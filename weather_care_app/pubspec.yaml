@@ -7,8 +7,11 @@ environment:
   sdk: ">=3.2.0 <4.0.0"
 
 dependencies:
+  firebase_analytics: ^12.4.6
+  firebase_core: ^4.13.0
   flutter:
     sdk: flutter
+  google_mobile_ads: ^7.0.0
   http: ^1.2.1
 
 dev_dependencies:

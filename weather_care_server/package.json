@@ -1,0 +1,22 @@
+{
+  "name": "weather-care-server",
+  "private": true,
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply weather-care-db --local",
+    "db:push": "wrangler d1 execute weather-care-db --file=./migrations/0001_init.sql --local"
+  },
+  "dependencies": {
+    "hono": "^4.5.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "wrangler": "^3.78.12",
+    "@types/node": "^22.5.2"
+  }
+}
+

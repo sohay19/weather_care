@@ -1,0 +1,57 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace = "com.codesoha.weather_care"
+    compileSdk = 36
+    ndkVersion "29.0.13113456"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.codesoha.weather_care"
+        minSdkVersion 27
+        targetSdk 36
+        versionCode keystoreProperties["versionCode"].toInteger()
+        versionName keystoreProperties["versionName"]
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties["keyAlias"]
+            keyPassword keystoreProperties["keyPassword"]
+            storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null
+            storePassword keystoreProperties["storePassword"]
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:24.5.0'
+}

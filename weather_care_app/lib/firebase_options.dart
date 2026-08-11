@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '753467123768',
     projectId: 'weather-care-2aaa8',
     storageBucket: 'weather-care-2aaa8.firebasestorage.app',
-    iosBundleId: 'com.weathercare.weatherCare',
+    iosBundleId: 'com.codesoha.weatherCare',
   );
 }

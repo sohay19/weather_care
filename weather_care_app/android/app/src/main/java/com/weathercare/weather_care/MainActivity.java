@@ -1,4 +1,4 @@
-package com.weathercare.weather_care;
+package com.codesoha.weather_care;
 
 import io.flutter.embedding.android.FlutterActivity;
 

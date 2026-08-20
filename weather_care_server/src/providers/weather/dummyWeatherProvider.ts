@@ -2,7 +2,7 @@ import { WeatherSnapshot } from '../../types';
 import { WeatherProvider } from './weatherProvider';
 
 export class DummyWeatherProvider implements WeatherProvider {
-  async getByRegion(): Promise<WeatherSnapshot> {
+  async getByRegion(_nx: number, _ny: number): Promise<WeatherSnapshot> {
     return {
       observedAt: new Date().toISOString(),
       temperature: 29.5,
@@ -16,11 +16,10 @@ export class DummyWeatherProvider implements WeatherProvider {
       snowProbability: 5,
       snowfallAmount: 0,
       uvIndex: 7,
-      skyCondition: 'Cloudy',
+      skyCondition: '흐림',
       pm10: 33,
       pm25: 18,
       airQualityGrade: 'Moderate',
     };
   }
 }
-

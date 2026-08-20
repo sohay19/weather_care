@@ -122,6 +122,7 @@ export interface TodayWeatherResponse {
   region: { nx: number; ny: number; name: string };
   brief: string;
   current: WeatherSnapshot;
+  hourly: WeatherSnapshot[];
   recommendations: Recommendation[];
   lifestyleMessages: { type: LifestyleInsightType; title: string; description?: string }[];
   timeline: {

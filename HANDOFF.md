@@ -301,3 +301,20 @@
 - 생성 커밋:
   - `9d1fb1a chore(app): KMA 디버그 설정 자동 적용`
   - `0ce7c41 refactor: 샘플 데이터 제거`
+
+### KMA 설정 Debug/Release 공통 적용
+- 사용자가 키를 입력한 기존 추적 대상 예제 파일을 확인했으며 키 값을 출력하지 않고 Git 제외 대상 `weather_care_app/config/kma.config.json`으로 이동함.
+- 추적 예제는 `weather_care_app/config/kma.config.example.json`으로 교체하고 실제 설정 파일은 `.gitignore`에 등록함.
+- `config/` 디렉터리를 Flutter 자산으로 등록하고 `AppConfig`가 앱 시작 시 `config/kma.config.json`을 읽도록 구현함.
+  - Debug/Release 및 IntelliJ/CLI 실행 방식과 관계없이 같은 설정을 적용함.
+  - 설정 파일이 없거나 잘못된 경우 기존 `String.fromEnvironment`와 운영 서버 기본값으로 안전하게 Fallback함.
+  - 명시적인 `--dart-define` 값은 로컬 파일보다 우선해 로컬 서버와 CI Override를 유지함.
+- IntelliJ Run Configuration의 `--dart-define-from-file` 의존성을 제거함.
+- 검증 결과:
+  - `flutter analyze` 이슈 없음, `flutter test` 8개 통과.
+  - 별도 Dart Define 없이 Debug APK와 Release APK 빌드 성공.
+  - 두 APK 모두 `assets/flutter_assets/config/kma.config.json`을 정확히 1개 포함함.
+  - 실제 키 파일은 Git 제외 상태이며 저장소 추적 목록에 포함되지 않음.
+- 생성 커밋:
+  - `9c2e832 feat(app): KMA 설정을 모든 빌드에 적용`
+  - `da6de87 fix(app): 빌드 인자 우선순위 보장`

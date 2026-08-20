@@ -77,9 +77,9 @@ flowchart LR
 - FCM 전송 함수는 TODO 상태이며 실제 Push를 발송하지 않음
 
 서버의 기상청 API 키는 로컬 `.dev.vars` 또는 운영 Worker Secret으로 주입합니다.
-앱 직접 조회용 키는 Flutter `KMA_SERVICE_KEY` 빌드 인자로 주입하며 저장소에는
-보관하지 않습니다. Flutter 바이너리에 포함된 키는 추출될 수 있으므로 호출량과 키
-교체 정책을 별도로 관리해야 합니다.
+앱 직접 조회용 키는 Git 제외 대상 `config/kma.config.json`에 저장하며 앱 시작 시
+불러옵니다. 이 파일은 Debug/Release 바이너리에 포함되어 추출될 수 있으므로 호출량과
+키 교체 정책을 별도로 관리해야 합니다.
 
 ## 서버 연결
 
@@ -100,8 +100,8 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
 운영 서버 장애 시 앱 직접 조회까지 사용하려면
-`weather_care_app/kma.debug.json`에 기상청 일반 인증키를 입력합니다. IntelliJ의
-공유 Run/Debug 구성은 이 파일을 자동 적용합니다.
+`weather_care_app/config/kma.config.json`에 기상청 일반 인증키를 입력합니다. 앱이
+설정 파일을 자산으로 읽으므로 IntelliJ Debug와 Release 빌드에 모두 자동 적용됩니다.
 
 ```json
 {
@@ -110,7 +110,8 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 }
 ```
 
-실제 파일은 Git에서 제외되며 저장소에는 `kma.debug.example.json`만 포함됩니다.
+실제 파일은 Git에서 제외되며 저장소에는 `config/kma.config.example.json`만
+포함됩니다.
 
 각 프로젝트의 실행 방법과 API 목록은 다음 문서를 참고합니다.
 

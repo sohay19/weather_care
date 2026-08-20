@@ -43,7 +43,7 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 운영 응답을 사용하면 홈 배지에 서버가 내려준 `기상청 단기예보` 출처가 표시됩니다.
 
 운영 서버 장애 시 앱이 기상청 단기예보를 직접 조회하게 하려면
-`kma.debug.json`의 빈 값에 공공데이터포털 일반 인증키를 입력합니다.
+`config/kma.config.json`에 공공데이터포털 일반 인증키를 입력합니다.
 
 ```json
 {
@@ -52,30 +52,26 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 }
 ```
 
-IntelliJ의 공유 `main.dart` 실행 구성에는 아래 인자가 저장되어 있어 Run/Debug 시
-`kma.debug.json`이 자동 적용됩니다. 실행 구성을 다시 수정할 필요가 없습니다.
+앱이 이 파일을 Flutter 자산으로 읽기 때문에 별도 실행 인자 없이 Debug와 Release에
+모두 자동 적용됩니다. IntelliJ 실행 구성도 다시 수정할 필요가 없습니다.
 
-```text
---dart-define-from-file=kma.debug.json
+파일이 없는 새 개발 환경에서는 예제 파일을 복사한 뒤 키를 입력합니다.
+
+```powershell
+Copy-Item config/kma.config.example.json config/kma.config.json
 ```
 
-파일이 없는 새 개발 환경에서는 `kma.debug.example.json`을 `kma.debug.json`으로
-복사한 뒤 키를 입력합니다. 실제 `kma.debug.json`은 Git에서 제외됩니다.
-
-CLI에서도 같은 문서를 적용할 수 있습니다.
-
-```bash
-flutter run -d emulator-5554 --dart-define-from-file=kma.debug.json
-```
+실제 `config/kma.config.json`은 Git에서 제외됩니다. `--dart-define`을 별도로 지정하면
+해당 값이 설정 파일보다 우선하므로 로컬 서버나 CI 설정도 계속 사용할 수 있습니다.
 
 키가 설정된 상태에서 운영 서버만 실패하면 기상청 원시 예보를 직접 표시합니다.
 추천·생활 날씨·준비물·타임라인·체감온도 등 서버 연산 항목은 `미지원`으로 표시하며,
 인터넷 연결도 없으면 날씨 화면 전체를 `인터넷 연결 불가로 미지원`으로 표시합니다.
 내장 고정 데이터 파일은 제거되어 런타임 폴백으로 사용되지 않습니다.
 
-주의: `--dart-define-from-file` 값은 앱 바이너리에 포함되므로 배포 앱에서 완전한
-Secret으로 보호되지 않습니다. 직접 조회 기능을 운영할 경우 호출량 제한과 키 교체
-정책을 함께 관리해야 합니다.
+주의: 설정 파일은 Debug/Release 앱 바이너리에 자산으로 포함되므로 완전한 Secret으로
+보호되지 않습니다. 직접 조회 기능을 운영할 경우 호출량 제한과 키 교체 정책을 함께
+관리해야 합니다.
 
 ## 다음 단계
 

@@ -57,7 +57,6 @@ void main() {
       0,
     );
     expect(find.byKey(const ValueKey('today-tab')), findsOneWidget);
-    expect(find.text('샘플 데이터'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

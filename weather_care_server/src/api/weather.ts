@@ -21,7 +21,7 @@ import { lifestyleMessageFor } from '../lifestyle/lifestyleTemplates';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
-const sampleSettings: Partial<NotificationSettings> = {
+const defaultSettings: Partial<NotificationSettings> = {
   umbrellaEnabled: true,
   parasolEnabled: true,
   heavySnowEnabled: true,
@@ -44,7 +44,7 @@ router.get('/today', async (c) => {
     const decisionSnapshot = aggregateDecisionSnapshot(forecast);
     const rules = runWeatherRuleEngine(decisionSnapshot);
     const lifestyle = runLifestyleWeatherEngine(rules);
-    const recommendations = runRecommendationEngine(lifestyle, sampleSettings);
+    const recommendations = runRecommendationEngine(lifestyle, defaultSettings);
 
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
@@ -183,7 +183,7 @@ function timelineDetail(snapshot: WeatherSnapshot): string {
 function recommendationsForSnapshot(snapshot: WeatherSnapshot): Recommendation[] {
   return runRecommendationEngine(
     runLifestyleWeatherEngine(runWeatherRuleEngine(snapshot)),
-    sampleSettings,
+    defaultSettings,
   );
 }
 

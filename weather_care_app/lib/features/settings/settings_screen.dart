@@ -310,6 +310,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        const Center(
+          child: Text(
+            '날씨 정보는 기상청 공식 API를 사용합니다.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: WeatherCareTheme.textSecondary,
+              fontSize: 9,
+              height: 1.2,
+            ),
+          ),
+        ),
       ],
     );
     if (widget.embedded) return body;

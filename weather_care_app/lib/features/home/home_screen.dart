@@ -32,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
-  bool _refreshing = true;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
   @override
@@ -61,9 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadData() async {
     final service = _service;
     if (service == null) return;
-    if (mounted) {
-      setState(() => _refreshing = true);
-    }
 
     final result = await service.fetchWeather(
       installationId: _settings.installationId,
@@ -77,7 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _weekly = result.weekly;
       _loadMode = result.mode;
       _statusMessage = result.message;
-      _refreshing = false;
     });
   }
 
@@ -108,7 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final weekly = _weekly;
     final hasWeather = today != null && weekly != null;
     final serverFeaturesAvailable = _loadMode == WeatherLoadMode.server;
-    final directKma = _loadMode == WeatherLoadMode.directKma;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
@@ -140,8 +134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       today: today,
                       dateLabel: _dateLabel,
                       mood: _mood,
-                      refreshing: _refreshing,
-                      directKma: directKma,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
                     ),

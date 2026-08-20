@@ -9,8 +9,6 @@ class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
   final String dateLabel;
   final String mood;
-  final bool refreshing;
-  final bool directKma;
   final bool serverFeaturesAvailable;
   final VoidCallback onRefresh;
 
@@ -19,8 +17,6 @@ class MainTab extends StatelessWidget {
     required this.today,
     required this.dateLabel,
     required this.mood,
-    required this.refreshing,
-    required this.directKma,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
   });
@@ -49,8 +45,6 @@ class MainTab extends StatelessWidget {
                   today: today,
                   mood: mood,
                   compact: compact,
-                  refreshing: refreshing,
-                  directKma: directKma,
                 ),
               ),
               SizedBox(height: compact ? 8 : 12),
@@ -74,15 +68,11 @@ class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
   final String mood;
   final bool compact;
-  final bool refreshing;
-  final bool directKma;
 
   const _TopWeatherCard({
     required this.today,
     required this.mood,
     required this.compact,
-    required this.refreshing,
-    required this.directKma,
   });
 
   @override
@@ -99,11 +89,6 @@ class _TopWeatherCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _SourceBadge(
-                refreshing: refreshing,
-                directKma: directKma,
-                dataSource: today.dataSource,
-              ),
               const Spacer(),
               Icon(
                 _weatherIcon(current.sky),
@@ -253,66 +238,6 @@ class _TopMetric extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SourceBadge extends StatelessWidget {
-  final bool refreshing;
-  final bool directKma;
-  final String dataSource;
-
-  const _SourceBadge({
-    required this.refreshing,
-    required this.directKma,
-    required this.dataSource,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final label = refreshing ? '서버 확인 중' : dataSource;
-    final accent =
-        directKma ? const Color(0xFFB56A32) : const Color(0xFF3C8C66);
-    final background =
-        directKma ? const Color(0xFFFFF0E3) : const Color(0xFFE9F7EF);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (refreshing)
-            SizedBox(
-              width: 11,
-              height: 11,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: accent,
-              ),
-            )
-          else
-            Icon(
-              directKma
-                  ? Icons.phone_android_rounded
-                  : Icons.cloud_done_outlined,
-              size: 13,
-              color: accent,
-            ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: accent,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
             ),
           ),
         ],

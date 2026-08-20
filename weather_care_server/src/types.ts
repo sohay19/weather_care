@@ -116,9 +116,11 @@ export interface Installation {
 export interface ServerEnv {
   DB: any;
   APP_ORIGIN?: string;
+  KMA_SERVICE_KEY?: string;
 }
 
 export interface TodayWeatherResponse {
+  dataSource: string;
   region: { nx: number; ny: number; name: string };
   brief: string;
   current: WeatherSnapshot;

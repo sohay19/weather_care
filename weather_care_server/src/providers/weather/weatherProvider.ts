@@ -1,6 +1,25 @@
 import { WeatherSnapshot } from '../../types';
 
-export interface WeatherProvider {
-  getByRegion(nx: number, ny: number): Promise<WeatherSnapshot>;
+export interface DailyWeatherForecast {
+  date: string;
+  minTemperature?: number;
+  maxTemperature?: number;
+  skyCondition: string;
+  precipitationProbability: number;
+  precipitationAmount: number;
+  snowProbability: number;
+  snowfallAmount: number;
 }
 
+export interface WeatherForecast {
+  current: WeatherSnapshot;
+  hourly: WeatherSnapshot[];
+  daily: DailyWeatherForecast[];
+  baseDate: string;
+  baseTime: string;
+  dataSource: string;
+}
+
+export interface WeatherProvider {
+  getForecastByRegion(nx: number, ny: number): Promise<WeatherForecast>;
+}

@@ -1,8 +1,16 @@
 import { Hono } from 'hono';
-import { Recommendation, ServerEnv, NotificationSettings, TodayWeatherResponse } from '../types';
-import { DummyWeatherProvider } from '../providers/weather/dummyWeatherProvider';
-import { DummyAirQualityProvider } from '../providers/air/dummyAirQualityProvider';
-import { WeatherNormalizer } from '../normalization/weatherNormalizer';
+import {
+  NotificationSettings,
+  Recommendation,
+  ServerEnv,
+  TodayWeatherResponse,
+  WeatherSnapshot,
+} from '../types';
+import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
+import {
+  DailyWeatherForecast,
+  WeatherForecast,
+} from '../providers/weather/weatherProvider';
 import { runWeatherRuleEngine } from '../rules/weatherRuleEngine';
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
@@ -12,8 +20,6 @@ import { runRecommendationNotificationJob } from '../notification/notificationSc
 import { lifestyleMessageFor } from '../lifestyle/lifestyleTemplates';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
-const weatherProvider = new DummyWeatherProvider();
-const airQualityProvider = new DummyAirQualityProvider();
 
 const sampleSettings: Partial<NotificationSettings> = {
   umbrellaEnabled: true,
@@ -26,150 +32,215 @@ const sampleSettings: Partial<NotificationSettings> = {
 };
 
 router.get('/today', async (c) => {
-  const { nx, ny, topic } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
-  const raw = await weatherProvider.getByRegion(nx, ny);
-  const air = await airQualityProvider.getByRegion(nx, ny);
-  const snapshot = WeatherNormalizer.normalize({
-    ...raw,
-    pm10: air.pm10,
-    pm25: air.pm25,
-    airQualityGrade: air.airQualityGrade,
-  });
-  const rules = runWeatherRuleEngine(snapshot);
-  const lifestyle = runLifestyleWeatherEngine(rules);
-  const recommendations = runRecommendationEngine(lifestyle, sampleSettings);
-  const recommendationOf = (type: Recommendation['type']) =>
-    recommendations.filter((item) => item.type === type);
-
-  const response: TodayWeatherResponse = {
-    region: { nx, ny, name: '수원' },
-    brief: '오늘은 덥다가 퇴근할 때 비가 와요.',
-    current: snapshot,
-    hourly: buildHourlyForecast(snapshot),
-    recommendations,
-    lifestyleMessages: lifestyle.map((item) => ({
-      type: item.type,
-      ...lifestyleMessageFor(item.type, item.score),
-    })),
-    timeline: [
-      {
-        timeLabel: '07',
-        stateLabel: '출근할 때',
-        detail: '선선해요. 특별히 챙길 건 없어요.',
-        recommendations: [],
-      },
-      {
-        timeLabel: '12',
-        stateLabel: '점심 무렵',
-        detail: '햇볕이 강해요.',
-        recommendations: recommendationOf('SUNSCREEN'),
-      },
-      {
-        timeLabel: '18',
-        stateLabel: '퇴근할 때',
-        detail: '비 올 가능성이 높아요.',
-        recommendations: recommendationOf('UMBRELLA'),
-      },
-    ],
-  };
-
-  if (c.env.DB) {
-    await saveCurrentWeather(c.env.DB, nx, ny, snapshot);
-    // Topic subscription corrective logic could be added here
-    void runRecommendationNotificationJob(c.env);
+  const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  if (!c.env.KMA_SERVICE_KEY) {
+    return c.json({ error: 'KMA_SERVICE_KEY_NOT_CONFIGURED' }, 503);
   }
-  return c.json(response);
+
+  try {
+    const forecast = await new KmaWeatherProvider({
+      serviceKey: c.env.KMA_SERVICE_KEY,
+    }).getForecastByRegion(nx, ny);
+    const decisionSnapshot = aggregateDecisionSnapshot(forecast);
+    const rules = runWeatherRuleEngine(decisionSnapshot);
+    const lifestyle = runLifestyleWeatherEngine(rules);
+    const recommendations = runRecommendationEngine(lifestyle, sampleSettings);
+
+    const response: TodayWeatherResponse = {
+      dataSource: forecast.dataSource,
+      region: { nx, ny, name: regionName(nx, ny) },
+      brief: buildBrief(forecast),
+      current: forecast.current,
+      hourly: forecast.hourly,
+      recommendations,
+      lifestyleMessages: lifestyle.map((item) => ({
+        type: item.type,
+        ...lifestyleMessageFor(item.type, item.score),
+      })),
+      timeline: buildTimeline(forecast.hourly),
+    };
+
+    if (c.env.DB) {
+      await saveCurrentWeather(c.env.DB, nx, ny, forecast.current);
+      c.executionCtx.waitUntil(runRecommendationNotificationJob(c.env));
+    }
+    return c.json(response);
+  } catch (error) {
+    logProviderError('today', nx, ny, error);
+    return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
+  }
 });
 
 router.get('/weekly', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
-  return c.json({
-    regionId: `${nx}_${ny}`,
-    days: buildWeeklyForecast(),
-  });
+  if (!c.env.KMA_SERVICE_KEY) {
+    return c.json({ error: 'KMA_SERVICE_KEY_NOT_CONFIGURED' }, 503);
+  }
+
+  try {
+    const forecast = await new KmaWeatherProvider({
+      serviceKey: c.env.KMA_SERVICE_KEY,
+    }).getForecastByRegion(nx, ny);
+    return c.json({
+      dataSource: forecast.dataSource,
+      regionId: `${nx}_${ny}`,
+      days: forecast.daily.map((day) => ({
+        date: weekdayLabel(day.date),
+        weatherLabel: day.skyCondition,
+        min: formatTemperature(day.minTemperature),
+        max: formatTemperature(day.maxTemperature),
+        recommendations: recommendationsForDay(day),
+      })),
+    });
+  } catch (error) {
+    logProviderError('weekly', nx, ny, error);
+    return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
+  }
 });
 
 export default router;
 
-function buildHourlyForecast(current: TodayWeatherResponse['current']) {
-  const baseTemperature = current.temperature ?? 27;
-  const baseDate = current.observedAt.slice(0, 10);
-  const rows = [
-    { time: '06', delta: -6, apparentDelta: -5.5, rain: 10, amount: 0, wind: 1.4, sky: '맑음' },
-    { time: '09', delta: -3, apparentDelta: -2, rain: 10, amount: 0, wind: 1.8, sky: '구름 조금' },
-    { time: '12', delta: 0, apparentDelta: 2.5, rain: 20, amount: 0, wind: 2.4, sky: '부분 흐림' },
-    { time: '15', delta: 1.5, apparentDelta: 4, rain: 35, amount: 0, wind: 3.1, sky: '흐림' },
-    { time: '18', delta: -2.5, apparentDelta: -0.5, rain: 75, amount: 3.2, wind: 5.8, sky: '비' },
-    { time: '21', delta: -5, apparentDelta: -4, rain: 60, amount: 1.1, wind: 4.3, sky: '비' },
-  ];
-  return rows.map((row) => ({
-    observedAt: `${baseDate}T${row.time}:00:00+09:00`,
-    temperature: baseTemperature + row.delta,
-    apparentTemperature: baseTemperature + row.apparentDelta,
-    precipitationProbability: row.rain,
-    precipitationAmount: row.amount,
-    snowProbability: 0,
-    snowfallAmount: 0,
-    windSpeed: row.wind,
-    skyCondition: row.sky,
-  }));
-}
+function aggregateDecisionSnapshot(forecast: WeatherForecast): WeatherSnapshot {
+  const nextDay = forecast.hourly.slice(0, 24);
+  const temperatures = nextDay
+    .map((item) => item.temperature)
+    .filter((value): value is number => value !== undefined);
+  const apparentTemperatures = nextDay
+    .map((item) => item.apparentTemperature)
+    .filter((value): value is number => value !== undefined);
 
-function buildWeeklyForecast() {
-  const weekdayLabels = ['일', '월', '화', '수', '목', '금', '토'];
-  const koreaNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const firstWeekday = koreaNow.getUTCDay();
-  const umbrella = weeklyRecommendation(
-    'UMBRELLA',
-    90,
-    '우산 챙겨요',
-    '비 예보가 있어 외출 전에 우산을 준비해요.',
-    'RAIN_LIKELY',
-  );
-  const sunscreen = weeklyRecommendation(
-    'SUNSCREEN',
-    70,
-    '선크림 챙겨요',
-    '자외선이 강한 시간대 전에 선크림을 발라요.',
-    'UV_HIGH',
-  );
-  const water = weeklyRecommendation(
-    'WATER',
-    65,
-    '물 챙겨요',
-    '체감온도가 높아 작은 물병을 준비하면 좋아요.',
-    'APPARENT_TEMPERATURE_HIGH',
-  );
-  const rows = [
-    { weatherLabel: '구름 후 비', min: '24', max: '32', recommendations: [umbrella, sunscreen] },
-    { weatherLabel: '비', min: '23', max: '28', recommendations: [umbrella] },
-    { weatherLabel: '흐림', min: '22', max: '27', recommendations: [] },
-    { weatherLabel: '맑음', min: '23', max: '30', recommendations: [sunscreen] },
-    { weatherLabel: '소나기', min: '24', max: '29', recommendations: [umbrella] },
-    { weatherLabel: '맑음', min: '24', max: '31', recommendations: [sunscreen] },
-    { weatherLabel: '구름 조금', min: '25', max: '32', recommendations: [water] },
-  ];
-
-  return rows.map((row, index) => ({
-    date: weekdayLabels[(firstWeekday + index) % weekdayLabels.length],
-    ...row,
-  }));
-}
-
-function weeklyRecommendation(
-  type: Recommendation['type'],
-  priority: number,
-  title: string,
-  description: string,
-  reasonCode: string,
-): Recommendation {
   return {
-    type,
-    recommended: true,
-    priority,
-    title,
-    description,
-    reasonCodes: [reasonCode],
-    notificationEligible: true,
+    ...forecast.current,
+    minTemperature:
+      temperatures.length === 0 ? undefined : Math.min(...temperatures),
+    maxTemperature:
+      temperatures.length === 0 ? undefined : Math.max(...temperatures),
+    apparentTemperature:
+      apparentTemperatures.length === 0
+        ? forecast.current.apparentTemperature
+        : Math.max(...apparentTemperatures),
+    precipitationProbability: maximum(
+      nextDay.map((item) => item.precipitationProbability ?? 0),
+    ),
+    precipitationAmount: nextDay.reduce(
+      (sum, item) => sum + (item.precipitationAmount ?? 0),
+      0,
+    ),
+    snowProbability: maximum(
+      nextDay.map((item) => item.snowProbability ?? 0),
+    ),
+    snowfallAmount: nextDay.reduce(
+      (sum, item) => sum + (item.snowfallAmount ?? 0),
+      0,
+    ),
   };
+}
+
+function buildBrief(forecast: WeatherForecast): string {
+  const current = forecast.current;
+  const temperature = current.temperature;
+  const temperatureLabel =
+    temperature === undefined ? '' : `, ${temperature.toFixed(1)}°`;
+  const rain = forecast.hourly
+    .slice(0, 24)
+    .find((item) => (item.precipitationProbability ?? 0) >= 50);
+
+  if (rain) {
+    const hour = rain.observedAt.slice(11, 13);
+    return `현재 ${current.skyCondition ?? '날씨 확인 중'}${temperatureLabel}, ${hour}시 전후 비 가능성이 있어요.`;
+  }
+  return `현재 ${current.skyCondition ?? '날씨 확인 중'}${temperatureLabel}예요.`;
+}
+
+function buildTimeline(hourly: WeatherSnapshot[]) {
+  const offsets = [0, 6, 12];
+  return offsets
+    .map((offset) => hourly[offset])
+    .filter((item): item is WeatherSnapshot => item !== undefined)
+    .map((item) => {
+      const recommendations = recommendationsForSnapshot(item);
+      const hour = item.observedAt.slice(11, 13);
+      return {
+        timeLabel: hour,
+        stateLabel: `${hour}시 무렵`,
+        detail: timelineDetail(item),
+        recommendations,
+      };
+    });
+}
+
+function timelineDetail(snapshot: WeatherSnapshot): string {
+  const pieces = [
+    snapshot.skyCondition ?? '날씨 정보 확인 중',
+    snapshot.temperature === undefined
+      ? null
+      : `${snapshot.temperature.toFixed(1)}°`,
+    `강수확률 ${Math.round(snapshot.precipitationProbability ?? 0)}%`,
+  ];
+  return pieces.filter((piece): piece is string => piece !== null).join(' · ');
+}
+
+function recommendationsForSnapshot(snapshot: WeatherSnapshot): Recommendation[] {
+  return runRecommendationEngine(
+    runLifestyleWeatherEngine(runWeatherRuleEngine(snapshot)),
+    sampleSettings,
+  );
+}
+
+function recommendationsForDay(day: DailyWeatherForecast): Recommendation[] {
+  const snapshot: WeatherSnapshot = {
+    observedAt: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}T12:00:00+09:00`,
+    temperature: day.maxTemperature,
+    minTemperature: day.minTemperature,
+    maxTemperature: day.maxTemperature,
+    apparentTemperature: day.maxTemperature,
+    precipitationProbability: day.precipitationProbability,
+    precipitationAmount: day.precipitationAmount,
+    snowProbability: day.snowProbability,
+    snowfallAmount: day.snowfallAmount,
+    skyCondition: day.skyCondition,
+  };
+  return recommendationsForSnapshot(snapshot).slice(0, 2);
+}
+
+function weekdayLabel(kmaDate: string): string {
+  const date = new Date(
+    Date.UTC(
+      Number(kmaDate.slice(0, 4)),
+      Number(kmaDate.slice(4, 6)) - 1,
+      Number(kmaDate.slice(6, 8)),
+    ),
+  );
+  return ['일', '월', '화', '수', '목', '금', '토'][date.getUTCDay()];
+}
+
+function regionName(nx: number, ny: number): string {
+  if (nx === 60 && ny === 121) return '수원';
+  return '선택 지역';
+}
+
+function formatTemperature(value?: number): string {
+  return value === undefined ? '--' : String(Math.round(value));
+}
+
+function maximum(values: number[]): number {
+  return values.length === 0 ? 0 : Math.max(...values);
+}
+
+function logProviderError(
+  route: 'today' | 'weekly',
+  nx: number,
+  ny: number,
+  error: unknown,
+): void {
+  console.error(
+    JSON.stringify({
+      event: 'weather_provider_failed',
+      provider: 'KMA',
+      route,
+      nx,
+      ny,
+      error: error instanceof Error ? error.name : 'UnknownError',
+    }),
+  );
 }

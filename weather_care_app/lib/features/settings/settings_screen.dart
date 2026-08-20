@@ -123,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       '필요한 준비물을 한 번에 알려드려요',
                       style: TextStyle(
-                        fontFamily: WeatherCareTheme.fontChosunCentennial,
+                        fontFamily: WeatherCareTheme.fontChosunSg,
                         color: Color(0xE6FFFFFF),
                         fontSize: 12,
                       ),

@@ -28,7 +28,7 @@ void main() {
     expect(theme.textTheme.bodyMedium?.fontFamily, WeatherCareTheme.fontSuite);
     expect(
       theme.textTheme.bodySmall?.fontFamily,
-      WeatherCareTheme.fontChosunCentennial,
+      WeatherCareTheme.fontChosunSg,
     );
     expect(
       theme.textTheme.headlineSmall?.fontFamily,

@@ -392,3 +392,22 @@
   - Debug APK 빌드 및 Android 에뮬레이터 설치 성공.
   - APK `FontManifest.json`에서 SUITE·ChosunCentennial·Mona·NeoHyundai 등록을 확인함.
   - 360×800 Main/Today/Week/Setting 시각 검증에서 한글 깨짐과 RenderFlex/overflow/FATAL/Unhandled/폰트 자산 오류 없음.
+
+### NeoHyundai 타이틀 우선 적용 복구
+- 사용자 재요청에 따라 페이지·섹션 타이틀, 큰 브리핑, 알림 카드 등 기존 타이틀 역할에 NeoHyundai를 다시 우선 적용함.
+- SUITE는 앱 기본 본문 폰트로 유지하고, NeoHyundai는 명시적으로 지정된 큰 제목에만 사용함.
+- `pubspec.yaml`에 NeoHyundai L/R/B/EB/EBK 등록을 복구함.
+- 검증 결과:
+  - `flutter analyze`: 이슈 없음.
+  - `flutter test`: 13개 모두 통과.
+  - Debug APK 빌드 성공 및 `FontManifest.json`에서 NeoHyundai 5개 굵기 포함 확인.
+  - Android 에뮬레이터 Main 화면에서 타이틀 렌더링 정상, RenderFlex/overflow/FATAL/Unhandled/폰트 자산 오류 없음.
+
+### 보조 폰트 및 타이틀 굵기 조정
+- 작은 보조문구용 폰트를 `ChosunCentennial`에서 `ChosunSg`로 교체함.
+- NeoHyundai 타이틀과 SUITE 중간 제목의 굵기를 600으로 낮춰 화면의 시각적 무게를 조정함.
+- 실제 자산명 `ChosunSg.TTF`와 `pubspec.yaml`, 테마 상수, 회귀 테스트 참조를 일치시킴.
+- 검증 결과:
+  - `flutter analyze`: 이슈 없음.
+  - `flutter test`: 13개 모두 통과.
+  - Debug APK 빌드 성공 및 `FontManifest.json`에서 ChosunSg·NeoHyundai 등록 확인.

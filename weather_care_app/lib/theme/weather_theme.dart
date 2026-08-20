@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class WeatherCareTheme {
   // 카테고리는 아이콘과 문구로 구분하고, 화면 색상은 이 팔레트 안에서만 사용한다.
   static const String fontSuite = 'SUITE';
-  static const String fontChosunCentennial = 'ChosunCentennial';
+  static const String fontChosunSg = 'ChosunSg';
   static const String fontMona = 'Mona';
   static const String fontNeoHyundai = 'NeoHyundai';
 
@@ -32,7 +32,7 @@ class WeatherCareTheme {
   );
 
   static const TextStyle microTextStyle = TextStyle(
-    fontFamily: fontChosunCentennial,
+    fontFamily: fontChosunSg,
     color: textSecondary,
     fontSize: 10,
     height: 1.4,
@@ -86,33 +86,33 @@ class WeatherCareTheme {
           fontFamily: fontNeoHyundai,
           fontSize: 32,
           height: 1.22,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           letterSpacing: -1.2,
           color: textPrimary,
         ),
         headlineSmall: TextStyle(
           fontFamily: fontNeoHyundai,
           fontSize: 22,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
           color: textPrimary,
         ),
         titleLarge: TextStyle(
           fontFamily: fontNeoHyundai,
           fontSize: 19,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           letterSpacing: -0.35,
           color: textPrimary,
         ),
         titleMedium: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
         bodyLarge: TextStyle(fontSize: 16, height: 1.5, color: textPrimary),
         bodyMedium: TextStyle(fontSize: 14, height: 1.45, color: textPrimary),
         bodySmall: TextStyle(
-          fontFamily: fontChosunCentennial,
+          fontFamily: fontChosunSg,
           fontSize: 12,
           height: 1.5,
           fontWeight: FontWeight.w400,

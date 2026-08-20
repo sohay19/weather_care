@@ -40,9 +40,9 @@ flutter:
           weight: 800
         - asset: assets/fonts/SUITE-Heavy.ttf
           weight: 900
-    - family: ChosunCentennial
+    - family: ChosunSg
       fonts:
-        - asset: assets/fonts/ChosunCentennial.ttf
+        - asset: assets/fonts/ChosunSg.TTF
           weight: 400
     - family: Mona
       fonts:

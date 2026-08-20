@@ -14,7 +14,7 @@
 
 | 영역 | 앱 (`weather_care_app`) | 서버 (`weather_care_server`) |
 | --- | --- | --- |
-| 날씨 데이터 | 서버의 Today/Weekly/Comparison API를 호출하고 응답을 화면에 표시 | 외부 기상·대기질·과거 날씨 Provider를 호출하고 공통 모델로 정규화 |
+| 날씨 데이터 | 서버의 Today/Weekly/Comparison API를 호출하고 응답을 화면에 표시 | 기상청 단기예보를 호출하고 공통 모델로 정규화 |
 | 날씨 판단 | 서버가 내려준 상태와 설명을 신뢰하고 표시 | `WeatherRuleEngine`에서 강수, 강설, 자외선, 더위, 추위, 대기질 등의 객관적 상태를 판단 |
 | 생활 해석 | LifestyleMessage를 생활 날씨 UI로 표시 | `LifestyleWeatherEngine`에서 RuleFact를 생활 관점의 LifestyleInsight로 변환 |
 | 준비물 추천 | Recommendation을 우선순위대로 표시하고 아이콘·색상·딥링크를 매핑 | `RecommendationEngine`에서 우산, 양산, 겉옷, 마스크, 물, 선크림, 폭설 주의를 생성하고 중복·우선순위·사용자 설정을 적용 |
@@ -28,7 +28,7 @@
 
 ```mermaid
 flowchart LR
-    provider["외부 기상·대기질 Provider"] --> normalize["WeatherNormalizer"]
+    provider["기상청 단기예보 API"] --> normalize["KmaWeatherProvider"]
     normalize --> rules["WeatherRuleEngine"]
     rules --> lifestyle["LifestyleWeatherEngine"]
     lifestyle --> recommendation["RecommendationEngine"]
@@ -49,7 +49,7 @@ flowchart LR
 홈 상단 데이터 출처 배지는 현재 상태를 다음과 같이 표시합니다.
 
 - `서버 확인 중`: 서버 연결을 시도하는 중
-- `실시간 서버`: 서버 응답을 사용 중
+- `기상청 단기예보`: 운영 서버의 기상청 응답을 사용 중
 - `샘플 데이터`: 앱 내장 샘플 응답을 사용 중
 
 샘플 데이터에는 이미 계산된 Recommendation, LifestyleMessage, Timeline이 들어 있습니다. 앱이 샘플 날씨 수치로 추천 기준을 직접 계산하는 것은 아닙니다.
@@ -71,12 +71,14 @@ flowchart LR
 - Today/Weekly/Comparison 및 Installation/Notification Settings 라우트 골격 구현
 - Rule/Lifestyle/Recommendation Engine 모듈 구현
 - D1 Repository와 Migration 초안 구현
-- Weather/Air/Historical Provider는 현재 Dummy 구현
-- Weekly API 응답은 현재 일부 날짜가 하드코딩된 골격
+- Weather Provider는 공공데이터포털의 기상청 단기예보 API와 연결
+- Weekly API는 기상청 단기예보가 제공하는 오늘부터 글피까지 반환
+- 미세먼지·자외선 Provider는 아직 연결하지 않아 해당 값은 결측 처리
 - Recommendation 알림 조회는 Placeholder로 빈 배열을 반환
 - FCM 전송 함수는 TODO 상태이며 실제 Push를 발송하지 않음
 
-따라서 현재 서버를 실행하더라도 실제 기상 API 기반 서비스가 아니라 더미 Provider 기반 응답을 반환합니다.
+기상청 API 키는 로컬 `.dev.vars` 또는 운영 Worker Secret의 `KMA_SERVICE_KEY`로만
+주입하며 저장소에는 보관하지 않습니다.
 
 ## 서버 연결
 

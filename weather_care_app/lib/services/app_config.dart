@@ -16,11 +16,11 @@ class AppConfig {
   });
 
   static Future<AppConfig> load({AssetBundle? bundle}) async {
-    var serverUrl = const String.fromEnvironment(
-      'SERVER_URL',
-      defaultValue: _defaultServerUrl,
-    );
-    var kmaServiceKey = const String.fromEnvironment('KMA_SERVICE_KEY');
+    const definedServerUrl = String.fromEnvironment('SERVER_URL');
+    const definedServiceKey = String.fromEnvironment('KMA_SERVICE_KEY');
+    var serverUrl =
+        definedServerUrl.isEmpty ? _defaultServerUrl : definedServerUrl;
+    var kmaServiceKey = definedServiceKey;
 
     try {
       final raw = await (bundle ?? rootBundle).loadString(_configAssetPath);
@@ -32,8 +32,12 @@ class AppConfig {
       final assetServerUrl = decoded['SERVER_URL']?.toString().trim() ?? '';
       final assetServiceKey =
           decoded['KMA_SERVICE_KEY']?.toString().trim() ?? '';
-      if (assetServerUrl.isNotEmpty) serverUrl = assetServerUrl;
-      if (assetServiceKey.isNotEmpty) kmaServiceKey = assetServiceKey;
+      if (definedServerUrl.isEmpty && assetServerUrl.isNotEmpty) {
+        serverUrl = assetServerUrl;
+      }
+      if (definedServiceKey.isEmpty && assetServiceKey.isNotEmpty) {
+        kmaServiceKey = assetServiceKey;
+      }
     } catch (error) {
       log('KMA config asset unavailable (${error.runtimeType})');
     }

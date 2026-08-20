@@ -280,3 +280,24 @@
 - 남은 운영 작업:
   - `a90a1b1` 이후 서버 코드를 `npm run deploy`로 재배포해야 Today/Weekly 502가 해소됨.
   - 앱 직접 조회를 실제 Debug/배포 빌드에서 사용하려면 별도의 Flutter `KMA_SERVICE_KEY` 빌드 인자가 필요함.
+
+### KMA Debug 설정 자동 적용 및 샘플 소스 제거
+- 앱 프로젝트에 로컬 입력 문서 `kma.debug.json`을 생성함.
+  - `SERVER_URL`은 운영 Worker 주소로 입력함.
+  - `KMA_SERVICE_KEY`는 사용자가 발급키를 직접 입력할 수 있도록 빈 값으로 둠.
+  - 실제 파일은 `.gitignore`에 추가하고, 형식 공유용 `kma.debug.example.json`만 추적함.
+- IntelliJ 공유 `main.dart` Run/Debug 구성을 `--dart-define-from-file=kma.debug.json`으로 변경함.
+  - 이후 `kma.debug.json`만 수정하면 IntelliJ Run/Debug에 자동 적용됨.
+  - 현재 로컬 `workspace.xml`의 동일 실행 구성도 같은 인자로 맞춤.
+- 더 이상 사용하지 않는 `lib/data/sample_payloads.dart`를 삭제함.
+- 서버의 `sampleSettings`는 날씨 샘플이 아닌 기본 알림 설정이므로 `defaultSettings`로 이름을 정리함.
+- 앱·서버·현재 README에서 `sample`/`샘플` 및 `sample_payloads` 참조가 0건임을 확인함.
+- 검증 결과:
+  - 실제 로컬 `kma.debug.json`이 Git 제외 대상이고 예제 파일만 추적됨.
+  - IntelliJ 실행 구성 XML과 실제/예제 JSON 파싱 성공.
+  - `flutter analyze` 이슈 없음, `flutter test` 7개 통과.
+  - `flutter build apk --debug --dart-define-from-file=kma.debug.json` 성공.
+  - 서버 Vitest 4개와 `npx tsc --noEmit` 통과.
+- 생성 커밋:
+  - `9d1fb1a chore(app): KMA 디버그 설정 자동 적용`
+  - `0ce7c41 refactor: 샘플 데이터 제거`

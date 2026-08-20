@@ -39,7 +39,7 @@ flowchart LR
 
 ## 서버 장애 및 오프라인 동작
 
-앱 화면에서는 샘플 응답을 폴백으로 사용하지 않습니다.
+앱 화면에서는 내장 고정 응답을 사용하지 않습니다.
 
 1. 앱이 운영 서버의 Today/Weekly API를 먼저 호출합니다.
 2. 서버 연결에 실패하고 인터넷은 연결되어 있으면 앱이 기상청 단기예보를 직접 조회합니다.
@@ -99,12 +99,18 @@ cd weather_care_app
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-운영 서버 장애 시 앱 직접 조회까지 사용하려면 기상청 일반 인증키를 빌드 인자로
-추가합니다.
+운영 서버 장애 시 앱 직접 조회까지 사용하려면
+`weather_care_app/kma.debug.json`에 기상청 일반 인증키를 입력합니다. IntelliJ의
+공유 Run/Debug 구성은 이 파일을 자동 적용합니다.
 
-```bash
-flutter run -d emulator-5554 --dart-define=KMA_SERVICE_KEY=발급받은_일반인증키
+```json
+{
+  "SERVER_URL": "https://weather-care-server.sy40222.workers.dev",
+  "KMA_SERVICE_KEY": "발급받은_일반인증키"
+}
 ```
+
+실제 파일은 Git에서 제외되며 저장소에는 `kma.debug.example.json`만 포함됩니다.
 
 각 프로젝트의 실행 방법과 API 목록은 다음 문서를 참고합니다.
 

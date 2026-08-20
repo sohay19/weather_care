@@ -250,8 +250,9 @@ class _HourlyRow extends StatelessWidget {
               ),
               _MetricChip(
                 icon: Icons.ac_unit_rounded,
-                label:
-                    '눈 ${item.snowProbability.toStringAsFixed(0)}% · ${item.snowfallAmount.toStringAsFixed(1)}cm',
+                label: item.snowExpected
+                    ? '눈 예상 · ${item.snowfallAmount.toStringAsFixed(1)}cm'
+                    : '눈 없음',
               ),
               _MetricChip(
                 icon: Icons.air_rounded,

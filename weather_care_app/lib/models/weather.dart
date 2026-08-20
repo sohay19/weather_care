@@ -65,7 +65,7 @@ class HourlyWeatherItem {
   final double? apparentTemperature;
   final double precipitationProbability;
   final double precipitationAmount;
-  final double snowProbability;
+  final bool snowExpected;
   final double snowfallAmount;
   final double windSpeed;
   final String skyCondition;
@@ -76,16 +76,20 @@ class HourlyWeatherItem {
     this.apparentTemperature,
     required this.precipitationProbability,
     required this.precipitationAmount,
-    required this.snowProbability,
+    required this.snowExpected,
     required this.snowfallAmount,
     required this.windSpeed,
     required this.skyCondition,
   });
 
   factory HourlyWeatherItem.fromJson(Map<String, dynamic> json) {
-    final observedAt = json['observedAt']?.toString() ?? '';
+    final observedAt =
+        json['forecastAt']?.toString() ?? json['observedAt']?.toString() ?? '';
     final parsedTime =
         observedAt.length >= 13 ? observedAt.substring(11, 13) : '--';
+    final snowfallAmount = (json['snowfallAmount'] as num?)?.toDouble() ?? 0;
+    final legacySnowProbability =
+        (json['snowProbability'] as num?)?.toDouble() ?? 0;
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
       temperature: (json['temperature'] as num?)?.toDouble() ?? 0,
@@ -94,8 +98,10 @@ class HourlyWeatherItem {
           (json['precipitationProbability'] as num?)?.toDouble() ?? 0,
       precipitationAmount:
           (json['precipitationAmount'] as num?)?.toDouble() ?? 0,
-      snowProbability: (json['snowProbability'] as num?)?.toDouble() ?? 0,
-      snowfallAmount: (json['snowfallAmount'] as num?)?.toDouble() ?? 0,
+      snowExpected: json['snowExpected'] == true ||
+          legacySnowProbability > 0 ||
+          snowfallAmount > 0,
+      snowfallAmount: snowfallAmount,
       windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0,
       skyCondition: json['skyCondition']?.toString() ?? '맑음',
     );

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/app_config.dart';
 import 'package:weather_care/services/kma_direct_weather_service.dart';
@@ -102,6 +103,25 @@ void main() {
     expect(result.mode, WeatherLoadMode.directKma);
     expect(result.hasWeather, isTrue);
     expect(result.serverFeaturesAvailable, isFalse);
+  });
+
+  test('시간대 예보는 forecastAt과 눈 예상 파생값을 사용한다', () {
+    final response = TodayWeatherResponse.fromJson({
+      'region': {'nx': 60, 'ny': 121, 'name': '수원'},
+      'current': {'temperature': 0},
+      'hourly': [
+        {
+          'forecastAt': '2026-08-20T18:00:00+09:00',
+          'temperature': 0,
+          'snowExpected': true,
+          'snowfallAmount': 1.2,
+        },
+      ],
+    });
+
+    expect(response.hourly.single.time, '18');
+    expect(response.hourly.single.snowExpected, isTrue);
+    expect(response.hourly.single.snowfallAmount, 1.2);
   });
 
   test('인터넷 연결이 없으면 날씨 미지원 상태를 반환한다', () async {

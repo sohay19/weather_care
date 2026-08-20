@@ -205,7 +205,7 @@ DirectKmaWeatherBundle _buildBundle(
               temperature: item.temperature,
               precipitationProbability: item.precipitationProbability,
               precipitationAmount: item.precipitationAmount,
-              snowProbability: item.snowProbability,
+              snowExpected: item.snowExpected,
               snowfallAmount: item.snowfallAmount,
               windSpeed: item.windSpeed ?? 0,
               skyCondition: item.skyCondition,
@@ -272,9 +272,8 @@ _DirectSnapshot? _snapshotFromSlot(
     windSpeed: double.tryParse(categories['WSD'] ?? ''),
     precipitationProbability: precipitationProbability,
     precipitationAmount: _parseAmount(categories['PCP']),
-    snowProbability: const [2, 3, 6, 7].contains(precipitationType.round())
-        ? precipitationProbability
-        : 0,
+    snowExpected: const [2, 3, 6, 7].contains(precipitationType.round()) ||
+        _parseAmount(categories['SNO']) > 0,
     snowfallAmount: _parseAmount(categories['SNO']),
     skyCondition: _weatherLabel(
       precipitationType.round(),
@@ -460,7 +459,7 @@ class _DirectSnapshot {
   final double? windSpeed;
   final double precipitationProbability;
   final double precipitationAmount;
-  final double snowProbability;
+  final bool snowExpected;
   final double snowfallAmount;
   final String skyCondition;
 
@@ -471,7 +470,7 @@ class _DirectSnapshot {
     required this.windSpeed,
     required this.precipitationProbability,
     required this.precipitationAmount,
-    required this.snowProbability,
+    required this.snowExpected,
     required this.snowfallAmount,
     required this.skyCondition,
   });

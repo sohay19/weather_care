@@ -8,6 +8,7 @@ build/
 
 # Local API credentials
 kma.debug.json
+config/kma.config.json
 
 # IDE
 .idea/

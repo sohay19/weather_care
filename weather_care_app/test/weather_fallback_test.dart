@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:weather_care/services/api_client.dart';
+import 'package:weather_care/services/app_config.dart';
 import 'package:weather_care/services/kma_direct_weather_service.dart';
 import 'package:weather_care/services/weather_service.dart';
 
@@ -51,6 +53,18 @@ void main() {
         headers: const {'content-type': 'application/json'},
       );
     });
+  });
+
+  test('KMA 설정 자산은 빌드 모드와 무관하게 로드된다', () async {
+    final config = await AppConfig.load(
+      bundle: _JsonAssetBundle({
+        'SERVER_URL': 'https://weather.example.com',
+        'KMA_SERVICE_KEY': 'asset-key',
+      }),
+    );
+
+    expect(config.serverUrl, 'https://weather.example.com');
+    expect(config.kmaServiceKey, 'asset-key');
   });
 
   test('앱 직접 기상청 조회는 원시 날씨만 제공한다', () async {
@@ -103,6 +117,18 @@ void main() {
     expect(result.hasWeather, isFalse);
     expect(result.message, contains('인터넷 연결 불가'));
   });
+}
+
+class _JsonAssetBundle extends CachingAssetBundle {
+  final Map<String, dynamic> value;
+
+  _JsonAssetBundle(this.value);
+
+  @override
+  Future<ByteData> load(String key) async {
+    final bytes = Uint8List.fromList(utf8.encode(jsonEncode(value)));
+    return ByteData.sublistView(bytes);
+  }
 }
 
 class _FailingApiClient extends ApiClient {

@@ -5,6 +5,7 @@ import '../../models/app_settings.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../services/api_client.dart';
+import '../../services/app_config.dart';
 import '../../services/kma_direct_weather_service.dart';
 import '../../services/weather_service.dart';
 import '../../theme/weather_theme.dart';
@@ -26,7 +27,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final AppSettings _settings = AppSettings.fallback('local-installation');
-  late final WeatherService _service;
+  WeatherService? _service;
   TodayWeatherResponse? _today;
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
@@ -42,28 +43,29 @@ class _HomeScreenState extends State<HomeScreen> {
         : widget.initialIndex > 4
             ? 4
             : widget.initialIndex;
-    _service = WeatherService(
-      ApiClient(baseUrl: _resolveServerUrl()),
-      directKma: KmaDirectWeatherService(
-        serviceKey: const String.fromEnvironment('KMA_SERVICE_KEY'),
-      ),
-    );
-    _loadData();
+    _initialize();
   }
 
-  String _resolveServerUrl() {
-    return const String.fromEnvironment(
-      'SERVER_URL',
-      defaultValue: 'https://weather-care-server.sy40222.workers.dev',
+  Future<void> _initialize() async {
+    final config = await AppConfig.load();
+    if (!mounted) return;
+    _service = WeatherService(
+      ApiClient(baseUrl: config.serverUrl),
+      directKma: KmaDirectWeatherService(
+        serviceKey: config.kmaServiceKey,
+      ),
     );
+    await _loadData();
   }
 
   Future<void> _loadData() async {
+    final service = _service;
+    if (service == null) return;
     if (mounted) {
       setState(() => _refreshing = true);
     }
 
-    final result = await _service.fetchWeather(
+    final result = await service.fetchWeather(
       installationId: _settings.installationId,
       nx: 60,
       ny: 121,

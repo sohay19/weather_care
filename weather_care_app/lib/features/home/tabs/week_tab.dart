@@ -83,15 +83,16 @@ class _WeekSummary extends StatelessWidget {
         children: [
           const Text(
             '이번 주 한눈에',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              fontFamily: WeatherCareTheme.fontNeoHyundai,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 5),
-          const Text(
+          Text(
             '비 오는 날과 준비물이 필요한 날을 먼저 확인하세요.',
-            style: TextStyle(
-              color: WeatherCareTheme.textSecondary,
-              fontSize: 12,
-            ),
+            style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
           Row(
@@ -149,10 +150,7 @@ class _SummaryMetric extends StatelessWidget {
             Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
             Text(
               label,
-              style: const TextStyle(
-                color: WeatherCareTheme.textSecondary,
-                fontSize: 10,
-              ),
+              style: WeatherCareTheme.microTextStyle,
             ),
           ],
         ),
@@ -210,12 +208,10 @@ class _WeekDayCard extends StatelessWidget {
                   ),
                 ),
                 if (isToday)
-                  const Text(
+                  Text(
                     '오늘',
-                    style: TextStyle(
-                      color: WeatherCareTheme.primaryDeep,
+                    style: WeatherCareTheme.specialLabelStyle.copyWith(
                       fontSize: 9,
-                      fontWeight: FontWeight.w800,
                     ),
                   ),
               ],
@@ -249,10 +245,8 @@ class _WeekDayCard extends StatelessWidget {
                     serverFeaturesAvailable
                         ? '특별한 준비물 없음'
                         : '운영 서버 미연결로 준비물 미지원',
-                    style: const TextStyle(
-                      color: WeatherCareTheme.textSecondary,
-                      fontSize: 11,
-                    ),
+                    style:
+                        WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
                   )
                 else
                   Wrap(
@@ -281,8 +275,9 @@ class _WeekDayCard extends StatelessWidget {
                               Text(
                                 recommendation.type.label,
                                 style: const TextStyle(
+                                  fontFamily: WeatherCareTheme.fontMona,
                                   fontSize: 9,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ],

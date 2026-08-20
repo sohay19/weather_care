@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 class WeatherCareTheme {
   // 카테고리는 아이콘과 문구로 구분하고, 화면 색상은 이 팔레트 안에서만 사용한다.
+  static const String fontSuite = 'SUITE';
+  static const String fontChosunCentennial = 'ChosunCentennial';
+  static const String fontMona = 'Mona';
+  static const String fontNeoHyundai = 'NeoHyundai';
+
   static const Color primary = Color(0xFF5D7F9E);
   static const Color primaryDeep = Color(0xFF3E5F7C);
   static const Color primarySoft = Color(0xFFEAF0F5);
@@ -18,9 +23,25 @@ class WeatherCareTheme {
   static const Color attentionDeep = Color(0xFF7E582F);
   static const Color attentionSoft = Color(0xFFFAF3E8);
 
+  static const TextStyle specialLabelStyle = TextStyle(
+    fontFamily: fontMona,
+    color: primaryDeep,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.8,
+  );
+
+  static const TextStyle microTextStyle = TextStyle(
+    fontFamily: fontChosunCentennial,
+    color: textSecondary,
+    fontSize: 10,
+    height: 1.4,
+  );
+
   static ThemeData light() {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontSuite,
       colorScheme: const ColorScheme.light(
         primary: primary,
         onPrimary: Colors.white,
@@ -42,6 +63,7 @@ class WeatherCareTheme {
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
         titleTextStyle: TextStyle(
+          fontFamily: fontNeoHyundai,
           color: textPrimary,
           fontSize: 22,
           fontWeight: FontWeight.w800,
@@ -61,6 +83,7 @@ class WeatherCareTheme {
       ),
       textTheme: const TextTheme(
         displaySmall: TextStyle(
+          fontFamily: fontNeoHyundai,
           fontSize: 32,
           height: 1.22,
           fontWeight: FontWeight.w800,
@@ -68,12 +91,14 @@ class WeatherCareTheme {
           color: textPrimary,
         ),
         headlineSmall: TextStyle(
+          fontFamily: fontNeoHyundai,
           fontSize: 22,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.5,
           color: textPrimary,
         ),
         titleLarge: TextStyle(
+          fontFamily: fontNeoHyundai,
           fontSize: 19,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.35,
@@ -86,7 +111,14 @@ class WeatherCareTheme {
         ),
         bodyLarge: TextStyle(fontSize: 16, height: 1.5, color: textPrimary),
         bodyMedium: TextStyle(fontSize: 14, height: 1.45, color: textPrimary),
-        bodySmall: TextStyle(fontSize: 12, height: 1.4, color: textSecondary),
+        bodySmall: TextStyle(
+          fontFamily: fontChosunCentennial,
+          fontSize: 12,
+          height: 1.5,
+          fontWeight: FontWeight.w400,
+          color: textSecondary,
+        ),
+        labelSmall: microTextStyle,
         labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
       chipTheme: ChipThemeData(

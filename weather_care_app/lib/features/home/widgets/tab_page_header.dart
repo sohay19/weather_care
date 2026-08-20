@@ -39,12 +39,7 @@ class TabPageHeader extends StatelessWidget {
             children: [
               Text(
                 eyebrow,
-                style: const TextStyle(
-                  color: WeatherCareTheme.primaryDeep,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                ),
+                style: WeatherCareTheme.specialLabelStyle,
               ),
               const SizedBox(height: 2),
               Text(title, style: Theme.of(context).textTheme.headlineSmall),

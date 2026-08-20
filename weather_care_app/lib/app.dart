@@ -78,6 +78,7 @@ class WeatherDetailsScreen extends StatelessWidget {
                 Text(
                   '숫자는 추천을 이해하는\n근거로 보여드릴게요.',
                   style: TextStyle(
+                    fontFamily: WeatherCareTheme.fontNeoHyundai,
                     fontSize: 25,
                     height: 1.3,
                     fontWeight: FontWeight.w900,
@@ -147,6 +148,7 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
+                    fontFamily: WeatherCareTheme.fontNeoHyundai,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.6,

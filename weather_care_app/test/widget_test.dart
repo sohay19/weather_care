@@ -22,6 +22,24 @@ void main() {
     );
   });
 
+  test('theme maps the four font roles', () {
+    final theme = WeatherCareTheme.light();
+
+    expect(theme.textTheme.bodyMedium?.fontFamily, WeatherCareTheme.fontSuite);
+    expect(
+      theme.textTheme.bodySmall?.fontFamily,
+      WeatherCareTheme.fontChosunCentennial,
+    );
+    expect(
+      theme.textTheme.headlineSmall?.fontFamily,
+      WeatherCareTheme.fontNeoHyundai,
+    );
+    expect(
+      WeatherCareTheme.specialLabelStyle.fontFamily,
+      WeatherCareTheme.fontMona,
+    );
+  });
+
   testWidgets('WeatherCareApp starts', (tester) async {
     await tester.pumpWidget(const WeatherCareApp());
 

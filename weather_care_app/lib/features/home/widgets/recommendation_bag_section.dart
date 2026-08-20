@@ -175,8 +175,7 @@ class _BagItem extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: WeatherCareTheme.textSecondary,
+                    style: WeatherCareTheme.microTextStyle.copyWith(
                       fontSize: 10.5,
                       height: 1.3,
                     ),

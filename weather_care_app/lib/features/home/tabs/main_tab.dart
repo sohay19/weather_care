@@ -103,6 +103,7 @@ class _TopWeatherCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
+              fontFamily: WeatherCareTheme.fontNeoHyundai,
               color: WeatherCareTheme.textPrimary,
               fontSize: compact ? 23 : 27,
               height: 1.22,
@@ -232,10 +233,7 @@ class _TopMetric extends StatelessWidget {
                 ),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: WeatherCareTheme.textSecondary,
-                    fontSize: 9,
-                  ),
+                  style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 9),
                 ),
               ],
             ),
@@ -300,14 +298,10 @@ class _LifestyleDashboard extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               const Text(
                 'TODAY',
-                style: TextStyle(
-                  color: WeatherCareTheme.textSecondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
+                style: WeatherCareTheme.specialLabelStyle,
               ),
             ],
           ),
@@ -413,8 +407,7 @@ class _LifestyleActionCard extends StatelessWidget {
               message.description ?? presentation.subtitle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: WeatherCareTheme.textSecondary,
+              style: WeatherCareTheme.microTextStyle.copyWith(
                 fontSize: 9,
                 height: 1.3,
               ),

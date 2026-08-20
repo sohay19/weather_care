@@ -289,7 +289,12 @@ class _MetricChip extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: WeatherCareTheme.textSecondary),
           const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 10)),
+          Text(
+            label,
+            style: WeatherCareTheme.microTextStyle.copyWith(
+              color: WeatherCareTheme.textPrimary,
+            ),
+          ),
         ],
       ),
     );

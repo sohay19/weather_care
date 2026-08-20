@@ -376,3 +376,19 @@
   - `flutter test`: 12개 모두 통과.
   - Debug APK 빌드 및 Android 에뮬레이터 설치 성공.
   - 360×800 Week 화면에서 `°C` 표기와 레이아웃을 확인했으며 RenderFlex/overflow/FATAL/Unhandled 오류 없음.
+
+### Flutter 역할별 커스텀 폰트 적용
+- `weather_care_app/assets/fonts`의 파일명을 기준으로 4개 폰트 패밀리를 등록함.
+  - `SUITE`: Light~Heavy 7개 굵기를 앱 기본 폰트로 적용.
+  - `ChosunCentennial`: 작은 보조문구, 얇은 설명, 9~12px 마이크로 텍스트에 적용.
+  - `Mona`: 작은 도트 라벨에 적합한 `Mona10` Regular/Bold를 `TODAY/DETAIL/WEEK`, 날짜 눈썹 라벨과 추천 태그에 제한 적용.
+  - `NeoHyundai`: L/R/B/EB/EBK를 등록하고 페이지·섹션 타이틀과 큰 브리핑 문구에 적용.
+- Mona의 다른 도트 규격 파일은 향후 용도 선택을 위해 원본 자산으로 보존하되 현재 APK에는 실제 사용하는 `Mona10` 2개만 번들링함.
+- 테마에 폰트 역할 상수와 `specialLabelStyle`, `microTextStyle`을 추가해 화면별 직접 지정이 흩어지지 않도록 함.
+- 4개 역할 매핑을 검증하는 테마 회귀 테스트를 추가함.
+- 검증 결과:
+  - `flutter analyze`: 이슈 없음.
+  - `flutter test`: 13개 모두 통과.
+  - Debug APK 빌드 및 Android 에뮬레이터 설치 성공.
+  - APK `FontManifest.json`에서 SUITE·ChosunCentennial·Mona·NeoHyundai 등록을 확인함.
+  - 360×800 Main/Today/Week/Setting 시각 검증에서 한글 깨짐과 RenderFlex/overflow/FATAL/Unhandled/폰트 자산 오류 없음.

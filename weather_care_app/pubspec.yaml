@@ -23,3 +23,42 @@ flutter:
   uses-material-design: true
   assets:
     - config/
+  fonts:
+    - family: SUITE
+      fonts:
+        - asset: assets/fonts/SUITE-Light.ttf
+          weight: 300
+        - asset: assets/fonts/SUITE-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SUITE-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SUITE-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/SUITE-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/SUITE-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/SUITE-Heavy.ttf
+          weight: 900
+    - family: ChosunCentennial
+      fonts:
+        - asset: assets/fonts/ChosunCentennial.ttf
+          weight: 400
+    - family: Mona
+      fonts:
+        - asset: assets/fonts/Mona10.ttf
+          weight: 400
+        - asset: assets/fonts/Mona10-Bold.ttf
+          weight: 700
+    - family: NeoHyundai
+      fonts:
+        - asset: "assets/fonts/NeoHyundai L.ttf"
+          weight: 300
+        - asset: "assets/fonts/NeoHyundai R.ttf"
+          weight: 400
+        - asset: "assets/fonts/NeoHyundai B.ttf"
+          weight: 700
+        - asset: "assets/fonts/NeoHyundai EB.ttf"
+          weight: 800
+        - asset: "assets/fonts/NeoHyundai EBK.ttf"
+          weight: 900

@@ -113,6 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Text(
                       '날씨 알림',
                       style: TextStyle(
+                        fontFamily: WeatherCareTheme.fontNeoHyundai,
                         color: Colors.white,
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -121,7 +122,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SizedBox(height: 3),
                     Text(
                       '필요한 준비물을 한 번에 알려드려요',
-                      style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 12),
+                      style: TextStyle(
+                        fontFamily: WeatherCareTheme.fontChosunCentennial,
+                        color: Color(0xE6FFFFFF),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -283,19 +288,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: WeatherCareTheme.attentionSoft,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: const Row(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
+              const Icon(
                 Icons.info_outline_rounded,
                 size: 19,
                 color: WeatherCareTheme.attention,
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   '현재 설정은 화면 안에서만 바뀌는 데모 상태예요. 서버 저장 기능은 아직 연결되지 않았어요.',
-                  style: TextStyle(
+                  style: WeatherCareTheme.microTextStyle.copyWith(
                     color: WeatherCareTheme.attentionDeep,
                     fontSize: 12,
                     height: 1.45,
@@ -306,12 +311,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        const Center(
+        Center(
           child: Text(
             '날씨 정보는 기상청 공식 API를 사용합니다.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: WeatherCareTheme.textSecondary,
+            style: WeatherCareTheme.microTextStyle.copyWith(
               fontSize: 9,
               height: 1.2,
             ),

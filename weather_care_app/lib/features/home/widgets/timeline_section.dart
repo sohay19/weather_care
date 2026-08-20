@@ -154,9 +154,10 @@ class _TimelineItemView extends StatelessWidget {
                                   Text(
                                     recommendation.type.label,
                                     style: TextStyle(
+                                      fontFamily: WeatherCareTheme.fontMona,
                                       color: recommendation.type.accentColor,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],

@@ -6,8 +6,10 @@
 .pub/
 build/
 
+# Local API credentials
+kma.debug.json
+
 # IDE
 .idea/
 .vscode/
 *.iml
-

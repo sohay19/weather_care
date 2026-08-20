@@ -6,12 +6,11 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "weather_care_db"
-database_id = "replace-with-your-d1-id"
+database_id = "9d1c83ca-9626-4b92-b4ea-db7433115324"
 
 [vars]
 APP_ORIGIN = "http://localhost:8787"
 FcmProject = "weather-care-dev"
 
-[[triggers]]
+[triggers]
 crons = ["0 7 * * *", "10 5 * * *"]
-

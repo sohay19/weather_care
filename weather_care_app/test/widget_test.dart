@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/app.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/features/home/widgets/timeline_section.dart';
+import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
 
@@ -143,5 +144,17 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(tester.getSize(find.text('점심 무렵')).height, lessThan(40));
+  });
+
+  testWidgets('settings shows the KMA API notice at the bottom',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: SettingsScreen())),
+    );
+
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+
+    expect(find.text('날씨 정보는 기상청 공식 API를 사용합니다.'), findsOneWidget);
   });
 }

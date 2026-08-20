@@ -14,7 +14,7 @@
 
 | 영역 | 앱 (`weather_care_app`) | 서버 (`weather_care_server`) |
 | --- | --- | --- |
-| 날씨 데이터 | 서버의 Today/Weekly/Comparison API를 호출하고 응답을 화면에 표시 | 기상청 단기예보를 호출하고 공통 모델로 정규화 |
+| 날씨 데이터 | 서버를 우선 호출하고, 서버 장애 시 기상청 단기예보 원시 데이터를 직접 조회 | 기상청 단기예보를 호출하고 공통 모델로 정규화 |
 | 날씨 판단 | 서버가 내려준 상태와 설명을 신뢰하고 표시 | `WeatherRuleEngine`에서 강수, 강설, 자외선, 더위, 추위, 대기질 등의 객관적 상태를 판단 |
 | 생활 해석 | LifestyleMessage를 생활 날씨 UI로 표시 | `LifestyleWeatherEngine`에서 RuleFact를 생활 관점의 LifestyleInsight로 변환 |
 | 준비물 추천 | Recommendation을 우선순위대로 표시하고 아이콘·색상·딥링크를 매핑 | `RecommendationEngine`에서 우산, 양산, 겉옷, 마스크, 물, 선크림, 폭설 주의를 생성하고 중복·우선순위·사용자 설정을 적용 |
@@ -37,29 +37,28 @@ flowchart LR
     app --> ui["브리핑 · 오늘의 가방 · 타임라인 · 생활 날씨"]
 ```
 
-## 서버가 없어도 앱이 동작하는 이유
+## 서버 장애 및 오프라인 동작
 
-현재 앱에는 UI 개발과 에뮬레이터 검증을 위한 샘플 응답이 포함되어 있습니다.
+앱 화면에서는 샘플 응답을 폴백으로 사용하지 않습니다.
 
-1. 앱 시작 시 `lib/data/sample_payloads.dart`의 Today/Weekly 샘플을 즉시 표시합니다.
-2. 동시에 서버의 Today/Weekly API에 연결을 시도합니다.
-3. 서버 응답이 성공하면 화면 데이터를 서버 응답으로 교체합니다.
-4. 연결 실패, Timeout, 비정상 응답이 발생하면 샘플 데이터를 계속 사용합니다.
+1. 앱이 운영 서버의 Today/Weekly API를 먼저 호출합니다.
+2. 서버 연결에 실패하고 인터넷은 연결되어 있으면 앱이 기상청 단기예보를 직접 조회합니다.
+3. 직접 조회에서는 기온·습도·바람·강수·하늘 상태와 시간별·일별 예보만 표시합니다.
+4. 추천, 생활 날씨, 준비물, 타임라인, 체감온도처럼 서버 연산이 필요한 항목은 `운영 서버 미연결로 미지원`으로 표시합니다.
+5. 인터넷 연결도 없으면 날씨 화면 전체를 `인터넷 연결 불가로 미지원`으로 표시합니다.
 
 홈 상단 데이터 출처 배지는 현재 상태를 다음과 같이 표시합니다.
 
 - `서버 확인 중`: 서버 연결을 시도하는 중
 - `기상청 단기예보`: 운영 서버의 기상청 응답을 사용 중
-- `샘플 데이터`: 앱 내장 샘플 응답을 사용 중
-
-샘플 데이터에는 이미 계산된 Recommendation, LifestyleMessage, Timeline이 들어 있습니다. 앱이 샘플 날씨 수치로 추천 기준을 직접 계산하는 것은 아닙니다.
+- `기상청 직접 조회`: 운영 서버 장애로 앱이 기상청 원시 예보를 사용 중
 
 ## 현재 구현 상태
 
 ### 앱
 
 - Final Home 및 Soft Weather UI 구현
-- Today/Weekly API 클라이언트와 샘플 Fallback 구현
+- Today/Weekly API 클라이언트와 기상청 직접 조회 Fallback 구현
 - Recommendation 표시, 로컬 `챙겼어요` 상태, 상세 화면 이동 구현
 - GPS/MANUAL 및 알림 설정 UI 구현
 - 실제 GPS 권한·좌표 변환·설정 영구 저장은 미구현
@@ -77,8 +76,10 @@ flowchart LR
 - Recommendation 알림 조회는 Placeholder로 빈 배열을 반환
 - FCM 전송 함수는 TODO 상태이며 실제 Push를 발송하지 않음
 
-기상청 API 키는 로컬 `.dev.vars` 또는 운영 Worker Secret의 `KMA_SERVICE_KEY`로만
-주입하며 저장소에는 보관하지 않습니다.
+서버의 기상청 API 키는 로컬 `.dev.vars` 또는 운영 Worker Secret으로 주입합니다.
+앱 직접 조회용 키는 Flutter `KMA_SERVICE_KEY` 빌드 인자로 주입하며 저장소에는
+보관하지 않습니다. Flutter 바이너리에 포함된 키는 추출될 수 있으므로 호출량과 키
+교체 정책을 별도로 관리해야 합니다.
 
 ## 서버 연결
 
@@ -96,6 +97,13 @@ https://weather-care-server.sy40222.workers.dev
 ```bash
 cd weather_care_app
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
+```
+
+운영 서버 장애 시 앱 직접 조회까지 사용하려면 기상청 일반 인증키를 빌드 인자로
+추가합니다.
+
+```bash
+flutter run -d emulator-5554 --dart-define=KMA_SERVICE_KEY=발급받은_일반인증키
 ```
 
 각 프로젝트의 실행 방법과 API 목록은 다음 문서를 참고합니다.

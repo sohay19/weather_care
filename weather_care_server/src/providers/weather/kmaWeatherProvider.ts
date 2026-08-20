@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { WeatherSnapshot } from '../../types';
+import {
+  AmountRange,
+  PrecipitationType,
+  WeatherSnapshot,
+} from '../../types';
 import {
   DailyWeatherForecast,
   WeatherForecast,
@@ -200,7 +204,9 @@ export function buildForecastFromItems(
   }
 
   const allHourly = [...slots.entries()]
-    .map(([slotKey, categories]) => snapshotFromSlot(slotKey, categories))
+    .map(([slotKey, categories]) =>
+      snapshotFromSlot(slotKey, categories, base, now),
+    )
     .filter((snapshot): snapshot is WeatherSnapshot => snapshot !== null)
     .sort((left, right) => left.observedAt.localeCompare(right.observedAt));
 
@@ -236,18 +242,37 @@ export function buildForecastFromItems(
 function snapshotFromSlot(
   slotKey: string,
   categories: Map<string, string>,
+  base: BaseDateTime,
+  fetchedAt: Date,
 ): WeatherSnapshot | null {
   const temperature = numericValue(categories.get('TMP'));
   if (temperature === undefined) return null;
 
   const humidity = numericValue(categories.get('REH'));
   const windSpeed = numericValue(categories.get('WSD'));
-  const precipitationProbability = numericValue(categories.get('POP')) ?? 0;
-  const precipitationType = numericValue(categories.get('PTY')) ?? 0;
-  const snowfallAmount = parsePrecipitationAmount(categories.get('SNO'));
+  const precipitationProbability = numericValue(categories.get('POP'));
+  const precipitationCode = numericValue(categories.get('PTY')) ?? 0;
+  const precipitationType = normalizePrecipitationType(precipitationCode);
+  const precipitationAmountRange = parseAmountRange(
+    categories.get('PCP'),
+    'MM',
+  );
+  const snowfallAmountRange = parseAmountRange(categories.get('SNO'), 'CM');
+  const snowExpected = isSnowType(precipitationCode) ||
+    (snowfallAmountRange?.min ?? 0) > 0;
+  const forecastAt = kmaSlotToIso(slotKey);
+  const qualityFlags = [
+    ifUndefined(categories.get('PCP'), 'MISSING_PCP'),
+    ifUndefined(categories.get('SNO'), 'MISSING_SNO'),
+  ].filter((flag): flag is string => flag !== undefined);
 
   return {
-    observedAt: kmaSlotToIso(slotKey),
+    observedAt: forecastAt,
+    forecastAt,
+    validFrom: forecastAt,
+    validTo: endOfKmaSlot(forecastAt),
+    issuedAt: kmaBaseToIso(base),
+    fetchedAt: fetchedAt.toISOString(),
     temperature,
     apparentTemperature: apparentTemperature(
       temperature,
@@ -256,16 +281,29 @@ function snapshotFromSlot(
     ),
     humidity,
     windSpeed,
+    windDirection: numericValue(categories.get('VEC')),
+    precipitationType,
     precipitationProbability,
-    precipitationAmount: parsePrecipitationAmount(categories.get('PCP')),
-    snowProbability: isSnowType(precipitationType)
-      ? precipitationProbability
+    precipitationAmount: precipitationAmountRange?.min,
+    precipitationAmountRange,
+    snowProbability: snowExpected
+      ? precipitationProbability ?? 0
       : 0,
-    snowfallAmount,
+    snowExpected,
+    snowfallAmount: snowfallAmountRange?.min,
+    snowfallAmountRange,
     skyCondition: weatherLabel(
-      precipitationType,
+      precipitationCode,
       numericValue(categories.get('SKY')),
     ),
+    provider: 'KMA',
+    providerField: 'TMP,REH,WSD,VEC,POP,PTY,PCP,SNO,SKY',
+    rawValue: {
+      precipitationAmount: categories.get('PCP') ?? '',
+      snowfallAmount: categories.get('SNO') ?? '',
+      precipitationType: categories.get('PTY') ?? '',
+    },
+    qualityFlags,
   };
 }
 
@@ -322,9 +360,51 @@ function buildDailyForecast(
 }
 
 export function parsePrecipitationAmount(value?: string): number {
-  if (!value || /없음/.test(value)) return 0;
-  const match = value.replace(',', '.').match(/\d+(?:\.\d+)?/);
-  return match ? Number(match[0]) : 0;
+  return parseAmountRange(value, 'MM')?.min ?? 0;
+}
+
+export function parseAmountRange(
+  value: string | undefined,
+  unit: 'MM' | 'CM',
+): AmountRange | undefined {
+  if (value === undefined) return undefined;
+  const normalized = value.trim().replaceAll(',', '.');
+  if (!normalized || /없음/.test(normalized)) {
+    return { type: 'NONE', min: 0, max: 0, unit, rawValue: value };
+  }
+
+  const numbers = [...normalized.matchAll(/\d+(?:\.\d+)?/g)].map((match) =>
+    Number(match[0]),
+  );
+  if (numbers.length === 0) return undefined;
+  if (/미만/.test(normalized)) {
+    return {
+      type: 'LESS_THAN',
+      min: 0,
+      max: numbers[0],
+      unit,
+      rawValue: value,
+    };
+  }
+  if (/이상/.test(normalized)) {
+    return { type: 'AT_LEAST', min: numbers[0], unit, rawValue: value };
+  }
+  if (numbers.length >= 2 && /[~-]/.test(normalized)) {
+    return {
+      type: 'RANGE',
+      min: Math.min(numbers[0], numbers[1]),
+      max: Math.max(numbers[0], numbers[1]),
+      unit,
+      rawValue: value,
+    };
+  }
+  return {
+    type: 'VALUE',
+    min: numbers[0],
+    max: numbers[0],
+    unit,
+    rawValue: value,
+  };
 }
 
 function normalizeServiceKey(value: string): string {
@@ -369,12 +449,35 @@ function kmaSlotToIso(slotKey: string): string {
   return `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T${time.slice(0, 2)}:${time.slice(2, 4)}:00+09:00`;
 }
 
+function endOfKmaSlot(forecastAt: string): string {
+  return `${forecastAt.slice(0, 14)}59:59+09:00`;
+}
+
+function kmaBaseToIso(base: BaseDateTime): string {
+  return `${base.baseDate.slice(0, 4)}-${base.baseDate.slice(4, 6)}-${base.baseDate.slice(6, 8)}T${base.baseTime.slice(0, 2)}:${base.baseTime.slice(2, 4)}:00+09:00`;
+}
+
 function compactDate(iso: string): string {
   return `${iso.slice(0, 4)}${iso.slice(5, 7)}${iso.slice(8, 10)}`;
 }
 
 function isSnowType(precipitationType: number): boolean {
   return [2, 3, 6, 7].includes(precipitationType);
+}
+
+function normalizePrecipitationType(code: number): PrecipitationType {
+  if ([2, 6].includes(code)) return 'RAIN_SNOW';
+  if ([3, 7].includes(code)) return 'SNOW';
+  if (code === 4) return 'SHOWER';
+  if ([1, 5].includes(code)) return 'RAIN';
+  return 'NONE';
+}
+
+function ifUndefined(
+  value: string | undefined,
+  flag: string,
+): string | undefined {
+  return value === undefined ? flag : undefined;
 }
 
 function weatherLabel(

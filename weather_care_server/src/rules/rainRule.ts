@@ -1,24 +1,48 @@
 import { RuleConfig } from '../config/ruleConfig';
 import { WeatherRuleFact, WeatherRuleFactType, WeatherSnapshot } from '../types';
+import { amountMinimum, snapshotTime } from './timeWindows';
 
 export function applyRainRule(snapshot: WeatherSnapshot, config: RuleConfig): WeatherRuleFact[] {
   const facts: WeatherRuleFact[] = [];
-  const p = snapshot.precipitationProbability ?? 0;
-  if (p >= config.rain.minProbability) {
+  const probability = snapshot.precipitationProbability;
+  const amount = amountMinimum(
+    snapshot.precipitationAmountRange,
+    snapshot.precipitationAmount,
+  );
+  if (
+    (probability ?? 0) >= config.rain.minProbability ||
+    amount >= config.rain.minAmount
+  ) {
     facts.push({
       type: WeatherRuleFactType.RAIN_LIKELY,
-      severity: Math.min(100, Math.round(p)),
-      evidence: { precipitationProbability: p },
-      validFrom: snapshot.observedAt,
+      severity: Math.min(
+        89,
+        Math.max(Math.round(probability ?? 0), Math.round(amount * 10)),
+      ),
+      evidence: {
+        precipitationProbability: probability ?? 0,
+        precipitationAmountMinimum: amount,
+        precipitationType: snapshot.precipitationType ?? 'NONE',
+      },
+      validFrom: snapshotTime(snapshot),
+      validUntil: snapshot.validTo,
     });
   }
-  if (p >= config.rain.heavyThreshold) {
+  if (
+    amount >= config.rain.instantHeavyAmount ||
+    ((probability ?? 0) >= config.rain.heavyProbability &&
+      amount >= config.rain.heavyAmount)
+  ) {
     facts.push({
       type: WeatherRuleFactType.HEAVY_RAIN,
-      severity: Math.min(100, Math.round(p)),
-      evidence: { precipitationProbability: p, precipitationAmount: snapshot.precipitationAmount ?? 0 },
+      severity: Math.min(100, Math.max(90, Math.round(amount * 3))),
+      evidence: {
+        precipitationProbability: probability ?? 0,
+        precipitationAmountMinimum: amount,
+      },
+      validFrom: snapshotTime(snapshot),
+      validUntil: snapshot.validTo,
     });
   }
   return facts;
 }
-

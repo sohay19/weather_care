@@ -4,6 +4,7 @@ import {
   KmaForecastItem,
   KmaWeatherProvider,
   latestBaseDateTimes,
+  parseAmountRange,
   parsePrecipitationAmount,
 } from '../src/providers/weather/kmaWeatherProvider';
 
@@ -23,8 +24,28 @@ describe('KmaWeatherProvider', () => {
 
   it('parses KMA precipitation amount labels', () => {
     expect(parsePrecipitationAmount('강수없음')).toBe(0);
-    expect(parsePrecipitationAmount('1.0mm 미만')).toBe(1);
+    expect(parsePrecipitationAmount('1.0mm 미만')).toBe(0);
     expect(parsePrecipitationAmount('30.0~50.0mm')).toBe(30);
+    expect(parseAmountRange('1.0mm 미만', 'MM')).toEqual({
+      type: 'LESS_THAN',
+      min: 0,
+      max: 1,
+      unit: 'MM',
+      rawValue: '1.0mm 미만',
+    });
+    expect(parseAmountRange('30.0~50.0mm', 'MM')).toEqual({
+      type: 'RANGE',
+      min: 30,
+      max: 50,
+      unit: 'MM',
+      rawValue: '30.0~50.0mm',
+    });
+    expect(parseAmountRange('5.0cm 이상', 'CM')).toEqual({
+      type: 'AT_LEAST',
+      min: 5,
+      unit: 'CM',
+      rawValue: '5.0cm 이상',
+    });
   });
 
   it('builds current, hourly and daily weather from forecast items', () => {
@@ -75,6 +96,18 @@ describe('KmaWeatherProvider', () => {
     expect(forecast.current.maxTemperature).toBe(31);
     expect(forecast.hourly).toHaveLength(3);
     expect(forecast.hourly[1].skyCondition).toBe('비');
+    expect(forecast.hourly[1]).toEqual(
+      expect.objectContaining({
+        forecastAt: '2026-08-20T11:00:00+09:00',
+        validFrom: '2026-08-20T11:00:00+09:00',
+        validTo: '2026-08-20T11:59:59+09:00',
+        precipitationType: 'RAIN',
+        provider: 'KMA',
+      }),
+    );
+    expect(forecast.hourly[1].precipitationAmountRange).toEqual(
+      expect.objectContaining({ type: 'LESS_THAN', min: 0, max: 1 }),
+    );
     expect(forecast.daily).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

@@ -11,13 +11,18 @@ import {
   DailyWeatherForecast,
   WeatherForecast,
 } from '../providers/weather/weatherProvider';
-import { runWeatherRuleEngine } from '../rules/weatherRuleEngine';
+import {
+  DECISION_VERSION,
+  runWeatherRuleEngine,
+  runWeatherRuleEngineForHourly,
+} from '../rules/weatherRuleEngine';
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
 import { regionFromQuery } from '../utils';
 import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
 import { lifestyleMessageFor } from '../lifestyle/lifestyleTemplates';
+import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -41,9 +46,9 @@ router.get('/today', async (c) => {
     const forecast = await new KmaWeatherProvider({
       serviceKey: c.env.KMA_SERVICE_KEY,
     }).getForecastByRegion(nx, ny);
-    const decisionSnapshot = aggregateDecisionSnapshot(forecast);
-    const rules = runWeatherRuleEngine(decisionSnapshot);
-    const lifestyle = runLifestyleWeatherEngine(rules);
+    const decisionHourly = forecast.hourly.slice(0, 24);
+    const rules = runWeatherRuleEngineForHourly(decisionHourly);
+    const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
     const recommendations = runRecommendationEngine(lifestyle, defaultSettings);
 
     const response: TodayWeatherResponse = {
@@ -55,9 +60,12 @@ router.get('/today', async (c) => {
       recommendations,
       lifestyleMessages: lifestyle.map((item) => ({
         type: item.type,
-        ...lifestyleMessageFor(item.type, item.score),
+        ...lifestyleMessageFor(item.type, item.score, item.context),
       })),
       timeline: buildTimeline(forecast.hourly),
+      decisionVersion: DECISION_VERSION,
+      catalogVersion: CATALOG_VERSION,
+      generatedAt: new Date().toISOString(),
     };
 
     if (c.env.DB) {

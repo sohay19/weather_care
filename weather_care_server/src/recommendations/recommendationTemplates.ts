@@ -1,5 +1,7 @@
 import { LifestyleInsightType, RecommendationType } from '../types';
 
+export const CATALOG_VERSION = 'ko-KR-2026.08.2';
+
 export const recommendationMessageCatalog: Record<RecommendationType, string[]> = {
   UMBRELLA: [
     '오후 비가 예상돼요. 우산을 챙겨요.',

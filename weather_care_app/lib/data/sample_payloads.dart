@@ -1,5 +1,6 @@
 Map<String, dynamic> sampleTodayPayload(String installationId) {
   return {
+    'dataSource': '샘플 데이터',
     'region': {'nx': 60, 'ny': 121, 'name': '수원'},
     'brief': '오늘은 덥다가 퇴근할 때 비가 와요.',
     'current': {

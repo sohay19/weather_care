@@ -99,6 +99,7 @@ class _TopWeatherCard extends StatelessWidget {
               _SourceBadge(
                 refreshing: refreshing,
                 usingSampleData: usingSampleData,
+                dataSource: today.dataSource,
               ),
               const Spacer(),
               Icon(
@@ -258,10 +259,12 @@ class _TopMetric extends StatelessWidget {
 class _SourceBadge extends StatelessWidget {
   final bool refreshing;
   final bool usingSampleData;
+  final String dataSource;
 
   const _SourceBadge({
     required this.refreshing,
     required this.usingSampleData,
+    required this.dataSource,
   });
 
   @override
@@ -270,7 +273,7 @@ class _SourceBadge extends StatelessWidget {
         ? '서버 확인 중'
         : usingSampleData
             ? '샘플 데이터'
-            : '실시간 서버';
+            : dataSource;
     final accent =
         usingSampleData ? const Color(0xFFB56A32) : const Color(0xFF3C8C66);
     final background =

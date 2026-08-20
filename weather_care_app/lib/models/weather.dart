@@ -134,6 +134,7 @@ class WeeklyForecastItem {
 }
 
 class TodayWeatherResponse {
+  final String dataSource;
   final WeatherRegion region;
   final String brief;
   final CurrentWeather current;
@@ -143,6 +144,7 @@ class TodayWeatherResponse {
   final List<HourlyWeatherItem> hourly;
 
   const TodayWeatherResponse({
+    required this.dataSource,
     required this.region,
     required this.brief,
     required this.current,
@@ -183,6 +185,7 @@ class TodayWeatherResponse {
         .toList();
 
     return TodayWeatherResponse(
+      dataSource: json['dataSource']?.toString() ?? '서버 데이터',
       region: WeatherRegion.fromJson(
         json['region'] as Map<String, dynamic>? ??
             {'name': '수원', 'nx': 60, 'ny': 121},

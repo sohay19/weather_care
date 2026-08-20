@@ -223,3 +223,32 @@
 - 로컬 `8787` 포트에는 실행 중인 서버가 없고, 앱 기본 대상인 운영 Worker `https://weather-care-server.sy40222.workers.dev`는 `/health`와 Today API가 정상 응답함.
 - 운영 Today 응답의 온도, 강수확률, 미세먼지 값이 저장소의 `DummyWeatherProvider` 및 `DummyAirQualityProvider` 고정값과 일치함을 확인함.
 - 현재 서버는 기상청이나 외부 날씨 API를 호출하지 않으며 Dummy Provider가 생성한 데이터를 정규화·판단한 뒤 D1 `weather_cache`에 저장하고 반환함.
+
+### 기상청 단기예보 Provider 구현
+- 공공데이터포털의 `기상청_단기예보 조회서비스`를 사용하는 `KmaWeatherProvider`를 추가함.
+  - `getVilageFcst` JSON 응답을 Zod로 검증함.
+  - 한국시간 기준 최근 발표시각을 선택하고 최신 자료가 아직 없으면 이전 발표분까지 재시도함.
+  - `TMP`, `REH`, `WSD`, `POP`, `PCP`, `SNO`, `PTY`, `SKY`, `TMN`, `TMX`를 현재·시간별·일별 공통 모델로 변환함.
+  - 체감온도는 기온·습도·풍속으로 계산하고 강수/적설 문구 값을 숫자로 정규화함.
+- Today API의 고정 날씨·고정 타임라인을 기상청 예보 기반 브리핑, 향후 48시간, 추천 타임라인으로 교체함.
+- Weekly API의 7일 하드코딩을 제거하고 기상청 단기예보가 제공하는 오늘부터 글피까지의 날짜만 반환하도록 변경함.
+- 기상청에 없는 미세먼지·자외선 값은 Dummy 값으로 채우지 않고 결측으로 유지함.
+- 사용하지 않게 된 Dummy Weather/Air Provider와 기존 범용 WeatherNormalizer를 제거함.
+- API 응답에 `dataSource=기상청 단기예보`를 추가하고 Flutter 홈 배지에 표시함.
+- Secret 관리:
+  - 로컬은 Git 제외 대상 `.dev.vars`의 `KMA_SERVICE_KEY`를 사용함.
+  - 운영은 `npx wrangler secret put KMA_SERVICE_KEY`로 등록해야 함.
+  - 현재 로컬·환경변수·운영 Worker Secret 목록에는 키가 없어 실제 운영 배포는 수행하지 않음.
+  - 키 등록 전까지 현재 운영 Worker는 이전 Dummy Provider 배포본으로 계속 동작함.
+- 검증 결과:
+  - 서버 Vitest/Workers Pool: 기상청 Provider 테스트 4개 통과.
+  - 서버 `npx tsc --noEmit`: 통과.
+  - 서버 `npx wrangler deploy --dry-run`: 통과.
+  - 서버 `npx wrangler check startup`: 활성 CPU 약 3.4ms.
+  - 앱 `flutter analyze`: 이슈 없음.
+  - 앱 `flutter test`: 4개 모두 통과.
+  - `npm audit`: 취약점 0건.
+- 생성 커밋:
+  - `ccfa574 feat(server): 기상청 단기예보 연동`
+  - `32a4944 feat(app): 기상청 데이터 출처 표시`
+  - `c255a36 docs: 기상청 API 설정 안내`

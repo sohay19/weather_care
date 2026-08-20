@@ -59,6 +59,50 @@ class CurrentWeather {
   }
 }
 
+class HourlyWeatherItem {
+  final String time;
+  final double temperature;
+  final double apparentTemperature;
+  final double precipitationProbability;
+  final double precipitationAmount;
+  final double snowProbability;
+  final double snowfallAmount;
+  final double windSpeed;
+  final String skyCondition;
+
+  const HourlyWeatherItem({
+    required this.time,
+    required this.temperature,
+    required this.apparentTemperature,
+    required this.precipitationProbability,
+    required this.precipitationAmount,
+    required this.snowProbability,
+    required this.snowfallAmount,
+    required this.windSpeed,
+    required this.skyCondition,
+  });
+
+  factory HourlyWeatherItem.fromJson(Map<String, dynamic> json) {
+    final observedAt = json['observedAt']?.toString() ?? '';
+    final parsedTime =
+        observedAt.length >= 13 ? observedAt.substring(11, 13) : '--';
+    return HourlyWeatherItem(
+      time: json['time']?.toString() ?? parsedTime,
+      temperature: (json['temperature'] as num?)?.toDouble() ?? 0,
+      apparentTemperature:
+          (json['apparentTemperature'] as num?)?.toDouble() ?? 0,
+      precipitationProbability:
+          (json['precipitationProbability'] as num?)?.toDouble() ?? 0,
+      precipitationAmount:
+          (json['precipitationAmount'] as num?)?.toDouble() ?? 0,
+      snowProbability: (json['snowProbability'] as num?)?.toDouble() ?? 0,
+      snowfallAmount: (json['snowfallAmount'] as num?)?.toDouble() ?? 0,
+      windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0,
+      skyCondition: json['skyCondition']?.toString() ?? '맑음',
+    );
+  }
+}
+
 class TimelineItem {
   final String timeLabel;
   final String stateLabel;
@@ -96,6 +140,7 @@ class TodayWeatherResponse {
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
   final List<TimelineItem> timeline;
+  final List<HourlyWeatherItem> hourly;
 
   const TodayWeatherResponse({
     required this.region,
@@ -104,6 +149,7 @@ class TodayWeatherResponse {
     required this.recommendations,
     required this.lifestyleMessages,
     required this.timeline,
+    required this.hourly,
   });
 
   factory TodayWeatherResponse.fromJson(Map<String, dynamic> json) {
@@ -131,16 +177,22 @@ class TodayWeatherResponse {
           ),
         )
         .toList();
+    final hourly = (json['hourly'] as List<dynamic>? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .map(HourlyWeatherItem.fromJson)
+        .toList();
 
     return TodayWeatherResponse(
       region: WeatherRegion.fromJson(
-        json['region'] as Map<String, dynamic>? ?? {'name': '수원', 'nx': 60, 'ny': 121},
+        json['region'] as Map<String, dynamic>? ??
+            {'name': '수원', 'nx': 60, 'ny': 121},
       ),
       brief: json['brief']?.toString() ?? '오늘은 덥다가 퇴근할 때 비가 와요.',
       current: CurrentWeather.fromJson(json),
       recommendations: recs,
       lifestyleMessages: lifestyles,
       timeline: timeline,
+      hourly: hourly,
     );
   }
 }
@@ -176,7 +228,8 @@ class ComparisonResponse {
   final bool comparisonAvailable;
   final Map<String, dynamic> payload;
 
-  const ComparisonResponse({required this.comparisonAvailable, required this.payload});
+  const ComparisonResponse(
+      {required this.comparisonAvailable, required this.payload});
 
   factory ComparisonResponse.fromJson(Map<String, dynamic> json) {
     return ComparisonResponse(
@@ -185,4 +238,3 @@ class ComparisonResponse {
     );
   }
 }
-

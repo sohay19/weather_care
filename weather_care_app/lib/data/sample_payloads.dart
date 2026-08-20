@@ -48,12 +48,19 @@ Map<String, dynamic> sampleTodayPayload(String installationId) {
     ],
     'lifestyleMessages': [
       {
-        'type': 'VERY_HOT_AND_HUMID',
-        'title': '땀이 비 오듯 나는 날',
+        'type': 'LAUNDRY_GOOD',
+        'title': '빨래는 오전에 끝내요',
+        'description': '오후 4시 전까지는 비 걱정이 적어요.',
       },
       {
-        'type': 'LAUNDRY_GOOD',
-        'title': '빨래가 잘 마르는 날',
+        'type': 'OUTDOOR_ACTIVITY_CAUTION',
+        'title': '산책은 해 질 무렵에',
+        'description': '낮 더위를 피해 오후 8시 이후가 편안해요.',
+      },
+      {
+        'type': 'VENTILATION_GOOD',
+        'title': '환기는 오후에 짧게',
+        'description': '대기질이 무난한 오후 2시 전후를 추천해요.',
       },
     ],
     'timeline': [
@@ -77,9 +84,30 @@ Map<String, dynamic> sampleTodayPayload(String installationId) {
         'stateLabel': '점심 무렵',
         'detail': '햇볕이 강하고 체감온도가 높아요.',
         'recommendations': [
-          {'type': 'SUNSCREEN', 'recommended': true, 'priority': 80, 'title': '선크림', 'description': '자외선 주의', 'notificationEligible': true},
-          {'type': 'PARASOL', 'recommended': true, 'priority': 75, 'title': '양산', 'description': '장시간 외출 시', 'notificationEligible': false},
-          {'type': 'WATER', 'recommended': true, 'priority': 70, 'title': '물', 'description': '수분 보충', 'notificationEligible': true},
+          {
+            'type': 'SUNSCREEN',
+            'recommended': true,
+            'priority': 80,
+            'title': '선크림',
+            'description': '자외선 주의',
+            'notificationEligible': true
+          },
+          {
+            'type': 'PARASOL',
+            'recommended': true,
+            'priority': 75,
+            'title': '양산',
+            'description': '장시간 외출 시',
+            'notificationEligible': false
+          },
+          {
+            'type': 'WATER',
+            'recommended': true,
+            'priority': 70,
+            'title': '물',
+            'description': '수분 보충',
+            'notificationEligible': true
+          },
         ],
       },
       {
@@ -87,8 +115,83 @@ Map<String, dynamic> sampleTodayPayload(String installationId) {
         'stateLabel': '퇴근할 때',
         'detail': '비 올 가능성이 높아요.',
         'recommendations': [
-          {'type': 'UMBRELLA', 'recommended': true, 'priority': 90, 'title': '우산', 'description': '퇴근 전 강수', 'notificationEligible': true},
+          {
+            'type': 'UMBRELLA',
+            'recommended': true,
+            'priority': 90,
+            'title': '우산',
+            'description': '퇴근 전 강수',
+            'notificationEligible': true
+          },
         ],
+      },
+    ],
+    'hourly': [
+      {
+        'time': '06',
+        'temperature': 23.0,
+        'apparentTemperature': 23.5,
+        'precipitationProbability': 10,
+        'precipitationAmount': 0,
+        'snowProbability': 0,
+        'snowfallAmount': 0,
+        'windSpeed': 1.4,
+        'skyCondition': '맑음',
+      },
+      {
+        'time': '09',
+        'temperature': 26.0,
+        'apparentTemperature': 27.2,
+        'precipitationProbability': 10,
+        'precipitationAmount': 0,
+        'snowProbability': 0,
+        'snowfallAmount': 0,
+        'windSpeed': 1.8,
+        'skyCondition': '구름 조금',
+      },
+      {
+        'time': '12',
+        'temperature': 29.5,
+        'apparentTemperature': 32.1,
+        'precipitationProbability': 20,
+        'precipitationAmount': 0,
+        'snowProbability': 0,
+        'snowfallAmount': 0,
+        'windSpeed': 2.4,
+        'skyCondition': '부분 흐림',
+      },
+      {
+        'time': '15',
+        'temperature': 31.0,
+        'apparentTemperature': 34.0,
+        'precipitationProbability': 35,
+        'precipitationAmount': 0,
+        'snowProbability': 0,
+        'snowfallAmount': 0,
+        'windSpeed': 3.1,
+        'skyCondition': '흐림',
+      },
+      {
+        'time': '18',
+        'temperature': 27.0,
+        'apparentTemperature': 29.0,
+        'precipitationProbability': 75,
+        'precipitationAmount': 3.2,
+        'snowProbability': 0,
+        'snowfallAmount': 0,
+        'windSpeed': 5.8,
+        'skyCondition': '비',
+      },
+      {
+        'time': '21',
+        'temperature': 24.0,
+        'apparentTemperature': 25.0,
+        'precipitationProbability': 60,
+        'precipitationAmount': 1.1,
+        'snowProbability': 0,
+        'snowfallAmount': 0,
+        'windSpeed': 4.3,
+        'skyCondition': '비',
       },
     ],
     'installationId': installationId,
@@ -104,8 +207,22 @@ Map<String, dynamic> sampleWeeklyPayload() {
         'min': '24',
         'max': '32',
         'recommendations': [
-          {'type': 'PARASOL', 'recommended': true, 'priority': 80, 'title': '양산', 'description': '햇빛 강함', 'notificationEligible': false},
-          {'type': 'SUNSCREEN', 'recommended': true, 'priority': 75, 'title': '선크림', 'description': '자외선 강함', 'notificationEligible': false},
+          {
+            'type': 'PARASOL',
+            'recommended': true,
+            'priority': 80,
+            'title': '양산',
+            'description': '햇빛 강함',
+            'notificationEligible': false
+          },
+          {
+            'type': 'SUNSCREEN',
+            'recommended': true,
+            'priority': 75,
+            'title': '선크림',
+            'description': '자외선 강함',
+            'notificationEligible': false
+          },
         ]
       },
       {
@@ -114,7 +231,14 @@ Map<String, dynamic> sampleWeeklyPayload() {
         'min': '23',
         'max': '28',
         'recommendations': [
-          {'type': 'UMBRELLA', 'recommended': true, 'priority': 90, 'title': '우산', 'description': '비가 가능', 'notificationEligible': false},
+          {
+            'type': 'UMBRELLA',
+            'recommended': true,
+            'priority': 90,
+            'title': '우산',
+            'description': '비가 가능',
+            'notificationEligible': false
+          },
         ],
       },
       {
@@ -123,7 +247,14 @@ Map<String, dynamic> sampleWeeklyPayload() {
         'min': '22',
         'max': '27',
         'recommendations': [
-          {'type': 'OUTERWEAR', 'recommended': true, 'priority': 60, 'title': '겉옷', 'description': '쌀쌀', 'notificationEligible': false},
+          {
+            'type': 'OUTERWEAR',
+            'recommended': true,
+            'priority': 60,
+            'title': '겉옷',
+            'description': '쌀쌀',
+            'notificationEligible': false
+          },
         ],
       },
       {
@@ -132,8 +263,22 @@ Map<String, dynamic> sampleWeeklyPayload() {
         'min': '24',
         'max': '31',
         'recommendations': [
-          {'type': 'WATER', 'recommended': true, 'priority': 60, 'title': '물', 'description': '더위', 'notificationEligible': false},
-          {'type': 'SUNSCREEN', 'recommended': true, 'priority': 60, 'title': '선크림', 'description': '자외선', 'notificationEligible': false},
+          {
+            'type': 'WATER',
+            'recommended': true,
+            'priority': 60,
+            'title': '물',
+            'description': '더위',
+            'notificationEligible': false
+          },
+          {
+            'type': 'SUNSCREEN',
+            'recommended': true,
+            'priority': 60,
+            'title': '선크림',
+            'description': '자외선',
+            'notificationEligible': false
+          },
         ],
       },
       {
@@ -142,12 +287,30 @@ Map<String, dynamic> sampleWeeklyPayload() {
         'min': '23',
         'max': '30',
         'recommendations': [
-          {'type': 'WATER', 'recommended': true, 'priority': 65, 'title': '물', 'description': '수분 보충', 'notificationEligible': false},
+          {
+            'type': 'WATER',
+            'recommended': true,
+            'priority': 65,
+            'title': '물',
+            'description': '수분 보충',
+            'notificationEligible': false
+          },
         ],
       },
-      {'date': '토', 'weatherLabel': '맑음', 'min': '24', 'max': '29', 'recommendations': []},
-      {'date': '일', 'weatherLabel': '흐림', 'min': '21', 'max': '26', 'recommendations': []},
+      {
+        'date': '토',
+        'weatherLabel': '맑음',
+        'min': '24',
+        'max': '29',
+        'recommendations': []
+      },
+      {
+        'date': '일',
+        'weatherLabel': '흐림',
+        'min': '21',
+        'max': '26',
+        'recommendations': []
+      },
     ],
   };
 }
-

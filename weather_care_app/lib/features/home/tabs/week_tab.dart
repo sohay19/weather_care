@@ -1,0 +1,310 @@
+import 'package:flutter/material.dart';
+
+import '../../../models/recommendation.dart';
+import '../../../models/weather.dart';
+import '../../../theme/recommendation_theme.dart';
+import '../../../theme/weather_theme.dart';
+import '../widgets/tab_page_header.dart';
+
+class WeekTab extends StatelessWidget {
+  final WeeklyWeatherResponse weekly;
+  final Future<void> Function() onRefresh;
+
+  const WeekTab({
+    super.key,
+    required this.weekly,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      color: WeatherCareTheme.primary,
+      onRefresh: onRefresh,
+      child: ListView(
+        key: const ValueKey('week-tab'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+        children: [
+          TabPageHeader(
+            eyebrow: 'WEEK',
+            title: '한 주 날씨',
+            subtitle: '날짜별 날씨와 대표 준비물을 미리 살펴봐요',
+            icon: Icons.calendar_month_outlined,
+            onRefresh: onRefresh,
+          ),
+          const SizedBox(height: 18),
+          _WeekSummary(days: weekly.days),
+          const SizedBox(height: 16),
+          for (var index = 0; index < weekly.days.length; index++) ...[
+            _WeekDayCard(day: weekly.days[index], isToday: index == 0),
+            if (index < weekly.days.length - 1) const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WeekSummary extends StatelessWidget {
+  final List<WeeklyForecastItem> days;
+
+  const _WeekSummary({required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final rainyDays =
+        days.where((day) => _isRainWeather(day.weatherLabel)).length;
+    final prepDays = days.where((day) => day.recommendations.isNotEmpty).length;
+    final maxTemperature = days
+        .map((day) => double.tryParse(day.max))
+        .whereType<double>()
+        .fold<double?>(
+            null, (max, value) => max == null || value > max ? value : max);
+
+    return Container(
+      padding: const EdgeInsets.all(19),
+      decoration: WeatherCareTheme.mood('clear'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '이번 주 한눈에',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            '비 오는 날과 준비물이 필요한 날을 먼저 확인하세요.',
+            style: TextStyle(
+              color: WeatherCareTheme.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              _SummaryMetric(
+                icon: Icons.umbrella_outlined,
+                label: '비 예보',
+                value: '$rainyDays일',
+              ),
+              _SummaryMetric(
+                icon: Icons.device_thermostat_rounded,
+                label: '최고 기온',
+                value: maxTemperature == null
+                    ? '--'
+                    : '${maxTemperature.toStringAsFixed(0)}°',
+              ),
+              _SummaryMetric(
+                icon: Icons.work_outline_rounded,
+                label: '준비물',
+                value: '$prepDays일',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryMetric extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _SummaryMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.66),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: WeatherCareTheme.primaryDeep, size: 19),
+            const SizedBox(height: 5),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+            Text(
+              label,
+              style: const TextStyle(
+                color: WeatherCareTheme.textSecondary,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WeekDayCard extends StatelessWidget {
+  final WeeklyForecastItem day;
+  final bool isToday;
+
+  const _WeekDayCard({required this.day, required this.isToday});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: isToday ? WeatherCareTheme.primarySoft : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isToday ? const Color(0xFFCFE3F8) : WeatherCareTheme.outline,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: WeatherCareTheme.shadow,
+            blurRadius: 20,
+            offset: Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 43,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  day.date,
+                  style: TextStyle(
+                    color: isToday
+                        ? WeatherCareTheme.primaryDeep
+                        : WeatherCareTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                if (isToday)
+                  const Text(
+                    '오늘',
+                    style: TextStyle(
+                      color: WeatherCareTheme.primaryDeep,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.72),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _weekIcon(day.weatherLabel),
+              color: WeatherCareTheme.primaryDeep,
+              size: 21,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  day.weatherLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                if (day.recommendations.isEmpty)
+                  const Text(
+                    '특별한 준비물 없음',
+                    style: TextStyle(
+                      color: WeatherCareTheme.textSecondary,
+                      fontSize: 11,
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: [
+                      for (final recommendation in day.recommendations)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: recommendation.type.softColor,
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                recommendation.type.icon,
+                                size: 12,
+                                color: recommendation.type.accentColor,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                recommendation.type.label,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                color: WeatherCareTheme.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+              children: [
+                TextSpan(text: '${day.min}°'),
+                const TextSpan(
+                  text: ' / ',
+                  style: TextStyle(color: WeatherCareTheme.textSecondary),
+                ),
+                TextSpan(
+                  text: '${day.max}°',
+                  style: const TextStyle(color: Color(0xFFE07A55)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData _weekIcon(String label) {
+  if (_isRainWeather(label)) return Icons.umbrella_outlined;
+  if (label.contains('눈')) return Icons.ac_unit_rounded;
+  if (label.contains('흐림') || label.contains('구름')) return Icons.cloud_outlined;
+  return Icons.wb_sunny_outlined;
+}
+
+bool _isRainWeather(String label) {
+  return label.contains('비') || label.contains('소나기');
+}

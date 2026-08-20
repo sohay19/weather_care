@@ -10,7 +10,8 @@ class ApiClient {
     this.timeout = const Duration(seconds: 6),
   });
 
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? query}) async {
+  Future<Map<String, dynamic>> get(String path,
+      {Map<String, String>? query}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
     final response = await http.get(uri).timeout(timeout);
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -34,4 +35,3 @@ class ApiClient {
     }
   }
 }
-

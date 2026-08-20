@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:weather_care/models/recommendation.dart';
+
+import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
+import '../../../theme/recommendation_theme.dart';
+import '../../../theme/weather_theme.dart';
+import 'home_section_header.dart';
 
 class TimelineSection extends StatelessWidget {
   final List<TimelineItem> items;
@@ -9,30 +13,165 @@ class TimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('오늘 하루 타임라인', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ...items.map(
-              (item) => ListTile(
-                dense: true,
-                leading: Text(item.timeLabel),
-                title: Text(item.stateLabel),
-                subtitle: Text(item.detail),
-                trailing: Wrap(
-                  spacing: 6,
-                  children: item.recommendations.map((r) => Chip(label: Text(r.type.title))).toList(),
-                ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: WeatherCareTheme.surfaceDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const HomeSectionHeader(
+            icon: Icons.schedule_rounded,
+            title: '오늘 하루',
+            subtitle: '생활 시점에 맞춰 변화를 알려드려요',
+          ),
+          const SizedBox(height: 18),
+          if (items.isEmpty)
+            Text(
+              '표시할 타임라인이 없어요',
+              style: Theme.of(context).textTheme.bodyMedium,
+            )
+          else
+            for (var index = 0; index < items.length; index++)
+              _TimelineItemView(
+                item: items[index],
+                isLast: index == items.length - 1,
               ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
+class _TimelineItemView extends StatelessWidget {
+  final TimelineItem item;
+  final bool isLast;
+
+  const _TimelineItemView({required this.item, required this.isLast});
+
+  @override
+  Widget build(BuildContext context) {
+    final recommendations =
+        item.recommendations.where((item) => item.recommended).toList();
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 46,
+            child: Column(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: recommendations.isEmpty
+                        ? const Color(0xFFF0F3F7)
+                        : WeatherCareTheme.primarySoft,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: recommendations.isEmpty
+                          ? WeatherCareTheme.outline
+                          : const Color(0xFFCFE3F8),
+                    ),
+                  ),
+                  child: Text(
+                    item.timeLabel,
+                    style: TextStyle(
+                      color: recommendations.isEmpty
+                          ? WeatherCareTheme.textSecondary
+                          : WeatherCareTheme.primaryDeep,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCE7F2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+              child: Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAFBFD),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFEDF1F5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.stateLabel,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      item.detail,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: WeatherCareTheme.textSecondary,
+                          ),
+                    ),
+                    if (recommendations.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final recommendation in recommendations)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: recommendation.type.softColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    recommendation.type.icon,
+                                    size: 14,
+                                    color: recommendation.type.accentColor,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    recommendation.type.label,
+                                    style: TextStyle(
+                                      color: recommendation.type.accentColor,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

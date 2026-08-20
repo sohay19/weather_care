@@ -1,126 +1,188 @@
 import 'package:flutter/material.dart';
-import '../../models/weather.dart';
-import '../../models/recommendation.dart';
+import 'package:flutter/services.dart';
+
+import '../../data/sample_payloads.dart';
 import '../../models/app_settings.dart';
+import '../../models/recommendation.dart';
+import '../../models/weather.dart';
 import '../../services/api_client.dart';
 import '../../services/weather_service.dart';
 import '../../theme/weather_theme.dart';
-import '../../features/home/widgets/recommendation_bag_section.dart';
-import '../../features/home/widgets/timeline_section.dart';
-import '../../features/home/widgets/lifestyle_section.dart';
-import '../../features/home/widgets/weather_card.dart';
 import '../settings/settings_screen.dart';
+import 'tabs/detail_tab.dart';
+import 'tabs/main_tab.dart';
+import 'tabs/today_tab.dart';
+import 'tabs/week_tab.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+
+  const HomeScreen({super.key, this.initialIndex = 2});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final WeatherService _service = WeatherService(
-    ApiClient(baseUrl: const String.fromEnvironment('SERVER_URL', defaultValue: 'http://localhost:8787')),
-  );
   final AppSettings _settings = AppSettings.fallback('local-installation');
-  bool _loading = true;
-  TodayWeatherResponse _today = TodayWeatherResponse.fromJson(
-    const {
-      'region': {'nx': 60, 'ny': 121, 'name': '수원'},
-      'brief': '오늘은 덥다가 퇴근할 때 비가 와요.',
-      'current': {
-        'temperature': 29.5,
-        'apparentTemperature': 32.1,
-      },
-      'recommendations': [],
-      'lifestyleMessages': [],
-      'timeline': [],
-    },
-  );
-  WeeklyWeatherResponse? _weekly;
+  late final WeatherService _service;
+  late TodayWeatherResponse _today;
+  late WeeklyWeatherResponse _weekly;
+  late int _selectedIndex;
+  bool _refreshing = true;
+  bool _usingSampleData = true;
 
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex < 0
+        ? 0
+        : widget.initialIndex > 4
+            ? 4
+            : widget.initialIndex;
+    _today = TodayWeatherResponse.fromJson(
+      sampleTodayPayload(_settings.installationId),
+    );
+    _weekly = WeeklyWeatherResponse.fromJson(sampleWeeklyPayload());
+    _service = WeatherService(ApiClient(baseUrl: _resolveServerUrl()));
     _loadData();
   }
 
+  String _resolveServerUrl() {
+    return const String.fromEnvironment(
+      'SERVER_URL',
+      defaultValue: 'https://weather-care-server.sy40222.workers.dev',
+    );
+  }
+
   Future<void> _loadData() async {
-    final data = await _service.fetchToday(
+    if (mounted) {
+      setState(() => _refreshing = true);
+    }
+
+    final todayFuture = _service.fetchToday(
       installationId: _settings.installationId,
       nx: 60,
       ny: 121,
     );
-    final weekly = await _service.fetchWeekly(installationId: _settings.installationId);
+    final weeklyFuture = _service.fetchWeekly(
+      installationId: _settings.installationId,
+      nx: 60,
+      ny: 121,
+    );
+    final today = await todayFuture;
+    final weekly = await weeklyFuture;
+
     if (!mounted) return;
     setState(() {
-      _today = data;
-      _weekly = weekly;
-      _loading = false;
+      _today = today.data;
+      _weekly = weekly.data;
+      _usingSampleData = today.isSample || weekly.isSample;
+      _refreshing = false;
     });
   }
 
   List<WeatherRecommendation> get _priorityRecommendations {
-    final recs = List<WeatherRecommendation>.from(_today.recommendations)
-      ..sort((a, b) => b.priority.compareTo(a.priority));
-    return recs.where((e) => e.recommended).toList();
+    final recommendations = List<WeatherRecommendation>.from(
+      _today.recommendations,
+    )..sort((a, b) => b.priority.compareTo(a.priority));
+    return recommendations.where((item) => item.recommended).toList();
+  }
+
+  String get _mood {
+    final sky = (_today.current.sky ?? '').toLowerCase();
+    if (sky.contains('비')) return 'rain';
+    if (sky.contains('눈')) return 'snow';
+    if (sky.contains('흐림') || sky.contains('구름')) return 'cloudy';
+    return 'clear';
+  }
+
+  String get _dateLabel {
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    final now = DateTime.now();
+    return '${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('날씨챙겨'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              TodayTab(
+                today: _today,
+                recommendations: _priorityRecommendations,
+                onRefresh: _loadData,
+                onDetail: _openRecommendationDetail,
+              ),
+              DetailTab(
+                today: _today,
+                recommendations: _priorityRecommendations,
+                onRefresh: _loadData,
+              ),
+              MainTab(
+                today: _today,
+                dateLabel: _dateLabel,
+                mood: _mood,
+                refreshing: _refreshing,
+                usingSampleData: _usingSampleData,
+                onRefresh: _loadData,
+              ),
+              WeekTab(weekly: _weekly, onRefresh: _loadData),
+              const SettingsScreen(embedded: true),
+            ],
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: WeatherCareTheme.mood('clear'),
-              child: Text(
-                '${_today.region.name} · ${_today.brief}',
-                style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w600, height: 1.3),
-              ),
+        ),
+        bottomNavigationBar: NavigationBar(
+          key: const ValueKey('main-bottom-navigation'),
+          selectedIndex: _selectedIndex,
+          height: 74,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: WeatherCareTheme.primarySoft,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          onDestinationSelected: (index) {
+            if (_selectedIndex == index) return;
+            setState(() => _selectedIndex = index);
+          },
+          destinations: const [
+            NavigationDestination(
+              tooltip: '오늘의 가방과 오늘 하루',
+              icon: Icon(Icons.work_outline_rounded),
+              selectedIcon: Icon(Icons.work_rounded),
+              label: 'Today',
             ),
-            const SizedBox(height: 12),
-            WeatherInfoCard(current: _today.current),
-            const SizedBox(height: 12),
-            RecommendationBagSection(
-              regionName: _today.region.name,
-              recommendations: _priorityRecommendations,
-              onDetail: (type) {
-                _openRecommendationDetail(type);
-              },
+            NavigationDestination(
+              tooltip: '상세 날씨',
+              icon: Icon(Icons.query_stats_outlined),
+              selectedIcon: Icon(Icons.query_stats_rounded),
+              label: 'Detail',
             ),
-            const SizedBox(height: 12),
-            TimelineSection(items: _today.timeline),
-            const SizedBox(height: 12),
-            LifestyleSection(messages: _today.lifestyleMessages),
-            const SizedBox(height: 12),
-            if (_weekly != null) _buildWeeklySummary(),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/weather-details'),
-              child: const Text('상세 날씨 보기'),
+            NavigationDestination(
+              tooltip: '메인',
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Main',
+            ),
+            NavigationDestination(
+              tooltip: '한 주 날씨',
+              icon: Icon(Icons.calendar_month_outlined),
+              selectedIcon: Icon(Icons.calendar_month_rounded),
+              label: 'Week',
+            ),
+            NavigationDestination(
+              tooltip: '설정',
+              icon: Icon(Icons.tune_outlined),
+              selectedIcon: Icon(Icons.tune_rounded),
+              label: 'Setting',
             ),
           ],
         ),
@@ -128,42 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openRecommendationDetail(RecommendationType type) {
-    final route = switch (type) {
-      RecommendationType.umbrella => '/weather/precipitation',
-      RecommendationType.parasol => '/weather/uv',
-      RecommendationType.heavySnowCaution => '/weather/snow',
-      RecommendationType.outerwear => '/weather/temperature',
-      RecommendationType.mask => '/weather/air-quality',
-      RecommendationType.water => '/weather/heat',
-      RecommendationType.sunscreen => '/weather/uv',
-    };
-    Navigator.pushNamed(context, route);
-  }
-
-  Widget _buildWeeklySummary() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('한 주 날씨', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ..._weekly!.days.map(
-              (d) => ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: Text(d.date),
-                title: Text(d.weatherLabel),
-                subtitle: Text('대표 추천: ${d.recommendations.map((r) => r.title).join(' · ')}'),
-                trailing: Text('${d.min} / ${d.max}°'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _openRecommendationDetail(RecommendationType _) {
+    setState(() => _selectedIndex = 1);
   }
 }
-

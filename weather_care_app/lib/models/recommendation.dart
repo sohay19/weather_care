@@ -142,4 +142,3 @@ RecommendationType _parseType(String raw) {
       return RecommendationType.umbrella;
   }
 }
-

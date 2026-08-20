@@ -4,12 +4,19 @@ import '../models/weather.dart';
 import 'api_client.dart';
 import '../data/sample_payloads.dart';
 
+class WeatherFetchResult<T> {
+  final T data;
+  final bool isSample;
+
+  const WeatherFetchResult({required this.data, required this.isSample});
+}
+
 class WeatherService {
   final ApiClient client;
 
   WeatherService(this.client);
 
-  Future<TodayWeatherResponse> fetchToday({
+  Future<WeatherFetchResult<TodayWeatherResponse>> fetchToday({
     required String installationId,
     int nx = 60,
     int ny = 121,
@@ -19,14 +26,22 @@ class WeatherService {
         '/api/v1/weather/today',
         query: {'nx': '$nx', 'ny': '$ny', 'installationId': installationId},
       );
-      return TodayWeatherResponse.fromJson(data);
-    } catch (_) {
-      log('Today API fallback used');
-      return TodayWeatherResponse.fromJson(sampleTodayPayload(installationId));
+      return WeatherFetchResult(
+        data: TodayWeatherResponse.fromJson(data),
+        isSample: false,
+      );
+    } catch (error) {
+      log(
+        'Today API unavailable (${error.runtimeType}); sample data in use',
+      );
+      return WeatherFetchResult(
+        data: TodayWeatherResponse.fromJson(sampleTodayPayload(installationId)),
+        isSample: true,
+      );
     }
   }
 
-  Future<WeeklyWeatherResponse> fetchWeekly({
+  Future<WeatherFetchResult<WeeklyWeatherResponse>> fetchWeekly({
     required String installationId,
     int nx = 60,
     int ny = 121,
@@ -36,9 +51,18 @@ class WeatherService {
         '/api/v1/weather/weekly',
         query: {'nx': '$nx', 'ny': '$ny', 'installationId': installationId},
       );
-      return WeeklyWeatherResponse.fromJson(data);
-    } catch (_) {
-      return WeeklyWeatherResponse.fromJson(sampleWeeklyPayload());
+      return WeatherFetchResult(
+        data: WeeklyWeatherResponse.fromJson(data),
+        isSample: false,
+      );
+    } catch (error) {
+      log(
+        'Weekly API unavailable (${error.runtimeType}); sample data in use',
+      );
+      return WeatherFetchResult(
+        data: WeeklyWeatherResponse.fromJson(sampleWeeklyPayload()),
+        isSample: true,
+      );
     }
   }
 
@@ -74,4 +98,3 @@ class WeatherService {
     }
   }
 }
-

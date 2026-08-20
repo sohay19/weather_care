@@ -72,7 +72,8 @@ export class KmaWeatherProvider implements WeatherProvider {
 
   constructor(options: KmaWeatherProviderOptions) {
     this.serviceKey = normalizeServiceKey(options.serviceKey);
-    this.fetcher = options.fetcher ?? fetch;
+    this.fetcher =
+      options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.now = options.now ?? (() => new Date());
     this.timeoutMs = options.timeoutMs ?? 8_000;
   }

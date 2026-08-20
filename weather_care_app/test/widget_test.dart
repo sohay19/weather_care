@@ -3,11 +3,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/app.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/features/home/widgets/timeline_section.dart';
+import 'package:weather_care/features/home/widgets/weather_card.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
+import 'package:weather_care/theme/recommendation_theme.dart';
+import 'package:weather_care/theme/weather_theme.dart';
 
 void main() {
+  test('recommendation categories share one color palette', () {
+    expect(
+      RecommendationType.values.map((type) => type.accentColor).toSet(),
+      {WeatherCareTheme.primaryDeep},
+    );
+    expect(
+      RecommendationType.values.map((type) => type.softColor).toSet(),
+      {WeatherCareTheme.primarySoft},
+    );
+  });
+
   testWidgets('WeatherCareApp starts', (tester) async {
     await tester.pumpWidget(const WeatherCareApp());
 
@@ -18,6 +32,24 @@ void main() {
           .debugShowCheckedModeBanner,
       isFalse,
     );
+  });
+
+  testWidgets('temperature values include the Celsius unit', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: WeatherInfoCard(
+            current: CurrentWeather(
+              temperature: 29,
+              apparentTemperature: 32.7,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('29.0°C'), findsOneWidget);
+    expect(find.text('32.7°C'), findsOneWidget);
   });
 
   testWidgets('five tabs start on a non-scrollable Main screen',

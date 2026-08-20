@@ -156,7 +156,7 @@ class _HourlyForecastCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F9FC),
+                color: WeatherCareTheme.surfaceMuted,
                 borderRadius: BorderRadius.circular(17),
               ),
               child: const Text(
@@ -186,10 +186,14 @@ class _HourlyRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isRainy ? const Color(0xFFEDF5FD) : const Color(0xFFF8FAFC),
+        color: isRainy
+            ? WeatherCareTheme.primarySoft
+            : WeatherCareTheme.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isRainy ? const Color(0xFFD4E6F8) : const Color(0xFFEDF1F5),
+          color: isRainy
+              ? WeatherCareTheme.primaryBorder
+              : WeatherCareTheme.outline,
         ),
       ),
       child: Column(
@@ -221,7 +225,7 @@ class _HourlyRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${item.temperature.toStringAsFixed(0)}°',
+                '${item.temperature.toStringAsFixed(0)}°C',
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
               ),
@@ -229,7 +233,7 @@ class _HourlyRow extends StatelessWidget {
               Text(
                 item.apparentTemperature == null
                     ? '체감 미지원'
-                    : '체감 ${item.apparentTemperature!.toStringAsFixed(0)}°',
+                    : '체감 ${item.apparentTemperature!.toStringAsFixed(0)}°C',
                 style: const TextStyle(
                   color: WeatherCareTheme.textSecondary,
                   fontSize: 11,

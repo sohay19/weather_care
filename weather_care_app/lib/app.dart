@@ -21,43 +21,31 @@ class WeatherCareApp extends StatelessWidget {
               title: '우산이 필요한 이유',
               subtitle: '오후 비 가능성과 강수 시간대를 확인해요',
               icon: Icons.umbrella_outlined,
-              accent: Color(0xFF4E8FD8),
-              background: Color(0xFFEAF3FD),
             ),
         '/weather/uv': (_) => const WeatherRecommendationDetailScreen(
               title: '자외선 대비가 필요한 이유',
               subtitle: '자외선 지수와 햇볕이 강한 시간대를 확인해요',
               icon: Icons.wb_sunny_outlined,
-              accent: Color(0xFFE98B65),
-              background: Color(0xFFFFEFE8),
             ),
         '/weather/snow': (_) => const WeatherRecommendationDetailScreen(
               title: '눈길 이동에 주의해요',
               subtitle: '강설 가능성과 이동 주의 시간대를 확인해요',
               icon: Icons.ac_unit_rounded,
-              accent: Color(0xFF65A9C8),
-              background: Color(0xFFEAF7FC),
             ),
         '/weather/temperature': (_) => const WeatherRecommendationDetailScreen(
               title: '겉옷이 필요한 이유',
               subtitle: '기온과 체감온도 변화를 함께 확인해요',
               icon: Icons.checkroom_rounded,
-              accent: Color(0xFF8B78C6),
-              background: Color(0xFFF1EDFB),
             ),
         '/weather/air-quality': (_) => const WeatherRecommendationDetailScreen(
               title: '마스크가 필요한 이유',
               subtitle: '미세먼지와 대기질 상태를 확인해요',
               icon: Icons.face_outlined,
-              accent: Color(0xFF748596),
-              background: Color(0xFFF0F3F5),
             ),
         '/weather/heat': (_) => const WeatherRecommendationDetailScreen(
               title: '물을 챙겨야 하는 이유',
               subtitle: '체감더위와 수분 보충 필요성을 확인해요',
               icon: Icons.local_drink_outlined,
-              accent: Color(0xFF3FA9C5),
-              background: Color(0xFFE7F8FB),
             ),
       },
       initialRoute: '/',
@@ -118,16 +106,12 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color accent;
-  final Color background;
 
   const WeatherRecommendationDetailScreen({
     super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.accent,
-    required this.background,
   });
 
   @override
@@ -140,7 +124,7 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: background,
+              color: WeatherCareTheme.primarySoft,
               borderRadius: BorderRadius.circular(28),
             ),
             child: Column(
@@ -153,7 +137,11 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
                     color: Colors.white,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: accent, size: 28),
+                  child: Icon(
+                    icon,
+                    color: WeatherCareTheme.primaryDeep,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Text(

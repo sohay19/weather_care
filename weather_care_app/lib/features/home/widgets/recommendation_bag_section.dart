@@ -239,14 +239,17 @@ class _EmptyBag extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F8F5),
+        color: WeatherCareTheme.primarySoft,
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Row(
         children: [
           CircleAvatar(
             backgroundColor: Colors.white,
-            child: Icon(Icons.check_rounded, color: Color(0xFF54A875)),
+            child: Icon(
+              Icons.check_rounded,
+              color: WeatherCareTheme.primaryDeep,
+            ),
           ),
           SizedBox(width: 14),
           Expanded(

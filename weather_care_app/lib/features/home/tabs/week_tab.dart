@@ -106,7 +106,7 @@ class _WeekSummary extends StatelessWidget {
                 label: '최고 기온',
                 value: maxTemperature == null
                     ? '--'
-                    : '${maxTemperature.toStringAsFixed(0)}°',
+                    : '${maxTemperature.toStringAsFixed(0)}°C',
               ),
               _SummaryMetric(
                 icon: Icons.work_outline_rounded,
@@ -180,7 +180,9 @@ class _WeekDayCard extends StatelessWidget {
         color: isToday ? WeatherCareTheme.primarySoft : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: isToday ? const Color(0xFFCFE3F8) : WeatherCareTheme.outline,
+          color: isToday
+              ? WeatherCareTheme.primaryBorder
+              : WeatherCareTheme.outline,
         ),
         boxShadow: const [
           BoxShadow(
@@ -300,14 +302,14 @@ class _WeekDayCard extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
               children: [
-                TextSpan(text: '${day.min}°'),
+                TextSpan(text: '${day.min}°C'),
                 const TextSpan(
                   text: ' / ',
                   style: TextStyle(color: WeatherCareTheme.textSecondary),
                 ),
                 TextSpan(
-                  text: '${day.max}°',
-                  style: const TextStyle(color: Color(0xFFE07A55)),
+                  text: '${day.max}°C',
+                  style: const TextStyle(color: WeatherCareTheme.primaryDeep),
                 ),
               ],
             ),

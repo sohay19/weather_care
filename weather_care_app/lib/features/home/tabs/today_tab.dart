@@ -89,7 +89,7 @@ class _TodayBriefCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E9),
+        color: WeatherCareTheme.primarySoft,
         borderRadius: BorderRadius.circular(22),
       ),
       child: Row(
@@ -103,7 +103,7 @@ class _TodayBriefCard extends StatelessWidget {
             ),
             child: const Icon(
               Icons.auto_awesome_rounded,
-              color: Color(0xFFB56A32),
+              color: WeatherCareTheme.primaryDeep,
               size: 21,
             ),
           ),

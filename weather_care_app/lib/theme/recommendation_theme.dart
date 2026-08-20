@@ -1,30 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../models/recommendation.dart';
+import 'weather_theme.dart';
 
 extension RecommendationPresentation on RecommendationType {
   Color get accentColor {
-    return switch (this) {
-      RecommendationType.umbrella => const Color(0xFF4E8FD8),
-      RecommendationType.parasol => const Color(0xFFE7A93B),
-      RecommendationType.heavySnowCaution => const Color(0xFF65A9C8),
-      RecommendationType.outerwear => const Color(0xFF8B78C6),
-      RecommendationType.mask => const Color(0xFF748596),
-      RecommendationType.water => const Color(0xFF3FA9C5),
-      RecommendationType.sunscreen => const Color(0xFFE98B65),
-    };
+    return WeatherCareTheme.primaryDeep;
   }
 
   Color get softColor {
-    return switch (this) {
-      RecommendationType.umbrella => const Color(0xFFEAF3FD),
-      RecommendationType.parasol => const Color(0xFFFFF5D9),
-      RecommendationType.heavySnowCaution => const Color(0xFFEAF7FC),
-      RecommendationType.outerwear => const Color(0xFFF1EDFB),
-      RecommendationType.mask => const Color(0xFFF0F3F5),
-      RecommendationType.water => const Color(0xFFE7F8FB),
-      RecommendationType.sunscreen => const Color(0xFFFFEFE8),
-    };
+    return WeatherCareTheme.primarySoft;
   }
 
   String get statusLabel {

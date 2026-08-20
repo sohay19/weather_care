@@ -67,13 +67,13 @@ class _TimelineItemView extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: recommendations.isEmpty
-                        ? const Color(0xFFF0F3F7)
+                        ? WeatherCareTheme.surfaceMuted
                         : WeatherCareTheme.primarySoft,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: recommendations.isEmpty
                           ? WeatherCareTheme.outline
-                          : const Color(0xFFCFE3F8),
+                          : WeatherCareTheme.primaryBorder,
                     ),
                   ),
                   child: Text(
@@ -93,7 +93,7 @@ class _TimelineItemView extends StatelessWidget {
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCE7F2),
+                        color: WeatherCareTheme.primaryBorder,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -108,9 +108,9 @@ class _TimelineItemView extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAFBFD),
+                  color: WeatherCareTheme.surfaceSubtle,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFEDF1F5)),
+                  border: Border.all(color: WeatherCareTheme.outline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

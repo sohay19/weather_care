@@ -32,7 +32,7 @@ class ServerFeatureUnavailableCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F9FC),
+              color: WeatherCareTheme.surfaceMuted,
               borderRadius: BorderRadius.circular(17),
             ),
             child: const Row(

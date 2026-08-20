@@ -77,12 +77,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF5A98DB), Color(0xFF7DAEE0)],
+              colors: [
+                WeatherCareTheme.primaryDeep,
+                WeatherCareTheme.primary,
+              ],
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x284E8FD8),
+                color: WeatherCareTheme.shadow,
                 blurRadius: 24,
                 offset: Offset(0, 9),
               ),
@@ -128,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 activeTrackColor: Colors.white.withValues(alpha: 0.45),
                 activeThumbColor: Colors.white,
                 inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
-                inactiveThumbColor: const Color(0xFFDDE7F1),
+                inactiveThumbColor: WeatherCareTheme.primaryBorder,
                 trackOutlineColor:
                     const WidgetStatePropertyAll(Colors.transparent),
                 onChanged: (value) {
@@ -148,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F9FC),
+              color: WeatherCareTheme.surfaceMuted,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(
@@ -190,7 +193,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _SettingsToggleTile(
                 icon: Icons.umbrella_outlined,
-                color: const Color(0xFF4E8FD8),
                 title: '우산',
                 value: settings.umbrellaEnabled,
                 enabled: _alertsEnabled,
@@ -200,7 +202,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.wb_sunny_outlined,
-                color: const Color(0xFFE7A93B),
                 title: '양산',
                 value: settings.parasolEnabled,
                 enabled: _alertsEnabled,
@@ -210,7 +211,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.checkroom_rounded,
-                color: const Color(0xFF8B78C6),
                 title: '겉옷',
                 value: settings.outerwearEnabled,
                 enabled: _alertsEnabled,
@@ -220,7 +220,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.face_outlined,
-                color: const Color(0xFF748596),
                 title: '마스크',
                 value: settings.maskEnabled,
                 enabled: _alertsEnabled,
@@ -230,7 +229,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.local_drink_outlined,
-                color: const Color(0xFF3FA9C5),
                 title: '물',
                 value: settings.waterEnabled,
                 enabled: _alertsEnabled,
@@ -240,7 +238,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.spa_outlined,
-                color: const Color(0xFFE98B65),
                 title: '선크림',
                 value: settings.sunscreenEnabled,
                 enabled: _alertsEnabled,
@@ -260,7 +257,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _SettingsToggleTile(
                 icon: Icons.ac_unit_rounded,
-                color: const Color(0xFF65A9C8),
                 title: '폭설 주의',
                 value: settings.heavySnowEnabled,
                 enabled: _alertsEnabled,
@@ -270,7 +266,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.wb_cloudy_outlined,
-                color: WeatherCareTheme.primary,
                 title: '오늘 날씨',
                 value: settings.dailyWeatherEnabled,
                 enabled: _alertsEnabled,
@@ -285,7 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF7E9),
+            color: WeatherCareTheme.attentionSoft,
             borderRadius: BorderRadius.circular(18),
           ),
           child: const Row(
@@ -294,14 +289,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Icon(
                 Icons.info_outline_rounded,
                 size: 19,
-                color: Color(0xFFB56A32),
+                color: WeatherCareTheme.attention,
               ),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
                   '현재 설정은 화면 안에서만 바뀌는 데모 상태예요. 서버 저장 기능은 아직 연결되지 않았어요.',
                   style: TextStyle(
-                    color: Color(0xFF8A5A31),
+                    color: WeatherCareTheme.attentionDeep,
                     fontSize: 12,
                     height: 1.45,
                   ),
@@ -410,11 +405,14 @@ class _LocationRadioTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color:
-            selected ? WeatherCareTheme.primarySoft : const Color(0xFFF8FAFC),
+        color: selected
+            ? WeatherCareTheme.primarySoft
+            : WeatherCareTheme.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: selected ? const Color(0xFFCFE3F8) : const Color(0xFFEDF1F5),
+          color: selected
+              ? WeatherCareTheme.primaryBorder
+              : WeatherCareTheme.outline,
         ),
       ),
       child: RadioListTile<LocationMode>(
@@ -436,7 +434,6 @@ class _LocationRadioTile extends StatelessWidget {
 
 class _SettingsToggleTile extends StatelessWidget {
   final IconData icon;
-  final Color color;
   final String title;
   final bool value;
   final bool enabled;
@@ -444,7 +441,6 @@ class _SettingsToggleTile extends StatelessWidget {
 
   const _SettingsToggleTile({
     required this.icon,
-    required this.color,
     required this.title,
     required this.value,
     required this.enabled,
@@ -463,10 +459,14 @@ class _SettingsToggleTile extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
+                color: WeatherCareTheme.primarySoft,
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(icon, size: 20, color: color),
+              child: Icon(
+                icon,
+                size: 20,
+                color: WeatherCareTheme.primaryDeep,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

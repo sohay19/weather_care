@@ -17,7 +17,7 @@ class WeatherInfoCard extends StatelessWidget {
         label: '체감',
         value: current.apparentTemperature == null
             ? '미지원'
-            : '${current.apparentTemperature!.toStringAsFixed(1)}°',
+            : '${current.apparentTemperature!.toStringAsFixed(1)}°C',
       ),
       if (current.humidity != null)
         _WeatherMetric(
@@ -55,7 +55,7 @@ class WeatherInfoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${current.temperature.toStringAsFixed(1)}°',
+                '${current.temperature.toStringAsFixed(1)}°C',
                 style: const TextStyle(
                   color: WeatherCareTheme.textPrimary,
                   fontSize: 34,
@@ -81,7 +81,7 @@ class WeatherInfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 13),
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F9FC),
+              color: WeatherCareTheme.surfaceMuted,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Row(

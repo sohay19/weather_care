@@ -118,7 +118,7 @@ class _TopWeatherCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      '${current.temperature.toStringAsFixed(1)}°',
+                      '${current.temperature.toStringAsFixed(1)}°C',
                       style: TextStyle(
                         fontSize: compact ? 28 : 33,
                         height: 1,
@@ -151,7 +151,7 @@ class _TopWeatherCard extends StatelessWidget {
                 child: Text(
                   current.apparentTemperature == null
                       ? '체감 미지원'
-                      : '체감 ${current.apparentTemperature!.toStringAsFixed(1)}°',
+                      : '체감 ${current.apparentTemperature!.toStringAsFixed(1)}°C',
                   style: const TextStyle(
                     color: WeatherCareTheme.textSecondary,
                     fontSize: 12,
@@ -274,12 +274,12 @@ class _LifestyleDashboard extends StatelessWidget {
                 width: compact ? 36 : 40,
                 height: compact ? 36 : 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF7F1),
+                  color: WeatherCareTheme.primarySoft,
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: const Icon(
                   Icons.eco_outlined,
-                  color: Color(0xFF4D9B7B),
+                  color: WeatherCareTheme.primaryDeep,
                   size: 20,
                 ),
               ),
@@ -349,7 +349,7 @@ class _LifestyleUnsupported extends StatelessWidget {
       alignment: Alignment.center,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FC),
+        color: WeatherCareTheme.surfaceMuted,
         borderRadius: BorderRadius.circular(17),
       ),
       child: const Text(
@@ -377,7 +377,7 @@ class _LifestyleActionCard extends StatelessWidget {
       height: double.infinity,
       padding: EdgeInsets.all(compact ? 9 : 11),
       decoration: BoxDecoration(
-        color: presentation.background,
+        color: WeatherCareTheme.surfaceMuted,
         borderRadius: BorderRadius.circular(17),
       ),
       child: Column(
@@ -392,7 +392,7 @@ class _LifestyleActionCard extends StatelessWidget {
             ),
             child: Icon(
               presentation.icon,
-              color: presentation.accent,
+              color: WeatherCareTheme.primaryDeep,
               size: compact ? 16 : 18,
             ),
           ),
@@ -442,82 +442,56 @@ _LifestyleCardPresentation _lifestylePresentation(
   return switch (type) {
     LifestyleMessageType.rainGearUseful => const _LifestyleCardPresentation(
         icon: Icons.umbrella_outlined,
-        accent: Color(0xFF4E8FD8),
-        background: Color(0xFFEDF5FD),
         subtitle: '비 오기 전에 준비해요',
       ),
     LifestyleMessageType.strongSunExposure => const _LifestyleCardPresentation(
         icon: Icons.wb_sunny_outlined,
-        accent: Color(0xFFE1A12A),
-        background: Color(0xFFFFF6E3),
         subtitle: '한낮 햇볕을 피해주세요',
       ),
     LifestyleMessageType.laundryGood => const _LifestyleCardPresentation(
         icon: Icons.local_laundry_service_outlined,
-        accent: Color(0xFF4E8FD8),
-        background: Color(0xFFEDF5FD),
         subtitle: '오전에 널면 좋아요',
       ),
     LifestyleMessageType.outdoorCaution => const _LifestyleCardPresentation(
         icon: Icons.directions_walk_rounded,
-        accent: Color(0xFFD47C55),
-        background: Color(0xFFFFF1E9),
         subtitle: '해 질 무렵이 편안해요',
       ),
     LifestyleMessageType.ventilationGood => const _LifestyleCardPresentation(
         icon: Icons.window_outlined,
-        accent: Color(0xFF4D9B7B),
-        background: Color(0xFFEAF7F1),
         subtitle: '오후에 짧게 열어요',
       ),
     LifestyleMessageType.veryHotAndHumid => const _LifestyleCardPresentation(
         icon: Icons.thermostat_rounded,
-        accent: Color(0xFFE98B65),
-        background: Color(0xFFFFF2EB),
         subtitle: '물을 자주 마셔요',
       ),
     LifestyleMessageType.coolerThanTemperature =>
       const _LifestyleCardPresentation(
         icon: Icons.air_rounded,
-        accent: Color(0xFF668EB7),
-        background: Color(0xFFEEF4F8),
         subtitle: '조금 서늘해요',
       ),
     LifestyleMessageType.outerwearUseful => const _LifestyleCardPresentation(
         icon: Icons.checkroom_rounded,
-        accent: Color(0xFF8B78C6),
-        background: Color(0xFFF3F0FA),
         subtitle: '가벼운 겉옷이 좋아요',
       ),
     LifestyleMessageType.maskUseful => const _LifestyleCardPresentation(
         icon: Icons.masks_outlined,
-        accent: Color(0xFF708398),
-        background: Color(0xFFF0F3F6),
         subtitle: '외출 전 대기질을 확인해요',
       ),
     LifestyleMessageType.hydrationImportant => const _LifestyleCardPresentation(
         icon: Icons.local_drink_outlined,
-        accent: Color(0xFF36A4BC),
-        background: Color(0xFFEAF7FA),
         subtitle: '조금씩 자주 마셔요',
       ),
     LifestyleMessageType.sunscreenUseful => const _LifestyleCardPresentation(
         icon: Icons.spa_outlined,
-        accent: Color(0xFFE98B65),
-        background: Color(0xFFFFF2EB),
         subtitle: '외출 전에 발라요',
       ),
     LifestyleMessageType.snowTravelCaution => const _LifestyleCardPresentation(
         icon: Icons.ac_unit_rounded,
-        accent: Color(0xFF5FA9C7),
-        background: Color(0xFFEDF7FA),
         subtitle: '천천히 이동해요',
       ),
     LifestyleMessageType.largeTemperatureSwing =>
       const _LifestyleCardPresentation(
         icon: Icons.device_thermostat_outlined,
-        accent: Color(0xFF8B78C6),
-        background: Color(0xFFF3F0FA),
         subtitle: '겹쳐 입기 좋아요',
       ),
   };
@@ -525,14 +499,10 @@ _LifestyleCardPresentation _lifestylePresentation(
 
 class _LifestyleCardPresentation {
   final IconData icon;
-  final Color accent;
-  final Color background;
   final String subtitle;
 
   const _LifestyleCardPresentation({
     required this.icon,
-    required this.accent,
-    required this.background,
     required this.subtitle,
   });
 }

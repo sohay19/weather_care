@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 
 class WeatherCareTheme {
-  static const Color primary = Color(0xFF4E8FD8);
-  static const Color primaryDeep = Color(0xFF2F6FBA);
-  static const Color primarySoft = Color(0xFFEAF3FD);
-  static const Color background = Color(0xFFF7F9FC);
+  // 카테고리는 아이콘과 문구로 구분하고, 화면 색상은 이 팔레트 안에서만 사용한다.
+  static const Color primary = Color(0xFF5D7F9E);
+  static const Color primaryDeep = Color(0xFF3E5F7C);
+  static const Color primarySoft = Color(0xFFEAF0F5);
+  static const Color primaryBorder = Color(0xFFCEDAE4);
+  static const Color background = Color(0xFFF6F7F8);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color textPrimary = Color(0xFF263238);
-  static const Color textSecondary = Color(0xFF708090);
-  static const Color outline = Color(0xFFE5EAF0);
-  static const Color shadow = Color(0x14263238);
+  static const Color surfaceMuted = Color(0xFFF2F4F6);
+  static const Color surfaceSubtle = Color(0xFFF8F9FA);
+  static const Color textPrimary = Color(0xFF29343D);
+  static const Color textSecondary = Color(0xFF73808A);
+  static const Color outline = Color(0xFFE2E7EA);
+  static const Color shadow = Color(0x1229343D);
+  static const Color attention = Color(0xFFB27A3D);
+  static const Color attentionDeep = Color(0xFF7E582F);
+  static const Color attentionSoft = Color(0xFFFAF3E8);
 
   static ThemeData light() {
     return ThemeData(
@@ -19,12 +26,12 @@ class WeatherCareTheme {
         onPrimary: Colors.white,
         primaryContainer: primarySoft,
         onPrimaryContainer: primaryDeep,
-        secondary: Color(0xFF79A9DC),
+        secondary: primaryDeep,
         onSecondary: Colors.white,
         surface: surface,
         onSurface: textPrimary,
         outline: outline,
-        outlineVariant: Color(0xFFF0F3F7),
+        outlineVariant: surfaceMuted,
       ),
       scaffoldBackgroundColor: background,
       appBarTheme: const AppBarTheme(
@@ -83,7 +90,7 @@ class WeatherCareTheme {
         labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: const Color(0xFFF1F5FA),
+        backgroundColor: surfaceMuted,
         selectedColor: primarySoft,
         labelStyle: const TextStyle(
           color: textPrimary,
@@ -129,13 +136,11 @@ class WeatherCareTheme {
   static List<Color> moodColors(String base) {
     final safe = base.toLowerCase();
     return switch (safe) {
-      'rain' => const [Color(0xFFEDF3F8), Color(0xFFE5EBF3)],
-      'cloudy' => const [Color(0xFFF2F4F7), Color(0xFFE8EDF2)],
-      'snow' => const [Color(0xFFF9FCFF), Color(0xFFEAF5FF)],
-      'hot' => const [Color(0xFFFFF7E8), Color(0xFFFFF0E6)],
-      'cold' => const [Color(0xFFF4FAFF), Color(0xFFE7F2FF)],
-      'night' => const [Color(0xFFEEF1F8), Color(0xFFE5E9F3)],
-      _ => const [Color(0xFFEAF4FF), Color(0xFFFFF7DF)],
+      'rain' => const [Color(0xFFE7EDF2), Color(0xFFDDE7EE)],
+      'cloudy' => const [Color(0xFFEDF1F4), Color(0xFFE3E9ED)],
+      'snow' => const [Color(0xFFF2F5F7), Color(0xFFE8EEF2)],
+      'night' => const [Color(0xFFE7EBF0), Color(0xFFDDE5EB)],
+      _ => const [Color(0xFFEAF0F5), Color(0xFFF2F4F6)],
     };
   }
 

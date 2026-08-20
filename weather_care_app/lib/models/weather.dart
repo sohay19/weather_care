@@ -25,7 +25,7 @@ class WeatherRegion {
 
 class CurrentWeather {
   final double temperature;
-  final double apparentTemperature;
+  final double? apparentTemperature;
   final double? humidity;
   final double? windSpeed;
   final double? uvIndex;
@@ -35,7 +35,7 @@ class CurrentWeather {
 
   const CurrentWeather({
     required this.temperature,
-    required this.apparentTemperature,
+    this.apparentTemperature,
     this.humidity,
     this.windSpeed,
     this.uvIndex,
@@ -48,7 +48,7 @@ class CurrentWeather {
     final c = json['current'] ?? {};
     return CurrentWeather(
       temperature: (c['temperature'] as num?)?.toDouble() ?? 0,
-      apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble() ?? 0,
+      apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble(),
       humidity: (c['humidity'] as num?)?.toDouble(),
       windSpeed: (c['windSpeed'] as num?)?.toDouble(),
       uvIndex: (c['uvIndex'] as num?)?.toDouble(),
@@ -62,7 +62,7 @@ class CurrentWeather {
 class HourlyWeatherItem {
   final String time;
   final double temperature;
-  final double apparentTemperature;
+  final double? apparentTemperature;
   final double precipitationProbability;
   final double precipitationAmount;
   final double snowProbability;
@@ -73,7 +73,7 @@ class HourlyWeatherItem {
   const HourlyWeatherItem({
     required this.time,
     required this.temperature,
-    required this.apparentTemperature,
+    this.apparentTemperature,
     required this.precipitationProbability,
     required this.precipitationAmount,
     required this.snowProbability,
@@ -89,8 +89,7 @@ class HourlyWeatherItem {
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
       temperature: (json['temperature'] as num?)?.toDouble() ?? 0,
-      apparentTemperature:
-          (json['apparentTemperature'] as num?)?.toDouble() ?? 0,
+      apparentTemperature: (json['apparentTemperature'] as num?)?.toDouble(),
       precipitationProbability:
           (json['precipitationProbability'] as num?)?.toDouble() ?? 0,
       precipitationAmount:

@@ -4,12 +4,14 @@ import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/recommendation_bag_section.dart';
+import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/timeline_section.dart';
 
 class TodayTab extends StatelessWidget {
   final TodayWeatherResponse today;
   final List<WeatherRecommendation> recommendations;
+  final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
   final ValueChanged<RecommendationType> onDetail;
 
@@ -17,6 +19,7 @@ class TodayTab extends StatelessWidget {
     super.key,
     required this.today,
     required this.recommendations,
+    required this.serverFeaturesAvailable,
     required this.onRefresh,
     required this.onDetail,
   });
@@ -42,15 +45,28 @@ class TodayTab extends StatelessWidget {
           _TodayBriefCard(
             brief: today.brief,
             recommendationCount: recommendations.length,
+            serverFeaturesAvailable: serverFeaturesAvailable,
           ),
           const SizedBox(height: 16),
-          RecommendationBagSection(
-            regionName: today.region.name,
-            recommendations: recommendations,
-            onDetail: onDetail,
-          ),
+          if (serverFeaturesAvailable)
+            RecommendationBagSection(
+              regionName: today.region.name,
+              recommendations: recommendations,
+              onDetail: onDetail,
+            )
+          else
+            const ServerFeatureUnavailableCard(
+              icon: Icons.work_outline_rounded,
+              title: '오늘의 가방',
+            ),
           const SizedBox(height: 16),
-          TimelineSection(items: today.timeline),
+          if (serverFeaturesAvailable)
+            TimelineSection(items: today.timeline)
+          else
+            const ServerFeatureUnavailableCard(
+              icon: Icons.schedule_rounded,
+              title: '오늘 하루',
+            ),
         ],
       ),
     );
@@ -60,10 +76,12 @@ class TodayTab extends StatelessWidget {
 class _TodayBriefCard extends StatelessWidget {
   final String brief;
   final int recommendationCount;
+  final bool serverFeaturesAvailable;
 
   const _TodayBriefCard({
     required this.brief,
     required this.recommendationCount,
+    required this.serverFeaturesAvailable,
   });
 
   @override
@@ -103,9 +121,11 @@ class _TodayBriefCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  recommendationCount == 0
-                      ? '오늘은 특별한 준비물이 없어요.'
-                      : '챙길 항목 $recommendationCount개를 먼저 확인하세요.',
+                  !serverFeaturesAvailable
+                      ? '준비물과 생활 시점 계산은 운영 서버 미연결로 미지원됩니다.'
+                      : recommendationCount == 0
+                          ? '오늘은 특별한 준비물이 없어요.'
+                          : '챙길 항목 $recommendationCount개를 먼저 확인하세요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

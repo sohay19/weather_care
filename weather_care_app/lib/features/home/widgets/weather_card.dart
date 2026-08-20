@@ -15,7 +15,9 @@ class WeatherInfoCard extends StatelessWidget {
       _WeatherMetric(
         icon: Icons.device_thermostat_rounded,
         label: '체감',
-        value: '${current.apparentTemperature.toStringAsFixed(1)}°',
+        value: current.apparentTemperature == null
+            ? '미지원'
+            : '${current.apparentTemperature!.toStringAsFixed(1)}°',
       ),
       if (current.humidity != null)
         _WeatherMetric(

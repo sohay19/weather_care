@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../data/sample_payloads.dart';
 import '../../models/app_settings.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../services/api_client.dart';
+import '../../services/kma_direct_weather_service.dart';
 import '../../services/weather_service.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
@@ -13,6 +13,7 @@ import 'tabs/detail_tab.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
 import 'tabs/week_tab.dart';
+import 'widgets/weather_status_view.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
@@ -26,11 +27,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AppSettings _settings = AppSettings.fallback('local-installation');
   late final WeatherService _service;
-  late TodayWeatherResponse _today;
-  late WeeklyWeatherResponse _weekly;
+  TodayWeatherResponse? _today;
+  WeeklyWeatherResponse? _weekly;
+  WeatherLoadMode? _loadMode;
   late int _selectedIndex;
   bool _refreshing = true;
-  bool _usingSampleData = true;
+  String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
   @override
   void initState() {
@@ -40,11 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
         : widget.initialIndex > 4
             ? 4
             : widget.initialIndex;
-    _today = TodayWeatherResponse.fromJson(
-      sampleTodayPayload(_settings.installationId),
+    _service = WeatherService(
+      ApiClient(baseUrl: _resolveServerUrl()),
+      directKma: KmaDirectWeatherService(
+        serviceKey: const String.fromEnvironment('KMA_SERVICE_KEY'),
+      ),
     );
-    _weekly = WeeklyWeatherResponse.fromJson(sampleWeeklyPayload());
-    _service = WeatherService(ApiClient(baseUrl: _resolveServerUrl()));
     _loadData();
   }
 
@@ -60,37 +63,31 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _refreshing = true);
     }
 
-    final todayFuture = _service.fetchToday(
+    final result = await _service.fetchWeather(
       installationId: _settings.installationId,
       nx: 60,
       ny: 121,
     );
-    final weeklyFuture = _service.fetchWeekly(
-      installationId: _settings.installationId,
-      nx: 60,
-      ny: 121,
-    );
-    final today = await todayFuture;
-    final weekly = await weeklyFuture;
 
     if (!mounted) return;
     setState(() {
-      _today = today.data;
-      _weekly = weekly.data;
-      _usingSampleData = today.isSample || weekly.isSample;
+      _today = result.today;
+      _weekly = result.weekly;
+      _loadMode = result.mode;
+      _statusMessage = result.message;
       _refreshing = false;
     });
   }
 
   List<WeatherRecommendation> get _priorityRecommendations {
     final recommendations = List<WeatherRecommendation>.from(
-      _today.recommendations,
+      _today?.recommendations ?? const [],
     )..sort((a, b) => b.priority.compareTo(a.priority));
     return recommendations.where((item) => item.recommended).toList();
   }
 
   String get _mood {
-    final sky = (_today.current.sky ?? '').toLowerCase();
+    final sky = (_today?.current.sky ?? '').toLowerCase();
     if (sky.contains('비')) return 'rain';
     if (sky.contains('눈')) return 'snow';
     if (sky.contains('흐림') || sky.contains('구름')) return 'cloudy';
@@ -105,6 +102,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final today = _today;
+    final weekly = _weekly;
+    final hasWeather = today != null && weekly != null;
+    final serverFeaturesAvailable = _loadMode == WeatherLoadMode.server;
+    final directKma = _loadMode == WeatherLoadMode.directKma;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
@@ -116,29 +119,44 @@ class _HomeScreenState extends State<HomeScreen> {
           bottom: false,
           child: IndexedStack(
             index: _selectedIndex,
-            children: [
-              TodayTab(
-                today: _today,
-                recommendations: _priorityRecommendations,
-                onRefresh: _loadData,
-                onDetail: _openRecommendationDetail,
-              ),
-              DetailTab(
-                today: _today,
-                recommendations: _priorityRecommendations,
-                onRefresh: _loadData,
-              ),
-              MainTab(
-                today: _today,
-                dateLabel: _dateLabel,
-                mood: _mood,
-                refreshing: _refreshing,
-                usingSampleData: _usingSampleData,
-                onRefresh: _loadData,
-              ),
-              WeekTab(weekly: _weekly, onRefresh: _loadData),
-              const SettingsScreen(embedded: true),
-            ],
+            children: hasWeather
+                ? [
+                    TodayTab(
+                      today: today,
+                      recommendations: _priorityRecommendations,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                      onRefresh: _loadData,
+                      onDetail: _openRecommendationDetail,
+                    ),
+                    DetailTab(
+                      today: today,
+                      recommendations: _priorityRecommendations,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                      onRefresh: _loadData,
+                    ),
+                    MainTab(
+                      today: today,
+                      dateLabel: _dateLabel,
+                      mood: _mood,
+                      refreshing: _refreshing,
+                      directKma: directKma,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                      onRefresh: _loadData,
+                    ),
+                    WeekTab(
+                      weekly: weekly,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                      onRefresh: _loadData,
+                    ),
+                    const SettingsScreen(embedded: true),
+                  ]
+                : [
+                    _statusView('today-tab'),
+                    _statusView('detail-tab'),
+                    _statusView('main-tab'),
+                    _statusView('week-tab'),
+                    const SettingsScreen(embedded: true),
+                  ],
           ),
         ),
         bottomNavigationBar: NavigationBar(
@@ -187,6 +205,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _statusView(String viewKey) {
+    return WeatherStatusView(
+      viewKey: viewKey,
+      loading: _loadMode == null,
+      offline: _loadMode == WeatherLoadMode.offline,
+      message: _statusMessage,
+      onRetry: _loadData,
     );
   }
 

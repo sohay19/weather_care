@@ -5,18 +5,21 @@ import '../../../models/weather.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/home_section_header.dart';
+import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_card.dart';
 
 class DetailTab extends StatelessWidget {
   final TodayWeatherResponse today;
   final List<WeatherRecommendation> recommendations;
+  final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
 
   const DetailTab({
     super.key,
     required this.today,
     required this.recommendations,
+    required this.serverFeaturesAvailable,
     required this.onRefresh,
   });
 
@@ -40,7 +43,13 @@ class DetailTab extends StatelessWidget {
           const SizedBox(height: 18),
           WeatherInfoCard(current: today.current),
           const SizedBox(height: 16),
-          _RecommendationEvidence(recommendations: recommendations),
+          if (serverFeaturesAvailable)
+            _RecommendationEvidence(recommendations: recommendations)
+          else
+            const ServerFeatureUnavailableCard(
+              icon: Icons.fact_check_outlined,
+              title: '오늘의 판단 근거',
+            ),
           const SizedBox(height: 16),
           _HourlyForecastCard(items: today.hourly),
         ],
@@ -218,7 +227,9 @@ class _HourlyRow extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               Text(
-                '체감 ${item.apparentTemperature.toStringAsFixed(0)}°',
+                item.apparentTemperature == null
+                    ? '체감 미지원'
+                    : '체감 ${item.apparentTemperature!.toStringAsFixed(0)}°',
                 style: const TextStyle(
                   color: WeatherCareTheme.textSecondary,
                   fontSize: 11,

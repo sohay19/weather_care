@@ -56,24 +56,8 @@ void main() {
           .selectedIndex,
       0,
     );
-    expect(find.text('오늘의 가방'), findsOneWidget);
-    expect(find.text('오늘 하루'), findsOneWidget);
-
-    final detailButton = find.byKey(const ValueKey('bag-detail-sunscreen'));
-    expect(detailButton, findsOneWidget);
-    await tester.ensureVisible(detailButton);
-    await tester.tap(detailButton);
-    await tester.pump();
-    expect(
-      tester
-          .widget<NavigationBar>(
-            find.byKey(const ValueKey('main-bottom-navigation')),
-          )
-          .selectedIndex,
-      1,
-    );
-    expect(find.text('시간대별 상세'), findsOneWidget);
-    expect(find.textContaining('비 75%'), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-tab')), findsOneWidget);
+    expect(find.text('샘플 데이터'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

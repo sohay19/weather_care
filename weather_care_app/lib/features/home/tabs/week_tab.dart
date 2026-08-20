@@ -8,11 +8,13 @@ import '../widgets/tab_page_header.dart';
 
 class WeekTab extends StatelessWidget {
   final WeeklyWeatherResponse weekly;
+  final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
 
   const WeekTab({
     super.key,
     required this.weekly,
+    required this.serverFeaturesAvailable,
     required this.onRefresh,
   });
 
@@ -34,10 +36,17 @@ class WeekTab extends StatelessWidget {
             onRefresh: onRefresh,
           ),
           const SizedBox(height: 18),
-          _WeekSummary(days: weekly.days),
+          _WeekSummary(
+            days: weekly.days,
+            serverFeaturesAvailable: serverFeaturesAvailable,
+          ),
           const SizedBox(height: 16),
           for (var index = 0; index < weekly.days.length; index++) ...[
-            _WeekDayCard(day: weekly.days[index], isToday: index == 0),
+            _WeekDayCard(
+              day: weekly.days[index],
+              isToday: index == 0,
+              serverFeaturesAvailable: serverFeaturesAvailable,
+            ),
             if (index < weekly.days.length - 1) const SizedBox(height: 10),
           ],
         ],
@@ -48,8 +57,12 @@ class WeekTab extends StatelessWidget {
 
 class _WeekSummary extends StatelessWidget {
   final List<WeeklyForecastItem> days;
+  final bool serverFeaturesAvailable;
 
-  const _WeekSummary({required this.days});
+  const _WeekSummary({
+    required this.days,
+    required this.serverFeaturesAvailable,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +111,7 @@ class _WeekSummary extends StatelessWidget {
               _SummaryMetric(
                 icon: Icons.work_outline_rounded,
                 label: '준비물',
-                value: '$prepDays일',
+                value: serverFeaturesAvailable ? '$prepDays일' : '미지원',
               ),
             ],
           ),
@@ -151,8 +164,13 @@ class _SummaryMetric extends StatelessWidget {
 class _WeekDayCard extends StatelessWidget {
   final WeeklyForecastItem day;
   final bool isToday;
+  final bool serverFeaturesAvailable;
 
-  const _WeekDayCard({required this.day, required this.isToday});
+  const _WeekDayCard({
+    required this.day,
+    required this.isToday,
+    required this.serverFeaturesAvailable,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -225,9 +243,11 @@ class _WeekDayCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 if (day.recommendations.isEmpty)
-                  const Text(
-                    '특별한 준비물 없음',
-                    style: TextStyle(
+                  Text(
+                    serverFeaturesAvailable
+                        ? '특별한 준비물 없음'
+                        : '운영 서버 미연결로 준비물 미지원',
+                    style: const TextStyle(
                       color: WeatherCareTheme.textSecondary,
                       fontSize: 11,
                     ),

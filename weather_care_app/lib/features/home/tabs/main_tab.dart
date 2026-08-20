@@ -10,7 +10,8 @@ class MainTab extends StatelessWidget {
   final String dateLabel;
   final String mood;
   final bool refreshing;
-  final bool usingSampleData;
+  final bool directKma;
+  final bool serverFeaturesAvailable;
   final VoidCallback onRefresh;
 
   const MainTab({
@@ -19,7 +20,8 @@ class MainTab extends StatelessWidget {
     required this.dateLabel,
     required this.mood,
     required this.refreshing,
-    required this.usingSampleData,
+    required this.directKma,
+    required this.serverFeaturesAvailable,
     required this.onRefresh,
   });
 
@@ -48,7 +50,7 @@ class MainTab extends StatelessWidget {
                   mood: mood,
                   compact: compact,
                   refreshing: refreshing,
-                  usingSampleData: usingSampleData,
+                  directKma: directKma,
                 ),
               ),
               SizedBox(height: compact ? 8 : 12),
@@ -57,6 +59,7 @@ class MainTab extends StatelessWidget {
                 child: _LifestyleDashboard(
                   messages: today.lifestyleMessages,
                   compact: compact,
+                  serverFeaturesAvailable: serverFeaturesAvailable,
                 ),
               ),
             ],
@@ -72,14 +75,14 @@ class _TopWeatherCard extends StatelessWidget {
   final String mood;
   final bool compact;
   final bool refreshing;
-  final bool usingSampleData;
+  final bool directKma;
 
   const _TopWeatherCard({
     required this.today,
     required this.mood,
     required this.compact,
     required this.refreshing,
-    required this.usingSampleData,
+    required this.directKma,
   });
 
   @override
@@ -98,7 +101,7 @@ class _TopWeatherCard extends StatelessWidget {
             children: [
               _SourceBadge(
                 refreshing: refreshing,
-                usingSampleData: usingSampleData,
+                directKma: directKma,
                 dataSource: today.dataSource,
               ),
               const Spacer(),
@@ -161,7 +164,9 @@ class _TopWeatherCard extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  '체감 ${current.apparentTemperature.toStringAsFixed(1)}°',
+                  current.apparentTemperature == null
+                      ? '체감 미지원'
+                      : '체감 ${current.apparentTemperature!.toStringAsFixed(1)}°',
                   style: const TextStyle(
                     color: WeatherCareTheme.textSecondary,
                     fontSize: 12,
@@ -258,26 +263,22 @@ class _TopMetric extends StatelessWidget {
 
 class _SourceBadge extends StatelessWidget {
   final bool refreshing;
-  final bool usingSampleData;
+  final bool directKma;
   final String dataSource;
 
   const _SourceBadge({
     required this.refreshing,
-    required this.usingSampleData,
+    required this.directKma,
     required this.dataSource,
   });
 
   @override
   Widget build(BuildContext context) {
-    final label = refreshing
-        ? '서버 확인 중'
-        : usingSampleData
-            ? '샘플 데이터'
-            : dataSource;
+    final label = refreshing ? '서버 확인 중' : dataSource;
     final accent =
-        usingSampleData ? const Color(0xFFB56A32) : const Color(0xFF3C8C66);
+        directKma ? const Color(0xFFB56A32) : const Color(0xFF3C8C66);
     final background =
-        usingSampleData ? const Color(0xFFFFF0E3) : const Color(0xFFE9F7EF);
+        directKma ? const Color(0xFFFFF0E3) : const Color(0xFFE9F7EF);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
@@ -299,8 +300,8 @@ class _SourceBadge extends StatelessWidget {
             )
           else
             Icon(
-              usingSampleData
-                  ? Icons.science_outlined
+              directKma
+                  ? Icons.phone_android_rounded
                   : Icons.cloud_done_outlined,
               size: 13,
               color: accent,
@@ -323,14 +324,17 @@ class _SourceBadge extends StatelessWidget {
 class _LifestyleDashboard extends StatelessWidget {
   final List<LifestyleMessage> messages;
   final bool compact;
+  final bool serverFeaturesAvailable;
 
-  const _LifestyleDashboard({required this.messages, required this.compact});
+  const _LifestyleDashboard({
+    required this.messages,
+    required this.compact,
+    required this.serverFeaturesAvailable,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final display = messages.isEmpty
-        ? _fallbackLifestyleMessages
-        : messages.take(3).toList();
+    final display = messages.take(3).toList();
 
     return Container(
       width: double.infinity,
@@ -384,22 +388,52 @@ class _LifestyleDashboard extends StatelessWidget {
           ),
           SizedBox(height: compact ? 8 : 12),
           Expanded(
-            child: Row(
-              children: [
-                for (var index = 0; index < display.length; index++) ...[
-                  Expanded(
-                    child: _LifestyleActionCard(
-                      message: display[index],
-                      compact: compact,
-                    ),
-                  ),
-                  if (index < display.length - 1)
-                    SizedBox(width: compact ? 6 : 8),
-                ],
-              ],
-            ),
+            child: !serverFeaturesAvailable
+                ? const _LifestyleUnsupported()
+                : display.isEmpty
+                    ? const Center(child: Text('표시할 생활 날씨 정보가 없어요'))
+                    : Row(
+                        children: [
+                          for (var index = 0;
+                              index < display.length;
+                              index++) ...[
+                            Expanded(
+                              child: _LifestyleActionCard(
+                                message: display[index],
+                                compact: compact,
+                              ),
+                            ),
+                            if (index < display.length - 1)
+                              SizedBox(width: compact ? 6 : 8),
+                          ],
+                        ],
+                      ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LifestyleUnsupported extends StatelessWidget {
+  const _LifestyleUnsupported();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FC),
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: const Text(
+        '운영 서버 미연결로 미지원',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: WeatherCareTheme.textSecondary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -577,18 +611,3 @@ class _LifestyleCardPresentation {
     required this.subtitle,
   });
 }
-
-final _fallbackLifestyleMessages = [
-  LifestyleMessage(
-    type: LifestyleMessageType.laundryGood,
-    title: '빨래는 오전에',
-  ),
-  LifestyleMessage(
-    type: LifestyleMessageType.outdoorCaution,
-    title: '산책은 저녁에',
-  ),
-  LifestyleMessage(
-    type: LifestyleMessageType.ventilationGood,
-    title: '환기는 오후에',
-  ),
-];

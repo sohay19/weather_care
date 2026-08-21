@@ -66,6 +66,9 @@ export enum LifestyleInsightType {
   VEHICLE_FROST_RISK = 'VEHICLE_FROST_RISK',
   FREEZE_CAUTION = 'FREEZE_CAUTION',
   RAPID_TEMPERATURE_DROP = 'RAPID_TEMPERATURE_DROP',
+  DAILY_WEATHER_CHECK = 'DAILY_WEATHER_CHECK',
+  DAILY_HYDRATION = 'DAILY_HYDRATION',
+  FLEXIBLE_DAY_PLAN = 'FLEXIBLE_DAY_PLAN',
 }
 
 export type PrecipitationType =
@@ -213,7 +216,12 @@ export interface TodayWeatherResponse {
   current: WeatherSnapshot;
   hourly: WeatherSnapshot[];
   recommendations: Recommendation[];
-  lifestyleMessages: { type: LifestyleInsightType; title: string; description?: string }[];
+  lifestyleMessages: {
+    type: LifestyleInsightType;
+    title: string;
+    description?: string;
+    score: number;
+  }[];
   timeline: {
     timeLabel: string;
     stateLabel: string;

@@ -105,6 +105,28 @@ void main() {
     expect(result.serverFeaturesAvailable, isFalse);
   });
 
+  test('운영 서버와 앱 단기예보 조회를 선택적으로 실행할 수 있다', () async {
+    final service = WeatherService(
+      _FailingApiClient(),
+      directKma: KmaDirectWeatherService(
+        serviceKey: 'test%2Bkey',
+        client: kmaClient,
+        now: () => DateTime.parse('2026-08-20T01:00:00Z'),
+      ),
+      internetProbe: () async => true,
+    );
+
+    final serverResult = await service.fetchServerWeather(
+      installationId: 'test',
+    );
+    expect(serverResult.hasWeather, isFalse);
+    expect(serverResult.mode, WeatherLoadMode.unavailable);
+
+    final directResult = await service.fetchDirectWeather();
+    expect(directResult.hasWeather, isTrue);
+    expect(directResult.mode, WeatherLoadMode.directKma);
+  });
+
   test('시간대 예보는 forecastAt과 눈 예상 파생값을 사용한다', () {
     final response = TodayWeatherResponse.fromJson({
       'region': {'nx': 60, 'ny': 121, 'name': '수원'},

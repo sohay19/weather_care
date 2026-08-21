@@ -22,6 +22,7 @@ class WeatherCareTheme {
   static const Color attention = Color(0xFFB27A3D);
   static const Color attentionDeep = Color(0xFF7E582F);
   static const Color attentionSoft = Color(0xFFFAF3E8);
+  static const Color danger = Color(0xFFB4534B);
 
   static const TextStyle specialLabelStyle = TextStyle(
     fontFamily: fontMona,
@@ -92,7 +93,7 @@ class WeatherCareTheme {
         ),
         headlineSmall: TextStyle(
           fontFamily: fontNeoHyundai,
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
           color: textPrimary,

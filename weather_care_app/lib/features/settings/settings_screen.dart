@@ -6,8 +6,13 @@ import 'location_mode.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
+  final Future<void> Function()? onRefresh;
 
-  const SettingsScreen({super.key, this.embedded = false});
+  const SettingsScreen({
+    super.key,
+    this.embedded = false,
+    this.onRefresh,
+  });
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -22,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final body = ListView(
       key: widget.embedded ? const ValueKey('setting-tab') : null,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16, widget.embedded ? 12 : 4, 16, 32),
       children: [
         if (widget.embedded) ...[
@@ -323,10 +329,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
-    if (widget.embedded) return body;
+    final refreshableBody = RefreshIndicator(
+      color: WeatherCareTheme.primary,
+      onRefresh: widget.onRefresh ?? () async {},
+      child: body,
+    );
+    if (widget.embedded) return refreshableBody;
     return Scaffold(
       appBar: AppBar(title: const Text('설정')),
-      body: body,
+      body: refreshableBody,
     );
   }
 }

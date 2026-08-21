@@ -38,7 +38,6 @@ class DetailTab extends StatelessWidget {
             title: '상세 날씨',
             subtitle: '추천을 만든 시간별 근거를 숫자로 확인해요',
             icon: Icons.query_stats_rounded,
-            onRefresh: onRefresh,
           ),
           const SizedBox(height: 18),
           WeatherInfoCard(current: today.current),

@@ -154,6 +154,18 @@ _LifestylePresentation _presentationFor(LifestyleMessageType type) {
         icon: Icons.window_outlined,
         subtitle: '오후에는 창문을 짧게 열어도 좋아요',
       ),
+    LifestyleMessageType.dailyWeatherCheck => const _LifestylePresentation(
+        icon: Icons.schedule_rounded,
+        subtitle: '외출 전 시간대별 변화를 살펴봐요',
+      ),
+    LifestyleMessageType.dailyHydration => const _LifestylePresentation(
+        icon: Icons.local_drink_outlined,
+        subtitle: '하루 틈틈이 가볍게 수분을 채워요',
+      ),
+    LifestyleMessageType.flexibleDayPlan => const _LifestylePresentation(
+        icon: Icons.self_improvement_rounded,
+        subtitle: '오늘의 흐름에 맞춰 여유 있게 움직여요',
+      ),
   };
 }
 

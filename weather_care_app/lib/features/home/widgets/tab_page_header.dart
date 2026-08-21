@@ -6,16 +6,14 @@ class TabPageHeader extends StatelessWidget {
   final String eyebrow;
   final String title;
   final String subtitle;
-  final IconData icon;
-  final VoidCallback? onRefresh;
+  final IconData? icon;
 
   const TabPageHeader({
     super.key,
     required this.eyebrow,
     required this.title,
     required this.subtitle,
-    required this.icon,
-    this.onRefresh,
+    this.icon,
   });
 
   @override
@@ -23,16 +21,22 @@ class TabPageHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: WeatherCareTheme.primarySoft,
-            borderRadius: BorderRadius.circular(15),
+        if (icon != null) ...[
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: WeatherCareTheme.primarySoft,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(
+              icon,
+              color: WeatherCareTheme.primaryDeep,
+              size: 23,
+            ),
           ),
-          child: Icon(icon, color: WeatherCareTheme.primaryDeep, size: 23),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,14 +52,6 @@ class TabPageHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (onRefresh != null) ...[
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: '날씨 새로고침',
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh_rounded, size: 21),
-          ),
-        ],
       ],
     );
   }

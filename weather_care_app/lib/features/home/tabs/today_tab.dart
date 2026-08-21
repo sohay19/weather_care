@@ -39,7 +39,6 @@ class TodayTab extends StatelessWidget {
             title: '오늘을 챙겨요',
             subtitle: '${today.region.name}의 준비물과 생활 시점 안내',
             icon: Icons.work_outline_rounded,
-            onRefresh: onRefresh,
           ),
           const SizedBox(height: 18),
           _TodayBriefCard(

@@ -46,6 +46,20 @@ class WeatherService {
     int nx = 60,
     int ny = 121,
   }) async {
+    final serverResult = await fetchServerWeather(
+      installationId: installationId,
+      nx: nx,
+      ny: ny,
+    );
+    if (serverResult.hasWeather) return serverResult;
+    return fetchDirectWeather(nx: nx, ny: ny);
+  }
+
+  Future<WeatherLoadResult> fetchServerWeather({
+    required String installationId,
+    int nx = 60,
+    int ny = 121,
+  }) async {
     try {
       final responses = await Future.wait([
         client.get(
@@ -73,8 +87,19 @@ class WeatherService {
       );
     } catch (error) {
       log('Weather server unavailable (${error.runtimeType})');
+      return const WeatherLoadResult(
+        today: null,
+        weekly: null,
+        mode: WeatherLoadMode.unavailable,
+        message: '운영 서버에 연결하지 못했습니다.',
+      );
     }
+  }
 
+  Future<WeatherLoadResult> fetchDirectWeather({
+    int nx = 60,
+    int ny = 121,
+  }) async {
     if (directKma.isConfigured) {
       try {
         final direct = await directKma.fetch(nx: nx, ny: ny);

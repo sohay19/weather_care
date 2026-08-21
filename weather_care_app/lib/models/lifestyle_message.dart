@@ -12,6 +12,9 @@ enum LifestyleMessageType {
   largeTemperatureSwing,
   outdoorCaution,
   ventilationGood,
+  dailyWeatherCheck,
+  dailyHydration,
+  flexibleDayPlan,
 }
 
 extension LifestyleMessageTypeLabel on LifestyleMessageType {
@@ -30,6 +33,9 @@ extension LifestyleMessageTypeLabel on LifestyleMessageType {
       LifestyleMessageType.largeTemperatureSwing => '하루 기온 차가 커요',
       LifestyleMessageType.outdoorCaution => '야외활동 시 주의가 필요해요',
       LifestyleMessageType.ventilationGood => '환기하기 좋은 시간이에요',
+      LifestyleMessageType.dailyWeatherCheck => '시간대별 흐름을 확인해요',
+      LifestyleMessageType.dailyHydration => '물 한 모금을 챙겨요',
+      LifestyleMessageType.flexibleDayPlan => '여유 있게 움직여요',
     };
   }
 
@@ -48,6 +54,9 @@ extension LifestyleMessageTypeLabel on LifestyleMessageType {
       LifestyleMessageType.largeTemperatureSwing => 'LARGE_TEMPERATURE_SWING',
       LifestyleMessageType.outdoorCaution => 'OUTDOOR_ACTIVITY_CAUTION',
       LifestyleMessageType.ventilationGood => 'VENTILATION_GOOD',
+      LifestyleMessageType.dailyWeatherCheck => 'DAILY_WEATHER_CHECK',
+      LifestyleMessageType.dailyHydration => 'DAILY_HYDRATION',
+      LifestyleMessageType.flexibleDayPlan => 'FLEXIBLE_DAY_PLAN',
     };
   }
 }
@@ -56,11 +65,13 @@ class LifestyleMessage {
   final LifestyleMessageType type;
   final String title;
   final String? description;
+  final double score;
 
   LifestyleMessage({
     required this.type,
     required this.title,
     this.description,
+    this.score = 0,
   });
 
   factory LifestyleMessage.fromJson(Map<String, dynamic> json) {
@@ -79,12 +90,16 @@ class LifestyleMessage {
       'LARGE_TEMPERATURE_SWING' => LifestyleMessageType.largeTemperatureSwing,
       'OUTDOOR_ACTIVITY_CAUTION' => LifestyleMessageType.outdoorCaution,
       'VENTILATION_GOOD' => LifestyleMessageType.ventilationGood,
+      'DAILY_WEATHER_CHECK' => LifestyleMessageType.dailyWeatherCheck,
+      'DAILY_HYDRATION' => LifestyleMessageType.dailyHydration,
+      'FLEXIBLE_DAY_PLAN' => LifestyleMessageType.flexibleDayPlan,
       _ => LifestyleMessageType.outdoorCaution,
     };
     return LifestyleMessage(
       type: parsed,
       title: json['title']?.toString() ?? parsed.title,
       description: json['description']?.toString(),
+      score: (json['score'] as num?)?.toDouble() ?? 0,
     );
   }
 }

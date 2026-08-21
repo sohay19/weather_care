@@ -33,7 +33,6 @@ class WeekTab extends StatelessWidget {
             title: '한 주 날씨',
             subtitle: '날짜별 날씨와 대표 준비물을 미리 살펴봐요',
             icon: Icons.calendar_month_outlined,
-            onRefresh: onRefresh,
           ),
           const SizedBox(height: 18),
           _WeekSummary(

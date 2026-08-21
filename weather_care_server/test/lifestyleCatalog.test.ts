@@ -3,7 +3,13 @@ import { runLifestyleWeatherEngine } from '../src/lifestyle/lifestyleWeatherEngi
 import { lifestyleMessageFor } from '../src/lifestyle/lifestyleTemplates';
 import { runWeatherRuleEngineForHourly } from '../src/rules/weatherRuleEngine';
 import { runRecommendationEngine } from '../src/recommendations/recommendationEngine';
-import { AmountRange, LifestyleInsightType, WeatherSnapshot } from '../src/types';
+import { buildLifestyleMessages } from '../src/presentation/lifestyleMessages';
+import {
+  AmountRange,
+  LifestyleInsight,
+  LifestyleInsightType,
+  WeatherSnapshot,
+} from '../src/types';
 
 describe('Lifestyle v1.1 catalog', () => {
   it('derives a commute weather change and selects the matching message', () => {
@@ -66,6 +72,24 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(insights.map((item) => item.type)).not.toContain(
       LifestyleInsightType.VENTILATION_WINDOW,
     );
+  });
+
+  it('keeps server TODO messages at a minimum of three', () => {
+    const insights: LifestyleInsight[] = [
+      {
+        type: LifestyleInsightType.RAIN_GEAR_USEFUL,
+        score: 90,
+        sourceFacts: [],
+      },
+    ];
+
+    const messages = buildLifestyleMessages(insights);
+
+    expect(messages).toHaveLength(3);
+    expect(messages[0].type).toBe(LifestyleInsightType.RAIN_GEAR_USEFUL);
+    expect(messages[0].score).toBe(90);
+    expect(messages.slice(1).every((message) => message.score === 0)).toBe(true);
+    expect(messages.every((message) => message.title.length > 0)).toBe(true);
   });
 });
 

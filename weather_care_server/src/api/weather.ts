@@ -21,8 +21,9 @@ import { runRecommendationEngine } from '../recommendations/recommendationEngine
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
 import { regionFromQuery } from '../utils';
 import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
-import { lifestyleMessageFor } from '../lifestyle/lifestyleTemplates';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
+import { buildWeatherBrief } from '../presentation/weatherBrief';
+import { buildLifestyleMessages } from '../presentation/lifestyleMessages';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -54,14 +55,11 @@ router.get('/today', async (c) => {
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
       region: { nx, ny, name: regionName(nx, ny) },
-      brief: buildBrief(forecast),
+      brief: buildWeatherBrief(forecast, { regionKey: `${nx}:${ny}` }),
       current: forecast.current,
       hourly: forecast.hourly,
       recommendations,
-      lifestyleMessages: lifestyle.map((item) => ({
-        type: item.type,
-        ...lifestyleMessageFor(item.type, item.score, item.context),
-      })),
+      lifestyleMessages: buildLifestyleMessages(lifestyle),
       timeline: buildTimeline(forecast.hourly),
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
@@ -142,22 +140,6 @@ function aggregateDecisionSnapshot(forecast: WeatherForecast): WeatherSnapshot {
       0,
     ),
   };
-}
-
-function buildBrief(forecast: WeatherForecast): string {
-  const current = forecast.current;
-  const temperature = current.temperature;
-  const temperatureLabel =
-    temperature === undefined ? '' : `, ${temperature.toFixed(1)}°`;
-  const rain = forecast.hourly
-    .slice(0, 24)
-    .find((item) => (item.precipitationProbability ?? 0) >= 50);
-
-  if (rain) {
-    const hour = rain.observedAt.slice(11, 13);
-    return `현재 ${current.skyCondition ?? '날씨 확인 중'}${temperatureLabel}, ${hour}시 전후 비 가능성이 있어요.`;
-  }
-  return `현재 ${current.skyCondition ?? '날씨 확인 중'}${temperatureLabel}예요.`;
 }
 
 function buildTimeline(hourly: WeatherSnapshot[]) {

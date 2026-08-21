@@ -268,6 +268,24 @@ export const lifestyleMessageCatalog: Record<
       description: '여러 겹으로 입는 편이 좋아요.',
     },
   ],
+  DAILY_WEATHER_CHECK: [
+    {
+      title: '시간대별 흐름 확인하기',
+      description: '외출 전 오늘의 변화를 한 번 살펴보세요.',
+    },
+  ],
+  DAILY_HYDRATION: [
+    {
+      title: '물 한 모금 챙기기',
+      description: '하루 틈틈이 가볍게 수분을 채워요.',
+    },
+  ],
+  FLEXIBLE_DAY_PLAN: [
+    {
+      title: '여유 있게 움직이기',
+      description: '오늘의 흐름에 맞춰 천천히 시작해요.',
+    },
+  ],
 };
 
 export function lifestyleMessageFor(

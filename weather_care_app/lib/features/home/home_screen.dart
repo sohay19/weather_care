@@ -14,6 +14,7 @@ import 'tabs/detail_tab.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
 import 'tabs/week_tab.dart';
+import 'widgets/server_connection_failure_dialog.dart';
 import 'widgets/weather_status_view.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
+  bool _loading = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
   @override
@@ -59,15 +61,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData() async {
     final service = _service;
-    if (service == null) return;
+    if (service == null || _loading) return;
 
-    final result = await service.fetchWeather(
-      installationId: _settings.installationId,
-      nx: 60,
-      ny: 121,
-    );
+    _loading = true;
+    if (_today == null || _weekly == null) {
+      setState(() {
+        _loadMode = null;
+        _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
+      });
+    }
 
-    if (!mounted) return;
+    try {
+      while (mounted) {
+        final serverResult = await service.fetchServerWeather(
+          installationId: _settings.installationId,
+          nx: 60,
+          ny: 121,
+        );
+
+        if (!mounted) return;
+        if (serverResult.hasWeather) {
+          _applyResult(serverResult);
+          return;
+        }
+
+        final action = await showDialog<ServerFailureAction>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const ServerConnectionFailureDialog(),
+        );
+        if (!mounted) return;
+
+        if (action == ServerFailureAction.retryServer) {
+          continue;
+        }
+
+        if (action == ServerFailureAction.useDirectForecast) {
+          final directResult = await service.fetchDirectWeather(
+            nx: 60,
+            ny: 121,
+          );
+          if (!mounted) return;
+          _applyResult(directResult);
+          return;
+        }
+
+        _applyResult(serverResult);
+        return;
+      }
+    } finally {
+      _loading = false;
+    }
+  }
+
+  void _applyResult(WeatherLoadResult result) {
     setState(() {
       _today = result.today;
       _weekly = result.weekly;
@@ -142,14 +189,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
                     ),
-                    const SettingsScreen(embedded: true),
+                    SettingsScreen(
+                      embedded: true,
+                      onRefresh: _loadData,
+                    ),
                   ]
                 : [
                     _statusView('today-tab'),
                     _statusView('detail-tab'),
                     _statusView('main-tab'),
                     _statusView('week-tab'),
-                    const SettingsScreen(embedded: true),
+                    SettingsScreen(
+                      embedded: true,
+                      onRefresh: _loadData,
+                    ),
                   ],
           ),
         ),
@@ -168,32 +221,62 @@ class _HomeScreenState extends State<HomeScreen> {
           destinations: const [
             NavigationDestination(
               tooltip: '오늘의 가방과 오늘 하루',
-              icon: Icon(Icons.work_outline_rounded),
-              selectedIcon: Icon(Icons.work_rounded),
+              icon: Icon(
+                Icons.work_outline_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
+              selectedIcon: Icon(
+                Icons.work_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
               label: 'Today',
             ),
             NavigationDestination(
               tooltip: '상세 날씨',
-              icon: Icon(Icons.query_stats_outlined),
-              selectedIcon: Icon(Icons.query_stats_rounded),
+              icon: Icon(
+                Icons.query_stats_outlined,
+                color: WeatherCareTheme.textSecondary,
+              ),
+              selectedIcon: Icon(
+                Icons.query_stats_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
               label: 'Detail',
             ),
             NavigationDestination(
               tooltip: '메인',
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
+              icon: Icon(
+                Icons.home_outlined,
+                color: WeatherCareTheme.textSecondary,
+              ),
+              selectedIcon: Icon(
+                Icons.home_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
               label: 'Main',
             ),
             NavigationDestination(
               tooltip: '한 주 날씨',
-              icon: Icon(Icons.calendar_month_outlined),
-              selectedIcon: Icon(Icons.calendar_month_rounded),
+              icon: Icon(
+                Icons.calendar_month_outlined,
+                color: WeatherCareTheme.textSecondary,
+              ),
+              selectedIcon: Icon(
+                Icons.calendar_month_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
               label: 'Week',
             ),
             NavigationDestination(
               tooltip: '설정',
-              icon: Icon(Icons.tune_outlined),
-              selectedIcon: Icon(Icons.tune_rounded),
+              icon: Icon(
+                Icons.tune_outlined,
+                color: WeatherCareTheme.textSecondary,
+              ),
+              selectedIcon: Icon(
+                Icons.tune_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
               label: 'Setting',
             ),
           ],

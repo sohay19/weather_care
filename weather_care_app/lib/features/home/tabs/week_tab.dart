@@ -32,7 +32,7 @@ class WeekTab extends StatelessWidget {
           TabPageHeader(
             eyebrow: 'WEEK',
             title: '이번주 날씨',
-            subtitle: '한 주의 날씨와 대표 준비물을 미리 살펴봐요',
+            subtitle: '한 주의 날씨와 준비물을 미리 살펴봐요',
             icon: Icons.calendar_month_outlined,
           ),
           const SizedBox(height: 18),

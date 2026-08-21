@@ -51,7 +51,7 @@ class DetailTab extends StatelessWidget {
           else
             const ServerFeatureUnavailableCard(
               icon: Icons.fact_check_outlined,
-              title: '챙김 근거',
+              title: '챙김 이유',
             ),
           const SizedBox(height: 16),
           _HourlyForecastCard(items: today.hourly),
@@ -80,7 +80,7 @@ class _RecommendationEvidence extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const HomeSectionHeader(
-            title: '챙김 근거',
+            title: '챙김 이유',
             subtitle: '추천을 만든 실제 날씨 수치를 함께 보여줘요',
           ),
           const SizedBox(height: 16),

@@ -9,7 +9,7 @@
 - `lib/models/*`: Recommendation/Lifestyle/Weather/Settings 모델
 - `lib/services/*`: API 클라이언트 및 서비스
 - `lib/features/home/home_screen.dart`: Today - Detail - Main - Week - Setting 5탭 Shell
-- `lib/features/home/tabs/*`: 비스크롤 Main, 오늘 준비, 시간별 상세, 주간 화면
+- `lib/features/home/tabs/*`: 한 화면 Main(당겨서 새로고침용 스크롤 표면), 오늘 준비, 시간별 상세, 주간 화면
 - `lib/features/settings/*`: 설치/알림 토글 중심의 설정 화면
 - `../weather_care_server`: 별도 Cloudflare Workers API 서버
 
@@ -40,7 +40,7 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
 별도 값을 지정하지 않으면 모든 플랫폼에서 위 Cloudflare 운영 서버를 사용합니다.
-운영 응답을 사용하면 홈 배지에 서버가 내려준 `기상청 단기예보` 출처가 표시됩니다.
+운영 응답에서는 서버가 기상청 단기예보에 생활기상지수 자외선과 에어코리아 PM10·PM2.5를 병합합니다. 앱은 `current.uvIndex`, `current.pm10`, `current.pm25`를 파싱하고, 결측시 `--`를 표시합니다.
 
 운영 서버 장애 시 앱이 기상청 단기예보를 직접 조회하게 하려면
 `config/kma.config.json`에 공공데이터포털 일반 인증키를 입력합니다.
@@ -78,4 +78,4 @@ Copy-Item config/kma.config.example.json config/kma.config.json
 - GPS 권한 수집 및 지역 선택 플로우 구현
 - 앱 시작 시 서버와의 설치/FCM 토큰 동기화
 - 실제 푸시/딥링크 매핑 구현
-- 미세먼지·자외선 공식 Provider와 서버 판단 근거 연결
+- Setting의 지역 선택과 서버 환경 Provider 지역 카탈로그 연결

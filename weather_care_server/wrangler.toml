@@ -12,5 +12,12 @@ database_id = "9d1c83ca-9626-4b92-b4ea-db7433115324"
 APP_ORIGIN = "http://localhost:8787"
 FcmProject = "weather-care-dev"
 
+[secrets]
+required = ["KMA_SERVICE_KEY"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 [triggers]
 crons = ["0 7 * * *", "10 5 * * *"]

@@ -14,7 +14,7 @@
 
 | 영역 | 앱 (`weather_care_app`) | 서버 (`weather_care_server`) |
 | --- | --- | --- |
-| 날씨 데이터 | 서버를 우선 호출하고, 서버 장애 시 기상청 단기예보 원시 데이터를 직접 조회 | 기상청 단기예보를 호출하고 공통 모델로 정규화 |
+| 날씨 데이터 | 서버를 우선 호출하고, 서버 장애 시 기상청 단기예보 원시 데이터를 직접 조회 | 기상청 단기예보·생활기상지수 V5와 에어코리아 관측값을 공통 모델로 정규화·병합 |
 | 날씨 판단 | 서버가 내려준 상태와 설명을 신뢰하고 표시 | `WeatherRuleEngine`에서 강수, 강설, 자외선, 더위, 추위, 대기질 등의 객관적 상태를 판단 |
 | 생활 해석 | LifestyleMessage를 생활 날씨 UI로 표시 | `LifestyleWeatherEngine`에서 RuleFact를 생활 관점의 LifestyleInsight로 변환 |
 | 준비물 추천 | Recommendation을 우선순위대로 표시하고 아이콘·색상·딥링크를 매핑 | `RecommendationEngine`에서 우산, 양산, 겉옷, 마스크, 물, 선크림, 폭설 주의를 생성하고 중복·우선순위·사용자 설정을 적용 |
@@ -28,7 +28,9 @@
 
 ```mermaid
 flowchart LR
-    provider["기상청 단기예보 API"] --> normalize["KmaWeatherProvider"]
+    weather["기상청 단기예보"] --> normalize["날씨 정규화"]
+    uv["기상청 생활기상지수 V5"] --> normalize
+    air["에어코리아 실시간 관측"] --> normalize
     normalize --> rules["WeatherRuleEngine"]
     rules --> lifestyle["LifestyleWeatherEngine"]
     lifestyle --> recommendation["RecommendationEngine"]
@@ -71,12 +73,13 @@ flowchart LR
 - Rule/Lifestyle/Recommendation Engine 모듈 구현
 - D1 Repository와 Migration 초안 구현
 - Weather Provider는 공공데이터포털의 기상청 단기예보 API와 연결
+- 자외선은 기상청 생활기상지수 V5의 3시간 예측, PM10·PM2.5·오존은 에어코리아 실시간 관측값을 사용
+- 환경 Provider는 D1 캐시, 제한된 stale-if-error, 개별 가용 상태를 제공하며 장애가 기온·강수 API 전체를 실패시키지 않음
 - Weekly API는 기상청 단기예보가 제공하는 오늘부터 글피까지 반환
-- 미세먼지·자외선 Provider는 아직 연결하지 않아 해당 값은 결측 처리
 - Recommendation 알림 조회는 Placeholder로 빈 배열을 반환
 - FCM 전송 함수는 TODO 상태이며 실제 Push를 발송하지 않음
 
-서버의 기상청 API 키는 로컬 `.dev.vars` 또는 운영 Worker Secret으로 주입합니다.
+서버의 공공데이터포털 일반 인증키는 로컬 `.dev.vars` 또는 운영 Worker Secret의 `KMA_SERVICE_KEY`로 주입합니다. 같은 키를 사용하더라도 공공데이터포털에서 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보 세 서비스를 각각 활용신청해야 전체 지표가 제공됩니다.
 앱 직접 조회용 키는 Git 제외 대상 `config/kma.config.json`에 저장하며 앱 시작 시
 불러옵니다. 이 파일은 Debug/Release 바이너리에 포함되어 추출될 수 있으므로 호출량과
 키 교체 정책을 별도로 관리해야 합니다.

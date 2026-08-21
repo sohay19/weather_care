@@ -47,7 +47,7 @@ class MainTab extends StatelessWidget {
                       TabPageHeader(
                         eyebrow: dateLabel,
                         title: '${today.region.name}이라면 확인하세요',
-                        subtitle: '핵심만 한 화면에 정리했어요',
+                        subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                       ),
                       SizedBox(height: compact ? 8 : 12),
                       Expanded(

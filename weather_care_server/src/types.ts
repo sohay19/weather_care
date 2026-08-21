@@ -203,10 +203,21 @@ export interface Installation {
   timezone: string;
 }
 
-export interface ServerEnv {
-  DB: any;
-  APP_ORIGIN?: string;
-  KMA_SERVICE_KEY?: string;
+export type ServerEnv = CloudflareBindings;
+
+export type EnvironmentalSourceState =
+  | 'AVAILABLE'
+  | 'CACHED'
+  | 'STALE'
+  | 'UNAVAILABLE'
+  | 'UNSUPPORTED_REGION';
+
+export interface EnvironmentalSourceStatus {
+  provider: string;
+  state: EnvironmentalSourceState;
+  observedAt?: string;
+  cachedAt?: string;
+  reason?: 'PROVIDER_UNAVAILABLE' | 'UNSUPPORTED_REGION';
 }
 
 export interface TodayWeatherResponse {
@@ -228,6 +239,10 @@ export interface TodayWeatherResponse {
     detail: string;
     recommendations: Recommendation[];
   }[];
+  environmentalSources: {
+    uv: EnvironmentalSourceStatus;
+    airQuality: EnvironmentalSourceStatus;
+  };
   decisionVersion?: string;
   catalogVersion?: string;
   generatedAt?: string;

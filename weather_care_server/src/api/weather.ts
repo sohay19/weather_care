@@ -24,6 +24,14 @@ import { runRecommendationNotificationJob } from '../notification/notificationSc
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBrief } from '../presentation/weatherBrief';
 import { buildLifestyleMessages } from '../presentation/lifestyleMessages';
+import {
+  enrichForecastWithEnvironmentalData,
+  loadEnvironmentalData,
+} from '../providers/environmental/environmentalDataService';
+import {
+  regionMetadataForGrid,
+  regionName,
+} from '../regions/regionCatalog';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -44,9 +52,17 @@ router.get('/today', async (c) => {
   }
 
   try {
-    const forecast = await new KmaWeatherProvider({
-      serviceKey: c.env.KMA_SERVICE_KEY,
-    }).getForecastByRegion(nx, ny);
+    const region = regionMetadataForGrid(nx, ny);
+    const [weatherForecast, environmentalData] = await Promise.all([
+      new KmaWeatherProvider({
+        serviceKey: c.env.KMA_SERVICE_KEY,
+      }).getForecastByRegion(nx, ny),
+      loadEnvironmentalData(c.env, region),
+    ]);
+    const forecast = enrichForecastWithEnvironmentalData(
+      weatherForecast,
+      environmentalData,
+    );
     const decisionHourly = forecast.hourly.slice(0, 24);
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
@@ -61,6 +77,7 @@ router.get('/today', async (c) => {
       recommendations,
       lifestyleMessages: buildLifestyleMessages(lifestyle),
       timeline: buildTimeline(forecast.hourly),
+      environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
       generatedAt: new Date().toISOString(),
@@ -202,11 +219,6 @@ function weekdayLabel(kmaDate: string): string {
     ),
   );
   return ['일', '월', '화', '수', '목', '금', '토'][date.getUTCDay()];
-}
-
-function regionName(nx: number, ny: number): string {
-  if (nx === 60 && ny === 121) return '수원';
-  return '선택 지역';
 }
 
 function formatTemperature(value?: number): string {

@@ -547,3 +547,46 @@
   - 앱 `flutter build apk --debug`: `app-debug.apk` 생성 성공.
   - 서버 `npx tsc --noEmit`: 통과.
   - 서버 Vitest: 4파일 22개 모두 통과.
+
+### 운영 자외선·미세먼지 결측 진단
+- 사용자가 수정한 Main 헤더 부제 `화면을 아래로 당기면 최신 날씨 정보를 가져와요`는 그대로 보존함.
+- 운영 `/api/v1/weather/today`를 수원(60,121)과 서울(60,127)에서 조회했으며 둘 다 200 응답이지만 `current` 내 `uvIndex`, `pm10`, `pm25`가 필드 자체로 없음.
+- 각 응답의 `hourly` 48개에도 자외선·PM10·PM2.5가 포함된 슬롯은 0개임.
+- 원인은 앱 파싱이 아니라 서버 Provider 미구현임.
+  - Today API는 `KmaWeatherProvider` 하나만 호출함.
+  - 해당 Provider는 기상청 단기예보의 `TMP, REH, WSD, VEC, POP, PTY, PCP, SNO, SKY`만 정규화하며 `uvIndex`, `pm10`, `pm25`를 생성하지 않음.
+  - `AirQualityProvider` 인터페이스는 존재하지만 구현체와 Today API 주입·병합 로직이 없음.
+  - `ServerEnv`와 운영 비밀값 안내도 `KMA_SERVICE_KEY`만 정의해 대기질 Provider용 설정이 없음.
+- 앱의 `CurrentWeather.fromJson()`과 Main 지표 UI는 세 필드를 정상 파싱·표시하므로 서버가 값을 제공하면 추가 앱 계약 변경 없이 표시 가능함.
+- 이번 작업은 진단만 수행했으며 Provider 구현·운영 secret 등록·Worker 배포는 수행하지 않음.
+
+### 운영 자외선·미세먼지 Provider 구현 및 전체 문서 동기화
+- 기존 진단에서 확인한 환경 데이터 결측을 실제 서버 기능으로 구현함.
+  - `KmaUvProvider`: 기상청 생활기상지수 V5 `getUVIdxV5`의 `h0`~`h75` 값을 3시간 간격 자외선 예측으로 정규화함.
+  - `AirKoreaAirQualityProvider`: 에어코리아 측정소별 실시간 자료에서 PM10·PM2.5·오존과 등급을 정규화함.
+  - 수원 `60:121`은 자외선 행정코드 `4111000000`·인계동 측정소, 서울 `60:127`은 `1100000000`·종로구 측정소로 매핑함.
+- Today API가 단기예보와 환경 Provider를 병렬 조회한 뒤 병합하도록 변경함.
+  - 자외선은 유효한 3시간 구간의 `current`와 `hourly`에 반영함.
+  - 대기질은 실시간 관측을 미래 예보로 오해하지 않도록 `current`와 첫 `hourly`에만 반영함.
+  - `environmentalSources`에 `AVAILABLE`, `CACHED`, `STALE`, `UNAVAILABLE`, `UNSUPPORTED_REGION`을 독립적으로 반환함.
+  - 환경 Provider 한쪽 또는 양쪽이 실패해도 단기예보가 정상이면 Today 응답 전체를 실패시키지 않음.
+- 기존 D1 `weather_cache`를 이용해 자외선 2시간·대기질 30분 fresh 캐시를 적용함. 새 조회 실패 시 자외선 최대 8시간, 대기질 최대 3시간 값만 `STALE`로 허용함.
+- `KMA_SERVICE_KEY`를 세 서비스가 함께 사용하는 일반 인증키로 유지하고 Worker 필수 secret 및 observability 설정을 명시함. 비밀값은 로그나 저장소에 추가하지 않음.
+- 현재 앱의 Main 부제 `화면을 아래로 당기면 최신 날씨 정보를 가져와요`를 보존함. 앱은 이미 `uvIndex`, `pm10`, `pm25` 결측·위험색 표시 계약을 지원하므로 별도 JSON 모델 변경이 필요하지 않음.
+- 현재 기준에 맞춰 루트·앱·서버 README, `docs/앱_탭_구성_현황.md`, `docs/메인_브리핑_문구_기획.md`를 갱신함.
+- DOCX 4종을 2026-08-21 기준으로 갱신함.
+  - 앱/서버 개발명세와 문구 카탈로그 v1.0/v1.1에 환경 Provider 원본 시간, 병합 범위, 결측·캐시 정책, 운영 승인 조건을 추가함.
+  - `scripts/update_docx_specs.py`로 날짜·현재 새로고침 설명·환경 부록 표 서식·접근성 속성 보정을 반복 적용할 수 있게 함.
+  - 문서 제목 메타데이터, 모든 표의 반복 머리글, 빈 셀 부재를 검사함.
+  - Microsoft Word 최종 렌더 기준 서버 17쪽, v1.0 17쪽, v1.1 24쪽, 앱 14쪽이며 전체 페이지와 환경 부록에서 잘림·의도치 않은 빈 페이지가 없음을 확인함.
+- 검증 결과:
+  - 서버 `npm test`: 7파일 29개 모두 통과.
+  - 서버 `npx tsc --noEmit`: 통과.
+  - `wrangler types --check`, `wrangler deploy --dry-run`, `wrangler check startup`: 모두 통과. 실제 배포는 수행하지 않음.
+  - 앱 `flutter analyze`: 이슈 없음.
+  - 앱 `flutter test`: 18개 모두 통과.
+  - 앱 `flutter build apk --debug`: 성공.
+- 운영 반영 전 외부 전제조건:
+  - 공공데이터포털 계정에서 기상청 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보를 각각 활용신청·승인해야 함.
+  - 로컬에 있던 일반 인증키로 세 API를 실호출했을 때 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`가 반환되어 실제 값의 종단간 검증은 승인된 키가 준비된 뒤 가능함.
+  - 승인된 키를 Worker secret `KMA_SERVICE_KEY`에 등록하고 Worker를 배포한 뒤 수원·서울 Today 응답의 `current.uvIndex`, `current.pm10`, `current.pm25`, `environmentalSources`를 운영 스모크 테스트해야 함.

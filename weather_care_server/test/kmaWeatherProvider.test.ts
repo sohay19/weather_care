@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildForecastFromItems,
+  calculateKmaApparentTemperature,
   KmaForecastItem,
   KmaWeatherProvider,
   latestBaseDateTimes,
@@ -48,6 +49,33 @@ describe('KmaWeatherProvider', () => {
     });
   });
 
+  it('uses the official KMA seasonal apparent-temperature formulas', () => {
+    expect(
+      calculateKmaApparentTemperature(
+        28,
+        70,
+        2.2,
+        '2026-08-20T10:00:00+09:00',
+      ),
+    ).toBe(29.3);
+    expect(
+      calculateKmaApparentTemperature(
+        0,
+        60,
+        1.3,
+        '2026-02-20T10:00:00+09:00',
+      ),
+    ).toBe(-1.4);
+    expect(
+      calculateKmaApparentTemperature(
+        18,
+        60,
+        1.3,
+        '2026-10-20T10:00:00+09:00',
+      ),
+    ).toBe(18);
+  });
+
   it('builds current, hourly and daily weather from forecast items', () => {
     const items = [
       ...slot('20260820', '1000', {
@@ -92,6 +120,7 @@ describe('KmaWeatherProvider', () => {
 
     expect(forecast.dataSource).toBe('기상청 단기예보');
     expect(forecast.current.temperature).toBe(28);
+    expect(forecast.current.apparentTemperature).toBe(29.3);
     expect(forecast.current.minTemperature).toBe(22);
     expect(forecast.current.maxTemperature).toBe(31);
     expect(forecast.hourly).toHaveLength(3);

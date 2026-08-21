@@ -180,14 +180,13 @@ class _TopWeatherCard extends StatelessWidget {
                         style: style,
                       ),
                       TextSpan(
-                        text: apparentTemperature == null
-                            ? ', 체감 미지원'
-                            : ', 체감 상 ',
+                        text:
+                            apparentTemperature == null ? ', 체감 미지원' : ', 체감은 ',
                         style: style,
                       ),
                       if (apparentTemperature != null)
                         TextSpan(
-                          text: _apparentExpression(apparentTemperature),
+                          text: apparentTemperatureLabel(apparentTemperature),
                           style: style,
                         ),
                     ],
@@ -538,13 +537,21 @@ String _weatherExpression(String? sky) {
   return '맑은 하늘';
 }
 
-String _apparentExpression(double temperature) {
-  if (temperature >= 33) return '한낮의 온실';
-  if (temperature >= 28) return '따뜻한 햇살';
-  if (temperature >= 20) return '가벼운 바람';
-  if (temperature >= 10) return '선선한 산책길';
-  if (temperature >= 0) return '차가운 공기';
-  return '얼어붙은 아침';
+String apparentTemperatureLabel(double temperature) {
+  const heatDangerThreshold = 38.0;
+  const heatImmediateActionThreshold = 35.0;
+  const heatActionThreshold = 33.0;
+  const heatSensationThreshold = 28.0;
+  const slightHeatSensationThreshold = 20.0;
+
+  if (temperature >= heatDangerThreshold) return '위험한 더위';
+  if (temperature >= heatImmediateActionThreshold) return '더위 경계';
+  if (temperature >= heatActionThreshold) return '더위 주의';
+  if (temperature >= heatSensationThreshold) return '더움';
+  if (temperature >= slightHeatSensationThreshold) return '조금 더움';
+  if (temperature >= 10) return '선선한 편';
+  if (temperature >= 0) return '쌀쌀한 편';
+  return '추운 날씨';
 }
 
 IconData _weatherIcon(String? sky) {

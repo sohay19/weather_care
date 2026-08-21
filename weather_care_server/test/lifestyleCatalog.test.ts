@@ -8,6 +8,7 @@ import {
   AmountRange,
   LifestyleInsight,
   LifestyleInsightType,
+  WeatherRuleFactType,
   WeatherSnapshot,
 } from '../src/types';
 
@@ -90,6 +91,57 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(messages[0].score).toBe(90);
     expect(messages.slice(1).every((message) => message.score === 0)).toBe(true);
     expect(messages.every((message) => message.title.length > 0)).toBe(true);
+  });
+
+  it('keeps laundry as a TODO without creating a parasol recommendation', () => {
+    const recommendations = runRecommendationEngine([
+      {
+        type: LifestyleInsightType.LAUNDRY_GOOD,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.LAUNDRY_DRYING_GOOD],
+      },
+    ]);
+
+    expect(recommendations).toEqual([]);
+  });
+
+  it('creates a heavy-snow recommendation only for a heavy-snow fact', () => {
+    const snowLikely = runRecommendationEngine([
+      {
+        type: LifestyleInsightType.SNOW_TRAVEL_CAUTION,
+        score: 70,
+        sourceFacts: [WeatherRuleFactType.SNOW_LIKELY],
+      },
+    ]);
+    expect(snowLikely).toEqual([]);
+
+    const heavySnow = runRecommendationEngine([
+      {
+        type: LifestyleInsightType.SNOW_TRAVEL_CAUTION,
+        score: 95,
+        sourceFacts: [WeatherRuleFactType.HEAVY_SNOW],
+      },
+    ]);
+    expect(heavySnow.map((item) => item.type)).toContain(
+      'HEAVY_SNOW_CAUTION',
+    );
+  });
+
+  it('creates a mask recommendation from a bad air-quality grade alone', () => {
+    const hourly = [
+      snapshot(10, {
+        pm10: 10,
+        pm25: 10,
+        airQualityGrade: 'Bad',
+      }),
+    ];
+    const facts = runWeatherRuleEngineForHourly(hourly);
+    const insights = runLifestyleWeatherEngine(facts, hourly);
+    const mask = runRecommendationEngine(insights).find(
+      (item) => item.type === 'MASK',
+    );
+
+    expect(mask?.sourceFields).toContain('airQualityGrade');
   });
 });
 

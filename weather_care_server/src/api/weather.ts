@@ -112,7 +112,7 @@ router.get('/weekly', async (c) => {
         weatherLabel: day.skyCondition,
         min: formatTemperature(day.minTemperature),
         max: formatTemperature(day.maxTemperature),
-        recommendations: recommendationsForDay(day),
+        recommendations: recommendationsForDay(day, forecast.hourly),
       })),
     });
   } catch (error) {
@@ -194,13 +194,29 @@ function recommendationsForSnapshot(snapshot: WeatherSnapshot): Recommendation[]
   );
 }
 
-function recommendationsForDay(day: DailyWeatherForecast): Recommendation[] {
+export function recommendationsForDay(
+  day: DailyWeatherForecast,
+  hourly: WeatherSnapshot[],
+): Recommendation[] {
+  const dayHourly = hourly.filter((item) => {
+    const date = (item.forecastAt ?? item.observedAt)
+      .slice(0, 10)
+      .replaceAll('-', '');
+    return date === day.date;
+  });
+  if (dayHourly.length > 0) {
+    const facts = runWeatherRuleEngineForHourly(dayHourly);
+    return runRecommendationEngine(
+      runLifestyleWeatherEngine(facts, dayHourly),
+      defaultSettings,
+    ).slice(0, 2);
+  }
+
   const snapshot: WeatherSnapshot = {
     observedAt: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}T12:00:00+09:00`,
     temperature: day.maxTemperature,
     minTemperature: day.minTemperature,
     maxTemperature: day.maxTemperature,
-    apparentTemperature: day.maxTemperature,
     precipitationProbability: day.precipitationProbability,
     precipitationAmount: day.precipitationAmount,
     snowProbability: day.snowProbability,

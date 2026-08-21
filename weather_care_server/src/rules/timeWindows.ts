@@ -36,7 +36,7 @@ export function isDayWindow(snapshot: WeatherSnapshot): boolean {
 
 export function isNightWindow(snapshot: WeatherSnapshot): boolean {
   const hour = localHour(snapshot);
-  return hour >= 21 || (hour >= 1 && hour <= 4);
+  return hour >= 21 || hour <= 4;
 }
 
 export function findRuns(

@@ -68,7 +68,28 @@ void main() {
     expect(config.kmaServiceKey, 'asset-key');
   });
 
-  test('앱 직접 기상청 조회는 원시 날씨만 제공한다', () async {
+  test('앱 직접 조회도 기상청 계절별 체감온도 산식을 사용한다', () {
+    expect(
+      calculateKmaApparentTemperature(
+        28,
+        humidity: 70,
+        windSpeed: 2.2,
+        forecastAt: DateTime.parse('2026-08-20T01:00:00Z'),
+      ),
+      29.3,
+    );
+    expect(
+      calculateKmaApparentTemperature(
+        0,
+        humidity: 60,
+        windSpeed: 1.3,
+        forecastAt: DateTime.parse('2026-02-20T01:00:00Z'),
+      ),
+      -1.4,
+    );
+  });
+
+  test('앱 직접 기상청 조회는 원시 날씨와 기상청 체감온도를 제공한다', () async {
     final direct = KmaDirectWeatherService(
       serviceKey: 'test%2Bkey',
       client: kmaClient,
@@ -79,7 +100,8 @@ void main() {
 
     expect(bundle.today.dataSource, '기상청 직접 조회');
     expect(bundle.today.current.temperature, 28);
-    expect(bundle.today.current.apparentTemperature, isNull);
+    expect(bundle.today.current.apparentTemperature, 29.3);
+    expect(bundle.today.hourly.first.apparentTemperature, 29.3);
     expect(bundle.today.hourly.first.time, '10');
     expect(bundle.today.recommendations, isEmpty);
     expect(bundle.today.lifestyleMessages, isEmpty);

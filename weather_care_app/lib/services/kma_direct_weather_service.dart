@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
 
@@ -186,6 +187,7 @@ DirectKmaWeatherBundle _buildBundle(
       brief: '운영 서버 미연결 · 기상청 예보를 직접 표시합니다.',
       current: CurrentWeather(
         temperature: current.temperature,
+        apparentTemperature: current.apparentTemperature,
         humidity: current.humidity,
         windSpeed: current.windSpeed,
         sky: current.skyCondition,
@@ -203,6 +205,7 @@ DirectKmaWeatherBundle _buildBundle(
                   .toString()
                   .padLeft(2, '0'),
               temperature: item.temperature,
+              apparentTemperature: item.apparentTemperature,
               precipitationProbability: item.precipitationProbability,
               precipitationAmount: item.precipitationAmount,
               snowExpected: item.snowExpected,
@@ -474,7 +477,57 @@ class _DirectSnapshot {
     required this.snowfallAmount,
     required this.skyCondition,
   });
+
+  double get apparentTemperature => calculateKmaApparentTemperature(
+        temperature,
+        humidity: humidity,
+        windSpeed: windSpeed,
+        forecastAt: observedAt,
+      );
 }
+
+double calculateKmaApparentTemperature(
+  double temperature, {
+  double? humidity,
+  double? windSpeed,
+  required DateTime forecastAt,
+}) {
+  final forecastAtKst = forecastAt.toUtc().add(const Duration(hours: 9));
+  final isSummer = forecastAtKst.month >= 5 && forecastAtKst.month <= 9;
+  final isWinter = forecastAtKst.month >= 10 || forecastAtKst.month <= 4;
+
+  if (isWinter && temperature <= 10 && (windSpeed ?? 0) >= 1.3) {
+    final windKmh = (windSpeed ?? 0) * 3.6;
+    return _roundOne(
+      13.12 +
+          0.6215 * temperature -
+          11.37 * math.pow(windKmh, 0.16) +
+          0.3965 * temperature * math.pow(windKmh, 0.16),
+    );
+  }
+  if (isSummer && humidity != null) {
+    final relativeHumidity = humidity.clamp(0, 100).toDouble();
+    final wetBulbTemperature = temperature *
+            math.atan(0.151977 * math.sqrt(relativeHumidity + 8.313659)) +
+        math.atan(temperature + relativeHumidity) -
+        math.atan(relativeHumidity - 1.67633) +
+        0.00391838 *
+            math.pow(relativeHumidity, 1.5) *
+            math.atan(0.023101 * relativeHumidity) -
+        4.686035;
+    return _roundOne(
+      -0.2442 +
+          0.55399 * wetBulbTemperature +
+          0.45535 * temperature -
+          0.0022 * wetBulbTemperature * wetBulbTemperature +
+          0.00278 * wetBulbTemperature * temperature +
+          3.0,
+    );
+  }
+  return _roundOne(temperature);
+}
+
+double _roundOne(num value) => (value * 10).round() / 10;
 
 class _DirectDaily {
   final String date;

@@ -1,5 +1,6 @@
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../types';
+import { defaultRuleConfig } from '../config/ruleConfig';
 import {
   WEATHER_BRIEF_SLOT_OPTIONS,
   WEATHER_BRIEF_TEMPLATES,
@@ -9,6 +10,8 @@ import {
 } from './weatherBriefCatalog';
 
 export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.08.1';
+const HEAT_SENSATION_SCENE_THRESHOLD = 28;
+const COLD_LAYER_SCENE_THRESHOLD = 8;
 
 export const DIRECT_WEATHER_EXPRESSION_PATTERN =
   /기온|온도|날씨|맑음|흐림|구름|강수|습도|풍속|자외선|초?미세먼지|(?:^|\s)비가\s|비 오는|비 내|(?:^|\s)눈이\s|눈 오는|눈 내|\d+(?:\.\d+)?\s*°/;
@@ -87,20 +90,24 @@ function selectScene(forecast: WeatherForecast): SceneSelection {
   }
 
   const strongExposure = candidates.find(
-    (item) => apparentTemperature(item) >= 28 || (item.uvIndex ?? 0) >= 6,
+    (item) =>
+      apparentTemperature(item) >= HEAT_SENSATION_SCENE_THRESHOLD ||
+      (item.uvIndex ?? 0) >= defaultRuleConfig.uv.highThreshold,
   );
   if (strongExposure) {
     return { scene: 'SHADE_BREAK', eventAt: strongExposure.observedAt };
   }
 
   const layerUseful = candidates.find(
-    (item) => apparentTemperature(item) <= 8,
+    (item) => apparentTemperature(item) <= COLD_LAYER_SCENE_THRESHOLD,
   );
   if (layerUseful) {
     return { scene: 'LAYER_READY', eventAt: layerUseful.observedAt };
   }
 
-  const steadyPace = candidates.find((item) => (item.windSpeed ?? 0) >= 6);
+  const steadyPace = candidates.find(
+    (item) => (item.windSpeed ?? 0) >= defaultRuleConfig.wind.caution,
+  );
   if (steadyPace) {
     return { scene: 'STEADY_PACE', eventAt: steadyPace.observedAt };
   }
@@ -187,7 +194,8 @@ function isSnowy(snapshot: WeatherSnapshot): boolean {
 
 function isRainy(snapshot: WeatherSnapshot): boolean {
   return (
-    (snapshot.precipitationProbability ?? 0) >= 50 ||
+    (snapshot.precipitationProbability ?? 0) >=
+      defaultRuleConfig.rain.minProbability ||
     snapshot.precipitationType === 'RAIN' ||
     snapshot.precipitationType === 'SHOWER'
   );
@@ -196,8 +204,8 @@ function isRainy(snapshot: WeatherSnapshot): boolean {
 function hasPoorAirQuality(snapshot: WeatherSnapshot): boolean {
   const grade = (snapshot.airQualityGrade ?? '').toLowerCase();
   return (
-    (snapshot.pm25 ?? 0) >= 36 ||
-    (snapshot.pm10 ?? 0) >= 81 ||
+    (snapshot.pm25 ?? 0) >= defaultRuleConfig.airQuality.pm25 ||
+    (snapshot.pm10 ?? 0) >= defaultRuleConfig.airQuality.pm10 ||
     grade.includes('bad') ||
     grade.includes('나쁨')
   );

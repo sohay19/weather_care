@@ -12,7 +12,12 @@ export interface RuleConfig {
     heavyThreeHourAmount: number;
   };
   uv: { highThreshold: number; veryHighThreshold: number };
-  heat: { apparentTemperature: number; instantApparentTemperature: number };
+  heat: {
+    actionAirTemperature: number;
+    actionApparentTemperature: number;
+    immediateActionApparentTemperature: number;
+    releaseApparentTemperature: number;
+  };
   cold: {
     temperature: number;
     apparentTemperature: number;
@@ -45,7 +50,12 @@ export const defaultRuleConfig: RuleConfig = {
     heavyThreeHourAmount: 3,
   },
   uv: { highThreshold: 6, veryHighThreshold: 8 },
-  heat: { apparentTemperature: 33, instantApparentTemperature: 35 },
+  heat: {
+    actionAirTemperature: 33,
+    actionApparentTemperature: 33,
+    immediateActionApparentTemperature: 35,
+    releaseApparentTemperature: 31,
+  },
   cold: {
     temperature: 12,
     apparentTemperature: 10,
@@ -53,7 +63,7 @@ export const defaultRuleConfig: RuleConfig = {
     apparentGap: 4,
   },
   wind: { caution: 6, high: 9 },
-  airQuality: { pm10: 80, pm25: 55, gradeBad: ['Bad', 'Very Bad'] },
+  airQuality: { pm10: 81, pm25: 36, gradeBad: ['Bad', 'Very Bad'] },
   laundry: { maxProbability: 20, maxHumidity: 75, minWind: 1, maxWind: 6 },
   humidity: { high: 80, low: 35 },
   series: { generalSlots: 2, laundrySlots: 3 },

@@ -104,6 +104,32 @@ describe('WeatherRuleEngine v1.1', () => {
     );
     expect(rangeFact?.evidence.dailyTemperatureRange).toBe(8);
   });
+
+  it('includes midnight in the night window', () => {
+    const facts = runWeatherRuleEngineForHourly(
+      [0, 1, 2].map((hour) =>
+        snapshot(hour, { temperature: 25, humidity: 80 }),
+      ),
+    );
+
+    expect(types(facts)).toContain(
+      WeatherRuleFactType.SLEEP_DISCOMFORT_EXPECTED,
+    );
+  });
+
+  it('aligns particulate thresholds with the app and brief', () => {
+    const below = runWeatherRuleEngineForHourly([
+      snapshot(10, { pm10: 80, pm25: 35 }),
+    ]);
+    expect(types(below)).not.toContain(WeatherRuleFactType.PM10_HIGH);
+    expect(types(below)).not.toContain(WeatherRuleFactType.PM25_HIGH);
+
+    const threshold = runWeatherRuleEngineForHourly([
+      snapshot(10, { pm10: 81, pm25: 36 }),
+    ]);
+    expect(types(threshold)).toContain(WeatherRuleFactType.PM10_HIGH);
+    expect(types(threshold)).toContain(WeatherRuleFactType.PM25_HIGH);
+  });
 });
 
 function snapshot(

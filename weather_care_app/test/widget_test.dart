@@ -54,6 +54,14 @@ void main() {
     expect(message.score, 87);
   });
 
+  test('체감 문구는 한국인 PT 구간과 기상청 위험값을 함께 사용한다', () {
+    expect(apparentTemperatureLabel(20), '조금 더움');
+    expect(apparentTemperatureLabel(31.4), '더움');
+    expect(apparentTemperatureLabel(33), '더위 주의');
+    expect(apparentTemperatureLabel(35), '더위 경계');
+    expect(apparentTemperatureLabel(38), '위험한 더위');
+  });
+
   testWidgets('WeatherCareApp starts', (tester) async {
     await tester.pumpWidget(const WeatherCareApp());
 

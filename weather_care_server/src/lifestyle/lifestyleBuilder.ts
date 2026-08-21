@@ -20,11 +20,23 @@ export function deriveInsightFromRules(facts: WeatherRuleFact[]): LifestyleInsig
       sourceFacts: [WeatherRuleFactType.UV_HIGH],
     });
   }
-  if (has(WeatherRuleFactType.PM10_HIGH) || has(WeatherRuleFactType.PM25_HIGH)) {
+  if (
+    has(WeatherRuleFactType.AIR_QUALITY_BAD) ||
+    has(WeatherRuleFactType.PM10_HIGH) ||
+    has(WeatherRuleFactType.PM25_HIGH)
+  ) {
     result.push({
       type: LifestyleInsightType.MASK_USEFUL,
-      score: Math.max(score(WeatherRuleFactType.PM10_HIGH), score(WeatherRuleFactType.PM25_HIGH)),
-      sourceFacts: [WeatherRuleFactType.PM10_HIGH, WeatherRuleFactType.PM25_HIGH],
+      score: Math.max(
+        score(WeatherRuleFactType.AIR_QUALITY_BAD),
+        score(WeatherRuleFactType.PM10_HIGH),
+        score(WeatherRuleFactType.PM25_HIGH),
+      ),
+      sourceFacts: [
+        WeatherRuleFactType.AIR_QUALITY_BAD,
+        WeatherRuleFactType.PM10_HIGH,
+        WeatherRuleFactType.PM25_HIGH,
+      ],
     });
   }
   return result;

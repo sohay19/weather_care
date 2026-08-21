@@ -5,7 +5,10 @@ import { snapshotTime } from './timeWindows';
 export function applyHeatRule(snapshot: WeatherSnapshot, config: RuleConfig): WeatherRuleFact[] {
   const facts: WeatherRuleFact[] = [];
   const apparent = snapshot.apparentTemperature ?? -999;
-  if (snapshot.temperature !== undefined && snapshot.temperature >= config.heat.apparentTemperature) {
+  if (
+    snapshot.temperature !== undefined &&
+    snapshot.temperature >= config.heat.actionAirTemperature
+  ) {
     facts.push({
       type: WeatherRuleFactType.TEMPERATURE_HIGH,
       severity: Math.min(100, Math.round(snapshot.temperature)),
@@ -14,7 +17,7 @@ export function applyHeatRule(snapshot: WeatherSnapshot, config: RuleConfig): We
       validUntil: snapshot.validTo,
     });
   }
-  if (apparent >= config.heat.apparentTemperature) {
+  if (apparent >= config.heat.actionApparentTemperature) {
     facts.push({
       type: WeatherRuleFactType.APPARENT_TEMPERATURE_HIGH,
       severity: Math.min(100, Math.round(apparent)),

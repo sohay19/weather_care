@@ -240,11 +240,13 @@ function addTemperatureFacts(
   const heatPredicate = (snapshot: WeatherSnapshot) =>
     isDayWindow(snapshot) &&
     (snapshot.apparentTemperature ?? -Infinity) >=
-      config.heat.apparentTemperature;
+      config.heat.actionApparentTemperature;
   for (const run of findHysteresisRuns(
     snapshots,
     heatPredicate,
-    (snapshot) => (snapshot.apparentTemperature ?? Infinity) < 31,
+    (snapshot) =>
+      (snapshot.apparentTemperature ?? Infinity) <
+      config.heat.releaseApparentTemperature,
     config.series.generalSlots,
   )) {
     facts.push(
@@ -272,7 +274,7 @@ function addTemperatureFacts(
     (item) =>
       isDayWindow(item) &&
       (item.apparentTemperature ?? -Infinity) >=
-        config.heat.instantApparentTemperature,
+        config.heat.immediateActionApparentTemperature,
   )) {
     facts.push(
       factForRun(

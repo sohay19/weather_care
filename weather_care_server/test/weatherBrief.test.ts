@@ -92,6 +92,19 @@ describe('weather brief catalog', () => {
     expect(result.text).not.toMatch(/\{[^}]+\}/);
   });
 
+  it('uses the same 40 percent rain preparation threshold as the rule engine', () => {
+    const result = buildWeatherBriefResult(
+      forecast([
+        snapshot(12, {
+          precipitationProbability: 40,
+        }),
+      ]),
+      { regionKey: '60:121' },
+    );
+
+    expect(result.scene).toBe('WET_TRAVEL');
+  });
+
   it('selects the matching indirect scene for each important condition', () => {
     const scenarios: [WeatherForecast, string][] = [
       [

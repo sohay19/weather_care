@@ -278,6 +278,7 @@ function snapshotFromSlot(
       temperature,
       humidity,
       windSpeed,
+      forecastAt,
     ),
     humidity,
     windSpeed,
@@ -520,12 +521,19 @@ function representativeWeather(snapshots: WeatherSnapshot[]): string {
   return '정보 없음';
 }
 
-function apparentTemperature(
+export function calculateKmaApparentTemperature(
   temperature: number,
   humidity?: number,
   windSpeed?: number,
+  forecastAt?: string,
 ): number {
-  if (temperature <= 10 && (windSpeed ?? 0) > 1.3) {
+  const month = forecastAt === undefined
+    ? undefined
+    : Number(forecastAt.slice(5, 7));
+  const isSummer = month !== undefined && month >= 5 && month <= 9;
+  const isWinter = month !== undefined && (month >= 10 || month <= 4);
+
+  if (isWinter && temperature <= 10 && (windSpeed ?? 0) >= 1.3) {
     const windKmh = (windSpeed ?? 0) * 3.6;
     return roundOne(
       13.12 +
@@ -534,21 +542,40 @@ function apparentTemperature(
         0.3965 * temperature * windKmh ** 0.16,
     );
   }
-  if (temperature >= 27 && humidity !== undefined) {
-    const fahrenheit = (temperature * 9) / 5 + 32;
-    const heatIndexF =
-      -42.379 +
-      2.04901523 * fahrenheit +
-      10.14333127 * humidity -
-      0.22475541 * fahrenheit * humidity -
-      0.00683783 * fahrenheit ** 2 -
-      0.05481717 * humidity ** 2 +
-      0.00122874 * fahrenheit ** 2 * humidity +
-      0.00085282 * fahrenheit * humidity ** 2 -
-      0.00000199 * fahrenheit ** 2 * humidity ** 2;
-    return roundOne(((heatIndexF - 32) * 5) / 9);
+  if (isSummer && humidity !== undefined) {
+    const relativeHumidity = Math.min(100, Math.max(0, humidity));
+    const wetBulbTemperature =
+      temperature *
+        Math.atan(0.151977 * Math.sqrt(relativeHumidity + 8.313659)) +
+      Math.atan(temperature + relativeHumidity) -
+      Math.atan(relativeHumidity - 1.67633) +
+      0.00391838 * relativeHumidity ** 1.5 *
+        Math.atan(0.023101 * relativeHumidity) -
+      4.686035;
+    return roundOne(
+      -0.2442 +
+        0.55399 * wetBulbTemperature +
+        0.45535 * temperature -
+        0.0022 * wetBulbTemperature ** 2 +
+        0.00278 * wetBulbTemperature * temperature +
+        3.0,
+    );
   }
   return roundOne(temperature);
+}
+
+function apparentTemperature(
+  temperature: number,
+  humidity?: number,
+  windSpeed?: number,
+  forecastAt?: string,
+): number {
+  return calculateKmaApparentTemperature(
+    temperature,
+    humidity,
+    windSpeed,
+    forecastAt,
+  );
 }
 
 function roundOne(value: number): number {

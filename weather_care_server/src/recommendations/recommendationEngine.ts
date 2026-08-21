@@ -1,4 +1,10 @@
-import { LifestyleInsight, Recommendation, NotificationSettings, RecommendationType } from '../types';
+import {
+  LifestyleInsight,
+  NotificationSettings,
+  Recommendation,
+  RecommendationType,
+  WeatherRuleFactType,
+} from '../types';
 import { descriptionFor, titleFor } from './recommendationTemplates';
 import { CATALOG_VERSION } from './recommendationTemplates';
 import { sortRecommendations } from './recommendationPriority';
@@ -14,7 +20,6 @@ const INSIGHT_TO_RECOMMENDATION: Record<string, RecommendationType> = {
   SUNSCREEN_USEFUL: 'SUNSCREEN',
   VERY_HOT_AND_HUMID: 'WATER',
   COOLER_THAN_TEMPERATURE: 'OUTERWEAR',
-  LAUNDRY_GOOD: 'PARASOL',
 };
 
 export function runRecommendationEngine(
@@ -45,6 +50,12 @@ export function runRecommendationEngine(
   for (const insight of insights) {
     const t = INSIGHT_TO_RECOMMENDATION[insight.type];
     if (!t || !allTypes.has(t)) continue;
+    if (
+      t === 'HEAVY_SNOW_CAUTION' &&
+      !insight.sourceFacts.includes(WeatherRuleFactType.HEAVY_SNOW)
+    ) {
+      continue;
+    }
     const reasonCodes =
       insight.sourceFacts.length > 0
         ? [...new Set(insight.sourceFacts.map(String))]
@@ -133,6 +144,7 @@ function sourceFieldsFor(insight: LifestyleInsight): string[] {
     }
     if (fact === 'PM10_HIGH') fields.add('pm10');
     if (fact === 'PM25_HIGH') fields.add('pm25');
+    if (fact === 'AIR_QUALITY_BAD') fields.add('airQualityGrade');
   }
   return [...fields];
 }

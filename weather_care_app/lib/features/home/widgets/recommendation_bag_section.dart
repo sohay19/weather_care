@@ -38,7 +38,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
           HomeSectionHeader(
             icon: Icons.work_outline_rounded,
             title: '오늘의 가방',
-            subtitle: '${widget.regionName}에서 오늘 필요한 것만 모았어요',
+            subtitle: '필요한 것만 모았어요',
           ),
           const SizedBox(height: 18),
           if (visible.isEmpty)
@@ -89,7 +89,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '카드를 누르면 오늘 챙긴 항목으로 표시돼요',
+                  '카드를 누르면 챙긴 항목으로 표시돼요',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),

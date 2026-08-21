@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
-        android:label="weather_care"
+        android:label="날씨챙겨"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

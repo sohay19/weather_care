@@ -37,7 +37,7 @@ class TodayTab extends StatelessWidget {
           TabPageHeader(
             eyebrow: 'TODAY',
             title: '오늘을 챙겨요',
-            subtitle: '${today.region.name}의 준비물과 생활 시점 안내',
+            subtitle: '오늘의 준비물과 시간대별 안내',
             icon: Icons.work_outline_rounded,
           ),
           const SizedBox(height: 18),
@@ -124,7 +124,7 @@ class _TodayBriefCard extends StatelessWidget {
                       ? '준비물과 생활 시점 계산은 운영 서버 미연결로 미지원됩니다.'
                       : recommendationCount == 0
                           ? '오늘은 특별한 준비물이 없어요.'
-                          : '챙길 항목 $recommendationCount개를 먼저 확인하세요.',
+                          : '챙겨야하는 항목 $recommendationCount개를 먼저 확인하세요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

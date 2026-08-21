@@ -24,6 +24,9 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: store/appIcon.png
+  adaptive_icon_background: "#4C77A4"
+  adaptive_icon_foreground: store/appIcon.png
+  adaptive_icon_foreground_inset: 16
   remove_alpha_ios: true
 
 flutter:

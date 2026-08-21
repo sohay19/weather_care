@@ -159,39 +159,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: Icons.schedule_outlined,
           title: '알림 시간',
           subtitle: 'Morning Brief를 받을 기본 시간이에요',
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-            decoration: BoxDecoration(
-              color: WeatherCareTheme.surfaceMuted,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.alarm_rounded,
-                  color: WeatherCareTheme.primary,
+          child: IgnorePointer(
+            ignoring: !_alertsEnabled,
+            child: Opacity(
+              key: const ValueKey('notification-time-control'),
+              opacity: _alertsEnabled ? 1 : 0.46,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                decoration: BoxDecoration(
+                  color: WeatherCareTheme.surfaceMuted,
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    '매일 아침',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.alarm_rounded,
+                      color: WeatherCareTheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        '매일 아침',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    Text(
+                      settings.notificationTime,
+                      style: const TextStyle(
+                        color: WeatherCareTheme.primaryDeep,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: WeatherCareTheme.textSecondary,
+                    ),
+                  ],
                 ),
-                Text(
-                  settings.notificationTime,
-                  style: const TextStyle(
-                    color: WeatherCareTheme.primaryDeep,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: WeatherCareTheme.textSecondary,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -267,12 +275,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             children: [
               _SettingsToggleTile(
+                icon: Icons.thunderstorm_outlined,
+                title: '폭우 주의',
+                value: settings.heavyRainEnabled,
+                enabled: _alertsEnabled,
+                onChanged: (value) => setState(() {
+                  settings = settings.copyWith(heavyRainEnabled: value);
+                }),
+              ),
+              _SettingsToggleTile(
                 icon: Icons.ac_unit_rounded,
                 title: '폭설 주의',
                 value: settings.heavySnowEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => setState(() {
                   settings = settings.copyWith(heavySnowEnabled: value);
+                }),
+              ),
+              _SettingsToggleTile(
+                icon: Icons.device_thermostat_rounded,
+                title: '폭염 주의',
+                value: settings.heatwaveEnabled,
+                enabled: _alertsEnabled,
+                onChanged: (value) => setState(() {
+                  settings = settings.copyWith(heatwaveEnabled: value);
+                }),
+              ),
+              _SettingsToggleTile(
+                icon: Icons.severe_cold_outlined,
+                title: '한파 주의',
+                value: settings.coldWaveEnabled,
+                enabled: _alertsEnabled,
+                onChanged: (value) => setState(() {
+                  settings = settings.copyWith(coldWaveEnabled: value);
+                }),
+              ),
+              _SettingsToggleTile(
+                icon: Icons.water_drop_outlined,
+                title: '소나기·약한 비 주의',
+                subtitle: '소나기, 이슬비, 가랑비를 구분해 한곳에서 관리해요',
+                value: settings.showerAndLightRainEnabled,
+                enabled: _alertsEnabled,
+                onChanged: (value) => setState(() {
+                  settings =
+                      settings.copyWith(showerAndLightRainEnabled: value);
                 }),
               ),
               _SettingsToggleTile(
@@ -319,7 +365,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 12),
         Center(
           child: Text(
-            '날씨 정보는 기상청 공식 API를 사용합니다.',
+            '날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.',
             textAlign: TextAlign.center,
             style: WeatherCareTheme.microTextStyle.copyWith(
               fontSize: 9,
@@ -450,6 +496,7 @@ class _LocationRadioTile extends StatelessWidget {
 class _SettingsToggleTile extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final bool value;
   final bool enabled;
   final ValueChanged<bool> onChanged;
@@ -457,6 +504,7 @@ class _SettingsToggleTile extends StatelessWidget {
   const _SettingsToggleTile({
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.value,
     required this.enabled,
     required this.onChanged,
@@ -485,9 +533,21 @@ class _SettingsToggleTile extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: WeatherCareTheme.microTextStyle,
+                    ),
+                  ],
+                ],
               ),
             ),
             Switch(

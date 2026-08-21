@@ -68,6 +68,9 @@ class HourlyWeatherItem {
   final bool snowExpected;
   final double snowfallAmount;
   final double windSpeed;
+  final double? uvIndex;
+  final int? pm10;
+  final int? pm25;
   final String skyCondition;
 
   const HourlyWeatherItem({
@@ -79,6 +82,9 @@ class HourlyWeatherItem {
     required this.snowExpected,
     required this.snowfallAmount,
     required this.windSpeed,
+    this.uvIndex,
+    this.pm10,
+    this.pm25,
     required this.skyCondition,
   });
 
@@ -103,6 +109,9 @@ class HourlyWeatherItem {
           snowfallAmount > 0,
       snowfallAmount: snowfallAmount,
       windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0,
+      uvIndex: (json['uvIndex'] as num?)?.toDouble(),
+      pm10: (json['pm10'] as num?)?.toInt(),
+      pm25: (json['pm25'] as num?)?.toInt(),
       skyCondition: json['skyCondition']?.toString() ?? '맑음',
     );
   }
@@ -223,7 +232,7 @@ class WeeklyWeatherResponse {
                     .whereType<Map<String, dynamic>>()
                     .map((r) => WeatherRecommendation.fromJson(r))
                     .toList())
-                .take(2)
+                .take(3)
                 .toList(),
           ),
         )

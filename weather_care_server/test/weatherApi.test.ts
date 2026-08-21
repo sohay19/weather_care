@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { recommendationsForDay } from '../src/api/weather';
+import { buildTimeline, recommendationsForDay } from '../src/api/weather';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
 
@@ -14,6 +14,25 @@ describe('weekly recommendation inputs', () => {
       snapshot(14, { temperature: 30, apparentTemperature: 35 }),
     ]);
     expect(highApparent.map((item) => item.type)).toContain('WATER');
+  });
+});
+
+describe('today timeline', () => {
+  it('shows five points at three-hour intervals across twelve hours', () => {
+    const timeline = buildTimeline(
+      Array.from({ length: 13 }, (_, index) => snapshot(6 + index)),
+    );
+
+    expect(timeline.map((item) => item.timeLabel)).toEqual([
+      '06',
+      '09',
+      '12',
+      '15',
+      '18',
+    ]);
+    expect(timeline.every((item) => item.stateLabel.endsWith('좋은 때'))).toBe(
+      true,
+    );
   });
 });
 

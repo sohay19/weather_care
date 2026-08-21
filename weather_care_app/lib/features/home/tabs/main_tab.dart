@@ -4,6 +4,7 @@ import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/tab_page_header.dart';
+import '../widgets/weather_condition_icon.dart';
 
 class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
@@ -194,8 +195,8 @@ class _TopWeatherCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(
-                _weatherIcon(current.sky),
+              WeatherConditionIcon(
+                condition: current.sky,
                 color: WeatherCareTheme.textPrimary,
                 size: compact ? 18 : 21,
               ),
@@ -552,16 +553,6 @@ String apparentTemperatureLabel(double temperature) {
   if (temperature >= 10) return '선선한 편';
   if (temperature >= 0) return '쌀쌀한 편';
   return '추운 날씨';
-}
-
-IconData _weatherIcon(String? sky) {
-  final value = (sky ?? '').toLowerCase();
-  if (value.contains('비')) return Icons.umbrella_outlined;
-  if (value.contains('눈')) return Icons.ac_unit_rounded;
-  if (value.contains('흐림') || value.contains('구름')) {
-    return Icons.cloud_outlined;
-  }
-  return Icons.wb_sunny_outlined;
 }
 
 List<_TodoItem> _todoItems(List<LifestyleMessage> messages) {

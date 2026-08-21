@@ -6,6 +6,7 @@ import 'package:weather_care/features/home/widgets/recommendation_bag_section.da
 import 'package:weather_care/features/home/widgets/server_connection_failure_dialog.dart';
 import 'package:weather_care/features/home/widgets/timeline_section.dart';
 import 'package:weather_care/features/home/widgets/weather_card.dart';
+import 'package:weather_care/features/home/widgets/weather_condition_icon.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/recommendation.dart';
@@ -54,12 +55,115 @@ void main() {
     expect(message.score, 87);
   });
 
+  test('시간별 예보는 자외선과 미세먼지 값을 보존한다', () {
+    final item = HourlyWeatherItem.fromJson({
+      'time': '12',
+      'temperature': 31,
+      'precipitationProbability': 20,
+      'precipitationAmount': 0,
+      'snowExpected': false,
+      'snowfallAmount': 0,
+      'windSpeed': 2,
+      'skyCondition': '구름 많음',
+      'uvIndex': 7,
+      'pm10': 52,
+      'pm25': 31,
+    });
+
+    expect(item.uvIndex, 7);
+    expect(item.pm10, 52);
+    expect(item.pm25, 31);
+  });
+
+  test('주간 예보는 대표 준비물을 최대 3개까지 보존한다', () {
+    final recommendations = [
+      'UMBRELLA',
+      'OUTERWEAR',
+      'MASK',
+      'WATER',
+    ]
+        .map(
+          (type) => {
+            'type': type,
+            'recommended': true,
+            'priority': 70,
+            'title': type,
+            'description': '설명',
+            'notificationEligible': true,
+          },
+        )
+        .toList();
+    final weekly = WeeklyWeatherResponse.fromJson({
+      'days': [
+        {
+          'date': '금',
+          'weatherLabel': '비',
+          'min': '22',
+          'max': '28',
+          'recommendations': recommendations,
+        },
+      ],
+    });
+
+    expect(weekly.days.single.recommendations, hasLength(3));
+  });
+
   test('체감 문구는 한국인 PT 구간과 기상청 위험값을 함께 사용한다', () {
     expect(apparentTemperatureLabel(20), '조금 더움');
     expect(apparentTemperatureLabel(31.4), '더움');
     expect(apparentTemperatureLabel(33), '더위 주의');
     expect(apparentTemperatureLabel(35), '더위 경계');
     expect(apparentTemperatureLabel(38), '위험한 더위');
+  });
+
+  test('날씨 상태는 비·구름 많음·흐림을 서로 다른 아이콘으로 구분한다', () {
+    expect(weatherConditionKind('비'), WeatherConditionKind.rain);
+    expect(
+      weatherConditionKind('구름 많음'),
+      WeatherConditionKind.partlyCloudy,
+    );
+    expect(weatherConditionKind('흐림'), WeatherConditionKind.overcast);
+    expect(
+      weatherConditionKind('구름 많음'),
+      isNot(weatherConditionKind('흐림')),
+    );
+  });
+
+  test('서버의 서로 다른 날씨 상태는 각각 고유한 아이콘 종류로 해석한다', () {
+    const serverConditions = [
+      '맑음',
+      '구름 많음',
+      '흐림',
+      '비',
+      '비/눈',
+      '눈',
+      '소나기',
+      '빗방울',
+      '빗방울/눈날림',
+      '눈날림',
+    ];
+
+    final kinds = serverConditions.map(weatherConditionKind).toSet();
+
+    expect(kinds, hasLength(serverConditions.length));
+    expect(weatherConditionKind('이슬비'), WeatherConditionKind.drizzle);
+    expect(weatherConditionKind('가랑비'), WeatherConditionKind.drizzle);
+  });
+
+  testWidgets('비 날씨 아이콘은 우산 대신 구름과 빗방울을 사용한다', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: WeatherConditionIcon(condition: '비'),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('weather-condition-rain')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.cloud_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.water_drop_rounded), findsNWidgets(2));
+    expect(find.byIcon(Icons.umbrella_outlined), findsNothing);
   });
 
   testWidgets('WeatherCareApp starts', (tester) async {
@@ -82,6 +186,10 @@ void main() {
             current: CurrentWeather(
               temperature: 29,
               apparentTemperature: 32.7,
+              humidity: 72,
+              uvIndex: 7,
+              pm25: 41,
+              sky: '구름 많음',
             ),
           ),
         ),
@@ -90,6 +198,14 @@ void main() {
 
     expect(find.text('29.0°C'), findsOneWidget);
     expect(find.text('32.7°C'), findsOneWidget);
+    expect(find.text('미세먼지'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('weather-metric-체감')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('체감온도 기준'), findsOneWidget);
+    expect(find.textContaining('33°C부터 더위 주의'), findsOneWidget);
   });
 
   testWidgets('five tabs start on a pull-to-refresh Main screen',
@@ -377,15 +493,33 @@ void main() {
     expect(tester.getSize(find.text('점심 무렵')).height, lessThan(40));
   });
 
-  testWidgets('settings shows the KMA API notice at the bottom',
+  testWidgets('settings disables notification time and shows all data sources',
       (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: SettingsScreen())),
     );
 
-    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.tap(find.byType(Switch).first);
+    await tester.pump();
+    expect(
+      tester
+          .widget<Opacity>(
+            find.byKey(const ValueKey('notification-time-control')),
+          )
+          .opacity,
+      0.46,
+    );
+
+    await tester.drag(find.byType(ListView), const Offset(0, -2200));
     await tester.pumpAndSettle();
 
-    expect(find.text('날씨 정보는 기상청 공식 API를 사용합니다.'), findsOneWidget);
+    expect(find.text('폭우 주의'), findsOneWidget);
+    expect(find.text('폭염 주의'), findsOneWidget);
+    expect(find.text('한파 주의'), findsOneWidget);
+    expect(find.text('소나기·약한 비 주의'), findsOneWidget);
+    expect(
+      find.text('날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.'),
+      findsOneWidget,
+    );
   });
 }

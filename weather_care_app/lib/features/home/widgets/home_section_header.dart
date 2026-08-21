@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../theme/weather_theme.dart';
 
 class HomeSectionHeader extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String title;
   final String subtitle;
   final Widget? trailing;
 
   const HomeSectionHeader({
     super.key,
-    required this.icon,
+    this.icon,
     required this.title,
     required this.subtitle,
     this.trailing,
@@ -21,16 +21,18 @@ class HomeSectionHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: WeatherCareTheme.primarySoft,
-            borderRadius: BorderRadius.circular(14),
+        if (icon != null) ...[
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: WeatherCareTheme.primarySoft,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 21, color: WeatherCareTheme.primaryDeep),
           ),
-          child: Icon(icon, size: 21, color: WeatherCareTheme.primaryDeep),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

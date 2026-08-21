@@ -159,8 +159,8 @@ function aggregateDecisionSnapshot(forecast: WeatherForecast): WeatherSnapshot {
   };
 }
 
-function buildTimeline(hourly: WeatherSnapshot[]) {
-  const offsets = [0, 6, 12];
+export function buildTimeline(hourly: WeatherSnapshot[]) {
+  const offsets = [0, 3, 6, 9, 12];
   return offsets
     .map((offset) => hourly[offset])
     .filter((item): item is WeatherSnapshot => item !== undefined)
@@ -169,11 +169,34 @@ function buildTimeline(hourly: WeatherSnapshot[]) {
       const hour = item.observedAt.slice(11, 13);
       return {
         timeLabel: hour,
-        stateLabel: `${hour}시 무렵`,
+        stateLabel: timelineStateLabel(recommendations, hour),
         detail: timelineDetail(item),
         recommendations,
       };
     });
+}
+
+function timelineStateLabel(
+  recommendations: Recommendation[],
+  hour: string,
+): string {
+  const recommendation = recommendations[0]?.type;
+  const labels: Partial<Record<Recommendation['type'], string>> = {
+    UMBRELLA: '우산 챙기기 좋은 때',
+    PARASOL: '햇볕 대비하기 좋은 때',
+    HEAVY_SNOW_CAUTION: '이동 준비를 살피기 좋은 때',
+    OUTERWEAR: '겉옷 챙기기 좋은 때',
+    MASK: '마스크 챙기기 좋은 때',
+    WATER: '수분 챙기기 좋은 때',
+    SUNSCREEN: '햇볕 대비하기 좋은 때',
+  };
+  if (recommendation && labels[recommendation]) {
+    return labels[recommendation];
+  }
+  const hourNumber = Number(hour);
+  return hourNumber >= 6 && hourNumber < 18
+    ? '바깥 날씨 확인하기 좋은 때'
+    : '귀가 날씨 확인하기 좋은 때';
 }
 
 function timelineDetail(snapshot: WeatherSnapshot): string {
@@ -209,7 +232,7 @@ export function recommendationsForDay(
     return runRecommendationEngine(
       runLifestyleWeatherEngine(facts, dayHourly),
       defaultSettings,
-    ).slice(0, 2);
+    ).slice(0, 3);
   }
 
   const snapshot: WeatherSnapshot = {
@@ -223,7 +246,7 @@ export function recommendationsForDay(
     snowfallAmount: day.snowfallAmount,
     skyCondition: day.skyCondition,
   };
-  return recommendationsForSnapshot(snapshot).slice(0, 2);
+  return recommendationsForSnapshot(snapshot).slice(0, 3);
 }
 
 function weekdayLabel(kmaDate: string): string {

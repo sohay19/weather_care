@@ -35,12 +35,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const TabPageHeader(
             eyebrow: 'SETTING',
             title: '설정',
-            subtitle: '내 위치와 필요한 알림만 편안하게 맞춰보세요.',
+            subtitle: '나의 위치와 필요한 알람을 설정할 수 있어요.',
             icon: Icons.tune_rounded,
           )
         else
           Text(
-            '내 위치와 필요한 알림만 편안하게 맞춰보세요.',
+            '나의 위치와 필요한 알람을 설정할 수 있어요.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: WeatherCareTheme.textSecondary,
                 ),

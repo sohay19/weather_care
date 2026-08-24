@@ -8,6 +8,7 @@ import '../widgets/weather_condition_icon.dart';
 
 class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
+  final ComparisonResponse yesterdayComparison;
   final String dateLabel;
   final String mood;
   final bool serverFeaturesAvailable;
@@ -16,6 +17,7 @@ class MainTab extends StatelessWidget {
   const MainTab({
     super.key,
     required this.today,
+    this.yesterdayComparison = const ComparisonResponse.unavailable(),
     required this.dateLabel,
     required this.mood,
     required this.serverFeaturesAvailable,
@@ -29,47 +31,40 @@ class MainTab extends StatelessWidget {
       onRefresh: onRefresh,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxHeight < 620;
+          final compact = constraints.maxWidth < 380;
           return CustomScrollView(
             key: const ValueKey('main-tab'),
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    compact ? 8 : 12,
-                    16,
-                    12,
-                  ),
-                  child: Column(
-                    children: [
-                      TabPageHeader(
-                        eyebrow: dateLabel,
-                        title: '${today.region.name}이라면 확인하세요',
-                        subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
-                      ),
-                      SizedBox(height: compact ? 8 : 12),
-                      Expanded(
-                        flex: compact ? 8 : 9,
-                        child: _TopWeatherCard(
-                          today: today,
-                          mood: mood,
-                          compact: compact,
-                        ),
-                      ),
-                      SizedBox(height: compact ? 8 : 12),
-                      Expanded(
-                        flex: compact ? 12 : 13,
-                        child: _LifestyleDashboard(
-                          messages: today.lifestyleMessages,
-                          compact: compact,
-                          serverFeaturesAvailable: serverFeaturesAvailable,
-                        ),
-                      ),
-                    ],
-                  ),
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  compact ? 8 : 12,
+                  16,
+                  24,
+                ),
+                sliver: SliverList.list(
+                  children: [
+                    TabPageHeader(
+                      eyebrow: dateLabel,
+                      title: '${today.region.name}이라면 확인하세요',
+                      subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
+                    ),
+                    SizedBox(height: compact ? 10 : 14),
+                    _TopWeatherCard(
+                      today: today,
+                      comparison: yesterdayComparison,
+                      mood: mood,
+                      compact: compact,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                    ),
+                    SizedBox(height: compact ? 10 : 14),
+                    _LifestyleDashboard(
+                      messages: today.lifestyleMessages,
+                      compact: compact,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -82,13 +77,17 @@ class MainTab extends StatelessWidget {
 
 class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
+  final ComparisonResponse comparison;
   final String mood;
   final bool compact;
+  final bool serverFeaturesAvailable;
 
   const _TopWeatherCard({
     required this.today,
+    required this.comparison,
     required this.mood,
     required this.compact,
+    required this.serverFeaturesAvailable,
   });
 
   @override
@@ -97,9 +96,10 @@ class _TopWeatherCard extends StatelessWidget {
     final apparentTemperature = current.apparentTemperature;
     final fineDustValue = current.pm25 ?? current.pm10;
     final usesPm25 = current.pm25 != null;
-    final style = TextStyle(
+    final feelingStyle = TextStyle(
       color: WeatherCareTheme.textPrimary,
-      fontSize: 11,
+      fontSize: 13,
+      height: 1.45,
       fontWeight: FontWeight.w600,
     );
 
@@ -114,8 +114,6 @@ class _TopWeatherCard extends StatelessWidget {
         children: [
           Text(
             today.brief,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               color: WeatherCareTheme.textPrimary,
@@ -125,7 +123,7 @@ class _TopWeatherCard extends StatelessWidget {
               letterSpacing: -0.45,
             ),
           ),
-          const Spacer(),
+          SizedBox(height: compact ? 22 : 28),
           Row(
             children: [
               const Text(
@@ -149,6 +147,7 @@ class _TopWeatherCard extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Row(
+            key: const ValueKey('main-apparent-temperature-row'),
             children: [
               const Text(
                 '체감 온도',
@@ -168,41 +167,41 @@ class _TopWeatherCard extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-              const SizedBox(width: 8),
+            ],
+          ),
+          SizedBox(height: compact ? 8 : 10),
+          Row(
+            key: const ValueKey('main-weather-feeling'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Expanded(
-                child: RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: _weatherExpression(current.sky),
-                        style: style,
-                      ),
-                      TextSpan(
-                        text:
-                            apparentTemperature == null ? ', 체감 미지원' : ', 체감은 ',
-                        style: style,
-                      ),
-                      if (apparentTemperature != null)
-                        TextSpan(
-                          text: apparentTemperatureLabel(apparentTemperature),
-                          style: style,
-                        ),
-                    ],
+                child: Text(
+                  _weatherFeelingMessage(
+                    sky: current.sky,
+                    apparentTemperature: apparentTemperature,
                   ),
+                  style: feelingStyle,
                 ),
               ),
-              const SizedBox(width: 4),
-              WeatherConditionIcon(
-                condition: current.sky,
-                color: WeatherCareTheme.textPrimary,
-                size: compact ? 18 : 21,
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 1),
+                child: WeatherConditionIcon(
+                  condition: current.sky,
+                  color: WeatherCareTheme.textPrimary,
+                  size: compact ? 20 : 23,
+                ),
               ),
             ],
           ),
           SizedBox(height: compact ? 7 : 9),
+          _YesterdayComparisonPanel(
+            current: current,
+            comparison: comparison,
+            serverFeaturesAvailable: serverFeaturesAvailable,
+            compact: compact,
+          ),
+          SizedBox(height: compact ? 8 : 10),
           Container(
             padding: EdgeInsets.symmetric(vertical: compact ? 7 : 8),
             decoration: BoxDecoration(
@@ -248,6 +247,243 @@ class _TopWeatherCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _YesterdayComparisonPanel extends StatelessWidget {
+  final CurrentWeather current;
+  final ComparisonResponse comparison;
+  final bool serverFeaturesAvailable;
+  final bool compact;
+
+  const _YesterdayComparisonPanel({
+    required this.current,
+    required this.comparison,
+    required this.serverFeaturesAvailable,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final previous =
+        comparison.comparisonAvailable ? comparison.comparison : null;
+    final differences = _comparisonDifferences(current, previous);
+    final previousSky = previous?.skyCondition?.trim();
+    final currentSky = current.sky?.trim();
+
+    return Container(
+      key: const ValueKey('main-yesterday-comparison'),
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.history_rounded,
+                size: 16,
+                color: WeatherCareTheme.primaryDeep,
+              ),
+              SizedBox(width: 6),
+              Text(
+                '어제와 비교',
+                style: TextStyle(
+                  color: WeatherCareTheme.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (previous == null)
+            Text(
+              serverFeaturesAvailable
+                  ? '어제 저장된 날씨가 쌓이면 차이를 보여드려요.'
+                  : '운영 서버 연결 시 어제와 차이를 보여드려요.',
+              style: WeatherCareTheme.microTextStyle.copyWith(
+                fontSize: compact ? 9 : 10,
+              ),
+            )
+          else ...[
+            if (previousSky != null &&
+                previousSky.isNotEmpty &&
+                currentSky != null &&
+                currentSky.isNotEmpty) ...[
+              Text(
+                previousSky == currentSky
+                    ? '하늘은 어제와 같은 $currentSky이에요.'
+                    : '어제 $previousSky · 오늘 $currentSky',
+                style: TextStyle(
+                  color: WeatherCareTheme.textSecondary,
+                  fontSize: compact ? 9.5 : 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (differences.isEmpty)
+              Text(
+                '비교할 수치가 아직 충분하지 않아요.',
+                style: WeatherCareTheme.microTextStyle,
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final itemWidth = (constraints.maxWidth - 7) / 2;
+                  return Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final difference in differences)
+                        SizedBox(
+                          width: itemWidth,
+                          child: _ComparisonDifferenceTile(
+                            difference: difference,
+                            compact: compact,
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ComparisonDifferenceTile extends StatelessWidget {
+  final _WeatherDifference difference;
+  final bool compact;
+
+  const _ComparisonDifferenceTile({
+    required this.difference,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 8 : 9,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            difference.label,
+            style: WeatherCareTheme.microTextStyle.copyWith(
+              fontSize: compact ? 8.5 : 9,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            difference.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: WeatherCareTheme.primaryDeep,
+              fontSize: compact ? 9.5 : 10.5,
+              height: 1.25,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeatherDifference {
+  final String label;
+  final String description;
+
+  const _WeatherDifference(this.label, this.description);
+}
+
+List<_WeatherDifference> _comparisonDifferences(
+  CurrentWeather current,
+  ComparisonWeatherSnapshot? previous,
+) {
+  if (previous == null) return const [];
+  final differences = <_WeatherDifference>[];
+  if (previous.temperature != null) {
+    differences.add(
+      _WeatherDifference(
+        '기온',
+        _differenceDescription(
+          current.temperature - previous.temperature!,
+          unit: '°C',
+        ),
+      ),
+    );
+  }
+  if (current.apparentTemperature != null &&
+      previous.apparentTemperature != null) {
+    differences.add(
+      _WeatherDifference(
+        '체감온도',
+        _differenceDescription(
+          current.apparentTemperature! - previous.apparentTemperature!,
+          unit: '°C',
+        ),
+      ),
+    );
+  }
+  if (current.pm25 != null && previous.pm25 != null) {
+    differences.add(
+      _WeatherDifference(
+        '초미세먼지',
+        _differenceDescription(
+          (current.pm25! - previous.pm25!).toDouble(),
+          unit: '㎍/㎥',
+          decimals: 0,
+          higherLabel: '많아요',
+          lowerLabel: '적어요',
+        ),
+      ),
+    );
+  } else if (current.pm10 != null && previous.pm10 != null) {
+    differences.add(
+      _WeatherDifference(
+        '미세먼지',
+        _differenceDescription(
+          (current.pm10! - previous.pm10!).toDouble(),
+          unit: '㎍/㎥',
+          decimals: 0,
+          higherLabel: '많아요',
+          lowerLabel: '적어요',
+        ),
+      ),
+    );
+  }
+  return differences;
+}
+
+String _differenceDescription(
+  double difference, {
+  required String unit,
+  int decimals = 1,
+  String higherLabel = '높아요',
+  String lowerLabel = '낮아요',
+}) {
+  if (difference.abs() < 0.05) return '어제와 같아요';
+  final amount = difference.abs().toStringAsFixed(decimals);
+  return difference > 0
+      ? '어제보다 $amount$unit $higherLabel'
+      : '어제보다 $amount$unit $lowerLabel';
 }
 
 class _TopMetric extends StatelessWidget {
@@ -409,24 +645,16 @@ class _LifestyleDashboard extends StatelessWidget {
             ],
           ),
           SizedBox(height: compact ? 8 : 10),
-          Expanded(
-            child: !serverFeaturesAvailable
-                ? const _LifestyleUnsupported()
-                : Column(
-                    children: [
-                      for (var index = 0; index < display.length; index++) ...[
-                        Expanded(
-                          child: _LifestyleActionCard(
-                            item: display[index],
-                            compact: compact,
-                          ),
-                        ),
-                        if (index < display.length - 1)
-                          SizedBox(height: compact ? 6 : 8),
-                      ],
-                    ],
-                  ),
-          ),
+          if (!serverFeaturesAvailable)
+            const _LifestyleUnsupported()
+          else
+            for (var index = 0; index < display.length; index++) ...[
+              _LifestyleActionCard(
+                item: display[index],
+                compact: compact,
+              ),
+              if (index < display.length - 1) SizedBox(height: compact ? 7 : 9),
+            ],
         ],
       ),
     );
@@ -474,7 +702,7 @@ class _LifestyleActionCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 10 : 12,
-        vertical: compact ? 8 : 10,
+        vertical: compact ? 15 : 18,
       ),
       decoration: BoxDecoration(
         color: style.background,
@@ -532,10 +760,34 @@ class _LifestyleActionCard extends StatelessWidget {
 
 String _weatherExpression(String? sky) {
   final value = sky ?? '';
-  if (value.contains('비')) return '우산 챙길 날';
-  if (value.contains('눈')) return '사뿐한 눈길';
-  if (value.contains('흐림') || value.contains('구름')) return '구름 낀 하늘';
-  return '맑은 하늘';
+  if (value.contains('비')) return '비가 내리는 날씨예요.';
+  if (value.contains('눈')) return '눈이 내리는 날씨예요.';
+  if (value.contains('흐림') || value.contains('구름')) {
+    return '구름이 많은 날씨예요.';
+  }
+  return '맑은 하늘이 이어지는 날씨예요.';
+}
+
+String _weatherFeelingMessage({
+  required String? sky,
+  required double? apparentTemperature,
+}) {
+  final weatherExpression = _weatherExpression(sky);
+  if (apparentTemperature == null) {
+    return '$weatherExpression 체감온도 정보는 아직 확인하기 어려워요.';
+  }
+
+  final feeling = switch (apparentTemperatureLabel(apparentTemperature)) {
+    '위험한 더위' => '위험할 만큼 매우 덥게',
+    '더위 경계' => '매우 덥게',
+    '더위 주의' => '더위가 강하게',
+    '더움' => '꽤 덥게',
+    '조금 더움' => '조금 덥게',
+    '선선한 편' => '선선하게',
+    '쌀쌀한 편' => '쌀쌀하게',
+    _ => '춥게',
+  };
+  return '$weatherExpression 바깥에서는 체감온도 기준으로 $feeling 느껴질 수 있어요.';
 }
 
 String apparentTemperatureLabel(double temperature) {

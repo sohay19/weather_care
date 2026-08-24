@@ -19,6 +19,7 @@ import {
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
+import { saveDailyWeatherSnapshot } from '../database/comparisonRepository';
 import { regionFromQuery } from '../utils';
 import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
@@ -84,8 +85,23 @@ router.get('/today', async (c) => {
     };
 
     if (c.env.DB) {
-      await saveCurrentWeather(c.env.DB, nx, ny, forecast.current);
-      c.executionCtx.waitUntil(runRecommendationNotificationJob(c.env));
+      c.executionCtx.waitUntil(
+        Promise.all([
+          saveCurrentWeather(c.env.DB, nx, ny, forecast.current),
+          saveDailyWeatherSnapshot(c.env.DB, nx, ny, forecast.current),
+        ])
+          .then(() => runRecommendationNotificationJob(c.env))
+          .catch((error: unknown) => {
+            console.error(
+              JSON.stringify({
+                event: 'weather_snapshot_persistence_failed',
+                nx,
+                ny,
+                error: error instanceof Error ? error.name : 'UnknownError',
+              }),
+            );
+          }),
+      );
     }
     return c.json(response);
   } catch (error) {

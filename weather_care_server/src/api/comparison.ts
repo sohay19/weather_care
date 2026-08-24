@@ -30,17 +30,16 @@ router.get('/last-year', async (c) => {
   return c.json({ comparisonAvailable: true, targetDate, comparison: row });
 });
 
-function yesterdayDate(): string {
-  const now = new Date();
-  now.setDate(now.getDate() - 1);
-  return now.toISOString().slice(0, 10);
+export function yesterdayDate(now = new Date()): string {
+  const nowInKorea = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  nowInKorea.setUTCDate(nowInKorea.getUTCDate() - 1);
+  return nowInKorea.toISOString().slice(0, 10);
 }
 
-function lastYearDate(): string {
-  const now = new Date();
-  now.setFullYear(now.getFullYear() - 1);
-  return now.toISOString().slice(0, 10);
+export function lastYearDate(now = new Date()): string {
+  const nowInKorea = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  nowInKorea.setUTCFullYear(nowInKorea.getUTCFullYear() - 1);
+  return nowInKorea.toISOString().slice(0, 10);
 }
 
 export default router;
-

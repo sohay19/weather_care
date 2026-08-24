@@ -31,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
   WeatherService? _service;
   TodayWeatherResponse? _today;
   WeeklyWeatherResponse? _weekly;
+  ComparisonResponse _yesterdayComparison =
+      const ComparisonResponse.unavailable();
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
   bool _loading = false;
@@ -81,7 +83,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (!mounted) return;
         if (serverResult.hasWeather) {
-          _applyResult(serverResult);
+          final comparison = await service.fetchYesterdayComparison(
+            installationId: _settings.installationId,
+            nx: 60,
+            ny: 121,
+          );
+          if (!mounted) return;
+          _applyResult(serverResult, comparison: comparison);
           return;
         }
 
@@ -114,10 +122,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _applyResult(WeatherLoadResult result) {
+  void _applyResult(
+    WeatherLoadResult result, {
+    ComparisonResponse comparison = const ComparisonResponse.unavailable(),
+  }) {
     setState(() {
       _today = result.today;
       _weekly = result.weekly;
+      _yesterdayComparison = comparison;
       _loadMode = result.mode;
       _statusMessage = result.message;
     });
@@ -179,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     MainTab(
                       today: today,
+                      yesterdayComparison: _yesterdayComparison,
                       dateLabel: _dateLabel,
                       mood: _mood,
                       serverFeaturesAvailable: serverFeaturesAvailable,

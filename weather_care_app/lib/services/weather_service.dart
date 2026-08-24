@@ -146,7 +146,7 @@ class WeatherService {
       );
       return ComparisonResponse.fromJson(data);
     } catch (_) {
-      return const ComparisonResponse(comparisonAvailable: false, payload: {});
+      return const ComparisonResponse.unavailable();
     }
   }
 
@@ -162,7 +162,7 @@ class WeatherService {
       );
       return ComparisonResponse.fromJson(data);
     } catch (_) {
-      return const ComparisonResponse(comparisonAvailable: false, payload: {});
+      return const ComparisonResponse.unavailable();
     }
   }
 }

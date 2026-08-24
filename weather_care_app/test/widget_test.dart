@@ -76,6 +76,27 @@ void main() {
     expect(item.pm25, 31);
   });
 
+  test('어제 비교 응답은 기온과 체감온도 등 날씨 값을 보존한다', () {
+    final response = ComparisonResponse.fromJson({
+      'comparisonAvailable': true,
+      'targetDate': '2026-08-23',
+      'comparison': {
+        'temperature': 20,
+        'apparentTemperature': 19.5,
+        'pm10': 42,
+        'pm25': 20,
+        'skyCondition': '맑음',
+      },
+    });
+
+    expect(response.comparisonAvailable, isTrue);
+    expect(response.targetDate, '2026-08-23');
+    expect(response.comparison?.temperature, 20);
+    expect(response.comparison?.apparentTemperature, 19.5);
+    expect(response.comparison?.pm25, 20);
+    expect(response.comparison?.skyCondition, '맑음');
+  });
+
   test('주간 예보는 대표 준비물을 최대 3개까지 보존한다', () {
     final recommendations = [
       'UMBRELLA',
@@ -342,6 +363,16 @@ void main() {
               timeline: [],
               hourly: [],
             ),
+            yesterdayComparison: const ComparisonResponse(
+              comparisonAvailable: true,
+              targetDate: '2026-08-20',
+              comparison: ComparisonWeatherSnapshot(
+                temperature: 20,
+                apparentTemperature: 20,
+                pm25: 20,
+                skyCondition: '맑음',
+              ),
+            ),
             dateLabel: '8월 21일 금요일',
             mood: 'cloudy',
             serverFeaturesAvailable: true,
@@ -357,15 +388,49 @@ void main() {
     expect(find.text('시간대별 흐름 확인하기'), findsOneWidget);
     expect(find.text('물 한 모금 챙기기'), findsOneWidget);
     expect(find.text('여유 있게 움직이기'), findsOneWidget);
-    expect(find.text('초미세먼지'), findsOneWidget);
+    expect(find.text('초미세먼지'), findsNWidgets(2));
     expect(find.text('76㎍'), findsOneWidget);
+    expect(find.text('어제와 비교'), findsOneWidget);
+    expect(find.text('어제 맑음 · 오늘 구름 많음'), findsOneWidget);
+    expect(find.text('어제보다 2.4°C 높아요'), findsOneWidget);
+    expect(find.text('어제보다 1.8°C 높아요'), findsOneWidget);
+    expect(find.text('어제보다 56㎍/㎥ 많아요'), findsOneWidget);
+    const weatherFeeling = '구름이 많은 날씨예요. 바깥에서는 체감온도 기준으로 조금 덥게 느껴질 수 있어요.';
+    expect(find.text(weatherFeeling), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
+      13,
+    );
+    final apparentTemperatureRow = tester.getRect(
+      find.byKey(const ValueKey('main-apparent-temperature-row')),
+    );
+    final weatherFeelingRow = tester.getRect(
+      find.byKey(const ValueKey('main-weather-feeling')),
+    );
+    expect(weatherFeelingRow.top, greaterThan(apparentTemperatureRow.bottom));
     expect(
       tester.widget<Text>(find.text('76㎍')).style?.color,
       WeatherCareTheme.danger,
     );
     expect(find.byTooltip('날씨 새로고침'), findsNothing);
-    expect(tester.widget<Text>(find.text(brief)).maxLines, 3);
+    expect(tester.widget<Text>(find.text(brief)).maxLines, isNull);
     expect(tester.takeException(), isNull);
+
+    final mainScrollable = find.descendant(
+      of: find.byKey(const ValueKey('main-tab')),
+      matching: find.byType(Scrollable),
+    );
+    final scrollableState = tester.state<ScrollableState>(mainScrollable);
+    expect(scrollableState.position.maxScrollExtent, greaterThan(0));
+    await tester.drag(
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+    expect(scrollableState.position.pixels, greaterThan(0));
+
+    scrollableState.position.jumpTo(0);
+    await tester.pump();
 
     await tester.drag(
       find.byKey(const ValueKey('main-tab')),
@@ -587,7 +652,7 @@ void main() {
     expect(find.text('SETTING'), findsOneWidget);
     expect(find.text('설정'), findsOneWidget);
     expect(
-      find.text('내 위치와 필요한 알림만 편안하게 맞춰보세요.'),
+      find.text('나의 위치와 필요한 알람을 설정할 수 있어요.'),
       findsOneWidget,
     );
     expect(find.byIcon(Icons.tune_rounded), findsOneWidget);

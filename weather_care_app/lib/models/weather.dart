@@ -248,15 +248,59 @@ class WeeklyWeatherResponse {
 
 class ComparisonResponse {
   final bool comparisonAvailable;
-  final Map<String, dynamic> payload;
+  final String? targetDate;
+  final ComparisonWeatherSnapshot? comparison;
 
-  const ComparisonResponse(
-      {required this.comparisonAvailable, required this.payload});
+  const ComparisonResponse({
+    required this.comparisonAvailable,
+    this.targetDate,
+    this.comparison,
+  });
+
+  const ComparisonResponse.unavailable()
+      : comparisonAvailable = false,
+        targetDate = null,
+        comparison = null;
 
   factory ComparisonResponse.fromJson(Map<String, dynamic> json) {
+    final comparisonJson = json['comparison'];
     return ComparisonResponse(
-      comparisonAvailable: json['comparisonAvailable'] == true,
-      payload: Map<String, dynamic>.from(json),
+      comparisonAvailable:
+          json['comparisonAvailable'] == true && comparisonJson is Map,
+      targetDate: json['targetDate']?.toString(),
+      comparison: comparisonJson is Map
+          ? ComparisonWeatherSnapshot.fromJson(
+              Map<String, dynamic>.from(comparisonJson),
+            )
+          : null,
+    );
+  }
+}
+
+class ComparisonWeatherSnapshot {
+  final double? temperature;
+  final double? apparentTemperature;
+  final int? pm10;
+  final int? pm25;
+  final String? skyCondition;
+
+  const ComparisonWeatherSnapshot({
+    this.temperature,
+    this.apparentTemperature,
+    this.pm10,
+    this.pm25,
+    this.skyCondition,
+  });
+
+  factory ComparisonWeatherSnapshot.fromJson(Map<String, dynamic> json) {
+    return ComparisonWeatherSnapshot(
+      temperature: (json['temperature'] as num?)?.toDouble(),
+      apparentTemperature: ((json['apparentTemperature'] ??
+              json['apparent_temperature']) as num?)
+          ?.toDouble(),
+      pm10: (json['pm10'] as num?)?.toInt(),
+      pm25: (json['pm25'] as num?)?.toInt(),
+      skyCondition: (json['skyCondition'] ?? json['summary'])?.toString(),
     );
   }
 }

@@ -139,15 +139,13 @@ class _RecommendationEvidence extends StatelessWidget {
 }
 
 class _HourlyForecastCard extends StatelessWidget {
-  static const _hoursPerDay = 24;
-
   final List<HourlyWeatherItem> items;
 
   const _HourlyForecastCard({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final visibleItems = items.take(_hoursPerDay).toList(growable: false);
+    final visibleItems = _todayHourlyItems(items);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.surfaceDecoration(),
@@ -160,7 +158,7 @@ class _HourlyForecastCard extends StatelessWidget {
             subtitle: '온도·체감·강수·자외선·대기질을 비교해요',
           ),
           const SizedBox(height: 16),
-          if (items.isEmpty)
+          if (visibleItems.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -168,9 +166,13 @@ class _HourlyForecastCard extends StatelessWidget {
                 color: WeatherCareTheme.surfaceMuted,
                 borderRadius: BorderRadius.circular(17),
               ),
-              child: const Text(
-                '서버에서 시간별 예보를 받으면 이곳에 표시해요.',
-                style: TextStyle(color: WeatherCareTheme.textSecondary),
+              child: Text(
+                items.isEmpty
+                    ? '서버에서 시간별 예보를 받으면 이곳에 표시해요.'
+                    : '오늘 표시할 시간별 예보가 없어요.',
+                style: const TextStyle(
+                  color: WeatherCareTheme.textSecondary,
+                ),
               ),
             )
           else
@@ -185,6 +187,21 @@ class _HourlyForecastCard extends StatelessWidget {
       ),
     );
   }
+}
+
+List<HourlyWeatherItem> _todayHourlyItems(List<HourlyWeatherItem> items) {
+  final hasForecastDates = items.any((item) => item.forecastDate != null);
+  if (!hasForecastDates) {
+    return items.take(24).toList(growable: false);
+  }
+
+  final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
+  final today = '${nowInKorea.year.toString().padLeft(4, '0')}-'
+      '${nowInKorea.month.toString().padLeft(2, '0')}-'
+      '${nowInKorea.day.toString().padLeft(2, '0')}';
+  return items
+      .where((item) => item.forecastDate == today)
+      .toList(growable: false);
 }
 
 class _HourlyRow extends StatelessWidget {

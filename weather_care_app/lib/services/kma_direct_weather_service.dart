@@ -204,6 +204,9 @@ DirectKmaWeatherBundle _buildBundle(
                   .hour
                   .toString()
                   .padLeft(2, '0'),
+              forecastDate: _isoDate(
+                item.observedAt.toUtc().add(const Duration(hours: 9)),
+              ),
               temperature: item.temperature,
               apparentTemperature: item.apparentTemperature,
               precipitationProbability: item.precipitationProbability,
@@ -400,6 +403,10 @@ String _formatKmaDate(DateTime date) =>
 String _compactDate(DateTime date) => _formatKmaDate(
       date.toUtc().add(const Duration(hours: 9)),
     );
+
+String _isoDate(DateTime date) => '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
 
 String _normalizeServiceKey(String value) {
   final trimmed = value.trim();

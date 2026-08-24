@@ -36,7 +36,7 @@ flowchart LR
     lifestyle --> recommendation["RecommendationEngine"]
     recommendation --> api["Today / Weekly / Comparison API"]
     api --> app["Flutter App"]
-    app --> ui["브리핑 · 오늘의 가방 · 타임라인 · 생활 날씨"]
+    app --> ui["브리핑 · Check List · 타임라인 · 생활 날씨"]
 ```
 
 ## 서버 장애 및 오프라인 동작

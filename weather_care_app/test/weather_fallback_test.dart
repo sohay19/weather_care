@@ -103,6 +103,7 @@ void main() {
     expect(bundle.today.current.apparentTemperature, 29.3);
     expect(bundle.today.hourly.first.apparentTemperature, 29.3);
     expect(bundle.today.hourly.first.time, '10');
+    expect(bundle.today.hourly.first.forecastDate, '2026-08-20');
     expect(bundle.today.recommendations, isEmpty);
     expect(bundle.today.lifestyleMessages, isEmpty);
     expect(bundle.today.timeline, isEmpty);
@@ -164,6 +165,7 @@ void main() {
     });
 
     expect(response.hourly.single.time, '18');
+    expect(response.hourly.single.forecastDate, '2026-08-20');
     expect(response.hourly.single.snowExpected, isTrue);
     expect(response.hourly.single.snowfallAmount, 1.2);
   });

@@ -61,6 +61,7 @@ class CurrentWeather {
 
 class HourlyWeatherItem {
   final String time;
+  final String? forecastDate;
   final double temperature;
   final double? apparentTemperature;
   final double precipitationProbability;
@@ -75,6 +76,7 @@ class HourlyWeatherItem {
 
   const HourlyWeatherItem({
     required this.time,
+    this.forecastDate,
     required this.temperature,
     this.apparentTemperature,
     required this.precipitationProbability,
@@ -93,11 +95,14 @@ class HourlyWeatherItem {
         json['forecastAt']?.toString() ?? json['observedAt']?.toString() ?? '';
     final parsedTime =
         observedAt.length >= 13 ? observedAt.substring(11, 13) : '--';
+    final parsedDate =
+        observedAt.length >= 10 ? observedAt.substring(0, 10) : null;
     final snowfallAmount = (json['snowfallAmount'] as num?)?.toDouble() ?? 0;
     final legacySnowProbability =
         (json['snowProbability'] as num?)?.toDouble() ?? 0;
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
+      forecastDate: json['forecastDate']?.toString() ?? parsedDate,
       temperature: (json['temperature'] as num?)?.toDouble() ?? 0,
       apparentTemperature: (json['apparentTemperature'] as num?)?.toDouble(),
       precipitationProbability:

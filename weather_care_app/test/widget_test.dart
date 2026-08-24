@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/app.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
+import 'package:weather_care/features/home/widgets/tab_page_header.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/features/home/widgets/server_connection_failure_dialog.dart';
 import 'package:weather_care/features/home/widgets/timeline_section.dart';
@@ -572,5 +573,24 @@ void main() {
       find.text('날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('embedded Setting uses the common tab page header',
+      (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: SettingsScreen(embedded: true)),
+      ),
+    );
+
+    expect(find.byType(TabPageHeader), findsOneWidget);
+    expect(find.text('SETTING'), findsOneWidget);
+    expect(find.text('설정'), findsOneWidget);
+    expect(
+      find.text('내 위치와 필요한 알림만 편안하게 맞춰보세요.'),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

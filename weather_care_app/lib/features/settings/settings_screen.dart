@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/app_settings.dart';
 import '../../theme/weather_theme.dart';
+import '../home/widgets/tab_page_header.dart';
 import 'location_mode.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -30,16 +31,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(16, widget.embedded ? 12 : 4, 16, 32),
       children: [
-        if (widget.embedded) ...[
-          Text('설정', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 4),
-        ],
-        Text(
-          '내 위치와 필요한 알림만 편안하게 맞춰보세요.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: WeatherCareTheme.textSecondary,
-              ),
-        ),
+        if (widget.embedded)
+          const TabPageHeader(
+            eyebrow: 'SETTING',
+            title: '설정',
+            subtitle: '내 위치와 필요한 알림만 편안하게 맞춰보세요.',
+            icon: Icons.tune_rounded,
+          )
+        else
+          Text(
+            '내 위치와 필요한 알림만 편안하게 맞춰보세요.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: WeatherCareTheme.textSecondary,
+                ),
+          ),
         const SizedBox(height: 20),
         _SettingsSection(
           icon: Icons.location_on_outlined,

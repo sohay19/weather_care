@@ -21,7 +21,7 @@ class TimelineSection extends StatelessWidget {
         children: [
           const HomeSectionHeader(
             icon: Icons.schedule_rounded,
-            title: '오늘 하루',
+            title: '간단한 타임라인',
             subtitle: '시간의 흐름에 맞춰 변화를 알려드려요',
           ),
           const SizedBox(height: 18),

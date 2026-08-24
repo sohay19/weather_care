@@ -82,7 +82,7 @@ class _WeekSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '이번 주 한눈에',
+            '한눈에 보는 이번주',
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               fontSize: 17,

@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           destinations: const [
             NavigationDestination(
-              tooltip: '오늘의 가방과 오늘 하루',
+              tooltip: 'Check List, 간단한 타임라인',
               icon: Icon(
                 Icons.work_outline_rounded,
                 color: WeatherCareTheme.textSecondary,

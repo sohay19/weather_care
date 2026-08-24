@@ -56,7 +56,7 @@ class TodayTab extends StatelessWidget {
           else
             const ServerFeatureUnavailableCard(
               icon: Icons.work_outline_rounded,
-              title: '오늘의 가방',
+              title: 'Check List',
             ),
           const SizedBox(height: 16),
           if (serverFeaturesAvailable)
@@ -64,7 +64,7 @@ class TodayTab extends StatelessWidget {
           else
             const ServerFeatureUnavailableCard(
               icon: Icons.schedule_rounded,
-              title: '오늘 하루',
+              title: '간단한 타임라인',
             ),
         ],
       ),

@@ -81,30 +81,57 @@ class WeatherConditionIcon extends StatelessWidget {
       label: '날씨 ${condition?.trim().isNotEmpty == true ? condition : '정보 없음'}',
       image: true,
       child: ExcludeSemantics(
-        child: SizedBox.square(
-          key: ValueKey('weather-condition-${kind.name}'),
-          dimension: size,
-          child: switch (kind) {
-            WeatherConditionKind.clear => _single(Icons.wb_sunny_outlined),
-            WeatherConditionKind.partlyCloudy => _partlyCloudy(),
-            WeatherConditionKind.overcast => _overcast(),
-            WeatherConditionKind.drizzle => _rain(dropCount: 1),
-            WeatherConditionKind.rain => _rain(dropCount: 2),
-            WeatherConditionKind.shower => _rain(dropCount: 3),
-            WeatherConditionKind.lightWintryMix => _wintryMix(light: true),
-            WeatherConditionKind.wintryMix => _wintryMix(),
-            WeatherConditionKind.snowFlurry => _snow(flurry: true),
-            WeatherConditionKind.snow => _snow(),
-            WeatherConditionKind.unknown => _single(Icons.help_outline_rounded),
-          },
+        child: Center(
+          widthFactor: 1,
+          heightFactor: 1,
+          child: SizedBox.square(
+            key: ValueKey('weather-condition-${kind.name}'),
+            dimension: size,
+            child: switch (kind) {
+              WeatherConditionKind.clear => Icon(
+                  Icons.wb_sunny_outlined,
+                  size: size,
+                  color: color,
+                ),
+              WeatherConditionKind.partlyCloudy =>
+                _PartlyCloudyWeatherGlyph(size: size, color: color),
+              WeatherConditionKind.overcast =>
+                _OvercastWeatherGlyph(size: size, color: color),
+              WeatherConditionKind.drizzle =>
+                _RainWeatherGlyph(size: size, color: color, dropCount: 1),
+              WeatherConditionKind.rain =>
+                _RainWeatherGlyph(size: size, color: color, dropCount: 2),
+              WeatherConditionKind.shower =>
+                _RainWeatherGlyph(size: size, color: color, dropCount: 3),
+              WeatherConditionKind.lightWintryMix =>
+                _WintryMixWeatherGlyph(size: size, color: color, light: true),
+              WeatherConditionKind.wintryMix =>
+                _WintryMixWeatherGlyph(size: size, color: color),
+              WeatherConditionKind.snowFlurry =>
+                _SnowWeatherGlyph(size: size, color: color, flurry: true),
+              WeatherConditionKind.snow =>
+                _SnowWeatherGlyph(size: size, color: color),
+              WeatherConditionKind.unknown => Icon(
+                  Icons.help_outline_rounded,
+                  size: size,
+                  color: color,
+                ),
+            },
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _single(IconData icon) => Icon(icon, size: size, color: color);
+class _PartlyCloudyWeatherGlyph extends StatelessWidget {
+  final double size;
+  final Color color;
 
-  Widget _partlyCloudy() {
+  const _PartlyCloudyWeatherGlyph({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -123,8 +150,16 @@ class WeatherConditionIcon extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _overcast() {
+class _OvercastWeatherGlyph extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _OvercastWeatherGlyph({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -143,8 +178,21 @@ class WeatherConditionIcon extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _rain({required int dropCount}) {
+class _RainWeatherGlyph extends StatelessWidget {
+  final double size;
+  final Color color;
+  final int dropCount;
+
+  const _RainWeatherGlyph({
+    required this.size,
+    required this.color,
+    required this.dropCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final dropSize = size * (dropCount == 3 ? 0.22 : 0.24);
     final spacing = size * 0.05;
     final dropsWidth = dropCount * dropSize + (dropCount - 1) * spacing;
@@ -168,8 +216,21 @@ class WeatherConditionIcon extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _wintryMix({bool light = false}) {
+class _WintryMixWeatherGlyph extends StatelessWidget {
+  final double size;
+  final Color color;
+  final bool light;
+
+  const _WintryMixWeatherGlyph({
+    required this.size,
+    required this.color,
+    this.light = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
@@ -199,8 +260,21 @@ class WeatherConditionIcon extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _snow({bool flurry = false}) {
+class _SnowWeatherGlyph extends StatelessWidget {
+  final double size;
+  final Color color;
+  final bool flurry;
+
+  const _SnowWeatherGlyph({
+    required this.size,
+    required this.color,
+    this.flurry = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.topCenter,
       children: [

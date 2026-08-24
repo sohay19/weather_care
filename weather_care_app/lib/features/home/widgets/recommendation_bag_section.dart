@@ -37,7 +37,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
         children: [
           HomeSectionHeader(
             icon: Icons.work_outline_rounded,
-            title: '오늘의 가방',
+            title: 'Check List',
             subtitle: '필요한 것만 모았어요',
           ),
           const SizedBox(height: 18),

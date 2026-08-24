@@ -166,6 +166,57 @@ void main() {
     expect(find.byIcon(Icons.umbrella_outlined), findsNothing);
   });
 
+  testWidgets('조합 날씨 아이콘은 큰 부모 안에서도 지정 크기의 한 위젯을 유지한다', (tester) async {
+    const conditions = [
+      '구름 많음',
+      '흐림',
+      '빗방울',
+      '비',
+      '소나기',
+      '빗방울/눈날림',
+      '비/눈',
+      '눈날림',
+      '눈',
+    ];
+
+    for (final condition in conditions) {
+      final kind = weatherConditionKind(condition);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: SizedBox.square(
+              dimension: 42,
+              child: WeatherConditionIcon(
+                condition: condition,
+                size: 21,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final glyph = find.byKey(ValueKey('weather-condition-${kind.name}'));
+      final glyphRect = tester.getRect(glyph);
+      final icons = find.descendant(of: glyph, matching: find.byType(Icon));
+
+      expect(tester.getSize(glyph), const Size.square(21));
+      expect(icons, findsWidgets);
+      for (var index = 0; index < icons.evaluate().length; index++) {
+        final iconRect = tester.getRect(icons.at(index));
+        expect(
+          glyphRect.inflate(1).contains(iconRect.topLeft),
+          isTrue,
+          reason: '$condition 아이콘 $index의 시작점이 조합 위젯 밖에 있어요: $iconRect',
+        );
+        expect(
+          glyphRect.inflate(1).contains(iconRect.bottomRight),
+          isTrue,
+          reason: '$condition 아이콘 $index의 끝점이 조합 위젯 밖에 있어요: $iconRect',
+        );
+      }
+    }
+  });
+
   testWidgets('WeatherCareApp starts', (tester) async {
     await tester.pumpWidget(const WeatherCareApp());
 

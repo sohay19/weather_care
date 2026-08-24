@@ -271,7 +271,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _SettingsSection(
           icon: Icons.shield_outlined,
           title: '주의 및 날씨 안내',
-          subtitle: '안전과 하루 날씨 알림을 관리해요',
+          subtitle: '안전과 간단한 타임라인 알림을 관리해요',
           child: Column(
             children: [
               _SettingsToggleTile(

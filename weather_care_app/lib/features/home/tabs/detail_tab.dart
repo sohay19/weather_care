@@ -51,7 +51,7 @@ class DetailTab extends StatelessWidget {
           else
             const ServerFeatureUnavailableCard(
               icon: Icons.fact_check_outlined,
-              title: '챙김 이유',
+              title: '챙길 이유',
             ),
           const SizedBox(height: 16),
           _HourlyForecastCard(items: today.hourly),
@@ -80,7 +80,7 @@ class _RecommendationEvidence extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const HomeSectionHeader(
-            title: '챙김 이유',
+            title: '챙길 이유',
             subtitle: '추천을 만든 실제 날씨 수치를 함께 보여줘요',
           ),
           const SizedBox(height: 16),
@@ -139,12 +139,15 @@ class _RecommendationEvidence extends StatelessWidget {
 }
 
 class _HourlyForecastCard extends StatelessWidget {
+  static const _hoursPerDay = 24;
+
   final List<HourlyWeatherItem> items;
 
   const _HourlyForecastCard({required this.items});
 
   @override
   Widget build(BuildContext context) {
+    final visibleItems = items.take(_hoursPerDay).toList(growable: false);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.surfaceDecoration(),
@@ -153,7 +156,7 @@ class _HourlyForecastCard extends StatelessWidget {
         children: [
           const HomeSectionHeader(
             icon: Icons.schedule_rounded,
-            title: '타임라인 상세',
+            title: '타임라인',
             subtitle: '온도·체감·강수·자외선·대기질을 비교해요',
           ),
           const SizedBox(height: 16),
@@ -171,9 +174,12 @@ class _HourlyForecastCard extends StatelessWidget {
               ),
             )
           else
-            for (var index = 0; index < items.length; index++) ...[
-              _HourlyRow(item: items[index]),
-              if (index < items.length - 1) const SizedBox(height: 9),
+            for (var index = 0; index < visibleItems.length; index++) ...[
+              _HourlyRow(
+                key: ValueKey('detail-hourly-$index'),
+                item: visibleItems[index],
+              ),
+              if (index < visibleItems.length - 1) const SizedBox(height: 9),
             ],
         ],
       ),
@@ -184,7 +190,7 @@ class _HourlyForecastCard extends StatelessWidget {
 class _HourlyRow extends StatelessWidget {
   final HourlyWeatherItem item;
 
-  const _HourlyRow({required this.item});
+  const _HourlyRow({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {

@@ -5022,3 +5022,11 @@
 - SHA-256: `07EFDFEDBC48C74E87F7A6CE2A6A5527D0A86C702D07378E6990D4935FDA0AEA`
 - 실제 레코드를 출력하지 않고 `CREATE TABLE` 7개와 `INSERT INTO` 6개가 포함된 것을 확인했다.
 - 이번 단계에서는 원격 D1을 수정하지 않았다. 다음 운영 단계는 백업을 복구 기준점으로 삼아 `0002`~`0006` 마이그레이션을 원격 D1에 적용하는 것이다.
+
+## 2026-09-01 운영 D1 마이그레이션 적용
+
+- 사전 백업을 확인한 뒤 원격 D1 `weather_care_db`에 `0002_notification_preferences.sql`부터 `0006_road_control_state.sql`까지 5개 migration을 순서대로 적용했다.
+- 적용 후 원격 migration 목록은 `0001`~`0006`까지 연속이며 대기 항목은 0개다.
+- 원격 스키마에서 `installation_warning_state` 테이블, 알림 설정 열 4개, 현재 강수·도로살얼음·도로통제 상태 열 10개가 생성된 것을 읽기 전용 조회로 확인했다.
+- 기존 레코드 내용은 조회하거나 변경하지 않았다. 적용 전 복구 기준점은 `C:\Users\idp20\Documents\weather-care-backups\weather_care_db_20260901_153556.sql`이다.
+- 다음 운영 단계는 최신 Worker를 dry-run으로 검증한 뒤 운영 배포하는 것이다.

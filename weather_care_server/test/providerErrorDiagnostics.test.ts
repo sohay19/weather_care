@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest';
+import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
+
+describe('provider error diagnostics', () => {
+  it('classifies safe HTTP and provider operation fields', () => {
+    expect(
+      providerErrorDiagnostic(
+        new Error('KMA radar request failed with status 403'),
+      ),
+    ).toEqual({
+      error: 'Error',
+      failureReason: 'AUTHORIZATION_FAILED',
+      httpStatus: 403,
+      operation: 'RADAR',
+    });
+  });
+
+  it('classifies network and invalid-response failures', () => {
+    expect(providerErrorDiagnostic(new TypeError('fetch failed'))).toEqual({
+      error: 'TypeError',
+      failureReason: 'NETWORK_ERROR',
+    });
+    expect(
+      providerErrorDiagnostic(
+        new Error('KMA warning response has an unknown format'),
+      ),
+    ).toEqual({
+      error: 'Error',
+      failureReason: 'INVALID_RESPONSE',
+      operation: 'WARNING',
+    });
+  });
+
+  it('never copies an error message or secret into the diagnostic', () => {
+    const secret = 'top-secret-api-key';
+    const diagnostic = providerErrorDiagnostic(
+      new Error(`authorization failed for ${secret}`),
+    );
+    const serialized = JSON.stringify(diagnostic);
+
+    expect(diagnostic.failureReason).toBe('AUTHORIZATION_FAILED');
+    expect(serialized).not.toContain(secret);
+    expect(serialized).not.toContain('message');
+  });
+});

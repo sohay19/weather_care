@@ -14,6 +14,7 @@ import { AirQualitySnapshot } from '../air/airQualityProvider';
 import { WeatherForecast } from '../weather/weatherProvider';
 import { KmaUvProvider } from '../uv/kmaUvProvider';
 import { UvForecast } from '../uv/uvProvider';
+import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
 
 const UV_FRESH_MS = 2 * 60 * 60 * 1000;
 const UV_MAX_STALE_MS = 8 * 60 * 60 * 1000;
@@ -337,7 +338,7 @@ function logEnvironmentalError(
     JSON.stringify({
       event,
       provider,
-      error: error instanceof Error ? error.name : 'UnknownError',
+      ...providerErrorDiagnostic(error),
     }),
   );
 }

@@ -53,6 +53,7 @@ import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
 import { ItsRoadControlProvider } from '../providers/traffic/itsRoadControlProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
+import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -168,7 +169,7 @@ async function loadCurrentPrecipitation(
       JSON.stringify({
         event: 'current_precipitation_provider_failed',
         provider: 'KMA_ANALYSIS_RADAR',
-        error: error instanceof Error ? error.name : 'UnknownError',
+        ...providerErrorDiagnostic(error),
       }),
     );
     return undefined;
@@ -189,7 +190,7 @@ async function loadRoadControl(
       JSON.stringify({
         event: 'road_control_provider_failed',
         provider: 'ITS_EVENT_INFO',
-        error: error instanceof Error ? error.name : 'UnknownError',
+        ...providerErrorDiagnostic(error),
       }),
     );
     return undefined;
@@ -215,7 +216,7 @@ async function loadRoadIce(
       JSON.stringify({
         event: 'road_ice_provider_failed',
         provider: 'KMA_ROAD_RISK',
-        error: error instanceof Error ? error.name : 'UnknownError',
+        ...providerErrorDiagnostic(error),
       }),
     );
     return undefined;
@@ -236,7 +237,7 @@ async function loadActiveWarnings(
       JSON.stringify({
         event: 'official_warning_provider_failed',
         provider: 'KMA_WARNING_STATUS',
-        error: error instanceof Error ? error.name : 'UnknownError',
+        ...providerErrorDiagnostic(error),
       }),
     );
     return [];
@@ -414,7 +415,7 @@ function logProviderError(
       route,
       nx,
       ny,
-      error: error instanceof Error ? error.name : 'UnknownError',
+      ...providerErrorDiagnostic(error),
     }),
   );
 }

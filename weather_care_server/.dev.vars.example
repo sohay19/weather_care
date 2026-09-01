@@ -2,6 +2,8 @@
 KMA_SERVICE_KEY=공공데이터포털_일반인증키
 # 고해상도 격자자료와 레이더 API 활용 권한이 있는 기상청 API허브 인증키
 KMA_APIHUB_KEY=기상청_API허브_인증키
+# 국가교통정보센터 돌발상황정보 Open API 인증키
+ITS_API_KEY=국가교통정보센터_인증키
 # Firebase 서비스 계정 JSON의 client_email과 private_key를 사용합니다.
 FCM_CLIENT_EMAIL=firebase-adminsdk@example.iam.gserviceaccount.com
 FCM_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n서비스계정_비공개키\n-----END PRIVATE KEY-----\n"

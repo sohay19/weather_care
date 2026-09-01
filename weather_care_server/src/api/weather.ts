@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import {
   NotificationSettings,
   CurrentPrecipitationObservation,
+  OfficialRoadControl,
   RoadIceRisk,
   Recommendation,
   ServerEnv,
@@ -50,6 +51,8 @@ import { buildActiveWarningMessages } from '../presentation/officialWarningMessa
 import { RegionMetadata } from '../regions/regionCatalog';
 import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
+import { ItsRoadControlProvider } from '../providers/traffic/itsRoadControlProvider';
+import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -65,7 +68,7 @@ router.get('/today', async (c) => {
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData, settings, precipitation, warnings, roadIce] = await Promise.all([
+    const [weatherForecast, environmentalData, settings, precipitation, warnings, roadIce, roadControl] = await Promise.all([
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
@@ -74,6 +77,7 @@ router.get('/today', async (c) => {
       loadCurrentPrecipitation(c.env, coordinates),
       loadActiveWarnings(c.env, region),
       loadRoadIce(c.env, region, coordinates),
+      loadRoadControl(c.env, coordinates),
     ]);
     const forecast = enrichForecastWithEnvironmentalData(
       weatherForecast,
@@ -97,6 +101,7 @@ router.get('/today', async (c) => {
     );
     const warningMessages = buildActiveWarningMessages(warnings, regionLabel);
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
+    const roadControlMessage = buildRoadControlMessage(roadControl);
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
       region: { nx, ny, name: regionLabel },
@@ -107,10 +112,12 @@ router.get('/today', async (c) => {
       },
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
+      currentRoadControl: roadControl,
       hourly: forecast.hourly,
       recommendations,
       lifestyleMessages: [
         ...warningMessages,
+        ...(roadControlMessage ? [roadControlMessage] : []),
         ...(roadIceMessage ? [roadIceMessage] : []),
         ...(currentPrecipitationMessage ? [currentPrecipitationMessage] : []),
         ...forecastLifestyleMessages,
@@ -161,6 +168,27 @@ async function loadCurrentPrecipitation(
       JSON.stringify({
         event: 'current_precipitation_provider_failed',
         provider: 'KMA_ANALYSIS_RADAR',
+        error: error instanceof Error ? error.name : 'UnknownError',
+      }),
+    );
+    return undefined;
+  }
+}
+
+async function loadRoadControl(
+  env: ServerEnv,
+  coordinates: { latitude: number; longitude: number } | undefined,
+): Promise<OfficialRoadControl | undefined> {
+  if (!env.ITS_API_KEY || !coordinates) return undefined;
+  try {
+    return await new ItsRoadControlProvider({
+      apiKey: env.ITS_API_KEY,
+    }).getNearestActiveControl(coordinates.latitude, coordinates.longitude);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'road_control_provider_failed',
+        provider: 'ITS_EVENT_INFO',
         error: error instanceof Error ? error.name : 'UnknownError',
       }),
     );

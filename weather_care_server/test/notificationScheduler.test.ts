@@ -24,6 +24,9 @@ describe('notification scheduler', () => {
           road_ice_level INTEGER NOT NULL DEFAULT 0,
           road_ice_link_id TEXT,
           road_ice_observed_at TEXT,
+          road_control_event_key TEXT,
+          road_control_kind TEXT,
+          road_control_started_at TEXT,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(
@@ -287,6 +290,42 @@ describe('notification scheduler', () => {
       .first<{ level: number; linkId: string | null }>();
     expect(state).toEqual({ level: 0, linkId: null });
   });
+
+  it('sends an active official road control once and resets after it ends', async () => {
+    await insertInstallation('device-token', true);
+    const sent: FcmPayload[] = [];
+    const bindings = testBindings('', 'test-its-key');
+    const dependencies = {
+      now: new Date('2026-09-01T05:10:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      roadControlLoader: async () => roadControl(),
+      sender: collectingSender(sent),
+    };
+
+    await runRecommendationNotificationJob(bindings, dependencies);
+    await runRecommendationNotificationJob(bindings, dependencies);
+
+    expect(sent.filter((item) => item.notificationKey.startsWith('ROAD_CONTROL_')))
+      .toEqual([
+        expect.objectContaining({
+          title: '출퇴근 경로',
+          body: '수원지하차도 전면 통제가 시행 중이니, 출발 전에 다른 경로와 대중교통 운행정보를 확인하세요 국가교통정보센터는 오후 2시부터 수원지하차도 전면 통제가 시행 중이라고 안내했어요',
+        }),
+      ]);
+
+    await runRecommendationNotificationJob(bindings, {
+      ...dependencies,
+      now: new Date('2026-09-01T05:20:00Z'),
+      roadControlLoader: async () => undefined,
+    });
+    const state = await env.DB.prepare(
+      `SELECT road_control_event_key AS eventKey
+       FROM installations WHERE installation_id = ?`,
+    )
+      .bind('installation-1')
+      .first<{ eventKey: string | null }>();
+    expect(state?.eventKey).toBeNull();
+  });
 });
 
 describe('notification time slots', () => {
@@ -319,15 +358,34 @@ async function insertInstallation(
     .run();
 }
 
-function testBindings(apiHubKey = ''): ServerEnv {
+function testBindings(apiHubKey = '', itsApiKey = ''): ServerEnv {
   return {
     DB: env.DB,
     APP_ORIGIN: 'http://localhost:8787',
     FCM_PROJECT_ID: 'weather-care-2aaa8',
     KMA_SERVICE_KEY: 'test-key',
     KMA_APIHUB_KEY: apiHubKey,
+    ITS_API_KEY: itsApiKey,
     FCM_CLIENT_EMAIL: 'test@example.iam.gserviceaccount.com',
     FCM_PRIVATE_KEY: 'test-private-key',
+  };
+}
+
+function roadControl() {
+  return {
+    eventKey: 'link-1|20260901140000|재난|침수',
+    startedAt: '2026-09-01T14:00:00+09:00',
+    roadName: '수원지하차도',
+    controlKind: 'FULL' as const,
+    lanesBlocked: '전면 통제',
+    eventType: '재난',
+    eventDetailType: '침수',
+    message: '침수로 전면 통제합니다',
+    linkId: 'link-1',
+    latitude: 37.264,
+    longitude: 127.029,
+    distanceMeters: 80,
+    provider: '국가교통정보센터 돌발상황정보' as const,
   };
 }
 

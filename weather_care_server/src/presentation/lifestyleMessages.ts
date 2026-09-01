@@ -131,6 +131,8 @@ function groundingPartFor(
     case LifestyleInsightType.RAIN_BREAK_WINDOW:
     case LifestyleInsightType.BEST_OUTING_WINDOW:
     case LifestyleInsightType.PET_WALK_WINDOW:
+    case LifestyleInsightType.BLACK_ICE_CAUTION:
+    case LifestyleInsightType.COMMUTE_ROUTE_CAUTION:
       return undefined;
   }
 }
@@ -196,6 +198,8 @@ function snapshotForInsight(
     case LifestyleInsightType.BEST_OUTING_WINDOW:
     case LifestyleInsightType.PET_WALK_WINDOW:
     case LifestyleInsightType.NIGHT_WEATHER_CHECK:
+    case LifestyleInsightType.BLACK_ICE_CAUTION:
+    case LifestyleInsightType.COMMUTE_ROUTE_CAUTION:
       return source[0];
   }
 }

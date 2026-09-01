@@ -744,6 +744,10 @@ _LifestyleCardPresentation _lifestylePresentation(
     LifestyleMessageType.blackIceCaution => const _LifestyleCardPresentation(
         icon: Icons.warning_amber_rounded,
       ),
+    LifestyleMessageType.commuteRouteCaution =>
+      const _LifestyleCardPresentation(
+        icon: Icons.alt_route_rounded,
+      ),
     LifestyleMessageType.rapidTemperatureDrop =>
       const _LifestyleCardPresentation(
         icon: Icons.thermostat_auto_outlined,

@@ -13,7 +13,7 @@ APP_ORIGIN = "http://localhost:8787"
 FCM_PROJECT_ID = "weather-care-2aaa8"
 
 [secrets]
-required = ["KMA_SERVICE_KEY", "KMA_APIHUB_KEY", "FCM_CLIENT_EMAIL", "FCM_PRIVATE_KEY"]
+required = ["KMA_SERVICE_KEY", "KMA_APIHUB_KEY", "ITS_API_KEY", "FCM_CLIENT_EMAIL", "FCM_PRIVATE_KEY"]
 
 [observability]
 enabled = true

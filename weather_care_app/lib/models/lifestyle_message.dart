@@ -19,6 +19,7 @@ enum LifestyleMessageType {
   rapidTemperatureDrop,
   nightWeatherCheck,
   blackIceCaution,
+  commuteRouteCaution,
   unknown,
 }
 
@@ -44,6 +45,7 @@ extension LifestyleMessageTypeLabel on LifestyleMessageType {
         LifestyleMessageType.rapidTemperatureDrop => '기온 하강',
         LifestyleMessageType.nightWeatherCheck => '수면환경 확인',
         LifestyleMessageType.blackIceCaution => '블랙아이스(도로살얼음)',
+        LifestyleMessageType.commuteRouteCaution => '출퇴근 경로',
         LifestyleMessageType.unknown => '날씨 안내',
       };
 
@@ -68,6 +70,7 @@ extension LifestyleMessageTypeLabel on LifestyleMessageType {
         LifestyleMessageType.rapidTemperatureDrop => 'RAPID_TEMPERATURE_DROP',
         LifestyleMessageType.nightWeatherCheck => 'NIGHT_WEATHER_CHECK',
         LifestyleMessageType.blackIceCaution => 'BLACK_ICE_CAUTION',
+        LifestyleMessageType.commuteRouteCaution => 'COMMUTE_ROUTE_CAUTION',
         LifestyleMessageType.unknown => 'UNKNOWN',
       };
 }
@@ -197,5 +200,6 @@ LifestyleMessageType _typeFromApiName(String value) => switch (value) {
       'RAPID_TEMPERATURE_DROP' => LifestyleMessageType.rapidTemperatureDrop,
       'NIGHT_WEATHER_CHECK' => LifestyleMessageType.nightWeatherCheck,
       'BLACK_ICE_CAUTION' => LifestyleMessageType.blackIceCaution,
+      'COMMUTE_ROUTE_CAUTION' => LifestyleMessageType.commuteRouteCaution,
       _ => LifestyleMessageType.unknown,
     };

@@ -184,6 +184,12 @@ export const lifestyleMessageCatalog: Record<
       description: '기상청 도로살얼음 발생 가능 정보를 확인했어요.',
     },
   ],
+  COMMUTE_ROUTE_CAUTION: [
+    {
+      title: '도로 통제가 시행 중이니, 출발 전에 다른 경로와 대중교통 운행정보를 확인하세요',
+      description: '국가교통정보센터의 현재 돌발상황정보를 확인했어요.',
+    },
+  ],
 };
 
 export function lifestyleMessageFor(

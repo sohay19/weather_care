@@ -50,6 +50,7 @@ export enum LifestyleInsightType {
   RAPID_TEMPERATURE_DROP = 'RAPID_TEMPERATURE_DROP',
   NIGHT_WEATHER_CHECK = 'NIGHT_WEATHER_CHECK',
   BLACK_ICE_CAUTION = 'BLACK_ICE_CAUTION',
+  COMMUTE_ROUTE_CAUTION = 'COMMUTE_ROUTE_CAUTION',
 }
 
 export type PrecipitationType =
@@ -231,6 +232,24 @@ export interface RoadIceRisk {
   provider: '기상청 도로살얼음 발생 가능 정보';
 }
 
+export interface OfficialRoadControl {
+  eventKey: string;
+  startedAt: string;
+  endsAt?: string;
+  roadName?: string;
+  direction?: string;
+  controlKind: 'FULL' | 'PARTIAL';
+  lanesBlocked?: string;
+  eventType: string;
+  eventDetailType?: string;
+  message: string;
+  linkId?: string;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+  provider: '국가교통정보센터 돌발상황정보';
+}
+
 export type ServerEnv = CloudflareBindings;
 
 export type EnvironmentalSourceState =
@@ -270,6 +289,7 @@ export interface TodayWeatherResponse {
   current: WeatherSnapshot;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;
+  currentRoadControl?: OfficialRoadControl;
   hourly: WeatherSnapshot[];
   recommendations: Recommendation[];
   lifestyleMessages: {

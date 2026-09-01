@@ -45,7 +45,7 @@ describe('KMA precipitation observation provider', () => {
   it('distinguishes a missing analysis value without logging the value', () => {
     let error: unknown;
     try {
-      parseAnalysisRain('202609011410 127.0 37.2 -999', '202609011410');
+      parseAnalysisRain('202609011410 127.0 37.2 -999 =', '202609011410');
     } catch (caught) {
       error = caught;
     }

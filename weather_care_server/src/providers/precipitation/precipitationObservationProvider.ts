@@ -244,7 +244,10 @@ export function parseAnalysisRain(
     };
   }
 
-  const lastToken = targetRows.at(-1)?.tokens.at(-1);
+  const lastToken = targetRows
+    .at(-1)
+    ?.tokens.filter((token) => token !== '=')
+    .at(-1);
   const lastValue = lastToken === undefined ? Number.NaN : Number(lastToken);
   const detail: KmaPrecipitationFailureDetail =
     lastToken === undefined

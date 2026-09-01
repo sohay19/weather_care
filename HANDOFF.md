@@ -5030,3 +5030,11 @@
 - 원격 스키마에서 `installation_warning_state` 테이블, 알림 설정 열 4개, 현재 강수·도로살얼음·도로통제 상태 열 10개가 생성된 것을 읽기 전용 조회로 확인했다.
 - 기존 레코드 내용은 조회하거나 변경하지 않았다. 적용 전 복구 기준점은 `C:\Users\idp20\Documents\weather-care-backups\weather_care_db_20260901_153556.sql`이다.
 - 다음 운영 단계는 최신 Worker를 dry-run으로 검증한 뒤 운영 배포하는 것이다.
+
+## 2026-09-01 최신 Worker 운영 배포
+
+- 추적된 최신 서버 코드에서 `npx tsc --noEmit`, Vitest `20 files / 72 tests`, `npx wrangler deploy --dry-run`을 통과했다.
+- 로컬 테스트에서는 운영 Secret 4종이 `.dev.vars`에 없다는 경고가 있었지만 테스트는 모두 통과했다. 운영 Worker에는 `KMA_SERVICE_KEY`, `KMA_APIHUB_KEY`, `ITS_API_KEY`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY` 5종이 등록된 것을 이름 목록으로 재확인했다.
+- Worker `weather-care-server`를 `https://weather-care-server.sy40222.workers.dev`에 배포했다. 활성 버전은 `c8f32083-d379-415e-92f8-5cf35701cd78`이며 100% 트래픽이 연결됐다.
+- 배포된 Worker의 시작 시간은 16ms이며 D1 `weather_care_db`, `FCM_PROJECT_ID`, 10분 주기 `*/10 * * * *` Cron이 연결됐다.
+- 배포 직후 `/`와 `/health`가 각각 HTTP 200을 반환했다. 전체 Today·설정·설치·알림 관련 운영 API 검증은 다음 단계에서 수행한다.

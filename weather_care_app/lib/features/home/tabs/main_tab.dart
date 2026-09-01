@@ -8,7 +8,6 @@ import '../widgets/weather_condition_icon.dart';
 
 class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
-  final ComparisonResponse yesterdayComparison;
   final String dateLabel;
   final String mood;
   final bool serverFeaturesAvailable;
@@ -17,7 +16,6 @@ class MainTab extends StatelessWidget {
   const MainTab({
     super.key,
     required this.today,
-    this.yesterdayComparison = const ComparisonResponse.unavailable(),
     required this.dateLabel,
     required this.mood,
     required this.serverFeaturesAvailable,

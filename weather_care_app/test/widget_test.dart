@@ -401,16 +401,6 @@ void main() {
               timeline: [],
               hourly: [],
             ),
-            yesterdayComparison: const ComparisonResponse(
-              comparisonAvailable: true,
-              targetDate: '2026-08-20',
-              comparison: ComparisonWeatherSnapshot(
-                temperature: 20,
-                apparentTemperature: 20,
-                pm25: 20,
-                skyCondition: '맑음',
-              ),
-            ),
             dateLabel: '8월 21일 금요일',
             mood: 'cloudy',
             serverFeaturesAvailable: true,

@@ -166,7 +166,58 @@ describe('Lifestyle v1.1 catalog', () => {
 
     expect(mask?.sourceFields).toContain('airQualityGrade');
   });
+
+  it('keeps three approved expressions for each supported feeling or impact tier', () => {
+    const rain = threeDescriptions(
+      LifestyleInsightType.RAIN_GEAR_USEFUL,
+      snapshot(15, {
+        precipitationType: 'RAIN',
+        precipitationAmount: 3,
+        precipitationAmountRange: range('VALUE', 3, 3, 'MM'),
+      }),
+    );
+    const snow = threeDescriptions(
+      LifestyleInsightType.SNOW_TRAVEL_CAUTION,
+      snapshot(17, {
+        precipitationType: 'SNOW',
+        snowExpected: true,
+        snowfallAmount: 1.5,
+        snowfallAmountRange: range('VALUE', 1.5, 1.5, 'CM'),
+      }),
+    );
+    const uv = threeDescriptions(
+      LifestyleInsightType.SUNSCREEN_USEFUL,
+      snapshot(13, { uvIndex: 7 }),
+    );
+    const air = threeDescriptions(
+      LifestyleInsightType.MASK_USEFUL,
+      snapshot(12, { pm25: 50, airQualityStationName: '수원 측정소' }),
+    );
+    const humidHeat = threeDescriptions(
+      LifestyleInsightType.VERY_HOT_AND_HUMID,
+      snapshot(14, { apparentTemperature: 34, humidity: 85 }),
+    );
+
+    for (const variants of [rain, snow, uv, air, humidHeat]) {
+      expect(new Set(variants).size).toBe(3);
+    }
+  });
 });
+
+function threeDescriptions(
+  type: LifestyleInsightType,
+  hourly: WeatherSnapshot,
+): string[] {
+  return [0, 1, 2].map((score) => {
+    const messages = buildLifestyleMessages(
+      [{ type, score, sourceFacts: [] }],
+      [],
+      [hourly],
+      '수원',
+    );
+    return messages[0].description ?? '';
+  });
+}
 
 function snapshot(
   hour: number,

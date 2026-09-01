@@ -393,18 +393,26 @@ function airQualityFact(
     snapshot.airQualityObservedAt ?? snapshot.observedAt,
   );
   if (snapshot.pm25 !== undefined) {
-    return officialFact(
-      `에어코리아는 ${time} ${station}의 초미세먼지 농도를 ${Math.round(snapshot.pm25)}㎍/㎥로 제공했어요`,
-      snapshot,
-      '에어코리아',
-    );
+    return {
+      ...officialFact(
+        `에어코리아는 ${time} ${station}의 초미세먼지 농도를 ${Math.round(snapshot.pm25)}㎍/㎥로 제공했어요`,
+        snapshot,
+        '에어코리아',
+      ),
+      validFrom: snapshot.airQualityObservedAt,
+      validUntil: undefined,
+    };
   }
   if (snapshot.pm10 !== undefined) {
-    return officialFact(
-      `에어코리아는 ${time} ${station}의 미세먼지 농도를 ${Math.round(snapshot.pm10)}㎍/㎥로 제공했어요`,
-      snapshot,
-      '에어코리아',
-    );
+    return {
+      ...officialFact(
+        `에어코리아는 ${time} ${station}의 미세먼지 농도를 ${Math.round(snapshot.pm10)}㎍/㎥로 제공했어요`,
+        snapshot,
+        '에어코리아',
+      ),
+      validFrom: snapshot.airQualityObservedAt,
+      validUntil: undefined,
+    };
   }
   return undefined;
 }

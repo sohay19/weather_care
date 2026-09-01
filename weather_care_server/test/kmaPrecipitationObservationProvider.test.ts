@@ -6,6 +6,7 @@ import {
   radarRainAtPoint,
 } from '../src/providers/precipitation/precipitationObservationProvider';
 import { buildCurrentPrecipitationMessage } from '../src/presentation/currentPrecipitationMessage';
+import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 
 describe('KMA precipitation observation provider', () => {
   it('maps known Korean observation locations to the official 500m radar cells', () => {
@@ -39,6 +40,22 @@ describe('KMA precipitation observation provider', () => {
         providerFailureDetail: 'ANALYSIS_TARGET_TIME_MISSING',
       }),
     );
+  });
+
+  it('distinguishes a missing analysis value without logging the value', () => {
+    let error: unknown;
+    try {
+      parseAnalysisRain('202609011410 127.0 37.2 -999', '202609011410');
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(providerErrorDiagnostic(error)).toEqual({
+      error: 'KmaPrecipitationObservationProviderError',
+      failureReason: 'INVALID_RESPONSE',
+      operation: 'ANALYSIS',
+      detail: 'ANALYSIS_MISSING_VALUE',
+    });
   });
 
   it('creates current-rain state only when analysis and radar both detect rain', async () => {

@@ -2,6 +2,7 @@ import {
   CurrentPrecipitationObservation,
   PrecipitationConsensusState,
 } from '../../types';
+import { kmaApiHubErrorStatus } from '../kmaApiHubResponse';
 
 const ANALYSIS_POINT_URL =
   'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-sfc_obs_nc_pt_api';
@@ -40,7 +41,10 @@ type KmaPrecipitationFailureDetail =
   | 'ANALYSIS_NO_DATA_ROWS'
   | 'ANALYSIS_TIMESTAMP_MISSING'
   | 'ANALYSIS_TARGET_TIME_MISSING'
-  | 'ANALYSIS_RAIN_FLAG_MISSING';
+  | 'ANALYSIS_RAIN_FLAG_MISSING'
+  | 'ANALYSIS_MISSING_VALUE'
+  | 'ANALYSIS_NON_BINARY_VALUE'
+  | 'ANALYSIS_TEXT_VALUE';
 
 export class KmaPrecipitationObservationProviderError extends Error {
   readonly providerFailureDetail?: KmaPrecipitationFailureDetail;
@@ -187,6 +191,12 @@ export function parseAnalysisRain(
   payload: string,
   expectedTime?: string,
 ): { observedAt: string; rainDetected: boolean } {
+  const apiHubStatus = kmaApiHubErrorStatus(payload);
+  if (apiHubStatus !== undefined) {
+    throw new KmaPrecipitationObservationProviderError(
+      `KMA analysis response failed with status ${apiHubStatus}`,
+    );
+  }
   const rows = payload
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -234,9 +244,19 @@ export function parseAnalysisRain(
     };
   }
 
+  const lastToken = targetRows.at(-1)?.tokens.at(-1);
+  const lastValue = lastToken === undefined ? Number.NaN : Number(lastToken);
+  const detail: KmaPrecipitationFailureDetail =
+    lastToken === undefined
+      ? 'ANALYSIS_RAIN_FLAG_MISSING'
+      : Number.isFinite(lastValue)
+        ? lastValue < 0
+          ? 'ANALYSIS_MISSING_VALUE'
+          : 'ANALYSIS_NON_BINARY_VALUE'
+        : 'ANALYSIS_TEXT_VALUE';
   throw new KmaPrecipitationObservationProviderError(
     'KMA analysis response has no valid rain observation',
-    'ANALYSIS_RAIN_FLAG_MISSING',
+    detail,
   );
 }
 

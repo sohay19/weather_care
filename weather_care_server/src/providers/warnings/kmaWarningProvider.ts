@@ -1,4 +1,5 @@
 import { WeatherWarning } from '../../types';
+import { kmaApiHubErrorStatus } from '../kmaApiHubResponse';
 
 const WARNING_STATUS_URL =
   'https://apihub.kma.go.kr/api/typ01/url/wrn_now_data_new.php';
@@ -24,7 +25,11 @@ export type KmaActiveWarningCommandCode = '1' | '2' | '5' | '6';
 
 type KmaWarningFailureDetail =
   | 'WARNING_SELECTED_REGION_ROW_INVALID'
-  | 'WARNING_UNSUPPORTED_ROWS';
+  | 'WARNING_UNSUPPORTED_ROWS'
+  | 'WARNING_JSON_RESPONSE'
+  | 'WARNING_HTML_RESPONSE'
+  | 'WARNING_ROWS_WITHOUT_TIMESTAMPS'
+  | 'WARNING_COLUMN_FORMAT_CHANGED';
 
 export interface OfficialWeatherWarning extends WeatherWarning {
   typeCode: KmaWarningTypeCode;
@@ -134,6 +139,12 @@ export function parseActiveWarnings(
   regionIds: readonly string[],
   now: Date,
 ): OfficialWeatherWarning[] {
+  const apiHubStatus = kmaApiHubErrorStatus(payload);
+  if (apiHubStatus !== undefined) {
+    throw new KmaWarningProviderError(
+      `KMA warning response failed with status ${apiHubStatus}`,
+    );
+  }
   if (/AUTH|인증|ERROR/i.test(payload) && !/L\d{7}/.test(payload)) {
     throw new KmaWarningProviderError('KMA warning response contains an error');
   }
@@ -164,7 +175,7 @@ export function parseActiveWarnings(
   if (dataLines.length > 0 && rows.length === 0) {
     throw new KmaWarningProviderError(
       'KMA warning response has unsupported rows',
-      'WARNING_UNSUPPORTED_ROWS',
+      unsupportedWarningDetail(payload, dataLines),
     );
   }
 
@@ -191,6 +202,25 @@ export function parseActiveWarnings(
       provider: '기상청 특보현황' as const,
     }];
   });
+}
+
+function unsupportedWarningDetail(
+  payload: string,
+  dataLines: readonly string[],
+): KmaWarningFailureDetail {
+  const trimmed = payload.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return 'WARNING_JSON_RESPONSE';
+  }
+  if (/^\s*</.test(payload)) return 'WARNING_HTML_RESPONSE';
+  const tokens = dataLines.flatMap((line) =>
+    line.split(/[\s,]+/).filter(Boolean),
+  );
+  if (!tokens.some((token) => /^\d{12}$/.test(token))) {
+    return 'WARNING_ROWS_WITHOUT_TIMESTAMPS';
+  }
+  if (tokens.length > 0) return 'WARNING_COLUMN_FORMAT_CHANGED';
+  return 'WARNING_UNSUPPORTED_ROWS';
 }
 
 function parseWarningRow(line: string): ParsedWarningRow | undefined {

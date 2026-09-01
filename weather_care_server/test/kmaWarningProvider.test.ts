@@ -3,6 +3,7 @@ import {
   KmaWarningProvider,
   parseActiveWarnings,
 } from '../src/providers/warnings/kmaWarningProvider';
+import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 
 const NOW = new Date('2026-09-01T01:30:00Z');
 
@@ -53,6 +54,30 @@ L1010000 경기도 L1011900 수원 202609010900 202609011000 C 2 3
     expect(() =>
       parseActiveWarnings('<html>maintenance</html>', ['L1011900'], NOW),
     ).toThrow('unsupported rows');
+  });
+
+  it('recognizes an APIHub error envelope returned with a successful HTTP status', () => {
+    const error = (() => {
+      try {
+        parseActiveWarnings(
+          '{"result":{"status":403,"message":"secret-value"}}',
+          ['L1011900'],
+          NOW,
+        );
+      } catch (caught) {
+        return caught;
+      }
+    })();
+
+    expect(providerErrorDiagnostic(error)).toEqual({
+      error: 'KmaWarningProviderError',
+      failureReason: 'AUTHORIZATION_FAILED',
+      httpStatus: 403,
+      operation: 'WARNING',
+    });
+    expect(JSON.stringify(providerErrorDiagnostic(error))).not.toContain(
+      'secret-value',
+    );
   });
 
   it('keeps a changed warning active and ignores unrelated release rows', () => {

@@ -4,6 +4,7 @@ import { lifestyleMessageFor } from '../src/lifestyle/lifestyleTemplates';
 import { runWeatherRuleEngineForHourly } from '../src/rules/weatherRuleEngine';
 import { runRecommendationEngine } from '../src/recommendations/recommendationEngine';
 import { buildLifestyleMessages } from '../src/presentation/lifestyleMessages';
+import { sensationMessageCatalog } from '../src/presentation/sensationMessages';
 import {
   AmountRange,
   LifestyleInsight,
@@ -198,10 +199,89 @@ describe('Lifestyle v1.1 catalog', () => {
       LifestyleInsightType.VERY_HOT_AND_HUMID,
       snapshot(14, { apparentTemperature: 34, humidity: 85 }),
     );
+    const ozone = threeDescriptions(
+      LifestyleInsightType.OZONE_CAUTION,
+      snapshot(14, {
+        ozone: 0.102,
+        ozoneGrade: 'Bad',
+        airQualityStationName: '인계동',
+        airQualityObservedAt: '2026-08-20T14:00:00+09:00',
+      }),
+    );
 
-    for (const variants of [rain, snow, uv, air, humidHeat]) {
+    for (const variants of [rain, snow, uv, air, humidHeat, ozone]) {
       expect(new Set(variants).size).toBe(3);
     }
+  });
+
+  it('stores exactly three approved expressions for every sensation tier', () => {
+    for (const messages of Object.values(sensationMessageCatalog)) {
+      expect(messages).toHaveLength(3);
+      expect(new Set(messages).size).toBe(3);
+    }
+  });
+
+  it('shows high ozone as action, perception caveat, and official measurement', () => {
+    const hourly = [
+      snapshot(14, {
+        ozone: 0.102,
+        ozoneGrade: 'Bad',
+        airQualityStationName: '인계동',
+        airQualityObservedAt: '2026-08-20T14:00:00+09:00',
+      }),
+    ];
+    const facts = runWeatherRuleEngineForHourly(hourly);
+    const insights = runLifestyleWeatherEngine(facts, hourly);
+    const ozone = buildLifestyleMessages(
+      insights,
+      facts,
+      hourly,
+      '수원',
+    ).find((item) => item.type === LifestyleInsightType.OZONE_CAUTION);
+
+    expect(facts.map((item) => item.type)).toContain(
+      WeatherRuleFactType.OZONE_HIGH,
+    );
+    expect(ozone?.parts.map((part) => part.role)).toEqual([
+      'APP_SUGGESTION',
+      'INTERNAL_POSSIBILITY',
+      'OFFICIAL_FACT',
+    ]);
+    expect(ozone?.parts[0].text).toContain('야외활동');
+    expect(sensationMessageCatalog.OZONE_DIRECT_PERCEPTION).toContain(
+      ozone?.parts[1].text,
+    );
+    expect(ozone?.parts[2].text).toBe(
+      '에어코리아는 오후 2시 인계동의 오존 농도를 0.102ppm, 나쁨 단계로 제공했어요',
+    );
+  });
+
+  it('does not assign Korean heat or cold sensation tiers from KMA apparent temperature alone', () => {
+    const hourly = [
+      snapshot(7, {
+        temperature: -3,
+        apparentTemperature: -8,
+        apparentTemperatureSource: 'APP_KMA_METHOD_FROM_FORECAST',
+      }),
+      snapshot(14, {
+        temperature: 34,
+        apparentTemperature: 36,
+        apparentTemperatureSource: 'APP_KMA_METHOD_FROM_FORECAST',
+      }),
+    ];
+    const facts = runWeatherRuleEngineForHourly(hourly);
+    const messages = buildLifestyleMessages(
+      runLifestyleWeatherEngine(facts, hourly),
+      facts,
+      hourly,
+      '수원',
+    );
+    const descriptions = messages.flatMap((message) =>
+      message.parts.map((part) => part.text),
+    );
+
+    expect(descriptions).not.toContain('쌀쌀하게 느껴질 수 있어요.');
+    expect(descriptions).not.toContain('많이 덥게 느껴질 수 있어요.');
   });
 });
 

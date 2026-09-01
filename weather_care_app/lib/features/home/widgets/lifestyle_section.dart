@@ -111,6 +111,7 @@ IconData _iconFor(LifestyleMessageType type) => switch (type) {
         Icons.thermostat_rounded,
       LifestyleMessageType.outerwearUseful => Icons.checkroom_rounded,
       LifestyleMessageType.maskUseful => Icons.masks_outlined,
+      LifestyleMessageType.ozoneCaution => Icons.air_rounded,
       LifestyleMessageType.snowTravelCaution => Icons.ac_unit_rounded,
       LifestyleMessageType.laundryPickupDue =>
         Icons.local_laundry_service_outlined,

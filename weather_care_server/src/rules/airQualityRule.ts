@@ -1,11 +1,20 @@
 import { RuleConfig } from '../config/ruleConfig';
 import { WeatherRuleFact, WeatherRuleFactType, WeatherSnapshot } from '../types';
 
-export function applyAirQualityRule(snapshot: WeatherSnapshot, config: RuleConfig): WeatherRuleFact[] {
+export function applyAirQualityRule(
+  snapshot: WeatherSnapshot,
+  config: RuleConfig,
+): WeatherRuleFact[] {
   const facts: WeatherRuleFact[] = [];
   const pm10 = snapshot.pm10 ?? 0;
   const pm25 = snapshot.pm25 ?? 0;
-  const gradeBad = config.airQuality.gradeBad.includes(snapshot.airQualityGrade ?? '');
+  const ozone = snapshot.ozone;
+  const gradeBad = config.airQuality.gradeBad.includes(
+    snapshot.airQualityGrade ?? '',
+  );
+  const ozoneGradeBad = config.airQuality.gradeBad.includes(
+    snapshot.ozoneGrade ?? '',
+  );
 
   if (gradeBad || pm10 >= config.airQuality.pm10) {
     facts.push({
@@ -29,6 +38,25 @@ export function applyAirQualityRule(snapshot: WeatherSnapshot, config: RuleConfi
       evidence: { pm25 },
     });
   }
+  if (
+    ozoneGradeBad ||
+    (ozone !== undefined && ozone >= config.airQuality.ozone)
+  ) {
+    facts.push({
+      type: WeatherRuleFactType.OZONE_HIGH,
+      severity:
+        ozoneGradeBad && snapshot.ozoneGrade === 'Very Bad'
+          ? 95
+          : Math.min(
+              94,
+              Math.max(70, Math.round((ozone ?? 0.091) * 1_000)),
+            ),
+      evidence: {
+        ozone: ozone ?? '',
+        ozoneGrade: snapshot.ozoneGrade ?? '',
+      },
+      validFrom: snapshot.airQualityObservedAt ?? snapshot.observedAt,
+    });
+  }
   return facts;
 }
-

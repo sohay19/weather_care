@@ -15,6 +15,10 @@ import {
   isWetSnapshot,
   snapshotTime,
 } from '../rules/timeWindows';
+import {
+  parasolBenefitMessage,
+  sensationMessage,
+} from './sensationMessages';
 
 export function buildLifestyleMessages(
   insights: LifestyleInsight[],
@@ -106,6 +110,8 @@ function groundingPartFor(
       return snapshot ? uvFact(snapshot, regionName) : undefined;
     case LifestyleInsightType.MASK_USEFUL:
       return snapshot ? airQualityFact(snapshot, regionName) : undefined;
+    case LifestyleInsightType.OZONE_CAUTION:
+      return snapshot ? ozoneFact(snapshot, regionName) : undefined;
     case LifestyleInsightType.HYDRATION_IMPORTANT:
     case LifestyleInsightType.VERY_HOT_AND_HUMID:
       return snapshot ? apparentTemperatureFact(snapshot) : undefined;
@@ -182,6 +188,10 @@ function snapshotForInsight(
       return source.find(
         (item) => item.pm10 !== undefined || item.pm25 !== undefined,
       );
+    case LifestyleInsightType.OZONE_CAUTION:
+      return source.find(
+        (item) => item.ozone !== undefined || item.ozoneGrade !== undefined,
+      );
     case LifestyleInsightType.HYDRATION_IMPORTANT:
     case LifestyleInsightType.VERY_HOT_AND_HUMID:
       return maximumBy(source, (item) => item.apparentTemperature);
@@ -231,22 +241,20 @@ function impactTextFor(
     if (amount === undefined || amount <= 0) return undefined;
     return snowImpactMessages(time, amount)[variant];
   }
-  if (
-    insight.type === LifestyleInsightType.STRONG_SUN_EXPOSURE ||
-    insight.type === LifestyleInsightType.SUNSCREEN_USEFUL
-  ) {
-    return [
-      '자외선 강도는 몸으로 바로 느끼기 어려울 수 있어요.',
-      '자외선은 햇볕의 뜨거움과 달라 몸으로 바로 느끼기 어려울 수 있어요.',
-      '덥게 느껴지는 정도와 자외선 강도는 다를 수 있어요.',
-    ][variant];
+  if (insight.type === LifestyleInsightType.STRONG_SUN_EXPOSURE) {
+    return parasolBenefitMessage(insight.score);
+  }
+  if (insight.type === LifestyleInsightType.SUNSCREEN_USEFUL) {
+    return sensationMessage('UV_DIRECT_PERCEPTION', variant);
   }
   if (insight.type === LifestyleInsightType.MASK_USEFUL) {
-    return [
-      '미세먼지와 초미세먼지 농도는 몸으로 바로 느끼기 어려울 수 있어요.',
-      '하늘이 맑아 보여도 미세먼지나 초미세먼지 농도는 높을 수 있어요.',
-      '공기가 텁텁하지 않아도 미세먼지나 초미세먼지 농도는 높을 수 있어요.',
-    ][variant];
+    return sensationMessage('PM_DIRECT_PERCEPTION', variant);
+  }
+  if (insight.type === LifestyleInsightType.OZONE_CAUTION) {
+    return sensationMessage('OZONE_DIRECT_PERCEPTION', variant);
+  }
+  if (insight.type === LifestyleInsightType.VERY_HOT_AND_HUMID) {
+    return sensationMessage('HOT_HUMID', variant);
   }
   return undefined;
 }
@@ -419,6 +427,46 @@ function airQualityFact(
     };
   }
   return undefined;
+}
+
+function ozoneFact(
+  snapshot: WeatherSnapshot,
+  regionName: string,
+): WeatherMessagePart | undefined {
+  if (snapshot.ozone === undefined && snapshot.ozoneGrade === undefined) {
+    return undefined;
+  }
+  const station = snapshot.airQualityStationName ?? `${regionName} 측정소`;
+  const time = formatHour(
+    snapshot.airQualityObservedAt ?? snapshot.observedAt,
+  );
+  const grade = ozoneGradeLabel(snapshot.ozoneGrade, snapshot.ozone);
+  const text = snapshot.ozone === undefined
+    ? `에어코리아는 ${time} ${station}의 오존 등급을 ${grade}으로 제공했어요`
+    : `에어코리아는 ${time} ${station}의 오존 농도를 ${snapshot.ozone.toFixed(3)}ppm, ${grade} 단계로 제공했어요`;
+  return {
+    ...officialFact(text, snapshot, '에어코리아'),
+    validFrom: snapshot.airQualityObservedAt,
+    validUntil: undefined,
+  };
+}
+
+function ozoneGradeLabel(
+  providerGrade: string | undefined,
+  ozone: number | undefined,
+): string {
+  const provided = {
+    Good: '좋음',
+    Moderate: '보통',
+    Bad: '나쁨',
+    'Very Bad': '매우 나쁨',
+  }[providerGrade ?? ''];
+  if (provided) return provided;
+  if (ozone === undefined) return '확인 어려움';
+  if (ozone <= 0.03) return '좋음';
+  if (ozone <= 0.09) return '보통';
+  if (ozone <= 0.15) return '나쁨';
+  return '매우 나쁨';
 }
 
 function apparentTemperatureFact(

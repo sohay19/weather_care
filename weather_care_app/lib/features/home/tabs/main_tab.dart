@@ -716,6 +716,9 @@ _LifestyleCardPresentation _lifestylePresentation(
     LifestyleMessageType.maskUseful => const _LifestyleCardPresentation(
         icon: Icons.masks_outlined,
       ),
+    LifestyleMessageType.ozoneCaution => const _LifestyleCardPresentation(
+        icon: Icons.air_rounded,
+      ),
     LifestyleMessageType.hydrationImportant => const _LifestyleCardPresentation(
         icon: Icons.local_drink_outlined,
       ),

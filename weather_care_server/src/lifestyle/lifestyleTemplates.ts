@@ -50,6 +50,20 @@ export const lifestyleMessageCatalog: Record<
       description: '대기질 등급은 몸의 느낌만으로 판단하기 어려울 수 있어요.',
     },
   ],
+  OZONE_CAUTION: [
+    {
+      title: '오존 농도가 높으니, 야외활동을 계획한다면 시간이나 강도를 줄이세요',
+      description: '오존 농도는 몸으로 느끼기 어려울 수 있어요.',
+    },
+    {
+      title: '오존 농도가 높으니, 야외활동을 한다면 오래 머무르지 마세요',
+      description: '숨 쉴 때 답답하거나 아프지 않아도 오존 농도는 높을 수 있어요.',
+    },
+    {
+      title: '오존 농도가 높으니, 외출한다면 최신 오존 측정값을 확인하세요',
+      description: '눈이나 목이 불편하지 않아도 오존 농도는 높을 수 있어요.',
+    },
+  ],
   HYDRATION_IMPORTANT: [
     {
       title: '더운 시간에 외출한다면 물을 미리 준비하세요',

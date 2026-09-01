@@ -27,7 +27,12 @@ export interface RuleConfig {
     apparentGap: number;
   };
   wind: { caution: number; high: number };
-  airQuality: { pm10: number; pm25: number; gradeBad: string[] };
+  airQuality: {
+    pm10: number;
+    pm25: number;
+    ozone: number;
+    gradeBad: string[];
+  };
   humidity: { high: number; low: number };
   series: { generalSlots: number };
 }
@@ -61,7 +66,12 @@ export const defaultRuleConfig: RuleConfig = {
     apparentGap: 4,
   },
   wind: { caution: 9, high: 14 },
-  airQuality: { pm10: 81, pm25: 36, gradeBad: ['Bad', 'Very Bad'] },
+  airQuality: {
+    pm10: 81,
+    pm25: 36,
+    ozone: 0.091,
+    gradeBad: ['Bad', 'Very Bad'],
+  },
   humidity: { high: 80, low: 35 },
   series: { generalSlots: 2 },
 };

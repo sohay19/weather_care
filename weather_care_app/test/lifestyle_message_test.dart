@@ -33,4 +33,14 @@ void main() {
     expect(message.type, LifestyleMessageType.commuteRouteCaution);
     expect(message.type.title, '출퇴근 경로');
   });
+
+  test('오존 생활문구를 전용 항목으로 표시한다', () {
+    final message = LifestyleMessage.fromJson({
+      'type': 'OZONE_CAUTION',
+      'title': '야외활동 시간이나 강도를 줄이세요',
+    });
+
+    expect(message.type, LifestyleMessageType.ozoneCaution);
+    expect(message.type.title, '오존');
+  });
 }

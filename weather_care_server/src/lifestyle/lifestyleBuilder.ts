@@ -38,6 +38,13 @@ export function deriveInsightFromRules(facts: WeatherRuleFact[]): LifestyleInsig
       ],
     });
   }
+  if (has(WeatherRuleFactType.OZONE_HIGH)) {
+    result.push({
+      type: LifestyleInsightType.OZONE_CAUTION,
+      score: score(WeatherRuleFactType.OZONE_HIGH),
+      sourceFacts: [WeatherRuleFactType.OZONE_HIGH],
+    });
+  }
   return result;
 }
 

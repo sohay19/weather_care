@@ -5006,3 +5006,10 @@
 - 앱에 `오존` 생활항목과 전용 API 매핑·아이콘을 추가했다. 농도만으로 눈·목·호흡 증상이나 실제 야외활동 여부를 추정하지 않는다.
 - 검증: 서버 TypeScript 검사, Vitest `20 files / 72 tests`, Worker 번들 dry-run, 앱 정적분석과 Flutter `36 tests`를 통과했다.
 - 운영 배포나 원격 설정 변경은 수행하지 않았다. 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.
+
+## 2026-09-01 운영 Worker Secret 등록
+
+- Cloudflare 운영 Worker `weather-care-server`에 필요한 Secret 5종 `KMA_SERVICE_KEY`, `KMA_APIHUB_KEY`, `ITS_API_KEY`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`가 등록된 것을 이름 목록으로 확인했다.
+- 기상청 API허브 인증키와 국가교통정보센터 인증키는 대화·명령 인자·저장소에 기록하지 않고 Wrangler의 Secret 입력으로 등록했다.
+- Firebase 프로젝트 `weather-care-2aaa8`의 서비스 계정 JSON에서 `client_email`과 `private_key`만 메모리에서 읽어 운영 Secret으로 전달했으며 실제 값은 출력하지 않았다.
+- 다운로드된 서비스 계정 JSON 원본은 사용자 승인 없이 삭제하거나 이동하지 않았다. 다음 운영 단계는 원격 D1 백업 후 `0002`~`0006` 마이그레이션 적용이다.

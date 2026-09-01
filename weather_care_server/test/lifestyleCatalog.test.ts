@@ -13,7 +13,7 @@ import {
 } from '../src/types';
 
 describe('Lifestyle v1.1 catalog', () => {
-  it('derives a commute weather change and selects the matching message', () => {
+  it('derives a rain recommendation without assuming a commute schedule', () => {
     const hourly = [
       snapshot(8),
       snapshot(18, { precipitationProbability: 70, precipitationType: 'RAIN' }),
@@ -21,14 +21,9 @@ describe('Lifestyle v1.1 catalog', () => {
     ];
     const facts = runWeatherRuleEngineForHourly(hourly);
     const insights = runLifestyleWeatherEngine(facts, hourly);
-    const commute = insights.find(
-      (item) => item.type === LifestyleInsightType.COMMUTE_WEATHER_CHANGE,
+    expect(insights.map((item) => String(item.type))).not.toContain(
+      'COMMUTE_WEATHER_CHANGE',
     );
-
-    expect(commute?.context?.messageContext).toBe('RAIN');
-    expect(
-      lifestyleMessageFor(commute!.type, commute!.score, commute!.context).title,
-    ).toContain('퇴근 무렵 비');
 
     const umbrella = runRecommendationEngine(insights).find(
       (item) => item.type === 'UMBRELLA',
@@ -50,7 +45,7 @@ describe('Lifestyle v1.1 catalog', () => {
       { validFrom: '오후 2시', validTo: '오후 4시' },
     );
     expect(rendered.description).toBe(
-      '오후 2시부터 오후 4시까지 이동하기 좋아요.',
+      '외출을 계획한다면 앞뒤 시간의 강수예보도 확인하세요.',
     );
 
     const fallback = lifestyleMessageFor(
@@ -70,12 +65,9 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(insights.map((item) => item.type)).not.toContain(
       LifestyleInsightType.BEST_OUTING_WINDOW,
     );
-    expect(insights.map((item) => item.type)).not.toContain(
-      LifestyleInsightType.VENTILATION_WINDOW,
-    );
   });
 
-  it('keeps server TODO messages at a minimum of three', () => {
+  it('does not pad lifestyle messages with weather-independent tasks', () => {
     const insights: LifestyleInsight[] = [
       {
         type: LifestyleInsightType.RAIN_GEAR_USEFUL,
@@ -86,23 +78,25 @@ describe('Lifestyle v1.1 catalog', () => {
 
     const messages = buildLifestyleMessages(insights);
 
-    expect(messages).toHaveLength(3);
+    expect(messages).toHaveLength(1);
     expect(messages[0].type).toBe(LifestyleInsightType.RAIN_GEAR_USEFUL);
     expect(messages[0].score).toBe(90);
-    expect(messages.slice(1).every((message) => message.score === 0)).toBe(true);
-    expect(messages.every((message) => message.title.length > 0)).toBe(true);
   });
 
-  it('keeps laundry as a TODO without creating a parasol recommendation', () => {
-    const recommendations = runRecommendationEngine([
-      {
-        type: LifestyleInsightType.LAUNDRY_GOOD,
-        score: 80,
-        sourceFacts: [WeatherRuleFactType.LAUNDRY_DRYING_GOOD],
-      },
-    ]);
+  it('does not emit indoor, vehicle, or sleep judgments from weather data', () => {
+    const hourly = [0, 1, 2].map((hour) =>
+      snapshot(hour, { temperature: 25, humidity: 80 }),
+    );
+    const facts = runWeatherRuleEngineForHourly(hourly);
+    const insights = runLifestyleWeatherEngine(facts, hourly).map((item) =>
+      String(item.type),
+    );
 
-    expect(recommendations).toEqual([]);
+    expect(insights).not.toContain('INDOOR_DRYING_PREFERRED');
+    expect(insights).not.toContain('DEHUMIDIFIER_USEFUL');
+    expect(insights).not.toContain('HUMIDIFIER_USEFUL');
+    expect(insights).not.toContain('SLEEP_DISCOMFORT_EXPECTED');
+    expect(insights).not.toContain('VEHICLE_FROST_RISK');
   });
 
   it('creates a heavy-snow recommendation only for a heavy-snow fact', () => {

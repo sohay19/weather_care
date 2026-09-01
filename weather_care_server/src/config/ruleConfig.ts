@@ -26,14 +26,8 @@ export interface RuleConfig {
   };
   wind: { caution: number; high: number };
   airQuality: { pm10: number; pm25: number; gradeBad: string[] };
-  laundry: {
-    maxProbability: number;
-    maxHumidity: number;
-    minWind: number;
-    maxWind: number;
-  };
   humidity: { high: number; low: number };
-  series: { generalSlots: number; laundrySlots: number };
+  series: { generalSlots: number };
 }
 
 export const defaultRuleConfig: RuleConfig = {
@@ -64,9 +58,8 @@ export const defaultRuleConfig: RuleConfig = {
   },
   wind: { caution: 6, high: 9 },
   airQuality: { pm10: 81, pm25: 36, gradeBad: ['Bad', 'Very Bad'] },
-  laundry: { maxProbability: 20, maxHumidity: 75, minWind: 1, maxWind: 6 },
   humidity: { high: 80, low: 35 },
-  series: { generalSlots: 2, laundrySlots: 3 },
+  series: { generalSlots: 2 },
 };
 
 // TODO: 운영 임계값 운영 콘피그 테이블/KV로 이동 예정

@@ -9,7 +9,7 @@ export function runLifestyleWeatherEngine(
   const insights = [
     ...deriveInsightFromRules(facts),
     ...enrichAdditionalInsights(facts),
-    ...enrichTimeSeriesInsights(facts, hourly),
+    ...enrichTimeSeriesInsights(hourly),
   ];
   const map = new Map<string, LifestyleInsight>();
   for (const item of insights) {

@@ -112,19 +112,6 @@ export function enrichAdditionalInsights(facts: WeatherRuleFact[]): LifestyleIns
     });
   }
 
-  if (
-    has(WeatherRuleFactType.LAUNDRY_DRYING_GOOD) &&
-    !has(WeatherRuleFactType.RAIN_LIKELY) &&
-    !has(WeatherRuleFactType.HEAVY_RAIN) &&
-    !has(WeatherRuleFactType.STRONG_WIND)
-  ) {
-    extra.push({
-      type: LifestyleInsightType.LAUNDRY_GOOD,
-      score: pick(WeatherRuleFactType.LAUNDRY_DRYING_GOOD),
-      sourceFacts: [WeatherRuleFactType.LAUNDRY_DRYING_GOOD],
-    });
-  }
-
   if (has(WeatherRuleFactType.RAIN_LIKELY) || has(WeatherRuleFactType.HEAVY_RAIN)) {
     extra.push({
       type: LifestyleInsightType.RAIN_GEAR_USEFUL,
@@ -154,22 +141,6 @@ export function enrichAdditionalInsights(facts: WeatherRuleFact[]): LifestyleIns
       type: LifestyleInsightType.OUTDOOR_ACTIVITY_CAUTION,
       score: pick(WeatherRuleFactType.STRONG_WIND),
       sourceFacts: [WeatherRuleFactType.STRONG_WIND],
-    });
-  }
-
-  if (has(WeatherRuleFactType.VENTILATION_GOOD)) {
-    extra.push({
-      type: LifestyleInsightType.VENTILATION_GOOD,
-      score: pick(WeatherRuleFactType.VENTILATION_GOOD),
-      sourceFacts: [WeatherRuleFactType.VENTILATION_GOOD],
-    });
-  }
-
-  if (has(WeatherRuleFactType.SLEEP_DISCOMFORT_EXPECTED)) {
-    extra.push({
-      type: LifestyleInsightType.SLEEP_DISCOMFORT_EXPECTED,
-      score: pick(WeatherRuleFactType.SLEEP_DISCOMFORT_EXPECTED),
-      sourceFacts: [WeatherRuleFactType.SLEEP_DISCOMFORT_EXPECTED],
     });
   }
 

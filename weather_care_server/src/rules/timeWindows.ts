@@ -24,19 +24,9 @@ export function localHour(snapshot: WeatherSnapshot): number {
   return Number(snapshotTime(snapshot).slice(11, 13));
 }
 
-export function isCommuteWindow(snapshot: WeatherSnapshot): boolean {
-  const hour = localHour(snapshot);
-  return (hour >= 5 && hour <= 9) || (hour >= 17 && hour <= 20);
-}
-
 export function isDayWindow(snapshot: WeatherSnapshot): boolean {
   const hour = localHour(snapshot);
   return hour >= 10 && hour <= 16;
-}
-
-export function isNightWindow(snapshot: WeatherSnapshot): boolean {
-  const hour = localHour(snapshot);
-  return hour >= 21 || hour <= 4;
 }
 
 export function findRuns(

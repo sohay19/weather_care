@@ -10,15 +10,12 @@ import { applyUvRule } from './uvRule';
 import { applyHeatRule } from './heatRule';
 import { applyColdRule } from './coldRule';
 import { applyAirQualityRule } from './airQualityRule';
-import { applyLaundryRule } from './laundryRule';
 import {
   amountMinimum,
   findHysteresisRuns,
   findRuns,
-  isCommuteWindow,
   isDayWindow,
   isKnownNoAmount,
-  isNightWindow,
   snapshotEnd,
   snapshotTime,
   sortSnapshots,
@@ -34,7 +31,6 @@ export function runWeatherRuleEngine(snapshot: WeatherSnapshot, config: RuleConf
     ...applyHeatRule(snapshot, config),
     ...applyColdRule(snapshot, config),
     ...applyAirQualityRule(snapshot, config),
-    ...applyLaundryRule(snapshot, config),
   ];
   return dedupeByType(facts);
 }
@@ -104,25 +100,6 @@ export function runWeatherRuleEngineForHourly(
       ),
     );
   }
-  for (const snapshot of snapshots.filter(
-    (item) => isCommuteWindow(item) && rainPredicate(item),
-  )) {
-    facts.push(
-      factForRun(
-        WeatherRuleFactType.RAIN_LIKELY,
-        [snapshot],
-        Math.min(
-          89,
-          Math.max(40, snapshot.precipitationProbability ?? 0),
-        ),
-        {
-          precipitationProbability: snapshot.precipitationProbability ?? 0,
-          commuteWindow: true,
-        },
-      ),
-    );
-  }
-
   for (const snapshot of snapshots) {
     const amount = amountMinimum(
       snapshot.precipitationAmountRange,
@@ -146,23 +123,6 @@ export function runWeatherRuleEngineForHourly(
       );
     }
 
-    const icy =
-      rainPredicate(snapshot) || snowPredicate(snapshot)
-        ? Math.min(
-            snapshot.temperature ?? Infinity,
-            snapshot.apparentTemperature ?? Infinity,
-          ) <= 0
-        : false;
-    if (icy) {
-      facts.push(
-        factForRun(WeatherRuleFactType.ICY_ROAD_RISK, [snapshot], 95, {
-          temperature: snapshot.temperature ?? 0,
-          apparentTemperature:
-            snapshot.apparentTemperature ?? snapshot.temperature ?? 0,
-          inferred: true,
-        }),
-      );
-    }
   }
 
   for (const run of findHysteresisRuns(
@@ -224,7 +184,7 @@ export function runWeatherRuleEngineForHourly(
   });
 
   addTemperatureFacts(facts, snapshots, config);
-  addLaundryAndVentilationFacts(facts, snapshots, config);
+  addHumidityFacts(facts, snapshots, config);
   facts.push(
     ...snapshots.flatMap((snapshot) => applyAirQualityRule(snapshot, config)),
   );
@@ -452,105 +412,13 @@ function addTemperatureFacts(
     }
   });
 
-  for (const run of findRuns(
-    snapshots,
-    (snapshot) =>
-      isNightWindow(snapshot) &&
-      (snapshot.temperature ?? -Infinity) >= 25 &&
-      (snapshot.humidity ?? -Infinity) >= 75,
-    3,
-  )) {
-    facts.push(
-      factForRun(
-        WeatherRuleFactType.SLEEP_DISCOMFORT_EXPECTED,
-        run,
-        70,
-        {
-          minimumNightTemperature: Math.min(
-            ...run.map((item) => item.temperature ?? Infinity),
-          ),
-          minimumNightHumidity: Math.min(
-            ...run.map((item) => item.humidity ?? Infinity),
-          ),
-        },
-      ),
-    );
-  }
 }
 
-function addLaundryAndVentilationFacts(
+function addHumidityFacts(
   facts: WeatherRuleFact[],
   snapshots: WeatherSnapshot[],
   config: RuleConfig,
 ): void {
-  const laundryPredicate = (snapshot: WeatherSnapshot) =>
-    isDayWindow(snapshot) &&
-    snapshot.precipitationProbability !== undefined &&
-    snapshot.humidity !== undefined &&
-    snapshot.windSpeed !== undefined &&
-    (snapshot.precipitationAmountRange !== undefined ||
-      snapshot.precipitationAmount !== undefined) &&
-    snapshot.precipitationProbability < config.laundry.maxProbability &&
-    isKnownNoAmount(
-      snapshot.precipitationAmountRange,
-      snapshot.precipitationAmount,
-    ) &&
-    snapshot.humidity <= config.laundry.maxHumidity &&
-    snapshot.windSpeed >= config.laundry.minWind &&
-    snapshot.windSpeed <= config.laundry.maxWind;
-  for (const run of findRuns(
-    snapshots,
-    laundryPredicate,
-    config.series.laundrySlots,
-  )) {
-    facts.push(
-      factForRun(
-        WeatherRuleFactType.LAUNDRY_DRYING_GOOD,
-        run,
-        80,
-        { consecutiveSlots: run.length },
-      ),
-    );
-  }
-
-  const ventilationPredicate = (snapshot: WeatherSnapshot) => {
-    const airKnown =
-      (snapshot.airQualityGrade !== undefined ||
-        snapshot.pm10 !== undefined ||
-        snapshot.pm25 !== undefined) &&
-      (snapshot.ozone !== undefined || snapshot.ozoneGrade !== undefined);
-    const badAir = config.airQuality.gradeBad.includes(
-      snapshot.airQualityGrade ?? '',
-    );
-    const badOzone = ['Bad', 'Very Bad', '나쁨', '매우 나쁨'].includes(
-      snapshot.ozoneGrade ?? '',
-    );
-    return (
-      airKnown &&
-      !badAir &&
-      !badOzone &&
-      snapshot.precipitationProbability !== undefined &&
-      snapshot.precipitationProbability < 20 &&
-      isKnownNoAmount(
-        snapshot.precipitationAmountRange,
-        snapshot.precipitationAmount,
-      ) &&
-      snapshot.windSpeed !== undefined &&
-      snapshot.windSpeed >= 1 &&
-      snapshot.windSpeed <= 5
-    );
-  };
-  for (const run of findRuns(snapshots, ventilationPredicate, 2)) {
-    facts.push(
-      factForRun(
-        WeatherRuleFactType.VENTILATION_GOOD,
-        run,
-        60,
-        { consecutiveSlots: run.length },
-      ),
-    );
-  }
-
   for (const run of findRuns(
     snapshots,
     (snapshot) =>

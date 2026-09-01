@@ -7,7 +7,7 @@ import {
 } from '../src/types';
 
 describe('WeatherRuleEngine v1.1', () => {
-  it('requires two general rain slots but triggers immediately at commute time', () => {
+  it('requires two rain slots without assuming a commute schedule', () => {
     const oneDaytimeSlot = runWeatherRuleEngineForHourly([
       snapshot(10, { precipitationProbability: 40 }),
     ]);
@@ -19,10 +19,12 @@ describe('WeatherRuleEngine v1.1', () => {
     ]);
     expect(types(twoDaytimeSlots)).toContain(WeatherRuleFactType.RAIN_LIKELY);
 
-    const commuteSlot = runWeatherRuleEngineForHourly([
+    const singleEveningSlot = runWeatherRuleEngineForHourly([
       snapshot(18, { precipitationProbability: 40 }),
     ]);
-    expect(types(commuteSlot)).toContain(WeatherRuleFactType.RAIN_LIKELY);
+    expect(types(singleEveningSlot)).not.toContain(
+      WeatherRuleFactType.RAIN_LIKELY,
+    );
   });
 
   it('uses the conservative lower bound for heavy rain', () => {
@@ -69,27 +71,24 @@ describe('WeatherRuleEngine v1.1', () => {
     expect(types(facts)).toContain(WeatherRuleFactType.SNOW_LIKELY);
   });
 
-  it('requires three complete daytime slots for a positive laundry fact', () => {
-    const complete = [10, 11, 12].map((hour) =>
-      snapshot(hour, {
-        precipitationProbability: 10,
-        precipitationAmount: 0,
-        precipitationAmountRange: range('NONE', 0, 0, 'MM'),
-        humidity: 70,
-        windSpeed: 2,
+  it('does not infer road ice from air temperature and precipitation alone', () => {
+    const facts = runWeatherRuleEngineForHourly([
+      snapshot(6, {
+        temperature: -2,
+        apparentTemperature: -5,
+        precipitationProbability: 80,
+        precipitationType: 'RAIN_SNOW',
       }),
-    );
-    expect(types(runWeatherRuleEngineForHourly(complete))).toContain(
-      WeatherRuleFactType.LAUNDRY_DRYING_GOOD,
-    );
+      snapshot(7, {
+        temperature: -2,
+        apparentTemperature: -5,
+        precipitationProbability: 80,
+        precipitationType: 'RAIN_SNOW',
+      }),
+    ]);
 
-    const missingAmount = complete.map((item, index) =>
-      index === 1
-        ? { ...item, precipitationAmount: undefined, precipitationAmountRange: undefined }
-        : item,
-    );
-    expect(types(runWeatherRuleEngineForHourly(missingAmount))).not.toContain(
-      WeatherRuleFactType.LAUNDRY_DRYING_GOOD,
+    expect(facts.map((fact) => String(fact.type))).not.toContain(
+      'ICY_ROAD_RISK',
     );
   });
 
@@ -105,15 +104,15 @@ describe('WeatherRuleEngine v1.1', () => {
     expect(rangeFact?.evidence.dailyTemperatureRange).toBe(8);
   });
 
-  it('includes midnight in the night window', () => {
+  it('does not infer bedroom or sleep conditions from outdoor night weather', () => {
     const facts = runWeatherRuleEngineForHourly(
       [0, 1, 2].map((hour) =>
         snapshot(hour, { temperature: 25, humidity: 80 }),
       ),
     );
 
-    expect(types(facts)).toContain(
-      WeatherRuleFactType.SLEEP_DISCOMFORT_EXPECTED,
+    expect(facts.map((fact) => String(fact.type))).not.toContain(
+      'SLEEP_DISCOMFORT_EXPECTED',
     );
   });
 

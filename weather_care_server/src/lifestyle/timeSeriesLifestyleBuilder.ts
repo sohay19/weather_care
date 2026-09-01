@@ -1,105 +1,29 @@
 import {
   LifestyleInsight,
   LifestyleInsightType,
-  WeatherRuleFact,
   WeatherRuleFactType,
   WeatherSnapshot,
 } from '../types';
 import {
   findRuns,
-  isCommuteWindow,
   isKnownNoAmount,
   isWetSnapshot,
-  localHour,
   snapshotEnd,
   snapshotTime,
   sortSnapshots,
 } from '../rules/timeWindows';
 
 export function enrichTimeSeriesInsights(
-  facts: WeatherRuleFact[],
   hourly: WeatherSnapshot[],
 ): LifestyleInsight[] {
   const snapshots = sortSnapshots(hourly);
   if (snapshots.length === 0) return [];
 
   const insights: LifestyleInsight[] = [];
-  addCommuteInsights(insights, snapshots, facts);
   addRainWindowInsights(insights, snapshots);
-  addIndoorInsights(insights, snapshots, facts);
-  addSeasonalInsights(insights, snapshots);
-  addCompleteInputPositiveWindows(insights, snapshots, facts);
+  addConditionalHouseholdActions(insights, snapshots);
+  addCompleteInputPositiveWindows(insights, snapshots);
   return insights;
-}
-
-function addCommuteInsights(
-  insights: LifestyleInsight[],
-  snapshots: WeatherSnapshot[],
-  facts: WeatherRuleFact[],
-): void {
-  const morning = snapshots.filter((item) => {
-    const hour = localHour(item);
-    return hour >= 5 && hour <= 9;
-  });
-  const evening = snapshots.filter((item) => {
-    const hour = localHour(item);
-    return hour >= 17 && hour <= 20;
-  });
-  if (morning.length > 0 && evening.length > 0) {
-    const morningWet = morning.some(isWetSnapshot);
-    const eveningWet = evening.some(isWetSnapshot);
-    const morningTemperature = averageTemperature(morning);
-    const eveningTemperature = averageTemperature(evening);
-    if (!morningWet && eveningWet) {
-      insights.push({
-        type: LifestyleInsightType.COMMUTE_WEATHER_CHANGE,
-        score: 85,
-        sourceFacts: [WeatherRuleFactType.RAIN_LIKELY],
-        context: {
-          messageContext: 'RAIN',
-          validFrom: snapshotTime(evening.find(isWetSnapshot) ?? evening[0]),
-        },
-      });
-    } else if (
-      morningTemperature !== undefined &&
-      eveningTemperature !== undefined &&
-      eveningTemperature <= morningTemperature - 4
-    ) {
-      insights.push({
-        type: LifestyleInsightType.COMMUTE_WEATHER_CHANGE,
-        score: 75,
-        sourceFacts: [WeatherRuleFactType.RAPID_TEMPERATURE_DROP],
-        context: { messageContext: 'COLD' },
-      });
-    }
-  }
-
-  const riskyCommute = snapshots.find(
-    (item) =>
-      isCommuteWindow(item) &&
-      isWetSnapshot(item) &&
-      (item.windSpeed ?? 0) >= 6,
-  );
-  const icyFact = facts.find(
-    (fact) => fact.type === WeatherRuleFactType.ICY_ROAD_RISK,
-  );
-  if (riskyCommute || icyFact) {
-    insights.push({
-      type: LifestyleInsightType.COMMUTE_RISK,
-      score: icyFact ? 95 : 85,
-      sourceFacts: [
-        WeatherRuleFactType.RAIN_LIKELY,
-        WeatherRuleFactType.STRONG_WIND,
-        WeatherRuleFactType.ICY_ROAD_RISK,
-      ],
-      context: {
-        messageContext: icyFact ? 'ICY' : 'RAIN_WIND',
-        validFrom: riskyCommute
-          ? snapshotTime(riskyCommute)
-          : icyFact?.validFrom,
-      },
-    });
-  }
 }
 
 function addRainWindowInsights(
@@ -137,16 +61,6 @@ function addRainWindowInsights(
     });
   }
 
-  const wetIndex = snapshots.findIndex(isWetSnapshot);
-  if (wetIndex >= 0) {
-    insights.push({
-      type: LifestyleInsightType.CAR_WASH_SCORE,
-      score: 55,
-      sourceFacts: [WeatherRuleFactType.RAIN_LIKELY],
-      context: { messageContext: 'POSTPONE' },
-    });
-  }
-
   const firstDryAfterRain = snapshots.findIndex(
     (item, index) =>
       index > 0 &&
@@ -168,148 +82,82 @@ function addRainWindowInsights(
   }
 }
 
-function addIndoorInsights(
+function addConditionalHouseholdActions(
   insights: LifestyleInsight[],
   snapshots: WeatherSnapshot[],
-  facts: WeatherRuleFact[],
 ): void {
-  const indoorDryingRun = findRuns(
-    snapshots,
-    (item) => isWetSnapshot(item) && (item.humidity ?? -Infinity) >= 75,
-    3,
-  )[0];
-  if (indoorDryingRun) {
-    insights.push({
-      type: LifestyleInsightType.INDOOR_DRYING_PREFERRED,
-      score: 65,
-      sourceFacts: [
-        WeatherRuleFactType.RAIN_LIKELY,
-        WeatherRuleFactType.HUMIDITY_HIGH,
-      ],
-      context: {
-        validFrom: snapshotTime(indoorDryingRun[0]),
-        validTo: snapshotEnd(indoorDryingRun.at(-1) ?? indoorDryingRun[0]),
-      },
-    });
-  }
-
-  const startTime = Date.parse(snapshotTime(snapshots[0]));
-  const nearbyRiskIndex = snapshots.findIndex((item) => {
-    const leadTime = Date.parse(snapshotTime(item)) - startTime;
+  const firstTime = Date.parse(snapshotTime(snapshots[0]));
+  const firstOutdoorRisk = snapshots.find((item) => {
+    const leadTime = Date.parse(snapshotTime(item)) - firstTime;
     return (
       leadTime >= 0 &&
-      leadTime <= 2 * 60 * 60 * 1000 &&
+      leadTime <= 24 * 60 * 60 * 1000 &&
       (isWetSnapshot(item) || (item.windSpeed ?? 0) >= 9)
     );
   });
-  if (nearbyRiskIndex >= 0) {
-    const risk = snapshots[nearbyRiskIndex];
+  if (!firstOutdoorRisk) return;
+
+  const riskTime = Date.parse(snapshotTime(firstOutdoorRisk));
+  const actionDeadline = formatTime(
+    new Date(riskTime - 30 * 60 * 1000).toISOString(),
+  );
+  insights.push({
+    type: LifestyleInsightType.LAUNDRY_PICKUP_DUE,
+    score: 80,
+    sourceFacts: sourceFactsForOutdoorRisk(firstOutdoorRisk),
+    context: {
+      actionDeadline,
+      validFrom: snapshotTime(firstOutdoorRisk),
+      messageContext: outdoorRiskContext(firstOutdoorRisk),
+    },
+  });
+
+  if (riskTime - firstTime <= 2 * 60 * 60 * 1000) {
     const minutesUntil = Math.max(
       0,
-      Math.round(
-        (Date.parse(snapshotTime(risk)) - Date.parse(snapshotTime(snapshots[0]))) /
-          60000,
-      ),
+      Math.round((riskTime - firstTime) / 60_000),
     );
     insights.push({
       type: LifestyleInsightType.WINDOW_CLOSE_SOON,
       score: 80,
-      sourceFacts: [
-        WeatherRuleFactType.RAIN_LIKELY,
-        WeatherRuleFactType.STRONG_WIND,
-      ],
+      sourceFacts: sourceFactsForOutdoorRisk(firstOutdoorRisk),
       context: {
         minutesUntil,
-        actionDeadline: formatTime(
-          new Date(Date.parse(snapshotTime(risk)) - 30 * 60 * 1000).toISOString(),
-        ),
-      },
-    });
-  }
-
-  const highHumidity = facts.find(
-    (fact) => fact.type === WeatherRuleFactType.HUMIDITY_HIGH,
-  );
-  if (highHumidity) {
-    insights.push({
-      type: LifestyleInsightType.DEHUMIDIFIER_USEFUL,
-      score: highHumidity.severity,
-      sourceFacts: [WeatherRuleFactType.HUMIDITY_HIGH],
-      context: {
-        validFrom: highHumidity.validFrom,
-        validTo: highHumidity.validUntil,
-      },
-    });
-  }
-  const lowHumidity = facts.find(
-    (fact) => fact.type === WeatherRuleFactType.HUMIDITY_LOW,
-  );
-  if (lowHumidity) {
-    insights.push({
-      type: LifestyleInsightType.HUMIDIFIER_USEFUL,
-      score: lowHumidity.severity,
-      sourceFacts: [WeatherRuleFactType.HUMIDITY_LOW],
-      context: {
-        validFrom: lowHumidity.validFrom,
-        validTo: lowHumidity.validUntil,
+        actionDeadline,
+        validFrom: snapshotTime(firstOutdoorRisk),
+        messageContext: outdoorRiskContext(firstOutdoorRisk),
       },
     });
   }
 }
 
-function addSeasonalInsights(
-  insights: LifestyleInsight[],
-  snapshots: WeatherSnapshot[],
-): void {
-  const frost = snapshots.find((item, index) => {
-    const hour = localHour(item);
-    const priorWet = snapshots
-      .slice(Math.max(0, index - 6), index)
-      .some(isWetSnapshot);
-    return (
-      hour >= 5 &&
-      hour <= 9 &&
-      (item.temperature ?? Infinity) <= 0 &&
-      ((item.humidity ?? 0) >= 80 || priorWet)
-    );
-  });
-  if (frost) {
-    insights.push({
-      type: LifestyleInsightType.VEHICLE_FROST_RISK,
-      score: 75,
-      sourceFacts: [WeatherRuleFactType.TEMPERATURE_LOW],
-      context: { validFrom: snapshotTime(frost) },
-    });
+function sourceFactsForOutdoorRisk(
+  snapshot: WeatherSnapshot,
+): WeatherRuleFactType[] {
+  const facts: WeatherRuleFactType[] = [];
+  if (isWetSnapshot(snapshot)) facts.push(WeatherRuleFactType.RAIN_LIKELY);
+  if ((snapshot.windSpeed ?? 0) >= 9) {
+    facts.push(WeatherRuleFactType.STRONG_WIND);
   }
+  return facts;
+}
+
+function outdoorRiskContext(snapshot: WeatherSnapshot): 'RAIN' | 'SNOW' | 'WIND' {
+  if (
+    snapshot.precipitationType === 'SNOW' ||
+    snapshot.precipitationType === 'RAIN_SNOW' ||
+    snapshot.snowExpected === true
+  ) {
+    return 'SNOW';
+  }
+  if (isWetSnapshot(snapshot)) return 'RAIN';
+  return 'WIND';
 }
 
 function addCompleteInputPositiveWindows(
   insights: LifestyleInsight[],
   snapshots: WeatherSnapshot[],
-  facts: WeatherRuleFact[],
 ): void {
-  const ventilation = facts.find(
-    (fact) => fact.type === WeatherRuleFactType.VENTILATION_GOOD,
-  );
-  if (ventilation?.validFrom && ventilation.validUntil) {
-    const durationMinutes = Math.max(
-      10,
-      Math.round(
-        (Date.parse(ventilation.validUntil) - Date.parse(ventilation.validFrom)) /
-          60000,
-      ),
-    );
-    insights.push({
-      type: LifestyleInsightType.VENTILATION_WINDOW,
-      score: ventilation.severity + 1,
-      sourceFacts: [WeatherRuleFactType.VENTILATION_GOOD],
-      context: {
-        durationMinutes,
-        validTo: formatTime(ventilation.validUntil),
-      },
-    });
-  }
-
   const outingRuns = findRuns(
     snapshots,
     (item) => {
@@ -326,7 +174,7 @@ function addCompleteInputPositiveWindows(
       return (
         !isWetSnapshot(item) &&
         (item.apparentTemperature ?? Infinity) >= 10 &&
-        (item.apparentTemperature ?? -Infinity) <= 30 &&
+        (item.apparentTemperature ?? -Infinity) <= 26 &&
         (item.uvIndex ?? Infinity) < 6 &&
         (item.windSpeed ?? Infinity) >= 1 &&
         (item.windSpeed ?? Infinity) <= 5 &&
@@ -342,28 +190,23 @@ function addCompleteInputPositiveWindows(
     2,
   );
   const best = outingRuns[0];
-  if (best) {
-    insights.push({
-      type: LifestyleInsightType.BEST_OUTING_WINDOW,
-      score: 55,
-      sourceFacts: [],
-      context: {
-        timeLabel: `${formatTime(snapshotTime(best[0]))}~${formatTime(
-          snapshotEnd(best.at(-1) ?? best[0]),
-        )}`,
-      },
-    });
-  }
-}
+  if (!best) return;
 
-function averageTemperature(
-  snapshots: WeatherSnapshot[],
-): number | undefined {
-  const values = snapshots
-    .map((item) => item.temperature)
-    .filter((value): value is number => value !== undefined);
-  if (values.length === 0) return undefined;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+  const timeLabel = `${formatTime(snapshotTime(best[0]))}~${formatTime(
+    snapshotEnd(best.at(-1) ?? best[0]),
+  )}`;
+  insights.push({
+    type: LifestyleInsightType.BEST_OUTING_WINDOW,
+    score: 55,
+    sourceFacts: [],
+    context: { timeLabel },
+  });
+  insights.push({
+    type: LifestyleInsightType.PET_WALK_WINDOW,
+    score: 54,
+    sourceFacts: [],
+    context: { timeLabel },
+  });
 }
 
 function formatTime(iso: string): string {

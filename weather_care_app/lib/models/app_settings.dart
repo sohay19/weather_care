@@ -103,6 +103,49 @@ class AppSettings {
     );
   }
 
+  factory AppSettings.fromJson(
+    Map<String, dynamic> json,
+    String installationId,
+  ) {
+    final fallbackSettings = AppSettings.fallback(installationId);
+    return AppSettings(
+      installationId: installationId,
+      locationMode:
+          json['locationMode'] as String? ?? fallbackSettings.locationMode,
+      currentRegionId:
+          json['currentRegion'] as String? ?? fallbackSettings.currentRegionId,
+      onboardingCompleted: json['onboardingCompleted'] as bool? ??
+          fallbackSettings.onboardingCompleted,
+      notificationEnabled: json['notificationEnabled'] as bool? ??
+          fallbackSettings.notificationEnabled,
+      notificationTime: json['notificationTime'] as String? ??
+          fallbackSettings.notificationTime,
+      umbrellaEnabled:
+          json['umbrellaEnabled'] as bool? ?? fallbackSettings.umbrellaEnabled,
+      parasolEnabled:
+          json['parasolEnabled'] as bool? ?? fallbackSettings.parasolEnabled,
+      heavyRainEnabled: json['heavyRainEnabled'] as bool? ??
+          fallbackSettings.heavyRainEnabled,
+      heavySnowEnabled: json['heavySnowEnabled'] as bool? ??
+          fallbackSettings.heavySnowEnabled,
+      heatwaveEnabled:
+          json['heatwaveEnabled'] as bool? ?? fallbackSettings.heatwaveEnabled,
+      coldWaveEnabled:
+          json['coldWaveEnabled'] as bool? ?? fallbackSettings.coldWaveEnabled,
+      showerAndLightRainEnabled: json['showerAndLightRainEnabled'] as bool? ??
+          fallbackSettings.showerAndLightRainEnabled,
+      outerwearEnabled: json['outerwearEnabled'] as bool? ??
+          fallbackSettings.outerwearEnabled,
+      maskEnabled: json['maskEnabled'] as bool? ?? fallbackSettings.maskEnabled,
+      waterEnabled:
+          json['waterEnabled'] as bool? ?? fallbackSettings.waterEnabled,
+      sunscreenEnabled: json['sunscreenEnabled'] as bool? ??
+          fallbackSettings.sunscreenEnabled,
+      dailyWeatherEnabled: json['dailyWeatherEnabled'] as bool? ??
+          fallbackSettings.dailyWeatherEnabled,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'installationId': installationId,

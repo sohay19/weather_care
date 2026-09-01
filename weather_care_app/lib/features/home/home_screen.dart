@@ -7,9 +7,11 @@ import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../services/api_client.dart';
 import '../../services/app_config.dart';
+import '../../services/app_settings_repository.dart';
 import '../../services/kma_direct_weather_service.dart';
 import '../../services/installation_identity.dart';
 import '../../services/notification_registration_service.dart';
+import '../../services/settings_sync_service.dart';
 import '../../services/weather_service.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
@@ -31,8 +33,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late AppSettings _settings;
+  final AppSettingsRepository _settingsRepository =
+      const AppSettingsRepository();
   WeatherService? _service;
   NotificationRegistrationService? _notificationRegistration;
+  SettingsSyncService? _settingsSync;
+  Future<void> _settingsSaveQueue = Future<void>.value();
+  int _settingsRevision = 0;
   TodayWeatherResponse? _today;
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
@@ -55,9 +62,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initialize() async {
     final config = await AppConfig.load();
     final installationId = await const InstallationIdentity().getOrCreate();
+    final savedSettings = await _settingsRepository.load(installationId);
     if (!mounted) return;
-    _settings = AppSettings.fallback(installationId);
+    _settings = savedSettings;
     final client = ApiClient(baseUrl: config.serverUrl);
+    _settingsSync = SettingsSyncService(client);
     _service = WeatherService(
       client,
       directKma: KmaDirectWeatherService(
@@ -73,6 +82,11 @@ class _HomeScreenState extends State<HomeScreen> {
         locationMode: _settings.locationMode,
       ),
     );
+    try {
+      await _settingsSync!.save(_settings);
+    } catch (_) {
+      // 날씨 조회와 로컬 설정 사용은 서버 설정 저장 실패와 별도로 유지합니다.
+    }
     await _loadData();
   }
 
@@ -215,6 +229,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SettingsScreen(
                       embedded: true,
                       onRefresh: _loadData,
+                      initialSettings: _settings,
+                      onSettingsChanged: _handleSettingsChanged,
                     ),
                   ]
                 : [
@@ -225,6 +241,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SettingsScreen(
                       embedded: true,
                       onRefresh: _loadData,
+                      initialSettings: _settings,
+                      onSettingsChanged: _handleSettingsChanged,
                     ),
                   ],
           ),
@@ -320,5 +338,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openRecommendationDetail(RecommendationType _) {
     setState(() => _selectedIndex = 1);
+  }
+
+  Future<void> _handleSettingsChanged(AppSettings updated) {
+    final revision = ++_settingsRevision;
+    final locationChanged = _settings.locationMode != updated.locationMode;
+    setState(() => _settings = updated);
+    _settingsSaveQueue = _settingsSaveQueue
+        .then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    )
+        .then((_) async {
+      await _settingsRepository.save(updated);
+      try {
+        await _settingsSync?.save(updated);
+        if (locationChanged) {
+          await _notificationRegistration?.syncInstallation(
+            installationId: updated.installationId,
+            nx: 60,
+            ny: 121,
+            locationMode: updated.locationMode,
+          );
+        }
+      } catch (_) {
+        // 로컬 저장값은 유지하고 다음 앱 시작 또는 변경 시 다시 동기화합니다.
+      }
+      if (mounted && revision == _settingsRevision) await _loadData();
+    });
+    return _settingsSaveQueue;
   }
 }

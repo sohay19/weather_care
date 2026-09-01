@@ -1,38 +1,39 @@
 import { Hono } from 'hono';
-import { ServerEnv } from '../types';
-import { upsertNotificationSettings } from '../database/notificationSettingsRepository';
+import {
+  getNotificationSettings,
+  upsertNotificationSettings,
+} from '../database/notificationSettingsRepository';
+import { NotificationSettings, ServerEnv } from '../types';
+import { notificationSettingsBodySchema } from '../validation/notificationSettings';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
 router.get('/', async (c) => {
-  const id = c.req.query('installationId');
-  if (!id) {
+  const installationId = c.req.query('installationId');
+  if (!installationId) {
     return c.json({ error: 'installationId required' }, 400);
   }
-  const row = c.env.DB
-    ? await c.env.DB.prepare('SELECT * FROM notification_settings WHERE installation_id = ?').bind(id).first()
-    : null;
-  return c.json(row ?? {});
+  return c.json(
+    await getNotificationSettings(c.env.DB, installationId),
+  );
 });
 
 router.put('/:installationId', async (c) => {
   const installationId = c.req.param('installationId');
-  const body = await c.req.json<any>();
-  await upsertNotificationSettings(c.env.DB, {
+  const parsed = notificationSettingsBodySchema.safeParse(
+    await c.req.json<unknown>(),
+  );
+  if (!parsed.success) {
+    return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
+  }
+  const current = await getNotificationSettings(c.env.DB, installationId);
+  const settings: NotificationSettings = {
+    ...current,
+    ...parsed.data,
     installationId,
-    notificationEnabled: body.notificationEnabled ?? true,
-    notificationTime: body.notificationTime ?? '07:00',
-    umbrellaEnabled: body.umbrellaEnabled ?? true,
-    parasolEnabled: body.parasolEnabled ?? true,
-    heavySnowEnabled: body.heavySnowEnabled ?? true,
-    outerwearEnabled: body.outerwearEnabled ?? true,
-    maskEnabled: body.maskEnabled ?? true,
-    waterEnabled: body.waterEnabled ?? true,
-    sunscreenEnabled: body.sunscreenEnabled ?? true,
-    dailyWeatherEnabled: body.dailyWeatherEnabled ?? true,
-  });
-  return c.json({ ok: true });
+  };
+  await upsertNotificationSettings(c.env.DB, settings);
+  return c.json(settings);
 });
 
 export default router;
-

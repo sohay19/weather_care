@@ -15,6 +15,27 @@ describe('weekly recommendation inputs', () => {
     ]);
     expect(highApparent.map((item) => item.type)).toContain('WATER');
   });
+
+  it('marks disabled preparation recommendations as not recommended', () => {
+    const recommendations = recommendationsForDay(day(24), [
+      snapshot(14, {
+        precipitationType: 'RAIN',
+        precipitationProbability: 90,
+        precipitationAmount: 5,
+      }),
+      snapshot(15, {
+        precipitationType: 'RAIN',
+        precipitationProbability: 90,
+        precipitationAmount: 5,
+      }),
+    ], {
+      umbrellaEnabled: false,
+    });
+
+    expect(recommendations.find((item) => item.type === 'UMBRELLA')).toMatchObject({
+      recommended: false,
+    });
+  });
 });
 
 describe('today timeline', () => {

@@ -50,6 +50,7 @@ Android 에뮬레이터는 호스트의 이 서버를 `http://10.0.2.2:8787`로 
 npx wrangler secret put KMA_SERVICE_KEY
 npx wrangler secret put FCM_CLIENT_EMAIL
 npx wrangler secret put FCM_PRIVATE_KEY
+npx wrangler d1 migrations apply weather_care_db --remote
 npm run deploy
 ```
 
@@ -81,3 +82,7 @@ npm run deploy
 한 번만 보내며, 중요한 대설 알림은 설정된 항목이 활성화된 경우 당일 최초 한 번
 전송합니다. FCM 성공 응답을 받은 알림만 `notification_history`에 기록하고,
 Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합니다.
+
+`/weather/today`와 `/weather/weekly`에 `installationId`를 전달하면 설치별 알림
+설정을 Recommendation의 `recommended` 값에 적용합니다. 설정 API는 camelCase로
+응답하며, 알림 시간은 24시간제 `HH:mm`만 허용합니다.

@@ -34,18 +34,12 @@ import {
   regionMetadataForGrid,
   regionName,
 } from '../regions/regionCatalog';
+import {
+  defaultNotificationSettings,
+  getNotificationSettings,
+} from '../database/notificationSettingsRepository';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
-
-const defaultSettings: Partial<NotificationSettings> = {
-  umbrellaEnabled: true,
-  parasolEnabled: true,
-  heavySnowEnabled: true,
-  outerwearEnabled: true,
-  maskEnabled: true,
-  waterEnabled: true,
-  sunscreenEnabled: true,
-};
 
 router.get('/today', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
@@ -55,11 +49,12 @@ router.get('/today', async (c) => {
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData] = await Promise.all([
+    const [weatherForecast, environmentalData, settings] = await Promise.all([
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
       loadEnvironmentalData(c.env, region),
+      settingsForRequest(c.env.DB, c.req.query('installationId')),
     ]);
     const forecast = enrichForecastWithEnvironmentalData(
       weatherForecast,
@@ -68,7 +63,7 @@ router.get('/today', async (c) => {
     const decisionHourly = forecast.hourly.slice(0, 24);
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
-    const recommendations = runRecommendationEngine(lifestyle, defaultSettings);
+    const recommendations = runRecommendationEngine(lifestyle, settings);
     const regionLabel = regionName(nx, ny);
 
     const response: TodayWeatherResponse = {
@@ -87,7 +82,7 @@ router.get('/today', async (c) => {
       dataStatusMessages: buildEnvironmentalDataStatusMessages(
         environmentalData.sources,
       ),
-      timeline: buildTimeline(forecast.hourly),
+      timeline: buildTimeline(forecast.hourly, settings),
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
@@ -123,9 +118,12 @@ router.get('/weekly', async (c) => {
   }
 
   try {
-    const forecast = await new KmaWeatherProvider({
-      serviceKey: c.env.KMA_SERVICE_KEY,
-    }).getForecastByRegion(nx, ny);
+    const [forecast, settings] = await Promise.all([
+      new KmaWeatherProvider({
+        serviceKey: c.env.KMA_SERVICE_KEY,
+      }).getForecastByRegion(nx, ny),
+      settingsForRequest(c.env.DB, c.req.query('installationId')),
+    ]);
     return c.json({
       dataSource: forecast.dataSource,
       regionId: `${nx}_${ny}`,
@@ -134,7 +132,11 @@ router.get('/weekly', async (c) => {
         weatherLabel: day.skyCondition,
         min: formatTemperature(day.minTemperature),
         max: formatTemperature(day.maxTemperature),
-        recommendations: recommendationsForDay(day, forecast.hourly),
+        recommendations: recommendationsForDay(
+          day,
+          forecast.hourly,
+          settings,
+        ),
       })),
     });
   } catch (error) {
@@ -145,13 +147,17 @@ router.get('/weekly', async (c) => {
 
 export default router;
 
-export function buildTimeline(hourly: WeatherSnapshot[]) {
+export function buildTimeline(
+  hourly: WeatherSnapshot[],
+  settings: Partial<NotificationSettings> =
+    defaultNotificationSettings('anonymous'),
+) {
   const offsets = [0, 3, 6, 9, 12];
   return offsets
     .map((offset) => hourly[offset])
     .filter((item): item is WeatherSnapshot => item !== undefined)
     .map((item) => {
-      const recommendations = recommendationsForSnapshot(item);
+      const recommendations = recommendationsForSnapshot(item, settings);
       const hour = (item.forecastAt ?? item.observedAt).slice(11, 13);
       return {
         timeLabel: hour,
@@ -192,16 +198,21 @@ function timelineDetail(snapshot: WeatherSnapshot): string {
   return pieces.filter((piece): piece is string => piece !== null).join(' · ');
 }
 
-function recommendationsForSnapshot(snapshot: WeatherSnapshot): Recommendation[] {
+function recommendationsForSnapshot(
+  snapshot: WeatherSnapshot,
+  settings: Partial<NotificationSettings>,
+): Recommendation[] {
   return runRecommendationEngine(
     runLifestyleWeatherEngine(runWeatherRuleEngine(snapshot)),
-    defaultSettings,
+    settings,
   );
 }
 
 export function recommendationsForDay(
   day: DailyWeatherForecast,
   hourly: WeatherSnapshot[],
+  settings: Partial<NotificationSettings> =
+    defaultNotificationSettings('anonymous'),
 ): Recommendation[] {
   const dayHourly = hourly.filter((item) => {
     const date = (item.forecastAt ?? item.observedAt)
@@ -213,7 +224,7 @@ export function recommendationsForDay(
     const facts = runWeatherRuleEngineForHourly(dayHourly);
     return runRecommendationEngine(
       runLifestyleWeatherEngine(facts, dayHourly),
-      defaultSettings,
+      settings,
     ).slice(0, 3);
   }
 
@@ -228,7 +239,15 @@ export function recommendationsForDay(
     snowfallAmount: day.snowfallAmount,
     skyCondition: day.skyCondition,
   };
-  return recommendationsForSnapshot(snapshot).slice(0, 3);
+  return recommendationsForSnapshot(snapshot, settings).slice(0, 3);
+}
+
+async function settingsForRequest(
+  db: D1Database,
+  installationId: string | undefined,
+): Promise<NotificationSettings> {
+  if (!installationId) return defaultNotificationSettings('anonymous');
+  return getNotificationSettings(db, installationId);
 }
 
 function weekdayLabel(kmaDate: string): string {

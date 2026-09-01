@@ -3,6 +3,8 @@ import { ServerEnv, Installation } from '../types';
 import { regionFromQuery } from '../utils';
 import { upsertInstallation } from '../database/installationsRepository';
 import { upsertNotificationSettings } from '../database/notificationSettingsRepository';
+import { getNotificationSettings } from '../database/notificationSettingsRepository';
+import { notificationSettingsBodySchema } from '../validation/notificationSettings';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -27,22 +29,19 @@ router.put('/:installationId', async (c) => {
 
 router.put('/:installationId/notification-settings', async (c) => {
   const installationId = c.req.param('installationId');
-  const body = await c.req.json<any>();
+  const parsed = notificationSettingsBodySchema.safeParse(
+    await c.req.json<unknown>(),
+  );
+  if (!parsed.success) {
+    return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
+  }
+  const current = await getNotificationSettings(c.env.DB, installationId);
   await upsertNotificationSettings(c.env.DB, {
+    ...current,
+    ...parsed.data,
     installationId,
-    notificationEnabled: body.notificationEnabled ?? true,
-    notificationTime: body.notificationTime ?? '07:00',
-    umbrellaEnabled: body.umbrellaEnabled ?? true,
-    parasolEnabled: body.parasolEnabled ?? true,
-    heavySnowEnabled: body.heavySnowEnabled ?? true,
-    outerwearEnabled: body.outerwearEnabled ?? true,
-    maskEnabled: body.maskEnabled ?? true,
-    waterEnabled: body.waterEnabled ?? true,
-    sunscreenEnabled: body.sunscreenEnabled ?? true,
-    dailyWeatherEnabled: body.dailyWeatherEnabled ?? true,
   });
   return c.json({ ok: true });
 });
 
 export default router;
-

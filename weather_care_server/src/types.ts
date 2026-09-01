@@ -175,6 +175,10 @@ export interface NotificationSettings {
   waterEnabled: boolean;
   sunscreenEnabled: boolean;
   dailyWeatherEnabled: boolean;
+  heavyRainEnabled: boolean;
+  heatwaveEnabled: boolean;
+  coldWaveEnabled: boolean;
+  showerAndLightRainEnabled: boolean;
 }
 
 export interface Installation {

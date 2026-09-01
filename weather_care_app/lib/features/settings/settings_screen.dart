@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../models/app_settings.dart';
@@ -8,11 +10,15 @@ import 'location_mode.dart';
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
   final Future<void> Function()? onRefresh;
+  final AppSettings? initialSettings;
+  final Future<void> Function(AppSettings settings)? onSettingsChanged;
 
   const SettingsScreen({
     super.key,
     this.embedded = false,
     this.onRefresh,
+    this.initialSettings,
+    this.onSettingsChanged,
   });
 
   @override
@@ -20,7 +26,23 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  AppSettings settings = AppSettings.fallback('local-installation');
+  late AppSettings settings;
+
+  @override
+  void initState() {
+    super.initState();
+    settings =
+        widget.initialSettings ?? AppSettings.fallback('local-installation');
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final updated = widget.initialSettings;
+    if (updated != null && updated != oldWidget.initialSettings) {
+      settings = updated;
+    }
+  }
 
   bool get _alertsEnabled => settings.notificationEnabled;
 
@@ -56,9 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : LocationMode.manual,
             onChanged: (mode) {
               if (mode == null) return;
-              setState(() {
-                settings = settings.copyWith(locationMode: mode.label);
-              });
+              _updateSettings(settings.copyWith(locationMode: mode.label));
             },
             child: Column(
               children: [
@@ -151,9 +171,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trackOutlineColor:
                     const WidgetStatePropertyAll(Colors.transparent),
                 onChanged: (value) {
-                  setState(() {
-                    settings = settings.copyWith(notificationEnabled: value);
-                  });
+                  _updateSettings(
+                    settings.copyWith(notificationEnabled: value),
+                  );
                 },
               ),
             ],
@@ -169,40 +189,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Opacity(
               key: const ValueKey('notification-time-control'),
               opacity: _alertsEnabled ? 1 : 0.46,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-                decoration: BoxDecoration(
-                  color: WeatherCareTheme.surfaceMuted,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.alarm_rounded,
-                      color: WeatherCareTheme.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        '매일 아침',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: _selectNotificationTime,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: WeatherCareTheme.surfaceMuted,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.alarm_rounded,
+                        color: WeatherCareTheme.primary,
                       ),
-                    ),
-                    Text(
-                      settings.notificationTime,
-                      style: const TextStyle(
-                        color: WeatherCareTheme.primaryDeep,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          '매일 아침',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: WeatherCareTheme.textSecondary,
-                    ),
-                  ],
+                      Text(
+                        settings.notificationTime,
+                        style: const TextStyle(
+                          color: WeatherCareTheme.primaryDeep,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: WeatherCareTheme.textSecondary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -220,54 +244,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: '우산',
                 value: settings.umbrellaEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(umbrellaEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(umbrellaEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.wb_sunny_outlined,
                 title: '양산',
                 value: settings.parasolEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(parasolEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(parasolEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.checkroom_rounded,
                 title: '겉옷',
                 value: settings.outerwearEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(outerwearEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(outerwearEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.face_outlined,
                 title: '마스크',
                 value: settings.maskEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(maskEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(maskEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.local_drink_outlined,
                 title: '물',
                 value: settings.waterEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(waterEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(waterEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.spa_outlined,
                 title: '선크림',
                 value: settings.sunscreenEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(sunscreenEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(sunscreenEnabled: value),
+                ),
               ),
             ],
           ),
@@ -284,36 +308,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: '많은 비 안내',
                 value: settings.heavyRainEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(heavyRainEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(heavyRainEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.ac_unit_rounded,
                 title: '많은 눈 안내',
                 value: settings.heavySnowEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(heavySnowEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(heavySnowEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.device_thermostat_rounded,
                 title: '고온 안내',
                 value: settings.heatwaveEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(heatwaveEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(heatwaveEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.severe_cold_outlined,
                 title: '저온 안내',
                 value: settings.coldWaveEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(coldWaveEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(coldWaveEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.water_drop_outlined,
@@ -321,19 +345,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: '소나기, 이슬비, 가랑비를 구분해 한곳에서 관리해요',
                 value: settings.showerAndLightRainEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings =
-                      settings.copyWith(showerAndLightRainEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(showerAndLightRainEnabled: value),
+                ),
               ),
               _SettingsToggleTile(
                 icon: Icons.wb_cloudy_outlined,
                 title: '오늘 날씨',
                 value: settings.dailyWeatherEnabled,
                 enabled: _alertsEnabled,
-                onChanged: (value) => setState(() {
-                  settings = settings.copyWith(dailyWeatherEnabled: value);
-                }),
+                onChanged: (value) => _updateSettings(
+                  settings.copyWith(dailyWeatherEnabled: value),
+                ),
               ),
             ],
           ),
@@ -356,7 +379,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '현재 설정은 화면 안에서만 바뀌는 데모 상태예요. 서버 저장 기능은 아직 연결되지 않았어요.',
+                  '변경한 알림 설정은 이 기기와 서버에 자동으로 저장돼요.',
                   style: WeatherCareTheme.microTextStyle.copyWith(
                     color: WeatherCareTheme.attentionDeep,
                     fontSize: 12,
@@ -390,6 +413,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(title: const Text('설정')),
       body: refreshableBody,
     );
+  }
+
+  void _updateSettings(AppSettings updated) {
+    setState(() => settings = updated);
+    final callback = widget.onSettingsChanged;
+    if (callback != null) unawaited(callback(updated));
+  }
+
+  Future<void> _selectNotificationTime() async {
+    if (!_alertsEnabled) return;
+    final pieces = settings.notificationTime.split(':');
+    final initial = TimeOfDay(
+      hour: int.tryParse(pieces.first) ?? 7,
+      minute: int.tryParse(pieces.length > 1 ? pieces[1] : '') ?? 0,
+    );
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      helpText: '알림 시간 선택',
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (selected == null || !mounted) return;
+    final time =
+        '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}';
+    _updateSettings(settings.copyWith(notificationTime: time));
   }
 }
 

@@ -64,6 +64,29 @@ class NotificationRegistrationService {
     await _tokenSubscription?.cancel();
   }
 
+  Future<void> syncInstallation({
+    required String installationId,
+    required int nx,
+    required int ny,
+    required String locationMode,
+  }) async {
+    try {
+      final permission = await messaging.getNotificationSettings();
+      final authorized =
+          permission.authorizationStatus == AuthorizationStatus.authorized ||
+              permission.authorizationStatus == AuthorizationStatus.provisional;
+      await _register(
+        installationId: installationId,
+        token: authorized ? await messaging.getToken() : null,
+        nx: nx,
+        ny: ny,
+        locationMode: locationMode,
+      );
+    } catch (error) {
+      log('Installation synchronization failed (${error.runtimeType})');
+    }
+  }
+
   Future<void> _register({
     required String installationId,
     required String? token,

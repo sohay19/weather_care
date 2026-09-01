@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import {
   NotificationSettings,
   CurrentPrecipitationObservation,
+  RoadIceRisk,
   Recommendation,
   ServerEnv,
   TodayWeatherResponse,
@@ -47,6 +48,8 @@ import {
 } from '../providers/warnings/kmaWarningProvider';
 import { buildActiveWarningMessages } from '../presentation/officialWarningMessages';
 import { RegionMetadata } from '../regions/regionCatalog';
+import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
+import { buildRoadIceMessage } from '../presentation/roadIceMessage';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -62,7 +65,7 @@ router.get('/today', async (c) => {
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData, settings, precipitation, warnings] = await Promise.all([
+    const [weatherForecast, environmentalData, settings, precipitation, warnings, roadIce] = await Promise.all([
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
@@ -70,6 +73,7 @@ router.get('/today', async (c) => {
       settingsForRequest(c.env.DB, c.req.query('installationId')),
       loadCurrentPrecipitation(c.env, coordinates),
       loadActiveWarnings(c.env, region),
+      loadRoadIce(c.env, region, coordinates),
     ]);
     const forecast = enrichForecastWithEnvironmentalData(
       weatherForecast,
@@ -92,6 +96,7 @@ router.get('/today', async (c) => {
       settings.umbrellaEnabled,
     );
     const warningMessages = buildActiveWarningMessages(warnings, regionLabel);
+    const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
       region: { nx, ny, name: regionLabel },
@@ -101,10 +106,12 @@ router.get('/today', async (c) => {
         activeWarnings: warnings,
       },
       currentPrecipitation: precipitation,
+      currentRoadIce: roadIce,
       hourly: forecast.hourly,
       recommendations,
       lifestyleMessages: [
         ...warningMessages,
+        ...(roadIceMessage ? [roadIceMessage] : []),
         ...(currentPrecipitationMessage ? [currentPrecipitationMessage] : []),
         ...forecastLifestyleMessages,
       ],
@@ -154,6 +161,32 @@ async function loadCurrentPrecipitation(
       JSON.stringify({
         event: 'current_precipitation_provider_failed',
         provider: 'KMA_ANALYSIS_RADAR',
+        error: error instanceof Error ? error.name : 'UnknownError',
+      }),
+    );
+    return undefined;
+  }
+}
+
+async function loadRoadIce(
+  env: ServerEnv,
+  region: RegionMetadata | undefined,
+  coordinates: { latitude: number; longitude: number } | undefined,
+): Promise<RoadIceRisk | undefined> {
+  if (!env.KMA_APIHUB_KEY || !region || !coordinates) return undefined;
+  try {
+    return await new KmaRoadIceProvider({
+      serviceKey: env.KMA_APIHUB_KEY,
+    }).getNearestRiskByLocation(
+      coordinates.latitude,
+      coordinates.longitude,
+      region.roadWeatherRoadNumbers,
+    );
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'road_ice_provider_failed',
+        provider: 'KMA_ROAD_RISK',
         error: error instanceof Error ? error.name : 'UnknownError',
       }),
     );

@@ -11,6 +11,7 @@
     "db:push": "wrangler d1 execute weather_care_db --file=./migrations/0001_init.sql --local"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "hono": "^4.5.0",
     "zod": "^3.22.4"
   },

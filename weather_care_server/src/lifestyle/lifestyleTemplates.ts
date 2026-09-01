@@ -178,6 +178,12 @@ export const lifestyleMessageCatalog: Record<
       description: '',
     },
   ],
+  BLACK_ICE_CAUTION: [
+    {
+      title: '블랙아이스가 생길 수 있으니, 운전한다면 출발 전에 최신 도로정보를 확인하세요',
+      description: '기상청 도로살얼음 발생 가능 정보를 확인했어요.',
+    },
+  ],
 };
 
 export function lifestyleMessageFor(

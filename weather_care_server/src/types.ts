@@ -49,6 +49,7 @@ export enum LifestyleInsightType {
   WINDOW_CLOSE_SOON = 'WINDOW_CLOSE_SOON',
   RAPID_TEMPERATURE_DROP = 'RAPID_TEMPERATURE_DROP',
   NIGHT_WEATHER_CHECK = 'NIGHT_WEATHER_CHECK',
+  BLACK_ICE_CAUTION = 'BLACK_ICE_CAUTION',
 }
 
 export type PrecipitationType =
@@ -214,6 +215,22 @@ export interface CurrentPrecipitationObservation {
   provider: 'KMA_ANALYSIS_RADAR';
 }
 
+export interface RoadIceRisk {
+  producedAt: string;
+  roadNumber: string;
+  roadName: string;
+  linkId: string;
+  level: 1 | 2 | 3;
+  levelLabel: '관심' | '주의' | '위험';
+  sourceType: 'ANALYSIS' | 'OBSERVATION';
+  fromLatitude: number;
+  fromLongitude: number;
+  toLatitude: number;
+  toLongitude: number;
+  distanceMeters: number;
+  provider: '기상청 도로살얼음 발생 가능 정보';
+}
+
 export type ServerEnv = CloudflareBindings;
 
 export type EnvironmentalSourceState =
@@ -252,6 +269,7 @@ export interface TodayWeatherResponse {
   brief: string;
   current: WeatherSnapshot;
   currentPrecipitation?: CurrentPrecipitationObservation;
+  currentRoadIce?: RoadIceRisk;
   hourly: WeatherSnapshot[];
   recommendations: Recommendation[];
   lifestyleMessages: {

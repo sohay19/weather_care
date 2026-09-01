@@ -21,6 +21,9 @@ describe('notification scheduler', () => {
           latitude REAL, longitude REAL,
           current_rain_state INTEGER NOT NULL DEFAULT 0,
           current_rain_observed_at TEXT,
+          road_ice_level INTEGER NOT NULL DEFAULT 0,
+          road_ice_link_id TEXT,
+          road_ice_observed_at TEXT,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(
@@ -155,6 +158,7 @@ describe('notification scheduler', () => {
         provider: 'KMA_ANALYSIS_RADAR' as const,
       }),
       warningLoader: async () => [],
+      roadIceLoader: async () => undefined,
       sender,
     };
     const bindings = testBindings('test-apihub-key');
@@ -234,6 +238,54 @@ describe('notification scheduler', () => {
     });
     expect(sent.find((item) => item.notificationKey.includes('RELEASED'))?.body)
       .toBe('수원의 호우경보가 해제됐어요');
+  });
+
+  it('sends a nearby official road-ice stage once and resets after it clears', async () => {
+    await insertInstallation('device-token', true);
+    const sent: FcmPayload[] = [];
+    const bindings = testBindings('test-apihub-key');
+    const dependencies = {
+      now: new Date('2026-01-15T01:00:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      precipitationLoader: async () => ({
+        observedAt: '2026-01-15T09:50:00+09:00',
+        latitude: 37.2636,
+        longitude: 127.0286,
+        analysisRainDetected: false,
+        radarRainDetected: false,
+        state: 'DRY' as const,
+        provider: 'KMA_ANALYSIS_RADAR' as const,
+      }),
+      warningLoader: async () => [],
+      roadIceLoader: async () => roadIceRisk(),
+      sender: collectingSender(sent),
+    };
+
+    await runRecommendationNotificationJob(bindings, dependencies);
+    await runRecommendationNotificationJob(bindings, dependencies);
+
+    expect(sent.filter((item) => item.notificationKey.startsWith('ROAD_ICE_')))
+      .toEqual([
+        expect.objectContaining({
+          title: '블랙아이스(도로살얼음)',
+          body: expect.stringContaining(
+            '기상청은 오전 10시 영동선 수원 인근 구간의 블랙아이스(도로살얼음) 발생 가능성을 주의 2단계로 안내했어요',
+          ),
+        }),
+      ]);
+
+    await runRecommendationNotificationJob(bindings, {
+      ...dependencies,
+      now: new Date('2026-01-15T01:10:00Z'),
+      roadIceLoader: async () => undefined,
+    });
+    const state = await env.DB.prepare(
+      `SELECT road_ice_level AS level, road_ice_link_id AS linkId
+       FROM installations WHERE installation_id = ?`,
+    )
+      .bind('installation-1')
+      .first<{ level: number; linkId: string | null }>();
+    expect(state).toEqual({ level: 0, linkId: null });
   });
 });
 
@@ -372,4 +424,22 @@ async function insertWarningState(
       '2026-09-01T01:00:00Z',
     )
     .run();
+}
+
+function roadIceRisk() {
+  return {
+    producedAt: '2026-01-15T01:00:00Z',
+    roadNumber: '050',
+    roadName: '영동선',
+    linkId: 'risk-link',
+    level: 2 as const,
+    levelLabel: '주의' as const,
+    sourceType: 'OBSERVATION' as const,
+    fromLatitude: 37.263,
+    fromLongitude: 127.03,
+    toLatitude: 37.264,
+    toLongitude: 127.031,
+    distanceMeters: 120,
+    provider: '기상청 도로살얼음 발생 가능 정보' as const,
+  };
 }

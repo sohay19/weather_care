@@ -741,6 +741,9 @@ _LifestyleCardPresentation _lifestylePresentation(
     LifestyleMessageType.wetRoadCaution => const _LifestyleCardPresentation(
         icon: Icons.directions_car_outlined,
       ),
+    LifestyleMessageType.blackIceCaution => const _LifestyleCardPresentation(
+        icon: Icons.warning_amber_rounded,
+      ),
     LifestyleMessageType.rapidTemperatureDrop =>
       const _LifestyleCardPresentation(
         icon: Icons.thermostat_auto_outlined,

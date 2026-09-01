@@ -16,6 +16,7 @@ import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
 import {
   CurrentPrecipitationObservation,
   NotificationSettings,
+  RoadIceRisk,
   ServerEnv,
 } from '../types';
 import { FcmPayload, FcmSendResult, sendBatch } from './fcmClient';
@@ -25,6 +26,8 @@ import {
   changedWarningNotification,
   releasedWarningNotification,
 } from '../presentation/officialWarningMessages';
+import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
+import { roadIceNotification } from '../presentation/roadIceMessage';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -48,6 +51,8 @@ interface NotificationInstallationRow {
   latitude: number | null;
   longitude: number | null;
   currentRainState: number;
+  roadIceLevel: number;
+  roadIceLinkId: string | null;
 }
 
 interface PendingNotification {
@@ -57,6 +62,7 @@ interface PendingNotification {
   built: BuiltNotification;
   rainObservedAt?: string;
   warningStateMutation?: WarningStateMutation;
+  roadIceRisk?: RoadIceRisk;
 }
 
 interface WarningStateRow {
@@ -92,6 +98,12 @@ interface SchedulerDependencies {
     env: ServerEnv,
     regionIds: readonly string[],
   ) => Promise<OfficialWeatherWarning[]>;
+  roadIceLoader?: (
+    env: ServerEnv,
+    latitude: number,
+    longitude: number,
+    roadNumbers: readonly string[],
+  ) => Promise<RoadIceRisk | undefined>;
 }
 
 export async function runRecommendationNotificationJob(
@@ -112,6 +124,7 @@ export async function runRecommendationNotificationJob(
     string,
     Promise<OfficialWeatherWarning[]>
   >();
+  const roadIceByLocation = new Map<string, Promise<RoadIceRisk | undefined>>();
   const pending: PendingNotification[] = [];
 
   for (const row of rows) {
@@ -131,6 +144,14 @@ export async function runRecommendationNotificationJob(
       pending,
       warningsByRegion,
       dependencies.warningLoader ?? defaultWarningLoader,
+    );
+    await collectRoadIceNotification(
+      env,
+      row,
+      local.date,
+      pending,
+      roadIceByLocation,
+      dependencies.roadIceLoader ?? defaultRoadIceLoader,
     );
     const regionKey = `${row.nx}:${row.ny}`;
     let forecastPromise = forecastByRegion.get(regionKey);
@@ -222,7 +243,9 @@ async function notificationInstallations(
          COALESCE(s.shower_light_rain_enabled, 1) AS showerAndLightRainEnabled,
          i.latitude,
          i.longitude,
-         COALESCE(i.current_rain_state, 0) AS currentRainState
+         COALESCE(i.current_rain_state, 0) AS currentRainState,
+         COALESCE(i.road_ice_level, 0) AS roadIceLevel,
+         i.road_ice_link_id AS roadIceLinkId
        FROM installations i
        LEFT JOIN notification_settings s
          ON s.installation_id = i.installation_id
@@ -296,6 +319,101 @@ async function defaultWarningLoader(
   return new KmaWarningProvider({
     serviceKey: env.KMA_APIHUB_KEY,
   }).getActiveForRegions(regionIds);
+}
+
+async function defaultRoadIceLoader(
+  env: ServerEnv,
+  latitude: number,
+  longitude: number,
+  roadNumbers: readonly string[],
+): Promise<RoadIceRisk | undefined> {
+  return new KmaRoadIceProvider({
+    serviceKey: env.KMA_APIHUB_KEY,
+  }).getNearestRiskByLocation(latitude, longitude, roadNumbers);
+}
+
+async function collectRoadIceNotification(
+  env: ServerEnv,
+  row: NotificationInstallationRow,
+  targetDate: string,
+  pending: PendingNotification[],
+  roadIceByLocation: Map<string, Promise<RoadIceRisk | undefined>>,
+  loader: (
+    env: ServerEnv,
+    latitude: number,
+    longitude: number,
+    roadNumbers: readonly string[],
+  ) => Promise<RoadIceRisk | undefined>,
+): Promise<void> {
+  if (!env.KMA_APIHUB_KEY) return;
+  if (row.latitude === null || row.longitude === null) return;
+  const region = regionMetadataForGrid(row.nx, row.ny);
+  if (!region || region.roadWeatherRoadNumbers.length === 0) return;
+  const locationKey = [
+    row.latitude.toFixed(5),
+    row.longitude.toFixed(5),
+    region.roadWeatherRoadNumbers.join(','),
+  ].join(':');
+  let riskPromise = roadIceByLocation.get(locationKey);
+  if (!riskPromise) {
+    riskPromise = loader(
+      env,
+      row.latitude,
+      row.longitude,
+      region.roadWeatherRoadNumbers,
+    );
+    roadIceByLocation.set(locationKey, riskPromise);
+  }
+
+  try {
+    const risk = await riskPromise;
+    if (!risk) {
+      if (row.roadIceLevel > 0) {
+        await resetRoadIceState(env.DB, row.installationId);
+      }
+      return;
+    }
+    if (
+      row.roadIceLevel === risk.level &&
+      row.roadIceLinkId === risk.linkId
+    ) {
+      return;
+    }
+    const content = roadIceNotification(risk, region.name);
+    pending.push({
+      installationId: row.installationId,
+      targetDate,
+      token: row.token,
+      built: {
+        notification_key: `ROAD_ICE_${risk.linkId}_${risk.level}_${risk.producedAt.replace(/\D/g, '')}`,
+        title: content.title,
+        body: content.body,
+      },
+      roadIceRisk: risk,
+    });
+  } catch (error) {
+    logNotificationError('road_ice_build_failed', error, {
+      installationId: row.installationId,
+      locationKey,
+    });
+  }
+}
+
+async function resetRoadIceState(
+  db: D1Database,
+  installationId: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE installations
+       SET road_ice_level = 0,
+           road_ice_link_id = NULL,
+           road_ice_observed_at = NULL,
+           updated_at = ?
+       WHERE installation_id = ?`,
+    )
+    .bind(new Date().toISOString(), installationId)
+    .run();
 }
 
 async function collectOfficialWarningNotifications(
@@ -674,6 +792,26 @@ async function recordResults(
           );
         }
       }
+      if (item.roadIceRisk) {
+        statements.push(
+          db
+            .prepare(
+              `UPDATE installations
+               SET road_ice_level = ?,
+                   road_ice_link_id = ?,
+                   road_ice_observed_at = ?,
+                   updated_at = ?
+               WHERE installation_id = ?`,
+            )
+            .bind(
+              item.roadIceRisk.level,
+              item.roadIceRisk.linkId,
+              item.roadIceRisk.producedAt,
+              sentAt,
+              item.installationId,
+            ),
+        );
+      }
     } else {
       logNotificationError('fcm_send_failed', undefined, {
         installationId: item.installationId,
@@ -763,6 +901,7 @@ function logNotificationError(
     | 'recommendation_build_failed'
     | 'current_rain_build_failed'
     | 'official_warning_build_failed'
+    | 'road_ice_build_failed'
     | 'fcm_send_failed',
   error: unknown,
   context: Record<string, string | number>,

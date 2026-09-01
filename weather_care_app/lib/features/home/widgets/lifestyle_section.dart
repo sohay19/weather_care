@@ -118,6 +118,7 @@ IconData _iconFor(LifestyleMessageType type) => switch (type) {
       LifestyleMessageType.nightWeatherCheck => Icons.bedtime_outlined,
       LifestyleMessageType.windowCloseSoon => Icons.window_outlined,
       LifestyleMessageType.wetRoadCaution => Icons.directions_car_outlined,
+      LifestyleMessageType.blackIceCaution => Icons.warning_amber_rounded,
       LifestyleMessageType.outdoorCaution ||
       LifestyleMessageType.coolerThanTemperature =>
         Icons.air_rounded,

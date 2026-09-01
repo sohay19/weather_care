@@ -17,39 +17,39 @@ class WeatherInfoCard extends StatelessWidget {
         label: '체감',
         value: current.apparentTemperature == null
             ? '미지원'
-            : '${current.apparentTemperature!.toStringAsFixed(1)}°C',
-        dialogTitle: '체감온도 기준',
+            : '${current.apparentTemperature!.toStringAsFixed(1)}℃',
+        dialogTitle: '예상 체감온도',
         dialogBody: current.apparentTemperature == null
-            ? '현재 체감온도 값이 없어 기준을 적용할 수 없어요.'
-            : '현재 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}°C예요. 28°C부터 더움, 33°C부터 더위 주의, 35°C부터 더위 경계, 38°C 이상은 위험한 더위로 안내해요. 10°C 미만은 쌀쌀함, 0°C 미만은 추운 날씨로 표현해요.',
+            ? '체감온도 계산조건이 맞지 않거나 입력자료가 없어 표시하지 않아요.'
+            : '기상청 단기예보의 기온·습도·풍속으로 계산한 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.',
       ),
       if (current.humidity != null)
         _WeatherMetric(
           icon: Icons.water_drop_outlined,
           label: '습도',
           value: '${current.humidity!.toStringAsFixed(0)}%',
-          dialogTitle: '습도 기준',
+          dialogTitle: '실외 상대습도',
           dialogBody:
-              '현재 습도는 ${current.humidity!.toStringAsFixed(0)}%예요. 35% 이하 또는 70~79%는 주의, 80% 이상은 위험 구간으로 표시해요.',
+              '기상청은 선택한 지역에 상대습도 ${current.humidity!.toStringAsFixed(0)}%를 예보했어요.',
         ),
       if (current.uvIndex != null)
         _WeatherMetric(
           icon: Icons.wb_sunny_outlined,
           label: '자외선',
           value: current.uvIndex!.toStringAsFixed(1),
-          dialogTitle: '자외선 기준',
+          dialogTitle: '자외선지수 공식 단계',
           dialogBody:
-              '현재 자외선 지수는 ${current.uvIndex!.toStringAsFixed(1)}예요. 6~7은 주의, 8 이상은 위험 구간으로 표시해요.',
+              '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${_uvGrade(current.uvIndex!)} 단계예요. 공식 단계는 낮음·보통·높음·매우 높음·위험으로 구분해요.',
         ),
       if (current.pm25 != null || current.pm10 != null)
         _WeatherMetric(
           icon: Icons.blur_on_rounded,
-          label: '미세먼지',
+          label: current.pm25 != null ? '초미세먼지' : '미세먼지',
           value: current.pm25?.toString() ?? current.pm10.toString(),
-          dialogTitle: '미세먼지 기준',
+          dialogTitle: current.pm25 != null ? '초미세먼지 공식 등급' : '미세먼지 공식 등급',
           dialogBody: current.pm25 != null
-              ? '현재 PM2.5는 ${current.pm25}㎍/㎥예요. 36~75㎍/㎥는 주의, 76㎍/㎥ 이상은 위험 구간으로 표시해요.'
-              : '현재 PM10은 ${current.pm10}㎍/㎥예요. 81~150㎍/㎥는 주의, 151㎍/㎥ 이상은 위험 구간으로 표시해요.',
+              ? '에어코리아 초미세먼지 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.'
+              : '에어코리아 미세먼지 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.',
         ),
     ];
 
@@ -63,7 +63,7 @@ class WeatherInfoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                '${current.temperature.toStringAsFixed(1)}°C',
+                '${current.temperature.toStringAsFixed(1)}℃',
                 style: const TextStyle(
                   color: WeatherCareTheme.textPrimary,
                   fontSize: 34,
@@ -117,6 +117,28 @@ class WeatherInfoCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _uvGrade(double value) {
+  if (value <= 2) return '낮음';
+  if (value <= 5) return '보통';
+  if (value <= 7) return '높음';
+  if (value <= 10) return '매우 높음';
+  return '위험';
+}
+
+String _pm25Grade(int value) {
+  if (value <= 15) return '좋음';
+  if (value <= 35) return '보통';
+  if (value <= 75) return '나쁨';
+  return '매우 나쁨';
+}
+
+String _pm10Grade(int value) {
+  if (value <= 30) return '좋음';
+  if (value <= 80) return '보통';
+  if (value <= 150) return '나쁨';
+  return '매우 나쁨';
 }
 
 void _showMetricDialog(BuildContext context, _WeatherMetric metric) {

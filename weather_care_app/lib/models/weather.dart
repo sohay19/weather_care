@@ -25,7 +25,10 @@ class WeatherRegion {
 
 class CurrentWeather {
   final double temperature;
+  final String? forecastAt;
+  final String? issuedAt;
   final double? apparentTemperature;
+  final String? apparentTemperatureSource;
   final double? humidity;
   final double? windSpeed;
   final double? uvIndex;
@@ -35,7 +38,10 @@ class CurrentWeather {
 
   const CurrentWeather({
     required this.temperature,
+    this.forecastAt,
+    this.issuedAt,
     this.apparentTemperature,
+    this.apparentTemperatureSource,
     this.humidity,
     this.windSpeed,
     this.uvIndex,
@@ -48,7 +54,10 @@ class CurrentWeather {
     final c = json['current'] ?? {};
     return CurrentWeather(
       temperature: (c['temperature'] as num?)?.toDouble() ?? 0,
+      forecastAt: c['forecastAt']?.toString(),
+      issuedAt: c['issuedAt']?.toString(),
       apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble(),
+      apparentTemperatureSource: c['apparentTemperatureSource']?.toString(),
       humidity: (c['humidity'] as num?)?.toDouble(),
       windSpeed: (c['windSpeed'] as num?)?.toDouble(),
       uvIndex: (c['uvIndex'] as num?)?.toDouble(),
@@ -66,8 +75,10 @@ class HourlyWeatherItem {
   final double? apparentTemperature;
   final double precipitationProbability;
   final double precipitationAmount;
+  final String? precipitationAmountLabel;
   final bool snowExpected;
   final double snowfallAmount;
+  final String? snowfallAmountLabel;
   final double windSpeed;
   final double? uvIndex;
   final int? pm10;
@@ -81,8 +92,10 @@ class HourlyWeatherItem {
     this.apparentTemperature,
     required this.precipitationProbability,
     required this.precipitationAmount,
+    this.precipitationAmountLabel,
     required this.snowExpected,
     required this.snowfallAmount,
+    this.snowfallAmountLabel,
     required this.windSpeed,
     this.uvIndex,
     this.pm10,
@@ -109,10 +122,18 @@ class HourlyWeatherItem {
           (json['precipitationProbability'] as num?)?.toDouble() ?? 0,
       precipitationAmount:
           (json['precipitationAmount'] as num?)?.toDouble() ?? 0,
+      precipitationAmountLabel: _amountRangeLabel(
+        json['precipitationAmountRange'],
+        'mm',
+      ),
       snowExpected: json['snowExpected'] == true ||
           legacySnowProbability > 0 ||
           snowfallAmount > 0,
       snowfallAmount: snowfallAmount,
+      snowfallAmountLabel: _amountRangeLabel(
+        json['snowfallAmountRange'],
+        'cm',
+      ),
       windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0,
       uvIndex: (json['uvIndex'] as num?)?.toDouble(),
       pm10: (json['pm10'] as num?)?.toInt(),
@@ -120,6 +141,25 @@ class HourlyWeatherItem {
       skyCondition: json['skyCondition']?.toString() ?? '맑음',
     );
   }
+}
+
+String? _amountRangeLabel(Object? raw, String fallbackUnit) {
+  if (raw is! Map<String, dynamic>) return null;
+  final type = raw['type']?.toString();
+  final min = (raw['min'] as num?)?.toDouble();
+  final max = (raw['max'] as num?)?.toDouble();
+  final unit = raw['unit']?.toString() == 'CM' ? 'cm' : fallbackUnit;
+  String number(double value) => value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toStringAsFixed(1);
+  return switch (type) {
+    'LESS_THAN' when max != null => '${number(max)}$unit 미만',
+    'RANGE' when min != null && max != null =>
+      '${number(min)}~${number(max)}$unit',
+    'AT_LEAST' when min != null => '${number(min)}$unit 이상',
+    'VALUE' when min != null => '${number(min)}$unit',
+    _ => null,
+  };
 }
 
 class TimelineItem {
@@ -159,6 +199,7 @@ class TodayWeatherResponse {
   final CurrentWeather current;
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
+  final List<WeatherMessagePart> dataStatusMessages;
   final List<TimelineItem> timeline;
   final List<HourlyWeatherItem> hourly;
 
@@ -169,6 +210,7 @@ class TodayWeatherResponse {
     required this.current,
     required this.recommendations,
     required this.lifestyleMessages,
+    this.dataStatusMessages = const [],
     required this.timeline,
     required this.hourly,
   });
@@ -182,6 +224,12 @@ class TodayWeatherResponse {
         .whereType<Map<String, dynamic>>()
         .map((e) => LifestyleMessage.fromJson(e))
         .toList();
+    final dataStatusMessages =
+        (json['dataStatusMessages'] as List<dynamic>? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .map(WeatherMessagePart.fromJson)
+            .where((part) => part.text.isNotEmpty)
+            .toList();
     final timeline = (json['timeline'] as List<dynamic>? ?? [])
         .whereType<Map<String, dynamic>>()
         .map(
@@ -209,10 +257,11 @@ class TodayWeatherResponse {
         json['region'] as Map<String, dynamic>? ??
             {'name': '수원', 'nx': 60, 'ny': 121},
       ),
-      brief: json['brief']?.toString() ?? '오늘은 덥다가 퇴근할 때 비가 와요.',
+      brief: json['brief']?.toString() ?? '외출 전에 시간별 예보를 확인하세요.',
       current: CurrentWeather.fromJson(json),
       recommendations: recs,
       lifestyleMessages: lifestyles,
+      dataStatusMessages: dataStatusMessages,
       timeline: timeline,
       hourly: hourly,
     );

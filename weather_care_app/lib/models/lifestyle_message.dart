@@ -1,63 +1,123 @@
 enum LifestyleMessageType {
   rainGearUseful,
   strongSunExposure,
-  veryHotAndHumid,
-  laundryGood,
-  coolerThanTemperature,
   outerwearUseful,
   maskUseful,
   hydrationImportant,
   sunscreenUseful,
   snowTravelCaution,
+  veryHotAndHumid,
+  coolerThanTemperature,
   largeTemperatureSwing,
   outdoorCaution,
-  ventilationGood,
-  dailyWeatherCheck,
-  dailyHydration,
-  flexibleDayPlan,
+  rainBreakWindow,
+  bestOutingWindow,
+  petWalkWindow,
+  wetRoadCaution,
+  laundryPickupDue,
+  windowCloseSoon,
+  rapidTemperatureDrop,
+  nightWeatherCheck,
+  unknown,
 }
 
 extension LifestyleMessageTypeLabel on LifestyleMessageType {
-  String get title {
-    return switch (this) {
-      LifestyleMessageType.rainGearUseful => '비 오는 시간대를 준비해요',
-      LifestyleMessageType.strongSunExposure => '햇볕 노출에 주의해요',
-      LifestyleMessageType.veryHotAndHumid => '땀이 비 오듯 나는 날',
-      LifestyleMessageType.laundryGood => '빨래가 잘 마르는 날',
-      LifestyleMessageType.coolerThanTemperature => '아침저녁이 쌀쌀해요',
-      LifestyleMessageType.outerwearUseful => '겉옷이 유용할 가능성이 높아요',
-      LifestyleMessageType.maskUseful => '대기질을 확인해요',
-      LifestyleMessageType.hydrationImportant => '물을 자주 마셔요',
-      LifestyleMessageType.sunscreenUseful => '선크림이 필요한 날이에요',
-      LifestyleMessageType.snowTravelCaution => '눈길 이동에 주의해요',
-      LifestyleMessageType.largeTemperatureSwing => '하루 기온 차가 커요',
-      LifestyleMessageType.outdoorCaution => '야외활동 시 주의가 필요해요',
-      LifestyleMessageType.ventilationGood => '환기하기 좋은 시간이에요',
-      LifestyleMessageType.dailyWeatherCheck => '시간대별 흐름을 확인해요',
-      LifestyleMessageType.dailyHydration => '물 한 모금을 챙겨요',
-      LifestyleMessageType.flexibleDayPlan => '여유 있게 움직여요',
-    };
-  }
+  String get title => switch (this) {
+        LifestyleMessageType.rainGearUseful => '비와 우산 준비',
+        LifestyleMessageType.strongSunExposure => '자외선과 양산',
+        LifestyleMessageType.outerwearUseful => '겉옷 준비',
+        LifestyleMessageType.maskUseful => '대기질과 마스크',
+        LifestyleMessageType.hydrationImportant => '더위와 물 준비',
+        LifestyleMessageType.sunscreenUseful => '자외선 차단제',
+        LifestyleMessageType.snowTravelCaution => '새로 쌓인 눈',
+        LifestyleMessageType.veryHotAndHumid => '덥고 습한 날씨',
+        LifestyleMessageType.coolerThanTemperature => '기온과 바람',
+        LifestyleMessageType.largeTemperatureSwing => '시간대별 기온 차',
+        LifestyleMessageType.outdoorCaution => '강풍',
+        LifestyleMessageType.rainBreakWindow => '비가 잠시 그치는 시간',
+        LifestyleMessageType.bestOutingWindow => '외출 시간 확인',
+        LifestyleMessageType.petWalkWindow => '반려견 산책계획',
+        LifestyleMessageType.wetRoadCaution => '젖은 도로',
+        LifestyleMessageType.laundryPickupDue => '빨래 회수',
+        LifestyleMessageType.windowCloseSoon => '창문 확인',
+        LifestyleMessageType.rapidTemperatureDrop => '기온 하강',
+        LifestyleMessageType.nightWeatherCheck => '수면환경 확인',
+        LifestyleMessageType.unknown => '날씨 안내',
+      };
 
-  String get apiName {
-    return switch (this) {
-      LifestyleMessageType.rainGearUseful => 'RAIN_GEAR_USEFUL',
-      LifestyleMessageType.strongSunExposure => 'STRONG_SUN_EXPOSURE',
-      LifestyleMessageType.veryHotAndHumid => 'VERY_HOT_AND_HUMID',
-      LifestyleMessageType.laundryGood => 'LAUNDRY_GOOD',
-      LifestyleMessageType.coolerThanTemperature => 'COOLER_THAN_TEMPERATURE',
-      LifestyleMessageType.outerwearUseful => 'OUTERWEAR_USEFUL',
-      LifestyleMessageType.maskUseful => 'MASK_USEFUL',
-      LifestyleMessageType.hydrationImportant => 'HYDRATION_IMPORTANT',
-      LifestyleMessageType.sunscreenUseful => 'SUNSCREEN_USEFUL',
-      LifestyleMessageType.snowTravelCaution => 'SNOW_TRAVEL_CAUTION',
-      LifestyleMessageType.largeTemperatureSwing => 'LARGE_TEMPERATURE_SWING',
-      LifestyleMessageType.outdoorCaution => 'OUTDOOR_ACTIVITY_CAUTION',
-      LifestyleMessageType.ventilationGood => 'VENTILATION_GOOD',
-      LifestyleMessageType.dailyWeatherCheck => 'DAILY_WEATHER_CHECK',
-      LifestyleMessageType.dailyHydration => 'DAILY_HYDRATION',
-      LifestyleMessageType.flexibleDayPlan => 'FLEXIBLE_DAY_PLAN',
+  String get apiName => switch (this) {
+        LifestyleMessageType.rainGearUseful => 'RAIN_GEAR_USEFUL',
+        LifestyleMessageType.strongSunExposure => 'STRONG_SUN_EXPOSURE',
+        LifestyleMessageType.outerwearUseful => 'OUTERWEAR_USEFUL',
+        LifestyleMessageType.maskUseful => 'MASK_USEFUL',
+        LifestyleMessageType.hydrationImportant => 'HYDRATION_IMPORTANT',
+        LifestyleMessageType.sunscreenUseful => 'SUNSCREEN_USEFUL',
+        LifestyleMessageType.snowTravelCaution => 'SNOW_TRAVEL_CAUTION',
+        LifestyleMessageType.veryHotAndHumid => 'VERY_HOT_AND_HUMID',
+        LifestyleMessageType.coolerThanTemperature => 'COOLER_THAN_TEMPERATURE',
+        LifestyleMessageType.largeTemperatureSwing => 'LARGE_TEMPERATURE_SWING',
+        LifestyleMessageType.outdoorCaution => 'OUTDOOR_ACTIVITY_CAUTION',
+        LifestyleMessageType.rainBreakWindow => 'RAIN_BREAK_WINDOW',
+        LifestyleMessageType.bestOutingWindow => 'BEST_OUTING_WINDOW',
+        LifestyleMessageType.petWalkWindow => 'PET_WALK_WINDOW',
+        LifestyleMessageType.wetRoadCaution => 'WET_ROAD_CAUTION',
+        LifestyleMessageType.laundryPickupDue => 'LAUNDRY_PICKUP_DUE',
+        LifestyleMessageType.windowCloseSoon => 'WINDOW_CLOSE_SOON',
+        LifestyleMessageType.rapidTemperatureDrop => 'RAPID_TEMPERATURE_DROP',
+        LifestyleMessageType.nightWeatherCheck => 'NIGHT_WEATHER_CHECK',
+        LifestyleMessageType.unknown => 'UNKNOWN',
+      };
+}
+
+enum WeatherMessageRole {
+  appSuggestion,
+  internalPossibility,
+  officialFact,
+  calculatedFact,
+  dataStatus,
+}
+
+extension WeatherMessageRoleLabel on WeatherMessageRole {
+  String get label => switch (this) {
+        WeatherMessageRole.appSuggestion => '추천 행동',
+        WeatherMessageRole.internalPossibility => '발생 가능성',
+        WeatherMessageRole.officialFact => '공식 정보',
+        WeatherMessageRole.calculatedFact => '앱 계산',
+        WeatherMessageRole.dataStatus => '자료 상태',
+      };
+}
+
+class WeatherMessagePart {
+  final WeatherMessageRole role;
+  final String text;
+  final String? source;
+  final String? validFrom;
+  final String? validUntil;
+
+  const WeatherMessagePart({
+    required this.role,
+    required this.text,
+    this.source,
+    this.validFrom,
+    this.validUntil,
+  });
+
+  factory WeatherMessagePart.fromJson(Map<String, dynamic> json) {
+    final role = switch (json['role']?.toString()) {
+      'APP_SUGGESTION' => WeatherMessageRole.appSuggestion,
+      'INTERNAL_POSSIBILITY' => WeatherMessageRole.internalPossibility,
+      'OFFICIAL_FACT' => WeatherMessageRole.officialFact,
+      'CALCULATED_FACT' => WeatherMessageRole.calculatedFact,
+      'DATA_STATUS' => WeatherMessageRole.dataStatus,
+      _ => WeatherMessageRole.dataStatus,
     };
+    return WeatherMessagePart(
+      role: role,
+      text: json['text']?.toString() ?? '',
+      source: json['source']?.toString(),
+      validFrom: json['validFrom']?.toString(),
+      validUntil: json['validUntil']?.toString(),
+    );
   }
 }
 
@@ -65,41 +125,73 @@ class LifestyleMessage {
   final LifestyleMessageType type;
   final String title;
   final String? description;
-  final double score;
+  final double priority;
+  final List<WeatherMessagePart> parts;
+
+  double get score => priority;
 
   LifestyleMessage({
     required this.type,
     required this.title,
     this.description,
-    this.score = 0,
-  });
+    double priority = 0,
+    double? score,
+    List<WeatherMessagePart>? parts,
+  })  : priority = score ?? priority,
+        parts = parts ??
+            [
+              WeatherMessagePart(
+                role: WeatherMessageRole.appSuggestion,
+                text: title,
+              ),
+              if (description != null && description.isNotEmpty)
+                WeatherMessagePart(
+                  role: WeatherMessageRole.internalPossibility,
+                  text: description,
+                ),
+            ];
 
   factory LifestyleMessage.fromJson(Map<String, dynamic> json) {
-    final type = (json['type'] ?? '').toString();
-    final parsed = switch (type) {
+    final rawType = (json['type'] ?? '').toString();
+    final parsed = _typeFromApiName(rawType);
+    final title = json['title']?.toString() ?? parsed.title;
+    final description = json['description']?.toString();
+    final parts = (json['parts'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(WeatherMessagePart.fromJson)
+        .where((part) => part.text.isNotEmpty)
+        .toList();
+    return LifestyleMessage(
+      type: parsed,
+      title: title,
+      description: description,
+      priority: (json['priority'] as num?)?.toDouble() ??
+          (json['score'] as num?)?.toDouble() ??
+          0,
+      parts: parts.isEmpty ? null : parts,
+    );
+  }
+}
+
+LifestyleMessageType _typeFromApiName(String value) => switch (value) {
       'RAIN_GEAR_USEFUL' => LifestyleMessageType.rainGearUseful,
       'STRONG_SUN_EXPOSURE' => LifestyleMessageType.strongSunExposure,
-      'VERY_HOT_AND_HUMID' => LifestyleMessageType.veryHotAndHumid,
-      'LAUNDRY_GOOD' => LifestyleMessageType.laundryGood,
-      'COOLER_THAN_TEMPERATURE' => LifestyleMessageType.coolerThanTemperature,
       'OUTERWEAR_USEFUL' => LifestyleMessageType.outerwearUseful,
       'MASK_USEFUL' => LifestyleMessageType.maskUseful,
       'HYDRATION_IMPORTANT' => LifestyleMessageType.hydrationImportant,
       'SUNSCREEN_USEFUL' => LifestyleMessageType.sunscreenUseful,
       'SNOW_TRAVEL_CAUTION' => LifestyleMessageType.snowTravelCaution,
+      'VERY_HOT_AND_HUMID' => LifestyleMessageType.veryHotAndHumid,
+      'COOLER_THAN_TEMPERATURE' => LifestyleMessageType.coolerThanTemperature,
       'LARGE_TEMPERATURE_SWING' => LifestyleMessageType.largeTemperatureSwing,
       'OUTDOOR_ACTIVITY_CAUTION' => LifestyleMessageType.outdoorCaution,
-      'VENTILATION_GOOD' => LifestyleMessageType.ventilationGood,
-      'DAILY_WEATHER_CHECK' => LifestyleMessageType.dailyWeatherCheck,
-      'DAILY_HYDRATION' => LifestyleMessageType.dailyHydration,
-      'FLEXIBLE_DAY_PLAN' => LifestyleMessageType.flexibleDayPlan,
-      _ => LifestyleMessageType.outdoorCaution,
+      'RAIN_BREAK_WINDOW' => LifestyleMessageType.rainBreakWindow,
+      'BEST_OUTING_WINDOW' => LifestyleMessageType.bestOutingWindow,
+      'PET_WALK_WINDOW' => LifestyleMessageType.petWalkWindow,
+      'WET_ROAD_CAUTION' => LifestyleMessageType.wetRoadCaution,
+      'LAUNDRY_PICKUP_DUE' => LifestyleMessageType.laundryPickupDue,
+      'WINDOW_CLOSE_SOON' => LifestyleMessageType.windowCloseSoon,
+      'RAPID_TEMPERATURE_DROP' => LifestyleMessageType.rapidTemperatureDrop,
+      'NIGHT_WEATHER_CHECK' => LifestyleMessageType.nightWeatherCheck,
+      _ => LifestyleMessageType.unknown,
     };
-    return LifestyleMessage(
-      type: parsed,
-      title: json['title']?.toString() ?? parsed.title,
-      description: json['description']?.toString(),
-      score: (json['score'] as num?)?.toDouble() ?? 0,
-    );
-  }
-}

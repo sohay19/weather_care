@@ -187,7 +187,11 @@ DirectKmaWeatherBundle _buildBundle(
       brief: '운영 서버 미연결 · 기상청 예보를 직접 표시합니다.',
       current: CurrentWeather(
         temperature: current.temperature,
+        forecastAt: _kstIso(current.observedAt),
         apparentTemperature: current.apparentTemperature,
+        apparentTemperatureSource: current.apparentTemperature == null
+            ? null
+            : 'APP_KMA_METHOD_FROM_FORECAST',
         humidity: current.humidity,
         windSpeed: current.windSpeed,
         sky: current.skyCondition,
@@ -211,8 +215,10 @@ DirectKmaWeatherBundle _buildBundle(
               apparentTemperature: item.apparentTemperature,
               precipitationProbability: item.precipitationProbability,
               precipitationAmount: item.precipitationAmount,
+              precipitationAmountLabel: item.precipitationAmountLabel,
               snowExpected: item.snowExpected,
               snowfallAmount: item.snowfallAmount,
+              snowfallAmountLabel: item.snowfallAmountLabel,
               windSpeed: item.windSpeed ?? 0,
               skyCondition: item.skyCondition,
             ),
@@ -278,9 +284,11 @@ _DirectSnapshot? _snapshotFromSlot(
     windSpeed: double.tryParse(categories['WSD'] ?? ''),
     precipitationProbability: precipitationProbability,
     precipitationAmount: _parseAmount(categories['PCP']),
+    precipitationAmountLabel: _amountDisplayLabel(categories['PCP'], 'mm'),
     snowExpected: const [2, 3, 6, 7].contains(precipitationType.round()) ||
         _parseAmount(categories['SNO']) > 0,
     snowfallAmount: _parseAmount(categories['SNO']),
+    snowfallAmountLabel: _amountDisplayLabel(categories['SNO'], 'cm'),
     skyCondition: _weatherLabel(
       precipitationType.round(),
       double.tryParse(categories['SKY'] ?? '')?.round(),
@@ -376,6 +384,19 @@ double _parseAmount(String? value) {
   return double.tryParse(match?.group(0)?.replaceAll(',', '.') ?? '') ?? 0;
 }
 
+String? _amountDisplayLabel(String? value, String unit) {
+  if (value == null || value.contains('없음')) return null;
+  final normalized = value.replaceAll(' ', '');
+  if (normalized.isEmpty) return null;
+  if (normalized.contains('미만')) {
+    return '${normalized.replaceAll('미만', '').replaceAll(unit, '')}$unit 미만';
+  }
+  if (normalized.contains('이상')) {
+    return '${normalized.replaceAll('이상', '').replaceAll(unit, '')}$unit 이상';
+  }
+  return normalized.contains(unit) ? normalized : '$normalized$unit';
+}
+
 double? _firstNumber(List<String>? values) {
   if (values == null) return null;
   for (final value in values) {
@@ -407,6 +428,12 @@ String _compactDate(DateTime date) => _formatKmaDate(
 String _isoDate(DateTime date) => '${date.year.toString().padLeft(4, '0')}-'
     '${date.month.toString().padLeft(2, '0')}-'
     '${date.day.toString().padLeft(2, '0')}';
+
+String _kstIso(DateTime date) {
+  final kst = date.toUtc().add(const Duration(hours: 9));
+  return '${_isoDate(kst)}T${kst.hour.toString().padLeft(2, '0')}:'
+      '${kst.minute.toString().padLeft(2, '0')}:00+09:00';
+}
 
 String _normalizeServiceKey(String value) {
   final trimmed = value.trim();
@@ -469,8 +496,10 @@ class _DirectSnapshot {
   final double? windSpeed;
   final double precipitationProbability;
   final double precipitationAmount;
+  final String? precipitationAmountLabel;
   final bool snowExpected;
   final double snowfallAmount;
+  final String? snowfallAmountLabel;
   final String skyCondition;
 
   const _DirectSnapshot({
@@ -480,17 +509,31 @@ class _DirectSnapshot {
     required this.windSpeed,
     required this.precipitationProbability,
     required this.precipitationAmount,
+    required this.precipitationAmountLabel,
     required this.snowExpected,
     required this.snowfallAmount,
+    required this.snowfallAmountLabel,
     required this.skyCondition,
   });
 
-  double get apparentTemperature => calculateKmaApparentTemperature(
-        temperature,
-        humidity: humidity,
-        windSpeed: windSpeed,
-        forecastAt: observedAt,
-      );
+  double? get apparentTemperature {
+    final forecastAtKst = observedAt.toUtc().add(const Duration(hours: 9));
+    final summerInputsAvailable = forecastAtKst.month >= 5 &&
+        forecastAtKst.month <= 9 &&
+        humidity != null;
+    final winterInputsAvailable =
+        (forecastAtKst.month >= 10 || forecastAtKst.month <= 4) &&
+            temperature <= 10 &&
+            windSpeed != null &&
+            windSpeed! >= 1.3;
+    if (!summerInputsAvailable && !winterInputsAvailable) return null;
+    return calculateKmaApparentTemperature(
+      temperature,
+      humidity: humidity,
+      windSpeed: windSpeed,
+      forecastAt: observedAt,
+    );
+  }
 }
 
 double calculateKmaApparentTemperature(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
+import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
-import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/home_section_header.dart';
 import '../widgets/server_feature_unavailable_card.dart';
@@ -45,7 +45,6 @@ class DetailTab extends StatelessWidget {
           const SizedBox(height: 16),
           if (serverFeaturesAvailable)
             _RecommendationEvidence(
-              recommendations: recommendations,
               today: today,
             )
           else
@@ -62,17 +61,15 @@ class DetailTab extends StatelessWidget {
 }
 
 class _RecommendationEvidence extends StatelessWidget {
-  final List<WeatherRecommendation> recommendations;
   final TodayWeatherResponse today;
 
   const _RecommendationEvidence({
-    required this.recommendations,
     required this.today,
   });
 
   @override
   Widget build(BuildContext context) {
-    final items = recommendations.take(3).toList();
+    final items = today.lifestyleMessages.take(5).toList();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.surfaceDecoration(),
@@ -80,8 +77,8 @@ class _RecommendationEvidence extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const HomeSectionHeader(
-            title: '챙길 이유',
-            subtitle: '추천을 만든 실제 날씨 수치를 함께 보여줘요',
+            title: '근거와 자료',
+            subtitle: '추천 뒤에 공식 정보와 자료 상태를 확인해요',
           ),
           const SizedBox(height: 16),
           if (items.isEmpty)
@@ -98,13 +95,13 @@ class _RecommendationEvidence extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: items[index].type.softColor,
+                      color: WeatherCareTheme.primarySoft,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      items[index].type.icon,
+                      Icons.fact_check_outlined,
                       size: 19,
-                      color: items[index].type.accentColor,
+                      color: WeatherCareTheme.primaryDeep,
                     ),
                   ),
                   const SizedBox(width: 11),
@@ -117,10 +114,13 @@ class _RecommendationEvidence extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          _recommendationEvidenceText(items[index], today),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                        for (final part in items[index].parts.skip(1)) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '${part.role.label} · ${part.text}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -211,26 +211,13 @@ class _HourlyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPrecipitationRisk = item.precipitationProbability >= 40;
-    final isSnowRisk = item.snowExpected && isPrecipitationRisk;
-    final isHeatRisk = item.temperature >= 33 ||
-        (item.apparentTemperature != null && item.apparentTemperature! >= 33);
-    final isHighlighted = isPrecipitationRisk || isSnowRisk || isHeatRisk;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isHeatRisk
-            ? WeatherCareTheme.attentionSoft
-            : isHighlighted
-                ? WeatherCareTheme.primarySoft
-                : WeatherCareTheme.surfaceSubtle,
+        color: WeatherCareTheme.surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isHeatRisk
-              ? WeatherCareTheme.attention.withValues(alpha: 0.38)
-              : isHighlighted
-                  ? WeatherCareTheme.primaryBorder
-                  : WeatherCareTheme.outline,
+          color: WeatherCareTheme.outline,
         ),
       ),
       child: Column(
@@ -250,9 +237,7 @@ class _HourlyRow extends StatelessWidget {
               WeatherConditionIcon(
                 condition: item.skyCondition,
                 size: 19,
-                color: isHighlighted
-                    ? WeatherCareTheme.primaryDeep
-                    : WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.textSecondary,
               ),
               const SizedBox(width: 7),
               Expanded(
@@ -262,7 +247,7 @@ class _HourlyRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${item.temperature.toStringAsFixed(0)}°C',
+                '${item.temperature.toStringAsFixed(0)}℃',
                 style:
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
               ),
@@ -270,7 +255,7 @@ class _HourlyRow extends StatelessWidget {
               Text(
                 item.apparentTemperature == null
                     ? '체감 미지원'
-                    : '체감 ${item.apparentTemperature!.toStringAsFixed(0)}°C',
+                    : '예상 체감 ${item.apparentTemperature!.toStringAsFixed(0)}℃',
                 style: const TextStyle(
                   color: WeatherCareTheme.textSecondary,
                   fontSize: 11,
@@ -284,17 +269,21 @@ class _HourlyRow extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _MetricChip(
-                icon: Icons.water_drop_outlined,
-                label:
-                    '비 ${item.precipitationProbability.toStringAsFixed(0)}% · ${item.precipitationAmount.toStringAsFixed(1)}mm',
-              ),
-              _MetricChip(
-                icon: Icons.ac_unit_rounded,
-                label: item.snowExpected
-                    ? '눈 예상 · ${item.snowfallAmount.toStringAsFixed(1)}cm'
-                    : '눈 없음',
-              ),
+              if (item.precipitationProbability > 0 ||
+                  item.precipitationAmount > 0)
+                _MetricChip(
+                  icon: Icons.water_drop_outlined,
+                  label: '강수확률 '
+                      '${item.precipitationProbability.toStringAsFixed(0)}%'
+                      '${item.precipitationAmountLabel == null ? '' : ' · ${item.precipitationAmountLabel}'}',
+                ),
+              if (item.snowExpected)
+                _MetricChip(
+                  icon: Icons.ac_unit_rounded,
+                  label: item.snowfallAmountLabel == null
+                      ? '눈이 예보됐어요'
+                      : '눈 예상 · ${item.snowfallAmountLabel}',
+                ),
               _MetricChip(
                 icon: Icons.air_rounded,
                 label: '바람 ${item.windSpeed.toStringAsFixed(1)}m/s',
@@ -308,7 +297,7 @@ class _HourlyRow extends StatelessWidget {
                 _MetricChip(
                   icon: Icons.grain_rounded,
                   label: item.pm25 != null
-                      ? '미세먼지 ${item.pm25}㎍/㎥'
+                      ? '초미세먼지 ${item.pm25}㎍/㎥'
                       : '미세먼지 ${item.pm10}㎍/㎥',
                 ),
             ],
@@ -348,58 +337,4 @@ class _MetricChip extends StatelessWidget {
       ),
     );
   }
-}
-
-String _recommendationEvidenceText(
-  WeatherRecommendation recommendation,
-  TodayWeatherResponse today,
-) {
-  final hourly = today.hourly;
-  final current = today.current;
-  final evidence = switch (recommendation.type) {
-    RecommendationType.umbrella => hourly.isEmpty
-        ? null
-        : '최대 강수확률 ${hourly.map((item) => item.precipitationProbability).reduce((a, b) => a > b ? a : b).toStringAsFixed(0)}%, 최대 강수량 ${hourly.map((item) => item.precipitationAmount).reduce((a, b) => a > b ? a : b).toStringAsFixed(1)}mm',
-    RecommendationType.parasol ||
-    RecommendationType.sunscreen =>
-      _maxUv(hourly, current.uvIndex) == null
-          ? null
-          : '최대 자외선 지수 ${_maxUv(hourly, current.uvIndex)!.toStringAsFixed(0)}',
-    RecommendationType.heavySnowCaution => hourly.isEmpty
-        ? null
-        : '최대 적설량 ${hourly.map((item) => item.snowfallAmount).reduce((a, b) => a > b ? a : b).toStringAsFixed(1)}cm',
-    RecommendationType.outerwear => hourly.isEmpty
-        ? '현재 기온 ${current.temperature.toStringAsFixed(1)}°C'
-        : '최저 기온 ${hourly.map((item) => item.temperature).reduce((a, b) => a < b ? a : b).toStringAsFixed(1)}°C',
-    RecommendationType.mask => current.pm25 != null
-        ? '현재 PM2.5 ${current.pm25}㎍/㎥'
-        : current.pm10 != null
-            ? '현재 PM10 ${current.pm10}㎍/㎥'
-            : null,
-    RecommendationType.water => _maxApparent(hourly, current) == null
-        ? null
-        : '최고 체감온도 ${_maxApparent(hourly, current)!.toStringAsFixed(1)}°C',
-  };
-  return evidence == null
-      ? recommendation.description
-      : '${recommendation.description} · $evidence';
-}
-
-double? _maxUv(List<HourlyWeatherItem> hourly, double? current) {
-  final values = [
-    if (current != null) current,
-    ...hourly.map((item) => item.uvIndex).whereType<double>(),
-  ];
-  return values.isEmpty ? null : values.reduce((a, b) => a > b ? a : b);
-}
-
-double? _maxApparent(
-  List<HourlyWeatherItem> hourly,
-  CurrentWeather current,
-) {
-  final values = [
-    if (current.apparentTemperature != null) current.apparentTemperature!,
-    ...hourly.map((item) => item.apparentTemperature).whereType<double>(),
-  ];
-  return values.isEmpty ? null : values.reduce((a, b) => a > b ? a : b);
 }

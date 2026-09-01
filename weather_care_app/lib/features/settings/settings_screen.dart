@@ -275,13 +275,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 16),
         _SettingsSection(
           icon: Icons.shield_outlined,
-          title: '주의 및 날씨 안내',
-          subtitle: '안전과 간단한 타임라인 알림을 관리해요',
+          title: '기상·생활 알림',
+          subtitle: '발효된 공식 정보와 생활 준비 알림을 관리해요',
           child: Column(
             children: [
               _SettingsToggleTile(
                 icon: Icons.thunderstorm_outlined,
-                title: '폭우 주의',
+                title: '많은 비 안내',
                 value: settings.heavyRainEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => setState(() {
@@ -290,7 +290,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.ac_unit_rounded,
-                title: '폭설 주의',
+                title: '많은 눈 안내',
                 value: settings.heavySnowEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => setState(() {
@@ -299,7 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.device_thermostat_rounded,
-                title: '폭염 주의',
+                title: '고온 안내',
                 value: settings.heatwaveEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => setState(() {
@@ -308,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.severe_cold_outlined,
-                title: '한파 주의',
+                title: '저온 안내',
                 value: settings.coldWaveEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => setState(() {
@@ -317,7 +317,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.water_drop_outlined,
-                title: '소나기·약한 비 주의',
+                title: '소나기·약한 비 안내',
                 subtitle: '소나기, 이슬비, 가랑비를 구분해 한곳에서 관리해요',
                 value: settings.showerAndLightRainEnabled,
                 enabled: _alertsEnabled,

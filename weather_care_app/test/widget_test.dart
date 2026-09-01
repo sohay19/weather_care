@@ -45,15 +45,40 @@ void main() {
     );
   });
 
-  test('lifestyle messages parse the server importance score', () {
+  test('생활 문구는 서버 우선순위와 알 수 없는 유형을 안전하게 보존한다', () {
     final message = LifestyleMessage.fromJson({
       'type': 'RAIN_GEAR_USEFUL',
       'title': '작은 우산을 챙겨요',
-      'score': 87,
+      'priority': 87,
+    });
+    final unknown = LifestyleMessage.fromJson({
+      'type': 'FUTURE_MESSAGE',
+      'title': '새 문구',
+      'priority': 1,
     });
 
     expect(message.type, LifestyleMessageType.rainGearUseful);
-    expect(message.score, 87);
+    expect(message.priority, 87);
+    expect(unknown.type, LifestyleMessageType.unknown);
+  });
+
+  test('오늘 응답은 독립 자료상태 문구를 보존한다', () {
+    final response = TodayWeatherResponse.fromJson({
+      'dataSource': 'test',
+      'region': {'nx': 60, 'ny': 121, 'name': '수원'},
+      'brief': '예보를 확인하세요',
+      'current': {'temperature': 20},
+      'dataStatusMessages': [
+        {
+          'role': 'DATA_STATUS',
+          'text': '자료를 받아오지 못해 자외선지수를 확인하기 어려워요',
+          'source': '기상청',
+        },
+      ],
+    });
+
+    expect(
+        response.dataStatusMessages.single.role, WeatherMessageRole.dataStatus);
   });
 
   test('시간별 예보는 자외선과 미세먼지 값을 보존한다', () {
@@ -130,12 +155,23 @@ void main() {
     expect(weekly.days.single.recommendations, hasLength(3));
   });
 
-  test('체감 문구는 한국인 PT 구간과 기상청 위험값을 함께 사용한다', () {
-    expect(apparentTemperatureLabel(20), '조금 더움');
-    expect(apparentTemperatureLabel(31.4), '더움');
-    expect(apparentTemperatureLabel(33), '더위 주의');
-    expect(apparentTemperatureLabel(35), '더위 경계');
-    expect(apparentTemperatureLabel(38), '위험한 더위');
+  test('생활 문구는 행동·가능성·공식 사실 순서를 보존한다', () {
+    final message = LifestyleMessage.fromJson({
+      'type': 'RAIN_GEAR_USEFUL',
+      'title': '비가 올 수 있으니, 외출한다면 우산을 챙기세요',
+      'priority': 80,
+      'parts': [
+        {'role': 'APP_SUGGESTION', 'text': '우산을 챙기세요'},
+        {'role': 'INTERNAL_POSSIBILITY', 'text': '옷이 젖을 수 있어요'},
+        {'role': 'OFFICIAL_FACT', 'text': '기상청은 비를 예보했어요'},
+      ],
+    });
+
+    expect(message.parts.map((part) => part.role), [
+      WeatherMessageRole.appSuggestion,
+      WeatherMessageRole.internalPossibility,
+      WeatherMessageRole.officialFact,
+    ]);
   });
 
   test('날씨 상태는 비·구름 많음·흐림을 서로 다른 아이콘으로 구분한다', () {
@@ -269,16 +305,16 @@ void main() {
       ),
     );
 
-    expect(find.text('29.0°C'), findsOneWidget);
-    expect(find.text('32.7°C'), findsOneWidget);
-    expect(find.text('미세먼지'), findsOneWidget);
+    expect(find.text('29.0℃'), findsOneWidget);
+    expect(find.text('32.7℃'), findsOneWidget);
+    expect(find.text('초미세먼지'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey('weather-metric-체감')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('체감온도 기준'), findsOneWidget);
-    expect(find.textContaining('33°C부터 더위 주의'), findsOneWidget);
+    expect(find.text('예상 체감온도'), findsOneWidget);
+    expect(find.textContaining('기온·습도·풍속으로 계산한'), findsOneWidget);
   });
 
   testWidgets('five tabs start on a pull-to-refresh Main screen',
@@ -333,7 +369,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Main uses the compact weather and three-row TODO layout',
+  testWidgets('Main shows forecast roles without fallback TODO items',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -352,7 +388,9 @@ void main() {
               brief: brief,
               current: CurrentWeather(
                 temperature: 22.4,
+                forecastAt: '2026-08-21T15:00:00+09:00',
                 apparentTemperature: 21.8,
+                apparentTemperatureSource: 'APP_KMA_METHOD_FROM_FORECAST',
                 humidity: 60,
                 windSpeed: 2.1,
                 pm25: 76,
@@ -385,17 +423,16 @@ void main() {
     expect(find.text('수원이라면 확인하세요'), findsOneWidget);
     expect(find.text('Check List'), findsOneWidget);
     expect(find.text('오늘 날씨에 체크해야할 일들이에요'), findsOneWidget);
-    expect(find.text('시간대별 흐름 확인하기'), findsOneWidget);
-    expect(find.text('물 한 모금 챙기기'), findsOneWidget);
-    expect(find.text('여유 있게 움직이기'), findsOneWidget);
-    expect(find.text('초미세먼지'), findsNWidgets(2));
+    expect(find.text('현재 예보에서 안내할 생활행동이 없어요.'), findsOneWidget);
+    expect(find.text('시간대별 흐름 확인하기'), findsNothing);
+    expect(find.text('물 한 모금 챙기기'), findsNothing);
+    expect(find.text('여유 있게 움직이기'), findsNothing);
+    expect(find.text('초미세먼지'), findsOneWidget);
     expect(find.text('76㎍'), findsOneWidget);
-    expect(find.text('어제와 비교'), findsOneWidget);
-    expect(find.text('어제 맑음 · 오늘 구름 많음'), findsOneWidget);
-    expect(find.text('어제보다 2.4°C 높아요'), findsOneWidget);
-    expect(find.text('어제보다 1.8°C 높아요'), findsOneWidget);
-    expect(find.text('어제보다 56㎍/㎥ 많아요'), findsOneWidget);
-    const weatherFeeling = '구름이 많은 날씨예요. 바깥에서는 체감온도 기준으로 조금 덥게 느껴질 수 있어요.';
+    expect(find.text('어제와 비교'), findsNothing);
+    expect(find.text('오후 3시 예상기온'), findsOneWidget);
+    const weatherFeeling =
+        '구름이 많은 날씨예요. 기상청 예보의 기온·습도·풍속으로 계산한 예상 체감온도는 21.8℃예요.';
     expect(find.text(weatherFeeling), findsOneWidget);
     expect(
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
@@ -416,22 +453,6 @@ void main() {
     expect(tester.widget<Text>(find.text(brief)).maxLines, isNull);
     expect(tester.takeException(), isNull);
 
-    final mainScrollable = find.descendant(
-      of: find.byKey(const ValueKey('main-tab')),
-      matching: find.byType(Scrollable),
-    );
-    final scrollableState = tester.state<ScrollableState>(mainScrollable);
-    expect(scrollableState.position.maxScrollExtent, greaterThan(0));
-    await tester.drag(
-      find.byKey(const ValueKey('main-tab')),
-      const Offset(0, -300),
-    );
-    await tester.pumpAndSettle();
-    expect(scrollableState.position.pixels, greaterThan(0));
-
-    scrollableState.position.jumpTo(0);
-    await tester.pump();
-
     await tester.drag(
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, 320),
@@ -442,8 +463,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('carry TODO backgrounds reflect the server score',
-      (tester) async {
+  testWidgets('생활행동 카드는 서버 점수를 위험색으로 바꾸지 않는다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -471,8 +491,8 @@ void main() {
                   score: 70,
                 ),
                 LifestyleMessage(
-                  type: LifestyleMessageType.laundryGood,
-                  title: '빨래를 널어보세요',
+                  type: LifestyleMessageType.laundryPickupDue,
+                  title: '실외 빨래가 있다면 실내로 들여놓으세요',
                   score: 95,
                 ),
               ],
@@ -497,19 +517,22 @@ void main() {
 
     expect(
       decorationFor('작은 우산을 챙겨요').color,
-      WeatherCareTheme.attentionSoft,
+      WeatherCareTheme.surfaceSubtle,
     );
     expect(
       decorationFor('가벼운 겉옷을 챙겨요').color,
-      WeatherCareTheme.primarySoft,
+      WeatherCareTheme.surfaceSubtle,
     );
     expect(
-      decorationFor('빨래를 널어보세요').color,
-      WeatherCareTheme.surfaceMuted,
+      decorationFor('실외 빨래가 있다면 실내로 들여놓으세요').color,
+      WeatherCareTheme.surfaceSubtle,
     );
     expect(decorationFor('작은 우산을 챙겨요').border, isNull);
     expect(decorationFor('가벼운 겉옷을 챙겨요').border, isNull);
-    expect(decorationFor('빨래를 널어보세요').border, isNull);
+    expect(
+      decorationFor('실외 빨래가 있다면 실내로 들여놓으세요').border,
+      isNull,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -630,10 +653,10 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -2200));
     await tester.pumpAndSettle();
 
-    expect(find.text('폭우 주의'), findsOneWidget);
-    expect(find.text('폭염 주의'), findsOneWidget);
-    expect(find.text('한파 주의'), findsOneWidget);
-    expect(find.text('소나기·약한 비 주의'), findsOneWidget);
+    expect(find.text('많은 비 안내'), findsOneWidget);
+    expect(find.text('고온 안내'), findsOneWidget);
+    expect(find.text('저온 안내'), findsOneWidget);
+    expect(find.text('소나기·약한 비 안내'), findsOneWidget);
     expect(
       find.text('날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.'),
       findsOneWidget,

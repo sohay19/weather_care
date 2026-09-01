@@ -28,7 +28,7 @@ class WeatherCareApp extends StatelessWidget {
               icon: Icons.wb_sunny_outlined,
             ),
         '/weather/snow': (_) => const WeatherRecommendationDetailScreen(
-              title: '눈길 이동에 주의해요',
+              title: '많은 눈에 대비해요',
               subtitle: '강설 가능성과 이동 주의 시간대를 확인해요',
               icon: Icons.ac_unit_rounded,
             ),

@@ -53,14 +53,13 @@ class MainTab extends StatelessWidget {
                     SizedBox(height: compact ? 10 : 14),
                     _TopWeatherCard(
                       today: today,
-                      comparison: yesterdayComparison,
                       mood: mood,
                       compact: compact,
-                      serverFeaturesAvailable: serverFeaturesAvailable,
                     ),
                     SizedBox(height: compact ? 10 : 14),
                     _LifestyleDashboard(
                       messages: today.lifestyleMessages,
+                      dataStatusMessages: today.dataStatusMessages,
                       compact: compact,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                     ),
@@ -77,17 +76,13 @@ class MainTab extends StatelessWidget {
 
 class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
-  final ComparisonResponse comparison;
   final String mood;
   final bool compact;
-  final bool serverFeaturesAvailable;
 
   const _TopWeatherCard({
     required this.today,
-    required this.comparison,
     required this.mood,
     required this.compact,
-    required this.serverFeaturesAvailable,
   });
 
   @override
@@ -126,8 +121,8 @@ class _TopWeatherCard extends StatelessWidget {
           SizedBox(height: compact ? 22 : 28),
           Row(
             children: [
-              const Text(
-                '현재 기온',
+              Text(
+                _forecastTemperatureLabel(current.forecastAt),
                 style: TextStyle(
                   color: WeatherCareTheme.textSecondary,
                   fontSize: 11,
@@ -136,7 +131,7 @@ class _TopWeatherCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '${current.temperature.toStringAsFixed(1)}°C',
+                '${current.temperature.toStringAsFixed(1)}℃',
                 style: const TextStyle(
                   color: WeatherCareTheme.primaryDeep,
                   fontSize: 16,
@@ -150,7 +145,7 @@ class _TopWeatherCard extends StatelessWidget {
             key: const ValueKey('main-apparent-temperature-row'),
             children: [
               const Text(
-                '체감 온도',
+                '예상 체감온도',
                 style: TextStyle(
                   color: WeatherCareTheme.textSecondary,
                   fontSize: 11,
@@ -160,7 +155,7 @@ class _TopWeatherCard extends StatelessWidget {
               const SizedBox(width: 8),
               if (apparentTemperature != null)
                 Text(
-                  '${apparentTemperature.toStringAsFixed(1)}°C',
+                  '${apparentTemperature.toStringAsFixed(1)}℃',
                   style: const TextStyle(
                     color: WeatherCareTheme.primaryDeep,
                     fontSize: 16,
@@ -176,9 +171,11 @@ class _TopWeatherCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  _weatherFeelingMessage(
+                  _weatherSummaryMessage(
                     sky: current.sky,
                     apparentTemperature: apparentTemperature,
+                    apparentTemperatureSource:
+                        current.apparentTemperatureSource,
                   ),
                   style: feelingStyle,
                 ),
@@ -193,13 +190,6 @@ class _TopWeatherCard extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-          SizedBox(height: compact ? 7 : 9),
-          _YesterdayComparisonPanel(
-            current: current,
-            comparison: comparison,
-            serverFeaturesAvailable: serverFeaturesAvailable,
-            compact: compact,
           ),
           SizedBox(height: compact ? 8 : 10),
           Container(
@@ -216,7 +206,7 @@ class _TopWeatherCard extends StatelessWidget {
                   value: current.humidity == null
                       ? '--'
                       : '${current.humidity!.toStringAsFixed(0)}%',
-                  risk: _humidityRisk(current.humidity),
+                  state: _humidityState(current.humidity),
                 ),
                 _TopMetric(
                   icon: Icons.air_rounded,
@@ -224,21 +214,21 @@ class _TopWeatherCard extends StatelessWidget {
                   value: current.windSpeed == null
                       ? '--'
                       : '${current.windSpeed!.toStringAsFixed(1)}m/s',
-                  risk: _windRisk(current.windSpeed),
+                  state: _windState(current.windSpeed),
                 ),
                 _TopMetric(
                   icon: Icons.wb_sunny_outlined,
                   label: '자외선',
                   value: current.uvIndex?.toStringAsFixed(0) ?? '--',
-                  risk: _uvRisk(current.uvIndex),
+                  state: _uvState(current.uvIndex),
                 ),
                 _TopMetric(
                   icon: Icons.grain_rounded,
                   label: usesPm25 ? '초미세먼지' : '미세먼지',
                   value: fineDustValue == null ? '--' : '$fineDustValue㎍',
-                  risk: usesPm25
-                      ? _pm25Risk(current.pm25)
-                      : _pm10Risk(current.pm10),
+                  state: usesPm25
+                      ? _pm25State(current.pm25)
+                      : _pm10State(current.pm10),
                 ),
               ],
             ),
@@ -249,273 +239,36 @@ class _TopWeatherCard extends StatelessWidget {
   }
 }
 
-class _YesterdayComparisonPanel extends StatelessWidget {
-  final CurrentWeather current;
-  final ComparisonResponse comparison;
-  final bool serverFeaturesAvailable;
-  final bool compact;
-
-  const _YesterdayComparisonPanel({
-    required this.current,
-    required this.comparison,
-    required this.serverFeaturesAvailable,
-    required this.compact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final previous =
-        comparison.comparisonAvailable ? comparison.comparison : null;
-    final differences = _comparisonDifferences(current, previous);
-    final previousSky = previous?.skyCondition?.trim();
-    final currentSky = current.sky?.trim();
-
-    return Container(
-      key: const ValueKey('main-yesterday-comparison'),
-      width: double.infinity,
-      padding: EdgeInsets.all(compact ? 10 : 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.56),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.history_rounded,
-                size: 16,
-                color: WeatherCareTheme.primaryDeep,
-              ),
-              SizedBox(width: 6),
-              Text(
-                '어제와 비교',
-                style: TextStyle(
-                  color: WeatherCareTheme.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (previous == null)
-            Text(
-              serverFeaturesAvailable
-                  ? '어제 저장된 날씨가 쌓이면 차이를 보여드려요.'
-                  : '운영 서버 연결 시 어제와 차이를 보여드려요.',
-              style: WeatherCareTheme.microTextStyle.copyWith(
-                fontSize: compact ? 9 : 10,
-              ),
-            )
-          else ...[
-            if (previousSky != null &&
-                previousSky.isNotEmpty &&
-                currentSky != null &&
-                currentSky.isNotEmpty) ...[
-              Text(
-                previousSky == currentSky
-                    ? '하늘은 어제와 같은 $currentSky이에요.'
-                    : '어제 $previousSky · 오늘 $currentSky',
-                style: TextStyle(
-                  color: WeatherCareTheme.textSecondary,
-                  fontSize: compact ? 9.5 : 10.5,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            if (differences.isEmpty)
-              Text(
-                '비교할 수치가 아직 충분하지 않아요.',
-                style: WeatherCareTheme.microTextStyle,
-              )
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final itemWidth = (constraints.maxWidth - 7) / 2;
-                  return Wrap(
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: [
-                      for (final difference in differences)
-                        SizedBox(
-                          width: itemWidth,
-                          child: _ComparisonDifferenceTile(
-                            difference: difference,
-                            compact: compact,
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ComparisonDifferenceTile extends StatelessWidget {
-  final _WeatherDifference difference;
-  final bool compact;
-
-  const _ComparisonDifferenceTile({
-    required this.difference,
-    required this.compact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 10,
-        vertical: compact ? 8 : 9,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            difference.label,
-            style: WeatherCareTheme.microTextStyle.copyWith(
-              fontSize: compact ? 8.5 : 9,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            difference.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: WeatherCareTheme.primaryDeep,
-              fontSize: compact ? 9.5 : 10.5,
-              height: 1.25,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeatherDifference {
-  final String label;
-  final String description;
-
-  const _WeatherDifference(this.label, this.description);
-}
-
-List<_WeatherDifference> _comparisonDifferences(
-  CurrentWeather current,
-  ComparisonWeatherSnapshot? previous,
-) {
-  if (previous == null) return const [];
-  final differences = <_WeatherDifference>[];
-  if (previous.temperature != null) {
-    differences.add(
-      _WeatherDifference(
-        '기온',
-        _differenceDescription(
-          current.temperature - previous.temperature!,
-          unit: '°C',
-        ),
-      ),
-    );
-  }
-  if (current.apparentTemperature != null &&
-      previous.apparentTemperature != null) {
-    differences.add(
-      _WeatherDifference(
-        '체감온도',
-        _differenceDescription(
-          current.apparentTemperature! - previous.apparentTemperature!,
-          unit: '°C',
-        ),
-      ),
-    );
-  }
-  if (current.pm25 != null && previous.pm25 != null) {
-    differences.add(
-      _WeatherDifference(
-        '초미세먼지',
-        _differenceDescription(
-          (current.pm25! - previous.pm25!).toDouble(),
-          unit: '㎍/㎥',
-          decimals: 0,
-          higherLabel: '많아요',
-          lowerLabel: '적어요',
-        ),
-      ),
-    );
-  } else if (current.pm10 != null && previous.pm10 != null) {
-    differences.add(
-      _WeatherDifference(
-        '미세먼지',
-        _differenceDescription(
-          (current.pm10! - previous.pm10!).toDouble(),
-          unit: '㎍/㎥',
-          decimals: 0,
-          higherLabel: '많아요',
-          lowerLabel: '적어요',
-        ),
-      ),
-    );
-  }
-  return differences;
-}
-
-String _differenceDescription(
-  double difference, {
-  required String unit,
-  int decimals = 1,
-  String higherLabel = '높아요',
-  String lowerLabel = '낮아요',
-}) {
-  if (difference.abs() < 0.05) return '어제와 같아요';
-  final amount = difference.abs().toStringAsFixed(decimals);
-  return difference > 0
-      ? '어제보다 $amount$unit $higherLabel'
-      : '어제보다 $amount$unit $lowerLabel';
-}
-
 class _TopMetric extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final _MetricRisk risk;
+  final _MetricState state;
 
   const _TopMetric({
     required this.icon,
     required this.label,
     required this.value,
-    required this.risk,
+    required this.state,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Semantics(
-        label: '$label $value, ${risk.label}',
+        label: '$label $value, ${state.label}',
         excludeSemantics: true,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: risk.color),
+            Icon(icon, size: 14, color: state.color),
             const SizedBox(height: 2),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: risk.color,
+                color: state.color,
                 fontSize: 10.5,
                 height: 1.1,
                 fontWeight: FontWeight.w800,
@@ -535,66 +288,88 @@ class _TopMetric extends StatelessWidget {
   }
 }
 
-enum _MetricRisk { safe, caution, danger, unavailable }
+class _MetricState {
+  final String label;
+  final Color color;
 
-extension on _MetricRisk {
-  Color get color => switch (this) {
-        _MetricRisk.safe => WeatherCareTheme.primaryDeep,
-        _MetricRisk.caution => WeatherCareTheme.attention,
-        _MetricRisk.danger => WeatherCareTheme.danger,
-        _MetricRisk.unavailable => WeatherCareTheme.textSecondary,
-      };
-
-  String get label => switch (this) {
-        _MetricRisk.safe => '안전',
-        _MetricRisk.caution => '주의',
-        _MetricRisk.danger => '위험',
-        _MetricRisk.unavailable => '정보 없음',
-      };
+  const _MetricState(this.label, this.color);
 }
 
-_MetricRisk _humidityRisk(double? value) {
-  if (value == null) return _MetricRisk.unavailable;
-  if (value >= 80) return _MetricRisk.danger;
-  if (value <= 35 || value >= 70) return _MetricRisk.caution;
-  return _MetricRisk.safe;
+const _unavailableMetric =
+    _MetricState('정보 없음', WeatherCareTheme.textSecondary);
+
+_MetricState _humidityState(double? value) => value == null
+    ? _unavailableMetric
+    : const _MetricState('실외 상대습도', WeatherCareTheme.primaryDeep);
+
+_MetricState _windState(double? value) {
+  if (value == null) return _unavailableMetric;
+  if (value < 4) {
+    return const _MetricState('약한 바람', WeatherCareTheme.primaryDeep);
+  }
+  if (value < 9) {
+    return const _MetricState('약간 강한 바람', WeatherCareTheme.primaryDeep);
+  }
+  if (value < 14) {
+    return const _MetricState('강한 바람', WeatherCareTheme.attentionDeep);
+  }
+  return const _MetricState('매우 강한 바람', WeatherCareTheme.danger);
 }
 
-_MetricRisk _windRisk(double? value) {
-  if (value == null) return _MetricRisk.unavailable;
-  if (value >= 9) return _MetricRisk.danger;
-  if (value >= 6) return _MetricRisk.caution;
-  return _MetricRisk.safe;
+_MetricState _uvState(double? value) {
+  if (value == null) return _unavailableMetric;
+  if (value <= 2) {
+    return const _MetricState('낮음', WeatherCareTheme.primaryDeep);
+  }
+  if (value <= 5) {
+    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+  }
+  if (value <= 7) {
+    return const _MetricState('높음', WeatherCareTheme.attentionDeep);
+  }
+  if (value <= 10) {
+    return const _MetricState('매우 높음', WeatherCareTheme.danger);
+  }
+  return const _MetricState('위험', WeatherCareTheme.danger);
 }
 
-_MetricRisk _uvRisk(double? value) {
-  if (value == null) return _MetricRisk.unavailable;
-  if (value >= 8) return _MetricRisk.danger;
-  if (value >= 6) return _MetricRisk.caution;
-  return _MetricRisk.safe;
+_MetricState _pm25State(int? value) {
+  if (value == null) return _unavailableMetric;
+  if (value <= 15) {
+    return const _MetricState('좋음', WeatherCareTheme.primaryDeep);
+  }
+  if (value <= 35) {
+    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+  }
+  if (value <= 75) {
+    return const _MetricState('나쁨', WeatherCareTheme.attentionDeep);
+  }
+  return const _MetricState('매우 나쁨', WeatherCareTheme.danger);
 }
 
-_MetricRisk _pm25Risk(int? value) {
-  if (value == null) return _MetricRisk.unavailable;
-  if (value >= 76) return _MetricRisk.danger;
-  if (value >= 36) return _MetricRisk.caution;
-  return _MetricRisk.safe;
-}
-
-_MetricRisk _pm10Risk(int? value) {
-  if (value == null) return _MetricRisk.unavailable;
-  if (value >= 151) return _MetricRisk.danger;
-  if (value >= 81) return _MetricRisk.caution;
-  return _MetricRisk.safe;
+_MetricState _pm10State(int? value) {
+  if (value == null) return _unavailableMetric;
+  if (value <= 30) {
+    return const _MetricState('좋음', WeatherCareTheme.primaryDeep);
+  }
+  if (value <= 80) {
+    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+  }
+  if (value <= 150) {
+    return const _MetricState('나쁨', WeatherCareTheme.attentionDeep);
+  }
+  return const _MetricState('매우 나쁨', WeatherCareTheme.danger);
 }
 
 class _LifestyleDashboard extends StatelessWidget {
   final List<LifestyleMessage> messages;
+  final List<WeatherMessagePart> dataStatusMessages;
   final bool compact;
   final bool serverFeaturesAvailable;
 
   const _LifestyleDashboard({
     required this.messages,
+    required this.dataStatusMessages,
     required this.compact,
     required this.serverFeaturesAvailable,
   });
@@ -647,7 +422,9 @@ class _LifestyleDashboard extends StatelessWidget {
           SizedBox(height: compact ? 8 : 10),
           if (!serverFeaturesAvailable)
             const _LifestyleUnsupported()
-          else
+          else if (display.isEmpty && dataStatusMessages.isEmpty)
+            const _NoLifestyleMessages()
+          else ...[
             for (var index = 0; index < display.length; index++) ...[
               _LifestyleActionCard(
                 item: display[index],
@@ -655,6 +432,65 @@ class _LifestyleDashboard extends StatelessWidget {
               ),
               if (index < display.length - 1) SizedBox(height: compact ? 7 : 9),
             ],
+            if (display.isNotEmpty && dataStatusMessages.isNotEmpty)
+              SizedBox(height: compact ? 8 : 10),
+            for (final status in dataStatusMessages)
+              _DataStatusLine(status: status),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _NoLifestyleMessages extends StatelessWidget {
+  const _NoLifestyleMessages();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: WeatherCareTheme.surfaceMuted,
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: const Text(
+        '현재 예보에서 안내할 생활행동이 없어요.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: WeatherCareTheme.textSecondary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _DataStatusLine extends StatelessWidget {
+  final WeatherMessagePart status;
+
+  const _DataStatusLine({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 15,
+            color: WeatherCareTheme.textSecondary,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              status.text,
+              style: WeatherCareTheme.microTextStyle,
+            ),
+          ),
         ],
       ),
     );
@@ -696,7 +532,11 @@ class _LifestyleActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = _todoStyle(item);
+    const style = _TodoStyle(
+      background: WeatherCareTheme.surfaceSubtle,
+      iconBackground: WeatherCareTheme.primarySoft,
+      accent: WeatherCareTheme.primaryDeep,
+    );
     return Container(
       key: ValueKey('main-todo-${item.title}'),
       width: double.infinity,
@@ -730,9 +570,7 @@ class _LifestyleActionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  item.actionText,
                   style: TextStyle(
                     fontSize: compact ? 11 : 12,
                     height: 1.2,
@@ -740,15 +578,24 @@ class _LifestyleActionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  item.description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: WeatherCareTheme.microTextStyle.copyWith(
-                    fontSize: compact ? 8.5 : 9.5,
-                    height: 1.25,
+                for (final part in item.details) ...[
+                  const SizedBox(height: 5),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${part.role.label} · ',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        TextSpan(text: part.text),
+                      ],
+                    ),
+                    style: WeatherCareTheme.microTextStyle.copyWith(
+                      fontSize: compact ? 8.5 : 9.5,
+                      height: 1.3,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -768,145 +615,63 @@ String _weatherExpression(String? sky) {
   return '맑은 하늘이 이어지는 날씨예요.';
 }
 
-String _weatherFeelingMessage({
+String _forecastTemperatureLabel(String? forecastAt) {
+  if (forecastAt == null || forecastAt.length < 13) return '예상기온';
+  final hour = int.tryParse(forecastAt.substring(11, 13));
+  if (hour == null) return '예상기온';
+  final period = hour < 12 ? '오전' : '오후';
+  final hour12 = hour % 12 == 0 ? 12 : hour % 12;
+  return '$period $hour12시 예상기온';
+}
+
+String _weatherSummaryMessage({
   required String? sky,
   required double? apparentTemperature,
+  required String? apparentTemperatureSource,
 }) {
   final weatherExpression = _weatherExpression(sky);
   if (apparentTemperature == null) {
-    return '$weatherExpression 체감온도 정보는 아직 확인하기 어려워요.';
+    return '$weatherExpression 예상 체감온도는 계산조건이 맞을 때 표시해요.';
   }
-
-  final feeling = switch (apparentTemperatureLabel(apparentTemperature)) {
-    '위험한 더위' => '위험할 만큼 매우 덥게',
-    '더위 경계' => '매우 덥게',
-    '더위 주의' => '더위가 강하게',
-    '더움' => '꽤 덥게',
-    '조금 더움' => '조금 덥게',
-    '선선한 편' => '선선하게',
-    '쌀쌀한 편' => '쌀쌀하게',
-    _ => '춥게',
-  };
-  return '$weatherExpression 바깥에서는 체감온도 기준으로 $feeling 느껴질 수 있어요.';
-}
-
-String apparentTemperatureLabel(double temperature) {
-  const heatDangerThreshold = 38.0;
-  const heatImmediateActionThreshold = 35.0;
-  const heatActionThreshold = 33.0;
-  const heatSensationThreshold = 28.0;
-  const slightHeatSensationThreshold = 20.0;
-
-  if (temperature >= heatDangerThreshold) return '위험한 더위';
-  if (temperature >= heatImmediateActionThreshold) return '더위 경계';
-  if (temperature >= heatActionThreshold) return '더위 주의';
-  if (temperature >= heatSensationThreshold) return '더움';
-  if (temperature >= slightHeatSensationThreshold) return '조금 더움';
-  if (temperature >= 10) return '선선한 편';
-  if (temperature >= 0) return '쌀쌀한 편';
-  return '추운 날씨';
+  final sourceLabel =
+      apparentTemperatureSource == 'APP_KMA_METHOD_FROM_FORECAST'
+          ? '기상청 예보의 기온·습도·풍속으로 계산한'
+          : '제공된 자료로 확인한';
+  return '$weatherExpression $sourceLabel 예상 체감온도는 ${apparentTemperature.toStringAsFixed(1)}℃예요.';
 }
 
 List<_TodoItem> _todoItems(List<LifestyleMessage> messages) {
-  final items = messages.take(3).map((message) {
+  return messages.map((message) {
     final presentation = _lifestylePresentation(message.type);
+    final actions = message.parts
+        .where((part) => part.role == WeatherMessageRole.appSuggestion)
+        .map((part) => part.text)
+        .toList();
+    final action = actions.isEmpty ? null : actions.first;
+    final details = message.parts
+        .where((part) => part.role != WeatherMessageRole.appSuggestion)
+        .toList();
     return _TodoItem(
       icon: presentation.icon,
       title: message.title,
-      description: message.description ?? presentation.subtitle,
-      isCarryItem: _isCarryItem(message.type),
-      importance: _todoImportance(message.score),
+      actionText: action ?? message.title,
+      details: details,
     );
   }).toList();
-  for (final fallback in _fallbackTodoItems) {
-    if (items.length >= 3) break;
-    items.add(fallback);
-  }
-  return items;
 }
-
-const _fallbackTodoItems = [
-  _TodoItem(
-    icon: Icons.schedule_rounded,
-    title: '시간대별 흐름 확인하기',
-    description: '외출 전 오늘의 변화를 한 번 살펴보세요.',
-  ),
-  _TodoItem(
-    icon: Icons.local_drink_outlined,
-    title: '물 한 모금 챙기기',
-    description: '하루 틈틈이 가볍게 수분을 채워요.',
-  ),
-  _TodoItem(
-    icon: Icons.self_improvement_rounded,
-    title: '여유 있게 움직이기',
-    description: '오늘의 흐름에 맞춰 천천히 시작해요.',
-  ),
-];
 
 class _TodoItem {
   final IconData icon;
   final String title;
-  final String description;
-  final bool isCarryItem;
-  final _TodoImportance importance;
+  final String actionText;
+  final List<WeatherMessagePart> details;
 
   const _TodoItem({
     required this.icon,
     required this.title,
-    required this.description,
-    this.isCarryItem = false,
-    this.importance = _TodoImportance.low,
+    required this.actionText,
+    this.details = const [],
   });
-}
-
-enum _TodoImportance { low, medium, high }
-
-_TodoImportance _todoImportance(double score) {
-  if (score >= 80) return _TodoImportance.high;
-  if (score >= 60) return _TodoImportance.medium;
-  return _TodoImportance.low;
-}
-
-bool _isCarryItem(LifestyleMessageType type) {
-  return switch (type) {
-    LifestyleMessageType.rainGearUseful ||
-    LifestyleMessageType.strongSunExposure ||
-    LifestyleMessageType.veryHotAndHumid ||
-    LifestyleMessageType.coolerThanTemperature ||
-    LifestyleMessageType.outerwearUseful ||
-    LifestyleMessageType.maskUseful ||
-    LifestyleMessageType.hydrationImportant ||
-    LifestyleMessageType.sunscreenUseful =>
-      true,
-    _ => false,
-  };
-}
-
-_TodoStyle _todoStyle(_TodoItem item) {
-  if (!item.isCarryItem) {
-    return const _TodoStyle(
-      background: WeatherCareTheme.surfaceMuted,
-      iconBackground: Colors.white,
-      accent: WeatherCareTheme.primaryDeep,
-    );
-  }
-  return switch (item.importance) {
-    _TodoImportance.high => const _TodoStyle(
-        background: WeatherCareTheme.attentionSoft,
-        iconBackground: Colors.white,
-        accent: WeatherCareTheme.attentionDeep,
-      ),
-    _TodoImportance.medium => const _TodoStyle(
-        background: WeatherCareTheme.primarySoft,
-        iconBackground: Colors.white,
-        accent: WeatherCareTheme.primaryDeep,
-      ),
-    _TodoImportance.low => const _TodoStyle(
-        background: WeatherCareTheme.surfaceSubtle,
-        iconBackground: WeatherCareTheme.primarySoft,
-        accent: WeatherCareTheme.primary,
-      ),
-  };
 }
 
 class _TodoStyle {
@@ -927,79 +692,74 @@ _LifestyleCardPresentation _lifestylePresentation(
   return switch (type) {
     LifestyleMessageType.rainGearUseful => const _LifestyleCardPresentation(
         icon: Icons.umbrella_outlined,
-        subtitle: '비 오기 전에 준비해요',
       ),
     LifestyleMessageType.strongSunExposure => const _LifestyleCardPresentation(
         icon: Icons.wb_sunny_outlined,
-        subtitle: '한낮 햇볕을 피해주세요',
       ),
-    LifestyleMessageType.laundryGood => const _LifestyleCardPresentation(
+    LifestyleMessageType.laundryPickupDue => const _LifestyleCardPresentation(
         icon: Icons.local_laundry_service_outlined,
-        subtitle: '오전에 널면 좋아요',
       ),
     LifestyleMessageType.outdoorCaution => const _LifestyleCardPresentation(
-        icon: Icons.directions_walk_rounded,
-        subtitle: '해 질 무렵이 편안해요',
+        icon: Icons.air_rounded,
       ),
-    LifestyleMessageType.ventilationGood => const _LifestyleCardPresentation(
+    LifestyleMessageType.windowCloseSoon => const _LifestyleCardPresentation(
         icon: Icons.window_outlined,
-        subtitle: '오후에 짧게 열어요',
       ),
     LifestyleMessageType.veryHotAndHumid => const _LifestyleCardPresentation(
         icon: Icons.thermostat_rounded,
-        subtitle: '물을 자주 마셔요',
       ),
     LifestyleMessageType.coolerThanTemperature =>
       const _LifestyleCardPresentation(
         icon: Icons.air_rounded,
-        subtitle: '조금 서늘해요',
       ),
     LifestyleMessageType.outerwearUseful => const _LifestyleCardPresentation(
         icon: Icons.checkroom_rounded,
-        subtitle: '가벼운 겉옷이 좋아요',
       ),
     LifestyleMessageType.maskUseful => const _LifestyleCardPresentation(
         icon: Icons.masks_outlined,
-        subtitle: '외출 전 대기질을 확인해요',
       ),
     LifestyleMessageType.hydrationImportant => const _LifestyleCardPresentation(
         icon: Icons.local_drink_outlined,
-        subtitle: '조금씩 자주 마셔요',
       ),
     LifestyleMessageType.sunscreenUseful => const _LifestyleCardPresentation(
         icon: Icons.spa_outlined,
-        subtitle: '외출 전에 발라요',
       ),
     LifestyleMessageType.snowTravelCaution => const _LifestyleCardPresentation(
         icon: Icons.ac_unit_rounded,
-        subtitle: '천천히 이동해요',
       ),
     LifestyleMessageType.largeTemperatureSwing =>
       const _LifestyleCardPresentation(
         icon: Icons.device_thermostat_outlined,
-        subtitle: '겹쳐 입기 좋아요',
       ),
-    LifestyleMessageType.dailyWeatherCheck => const _LifestyleCardPresentation(
+    LifestyleMessageType.rainBreakWindow => const _LifestyleCardPresentation(
         icon: Icons.schedule_rounded,
-        subtitle: '시간대별 변화를 살펴봐요',
       ),
-    LifestyleMessageType.dailyHydration => const _LifestyleCardPresentation(
-        icon: Icons.local_drink_outlined,
-        subtitle: '틈틈이 수분을 채워요',
+    LifestyleMessageType.bestOutingWindow => const _LifestyleCardPresentation(
+        icon: Icons.schedule_rounded,
       ),
-    LifestyleMessageType.flexibleDayPlan => const _LifestyleCardPresentation(
-        icon: Icons.self_improvement_rounded,
-        subtitle: '여유 있게 움직여요',
+    LifestyleMessageType.petWalkWindow => const _LifestyleCardPresentation(
+        icon: Icons.pets_outlined,
+      ),
+    LifestyleMessageType.wetRoadCaution => const _LifestyleCardPresentation(
+        icon: Icons.directions_car_outlined,
+      ),
+    LifestyleMessageType.rapidTemperatureDrop =>
+      const _LifestyleCardPresentation(
+        icon: Icons.thermostat_auto_outlined,
+      ),
+    LifestyleMessageType.nightWeatherCheck => const _LifestyleCardPresentation(
+        icon: Icons.bedtime_outlined,
+      ),
+    LifestyleMessageType.unknown => const _LifestyleCardPresentation(
+        icon: Icons.info_outline_rounded,
       ),
   };
 }
 
 class _LifestyleCardPresentation {
   final IconData icon;
-  final String subtitle;
 
   const _LifestyleCardPresentation({
     required this.icon,
-    required this.subtitle,
   });
 }

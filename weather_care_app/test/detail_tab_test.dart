@@ -67,6 +67,7 @@ void main() {
     expect(find.byKey(const ValueKey('detail-hourly-6')), findsNothing);
     expect(find.text('23시'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
+    expect(find.text('눈 없음'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

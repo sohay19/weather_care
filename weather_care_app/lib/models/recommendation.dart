@@ -21,7 +21,7 @@ extension RecommendationTypeLabel on RecommendationType {
     return switch (this) {
       RecommendationType.umbrella => '우산',
       RecommendationType.parasol => '양산',
-      RecommendationType.heavySnowCaution => '폭설 주의',
+      RecommendationType.heavySnowCaution => '많은 눈 대비',
       RecommendationType.outerwear => '겉옷',
       RecommendationType.mask => '마스크',
       RecommendationType.water => '물',
@@ -33,7 +33,7 @@ extension RecommendationTypeLabel on RecommendationType {
     return switch (this) {
       RecommendationType.umbrella => '우산 챙겨요',
       RecommendationType.parasol => '양산 챙겨요',
-      RecommendationType.heavySnowCaution => '폭설 주의',
+      RecommendationType.heavySnowCaution => '많은 눈 대비',
       RecommendationType.outerwear => '겉옷 챙겨요',
       RecommendationType.mask => '마스크 챙겨요',
       RecommendationType.water => '물 챙겨요',

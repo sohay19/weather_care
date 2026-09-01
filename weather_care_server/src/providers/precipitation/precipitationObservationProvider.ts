@@ -36,10 +36,22 @@ interface KmaPrecipitationObservationProviderOptions {
   attempts?: number;
 }
 
+type KmaPrecipitationFailureDetail =
+  | 'ANALYSIS_NO_DATA_ROWS'
+  | 'ANALYSIS_TIMESTAMP_MISSING'
+  | 'ANALYSIS_TARGET_TIME_MISSING'
+  | 'ANALYSIS_RAIN_FLAG_MISSING';
+
 export class KmaPrecipitationObservationProviderError extends Error {
-  constructor(message: string) {
+  readonly providerFailureDetail?: KmaPrecipitationFailureDetail;
+
+  constructor(
+    message: string,
+    providerFailureDetail?: KmaPrecipitationFailureDetail,
+  ) {
     super(message);
     this.name = 'KmaPrecipitationObservationProviderError';
+    this.providerFailureDetail = providerFailureDetail;
   }
 }
 
@@ -108,6 +120,9 @@ export class KmaPrecipitationObservationProvider {
       lastError instanceof Error
         ? lastError.message
         : 'KMA precipitation observation is not available',
+      lastError instanceof KmaPrecipitationObservationProviderError
+        ? lastError.providerFailureDetail
+        : undefined,
     );
   }
 
@@ -177,12 +192,37 @@ export function parseAnalysisRain(
     .map((line) => line.trim())
     .filter((line) => line.length > 0 && !line.startsWith('#'));
 
-  for (const row of rows.reverse()) {
+  if (rows.length === 0) {
+    throw new KmaPrecipitationObservationProviderError(
+      'KMA analysis response has no data rows',
+      'ANALYSIS_NO_DATA_ROWS',
+    );
+  }
+
+  const timestampedRows = rows.map((row) => {
     const tokens = row.split(/[\s,]+/).filter(Boolean);
     const timeIndex = tokens.findIndex((token) => /^\d{12}$/.test(token));
-    if (timeIndex < 0) continue;
+    return { tokens, timeIndex };
+  });
+  if (timestampedRows.every(({ timeIndex }) => timeIndex < 0)) {
+    throw new KmaPrecipitationObservationProviderError(
+      'KMA analysis response has no timestamp',
+      'ANALYSIS_TIMESTAMP_MISSING',
+    );
+  }
+
+  const targetRows = timestampedRows.filter(({ tokens, timeIndex }) =>
+    timeIndex >= 0 && (!expectedTime || tokens[timeIndex] === expectedTime),
+  );
+  if (expectedTime && targetRows.length === 0) {
+    throw new KmaPrecipitationObservationProviderError(
+      'KMA analysis response does not contain the target time',
+      'ANALYSIS_TARGET_TIME_MISSING',
+    );
+  }
+
+  for (const { tokens, timeIndex } of targetRows.reverse()) {
     const observedTime = tokens[timeIndex];
-    if (expectedTime && observedTime !== expectedTime) continue;
     const value = tokens
       .slice(timeIndex + 1)
       .map(Number)
@@ -196,6 +236,7 @@ export function parseAnalysisRain(
 
   throw new KmaPrecipitationObservationProviderError(
     'KMA analysis response has no valid rain observation',
+    'ANALYSIS_RAIN_FLAG_MISSING',
   );
 }
 

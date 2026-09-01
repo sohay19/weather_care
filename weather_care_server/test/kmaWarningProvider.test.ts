@@ -52,6 +52,30 @@ L1010000 경기도 L1011900 수원 202609010900 202609011000 C 2 3
   it('rejects an unknown payload instead of treating it as a release', () => {
     expect(() =>
       parseActiveWarnings('<html>maintenance</html>', ['L1011900'], NOW),
-    ).toThrow('unknown format');
+    ).toThrow('unsupported rows');
+  });
+
+  it('keeps a changed warning active and ignores unrelated release rows', () => {
+    const payload = [
+      'L1010000 경기도 L1011900 수원 202609010900 202609011000 R 2 6',
+      'L1020000 강원도 L1020200 춘천 202609010900 202609011000 W 2 7',
+    ].join('\n');
+
+    expect(parseActiveWarnings(payload, ['L1011900'], NOW)).toEqual([
+      expect.objectContaining({
+        typeCode: 'R',
+        commandCode: '6',
+        regionId: 'L1011900',
+      }),
+    ]);
+  });
+
+  it('ignores an unknown unrelated row without hiding selected-region data', () => {
+    const payload = [
+      'future unrelated response row',
+      'L1010000 경기도 L1011900 수원 202609010900 202609011000 R 2 1',
+    ].join('\n');
+
+    expect(parseActiveWarnings(payload, ['L1011900'], NOW)).toHaveLength(1);
   });
 });

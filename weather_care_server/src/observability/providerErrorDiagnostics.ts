@@ -18,11 +18,21 @@ export type ProviderOperation =
   | 'WARNING'
   | 'ROAD_CONTROL';
 
+export type ProviderFailureDetail =
+  | 'ANALYSIS_NO_DATA_ROWS'
+  | 'ANALYSIS_TIMESTAMP_MISSING'
+  | 'ANALYSIS_TARGET_TIME_MISSING'
+  | 'ANALYSIS_RAIN_FLAG_MISSING'
+  | 'WARNING_SELECTED_REGION_ROW_INVALID'
+  | 'WARNING_UNSUPPORTED_ROWS'
+  | 'ROAD_CONTROL_FETCH_FAILED';
+
 export interface ProviderErrorDiagnostic {
   error: string;
   failureReason: ProviderFailureReason;
   httpStatus?: number;
   operation?: ProviderOperation;
+  detail?: ProviderFailureDetail;
 }
 
 export function providerErrorDiagnostic(
@@ -32,12 +42,14 @@ export function providerErrorDiagnostic(
   const message = error instanceof Error ? error.message : '';
   const httpStatus = statusFromMessage(message);
   const operation = operationFromMessage(message);
+  const detail = failureDetailFromError(error);
 
   return {
     error: errorName,
     failureReason: failureReason(errorName, message, httpStatus),
     ...(httpStatus === undefined ? {} : { httpStatus }),
     ...(operation === undefined ? {} : { operation }),
+    ...(detail === undefined ? {} : { detail }),
   };
 }
 
@@ -53,6 +65,7 @@ function failureReason(
     return 'TIMEOUT';
   }
   if (errorName === 'TypeError') return 'NETWORK_ERROR';
+  if (/\bnetwork\b/i.test(message)) return 'NETWORK_ERROR';
   if (/not configured/i.test(message)) return 'NOT_CONFIGURED';
   if (httpStatus === 401 || httpStatus === 403) {
     return 'AUTHORIZATION_FAILED';
@@ -82,6 +95,28 @@ function failureReason(
     return 'NO_USABLE_DATA';
   }
   return 'UNKNOWN';
+}
+
+const PROVIDER_FAILURE_DETAILS = new Set<ProviderFailureDetail>([
+  'ANALYSIS_NO_DATA_ROWS',
+  'ANALYSIS_TIMESTAMP_MISSING',
+  'ANALYSIS_TARGET_TIME_MISSING',
+  'ANALYSIS_RAIN_FLAG_MISSING',
+  'WARNING_SELECTED_REGION_ROW_INVALID',
+  'WARNING_UNSUPPORTED_ROWS',
+  'ROAD_CONTROL_FETCH_FAILED',
+]);
+
+function failureDetailFromError(
+  error: unknown,
+): ProviderFailureDetail | undefined {
+  if (error === null || typeof error !== 'object') return undefined;
+  const value = (error as { providerFailureDetail?: unknown })
+    .providerFailureDetail;
+  return typeof value === 'string' &&
+    PROVIDER_FAILURE_DETAILS.has(value as ProviderFailureDetail)
+    ? (value as ProviderFailureDetail)
+    : undefined;
 }
 
 function statusFromMessage(message: string): number | undefined {

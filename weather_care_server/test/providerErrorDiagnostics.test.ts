@@ -42,4 +42,18 @@ describe('provider error diagnostics', () => {
     expect(serialized).not.toContain(secret);
     expect(serialized).not.toContain('message');
   });
+
+  it('allows only fixed provider detail codes', () => {
+    const safe = Object.assign(new Error('safe'), {
+      providerFailureDetail: 'ANALYSIS_TARGET_TIME_MISSING',
+    });
+    const unsafe = Object.assign(new Error('unsafe'), {
+      providerFailureDetail: 'secret-value',
+    });
+
+    expect(providerErrorDiagnostic(safe).detail).toBe(
+      'ANALYSIS_TARGET_TIME_MISSING',
+    );
+    expect(providerErrorDiagnostic(unsafe)).not.toHaveProperty('detail');
+  });
 });

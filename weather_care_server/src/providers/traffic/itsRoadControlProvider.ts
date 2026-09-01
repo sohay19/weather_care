@@ -8,6 +8,7 @@ interface ItsRoadControlProviderOptions {
   fetcher?: typeof fetch;
   now?: () => Date;
   radiusMeters?: number;
+  timeoutMs?: number;
 }
 
 interface ItsEventItem {
@@ -32,12 +33,14 @@ export class ItsRoadControlProvider {
   private readonly fetcher: typeof fetch;
   private readonly now: () => Date;
   private readonly radiusMeters: number;
+  private readonly timeoutMs: number;
 
   constructor(options: ItsRoadControlProviderOptions) {
     this.apiKey = options.apiKey;
     this.fetcher = options.fetcher ?? fetch;
     this.now = options.now ?? (() => new Date());
     this.radiusMeters = options.radiusMeters ?? DEFAULT_RADIUS_METERS;
+    this.timeoutMs = options.timeoutMs ?? 10_000;
   }
 
   async getNearestActiveControl(
@@ -55,7 +58,21 @@ export class ItsRoadControlProvider {
     url.searchParams.set('maxY', bounds.maxLatitude.toFixed(6));
     url.searchParams.set('getType', 'json');
 
-    const response = await this.fetcher(url);
+    let response: Response;
+    try {
+      response = await this.fetcher(url, {
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        throw new ItsRoadControlProviderError(
+          'ITS road control request timed out',
+        );
+      }
+      throw new ItsRoadControlProviderError(
+        'ITS road control network request failed',
+      );
+    }
     if (!response.ok) {
       throw new Error(`ITS road control request failed: ${response.status}`);
     }
@@ -72,6 +89,15 @@ export class ItsRoadControlProvider {
       radiusMeters: this.radiusMeters,
       now: this.now(),
     })[0];
+  }
+}
+
+class ItsRoadControlProviderError extends Error {
+  readonly providerFailureDetail = 'ROAD_CONTROL_FETCH_FAILED' as const;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'ItsRoadControlProviderError';
   }
 }
 

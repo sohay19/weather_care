@@ -31,6 +31,16 @@ describe('KMA precipitation observation provider', () => {
     });
   });
 
+  it('reports a fixed diagnostic when the requested analysis time is absent', () => {
+    expect(() =>
+      parseAnalysisRain('202609011405 0', '202609011410'),
+    ).toThrow(
+      expect.objectContaining({
+        providerFailureDetail: 'ANALYSIS_TARGET_TIME_MISSING',
+      }),
+    );
+  });
+
   it('creates current-rain state only when analysis and radar both detect rain', async () => {
     const point = radarGridPoint(37.2636, 127.0286);
     const fetcher = async (input: RequestInfo | URL) => {

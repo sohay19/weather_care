@@ -3,6 +3,7 @@ import {
   ItsRoadControlProvider,
   parseItsRoadControls,
 } from '../src/providers/traffic/itsRoadControlProvider';
+import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 
 describe('ITS road control provider', () => {
   it('requests the official event endpoint around the current GPS location', async () => {
@@ -98,6 +99,28 @@ describe('ITS road control provider', () => {
         },
       ),
     ).toThrow('FAIL');
+  });
+
+  it('replaces a fetch failure with a fixed secret-safe diagnostic', async () => {
+    const provider = new ItsRoadControlProvider({
+      apiKey: 'its-key',
+      fetcher: async () => {
+        throw new TypeError('network failed with secret-value');
+      },
+    });
+
+    const error = await provider
+      .getNearestActiveControl(37.2636, 127.0286)
+      .catch((caught: unknown) => caught);
+    const diagnostic = providerErrorDiagnostic(error);
+
+    expect(diagnostic).toEqual({
+      error: 'ItsRoadControlProviderError',
+      failureReason: 'NETWORK_ERROR',
+      operation: 'ROAD_CONTROL',
+      detail: 'ROAD_CONTROL_FETCH_FAILED',
+    });
+    expect(JSON.stringify(diagnostic)).not.toContain('secret-value');
   });
 });
 

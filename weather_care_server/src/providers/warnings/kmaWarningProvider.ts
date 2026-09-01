@@ -20,7 +20,11 @@ export type KmaWarningTypeCode =
   | 'K';
 
 export type KmaWarningLevelCode = '2' | '3';
-export type KmaActiveWarningCommandCode = '1' | '2' | '5';
+export type KmaActiveWarningCommandCode = '1' | '2' | '5' | '6';
+
+type KmaWarningFailureDetail =
+  | 'WARNING_SELECTED_REGION_ROW_INVALID'
+  | 'WARNING_UNSUPPORTED_ROWS';
 
 export interface OfficialWeatherWarning extends WeatherWarning {
   typeCode: KmaWarningTypeCode;
@@ -53,9 +57,12 @@ interface KmaWarningProviderOptions {
 }
 
 export class KmaWarningProviderError extends Error {
-  constructor(message: string) {
+  readonly providerFailureDetail?: KmaWarningFailureDetail;
+
+  constructor(message: string, providerFailureDetail?: KmaWarningFailureDetail) {
     super(message);
     this.name = 'KmaWarningProviderError';
+    this.providerFailureDetail = providerFailureDetail;
   }
 }
 
@@ -135,20 +142,37 @@ export function parseActiveWarnings(
   const dataLines = payload
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith('#'));
+    .filter(
+      (line) =>
+        line.length > 0 && !line.startsWith('#') && line !== '=',
+    );
   const parsedRows = dataLines.map(parseWarningRow);
-  if (parsedRows.some((row) => row === undefined)) {
+  const selectedRegionRowIsInvalid = dataLines.some((line, index) => {
+    if (parsedRows[index] !== undefined) return false;
+    const tokens = line.split(/[\s,]+/).filter(Boolean);
+    return tokens.some((token) => selectedRegions.has(token));
+  });
+  if (selectedRegionRowIsInvalid) {
     throw new KmaWarningProviderError(
-      'KMA warning response has an unknown format',
+      'KMA warning selected region row has an unknown format',
+      'WARNING_SELECTED_REGION_ROW_INVALID',
     );
   }
-  const rows = parsedRows as ParsedWarningRow[];
+  const rows = parsedRows.filter(
+    (row): row is ParsedWarningRow => row !== undefined,
+  );
+  if (dataLines.length > 0 && rows.length === 0) {
+    throw new KmaWarningProviderError(
+      'KMA warning response has unsupported rows',
+      'WARNING_UNSUPPORTED_ROWS',
+    );
+  }
 
   return rows.flatMap((row) => {
     if (!selectedRegions.has(row.regionId)) return [];
     if (!isWarningTypeCode(row.typeCode)) return [];
     if (row.levelCode !== '2' && row.levelCode !== '3') return [];
-    if (!['1', '2', '5'].includes(row.commandCode)) return [];
+    if (!['1', '2', '5', '6'].includes(row.commandCode)) return [];
 
     const effectiveAt = compactKstToIso(row.effectiveAt);
     if (Date.parse(effectiveAt) > now.getTime()) return [];
@@ -174,7 +198,7 @@ function parseWarningRow(line: string): ParsedWarningRow | undefined {
   if (!trimmed) return undefined;
 
   const normalized = trimmed.replace(/\s*,\s*/g, ' ');
-  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+([A-Z])\s+([123])\s+([1-5])$/.exec(
+  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+([A-Z])\s+([123])\s+([1-7])$/.exec(
     normalized,
   );
   if (!match) return undefined;

@@ -103,4 +103,11 @@ L1010000 경기도 L1011900 수원 202609010900 202609011000 C 2 3
 
     expect(parseActiveWarnings(payload, ['L1011900'], NOW)).toHaveLength(1);
   });
+
+  it('ignores timestamped rows for other regions when their columns expand', () => {
+    const payload =
+      'L1020000 강원도 L1020200 춘천 확장열 202609010900 202609011000 W 2 1';
+
+    expect(parseActiveWarnings(payload, ['L1011900'], NOW)).toEqual([]);
+  });
 });

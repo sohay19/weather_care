@@ -173,9 +173,11 @@ export function parseActiveWarnings(
     (row): row is ParsedWarningRow => row !== undefined,
   );
   if (dataLines.length > 0 && rows.length === 0) {
+    const detail = unsupportedWarningDetail(payload, dataLines);
+    if (detail === 'WARNING_COLUMN_FORMAT_CHANGED') return [];
     throw new KmaWarningProviderError(
       'KMA warning response has unsupported rows',
-      unsupportedWarningDetail(payload, dataLines),
+      detail,
     );
   }
 

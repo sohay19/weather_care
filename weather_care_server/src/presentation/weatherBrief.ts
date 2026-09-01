@@ -1,20 +1,16 @@
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../types';
 import { defaultRuleConfig } from '../config/ruleConfig';
-import {
-  WEATHER_BRIEF_SLOT_OPTIONS,
-  WEATHER_BRIEF_TEMPLATES,
-  type WeatherBriefScene,
-  type WeatherBriefSlotKey,
-  type WeatherBriefTemplate,
-} from './weatherBriefCatalog';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.08.1';
-const HEAT_SENSATION_SCENE_THRESHOLD = 28;
-const COLD_LAYER_SCENE_THRESHOLD = 8;
-
-export const DIRECT_WEATHER_EXPRESSION_PATTERN =
-  /기온|온도|날씨|맑음|흐림|구름|강수|습도|풍속|자외선|초?미세먼지|(?:^|\s)비가\s|비 오는|비 내|(?:^|\s)눈이\s|눈 오는|눈 내|\d+(?:\.\d+)?\s*°/;
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.1';
+export type WeatherBriefScene =
+  | 'WET_TRAVEL'
+  | 'CAREFUL_STEPS'
+  | 'MASK_READY'
+  | 'SHADE_BREAK'
+  | 'LAYER_READY'
+  | 'STEADY_PACE'
+  | 'DAILY_RHYTHM';
 
 export interface WeatherBriefContext {
   regionKey?: string;
@@ -25,13 +21,13 @@ export interface WeatherBriefResult {
   text: string;
   scene: WeatherBriefScene;
   templateId: string;
-  slots: Readonly<Partial<Record<WeatherBriefSlotKey, string>>>;
+  slots: Readonly<{ eventTime?: string }>;
   catalogVersion: string;
 }
 
 interface SceneSelection {
   scene: WeatherBriefScene;
-  eventAt: string;
+  snapshot: WeatherSnapshot;
 }
 
 export function buildWeatherBrief(
@@ -43,30 +39,17 @@ export function buildWeatherBrief(
 
 export function buildWeatherBriefResult(
   forecast: WeatherForecast,
-  context: WeatherBriefContext = {},
+  _context: WeatherBriefContext = {},
 ): WeatherBriefResult {
   const selection = selectScene(forecast);
-  const dateKey = context.dateKey ?? forecast.baseDate;
-  const regionKey = context.regionKey ?? 'default-region';
-  const seed = `${regionKey}|${selection.scene}`;
-  const rotation = dayRotation(dateKey);
-  const templates = WEATHER_BRIEF_TEMPLATES.filter(
-    (template) => template.scene === selection.scene,
+  const eventTime = formatHour(
+    selection.snapshot.forecastAt ?? selection.snapshot.observedAt,
   );
-  const templatePool =
-    templates.length > 0 ? templates : [WEATHER_BRIEF_TEMPLATES[0]];
-  const template =
-    templatePool[
-      (stableIndex(`${seed}|template`, templatePool.length) + rotation) %
-        templatePool.length
-    ];
-  const slots = selectSlots(template, selection.eventAt, seed, rotation);
-
   return {
-    text: renderTemplate(template, slots),
+    text: messageFor(selection, eventTime),
     scene: selection.scene,
-    templateId: template.id,
-    slots,
+    templateId: `policy-${selection.scene.toLowerCase()}`,
+    slots: { eventTime },
     catalogVersion: WEATHER_BRIEF_CATALOG_VERSION,
   };
 }
@@ -75,113 +58,72 @@ function selectScene(forecast: WeatherForecast): SceneSelection {
   const candidates = [forecast.current, ...forecast.hourly.slice(0, 24)];
 
   const snowy = candidates.find(isSnowy);
-  if (snowy) {
-    return { scene: 'CAREFUL_STEPS', eventAt: snowy.observedAt };
-  }
+  if (snowy) return { scene: 'CAREFUL_STEPS', snapshot: snowy };
 
   const rainy = candidates.find(isRainy);
-  if (rainy) {
-    return { scene: 'WET_TRAVEL', eventAt: rainy.observedAt };
-  }
+  if (rainy) return { scene: 'WET_TRAVEL', snapshot: rainy };
 
   const poorAir = candidates.find(hasPoorAirQuality);
-  if (poorAir) {
-    return { scene: 'MASK_READY', eventAt: poorAir.observedAt };
-  }
+  if (poorAir) return { scene: 'MASK_READY', snapshot: poorAir };
 
   const strongExposure = candidates.find(
     (item) =>
-      apparentTemperature(item) >= HEAT_SENSATION_SCENE_THRESHOLD ||
+      (item.apparentTemperature ?? -Infinity) >=
+        defaultRuleConfig.heat.actionApparentTemperature ||
+      (item.temperature ?? -Infinity) >=
+        defaultRuleConfig.heat.actionAirTemperature ||
       (item.uvIndex ?? 0) >= defaultRuleConfig.uv.highThreshold,
   );
   if (strongExposure) {
-    return { scene: 'SHADE_BREAK', eventAt: strongExposure.observedAt };
+    return { scene: 'SHADE_BREAK', snapshot: strongExposure };
   }
 
   const layerUseful = candidates.find(
-    (item) => apparentTemperature(item) <= COLD_LAYER_SCENE_THRESHOLD,
+    (item) =>
+      (item.temperature ?? Infinity) <= defaultRuleConfig.cold.temperature ||
+      (item.apparentTemperature ?? Infinity) <=
+        defaultRuleConfig.cold.apparentTemperature,
   );
-  if (layerUseful) {
-    return { scene: 'LAYER_READY', eventAt: layerUseful.observedAt };
-  }
+  if (layerUseful) return { scene: 'LAYER_READY', snapshot: layerUseful };
 
-  const steadyPace = candidates.find(
+  const strongWind = candidates.find(
     (item) => (item.windSpeed ?? 0) >= defaultRuleConfig.wind.caution,
   );
-  if (steadyPace) {
-    return { scene: 'STEADY_PACE', eventAt: steadyPace.observedAt };
+  if (strongWind) return { scene: 'STEADY_PACE', snapshot: strongWind };
+
+  return { scene: 'DAILY_RHYTHM', snapshot: forecast.current };
+}
+
+function messageFor(selection: SceneSelection, eventTime: string): string {
+  const snapshot = selection.snapshot;
+  switch (selection.scene) {
+    case 'CAREFUL_STEPS':
+      return `눈이 내릴 수 있으니, ${eventTime} 외출한다면 도로 상태와 대중교통 운행정보를 확인하세요`;
+    case 'WET_TRAVEL':
+      return snapshot.precipitationType === 'SHOWER'
+        ? `소나기가 내릴 수 있으니, ${eventTime} 외출한다면 우산을 챙기세요`
+        : `비가 올 수 있으니, ${eventTime} 외출한다면 우산을 챙기세요`;
+    case 'MASK_READY':
+      return `미세먼지나 초미세먼지가 나쁨 단계이니, ${eventTime} 외출한다면 보건용 마스크를 준비하세요`;
+    case 'SHADE_BREAK':
+      return (snapshot.uvIndex ?? 0) >= defaultRuleConfig.uv.highThreshold
+        ? `자외선이 강할 수 있으니, ${eventTime} 외출한다면 양산이나 모자를 준비하세요`
+        : `기온이 높거나 예상 체감온도가 높게 계산됐으니, ${eventTime} 외출한다면 물을 준비하세요`;
+    case 'LAYER_READY':
+      return `기온이 낮거나 예상 체감온도가 낮게 계산됐으니, ${eventTime} 외출한다면 겉옷을 준비하세요`;
+    case 'STEADY_PACE':
+      return `바람이 강할 수 있으니, ${eventTime} 외출한다면 소지품을 단단히 고정하세요`;
+    case 'DAILY_RHYTHM':
+      return '오늘은 외출 전에 시간별 예보를 확인하세요';
   }
-
-  return {
-    scene: 'DAILY_RHYTHM',
-    eventAt: forecast.current.observedAt,
-  };
 }
 
-function selectSlots(
-  template: WeatherBriefTemplate,
-  eventAt: string,
-  seed: string,
-  rotation: number,
-): Partial<Record<WeatherBriefSlotKey, string>> {
-  const selected: Partial<Record<WeatherBriefSlotKey, string>> = {};
-  for (const slot of template.slots) {
-    const options = WEATHER_BRIEF_SLOT_OPTIONS[slot];
-    const index =
-      slot === 'eventTime'
-        ? timeSlotIndex(eventAt)
-        : (stableIndex(`${seed}|${template.id}|${slot}`, options.length) +
-            rotation) %
-          options.length;
-    selected[slot] = options[index];
-  }
-  return selected;
-}
-
-function renderTemplate(
-  template: WeatherBriefTemplate,
-  slots: Partial<Record<WeatherBriefSlotKey, string>>,
-): string {
-  let rendered = template.text;
-  for (const slot of template.slots) {
-    rendered = rendered.replaceAll(`{${slot}}`, slots[slot] ?? '');
-  }
-  return rendered.replace(/\s+/g, ' ').trim();
-}
-
-function stableIndex(seed: string, length: number): number {
-  let hash = 2166136261;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) % Math.max(1, length);
-}
-
-function dayRotation(dateKey: string): number {
-  const match = dateKey.match(/^(\d{4})(\d{2})(\d{2})$/);
-  if (!match) return 0;
-  const timestamp = Date.UTC(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
-  );
-  return Math.floor(timestamp / 86_400_000);
-}
-
-function timeSlotIndex(observedAt: string): number {
-  const match = observedAt.match(/T(\d{2}):/);
-  const hour = match ? Number(match[1]) : 12;
-  if (hour < 6) return 0;
-  if (hour < 8) return 1;
-  if (hour < 10) return 2;
-  if (hour < 12) return 3;
-  if (hour < 14) return 4;
-  if (hour < 16) return 5;
-  if (hour < 18) return 6;
-  if (hour < 20) return 7;
-  if (hour < 22) return 8;
-  return 9;
+function formatHour(iso: string): string {
+  const hour = Number(iso.slice(11, 13));
+  const minute = Number(iso.slice(14, 16));
+  const period = hour < 12 ? '오전' : '오후';
+  const hour12 = hour % 12 || 12;
+  return `${period} ${hour12}시${minute === 0 ? '' : ` ${minute}분`}`;
 }
 
 function isSnowy(snapshot: WeatherSnapshot): boolean {
@@ -209,8 +151,4 @@ function hasPoorAirQuality(snapshot: WeatherSnapshot): boolean {
     grade.includes('bad') ||
     grade.includes('나쁨')
   );
-}
-
-function apparentTemperature(snapshot: WeatherSnapshot): number {
-  return snapshot.apparentTemperature ?? snapshot.temperature;
 }

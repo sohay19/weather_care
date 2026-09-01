@@ -40,8 +40,8 @@ describe('WeatherRuleEngine v1.1', () => {
     const heavy = runWeatherRuleEngineForHourly([
       snapshot(12, {
         precipitationProbability: 70,
-        precipitationAmount: 5,
-        precipitationAmountRange: range('VALUE', 5, 5, 'MM'),
+        precipitationAmount: 15,
+        precipitationAmountRange: range('VALUE', 15, 15, 'MM'),
       }),
     ]);
     expect(types(heavy)).toContain(WeatherRuleFactType.HEAVY_RAIN);

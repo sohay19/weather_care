@@ -24,7 +24,10 @@ import { regionFromQuery } from '../utils';
 import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBrief } from '../presentation/weatherBrief';
-import { buildLifestyleMessages } from '../presentation/lifestyleMessages';
+import {
+  buildEnvironmentalDataStatusMessages,
+  buildLifestyleMessages,
+} from '../presentation/lifestyleMessages';
 import {
   enrichForecastWithEnvironmentalData,
   loadEnvironmentalData,
@@ -68,15 +71,24 @@ router.get('/today', async (c) => {
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
     const recommendations = runRecommendationEngine(lifestyle, defaultSettings);
+    const regionLabel = regionName(nx, ny);
 
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
-      region: { nx, ny, name: regionName(nx, ny) },
+      region: { nx, ny, name: regionLabel },
       brief: buildWeatherBrief(forecast, { regionKey: `${nx}:${ny}` }),
       current: forecast.current,
       hourly: forecast.hourly,
       recommendations,
-      lifestyleMessages: buildLifestyleMessages(lifestyle),
+      lifestyleMessages: buildLifestyleMessages(
+        lifestyle,
+        rules,
+        decisionHourly,
+        regionLabel,
+      ),
+      dataStatusMessages: buildEnvironmentalDataStatusMessages(
+        environmentalData.sources,
+      ),
       timeline: buildTimeline(forecast.hourly),
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
@@ -139,42 +151,6 @@ router.get('/weekly', async (c) => {
 
 export default router;
 
-function aggregateDecisionSnapshot(forecast: WeatherForecast): WeatherSnapshot {
-  const nextDay = forecast.hourly.slice(0, 24);
-  const temperatures = nextDay
-    .map((item) => item.temperature)
-    .filter((value): value is number => value !== undefined);
-  const apparentTemperatures = nextDay
-    .map((item) => item.apparentTemperature)
-    .filter((value): value is number => value !== undefined);
-
-  return {
-    ...forecast.current,
-    minTemperature:
-      temperatures.length === 0 ? undefined : Math.min(...temperatures),
-    maxTemperature:
-      temperatures.length === 0 ? undefined : Math.max(...temperatures),
-    apparentTemperature:
-      apparentTemperatures.length === 0
-        ? forecast.current.apparentTemperature
-        : Math.max(...apparentTemperatures),
-    precipitationProbability: maximum(
-      nextDay.map((item) => item.precipitationProbability ?? 0),
-    ),
-    precipitationAmount: nextDay.reduce(
-      (sum, item) => sum + (item.precipitationAmount ?? 0),
-      0,
-    ),
-    snowProbability: maximum(
-      nextDay.map((item) => item.snowProbability ?? 0),
-    ),
-    snowfallAmount: nextDay.reduce(
-      (sum, item) => sum + (item.snowfallAmount ?? 0),
-      0,
-    ),
-  };
-}
-
 export function buildTimeline(hourly: WeatherSnapshot[]) {
   const offsets = [0, 3, 6, 9, 12];
   return offsets
@@ -182,10 +158,10 @@ export function buildTimeline(hourly: WeatherSnapshot[]) {
     .filter((item): item is WeatherSnapshot => item !== undefined)
     .map((item) => {
       const recommendations = recommendationsForSnapshot(item);
-      const hour = item.observedAt.slice(11, 13);
+      const hour = (item.forecastAt ?? item.observedAt).slice(11, 13);
       return {
         timeLabel: hour,
-        stateLabel: timelineStateLabel(recommendations, hour),
+        stateLabel: timelineStateLabel(recommendations),
         detail: timelineDetail(item),
         recommendations,
       };
@@ -194,25 +170,21 @@ export function buildTimeline(hourly: WeatherSnapshot[]) {
 
 function timelineStateLabel(
   recommendations: Recommendation[],
-  hour: string,
 ): string {
   const recommendation = recommendations[0]?.type;
   const labels: Partial<Record<Recommendation['type'], string>> = {
-    UMBRELLA: '우산 챙기기 좋은 때',
-    PARASOL: '햇볕 대비하기 좋은 때',
-    HEAVY_SNOW_CAUTION: '이동 준비를 살피기 좋은 때',
-    OUTERWEAR: '겉옷 챙기기 좋은 때',
-    MASK: '마스크 챙기기 좋은 때',
-    WATER: '수분 챙기기 좋은 때',
-    SUNSCREEN: '햇볕 대비하기 좋은 때',
+    UMBRELLA: '비가 예보됐어요',
+    PARASOL: '자외선지수가 높게 예보됐어요',
+    HEAVY_SNOW_CAUTION: '많은 눈이 예보됐어요',
+    OUTERWEAR: '기온이 낮게 예보됐어요',
+    MASK: '대기질이 나쁨 단계예요',
+    WATER: '예상 체감온도가 높게 계산됐어요',
+    SUNSCREEN: '자외선지수가 높게 예보됐어요',
   };
   if (recommendation && labels[recommendation]) {
     return labels[recommendation];
   }
-  const hourNumber = Number(hour);
-  return hourNumber >= 6 && hourNumber < 18
-    ? '바깥 날씨 확인하기 좋은 때'
-    : '귀가 날씨 확인하기 좋은 때';
+  return '시간별 예보를 확인하세요';
 }
 
 function timelineDetail(snapshot: WeatherSnapshot): string {
@@ -220,7 +192,7 @@ function timelineDetail(snapshot: WeatherSnapshot): string {
     snapshot.skyCondition ?? '날씨 정보 확인 중',
     snapshot.temperature === undefined
       ? null
-      : `${snapshot.temperature.toFixed(1)}°`,
+      : `예상기온 ${snapshot.temperature.toFixed(1)}℃`,
     `강수확률 ${Math.round(snapshot.precipitationProbability ?? 0)}%`,
   ];
   return pieces.filter((piece): piece is string => piece !== null).join(' · ');

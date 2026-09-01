@@ -185,6 +185,7 @@ export function runWeatherRuleEngineForHourly(
 
   addTemperatureFacts(facts, snapshots, config);
   addHumidityFacts(facts, snapshots, config);
+  addNightWeatherFacts(facts, snapshots, config);
   facts.push(
     ...snapshots.flatMap((snapshot) => applyAirQualityRule(snapshot, config)),
   );
@@ -445,6 +446,41 @@ function addHumidityFacts(
       factForRun(WeatherRuleFactType.HUMIDITY_LOW, run, 70, {
         maximumHumidity: Math.max(...run.map((item) => item.humidity ?? 0)),
       }),
+    );
+  }
+}
+
+function addNightWeatherFacts(
+  facts: WeatherRuleFact[],
+  snapshots: WeatherSnapshot[],
+  config: RuleConfig,
+): void {
+  const nightSnapshots = snapshots.filter((snapshot) => {
+    const hour = Number(snapshotTime(snapshot).slice(11, 13));
+    return hour >= 18 || hour < 7;
+  });
+  for (const run of findRuns(
+    nightSnapshots,
+    (snapshot) =>
+      (snapshot.temperature ?? -Infinity) >=
+        config.heat.warmNightTemperature &&
+      (snapshot.humidity ?? -Infinity) >= config.humidity.high,
+    2,
+  )) {
+    facts.push(
+      factForRun(
+        WeatherRuleFactType.WARM_HUMID_NIGHT_FORECAST,
+        run,
+        65,
+        {
+          minimumTemperature: Math.min(
+            ...run.map((item) => item.temperature ?? Infinity),
+          ),
+          minimumHumidity: Math.min(
+            ...run.map((item) => item.humidity ?? Infinity),
+          ),
+        },
+      ),
     );
   }
 }

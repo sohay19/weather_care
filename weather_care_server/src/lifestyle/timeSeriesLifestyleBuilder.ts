@@ -135,7 +135,15 @@ function sourceFactsForOutdoorRisk(
   snapshot: WeatherSnapshot,
 ): WeatherRuleFactType[] {
   const facts: WeatherRuleFactType[] = [];
-  if (isWetSnapshot(snapshot)) facts.push(WeatherRuleFactType.RAIN_LIKELY);
+  if (
+    snapshot.precipitationType === 'SNOW' ||
+    snapshot.precipitationType === 'RAIN_SNOW' ||
+    snapshot.snowExpected === true
+  ) {
+    facts.push(WeatherRuleFactType.SNOW_LIKELY);
+  } else if (isWetSnapshot(snapshot)) {
+    facts.push(WeatherRuleFactType.RAIN_LIKELY);
+  }
   if ((snapshot.windSpeed ?? 0) >= 9) {
     facts.push(WeatherRuleFactType.STRONG_WIND);
   }

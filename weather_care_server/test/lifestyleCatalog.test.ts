@@ -31,7 +31,7 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(umbrella).toEqual(
       expect.objectContaining({
         decisionVersion: 'weather-rules-1.1.0',
-        catalogVersion: 'ko-KR-2026.08.2',
+        catalogVersion: 'ko-KR-2026.09.1',
         reasonCodes: expect.arrayContaining(['RAIN_LIKELY']),
         sourceFields: expect.arrayContaining(['precipitationType']),
       }),
@@ -45,7 +45,7 @@ describe('Lifestyle v1.1 catalog', () => {
       { validFrom: '오후 2시', validTo: '오후 4시' },
     );
     expect(rendered.description).toBe(
-      '외출을 계획한다면 앞뒤 시간의 강수예보도 확인하세요.',
+      '오후 2시부터 오후 4시까지 비가 잠시 그칠 수 있어요.',
     );
 
     const fallback = lifestyleMessageFor(
@@ -80,7 +80,36 @@ describe('Lifestyle v1.1 catalog', () => {
 
     expect(messages).toHaveLength(1);
     expect(messages[0].type).toBe(LifestyleInsightType.RAIN_GEAR_USEFUL);
-    expect(messages[0].score).toBe(90);
+    expect(messages[0].priority).toBe(90);
+  });
+
+  it('orders action, impact, and official fact by message role', () => {
+    const hourly = [
+      snapshot(14, {
+        precipitationProbability: 70,
+        precipitationType: 'RAIN',
+      }),
+      snapshot(15, {
+        precipitationProbability: 70,
+        precipitationType: 'RAIN',
+      }),
+    ];
+    const facts = runWeatherRuleEngineForHourly(hourly);
+    const insights = runLifestyleWeatherEngine(facts, hourly);
+    const rain = buildLifestyleMessages(
+      insights,
+      facts,
+      hourly,
+      '수원',
+    ).find((item) => item.type === LifestyleInsightType.RAIN_GEAR_USEFUL);
+
+    expect(rain?.parts.map((part) => part.role)).toEqual([
+      'APP_SUGGESTION',
+      'INTERNAL_POSSIBILITY',
+      'OFFICIAL_FACT',
+    ]);
+    expect(rain?.parts[2].text).toContain('기상청은 수원의');
+    expect(rain?.parts[2].text).toContain('강수확률을 70%로 예보했어요');
   });
 
   it('does not emit indoor, vehicle, or sleep judgments from weather data', () => {

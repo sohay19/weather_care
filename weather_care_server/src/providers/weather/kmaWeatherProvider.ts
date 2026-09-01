@@ -261,6 +261,12 @@ function snapshotFromSlot(
   const snowExpected = isSnowType(precipitationCode) ||
     (snowfallAmountRange?.min ?? 0) > 0;
   const forecastAt = kmaSlotToIso(slotKey);
+  const calculatedApparentTemperature = apparentTemperature(
+    temperature,
+    humidity,
+    windSpeed,
+    forecastAt,
+  );
   const qualityFlags = [
     ifUndefined(categories.get('PCP'), 'MISSING_PCP'),
     ifUndefined(categories.get('SNO'), 'MISSING_SNO'),
@@ -268,18 +274,22 @@ function snapshotFromSlot(
 
   return {
     observedAt: forecastAt,
+    dataRole: 'FORECAST',
     forecastAt,
     validFrom: forecastAt,
     validTo: endOfKmaSlot(forecastAt),
     issuedAt: kmaBaseToIso(base),
     fetchedAt: fetchedAt.toISOString(),
     temperature,
-    apparentTemperature: apparentTemperature(
-      temperature,
-      humidity,
-      windSpeed,
-      forecastAt,
-    ),
+    apparentTemperature: calculatedApparentTemperature,
+    apparentTemperatureSource:
+      calculatedApparentTemperature === undefined
+        ? undefined
+        : 'APP_KMA_METHOD_FROM_FORECAST',
+    apparentTemperatureFormulaVersion:
+      calculatedApparentTemperature === undefined
+        ? undefined
+        : 'KMA_APPARENT_TEMPERATURE_2026.1',
     humidity,
     windSpeed,
     windDirection: numericValue(categories.get('VEC')),
@@ -569,7 +579,22 @@ function apparentTemperature(
   humidity?: number,
   windSpeed?: number,
   forecastAt?: string,
-): number {
+): number | undefined {
+  const month = forecastAt === undefined
+    ? undefined
+    : Number(forecastAt.slice(5, 7));
+  const summerInputsAvailable =
+    month !== undefined &&
+    month >= 5 &&
+    month <= 9 &&
+    humidity !== undefined;
+  const winterInputsAvailable =
+    month !== undefined &&
+    (month >= 10 || month <= 4) &&
+    temperature <= 10 &&
+    windSpeed !== undefined &&
+    windSpeed >= 1.3;
+  if (!summerInputsAvailable && !winterInputsAvailable) return undefined;
   return calculateKmaApparentTemperature(
     temperature,
     humidity,

@@ -259,6 +259,10 @@ function enrichSnapshot(
     uvIndex,
     pm10: airQuality?.pm10 ?? snapshot.pm10,
     pm25: airQuality?.pm25 ?? snapshot.pm25,
+    airQualityStationName:
+      airQuality?.stationName ?? snapshot.airQualityStationName,
+    airQualityObservedAt:
+      airQuality?.observedAt ?? snapshot.airQualityObservedAt,
     airQualityGrade:
       airQuality?.airQualityGrade ?? snapshot.airQualityGrade,
     ozone: airQuality?.ozone ?? snapshot.ozone,

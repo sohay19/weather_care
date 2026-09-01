@@ -17,6 +17,7 @@ export interface RuleConfig {
     actionApparentTemperature: number;
     immediateActionApparentTemperature: number;
     releaseApparentTemperature: number;
+    warmNightTemperature: number;
   };
   cold: {
     temperature: number;
@@ -35,13 +36,13 @@ export const defaultRuleConfig: RuleConfig = {
     minProbability: 40,
     minAmount: 0.5,
     heavyProbability: 70,
-    heavyAmount: 5,
-    instantHeavyAmount: 10,
+    heavyAmount: 15,
+    instantHeavyAmount: 30,
   },
   snow: {
     minAmount: 0,
-    heavyHourlyAmount: 1,
-    heavyThreeHourAmount: 3,
+    heavyHourlyAmount: 5,
+    heavyThreeHourAmount: 5,
   },
   uv: { highThreshold: 6, veryHighThreshold: 8 },
   heat: {
@@ -49,6 +50,7 @@ export const defaultRuleConfig: RuleConfig = {
     actionApparentTemperature: 33,
     immediateActionApparentTemperature: 35,
     releaseApparentTemperature: 31,
+    warmNightTemperature: 25,
   },
   cold: {
     temperature: 12,
@@ -56,7 +58,7 @@ export const defaultRuleConfig: RuleConfig = {
     diurnalRange: 8,
     apparentGap: 4,
   },
-  wind: { caution: 6, high: 9 },
+  wind: { caution: 9, high: 14 },
   airQuality: { pm10: 81, pm25: 36, gradeBad: ['Bad', 'Very Bad'] },
   humidity: { high: 80, low: 35 },
   series: { generalSlots: 2 },

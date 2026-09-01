@@ -47,6 +47,7 @@ export function runRecommendationEngine(
   ]);
 
   const recs: Recommendation[] = [];
+  const allInsightTypes = insights.map((item) => item.type);
   for (const insight of insights) {
     const t = INSIGHT_TO_RECOMMENDATION[insight.type];
     if (!t || !allTypes.has(t)) continue;
@@ -68,17 +69,15 @@ export function runRecommendationEngine(
       recommended: !!enabled[t],
       priority: Math.min(100, Math.max(10, insight.score)),
       title: titleFor(t),
-      description: descriptionFor(t, [insight.type]),
+      description: descriptionFor(t, allInsightTypes),
       reasonCodes,
       validFrom,
       validUntil,
       notificationEligible: t !== 'OUTERWEAR' || insight.score >= 70,
-      level: recommendationLevel(insight.score),
-      score: insight.score,
       reasons: [reasonLabel(insight.type)],
       sourceFields: sourceFieldsFor(insight),
       actionDeadline,
-      providerRefs: ['KMA'],
+      providerRefs: providerRefsFor(insight),
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
     });
@@ -97,26 +96,34 @@ function stringContext(
   return typeof value === 'string' ? value : undefined;
 }
 
-function recommendationLevel(
-  score: number,
-): 'NONE' | 'INFO' | 'CAUTION' | 'WARNING' | 'DANGER' {
-  if (score >= 95) return 'DANGER';
-  if (score >= 90) return 'WARNING';
-  if (score >= 70) return 'CAUTION';
-  if (score >= 40) return 'INFO';
-  return 'NONE';
-}
-
 function reasonLabel(type: LifestyleInsight['type']): string {
   return {
     RAIN_GEAR_USEFUL: '비가 예상되는 시간대가 있어요.',
-    STRONG_SUN_EXPOSURE: '햇볕과 더위가 함께 강해요.',
+    STRONG_SUN_EXPOSURE: '자외선지수가 높게 예보됐어요.',
     SNOW_TRAVEL_CAUTION: '눈이 예상되는 시간대가 있어요.',
-    OUTERWEAR_USEFUL: '기온이나 체감온도가 낮아요.',
-    MASK_USEFUL: '대기질이 좋지 않은 시간이 있어요.',
-    HYDRATION_IMPORTANT: '체감온도가 높은 시간이 이어져요.',
-    SUNSCREEN_USEFUL: '자외선이 강한 시간이 있어요.',
+    OUTERWEAR_USEFUL: '기온이 낮거나 예상 체감온도가 낮게 계산됐어요.',
+    MASK_USEFUL: '미세먼지나 초미세먼지가 나쁨 단계예요.',
+    HYDRATION_IMPORTANT: '예상 체감온도가 높은 시간이 있어요.',
+    SUNSCREEN_USEFUL: '자외선지수가 높게 예보됐어요.',
   }[type] ?? '날씨 변화에 대비가 필요해요.';
+}
+
+function providerRefsFor(insight: LifestyleInsight): string[] {
+  if (
+    insight.sourceFacts.some((fact) =>
+      [
+        WeatherRuleFactType.AIR_QUALITY_BAD,
+        WeatherRuleFactType.PM10_HIGH,
+        WeatherRuleFactType.PM25_HIGH,
+      ].includes(fact),
+    )
+  ) {
+    return ['AIR_KOREA'];
+  }
+  if (insight.sourceFacts.includes(WeatherRuleFactType.UV_HIGH)) {
+    return ['KMA_LIFE_WEATHER_INDEX'];
+  }
+  return ['KMA_VILLAGE_FORECAST'];
 }
 
 function sourceFieldsFor(insight: LifestyleInsight): string[] {

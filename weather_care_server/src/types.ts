@@ -26,6 +26,7 @@ export enum WeatherRuleFactType {
   STRONG_WIND = 'STRONG_WIND',
   RAPID_TEMPERATURE_DROP = 'RAPID_TEMPERATURE_DROP',
   HUMIDITY_LOW = 'HUMIDITY_LOW',
+  WARM_HUMID_NIGHT_FORECAST = 'WARM_HUMID_NIGHT_FORECAST',
 }
 
 export enum LifestyleInsightType {
@@ -47,6 +48,7 @@ export enum LifestyleInsightType {
   LAUNDRY_PICKUP_DUE = 'LAUNDRY_PICKUP_DUE',
   WINDOW_CLOSE_SOON = 'WINDOW_CLOSE_SOON',
   RAPID_TEMPERATURE_DROP = 'RAPID_TEMPERATURE_DROP',
+  NIGHT_WEATHER_CHECK = 'NIGHT_WEATHER_CHECK',
 }
 
 export type PrecipitationType =
@@ -81,6 +83,7 @@ export interface WeatherWarning {
 
 export interface WeatherSnapshot {
   observedAt: string;
+  dataRole?: 'FORECAST' | 'OBSERVATION' | 'ANALYSIS';
   forecastAt?: string;
   validFrom?: string;
   validTo?: string;
@@ -88,6 +91,11 @@ export interface WeatherSnapshot {
   fetchedAt?: string;
   temperature?: number;
   apparentTemperature?: number;
+  apparentTemperatureSource?:
+    | 'APP_KMA_METHOD_FROM_FORECAST'
+    | 'APP_KMA_METHOD_FROM_OBSERVATION'
+    | 'OFFICIAL_KMA_VALUE';
+  apparentTemperatureFormulaVersion?: string;
   minTemperature?: number;
   maxTemperature?: number;
   humidity?: number;
@@ -107,6 +115,8 @@ export interface WeatherSnapshot {
   skyCondition?: string;
   pm10?: number;
   pm25?: number;
+  airQualityStationName?: string;
+  airQualityObservedAt?: string;
   airQualityGrade?: string;
   ozone?: number;
   ozoneGrade?: string;
@@ -145,8 +155,6 @@ export interface Recommendation {
   validFrom?: string;
   validUntil?: string;
   notificationEligible: boolean;
-  level?: 'NONE' | 'INFO' | 'CAUTION' | 'WARNING' | 'DANGER';
-  score?: number;
   reasons?: string[];
   sourceFields?: string[];
   actionDeadline?: string;
@@ -198,6 +206,21 @@ export interface EnvironmentalSourceStatus {
   reason?: 'PROVIDER_UNAVAILABLE' | 'UNSUPPORTED_REGION';
 }
 
+export type WeatherMessageRole =
+  | 'APP_SUGGESTION'
+  | 'INTERNAL_POSSIBILITY'
+  | 'OFFICIAL_FACT'
+  | 'CALCULATED_FACT'
+  | 'DATA_STATUS';
+
+export interface WeatherMessagePart {
+  role: WeatherMessageRole;
+  text: string;
+  source?: string;
+  validFrom?: string;
+  validUntil?: string;
+}
+
 export interface TodayWeatherResponse {
   dataSource: string;
   region: { nx: number; ny: number; name: string };
@@ -209,8 +232,10 @@ export interface TodayWeatherResponse {
     type: LifestyleInsightType;
     title: string;
     description?: string;
-    score: number;
+    priority: number;
+    parts: WeatherMessagePart[];
   }[];
+  dataStatusMessages: WeatherMessagePart[];
   timeline: {
     timeLabel: string;
     stateLabel: string;

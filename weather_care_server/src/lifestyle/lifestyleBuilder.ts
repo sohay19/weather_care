@@ -5,12 +5,11 @@ export function deriveInsightFromRules(facts: WeatherRuleFact[]): LifestyleInsig
   const score = (type: WeatherRuleFactType) => facts.find((f) => f.type === type)?.severity ?? 0;
 
   const result: LifestyleInsight[] = [];
-  if (has(WeatherRuleFactType.UV_HIGH) && has(WeatherRuleFactType.TEMPERATURE_HIGH)) {
+  if (has(WeatherRuleFactType.UV_HIGH)) {
     result.push({
       type: LifestyleInsightType.STRONG_SUN_EXPOSURE,
       score: Math.max(score(WeatherRuleFactType.UV_HIGH), score(WeatherRuleFactType.TEMPERATURE_HIGH)),
-      sourceFacts: [WeatherRuleFactType.UV_HIGH, WeatherRuleFactType.TEMPERATURE_HIGH],
-      context: { reason: 'UV and heat combined' },
+      sourceFacts: [WeatherRuleFactType.UV_HIGH],
     });
   }
   if (has(WeatherRuleFactType.UV_HIGH)) {
@@ -120,14 +119,6 @@ export function enrichAdditionalInsights(facts: WeatherRuleFact[]): LifestyleIns
     });
   }
 
-  if (has(WeatherRuleFactType.COLD_STRESS_RISK)) {
-    extra.push({
-      type: LifestyleInsightType.COOLER_THAN_TEMPERATURE,
-      score: pick(WeatherRuleFactType.COLD_STRESS_RISK),
-      sourceFacts: [WeatherRuleFactType.COLD_STRESS_RISK],
-    });
-  }
-
   if (has(WeatherRuleFactType.LARGE_DIURNAL_RANGE)) {
     extra.push({
       type: LifestyleInsightType.LARGE_TEMPERATURE_SWING,
@@ -149,6 +140,13 @@ export function enrichAdditionalInsights(facts: WeatherRuleFact[]): LifestyleIns
       type: LifestyleInsightType.RAPID_TEMPERATURE_DROP,
       score: pick(WeatherRuleFactType.RAPID_TEMPERATURE_DROP),
       sourceFacts: [WeatherRuleFactType.RAPID_TEMPERATURE_DROP],
+    });
+  }
+  if (has(WeatherRuleFactType.WARM_HUMID_NIGHT_FORECAST)) {
+    extra.push({
+      type: LifestyleInsightType.NIGHT_WEATHER_CHECK,
+      score: pick(WeatherRuleFactType.WARM_HUMID_NIGHT_FORECAST),
+      sourceFacts: [WeatherRuleFactType.WARM_HUMID_NIGHT_FORECAST],
     });
   }
   return extra;

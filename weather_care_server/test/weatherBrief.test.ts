@@ -2,78 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWeatherBrief,
   buildWeatherBriefResult,
-  DIRECT_WEATHER_EXPRESSION_PATTERN,
 } from '../src/presentation/weatherBrief';
-import {
-  WEATHER_BRIEF_SLOT_OPTIONS,
-  WEATHER_BRIEF_TEMPLATES,
-} from '../src/presentation/weatherBriefCatalog';
 import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
 
-describe('weather brief catalog', () => {
-  it('contains exactly 20 complete templates', () => {
-    expect(WEATHER_BRIEF_TEMPLATES).toHaveLength(20);
-    expect(
-      new Set(WEATHER_BRIEF_TEMPLATES.map((template) => template.id)).size,
-    ).toBe(20);
-    expect(
-      new Set(WEATHER_BRIEF_TEMPLATES.map((template) => template.scene)),
-    ).toEqual(
-      new Set([
-        'WET_TRAVEL',
-        'CAREFUL_STEPS',
-        'MASK_READY',
-        'SHADE_BREAK',
-        'LAYER_READY',
-        'STEADY_PACE',
-        'DAILY_RHYTHM',
-      ]),
-    );
-
-    for (const template of WEATHER_BRIEF_TEMPLATES) {
-      const placeholders = Array.from(
-        template.text.matchAll(/\{([a-zA-Z]+)\}/g),
-        (match) => match[1],
-      );
-      expect(placeholders.sort()).toEqual([...template.slots].sort());
-      expect(template.slots).toHaveLength(3);
-    }
-  });
-
-  it('provides exactly 10 unique replacements for every slot', () => {
-    for (const options of Object.values(WEATHER_BRIEF_SLOT_OPTIONS)) {
-      expect(options).toHaveLength(10);
-      expect(new Set(options).size).toBe(10);
-      expect(options.every((option) => option.trim().length > 0)).toBe(true);
-    }
-  });
-
-  it('keeps direct weather facts out of every template and slot', () => {
-    for (const template of WEATHER_BRIEF_TEMPLATES) {
-      expect(template.text).not.toMatch(DIRECT_WEATHER_EXPRESSION_PATTERN);
-    }
-    for (const options of Object.values(WEATHER_BRIEF_SLOT_OPTIONS)) {
-      for (const option of options) {
-        expect(option).not.toMatch(DIRECT_WEATHER_EXPRESSION_PATTERN);
-      }
-    }
-  });
-
-  it('keeps even the longest slot combination within 47 characters', () => {
-    for (const template of WEATHER_BRIEF_TEMPLATES) {
-      let rendered = template.text;
-      for (const slot of template.slots) {
-        const longest = [...WEATHER_BRIEF_SLOT_OPTIONS[slot]].sort(
-          (left, right) => right.length - left.length,
-        )[0];
-        rendered = rendered.replaceAll(`{${slot}}`, longest);
-      }
-      expect(rendered.length, template.id).toBeLessThanOrEqual(47);
-    }
-  });
-
-  it('describes upcoming rain indirectly with an umbrella scene', () => {
+describe('weather brief policy', () => {
+  it('puts the reason before a conditional umbrella action', () => {
     const result = buildWeatherBriefResult(
       forecast([
         snapshot(12),
@@ -82,31 +16,36 @@ describe('weather brief catalog', () => {
           precipitationProbability: 70,
         }),
       ]),
-      { regionKey: '60:121' },
     );
 
     expect(result.scene).toBe('WET_TRAVEL');
-    expect(result.slots.eventTime).toBe('퇴근길');
-    expect(result.text).toContain('우산');
-    expect(result.text).not.toMatch(DIRECT_WEATHER_EXPRESSION_PATTERN);
-    expect(result.text).not.toMatch(/\{[^}]+\}/);
+    expect(result.slots.eventTime).toBe('오후 6시');
+    expect(result.text).toBe(
+      '비가 올 수 있으니, 오후 6시 외출한다면 우산을 챙기세요',
+    );
+    expect(result.text).not.toMatch(/출근길|퇴근길|안전해요|좋은 때/);
   });
 
-  it('uses the same 40 percent rain preparation threshold as the rule engine', () => {
-    const result = buildWeatherBriefResult(
+  it('uses the official shower name only for a shower code', () => {
+    const shower = buildWeatherBriefResult(
       forecast([
-        snapshot(12, {
-          precipitationProbability: 40,
+        snapshot(15, {
+          precipitationType: 'SHOWER',
+          precipitationProbability: 60,
         }),
       ]),
-      { regionKey: '60:121' },
+    );
+    const rain = buildWeatherBriefResult(
+      forecast([snapshot(15, { precipitationProbability: 60 })]),
     );
 
-    expect(result.scene).toBe('WET_TRAVEL');
+    expect(shower.text).toContain('소나기가 내릴 수 있으니');
+    expect(rain.text).toContain('비가 올 수 있으니');
+    expect(rain.text).not.toContain('소나기');
   });
 
-  it('selects the matching indirect scene for each important condition', () => {
-    const scenarios: [WeatherForecast, string][] = [
+  it('selects a grounded action for each supported condition', () => {
+    const scenarios: Array<[WeatherForecast, string, RegExp]> = [
       [
         forecast([
           snapshot(7, {
@@ -115,59 +54,52 @@ describe('weather brief catalog', () => {
           }),
         ]),
         'CAREFUL_STEPS',
+        /도로 상태와 대중교통 운행정보를 확인하세요/,
       ],
-      [forecast([snapshot(12)], { pm25: 50 }), 'MASK_READY'],
+      [forecast([snapshot(12)], { pm25: 50 }), 'MASK_READY', /마스크/],
       [
-        forecast([snapshot(14, { apparentTemperature: 31 })]),
+        forecast([snapshot(14, { apparentTemperature: 33 })]),
         'SHADE_BREAK',
+        /물을 준비하세요/,
+      ],
+      [
+        forecast([snapshot(14, { uvIndex: 7 })]),
+        'SHADE_BREAK',
+        /양산이나 모자를 준비하세요/,
       ],
       [
         forecast([snapshot(6, { apparentTemperature: 4 })]),
         'LAYER_READY',
+        /겉옷을 준비하세요/,
       ],
-      [forecast([snapshot(15, { windSpeed: 8 })]), 'STEADY_PACE'],
-      [forecast([snapshot(12)]), 'DAILY_RHYTHM'],
+      [
+        forecast([snapshot(15, { windSpeed: 9 })]),
+        'STEADY_PACE',
+        /소지품을 단단히 고정하세요/,
+      ],
+      [
+        forecast([snapshot(12)]),
+        'DAILY_RHYTHM',
+        /시간별 예보를 확인하세요/,
+      ],
     ];
 
-    for (const [input, scene] of scenarios) {
-      const result = buildWeatherBriefResult(input, {
-        regionKey: '60:121',
-      });
+    for (const [input, scene, action] of scenarios) {
+      const result = buildWeatherBriefResult(input);
       expect(result.scene).toBe(scene);
-      expect(result.text).not.toMatch(DIRECT_WEATHER_EXPRESSION_PATTERN);
-      expect(result.text).not.toMatch(/\{[^}]+\}/);
+      expect(result.text).toMatch(action);
     }
   });
 
-  it('keeps the same brief for the same date, region and scene', () => {
+  it('keeps the same brief for the same weather input', () => {
     const input = forecast([
       snapshot(18, {
         precipitationType: 'RAIN',
         precipitationProbability: 70,
       }),
     ]);
-    const context = { regionKey: '60:121' };
 
-    expect(buildWeatherBrief(input, context)).toBe(
-      buildWeatherBrief(input, context),
-    );
-  });
-
-  it('does not repeat the same sentence during a seven-day rotation', () => {
-    const input = forecast([
-      snapshot(18, {
-        precipitationType: 'RAIN',
-        precipitationProbability: 70,
-      }),
-    ]);
-    const briefs = Array.from({ length: 7 }, (_, index) =>
-      buildWeatherBrief(input, {
-        regionKey: '60:121',
-        dateKey: `202608${String(21 + index).padStart(2, '0')}`,
-      }),
-    );
-
-    expect(new Set(briefs).size).toBe(7);
+    expect(buildWeatherBrief(input)).toBe(buildWeatherBrief(input));
   });
 });
 

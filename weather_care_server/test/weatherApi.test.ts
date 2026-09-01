@@ -30,9 +30,11 @@ describe('today timeline', () => {
       '15',
       '18',
     ]);
-    expect(timeline.every((item) => item.stateLabel.endsWith('좋은 때'))).toBe(
-      true,
-    );
+    expect(
+      timeline.every(
+        (item) => item.stateLabel === '시간별 예보를 확인하세요',
+      ),
+    ).toBe(true);
   });
 });
 

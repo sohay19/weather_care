@@ -21,7 +21,7 @@ export const lifestyleMessageCatalog: Record<
     },
     {
       title: '비가 내릴 수 있으니, 외출할 계획이라면 우산을 챙기세요',
-      description: '시간별 강수예보를 함께 확인하세요.',
+      description: '강수 시간에 우산이 없으면 옷이나 신발이 젖을 수 있어요.',
     },
   ],
   STRONG_SUN_EXPOSURE: [
@@ -32,16 +32,16 @@ export const lifestyleMessageCatalog: Record<
   ],
   OUTERWEAR_USEFUL: [
     {
-      title: '쌀쌀할 수 있으니, 외출한다면 겉옷을 준비하세요',
-      description: '바람이 불면 예보기온보다 춥다고 느낄 수도 있어요.',
+      title: '기온이 낮거나 바람이 강할 수 있으니, 외출한다면 겉옷을 준비하세요',
+      description: '실외에서는 예보기온보다 예상 체감온도가 낮을 수 있어요.',
     },
     {
-      title: '찬 기운을 느낄 수 있으니, 외출 전에 겉옷을 챙기세요',
-      description: '기온과 예상 체감온도를 함께 확인했어요.',
+      title: '예상 체감온도가 낮을 수 있으니, 외출 전에 겉옷을 챙기세요',
+      description: '바람이 불면 몸에서 열이 더 빠르게 빠져나갈 수 있어요.',
     },
     {
-      title: '바깥 공기가 차게 느껴질 수 있으니, 벗어 들기 쉬운 겉옷을 준비하세요',
-      description: '시간대별 체감 차이가 날 수 있어요.',
+      title: '시간대별 기온 차가 클 수 있으니, 벗어 들기 쉬운 겉옷을 준비하세요',
+      description: '앞뒤 시간의 예상 체감온도에 차이가 날 수 있어요.',
     },
   ],
   MASK_USEFUL: [
@@ -70,30 +70,30 @@ export const lifestyleMessageCatalog: Record<
   ],
   VERY_HOT_AND_HUMID: [
     {
-      title: '후텁지근하게 느껴질 수 있어요',
-      description: '더운 시간에 외출한다면 물을 준비하고 중간에 쉬세요.',
+      title: '더운 시간에 외출한다면 물을 준비하고 중간에 쉬세요',
+      description: '후텁지근하게 느껴질 수 있어요.',
     },
     {
-      title: '더운 공기와 습함이 느껴질 수 있어요',
-      description: '실외활동을 계획한다면 시간이나 강도를 줄이세요.',
+      title: '실외활동을 계획한다면 시간이나 강도를 줄이세요',
+      description: '더운 공기와 습함이 느껴질 수 있어요.',
     },
     {
-      title: '덥고 습하다고 느낄 수도 있어요',
-      description: '가능하다면 더위가 덜한 시간대로 활동을 옮기세요.',
+      title: '가능하다면 더위가 덜한 시간대로 활동을 옮기세요',
+      description: '덥고 습하다고 느낄 수도 있어요.',
     },
   ],
   COOLER_THAN_TEMPERATURE: [
     {
-      title: '예보기온보다 쌀쌀하게 느껴질 수 있어요',
-      description: '찬 바람을 막을 수 있는 겉옷을 준비하세요.',
+      title: '바람이 강할 수 있으니, 외출한다면 겉옷을 준비하세요',
+      description: '예보기온보다 예상 체감온도가 낮을 수 있어요.',
     },
     {
-      title: '바깥 공기에서 뚜렷한 찬 기운을 느낄 수도 있어요',
-      description: '외출한다면 모자나 목도리도 함께 준비하세요.',
+      title: '예상 체감온도가 낮을 수 있으니, 외출한다면 모자나 목도리를 준비하세요',
+      description: '바람이 불면 몸에서 열이 더 빠르게 빠져나갈 수 있어요.',
     },
     {
-      title: '바람 때문에 조금 춥다고 느낄 수도 있어요',
-      description: '예상 체감온도를 확인하고 옷차림을 준비하세요.',
+      title: '기온과 바람을 확인하고 외출할 옷을 준비하세요',
+      description: '예보기온과 예상 체감온도에 차이가 날 수 있어요.',
     },
   ],
   LARGE_TEMPERATURE_SWING: [
@@ -110,8 +110,8 @@ export const lifestyleMessageCatalog: Record<
   ],
   RAIN_BREAK_WINDOW: [
     {
-      title: '{{validFrom}}부터 {{validTo}}까지 비가 잠시 그칠 수 있어요',
-      description: '외출을 계획한다면 앞뒤 시간의 강수예보도 확인하세요.',
+      title: '외출을 계획한다면 앞뒤 시간의 강수예보를 확인하세요',
+      description: '{{validFrom}}부터 {{validTo}}까지 비가 잠시 그칠 수 있어요.',
     },
   ],
   BEST_OUTING_WINDOW: [
@@ -128,8 +128,8 @@ export const lifestyleMessageCatalog: Record<
   ],
   WET_ROAD_CAUTION: [
     {
-      title: '비가 그친 뒤에도 도로가 젖어 있을 수 있어요',
-      description: '보행하거나 운전한다면 미끄러운 구간을 조심하세요.',
+      title: '비가 그친 뒤 보행하거나 운전한다면 미끄러운 구간을 조심하세요',
+      description: '도로가 젖어 있을 수 있어요.',
     },
   ],
   LAUNDRY_PICKUP_DUE: [
@@ -169,7 +169,13 @@ export const lifestyleMessageCatalog: Record<
   RAPID_TEMPERATURE_DROP: [
     {
       title: '기온이 빠르게 내려갈 수 있으니, 외출한다면 겉옷을 준비하세요',
-      description: '뒤 시간에는 지금보다 춥게 느껴질 수 있어요.',
+      description: '뒤 시간에는 예보기온이 지금보다 낮아질 수 있어요.',
+    },
+  ],
+  NIGHT_WEATHER_CHECK: [
+    {
+      title: '오늘 밤 기온과 습도가 높게 예보됐으니, 잠들기 전에 침실 상태를 확인하고 필요하면 냉방이나 제습으로 조절하세요',
+      description: '',
     },
   ],
 };

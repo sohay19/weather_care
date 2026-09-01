@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 import 'api_client.dart';
+import 'current_location_service.dart';
 
 class NotificationRegistrationService {
   final ApiClient client;
@@ -21,6 +22,7 @@ class NotificationRegistrationService {
     required int nx,
     required int ny,
     required String locationMode,
+    DeviceCoordinates? coordinates,
   }) async {
     try {
       final permission = await messaging.requestPermission(
@@ -38,6 +40,7 @@ class NotificationRegistrationService {
         nx: nx,
         ny: ny,
         locationMode: locationMode,
+        coordinates: coordinates,
       );
 
       await _tokenSubscription?.cancel();
@@ -49,6 +52,7 @@ class NotificationRegistrationService {
             nx: nx,
             ny: ny,
             locationMode: locationMode,
+            coordinates: coordinates,
           ),
         ),
         onError: (Object error) {
@@ -69,6 +73,7 @@ class NotificationRegistrationService {
     required int nx,
     required int ny,
     required String locationMode,
+    DeviceCoordinates? coordinates,
   }) async {
     try {
       final permission = await messaging.getNotificationSettings();
@@ -81,6 +86,7 @@ class NotificationRegistrationService {
         nx: nx,
         ny: ny,
         locationMode: locationMode,
+        coordinates: coordinates,
       );
     } catch (error) {
       log('Installation synchronization failed (${error.runtimeType})');
@@ -93,6 +99,7 @@ class NotificationRegistrationService {
     required int nx,
     required int ny,
     required String locationMode,
+    DeviceCoordinates? coordinates,
   }) async {
     try {
       await client.putJson(
@@ -102,6 +109,8 @@ class NotificationRegistrationService {
           'locationMode': locationMode,
           'platform': defaultTargetPlatform.name,
           'timezone': 'Asia/Seoul',
+          'latitude': coordinates?.latitude,
+          'longitude': coordinates?.longitude,
         },
         query: {'nx': '$nx', 'ny': '$ny'},
       );

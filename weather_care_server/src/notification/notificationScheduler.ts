@@ -5,10 +5,15 @@ import {
 } from '../providers/environmental/environmentalDataService';
 import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
 import { WeatherForecast } from '../providers/weather/weatherProvider';
+import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
-import { NotificationSettings, ServerEnv } from '../types';
+import {
+  CurrentPrecipitationObservation,
+  NotificationSettings,
+  ServerEnv,
+} from '../types';
 import { FcmPayload, FcmSendResult, sendBatch } from './fcmClient';
 import { BuiltNotification, buildNotification } from './notificationBuilder';
 
@@ -27,6 +32,10 @@ interface NotificationInstallationRow {
   waterEnabled: number;
   sunscreenEnabled: number;
   dailyWeatherEnabled: number;
+  showerAndLightRainEnabled: number;
+  latitude: number | null;
+  longitude: number | null;
+  currentRainState: number;
 }
 
 interface PendingNotification {
@@ -34,6 +43,7 @@ interface PendingNotification {
   targetDate: string;
   token: string;
   built: BuiltNotification;
+  rainObservedAt?: string;
 }
 
 interface SchedulerDependencies {
@@ -47,6 +57,11 @@ interface SchedulerDependencies {
     env: ServerEnv,
     payloads: FcmPayload[],
   ) => Promise<FcmSendResult[]>;
+  precipitationLoader?: (
+    env: ServerEnv,
+    latitude: number,
+    longitude: number,
+  ) => Promise<CurrentPrecipitationObservation>;
 }
 
 export async function runRecommendationNotificationJob(
@@ -59,10 +74,22 @@ export async function runRecommendationNotificationJob(
 
   const loadForecast = dependencies.forecastLoader ?? defaultForecastLoader;
   const forecastByRegion = new Map<string, Promise<WeatherForecast>>();
+  const precipitationByLocation = new Map<
+    string,
+    Promise<CurrentPrecipitationObservation>
+  >();
   const pending: PendingNotification[] = [];
 
   for (const row of rows) {
     const local = localNotificationTime(now, row.timezone);
+    await collectCurrentRainNotification(
+      env,
+      row,
+      local.date,
+      pending,
+      precipitationByLocation,
+      dependencies.precipitationLoader ?? defaultPrecipitationLoader,
+    );
     const regionKey = `${row.nx}:${row.ny}`;
     let forecastPromise = forecastByRegion.get(regionKey);
     if (!forecastPromise) {
@@ -146,7 +173,11 @@ async function notificationInstallations(
          COALESCE(s.mask_enabled, 1) AS maskEnabled,
          COALESCE(s.water_enabled, 1) AS waterEnabled,
          COALESCE(s.sunscreen_enabled, 1) AS sunscreenEnabled,
-         COALESCE(s.daily_weather_enabled, 1) AS dailyWeatherEnabled
+         COALESCE(s.daily_weather_enabled, 1) AS dailyWeatherEnabled,
+         COALESCE(s.shower_light_rain_enabled, 1) AS showerAndLightRainEnabled,
+         i.latitude,
+         i.longitude,
+         COALESCE(i.current_rain_state, 0) AS currentRainState
        FROM installations i
        LEFT JOIN notification_settings s
          ON s.installation_id = i.installation_id
@@ -203,6 +234,104 @@ async function defaultSender(
   );
 }
 
+async function defaultPrecipitationLoader(
+  env: ServerEnv,
+  latitude: number,
+  longitude: number,
+): Promise<CurrentPrecipitationObservation> {
+  return new KmaPrecipitationObservationProvider({
+    serviceKey: env.KMA_APIHUB_KEY,
+  }).getCurrentByLocation(latitude, longitude);
+}
+
+async function collectCurrentRainNotification(
+  env: ServerEnv,
+  row: NotificationInstallationRow,
+  targetDate: string,
+  pending: PendingNotification[],
+  precipitationByLocation: Map<
+    string,
+    Promise<CurrentPrecipitationObservation>
+  >,
+  loader: (
+    env: ServerEnv,
+    latitude: number,
+    longitude: number,
+  ) => Promise<CurrentPrecipitationObservation>,
+): Promise<void> {
+  if (row.latitude === null || row.longitude === null) return;
+  if (!env.KMA_APIHUB_KEY) return;
+  const locationKey = `${row.latitude.toFixed(5)}:${row.longitude.toFixed(5)}`;
+  let observationPromise = precipitationByLocation.get(locationKey);
+  if (!observationPromise) {
+    observationPromise = loader(env, row.latitude, row.longitude);
+    precipitationByLocation.set(locationKey, observationPromise);
+  }
+
+  try {
+    const observation = await observationPromise;
+    if (observation.state === 'MISMATCH') return;
+    if (observation.state === 'DRY') {
+      if (row.currentRainState === 1) {
+        await updateCurrentRainState(
+          env.DB,
+          row.installationId,
+          false,
+          observation.observedAt,
+        );
+      }
+      return;
+    }
+    if (row.currentRainState === 1) return;
+    if (row.umbrellaEnabled !== 1 || row.showerAndLightRainEnabled !== 1) {
+      await updateCurrentRainState(
+        env.DB,
+        row.installationId,
+        true,
+        observation.observedAt,
+      );
+      return;
+    }
+    pending.push({
+      installationId: row.installationId,
+      targetDate,
+      token: row.token,
+      built: {
+        notification_key: 'CURRENT_RAIN',
+        title: '현재 강수 안내',
+        body: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+      },
+      rainObservedAt: observation.observedAt,
+    });
+  } catch (error) {
+    logNotificationError('current_rain_build_failed', error, {
+      installationId: row.installationId,
+      locationKey,
+    });
+  }
+}
+
+async function updateCurrentRainState(
+  db: D1Database,
+  installationId: string,
+  raining: boolean,
+  observedAt: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE installations
+       SET current_rain_state = ?, current_rain_observed_at = ?, updated_at = ?
+       WHERE installation_id = ?`,
+    )
+    .bind(
+      raining ? 1 : 0,
+      observedAt,
+      new Date().toISOString(),
+      installationId,
+    )
+    .run();
+}
+
 async function recordResults(
   db: D1Database,
   pending: PendingNotification[],
@@ -229,6 +358,19 @@ async function recordResults(
             `${item.built.title}\n${item.built.body}`.slice(0, 160),
           ),
       );
+      if (item.rainObservedAt) {
+        statements.push(
+          db
+            .prepare(
+              `UPDATE installations
+               SET current_rain_state = 1,
+                   current_rain_observed_at = ?,
+                   updated_at = ?
+               WHERE installation_id = ?`,
+            )
+            .bind(item.rainObservedAt, sentAt, item.installationId),
+        );
+      }
     } else {
       logNotificationError('fcm_send_failed', undefined, {
         installationId: item.installationId,
@@ -311,7 +453,10 @@ function minutesOfDay(value: string): number | undefined {
 }
 
 function logNotificationError(
-  event: 'recommendation_build_failed' | 'fcm_send_failed',
+  event:
+    | 'recommendation_build_failed'
+    | 'current_rain_build_failed'
+    | 'fcm_send_failed',
   error: unknown,
   context: Record<string, string | number>,
 ): void {

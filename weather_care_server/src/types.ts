@@ -191,6 +191,21 @@ export interface Installation {
   platform?: string;
   appVersion?: string;
   timezone: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export type PrecipitationConsensusState = 'RAIN' | 'DRY' | 'MISMATCH';
+
+export interface CurrentPrecipitationObservation {
+  observedAt: string;
+  latitude: number;
+  longitude: number;
+  analysisRainDetected: boolean;
+  radarRainDetected: boolean;
+  state: PrecipitationConsensusState;
+  radarDbz?: number;
+  provider: 'KMA_ANALYSIS_RADAR';
 }
 
 export type ServerEnv = CloudflareBindings;
@@ -230,6 +245,7 @@ export interface TodayWeatherResponse {
   region: { nx: number; ny: number; name: string };
   brief: string;
   current: WeatherSnapshot;
+  currentPrecipitation?: CurrentPrecipitationObservation;
   hourly: WeatherSnapshot[];
   recommendations: Recommendation[];
   lifestyleMessages: {

@@ -8,8 +8,8 @@ export async function upsertInstallation(
   await db
     .prepare(
       `INSERT INTO installations
-       (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, latitude, longitude, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(installation_id) DO UPDATE SET
          fcm_token=excluded.fcm_token,
          nx=excluded.nx,
@@ -19,6 +19,8 @@ export async function upsertInstallation(
          platform=excluded.platform,
          app_version=excluded.app_version,
          timezone=excluded.timezone,
+         latitude=excluded.latitude,
+         longitude=excluded.longitude,
          updated_at=excluded.updated_at`,
     )
     .bind(
@@ -31,6 +33,8 @@ export async function upsertInstallation(
       payload.platform ?? null,
       payload.appVersion ?? null,
       payload.timezone,
+      payload.latitude ?? null,
+      payload.longitude ?? null,
       now,
       now,
     )

@@ -4955,3 +4955,13 @@
 - 커밋은 `bfbde04` 문구 정책 정리, `a014748` 근거 없는 생활상태 판정 제거, `6a74d0b` 서버 역할별 문구·기준, `f2cfe4f` 검증 불가 비교 차단, `35a53a6` 앱 행동 우선 표시, `accb666` 야간 확인조건 근거값 정합화, `af6ecd2` 앱의 검증 불가 비교 조회 제거 순으로 분리했다.
 - 검증: 서버 `npx tsc --noEmit`, 서버 Vitest `9 files / 36 tests`, 앱 `flutter analyze`, 앱 `flutter test` `30 tests`가 모두 통과했다.
 - 사용자 소유의 미추적 `scripts/analyze_precip_sample.py`, `scripts/build_precip_grid_mapping.py`, `scripts/download_precip_sample.mjs`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.
+
+## 2026-09-01 현재 위치 500m 강수 일치 판정 구현
+
+- GPS 모드와 위치 권한이 모두 유효할 때 앱이 현재 위·경도를 Today API와 설치정보에 전달하도록 foreground 위치 조회를 연결했다. MANUAL 모드 또는 권한·위치서비스 미사용 때는 좌표를 보내지 않는다.
+- 기상청 API허브의 고해상도 관측분석 `rn_ox`와 레이더 HSR를 같은 5분 기준시각으로 조회하는 Provider를 추가했다. WGS84 타원체 Lambert 정각원추도법으로 사용자 좌표를 공식 500m 레이더 셀에 매핑하며 기존 526개 관측지점 매핑과 전부 일치함을 확인했다.
+- 관측분석과 레이더가 모두 강수를 나타낼 때만 `비가 내리고 있을 수 있어요` 상태와 `지금 외출한다면 우산을 챙기세요` 행동을 노출한다. 한 자료만 강수이거나 자료가 없으면 판정을 보류하고 출처 괄호는 본문에 붙이지 않는다.
+- 설치별 현재 강수 상태를 D1에 저장해 같은 비가 계속되는 동안 푸시를 반복하지 않고, 두 자료가 모두 무강수로 바뀐 후 다시 일치 강수가 확인될 때 새 알림을 허용한다. 우산 또는 소나기·약한 비 알림이 꺼져 있으면 푸시하지 않는다.
+- `0003_precise_precipitation_location.sql`을 로컬 D1에 적용했다. 운영 전 원격 D1 migration과 API허브 고해상도 격자자료·레이더 활용 권한이 있는 `KMA_APIHUB_KEY` 등록이 필요하다.
+- 검증: 서버 TypeScript 검사, Vitest `14 files / 52 tests`, 앱 분석·테스트 `33 tests`, Android debug APK 빌드를 통과했다.
+- 사용자 소유의 미추적 `scripts/*` 강수분석 파일과 `tmp/` 자료는 수정하거나 커밋하지 않았다.

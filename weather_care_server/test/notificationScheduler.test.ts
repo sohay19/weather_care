@@ -18,6 +18,9 @@ describe('notification scheduler', () => {
           region_topic TEXT NOT NULL, location_mode TEXT NOT NULL,
           platform TEXT, app_version TEXT,
           timezone TEXT NOT NULL DEFAULT 'Asia/Seoul',
+          latitude REAL, longitude REAL,
+          current_rain_state INTEGER NOT NULL DEFAULT 0,
+          current_rain_observed_at TEXT,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(
@@ -33,6 +36,7 @@ describe('notification scheduler', () => {
           water_enabled INTEGER NOT NULL DEFAULT 1,
           sunscreen_enabled INTEGER NOT NULL DEFAULT 1,
           daily_weather_enabled INTEGER NOT NULL DEFAULT 1,
+          shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(
@@ -114,6 +118,52 @@ describe('notification scheduler', () => {
     expect(installation?.fcm_token).toBeNull();
     expect(history?.count).toBe(0);
   });
+
+  it('sends current rain once per rain episode only after both 500m sources agree', async () => {
+    await insertInstallation('device-token', true);
+    const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) =>
+      payloads.map((payload) => ({
+        token: payload.token,
+        notificationKey: payload.notificationKey,
+        success: true,
+        unregistered: false,
+        status: 200,
+      })),
+    );
+    const dependencies = {
+      now: new Date('2026-09-01T12:00:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      precipitationLoader: async () => ({
+        observedAt: '2026-09-01T20:50:00+09:00',
+        latitude: 37.2636,
+        longitude: 127.0286,
+        analysisRainDetected: true,
+        radarRainDetected: true,
+        state: 'RAIN' as const,
+        provider: 'KMA_ANALYSIS_RADAR' as const,
+      }),
+      sender,
+    };
+    const bindings = testBindings('test-apihub-key');
+
+    await runRecommendationNotificationJob(bindings, dependencies);
+    await runRecommendationNotificationJob(bindings, dependencies);
+
+    const currentRainPayloads = sender.mock.calls
+      .flatMap((call) => call[1] as FcmPayload[])
+      .filter((payload) => payload.notificationKey === 'CURRENT_RAIN');
+    expect(currentRainPayloads).toEqual([
+      expect.objectContaining({
+        body: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+      }),
+    ]);
+    const state = await env.DB.prepare(
+      'SELECT current_rain_state AS state FROM installations WHERE installation_id = ?',
+    )
+      .bind('installation-1')
+      .first<{ state: number }>();
+    expect(state?.state).toBe(1);
+  });
 });
 
 describe('notification time slots', () => {
@@ -125,28 +175,34 @@ describe('notification time slots', () => {
   });
 });
 
-async function insertInstallation(token: string): Promise<void> {
+async function insertInstallation(
+  token: string,
+  withCoordinates = false,
+): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO installations
      (installation_id, fcm_token, nx, ny, region_topic, location_mode,
-      timezone, created_at, updated_at)
-     VALUES (?, ?, 60, 121, 'region_60_121', 'GPS', 'Asia/Seoul', ?, ?)`,
+      timezone, latitude, longitude, created_at, updated_at)
+     VALUES (?, ?, 60, 121, 'region_60_121', 'GPS', 'Asia/Seoul', ?, ?, ?, ?)`,
   )
     .bind(
       'installation-1',
       token,
+      withCoordinates ? 37.2636 : null,
+      withCoordinates ? 127.0286 : null,
       '2026-09-01T00:00:00Z',
       '2026-09-01T00:00:00Z',
     )
     .run();
 }
 
-function testBindings(): ServerEnv {
+function testBindings(apiHubKey = ''): ServerEnv {
   return {
     DB: env.DB,
     APP_ORIGIN: 'http://localhost:8787',
     FCM_PROJECT_ID: 'weather-care-2aaa8',
     KMA_SERVICE_KEY: 'test-key',
+    KMA_APIHUB_KEY: apiHubKey,
     FCM_CLIENT_EMAIL: 'test@example.iam.gserviceaccount.com',
     FCM_PRIVATE_KEY: 'test-private-key',
   };

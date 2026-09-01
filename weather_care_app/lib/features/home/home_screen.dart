@@ -13,6 +13,7 @@ import '../../services/installation_identity.dart';
 import '../../services/notification_registration_service.dart';
 import '../../services/settings_sync_service.dart';
 import '../../services/weather_service.dart';
+import '../../services/current_location_service.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
 import 'tabs/detail_tab.dart';
@@ -38,6 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
   WeatherService? _service;
   NotificationRegistrationService? _notificationRegistration;
   SettingsSyncService? _settingsSync;
+  final CurrentLocationService _locationService =
+      const CurrentLocationService();
+  DeviceCoordinates? _coordinates;
   Future<void> _settingsSaveQueue = Future<void>.value();
   int _settingsRevision = 0;
   TodayWeatherResponse? _today;
@@ -65,6 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final savedSettings = await _settingsRepository.load(installationId);
     if (!mounted) return;
     _settings = savedSettings;
+    _coordinates = await _locationService.currentCoordinates(
+      gpsEnabled: _settings.locationMode == 'GPS',
+    );
+    if (!mounted) return;
     final client = ApiClient(baseUrl: config.serverUrl);
     _settingsSync = SettingsSyncService(client);
     _service = WeatherService(
@@ -80,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
         nx: 60,
         ny: 121,
         locationMode: _settings.locationMode,
+        coordinates: _coordinates,
       ),
     );
     try {
@@ -114,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
           installationId: _settings.installationId,
           nx: 60,
           ny: 121,
+          coordinates: _coordinates,
         );
 
         if (!mounted) return;
@@ -354,11 +364,15 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         await _settingsSync?.save(updated);
         if (locationChanged) {
+          _coordinates = await _locationService.currentCoordinates(
+            gpsEnabled: updated.locationMode == 'GPS',
+          );
           await _notificationRegistration?.syncInstallation(
             installationId: updated.installationId,
             nx: 60,
             ny: 121,
             locationMode: updated.locationMode,
+            coordinates: _coordinates,
           );
         }
       } catch (_) {

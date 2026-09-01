@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import {
   NotificationSettings,
+  CurrentPrecipitationObservation,
   Recommendation,
   ServerEnv,
   TodayWeatherResponse,
@@ -19,7 +20,7 @@ import {
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
-import { regionFromQuery } from '../utils';
+import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBrief } from '../presentation/weatherBrief';
 import {
@@ -38,23 +39,30 @@ import {
   defaultNotificationSettings,
   getNotificationSettings,
 } from '../database/notificationSettingsRepository';
+import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
+import { buildCurrentPrecipitationMessage } from '../presentation/currentPrecipitationMessage';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
 router.get('/today', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const coordinates = coordinatesFromQuery(
+    c.req.query('latitude'),
+    c.req.query('longitude'),
+  );
   if (!c.env.KMA_SERVICE_KEY) {
     return c.json({ error: 'KMA_SERVICE_KEY_NOT_CONFIGURED' }, 503);
   }
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData, settings] = await Promise.all([
+    const [weatherForecast, environmentalData, settings, precipitation] = await Promise.all([
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
       loadEnvironmentalData(c.env, region),
       settingsForRequest(c.env.DB, c.req.query('installationId')),
+      loadCurrentPrecipitation(c.env, coordinates),
     ]);
     const forecast = enrichForecastWithEnvironmentalData(
       weatherForecast,
@@ -66,19 +74,27 @@ router.get('/today', async (c) => {
     const recommendations = runRecommendationEngine(lifestyle, settings);
     const regionLabel = regionName(nx, ny);
 
+    const forecastLifestyleMessages = buildLifestyleMessages(
+      lifestyle,
+      rules,
+      decisionHourly,
+      regionLabel,
+    );
+    const currentPrecipitationMessage = buildCurrentPrecipitationMessage(
+      precipitation,
+      settings.umbrellaEnabled,
+    );
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
       region: { nx, ny, name: regionLabel },
       brief: buildWeatherBrief(forecast, { regionKey: `${nx}:${ny}` }),
       current: forecast.current,
+      currentPrecipitation: precipitation,
       hourly: forecast.hourly,
       recommendations,
-      lifestyleMessages: buildLifestyleMessages(
-        lifestyle,
-        rules,
-        decisionHourly,
-        regionLabel,
-      ),
+      lifestyleMessages: currentPrecipitationMessage
+        ? [currentPrecipitationMessage, ...forecastLifestyleMessages]
+        : forecastLifestyleMessages,
       dataStatusMessages: buildEnvironmentalDataStatusMessages(
         environmentalData.sources,
       ),
@@ -110,6 +126,27 @@ router.get('/today', async (c) => {
     return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
   }
 });
+
+async function loadCurrentPrecipitation(
+  env: ServerEnv,
+  coordinates: { latitude: number; longitude: number } | undefined,
+): Promise<CurrentPrecipitationObservation | undefined> {
+  if (!coordinates || !env.KMA_APIHUB_KEY) return undefined;
+  try {
+    return await new KmaPrecipitationObservationProvider({
+      serviceKey: env.KMA_APIHUB_KEY,
+    }).getCurrentByLocation(coordinates.latitude, coordinates.longitude);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'current_precipitation_provider_failed',
+        provider: 'KMA_ANALYSIS_RADAR',
+        error: error instanceof Error ? error.name : 'UnknownError',
+      }),
+    );
+    return undefined;
+  }
+}
 
 router.get('/weekly', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));

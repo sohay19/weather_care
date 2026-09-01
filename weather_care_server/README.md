@@ -30,7 +30,9 @@ cp .dev.vars.example .dev.vars
 
 `.dev.vars`의 `KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
 `client_email`, `private_key`를 각각 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`로
-교체한 뒤 실행합니다. Firebase 프로젝트 ID는 공개 설정값
+교체합니다. 현재 위치의 500m 강수 판정에는 기상청 API허브에서 고해상도
+격자자료와 레이더 API 활용신청 후 발급된 `KMA_APIHUB_KEY`도 필요합니다.
+Firebase 프로젝트 ID는 공개 설정값
 `weather-care-2aaa8`로 고정되어 있습니다.
 
 ```bash
@@ -48,6 +50,7 @@ Android 에뮬레이터는 호스트의 이 서버를 `http://10.0.2.2:8787`로 
 
 ```bash
 npx wrangler secret put KMA_SERVICE_KEY
+npx wrangler secret put KMA_APIHUB_KEY
 npx wrangler secret put FCM_CLIENT_EMAIL
 npx wrangler secret put FCM_PRIVATE_KEY
 npx wrangler d1 migrations apply weather_care_db --remote
@@ -65,8 +68,9 @@ npm run deploy
 - `src/providers/uv/kmaUvProvider.ts`: 생활기상지수 V5 자외선 3시간 예측 정규화
 - `src/providers/air/airKoreaAirQualityProvider.ts`: 에어코리아 PM10·PM2.5·오존 실시간 관측 정규화
 - `src/providers/environmental/environmentalDataService.ts`: 환경 데이터 캐시·부분 실패·Today 병합
+- `src/providers/precipitation/precipitationObservationProvider.ts`: 현재 위치의 500m 관측분석·레이더 일치 판정
 - `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드와 에어코리아 측정소 매핑
-- `migrations/0001_init.sql`: 테이블 DDL
+- `migrations/0001_init.sql`~`0003_precise_precipitation_location.sql`: 테이블 DDL과 사용자별 현재 강수 상태
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 

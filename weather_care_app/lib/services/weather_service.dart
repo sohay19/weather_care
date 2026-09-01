@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/weather.dart';
 import 'api_client.dart';
 import 'kma_direct_weather_service.dart';
+import 'current_location_service.dart';
 
 enum WeatherLoadMode {
   server,
@@ -45,11 +46,13 @@ class WeatherService {
     required String installationId,
     int nx = 60,
     int ny = 121,
+    DeviceCoordinates? coordinates,
   }) async {
     final serverResult = await fetchServerWeather(
       installationId: installationId,
       nx: nx,
       ny: ny,
+      coordinates: coordinates,
     );
     if (serverResult.hasWeather) return serverResult;
     return fetchDirectWeather(nx: nx, ny: ny);
@@ -59,6 +62,7 @@ class WeatherService {
     required String installationId,
     int nx = 60,
     int ny = 121,
+    DeviceCoordinates? coordinates,
   }) async {
     try {
       final responses = await Future.wait([
@@ -68,6 +72,10 @@ class WeatherService {
             'nx': '$nx',
             'ny': '$ny',
             'installationId': installationId,
+            if (coordinates != null) ...{
+              'latitude': '${coordinates.latitude}',
+              'longitude': '${coordinates.longitude}',
+            },
           },
         ),
         client.get(

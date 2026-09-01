@@ -13,6 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   google_mobile_ads: ^7.0.0
+  geolocator: 14.0.2
   http: ^1.2.1
   shared_preferences: ^2.5.5
 

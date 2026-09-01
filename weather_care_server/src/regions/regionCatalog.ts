@@ -4,6 +4,8 @@ export interface RegionMetadata {
   name: string;
   uvAreaNo: string;
   airKoreaStationName: string;
+  latitude: number;
+  longitude: number;
 }
 
 const REGION_CATALOG: RegionMetadata[] = [
@@ -13,6 +15,8 @@ const REGION_CATALOG: RegionMetadata[] = [
     name: '수원',
     uvAreaNo: '4111000000',
     airKoreaStationName: '인계동',
+    latitude: 37.2636,
+    longitude: 127.0286,
   },
   {
     nx: 60,
@@ -20,6 +24,8 @@ const REGION_CATALOG: RegionMetadata[] = [
     name: '서울',
     uvAreaNo: '1100000000',
     airKoreaStationName: '종로구',
+    latitude: 37.5665,
+    longitude: 126.978,
   },
 ];
 

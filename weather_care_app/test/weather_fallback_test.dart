@@ -9,6 +9,7 @@ import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/app_config.dart';
 import 'package:weather_care/services/kma_direct_weather_service.dart';
 import 'package:weather_care/services/weather_service.dart';
+import 'package:weather_care/services/current_location_service.dart';
 
 void main() {
   late MockClient kmaClient;
@@ -150,6 +151,30 @@ void main() {
     expect(directResult.mode, WeatherLoadMode.directKma);
   });
 
+  test('GPS 좌표는 현재 강수 조회에만 전달한다', () async {
+    final client = _RecordingApiClient();
+    final service = WeatherService(
+      client,
+      directKma: KmaDirectWeatherService(serviceKey: ''),
+    );
+
+    final result = await service.fetchServerWeather(
+      installationId: 'device-1',
+      coordinates: const DeviceCoordinates(
+        latitude: 37.2636,
+        longitude: 127.0286,
+      ),
+    );
+
+    expect(result.hasWeather, isTrue);
+    expect(client.queries['/api/v1/weather/today'],
+        containsPair('latitude', '37.2636'));
+    expect(client.queries['/api/v1/weather/today'],
+        containsPair('longitude', '127.0286'));
+    expect(
+        client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
+  });
+
   test('시간대 예보는 forecastAt과 눈 예상 파생값을 사용한다', () {
     final response = TodayWeatherResponse.fromJson({
       'region': {'nx': 60, 'ny': 121, 'name': '수원'},
@@ -206,6 +231,27 @@ class _FailingApiClient extends ApiClient {
     Map<String, String>? query,
   }) {
     return Future.error(Exception('server unavailable'));
+  }
+}
+
+class _RecordingApiClient extends ApiClient {
+  _RecordingApiClient() : super(baseUrl: 'https://server.example');
+
+  final Map<String, Map<String, String>> queries = {};
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    queries[path] = query ?? {};
+    if (path.endsWith('/today')) {
+      return {
+        'region': {'nx': 60, 'ny': 121, 'name': '수원'},
+        'current': {'temperature': 24},
+      };
+    }
+    return {'days': <Map<String, dynamic>>[]};
   }
 }
 

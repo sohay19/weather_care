@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 
 import '../../models/app_settings.dart';
 import '../../models/recommendation.dart';
@@ -7,6 +8,8 @@ import '../../models/weather.dart';
 import '../../services/api_client.dart';
 import '../../services/app_config.dart';
 import '../../services/kma_direct_weather_service.dart';
+import '../../services/installation_identity.dart';
+import '../../services/notification_registration_service.dart';
 import '../../services/weather_service.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
@@ -27,8 +30,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AppSettings _settings = AppSettings.fallback('local-installation');
+  late AppSettings _settings;
   WeatherService? _service;
+  NotificationRegistrationService? _notificationRegistration;
   TodayWeatherResponse? _today;
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
@@ -39,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _settings = AppSettings.fallback('initializing-installation');
     _selectedIndex = widget.initialIndex < 0
         ? 0
         : widget.initialIndex > 4
@@ -49,14 +54,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _initialize() async {
     final config = await AppConfig.load();
+    final installationId = await const InstallationIdentity().getOrCreate();
     if (!mounted) return;
+    _settings = AppSettings.fallback(installationId);
+    final client = ApiClient(baseUrl: config.serverUrl);
     _service = WeatherService(
-      ApiClient(baseUrl: config.serverUrl),
+      client,
       directKma: KmaDirectWeatherService(
         serviceKey: config.kmaServiceKey,
       ),
     );
+    _notificationRegistration = NotificationRegistrationService(client);
+    unawaited(
+      _notificationRegistration!.initialize(
+        installationId: installationId,
+        nx: 60,
+        ny: 121,
+        locationMode: _settings.locationMode,
+      ),
+    );
     await _loadData();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_notificationRegistration?.dispose() ?? Future<void>.value());
+    super.dispose();
   }
 
   Future<void> _loadData() async {

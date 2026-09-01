@@ -21,8 +21,12 @@ class ApiClient {
     return Map<String, dynamic>.from(jsonDecode(body) as Map);
   }
 
-  Future<void> putJson(String path, Map<String, dynamic> body) async {
-    final uri = Uri.parse('$baseUrl$path');
+  Future<void> putJson(
+    String path,
+    Map<String, dynamic> body, {
+    Map<String, String>? query,
+  }) async {
+    final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
     final response = await http
         .put(
           uri,

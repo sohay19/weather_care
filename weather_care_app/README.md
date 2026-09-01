@@ -40,6 +40,9 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
 별도 값을 지정하지 않으면 모든 플랫폼에서 위 Cloudflare 운영 서버를 사용합니다.
+앱은 최초 실행 시 기기별 설치 ID를 생성해 보관하고, 알림 권한이 허용되면 FCM
+토큰을 설치 위치와 함께 서버에 등록합니다. Firebase가 토큰을 갱신할 때도 같은
+설치 ID로 서버 등록값을 자동 갱신합니다.
 운영 응답에서는 서버가 기상청 단기예보에 생활기상지수 자외선과 에어코리아 PM10·PM2.5를 병합합니다. 앱은 `current.uvIndex`, `current.pm10`, `current.pm25`를 파싱하고, 결측시 `--`를 표시합니다.
 
 운영 서버 장애 시 앱이 기상청 단기예보를 직접 조회하게 하려면
@@ -76,6 +79,5 @@ Copy-Item config/kma.config.example.json config/kma.config.json
 ## 다음 단계
 
 - GPS 권한 수집 및 지역 선택 플로우 구현
-- 앱 시작 시 서버와의 설치/FCM 토큰 동기화
-- 실제 푸시/딥링크 매핑 구현
+- 알림 선택 시 상세 화면으로 이동하는 딥링크 매핑
 - Setting의 지역 선택과 서버 환경 Provider 지역 카탈로그 연결

@@ -1,11 +1,15 @@
 import { Installation } from '../types';
 
-export async function upsertInstallation(db: any, payload: Installation): Promise<void> {
+export async function upsertInstallation(
+  db: D1Database,
+  payload: Installation,
+): Promise<void> {
+  const now = new Date().toISOString();
   await db
     .prepare(
       `INSERT INTO installations
-       (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(installation_id) DO UPDATE SET
          fcm_token=excluded.fcm_token,
          nx=excluded.nx,
@@ -27,12 +31,16 @@ export async function upsertInstallation(db: any, payload: Installation): Promis
       payload.platform ?? null,
       payload.appVersion ?? null,
       payload.timezone,
-      new Date().toISOString(),
+      now,
+      now,
     )
     .run();
 }
 
-export async function upsertRegionSubscription(db: any, topic: string): Promise<void> {
+export async function upsertRegionSubscription(
+  db: D1Database,
+  topic: string,
+): Promise<void> {
   const pieces = topic.split('_');
   const nx = parseInt(pieces[1] ?? '60', 10);
   const ny = parseInt(pieces[2] ?? '121', 10);

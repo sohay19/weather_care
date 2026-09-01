@@ -64,7 +64,8 @@ flowchart LR
 - Recommendation 표시, 로컬 `챙겼어요` 상태, 상세 화면 이동 구현
 - GPS/MANUAL 및 알림 설정 UI 구현
 - 실제 GPS 권한·좌표 변환·설정 영구 저장은 미구현
-- FCM 토큰 등록·수신·딥링크 처리는 미구현
+- 기기별 설치 ID와 FCM 토큰 등록·갱신, 백그라운드 알림 수신 구현
+- 알림 선택 시 상세 화면으로 이동하는 딥링크 처리는 미구현
 - 설정 변경의 서버 동기화는 미구현이며 현재 메모리에서만 유지
 
 ### 서버
@@ -77,8 +78,9 @@ flowchart LR
 - 체감온도는 서버와 앱 직접조회 모두 기상청의 여름·겨울 계절별 산식을 사용하며 Main 문구는 한국인 PT 연구와 기상청 위험값을 조합
 - 환경 Provider는 D1 캐시, 제한된 stale-if-error, 개별 가용 상태를 제공하며 장애가 기온·강수 API 전체를 실패시키지 않음
 - Weekly API는 기상청 단기예보가 제공하는 오늘부터 글피까지 반환
-- Recommendation 알림 조회는 Placeholder로 빈 배열을 반환
-- FCM 전송 함수는 TODO 상태이며 실제 Push를 발송하지 않음
+- Cron이 지역별 예보에서 Recommendation을 생성하고 사용자 설정·당일 전송 이력을
+  확인해 FCM HTTP v1 알림을 전송
+- FCM 서비스 계정 Secret이 운영 Worker에 등록되어야 실제 Push가 발송됨
 
 서버의 공공데이터포털 일반 인증키는 로컬 `.dev.vars` 또는 운영 Worker Secret의 `KMA_SERVICE_KEY`로 주입합니다. 같은 키를 사용하더라도 공공데이터포털에서 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보 세 서비스를 각각 활용신청해야 전체 지표가 제공됩니다.
 앱 직접 조회용 키는 Git 제외 대상 `config/kma.config.json`에 저장하며 앱 시작 시

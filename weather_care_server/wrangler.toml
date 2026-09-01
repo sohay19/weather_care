@@ -10,14 +10,14 @@ database_id = "9d1c83ca-9626-4b92-b4ea-db7433115324"
 
 [vars]
 APP_ORIGIN = "http://localhost:8787"
-FcmProject = "weather-care-dev"
+FCM_PROJECT_ID = "weather-care-2aaa8"
 
 [secrets]
-required = ["KMA_SERVICE_KEY"]
+required = ["KMA_SERVICE_KEY", "FCM_CLIENT_EMAIL", "FCM_PRIVATE_KEY"]
 
 [observability]
 enabled = true
 head_sampling_rate = 1
 
 [triggers]
-crons = ["0 7 * * *", "10 5 * * *"]
+crons = ["*/10 * * * *"]

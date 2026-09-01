@@ -28,7 +28,10 @@ Cloudflare Workers + TypeScript + Hono + D1 기반의 서버 뼈대입니다.
 cp .dev.vars.example .dev.vars
 ```
 
-`.dev.vars`의 `KMA_SERVICE_KEY` 값을 실제 키로 교체한 뒤 실행합니다.
+`.dev.vars`의 `KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
+`client_email`, `private_key`를 각각 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`로
+교체한 뒤 실행합니다. Firebase 프로젝트 ID는 공개 설정값
+`weather-care-2aaa8`로 고정되어 있습니다.
 
 ```bash
 cd weather_care_server
@@ -45,6 +48,8 @@ Android 에뮬레이터는 호스트의 이 서버를 `http://10.0.2.2:8787`로 
 
 ```bash
 npx wrangler secret put KMA_SERVICE_KEY
+npx wrangler secret put FCM_CLIENT_EMAIL
+npx wrangler secret put FCM_PRIVATE_KEY
 npm run deploy
 ```
 
@@ -53,7 +58,7 @@ npm run deploy
 - `src/rules/*`: 날씨 데이터 -> RuleFact
 - `src/lifestyle/*`: RuleFact -> LifestyleInsight + 생활 문구 카탈로그
 - `src/recommendations/*`: Insight + 사용자 설정 -> Recommendation + 준비물 문구 카탈로그
-- `src/notification/*`: 추천 결과의 push payload 생성
+- `src/notification/*`: 추천 결과 생성·중복 방지·FCM HTTP v1 전송
 - `src/database/*`: D1 저장/조회 함수
 - `src/providers/weather/kmaWeatherProvider.ts`: 기상청 응답 검증·정규화
 - `src/providers/uv/kmaUvProvider.ts`: 생활기상지수 V5 자외선 3시간 예측 정규화
@@ -71,3 +76,8 @@ npm run deploy
 현재 환경 지역 카탈로그는 앱에서 사용하는 수원 `60:121`(자외선 `4111000000`, 인계동 측정소)와 검증용 서울 `60:127`(자외선 `1100000000`, 종로구 측정소)를 지원합니다. 지역 선택 기능을 확장할 때 행정코드와 측정소를 카탈로그에 함께 등록해야 합니다.
 
 `/weather/weekly`는 단기예보가 제공하는 오늘부터 글피까지의 날짜만 반환하며 가짜 날짜를 채우지 않습니다.
+
+알림 Cron은 10분마다 실행됩니다. 설치별 시간대와 알림 시간을 확인해 아침 브리핑을
+한 번만 보내며, 중요한 대설 알림은 설정된 항목이 활성화된 경우 당일 최초 한 번
+전송합니다. FCM 성공 응답을 받은 알림만 `notification_history`에 기록하고,
+Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합니다.

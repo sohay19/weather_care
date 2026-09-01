@@ -20,7 +20,6 @@ import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
 import { regionFromQuery } from '../utils';
-import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBrief } from '../presentation/weatherBrief';
 import {
@@ -98,7 +97,6 @@ router.get('/today', async (c) => {
     if (c.env.DB) {
       c.executionCtx.waitUntil(
         saveCurrentWeather(c.env.DB, nx, ny, forecast.current)
-          .then(() => runRecommendationNotificationJob(c.env))
           .catch((error: unknown) => {
             console.error(
               JSON.stringify({

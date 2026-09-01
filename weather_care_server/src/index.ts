@@ -19,10 +19,7 @@ app.get('/', (c) => c.json({ app: 'weather-care-server', version: '0.1.0' }));
 
 export default {
   fetch: app.fetch,
-  async scheduled(event: any, env: ServerEnv) {
-    if (event.cron === '0 7 * * *' || event.cron === '10 5 * * *') {
-      await runRecommendationNotificationJobFromCron(env);
-    }
+  async scheduled(event: ScheduledController, env: ServerEnv) {
+    await runRecommendationNotificationJobFromCron(env, event.scheduledTime);
   },
-};
-
+} satisfies ExportedHandler<ServerEnv>;

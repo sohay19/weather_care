@@ -5013,3 +5013,12 @@
 - 기상청 API허브 인증키와 국가교통정보센터 인증키는 대화·명령 인자·저장소에 기록하지 않고 Wrangler의 Secret 입력으로 등록했다.
 - Firebase 프로젝트 `weather-care-2aaa8`의 서비스 계정 JSON에서 `client_email`과 `private_key`만 메모리에서 읽어 운영 Secret으로 전달했으며 실제 값은 출력하지 않았다.
 - 다운로드된 서비스 계정 JSON 원본은 사용자 승인 없이 삭제하거나 이동하지 않았다. 다음 운영 단계는 원격 D1 백업 후 `0002`~`0006` 마이그레이션 적용이다.
+
+## 2026-09-01 운영 D1 마이그레이션 전 백업
+
+- 원격 D1 `weather_care_db`를 변경하기 전에 Wrangler export로 SQL 백업을 생성했다.
+- 백업 파일: `C:\Users\idp20\Documents\weather-care-backups\weather_care_db_20260901_153556.sql`
+- 파일 크기: `6,873 bytes`
+- SHA-256: `07EFDFEDBC48C74E87F7A6CE2A6A5527D0A86C702D07378E6990D4935FDA0AEA`
+- 실제 레코드를 출력하지 않고 `CREATE TABLE` 7개와 `INSERT INTO` 6개가 포함된 것을 확인했다.
+- 이번 단계에서는 원격 D1을 수정하지 않았다. 다음 운영 단계는 백업을 복구 기준점으로 삼아 `0002`~`0006` 마이그레이션을 원격 D1에 적용하는 것이다.

@@ -75,7 +75,13 @@ export interface AmountRange {
 
 export interface WeatherWarning {
   type: string;
+  typeCode?: string;
   level?: string;
+  levelCode?: string;
+  commandCode?: string;
+  regionId?: string;
+  regionName?: string;
+  announcedAt?: string;
   validFrom?: string;
   validUntil?: string;
   provider: string;

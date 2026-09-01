@@ -6,6 +6,10 @@ import {
 import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
 import { WeatherForecast } from '../providers/weather/weatherProvider';
 import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
+import {
+  KmaWarningProvider,
+  OfficialWeatherWarning,
+} from '../providers/warnings/kmaWarningProvider';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
@@ -16,6 +20,11 @@ import {
 } from '../types';
 import { FcmPayload, FcmSendResult, sendBatch } from './fcmClient';
 import { BuiltNotification, buildNotification } from './notificationBuilder';
+import {
+  activeWarningNotification,
+  changedWarningNotification,
+  releasedWarningNotification,
+} from '../presentation/officialWarningMessages';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -32,6 +41,9 @@ interface NotificationInstallationRow {
   waterEnabled: number;
   sunscreenEnabled: number;
   dailyWeatherEnabled: number;
+  heavyRainEnabled: number;
+  heatwaveEnabled: number;
+  coldWaveEnabled: number;
   showerAndLightRainEnabled: number;
   latitude: number | null;
   longitude: number | null;
@@ -44,7 +56,21 @@ interface PendingNotification {
   token: string;
   built: BuiltNotification;
   rainObservedAt?: string;
+  warningStateMutation?: WarningStateMutation;
 }
+
+interface WarningStateRow {
+  typeCode: string;
+  typeName: string;
+  levelCode: '2' | '3';
+  levelName: '주의보' | '경보';
+  regionName: string;
+  effectiveAt: string;
+}
+
+type WarningStateMutation =
+  | { operation: 'UPSERT'; warning: OfficialWeatherWarning }
+  | { operation: 'DELETE'; typeCode: string };
 
 interface SchedulerDependencies {
   now?: Date;
@@ -62,6 +88,10 @@ interface SchedulerDependencies {
     latitude: number,
     longitude: number,
   ) => Promise<CurrentPrecipitationObservation>;
+  warningLoader?: (
+    env: ServerEnv,
+    regionIds: readonly string[],
+  ) => Promise<OfficialWeatherWarning[]>;
 }
 
 export async function runRecommendationNotificationJob(
@@ -78,6 +108,10 @@ export async function runRecommendationNotificationJob(
     string,
     Promise<CurrentPrecipitationObservation>
   >();
+  const warningsByRegion = new Map<
+    string,
+    Promise<OfficialWeatherWarning[]>
+  >();
   const pending: PendingNotification[] = [];
 
   for (const row of rows) {
@@ -89,6 +123,14 @@ export async function runRecommendationNotificationJob(
       pending,
       precipitationByLocation,
       dependencies.precipitationLoader ?? defaultPrecipitationLoader,
+    );
+    await collectOfficialWarningNotifications(
+      env,
+      row,
+      local.date,
+      pending,
+      warningsByRegion,
+      dependencies.warningLoader ?? defaultWarningLoader,
     );
     const regionKey = `${row.nx}:${row.ny}`;
     let forecastPromise = forecastByRegion.get(regionKey);
@@ -174,6 +216,9 @@ async function notificationInstallations(
          COALESCE(s.water_enabled, 1) AS waterEnabled,
          COALESCE(s.sunscreen_enabled, 1) AS sunscreenEnabled,
          COALESCE(s.daily_weather_enabled, 1) AS dailyWeatherEnabled,
+         COALESCE(s.heavy_rain_enabled, 1) AS heavyRainEnabled,
+         COALESCE(s.heatwave_enabled, 1) AS heatwaveEnabled,
+         COALESCE(s.cold_wave_enabled, 1) AS coldWaveEnabled,
          COALESCE(s.shower_light_rain_enabled, 1) AS showerAndLightRainEnabled,
          i.latitude,
          i.longitude,
@@ -242,6 +287,223 @@ async function defaultPrecipitationLoader(
   return new KmaPrecipitationObservationProvider({
     serviceKey: env.KMA_APIHUB_KEY,
   }).getCurrentByLocation(latitude, longitude);
+}
+
+async function defaultWarningLoader(
+  env: ServerEnv,
+  regionIds: readonly string[],
+): Promise<OfficialWeatherWarning[]> {
+  return new KmaWarningProvider({
+    serviceKey: env.KMA_APIHUB_KEY,
+  }).getActiveForRegions(regionIds);
+}
+
+async function collectOfficialWarningNotifications(
+  env: ServerEnv,
+  row: NotificationInstallationRow,
+  targetDate: string,
+  pending: PendingNotification[],
+  warningsByRegion: Map<string, Promise<OfficialWeatherWarning[]>>,
+  loader: (
+    env: ServerEnv,
+    regionIds: readonly string[],
+  ) => Promise<OfficialWeatherWarning[]>,
+): Promise<void> {
+  if (!env.KMA_APIHUB_KEY) return;
+  const region = regionMetadataForGrid(row.nx, row.ny);
+  if (!region || region.warningRegionIds.length === 0) return;
+  const regionKey = region.warningRegionIds.join(',');
+  let warningsPromise = warningsByRegion.get(regionKey);
+  if (!warningsPromise) {
+    warningsPromise = loader(env, region.warningRegionIds);
+    warningsByRegion.set(regionKey, warningsPromise);
+  }
+
+  try {
+    const current = highestWarningByType(await warningsPromise);
+    const previous = await warningStates(env.DB, row.installationId);
+    const previousByType = new Map(previous.map((item) => [item.typeCode, item]));
+
+    for (const warning of current.values()) {
+      const before = previousByType.get(warning.typeCode);
+      if (!before) {
+        await queueOrApplyWarningTransition(
+          env.DB,
+          row,
+          targetDate,
+          pending,
+          warningKey('ACTIVE', warning.typeCode, warning.validFrom),
+          activeWarningNotification(warning, region.name),
+          { operation: 'UPSERT', warning },
+        );
+      } else if (before.levelCode !== warning.levelCode) {
+        await queueOrApplyWarningTransition(
+          env.DB,
+          row,
+          targetDate,
+          pending,
+          warningKey('CHANGED', warning.typeCode, warning.validFrom),
+          changedWarningNotification(warning, before.levelName, region.name),
+          { operation: 'UPSERT', warning },
+        );
+      } else if (
+        before.effectiveAt !== warning.validFrom ||
+        before.regionName !== warning.regionName
+      ) {
+        await applyWarningStateMutation(env.DB, row.installationId, {
+          operation: 'UPSERT',
+          warning,
+        });
+      }
+      previousByType.delete(warning.typeCode);
+    }
+
+    for (const before of previousByType.values()) {
+      await queueOrApplyWarningTransition(
+        env.DB,
+        row,
+        targetDate,
+        pending,
+        warningKey('RELEASED', before.typeCode, before.effectiveAt),
+        releasedWarningNotification(
+          { type: before.typeName, level: before.levelName },
+          region.name,
+        ),
+        { operation: 'DELETE', typeCode: before.typeCode },
+      );
+    }
+  } catch (error) {
+    logNotificationError('official_warning_build_failed', error, {
+      installationId: row.installationId,
+      regionKey,
+    });
+  }
+}
+
+async function queueOrApplyWarningTransition(
+  db: D1Database,
+  row: NotificationInstallationRow,
+  targetDate: string,
+  pending: PendingNotification[],
+  notificationKey: string,
+  content: { title: string; body: string },
+  mutation: WarningStateMutation,
+): Promise<void> {
+  const typeCode =
+    mutation.operation === 'UPSERT'
+      ? mutation.warning.typeCode
+      : mutation.typeCode;
+  if (!isWarningNotificationEnabled(row, typeCode)) {
+    await applyWarningStateMutation(db, row.installationId, mutation);
+    return;
+  }
+  pending.push({
+    installationId: row.installationId,
+    targetDate,
+    token: row.token,
+    built: {
+      notification_key: notificationKey,
+      title: content.title,
+      body: content.body,
+    },
+    warningStateMutation: mutation,
+  });
+}
+
+function highestWarningByType(
+  warnings: readonly OfficialWeatherWarning[],
+): Map<string, OfficialWeatherWarning> {
+  const selected = new Map<string, OfficialWeatherWarning>();
+  for (const warning of warnings) {
+    const current = selected.get(warning.typeCode);
+    if (!current || Number(warning.levelCode) > Number(current.levelCode)) {
+      selected.set(warning.typeCode, warning);
+    }
+  }
+  return selected;
+}
+
+async function warningStates(
+  db: D1Database,
+  installationId: string,
+): Promise<WarningStateRow[]> {
+  const result = await db
+    .prepare(
+      `SELECT warning_type AS typeCode,
+              warning_name AS typeName,
+              level_code AS levelCode,
+              level_name AS levelName,
+              region_name AS regionName,
+              effective_at AS effectiveAt
+       FROM installation_warning_state
+       WHERE installation_id = ?`,
+    )
+    .bind(installationId)
+    .all<WarningStateRow>();
+  return result.results;
+}
+
+async function applyWarningStateMutation(
+  db: D1Database,
+  installationId: string,
+  mutation: WarningStateMutation,
+): Promise<void> {
+  if (mutation.operation === 'DELETE') {
+    await db
+      .prepare(
+        `DELETE FROM installation_warning_state
+         WHERE installation_id = ? AND warning_type = ?`,
+      )
+      .bind(installationId, mutation.typeCode)
+      .run();
+    return;
+  }
+
+  const warning = mutation.warning;
+  await db
+    .prepare(
+      `INSERT INTO installation_warning_state
+       (installation_id, warning_type, warning_name, level_code, level_name,
+        region_name, effective_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(installation_id, warning_type) DO UPDATE SET
+         warning_name = excluded.warning_name,
+         level_code = excluded.level_code,
+         level_name = excluded.level_name,
+         region_name = excluded.region_name,
+         effective_at = excluded.effective_at,
+         updated_at = excluded.updated_at`,
+    )
+    .bind(
+      installationId,
+      warning.typeCode,
+      warning.type,
+      warning.levelCode,
+      warning.level,
+      warning.regionName,
+      warning.validFrom,
+      new Date().toISOString(),
+    )
+    .run();
+}
+
+function isWarningNotificationEnabled(
+  row: NotificationInstallationRow,
+  typeCode: string,
+): boolean {
+  if (typeCode === 'R') return row.heavyRainEnabled === 1;
+  if (typeCode === 'S') return row.heavySnowEnabled === 1;
+  if (typeCode === 'H') return row.heatwaveEnabled === 1;
+  if (typeCode === 'C') return row.coldWaveEnabled === 1;
+  return true;
+}
+
+function warningKey(
+  transition: 'ACTIVE' | 'CHANGED' | 'RELEASED',
+  typeCode: string,
+  effectiveAt: string,
+): string {
+  return `OFFICIAL_WARNING_${transition}_${typeCode}_${effectiveAt.replace(/\D/g, '')}`;
 }
 
 async function collectCurrentRainNotification(
@@ -371,6 +633,47 @@ async function recordResults(
             .bind(item.rainObservedAt, sentAt, item.installationId),
         );
       }
+      if (item.warningStateMutation) {
+        const mutation = item.warningStateMutation;
+        if (mutation.operation === 'DELETE') {
+          statements.push(
+            db
+              .prepare(
+                `DELETE FROM installation_warning_state
+                 WHERE installation_id = ? AND warning_type = ?`,
+              )
+              .bind(item.installationId, mutation.typeCode),
+          );
+        } else {
+          const warning = mutation.warning;
+          statements.push(
+            db
+              .prepare(
+                `INSERT INTO installation_warning_state
+                 (installation_id, warning_type, warning_name, level_code,
+                  level_name, region_name, effective_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT(installation_id, warning_type) DO UPDATE SET
+                   warning_name = excluded.warning_name,
+                   level_code = excluded.level_code,
+                   level_name = excluded.level_name,
+                   region_name = excluded.region_name,
+                   effective_at = excluded.effective_at,
+                   updated_at = excluded.updated_at`,
+              )
+              .bind(
+                item.installationId,
+                warning.typeCode,
+                warning.type,
+                warning.levelCode,
+                warning.level,
+                warning.regionName,
+                warning.validFrom,
+                sentAt,
+              ),
+          );
+        }
+      }
     } else {
       logNotificationError('fcm_send_failed', undefined, {
         installationId: item.installationId,
@@ -405,6 +708,9 @@ function settingsFromRow(
     waterEnabled: row.waterEnabled === 1,
     sunscreenEnabled: row.sunscreenEnabled === 1,
     dailyWeatherEnabled: row.dailyWeatherEnabled === 1,
+    heavyRainEnabled: row.heavyRainEnabled === 1,
+    heatwaveEnabled: row.heatwaveEnabled === 1,
+    coldWaveEnabled: row.coldWaveEnabled === 1,
   };
 }
 
@@ -456,6 +762,7 @@ function logNotificationError(
   event:
     | 'recommendation_build_failed'
     | 'current_rain_build_failed'
+    | 'official_warning_build_failed'
     | 'fcm_send_failed',
   error: unknown,
   context: Record<string, string | number>,

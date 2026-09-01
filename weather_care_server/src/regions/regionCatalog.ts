@@ -6,6 +6,7 @@ export interface RegionMetadata {
   airKoreaStationName: string;
   latitude: number;
   longitude: number;
+  warningRegionIds: string[];
 }
 
 const REGION_CATALOG: RegionMetadata[] = [
@@ -17,6 +18,7 @@ const REGION_CATALOG: RegionMetadata[] = [
     airKoreaStationName: '인계동',
     latitude: 37.2636,
     longitude: 127.0286,
+    warningRegionIds: ['L1011900'],
   },
   {
     nx: 60,
@@ -26,6 +28,8 @@ const REGION_CATALOG: RegionMetadata[] = [
     airKoreaStationName: '종로구',
     latitude: 37.5665,
     longitude: 126.978,
+    // 종로구는 기상청의 서울서북권 특보구역에 포함된다.
+    warningRegionIds: ['L1100400'],
   },
 ];
 

@@ -36,6 +36,9 @@ describe('notification scheduler', () => {
           water_enabled INTEGER NOT NULL DEFAULT 1,
           sunscreen_enabled INTEGER NOT NULL DEFAULT 1,
           daily_weather_enabled INTEGER NOT NULL DEFAULT 1,
+          heavy_rain_enabled INTEGER NOT NULL DEFAULT 1,
+          heatwave_enabled INTEGER NOT NULL DEFAULT 1,
+          cold_wave_enabled INTEGER NOT NULL DEFAULT 1,
           shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
@@ -46,8 +49,17 @@ describe('notification scheduler', () => {
           payload_hash TEXT,
           PRIMARY KEY (installation_id, target_date, notification_key))`,
       ),
+      env.DB.prepare(
+        `CREATE TABLE IF NOT EXISTS installation_warning_state (
+          installation_id TEXT NOT NULL, warning_type TEXT NOT NULL,
+          warning_name TEXT NOT NULL, level_code TEXT NOT NULL,
+          level_name TEXT NOT NULL, region_name TEXT NOT NULL,
+          effective_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+          PRIMARY KEY (installation_id, warning_type))`,
+      ),
     ]);
     await env.DB.batch([
+      env.DB.prepare('DELETE FROM installation_warning_state'),
       env.DB.prepare('DELETE FROM notification_history'),
       env.DB.prepare('DELETE FROM notification_settings'),
       env.DB.prepare('DELETE FROM installations'),
@@ -142,6 +154,7 @@ describe('notification scheduler', () => {
         state: 'RAIN' as const,
         provider: 'KMA_ANALYSIS_RADAR' as const,
       }),
+      warningLoader: async () => [],
       sender,
     };
     const bindings = testBindings('test-apihub-key');
@@ -163,6 +176,64 @@ describe('notification scheduler', () => {
       .bind('installation-1')
       .first<{ state: number }>();
     expect(state?.state).toBe(1);
+  });
+
+  it('sends an active official warning only once and stores its state', async () => {
+    await insertInstallation('device-token');
+    const sent: FcmPayload[] = [];
+    const dependencies = {
+      now: new Date('2026-09-01T12:00:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [officialWarning('R', '호우', '2')],
+      sender: async (_env: ServerEnv, payloads: FcmPayload[]) => {
+        sent.push(...payloads);
+        return payloads.map(successResult);
+      },
+    };
+    const bindings = testBindings('test-apihub-key');
+
+    await runRecommendationNotificationJob(bindings, dependencies);
+    await runRecommendationNotificationJob(bindings, dependencies);
+
+    expect(sent.filter((item) => item.notificationKey.startsWith('OFFICIAL_WARNING')))
+      .toEqual([
+        expect.objectContaining({
+          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요 수원에는 호우주의보가 발효 중이에요',
+        }),
+      ]);
+    const state = await env.DB.prepare(
+      `SELECT level_code AS levelCode FROM installation_warning_state
+       WHERE installation_id = ? AND warning_type = 'R'`,
+    )
+      .bind('installation-1')
+      .first<{ levelCode: string }>();
+    expect(state?.levelCode).toBe('2');
+  });
+
+  it('announces an official level change and release', async () => {
+    await insertInstallation('device-token');
+    await insertWarningState('R', '호우', '2', '주의보');
+    const sent: FcmPayload[] = [];
+    const bindings = testBindings('test-apihub-key');
+
+    await runRecommendationNotificationJob(bindings, {
+      now: new Date('2026-09-01T12:00:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [officialWarning('R', '호우', '3')],
+      sender: collectingSender(sent),
+    });
+    expect(sent.find((item) => item.notificationKey.includes('CHANGED'))?.body)
+      .toContain('기상청은 수원의 호우주의보를 호우경보로 변경했어요');
+
+    sent.length = 0;
+    await runRecommendationNotificationJob(bindings, {
+      now: new Date('2026-09-01T12:10:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [],
+      sender: collectingSender(sent),
+    });
+    expect(sent.find((item) => item.notificationKey.includes('RELEASED'))?.body)
+      .toBe('수원의 호우경보가 해제됐어요');
   });
 });
 
@@ -242,4 +313,63 @@ function snapshot(hour: number): WeatherSnapshot {
     },
     snowfallAmount: 0,
   };
+}
+
+function officialWarning(
+  typeCode: 'R',
+  type: '호우',
+  levelCode: '2' | '3',
+) {
+  return {
+    typeCode,
+    type,
+    levelCode,
+    level: levelCode === '2' ? '주의보' as const : '경보' as const,
+    commandCode: '1' as const,
+    regionId: 'L1011900',
+    regionName: '수원',
+    announcedAt: '2026-09-01T09:00:00+09:00',
+    validFrom: '2026-09-01T10:00:00+09:00',
+    provider: '기상청 특보현황' as const,
+  };
+}
+
+function successResult(payload: FcmPayload) {
+  return {
+    token: payload.token,
+    notificationKey: payload.notificationKey,
+    success: true,
+    unregistered: false,
+    status: 200,
+  };
+}
+
+function collectingSender(sent: FcmPayload[]) {
+  return async (_env: ServerEnv, payloads: FcmPayload[]) => {
+    sent.push(...payloads);
+    return payloads.map(successResult);
+  };
+}
+
+async function insertWarningState(
+  typeCode: string,
+  typeName: string,
+  levelCode: string,
+  levelName: string,
+): Promise<void> {
+  await env.DB.prepare(
+    `INSERT INTO installation_warning_state
+     (installation_id, warning_type, warning_name, level_code, level_name,
+      region_name, effective_at, updated_at)
+     VALUES ('installation-1', ?, ?, ?, ?, '수원', ?, ?)`,
+  )
+    .bind(
+      typeCode,
+      typeName,
+      levelCode,
+      levelName,
+      '2026-09-01T10:00:00+09:00',
+      '2026-09-01T01:00:00Z',
+    )
+    .run();
 }

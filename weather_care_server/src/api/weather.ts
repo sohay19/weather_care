@@ -41,6 +41,12 @@ import {
 } from '../database/notificationSettingsRepository';
 import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import { buildCurrentPrecipitationMessage } from '../presentation/currentPrecipitationMessage';
+import {
+  KmaWarningProvider,
+  OfficialWeatherWarning,
+} from '../providers/warnings/kmaWarningProvider';
+import { buildActiveWarningMessages } from '../presentation/officialWarningMessages';
+import { RegionMetadata } from '../regions/regionCatalog';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 
@@ -56,13 +62,14 @@ router.get('/today', async (c) => {
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData, settings, precipitation] = await Promise.all([
+    const [weatherForecast, environmentalData, settings, precipitation, warnings] = await Promise.all([
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
       loadEnvironmentalData(c.env, region),
       settingsForRequest(c.env.DB, c.req.query('installationId')),
       loadCurrentPrecipitation(c.env, coordinates),
+      loadActiveWarnings(c.env, region),
     ]);
     const forecast = enrichForecastWithEnvironmentalData(
       weatherForecast,
@@ -84,17 +91,23 @@ router.get('/today', async (c) => {
       precipitation,
       settings.umbrellaEnabled,
     );
+    const warningMessages = buildActiveWarningMessages(warnings, regionLabel);
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
       region: { nx, ny, name: regionLabel },
       brief: buildWeatherBrief(forecast, { regionKey: `${nx}:${ny}` }),
-      current: forecast.current,
+      current: {
+        ...forecast.current,
+        activeWarnings: warnings,
+      },
       currentPrecipitation: precipitation,
       hourly: forecast.hourly,
       recommendations,
-      lifestyleMessages: currentPrecipitationMessage
-        ? [currentPrecipitationMessage, ...forecastLifestyleMessages]
-        : forecastLifestyleMessages,
+      lifestyleMessages: [
+        ...warningMessages,
+        ...(currentPrecipitationMessage ? [currentPrecipitationMessage] : []),
+        ...forecastLifestyleMessages,
+      ],
       dataStatusMessages: buildEnvironmentalDataStatusMessages(
         environmentalData.sources,
       ),
@@ -145,6 +158,27 @@ async function loadCurrentPrecipitation(
       }),
     );
     return undefined;
+  }
+}
+
+async function loadActiveWarnings(
+  env: ServerEnv,
+  region: RegionMetadata | undefined,
+): Promise<OfficialWeatherWarning[]> {
+  if (!env.KMA_APIHUB_KEY || !region) return [];
+  try {
+    return await new KmaWarningProvider({
+      serviceKey: env.KMA_APIHUB_KEY,
+    }).getActiveForRegions(region.warningRegionIds);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'official_warning_provider_failed',
+        provider: 'KMA_WARNING_STATUS',
+        error: error instanceof Error ? error.name : 'UnknownError',
+      }),
+    );
+    return [];
   }
 }
 

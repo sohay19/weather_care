@@ -30,8 +30,9 @@ cp .dev.vars.example .dev.vars
 
 `.dev.vars`의 `KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
 `client_email`, `private_key`를 각각 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`로
-교체합니다. 현재 위치의 500m 강수 판정에는 기상청 API허브에서 고해상도
-격자자료와 레이더 API 활용신청 후 발급된 `KMA_APIHUB_KEY`도 필요합니다.
+교체합니다. 현재 위치의 500m 강수 판정과 실제 발효 특보 조회에는 기상청
+API허브에서 고해상도 격자자료·레이더·기상특보 API 활용신청 후 발급된
+`KMA_APIHUB_KEY`도 필요합니다.
 Firebase 프로젝트 ID는 공개 설정값
 `weather-care-2aaa8`로 고정되어 있습니다.
 
@@ -69,8 +70,9 @@ npm run deploy
 - `src/providers/air/airKoreaAirQualityProvider.ts`: 에어코리아 PM10·PM2.5·오존 실시간 관측 정규화
 - `src/providers/environmental/environmentalDataService.ts`: 환경 데이터 캐시·부분 실패·Today 병합
 - `src/providers/precipitation/precipitationObservationProvider.ts`: 현재 위치의 500m 관측분석·레이더 일치 판정
-- `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드와 에어코리아 측정소 매핑
-- `migrations/0001_init.sql`~`0003_precise_precipitation_location.sql`: 테이블 DDL과 사용자별 현재 강수 상태
+- `src/providers/warnings/kmaWarningProvider.ts`: 기상청 발효시각 기준 특보현황 조회와 예비·미발효 자료 제외
+- `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드·대기질 측정소·특보구역 매핑
+- `migrations/0001_init.sql`~`0004_official_warning_state.sql`: 테이블 DDL과 사용자별 현재 강수·특보 상태
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 
@@ -86,6 +88,9 @@ npm run deploy
 한 번만 보내며, 중요한 대설 알림은 설정된 항목이 활성화된 경우 당일 최초 한 번
 전송합니다. FCM 성공 응답을 받은 알림만 `notification_history`에 기록하고,
 Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합니다.
+기상특보는 예비특보와 발효 예정 상태를 알리지 않습니다. 실제 발효된 주의보·
+경보만 표시하고, 설치별 마지막 상태와 비교해 신규 발효·수준 변경·해제 때만
+푸시합니다. 앱 화면과 푸시 본문 모두 직접행동을 공식 사실보다 먼저 배치합니다.
 
 `/weather/today`와 `/weather/weekly`에 `installationId`를 전달하면 설치별 알림
 설정을 Recommendation의 `recommended` 값에 적용합니다. 설정 API는 camelCase로

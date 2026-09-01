@@ -18,6 +18,7 @@ export interface RuleConfig {
     immediateActionApparentTemperature: number;
     releaseApparentTemperature: number;
     warmNightTemperature: number;
+    warmNightHumidity: number;
   };
   cold: {
     temperature: number;
@@ -51,6 +52,7 @@ export const defaultRuleConfig: RuleConfig = {
     immediateActionApparentTemperature: 35,
     releaseApparentTemperature: 31,
     warmNightTemperature: 25,
+    warmNightHumidity: 75,
   },
   cold: {
     temperature: 12,

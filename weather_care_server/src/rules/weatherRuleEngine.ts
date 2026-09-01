@@ -464,8 +464,8 @@ function addNightWeatherFacts(
     (snapshot) =>
       (snapshot.temperature ?? -Infinity) >=
         config.heat.warmNightTemperature &&
-      (snapshot.humidity ?? -Infinity) >= config.humidity.high,
-    2,
+      (snapshot.humidity ?? -Infinity) >= config.heat.warmNightHumidity,
+    3,
   )) {
     facts.push(
       factForRun(

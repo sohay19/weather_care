@@ -126,6 +126,7 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(insights).not.toContain('HUMIDIFIER_USEFUL');
     expect(insights).not.toContain('SLEEP_DISCOMFORT_EXPECTED');
     expect(insights).not.toContain('VEHICLE_FROST_RISK');
+    expect(insights).toContain('NIGHT_WEATHER_CHECK');
   });
 
   it('creates a heavy-snow recommendation only for a heavy-snow fact', () => {

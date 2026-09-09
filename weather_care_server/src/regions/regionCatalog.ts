@@ -47,8 +47,12 @@ export function regionMetadataForGrid(
   return REGION_BY_GRID.get(`${nx}:${ny}`);
 }
 
-export function regionName(nx: number, ny: number): string {
-  return regionMetadataForGrid(nx, ny)?.name ?? '선택 지역';
+export function regionName(
+  nx: number,
+  ny: number,
+  fallback = '선택 지역',
+): string {
+  return regionMetadataForGrid(nx, ny)?.name ?? fallback;
 }
 
 export function supportedEnvironmentalRegions(): readonly RegionMetadata[] {

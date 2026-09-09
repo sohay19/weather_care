@@ -363,11 +363,13 @@ function precipitationFact(
   const time = timeRangeLabel(snapshot);
   const amount = amountLabel(snapshot.precipitationAmountRange);
   const shower = snapshot.precipitationType === 'SHOWER';
+  const regionAt = regionName === '현재 위치' ? '' : `${regionName}에 `;
+  const regionOf = regionName === '현재 위치' ? '' : `${regionName}의 `;
   const text = shower
-    ? `기상청은 ${regionName}에 ${time} 소나기를 예보했어요`
+    ? `기상청은 ${regionAt}${time} 소나기를 예보했어요`
     : amount
-      ? `기상청은 ${regionName}에 ${time} 시간당 ${amount}의 비를 예보했어요`
-      : `기상청은 ${regionName}의 ${time} 강수확률을 ${Math.round(snapshot.precipitationProbability ?? 0)}%로 예보했어요`;
+      ? `기상청은 ${regionAt}${time} 시간당 ${amount}의 비를 예보했어요`
+      : `기상청은 ${regionOf}${time} 강수확률을 ${Math.round(snapshot.precipitationProbability ?? 0)}%로 예보했어요`;
   return officialFact(text, snapshot, '기상청');
 }
 
@@ -377,9 +379,10 @@ function snowfallFact(
 ): WeatherMessagePart {
   const time = timeRangeLabel(snapshot);
   const amount = amountLabel(snapshot.snowfallAmountRange);
+  const regionAt = regionName === '현재 위치' ? '' : `${regionName}에 `;
   const text = amount
-    ? `기상청은 ${regionName}에 ${time} 눈이 ${amount} 쌓일 것으로 예보했어요`
-    : `기상청은 ${regionName}에 ${time} 눈을 예보했어요`;
+    ? `기상청은 ${regionAt}${time} 눈이 ${amount} 쌓일 것으로 예보했어요`
+    : `기상청은 ${regionAt}${time} 눈을 예보했어요`;
   return officialFact(text, snapshot, '기상청');
 }
 
@@ -389,8 +392,9 @@ function uvFact(
 ): WeatherMessagePart | undefined {
   if (snapshot.uvIndex === undefined) return undefined;
   const value = Math.round(snapshot.uvIndex);
+  const regionOf = regionName === '현재 위치' ? '' : `${regionName}의 `;
   return officialFact(
-    `기상청은 ${formatHour(snapshotTime(snapshot))} ${regionName}의 자외선지수를 ${value}, ${uvGrade(value)} 단계로 예보했어요`,
+    `기상청은 ${formatHour(snapshotTime(snapshot))} ${regionOf}자외선지수를 ${value}, ${uvGrade(value)} 단계로 예보했어요`,
     snapshot,
     '기상청 생활기상지수',
   );
@@ -487,6 +491,13 @@ function temperatureFact(
   regionName: string,
 ): WeatherMessagePart | undefined {
   if (snapshot.temperature === undefined) return undefined;
+  if (regionName === '현재 위치') {
+    return officialFact(
+      `기상청은 ${formatHour(snapshotTime(snapshot))} 기온이 ${formatNumber(snapshot.temperature)}℃라고 예보했어요`,
+      snapshot,
+      '기상청',
+    );
+  }
   return officialFact(
     `기상청은 ${regionName}의 ${formatHour(snapshotTime(snapshot))} 기온은 ${formatNumber(snapshot.temperature)}℃라고 예보했어요`,
     snapshot,
@@ -499,8 +510,9 @@ function windFact(
   regionName: string,
 ): WeatherMessagePart | undefined {
   if (snapshot.windSpeed === undefined) return undefined;
+  const regionAt = regionName === '현재 위치' ? '' : `${regionName}에 `;
   return officialFact(
-    `기상청은 ${formatHour(snapshotTime(snapshot))} ${regionName}에 풍속 ${formatNumber(snapshot.windSpeed)}m/s의 ${windLabel(snapshot.windSpeed)} 바람을 예보했어요`,
+    `기상청은 ${formatHour(snapshotTime(snapshot))} ${regionAt}풍속 ${formatNumber(snapshot.windSpeed)}m/s의 ${windLabel(snapshot.windSpeed)} 바람을 예보했어요`,
     snapshot,
     '기상청',
   );

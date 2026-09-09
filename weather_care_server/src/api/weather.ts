@@ -88,7 +88,11 @@ router.get('/today', async (c) => {
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
     const recommendations = runRecommendationEngine(lifestyle, settings);
-    const regionLabel = regionName(nx, ny);
+    const regionLabel = regionName(
+      nx,
+      ny,
+      coordinates ? '현재 위치' : '선택 지역',
+    );
 
     const forecastLifestyleMessages = buildLifestyleMessages(
       lifestyle,

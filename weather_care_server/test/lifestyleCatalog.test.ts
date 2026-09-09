@@ -113,6 +113,34 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(rain?.parts[2].text).toContain('강수확률을 70%로 예보했어요');
   });
 
+  it('omits the redundant current-location label from official facts', () => {
+    const hourly = [
+      snapshot(14, {
+        precipitationProbability: 70,
+        precipitationType: 'RAIN',
+      }),
+    ];
+    const facts = runWeatherRuleEngineForHourly(hourly);
+    const messages = buildLifestyleMessages(
+      runLifestyleWeatherEngine(facts, hourly),
+      facts,
+      hourly,
+      '현재 위치',
+    );
+    const factTexts = messages.flatMap((message) =>
+      message.parts
+        .filter((part) => part.role === 'OFFICIAL_FACT')
+        .map((part) => part.text),
+    );
+
+    expect(
+      factTexts.some((text) =>
+        text.includes('강수확률을 70%로 예보했어요'),
+      ),
+    ).toBe(true);
+    expect(factTexts.every((text) => !text.includes('현재 위치'))).toBe(true);
+  });
+
   it('does not emit indoor, vehicle, or sleep judgments from weather data', () => {
     const hourly = [0, 1, 2].map((hour) =>
       snapshot(hour, { temperature: 25, humidity: 80 }),

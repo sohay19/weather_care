@@ -15,6 +15,7 @@ import { WeatherForecast } from '../weather/weatherProvider';
 import { KmaUvProvider } from '../uv/kmaUvProvider';
 import { UvForecast } from '../uv/uvProvider';
 import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
+import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
 
 const UV_FRESH_MS = 2 * 60 * 60 * 1000;
 const UV_MAX_STALE_MS = 8 * 60 * 60 * 1000;
@@ -65,24 +66,28 @@ export async function loadEnvironmentalData(
   const serviceKey = env.KMA_SERVICE_KEY;
   const nx = region?.nx ?? options.nx;
   const ny = region?.ny ?? options.ny;
+  const uvAreaNo =
+    nx === undefined || ny === undefined
+      ? undefined
+      : uvAreaNoForGrid(nx, ny);
   const canLoadAirQuality =
     nx !== undefined &&
     ny !== undefined &&
     (options.coordinates !== undefined || region !== undefined);
   const [uv, airQuality] = await Promise.all([
-    region
+    uvAreaNo !== undefined && nx !== undefined && ny !== undefined
       ? resolveEnvironmentalValue<UvForecast>({
           db: env.DB,
-          cacheKey: `UV_${region.nx}_${region.ny}`,
+          cacheKey: `UV_${nx}_${ny}`,
           cacheType: 'UV',
-          nx: region.nx,
-          ny: region.ny,
+          nx,
+          ny,
           provider: 'KMA_LIVING_INDEX_V5',
           freshMs: UV_FRESH_MS,
           maxStaleMs: UV_MAX_STALE_MS,
           observedAt: (value) => value.issuedAt,
           load: () =>
-            new KmaUvProvider({ serviceKey }).getForecast(region.uvAreaNo),
+            new KmaUvProvider({ serviceKey }).getForecast(uvAreaNo),
           now,
         })
       : Promise.resolve<ResolvedValue<UvForecast>>({

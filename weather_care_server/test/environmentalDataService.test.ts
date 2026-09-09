@@ -1,9 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   EnvironmentalDataBundle,
   enrichForecastWithEnvironmentalData,
+  loadEnvironmentalData,
 } from '../src/providers/environmental/environmentalDataService';
 import { WeatherForecast } from '../src/providers/weather/weatherProvider';
+import { ServerEnv } from '../src/types';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('environmental data enrichment', () => {
   it('adds UV forecasts to matching hours and air observations to current only', () => {
@@ -78,6 +84,43 @@ describe('environmental data enrichment', () => {
     expect(result.current.qualityFlags).toEqual(
       expect.arrayContaining(['UV_UNAVAILABLE', 'AIR_QUALITY_UNAVAILABLE']),
     );
+  });
+
+  it('loads UV for an uncatalogued nationwide weather grid', async () => {
+    const fetcher = vi.fn(async () =>
+      new Response(JSON.stringify({
+        response: {
+          header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
+          body: {
+            items: {
+              item: {
+                areaNo: '2623056000',
+                date: '2026090112',
+                h0: '6',
+              },
+            },
+          },
+        },
+      })),
+    );
+    vi.stubGlobal('fetch', fetcher);
+
+    const result = await loadEnvironmentalData(
+      { KMA_SERVICE_KEY: 'test-key' } as ServerEnv,
+      undefined,
+      {
+        nx: 98,
+        ny: 76,
+        now: new Date('2026-09-01T03:40:00Z'),
+      },
+    );
+
+    expect(result.uv).toMatchObject({
+      areaNo: '2623056000',
+      points: [expect.objectContaining({ uvIndex: 6 })],
+    });
+    const requestUrl = new URL(fetcher.mock.calls[0][0].toString());
+    expect(requestUrl.searchParams.get('areaNo')).toBe('2623056000');
   });
 });
 

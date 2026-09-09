@@ -54,7 +54,7 @@ function roadControlAction(control: OfficialRoadControl): string {
 function roadControlOfficialFact(control: OfficialRoadControl): string {
   const road = roadLabel(control);
   const kind = control.controlKind === 'FULL' ? '전면 통제' : '일부 차로 통제';
-  return `국가교통정보센터는 ${formatHour(control.startedAt)}부터 ${road} ${kind}가 시행 중이라고 안내했어요`;
+  return `국가교통정보센터는 ${formatDateHour(control.startedAt)}부터 ${road} ${kind}가 시행 중이라고 안내했어요`;
 }
 
 function roadLabel(control: OfficialRoadControl): string {
@@ -62,15 +62,25 @@ function roadLabel(control: OfficialRoadControl): string {
   return control.direction ? `${road} ${control.direction}` : road;
 }
 
-function formatHour(iso: string): string {
+function formatDateHour(iso: string): string {
   const date = new Date(iso);
-  const hour = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Seoul',
-      hour: '2-digit',
-      hourCycle: 'h23',
-    }).format(date),
-  );
-  const period = hour < 12 ? '오전' : '오후';
-  return `${period} ${hour % 12 || 12}시`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value);
+  const month = value('month');
+  const day = value('day');
+  const hour = value('hour');
+  const hourLabel =
+    hour === 0
+      ? '0시'
+      : hour < 12
+        ? `오전 ${hour}시`
+        : `오후 ${hour % 12 || 12}시`;
+  return `${month}월 ${day}일 ${hourLabel}`;
 }

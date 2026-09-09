@@ -96,6 +96,7 @@ interface SchedulerDependencies {
     env: ServerEnv,
     nx: number,
     ny: number,
+    coordinates?: { latitude: number; longitude: number },
   ) => Promise<WeatherForecast>;
   sender?: (
     env: ServerEnv,
@@ -185,7 +186,14 @@ export async function runRecommendationNotificationJob(
     const regionKey = `${row.nx}:${row.ny}`;
     let forecastPromise = forecastByRegion.get(regionKey);
     if (!forecastPromise) {
-      forecastPromise = loadForecast(env, row.nx, row.ny);
+      forecastPromise = loadForecast(
+        env,
+        row.nx,
+        row.ny,
+        row.latitude !== null && row.longitude !== null
+          ? { latitude: row.latitude, longitude: row.longitude }
+          : undefined,
+      );
       forecastByRegion.set(regionKey, forecastPromise);
     }
 
@@ -308,6 +316,7 @@ async function defaultForecastLoader(
   env: ServerEnv,
   nx: number,
   ny: number,
+  coordinates?: { latitude: number; longitude: number },
 ): Promise<WeatherForecast> {
   const forecast = await new KmaWeatherProvider({
     serviceKey: env.KMA_SERVICE_KEY,
@@ -315,6 +324,7 @@ async function defaultForecastLoader(
   const environmental = await loadEnvironmentalData(
     env,
     regionMetadataForGrid(nx, ny),
+    { nx, ny, coordinates },
   );
   return enrichForecastWithEnvironmentalData(forecast, environmental);
 }

@@ -85,4 +85,59 @@ describe('AirKoreaAirQualityProvider', () => {
     expect(result.pm10).toBe(55);
     expect(result.pm25).toBe(31);
   });
+
+  it('selects a nearby official station from GPS coordinates', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith('/getMsrstnList')) {
+        return Response.json({
+          response: {
+            header: { resultCode: '00', resultMsg: 'NORMAL_CODE' },
+            body: {
+              items: [
+                {
+                  stationName: '종로구',
+                  dmX: '37.5720',
+                  dmY: '127.0050',
+                },
+                {
+                  stationName: '광복동',
+                  dmX: '35.1030',
+                  dmY: '129.0320',
+                },
+              ],
+            },
+          },
+        });
+      }
+      return Response.json({
+        response: {
+          header: { resultCode: '00', resultMsg: 'NORMAL_CODE' },
+          body: {
+            items: [
+              {
+                stationName: url.searchParams.get('stationName'),
+                dataTime: '2026-08-21 11:00',
+                pm10Value: '31',
+                pm25Value: '12',
+                o3Value: '0.028',
+              },
+            ],
+          },
+        },
+      });
+    });
+    const provider = new AirKoreaAirQualityProvider({
+      serviceKey: 'key',
+      fetcher,
+      now: () => new Date('2026-08-21T02:30:00Z'),
+    });
+
+    const result = await provider.getByLocation(35.1796, 129.0756);
+
+    expect(result.stationName).toBe('광복동');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const measurementUrl = new URL(String(fetcher.mock.calls[1][0]));
+    expect(measurementUrl.searchParams.get('stationName')).toBe('광복동');
+  });
 });

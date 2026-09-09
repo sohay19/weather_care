@@ -73,7 +73,7 @@ router.get('/today', async (c) => {
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
-      loadEnvironmentalData(c.env, region),
+      loadEnvironmentalData(c.env, region, { nx, ny, coordinates }),
       settingsForRequest(c.env.DB, c.req.query('installationId')),
       loadCurrentPrecipitation(c.env, coordinates),
       loadActiveWarnings(c.env, region),

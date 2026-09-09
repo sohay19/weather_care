@@ -6,6 +6,9 @@ import {
 
 const AIRKOREA_URL =
   'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty';
+const AIRKOREA_STATION_URL =
+  'https://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getMsrstnList';
+const NEARBY_STATION_ATTEMPTS = 5;
 
 const airItemSchema = z.object({
   stationName: z.coerce.string().optional(),
@@ -33,6 +36,33 @@ const airResponseSchema = z.object({
       .optional(),
   }),
 });
+
+const stationItemSchema = z.object({
+  stationName: z.coerce.string(),
+  dmX: z.union([z.string(), z.number(), z.null()]).optional(),
+  dmY: z.union([z.string(), z.number(), z.null()]).optional(),
+});
+
+const stationResponseSchema = z.object({
+  response: z.object({
+    header: z.object({
+      resultCode: z.coerce.string(),
+      resultMsg: z.coerce.string(),
+    }),
+    body: z
+      .object({
+        items: z.union([stationItemSchema, z.array(stationItemSchema)]),
+      })
+      .optional(),
+  }),
+});
+
+interface LocatedStation {
+  stationName: string;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+}
 
 const portalErrorSchema = z.object({
   OpenAPI_ServiceResponse: z.object({
@@ -77,23 +107,47 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     _ny: number,
     stationName?: string,
   ): Promise<AirQualitySnapshot> {
-    if (!this.serviceKey) {
-      throw new AirKoreaAirQualityProviderError(
-        'AirKorea service key is not configured',
-      );
-    }
+    this.requireServiceKey();
     if (!stationName?.trim()) {
       throw new AirKoreaAirQualityProviderError(
         'AirKorea station name is not configured',
       );
     }
 
+    return this.getByStation(stationName.trim());
+  }
+
+  async getByLocation(
+    latitude: number,
+    longitude: number,
+  ): Promise<AirQualitySnapshot> {
+    this.requireServiceKey();
+    validateLocation(latitude, longitude);
+    const stations = await this.getNearestStations(latitude, longitude);
+    let lastError: unknown;
+    for (const station of stations.slice(0, NEARBY_STATION_ATTEMPTS)) {
+      try {
+        return await this.getByStation(station.stationName);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw new AirKoreaAirQualityProviderError(
+      lastError instanceof Error
+        ? lastError.message
+        : 'AirKorea returned no nearby station measurements',
+    );
+  }
+
+  private async getByStation(
+    stationName: string,
+  ): Promise<AirQualitySnapshot> {
     const query = new URLSearchParams({
       serviceKey: this.serviceKey,
       returnType: 'json',
       numOfRows: '6',
       pageNo: '1',
-      stationName: stationName.trim(),
+      stationName,
       dataTerm: 'DAILY',
       ver: '1.3',
     });
@@ -145,7 +199,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
 
       return {
         observedAt,
-        stationName: item.stationName?.trim() || stationName.trim(),
+        stationName: item.stationName?.trim() || stationName,
         pm10,
         pm25,
         airQualityGrade: worstGrade([
@@ -162,6 +216,133 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
       'AirKorea returned no usable measurements',
     );
   }
+
+  private async getNearestStations(
+    latitude: number,
+    longitude: number,
+  ): Promise<LocatedStation[]> {
+    const query = new URLSearchParams({
+      serviceKey: this.serviceKey,
+      returnType: 'json',
+      numOfRows: '1000',
+      pageNo: '1',
+    });
+    const response = await this.fetcher(`${AIRKOREA_STATION_URL}?${query}`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(this.timeoutMs),
+      cf: { cacheEverything: true, cacheTtl: 86_400 },
+    });
+    const payload: unknown = await response.json();
+    const portalError = portalErrorSchema.safeParse(payload);
+    if (portalError.success) {
+      const header = portalError.data.OpenAPI_ServiceResponse.cmmMsgHeader;
+      throw new AirKoreaAirQualityProviderError(
+        `AirKorea station authorization failed ${header.returnReasonCode}: ${header.errMsg}`,
+      );
+    }
+    if (!response.ok) {
+      throw new AirKoreaAirQualityProviderError(
+        `AirKorea station request failed with status ${response.status}`,
+      );
+    }
+    const parsed = stationResponseSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new AirKoreaAirQualityProviderError(
+        'AirKorea station response schema is invalid',
+      );
+    }
+    const { header, body } = parsed.data.response;
+    if (header.resultCode !== '00') {
+      throw new AirKoreaAirQualityProviderError(
+        `AirKorea station service returned ${header.resultCode}: ${header.resultMsg}`,
+      );
+    }
+    if (!body) {
+      throw new AirKoreaAirQualityProviderError(
+        'AirKorea station service returned no body',
+      );
+    }
+    const items = Array.isArray(body.items) ? body.items : [body.items];
+    const stations = items
+      .flatMap((item) => {
+        const coordinates = stationCoordinates(item.dmX, item.dmY);
+        if (!coordinates || !item.stationName.trim()) return [];
+        return [{
+          stationName: item.stationName.trim(),
+          ...coordinates,
+          distanceMeters: haversineMeters(
+            latitude,
+            longitude,
+            coordinates.latitude,
+            coordinates.longitude,
+          ),
+        }];
+      })
+      .sort((left, right) => left.distanceMeters - right.distanceMeters);
+    if (stations.length === 0) {
+      throw new AirKoreaAirQualityProviderError(
+        'AirKorea station service returned no usable coordinates',
+      );
+    }
+    return stations;
+  }
+
+  private requireServiceKey(): void {
+    if (!this.serviceKey) {
+      throw new AirKoreaAirQualityProviderError(
+        'AirKorea service key is not configured',
+      );
+    }
+  }
+}
+
+function stationCoordinates(
+  dmX: string | number | null | undefined,
+  dmY: string | number | null | undefined,
+): { latitude: number; longitude: number } | undefined {
+  const first = numericValue(dmX);
+  const second = numericValue(dmY);
+  if (first === undefined || second === undefined) return undefined;
+  if (isLatitude(first) && isLongitude(second)) {
+    return { latitude: first, longitude: second };
+  }
+  if (isLongitude(first) && isLatitude(second)) {
+    return { latitude: second, longitude: first };
+  }
+  return undefined;
+}
+
+function isLatitude(value: number): boolean {
+  return value >= 30 && value <= 44;
+}
+
+function isLongitude(value: number): boolean {
+  return value >= 120 && value <= 134;
+}
+
+function validateLocation(latitude: number, longitude: number): void {
+  if (!isLatitude(latitude) || !isLongitude(longitude)) {
+    throw new AirKoreaAirQualityProviderError(
+      'Location is outside the supported Korean air-quality area',
+    );
+  }
+}
+
+function haversineMeters(
+  latitude: number,
+  longitude: number,
+  targetLatitude: number,
+  targetLongitude: number,
+): number {
+  const radians = Math.PI / 180;
+  const latitudeDelta = (targetLatitude - latitude) * radians;
+  const longitudeDelta = (targetLongitude - longitude) * radians;
+  const leftLatitude = latitude * radians;
+  const rightLatitude = targetLatitude * radians;
+  const a = Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(leftLatitude) * Math.cos(rightLatitude) *
+      Math.sin(longitudeDelta / 2) ** 2;
+  return 2 * 6_371_008.8 * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
 function numericValue(value: unknown): number | undefined {

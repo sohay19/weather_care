@@ -30,6 +30,13 @@ export interface EnvironmentalDataBundle {
   };
 }
 
+interface EnvironmentalLoadOptions {
+  now?: Date;
+  nx?: number;
+  ny?: number;
+  coordinates?: { latitude: number; longitude: number };
+}
+
 interface ResolveOptions<T> {
   db?: D1Database;
   cacheKey: string;
@@ -52,55 +59,67 @@ interface ResolvedValue<T> {
 export async function loadEnvironmentalData(
   env: ServerEnv,
   region: RegionMetadata | undefined,
-  options: { now?: Date } = {},
+  options: EnvironmentalLoadOptions = {},
 ): Promise<EnvironmentalDataBundle> {
-  if (!region) {
-    return {
-      sources: {
-        uv: unsupportedSource('KMA_LIVING_INDEX_V5'),
-        airQuality: unsupportedSource('AIRKOREA'),
-      },
-    };
-  }
-
   const now = options.now ?? new Date();
   const serviceKey = env.KMA_SERVICE_KEY;
+  const nx = region?.nx ?? options.nx;
+  const ny = region?.ny ?? options.ny;
+  const canLoadAirQuality =
+    nx !== undefined &&
+    ny !== undefined &&
+    (options.coordinates !== undefined || region !== undefined);
   const [uv, airQuality] = await Promise.all([
-    resolveEnvironmentalValue<UvForecast>({
-      db: env.DB,
-      cacheKey: `UV_${region.nx}_${region.ny}`,
-      cacheType: 'UV',
-      nx: region.nx,
-      ny: region.ny,
-      provider: 'KMA_LIVING_INDEX_V5',
-      freshMs: UV_FRESH_MS,
-      maxStaleMs: UV_MAX_STALE_MS,
-      observedAt: (value) => value.issuedAt,
-      load: () =>
-        new KmaUvProvider({ serviceKey }).getForecast(region.uvAreaNo),
-      now,
-    }),
-    resolveEnvironmentalValue<AirQualitySnapshot>({
-      db: env.DB,
-      cacheKey: `AIR_${region.nx}_${region.ny}`,
-      cacheType: 'AIR_QUALITY',
-      nx: region.nx,
-      ny: region.ny,
-      provider: 'AIRKOREA',
-      freshMs: AIR_FRESH_MS,
-      maxStaleMs: AIR_MAX_STALE_MS,
-      observedAt: (value) => value.observedAt,
-      load: () =>
-        new AirKoreaAirQualityProvider({
-          serviceKey,
-          now: () => now,
-        }).getByRegion(
-          region.nx,
-          region.ny,
-          region.airKoreaStationName,
-        ),
-      now,
-    }),
+    region
+      ? resolveEnvironmentalValue<UvForecast>({
+          db: env.DB,
+          cacheKey: `UV_${region.nx}_${region.ny}`,
+          cacheType: 'UV',
+          nx: region.nx,
+          ny: region.ny,
+          provider: 'KMA_LIVING_INDEX_V5',
+          freshMs: UV_FRESH_MS,
+          maxStaleMs: UV_MAX_STALE_MS,
+          observedAt: (value) => value.issuedAt,
+          load: () =>
+            new KmaUvProvider({ serviceKey }).getForecast(region.uvAreaNo),
+          now,
+        })
+      : Promise.resolve<ResolvedValue<UvForecast>>({
+          source: unsupportedSource('KMA_LIVING_INDEX_V5'),
+        }),
+    canLoadAirQuality
+      ? resolveEnvironmentalValue<AirQualitySnapshot>({
+          db: env.DB,
+          cacheKey: `AIR_${nx}_${ny}`,
+          cacheType: 'AIR_QUALITY',
+          nx,
+          ny,
+          provider: 'AIRKOREA',
+          freshMs: AIR_FRESH_MS,
+          maxStaleMs: AIR_MAX_STALE_MS,
+          observedAt: (value) => value.observedAt,
+          load: () => {
+            const provider = new AirKoreaAirQualityProvider({
+              serviceKey,
+              now: () => now,
+            });
+            return options.coordinates
+              ? provider.getByLocation(
+                  options.coordinates.latitude,
+                  options.coordinates.longitude,
+                )
+              : provider.getByRegion(
+                  nx,
+                  ny,
+                  region?.airKoreaStationName,
+                );
+          },
+          now,
+        })
+      : Promise.resolve<ResolvedValue<AirQualitySnapshot>>({
+          source: unsupportedSource('AIRKOREA'),
+        }),
   ]);
 
   return {

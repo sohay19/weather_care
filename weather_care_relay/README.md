@@ -26,6 +26,7 @@ ITS_API_KEY='...' RELAY_TOKEN='32자 이상의 임의 토큰' npm start
 
 ```bash
 curl -sS http://127.0.0.1:8788/health
+sudo /opt/weather-care-relay/deploy/smoke-test.sh
 ```
 
 ## Ubuntu 운영 경로

@@ -41,15 +41,30 @@ describe('ITS relay', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it('forwards only validated bounds and keeps the ITS key upstream', async () => {
-    const payload = { response: { header: { resultCode: '0' } } };
+  it('fetches nationwide once and returns only events inside the requested bounds', async () => {
+    const payload = successPayload([
+      { linkId: 'inside', coordX: '127.02', coordY: '37.26' },
+      { linkId: 'outside', coordX: '129.07', coordY: '35.18' },
+    ]);
     const fetcher = vi.fn(async () => Response.json(payload));
     const baseUrl = await start(fetcher);
 
     const response = await relayRequest(baseUrl, validBounds());
+    const second = await relayRequest(baseUrl, {
+      minLongitude: 129.04,
+      maxLongitude: 129.1,
+      minLatitude: 35.15,
+      maxLatitude: 35.21,
+    });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(payload);
+    expect(await response.json()).toEqual(successPayload([
+      { linkId: 'inside', coordX: '127.02', coordY: '37.26' },
+    ]));
+    expect(await second.json()).toEqual(successPayload([
+      { linkId: 'outside', coordX: '129.07', coordY: '35.18' },
+    ]));
+    expect(fetcher).toHaveBeenCalledTimes(1);
     const [rawUrl, init] = fetcher.mock.calls[0];
     const url = new URL(rawUrl.toString());
     expect(`${url.origin}${url.pathname}`).toBe(
@@ -59,7 +74,29 @@ describe('ITS relay', () => {
     expect(url.searchParams.get('type')).toBe('all');
     expect(url.searchParams.get('eventType')).toBe('all');
     expect(url.searchParams.get('getType')).toBe('json');
+    expect(url.searchParams.get('minX')).toBe('124');
+    expect(url.searchParams.get('maxX')).toBe('132');
+    expect(url.searchParams.get('minY')).toBe('32');
+    expect(url.searchParams.get('maxY')).toBe('39.5');
     expect(init?.headers).toEqual({ accept: 'application/json' });
+  });
+
+  it('coalesces concurrent cache misses into one nationwide request', async () => {
+    let release: ((response: Response) => void) | undefined;
+    const upstream = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const fetcher = vi.fn(() => upstream);
+    const baseUrl = await start(fetcher);
+
+    const first = relayRequest(baseUrl, validBounds());
+    const second = relayRequest(baseUrl, validBounds());
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    release!(Response.json(successPayload([])));
+
+    expect((await first).status).toBe(200);
+    expect((await second).status).toBe(200);
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   it('rejects coordinates outside Korea and oversized bounding boxes', async () => {
@@ -99,6 +136,20 @@ describe('ITS relay', () => {
       error: 'UPSTREAM_UNAVAILABLE',
     });
   });
+
+  it('does not cache an official error payload', async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ response: { header: { resultCode: '9' } } }),
+      )
+      .mockResolvedValueOnce(Response.json(successPayload([])));
+    const baseUrl = await start(fetcher);
+
+    expect((await relayRequest(baseUrl, validBounds())).status).toBe(502);
+    expect((await relayRequest(baseUrl, validBounds())).status).toBe(200);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
 });
 
 async function start(fetcher: typeof fetch = fetch): Promise<string> {
@@ -109,6 +160,7 @@ async function start(fetcher: typeof fetch = fetch): Promise<string> {
       itsApiKey: 'test-its-key',
       relayToken: TOKEN,
       upstreamTimeoutMs: 1_000,
+      itsCacheTtlMs: 3_600_000,
     },
     fetcher,
   });
@@ -119,6 +171,15 @@ async function start(fetcher: typeof fetch = fetch): Promise<string> {
   });
   const address = server.address() as AddressInfo;
   return `http://127.0.0.1:${address.port}`;
+}
+
+function successPayload(items: Record<string, string>[]) {
+  return {
+    response: {
+      header: { resultCode: '0' },
+      body: { totalCount: items.length, items: { item: items } },
+    },
+  };
 }
 
 function relayRequest(baseUrl: string, body: unknown): Promise<Response> {

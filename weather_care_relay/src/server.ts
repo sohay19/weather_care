@@ -11,6 +11,12 @@ const ITS_EVENT_URL = 'https://openapi.its.go.kr:9443/eventInfo';
 const MAX_REQUEST_BYTES = 4 * 1024;
 const MAX_UPSTREAM_BYTES = 2 * 1024 * 1024;
 const MAX_BOUNDING_BOX_SPAN_DEGREES = 0.25;
+const KOREA_BOUNDS: BoundingBoxRequest = {
+  minLongitude: 124,
+  maxLongitude: 132,
+  minLatitude: 32,
+  maxLatitude: 39.5,
+};
 
 interface BoundingBoxRequest {
   minLongitude: number;
@@ -22,12 +28,23 @@ interface BoundingBoxRequest {
 export interface RelayServerOptions {
   config: RelayConfig;
   fetcher?: typeof fetch;
+  now?: () => number;
 }
 
 export function createRelayServer(options: RelayServerOptions): Server {
   const fetcher = options.fetcher ?? fetch;
+  const loadNationwideEvents = nationwideItsLoader(
+    options.config,
+    fetcher,
+    options.now ?? Date.now,
+  );
   return createServer((request, response) => {
-    void handleRequest(request, response, options.config, fetcher).catch(
+    void handleRequest(
+      request,
+      response,
+      options.config,
+      loadNationwideEvents,
+    ).catch(
       (error: unknown) => {
         log('relay_request_failed', {
           error: error instanceof Error ? error.name : 'UnknownError',
@@ -42,7 +59,7 @@ async function handleRequest(
   request: IncomingMessage,
   response: ServerResponse,
   config: RelayConfig,
-  fetcher: typeof fetch,
+  loadNationwideEvents: () => Promise<unknown>,
 ): Promise<void> {
   if (request.method === 'GET' && request.url === '/health') {
     sendJson(response, 200, { status: 'ok' });
@@ -75,29 +92,9 @@ async function handleRequest(
     return;
   }
 
-  const upstreamUrl = new URL(ITS_EVENT_URL);
-  upstreamUrl.searchParams.set('apiKey', config.itsApiKey);
-  upstreamUrl.searchParams.set('type', 'all');
-  upstreamUrl.searchParams.set('eventType', 'all');
-  upstreamUrl.searchParams.set('minX', bounds.minLongitude.toFixed(6));
-  upstreamUrl.searchParams.set('maxX', bounds.maxLongitude.toFixed(6));
-  upstreamUrl.searchParams.set('minY', bounds.minLatitude.toFixed(6));
-  upstreamUrl.searchParams.set('maxY', bounds.maxLatitude.toFixed(6));
-  upstreamUrl.searchParams.set('getType', 'json');
-
   try {
-    const upstream = await fetcher(upstreamUrl, {
-      headers: { accept: 'application/json' },
-      signal: AbortSignal.timeout(config.upstreamTimeoutMs),
-    });
-    if (!upstream.ok) {
-      log('its_upstream_rejected', { status: upstream.status });
-      sendJson(response, 502, { error: 'UPSTREAM_UNAVAILABLE' });
-      return;
-    }
-
-    const payload = await readJsonResponse(upstream);
-    sendJson(response, 200, payload);
+    const payload = await loadNationwideEvents();
+    sendJson(response, 200, filterItsPayload(payload, bounds));
   } catch (error) {
     log('its_upstream_failed', {
       error:
@@ -108,6 +105,108 @@ async function handleRequest(
             : 'NetworkError',
     });
     sendJson(response, 502, { error: 'UPSTREAM_UNAVAILABLE' });
+  }
+}
+
+function nationwideItsLoader(
+  config: RelayConfig,
+  fetcher: typeof fetch,
+  now: () => number,
+): () => Promise<unknown> {
+  let cached: { payload: unknown; expiresAt: number } | undefined;
+  let refresh: Promise<unknown> | undefined;
+
+  return async () => {
+    const current = now();
+    if (cached && current < cached.expiresAt) return cached.payload;
+    if (refresh) return refresh;
+
+    refresh = fetchNationwideItsEvents(config, fetcher).then((payload) => {
+      cached = { payload, expiresAt: now() + config.itsCacheTtlMs };
+      return payload;
+    });
+    try {
+      return await refresh;
+    } finally {
+      refresh = undefined;
+    }
+  };
+}
+
+async function fetchNationwideItsEvents(
+  config: RelayConfig,
+  fetcher: typeof fetch,
+): Promise<unknown> {
+  const upstreamUrl = new URL(ITS_EVENT_URL);
+  upstreamUrl.searchParams.set('apiKey', config.itsApiKey);
+  upstreamUrl.searchParams.set('type', 'all');
+  upstreamUrl.searchParams.set('eventType', 'all');
+  upstreamUrl.searchParams.set('minX', String(KOREA_BOUNDS.minLongitude));
+  upstreamUrl.searchParams.set('maxX', String(KOREA_BOUNDS.maxLongitude));
+  upstreamUrl.searchParams.set('minY', String(KOREA_BOUNDS.minLatitude));
+  upstreamUrl.searchParams.set('maxY', String(KOREA_BOUNDS.maxLatitude));
+  upstreamUrl.searchParams.set('getType', 'json');
+
+  const upstream = await fetcher(upstreamUrl, {
+    headers: { accept: 'application/json' },
+    signal: AbortSignal.timeout(config.upstreamTimeoutMs),
+  });
+  if (!upstream.ok) {
+    log('its_upstream_rejected', { status: upstream.status });
+    throw new UpstreamResponseError('upstream request rejected');
+  }
+  const payload = await readJsonResponse(upstream);
+  assertSuccessfulItsPayload(payload);
+  return payload;
+}
+
+function filterItsPayload(
+  payload: unknown,
+  bounds: BoundingBoxRequest,
+): unknown {
+  const root = record(payload);
+  const response = record(root.response ?? root);
+  const body = record(response.body);
+  const itemsContainer = record(body.items);
+  const rawItems = itemsContainer.item ?? body.items ?? response.items;
+  const items = Array.isArray(rawItems)
+    ? rawItems
+    : rawItems === undefined || rawItems === null
+      ? []
+      : [rawItems];
+  const filtered = items.filter((value) => {
+    const item = record(value);
+    const longitude = numeric(item.coordX);
+    const latitude = numeric(item.coordY);
+    return (
+      longitude !== undefined &&
+      latitude !== undefined &&
+      longitude >= bounds.minLongitude &&
+      longitude <= bounds.maxLongitude &&
+      latitude >= bounds.minLatitude &&
+      latitude <= bounds.maxLatitude
+    );
+  });
+  const filteredResponse = {
+    ...response,
+    body: {
+      ...body,
+      totalCount: filtered.length,
+      items: { ...itemsContainer, item: filtered },
+    },
+  };
+  return Object.hasOwn(root, 'response')
+    ? { ...root, response: filteredResponse }
+    : filteredResponse;
+}
+
+function assertSuccessfulItsPayload(payload: unknown): void {
+  const root = record(payload);
+  const response = record(root.response ?? root);
+  const header = record(response.header);
+  const resultCode = String(header.resultCode ?? response.resultCode ?? '');
+  if (resultCode !== '0') {
+    throw new UpstreamResponseError('upstream response contains an error');
   }
 }
 
@@ -228,6 +327,15 @@ function log(event: string, fields: Record<string, string | number>): void {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {};
+}
+
+function numeric(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 class PayloadTooLargeError extends Error {

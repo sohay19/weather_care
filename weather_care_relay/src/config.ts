@@ -4,6 +4,7 @@ export interface RelayConfig {
   itsApiKey: string;
   relayToken: string;
   upstreamTimeoutMs: number;
+  itsCacheTtlMs: number;
 }
 
 export function loadRelayConfig(
@@ -25,6 +26,11 @@ export function loadRelayConfig(
       10_000,
       'UPSTREAM_TIMEOUT_MS',
     ),
+    itsCacheTtlMs: durationMilliseconds(
+      environment.ITS_CACHE_TTL_MS,
+      3_600_000,
+      'ITS_CACHE_TTL_MS',
+    ),
   };
 }
 
@@ -43,6 +49,19 @@ function positiveInteger(
   const parsed = Number(value);
   if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > 65_535) {
     throw new Error(`${name} must be a positive integer no greater than 65535`);
+  }
+  return parsed;
+}
+
+function durationMilliseconds(
+  value: string | undefined,
+  fallback: number,
+  name: string,
+): number {
+  if (!value) return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > 86_400_000) {
+    throw new Error(`${name} must be between 1 and 86400000 milliseconds`);
   }
   return parsed;
 }

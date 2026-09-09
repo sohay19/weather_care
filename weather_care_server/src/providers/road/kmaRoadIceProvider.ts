@@ -20,6 +20,8 @@ const ROAD_NAMES: Record<string, string> = {
   '251': '호남선의지선',
 };
 
+export const ROAD_ICE_ROAD_NUMBERS = Object.freeze(Object.keys(ROAD_NAMES));
+
 interface KmaRoadIceProviderOptions {
   serviceKey: string;
   fetcher?: typeof fetch;
@@ -67,7 +69,7 @@ export class KmaRoadIceProvider {
   async getNearestRiskByLocation(
     latitude: number,
     longitude: number,
-    roadNumbers: readonly string[],
+    roadNumbers: readonly string[] = ROAD_ICE_ROAD_NUMBERS,
   ): Promise<RoadIceRisk | undefined> {
     validateLocation(latitude, longitude);
     if (!this.serviceKey) {

@@ -18,6 +18,14 @@ describe('road ice message', () => {
       }),
     ]);
   });
+
+  it('does not repeat the current-location label', () => {
+    const message = buildRoadIceMessage(risk(), '현재 위치');
+
+    expect(message?.parts[1].text).toBe(
+      '기상청은 오전 10시 영동선 인근 구간의 블랙아이스(도로살얼음) 발생 가능성을 주의 2단계로 안내했어요',
+    );
+  });
 });
 
 function risk(): RoadIceRisk {

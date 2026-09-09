@@ -58,7 +58,8 @@ function roadIceOfficialFact(
   risk: RoadIceRisk,
   regionName: string,
 ): string {
-  return `기상청은 ${formatHour(risk.producedAt)} ${risk.roadName} ${regionName} 인근 구간의 블랙아이스(도로살얼음) 발생 가능성을 ${risk.levelLabel} ${risk.level}단계로 안내했어요`;
+  const location = regionName === '현재 위치' ? '' : `${regionName} `;
+  return `기상청은 ${formatHour(risk.producedAt)} ${risk.roadName} ${location}인근 구간의 블랙아이스(도로살얼음) 발생 가능성을 ${risk.levelLabel} ${risk.level}단계로 안내했어요`;
 }
 
 function formatHour(iso: string): string {

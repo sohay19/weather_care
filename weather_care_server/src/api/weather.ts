@@ -77,7 +77,7 @@ router.get('/today', async (c) => {
       settingsForRequest(c.env.DB, c.req.query('installationId')),
       loadCurrentPrecipitation(c.env, coordinates),
       loadActiveWarnings(c.env, region),
-      loadRoadIce(c.env, region, coordinates),
+      loadRoadIce(c.env, coordinates),
       loadRoadControl(c.env, coordinates),
     ]);
     const forecast = enrichForecastWithEnvironmentalData(
@@ -206,17 +206,15 @@ async function loadRoadControl(
 
 async function loadRoadIce(
   env: ServerEnv,
-  region: RegionMetadata | undefined,
   coordinates: { latitude: number; longitude: number } | undefined,
 ): Promise<RoadIceRisk | undefined> {
-  if (!env.KMA_APIHUB_KEY || !region || !coordinates) return undefined;
+  if (!env.KMA_APIHUB_KEY || !coordinates) return undefined;
   try {
     return await new KmaRoadIceProvider({
       serviceKey: env.KMA_APIHUB_KEY,
     }).getNearestRiskByLocation(
       coordinates.latitude,
       coordinates.longitude,
-      region.roadWeatherRoadNumbers,
     );
   } catch (error) {
     console.error(

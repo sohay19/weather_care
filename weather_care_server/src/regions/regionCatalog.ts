@@ -7,7 +7,6 @@ export interface RegionMetadata {
   latitude: number;
   longitude: number;
   warningRegionIds: string[];
-  roadWeatherRoadNumbers: string[];
 }
 
 const REGION_CATALOG: RegionMetadata[] = [
@@ -20,7 +19,6 @@ const REGION_CATALOG: RegionMetadata[] = [
     latitude: 37.2636,
     longitude: 127.0286,
     warningRegionIds: ['L1011900'],
-    roadWeatherRoadNumbers: ['001', '015', '050'],
   },
   {
     nx: 60,
@@ -32,7 +30,6 @@ const REGION_CATALOG: RegionMetadata[] = [
     longitude: 126.978,
     // 종로구는 기상청의 서울서북권 특보구역에 포함된다.
     warningRegionIds: ['L1100400'],
-    roadWeatherRoadNumbers: ['001', '050'],
   },
 ];
 

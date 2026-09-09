@@ -2,6 +2,7 @@ import { strToU8, zipSync } from 'fflate';
 import { describe, expect, it, vi } from 'vitest';
 import {
   KmaRoadIceProvider,
+  ROAD_ICE_ROAD_NUMBERS,
   parseRoadIceArchive,
 } from '../src/providers/road/kmaRoadIceProvider';
 
@@ -53,6 +54,26 @@ describe('KMA road ice provider', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it('checks every officially supported road when no regional list is supplied', async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const roadNumber = new URL(input.toString()).searchParams.get('roadNum');
+      return new Response(
+        roadIceArchive(roadNumber === '050' ? 2 : 0, roadNumber ?? '000'),
+        { headers: { 'Content-Type': 'application/zip' } },
+      );
+    });
+    const provider = new KmaRoadIceProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-01-15T01:00:00Z'),
+    });
+
+    const risk = await provider.getNearestRiskByLocation(37.2636, 127.0286);
+
+    expect(fetcher).toHaveBeenCalledTimes(ROAD_ICE_ROAD_NUMBERS.length);
+    expect(risk).toMatchObject({ roadNumber: '050', level: 2 });
+  });
+
   it('rejects non-ZIP responses instead of treating them as no risk', () => {
     const bytes = new TextEncoder().encode('temporary provider response');
     expect(() =>
@@ -61,15 +82,15 @@ describe('KMA road ice provider', () => {
   });
 });
 
-function roadIceArchive(): ArrayBuffer {
+function roadIceArchive(level = 2, roadNumber = '050'): ArrayBuffer {
   const csv = [
     'LINK_ID,S_NUM,F_LON,F_LAT,T_LON,T_LAT,B_ICE,FLAG,X_GRID,Y_GRID',
     'no-info,1,127.0280,37.2630,127.0290,37.2640,0,0,1,1',
-    'risk-link,1,127.0300,37.2630,127.0310,37.2640,2,1,2,2',
+    `risk-link,1,127.0300,37.2630,127.0310,37.2640,${level},1,2,2`,
     'far-danger,1,127.1000,37.3000,127.1010,37.3010,3,0,3,3',
   ].join('\n');
   const zipped = zipSync({
-    'R050_1KM_FRG_202601150100.csv': strToU8(csv),
+    [`R${roadNumber}_1KM_FRG_202601150100.csv`]: strToU8(csv),
   });
   return toArrayBuffer(zipped);
 }

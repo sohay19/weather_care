@@ -27,7 +27,10 @@ import {
   changedWarningNotification,
   releasedWarningNotification,
 } from '../presentation/officialWarningMessages';
-import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
+import {
+  KmaRoadIceProvider,
+  ROAD_ICE_ROAD_NUMBERS,
+} from '../providers/road/kmaRoadIceProvider';
 import { roadIceNotification } from '../presentation/roadIceMessage';
 import {
   hasItsRoadControlConfiguration,
@@ -387,11 +390,10 @@ async function collectRoadIceNotification(
   if (!env.KMA_APIHUB_KEY) return;
   if (row.latitude === null || row.longitude === null) return;
   const region = regionMetadataForGrid(row.nx, row.ny);
-  if (!region || region.roadWeatherRoadNumbers.length === 0) return;
+  const displayRegionName = region?.name ?? '현재 위치';
   const locationKey = [
     row.latitude.toFixed(5),
     row.longitude.toFixed(5),
-    region.roadWeatherRoadNumbers.join(','),
   ].join(':');
   let riskPromise = roadIceByLocation.get(locationKey);
   if (!riskPromise) {
@@ -399,7 +401,7 @@ async function collectRoadIceNotification(
       env,
       row.latitude,
       row.longitude,
-      region.roadWeatherRoadNumbers,
+      ROAD_ICE_ROAD_NUMBERS,
     );
     roadIceByLocation.set(locationKey, riskPromise);
   }
@@ -418,7 +420,7 @@ async function collectRoadIceNotification(
     ) {
       return;
     }
-    const content = roadIceNotification(risk, region.name);
+    const content = roadIceNotification(risk, displayRegionName);
     pending.push({
       installationId: row.installationId,
       targetDate,

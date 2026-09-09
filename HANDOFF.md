@@ -5062,3 +5062,17 @@
 - 검증: 서버 TypeScript 검사, Vitest `21 files / 83 tests`, Worker 번들 dry-run을 통과했다. 로컬 `.dev.vars`에 운영 전용 Secret 4종이 없다는 테스트 경고는 기존과 같고 운영 Secret 등록 상태와는 무관하다.
 - 관련 커밋: `dd16f2f` 안전 진단 기반, `99a7875` 특보 명령·세부진단, `3d0b766` API허브 오류 구분, `3cf7020` 타 지역 특보행 격리, `9b9f870` 강수 ASCII 종료표시 제외.
 - 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다. 공식 ITS 매뉴얼 확인용 시스템 임시 파일은 확인 후 삭제했다.
+
+## 2026-09-09 ITS 홈서버 중계 운영 연동 완료
+
+- Cloudflare Worker에서 국가교통정보센터 `openapi.its.go.kr:9443`로 직접 연결하지 않고, 한국 가정망의 Ubuntu 서버를 거치는 전용 HTTPS 중계를 추가했다. 중계는 좌표 경계만 받으며 ITS 인증키는 Ubuntu에만 보관한다.
+- 중계 서비스는 `weather_care_relay`에 별도 Node.js TypeScript 프로젝트로 구현했다. `GET /health`와 Bearer 인증이 필요한 `POST /v1/its/event-info`만 제공하고, 대한민국 범위·요청 크기·응답 크기·상류 시간제한을 검증한다.
+- Ubuntu `soha-01`에는 검증한 Node.js `24.15.0`을 `/opt/node-v24.15.0-linux-x64`에 설치했다. 애플리케이션은 `/opt/weather-care-relay/dist`, 비밀환경은 `/etc/weather-care-relay.env`, systemd 단위는 `/etc/systemd/system/weather-care-relay.service`에 배치했다.
+- `weather-care-relay` systemd 서비스는 `active`·`enabled` 상태이며, Tailscale Funnel `https://soha-01.tail82e8fe.ts.net`이 `127.0.0.1:8788`로 연결된다. 로컬 health와 Funnel을 통한 인증·ITS 전체 왕복이 HTTP 200으로 확인됐다.
+- Worker에는 `ITS_RELAY_URL`, `ITS_RELAY_TOKEN`을 Secret으로 등록했다. 교통 Provider는 두 값이 모두 있으면 중계를 우선 사용하고, 기존 `ITS_API_KEY` 직접 연결은 선택적 비상 호환 경로로만 남겼다.
+- Funnel 활성화 직후 Tailscale 공개 DNS 전파 전의 부정 응답이 Cloudflare에 남아 일시적인 연결 실패가 있었다. 전파 후 비밀값을 다시 맞추고 Worker를 재배포했다.
+- 교통 Provider만 전역 `fetch`를 객체 메서드로 저장해 Cloudflare 런타임에서 잘못된 수신자로 호출하던 문제를 수정했다. 전역 래퍼를 사용하도록 바꾸고 호출 문맥 회귀 테스트를 추가했다.
+- 최종 운영 Worker 버전은 `6c7be553-9180-4414-b59f-58e362734e64`이다. 수원 좌표 Today API가 HTTP 200으로 응답했고, 같은 실행의 운영 로그에 `road_control_provider_failed`가 없음을 확인했다. 현재 반경에는 통제정보가 없어 `currentRoadControl`이 생략되는 것이 정상이다.
+- 검증: 중계 Vitest `5 tests`, Ubuntu 배포 스모크 테스트 `ITS_RELAY_OK`, 서버 TypeScript 검사, 서버 Vitest `21 files / 87 tests`, Worker 번들 dry-run, 공개 중계 왕복과 운영 Today 호출을 통과했다.
+- 관련 커밋: `0efdc8c` 중계 서비스, `a230951` Worker 중계 경로, `806e46a` Ubuntu 실행·점검, `a207a54` Worker fetch 호출 문맥 수정.
+- 임시 진단 Worker `weather-care-relay-probe`와 서버 설치용 `/tmp/weather-care-*` 파일은 확인 후 삭제했다. 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.

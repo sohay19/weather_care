@@ -71,7 +71,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _SettingsSection(
           icon: Icons.location_on_outlined,
           title: '기준 지역',
-          subtitle: '현재 수원 날씨를 기준으로 안내하고 있어요',
+          subtitle: settings.locationMode == 'GPS'
+              ? '현재 위치 날씨를 기준으로 안내하고 있어요'
+              : '선택한 지역 날씨를 기준으로 안내하고 있어요',
           child: RadioGroup<LocationMode>(
             groupValue: settings.locationMode == 'GPS'
                 ? LocationMode.gps

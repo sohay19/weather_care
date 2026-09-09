@@ -9,6 +9,7 @@ import '../../services/api_client.dart';
 import '../../services/app_config.dart';
 import '../../services/app_settings_repository.dart';
 import '../../services/kma_direct_weather_service.dart';
+import '../../services/kma_grid.dart';
 import '../../services/installation_identity.dart';
 import '../../services/notification_registration_service.dart';
 import '../../services/settings_sync_service.dart';
@@ -51,6 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
+  KmaGrid get _weatherGrid {
+    final coordinates = _coordinates;
+    if (_settings.locationMode != 'GPS' || coordinates == null) {
+      return KmaGrid.suwon;
+    }
+    return KmaGrid.fromCoordinates(
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -82,11 +94,12 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     _notificationRegistration = NotificationRegistrationService(client);
+    final grid = _weatherGrid;
     unawaited(
       _notificationRegistration!.initialize(
         installationId: installationId,
-        nx: 60,
-        ny: 121,
+        nx: grid.nx,
+        ny: grid.ny,
         locationMode: _settings.locationMode,
         coordinates: _coordinates,
       ),
@@ -119,10 +132,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       while (mounted) {
+        final grid = _weatherGrid;
         final serverResult = await service.fetchServerWeather(
           installationId: _settings.installationId,
-          nx: 60,
-          ny: 121,
+          nx: grid.nx,
+          ny: grid.ny,
           coordinates: _coordinates,
         );
 
@@ -145,8 +159,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (action == ServerFailureAction.useDirectForecast) {
           final directResult = await service.fetchDirectWeather(
-            nx: 60,
-            ny: 121,
+            nx: grid.nx,
+            ny: grid.ny,
           );
           if (!mounted) return;
           _applyResult(directResult);
@@ -367,10 +381,11 @@ class _HomeScreenState extends State<HomeScreen> {
           _coordinates = await _locationService.currentCoordinates(
             gpsEnabled: updated.locationMode == 'GPS',
           );
+          final grid = _weatherGrid;
           await _notificationRegistration?.syncInstallation(
             installationId: updated.installationId,
-            nx: 60,
-            ny: 121,
+            nx: grid.nx,
+            ny: grid.ny,
             locationMode: updated.locationMode,
             coordinates: _coordinates,
           );

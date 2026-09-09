@@ -112,6 +112,23 @@ describe('ITS road control provider', () => {
     expect(`${url}${String(init?.body)}`).not.toContain('its-key');
   });
 
+  it('calls the runtime fetch with the global receiver', async () => {
+    const originalFetch = globalThis.fetch;
+    let receiver: unknown;
+    globalThis.fetch = vi.fn(function (this: unknown) {
+      receiver = this;
+      return Promise.resolve(Response.json(successPayload([])));
+    }) as typeof fetch;
+
+    try {
+      const provider = new ItsRoadControlProvider({ apiKey: 'its-key' });
+      await provider.getNearestActiveControl(37.2636, 127.0286);
+      expect(receiver).toBe(globalThis);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it('prefers a complete relay configuration and keeps direct mode as fallback', () => {
     expect(
       itsRoadControlProviderFromEnvironment({

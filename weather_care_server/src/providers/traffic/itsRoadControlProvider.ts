@@ -58,7 +58,8 @@ export class ItsRoadControlProvider {
     this.apiKey = apiKey;
     this.relayEndpoint = relayUrl ? relayEndpoint(relayUrl) : undefined;
     this.relayToken = relayToken;
-    this.fetcher = options.fetcher ?? fetch;
+    this.fetcher =
+      options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.now = options.now ?? (() => new Date());
     this.radiusMeters = options.radiusMeters ?? DEFAULT_RADIUS_METERS;
     this.timeoutMs = options.timeoutMs ?? 10_000;

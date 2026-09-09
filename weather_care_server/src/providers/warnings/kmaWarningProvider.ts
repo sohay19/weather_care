@@ -3,6 +3,8 @@ import { kmaApiHubErrorStatus } from '../kmaApiHubResponse';
 
 const WARNING_STATUS_URL =
   'https://apihub.kma.go.kr/api/typ01/url/wrn_now_data_new.php';
+const WARNING_REGION_MAPPING_URL =
+  'https://apihub.kma.go.kr/api/typ01/url/wrn_reg_aws2.php';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 export type KmaWarningTypeCode =
@@ -29,7 +31,25 @@ type KmaWarningFailureDetail =
   | 'WARNING_JSON_RESPONSE'
   | 'WARNING_HTML_RESPONSE'
   | 'WARNING_ROWS_WITHOUT_TIMESTAMPS'
-  | 'WARNING_COLUMN_FORMAT_CHANGED';
+  | 'WARNING_COLUMN_FORMAT_CHANGED'
+  | 'WARNING_REGION_MAPPING_INVALID';
+
+export interface KmaWarningRegionMatch {
+  regionId: string;
+  regionName: string;
+  stationId: string;
+  stationName: string;
+  distanceMeters: number;
+}
+
+interface KmaWarningRegionStation {
+  regionId: string;
+  regionName: string;
+  stationId: string;
+  stationName: string;
+  latitude: number;
+  longitude: number;
+}
 
 export interface OfficialWeatherWarning extends WeatherWarning {
   typeCode: KmaWarningTypeCode;
@@ -115,6 +135,66 @@ export class KmaWarningProvider {
     }
 
     return parseActiveWarnings(await response.text(), regionIds, now);
+  }
+
+  async resolveRegionByLocation(
+    latitude: number,
+    longitude: number,
+  ): Promise<KmaWarningRegionMatch> {
+    if (!this.serviceKey) {
+      throw new KmaWarningProviderError(
+        'KMA APIHub service key is not configured',
+      );
+    }
+    if (!isKoreanCoordinate(latitude, longitude)) {
+      throw new KmaWarningProviderError(
+        'KMA warning location is outside the valid Korean coordinate range',
+      );
+    }
+
+    const query = new URLSearchParams({
+      tm: '',
+      disp: '0',
+      help: '0',
+      authKey: this.serviceKey,
+    });
+    const response = await this.fetcher(`${WARNING_REGION_MAPPING_URL}?${query}`, {
+      headers: { Accept: 'text/plain' },
+      signal: AbortSignal.timeout(this.timeoutMs),
+      cf: { cacheEverything: true, cacheTtl: 86_400 },
+    });
+    if (!response.ok) {
+      throw new KmaWarningProviderError(
+        `KMA warning region mapping request failed with status ${response.status}`,
+      );
+    }
+
+    const stations = parseWarningRegionStations(await response.text());
+    const nearest = stations
+      .map((station) => ({
+        station,
+        distanceMeters: haversineMeters(
+          latitude,
+          longitude,
+          station.latitude,
+          station.longitude,
+        ),
+      }))
+      .sort((left, right) => left.distanceMeters - right.distanceMeters)[0];
+    if (!nearest) {
+      throw new KmaWarningProviderError(
+        'KMA warning region mapping response has no usable stations',
+        'WARNING_REGION_MAPPING_INVALID',
+      );
+    }
+
+    return {
+      regionId: nearest.station.regionId,
+      regionName: nearest.station.regionName,
+      stationId: nearest.station.stationId,
+      stationName: nearest.station.stationName,
+      distanceMeters: Math.round(nearest.distanceMeters),
+    };
   }
 }
 
@@ -206,6 +286,36 @@ export function parseActiveWarnings(
   });
 }
 
+export function parseWarningRegionStations(
+  payload: string,
+): KmaWarningRegionStation[] {
+  const apiHubStatus = kmaApiHubErrorStatus(payload);
+  if (apiHubStatus !== undefined) {
+    throw new KmaWarningProviderError(
+      `KMA warning region mapping response failed with status ${apiHubStatus}`,
+    );
+  }
+  if (/AUTH|인증|ERROR/i.test(payload) && !/L\d{7}/.test(payload)) {
+    throw new KmaWarningProviderError(
+      'KMA warning region mapping response contains an error',
+    );
+  }
+
+  const stations = payload
+    .split(/\r?\n/)
+    .map(parseWarningRegionStation)
+    .filter(
+      (station): station is KmaWarningRegionStation => station !== undefined,
+    );
+  if (stations.length === 0) {
+    throw new KmaWarningProviderError(
+      'KMA warning region mapping response has no valid rows',
+      'WARNING_REGION_MAPPING_INVALID',
+    );
+  }
+  return stations;
+}
+
 function unsupportedWarningDetail(
   payload: string,
   dataLines: readonly string[],
@@ -245,6 +355,42 @@ function parseWarningRow(line: string): ParsedWarningRow | undefined {
   };
 }
 
+function parseWarningRegionStation(
+  line: string,
+): KmaWarningRegionStation | undefined {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith('#') || trimmed === '=') return undefined;
+  const tokens = (trimmed.includes(',')
+    ? trimmed.split(',')
+    : trimmed.split(/\s+/)
+  ).map((token) => token.trim()).filter(Boolean);
+  if (tokens.length < 7 || !/^\d+$/.test(tokens[0])) return undefined;
+
+  const coordinateIndex = tokens.findIndex((token, index) => {
+    if (index < 2 || index >= tokens.length - 1) return false;
+    const candidateLongitude = Number(token);
+    const candidateLatitude = Number(tokens[index + 1]);
+    return isKoreanCoordinate(candidateLatitude, candidateLongitude);
+  });
+  const warningRegionIndex = tokens.findIndex((token) => /^L\d{7}$/.test(token));
+  if (
+    coordinateIndex < 0 ||
+    warningRegionIndex < 0 ||
+    warningRegionIndex >= tokens.length - 1
+  ) {
+    return undefined;
+  }
+
+  return {
+    stationId: tokens[0],
+    stationName: tokens[1],
+    longitude: Number(tokens[coordinateIndex]),
+    latitude: Number(tokens[coordinateIndex + 1]),
+    regionId: tokens[warningRegionIndex],
+    regionName: tokens.slice(warningRegionIndex + 1).join(' '),
+  };
+}
+
 function isWarningTypeCode(value: string): value is KmaWarningTypeCode {
   return value in WARNING_NAMES;
 }
@@ -265,4 +411,31 @@ function normalizeServiceKey(value: string): string {
   } catch {
     return trimmed;
   }
+}
+
+function isKoreanCoordinate(latitude: number, longitude: number): boolean {
+  return Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= 30 &&
+    latitude <= 44 &&
+    longitude >= 124 &&
+    longitude <= 132;
+}
+
+function haversineMeters(
+  latitudeA: number,
+  longitudeA: number,
+  latitudeB: number,
+  longitudeB: number,
+): number {
+  const radians = (value: number) => value * Math.PI / 180;
+  const latitudeDelta = radians(latitudeB - latitudeA);
+  const longitudeDelta = radians(longitudeB - longitudeA);
+  const startLatitude = radians(latitudeA);
+  const endLatitude = radians(latitudeB);
+  const haversine =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(startLatitude) * Math.cos(endLatitude) *
+      Math.sin(longitudeDelta / 2) ** 2;
+  return 6_371_000 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine));
 }

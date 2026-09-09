@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   KmaWarningProvider,
   parseActiveWarnings,
+  parseWarningRegionStations,
 } from '../src/providers/warnings/kmaWarningProvider';
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 
@@ -109,5 +110,56 @@ L1010000 경기도 L1011900 수원 202609010900 202609011000 C 2 3
       'L1020000 강원도 L1020200 춘천 확장열 202609010900 202609011000 W 2 1';
 
     expect(parseActiveWarnings(payload, ['L1011900'], NOW)).toEqual([]);
+  });
+
+  it('parses the official observation-station to warning-region mapping', () => {
+    const payload = [
+      '# STN_ID STN_KO STN_SP LON LAT HT FCT_ID WRN_ID WRN_KO',
+      '119,수원,1,127.0286,37.2636,39.0,11B20601,L1011900,수원',
+      '159,부산,1,129.0320,35.1047,69.6,11H20201,L1080100,부산',
+      '=',
+    ].join('\n');
+
+    expect(parseWarningRegionStations(payload)).toEqual([
+      expect.objectContaining({
+        stationId: '119',
+        stationName: '수원',
+        regionId: 'L1011900',
+        regionName: '수원',
+        latitude: 37.2636,
+        longitude: 127.0286,
+      }),
+      expect.objectContaining({
+        stationId: '159',
+        regionId: 'L1080100',
+        regionName: '부산',
+      }),
+    ]);
+  });
+
+  it('resolves the nearest official warning region for a nationwide GPS location', async () => {
+    const fetcher = vi.fn(async () =>
+      new Response([
+        '119 수원 1 127.0286 37.2636 39.0 11B20601 L1011900 수원',
+        '159 부산 1 129.0320 35.1047 69.6 11H20201 L1080100 부산',
+      ].join('\n')),
+    );
+    const provider = new KmaWarningProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => NOW,
+    });
+
+    const match = await provider.resolveRegionByLocation(35.1796, 129.0756);
+
+    expect(match).toMatchObject({
+      stationId: '159',
+      stationName: '부산',
+      regionId: 'L1080100',
+      regionName: '부산',
+    });
+    expect(match.distanceMeters).toBeLessThan(10_000);
+    const requestUrl = new URL(fetcher.mock.calls[0][0].toString());
+    expect(requestUrl.pathname).toContain('wrn_reg_aws2.php');
   });
 });

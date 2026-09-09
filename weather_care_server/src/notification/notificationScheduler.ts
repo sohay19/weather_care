@@ -8,6 +8,7 @@ import { WeatherForecast } from '../providers/weather/weatherProvider';
 import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import {
   KmaWarningProvider,
+  KmaWarningRegionMatch,
   OfficialWeatherWarning,
 } from '../providers/warnings/kmaWarningProvider';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
@@ -111,6 +112,11 @@ interface SchedulerDependencies {
     env: ServerEnv,
     regionIds: readonly string[],
   ) => Promise<OfficialWeatherWarning[]>;
+  warningRegionResolver?: (
+    env: ServerEnv,
+    latitude: number,
+    longitude: number,
+  ) => Promise<KmaWarningRegionMatch>;
   roadIceLoader?: (
     env: ServerEnv,
     latitude: number,
@@ -142,6 +148,10 @@ export async function runRecommendationNotificationJob(
     string,
     Promise<OfficialWeatherWarning[]>
   >();
+  const warningRegionsByLocation = new Map<
+    string,
+    Promise<KmaWarningRegionMatch>
+  >();
   const roadIceByLocation = new Map<string, Promise<RoadIceRisk | undefined>>();
   const roadControlByLocation = new Map<
     string,
@@ -165,7 +175,9 @@ export async function runRecommendationNotificationJob(
       local.date,
       pending,
       warningsByRegion,
+      warningRegionsByLocation,
       dependencies.warningLoader ?? defaultWarningLoader,
+      dependencies.warningRegionResolver ?? defaultWarningRegionResolver,
     );
     await collectRoadIceNotification(
       env,
@@ -360,6 +372,16 @@ async function defaultWarningLoader(
   return new KmaWarningProvider({
     serviceKey: env.KMA_APIHUB_KEY,
   }).getActiveForRegions(regionIds);
+}
+
+async function defaultWarningRegionResolver(
+  env: ServerEnv,
+  latitude: number,
+  longitude: number,
+): Promise<KmaWarningRegionMatch> {
+  return new KmaWarningProvider({
+    serviceKey: env.KMA_APIHUB_KEY,
+  }).resolveRegionByLocation(latitude, longitude);
 }
 
 async function defaultRoadIceLoader(
@@ -557,22 +579,47 @@ async function collectOfficialWarningNotifications(
   targetDate: string,
   pending: PendingNotification[],
   warningsByRegion: Map<string, Promise<OfficialWeatherWarning[]>>,
+  warningRegionsByLocation: Map<string, Promise<KmaWarningRegionMatch>>,
   loader: (
     env: ServerEnv,
     regionIds: readonly string[],
   ) => Promise<OfficialWeatherWarning[]>,
+  regionResolver: (
+    env: ServerEnv,
+    latitude: number,
+    longitude: number,
+  ) => Promise<KmaWarningRegionMatch>,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
-  const region = regionMetadataForGrid(row.nx, row.ny);
-  if (!region || region.warningRegionIds.length === 0) return;
-  const regionKey = region.warningRegionIds.join(',');
-  let warningsPromise = warningsByRegion.get(regionKey);
-  if (!warningsPromise) {
-    warningsPromise = loader(env, region.warningRegionIds);
-    warningsByRegion.set(regionKey, warningsPromise);
-  }
+  let regionKey = `${row.nx}:${row.ny}`;
 
   try {
+    const catalogRegion = regionMetadataForGrid(row.nx, row.ny);
+    let regionIds: readonly string[];
+    let displayRegionName: string;
+    if (catalogRegion) {
+      regionIds = catalogRegion.warningRegionIds;
+      displayRegionName = catalogRegion.name;
+    } else {
+      if (row.latitude === null || row.longitude === null) return;
+      const locationKey = `${row.latitude.toFixed(5)}:${row.longitude.toFixed(5)}`;
+      let matchPromise = warningRegionsByLocation.get(locationKey);
+      if (!matchPromise) {
+        matchPromise = regionResolver(env, row.latitude, row.longitude);
+        warningRegionsByLocation.set(locationKey, matchPromise);
+      }
+      const match = await matchPromise;
+      regionIds = [match.regionId];
+      displayRegionName = match.regionName;
+    }
+    if (regionIds.length === 0) return;
+    regionKey = regionIds.join(',');
+    let warningsPromise = warningsByRegion.get(regionKey);
+    if (!warningsPromise) {
+      warningsPromise = loader(env, regionIds);
+      warningsByRegion.set(regionKey, warningsPromise);
+    }
+
     const current = highestWarningByType(await warningsPromise);
     const previous = await warningStates(env.DB, row.installationId);
     const previousByType = new Map(previous.map((item) => [item.typeCode, item]));
@@ -586,7 +633,7 @@ async function collectOfficialWarningNotifications(
           targetDate,
           pending,
           warningKey('ACTIVE', warning.typeCode, warning.validFrom),
-          activeWarningNotification(warning, region.name),
+          activeWarningNotification(warning, displayRegionName),
           { operation: 'UPSERT', warning },
         );
       } else if (before.levelCode !== warning.levelCode) {
@@ -596,7 +643,11 @@ async function collectOfficialWarningNotifications(
           targetDate,
           pending,
           warningKey('CHANGED', warning.typeCode, warning.validFrom),
-          changedWarningNotification(warning, before.levelName, region.name),
+          changedWarningNotification(
+            warning,
+            before.levelName,
+            displayRegionName,
+          ),
           { operation: 'UPSERT', warning },
         );
       } else if (
@@ -620,7 +671,7 @@ async function collectOfficialWarningNotifications(
         warningKey('RELEASED', before.typeCode, before.effectiveAt),
         releasedWarningNotification(
           { type: before.typeName, level: before.levelName },
-          region.name,
+          displayRegionName,
         ),
         { operation: 'DELETE', typeCode: before.typeCode },
       );

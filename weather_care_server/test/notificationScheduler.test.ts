@@ -217,6 +217,48 @@ describe('notification scheduler', () => {
     expect(state?.levelCode).toBe('2');
   });
 
+  it('resolves an uncatalogued GPS grid to an official warning region', async () => {
+    await insertInstallation('device-token', true);
+    await env.DB.prepare(
+      `UPDATE installations
+       SET nx = 98, ny = 76, latitude = 35.1796, longitude = 129.0756
+       WHERE installation_id = 'installation-1'`,
+    ).run();
+    const warningLoader = vi.fn(async () => [
+      {
+        ...officialWarning('R', '호우', '2'),
+        regionId: 'L1080100',
+        regionName: '부산',
+      },
+    ]);
+    const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) =>
+      payloads.map(successResult),
+    );
+
+    await runRecommendationNotificationJob(testBindings('test-apihub-key'), {
+      now: new Date('2026-09-01T12:00:00Z'),
+      forecastLoader: async () => rainyForecast(),
+      warningRegionResolver: async () => ({
+        regionId: 'L1080100',
+        regionName: '부산',
+        stationId: '159',
+        stationName: '부산',
+        distanceMeters: 2_000,
+      }),
+      warningLoader,
+      sender,
+    });
+
+    expect(warningLoader).toHaveBeenCalledWith(
+      expect.anything(),
+      ['L1080100'],
+    );
+    const warningPayload = sender.mock.calls
+      .flatMap((call) => call[1] as FcmPayload[])
+      .find((payload) => payload.notificationKey.startsWith('OFFICIAL_WARNING'));
+    expect(warningPayload?.body).toContain('부산에는 호우주의보가 발효 중이에요');
+  });
+
   it('announces an official level change and release', async () => {
     await insertInstallation('device-token');
     await insertWarningState('R', '호우', '2', '주의보');

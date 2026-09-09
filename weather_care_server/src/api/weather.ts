@@ -69,14 +69,14 @@ router.get('/today', async (c) => {
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData, settings, precipitation, warnings, roadIce, roadControl] = await Promise.all([
+    const [weatherForecast, environmentalData, settings, precipitation, warningResult, roadIce, roadControl] = await Promise.all([
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
       loadEnvironmentalData(c.env, region, { nx, ny, coordinates }),
       settingsForRequest(c.env.DB, c.req.query('installationId')),
       loadCurrentPrecipitation(c.env, coordinates),
-      loadActiveWarnings(c.env, region),
+      loadActiveWarnings(c.env, region, coordinates),
       loadRoadIce(c.env, coordinates),
       loadRoadControl(c.env, coordinates),
     ]);
@@ -104,7 +104,11 @@ router.get('/today', async (c) => {
       precipitation,
       settings.umbrellaEnabled,
     );
-    const warningMessages = buildActiveWarningMessages(warnings, regionLabel);
+    const warnings = warningResult.warnings;
+    const warningMessages = buildActiveWarningMessages(
+      warnings,
+      warningResult.regionName ?? regionLabel,
+    );
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
     const response: TodayWeatherResponse = {
@@ -231,12 +235,31 @@ async function loadRoadIce(
 async function loadActiveWarnings(
   env: ServerEnv,
   region: RegionMetadata | undefined,
-): Promise<OfficialWeatherWarning[]> {
-  if (!env.KMA_APIHUB_KEY || !region) return [];
+  coordinates: { latitude: number; longitude: number } | undefined,
+): Promise<{
+  warnings: OfficialWeatherWarning[];
+  regionName?: string;
+}> {
+  if (!env.KMA_APIHUB_KEY) return { warnings: [] };
   try {
-    return await new KmaWarningProvider({
+    const provider = new KmaWarningProvider({
       serviceKey: env.KMA_APIHUB_KEY,
-    }).getActiveForRegions(region.warningRegionIds);
+    });
+    if (region) {
+      return {
+        warnings: await provider.getActiveForRegions(region.warningRegionIds),
+        regionName: region.name,
+      };
+    }
+    if (!coordinates) return { warnings: [] };
+    const matchedRegion = await provider.resolveRegionByLocation(
+      coordinates.latitude,
+      coordinates.longitude,
+    );
+    return {
+      warnings: await provider.getActiveForRegions([matchedRegion.regionId]),
+      regionName: matchedRegion.regionName,
+    };
   } catch (error) {
     console.error(
       JSON.stringify({
@@ -245,7 +268,7 @@ async function loadActiveWarnings(
         ...providerErrorDiagnostic(error),
       }),
     );
-    return [];
+    return { warnings: [], regionName: region?.name };
   }
 }
 

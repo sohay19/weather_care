@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   ItsRoadControlProvider,
+  itsRoadControlProviderFromEnvironment,
   parseItsRoadControls,
 } from '../src/providers/traffic/itsRoadControlProvider';
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
@@ -24,6 +25,7 @@ describe('ITS road control provider', () => {
     expect(url.searchParams.get('type')).toBe('all');
     expect(url.searchParams.get('eventType')).toBe('all');
     expect(url.searchParams.get('getType')).toBe('json');
+    expect(url.searchParams.get('apiKey')).toBe('its-key');
   });
 
   it('uses only active events with explicit control evidence and prioritizes a full closure', () => {
@@ -78,6 +80,66 @@ describe('ITS road control provider', () => {
       direction: '서울방향',
       provider: '국가교통정보센터 돌발상황정보',
     });
+  });
+
+  it('uses the authenticated home relay without exposing the ITS key', async () => {
+    const fetcher = vi.fn(async () => Response.json(successPayload([])));
+    const provider = new ItsRoadControlProvider({
+      apiKey: 'its-key',
+      relayUrl: 'https://relay.example.ts.net',
+      relayToken: 'relay-secret',
+      fetcher,
+    });
+
+    await provider.getNearestActiveControl(37.2636, 127.0286);
+
+    const [rawUrl, init] = fetcher.mock.calls[0];
+    const url = new URL(rawUrl.toString());
+    expect(url.toString()).toBe(
+      'https://relay.example.ts.net/v1/its/event-info',
+    );
+    expect(init?.method).toBe('POST');
+    expect(init?.headers).toEqual({
+      authorization: 'Bearer relay-secret',
+      'content-type': 'application/json',
+    });
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      minLongitude: expect.any(Number),
+      maxLongitude: expect.any(Number),
+      minLatitude: expect.any(Number),
+      maxLatitude: expect.any(Number),
+    });
+    expect(`${url}${String(init?.body)}`).not.toContain('its-key');
+  });
+
+  it('prefers a complete relay configuration and keeps direct mode as fallback', () => {
+    expect(
+      itsRoadControlProviderFromEnvironment({
+        ITS_API_KEY: 'direct-key',
+        ITS_RELAY_URL: 'https://relay.example.ts.net',
+        ITS_RELAY_TOKEN: 'relay-token',
+      }),
+    ).toBeInstanceOf(ItsRoadControlProvider);
+    expect(
+      itsRoadControlProviderFromEnvironment({ ITS_API_KEY: 'direct-key' }),
+    ).toBeInstanceOf(ItsRoadControlProvider);
+    expect(itsRoadControlProviderFromEnvironment({})).toBeUndefined();
+  });
+
+  it('rejects an insecure or incomplete relay configuration', () => {
+    expect(
+      () =>
+        new ItsRoadControlProvider({
+          relayUrl: 'http://relay.example.ts.net',
+          relayToken: 'relay-token',
+        }),
+    ).toThrow('HTTPS');
+    expect(
+      () =>
+        new ItsRoadControlProvider({
+          relayUrl: 'https://relay.example.ts.net',
+        }),
+    ).toThrow('completely');
   });
 
   it('rejects a malformed or failed response instead of treating it as no control', async () => {

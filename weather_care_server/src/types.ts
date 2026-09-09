@@ -252,7 +252,10 @@ export interface OfficialRoadControl {
   provider: '국가교통정보센터 돌발상황정보';
 }
 
-export type ServerEnv = CloudflareBindings;
+export type ServerEnv = CloudflareBindings & {
+  /** 중계 전환 전 로컬 개발 또는 비상 직접조회에만 사용하는 선택 바인딩 */
+  ITS_API_KEY?: string;
+};
 
 export type EnvironmentalSourceState =
   | 'AVAILABLE'

@@ -35,7 +35,10 @@ cp .dev.vars.example .dev.vars
 API허브에서 고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
 `KMA_APIHUB_KEY`도 필요합니다.
 현재 시행 중인 도로 통제를 조회하려면 국가교통정보센터에서 돌발상황정보
-Open API 활용신청을 하고 발급받은 키를 `ITS_API_KEY`에 저장해야 합니다.
+Open API 활용신청을 하고 발급받은 키를 홈서버 중계 서비스의 `ITS_API_KEY`에
+저장해야 합니다. 운영 Worker에는 Tailscale Funnel의 HTTPS 주소와 같은 중계 토큰을
+각각 `ITS_RELAY_URL`, `ITS_RELAY_TOKEN` Secret으로 저장합니다. 두 중계 Secret이
+없을 때만 Worker의 기존 `ITS_API_KEY`를 직접 조회용으로 사용합니다.
 Firebase 프로젝트 ID는 공개 설정값
 `weather-care-2aaa8`로 고정되어 있습니다.
 
@@ -55,12 +58,16 @@ Android 에뮬레이터는 호스트의 이 서버를 `http://10.0.2.2:8787`로 
 ```bash
 npx wrangler secret put KMA_SERVICE_KEY
 npx wrangler secret put KMA_APIHUB_KEY
-npx wrangler secret put ITS_API_KEY
+npx wrangler secret put ITS_RELAY_URL
+npx wrangler secret put ITS_RELAY_TOKEN
 npx wrangler secret put FCM_CLIENT_EMAIL
 npx wrangler secret put FCM_PRIVATE_KEY
 npx wrangler d1 migrations apply weather_care_db --remote
 npm run deploy
 ```
+
+`ITS_API_KEY`를 Worker에 등록하는 방식은 중계 서비스가 없는 로컬 개발 또는 비상
+직접조회에만 선택적으로 사용합니다.
 
 ## 핵심 구조
 

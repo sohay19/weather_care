@@ -294,7 +294,12 @@ describe('notification scheduler', () => {
   it('sends an active official road control once and resets after it ends', async () => {
     await insertInstallation('device-token', true);
     const sent: FcmPayload[] = [];
-    const bindings = testBindings('', 'test-its-key');
+    const bindings = testBindings(
+      '',
+      '',
+      'https://relay.example.ts.net',
+      'relay-token',
+    );
     const dependencies = {
       now: new Date('2026-09-01T05:10:00Z'),
       forecastLoader: async () => rainyForecast(),
@@ -358,7 +363,12 @@ async function insertInstallation(
     .run();
 }
 
-function testBindings(apiHubKey = '', itsApiKey = ''): ServerEnv {
+function testBindings(
+  apiHubKey = '',
+  itsApiKey = '',
+  itsRelayUrl = '',
+  itsRelayToken = '',
+): ServerEnv {
   return {
     DB: env.DB,
     APP_ORIGIN: 'http://localhost:8787',
@@ -366,6 +376,8 @@ function testBindings(apiHubKey = '', itsApiKey = ''): ServerEnv {
     KMA_SERVICE_KEY: 'test-key',
     KMA_APIHUB_KEY: apiHubKey,
     ITS_API_KEY: itsApiKey,
+    ITS_RELAY_URL: itsRelayUrl,
+    ITS_RELAY_TOKEN: itsRelayToken,
     FCM_CLIENT_EMAIL: 'test@example.iam.gserviceaccount.com',
     FCM_PRIVATE_KEY: 'test-private-key',
   };

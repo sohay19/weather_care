@@ -4,11 +4,19 @@ const DEFAULT_RADIUS_METERS = 3_000;
 const ITS_EVENT_URL = 'https://openapi.its.go.kr:9443/eventInfo';
 
 interface ItsRoadControlProviderOptions {
-  apiKey: string;
+  apiKey?: string;
+  relayUrl?: string;
+  relayToken?: string;
   fetcher?: typeof fetch;
   now?: () => Date;
   radiusMeters?: number;
   timeoutMs?: number;
+}
+
+export interface ItsRoadControlEnvironment {
+  ITS_API_KEY?: string;
+  ITS_RELAY_URL?: string;
+  ITS_RELAY_TOKEN?: string;
 }
 
 interface ItsEventItem {
@@ -29,14 +37,27 @@ interface ItsEventItem {
 }
 
 export class ItsRoadControlProvider {
-  private readonly apiKey: string;
+  private readonly apiKey?: string;
+  private readonly relayEndpoint?: string;
+  private readonly relayToken?: string;
   private readonly fetcher: typeof fetch;
   private readonly now: () => Date;
   private readonly radiusMeters: number;
   private readonly timeoutMs: number;
 
   constructor(options: ItsRoadControlProviderOptions) {
-    this.apiKey = options.apiKey;
+    const apiKey = options.apiKey?.trim();
+    const relayUrl = options.relayUrl?.trim();
+    const relayToken = options.relayToken?.trim();
+    if ((relayUrl && !relayToken) || (!relayUrl && relayToken)) {
+      throw new Error('ITS relay is not configured completely');
+    }
+    if (!apiKey && !relayUrl) {
+      throw new Error('ITS road control provider is not configured');
+    }
+    this.apiKey = apiKey;
+    this.relayEndpoint = relayUrl ? relayEndpoint(relayUrl) : undefined;
+    this.relayToken = relayToken;
     this.fetcher = options.fetcher ?? fetch;
     this.now = options.now ?? (() => new Date());
     this.radiusMeters = options.radiusMeters ?? DEFAULT_RADIUS_METERS;
@@ -48,19 +69,14 @@ export class ItsRoadControlProvider {
     longitude: number,
   ): Promise<OfficialRoadControl | undefined> {
     const bounds = boundingBox(latitude, longitude, this.radiusMeters);
-    const url = new URL(ITS_EVENT_URL);
-    url.searchParams.set('apiKey', this.apiKey);
-    url.searchParams.set('type', 'all');
-    url.searchParams.set('eventType', 'all');
-    url.searchParams.set('minX', bounds.minLongitude.toFixed(6));
-    url.searchParams.set('maxX', bounds.maxLongitude.toFixed(6));
-    url.searchParams.set('minY', bounds.minLatitude.toFixed(6));
-    url.searchParams.set('maxY', bounds.maxLatitude.toFixed(6));
-    url.searchParams.set('getType', 'json');
+    const request = this.relayEndpoint
+      ? relayRequest(this.relayEndpoint, this.relayToken!, bounds)
+      : directRequest(this.apiKey!, bounds);
 
     let response: Response;
     try {
-      response = await this.fetcher(url, {
+      response = await this.fetcher(request.url, {
+        ...request.init,
         signal: AbortSignal.timeout(this.timeoutMs),
       });
     } catch (error) {
@@ -90,6 +106,28 @@ export class ItsRoadControlProvider {
       now: this.now(),
     })[0];
   }
+}
+
+export function itsRoadControlProviderFromEnvironment(
+  environment: ItsRoadControlEnvironment,
+): ItsRoadControlProvider | undefined {
+  const relayUrl = environment.ITS_RELAY_URL?.trim();
+  const relayToken = environment.ITS_RELAY_TOKEN?.trim();
+  if (relayUrl && relayToken) {
+    return new ItsRoadControlProvider({ relayUrl, relayToken });
+  }
+  const apiKey = environment.ITS_API_KEY?.trim();
+  return apiKey ? new ItsRoadControlProvider({ apiKey }) : undefined;
+}
+
+export function hasItsRoadControlConfiguration(
+  environment: ItsRoadControlEnvironment,
+): boolean {
+  const relayConfigured = Boolean(
+    environment.ITS_RELAY_URL?.trim() &&
+      environment.ITS_RELAY_TOKEN?.trim(),
+  );
+  return relayConfigured || Boolean(environment.ITS_API_KEY?.trim());
 }
 
 class ItsRoadControlProviderError extends Error {
@@ -236,6 +274,51 @@ function boundingBox(latitude: number, longitude: number, radiusMeters: number) 
     minLongitude: longitude - longitudeDelta,
     maxLongitude: longitude + longitudeDelta,
   };
+}
+
+function directRequest(
+  apiKey: string,
+  bounds: ReturnType<typeof boundingBox>,
+): { url: URL; init: RequestInit } {
+  const url = new URL(ITS_EVENT_URL);
+  url.searchParams.set('apiKey', apiKey);
+  url.searchParams.set('type', 'all');
+  url.searchParams.set('eventType', 'all');
+  url.searchParams.set('minX', bounds.minLongitude.toFixed(6));
+  url.searchParams.set('maxX', bounds.maxLongitude.toFixed(6));
+  url.searchParams.set('minY', bounds.minLatitude.toFixed(6));
+  url.searchParams.set('maxY', bounds.maxLatitude.toFixed(6));
+  url.searchParams.set('getType', 'json');
+  return { url, init: {} };
+}
+
+function relayRequest(
+  endpoint: string,
+  relayToken: string,
+  bounds: ReturnType<typeof boundingBox>,
+): { url: URL; init: RequestInit } {
+  return {
+    url: new URL(endpoint),
+    init: {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${relayToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(bounds),
+    },
+  };
+}
+
+function relayEndpoint(value: string): string {
+  const url = new URL(value);
+  if (url.protocol !== 'https:') {
+    throw new Error('ITS relay URL must use HTTPS');
+  }
+  if ((url.pathname && url.pathname !== '/') || url.search || url.hash) {
+    throw new Error('ITS relay URL must contain only an HTTPS origin');
+  }
+  return new URL('/v1/its/event-info', url.origin).toString();
 }
 
 function distanceMeters(

@@ -29,7 +29,10 @@ import {
 } from '../presentation/officialWarningMessages';
 import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
 import { roadIceNotification } from '../presentation/roadIceMessage';
-import { ItsRoadControlProvider } from '../providers/traffic/itsRoadControlProvider';
+import {
+  hasItsRoadControlConfiguration,
+  itsRoadControlProviderFromEnvironment,
+} from '../providers/traffic/itsRoadControlProvider';
 import { roadControlNotification } from '../presentation/roadControlMessage';
 
 interface NotificationInstallationRow {
@@ -362,9 +365,10 @@ async function defaultRoadControlLoader(
   latitude: number,
   longitude: number,
 ): Promise<OfficialRoadControl | undefined> {
-  return new ItsRoadControlProvider({
-    apiKey: env.ITS_API_KEY,
-  }).getNearestActiveControl(latitude, longitude);
+  return itsRoadControlProviderFromEnvironment(env)?.getNearestActiveControl(
+    latitude,
+    longitude,
+  );
 }
 
 async function collectRoadIceNotification(
@@ -466,7 +470,7 @@ async function collectRoadControlNotification(
     longitude: number,
   ) => Promise<OfficialRoadControl | undefined>,
 ): Promise<void> {
-  if (!env.ITS_API_KEY) return;
+  if (!hasItsRoadControlConfiguration(env)) return;
   if (row.latitude === null || row.longitude === null) return;
   const locationKey = `${row.latitude.toFixed(5)}:${row.longitude.toFixed(5)}`;
   let controlPromise = roadControlByLocation.get(locationKey);

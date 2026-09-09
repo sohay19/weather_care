@@ -51,7 +51,7 @@ import { buildActiveWarningMessages } from '../presentation/officialWarningMessa
 import { RegionMetadata } from '../regions/regionCatalog';
 import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
-import { ItsRoadControlProvider } from '../providers/traffic/itsRoadControlProvider';
+import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
 
@@ -180,11 +180,14 @@ async function loadRoadControl(
   env: ServerEnv,
   coordinates: { latitude: number; longitude: number } | undefined,
 ): Promise<OfficialRoadControl | undefined> {
-  if (!env.ITS_API_KEY || !coordinates) return undefined;
+  if (!coordinates) return undefined;
   try {
-    return await new ItsRoadControlProvider({
-      apiKey: env.ITS_API_KEY,
-    }).getNearestActiveControl(coordinates.latitude, coordinates.longitude);
+    const provider = itsRoadControlProviderFromEnvironment(env);
+    if (!provider) return undefined;
+    return await provider.getNearestActiveControl(
+      coordinates.latitude,
+      coordinates.longitude,
+    );
   } catch (error) {
     console.error(
       JSON.stringify({

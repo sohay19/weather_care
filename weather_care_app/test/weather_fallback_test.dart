@@ -10,8 +10,50 @@ import 'package:weather_care/services/app_config.dart';
 import 'package:weather_care/services/kma_direct_weather_service.dart';
 import 'package:weather_care/services/weather_service.dart';
 import 'package:weather_care/services/current_location_service.dart';
+import 'package:weather_care/features/home/widgets/week_precipitation.dart';
 
 void main() {
+  test('직접 조회의 Week도 자정 구간·미만 범위·결측을 보존한다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {'TMP': '20', 'POP': '60', 'PCP': '1mm 미만'}),
+      ..._slot('20260820', '1100', {'POP': '80', 'PCP': '2mm'}),
+      ..._slot('20260821', '0000', {'POP': '90', 'PCP': '3mm'}),
+      ..._slot('20260821', '0100', {'POP': '50', 'PCP': '1mm 미만'}),
+      ..._slot('20260821', '0200', {'POP': '30'}),
+    ]);
+    final days = bundle.weekly.days;
+    expect(days.first.precipitationDetail?.hours.length, 3);
+    expect(days.first.precipitationDetail?.hours.first.amount?.label, '1mm 미만');
+    expect(days.first.precipitationDetail?.hours.last.probability, 90);
+    expect(weekPrecipitationLines(days.first).join(),
+        contains('예상 누적량을 계산하기 어려워요'));
+    expect(days[1].precipitationDetail?.hours.length, 2);
+    expect(days[1].precipitationDetail?.hours.last.amount, isNull);
+    expect(weekPrecipitationLines(days[1]).first, '0~2시 예보 기준 · 하루 중 일부 시간');
+  });
+
+  test('직접 조회도 연장 예보의 단계 코드를 mm로 합산하지 않는다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {'TMP': '20'}),
+      ..._slot('20260823', '0300', {'POP': '60', 'PCP': '2'}),
+    ]);
+    final extended = bundle.weekly.days.last;
+    expect(extended.precipitationDetail?.kind, 'EXTENDED');
+    expect(extended.precipitationDetail?.hours, isEmpty);
+    expect(weekPrecipitationLines(extended).join(), contains('강수확률 중 최고 60%'));
+    expect(weekPrecipitationLines(extended).last, contains('mm 합계를 계산하지 않아요'));
+  });
+
+  test('직접 조회의 Week도 48시간 뒤 자료를 사용한다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {'TMP': '20'}),
+      ..._slot('20260822', '1000', {'POP': '60', 'PCP': '2mm'}),
+      ..._slot('20260822', '1100', {'POP': '30', 'PCP': '1mm 미만'}),
+    ]);
+    expect(weekPrecipitationLines(bundle.weekly.days.last),
+        contains('예상 누적 강수량 2mm 이상 3mm 미만'));
+  });
+
   late MockClient kmaClient;
 
   setUp(() {

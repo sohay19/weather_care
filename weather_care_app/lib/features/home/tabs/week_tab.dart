@@ -10,6 +10,7 @@ import '../../../utils/korea_date.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/week_presentation.dart';
+import '../widgets/week_precipitation.dart';
 
 class WeekTab extends StatefulWidget {
   final WeeklyWeatherResponse weekly;
@@ -255,6 +256,7 @@ class _WeekDayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final weatherLabel = weekWeatherLabel(day);
+    final precipitationLines = weekPrecipitationLines(day);
     final recommendations = serverFeaturesAvailable
         ? weekRecommendations(day)
         : <WeatherRecommendation>[];
@@ -338,6 +340,32 @@ class _WeekDayCard extends StatelessWidget {
               day.maxTemperatureSource == 'HOURLY')
             Text('시간별 최저·최고는 받은 시간대만 비교한 값이에요.',
                 style: WeatherCareTheme.microTextStyle),
+          if (precipitationLines.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              key: ValueKey('week-precipitation-${day.forecastDate}'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('강수 예보',
+                      style: TextStyle(fontWeight: FontWeight.w800)),
+                  for (final line in precipitationLines)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(line,
+                          style: WeatherCareTheme.microTextStyle
+                              .copyWith(fontSize: 12)),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

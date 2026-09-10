@@ -378,6 +378,7 @@ router.get('/weekly', async (c) => {
         forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
         weatherLabel: day.skyCondition,
         weatherDataComplete: day.weatherDataComplete,
+        precipitationDetail: day.precipitationDetail,
         min: formatTemperature(day.minTemperature),
         max: formatTemperature(day.maxTemperature),
         minTemperatureSource: day.minTemperatureSource,

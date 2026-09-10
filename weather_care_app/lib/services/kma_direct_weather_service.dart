@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 
 import '../models/weather.dart';
+import '../models/precipitation.dart';
 
 const _kmaHost = 'apis.data.go.kr';
 const _kmaPath = '/1360000/VilageFcstInfoService_2.0/getVilageFcst';
@@ -61,7 +62,7 @@ class KmaDirectWeatherService {
     for (final base in _latestBaseDateTimes(requestedAt, 4)) {
       try {
         final items = await _fetchItems(base, nx, ny);
-        return _buildBundle(items, requestedAt, nx, ny);
+        return _buildBundle(items, requestedAt, nx, ny, base);
       } on KmaDirectWeatherException catch (error) {
         lastError = error;
         if (!error.retryable) rethrow;
@@ -144,6 +145,7 @@ DirectKmaWeatherBundle _buildBundle(
   DateTime now,
   int nx,
   int ny,
+  _BaseDateTime base,
 ) {
   final categoriesBySlot = <String, Map<String, String>>{};
   for (final item in items) {
@@ -234,6 +236,8 @@ DirectKmaWeatherBundle _buildBundle(
                   '${item.date.substring(4, 6)}-${item.date.substring(6, 8)}',
               weatherLabel: item.skyCondition,
               weatherDataComplete: item.weatherDataComplete,
+              precipitationDetail:
+                  _dailyPrecipitation(item.date, allHourly, base),
               min: item.minTemperature,
               max: item.maxTemperature,
               minTemperatureSource: item.minTemperatureSource,
@@ -244,6 +248,46 @@ DirectKmaWeatherBundle _buildBundle(
           )
           .toList(),
     ),
+  );
+}
+
+DailyPrecipitationDetail _dailyPrecipitation(
+  String date,
+  List<_DirectSnapshot> hourly,
+  _BaseDateTime base,
+) {
+  final baseDay = _kmaSlotToDateTime('${base.date}0000');
+  final extendedDate = _compactDate(baseDay.add(
+    Duration(days: int.parse(base.time) < 1700 ? 3 : 4),
+  ));
+  final snapshots = hourly
+      .where((item) =>
+          _compactDate(item.observedAt.subtract(const Duration(hours: 1))) ==
+          date)
+      .toList();
+  if (date.compareTo(extendedDate) >= 0) {
+    return DailyPrecipitationDetail(
+      kind: 'EXTENDED',
+      hours: const [],
+      extendedMaxProbability: _maximum(snapshots
+          .map(
+              (item) => precipitationProbability(item.precipitationProbability))
+          .whereType<double>()
+          .toList()),
+    );
+  }
+  return DailyPrecipitationDetail(
+    kind: 'HOURLY',
+    hours: snapshots
+        .map((item) => PrecipitationHour.fromJson({
+              'forecastAt': item.observedAt
+                  .toUtc()
+                  .toIso8601String()
+                  .replaceFirst('.000Z', 'Z'),
+              'probability': item.precipitationProbability,
+              'amountText': item.precipitationAmountText,
+            }))
+        .toList(),
   );
 }
 
@@ -319,6 +363,7 @@ _DirectSnapshot? _snapshotFromSlot(
     windSpeed: _parseNumber(categories['WSD']),
     precipitationProbability: precipitationProbability,
     precipitationAmount: _parseAmount(categories['PCP']),
+    precipitationAmountText: categories['PCP'],
     precipitationAmountLabel: _amountDisplayLabel(categories['PCP'], 'mm'),
     snowExpected: const [2, 3, 6, 7].contains(precipitationType) ||
             (snowfallAmount != null && snowfallAmount > 0)
@@ -548,6 +593,7 @@ class _DirectSnapshot {
   final double? windSpeed;
   final double? precipitationProbability;
   final double? precipitationAmount;
+  final String? precipitationAmountText;
   final String? precipitationAmountLabel;
   final bool? snowExpected;
   final double? snowfallAmount;
@@ -561,6 +607,7 @@ class _DirectSnapshot {
     required this.windSpeed,
     required this.precipitationProbability,
     required this.precipitationAmount,
+    this.precipitationAmountText,
     required this.precipitationAmountLabel,
     required this.snowExpected,
     required this.snowfallAmount,

@@ -1,5 +1,6 @@
 import 'recommendation.dart';
 import 'lifestyle_message.dart';
+import 'precipitation.dart';
 
 class WeatherRegion {
   final int nx;
@@ -199,6 +200,7 @@ class WeeklyForecastItem {
   final String? forecastDate;
   final String? weatherLabel;
   final bool? weatherDataComplete;
+  final DailyPrecipitationDetail? precipitationDetail;
   final double? min;
   final double? max;
   final String? minTemperatureSource;
@@ -211,6 +213,7 @@ class WeeklyForecastItem {
     this.forecastDate,
     required this.weatherLabel,
     this.weatherDataComplete,
+    this.precipitationDetail,
     required this.min,
     required this.max,
     this.minTemperatureSource,
@@ -246,6 +249,8 @@ class WeeklyForecastItem {
       weatherDataComplete: json['weatherDataComplete'] is bool
           ? json['weatherDataComplete'] as bool
           : null,
+      precipitationDetail:
+          DailyPrecipitationDetail.fromJson(json['precipitationDetail']),
       min: min,
       max: max,
       minTemperatureSource: _optionalText(json['minTemperatureSource']),

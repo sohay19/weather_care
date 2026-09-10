@@ -219,7 +219,7 @@ export function buildForecastFromItems(
   }
 
   const today = formatKmaDate(new Date(now.getTime() + KST_OFFSET_MS));
-  const daily = buildDailyForecast(items, allHourly)
+  const daily = buildDailyForecast(items, allHourly, base)
     .filter((item) => item.date >= today)
     .slice(0, 4);
   const todaySummary = daily.find((item) => item.date === today);
@@ -327,6 +327,7 @@ function snapshotFromSlot(
 function buildDailyForecast(
   items: KmaForecastItem[],
   hourly: WeatherSnapshot[],
+  base: BaseDateTime,
 ): DailyWeatherForecast[] {
   const categoriesByDate = new Map<string, Map<string, string[]>>();
   for (const item of items) {
@@ -359,6 +360,7 @@ function buildDailyForecast(
 
       return {
         date,
+        precipitationDetail: dailyPrecipitationDetail(date, hourly, base),
         minTemperature,
         maxTemperature,
         minTemperatureSource: minTemperature === undefined ? undefined
@@ -381,6 +383,40 @@ function buildDailyForecast(
         ),
       };
     });
+}
+
+function dailyPrecipitationDetail(
+  date: string,
+  hourly: WeatherSnapshot[],
+  base: BaseDateTime,
+): NonNullable<DailyWeatherForecast['precipitationDetail']> {
+  const extendedStart = new Date(kmaBaseToIso({ ...base, baseTime: '0000' }));
+  extendedStart.setUTCDate(extendedStart.getUTCDate() + (Number(base.baseTime) < 1700 ? 3 : 4));
+  const isExtended = date >= formatKmaDate(new Date(extendedStart.getTime() + KST_OFFSET_MS));
+  const validProbability = (value: number | undefined) =>
+    value !== undefined && Number.isFinite(value) && value >= 0 && value <= 100 ? value : undefined;
+  if (isExtended) {
+    const probabilities = hourly.filter((snapshot) =>
+      formatKmaDate(new Date(Date.parse(snapshot.observedAt) + KST_OFFSET_MS - 3_600_000)) === date)
+      .map((snapshot) => validProbability(snapshot.precipitationProbability))
+      .filter((value): value is number => value !== undefined);
+    return { kind: 'EXTENDED', hours: [], extendedMaxProbability: maximum(probabilities) };
+  }
+  return {
+    kind: 'HOURLY',
+    hours: hourly.filter((snapshot) => {
+      // KMA PCP/POP at 00:00 cover 23:00–24:00 on the previous Korean date.
+      const startKst = new Date(Date.parse(snapshot.observedAt) + KST_OFFSET_MS - 3_600_000);
+      return formatKmaDate(startKst) === date;
+    }).map((snapshot) => ({
+      forecastAt: snapshot.observedAt,
+      probability: validProbability(snapshot.precipitationProbability),
+      amountText: typeof snapshot.rawValue === 'object' && snapshot.rawValue !== null
+        && 'precipitationAmount' in snapshot.rawValue
+        && typeof snapshot.rawValue.precipitationAmount === 'string'
+        ? snapshot.rawValue.precipitationAmount : undefined,
+    })),
+  };
 }
 
 export function parsePrecipitationAmount(value?: string): number {

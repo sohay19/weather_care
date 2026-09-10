@@ -13,6 +13,8 @@ import '../home/widgets/tab_page_header.dart';
 import 'location_mode.dart';
 import 'region_picker_screen.dart';
 import 'notification_schedule.dart';
+import 'settings_guide.dart';
+import 'settings_guide_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -202,6 +204,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Text(
                   '선택 지역의 대표 예보 지점 기준이에요. 현재 위치를 추적하지 않으며, 정밀 강수·도로 분석에는 사용하지 않아요.'),
             ],
+            TextButton.icon(
+              key: const ValueKey('location-guide'),
+              onPressed: () => _openGuide(SettingsGuide.location),
+              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              label: const Text('위치 권한은 어디에 쓰이나요?'),
+            ),
           ]),
         ),
         const SizedBox(height: 16),
@@ -340,6 +348,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(
                 '기기 앱 설정의 알림 메뉴에서 변경할 수 있어요. 개별 알림 종류·집중 모드·소리 설정에 따라 표시 방식이 달라질 수 있어요. 서버 저장과 권한 허용만으로 실제 수신을 확인할 수는 없어요.',
                 style: Theme.of(context).textTheme.bodySmall),
+            TextButton.icon(
+              key: const ValueKey('notification-guide'),
+              onPressed: () => _openGuide(SettingsGuide.notifications),
+              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              label: const Text('알림 권한과 앱 설정은 어떻게 다른가요?'),
+            ),
           ]),
         ),
         const SizedBox(height: 16),
@@ -589,14 +603,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Center(
-          child: Text(
-            '날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.',
-            textAlign: TextAlign.center,
-            style: WeatherCareTheme.microTextStyle.copyWith(
-              fontSize: 9,
-              height: 1.2,
-            ),
+        _SettingsSection(
+          icon: Icons.info_outline_rounded,
+          title: '데이터·권한 안내',
+          subtitle: '자료 출처와 위치·알림 정보 사용을 확인하세요',
+          child: Column(
+            children: [
+              for (final guide in SettingsGuide.values)
+                ListTile(
+                  key: ValueKey('guide-entry-${guide.name}'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(guide.title),
+                  subtitle: Text(guide.subtitle),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => _openGuide(guide),
+                ),
+            ],
           ),
         ),
       ],
@@ -624,6 +646,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       }));
     }
+  }
+
+  void _openGuide(SettingsGuide guide) {
+    Navigator.of(context).push<void>(MaterialPageRoute(
+      builder: (_) => SettingsGuideScreen(guide: guide),
+    ));
   }
 
   Future<void> _selectRegion() async {

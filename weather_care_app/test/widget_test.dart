@@ -800,10 +800,12 @@ void main() {
     expect(find.text('폭염특보 안내'), findsOneWidget);
     expect(find.text('한파특보 안내'), findsOneWidget);
     expect(find.text('현재 비 안내'), findsOneWidget);
-    expect(
-      find.text('날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.'),
-      findsOneWidget,
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('guide-entry-sources')),
+      250,
+      scrollable: find.byType(Scrollable).first,
     );
+    expect(find.text('기상청·에어코리아·국가교통정보센터'), findsOneWidget);
   });
 
   testWidgets('embedded Setting uses the common tab page header',

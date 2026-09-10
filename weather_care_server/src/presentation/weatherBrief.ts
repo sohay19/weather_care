@@ -1,9 +1,11 @@
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../types';
 import { defaultRuleConfig } from '../config/ruleConfig';
-import { precipitationDecisionSnapshot, precipitationLabel, koreanHour } from '../rules/precipitationWindows';
+import { precipitationDecisionSnapshot, precipitationPeriod, periodLabel, otherDatePrefix, koreanHour } from '../rules/precipitationWindows';
+import { snapshotTime } from '../rules/timeWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.2';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.3';
+const HOUR = 3_600_000;
 export type WeatherBriefScene =
   | 'WET_TRAVEL'
   | 'CAREFUL_STEPS'
@@ -16,6 +18,7 @@ export type WeatherBriefScene =
 export interface WeatherBriefContext {
   regionKey?: string;
   dateKey?: string;
+  now?: Date;
 }
 
 export interface WeatherBriefResult {
@@ -24,11 +27,16 @@ export interface WeatherBriefResult {
   templateId: string;
   slots: Readonly<{ eventTime?: string }>;
   catalogVersion: string;
+  /** Exclusive display deadline: re-evaluate when the event starts or ends. */
+  expiresAt?: string;
 }
 
 interface SceneSelection {
   scene: WeatherBriefScene;
   snapshot: WeatherSnapshot;
+  start?: number;
+  end?: number;
+  precipitation?: boolean;
 }
 
 export function buildWeatherBrief(
@@ -40,35 +48,67 @@ export function buildWeatherBrief(
 
 export function buildWeatherBriefResult(
   forecast: WeatherForecast,
-  _context: WeatherBriefContext = {},
+  context: WeatherBriefContext = {},
 ): WeatherBriefResult {
-  const selection = selectScene(forecast);
-  const eventTime = ['CAREFUL_STEPS', 'WET_TRAVEL'].includes(selection.scene)
-    ? precipitationLabel(selection.snapshot)
-    : koreanHour(selection.snapshot.forecastAt ?? selection.snapshot.observedAt);
+  const now = context.now ?? new Date();
+  const reference = now.getTime();
+  const selection = selectScene(forecast, now);
+  let eventTime: string | undefined;
+  let expiresAt: string | undefined;
+  if (selection.start !== undefined && selection.end !== undefined) {
+    const active = selection.start <= reference;
+    const start = new Date(selection.start).toISOString();
+    const end = new Date(selection.end).toISOString();
+    eventTime = active ? '지금'
+      : otherDatePrefix(start, now.toISOString()) +
+        (selection.precipitation ? periodLabel(start, end) : koreanHour(start));
+    expiresAt = active ? end : start;
+  }
   return {
-    text: messageFor(selection, eventTime),
+    text: messageFor(selection, eventTime ?? ''),
     scene: selection.scene,
     templateId: `policy-${selection.scene.toLowerCase()}`,
-    slots: { eventTime },
+    slots: eventTime ? { eventTime } : {},
     catalogVersion: WEATHER_BRIEF_CATALOG_VERSION,
+    expiresAt,
   };
 }
 
-function selectScene(forecast: WeatherForecast): SceneSelection {
+function selectScene(forecast: WeatherForecast, now: Date): SceneSelection {
+  const reference = now.getTime();
   const candidates = [forecast.current, ...forecast.hourly.slice(0, 24)]
-    .map((item) => precipitationDecisionSnapshot(item));
+    .map((item) => precipitationDecisionSnapshot(item, now))
+    .filter((item) => Number.isFinite(Date.parse(snapshotTime(item))))
+    .sort((a, b) => Date.parse(snapshotTime(a)) - Date.parse(snapshotTime(b)));
 
-  const snowy = candidates.find(isSnowy);
-  if (snowy) return { scene: 'CAREFUL_STEPS', snapshot: snowy };
+  // Point forecasts describe their own hour; PCP/SNO describe the preceding
+  // interval. Do not shift raw forecast timestamps or reuse ended intervals.
+  const find = (scene: WeatherBriefScene, predicate: (item: WeatherSnapshot) => boolean,
+    precipitation = false): SceneSelection | undefined => {
+    for (const snapshot of candidates) {
+      const period = precipitation ? precipitationPeriod(snapshot) : undefined;
+      const point = Date.parse(snapshotTime(snapshot));
+      const start = period ? Date.parse(period.start) : point;
+      const end = period ? Date.parse(period.end)
+        : snapshot.validTo === undefined ? point + HOUR
+          : Math.min(Date.parse(snapshot.validTo), point + HOUR);
+      if (!Number.isFinite(reference) || !Number.isFinite(end) || end <= start ||
+        end <= reference || start >= reference + 24 * HOUR) continue;
+      if (predicate(snapshot)) return { scene, snapshot, start, end, precipitation: !!period };
+    }
+    return undefined;
+  };
 
-  const rainy = candidates.find(isRainy);
-  if (rainy) return { scene: 'WET_TRAVEL', snapshot: rainy };
+  const snowy = find('CAREFUL_STEPS', isSnowy, true);
+  if (snowy) return snowy;
 
-  const poorAir = candidates.find(hasPoorAirQuality);
-  if (poorAir) return { scene: 'MASK_READY', snapshot: poorAir };
+  const rainy = find('WET_TRAVEL', isRainy, true);
+  if (rainy) return rainy;
 
-  const strongExposure = candidates.find(
+  const poorAir = find('MASK_READY', hasPoorAirQuality);
+  if (poorAir) return poorAir;
+
+  const strongExposure = find('SHADE_BREAK',
     (item) =>
       (item.apparentTemperature ?? -Infinity) >=
         defaultRuleConfig.heat.actionApparentTemperature ||
@@ -77,21 +117,21 @@ function selectScene(forecast: WeatherForecast): SceneSelection {
       (item.uvIndex ?? 0) >= defaultRuleConfig.uv.highThreshold,
   );
   if (strongExposure) {
-    return { scene: 'SHADE_BREAK', snapshot: strongExposure };
+    return strongExposure;
   }
 
-  const layerUseful = candidates.find(
+  const layerUseful = find('LAYER_READY',
     (item) =>
       (item.temperature ?? Infinity) <= defaultRuleConfig.cold.temperature ||
       (item.apparentTemperature ?? Infinity) <=
         defaultRuleConfig.cold.apparentTemperature,
   );
-  if (layerUseful) return { scene: 'LAYER_READY', snapshot: layerUseful };
+  if (layerUseful) return layerUseful;
 
-  const strongWind = candidates.find(
+  const strongWind = find('STEADY_PACE',
     (item) => (item.windSpeed ?? 0) >= defaultRuleConfig.wind.caution,
   );
-  if (strongWind) return { scene: 'STEADY_PACE', snapshot: strongWind };
+  if (strongWind) return strongWind;
 
   return { scene: 'DAILY_RHYTHM', snapshot: forecast.current };
 }

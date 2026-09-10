@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildWeatherBrief,
   buildWeatherBriefResult,
@@ -7,6 +7,8 @@ import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
 
 describe('weather brief policy', () => {
+  beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-08-21T06:00:00+09:00')); });
+  afterEach(() => vi.useRealTimers());
   it('puts the reason before a conditional umbrella action', () => {
     const result = buildWeatherBriefResult(
       forecast([
@@ -100,6 +102,82 @@ describe('weather brief policy', () => {
     ]);
 
     expect(buildWeatherBrief(input)).toBe(buildWeatherBrief(input));
+  });
+
+  it.each(['14:00:00', '14:10:00', '14:30:00', '14:59:58'])(
+    'labels the still-valid UV hour as now at %s, preserving raw forecast time', (clock) => {
+      const sample = snapshot(14, { uvIndex: 7, validTo: '2026-08-21T14:59:59+09:00' });
+      const input = forecast([sample]);
+      const original = JSON.stringify(input);
+      const result = buildWeatherBriefResult(input, { now: new Date(`2026-08-21T${clock}+09:00`) });
+      expect(result.text).toBe('자외선이 강할 수 있으니, 지금 외출한다면 양산이나 모자를 준비하세요');
+      expect(result.expiresAt).toBe('2026-08-21T05:59:59.000Z');
+      expect(JSON.stringify(input)).toBe(original);
+    },
+  );
+
+  it.each(['14:59:59', '15:00:00', '17:00:00'])(
+    'does not use expired UV even when it is the current snapshot at %s', (clock) => {
+      const old = snapshot(14, { uvIndex: 9, validTo: '2026-08-21T14:59:59+09:00' });
+      const result = buildWeatherBriefResult({ ...forecast([old]), current: old },
+        { now: new Date(`2026-08-21T${clock}+09:00`) });
+      expect(result.scene).toBe('DAILY_RHYTHM');
+      expect(result.slots).toEqual({});
+      expect(result.expiresAt).toBeUndefined();
+      expect(result.text).not.toContain('자외선');
+    },
+  );
+
+  it('selects the earliest remaining UV hour and expires the future wording at its start', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(17, { uvIndex: 9 }), snapshot(16, { uvIndex: 6 }), snapshot(14, { uvIndex: 10 }),
+    ]), { now: new Date('2026-08-21T15:10:00+09:00') });
+    expect(result.slots.eventTime).toBe('오후 4시');
+    expect(result.expiresAt).toBe('2026-08-21T07:00:00.000Z');
+  });
+
+  it('qualifies next-day UV with a calendar date, including a year boundary', () => {
+    const sample = { ...snapshot(10, { uvIndex: 7 }), forecastAt: '2027-01-01T01:00:00Z' };
+    const result = buildWeatherBriefResult(forecast([sample]),
+      { now: new Date('2026-12-31T23:30:00+09:00') });
+    expect(result.slots.eventTime).toBe('1월 1일 오전 10시');
+    expect(result.expiresAt).toBe('2027-01-01T01:00:00.000Z');
+  });
+
+  it('does not let old snow/rain mask a remaining UV action', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(13, { precipitationType: 'SNOW', snowExpected: true }),
+      snapshot(14, { precipitationType: 'RAIN' }), snapshot(16, { uvIndex: 7 }),
+    ]), { now: new Date('2026-08-21T15:00:00+09:00') });
+    expect(result.scene).toBe('SHADE_BREAK');
+    expect(result.slots.eventTime).toBe('오후 4시');
+  });
+
+  it('uses the active preceding rain interval and never reuses it after its end', () => {
+    const rain = snapshot(15, { precipitationType: 'RAIN', precipitationPeriod: {
+      start: '2026-08-21T14:00:00+09:00', end: '2026-08-21T15:00:00+09:00',
+    } });
+    const input = forecast([rain]);
+    const ongoing = buildWeatherBriefResult(input, { now: new Date('2026-08-21T14:30:00+09:00') });
+    expect(ongoing.scene).toBe('WET_TRAVEL');
+    expect(ongoing.slots.eventTime).toBe('지금');
+    expect(ongoing.expiresAt).toBe('2026-08-21T06:00:00.000Z');
+    expect(buildWeatherBriefResult(input, { now: new Date('2026-08-21T15:00:00+09:00') }).scene)
+      .toBe('DAILY_RHYTHM');
+  });
+
+  it.each([
+    { forecastAt: 'invalid' }, { validTo: 'invalid' },
+    { validTo: '2026-08-21T13:00:00+09:00' },
+  ])('ignores invalid point validity without throwing: %j', (overrides) => {
+    expect(buildWeatherBriefResult(forecast([snapshot(14, { uvIndex: 7, ...overrides })]),
+      { now: new Date('2026-08-21T14:10:00+09:00') }).scene).toBe('DAILY_RHYTHM');
+  });
+
+  it('does not infer missing UV or select more than 24 hours ahead', () => {
+    const later = { ...snapshot(16, { uvIndex: 7 }), forecastAt: '2026-08-22T16:00:00+09:00' };
+    expect(buildWeatherBriefResult(forecast([snapshot(16), later]),
+      { now: new Date('2026-08-21T16:00:00+09:00') }).scene).toBe('DAILY_RHYTHM');
   });
 });
 

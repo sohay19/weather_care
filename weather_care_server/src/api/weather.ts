@@ -25,7 +25,7 @@ import { runRecommendationEngine } from '../recommendations/recommendationEngine
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
-import { buildWeatherBrief } from '../presentation/weatherBrief';
+import { buildWeatherBriefResult } from '../presentation/weatherBrief';
 import {
   buildEnvironmentalDataStatusMessages,
   buildLifestyleMessages,
@@ -197,10 +197,13 @@ router.get('/today', async (c) => {
     );
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
+    const generatedAt = new Date();
+    const brief = buildWeatherBriefResult(forecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
     const response: TodayWeatherResponse = {
       dataSource: forecast.dataSource,
       region: { nx, ny, name: regionLabel },
-      brief: buildWeatherBrief(forecast, { regionKey: `${nx}:${ny}` }),
+      brief: brief.text,
+      briefExpiresAt: brief.expiresAt,
       current: {
         ...forecast.current,
         activeWarnings: warnings,
@@ -225,7 +228,7 @@ router.get('/today', async (c) => {
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
-      generatedAt: new Date().toISOString(),
+      generatedAt: generatedAt.toISOString(),
     };
 
     if (c.env.DB) {

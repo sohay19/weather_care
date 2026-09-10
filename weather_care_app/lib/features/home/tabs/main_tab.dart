@@ -6,6 +6,7 @@ import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_condition_icon.dart';
+import '../widgets/weather_brief_text.dart';
 
 class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
@@ -109,8 +110,9 @@ class _TopWeatherCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            today.brief,
+          WeatherBriefText(
+            text: today.brief,
+            expiresAt: today.briefExpiresAt,
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               color: WeatherCareTheme.textPrimary,

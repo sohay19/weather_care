@@ -294,6 +294,8 @@ export interface TodayWeatherResponse {
   dataSource: string;
   region: { nx: number; ny: number; name: string };
   brief: string;
+  /** Exclusive deadline for displaying the time-sensitive Main brief. */
+  briefExpiresAt?: string;
   current: WeatherSnapshot;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;

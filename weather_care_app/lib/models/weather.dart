@@ -292,6 +292,7 @@ class TodayWeatherResponse {
   final String dataSource;
   final WeatherRegion region;
   final String brief;
+  final String? briefExpiresAt;
   final CurrentWeather current;
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
@@ -303,6 +304,7 @@ class TodayWeatherResponse {
     required this.dataSource,
     required this.region,
     required this.brief,
+    this.briefExpiresAt,
     required this.current,
     required this.recommendations,
     required this.lifestyleMessages,
@@ -315,6 +317,7 @@ class TodayWeatherResponse {
         dataSource: dataSource,
         region: WeatherRegion(nx: region.nx, ny: region.ny, name: name),
         brief: brief,
+        briefExpiresAt: briefExpiresAt,
         current: current,
         recommendations: recommendations,
         lifestyleMessages: lifestyleMessages,
@@ -366,6 +369,7 @@ class TodayWeatherResponse {
             {'name': '수원', 'nx': 60, 'ny': 121},
       ),
       brief: json['brief']?.toString() ?? '외출 전에 시간별 예보를 확인하세요.',
+      briefExpiresAt: json['briefExpiresAt']?.toString(),
       current: CurrentWeather.fromJson(json),
       recommendations: recs,
       lifestyleMessages: lifestyles,

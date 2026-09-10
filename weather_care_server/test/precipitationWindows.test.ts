@@ -81,7 +81,7 @@ describe('element-specific precipitation windows', () => {
   it('brief and today timeline label rain separately from the 15:00 temperature', () => {
     const sample = rain(15);
     const forecast = { current: sample, hourly: [sample], daily: [], ...base, dataSource: '기상청' };
-    expect(buildWeatherBriefResult(forecast).slots.eventTime).toBe('오후 2시~3시');
+    expect(buildWeatherBriefResult(forecast, { now }).slots.eventTime).toBe('오후 2시~3시');
     const timeline = buildTimeline([sample])[0];
     expect(timeline.timeLabel).toBe('15');
     expect(timeline.detail).toContain('예상기온 22.0℃');
@@ -147,7 +147,7 @@ describe('element-specific precipitation windows', () => {
 
   it('includes the date when the future rain belongs to another day', () => {
     const forecast = buildForecastFromItems(items('20260911', '0100', { PCP: '30mm', POP: '90', PTY: '1' }), now, base);
-    expect(buildWeatherBriefResult(forecast).slots.eventTime).toBe('9월 11일 오전 12시~1시');
+    expect(buildWeatherBriefResult(forecast, { now }).slots.eventTime).toBe('9월 11일 오전 12시~1시');
     const facts = runWeatherRuleEngineForHourly(forecast.hourly);
     const recs = runRecommendationEngine(runLifestyleWeatherEngine(facts, forecast.hourly));
     expect(buildNotification(recs, now)[0].body).toContain('9월 11일 오전 12시~1시');

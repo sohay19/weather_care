@@ -20,7 +20,7 @@ import {
   sensationMessage,
 } from './sensationMessages';
 import { isPrecipitationFact, precipitationStart, precipitationEnd,
-  precipitationPeriod, precipitationLabel } from '../rules/precipitationWindows';
+  precipitationPeriod, precipitationLabel, otherDatePrefix, koreanHour } from '../rules/precipitationWindows';
 
 export function buildLifestyleMessages(
   insights: LifestyleInsight[],
@@ -399,10 +399,13 @@ function uvFact(
   regionName: string,
 ): WeatherMessagePart | undefined {
   if (snapshot.uvIndex === undefined) return undefined;
+  const forecastAt = snapshotTime(snapshot);
+  if (!Number.isFinite(Date.parse(forecastAt))) return undefined;
+  const time = otherDatePrefix(forecastAt, snapshot.fetchedAt) + koreanHour(forecastAt);
   const value = Math.round(snapshot.uvIndex);
   const regionOf = regionName === '현재 위치' ? '' : `${regionName}의 `;
   return officialFact(
-    `기상청은 ${formatHour(snapshotTime(snapshot))} ${regionOf}자외선지수를 ${value}, ${uvGrade(value)} 단계로 예보했어요`,
+    `기상청은 ${time} ${regionOf}자외선지수를 ${value}, ${uvGrade(value)} 단계로 예보했어요`,
     snapshot,
     '기상청 생활기상지수',
   );

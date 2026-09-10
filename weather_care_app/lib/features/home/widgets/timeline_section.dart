@@ -8,8 +8,13 @@ import 'home_section_header.dart';
 
 class TimelineSection extends StatelessWidget {
   final List<TimelineItem> items;
+  final ValueChanged<RecommendationType> onDetail;
 
-  const TimelineSection({super.key, required this.items});
+  const TimelineSection({
+    super.key,
+    required this.items,
+    required this.onDetail,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +40,7 @@ class TimelineSection extends StatelessWidget {
               _TimelineItemView(
                 item: items[index],
                 isLast: index == items.length - 1,
+                onDetail: onDetail,
               ),
         ],
       ),
@@ -45,8 +51,13 @@ class TimelineSection extends StatelessWidget {
 class _TimelineItemView extends StatelessWidget {
   final TimelineItem item;
   final bool isLast;
+  final ValueChanged<RecommendationType> onDetail;
 
-  const _TimelineItemView({required this.item, required this.isLast});
+  const _TimelineItemView({
+    required this.item,
+    required this.isLast,
+    required this.onDetail,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -133,34 +144,57 @@ class _TimelineItemView extends StatelessWidget {
                         runSpacing: 6,
                         children: [
                           for (final recommendation in recommendations)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
+                            Semantics(
+                              button: true,
+                              excludeSemantics: true,
+                              label: '${recommendation.type.label} 근거 보기',
+                              child: Material(
                                 color: recommendation.type.softColor,
                                 borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    recommendation.type.icon,
-                                    size: 14,
-                                    color: recommendation.type.accentColor,
+                                child: InkWell(
+                                  key: ValueKey(
+                                    'timeline-detail-${item.timeLabel}-'
+                                    '${recommendation.type.apiName.toLowerCase()}',
                                   ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    recommendation.type.label,
-                                    style: TextStyle(
-                                      fontFamily: WeatherCareTheme.fontMona,
-                                      color: recommendation.type.accentColor,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
+                                  onTap: () => onDetail(recommendation.type),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          recommendation.type.icon,
+                                          size: 14,
+                                          color:
+                                              recommendation.type.accentColor,
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          recommendation.type.label,
+                                          style: TextStyle(
+                                            fontFamily:
+                                                WeatherCareTheme.fontMona,
+                                            color:
+                                                recommendation.type.accentColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 1),
+                                        Icon(
+                                          Icons.chevron_right_rounded,
+                                          size: 14,
+                                          color:
+                                              recommendation.type.accentColor,
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                         ],

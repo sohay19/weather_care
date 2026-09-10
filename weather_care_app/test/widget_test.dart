@@ -633,6 +633,7 @@ void main() {
           ),
         )
         .toList();
+    RecommendationType? openedDetail;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -647,6 +648,7 @@ void main() {
                   recommendations: recommendations,
                 ),
               ],
+              onDetail: (type) => openedDetail = type,
             ),
           ),
         ),
@@ -655,6 +657,14 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(tester.getSize(find.text('점심 무렵')).height, lessThan(40));
+    expect(find.bySemanticsLabel('선크림 근거 보기'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('timeline-detail-12-sunscreen')),
+    );
+    await tester.pump();
+    expect(openedDetail, RecommendationType.sunscreen);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('settings disables notification time and shows all data sources',

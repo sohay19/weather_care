@@ -60,7 +60,10 @@ class TodayTab extends StatelessWidget {
             ),
           const SizedBox(height: 16),
           if (serverFeaturesAvailable)
-            TimelineSection(items: today.timeline)
+            TimelineSection(
+              items: today.timeline,
+              onDetail: onDetail,
+            )
           else
             const ServerFeatureUnavailableCard(
               icon: Icons.schedule_rounded,

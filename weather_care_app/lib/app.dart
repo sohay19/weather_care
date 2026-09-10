@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 
 import 'features/home/home_screen.dart';
+import 'services/notification_destination.dart';
 import 'theme/weather_theme.dart';
 
 class WeatherCareApp extends StatelessWidget {
-  const WeatherCareApp({super.key});
+  final GlobalKey<NavigatorState>? navigatorKey;
+  final Map<String, dynamic>? initialNotificationData;
+
+  const WeatherCareApp({
+    super.key,
+    this.navigatorKey,
+    this.initialNotificationData,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: '날씨챙겨',
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
@@ -48,7 +57,11 @@ class WeatherCareApp extends StatelessWidget {
               icon: Icons.local_drink_outlined,
             ),
       },
-      initialRoute: '/',
+      initialRoute: initialNotificationData == null
+          ? '/'
+          : NotificationDestination.fromMessageData(
+              initialNotificationData!,
+            ).routeName,
     );
   }
 }

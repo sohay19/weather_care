@@ -287,6 +287,24 @@ void main() {
     );
   });
 
+  testWidgets('종료 상태에서 선택한 날씨 알림은 상세 탭으로 시작한다', (tester) async {
+    await tester.pumpWidget(
+      const WeatherCareApp(
+        initialNotificationData: {
+          'notificationTarget': 'WEATHER_DETAILS',
+          'notificationTopic': 'SNOW',
+        },
+      ),
+    );
+    await tester.pump();
+
+    final navigation = tester.widget<NavigationBar>(
+      find.byKey(const ValueKey('main-bottom-navigation')),
+    );
+    expect(navigation.selectedIndex, 1);
+    expect(find.byKey(const ValueKey('detail-tab')), findsOneWidget);
+  });
+
   testWidgets('temperature values include the Celsius unit', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
@@ -46,8 +48,15 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
           else
             LayoutBuilder(
               builder: (context, constraints) {
-                final columns = visible.length.clamp(1, 3);
                 const spacing = 8.0;
+                const minimumItemWidth = 124.0;
+                final fittingColumns = ((constraints.maxWidth + spacing) /
+                        (minimumItemWidth + spacing))
+                    .floor();
+                final columns = math.min(
+                  visible.length,
+                  math.max(1, math.min(3, fittingColumns)),
+                );
                 final itemWidth =
                     (constraints.maxWidth - (columns - 1) * spacing) / columns;
 
@@ -78,25 +87,25 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
                 );
               },
             ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Icon(
-                Icons.touch_app_outlined,
-                size: 16,
-                color: WeatherCareTheme.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  visible.isEmpty
-                      ? '준비물이 생기면 필요한 시간도 함께 알려드려요'
-                      : '준비물은 여기서 체크하고, 필요한 시간은 아래에서 확인하세요',
-                  style: Theme.of(context).textTheme.bodySmall,
+          if (visible.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const Icon(
+                  Icons.touch_app_outlined,
+                  size: 16,
+                  color: WeatherCareTheme.textSecondary,
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '준비물은 여기서 체크하고, 필요한 시간은 아래에서 확인하세요',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -163,7 +172,7 @@ class _BagItem extends StatelessWidget {
                   Text(
                     type.label,
                     textAlign: TextAlign.center,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: WeatherCareTheme.textPrimary,

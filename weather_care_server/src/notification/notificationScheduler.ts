@@ -260,7 +260,15 @@ export async function runRecommendationNotificationJob(
   }
 
   if (pending.length === 0) return;
-  const payloads = pending.map<FcmPayload>((item) => ({
+  // The job can spend seconds loading providers. Recheck the installation and
+  // current token immediately before sending; deletion may have happened meanwhile.
+  const eligible = await env.DB.batch(pending.map((item) => env.DB.prepare(`SELECT 1 FROM installations i
+    LEFT JOIN notification_settings s ON s.installation_id = i.installation_id
+    WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 1) = 1`)
+    .bind(item.installationId, item.token)));
+  const sendable = pending.filter((_, index) => eligible[index].results.length > 0);
+  if (!sendable.length) return;
+  const payloads = sendable.map<FcmPayload>((item) => ({
     token: item.token,
     title: item.built.title,
     body: item.built.body,
@@ -269,7 +277,7 @@ export async function runRecommendationNotificationJob(
     notificationTopic: item.built.destination.topic,
   }));
   const results = await (dependencies.sender ?? defaultSender)(env, payloads);
-  await recordResults(env.DB, pending, results, now.toISOString());
+  await recordResults(env.DB, sendable, results, now.toISOString());
 }
 
 async function notificationInstallations(
@@ -778,7 +786,8 @@ async function applyWarningStateMutation(
       `INSERT INTO installation_warning_state
        (installation_id, warning_type, warning_name, level_code, level_name,
         region_name, effective_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS
+         (SELECT 1 FROM installations WHERE installation_id = ?)
        ON CONFLICT(installation_id, warning_type) DO UPDATE SET
          warning_name = excluded.warning_name,
          level_code = excluded.level_code,
@@ -796,6 +805,7 @@ async function applyWarningStateMutation(
       warning.regionName,
       warning.validFrom,
       new Date().toISOString(),
+      installationId,
     )
     .run();
 }
@@ -924,7 +934,8 @@ async function recordResults(
           .prepare(
             `INSERT OR IGNORE INTO notification_history
              (installation_id, target_date, notification_key, sent_at, payload_hash)
-             VALUES (?, ?, ?, ?, ?)`,
+             SELECT ?, ?, ?, ?, ? WHERE EXISTS
+               (SELECT 1 FROM installations WHERE installation_id = ?)`,
           )
           .bind(
             item.installationId,
@@ -932,6 +943,7 @@ async function recordResults(
             item.built.notification_key,
             sentAt,
             `${item.built.title}\n${item.built.body}`.slice(0, 160),
+            item.installationId,
           ),
       );
       if (item.rainObservedAt) {
@@ -966,7 +978,8 @@ async function recordResults(
                 `INSERT INTO installation_warning_state
                  (installation_id, warning_type, warning_name, level_code,
                   level_name, region_name, effective_at, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS
+                   (SELECT 1 FROM installations WHERE installation_id = ?)
                  ON CONFLICT(installation_id, warning_type) DO UPDATE SET
                    warning_name = excluded.warning_name,
                    level_code = excluded.level_code,
@@ -984,6 +997,7 @@ async function recordResults(
                 warning.regionName,
                 warning.validFrom,
                 sentAt,
+                item.installationId,
               ),
           );
         }

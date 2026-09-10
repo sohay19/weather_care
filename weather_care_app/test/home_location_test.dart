@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/home_screen.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
@@ -21,9 +22,22 @@ import 'package:weather_care/services/weather_service.dart';
 import 'package:weather_care/services/region_catalog.dart';
 import 'package:weather_care/services/settings_save_controller.dart';
 import 'package:weather_care/services/notification_permission_service.dart';
+import 'package:weather_care/services/server_data_access.dart';
 
 const _seoul = DeviceCoordinates(latitude: 37.57, longitude: 126.98);
 const _busan = DeviceCoordinates(latitude: 35.18, longitude: 129.07);
+
+class _DeletionApi extends ApiClient {
+  int deletes = 0;
+  _DeletionApi() : super(baseUrl: 'https://example.invalid');
+  @override
+  Future<Map<String, dynamic>> requestJson(String method, String path,
+      {Map<String, String>? query, Map<String, String>? headers, Map<String, dynamic>? body}) async {
+    if (method != 'DELETE') throw StateError('Unexpected request');
+    deletes++;
+    return {};
+  }
+}
 
 class _Location extends CurrentLocationService {
   LocationResult result =
@@ -142,15 +156,17 @@ void main() {
     rootBundle.evict('config/kma.config.json');
     rootBundle.evict('assets/data/kma_regions.json');
     SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
     location = _Location();
     weather = _Weather();
     sync = _Sync();
     registration = _Registration();
     notificationPermission = _NotificationPermission();
   });
-  Future<void> start(WidgetTester tester, {bool settle = true}) async {
+  Future<void> start(WidgetTester tester, {bool settle = true, ServerDataAccess? access}) async {
     await tester.pumpWidget(MaterialApp(
         home: HomeScreen(
+            serverDataAccess: access,
             initialIndex: 4,
             locationService: location,
             weatherService: weather,
@@ -167,6 +183,34 @@ void main() {
 
   SettingsScreen screen(WidgetTester tester) =>
       tester.widget<SettingsScreen>(find.byType(SettingsScreen));
+
+  testWidgets('실제 삭제 콜백 후 복귀·새로고침·설정 변경으로 서버에 다시 등록하지 않는다', (tester) async {
+    var stored = jsonEncode({'mode': 'active', 'serverId': 'wc_fixture_server_1234567890', 'secret': 'a' * 64});
+    final api = _DeletionApi();
+    final access = ServerDataAccess(api: api, legacyInstallationId: 'wc_fixture_local_1234567890',
+      readStore: () async => stored, writeStore: (value) async { stored = value; });
+    addTearDown(access.dispose);
+    await const AppSettingsRepository().save(AppSettings.fallback('test').copyWith(
+      locationMode: 'MANUAL', currentRegionId: '98_76', notificationTime: '06:35', umbrellaEnabled: false));
+    await start(tester, access: access);
+    final registrations = registration.calls.length;
+    final settingsWrites = sync.calls.length;
+    await screen(tester).onDeleteServerData!();
+    await tester.pumpAndSettle();
+    expect(api.deletes, 1); expect(access.mode, ServerDataMode.deleted);
+    expect(screen(tester).saveState, SettingsSaveState.localOnly);
+    final saved = await const AppSettingsRepository().load('test');
+    expect(saved.notificationEnabled, false); expect(saved.currentRegionId, '98_76');
+    expect(saved.notificationTime, '06:35'); expect(saved.umbrellaEnabled, false);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await screen(tester).onRefresh!();
+    await screen(tester).onSettingsChanged!(saved.copyWith(notificationEnabled: true));
+    await tester.pumpAndSettle();
+    expect(registration.calls.length, registrations); expect(sync.calls.length, settingsWrites);
+    expect(screen(tester).initialSettings!.notificationEnabled, false);
+    expect(jsonDecode(stored)['mode'], 'deleted');
+  });
 
   testWidgets('서버 저장 실패 표시와 최신 설정 재시도를 연결한다', (tester) async {
     sync.fail = true;

@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { installationOwnerHash } from '../security/installationAccess';
 import {
   NotificationSettings,
   CurrentPrecipitationObservation,
@@ -60,6 +61,10 @@ import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySn
   withoutPrecipitation } from '../rules/precipitationWindows';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
+router.use('*', async (c, next) => {
+  if (c.req.header('Authorization')) c.header('Cache-Control', 'private, no-store');
+  await next();
+});
 const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
 
 interface TimedResult<T> {
@@ -97,6 +102,7 @@ router.get('/today', async (c) => {
     const settingsPromise = settingsForRequest(
       c.env.DB,
       c.req.query('installationId'),
+      c.req.header('Authorization'),
     );
     const precipitationPromise = loadCurrentPrecipitation(c.env, coordinates);
     const warningPromise = loadActiveWarnings(c.env, region, coordinates);
@@ -373,7 +379,7 @@ router.get('/weekly', async (c) => {
       new KmaWeatherProvider({
         serviceKey: c.env.KMA_SERVICE_KEY,
       }).getForecastByRegion(nx, ny),
-      settingsForRequest(c.env.DB, c.req.query('installationId')),
+      settingsForRequest(c.env.DB, c.req.query('installationId'), c.req.header('Authorization')),
     ]);
     return c.json({
       dataSource: forecast.dataSource,
@@ -506,8 +512,11 @@ export function recommendationsForDay(
 async function settingsForRequest(
   db: D1Database,
   installationId: string | undefined,
+  authorization?: string,
 ): Promise<NotificationSettings> {
-  if (!installationId) return defaultNotificationSettings('anonymous');
+  if (!installationId || !authorization || !await installationOwnerHash(db, installationId, authorization)) {
+    return defaultNotificationSettings('anonymous');
+  }
   return getNotificationSettings(db, installationId);
 }
 

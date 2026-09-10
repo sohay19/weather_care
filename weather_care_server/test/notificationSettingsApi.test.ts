@@ -1,8 +1,10 @@
 import { SELF, env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('notification settings API', () => {
   beforeEach(async () => {
+    await authorizeFixture();
     await env.DB.prepare(
       `CREATE TABLE IF NOT EXISTS notification_settings (
         installation_id TEXT PRIMARY KEY,
@@ -31,7 +33,7 @@ describe('notification settings API', () => {
       'https://example.com/api/v1/notification-settings/device-1',
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: testAuthHeaders,
         body: JSON.stringify({
           notificationTime: '06:35',
           umbrellaEnabled: false,
@@ -43,6 +45,7 @@ describe('notification settings API', () => {
 
     const response = await SELF.fetch(
       'https://example.com/api/v1/notification-settings?installationId=device-1',
+      { headers: testAuthHeaders },
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
@@ -63,7 +66,7 @@ describe('notification settings API', () => {
         'https://example.com/api/v1/notification-settings/device-1',
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: testAuthHeaders,
           body: JSON.stringify(body),
         },
       );

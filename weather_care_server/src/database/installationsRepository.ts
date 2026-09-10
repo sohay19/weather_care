@@ -3,13 +3,16 @@ import { Installation } from '../types';
 export async function upsertInstallation(
   db: D1Database,
   payload: Installation,
-): Promise<void> {
+  ownerHash?: string,
+): Promise<boolean> {
   const now = new Date().toISOString();
-  await db
+  const result = await db
     .prepare(
       `INSERT INTO installations
        (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, latitude, longitude, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
+         WHERE installation_id = ? AND secret_hash = ?)`}
        ON CONFLICT(installation_id) DO UPDATE SET
          fcm_token=excluded.fcm_token,
          nx=excluded.nx,
@@ -37,8 +40,10 @@ export async function upsertInstallation(
       payload.longitude ?? null,
       now,
       now,
+      ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();
+  return result.meta.changes > 0;
 }
 
 export async function upsertRegionSubscription(

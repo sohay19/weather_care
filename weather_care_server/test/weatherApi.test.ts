@@ -9,9 +9,12 @@ import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider'
 import * as settingsRepository from '../src/database/notificationSettingsRepository';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
+import { env } from 'cloudflare:test';
+import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('weekly calendar date contract', () => {
   it('filters disabled recommendations before selecting the first three and exposes coverage metadata', async () => {
+    await authorizeFixture('test');
     const settings = { ...settingsRepository.defaultNotificationSettings('test'), umbrellaEnabled: false, parasolEnabled: false };
     const hourly = [snapshot(14, { temperature: 35, apparentTemperature: 38, humidity: 85, uvIndex: 9, pm25: 90,
       precipitationProbability: 90, precipitationAmount: 10, precipitationType: 'RAIN' })];
@@ -24,7 +27,7 @@ describe('weekly calendar date contract', () => {
     });
     const savedSettings = vi.spyOn(settingsRepository, 'getNotificationSettings').mockResolvedValue(settings);
     try {
-      const response = await router.request('/weekly?nx=60&ny=121&installationId=test', {}, { KMA_SERVICE_KEY: 'test-key' });
+      const response = await router.request('/weekly?nx=60&ny=121&installationId=test', { headers: testAuthHeaders }, { DB: env.DB, KMA_SERVICE_KEY: 'test-key' });
       expect(response.status).toBe(200);
       expect(await response.json()).toMatchObject({ days: [{
         weatherDataComplete: false, minTemperatureSource: 'HOURLY', maxTemperatureSource: 'DAILY',

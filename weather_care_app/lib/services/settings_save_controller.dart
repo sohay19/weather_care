@@ -1,8 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/app_settings.dart';
+import 'server_data_access.dart';
 
-enum SettingsSaveState { checking, saving, localFailed, serverFailed, saved }
+enum SettingsSaveState {
+  checking,
+  saving,
+  localFailed,
+  serverFailed,
+  saved,
+  localOnly
+}
 
 extension SettingsSaveStateMessage on SettingsSaveState {
   String get message => switch (this) {
@@ -13,6 +21,8 @@ extension SettingsSaveStateMessage on SettingsSaveState {
         SettingsSaveState.serverFailed =>
           '기기에는 저장했지만 서버 반영을 확인하지 못했어요. 알림은 이전 설정으로 발송될 수 있어요.',
         SettingsSaveState.saved => '기기에 설정을 저장하고 서버에 반영했어요.',
+        SettingsSaveState.localOnly =>
+          '기기에만 설정을 저장했어요. 서버 등록과 설정 전송은 중지된 상태예요.',
       };
 
   bool get canRetry =>
@@ -47,6 +57,8 @@ class SettingsSaveController extends ChangeNotifier {
       try {
         await saveServer(settings);
         _publish(SettingsSaveState.saved, revision);
+      } on ServerDataPaused {
+        _publish(SettingsSaveState.localOnly, revision);
       } catch (_) {
         _publish(SettingsSaveState.serverFailed, revision);
       }

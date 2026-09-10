@@ -15,6 +15,8 @@ import 'region_picker_screen.dart';
 import 'notification_schedule.dart';
 import 'settings_guide.dart';
 import 'settings_guide_screen.dart';
+import 'server_data_controls.dart';
+import '../../services/server_data_access.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -33,6 +35,9 @@ class SettingsScreen extends StatefulWidget {
   final Future<void> Function()? onRequestNotificationPermission;
   final Future<void> Function()? onRefreshNotificationPermission;
   final Future<void> Function()? onOpenNotificationSettings;
+  final ServerDataAccess? serverDataAccess;
+  final Future<void> Function()? onDeleteServerData;
+  final Future<void> Function()? onResumeServerData;
 
   const SettingsScreen({
     super.key,
@@ -52,6 +57,9 @@ class SettingsScreen extends StatefulWidget {
     this.onRequestNotificationPermission,
     this.onRefreshNotificationPermission,
     this.onOpenNotificationSettings,
+    this.serverDataAccess,
+    this.onDeleteServerData,
+    this.onResumeServerData,
   });
 
   @override
@@ -78,7 +86,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  bool get _alertsEnabled => settings.notificationEnabled;
+  bool get _alertsEnabled =>
+      settings.notificationEnabled &&
+      !(widget.serverDataAccess?.paused ?? false);
 
   @override
   Widget build(BuildContext context) {
@@ -274,18 +284,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               Switch(
-                value: settings.notificationEnabled,
+                value: _alertsEnabled,
                 activeTrackColor: Colors.white.withValues(alpha: 0.45),
                 activeThumbColor: Colors.white,
                 inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
                 inactiveThumbColor: WeatherCareTheme.primaryBorder,
                 trackOutlineColor:
                     const WidgetStatePropertyAll(Colors.transparent),
-                onChanged: (value) {
-                  _updateSettings(
-                    settings.copyWith(notificationEnabled: value),
-                  );
-                },
+                onChanged: (widget.serverDataAccess?.paused ?? false)
+                    ? null
+                    : (value) {
+                        _updateSettings(
+                          settings.copyWith(notificationEnabled: value),
+                        );
+                      },
               ),
             ],
           ),
@@ -317,7 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (!_alertsEnabled) ...[
               const SizedBox(height: 8),
               const Text(
-                  '앱의 날씨 알림을 껐어요. 서버 반영이 완료되면 이후 알림 발송 대상에서 제외돼요. 이미 처리 중이거나 발송된 알림은 도착할 수 있어요.'),
+                  '날씨 알림이 꺼져 있어요. 서버에 등록된 정보가 있다면 서버 반영 후 발송 대상에서 제외돼요. 이미 처리 중이거나 발송된 알림은 도착할 수 있어요.'),
             ],
             const SizedBox(height: 8),
             Wrap(spacing: 8, runSpacing: 4, children: [
@@ -618,6 +630,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _openGuide(guide),
                 ),
+              if (widget.serverDataAccess != null) ...[
+                const Divider(height: 24),
+                ServerDataControls(
+                    access: widget.serverDataAccess!,
+                    onDelete: widget.onDeleteServerData ?? () async {},
+                    onResume: widget.onResumeServerData ?? () async {}),
+              ],
             ],
           ),
         ),

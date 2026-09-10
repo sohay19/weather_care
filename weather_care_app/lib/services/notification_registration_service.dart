@@ -10,6 +10,7 @@ import 'current_location_service.dart';
 class NotificationRegistrationService {
   final ApiClient client;
   final FirebaseMessaging? _messaging;
+  final bool Function()? canRegister;
   FirebaseMessaging get messaging => _messaging ?? FirebaseMessaging.instance;
   StreamSubscription<String>? _tokenSubscription;
   _RegistrationTarget? _target;
@@ -19,6 +20,7 @@ class NotificationRegistrationService {
   NotificationRegistrationService(
     this.client, {
     FirebaseMessaging? messaging,
+    this.canRegister,
   }) : _messaging = messaging;
 
   Future<void> initialize({
@@ -28,7 +30,7 @@ class NotificationRegistrationService {
     required String locationMode,
     DeviceCoordinates? coordinates,
   }) async {
-    if (_disposed) return;
+    if (_disposed || !(canRegister?.call() ?? true)) return;
     _target =
         _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
@@ -66,7 +68,7 @@ class NotificationRegistrationService {
     required String locationMode,
     DeviceCoordinates? coordinates,
   }) async {
-    if (_disposed) return;
+    if (_disposed || !(canRegister?.call() ?? true)) return;
     _target =
         _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
@@ -78,7 +80,9 @@ class NotificationRegistrationService {
 
   Future<void> _registerCurrent([String? refreshedToken]) {
     _registrationQueue = _registrationQueue.then((_) async {
-      if (_disposed || _target == null) return;
+      if (_disposed || _target == null || !(canRegister?.call() ?? true)) {
+        return;
+      }
       // Read inside the queue so a delayed token refresh cannot restore a token
       // after a queued permission denial. Only explicit Settings actions ask.
       final permission = await messaging.getNotificationSettings();
@@ -88,7 +92,7 @@ class NotificationRegistrationService {
       final token =
           allowed ? refreshedToken ?? await messaging.getToken() : null;
       final target = _target;
-      if (_disposed || target == null) return;
+      if (_disposed || target == null || !(canRegister?.call() ?? true)) return;
       await client.putJson(
         '/api/v1/installations/${target.installationId}',
         {

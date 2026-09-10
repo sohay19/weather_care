@@ -68,7 +68,7 @@ void main() {
     await tester.pump();
     await reveal(tester, 'notification-permission-status');
     expect(find.text('기기에서 앱 알림을 허용했어요.'), findsOneWidget);
-    expect(find.textContaining('앱의 날씨 알림을 껐어요'), findsOneWidget);
+    expect(find.textContaining('날씨 알림이 꺼져 있어요'), findsOneWidget);
     expect(changes.single.notificationEnabled, false);
     expect(changes.single.umbrellaEnabled, false);
   });

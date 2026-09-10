@@ -6,6 +6,8 @@ import { upsertNotificationSettings } from '../database/notificationSettingsRepo
 import { getNotificationSettings } from '../database/notificationSettingsRepository';
 import { notificationSettingsBodySchema } from '../validation/notificationSettings';
 import { z } from 'zod';
+import { ownerForRequest } from '../security/installationAccess';
+import { bodyLimit } from 'hono/body-limit';
 
 const installationBodySchema = z
   .object({
@@ -26,9 +28,12 @@ const installationBodySchema = z
   );
 
 const router = new Hono<{ Bindings: ServerEnv }>();
+router.use('*', bodyLimit({ maxSize: 8192 }));
 
 router.put('/:installationId', async (c) => {
   const installationId = c.req.param('installationId');
+  const ownerHash = await ownerForRequest(c, installationId);
+  if (!ownerHash) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   const parsed = installationBodySchema.safeParse(await c.req.json<unknown>());
   if (!parsed.success) {
     return c.json({ error: 'INVALID_INSTALLATION' }, 400);
@@ -48,12 +53,16 @@ router.put('/:installationId', async (c) => {
     latitude: body.latitude ?? undefined,
     longitude: body.longitude ?? undefined,
   };
-  await upsertInstallation(c.env.DB, payload);
+  if (!await upsertInstallation(c.env.DB, payload, ownerHash)) {
+    return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
+  }
   return c.json({ ok: true });
 });
 
 router.put('/:installationId/notification-settings', async (c) => {
   const installationId = c.req.param('installationId');
+  const ownerHash = await ownerForRequest(c, installationId);
+  if (!ownerHash) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   const parsed = notificationSettingsBodySchema.safeParse(
     await c.req.json<unknown>(),
   );
@@ -61,11 +70,12 @@ router.put('/:installationId/notification-settings', async (c) => {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }
   const current = await getNotificationSettings(c.env.DB, installationId);
-  await upsertNotificationSettings(c.env.DB, {
+  const saved = await upsertNotificationSettings(c.env.DB, {
     ...current,
     ...parsed.data,
     installationId,
-  });
+  }, ownerHash);
+  if (!saved) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   return c.json({ ok: true });
 });
 

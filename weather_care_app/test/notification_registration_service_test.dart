@@ -113,6 +113,36 @@ void main() {
     expect(client.calls.last.body['latitude'], 35.18);
     expect(client.calls.last.body['fcmToken'], 'refreshed-token');
   });
+
+  test('서버 삭제 중지 상태면 토큰 갱신·앱 복귀로 다시 등록하지 않는다', () async {
+    await service.dispose();
+    var allowed = true;
+    service = NotificationRegistrationService(client,
+        messaging: messaging, canRegister: () => allowed);
+    await initialize();
+    expect(client.calls, hasLength(1));
+    allowed = false;
+    messaging.tokens.add('late-token');
+    await moved();
+    await initialize();
+    await flush();
+    expect(client.calls, hasLength(1));
+  });
+
+  test('권한 응답을 기다리던 등록도 삭제 중지 상태를 다시 확인한다', () async {
+    await service.dispose();
+    var allowed = true;
+    service = NotificationRegistrationService(client,
+        messaging: messaging, canRegister: () => allowed);
+    final pending = Completer<NotificationSettings>();
+    messaging.pendingPermission = pending;
+    final work = initialize();
+    await flush();
+    allowed = false;
+    pending.complete(_Permission(AuthorizationStatus.authorized));
+    await work;
+    expect(client.calls, isEmpty);
+  });
   test('대략적 위치로 바뀌면 기존 정밀 좌표를 null로 갱신한다', () async {
     await initialize();
     await service.syncInstallation(

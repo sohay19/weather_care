@@ -1,8 +1,10 @@
 import { SELF, env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('installation API precise location', () => {
   beforeEach(async () => {
+    await authorizeFixture();
     await env.DB.prepare(
       `CREATE TABLE IF NOT EXISTS installations (
         installation_id TEXT PRIMARY KEY,
@@ -29,7 +31,7 @@ describe('installation API precise location', () => {
       'https://example.com/api/v1/installations/device-1?nx=60&ny=121',
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: testAuthHeaders,
         body: JSON.stringify({
           fcmToken: 'token-1',
           locationMode: 'GPS',
@@ -64,7 +66,7 @@ describe('installation API precise location', () => {
       'https://example.com/api/v1/installations/device-1?nx=60&ny=121',
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: testAuthHeaders,
         body: JSON.stringify({
           locationMode: 'GPS',
           latitude: 37.2636,

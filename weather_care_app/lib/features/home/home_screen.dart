@@ -7,6 +7,7 @@ import '../../models/lifestyle_message.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../services/api_client.dart';
+import '../../services/server_data_access.dart';
 import '../../services/app_config.dart';
 import '../../services/app_settings_repository.dart';
 import '../../services/kma_direct_weather_service.dart';
@@ -39,6 +40,7 @@ class HomeScreen extends StatefulWidget {
   final NotificationRegistrationService? notificationRegistration;
   final RegionCatalog? regionCatalog;
   final NotificationPermissionService? notificationPermission;
+  final ServerDataAccess? serverDataAccess;
 
   const HomeScreen({
     super.key,
@@ -50,6 +52,7 @@ class HomeScreen extends StatefulWidget {
     this.notificationRegistration,
     this.regionCatalog,
     this.notificationPermission,
+    this.serverDataAccess,
   });
 
   @override
@@ -63,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   WeatherService? _service;
   NotificationRegistrationService? _notificationRegistration;
   SettingsSyncService? _settingsSync;
+  ServerDataAccess? _serverDataAccess;
   CurrentLocationService get _locationService => widget.locationService;
   DeviceCoordinates? _coordinates;
   LocationResult _location = const LocationResult(LocationState.idle);
@@ -146,7 +150,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     _settings = savedSettings;
-    final client = ApiClient(baseUrl: config.serverUrl);
+    final access = widget.serverDataAccess ??
+        ServerDataAccess(
+            api: ApiClient(
+                baseUrl: config.serverUrl,
+                timeout: const Duration(seconds: 20)),
+            legacyInstallationId: installationId);
+    _serverDataAccess = access;
+    try {
+      await access.load();
+    } catch (_) {
+      access.error = '기기의 본인 확인 정보를 읽지 못했어요. 서버 전송을 중지했어요. 앱을 다시 열어주세요.';
+    }
+    if (!mounted) return;
+    access.addListener(_onServerDataChanged);
+    if (access.paused) {
+      _settings = _settings.copyWith(notificationEnabled: false);
+    }
+    final client =
+        InstallationApiClient(baseUrl: config.serverUrl, access: access);
     _settingsSync = widget.settingsSync ?? SettingsSyncService(client);
     _service = widget.weatherService ??
         WeatherService(
@@ -156,10 +178,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         );
     _notificationRegistration = widget.notificationRegistration ??
-        NotificationRegistrationService(client);
+        NotificationRegistrationService(client,
+            canRegister: () => !access.paused);
     // A failed remote preferences save must not prevent local GPS or weather.
     _settingsSave = SettingsSaveController(
-        saveLocal: _settingsRepository.save, saveServer: _settingsSync!.save)
+        saveLocal: _settingsRepository.save,
+        saveServer: (settings) async {
+          if (access.paused) throw const ServerDataPaused();
+          await _settingsSync!.save(settings);
+        })
       ..addListener(_onSettingsSaveChanged);
     unawaited(_settingsSave!.save(_settings));
     unawaited(_readNotificationPermission());
@@ -172,6 +199,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _locationRevision++;
     _settingsSave?.dispose();
+    _serverDataAccess?.removeListener(_onServerDataChanged);
+    if (widget.serverDataAccess == null) _serverDataAccess?.dispose();
     unawaited(_notificationRegistration?.dispose() ?? Future<void>.value());
     super.dispose();
   }
@@ -264,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ? _coordinates
                 : null;
         final registration = _notificationRegistration;
-        if (registration != null) {
+        if (registration != null && !(_serverDataAccess?.paused ?? true)) {
           final register = _registrationInitialized
               ? registration.syncInstallation
               : registration.initialize;
@@ -413,6 +442,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           onRefreshNotificationPermission: () =>
               _readNotificationPermission(sync: true),
           onOpenNotificationSettings: _openNotificationSettings,
+          serverDataAccess: _serverDataAccess,
+          onDeleteServerData: _deleteServerData,
+          onResumeServerData: _resumeServerData,
         ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -581,6 +613,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _handleSettingsChanged(AppSettings updated) {
+    if (_serverDataAccess?.paused ?? true) {
+      updated = updated.copyWith(notificationEnabled: false);
+    }
     final locationChanged = _settings.locationMode != updated.locationMode ||
         _settings.currentRegionId != updated.currentRegionId ||
         _settings.manualRegionKey != updated.manualRegionKey;
@@ -647,6 +682,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _syncNotificationPermission() {
+    if (_serverDataAccess?.paused ?? true) return;
     final grid = _weatherGrid;
     if (grid == null) return;
     unawaited(_notificationRegistration?.syncInstallation(
@@ -666,6 +702,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (!mounted || opened) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('설정을 열지 못했어요. 기기 설정에서 날씨챙겨의 알림을 확인해주세요.')));
+  }
+
+  void _onServerDataChanged() {
+    if (_serverDataAccess?.paused ?? true) {
+      _notificationRegistration?.invalidateLocation();
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _deleteServerData() async {
+    await _serverDataAccess?.deleteData();
+    if (!mounted) return;
+    if (_serverDataAccess?.mode == ServerDataMode.deleted) {
+      setState(() {
+        _settings = _settings.copyWith(notificationEnabled: false);
+        _locationRevision++;
+        _today = null;
+        _weekly = null;
+      });
+      await _settingsSave?.save(_settings);
+      if (mounted) unawaited(_refresh(supersede: true));
+    }
+  }
+
+  Future<void> _resumeServerData() async {
+    await _serverDataAccess?.resume();
+    if (!mounted || (_serverDataAccess?.paused ?? true)) return;
+    // Re-enable registration only, not notification consent or the master switch.
+    await _settingsSave?.save(_settings);
+    if (mounted) unawaited(_refresh(supersede: true));
   }
 
   Future<RegionCatalog> _loadRegionCatalog() async =>

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { sendBatch } from '../src/notification/fcmClient';
+import { sendBatch, sendOwnershipChallenge } from '../src/notification/fcmClient';
 
 const credentials = {
   projectId: 'weather-care-2aaa8',
@@ -8,6 +8,17 @@ const credentials = {
 };
 
 describe('FCM HTTP v1 client', () => {
+  it('sends ownership proof as expiring data only, without visible alert or weather navigation', async () => {
+    const requests: Request[] = [];
+    await sendOwnershipChallenge(credentials, 'synthetic-token', {
+      installationId: 'synthetic-id', requestId: 'request', proof: 'synthetic-proof',
+    }, { accessTokenProvider: async () => 'synthetic-access',
+      fetcher: async (input, init) => { requests.push(new Request(input, init)); return Response.json({ name: 'synthetic' }); } });
+    const body = await requests[0].json<{ message: Record<string, unknown> }>();
+    expect(body.message.notification).toBeUndefined();
+    expect(body.message.data).toEqual({ kind: 'installation_ownership', installationId: 'synthetic-id', requestId: 'request', proof: 'synthetic-proof' });
+    expect(body.message.android).toEqual({ priority: 'normal', ttl: '60s' });
+  });
   it('sends notification payloads with one acquired access token', async () => {
     const requests: Request[] = [];
     const fetcher = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

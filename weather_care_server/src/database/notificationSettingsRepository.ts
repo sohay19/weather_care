@@ -90,9 +90,10 @@ export async function getNotificationSettings(
 export async function upsertNotificationSettings(
   db: D1Database,
   payload: NotificationSettings,
-): Promise<void> {
+  ownerHash?: string,
+): Promise<boolean> {
   const now = new Date().toISOString();
-  await db
+  const result = await db
     .prepare(
       `INSERT INTO notification_settings
       (installation_id, notification_enabled, notification_time,
@@ -100,7 +101,9 @@ export async function upsertNotificationSettings(
        outerwear_enabled, mask_enabled, water_enabled, sunscreen_enabled,
        daily_weather_enabled, heavy_rain_enabled, heatwave_enabled,
        cold_wave_enabled, shower_light_rain_enabled, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+      ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
+        WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
         notification_enabled=excluded.notification_enabled,
         notification_time=excluded.notification_time,
@@ -136,8 +139,10 @@ export async function upsertNotificationSettings(
       booleanInteger(payload.showerAndLightRainEnabled),
       now,
       now,
+      ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();
+  return result.meta.changes > 0;
 }
 
 function booleanInteger(value: boolean): number {

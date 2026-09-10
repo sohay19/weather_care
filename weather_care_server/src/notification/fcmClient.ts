@@ -51,6 +51,36 @@ export async function sendPush(
   return result;
 }
 
+/** A silent, short-lived ownership proof; never a user-visible weather alert. */
+export async function sendOwnershipChallenge(
+  credentials: FcmCredentials,
+  token: string,
+  proof: { installationId: string; requestId: string; proof: string },
+  dependencies: FcmClientDependencies = {},
+): Promise<void> {
+  validateCredentials(credentials);
+  const fetcher = dependencies.fetcher ?? fetch;
+  const accessToken = dependencies.accessTokenProvider
+    ? await dependencies.accessTokenProvider()
+    : await createGoogleAccessToken(credentials, fetcher, dependencies.now ?? Date.now);
+  const response = await fetcher(
+    `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(credentials.projectId)}/messages:send`,
+    {
+      method: 'POST', signal: AbortSignal.timeout(10_000),
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: {
+        token, data: { kind: 'installation_ownership', ...proof },
+        android: { priority: 'normal', ttl: '60s' },
+        apns: { headers: { 'apns-push-type': 'background', 'apns-priority': '5',
+          'apns-expiration': `${Math.floor(Date.now() / 1000) + 60}` },
+          payload: { aps: { 'content-available': 1 } } },
+      } }),
+    },
+  );
+  if (!response.ok) throw new Error('Ownership proof delivery failed');
+  await response.body?.cancel();
+}
+
 export async function sendBatch(
   credentials: FcmCredentials,
   payloads: FcmPayload[],

@@ -8,6 +8,11 @@ binding = "DB"
 database_name = "weather_care_db"
 database_id = "9d1c83ca-9626-4b92-b4ea-db7433115324"
 
+[[ratelimits]]
+name = "INSTALLATION_ENROLL_LIMIT"
+namespace_id = "2026091101"
+simple = { limit = 20, period = 60 }
+
 [vars]
 APP_ORIGIN = "http://localhost:8787"
 FCM_PROJECT_ID = "weather-care-2aaa8"

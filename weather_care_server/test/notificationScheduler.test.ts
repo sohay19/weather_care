@@ -7,9 +7,11 @@ import {
 import { FcmPayload } from '../src/notification/fcmClient';
 import { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import { NotificationSettings, ServerEnv, WeatherSnapshot } from '../src/types';
+import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('notification scheduler', () => {
   beforeEach(async () => {
+    await authorizeFixture('installation-1');
     await env.DB.batch([
       env.DB.prepare(
         `CREATE TABLE IF NOT EXISTS installations (
@@ -88,6 +90,37 @@ describe('notification scheduler', () => {
     for (const action of [forecastLoader, warningLoader, precipitationLoader, roadIceLoader, roadControlLoader, sender]) {
       expect(action).not.toHaveBeenCalled();
     }
+  });
+
+  it('자료 조회 중 삭제된 설치는 발송 직전에 제외한다', async () => {
+    await insertInstallation('device-token');
+    const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) => payloads.map(successResult));
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'),
+      forecastLoader: async () => {
+        await env.DB.prepare('DELETE FROM installations WHERE installation_id = ?').bind('installation-1').run();
+        return rainyForecast();
+      }, sender,
+    });
+    expect(sender).not.toHaveBeenCalled();
+    expect(await env.DB.prepare('SELECT 1 FROM notification_history').first()).toBeNull();
+  });
+
+  it('발송 요청 중 삭제되어도 발송 이력과 특보 상태를 재생성하지 않는다', async () => {
+    await insertInstallation('device-token');
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings('key'), {
+      now: new Date('2026-09-02T07:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [officialWarning('R', '호우', '2')],
+      sender: async (_env, payloads) => {
+        sent.push(...payloads);
+        await env.DB.prepare('DELETE FROM installations WHERE installation_id = ?').bind('installation-1').run();
+        return payloads.map(successResult);
+      },
+    });
+    expect(sent.length).toBeGreaterThan(0);
+    expect(await env.DB.prepare('SELECT 1 FROM notification_history').first()).toBeNull();
+    expect(await env.DB.prepare('SELECT 1 FROM installation_warning_state').first()).toBeNull();
   });
 
   it.each([
@@ -591,7 +624,7 @@ describe('notification time slots', () => {
 
 async function savePreferences(settings: Partial<NotificationSettings>) {
   const response = await SELF.fetch('https://example.com/api/v1/notification-settings/installation-1', {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings),
+    method: 'PUT', headers: testAuthHeaders, body: JSON.stringify(settings),
   });
   expect(response.status).toBe(200);
 }

@@ -7,6 +7,7 @@ import {
   Recommendation,
   ServerEnv,
   TodayWeatherResponse,
+  WeatherMessagePart,
   WeatherSnapshot,
 } from '../types';
 import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
@@ -31,6 +32,7 @@ import {
 } from '../presentation/lifestyleMessages';
 import {
   enrichForecastWithEnvironmentalData,
+  EnvironmentalDataBundle,
   loadEnvironmentalData,
 } from '../providers/environmental/environmentalDataService';
 import {
@@ -56,6 +58,19 @@ import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
+const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
+
+interface TimedResult<T> {
+  value: T;
+  timedOut: boolean;
+}
+
+interface OptionalProviderTimeouts {
+  precipitation: boolean;
+  warning: boolean;
+  roadIce: boolean;
+  roadControl: boolean;
+}
 
 router.get('/today', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
@@ -69,17 +84,86 @@ router.get('/today', async (c) => {
 
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const [weatherForecast, environmentalData, settings, precipitation, warningResult, roadIce, roadControl] = await Promise.all([
-      new KmaWeatherProvider({
-        serviceKey: c.env.KMA_SERVICE_KEY,
-      }).getForecastByRegion(nx, ny),
-      loadEnvironmentalData(c.env, region, { nx, ny, coordinates }),
-      settingsForRequest(c.env.DB, c.req.query('installationId')),
-      loadCurrentPrecipitation(c.env, coordinates),
-      loadActiveWarnings(c.env, region, coordinates),
-      loadRoadIce(c.env, coordinates),
-      loadRoadControl(c.env, coordinates),
+    const weatherForecastPromise = new KmaWeatherProvider({
+      serviceKey: c.env.KMA_SERVICE_KEY,
+    }).getForecastByRegion(nx, ny);
+    const environmentalDataPromise = loadEnvironmentalData(
+      c.env,
+      region,
+      { nx, ny, coordinates },
+    );
+    const settingsPromise = settingsForRequest(
+      c.env.DB,
+      c.req.query('installationId'),
+    );
+    const precipitationPromise = loadCurrentPrecipitation(c.env, coordinates);
+    const warningPromise = loadActiveWarnings(c.env, region, coordinates);
+    const roadIcePromise = loadRoadIce(c.env, coordinates);
+    const roadControlPromise = loadRoadControl(c.env, coordinates);
+    const optionalPromises = [
+      environmentalDataPromise,
+      precipitationPromise,
+      warningPromise,
+      roadIcePromise,
+      roadControlPromise,
+    ] as const;
+
+    c.executionCtx.waitUntil(
+      Promise.allSettled(optionalPromises).then(() => undefined),
+    );
+
+    const [
+      weatherForecast,
+      settings,
+      environmentalResult,
+      precipitationResult,
+      warningResult,
+      roadIceResult,
+      roadControlResult,
+    ] = await Promise.all([
+      weatherForecastPromise,
+      settingsPromise,
+      settleWithin(
+        environmentalDataPromise,
+        unavailableEnvironmentalData(),
+        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
+      ),
+      settleWithin(
+        precipitationPromise,
+        undefined,
+        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
+      ),
+      settleWithin(
+        warningPromise,
+        { warnings: [], regionName: region?.name },
+        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
+      ),
+      settleWithin(
+        roadIcePromise,
+        undefined,
+        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
+      ),
+      settleWithin(
+        roadControlPromise,
+        undefined,
+        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
+      ),
     ]);
+    const environmentalData = environmentalResult.value;
+    const precipitation = precipitationResult.value;
+    const warningsResultValue = warningResult.value;
+    const roadIce = roadIceResult.value;
+    const roadControl = roadControlResult.value;
+    const optionalTimeouts: OptionalProviderTimeouts = {
+      precipitation: precipitationResult.timedOut,
+      warning: warningResult.timedOut,
+      roadIce: roadIceResult.timedOut,
+      roadControl: roadControlResult.timedOut,
+    };
+    logOptionalProviderTimeouts({
+      environmental: environmentalResult.timedOut,
+      ...optionalTimeouts,
+    });
     const forecast = enrichForecastWithEnvironmentalData(
       weatherForecast,
       environmentalData,
@@ -104,10 +188,10 @@ router.get('/today', async (c) => {
       precipitation,
       settings.umbrellaEnabled,
     );
-    const warnings = warningResult.warnings;
+    const warnings = warningsResultValue.warnings;
     const warningMessages = buildActiveWarningMessages(
       warnings,
-      warningResult.regionName ?? regionLabel,
+      warningsResultValue.regionName ?? regionLabel,
     );
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
@@ -131,9 +215,10 @@ router.get('/today', async (c) => {
         ...(currentPrecipitationMessage ? [currentPrecipitationMessage] : []),
         ...forecastLifestyleMessages,
       ],
-      dataStatusMessages: buildEnvironmentalDataStatusMessages(
-        environmentalData.sources,
-      ),
+      dataStatusMessages: [
+        ...buildEnvironmentalDataStatusMessages(environmentalData.sources),
+        ...buildOptionalProviderTimeoutStatusMessages(optionalTimeouts),
+      ],
       timeline: buildTimeline(forecast.hourly, settings),
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
@@ -446,4 +531,92 @@ function logProviderError(
       ...providerErrorDiagnostic(error),
     }),
   );
+}
+
+export async function settleWithin<T>(
+  promise: Promise<T>,
+  fallback: T,
+  timeoutMs: number,
+): Promise<TimedResult<T>> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise.then((value) => ({ value, timedOut: false })),
+      new Promise<TimedResult<T>>((resolve) => {
+        timeoutId = setTimeout(
+          () => resolve({ value: fallback, timedOut: true }),
+          timeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
+}
+
+export function buildOptionalProviderTimeoutStatusMessages(
+  timeouts: OptionalProviderTimeouts,
+): WeatherMessagePart[] {
+  return [
+    timeouts.precipitation
+      ? dataStatusMessage(
+          '자료를 받아오지 못해 현재 강수 상태를 확인하기 어려워요',
+          '기상청 관측분석자료·기상청 레이더',
+        )
+      : undefined,
+    timeouts.warning
+      ? dataStatusMessage(
+          '자료를 받아오지 못해 현재 기상특보 상태를 확인하기 어려워요',
+          '기상청 특보정보',
+        )
+      : undefined,
+    timeouts.roadIce
+      ? dataStatusMessage(
+          '자료를 받아오지 못해 블랙아이스(도로살얼음) 발생 가능 정보를 확인하기 어려워요',
+          '기상청 도로살얼음 발생 가능 정보',
+        )
+      : undefined,
+    timeouts.roadControl
+      ? dataStatusMessage(
+          '자료를 받아오지 못해 현재 도로 통제 상태를 확인하기 어려워요',
+          '국가교통정보센터 돌발상황정보',
+        )
+      : undefined,
+  ].filter((message): message is WeatherMessagePart => message !== undefined);
+}
+
+function unavailableEnvironmentalData(): EnvironmentalDataBundle {
+  return {
+    sources: {
+      uv: {
+        provider: 'KMA_LIVING_INDEX_V5',
+        state: 'UNAVAILABLE',
+        reason: 'PROVIDER_UNAVAILABLE',
+      },
+      airQuality: {
+        provider: 'AIRKOREA',
+        state: 'UNAVAILABLE',
+        reason: 'PROVIDER_UNAVAILABLE',
+      },
+    },
+  };
+}
+
+function dataStatusMessage(text: string, source: string): WeatherMessagePart {
+  return { role: 'DATA_STATUS', text, source };
+}
+
+function logOptionalProviderTimeouts(
+  timeouts: OptionalProviderTimeouts & { environmental: boolean },
+): void {
+  for (const [provider, timedOut] of Object.entries(timeouts)) {
+    if (!timedOut) continue;
+    console.warn(
+      JSON.stringify({
+        event: 'today_optional_provider_timed_out',
+        provider,
+        budgetMs: TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
+      }),
+    );
+  }
 }

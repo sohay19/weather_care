@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { buildTimeline, recommendationsForDay } from '../src/api/weather';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  buildOptionalProviderTimeoutStatusMessages,
+  buildTimeline,
+  recommendationsForDay,
+  settleWithin,
+} from '../src/api/weather';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
 
@@ -56,6 +61,55 @@ describe('today timeline', () => {
         (item) => item.stateLabel === '시간별 예보를 확인하세요',
       ),
     ).toBe(true);
+  });
+});
+
+describe('today optional provider deadline', () => {
+  it('returns a provider result that arrives within the deadline', async () => {
+    await expect(settleWithin(Promise.resolve('ready'), 'fallback', 3_500))
+      .resolves.toEqual({ value: 'ready', timedOut: false });
+  });
+
+  it('returns the fallback when the provider exceeds the deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const result = settleWithin(
+        new Promise<string>(() => undefined),
+        'fallback',
+        3_500,
+      );
+
+      await vi.advanceTimersByTimeAsync(3_500);
+
+      await expect(result).resolves.toEqual({
+        value: 'fallback',
+        timedOut: true,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('explains only the optional data that missed the deadline', () => {
+    expect(
+      buildOptionalProviderTimeoutStatusMessages({
+        precipitation: true,
+        warning: false,
+        roadIce: false,
+        roadControl: true,
+      }),
+    ).toEqual([
+      {
+        role: 'DATA_STATUS',
+        text: '자료를 받아오지 못해 현재 강수 상태를 확인하기 어려워요',
+        source: '기상청 관측분석자료·기상청 레이더',
+      },
+      {
+        role: 'DATA_STATUS',
+        text: '자료를 받아오지 못해 현재 도로 통제 상태를 확인하기 어려워요',
+        source: '국가교통정보센터 돌발상황정보',
+      },
+    ]);
   });
 });
 

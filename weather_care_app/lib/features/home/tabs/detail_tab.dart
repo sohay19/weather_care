@@ -13,7 +13,7 @@ import '../widgets/weather_condition_icon.dart';
 
 enum DetailFocusSource {
   notification,
-  recommendation,
+  selection,
 }
 
 class DetailTab extends StatefulWidget {
@@ -22,6 +22,7 @@ class DetailTab extends StatefulWidget {
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
   final NotificationTopic? focusTopic;
+  final LifestyleMessageType? focusLifestyleType;
   final DetailFocusSource focusSource;
   final int focusRequestId;
 
@@ -32,6 +33,7 @@ class DetailTab extends StatefulWidget {
     required this.serverFeaturesAvailable,
     required this.onRefresh,
     this.focusTopic,
+    this.focusLifestyleType,
     this.focusSource = DetailFocusSource.notification,
     this.focusRequestId = 0,
   });
@@ -55,6 +57,7 @@ class _DetailTabState extends State<DetailTab> {
   void didUpdateWidget(covariant DetailTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusTopic != widget.focusTopic ||
+        oldWidget.focusLifestyleType != widget.focusLifestyleType ||
         oldWidget.focusSource != widget.focusSource ||
         oldWidget.focusRequestId != widget.focusRequestId ||
         oldWidget.today != widget.today) {
@@ -64,7 +67,10 @@ class _DetailTabState extends State<DetailTab> {
   }
 
   void _scheduleFocusScroll() {
-    if (_focusScheduled || !_shouldFocus(widget.focusTopic)) return;
+    if (_focusScheduled ||
+        !_shouldFocus(widget.focusTopic, widget.focusLifestyleType)) {
+      return;
+    }
     _focusScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -104,6 +110,7 @@ class _DetailTabState extends State<DetailTab> {
               key: _evidenceSectionKey,
               today: widget.today,
               focusTopic: widget.focusTopic,
+              focusLifestyleType: widget.focusLifestyleType,
               focusSource: widget.focusSource,
               focusedItemKey: _focusedEvidenceKey,
             )
@@ -123,6 +130,7 @@ class _DetailTabState extends State<DetailTab> {
 class _RecommendationEvidence extends StatelessWidget {
   final TodayWeatherResponse today;
   final NotificationTopic? focusTopic;
+  final LifestyleMessageType? focusLifestyleType;
   final DetailFocusSource focusSource;
   final Key focusedItemKey;
 
@@ -130,13 +138,16 @@ class _RecommendationEvidence extends StatelessWidget {
     super.key,
     required this.today,
     required this.focusTopic,
+    required this.focusLifestyleType,
     required this.focusSource,
     required this.focusedItemKey,
   });
 
   @override
   Widget build(BuildContext context) {
-    final focusedTypes = lifestyleTypesForNotificationTopic(focusTopic);
+    final focusedTypes = focusLifestyleType == null
+        ? lifestyleTypesForNotificationTopic(focusTopic)
+        : {focusLifestyleType!};
     final orderedItems = [
       ...today.lifestyleMessages.where(
         (item) => focusedTypes.contains(item.type),
@@ -235,7 +246,7 @@ class _EvidenceItem extends StatelessWidget {
                   Text(
                     switch (focusSource) {
                       DetailFocusSource.notification => '알림에서 확인한 항목',
-                      DetailFocusSource.recommendation => '선택한 항목의 근거',
+                      DetailFocusSource.selection => '선택한 항목의 근거',
                     },
                     style: WeatherCareTheme.microTextStyle.copyWith(
                       color: WeatherCareTheme.primaryDeep,
@@ -265,10 +276,14 @@ class _EvidenceItem extends StatelessWidget {
   }
 }
 
-bool _shouldFocus(NotificationTopic? topic) =>
-    topic != null &&
-    topic != NotificationTopic.overview &&
-    topic != NotificationTopic.unknown;
+bool _shouldFocus(
+  NotificationTopic? topic,
+  LifestyleMessageType? lifestyleType,
+) =>
+    lifestyleType != null ||
+    (topic != null &&
+        topic != NotificationTopic.overview &&
+        topic != NotificationTopic.unknown);
 
 Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
   NotificationTopic? topic,
@@ -331,18 +346,18 @@ Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
         const {},
     };
 
-NotificationTopic detailTopicForRecommendationType(
+LifestyleMessageType detailLifestyleTypeForRecommendationType(
   RecommendationType type,
 ) =>
     switch (type) {
-      RecommendationType.umbrella => NotificationTopic.precipitation,
-      RecommendationType.parasol ||
-      RecommendationType.sunscreen =>
-        NotificationTopic.uv,
-      RecommendationType.heavySnowCaution => NotificationTopic.snow,
-      RecommendationType.outerwear => NotificationTopic.temperature,
-      RecommendationType.mask => NotificationTopic.airQuality,
-      RecommendationType.water => NotificationTopic.heat,
+      RecommendationType.umbrella => LifestyleMessageType.rainGearUseful,
+      RecommendationType.parasol => LifestyleMessageType.strongSunExposure,
+      RecommendationType.heavySnowCaution =>
+        LifestyleMessageType.snowTravelCaution,
+      RecommendationType.outerwear => LifestyleMessageType.outerwearUseful,
+      RecommendationType.mask => LifestyleMessageType.maskUseful,
+      RecommendationType.water => LifestyleMessageType.hydrationImportant,
+      RecommendationType.sunscreen => LifestyleMessageType.sunscreenUseful,
     };
 
 class _HourlyForecastCard extends StatelessWidget {

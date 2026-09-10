@@ -163,6 +163,10 @@ void main() {
               recommendations: const [],
               lifestyleMessages: [
                 LifestyleMessage(
+                  type: LifestyleMessageType.rainBreakWindow,
+                  title: '비가 잠시 그치는 시간을 확인하세요',
+                ),
+                LifestyleMessage(
                   type: LifestyleMessageType.rainGearUseful,
                   title: '우산을 챙기세요',
                 ),
@@ -172,8 +176,8 @@ void main() {
             ),
             recommendations: const [],
             serverFeaturesAvailable: true,
-            focusTopic: NotificationTopic.precipitation,
-            focusSource: DetailFocusSource.recommendation,
+            focusLifestyleType: LifestyleMessageType.rainGearUseful,
+            focusSource: DetailFocusSource.selection,
             focusRequestId: 1,
             onRefresh: () async {},
           ),
@@ -184,39 +188,45 @@ void main() {
 
     expect(find.text('선택한 항목의 근거'), findsOneWidget);
     expect(find.text('알림에서 확인한 항목'), findsNothing);
-    expect(find.text('우산을 챙기세요'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('detail-focused-evidence')),
+        matching: find.text('우산을 챙기세요'),
+      ),
+      findsOneWidget,
+    );
   });
 
   test('준비물 종류는 관련 상세 주제로 연결된다', () {
     expect(
-      detailTopicForRecommendationType(RecommendationType.umbrella),
-      NotificationTopic.precipitation,
+      detailLifestyleTypeForRecommendationType(RecommendationType.umbrella),
+      LifestyleMessageType.rainGearUseful,
     );
     expect(
-      detailTopicForRecommendationType(RecommendationType.parasol),
-      NotificationTopic.uv,
+      detailLifestyleTypeForRecommendationType(RecommendationType.parasol),
+      LifestyleMessageType.strongSunExposure,
     );
     expect(
-      detailTopicForRecommendationType(
+      detailLifestyleTypeForRecommendationType(
         RecommendationType.heavySnowCaution,
       ),
-      NotificationTopic.snow,
+      LifestyleMessageType.snowTravelCaution,
     );
     expect(
-      detailTopicForRecommendationType(RecommendationType.outerwear),
-      NotificationTopic.temperature,
+      detailLifestyleTypeForRecommendationType(RecommendationType.outerwear),
+      LifestyleMessageType.outerwearUseful,
     );
     expect(
-      detailTopicForRecommendationType(RecommendationType.mask),
-      NotificationTopic.airQuality,
+      detailLifestyleTypeForRecommendationType(RecommendationType.mask),
+      LifestyleMessageType.maskUseful,
     );
     expect(
-      detailTopicForRecommendationType(RecommendationType.water),
-      NotificationTopic.heat,
+      detailLifestyleTypeForRecommendationType(RecommendationType.water),
+      LifestyleMessageType.hydrationImportant,
     );
     expect(
-      detailTopicForRecommendationType(RecommendationType.sunscreen),
-      NotificationTopic.uv,
+      detailLifestyleTypeForRecommendationType(RecommendationType.sunscreen),
+      LifestyleMessageType.sunscreenUseful,
     );
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import '../../models/app_settings.dart';
+import '../../models/lifestyle_message.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../services/api_client.dart';
@@ -56,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
   late NotificationTopic? _detailFocusTopic;
+  LifestyleMessageType? _detailFocusLifestyleType;
   DetailFocusSource _detailFocusSource = DetailFocusSource.notification;
   int _detailFocusRequestId = 0;
   bool _loading = false;
@@ -248,6 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
                       focusTopic: _detailFocusTopic,
+                      focusLifestyleType: _detailFocusLifestyleType,
                       focusSource: _detailFocusSource,
                       focusRequestId: _detailFocusRequestId,
                     ),
@@ -257,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mood: _mood,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
+                      onDetail: _openLifestyleDetail,
                     ),
                     WeekTab(
                       weekly: weekly,
@@ -375,8 +379,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openRecommendationDetail(RecommendationType type) {
     setState(() {
-      _detailFocusTopic = detailTopicForRecommendationType(type);
-      _detailFocusSource = DetailFocusSource.recommendation;
+      _detailFocusTopic = null;
+      _detailFocusLifestyleType =
+          detailLifestyleTypeForRecommendationType(type);
+      _detailFocusSource = DetailFocusSource.selection;
+      _detailFocusRequestId += 1;
+      _selectedIndex = 1;
+    });
+  }
+
+  void _openLifestyleDetail(LifestyleMessageType type) {
+    setState(() {
+      _detailFocusTopic = null;
+      _detailFocusLifestyleType = type;
+      _detailFocusSource = DetailFocusSource.selection;
       _detailFocusRequestId += 1;
       _selectedIndex = 1;
     });

@@ -12,6 +12,7 @@ class MainTab extends StatelessWidget {
   final String mood;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
+  final ValueChanged<LifestyleMessageType> onDetail;
 
   const MainTab({
     super.key,
@@ -20,6 +21,7 @@ class MainTab extends StatelessWidget {
     required this.mood,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
+    required this.onDetail,
   });
 
   @override
@@ -60,6 +62,7 @@ class MainTab extends StatelessWidget {
                       dataStatusMessages: today.dataStatusMessages,
                       compact: compact,
                       serverFeaturesAvailable: serverFeaturesAvailable,
+                      onDetail: onDetail,
                     ),
                   ],
                 ),
@@ -364,12 +367,14 @@ class _LifestyleDashboard extends StatelessWidget {
   final List<WeatherMessagePart> dataStatusMessages;
   final bool compact;
   final bool serverFeaturesAvailable;
+  final ValueChanged<LifestyleMessageType> onDetail;
 
   const _LifestyleDashboard({
     required this.messages,
     required this.dataStatusMessages,
     required this.compact,
     required this.serverFeaturesAvailable,
+    required this.onDetail,
   });
 
   @override
@@ -427,6 +432,7 @@ class _LifestyleDashboard extends StatelessWidget {
               _LifestyleActionCard(
                 item: display[index],
                 compact: compact,
+                onTap: () => onDetail(display[index].type),
               ),
               if (index < display.length - 1) SizedBox(height: compact ? 7 : 9),
             ],
@@ -522,10 +528,12 @@ class _LifestyleUnsupported extends StatelessWidget {
 class _LifestyleActionCard extends StatelessWidget {
   final _TodoItem item;
   final bool compact;
+  final VoidCallback onTap;
 
   const _LifestyleActionCard({
     required this.item,
     required this.compact,
+    required this.onTap,
   });
 
   @override
@@ -538,66 +546,83 @@ class _LifestyleActionCard extends StatelessWidget {
     return Container(
       key: ValueKey('main-todo-${item.title}'),
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 12,
-        vertical: compact ? 15 : 18,
-      ),
       decoration: BoxDecoration(
         color: style.background,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: compact ? 32 : 36,
-            height: compact ? 32 : 36,
-            decoration: BoxDecoration(
-              color: style.iconBackground,
-              shape: BoxShape.circle,
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 10 : 12,
+              vertical: compact ? 15 : 18,
             ),
-            child: Icon(
-              item.icon,
-              color: style.accent,
-              size: compact ? 17 : 19,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  item.actionText,
-                  style: TextStyle(
-                    fontSize: compact ? 11 : 12,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  width: compact ? 32 : 36,
+                  height: compact ? 32 : 36,
+                  decoration: BoxDecoration(
+                    color: style.iconBackground,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    item.icon,
+                    color: style.accent,
+                    size: compact ? 17 : 19,
                   ),
                 ),
-                const SizedBox(height: 3),
-                for (final part in item.details) ...[
-                  const SizedBox(height: 5),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${part.role.label} · ',
-                          style: const TextStyle(fontWeight: FontWeight.w800),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.actionText,
+                        style: TextStyle(
+                          fontSize: compact ? 11 : 12,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
                         ),
-                        TextSpan(text: part.text),
+                      ),
+                      const SizedBox(height: 3),
+                      for (final part in item.details) ...[
+                        const SizedBox(height: 5),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${part.role.label} · ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              TextSpan(text: part.text),
+                            ],
+                          ),
+                          style: WeatherCareTheme.microTextStyle.copyWith(
+                            fontSize: compact ? 8.5 : 9.5,
+                            height: 1.3,
+                          ),
+                        ),
                       ],
-                    ),
-                    style: WeatherCareTheme.microTextStyle.copyWith(
-                      fontSize: compact ? 8.5 : 9.5,
-                      height: 1.3,
-                    ),
+                    ],
                   ),
-                ],
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: WeatherCareTheme.textSecondary,
+                  size: compact ? 18 : 20,
+                ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -650,6 +675,7 @@ List<_TodoItem> _todoItems(List<LifestyleMessage> messages) {
         .where((part) => part.role != WeatherMessageRole.appSuggestion)
         .toList();
     return _TodoItem(
+      type: message.type,
       icon: presentation.icon,
       title: message.title,
       actionText: action ?? message.title,
@@ -659,12 +685,14 @@ List<_TodoItem> _todoItems(List<LifestyleMessage> messages) {
 }
 
 class _TodoItem {
+  final LifestyleMessageType type;
   final IconData icon;
   final String title;
   final String actionText;
   final List<WeatherMessagePart> details;
 
   const _TodoItem({
+    required this.type,
     required this.icon,
     required this.title,
     required this.actionText,

@@ -431,6 +431,7 @@ void main() {
             mood: 'cloudy',
             serverFeaturesAvailable: true,
             onRefresh: () async => refreshCount++,
+            onDetail: (_) {},
           ),
         ),
       ),
@@ -485,6 +486,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    LifestyleMessageType? openedDetail;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -519,6 +521,7 @@ void main() {
             mood: 'cloudy',
             serverFeaturesAvailable: true,
             onRefresh: () async {},
+            onDetail: (type) => openedDetail = type,
           ),
         ),
       ),
@@ -549,6 +552,11 @@ void main() {
       decorationFor('실외 빨래가 있다면 실내로 들여놓으세요').border,
       isNull,
     );
+    await tester.tap(
+      find.byKey(const ValueKey('main-todo-작은 우산을 챙겨요')),
+    );
+    await tester.pump();
+    expect(openedDetail, LifestyleMessageType.rainGearUseful);
     expect(tester.takeException(), isNull);
   });
 

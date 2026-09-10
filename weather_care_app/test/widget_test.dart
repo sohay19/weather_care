@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/app.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
+import 'package:weather_care/features/home/home_screen.dart';
 import 'package:weather_care/features/home/widgets/tab_page_header.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/features/home/widgets/server_connection_failure_dialog.dart';
@@ -14,6 +15,7 @@ import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/theme/recommendation_theme.dart';
 import 'package:weather_care/theme/weather_theme.dart';
+import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
   test('recommendation categories share one color palette', () {
@@ -303,6 +305,12 @@ void main() {
     );
     expect(navigation.selectedIndex, 1);
     expect(find.byKey(const ValueKey('detail-tab')), findsOneWidget);
+    expect(
+      tester
+          .widget<HomeScreen>(find.byType(HomeScreen))
+          .initialNotificationTopic,
+      NotificationTopic.snow,
+    );
   });
 
   testWidgets('temperature values include the Celsius unit', (tester) async {

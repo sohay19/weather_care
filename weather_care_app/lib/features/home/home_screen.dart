@@ -12,6 +12,7 @@ import '../../services/kma_direct_weather_service.dart';
 import '../../services/kma_grid.dart';
 import '../../services/installation_identity.dart';
 import '../../services/notification_registration_service.dart';
+import '../../services/notification_destination.dart';
 import '../../services/settings_sync_service.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
@@ -26,8 +27,13 @@ import 'widgets/weather_status_view.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
+  final NotificationTopic? initialNotificationTopic;
 
-  const HomeScreen({super.key, this.initialIndex = 2});
+  const HomeScreen({
+    super.key,
+    this.initialIndex = 2,
+    this.initialNotificationTopic,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -237,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
+                      focusTopic: widget.initialNotificationTopic,
                     ),
                     MainTab(
                       today: today,

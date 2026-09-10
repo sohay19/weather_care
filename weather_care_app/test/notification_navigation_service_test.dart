@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/notification_navigation_service.dart';
+import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
   testWidgets('백그라운드에서 선택한 알림은 매핑된 화면을 연다', (tester) async {
@@ -20,7 +21,11 @@ void main() {
         navigatorKey: navigatorKey,
         routes: {
           '/': (_) => const Text('메인 화면'),
-          '/weather-details': (_) => const Text('날씨 상세 화면'),
+          '/weather-details': (context) {
+            final destination = ModalRoute.of(context)?.settings.arguments
+                as NotificationDestination?;
+            return Text('날씨 상세 화면 ${destination?.topic.name}');
+          },
         },
       ),
     );
@@ -31,7 +36,7 @@ void main() {
     });
     await tester.pumpAndSettle();
 
-    expect(find.text('날씨 상세 화면'), findsOneWidget);
+    expect(find.text('날씨 상세 화면 roadIce'), findsOneWidget);
     expect(find.text('메인 화면'), findsNothing);
 
     openedMessages.add({
@@ -41,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('메인 화면'), findsOneWidget);
-    expect(find.text('날씨 상세 화면'), findsNothing);
+    expect(find.textContaining('날씨 상세 화면'), findsNothing);
   });
 
   testWidgets('화면 준비 전에 선택한 알림도 첫 프레임 뒤에 연다', (tester) async {

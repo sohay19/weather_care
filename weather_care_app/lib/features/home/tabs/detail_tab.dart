@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
+import '../../../services/notification_destination.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/home_section_header.dart';
 import '../widgets/server_feature_unavailable_card.dart';
@@ -10,11 +11,12 @@ import '../widgets/tab_page_header.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/weather_condition_icon.dart';
 
-class DetailTab extends StatelessWidget {
+class DetailTab extends StatefulWidget {
   final TodayWeatherResponse today;
   final List<WeatherRecommendation> recommendations;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
+  final NotificationTopic? focusTopic;
 
   const DetailTab({
     super.key,
@@ -22,13 +24,56 @@ class DetailTab extends StatelessWidget {
     required this.recommendations,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
+    this.focusTopic,
   });
+
+  @override
+  State<DetailTab> createState() => _DetailTabState();
+}
+
+class _DetailTabState extends State<DetailTab> {
+  final _focusedEvidenceKey = GlobalKey();
+  final _evidenceSectionKey = GlobalKey();
+  bool _focusScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleFocusScroll();
+  }
+
+  @override
+  void didUpdateWidget(covariant DetailTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusTopic != widget.focusTopic ||
+        oldWidget.today != widget.today) {
+      _focusScheduled = false;
+      _scheduleFocusScroll();
+    }
+  }
+
+  void _scheduleFocusScroll() {
+    if (_focusScheduled || !_shouldFocus(widget.focusTopic)) return;
+    _focusScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _focusedEvidenceKey.currentContext ??
+          _evidenceSectionKey.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+        alignment: 0.08,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
       child: ListView(
         key: const ValueKey('detail-tab'),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -41,11 +86,14 @@ class DetailTab extends StatelessWidget {
             icon: Icons.query_stats_rounded,
           ),
           const SizedBox(height: 18),
-          WeatherInfoCard(current: today.current),
+          WeatherInfoCard(current: widget.today.current),
           const SizedBox(height: 16),
-          if (serverFeaturesAvailable)
+          if (widget.serverFeaturesAvailable)
             _RecommendationEvidence(
-              today: today,
+              key: _evidenceSectionKey,
+              today: widget.today,
+              focusTopic: widget.focusTopic,
+              focusedItemKey: _focusedEvidenceKey,
             )
           else
             const ServerFeatureUnavailableCard(
@@ -53,7 +101,7 @@ class DetailTab extends StatelessWidget {
               title: '챙길 이유',
             ),
           const SizedBox(height: 16),
-          _HourlyForecastCard(items: today.hourly),
+          _HourlyForecastCard(items: widget.today.hourly),
         ],
       ),
     );
@@ -62,14 +110,31 @@ class DetailTab extends StatelessWidget {
 
 class _RecommendationEvidence extends StatelessWidget {
   final TodayWeatherResponse today;
+  final NotificationTopic? focusTopic;
+  final Key focusedItemKey;
 
   const _RecommendationEvidence({
+    super.key,
     required this.today,
+    required this.focusTopic,
+    required this.focusedItemKey,
   });
 
   @override
   Widget build(BuildContext context) {
-    final items = today.lifestyleMessages.take(5).toList();
+    final focusedTypes = lifestyleTypesForNotificationTopic(focusTopic);
+    final orderedItems = [
+      ...today.lifestyleMessages.where(
+        (item) => focusedTypes.contains(item.type),
+      ),
+      ...today.lifestyleMessages.where(
+        (item) => !focusedTypes.contains(item.type),
+      ),
+    ];
+    final items = orderedItems.take(5).toList();
+    final focusedIndex = items.indexWhere(
+      (item) => focusedTypes.contains(item.type),
+    );
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.surfaceDecoration(),
@@ -88,43 +153,10 @@ class _RecommendationEvidence extends StatelessWidget {
             )
           else
             for (var index = 0; index < items.length; index++) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: WeatherCareTheme.primarySoft,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.fact_check_outlined,
-                      size: 19,
-                      color: WeatherCareTheme.primaryDeep,
-                    ),
-                  ),
-                  const SizedBox(width: 11),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          items[index].title,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 2),
-                        for (final part in items[index].parts.skip(1)) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            '${part.role.label} · ${part.text}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
+              _EvidenceItem(
+                key: index == focusedIndex ? focusedItemKey : null,
+                message: items[index],
+                focused: index == focusedIndex,
               ),
               if (index < items.length - 1) ...[
                 const SizedBox(height: 11),
@@ -137,6 +169,147 @@ class _RecommendationEvidence extends StatelessWidget {
     );
   }
 }
+
+class _EvidenceItem extends StatelessWidget {
+  final LifestyleMessage message;
+  final bool focused;
+
+  const _EvidenceItem({
+    super.key,
+    required this.message,
+    required this.focused,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      key: focused ? const ValueKey('detail-focused-evidence') : null,
+      duration: const Duration(milliseconds: 250),
+      padding: focused ? const EdgeInsets.all(12) : EdgeInsets.zero,
+      decoration: focused
+          ? BoxDecoration(
+              color: WeatherCareTheme.primarySoft.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: WeatherCareTheme.primary),
+            )
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: WeatherCareTheme.primarySoft,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.fact_check_outlined,
+              size: 19,
+              color: WeatherCareTheme.primaryDeep,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (focused) ...[
+                  Text(
+                    '알림에서 확인한 항목',
+                    style: WeatherCareTheme.microTextStyle.copyWith(
+                      color: WeatherCareTheme.primaryDeep,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                Text(
+                  message.title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                for (final part in message.parts.skip(1)) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${part.role.label} · ${part.text}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+bool _shouldFocus(NotificationTopic? topic) =>
+    topic != null &&
+    topic != NotificationTopic.overview &&
+    topic != NotificationTopic.unknown;
+
+Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
+  NotificationTopic? topic,
+) =>
+    switch (topic) {
+      NotificationTopic.strongWind => const {
+          LifestyleMessageType.outdoorCaution,
+        },
+      NotificationTopic.roadIce => const {
+          LifestyleMessageType.blackIceCaution,
+          LifestyleMessageType.wetRoadCaution,
+        },
+      NotificationTopic.uv => const {
+          LifestyleMessageType.strongSunExposure,
+          LifestyleMessageType.sunscreenUseful,
+        },
+      NotificationTopic.precipitation => const {
+          LifestyleMessageType.rainGearUseful,
+          LifestyleMessageType.rainBreakWindow,
+          LifestyleMessageType.wetRoadCaution,
+          LifestyleMessageType.windowCloseSoon,
+        },
+      NotificationTopic.laundry => const {
+          LifestyleMessageType.laundryPickupDue,
+        },
+      NotificationTopic.petWalk => const {
+          LifestyleMessageType.petWalkWindow,
+          LifestyleMessageType.bestOutingWindow,
+        },
+      NotificationTopic.commute => const {
+          LifestyleMessageType.commuteRouteCaution,
+          LifestyleMessageType.wetRoadCaution,
+          LifestyleMessageType.snowTravelCaution,
+        },
+      NotificationTopic.sleep => const {
+          LifestyleMessageType.nightWeatherCheck,
+          LifestyleMessageType.veryHotAndHumid,
+        },
+      NotificationTopic.snow => const {
+          LifestyleMessageType.snowTravelCaution,
+        },
+      NotificationTopic.airQuality => const {
+          LifestyleMessageType.maskUseful,
+          LifestyleMessageType.ozoneCaution,
+        },
+      NotificationTopic.temperature => const {
+          LifestyleMessageType.outerwearUseful,
+          LifestyleMessageType.coolerThanTemperature,
+          LifestyleMessageType.largeTemperatureSwing,
+          LifestyleMessageType.rapidTemperatureDrop,
+        },
+      NotificationTopic.heat => const {
+          LifestyleMessageType.hydrationImportant,
+          LifestyleMessageType.veryHotAndHumid,
+        },
+      NotificationTopic.overview ||
+      NotificationTopic.weatherWarning ||
+      NotificationTopic.unknown ||
+      null =>
+        const {},
+    };
 
 class _HourlyForecastCard extends StatelessWidget {
   final List<HourlyWeatherItem> items;

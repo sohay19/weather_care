@@ -16,6 +16,10 @@ class WeatherCareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initialDestination = initialNotificationData == null
+        ? null
+        : NotificationDestination.fromMessageData(initialNotificationData!);
+
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: '날씨챙겨',
@@ -24,7 +28,16 @@ class WeatherCareApp extends StatelessWidget {
       routes: {
         '/': (_) => const HomeScreen(),
         '/settings': (_) => const HomeScreen(initialIndex: 4),
-        '/weather-details': (_) => const HomeScreen(initialIndex: 1),
+        '/weather-details': (context) {
+          final arguments = ModalRoute.of(context)?.settings.arguments;
+          final destination = arguments is NotificationDestination
+              ? arguments
+              : initialDestination;
+          return HomeScreen(
+            initialIndex: 1,
+            initialNotificationTopic: destination?.topic,
+          );
+        },
         '/weather/precipitation': (_) =>
             const WeatherRecommendationDetailScreen(
               title: '우산이 필요한 이유',
@@ -57,11 +70,7 @@ class WeatherCareApp extends StatelessWidget {
               icon: Icons.local_drink_outlined,
             ),
       },
-      initialRoute: initialNotificationData == null
-          ? '/'
-          : NotificationDestination.fromMessageData(
-              initialNotificationData!,
-            ).routeName,
+      initialRoute: initialDestination?.routeName ?? '/',
     );
   }
 }

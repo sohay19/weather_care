@@ -5,11 +5,12 @@ import { enrichTimeSeriesInsights } from './timeSeriesLifestyleBuilder';
 export function runLifestyleWeatherEngine(
   facts: WeatherRuleFact[],
   hourly: WeatherSnapshot[] = [],
+  now?: Date,
 ): LifestyleInsight[] {
   const insights = [
     ...deriveInsightFromRules(facts),
     ...enrichAdditionalInsights(facts),
-    ...enrichTimeSeriesInsights(hourly),
+    ...enrichTimeSeriesInsights(hourly, now),
   ];
   const map = new Map<string, LifestyleInsight>();
   for (const item of insights) {
@@ -18,7 +19,7 @@ export function runLifestyleWeatherEngine(
     );
     const sourceFacts = facts.filter((fact) =>
       availableSourceFactTypes.includes(fact.type),
-    );
+    ).sort((a, b) => b.severity - a.severity);
     const enriched = {
       ...item,
       sourceFacts: availableSourceFactTypes,

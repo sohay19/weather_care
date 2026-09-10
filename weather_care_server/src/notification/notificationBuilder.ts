@@ -1,4 +1,5 @@
 import { Recommendation } from '../types';
+import { periodLabel, otherDatePrefix } from '../rules/precipitationWindows';
 import {
   morningBriefDestination,
   NotificationDestination,
@@ -12,7 +13,9 @@ export interface BuiltNotification {
   destination: NotificationDestination;
 }
 
-export function buildNotification(recommendations: Recommendation[]): BuiltNotification[] {
+export function buildNotification(recommendations: Recommendation[], now?: Date): BuiltNotification[] {
+  recommendations = recommendations.filter((item) => !now || !item.validUntil ||
+    Date.parse(item.validUntil) >= now.getTime());
   const important = recommendations.filter((r) => r.type === 'HEAVY_SNOW_CAUTION');
   const normal = recommendations.filter((r) => r.type !== 'HEAVY_SNOW_CAUTION');
 
@@ -21,7 +24,7 @@ export function buildNotification(recommendations: Recommendation[]): BuiltNotif
     payloads.push({
       notification_key: 'MORNING_BRIEF',
       title: '오늘 준비할 내용',
-      body: composeBody(normal),
+      body: composeBody(normal, now),
       destination: morningBriefDestination,
     });
   }
@@ -29,19 +32,29 @@ export function buildNotification(recommendations: Recommendation[]): BuiltNotif
     payloads.push({
       notification_key: `IMPORTANT_${item.type}`,
       title: item.title,
-      body: item.description,
+      body: timedDescription(item, now),
       destination: recommendationDestination(item.type),
     });
   }
   return payloads;
 }
 
-function composeBody(items: Recommendation[]): string {
+function composeBody(items: Recommendation[], now?: Date): string {
   if (items.length === 0) {
     return '오늘은 특별히 챙길 준비물이 적습니다.';
   }
   return items
     .slice(0, 3)
-    .map((item) => item.description)
+    .map((item) => timedDescription(item, now))
     .join(' ');
+}
+
+function timedDescription(item: Recommendation, now?: Date): string {
+  if (!['UMBRELLA', 'HEAVY_SNOW_CAUTION'].includes(item.type) || !item.validFrom || !item.validUntil) return item.description;
+  const start = Date.parse(item.validFrom);
+  const end = Date.parse(item.validUntil);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return item.description;
+  // Existing rules use inclusive second/millisecond ends. Round to the next hour.
+  const exclusiveEnd = new Date(Math.ceil((end + 1) / 3_600_000) * 3_600_000).toISOString();
+  return `${otherDatePrefix(item.validFrom, now?.toISOString())}${periodLabel(item.validFrom, exclusiveEnd)} · ${item.description}`;
 }

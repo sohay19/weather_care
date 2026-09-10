@@ -21,7 +21,9 @@ import {
   sortSnapshots,
 } from './timeWindows';
 
-export const DECISION_VERSION = 'weather-rules-1.1.0';
+import { isPrecipitationFact, precipitationDecisionSnapshot, precipitationStart, precipitationEnd } from './precipitationWindows';
+
+export const DECISION_VERSION = 'weather-rules-1.2.0';
 
 export function runWeatherRuleEngine(snapshot: WeatherSnapshot, config: RuleConfig = defaultRuleConfig): WeatherRuleFact[] {
   const facts: WeatherRuleFact[] = [
@@ -38,8 +40,9 @@ export function runWeatherRuleEngine(snapshot: WeatherSnapshot, config: RuleConf
 export function runWeatherRuleEngineForHourly(
   hourly: WeatherSnapshot[],
   config: RuleConfig = defaultRuleConfig,
+  now?: Date,
 ): WeatherRuleFact[] {
-  const snapshots = sortSnapshots(hourly);
+  const snapshots = sortSnapshots(hourly).map((item) => precipitationDecisionSnapshot(item, now));
   if (snapshots.length === 0) return [];
 
   const facts: WeatherRuleFact[] = [];
@@ -495,8 +498,8 @@ function factForRun(
     type,
     severity: Math.min(100, Math.max(0, Math.round(severity))),
     evidence,
-    validFrom: snapshotTime(run[0]),
-    validUntil: snapshotEnd(run.at(-1) ?? run[0]),
+    validFrom: isPrecipitationFact(type) ? precipitationStart(run[0]) : snapshotTime(run[0]),
+    validUntil: isPrecipitationFact(type) ? precipitationEnd(run.at(-1) ?? run[0]) : snapshotEnd(run.at(-1) ?? run[0]),
   };
 }
 

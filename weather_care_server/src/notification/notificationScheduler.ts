@@ -216,8 +216,8 @@ export async function runRecommendationNotificationJob(
     try {
       const forecast = await forecastPromise;
       const hourly = forecast.hourly.slice(0, 24);
-      const rules = runWeatherRuleEngineForHourly(hourly);
-      const insights = runLifestyleWeatherEngine(rules, hourly);
+      const rules = runWeatherRuleEngineForHourly(hourly, undefined, now);
+      const insights = runLifestyleWeatherEngine(rules, hourly, now);
       const recommendations = runRecommendationEngine(
         insights,
         settingsFromRow(row),
@@ -230,7 +230,7 @@ export async function runRecommendationNotificationJob(
         row.installationId,
         local.date,
       );
-      const notifications = buildNotification(recommendations).filter(
+      const notifications = buildNotification(recommendations, now).filter(
         (notification) => {
           if (alreadySent.has(notification.notification_key)) return false;
           if (notification.notification_key === 'MORNING_BRIEF') {

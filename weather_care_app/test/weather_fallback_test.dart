@@ -13,6 +13,23 @@ import 'package:weather_care/services/current_location_service.dart';
 import 'package:weather_care/features/home/widgets/week_precipitation.dart';
 
 void main() {
+  test('직접 조회도 강수 이전 1시간과 정시 기온을 분리하고 연장 구간은 추정하지 않는다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {'TMP': '20', 'POP': '60', 'PCP': '1mm 미만'}),
+      ..._slot('20260821', '0000', {'TMP': '21', 'POP': '90', 'PCP': '3mm'}),
+      ..._slot('20260823', '0300', {'POP': '60', 'PCP': '2'}),
+    ]);
+    final hourly = bundle.today.hourly;
+    expect(hourly.first.time, '10');
+    expect(hourly.first.temperature, 20);
+    expect(hourly.first.precipitationPeriod?.label, '9~10시');
+    expect(hourly[1].forecastDate, '2026-08-21');
+    expect(hourly[1].precipitationPeriod?.date, '2026-08-20');
+    expect(hourly[1].precipitationPeriod?.label, '23~24시');
+    expect(hourly.last.precipitationPeriodProvided, isTrue);
+    expect(hourly.last.precipitationPeriod, isNull);
+  });
+
   test('직접 조회의 Week도 자정 구간·미만 범위·결측을 보존한다', () async {
     final bundle = await _fetchPartialSlots([
       ..._slot('20260820', '1000', {'TMP': '20', 'POP': '60', 'PCP': '1mm 미만'}),

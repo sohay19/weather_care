@@ -1,8 +1,10 @@
 import { RuleConfig } from '../config/ruleConfig';
 import { WeatherRuleFact, WeatherRuleFactType, WeatherSnapshot } from '../types';
-import { amountMinimum, snapshotTime } from './timeWindows';
+import { amountMinimum } from './timeWindows';
+import { precipitationDecisionSnapshot, precipitationStart, precipitationEnd } from './precipitationWindows';
 
 export function applyRainRule(snapshot: WeatherSnapshot, config: RuleConfig): WeatherRuleFact[] {
+  snapshot = precipitationDecisionSnapshot(snapshot);
   const facts: WeatherRuleFact[] = [];
   const probability = snapshot.precipitationProbability;
   const amount = amountMinimum(
@@ -24,8 +26,8 @@ export function applyRainRule(snapshot: WeatherSnapshot, config: RuleConfig): We
         precipitationAmountMinimum: amount,
         precipitationType: snapshot.precipitationType ?? 'NONE',
       },
-      validFrom: snapshotTime(snapshot),
-      validUntil: snapshot.validTo,
+      validFrom: precipitationStart(snapshot),
+      validUntil: precipitationEnd(snapshot),
     });
   }
   if (
@@ -40,8 +42,8 @@ export function applyRainRule(snapshot: WeatherSnapshot, config: RuleConfig): We
         precipitationProbability: probability ?? 0,
         precipitationAmountMinimum: amount,
       },
-      validFrom: snapshotTime(snapshot),
-      validUntil: snapshot.validTo,
+      validFrom: precipitationStart(snapshot),
+      validUntil: precipitationEnd(snapshot),
     });
   }
   return facts;

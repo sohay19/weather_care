@@ -12,16 +12,19 @@ import {
   snapshotTime,
   sortSnapshots,
 } from '../rules/timeWindows';
+import { precipitationAtPoint, precipitationDecisionSnapshot, precipitationStart,
+  precipitationEnd, periodLabel } from '../rules/precipitationWindows';
 
 export function enrichTimeSeriesInsights(
   hourly: WeatherSnapshot[],
+  now?: Date,
 ): LifestyleInsight[] {
-  const snapshots = sortSnapshots(hourly);
+  const snapshots = sortSnapshots(hourly).map((item) => precipitationDecisionSnapshot(item, now));
   if (snapshots.length === 0) return [];
 
   const insights: LifestyleInsight[] = [];
   addRainWindowInsights(insights, snapshots);
-  addConditionalHouseholdActions(insights, snapshots);
+  addConditionalHouseholdActions(insights, snapshots, now);
   addCompleteInputPositiveWindows(insights, snapshots);
   return insights;
 }
@@ -55,8 +58,10 @@ function addRainWindowInsights(
       score: 60,
       sourceFacts: [WeatherRuleFactType.RAIN_LIKELY],
       context: {
-        validFrom: formatTime(snapshotTime(rainBreak[0])),
-        validTo: formatTime(snapshotEnd(rainBreak.at(-1) ?? rainBreak[0])),
+        validFrom: precipitationStart(rainBreak[0]),
+        validUntil: precipitationEnd(rainBreak.at(-1) ?? rainBreak[0]),
+        timeLabel: periodLabel(precipitationStart(rainBreak[0]),
+          exclusiveEnd(precipitationEnd(rainBreak.at(-1) ?? rainBreak[0]))),
       },
     });
   }
@@ -77,7 +82,7 @@ function addRainWindowInsights(
       type: LifestyleInsightType.WET_ROAD_CAUTION,
       score: 70,
       sourceFacts: [WeatherRuleFactType.RAIN_LIKELY],
-      context: { validFrom: snapshotTime(dry) },
+      context: { validFrom: precipitationStart(dry), validUntil: precipitationEnd(dry) },
     });
   }
 }
@@ -85,19 +90,23 @@ function addRainWindowInsights(
 function addConditionalHouseholdActions(
   insights: LifestyleInsight[],
   snapshots: WeatherSnapshot[],
+  now?: Date,
 ): void {
-  const firstTime = Date.parse(snapshotTime(snapshots[0]));
-  const firstOutdoorRisk = snapshots.find((item) => {
-    const leadTime = Date.parse(snapshotTime(item)) - firstTime;
+  const reference = now?.getTime() ?? Date.parse(snapshots[0].fetchedAt ?? '');
+  const firstTime = Number.isFinite(reference) ? reference : Date.parse(precipitationStart(snapshots[0]));
+  const riskStart = (item: WeatherSnapshot) => isWetSnapshot(item) ? precipitationStart(item) : snapshotTime(item);
+  const firstOutdoorRisk = [...snapshots].sort((a, b) => Date.parse(riskStart(a)) - Date.parse(riskStart(b))).find((item) => {
+    const leadTime = Date.parse(riskStart(item)) - firstTime;
     return (
-      leadTime >= 0 &&
+      leadTime >= -60 * 60 * 1000 &&
       leadTime <= 24 * 60 * 60 * 1000 &&
       (isWetSnapshot(item) || (item.windSpeed ?? 0) >= 9)
     );
   });
   if (!firstOutdoorRisk) return;
 
-  const riskTime = Date.parse(snapshotTime(firstOutdoorRisk));
+  const riskTime = Date.parse(riskStart(firstOutdoorRisk));
+  const actionNow = riskTime - 30 * 60 * 1000 <= firstTime;
   const actionDeadline = formatTime(
     new Date(riskTime - 30 * 60 * 1000).toISOString(),
   );
@@ -107,7 +116,10 @@ function addConditionalHouseholdActions(
     sourceFacts: sourceFactsForOutdoorRisk(firstOutdoorRisk),
     context: {
       actionDeadline,
-      validFrom: snapshotTime(firstOutdoorRisk),
+      actionNow,
+      groundingAt: snapshotTime(firstOutdoorRisk),
+      validFrom: riskStart(firstOutdoorRisk),
+      validUntil: isWetSnapshot(firstOutdoorRisk) ? precipitationEnd(firstOutdoorRisk) : snapshotEnd(firstOutdoorRisk),
       messageContext: outdoorRiskContext(firstOutdoorRisk),
     },
   });
@@ -124,7 +136,10 @@ function addConditionalHouseholdActions(
       context: {
         minutesUntil,
         actionDeadline,
-        validFrom: snapshotTime(firstOutdoorRisk),
+        actionNow,
+        groundingAt: snapshotTime(firstOutdoorRisk),
+        validFrom: riskStart(firstOutdoorRisk),
+        validUntil: isWetSnapshot(firstOutdoorRisk) ? precipitationEnd(firstOutdoorRisk) : snapshotEnd(firstOutdoorRisk),
         messageContext: outdoorRiskContext(firstOutdoorRisk),
       },
     });
@@ -167,7 +182,7 @@ function addCompleteInputPositiveWindows(
   snapshots: WeatherSnapshot[],
 ): void {
   const outingRuns = findRuns(
-    snapshots,
+    snapshots.map((item) => precipitationAtPoint(item, snapshots)),
     (item) => {
       const allRequired =
         item.apparentTemperature !== undefined &&
@@ -200,20 +215,20 @@ function addCompleteInputPositiveWindows(
   const best = outingRuns[0];
   if (!best) return;
 
-  const timeLabel = `${formatTime(snapshotTime(best[0]))}~${formatTime(
-    snapshotEnd(best.at(-1) ?? best[0]),
-  )}`;
+  const validFrom = snapshotTime(best[0]);
+  const validUntil = snapshotEnd(best.at(-1) ?? best[0]);
+  const timeLabel = periodLabel(validFrom, exclusiveEnd(validUntil));
   insights.push({
     type: LifestyleInsightType.BEST_OUTING_WINDOW,
     score: 55,
     sourceFacts: [],
-    context: { timeLabel },
+    context: { timeLabel, validFrom, validUntil },
   });
   insights.push({
     type: LifestyleInsightType.PET_WALK_WINDOW,
     score: 54,
     sourceFacts: [],
-    context: { timeLabel },
+    context: { timeLabel, validFrom, validUntil },
   });
 }
 
@@ -229,4 +244,8 @@ function formatTime(iso: string): string {
   const period = hour < 12 ? '오전' : '오후';
   const hour12 = hour % 12 || 12;
   return `${period} ${hour12}시${minute === 0 ? '' : ` ${minute}분`}`;
+}
+
+function exclusiveEnd(iso: string): string {
+  return new Date((Math.floor(Date.parse(iso) / 1000) + 1) * 1000).toISOString();
 }

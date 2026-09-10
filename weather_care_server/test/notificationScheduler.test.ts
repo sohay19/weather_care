@@ -110,6 +110,38 @@ describe('notification scheduler', () => {
     ]);
   });
 
+  it('uses scheduler time to suppress already-ended precipitation even with an older fetch time', async () => {
+    await insertInstallation('device-token');
+    const forecast = rainyForecast();
+    forecast.hourly = [6, 7].map((hour) => {
+      const item = snapshot(hour);
+      return { ...item, fetchedAt: '2026-09-02T05:00:00+09:00',
+        precipitationPeriod: { start: new Date(Date.parse(item.forecastAt!) - 3_600_000).toISOString(), end: item.forecastAt! } };
+    });
+    const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) => payloads.map(successResult));
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'), forecastLoader: async () => forecast, sender,
+    });
+    expect(sender).not.toHaveBeenCalled();
+  });
+
+  it('sends the true preceding-hour period in a due rain notification', async () => {
+    await insertInstallation('device-token');
+    const forecast = rainyForecast();
+    forecast.hourly = [8, 9].map((hour) => {
+      const item = snapshot(hour);
+      return { ...item, precipitationPeriod: {
+        start: new Date(Date.parse(item.forecastAt!) - 3_600_000).toISOString(), end: item.forecastAt! } };
+    });
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'), forecastLoader: async () => forecast,
+      sender: collectingSender(sent),
+    });
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body).toContain('오전 7시~9시');
+  });
+
   it('removes an unregistered token without writing send history', async () => {
     await insertInstallation('expired-token');
     const bindings = testBindings();

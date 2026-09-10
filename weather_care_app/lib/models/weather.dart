@@ -71,6 +71,8 @@ class CurrentWeather {
 
 class HourlyWeatherItem {
   final String time;
+  final PrecipitationPeriod? precipitationPeriod;
+  final bool precipitationPeriodProvided;
   final String? forecastDate;
   final double? temperature;
   final double? apparentTemperature;
@@ -88,6 +90,8 @@ class HourlyWeatherItem {
 
   const HourlyWeatherItem({
     required this.time,
+    this.precipitationPeriod,
+    this.precipitationPeriodProvided = false,
     this.forecastDate,
     required this.temperature,
     this.apparentTemperature,
@@ -122,6 +126,9 @@ class HourlyWeatherItem {
     final explicitSnowExpected = json['snowExpected'];
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
+      precipitationPeriod:
+          PrecipitationPeriod.fromJson(json['precipitationPeriod'], observedAt),
+      precipitationPeriodProvided: json.containsKey('precipitationPeriod'),
       forecastDate: json['forecastDate']?.toString() ?? parsedDate,
       temperature: _optionalNumber(json['temperature']),
       apparentTemperature: _optionalNumber(json['apparentTemperature']),

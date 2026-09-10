@@ -1,8 +1,9 @@
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../types';
 import { defaultRuleConfig } from '../config/ruleConfig';
+import { precipitationDecisionSnapshot, precipitationLabel, koreanHour } from '../rules/precipitationWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.1';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.2';
 export type WeatherBriefScene =
   | 'WET_TRAVEL'
   | 'CAREFUL_STEPS'
@@ -42,9 +43,9 @@ export function buildWeatherBriefResult(
   _context: WeatherBriefContext = {},
 ): WeatherBriefResult {
   const selection = selectScene(forecast);
-  const eventTime = formatHour(
-    selection.snapshot.forecastAt ?? selection.snapshot.observedAt,
-  );
+  const eventTime = ['CAREFUL_STEPS', 'WET_TRAVEL'].includes(selection.scene)
+    ? precipitationLabel(selection.snapshot)
+    : koreanHour(selection.snapshot.forecastAt ?? selection.snapshot.observedAt);
   return {
     text: messageFor(selection, eventTime),
     scene: selection.scene,
@@ -55,7 +56,8 @@ export function buildWeatherBriefResult(
 }
 
 function selectScene(forecast: WeatherForecast): SceneSelection {
-  const candidates = [forecast.current, ...forecast.hourly.slice(0, 24)];
+  const candidates = [forecast.current, ...forecast.hourly.slice(0, 24)]
+    .map((item) => precipitationDecisionSnapshot(item));
 
   const snowy = candidates.find(isSnowy);
   if (snowy) return { scene: 'CAREFUL_STEPS', snapshot: snowy };
@@ -116,14 +118,6 @@ function messageFor(selection: SceneSelection, eventTime: string): string {
     case 'DAILY_RHYTHM':
       return '오늘은 외출 전에 시간별 예보를 확인하세요';
   }
-}
-
-function formatHour(iso: string): string {
-  const hour = Number(iso.slice(11, 13));
-  const minute = Number(iso.slice(14, 16));
-  const period = hour < 12 ? '오전' : '오후';
-  const hour12 = hour % 12 || 12;
-  return `${period} ${hour12}시${minute === 0 ? '' : ` ${minute}분`}`;
 }
 
 function isSnowy(snapshot: WeatherSnapshot): boolean {

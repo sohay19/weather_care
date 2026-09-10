@@ -125,7 +125,7 @@ export const lifestyleMessageCatalog: Record<
   RAIN_BREAK_WINDOW: [
     {
       title: '외출을 계획한다면 앞뒤 시간의 강수예보를 확인하세요',
-      description: '{{validFrom}}부터 {{validTo}}까지 비가 잠시 그칠 수 있어요.',
+      description: '{{timeLabel}}에는 비가 잠시 그칠 수 있어요.',
     },
   ],
   BEST_OUTING_WINDOW: [
@@ -239,7 +239,8 @@ export function lifestyleMessageFor(
   }
   const selected = eligible[Math.abs(seed) % eligible.length];
   return {
-    title: renderTemplate(selected.title, context),
+    title: renderTemplate(context.actionNow === true
+      ? selected.title.replace('{{actionDeadline}} 전에', '지금') : selected.title, context),
     description: renderTemplate(selected.description, context),
   };
 }

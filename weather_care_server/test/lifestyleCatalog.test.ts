@@ -31,7 +31,7 @@ describe('Lifestyle v1.1 catalog', () => {
     );
     expect(umbrella).toEqual(
       expect.objectContaining({
-        decisionVersion: 'weather-rules-1.1.0',
+        decisionVersion: 'weather-rules-1.2.0',
         catalogVersion: 'ko-KR-2026.09.1',
         reasonCodes: expect.arrayContaining(['RAIN_LIKELY']),
         sourceFields: expect.arrayContaining(['precipitationType']),
@@ -43,10 +43,10 @@ describe('Lifestyle v1.1 catalog', () => {
     const rendered = lifestyleMessageFor(
       LifestyleInsightType.RAIN_BREAK_WINDOW,
       0,
-      { validFrom: '오후 2시', validTo: '오후 4시' },
+      { timeLabel: '오후 2시~4시' },
     );
     expect(rendered.description).toBe(
-      '오후 2시부터 오후 4시까지 비가 잠시 그칠 수 있어요.',
+      '오후 2시~4시에는 비가 잠시 그칠 수 있어요.',
     );
 
     const fallback = lifestyleMessageFor(

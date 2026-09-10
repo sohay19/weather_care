@@ -213,6 +213,9 @@ DirectKmaWeatherBundle _buildBundle(
               forecastDate: _isoDate(
                 item.observedAt.toUtc().add(const Duration(hours: 9)),
               ),
+              precipitationPeriod:
+                  _hourlyPrecipitationPeriod(item.observedAt, base),
+              precipitationPeriodProvided: true,
               temperature: item.temperature,
               apparentTemperature: item.apparentTemperature,
               precipitationProbability: item.precipitationProbability,
@@ -249,6 +252,17 @@ DirectKmaWeatherBundle _buildBundle(
           .toList(),
     ),
   );
+}
+
+PrecipitationPeriod? _hourlyPrecipitationPeriod(
+    DateTime end, _BaseDateTime base) {
+  final start = end.toUtc().subtract(const Duration(hours: 1));
+  final extendedStart = _kmaSlotToDateTime('${base.date}0000').add(
+    Duration(days: int.parse(base.time) < 1700 ? 3 : 4),
+  );
+  return start.isBefore(extendedStart)
+      ? PrecipitationPeriod(start: start, end: end.toUtc())
+      : null;
 }
 
 DailyPrecipitationDetail _dailyPrecipitation(

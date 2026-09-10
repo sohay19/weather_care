@@ -284,6 +284,7 @@ function snapshotFromSlot(
     dataRole: 'FORECAST',
     forecastAt,
     validFrom: forecastAt,
+    precipitationPeriod: hourlyPrecipitationPeriod(forecastAt, base),
     validTo: endOfKmaSlot(forecastAt),
     issuedAt: kmaBaseToIso(base),
     fetchedAt: fetchedAt.toISOString(),
@@ -417,6 +418,15 @@ function dailyPrecipitationDetail(
         ? snapshot.rawValue.precipitationAmount : undefined,
     })),
   };
+}
+
+function hourlyPrecipitationPeriod(forecastAt: string, base: BaseDateTime): WeatherSnapshot['precipitationPeriod'] {
+  const end = Date.parse(forecastAt);
+  const start = end - 3_600_000;
+  const extendedStart = Date.parse(kmaBaseToIso({ ...base, baseTime: '0000' })) +
+    (Number(base.baseTime) < 1700 ? 3 : 4) * 86_400_000;
+  if (!Number.isFinite(end) || start >= extendedStart) return null;
+  return { start: new Date(start).toISOString(), end: forecastAt };
 }
 
 export function parsePrecipitationAmount(value?: string): number {

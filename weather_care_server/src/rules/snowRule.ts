@@ -1,8 +1,10 @@
 import { RuleConfig } from '../config/ruleConfig';
 import { WeatherRuleFact, WeatherRuleFactType, WeatherSnapshot } from '../types';
-import { amountMinimum, snapshotTime } from './timeWindows';
+import { amountMinimum } from './timeWindows';
+import { precipitationDecisionSnapshot, precipitationStart, precipitationEnd } from './precipitationWindows';
 
 export function applySnowRule(snapshot: WeatherSnapshot, config: RuleConfig): WeatherRuleFact[] {
+  snapshot = precipitationDecisionSnapshot(snapshot);
   const facts: WeatherRuleFact[] = [];
   const amount = amountMinimum(
     snapshot.snowfallAmountRange,
@@ -23,8 +25,8 @@ export function applySnowRule(snapshot: WeatherSnapshot, config: RuleConfig): We
         precipitationType: snapshot.precipitationType ?? 'NONE',
         snowfallAmountMinimum: amount,
       },
-      validFrom: snapshotTime(snapshot),
-      validUntil: snapshot.validTo,
+      validFrom: precipitationStart(snapshot),
+      validUntil: precipitationEnd(snapshot),
     });
   }
   if (amount >= config.snow.heavyHourlyAmount) {
@@ -35,8 +37,8 @@ export function applySnowRule(snapshot: WeatherSnapshot, config: RuleConfig): We
         precipitationType: snapshot.precipitationType ?? 'NONE',
         snowfallAmountMinimum: amount,
       },
-      validFrom: snapshotTime(snapshot),
-      validUntil: snapshot.validTo,
+      validFrom: precipitationStart(snapshot),
+      validUntil: precipitationEnd(snapshot),
     });
   }
   return facts;

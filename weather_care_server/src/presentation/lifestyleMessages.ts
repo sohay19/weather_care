@@ -19,6 +19,8 @@ import {
   parasolBenefitMessage,
   sensationMessage,
 } from './sensationMessages';
+import { isPrecipitationFact, precipitationStart, precipitationEnd,
+  precipitationPeriod, precipitationLabel } from '../rules/precipitationWindows';
 
 export function buildLifestyleMessages(
   insights: LifestyleInsight[],
@@ -87,14 +89,16 @@ function groundingPartFor(
   regionName: string,
 ): WeatherMessagePart | undefined {
   const fact = strongestFactFor(insight, facts);
-  const snapshot = snapshotForInsight(insight.type, hourly, fact);
+  const groundingAt = stringContext(insight, 'groundingAt');
+  const snapshot = groundingAt ? hourly.find((item) => snapshotTime(item) === groundingAt)
+    : snapshotForInsight(insight.type, hourly, fact);
 
   switch (insight.type) {
     case LifestyleInsightType.RAIN_GEAR_USEFUL:
-    case LifestyleInsightType.WINDOW_CLOSE_SOON:
     case LifestyleInsightType.WET_ROAD_CAUTION:
       return snapshot ? precipitationFact(snapshot, regionName) : undefined;
     case LifestyleInsightType.LAUNDRY_PICKUP_DUE:
+    case LifestyleInsightType.WINDOW_CLOSE_SOON:
       if (!snapshot) return undefined;
       if (stringContext(insight, 'messageContext') === 'SNOW') {
         return snowfallFact(snapshot, regionName);
@@ -159,13 +163,15 @@ function snapshotForInsight(
 ): WeatherSnapshot | undefined {
   const candidates = fact?.validFrom
     ? hourly.filter((item) => {
-        const time = Date.parse(snapshotTime(item));
+        const rain = fact && isPrecipitationFact(fact.type);
+        const time = Date.parse(rain ? precipitationStart(item) : snapshotTime(item));
+        const itemEnd = rain ? Date.parse(precipitationEnd(item)) : time;
         const start = Date.parse(fact.validFrom ?? '');
         const end = Date.parse(fact.validUntil ?? fact.validFrom ?? '');
-        return Number.isFinite(start) && time >= start && time <= end;
+        return Number.isFinite(start) && itemEnd >= start && time <= end;
       })
     : hourly;
-  const source = candidates.length > 0 ? candidates : hourly;
+  const source = fact?.validFrom ? candidates : hourly;
 
   switch (type) {
     case LifestyleInsightType.RAIN_GEAR_USEFUL:
@@ -370,7 +376,8 @@ function precipitationFact(
     : amount
       ? `기상청은 ${regionAt}${time} 시간당 ${amount}의 비를 예보했어요`
       : `기상청은 ${regionOf}${time} 강수확률을 ${Math.round(snapshot.precipitationProbability ?? 0)}%로 예보했어요`;
-  return officialFact(text, snapshot, '기상청');
+  return { ...officialFact(text, snapshot, '기상청'),
+    validFrom: precipitationStart(snapshot), validUntil: precipitationEnd(snapshot) };
 }
 
 function snowfallFact(
@@ -383,7 +390,8 @@ function snowfallFact(
   const text = amount
     ? `기상청은 ${regionAt}${time} 눈이 ${amount} 쌓일 것으로 예보했어요`
     : `기상청은 ${regionAt}${time} 눈을 예보했어요`;
-  return officialFact(text, snapshot, '기상청');
+  return { ...officialFact(text, snapshot, '기상청'),
+    validFrom: precipitationStart(snapshot), validUntil: precipitationEnd(snapshot) };
 }
 
 function uvFact(
@@ -629,6 +637,7 @@ function unitLabel(range: AmountRange): string {
 }
 
 function timeRangeLabel(snapshot: WeatherSnapshot): string {
+  if (precipitationPeriod(snapshot)) return precipitationLabel(snapshot);
   const start = formatHour(snapshotTime(snapshot));
   if (!snapshot.validTo) return start;
   const endTimestamp = Date.parse(snapshot.validTo) + 60_000;

@@ -5,6 +5,7 @@ import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
 import '../../../services/notification_destination.dart';
 import '../../../theme/weather_theme.dart';
+import '../../../utils/korea_date.dart';
 import '../widgets/home_section_header.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
@@ -502,7 +503,7 @@ class _HourlyForecastCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '자외선과 대기질은 자료가 있는 시간대에만 표시해요.',
+            '기온·바람은 정시 값이며, 강수는 따로 표시한 1시간 구간의 예보예요. 자외선과 대기질은 자료가 있는 시간대에만 표시해요.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
@@ -528,6 +529,9 @@ class _HourlyForecastCard extends StatelessWidget {
               _HourlyRow(
                 key: ValueKey('detail-hourly-$index'),
                 item: visibleItems[index],
+                showPoint: visibleItems[index].forecastDate == null ||
+                    visibleItems[index].forecastDate ==
+                        dateInKorea(DateTime.now()),
               ),
               if (index < visibleItems.length - 1) const SizedBox(height: 9),
             ],
@@ -548,17 +552,22 @@ List<HourlyWeatherItem> _todayHourlyItems(List<HourlyWeatherItem> items) {
       '${nowInKorea.month.toString().padLeft(2, '0')}-'
       '${nowInKorea.day.toString().padLeft(2, '0')}';
   return items
-      .where((item) => item.forecastDate == today)
+      .where((item) =>
+          item.forecastDate == today || item.precipitationPeriod?.date == today)
       .toList(growable: false);
 }
 
 class _HourlyRow extends StatelessWidget {
   final HourlyWeatherItem item;
+  final bool showPoint;
 
-  const _HourlyRow({super.key, required this.item});
+  const _HourlyRow({super.key, required this.item, this.showPoint = true});
 
   @override
   Widget build(BuildContext context) {
+    final period = item.precipitationPeriod;
+    final showPrecipitation = !item.precipitationPeriodProvided ||
+        period?.date == dateInKorea(DateTime.now());
     final rainAmount = item.precipitationAmountLabel ??
         (item.precipitationAmount == null
             ? null
@@ -572,10 +581,10 @@ class _HourlyRow extends StatelessWidget {
     final showSnow =
         item.snowExpected == true || _hasPositiveAmount(snowAmount, 'cm');
     final missing = [
-      if (item.precipitationProbability == null) '강수확률',
-      if (rainAmount == null) '강수량',
-      if (snowAmount == null) '쌓일 눈',
-      if (item.windSpeed == null) '풍속',
+      if (showPrecipitation && item.precipitationProbability == null) '강수확률',
+      if (showPrecipitation && rainAmount == null) '강수량',
+      if (showPrecipitation && snowAmount == null) '쌓일 눈',
+      if (showPoint && item.windSpeed == null) '풍속',
     ];
     final hour = int.tryParse(item.time);
     final timeLabel = hour != null && hour >= 0 && hour < 24
@@ -593,99 +602,121 @@ class _HourlyRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Flexible(
-                child: Text(
-                  timeLabel,
-                  style: const TextStyle(
-                    color: WeatherCareTheme.primaryDeep,
-                    fontWeight: FontWeight.w900,
+          if (showPoint) ...[
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    timeLabel,
+                    style: const TextStyle(
+                      color: WeatherCareTheme.primaryDeep,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              WeatherConditionIcon(
-                condition: item.skyCondition,
-                size: 19,
-                color: WeatherCareTheme.textSecondary,
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  item.skyCondition ?? '날씨 자료 없음',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                const SizedBox(width: 12),
+                if (!item.precipitationPeriodProvided)
+                  WeatherConditionIcon(
+                    condition: item.skyCondition,
+                    size: 19,
+                    color: WeatherCareTheme.textSecondary,
+                  ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    item.precipitationPeriodProvided
+                        ? '정시 예보'
+                        : item.skyCondition ?? '날씨 자료 없음',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 12,
-            runSpacing: 6,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                item.temperature == null
-                    ? '예상기온 자료 없음'
-                    : '예상기온 ${item.temperature!.toStringAsFixed(0)}℃',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-              ),
-              Text(
-                item.apparentTemperature == null
-                    ? '예상 체감 자료 없음'
-                    : '예상 체감 ${item.apparentTemperature!.toStringAsFixed(0)}℃',
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  item.temperature == null
+                      ? '예상기온 자료 없음'
+                      : '예상기온 ${item.temperature!.toStringAsFixed(0)}℃',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w900),
+                ),
+                Text(
+                  item.apparentTemperature == null
+                      ? '예상 체감 자료 없음'
+                      : '예상 체감 ${item.apparentTemperature!.toStringAsFixed(0)}℃',
+                  style: const TextStyle(
+                    color: WeatherCareTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (showPoint) ...[
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (item.windSpeed != null)
+                  _MetricChip(
+                      icon: Icons.air_rounded,
+                      label: '바람 ${item.windSpeed!.toStringAsFixed(1)}m/s'),
+                if (item.uvIndex != null)
+                  _MetricChip(
+                      icon: Icons.wb_sunny_outlined,
+                      label: '자외선 ${item.uvIndex!.toStringAsFixed(0)}'),
+                if (item.pm25 != null)
+                  _MetricChip(
+                      icon: Icons.grain_rounded,
+                      label: '초미세먼지 ${item.pm25}㎍/㎥'),
+                if (item.pm10 != null)
+                  _MetricChip(
+                      icon: Icons.grain_rounded, label: '미세먼지 ${item.pm10}㎍/㎥'),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (showPrecipitation &&
+              (period != null || showRain || showSnow)) ...[
+            Text(period == null ? '강수 적용 구간 미확인' : '${period.label} 강수 예보',
                 style: const TextStyle(
-                  color: WeatherCareTheme.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+                    fontWeight: FontWeight.w800,
+                    color: WeatherCareTheme.primaryDeep)),
+            if (period != null) Text(item.skyCondition ?? '날씨 자료 없음'),
+            const SizedBox(height: 8),
+          ],
+          if (item.precipitationPeriodProvided && period == null)
+            const Text('강수 적용 구간을 확인하기 어려워요'),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
-              if (showRain && item.precipitationProbability != null)
+              if (showPrecipitation &&
+                  showRain &&
+                  item.precipitationProbability != null)
                 _MetricChip(
                   icon: Icons.water_drop_outlined,
                   label:
                       '강수확률 ${item.precipitationProbability!.toStringAsFixed(0)}%',
                 ),
-              if (_hasPositiveAmount(rainAmount, 'mm'))
+              if (showPrecipitation && _hasPositiveAmount(rainAmount, 'mm'))
                 _MetricChip(
                   icon: Icons.water_drop_outlined,
                   label: '강수량 $rainAmount',
                 ),
-              if (showSnow)
+              if (showPrecipitation && showSnow)
                 _MetricChip(
                   icon: Icons.ac_unit_rounded,
                   label: _hasPositiveAmount(snowAmount, 'cm')
                       ? '쌓일 눈 $snowAmount'
                       : '눈이 예보됐어요',
-                ),
-              if (item.windSpeed != null)
-                _MetricChip(
-                  icon: Icons.air_rounded,
-                  label: '바람 ${item.windSpeed!.toStringAsFixed(1)}m/s',
-                ),
-              if (item.uvIndex != null)
-                _MetricChip(
-                  icon: Icons.wb_sunny_outlined,
-                  label: '자외선 ${item.uvIndex!.toStringAsFixed(0)}',
-                ),
-              if (item.pm25 != null)
-                _MetricChip(
-                  icon: Icons.grain_rounded,
-                  label: '초미세먼지 ${item.pm25}㎍/㎥',
-                ),
-              if (item.pm10 != null)
-                _MetricChip(
-                  icon: Icons.grain_rounded,
-                  label: '미세먼지 ${item.pm10}㎍/㎥',
                 ),
             ],
           ),

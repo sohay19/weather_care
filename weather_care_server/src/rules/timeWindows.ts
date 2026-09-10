@@ -16,7 +16,7 @@ export function sortSnapshots(
   snapshots: WeatherSnapshot[],
 ): WeatherSnapshot[] {
   return [...snapshots].sort((left, right) =>
-    snapshotTime(left).localeCompare(snapshotTime(right)),
+    Date.parse(snapshotTime(left)) - Date.parse(snapshotTime(right)),
   );
 }
 
@@ -68,6 +68,14 @@ export function findHysteresisRuns(
   let releaseCount = 0;
 
   snapshots.forEach((snapshot, index) => {
+    const previousSlot = snapshots[index - 1];
+    const gap = previousSlot ? Date.parse(snapshotTime(snapshot)) - Date.parse(snapshotTime(previousSlot)) : 0;
+    if (previousSlot && (gap <= 0 || gap > MAX_SLOT_GAP_MS)) {
+      if (active) runs.push(active);
+      active = undefined;
+      pending = [];
+      releaseCount = 0;
+    }
     if (!active) {
       if (trigger(snapshot, index)) {
         const previous = pending.at(-1);

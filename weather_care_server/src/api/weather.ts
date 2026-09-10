@@ -56,6 +56,8 @@ import { buildRoadIceMessage } from '../presentation/roadIceMessage';
 import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
+import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySnapshot,
+  withoutPrecipitation } from '../rules/precipitationWindows';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
@@ -412,7 +414,8 @@ export function buildTimeline(
       const hour = (item.forecastAt ?? item.observedAt).slice(11, 13);
       return {
         timeLabel: hour,
-        stateLabel: timelineStateLabel(recommendations),
+        stateLabel: (['UMBRELLA', 'HEAVY_SNOW_CAUTION'].includes(recommendations[0]?.type) && precipitationPeriod(item)
+          ? `${precipitationLabel(item)} · ` : '') + timelineStateLabel(recommendations),
         detail: timelineDetail(item),
         recommendations,
       };
@@ -440,11 +443,13 @@ function timelineStateLabel(
 
 function timelineDetail(snapshot: WeatherSnapshot): string {
   const pieces = [
-    snapshot.skyCondition ?? '날씨 정보 확인 중',
     snapshot.temperature === undefined
       ? null
       : `예상기온 ${snapshot.temperature.toFixed(1)}℃`,
-    `강수확률 ${Math.round(snapshot.precipitationProbability ?? 0)}%`,
+    snapshot.precipitationPeriod === null ? '강수 적용 구간 확인 어려움'
+      : `${precipitationPeriod(snapshot) ? `${precipitationLabel(snapshot)} 강수 예보: ` : ''}${snapshot.skyCondition ?? '날씨 정보 확인 중'}`,
+    snapshot.precipitationProbability === undefined ? '강수확률 자료 없음'
+      : snapshot.precipitationProbability > 0 ? `강수확률 ${Math.round(snapshot.precipitationProbability)}%` : null,
   ];
   return pieces.filter((piece): piece is string => piece !== null).join(' · ');
 }
@@ -465,11 +470,13 @@ export function recommendationsForDay(
   settings: Partial<NotificationSettings> =
     defaultNotificationSettings('anonymous'),
 ): Recommendation[] {
-  const dayHourly = hourly.filter((item) => {
-    const date = (item.forecastAt ?? item.observedAt)
-      .slice(0, 10)
-      .replaceAll('-', '');
-    return date === day.date;
+  const dayHourly = hourly.flatMap((item) => {
+    const pointDate = koreaDate(item.forecastAt ?? item.observedAt).replaceAll('-', '');
+    const period = precipitationPeriod(item);
+    if (!period) return pointDate === day.date ? [item] : [];
+    const rainDate = koreaDate(period.start).replaceAll('-', '');
+    if (pointDate === day.date) return [rainDate === day.date ? item : withoutPrecipitation(item)];
+    return rainDate === day.date ? [precipitationOnlySnapshot(item)] : [];
   });
   if (dayHourly.length > 0) {
     const facts = runWeatherRuleEngineForHourly(dayHourly);

@@ -95,6 +95,9 @@ export interface WeatherSnapshot {
   observedAt: string;
   dataRole?: 'FORECAST' | 'OBSERVATION' | 'ANALYSIS';
   forecastAt?: string;
+  // PCP/POP/PTY/SNO: preceding hour, end exclusive. Null means unsupported
+  // (e.g. extended qualitative forecast); absent preserves legacy providers.
+  precipitationPeriod?: { start: string; end: string } | null;
   validFrom?: string;
   validTo?: string;
   issuedAt?: string;

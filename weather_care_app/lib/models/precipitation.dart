@@ -1,5 +1,45 @@
 import '../utils/korea_date.dart';
 
+/// A source-confirmed one-hour precipitation window, with an exclusive end.
+class PrecipitationPeriod {
+  final DateTime start;
+  final DateTime end;
+
+  const PrecipitationPeriod({required this.start, required this.end});
+
+  static PrecipitationPeriod? fromJson(Object? value, Object? forecastAt) {
+    if (value is! Map<String, dynamic>) return null;
+    DateTime? parse(Object? raw) {
+      if (raw is! String ||
+          !RegExp(r'^\d{4}-\d{2}-\d{2}T\d{2}:00:00(?:\.000)?(?:Z|\+09:00)$')
+              .hasMatch(raw) ||
+          parseForecastDate(raw.substring(0, 10)) == null ||
+          int.parse(raw.substring(11, 13)) >= 24) {
+        return null;
+      }
+      return DateTime.tryParse(raw)?.toUtc();
+    }
+
+    final start = parse(value['start']);
+    final end = parse(value['end']);
+    if (start == null ||
+        end == null ||
+        end != parse(forecastAt) ||
+        end.difference(start) != const Duration(hours: 1)) {
+      return null;
+    }
+    return PrecipitationPeriod(start: start, end: end);
+  }
+
+  String get date => dateInKorea(start);
+
+  String get label {
+    final first = start.toUtc().add(const Duration(hours: 9)).hour;
+    final last = end.toUtc().add(const Duration(hours: 9)).hour;
+    return '$first~${last == 0 ? 24 : last}시';
+  }
+}
+
 /// Preserves the source PCP text until range-aware aggregation in the UI.
 class DailyPrecipitationDetail {
   final String kind;

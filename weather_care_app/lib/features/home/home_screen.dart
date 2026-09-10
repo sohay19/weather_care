@@ -15,6 +15,8 @@ import '../../services/installation_identity.dart';
 import '../../services/notification_registration_service.dart';
 import '../../services/notification_destination.dart';
 import '../../services/settings_sync_service.dart';
+import '../../services/settings_save_controller.dart';
+import '../../services/notification_permission_service.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
 import '../../services/region_catalog.dart';
@@ -36,6 +38,7 @@ class HomeScreen extends StatefulWidget {
   final SettingsSyncService? settingsSync;
   final NotificationRegistrationService? notificationRegistration;
   final RegionCatalog? regionCatalog;
+  final NotificationPermissionService? notificationPermission;
 
   const HomeScreen({
     super.key,
@@ -46,6 +49,7 @@ class HomeScreen extends StatefulWidget {
     this.settingsSync,
     this.notificationRegistration,
     this.regionCatalog,
+    this.notificationPermission,
   });
 
   @override
@@ -72,8 +76,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   ForecastRegion? get _manualRegion =>
       _regionCatalog?.find(_settings.manualRegionKey);
   int _locationRevision = 0;
-  Future<void> _settingsSaveQueue = Future<void>.value();
-  int _settingsRevision = 0;
+  SettingsSaveController? _settingsSave;
+  late final NotificationPermissionService _notificationPermission =
+      widget.notificationPermission ?? NotificationPermissionService();
+  NotificationPermissionState _permission =
+      NotificationPermissionState.checking;
+  Future<void>? _permissionFuture;
+  bool _permissionRefreshAgain = false;
+  bool _permissionSyncRequested = false;
   TodayWeatherResponse? _today;
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
@@ -148,7 +158,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _notificationRegistration = widget.notificationRegistration ??
         NotificationRegistrationService(client);
     // A failed remote preferences save must not prevent local GPS or weather.
-    _settingsSaveQueue = _saveRemoteSettings(_settings);
+    _settingsSave = SettingsSaveController(
+        saveLocal: _settingsRepository.save, saveServer: _settingsSync!.save)
+      ..addListener(_onSettingsSaveChanged);
+    unawaited(_settingsSave!.save(_settings));
+    unawaited(_readNotificationPermission());
     _initialized = true;
     await _loadData();
   }
@@ -157,6 +171,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _locationRevision++;
+    _settingsSave?.dispose();
     unawaited(_notificationRegistration?.dispose() ?? Future<void>.value());
     super.dispose();
   }
@@ -169,13 +184,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     if (state == AppLifecycleState.resumed && _leftApp) {
       _leftApp = false;
+      if (_initialized) unawaited(_readNotificationPermission(sync: true));
       if (_initialized && _settings.locationMode == 'GPS') {
         unawaited(_refresh(supersede: true));
       }
     }
   }
 
-  Future<void> _loadData() => _refresh();
+  Future<void> _loadData() {
+    unawaited(_readNotificationPermission());
+    return _refresh();
+  }
 
   Future<void> _refresh(
       {bool requestPermission = false, bool supersede = false}) {
@@ -386,6 +405,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           onOpenLocationSettings: _openDeviceLocationSettings,
           loadRegionCatalog: _loadRegionCatalog,
           manualRegionName: _manualRegion?.fullName,
+          saveState: _settingsSave?.state ?? SettingsSaveState.checking,
+          onRetrySave: _retrySettingsSave,
+          notificationPermission: _permission,
+          onRequestNotificationPermission: () =>
+              _readNotificationPermission(request: true, sync: true),
+          onRefreshNotificationPermission: () =>
+              _readNotificationPermission(sync: true),
+          onOpenNotificationSettings: _openNotificationSettings,
         ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -554,7 +581,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _handleSettingsChanged(AppSettings updated) {
-    final revision = ++_settingsRevision;
     final locationChanged = _settings.locationMode != updated.locationMode ||
         _settings.currentRegionId != updated.currentRegionId ||
         _settings.manualRegionKey != updated.manualRegionKey;
@@ -573,25 +599,73 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       unawaited(_refresh(
           requestPermission: updated.locationMode == 'GPS', supersede: true));
     }
-    _settingsSaveQueue = _settingsSaveQueue
-        .then<void>(
-      (_) {},
-      onError: (Object _, StackTrace __) {},
-    )
-        .then((_) async {
-      await _settingsRepository.save(updated);
-      await _saveRemoteSettings(updated);
-      if (mounted && revision == _settingsRevision && !locationChanged) {
-        await _loadData();
-      }
-    });
-    return _settingsSaveQueue;
+    return _saveSettings(updated, refreshWeather: !locationChanged);
   }
 
-  Future<void> _saveRemoteSettings(AppSettings settings) async {
-    try {
-      await _settingsSync?.save(settings);
-    } catch (_) {/* Local settings remain valid. */}
+  void _onSettingsSaveChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _saveSettings(AppSettings settings,
+      {bool refreshWeather = true}) async {
+    await _settingsSave?.save(settings);
+    if (mounted &&
+        identical(settings, _settings) &&
+        refreshWeather &&
+        _settingsSave?.state == SettingsSaveState.saved) {
+      // A weather error dialog must not hold the settings save queue open.
+      unawaited(_loadData());
+    }
+  }
+
+  Future<void> _retrySettingsSave() => _saveSettings(_settings);
+
+  Future<void> _readNotificationPermission(
+      {bool request = false, bool sync = false}) {
+    // Checking/asking is single-flight; permission dialogs do not trigger GPS.
+    _permissionSyncRequested |= sync;
+    if (_permissionFuture != null) {
+      _permissionRefreshAgain |= sync;
+      return _permissionFuture!;
+    }
+    final future = Future<void>.microtask(() async {
+      var ask = request;
+      do {
+        _permissionRefreshAgain = false;
+        if (!mounted) return;
+        setState(() => _permission = NotificationPermissionState.checking);
+        final result = await _notificationPermission.read(request: ask);
+        ask = false;
+        if (!mounted) return;
+        setState(() => _permission = result);
+      } while (_permissionRefreshAgain);
+      if (_permissionSyncRequested) _syncNotificationPermission();
+      _permissionSyncRequested = false;
+    }).whenComplete(() => _permissionFuture = null);
+    _permissionFuture = future;
+    return future;
+  }
+
+  void _syncNotificationPermission() {
+    final grid = _weatherGrid;
+    if (grid == null) return;
+    unawaited(_notificationRegistration?.syncInstallation(
+            installationId: _settings.installationId,
+            nx: grid.nx,
+            ny: grid.ny,
+            locationMode: _settings.locationMode,
+            coordinates:
+                _settings.locationMode == 'GPS' && _location.canUseLocalAnalysis
+                    ? _coordinates
+                    : null) ??
+        Future<void>.value());
+  }
+
+  Future<void> _openNotificationSettings() async {
+    final opened = await _notificationPermission.openSettings();
+    if (!mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('설정을 열지 못했어요. 기기 설정에서 날씨챙겨의 알림을 확인해주세요.')));
   }
 
   Future<RegionCatalog> _loadRegionCatalog() async =>

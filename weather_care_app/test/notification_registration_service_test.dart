@@ -18,6 +18,7 @@ class _Messaging implements FirebaseMessaging {
   final tokens = StreamController<String>.broadcast();
   AuthorizationStatus authorization = AuthorizationStatus.authorized;
   Completer<NotificationSettings>? pendingPermission;
+  int requests = 0;
   @override
   Stream<String> get onTokenRefresh => tokens.stream;
   @override
@@ -25,21 +26,26 @@ class _Messaging implements FirebaseMessaging {
           {String? vapidKey, String? serviceWorkerScriptPath}) async =>
       'test-token';
   @override
-  Future<NotificationSettings> getNotificationSettings() async =>
-      _Permission(authorization);
+  Future<NotificationSettings> getNotificationSettings() async {
+    final pending = pendingPermission;
+    pendingPermission = null;
+    return pending == null ? _Permission(authorization) : await pending.future;
+  }
+
   @override
   Future<NotificationSettings> requestPermission(
-          {bool alert = true,
-          bool announcement = false,
-          bool badge = true,
-          bool carPlay = false,
-          bool criticalAlert = false,
-          bool provisional = false,
-          bool sound = true,
-          bool providesAppNotificationSettings = false}) async =>
-      pendingPermission == null
-          ? _Permission(authorization)
-          : await pendingPermission!.future;
+      {bool alert = true,
+      bool announcement = false,
+      bool badge = true,
+      bool carPlay = false,
+      bool criticalAlert = false,
+      bool provisional = false,
+      bool sound = true,
+      bool providesAppNotificationSettings = false}) async {
+    requests++;
+    return _Permission(authorization);
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -142,9 +148,10 @@ void main() {
     final pending = Completer<NotificationSettings>();
     messaging.pendingPermission = pending;
     final first = initialize();
-    await moved();
+    await flush();
+    final moving = moved();
     pending.complete(_Permission(AuthorizationStatus.authorized));
-    await first;
+    await Future.wait([first, moving]);
     expect(client.calls.every((call) => call.query?['nx'] == '98'), isTrue);
   });
   test('등록 실패 후 다시 동기화할 수 있고 종료 후에는 등록하지 않는다', () async {
@@ -164,5 +171,33 @@ void main() {
     await initialize();
     expect(client.calls.single.body['fcmToken'], isNull);
     expect(client.calls.single.query, {'nx': '60', 'ny': '127'});
+    expect(messaging.requests, 0);
+  });
+  test('OS에서 차단 후 토큰 갱신이 와도 토큰을 등록하지 않는다', () async {
+    await initialize();
+    messaging.authorization = AuthorizationStatus.deniedPermanently;
+    messaging.tokens.add('blocked-token');
+    await flush();
+    expect(client.calls.last.body['fcmToken'], isNull);
+    expect(messaging.requests, 0);
+  });
+  test('등록 대기 중 권한이 바뀌면 대기 중인 토큰에도 최신 권한을 적용한다', () async {
+    await initialize();
+    final pending = Completer<void>();
+    client.pending = pending;
+    final moving = moved();
+    await flush();
+    messaging.tokens.add('queued-token');
+    await flush();
+    messaging.authorization = AuthorizationStatus.denied;
+    client.pending = null;
+    pending.complete();
+    await moving;
+    await flush();
+    expect(client.calls.last.body['fcmToken'], isNull);
+    expect(client.maxActive, 1);
+    messaging.authorization = AuthorizationStatus.authorized;
+    await moved();
+    expect(client.calls.last.body['fcmToken'], 'test-token');
   });
 }

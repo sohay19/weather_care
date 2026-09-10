@@ -7,8 +7,24 @@ class SettingsSyncService {
   const SettingsSyncService(this.client);
 
   Future<void> save(AppSettings settings) async {
-    // Selection identity belongs to this app's catalog, not the server API.
-    final payload = settings.toJson()..remove('manualRegionKey');
+    // This endpoint is strict: installation/location belong to the separate
+    // installation registration API; onboarding/catalog identity stays local.
+    final payload = {
+      'notificationEnabled': settings.notificationEnabled,
+      'notificationTime': settings.notificationTime,
+      'umbrellaEnabled': settings.umbrellaEnabled,
+      'parasolEnabled': settings.parasolEnabled,
+      'outerwearEnabled': settings.outerwearEnabled,
+      'maskEnabled': settings.maskEnabled,
+      'waterEnabled': settings.waterEnabled,
+      'sunscreenEnabled': settings.sunscreenEnabled,
+      'heavyRainEnabled': settings.heavyRainEnabled,
+      'heavySnowEnabled': settings.heavySnowEnabled,
+      'heatwaveEnabled': settings.heatwaveEnabled,
+      'coldWaveEnabled': settings.coldWaveEnabled,
+      'showerAndLightRainEnabled': settings.showerAndLightRainEnabled,
+      'dailyWeatherEnabled': settings.dailyWeatherEnabled,
+    };
     await client.putJson(
       '/api/v1/notification-settings/${settings.installationId}',
       payload,

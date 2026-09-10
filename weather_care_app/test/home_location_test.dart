@@ -19,6 +19,8 @@ import 'package:weather_care/services/notification_registration_service.dart';
 import 'package:weather_care/services/settings_sync_service.dart';
 import 'package:weather_care/services/weather_service.dart';
 import 'package:weather_care/services/region_catalog.dart';
+import 'package:weather_care/services/settings_save_controller.dart';
+import 'package:weather_care/services/notification_permission_service.dart';
 
 const _seoul = DeviceCoordinates(latitude: 37.57, longitude: 126.98);
 const _busan = DeviceCoordinates(latitude: 35.18, longitude: 129.07);
@@ -110,11 +112,29 @@ class _Registration extends NotificationRegistrationService {
   }
 }
 
+class _NotificationPermission extends NotificationPermissionService {
+  NotificationPermissionState result = NotificationPermissionState.denied;
+  final requests = <bool>[];
+  Completer<NotificationPermissionState>? pending;
+  bool opened = false;
+  @override
+  Future<NotificationPermissionState> read({bool request = false}) async {
+    requests.add(request);
+    final held = pending;
+    pending = null;
+    return held == null ? result : await held.future;
+  }
+
+  @override
+  Future<bool> openSettings() async => opened;
+}
+
 void main() {
   late _Location location;
   late _Weather weather;
   late _Sync sync;
   late _Registration registration;
+  late _NotificationPermission notificationPermission;
   final catalog = RegionCatalog.fromJson(
       jsonDecode(File('assets/data/kma_regions.json').readAsStringSync())
           as Map<String, dynamic>);
@@ -126,6 +146,7 @@ void main() {
     weather = _Weather();
     sync = _Sync();
     registration = _Registration();
+    notificationPermission = _NotificationPermission();
   });
   Future<void> start(WidgetTester tester, {bool settle = true}) async {
     await tester.pumpWidget(MaterialApp(
@@ -135,6 +156,7 @@ void main() {
             weatherService: weather,
             settingsSync: sync,
             regionCatalog: catalog,
+            notificationPermission: notificationPermission,
             notificationRegistration: registration)));
     // Asset loading and SharedPreferences initialization are asynchronous.
     for (var i = 0; i < 20; i++) {
@@ -145,6 +167,103 @@ void main() {
 
   SettingsScreen screen(WidgetTester tester) =>
       tester.widget<SettingsScreen>(find.byType(SettingsScreen));
+
+  testWidgets('서버 저장 실패 표시와 최신 설정 재시도를 연결한다', (tester) async {
+    sync.fail = true;
+    await start(tester);
+    expect(screen(tester).saveState, SettingsSaveState.serverFailed);
+    final latest =
+        screen(tester).initialSettings!.copyWith(notificationEnabled: false);
+    await screen(tester).onSettingsChanged!(latest);
+    await tester.pumpAndSettle();
+    expect(screen(tester).saveState, SettingsSaveState.serverFailed);
+    expect(
+        (await const AppSettingsRepository().load('test')).notificationEnabled,
+        false);
+    sync.fail = false;
+    await screen(tester).onRetrySave!();
+    await tester.pumpAndSettle();
+    expect(sync.calls.last.notificationEnabled, false);
+    expect(screen(tester).saveState, SettingsSaveState.saved);
+  });
+
+  testWidgets('수동 지역에서도 복귀 시 알림 권한을 읽고 등록을 갱신한다', (tester) async {
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(locationMode: 'MANUAL', currentRegionId: '98_76'));
+    await start(tester);
+    expect(screen(tester).notificationPermission,
+        NotificationPermissionState.denied);
+    expect(notificationPermission.requests, [false]);
+    final initialRegistrations = registration.calls.length;
+    notificationPermission.result = NotificationPermissionState.authorized;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(screen(tester).notificationPermission,
+        NotificationPermissionState.authorized);
+    expect(notificationPermission.requests, [false, false]);
+    expect(registration.calls.length, initialRegistrations + 1);
+    expect(registration.calls.last.nx, 98);
+    expect(location.requests, isEmpty);
+  });
+
+  testWidgets('위치가 없어도 명시적으로 알림 권한을 요청하고 중복 요청을 막는다', (tester) async {
+    location.result = const LocationResult(LocationState.denied);
+    await start(tester);
+    final held = Completer<NotificationPermissionState>();
+    notificationPermission.pending = held;
+    final request = screen(tester).onRequestNotificationPermission!();
+    final duplicate = screen(tester).onRequestNotificationPermission!();
+    await tester.pump();
+    notificationPermission.result = NotificationPermissionState.authorized;
+    held.complete(NotificationPermissionState.authorized);
+    await Future.wait([request, duplicate]);
+    await tester.pumpAndSettle();
+    expect(notificationPermission.requests.where((ask) => ask), hasLength(1));
+    expect(screen(tester).notificationPermission,
+        NotificationPermissionState.authorized);
+    expect(registration.calls, isEmpty);
+    expect(location.requests, [false]);
+  });
+
+  testWidgets('권한 조회 대기 중 복귀하면 이전 상태를 다시 확인한다', (tester) async {
+    await start(tester);
+    final held = Completer<NotificationPermissionState>();
+    notificationPermission.pending = held;
+    final reading = screen(tester).onRefreshNotificationPermission!();
+    await tester.pump();
+    notificationPermission.result = NotificationPermissionState.authorized;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    held.complete(NotificationPermissionState.denied);
+    await reading;
+    await tester.pumpAndSettle();
+    expect(screen(tester).notificationPermission,
+        NotificationPermissionState.authorized);
+  });
+
+  testWidgets('기기 알림 설정 열기 실패를 안내한다', (tester) async {
+    await start(tester);
+    await screen(tester).onOpenNotificationSettings!();
+    await tester.pump();
+    expect(find.textContaining('설정을 열지 못했어요. 기기 설정에서 날씨챙겨'), findsOneWidget);
+  });
+
+  testWidgets('날씨 요청 대기가 설정 저장 완료와 다음 변경을 막지 않는다', (tester) async {
+    await start(tester);
+    weather.pending = Completer<WeatherLoadResult>();
+    await screen(tester).onSettingsChanged!(
+        screen(tester).initialSettings!.copyWith(umbrellaEnabled: false));
+    await tester.pump();
+    expect(screen(tester).saveState, SettingsSaveState.saved);
+    await screen(tester).onSettingsChanged!(
+        screen(tester).initialSettings!.copyWith(notificationEnabled: false));
+    await tester.pump();
+    expect(screen(tester).saveState, SettingsSaveState.saved);
+    expect(sync.calls.last.notificationEnabled, false);
+    weather.pending!.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+  });
 
   testWidgets('권한 거부 시 지역 대체 없이 대기하다 명시적 확인으로 복구한다', (tester) async {
     location.result = const LocationResult(LocationState.denied);

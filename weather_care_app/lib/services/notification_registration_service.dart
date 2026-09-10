@@ -32,16 +32,7 @@ class NotificationRegistrationService {
     _target =
         _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
-      final permission = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      final authorized =
-          permission.authorizationStatus == AuthorizationStatus.authorized ||
-              permission.authorizationStatus == AuthorizationStatus.provisional;
-      final token = authorized ? await messaging.getToken() : null;
-      await _registerCurrent(token);
+      await _registerCurrent();
 
       await _tokenSubscription?.cancel();
       if (_disposed) return;
@@ -79,18 +70,23 @@ class NotificationRegistrationService {
     _target =
         _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
-      final permission = await messaging.getNotificationSettings();
-      final authorized =
-          permission.authorizationStatus == AuthorizationStatus.authorized ||
-              permission.authorizationStatus == AuthorizationStatus.provisional;
-      await _registerCurrent(authorized ? await messaging.getToken() : null);
+      await _registerCurrent();
     } catch (error) {
       log('Installation synchronization failed (${error.runtimeType})');
     }
   }
 
-  Future<void> _registerCurrent(String? token) {
+  Future<void> _registerCurrent([String? refreshedToken]) {
     _registrationQueue = _registrationQueue.then((_) async {
+      if (_disposed || _target == null) return;
+      // Read inside the queue so a delayed token refresh cannot restore a token
+      // after a queued permission denial. Only explicit Settings actions ask.
+      final permission = await messaging.getNotificationSettings();
+      final allowed =
+          permission.authorizationStatus == AuthorizationStatus.authorized ||
+              permission.authorizationStatus == AuthorizationStatus.provisional;
+      final token =
+          allowed ? refreshedToken ?? await messaging.getToken() : null;
       final target = _target;
       if (_disposed || target == null) return;
       await client.putJson(

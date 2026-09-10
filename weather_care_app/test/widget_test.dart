@@ -779,6 +779,11 @@ void main() {
 
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('notification-time-control')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(
       tester
           .widget<Opacity>(

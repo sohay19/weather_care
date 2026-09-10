@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../models/app_settings.dart';
 import '../../services/current_location_service.dart';
 import '../../services/region_catalog.dart';
+import '../../services/settings_save_controller.dart';
+import '../../services/notification_permission_service.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
@@ -22,6 +24,12 @@ class SettingsScreen extends StatefulWidget {
   final Future<void> Function()? onOpenLocationSettings;
   final Future<RegionCatalog> Function()? loadRegionCatalog;
   final String? manualRegionName;
+  final SettingsSaveState saveState;
+  final Future<void> Function()? onRetrySave;
+  final NotificationPermissionState notificationPermission;
+  final Future<void> Function()? onRequestNotificationPermission;
+  final Future<void> Function()? onRefreshNotificationPermission;
+  final Future<void> Function()? onOpenNotificationSettings;
 
   const SettingsScreen({
     super.key,
@@ -35,6 +43,12 @@ class SettingsScreen extends StatefulWidget {
     this.onOpenLocationSettings,
     this.loadRegionCatalog,
     this.manualRegionName,
+    this.saveState = SettingsSaveState.checking,
+    this.onRetrySave,
+    this.notificationPermission = NotificationPermissionState.checking,
+    this.onRequestNotificationPermission,
+    this.onRefreshNotificationPermission,
+    this.onOpenNotificationSettings,
   });
 
   @override
@@ -269,6 +283,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 16),
         _SettingsSection(
+          icon: Icons.sync_rounded,
+          title: '저장·기기 알림 상태',
+          subtitle: '설정 저장과 기기의 알림 허용은 별개예요',
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Semantics(
+              liveRegion: true,
+              child: Text(widget.saveState.message,
+                  key: const ValueKey('settings-save-status')),
+            ),
+            if (widget.saveState.canRetry)
+              TextButton.icon(
+                  key: const ValueKey('settings-save-retry'),
+                  onPressed: widget.onRetrySave,
+                  icon: const Icon(Icons.sync_rounded),
+                  label: const Text('설정 저장 다시 시도')),
+            const Divider(height: 24),
+            Semantics(
+              liveRegion: true,
+              child: Text(widget.notificationPermission.message,
+                  key: const ValueKey('notification-permission-status')),
+            ),
+            if (!_alertsEnabled) ...[
+              const SizedBox(height: 8),
+              const Text(
+                  '앱의 날씨 알림을 껐어요. 서버 반영이 완료되면 이후 알림 발송 대상에서 제외돼요. 이미 처리 중이거나 발송된 알림은 도착할 수 있어요.'),
+            ],
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 4, children: [
+              if (widget.notificationPermission ==
+                      NotificationPermissionState.denied ||
+                  widget.notificationPermission ==
+                      NotificationPermissionState.notDetermined)
+                FilledButton.tonal(
+                    key: const ValueKey('notification-permission-request'),
+                    onPressed: widget.onRequestNotificationPermission,
+                    child: const Text('알림 권한 요청')),
+              TextButton(
+                  key: const ValueKey('notification-permission-refresh'),
+                  onPressed: widget.notificationPermission ==
+                          NotificationPermissionState.checking
+                      ? null
+                      : widget.onRefreshNotificationPermission,
+                  child: const Text('권한 다시 확인')),
+              TextButton(
+                  key: const ValueKey('notification-settings'),
+                  onPressed: widget.notificationPermission ==
+                          NotificationPermissionState.checking
+                      ? null
+                      : widget.onOpenNotificationSettings,
+                  child: const Text('기기 앱 설정 열기')),
+            ]),
+            const SizedBox(height: 6),
+            Text(
+                '기기 앱 설정의 알림 메뉴에서 변경할 수 있어요. 개별 알림 종류·집중 모드·소리 설정에 따라 표시 방식이 달라질 수 있어요. 서버 저장과 권한 허용만으로 실제 수신을 확인할 수는 없어요.',
+                style: Theme.of(context).textTheme.bodySmall),
+          ]),
+        ),
+        const SizedBox(height: 16),
+        _SettingsSection(
           icon: Icons.schedule_outlined,
           title: '알림 시간',
           subtitle: 'Morning Brief를 받을 기본 시간이에요',
@@ -467,7 +541,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '변경한 알림 설정은 이 기기와 서버에 자동으로 저장돼요.',
+                  '변경한 설정의 반영 결과는 위의 저장·기기 알림 상태에서 확인해주세요.',
                   style: WeatherCareTheme.microTextStyle.copyWith(
                     color: WeatherCareTheme.attentionDeep,
                     fontSize: 12,

@@ -27,6 +27,8 @@ class AppSettingsRepository {
 
   Future<void> save(AppSettings settings) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(_storageKey, jsonEncode(settings.toJson()));
+    final saved =
+        await preferences.setString(_storageKey, jsonEncode(settings.toJson()));
+    if (!saved) throw StateError('Local settings write failed');
   }
 }

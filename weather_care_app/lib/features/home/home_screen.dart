@@ -29,27 +29,42 @@ import 'widgets/weather_status_view.dart';
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
   final NotificationTopic? initialNotificationTopic;
+  final CurrentLocationService locationService;
+  final WeatherService? weatherService;
+  final SettingsSyncService? settingsSync;
+  final NotificationRegistrationService? notificationRegistration;
 
   const HomeScreen({
     super.key,
     this.initialIndex = 2,
     this.initialNotificationTopic,
+    this.locationService = const CurrentLocationService(),
+    this.weatherService,
+    this.settingsSync,
+    this.notificationRegistration,
   });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late AppSettings _settings;
   final AppSettingsRepository _settingsRepository =
       const AppSettingsRepository();
   WeatherService? _service;
   NotificationRegistrationService? _notificationRegistration;
   SettingsSyncService? _settingsSync;
-  final CurrentLocationService _locationService =
-      const CurrentLocationService();
+  CurrentLocationService get _locationService => widget.locationService;
   DeviceCoordinates? _coordinates;
+  LocationResult _location = const LocationResult(LocationState.idle);
+  Future<void>? _refreshFuture;
+  bool _refreshAgain = false;
+  bool _requestPermission = false;
+  bool _initialized = false;
+  bool _leftApp = false;
+  bool _registrationInitialized = false;
+  int _locationRevision = 0;
   Future<void> _settingsSaveQueue = Future<void>.value();
   int _settingsRevision = 0;
   TodayWeatherResponse? _today;
@@ -63,11 +78,19 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loading = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
-  KmaGrid get _weatherGrid {
+  KmaGrid? get _weatherGrid {
     final coordinates = _coordinates;
-    if (_settings.locationMode != 'GPS' || coordinates == null) {
-      return KmaGrid.suwon;
+    if (_settings.locationMode != 'GPS') {
+      final match = RegExp(r'^(\d{1,3})_(\d{1,3})$')
+          .firstMatch(_settings.currentRegionId ?? '');
+      if (match == null) return null;
+      final nx = int.parse(match.group(1)!);
+      final ny = int.parse(match.group(2)!);
+      return nx > 0 && nx <= 149 && ny > 0 && ny <= 253
+          ? KmaGrid(nx: nx, ny: ny)
+          : null;
     }
+    if (coordinates == null || !_location.hasLocation) return null;
     return KmaGrid.fromCoordinates(
       latitude: coordinates.latitude,
       longitude: coordinates.longitude,
@@ -77,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _settings = AppSettings.fallback('initializing-installation');
     _selectedIndex = widget.initialIndex < 0
         ? 0
@@ -93,44 +117,136 @@ class _HomeScreenState extends State<HomeScreen> {
     final savedSettings = await _settingsRepository.load(installationId);
     if (!mounted) return;
     _settings = savedSettings;
-    _coordinates = await _locationService.currentCoordinates(
-      gpsEnabled: _settings.locationMode == 'GPS',
-    );
-    if (!mounted) return;
     final client = ApiClient(baseUrl: config.serverUrl);
-    _settingsSync = SettingsSyncService(client);
-    _service = WeatherService(
-      client,
-      directKma: KmaDirectWeatherService(
-        serviceKey: config.kmaServiceKey,
-      ),
-    );
-    _notificationRegistration = NotificationRegistrationService(client);
-    final grid = _weatherGrid;
-    unawaited(
-      _notificationRegistration!.initialize(
-        installationId: installationId,
-        nx: grid.nx,
-        ny: grid.ny,
-        locationMode: _settings.locationMode,
-        coordinates: _coordinates,
-      ),
-    );
-    try {
-      await _settingsSync!.save(_settings);
-    } catch (_) {
-      // 날씨 조회와 로컬 설정 사용은 서버 설정 저장 실패와 별도로 유지합니다.
-    }
+    _settingsSync = widget.settingsSync ?? SettingsSyncService(client);
+    _service = widget.weatherService ??
+        WeatherService(
+          client,
+          directKma: KmaDirectWeatherService(
+            serviceKey: config.kmaServiceKey,
+          ),
+        );
+    _notificationRegistration = widget.notificationRegistration ??
+        NotificationRegistrationService(client);
+    // A failed remote preferences save must not prevent local GPS or weather.
+    _settingsSaveQueue = _saveRemoteSettings(_settings);
+    _initialized = true;
     await _loadData();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _locationRevision++;
     unawaited(_notificationRegistration?.dispose() ?? Future<void>.value());
     super.dispose();
   }
 
-  Future<void> _loadData() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _leftApp = true;
+    }
+    if (state == AppLifecycleState.resumed && _leftApp) {
+      _leftApp = false;
+      if (_initialized && _settings.locationMode == 'GPS') {
+        unawaited(_refresh(supersede: true));
+      }
+    }
+  }
+
+  Future<void> _loadData() => _refresh();
+
+  Future<void> _refresh(
+      {bool requestPermission = false, bool supersede = false}) {
+    if (_service == null) return Future<void>.value();
+    if (_refreshFuture != null) {
+      if (supersede) {
+        _refreshAgain = true;
+        _requestPermission |= requestPermission;
+      }
+      return _refreshFuture!;
+    }
+    _requestPermission |= requestPermission;
+    final future = Future<void>.microtask(_refreshLoop);
+    _refreshFuture = future;
+    return future;
+  }
+
+  Future<void> _refreshLoop() async {
+    if (!mounted) return;
+    try {
+      do {
+        _refreshAgain = false;
+        final revision = _locationRevision;
+        final ask = _requestPermission;
+        _requestPermission = false;
+        if (_settings.locationMode == 'GPS') {
+          setState(() {
+            _location = const LocationResult(LocationState.checking);
+            if (_today == null) {
+              _loadMode = null;
+              _statusMessage = _location.message;
+            }
+          });
+          final result = await _locationService.locate(requestPermission: ask);
+          if (!mounted) return;
+          if (revision != _locationRevision) continue;
+          setState(() {
+            _location = result;
+            _coordinates = result.coordinates;
+          });
+        } else {
+          _coordinates = null;
+          _location = const LocationResult(LocationState.idle);
+        }
+        final grid = _weatherGrid;
+        if (grid == null) {
+          setState(() {
+            _today = null;
+            _weekly = null;
+            _loadMode = WeatherLoadMode.unavailable;
+            _statusMessage = _settings.locationMode == 'GPS'
+                ? '${_location.message}. Setting에서 위치를 다시 확인해주세요. 다른 지역으로 대체하지 않아요.'
+                : '선택된 지역이 없어요. 현재 위치를 사용하거나 지역 선택을 완료해주세요.';
+          });
+          _notificationRegistration?.invalidateLocation();
+          continue;
+        }
+        if (_today != null &&
+            (_today!.region.nx != grid.nx || _today!.region.ny != grid.ny)) {
+          setState(() {
+            _today = null;
+            _weekly = null;
+          });
+        }
+        final preciseCoordinates =
+            _settings.locationMode == 'GPS' && _location.canUseLocalAnalysis
+                ? _coordinates
+                : null;
+        final registration = _notificationRegistration;
+        if (registration != null) {
+          final register = _registrationInitialized
+              ? registration.syncInstallation
+              : registration.initialize;
+          _registrationInitialized = true;
+          unawaited(register(
+              installationId: _settings.installationId,
+              nx: grid.nx,
+              ny: grid.ny,
+              locationMode: _settings.locationMode,
+              coordinates: preciseCoordinates));
+        }
+        await _fetchWeather(revision, grid, preciseCoordinates);
+      } while (mounted && _refreshAgain);
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<void> _fetchWeather(
+      int revision, KmaGrid grid, DeviceCoordinates? coordinates) async {
     final service = _service;
     if (service == null || _loading) return;
 
@@ -144,15 +260,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       while (mounted) {
-        final grid = _weatherGrid;
         final serverResult = await service.fetchServerWeather(
           installationId: _settings.installationId,
           nx: grid.nx,
           ny: grid.ny,
-          coordinates: _coordinates,
+          coordinates: coordinates,
         );
 
-        if (!mounted) return;
+        if (!mounted || revision != _locationRevision) return;
         if (serverResult.hasWeather) {
           _applyResult(serverResult);
           return;
@@ -163,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
           barrierDismissible: false,
           builder: (_) => const ServerConnectionFailureDialog(),
         );
-        if (!mounted) return;
+        if (!mounted || revision != _locationRevision) return;
 
         if (action == ServerFailureAction.retryServer) {
           continue;
@@ -174,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
             nx: grid.nx,
             ny: grid.ny,
           );
-          if (!mounted) return;
+          if (!mounted || revision != _locationRevision) return;
           _applyResult(directResult);
           return;
         }
@@ -272,6 +387,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       onRefresh: _loadData,
                       initialSettings: _settings,
                       onSettingsChanged: _handleSettingsChanged,
+                      location: _location,
+                      regionName: _today?.region.name,
+                      onLocate: () => _refresh(requestPermission: true),
+                      onOpenLocationSettings: _openDeviceLocationSettings,
                     ),
                   ]
                 : [
@@ -284,6 +403,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       onRefresh: _loadData,
                       initialSettings: _settings,
                       onSettingsChanged: _handleSettingsChanged,
+                      location: _location,
+                      regionName: _today?.region.name,
+                      onLocate: () => _refresh(requestPermission: true),
+                      onOpenLocationSettings: _openDeviceLocationSettings,
                     ),
                   ],
           ),
@@ -372,6 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
       viewKey: viewKey,
       loading: _loadMode == null,
       offline: _loadMode == WeatherLoadMode.offline,
+      title: _loadMode != null && _weatherGrid == null ? '기준 위치를 확인해주세요' : null,
       message: _statusMessage,
       onRetry: _loadData,
     );
@@ -400,8 +524,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _handleSettingsChanged(AppSettings updated) {
     final revision = ++_settingsRevision;
-    final locationChanged = _settings.locationMode != updated.locationMode;
-    setState(() => _settings = updated);
+    final locationChanged = _settings.locationMode != updated.locationMode ||
+        _settings.currentRegionId != updated.currentRegionId;
+    setState(() {
+      _settings = updated;
+      if (locationChanged) {
+        _locationRevision++;
+        _coordinates = null;
+        _today = null;
+        _weekly = null;
+        _loadMode = null;
+        _notificationRegistration?.invalidateLocation();
+      }
+    });
+    if (locationChanged) {
+      unawaited(_refresh(
+          requestPermission: updated.locationMode == 'GPS', supersede: true));
+    }
     _settingsSaveQueue = _settingsSaveQueue
         .then<void>(
       (_) {},
@@ -409,26 +548,26 @@ class _HomeScreenState extends State<HomeScreen> {
     )
         .then((_) async {
       await _settingsRepository.save(updated);
-      try {
-        await _settingsSync?.save(updated);
-        if (locationChanged) {
-          _coordinates = await _locationService.currentCoordinates(
-            gpsEnabled: updated.locationMode == 'GPS',
-          );
-          final grid = _weatherGrid;
-          await _notificationRegistration?.syncInstallation(
-            installationId: updated.installationId,
-            nx: grid.nx,
-            ny: grid.ny,
-            locationMode: updated.locationMode,
-            coordinates: _coordinates,
-          );
-        }
-      } catch (_) {
-        // 로컬 저장값은 유지하고 다음 앱 시작 또는 변경 시 다시 동기화합니다.
+      await _saveRemoteSettings(updated);
+      if (mounted && revision == _settingsRevision && !locationChanged) {
+        await _loadData();
       }
-      if (mounted && revision == _settingsRevision) await _loadData();
     });
     return _settingsSaveQueue;
+  }
+
+  Future<void> _saveRemoteSettings(AppSettings settings) async {
+    try {
+      await _settingsSync?.save(settings);
+    } catch (_) {/* Local settings remain valid. */}
+  }
+
+  Future<void> _openDeviceLocationSettings() async {
+    final opened = _location.state == LocationState.serviceDisabled
+        ? await _locationService.openLocationSettings()
+        : await _locationService.openAppSettings();
+    if (!mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('설정을 열지 못했어요. 기기 설정에서 위치 권한과 위치 기능을 확인해주세요.')));
   }
 }

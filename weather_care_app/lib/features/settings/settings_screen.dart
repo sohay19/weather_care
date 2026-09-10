@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../models/app_settings.dart';
+import '../../services/current_location_service.dart';
 import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
 import 'location_mode.dart';
@@ -12,6 +13,10 @@ class SettingsScreen extends StatefulWidget {
   final Future<void> Function()? onRefresh;
   final AppSettings? initialSettings;
   final Future<void> Function(AppSettings settings)? onSettingsChanged;
+  final LocationResult location;
+  final String? regionName;
+  final Future<void> Function()? onLocate;
+  final Future<void> Function()? onOpenLocationSettings;
 
   const SettingsScreen({
     super.key,
@@ -19,6 +24,10 @@ class SettingsScreen extends StatefulWidget {
     this.onRefresh,
     this.initialSettings,
     this.onSettingsChanged,
+    this.location = const LocationResult(LocationState.idle),
+    this.regionName,
+    this.onLocate,
+    this.onOpenLocationSettings,
   });
 
   @override
@@ -72,36 +81,88 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: Icons.location_on_outlined,
           title: '기준 지역',
           subtitle: settings.locationMode == 'GPS'
-              ? '현재 위치 날씨를 기준으로 안내하고 있어요'
-              : '선택한 지역 날씨를 기준으로 안내하고 있어요',
-          child: RadioGroup<LocationMode>(
-            groupValue: settings.locationMode == 'GPS'
-                ? LocationMode.gps
-                : LocationMode.manual,
-            onChanged: (mode) {
-              if (mode == null) return;
-              _updateSettings(settings.copyWith(locationMode: mode.label));
-            },
-            child: Column(
-              children: [
-                _LocationRadioTile(
-                  value: LocationMode.gps,
-                  icon: Icons.my_location_rounded,
-                  title: '현재 위치 사용',
-                  subtitle: '필요할 때만 GPS로 위치를 갱신해요',
-                  selected: settings.locationMode == 'GPS',
-                ),
-                const SizedBox(height: 8),
-                _LocationRadioTile(
-                  value: LocationMode.manual,
-                  icon: Icons.map_outlined,
-                  title: '지역 직접 선택',
-                  subtitle: '선택한 지역을 계속 유지해요',
-                  selected: settings.locationMode == 'MANUAL',
-                ),
-              ],
+              ? widget.location.hasLocation
+                  ? '${widget.regionName ?? '확인한 위치'} 기준으로 지역 예보를 안내해요'
+                  : '현재 위치 확인이 필요해요'
+              : settings.currentRegionId == null
+                  ? '선택된 지역이 없어요'
+                  : '${widget.regionName ?? '저장한 지역'}의 날씨를 사용해요',
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            RadioGroup<LocationMode>(
+              groupValue: settings.locationMode == 'GPS'
+                  ? LocationMode.gps
+                  : LocationMode.manual,
+              onChanged: (mode) {
+                if (mode == null) return;
+                _updateSettings(settings.copyWith(locationMode: mode.label));
+              },
+              child: Column(
+                children: [
+                  _LocationRadioTile(
+                    value: LocationMode.gps,
+                    icon: Icons.my_location_rounded,
+                    title: '현재 위치 사용',
+                    subtitle: '앱 실행·복귀·새로고침 때 위치를 확인해요',
+                    selected: settings.locationMode == 'GPS',
+                  ),
+                  const SizedBox(height: 8),
+                  _LocationRadioTile(
+                    value: LocationMode.manual,
+                    icon: Icons.map_outlined,
+                    title: '지역 직접 선택',
+                    subtitle: settings.currentRegionId == null
+                        ? '저장된 지역이 없어요'
+                        : '선택한 지역을 계속 유지해요',
+                    selected: settings.locationMode == 'MANUAL',
+                  ),
+                ],
+              ),
             ),
-          ),
+            if (settings.locationMode == 'GPS') ...[
+              const SizedBox(height: 12),
+              Text(widget.location.message,
+                  key: const ValueKey('location-status')),
+              if (widget.location.measuredAt != null) ...[
+                const SizedBox(height: 6),
+                Text(_locationTimeLabel(widget.location.measuredAt!),
+                    style: Theme.of(context).textTheme.bodySmall),
+              ],
+              const SizedBox(height: 8),
+              Wrap(spacing: 8, runSpacing: 4, children: [
+                FilledButton.tonalIcon(
+                  key: const ValueKey('location-refresh'),
+                  onPressed: widget.location.state == LocationState.checking
+                      ? null
+                      : widget.onLocate,
+                  icon: const Icon(Icons.my_location_rounded),
+                  label: Text(widget.location.state == LocationState.denied ||
+                          widget.location.state == LocationState.idle
+                      ? '위치 권한 허용하고 확인'
+                      : '위치 다시 확인'),
+                ),
+                if ([
+                  LocationState.serviceDisabled,
+                  LocationState.denied,
+                  LocationState.deniedForever,
+                  LocationState.approximate
+                ].contains(widget.location.state))
+                  TextButton(
+                      key: const ValueKey('location-settings'),
+                      onPressed: widget.onOpenLocationSettings,
+                      child: Text(
+                          widget.location.state == LocationState.serviceDisabled
+                              ? '기기 위치 설정 열기'
+                              : '앱 권한 설정 열기')),
+              ]),
+              const SizedBox(height: 6),
+              Text('백그라운드에서 위치를 계속 추적하지 않아요. 알림은 서버에 마지막으로 등록된 지역 기준이에요.',
+                  style: Theme.of(context).textTheme.bodySmall),
+            ] else if (settings.currentRegionId == null) ...[
+              const SizedBox(height: 10),
+              const Text('저장된 지역이 없어 날씨를 조회할 수 없어요. 현재 위치 사용으로 전환해주세요.'),
+            ],
+          ]),
         ),
         const SizedBox(height: 16),
         Container(
@@ -420,7 +481,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _updateSettings(AppSettings updated) {
     setState(() => settings = updated);
     final callback = widget.onSettingsChanged;
-    if (callback != null) unawaited(callback(updated));
+    if (callback != null) {
+      unawaited(callback(updated).catchError((Object _) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('설정을 저장하지 못했어요. 다시 시도해주세요.')));
+        }
+      }));
+    }
   }
 
   Future<void> _selectNotificationTime() async {
@@ -444,6 +512,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}';
     _updateSettings(settings.copyWith(notificationTime: time));
   }
+}
+
+String _locationTimeLabel(DateTime time) {
+  final korea = time.toUtc().add(const Duration(hours: 9));
+  final minute = korea.minute.toString().padLeft(2, '0');
+  return '위치 확인: ${korea.month}월 ${korea.day}일 ${korea.hour}:$minute';
 }
 
 class _SettingsSection extends StatelessWidget {

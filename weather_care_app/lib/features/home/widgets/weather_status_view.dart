@@ -7,6 +7,7 @@ class WeatherStatusView extends StatelessWidget {
   final bool loading;
   final bool offline;
   final String message;
+  final String? title;
   final Future<void> Function() onRetry;
 
   const WeatherStatusView({
@@ -15,6 +16,7 @@ class WeatherStatusView extends StatelessWidget {
     required this.loading,
     required this.offline,
     required this.message,
+    this.title,
     required this.onRetry,
   });
 
@@ -59,7 +61,7 @@ class WeatherStatusView extends StatelessWidget {
                         ),
                       const SizedBox(height: 18),
                       Text(
-                        loading ? '날씨 정보를 확인하고 있어요' : '날씨 정보 미지원',
+                        title ?? (loading ? '날씨 정보를 확인하고 있어요' : '날씨 정보 미지원'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),

@@ -9,13 +9,17 @@ import 'current_location_service.dart';
 
 class NotificationRegistrationService {
   final ApiClient client;
-  final FirebaseMessaging messaging;
+  final FirebaseMessaging? _messaging;
+  FirebaseMessaging get messaging => _messaging ?? FirebaseMessaging.instance;
   StreamSubscription<String>? _tokenSubscription;
+  _RegistrationTarget? _target;
+  Future<void> _registrationQueue = Future<void>.value();
+  bool _disposed = false;
 
   NotificationRegistrationService(
     this.client, {
     FirebaseMessaging? messaging,
-  }) : messaging = messaging ?? FirebaseMessaging.instance;
+  }) : _messaging = messaging;
 
   Future<void> initialize({
     required String installationId,
@@ -24,6 +28,9 @@ class NotificationRegistrationService {
     required String locationMode,
     DeviceCoordinates? coordinates,
   }) async {
+    if (_disposed) return;
+    _target =
+        _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
       final permission = await messaging.requestPermission(
         alert: true,
@@ -34,27 +41,12 @@ class NotificationRegistrationService {
           permission.authorizationStatus == AuthorizationStatus.authorized ||
               permission.authorizationStatus == AuthorizationStatus.provisional;
       final token = authorized ? await messaging.getToken() : null;
-      await _register(
-        installationId: installationId,
-        token: token,
-        nx: nx,
-        ny: ny,
-        locationMode: locationMode,
-        coordinates: coordinates,
-      );
+      await _registerCurrent(token);
 
       await _tokenSubscription?.cancel();
+      if (_disposed) return;
       _tokenSubscription = messaging.onTokenRefresh.listen(
-        (refreshedToken) => unawaited(
-          _register(
-            installationId: installationId,
-            token: refreshedToken,
-            nx: nx,
-            ny: ny,
-            locationMode: locationMode,
-            coordinates: coordinates,
-          ),
-        ),
+        (refreshedToken) => unawaited(_registerCurrent(refreshedToken)),
         onError: (Object error) {
           log('FCM token refresh failed (${error.runtimeType})');
         },
@@ -65,7 +57,15 @@ class NotificationRegistrationService {
   }
 
   Future<void> dispose() async {
+    _disposed = true;
+    _target = null;
     await _tokenSubscription?.cancel();
+  }
+
+  // Prevent a token refresh from re-registering coordinates that are no longer
+  // confirmed. The server retains its last registered region until a valid update.
+  void invalidateLocation() {
+    _target = null;
   }
 
   Future<void> syncInstallation({
@@ -75,47 +75,50 @@ class NotificationRegistrationService {
     required String locationMode,
     DeviceCoordinates? coordinates,
   }) async {
+    if (_disposed) return;
+    _target =
+        _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
       final permission = await messaging.getNotificationSettings();
       final authorized =
           permission.authorizationStatus == AuthorizationStatus.authorized ||
               permission.authorizationStatus == AuthorizationStatus.provisional;
-      await _register(
-        installationId: installationId,
-        token: authorized ? await messaging.getToken() : null,
-        nx: nx,
-        ny: ny,
-        locationMode: locationMode,
-        coordinates: coordinates,
-      );
+      await _registerCurrent(authorized ? await messaging.getToken() : null);
     } catch (error) {
       log('Installation synchronization failed (${error.runtimeType})');
     }
   }
 
-  Future<void> _register({
-    required String installationId,
-    required String? token,
-    required int nx,
-    required int ny,
-    required String locationMode,
-    DeviceCoordinates? coordinates,
-  }) async {
-    try {
+  Future<void> _registerCurrent(String? token) {
+    _registrationQueue = _registrationQueue.then((_) async {
+      final target = _target;
+      if (_disposed || target == null) return;
       await client.putJson(
-        '/api/v1/installations/$installationId',
+        '/api/v1/installations/${target.installationId}',
         {
           'fcmToken': token,
-          'locationMode': locationMode,
+          'locationMode': target.locationMode,
           'platform': defaultTargetPlatform.name,
           'timezone': 'Asia/Seoul',
-          'latitude': coordinates?.latitude,
-          'longitude': coordinates?.longitude,
+          'latitude': target.coordinates?.latitude,
+          'longitude': target.coordinates?.longitude,
         },
-        query: {'nx': '$nx', 'ny': '$ny'},
+        query: {'nx': '${target.nx}', 'ny': '${target.ny}'},
       );
-    } catch (error) {
+    }).catchError((Object error) {
       log('Installation registration failed (${error.runtimeType})');
-    }
+    });
+    return _registrationQueue;
   }
+}
+
+class _RegistrationTarget {
+  final String installationId;
+  final int nx;
+  final int ny;
+  final String locationMode;
+  final DeviceCoordinates? coordinates;
+
+  const _RegistrationTarget(this.installationId, this.nx, this.ny,
+      this.locationMode, this.coordinates);
 }

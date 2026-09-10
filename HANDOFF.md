@@ -5214,3 +5214,12 @@
 - `docs/앱_탭_구성_현황.md`에 반응형 열 기준과 빈 상태 동작, 다수·빈 추천 레이아웃 확인 완료를 반영했다.
 - 검증: 앱 `flutter analyze`, 전체 Flutter `53 tests`, Android debug APK 빌드를 통과했다. 에뮬레이터 저장공간 부족으로 기존 앱 APK만 제거하고 데이터는 유지하는 `cmd package uninstall -k` 방식으로 최신 APK를 복구 설치했다. 운영 자료의 양산·선크림 2열 카드와 치명적 예외·RenderFlex 오류가 없음을 확인했다.
 - 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.
+
+## 2026-09-10 Today 중복 브리핑 카드 제거
+
+- Today 상단의 별도 브리핑 카드를 제거했다. 같은 `today.brief`는 Main 상단에서 대표 행동으로 이미 노출되며, 준비물 개수와 빈 상태는 바로 아래 Check List가 직접 보여주므로 Today에서 반복하지 않는다.
+- Today는 페이지 헤더 다음에 Check List, 간단한 타임라인 순서로 바로 이어진다. 운영 서버 미연결 상태도 두 섹션의 기존 미지원 카드가 각각 설명하므로 별도 중복 안내가 필요하지 않다.
+- `docs/앱_탭_구성_현황.md`에서 브리핑 카드 항목을 삭제하고 화면 순서를 다시 번호 매겼으며, 중복 검토 항목을 완료로 표시했다.
+- `today.brief`와 추천 개수 문구가 Today에 다시 나타나지 않고 Check List·타임라인이 노출되는 회귀 테스트를 추가했다.
+- 검증: 앱 `flutter analyze`, 전체 Flutter `54 tests`, Android debug APK 빌드를 통과했다. 에뮬레이터에는 기존 앱 데이터 유지 방식으로 최신 APK를 설치했고, Today 헤더 직후 양산·선크림 Check List가 시작되며 기존 브리핑·추천 개수 카드가 없는 것을 확인했다. 치명적 예외와 RenderFlex 오류는 없었다.
+- 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.

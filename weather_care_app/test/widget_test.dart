@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/app.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
+import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/home_screen.dart';
 import 'package:weather_care/features/home/widgets/tab_page_header.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
@@ -477,6 +478,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(refreshCount, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Today starts with preparation without repeating the Main brief',
+      (tester) async {
+    const mainBrief = '자외선이 강할 수 있으니, 외출한다면 양산을 준비하세요';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TodayTab(
+            today: const TodayWeatherResponse(
+              dataSource: 'test',
+              region: WeatherRegion(nx: 60, ny: 121, name: '수원'),
+              brief: mainBrief,
+              current: CurrentWeather(temperature: 22),
+              recommendations: [],
+              lifestyleMessages: [],
+              timeline: [],
+              hourly: [],
+            ),
+            recommendations: const [],
+            serverFeaturesAvailable: true,
+            onRefresh: () async {},
+            onDetail: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text(mainBrief), findsNothing);
+    expect(find.textContaining('챙겨야하는 항목'), findsNothing);
+    expect(find.text('Check List'), findsOneWidget);
+    expect(find.text('오늘은 특별히 챙길 준비물이 없어요'), findsOneWidget);
+    expect(find.text('간단한 타임라인'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

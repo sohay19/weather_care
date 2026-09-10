@@ -796,10 +796,10 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -2200));
     await tester.pumpAndSettle();
 
-    expect(find.text('많은 비 안내'), findsOneWidget);
-    expect(find.text('고온 안내'), findsOneWidget);
-    expect(find.text('저온 안내'), findsOneWidget);
-    expect(find.text('소나기·약한 비 안내'), findsOneWidget);
+    expect(find.text('호우특보 안내'), findsOneWidget);
+    expect(find.text('폭염특보 안내'), findsOneWidget);
+    expect(find.text('한파특보 안내'), findsOneWidget);
+    expect(find.text('현재 비 안내'), findsOneWidget);
     expect(
       find.text('날씨·자외선은 기상청, 미세먼지는 에어코리아 공식 API를 사용합니다.'),
       findsOneWidget,

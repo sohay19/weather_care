@@ -12,6 +12,7 @@ import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
 import 'location_mode.dart';
 import 'region_picker_screen.dart';
+import 'notification_schedule.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -254,7 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     SizedBox(height: 3),
                     Text(
-                      '필요한 준비물을 한 번에 알려드려요',
+                      '준비물과 기상·도로 안내를 받아요',
                       style: TextStyle(
                         fontFamily: WeatherCareTheme.fontChosunSg,
                         color: Color(0xE6FFFFFF),
@@ -345,65 +346,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _SettingsSection(
           icon: Icons.schedule_outlined,
           title: '알림 시간',
-          subtitle: 'Morning Brief를 받을 기본 시간이에요',
-          child: IgnorePointer(
-            ignoring: !_alertsEnabled,
-            child: Opacity(
-              key: const ValueKey('notification-time-control'),
-              opacity: _alertsEnabled ? 1 : 0.46,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: _selectNotificationTime,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: WeatherCareTheme.surfaceMuted,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.alarm_rounded,
-                        color: WeatherCareTheme.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          '매일 아침',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+          subtitle: '준비물 요약에만 적용돼요. 특보·현재 비·도로 안내는 별도로 확인해요',
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            IgnorePointer(
+              ignoring: !_alertsEnabled,
+              child: Opacity(
+                key: const ValueKey('notification-time-control'),
+                opacity: _alertsEnabled ? 1 : 0.46,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: _selectNotificationTime,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 15, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: WeatherCareTheme.surfaceMuted,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.alarm_rounded,
+                          color: WeatherCareTheme.primary,
                         ),
-                      ),
-                      Text(
-                        settings.notificationTime,
-                        style: const TextStyle(
-                          color: WeatherCareTheme.primaryDeep,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            '설정 시각',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: WeatherCareTheme.textSecondary,
-                      ),
-                    ],
+                        Text(
+                          settings.notificationTime,
+                          style: const TextStyle(
+                            color: WeatherCareTheme.primaryDeep,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: WeatherCareTheme.textSecondary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: 10),
+            Text(notificationScheduleDescription(settings.notificationTime),
+                key: const ValueKey('notification-schedule-description')),
+            if (!settings.dailyWeatherEnabled)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text('준비물 요약 알림을 켜야 설정한 시간이 적용돼요.'),
+              ),
+          ]),
         ),
         const SizedBox(height: 16),
         _SettingsSection(
           icon: Icons.work_outline_rounded,
           title: '챙겨요 알림',
-          subtitle: '아침 알림에 포함할 준비물을 선택해요',
+          subtitle: '준비물 요약 알림에 포함할 항목을 선택해요',
           child: Column(
             children: [
               _SettingsToggleTile(
                 icon: Icons.umbrella_outlined,
+                settingId: 'umbrellaEnabled',
                 title: '우산',
+                subtitle: '준비물 요약과 현재 비 안내에 함께 적용돼요',
                 value: settings.umbrellaEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
@@ -412,6 +426,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.wb_sunny_outlined,
+                settingId: 'parasolEnabled',
                 title: '양산',
                 value: settings.parasolEnabled,
                 enabled: _alertsEnabled,
@@ -421,6 +436,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.checkroom_rounded,
+                settingId: 'outerwearEnabled',
                 title: '겉옷',
                 value: settings.outerwearEnabled,
                 enabled: _alertsEnabled,
@@ -430,6 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.face_outlined,
+                settingId: 'maskEnabled',
                 title: '마스크',
                 value: settings.maskEnabled,
                 enabled: _alertsEnabled,
@@ -439,6 +456,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.local_drink_outlined,
+                settingId: 'waterEnabled',
                 title: '물',
                 value: settings.waterEnabled,
                 enabled: _alertsEnabled,
@@ -448,6 +466,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.spa_outlined,
+                settingId: 'sunscreenEnabled',
                 title: '선크림',
                 value: settings.sunscreenEnabled,
                 enabled: _alertsEnabled,
@@ -467,7 +486,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _SettingsToggleTile(
                 icon: Icons.thunderstorm_outlined,
-                title: '많은 비 안내',
+                settingId: 'heavyRainEnabled',
+                title: '호우특보 안내',
+                subtitle: '발효된 호우특보의 시작·단계 변경·해제를 안내해요',
                 value: settings.heavyRainEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
@@ -476,7 +497,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.ac_unit_rounded,
-                title: '많은 눈 안내',
+                settingId: 'heavySnowEnabled',
+                title: '대설·많은 눈 안내',
+                subtitle: '발효된 대설특보와 예보 기반 많은 눈 대비를 안내해요',
                 value: settings.heavySnowEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
@@ -485,7 +508,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.device_thermostat_rounded,
-                title: '고온 안내',
+                settingId: 'heatwaveEnabled',
+                title: '폭염특보 안내',
+                subtitle: '발효된 폭염특보의 시작·단계 변경·해제를 안내해요',
                 value: settings.heatwaveEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
@@ -494,7 +519,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.severe_cold_outlined,
-                title: '저온 안내',
+                settingId: 'coldWaveEnabled',
+                title: '한파특보 안내',
+                subtitle: '발효된 한파특보의 시작·단계 변경·해제를 안내해요',
                 value: settings.coldWaveEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
@@ -503,8 +530,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.water_drop_outlined,
-                title: '소나기·약한 비 안내',
-                subtitle: '소나기, 이슬비, 가랑비를 구분해 한곳에서 관리해요',
+                settingId: 'showerAndLightRainEnabled',
+                title: '현재 비 안내',
+                subtitle:
+                    '관측분석·레이더가 일치한 현재 비를 안내해요. 우산도 켜고 GPS 정밀 위치를 확인해야 해요. 소나기 예보 알림은 아니에요',
                 value: settings.showerAndLightRainEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
@@ -513,12 +542,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               _SettingsToggleTile(
                 icon: Icons.wb_cloudy_outlined,
-                title: '오늘 날씨',
+                settingId: 'dailyWeatherEnabled',
+                title: '준비물 요약 알림',
+                subtitle: '추천할 준비물이 있을 때만 설정한 시간에 하루 한 번, 선택한 항목 중 최대 3개를 안내해요',
                 value: settings.dailyWeatherEnabled,
                 enabled: _alertsEnabled,
                 onChanged: (value) => _updateSettings(
                   settings.copyWith(dailyWeatherEnabled: value),
                 ),
+              ),
+              const Divider(height: 24),
+              const Text(
+                '추가 안내: 블랙아이스(도로살얼음)·도로통제·그 밖의 공식 특보는 개별 스위치 없이 전체 날씨 알림 설정을 따라요. 블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.',
+                key: ValueKey('additional-notification-contract'),
               ),
             ],
           ),
@@ -743,6 +779,7 @@ class _LocationRadioTile extends StatelessWidget {
 }
 
 class _SettingsToggleTile extends StatelessWidget {
+  final String settingId;
   final IconData icon;
   final String title;
   final String? subtitle;
@@ -751,6 +788,7 @@ class _SettingsToggleTile extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   const _SettingsToggleTile({
+    required this.settingId,
     required this.icon,
     required this.title,
     this.subtitle,
@@ -800,6 +838,7 @@ class _SettingsToggleTile extends StatelessWidget {
               ),
             ),
             Switch(
+              key: ValueKey('notification-toggle-$settingId'),
               value: value,
               onChanged: enabled ? onChanged : null,
             ),

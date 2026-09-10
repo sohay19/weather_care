@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   isNotificationTimeDue,
@@ -6,7 +6,7 @@ import {
 } from '../src/notification/notificationScheduler';
 import { FcmPayload } from '../src/notification/fcmClient';
 import { WeatherForecast } from '../src/providers/weather/weatherProvider';
-import { ServerEnv, WeatherSnapshot } from '../src/types';
+import { NotificationSettings, ServerEnv, WeatherSnapshot } from '../src/types';
 
 describe('notification scheduler', () => {
   beforeEach(async () => {
@@ -70,6 +70,169 @@ describe('notification scheduler', () => {
       env.DB.prepare('DELETE FROM notification_settings'),
       env.DB.prepare('DELETE FROM installations'),
     ]);
+  });
+
+  it('전체 알림을 끄면 모든 발송 경로와 외부 자료 조회를 건너뛴다', async () => {
+    await insertInstallation('device-token', true);
+    await savePreferences({ notificationEnabled: false });
+    const forecastLoader = vi.fn(async () => rainyForecast());
+    const warningLoader = vi.fn(async () => [officialWarning('R', '호우', '2')]);
+    const precipitationLoader = vi.fn(async () => precipitation('RAIN'));
+    const roadIceLoader = vi.fn(async () => roadIceRisk());
+    const roadControlLoader = vi.fn(async () => roadControl());
+    const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) => payloads.map(successResult));
+    await runRecommendationNotificationJob(testBindings('key', 'its-key'), {
+      now: new Date('2026-09-02T07:00:00+09:00'), forecastLoader, warningLoader,
+      precipitationLoader, roadIceLoader, roadControlLoader, sender,
+    });
+    for (const action of [forecastLoader, warningLoader, precipitationLoader, roadIceLoader, roadControlLoader, sender]) {
+      expect(action).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each([
+    ['umbrellaEnabled', '우산'], ['parasolEnabled', '양산'],
+    ['outerwearEnabled', '겉옷'], ['maskEnabled', '마스크'],
+    ['waterEnabled', '물'], ['sunscreenEnabled', '차단제'],
+  ] as const)('%s는 해당 준비물 요약을 실제로 제어한다', async (field, word) => {
+    await insertInstallation('device-token');
+    const sent: FcmPayload[] = [];
+    const settings = {
+      umbrellaEnabled: false, parasolEnabled: false, outerwearEnabled: false,
+      maskEnabled: false, waterEnabled: false, sunscreenEnabled: false,
+      heavySnowEnabled: false, dailyWeatherEnabled: true,
+    };
+    const forecast = preparationForecast(field === 'outerwearEnabled');
+    const dependencies = {
+      now: new Date('2026-09-02T07:00:00+09:00'),
+      forecastLoader: async () => forecast, sender: collectingSender(sent),
+    };
+    await savePreferences(settings);
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent).toEqual([]);
+    await savePreferences({ [field]: true });
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].notificationKey).toBe('MORNING_BRIEF');
+    expect(sent[0].body).toContain(word);
+  });
+
+  it('준비물 요약 끄기는 현재 비나 많은 눈 별도 안내를 끄지 않는다', async () => {
+    await insertInstallation('device-token', true);
+    await savePreferences({ dailyWeatherEnabled: false });
+    const sent: FcmPayload[] = [];
+    const forecast = rainyForecast();
+    forecast.hourly = forecast.hourly.map((item) => ({ ...item,
+      precipitationType: 'SNOW', snowfallAmount: 6,
+      snowfallAmountRange: { type: 'VALUE', min: 6, max: 6, unit: 'CM', rawValue: '6cm' },
+    }));
+    const dependencies = {
+      now: new Date('2026-09-02T07:00:00+09:00'),
+      forecastLoader: async () => forecast, warningLoader: async () => [],
+      precipitationLoader: async () => precipitation('RAIN'), roadIceLoader: async () => undefined,
+      sender: collectingSender(sent),
+    };
+    await runRecommendationNotificationJob(testBindings('key'), dependencies);
+    expect(sent.map((item) => item.notificationKey)).toEqual(['CURRENT_RAIN', 'IMPORTANT_HEAVY_SNOW_CAUTION']);
+  });
+
+  it('대설·많은 눈 끄기는 특보뿐 아니라 예보 기반 많은 눈 별도 알림도 끈다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({ heavySnowEnabled: false, dailyWeatherEnabled: false });
+    const sent: FcmPayload[] = [];
+    const forecast = rainyForecast();
+    forecast.hourly = forecast.hourly.map((item) => ({ ...item,
+      precipitationType: 'SNOW', snowfallAmount: 6,
+      snowfallAmountRange: { type: 'VALUE', min: 6, max: 6, unit: 'CM', rawValue: '6cm' },
+    }));
+    const dependencies = { now: new Date('2026-09-02T07:00:00+09:00'),
+      forecastLoader: async () => forecast, sender: collectingSender(sent) };
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent).toEqual([]);
+    await savePreferences({ heavySnowEnabled: true });
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent.map((item) => item.notificationKey)).toEqual(['IMPORTANT_HEAVY_SNOW_CAUTION']);
+  });
+
+  it.each([
+    ['R', 'heavyRainEnabled'], ['S', 'heavySnowEnabled'],
+    ['H', 'heatwaveEnabled'], ['C', 'coldWaveEnabled'],
+  ] as const)('%s 스위치는 자기 특보의 시작·변경·해제만 제어한다', async (code, field) => {
+    await insertInstallation('device-token');
+    await savePreferences({ [field]: false, dailyWeatherEnabled: false });
+    const sent: FcmPayload[] = [];
+    const warnings = [['R', '호우'], ['S', '대설'], ['H', '폭염'], ['C', '한파']]
+      .map(([typeCode, type]) => ({ ...officialWarning('R', '호우', '2'), typeCode, type }));
+    for (const [transition, values] of [
+      ['ACTIVE', warnings],
+      ['CHANGED', warnings.map((warning) => ({ ...warning, levelCode: '3' as const, level: '경보' as const }))],
+      ['RELEASED', []],
+    ] as const) {
+      sent.length = 0;
+      await runRecommendationNotificationJob(testBindings('key'), {
+        now: new Date('2026-09-02T08:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+        warningLoader: async () => [...values], sender: collectingSender(sent),
+      });
+      expect(sent).toHaveLength(3);
+      expect(sent.every((item) => item.notificationKey.startsWith(`OFFICIAL_WARNING_${transition}_`))).toBe(true);
+      expect(sent.some((item) => item.notificationKey.includes(`_${code}_`))).toBe(false);
+    }
+  });
+
+  it.each([[false, false], [false, true], [true, false], [true, true]])(
+    '현재 비는 우산 %s / 현재 비 %s 두 스위치를 함께 적용한다', async (umbrellaEnabled, showerAndLightRainEnabled) => {
+      await insertInstallation('device-token', true);
+      await savePreferences({ umbrellaEnabled, showerAndLightRainEnabled, dailyWeatherEnabled: false });
+      const sent: FcmPayload[] = [];
+      await runRecommendationNotificationJob(testBindings('key'), {
+        now: new Date('2026-09-02T08:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+        warningLoader: async () => [], roadIceLoader: async () => undefined,
+        precipitationLoader: async () => precipitation('RAIN'), sender: collectingSender(sent),
+      });
+      expect(sent.map((item) => item.notificationKey))
+        .toEqual(umbrellaEnabled && showerAndLightRainEnabled ? ['CURRENT_RAIN'] : []);
+    },
+  );
+
+  it('현재 비 스위치 끄기가 정기 우산 요약을 끄지는 않는다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({ showerAndLightRainEnabled: false });
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+      sender: collectingSender(sent),
+    });
+    expect(sent.map((item) => item.notificationKey)).toEqual(['MORNING_BRIEF']);
+  });
+
+  it('요약은 추천할 준비물이 없으면 발송하지 않고 있으면 최대 세 개다', async () => {
+    await insertInstallation('device-token');
+    const sent: FcmPayload[] = [];
+    const forecast = rainyForecast();
+    forecast.hourly = [];
+    const dependencies = { now: new Date('2026-09-02T07:00:00+09:00'),
+      forecastLoader: async () => forecast, sender: collectingSender(sent) };
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent).toEqual([]);
+    forecast.hourly = preparationForecast(false).hourly;
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body.split('.').filter((part) => part.trim())).toHaveLength(3);
+  });
+
+  it('개별 특보 스위치와 별개로 기타 특보·블랙아이스·도로통제는 전체 설정을 따른다', async () => {
+    await insertInstallation('device-token', true);
+    await savePreferences({ dailyWeatherEnabled: false, heavyRainEnabled: false,
+      heavySnowEnabled: false, heatwaveEnabled: false, coldWaveEnabled: false,
+      umbrellaEnabled: false, showerAndLightRainEnabled: false });
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings('key', 'its-key'), {
+      now: new Date('2026-09-02T08:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [{ ...officialWarning('R', '호우', '2'), typeCode: 'W', type: '강풍' }],
+      precipitationLoader: async () => precipitation('DRY'), roadIceLoader: async () => roadIceRisk(),
+      roadControlLoader: async () => roadControl(), sender: collectingSender(sent),
+    });
+    expect(sent.map((item) => item.notificationTopic)).toEqual(['STRONG_WIND', 'ROAD_ICE', 'COMMUTE']);
   });
 
   it('sends a due brief once and records only a successful send', async () => {
@@ -425,6 +588,30 @@ describe('notification time slots', () => {
     expect(isNotificationTimeDue('00:00', '23:55')).toBe(true);
   });
 });
+
+async function savePreferences(settings: Partial<NotificationSettings>) {
+  const response = await SELF.fetch('https://example.com/api/v1/notification-settings/installation-1', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings),
+  });
+  expect(response.status).toBe(200);
+}
+
+function preparationForecast(cold: boolean): WeatherForecast {
+  const forecast = rainyForecast();
+  forecast.hourly = [9, 10, 11].map((hour) => ({ ...snapshot(hour),
+    temperature: cold ? -10 : 35, apparentTemperature: cold ? -15 : 40,
+    humidity: 80, uvIndex: 10, pm10: 120, pm25: 70, airQualityGrade: 4,
+  }));
+  return forecast;
+}
+
+function precipitation(state: 'RAIN' | 'DRY' | 'MISMATCH') {
+  return { state, observedAt: '2026-09-02T08:00:00+09:00',
+    latitude: 37.2636, longitude: 127.0286,
+    analysisRainDetected: state !== 'DRY', radarRainDetected: state === 'RAIN',
+    provider: 'KMA_ANALYSIS_RADAR' as const,
+  };
+}
 
 async function insertInstallation(
   token: string,

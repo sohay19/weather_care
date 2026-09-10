@@ -38,7 +38,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
           HomeSectionHeader(
             icon: Icons.work_outline_rounded,
             title: 'Check List',
-            subtitle: '필요한 것만 모았어요',
+            subtitle: '오늘 준비할 물건을 확인해요',
           ),
           const SizedBox(height: 18),
           if (visible.isEmpty)
@@ -58,7 +58,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
                     for (final recommendation in visible)
                       SizedBox(
                         width: itemWidth,
-                        height: 196,
+                        height: 164,
                         child: _BagItem(
                           key: ValueKey(
                             'bag-item-${recommendation.type.apiName.toLowerCase()}',
@@ -89,7 +89,9 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '카드를 누르면 챙긴 항목으로 표시돼요',
+                  visible.isEmpty
+                      ? '준비물이 생기면 필요한 시간도 함께 알려드려요'
+                      : '준비물은 여기서 체크하고, 필요한 시간은 아래에서 확인하세요',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -167,17 +169,6 @@ class _BagItem extends StatelessWidget {
                       color: WeatherCareTheme.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    type.statusLabel,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: WeatherCareTheme.microTextStyle.copyWith(
-                      fontSize: 10.5,
-                      height: 1.3,
                     ),
                   ),
                   const Spacer(),

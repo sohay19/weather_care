@@ -598,6 +598,12 @@ void main() {
 
     final bagItem = find.byKey(const ValueKey('bag-item-umbrella'));
     expect(bagItem, findsOneWidget);
+    expect(find.text('오늘 준비할 물건을 확인해요'), findsOneWidget);
+    expect(find.text('오후부터 필요해요'), findsNothing);
+    expect(
+      find.text('준비물은 여기서 체크하고, 필요한 시간은 아래에서 확인하세요'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
 
     await tester.tap(bagItem);
@@ -657,6 +663,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(tester.getSize(find.text('점심 무렵')).height, lessThan(40));
+    expect(find.text('이 시간에 필요해요'), findsOneWidget);
     expect(find.bySemanticsLabel('선크림 근거 보기'), findsOneWidget);
 
     await tester.tap(

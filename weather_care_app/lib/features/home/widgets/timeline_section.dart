@@ -27,7 +27,7 @@ class TimelineSection extends StatelessWidget {
           const HomeSectionHeader(
             icon: Icons.schedule_rounded,
             title: '간단한 타임라인',
-            subtitle: '시간의 흐름에 맞춰 변화를 알려드려요',
+            subtitle: '준비물이 필요한 시간과 날씨를 확인해요',
           ),
           const SizedBox(height: 18),
           if (items.isEmpty)
@@ -139,6 +139,14 @@ class _TimelineItemView extends StatelessWidget {
                     ),
                     if (recommendations.isNotEmpty) ...[
                       const SizedBox(height: 10),
+                      Text(
+                        '이 시간에 필요해요',
+                        style: WeatherCareTheme.microTextStyle.copyWith(
+                          color: WeatherCareTheme.textSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,

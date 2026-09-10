@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/app.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
@@ -19,6 +20,8 @@ import 'package:weather_care/theme/weather_theme.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   test('recommendation categories share one color palette', () {
     expect(
       RecommendationType.values.map((type) => type.accentColor).toSet(),
@@ -632,6 +635,7 @@ void main() {
     );
 
     final bagItem = find.byKey(const ValueKey('bag-item-umbrella'));
+    await tester.pumpAndSettle();
     expect(bagItem, findsOneWidget);
     expect(find.text('오늘 준비할 물건을 확인해요'), findsOneWidget);
     expect(find.text('오후부터 필요해요'), findsNothing);

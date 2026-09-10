@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
+import '../../../services/preparation_checklist_repository.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
@@ -11,12 +13,16 @@ class RecommendationBagSection extends StatefulWidget {
   final String regionName;
   final List<WeatherRecommendation> recommendations;
   final ValueChanged<RecommendationType> onDetail;
+  final PreparationChecklistRepository checklistRepository;
+  final DateTime Function()? now;
 
   const RecommendationBagSection({
     super.key,
     required this.regionName,
     required this.recommendations,
     required this.onDetail,
+    this.checklistRepository = const PreparationChecklistRepository(),
+    this.now,
   });
 
   @override
@@ -24,8 +30,112 @@ class RecommendationBagSection extends StatefulWidget {
       _RecommendationBagSectionState();
 }
 
-class _RecommendationBagSectionState extends State<RecommendationBagSection> {
-  final Map<RecommendationType, bool> _checked = {};
+class _RecommendationBagSectionState extends State<RecommendationBagSection>
+    with WidgetsBindingObserver {
+  Set<RecommendationType> _checked = {};
+  String? _date;
+  Timer? _midnightTimer;
+  int _loadRevision = 0;
+  bool _loading = true;
+  bool _saving = false;
+  bool _loadFailed = false;
+
+  DateTime get _now => (widget.now ?? DateTime.now)();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshDate();
+  }
+
+  @override
+  void didUpdateWidget(covariant RecommendationBagSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _refreshDate();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshDate(retry: _loadFailed);
+    }
+  }
+
+  void _refreshDate({bool retry = false}) {
+    final now = _now;
+    final date = preparationDateInKorea(now);
+    _midnightTimer?.cancel();
+    _midnightTimer = Timer(untilPreparationMidnight(now), _refreshDate);
+    if (_date == date && !retry) return;
+    final revision = ++_loadRevision;
+    setState(() {
+      _date = date;
+      _checked = {};
+      _loading = true;
+      _loadFailed = false;
+    });
+    unawaited(_restore(date, revision));
+  }
+
+  Future<void> _restore(String date, int revision) async {
+    try {
+      final checked = await widget.checklistRepository.load(date);
+      if (!mounted || revision != _loadRevision) return;
+      if (date != preparationDateInKorea(_now)) {
+        _refreshDate();
+        return;
+      }
+      setState(() {
+        _checked = checked;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted || revision != _loadRevision) return;
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
+    }
+  }
+
+  Future<void> _toggle(RecommendationType type) async {
+    if (_loading || _saving || _loadFailed) return;
+    if (_date != preparationDateInKorea(_now)) {
+      _refreshDate();
+      return;
+    }
+    final date = _date!;
+    final revision = _loadRevision;
+    final previous = _checked;
+    final updated = {...previous};
+    if (!updated.remove(type)) updated.add(type);
+    setState(() {
+      _checked = updated;
+      _saving = true;
+    });
+    try {
+      await widget.checklistRepository.save(date, updated);
+    } catch (_) {
+      if (!mounted) return;
+      if (revision == _loadRevision) setState(() => _checked = previous);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('체크 상태를 저장하지 못했어요. 다시 눌러주세요')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+        _refreshDate();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _midnightTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,13 +183,15 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
                             'bag-item-${recommendation.type.apiName.toLowerCase()}',
                           ),
                           recommendation: recommendation,
-                          checked: _checked[recommendation.type] == true,
-                          onToggle: () {
-                            setState(() {
-                              _checked[recommendation.type] =
-                                  !(_checked[recommendation.type] == true);
-                            });
-                          },
+                          checked: _checked.contains(recommendation.type),
+                          pendingLabel: _loading
+                              ? '확인 중'
+                              : _loadFailed
+                                  ? '확인 필요'
+                                  : null,
+                          onToggle: _loading || _saving || _loadFailed
+                              ? null
+                              : () => _toggle(recommendation.type),
                           onDetail: () => widget.onDetail(recommendation.type),
                         ),
                       ),
@@ -88,6 +200,11 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
               },
             ),
           if (visible.isNotEmpty) ...[
+            if (_loadFailed)
+              TextButton(
+                onPressed: () => _refreshDate(retry: true),
+                child: const Text('체크 상태를 불러오지 못했어요 · 다시 시도'),
+              ),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -105,6 +222,11 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
+            Text(
+              '체크는 오늘만 유지돼요 · 한국시간 0시에 초기화돼요',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ],
       ),
@@ -115,7 +237,8 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection> {
 class _BagItem extends StatelessWidget {
   final WeatherRecommendation recommendation;
   final bool checked;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
+  final String? pendingLabel;
   final VoidCallback onDetail;
 
   const _BagItem({
@@ -124,6 +247,7 @@ class _BagItem extends StatelessWidget {
     required this.checked,
     required this.onToggle,
     required this.onDetail,
+    this.pendingLabel,
   });
 
   @override
@@ -190,7 +314,7 @@ class _BagItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(11),
                     ),
                     child: Text(
-                      checked ? '챙겼어요' : '챙길게요',
+                      pendingLabel ?? (checked ? '챙겼어요' : '챙길게요'),
                       maxLines: 1,
                       style: TextStyle(
                         color: checked ? Colors.white : type.accentColor,

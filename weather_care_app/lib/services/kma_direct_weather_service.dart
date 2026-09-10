@@ -219,7 +219,7 @@ DirectKmaWeatherBundle _buildBundle(
               snowExpected: item.snowExpected,
               snowfallAmount: item.snowfallAmount,
               snowfallAmountLabel: item.snowfallAmountLabel,
-              windSpeed: item.windSpeed ?? 0,
+              windSpeed: item.windSpeed,
               skyCondition: item.skyCondition,
             ),
           )
@@ -258,7 +258,8 @@ List<_DirectDaily> _buildDaily(
     final categories = categoriesByDate[date]!;
     final snapshots =
         hourly.where((item) => _compactDate(item.observedAt) == date).toList();
-    final temperatures = snapshots.map((item) => item.temperature).toList();
+    final temperatures =
+        snapshots.map((item) => item.temperature).whereType<double>().toList();
     return _DirectDaily(
       date: date,
       minTemperature: _firstNumber(categories['TMN']) ?? _minimum(temperatures),
@@ -272,26 +273,41 @@ _DirectSnapshot? _snapshotFromSlot(
   String slotKey,
   Map<String, String> categories,
 ) {
-  final temperature = double.tryParse(categories['TMP'] ?? '');
-  if (temperature == null) return null;
-  final precipitationType = double.tryParse(categories['PTY'] ?? '') ?? 0;
-  final precipitationProbability =
-      double.tryParse(categories['POP'] ?? '') ?? 0;
+  // TMN/TMX 전용 슬롯은 제외하지만, 기온만 누락된 시간대는 유지한다.
+  const hourlyCategories = {
+    'TMP',
+    'REH',
+    'WSD',
+    'POP',
+    'PCP',
+    'SNO',
+    'PTY',
+    'SKY'
+  };
+  if (!categories.keys.any(hourlyCategories.contains)) return null;
+  final temperature = _parseNumber(categories['TMP']);
+  final precipitationType = _parseNumber(categories['PTY'])?.round();
+  final precipitationProbability = _parseNumber(categories['POP']);
+  final snowfallAmount = _parseAmount(categories['SNO']);
   return _DirectSnapshot(
     observedAt: _kmaSlotToDateTime(slotKey),
     temperature: temperature,
-    humidity: double.tryParse(categories['REH'] ?? ''),
-    windSpeed: double.tryParse(categories['WSD'] ?? ''),
+    humidity: _parseNumber(categories['REH']),
+    windSpeed: _parseNumber(categories['WSD']),
     precipitationProbability: precipitationProbability,
     precipitationAmount: _parseAmount(categories['PCP']),
     precipitationAmountLabel: _amountDisplayLabel(categories['PCP'], 'mm'),
-    snowExpected: const [2, 3, 6, 7].contains(precipitationType.round()) ||
-        _parseAmount(categories['SNO']) > 0,
-    snowfallAmount: _parseAmount(categories['SNO']),
+    snowExpected: const [2, 3, 6, 7].contains(precipitationType) ||
+            (snowfallAmount != null && snowfallAmount > 0)
+        ? true
+        : const [0, 1, 4, 5].contains(precipitationType)
+            ? false
+            : null,
+    snowfallAmount: snowfallAmount,
     snowfallAmountLabel: _amountDisplayLabel(categories['SNO'], 'cm'),
     skyCondition: _weatherLabel(
-      precipitationType.round(),
-      double.tryParse(categories['SKY'] ?? '')?.round(),
+      precipitationType,
+      _parseNumber(categories['SKY'])?.round(),
     ),
   );
 }
@@ -363,7 +379,7 @@ String _representativeWeather(List<_DirectSnapshot> snapshots) {
   return '정보 없음';
 }
 
-String _weatherLabel(int precipitationType, int? skyCode) {
+String? _weatherLabel(int? precipitationType, int? skyCode) {
   const precipitationLabels = {
     1: '비',
     2: '비/눈',
@@ -373,19 +389,32 @@ String _weatherLabel(int precipitationType, int? skyCode) {
     6: '빗방울/눈날림',
     7: '눈날림',
   };
-  return precipitationLabels[precipitationType] ??
-      const {1: '맑음', 3: '구름 많음', 4: '흐림'}[skyCode] ??
-      '맑음';
+  // SKY만으로 강수 형태까지 확인됐다고 안내하지 않는다.
+  if (precipitationType == 0) {
+    return const {1: '맑음', 3: '구름 많음', 4: '흐림'}[skyCode];
+  }
+  return precipitationLabels[precipitationType];
 }
 
-double _parseAmount(String? value) {
-  if (value == null || value.contains('없음')) return 0;
-  final match = RegExp(r'\d+(?:[.,]\d+)?').firstMatch(value);
-  return double.tryParse(match?.group(0)?.replaceAll(',', '.') ?? '') ?? 0;
+double? _parseNumber(String? value) {
+  final parsed = double.tryParse(value ?? '');
+  return parsed?.isFinite == true ? parsed : null;
+}
+
+double? _parseAmount(String? value) {
+  if (value == null) return null;
+  if (value.trim() == '강수없음' || value.trim() == '적설없음') return 0;
+  final match = RegExp(r'^\s*(\d+(?:[.,]\d+)?)').firstMatch(value);
+  final number = _parseNumber(match?.group(1)?.replaceAll(',', '.'));
+  if (number == null) return null;
+  // 미만 구간의 상한을 정확한 양으로 사용하지 않는다. 표시는 원래 범위를 쓴다.
+  return value.contains('미만') ? 0 : number;
 }
 
 String? _amountDisplayLabel(String? value, String unit) {
-  if (value == null || value.contains('없음')) return null;
+  if (value == null || value.contains('없음') || _parseAmount(value) == null) {
+    return null;
+  }
   final normalized = value.replaceAll(' ', '');
   if (normalized.isEmpty) return null;
   if (normalized.contains('미만')) {
@@ -491,16 +520,16 @@ class _KmaItem {
 
 class _DirectSnapshot {
   final DateTime observedAt;
-  final double temperature;
+  final double? temperature;
   final double? humidity;
   final double? windSpeed;
-  final double precipitationProbability;
-  final double precipitationAmount;
+  final double? precipitationProbability;
+  final double? precipitationAmount;
   final String? precipitationAmountLabel;
-  final bool snowExpected;
-  final double snowfallAmount;
+  final bool? snowExpected;
+  final double? snowfallAmount;
   final String? snowfallAmountLabel;
-  final String skyCondition;
+  final String? skyCondition;
 
   const _DirectSnapshot({
     required this.observedAt,
@@ -517,18 +546,20 @@ class _DirectSnapshot {
   });
 
   double? get apparentTemperature {
+    final availableTemperature = temperature;
+    if (availableTemperature == null) return null;
     final forecastAtKst = observedAt.toUtc().add(const Duration(hours: 9));
     final summerInputsAvailable = forecastAtKst.month >= 5 &&
         forecastAtKst.month <= 9 &&
         humidity != null;
     final winterInputsAvailable =
         (forecastAtKst.month >= 10 || forecastAtKst.month <= 4) &&
-            temperature <= 10 &&
+            availableTemperature <= 10 &&
             windSpeed != null &&
             windSpeed! >= 1.3;
     if (!summerInputsAvailable && !winterInputsAvailable) return null;
     return calculateKmaApparentTemperature(
-      temperature,
+      availableTemperature,
       humidity: humidity,
       windSpeed: windSpeed,
       forecastAt: observedAt,

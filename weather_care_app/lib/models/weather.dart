@@ -71,19 +71,19 @@ class CurrentWeather {
 class HourlyWeatherItem {
   final String time;
   final String? forecastDate;
-  final double temperature;
+  final double? temperature;
   final double? apparentTemperature;
-  final double precipitationProbability;
-  final double precipitationAmount;
+  final double? precipitationProbability;
+  final double? precipitationAmount;
   final String? precipitationAmountLabel;
-  final bool snowExpected;
-  final double snowfallAmount;
+  final bool? snowExpected;
+  final double? snowfallAmount;
   final String? snowfallAmountLabel;
-  final double windSpeed;
+  final double? windSpeed;
   final double? uvIndex;
   final int? pm10;
   final int? pm25;
-  final String skyCondition;
+  final String? skyCondition;
 
   const HourlyWeatherItem({
     required this.time,
@@ -106,53 +106,71 @@ class HourlyWeatherItem {
   factory HourlyWeatherItem.fromJson(Map<String, dynamic> json) {
     final observedAt =
         json['forecastAt']?.toString() ?? json['observedAt']?.toString() ?? '';
-    final parsedTime =
-        observedAt.length >= 13 ? observedAt.substring(11, 13) : '--';
-    final parsedDate =
-        observedAt.length >= 10 ? observedAt.substring(0, 10) : null;
-    final snowfallAmount = (json['snowfallAmount'] as num?)?.toDouble() ?? 0;
-    final legacySnowProbability =
-        (json['snowProbability'] as num?)?.toDouble() ?? 0;
+    final parsed =
+        observedAt.contains('T') ? DateTime.tryParse(observedAt) : null;
+    final inKorea =
+        parsed?.isUtc == true ? parsed!.add(const Duration(hours: 9)) : parsed;
+    final parsedTime = inKorea?.hour.toString().padLeft(2, '0') ?? '--';
+    final parsedDate = inKorea == null
+        ? null
+        : '${inKorea.year.toString().padLeft(4, '0')}-'
+            '${inKorea.month.toString().padLeft(2, '0')}-'
+            '${inKorea.day.toString().padLeft(2, '0')}';
+    final snowfallAmount = _optionalNumber(json['snowfallAmount']);
+    final legacySnowProbability = _optionalNumber(json['snowProbability']);
+    final explicitSnowExpected = json['snowExpected'];
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
       forecastDate: json['forecastDate']?.toString() ?? parsedDate,
-      temperature: (json['temperature'] as num?)?.toDouble() ?? 0,
-      apparentTemperature: (json['apparentTemperature'] as num?)?.toDouble(),
+      temperature: _optionalNumber(json['temperature']),
+      apparentTemperature: _optionalNumber(json['apparentTemperature']),
       precipitationProbability:
-          (json['precipitationProbability'] as num?)?.toDouble() ?? 0,
-      precipitationAmount:
-          (json['precipitationAmount'] as num?)?.toDouble() ?? 0,
+          _optionalNumber(json['precipitationProbability']),
+      precipitationAmount: _optionalNumber(json['precipitationAmount']),
       precipitationAmountLabel: _amountRangeLabel(
         json['precipitationAmountRange'],
         'mm',
       ),
-      snowExpected: json['snowExpected'] == true ||
-          legacySnowProbability > 0 ||
-          snowfallAmount > 0,
+      snowExpected: explicitSnowExpected == true ||
+              (legacySnowProbability != null && legacySnowProbability > 0) ||
+              (snowfallAmount != null && snowfallAmount > 0)
+          ? true
+          : explicitSnowExpected is bool
+              ? explicitSnowExpected
+              : legacySnowProbability == null
+                  ? null
+                  : false,
       snowfallAmount: snowfallAmount,
       snowfallAmountLabel: _amountRangeLabel(
         json['snowfallAmountRange'],
         'cm',
       ),
-      windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0,
-      uvIndex: (json['uvIndex'] as num?)?.toDouble(),
-      pm10: (json['pm10'] as num?)?.toInt(),
-      pm25: (json['pm25'] as num?)?.toInt(),
-      skyCondition: json['skyCondition']?.toString() ?? '맑음',
+      windSpeed: _optionalNumber(json['windSpeed']),
+      uvIndex: _optionalNumber(json['uvIndex']),
+      pm10: _optionalNumber(json['pm10'])?.toInt(),
+      pm25: _optionalNumber(json['pm25'])?.toInt(),
+      skyCondition: _optionalText(json['skyCondition']),
     );
   }
 }
 
+double? _optionalNumber(Object? value) =>
+    value is num && value.isFinite ? value.toDouble() : null;
+
+String? _optionalText(Object? value) =>
+    value is String && value.trim().isNotEmpty ? value.trim() : null;
+
 String? _amountRangeLabel(Object? raw, String fallbackUnit) {
   if (raw is! Map<String, dynamic>) return null;
   final type = raw['type']?.toString();
-  final min = (raw['min'] as num?)?.toDouble();
-  final max = (raw['max'] as num?)?.toDouble();
+  final min = _optionalNumber(raw['min']);
+  final max = _optionalNumber(raw['max']);
   final unit = raw['unit']?.toString() == 'CM' ? 'cm' : fallbackUnit;
   String number(double value) => value == value.roundToDouble()
       ? value.toInt().toString()
       : value.toStringAsFixed(1);
   return switch (type) {
+    'NONE' => '0$unit',
     'LESS_THAN' when max != null => '${number(max)}$unit 미만',
     'RANGE' when min != null && max != null =>
       '${number(min)}~${number(max)}$unit',

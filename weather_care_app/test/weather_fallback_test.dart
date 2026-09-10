@@ -195,6 +195,91 @@ void main() {
     expect(response.hourly.single.snowfallAmount, 1.2);
   });
 
+  test('직접 조회에서도 기온 누락 슬롯을 유지하고 나머지 결측을 0으로 채우지 않는다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {'REH': '70'}),
+      ..._slot('20260820', '1100', {
+        'TMP': '0',
+        'WSD': '0',
+        'POP': '0',
+        'PCP': '강수없음',
+        'SNO': '적설없음',
+        'PTY': '0',
+        'SKY': '1',
+      }),
+      _item('20260820', '1500', 'TMX', '3'),
+    ]);
+    expect(bundle.today.hourly, hasLength(2));
+    final missing = bundle.today.hourly.first;
+    expect(missing.time, '10');
+    expect(missing.temperature, isNull);
+    expect(missing.apparentTemperature, isNull);
+    expect(missing.windSpeed, isNull);
+    expect(missing.precipitationProbability, isNull);
+    expect(missing.precipitationAmount, isNull);
+    expect(missing.snowExpected, isNull);
+    expect(missing.snowfallAmount, isNull);
+    expect(missing.skyCondition, isNull);
+    expect(bundle.today.current.temperature, isNull);
+    expect(bundle.today.current.sky, isNull);
+    final zero = bundle.today.hourly.last;
+    expect(zero.temperature, 0);
+    expect(zero.windSpeed, 0);
+    expect(zero.precipitationProbability, 0);
+    expect(zero.precipitationAmount, 0);
+    expect(zero.snowExpected, isFalse);
+    expect(zero.snowfallAmount, 0);
+    expect(zero.skyCondition, '맑음');
+    expect(bundle.weekly.days.single.min, '0');
+    expect(bundle.weekly.days.single.max, '3');
+  });
+
+  test('직접 조회의 모든 기온이 누락돼도 일 최저·최고를 0으로 계산하지 않는다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {'WSD': '2'}),
+      ..._slot('20260820', '1100', {'REH': '50'}),
+    ]);
+    expect(bundle.today.hourly, hasLength(2));
+    expect(bundle.weekly.days.single.min, '--');
+    expect(bundle.weekly.days.single.max, '--');
+    expect(bundle.weekly.days.single.weatherLabel, '정보 없음');
+  });
+
+  test('직접 조회의 미만 범위를 상한값으로 바꾸지 않고 비정상 자료를 결측으로 유지한다', () async {
+    final bundle = await _fetchPartialSlots([
+      ..._slot('20260820', '1000', {
+        'TMP': '5',
+        'PTY': '3',
+        'PCP': '1.0mm 미만',
+        'SNO': '0.5cm 미만',
+      }),
+      ..._slot('20260820', '1100', {
+        'TMP': 'NaN',
+        'WSD': '--',
+        'POP': '자료없음',
+        'PCP': '확인 불가',
+        'SNO': '자료없음',
+        'SKY': '1',
+      }),
+    ]);
+    final range = bundle.today.hourly.first;
+    expect(range.precipitationAmount, 0);
+    expect(range.precipitationAmountLabel, '1.0mm 미만');
+    expect(range.snowfallAmount, 0);
+    expect(range.snowfallAmountLabel, '0.5cm 미만');
+    expect(range.snowExpected, isTrue);
+    expect(range.skyCondition, '눈');
+    final missing = bundle.today.hourly.last;
+    expect(missing.temperature, isNull);
+    expect(missing.windSpeed, isNull);
+    expect(missing.precipitationProbability, isNull);
+    expect(missing.precipitationAmount, isNull);
+    expect(missing.precipitationAmountLabel, isNull);
+    expect(missing.snowfallAmount, isNull);
+    expect(missing.snowfallAmountLabel, isNull);
+    expect(missing.skyCondition, isNull);
+  });
+
   test('인터넷 연결이 없으면 날씨 미지원 상태를 반환한다', () async {
     final service = WeatherService(
       _FailingApiClient(),
@@ -208,6 +293,25 @@ void main() {
     expect(result.hasWeather, isFalse);
     expect(result.message, contains('인터넷 연결 불가'));
   });
+}
+
+Future<DirectKmaWeatherBundle> _fetchPartialSlots(
+    List<Map<String, dynamic>> items) {
+  return KmaDirectWeatherService(
+    serviceKey: 'test-key',
+    now: () => DateTime.parse('2026-08-20T01:00:00Z'),
+    client: MockClient((_) async => http.Response(
+        jsonEncode({
+          'response': {
+            'header': {'resultCode': '00'},
+            'body': {
+              'items': {'item': items}
+            },
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'})),
+  ).fetch(nx: 60, ny: 121);
 }
 
 class _JsonAssetBundle extends CachingAssetBundle {

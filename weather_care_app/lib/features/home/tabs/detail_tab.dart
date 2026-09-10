@@ -376,8 +376,13 @@ class _HourlyForecastCard extends StatelessWidget {
         children: [
           const HomeSectionHeader(
             icon: Icons.schedule_rounded,
-            title: '타임라인',
-            subtitle: '온도·체감·강수·자외선·대기질을 비교해요',
+            title: '시간별 예보',
+            subtitle: '기온·체감·강수·바람을 시간별로 비교해요',
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '자외선과 대기질은 자료가 있는 시간대에만 표시해요.',
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           if (visibleItems.isEmpty)
@@ -390,7 +395,7 @@ class _HourlyForecastCard extends StatelessWidget {
               ),
               child: Text(
                 items.isEmpty
-                    ? '서버에서 시간별 예보를 받으면 이곳에 표시해요.'
+                    ? '시간별 예보 자료가 없어 표시하기 어려워요.'
                     : '오늘 표시할 시간별 예보가 없어요.',
                 style: const TextStyle(
                   color: WeatherCareTheme.textSecondary,
@@ -433,6 +438,28 @@ class _HourlyRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rainAmount = item.precipitationAmountLabel ??
+        (item.precipitationAmount == null
+            ? null
+            : '${_amountNumber(item.precipitationAmount!)}mm');
+    final snowAmount = item.snowfallAmountLabel ??
+        (item.snowfallAmount == null
+            ? null
+            : '${_amountNumber(item.snowfallAmount!)}cm');
+    final showRain = (item.precipitationProbability ?? 0) > 0 ||
+        _hasPositiveAmount(rainAmount, 'mm');
+    final showSnow =
+        item.snowExpected == true || _hasPositiveAmount(snowAmount, 'cm');
+    final missing = [
+      if (item.precipitationProbability == null) '강수확률',
+      if (rainAmount == null) '강수량',
+      if (snowAmount == null) '쌓일 눈',
+      if (item.windSpeed == null) '풍속',
+    ];
+    final hour = int.tryParse(item.time);
+    final timeLabel = hour != null && hour >= 0 && hour < 24
+        ? '${hour.toString().padLeft(2, '0')}시'
+        : '시각 자료 없음';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -443,19 +470,20 @@ class _HourlyRow extends StatelessWidget {
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              SizedBox(
-                width: 42,
+              Flexible(
                 child: Text(
-                  '${item.time}시',
+                  timeLabel,
                   style: const TextStyle(
                     color: WeatherCareTheme.primaryDeep,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
+              const SizedBox(width: 12),
               WeatherConditionIcon(
                 condition: item.skyCondition,
                 size: 19,
@@ -464,23 +492,32 @@ class _HourlyRow extends StatelessWidget {
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  item.skyCondition,
+                  item.skyCondition ?? '날씨 자료 없음',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
               Text(
-                '${item.temperature.toStringAsFixed(0)}℃',
+                item.temperature == null
+                    ? '예상기온 자료 없음'
+                    : '예상기온 ${item.temperature!.toStringAsFixed(0)}℃',
                 style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(width: 7),
               Text(
                 item.apparentTemperature == null
-                    ? '체감 미지원'
+                    ? '예상 체감 자료 없음'
                     : '예상 체감 ${item.apparentTemperature!.toStringAsFixed(0)}℃',
                 style: const TextStyle(
                   color: WeatherCareTheme.textSecondary,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -491,44 +528,68 @@ class _HourlyRow extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              if (item.precipitationProbability > 0 ||
-                  item.precipitationAmount > 0)
+              if (showRain && item.precipitationProbability != null)
                 _MetricChip(
                   icon: Icons.water_drop_outlined,
-                  label: '강수확률 '
-                      '${item.precipitationProbability.toStringAsFixed(0)}%'
-                      '${item.precipitationAmountLabel == null ? '' : ' · ${item.precipitationAmountLabel}'}',
+                  label:
+                      '강수확률 ${item.precipitationProbability!.toStringAsFixed(0)}%',
                 ),
-              if (item.snowExpected)
+              if (_hasPositiveAmount(rainAmount, 'mm'))
+                _MetricChip(
+                  icon: Icons.water_drop_outlined,
+                  label: '강수량 $rainAmount',
+                ),
+              if (showSnow)
                 _MetricChip(
                   icon: Icons.ac_unit_rounded,
-                  label: item.snowfallAmountLabel == null
-                      ? '눈이 예보됐어요'
-                      : '눈 예상 · ${item.snowfallAmountLabel}',
+                  label: _hasPositiveAmount(snowAmount, 'cm')
+                      ? '쌓일 눈 $snowAmount'
+                      : '눈이 예보됐어요',
                 ),
-              _MetricChip(
-                icon: Icons.air_rounded,
-                label: '바람 ${item.windSpeed.toStringAsFixed(1)}m/s',
-              ),
+              if (item.windSpeed != null)
+                _MetricChip(
+                  icon: Icons.air_rounded,
+                  label: '바람 ${item.windSpeed!.toStringAsFixed(1)}m/s',
+                ),
               if (item.uvIndex != null)
                 _MetricChip(
                   icon: Icons.wb_sunny_outlined,
                   label: '자외선 ${item.uvIndex!.toStringAsFixed(0)}',
                 ),
-              if (item.pm25 != null || item.pm10 != null)
+              if (item.pm25 != null)
                 _MetricChip(
                   icon: Icons.grain_rounded,
-                  label: item.pm25 != null
-                      ? '초미세먼지 ${item.pm25}㎍/㎥'
-                      : '미세먼지 ${item.pm10}㎍/㎥',
+                  label: '초미세먼지 ${item.pm25}㎍/㎥',
+                ),
+              if (item.pm10 != null)
+                _MetricChip(
+                  icon: Icons.grain_rounded,
+                  label: '미세먼지 ${item.pm10}㎍/㎥',
                 ),
             ],
           ),
+          if (missing.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              '자료 없음: ${missing.join(' · ')}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: WeatherCareTheme.textSecondary,
+                  ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
+
+String _amountNumber(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toStringAsFixed(1);
+
+// 명시된 무강수·무적설은 반복 노출하지 않되, 미만·범위 예보는 보존한다.
+bool _hasPositiveAmount(String? label, String unit) =>
+    label != null && label != '0$unit' && label != '0.0$unit';
 
 class _MetricChip extends StatelessWidget {
   final IconData icon;
@@ -549,10 +610,12 @@ class _MetricChip extends StatelessWidget {
         children: [
           Icon(icon, size: 13, color: WeatherCareTheme.textSecondary),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: WeatherCareTheme.microTextStyle.copyWith(
-              color: WeatherCareTheme.textPrimary,
+          Flexible(
+            child: Text(
+              label,
+              style: WeatherCareTheme.microTextStyle.copyWith(
+                color: WeatherCareTheme.textPrimary,
+              ),
             ),
           ),
         ],

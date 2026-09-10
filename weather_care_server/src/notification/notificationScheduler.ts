@@ -24,6 +24,10 @@ import {
 import { FcmPayload, FcmSendResult, sendBatch } from './fcmClient';
 import { BuiltNotification, buildNotification } from './notificationBuilder';
 import {
+  warningDestination,
+  weatherDetailsDestination,
+} from './notificationDestination';
+import {
   activeWarningNotification,
   changedWarningNotification,
   releasedWarningNotification,
@@ -261,6 +265,8 @@ export async function runRecommendationNotificationJob(
     title: item.built.title,
     body: item.built.body,
     notificationKey: item.built.notification_key,
+    notificationTarget: item.built.destination.target,
+    notificationTopic: item.built.destination.topic,
   }));
   const results = await (dependencies.sender ?? defaultSender)(env, payloads);
   await recordResults(env.DB, pending, results, now.toISOString());
@@ -461,6 +467,7 @@ async function collectRoadIceNotification(
         notification_key: `ROAD_ICE_${risk.linkId}_${risk.level}_${risk.producedAt.replace(/\D/g, '')}`,
         title: content.title,
         body: content.body,
+        destination: weatherDetailsDestination('ROAD_ICE'),
       },
       roadIceRisk: risk,
     });
@@ -536,6 +543,7 @@ async function collectRoadControlNotification(
         notification_key: `ROAD_CONTROL_${notificationSafeKey(control.eventKey)}_${control.controlKind}`,
         title: content.title,
         body: content.body,
+        destination: weatherDetailsDestination('COMMUTE'),
       },
       roadControl: control,
     });
@@ -709,6 +717,7 @@ async function queueOrApplyWarningTransition(
       notification_key: notificationKey,
       title: content.title,
       body: content.body,
+      destination: warningDestination(typeCode),
     },
     warningStateMutation: mutation,
   });
@@ -866,6 +875,7 @@ async function collectCurrentRainNotification(
         notification_key: 'CURRENT_RAIN',
         title: '현재 강수 안내',
         body: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+        destination: weatherDetailsDestination('PRECIPITATION'),
       },
       rainObservedAt: observation.observedAt,
     });

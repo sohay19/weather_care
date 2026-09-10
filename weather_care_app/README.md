@@ -82,5 +82,5 @@ Copy-Item config/kma.config.example.json config/kma.config.json
 ## 다음 단계
 
 - GPS 권한 수집 및 지역 선택 플로우 구현
-- 알림 선택 시 상세 화면으로 이동하는 딥링크 매핑
+- 종료·백그라운드 상태에서 알림 선택 시 매핑된 메인·날씨 상세 화면 열기
 - Setting의 지역 선택과 서버 환경 Provider 지역 카탈로그 연결

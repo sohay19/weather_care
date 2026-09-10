@@ -24,6 +24,8 @@ describe('FCM HTTP v1 client', () => {
           title: '오늘 준비할 내용',
           body: '우산을 챙기세요',
           notificationKey: 'MORNING_BRIEF',
+          notificationTarget: 'MAIN',
+          notificationTopic: 'OVERVIEW',
         },
       ],
       { fetcher, accessTokenProvider },
@@ -41,7 +43,11 @@ describe('FCM HTTP v1 client', () => {
           title: '오늘 준비할 내용',
           body: '우산을 챙기세요',
         },
-        data: { notificationKey: 'MORNING_BRIEF' },
+        data: {
+          notificationKey: 'MORNING_BRIEF',
+          notificationTarget: 'MAIN',
+          notificationTopic: 'OVERVIEW',
+        },
       },
     });
     expect(results).toEqual([
@@ -75,6 +81,8 @@ describe('FCM HTTP v1 client', () => {
           title: '제목',
           body: '본문',
           notificationKey: 'MORNING_BRIEF',
+          notificationTarget: 'MAIN',
+          notificationTopic: 'OVERVIEW',
         },
       ],
       { fetcher, accessTokenProvider: async () => 'access-token' },

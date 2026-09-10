@@ -1,9 +1,15 @@
 import { Recommendation } from '../types';
+import {
+  morningBriefDestination,
+  NotificationDestination,
+  recommendationDestination,
+} from './notificationDestination';
 
 export interface BuiltNotification {
   notification_key: string;
   title: string;
   body: string;
+  destination: NotificationDestination;
 }
 
 export function buildNotification(recommendations: Recommendation[]): BuiltNotification[] {
@@ -16,6 +22,7 @@ export function buildNotification(recommendations: Recommendation[]): BuiltNotif
       notification_key: 'MORNING_BRIEF',
       title: '오늘 준비할 내용',
       body: composeBody(normal),
+      destination: morningBriefDestination,
     });
   }
   for (const item of important) {
@@ -23,6 +30,7 @@ export function buildNotification(recommendations: Recommendation[]): BuiltNotif
       notification_key: `IMPORTANT_${item.type}`,
       title: item.title,
       body: item.description,
+      destination: recommendationDestination(item.type),
     });
   }
   return payloads;

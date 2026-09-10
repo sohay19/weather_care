@@ -99,6 +99,8 @@ describe('notification scheduler', () => {
     expect(sent[0][0]).toMatchObject({
       token: 'device-token',
       notificationKey: 'MORNING_BRIEF',
+      notificationTarget: 'MAIN',
+      notificationTopic: 'OVERVIEW',
     });
     const history = await env.DB.prepare(
       'SELECT notification_key FROM notification_history',
@@ -175,6 +177,8 @@ describe('notification scheduler', () => {
     expect(currentRainPayloads).toEqual([
       expect.objectContaining({
         body: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+        notificationTarget: 'WEATHER_DETAILS',
+        notificationTopic: 'PRECIPITATION',
       }),
     ]);
     const state = await env.DB.prepare(
@@ -206,6 +210,8 @@ describe('notification scheduler', () => {
       .toEqual([
         expect.objectContaining({
           body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요 수원에는 호우주의보가 발효 중이에요',
+          notificationTarget: 'WEATHER_DETAILS',
+          notificationTopic: 'PRECIPITATION',
         }),
       ]);
     const state = await env.DB.prepare(
@@ -313,6 +319,8 @@ describe('notification scheduler', () => {
       .toEqual([
         expect.objectContaining({
           title: '블랙아이스(도로살얼음)',
+          notificationTarget: 'WEATHER_DETAILS',
+          notificationTopic: 'ROAD_ICE',
           body: expect.stringContaining(
             '기상청은 오전 10시 영동선 수원 인근 구간의 블랙아이스(도로살얼음) 발생 가능성을 주의 2단계로 안내했어요',
           ),
@@ -356,6 +364,8 @@ describe('notification scheduler', () => {
       .toEqual([
         expect.objectContaining({
           title: '출퇴근 경로',
+          notificationTarget: 'WEATHER_DETAILS',
+          notificationTopic: 'COMMUTE',
           body: '수원지하차도 전면 통제가 시행 중이니, 출발 전에 다른 경로와 대중교통 운행정보를 확인하세요 국가교통정보센터는 9월 1일 오후 2시부터 수원지하차도 전면 통제가 시행 중이라고 안내했어요',
         }),
       ]);

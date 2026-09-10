@@ -1,3 +1,8 @@
+import {
+  NotificationTarget,
+  NotificationTopic,
+} from './notificationDestination';
+
 const GOOGLE_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 
@@ -6,6 +11,8 @@ export interface FcmPayload {
   title: string;
   body: string;
   notificationKey: string;
+  notificationTarget: NotificationTarget;
+  notificationTopic: NotificationTopic;
 }
 
 export interface FcmCredentials {
@@ -141,6 +148,8 @@ async function sendFcmMessage(
           },
           data: {
             notificationKey: payload.notificationKey,
+            notificationTarget: payload.notificationTarget,
+            notificationTopic: payload.notificationTopic,
           },
           android: {
             priority: 'high',

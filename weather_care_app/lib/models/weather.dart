@@ -196,6 +196,7 @@ class TimelineItem {
 
 class WeeklyForecastItem {
   final String date;
+  final String? forecastDate;
   final String weatherLabel;
   final String min;
   final String max;
@@ -203,6 +204,7 @@ class WeeklyForecastItem {
 
   const WeeklyForecastItem({
     required this.date,
+    this.forecastDate,
     required this.weatherLabel,
     required this.min,
     required this.max,
@@ -297,6 +299,7 @@ class WeeklyWeatherResponse {
         .map(
           (e) => WeeklyForecastItem(
             date: e['date']?.toString() ?? '',
+            forecastDate: e['forecastDate']?.toString(),
             weatherLabel: e['weatherLabel']?.toString() ?? '맑음',
             min: e['min']?.toString() ?? '--',
             max: e['max']?.toString() ?? '--',

@@ -109,6 +109,8 @@ void main() {
     expect(bundle.today.lifestyleMessages, isEmpty);
     expect(bundle.today.timeline, isEmpty);
     expect(bundle.weekly.days.single.recommendations, isEmpty);
+    expect(bundle.weekly.days.single.forecastDate, '2026-08-20');
+    expect(bundle.weekly.days.single.date, '목');
   });
 
   test('운영 서버 실패 시 기상청 직접 조회로 전환한다', () async {

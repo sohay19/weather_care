@@ -230,6 +230,8 @@ DirectKmaWeatherBundle _buildBundle(
           .map(
             (item) => WeeklyForecastItem(
               date: _weekdayLabel(item.date),
+              forecastDate: '${item.date.substring(0, 4)}-'
+                  '${item.date.substring(4, 6)}-${item.date.substring(6, 8)}',
               weatherLabel: item.skyCondition,
               min: item.minTemperature?.round().toString() ?? '--',
               max: item.maxTemperature?.round().toString() ?? '--',

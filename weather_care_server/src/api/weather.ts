@@ -375,6 +375,7 @@ router.get('/weekly', async (c) => {
       regionId: `${nx}_${ny}`,
       days: forecast.daily.map((day) => ({
         date: weekdayLabel(day.date),
+        forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
         weatherLabel: day.skyCondition,
         min: formatTemperature(day.minTemperature),
         max: formatTemperature(day.maxTemperature),

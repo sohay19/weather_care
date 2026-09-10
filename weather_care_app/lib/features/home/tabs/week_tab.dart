@@ -1,29 +1,83 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
+import '../../../utils/korea_date.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_condition_icon.dart';
+import '../widgets/week_presentation.dart';
 
-class WeekTab extends StatelessWidget {
+class WeekTab extends StatefulWidget {
   final WeeklyWeatherResponse weekly;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
+  final DateTime Function()? now;
 
   const WeekTab({
     super.key,
     required this.weekly,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
+    this.now,
   });
 
   @override
+  State<WeekTab> createState() => _WeekTabState();
+}
+
+class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
+  Timer? _midnightTimer;
+
+  DateTime _now() => (widget.now ?? DateTime.now)();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleMidnight();
+  }
+
+  void _scheduleMidnight() {
+    _midnightTimer?.cancel();
+    _midnightTimer = Timer(untilKoreaMidnight(_now()), () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleMidnight();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant WeekTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _scheduleMidnight();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+      _scheduleMidnight();
+    }
+  }
+
+  @override
+  void dispose() {
+    _midnightTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final weekly = widget.weekly;
+    final today = dateInKorea(_now());
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
-      onRefresh: onRefresh,
+      onRefresh: widget.onRefresh,
       child: ListView(
         key: const ValueKey('week-tab'),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -31,21 +85,24 @@ class WeekTab extends StatelessWidget {
         children: [
           TabPageHeader(
             eyebrow: 'WEEK',
-            title: '이번주 날씨',
-            subtitle: '한 주의 날씨와 준비물을 미리 살펴봐요',
+            title: '날짜별 날씨',
+            subtitle: weekPeriodLabel(weekly.days),
             icon: Icons.calendar_month_outlined,
           ),
           const SizedBox(height: 18),
-          _WeekSummary(
-            days: weekly.days,
-            serverFeaturesAvailable: serverFeaturesAvailable,
-          ),
+          if (weekly.days.isNotEmpty)
+            _WeekSummary(
+              days: weekly.days,
+              serverFeaturesAvailable: widget.serverFeaturesAvailable,
+            )
+          else
+            const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
           const SizedBox(height: 16),
           for (var index = 0; index < weekly.days.length; index++) ...[
             _WeekDayCard(
               day: weekly.days[index],
-              isToday: index == 0,
-              serverFeaturesAvailable: serverFeaturesAvailable,
+              isToday: weekly.days[index].forecastDate == today,
+              serverFeaturesAvailable: widget.serverFeaturesAvailable,
             ),
             if (index < weekly.days.length - 1) const SizedBox(height: 10),
           ],
@@ -82,7 +139,7 @@ class _WeekSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '한눈에 보는 이번주',
+            '제공된 예보 요약',
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               fontSize: 17,
@@ -202,122 +259,110 @@ class _WeekDayCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 43,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  day.date,
-                  style: TextStyle(
-                    color: isToday
-                        ? WeatherCareTheme.primaryDeep
-                        : WeatherCareTheme.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                weekDayLabel(day),
+                style: TextStyle(
+                  color: isToday
+                      ? WeatherCareTheme.primaryDeep
+                      : WeatherCareTheme.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
                 ),
-                if (isToday)
-                  Text(
-                    '오늘',
-                    style: WeatherCareTheme.specialLabelStyle.copyWith(
-                      fontSize: 9,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.72),
-              shape: BoxShape.circle,
-            ),
-            child: WeatherConditionIcon(
-              condition: day.weatherLabel,
-              color: WeatherCareTheme.primaryDeep,
-              size: 21,
-            ),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  day.weatherLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 6),
-                if (day.recommendations.isEmpty)
-                  Text(
-                    serverFeaturesAvailable ? '준비물 없음' : '운영 서버 미연결로 준비물 미지원',
-                    style:
-                        WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
-                  )
-                else
-                  Wrap(
-                    spacing: 5,
-                    runSpacing: 5,
-                    children: [
-                      for (final recommendation in day.recommendations.take(3))
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: recommendation.type.softColor,
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                recommendation.type.icon,
-                                size: 12,
-                                color: recommendation.type.accentColor,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                recommendation.type.label,
-                                style: const TextStyle(
-                                  fontFamily: WeatherCareTheme.fontMona,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(
-                color: WeatherCareTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
               ),
-              children: [
-                TextSpan(text: '${day.min}℃'),
-                const TextSpan(
-                  text: ' / ',
-                  style: TextStyle(color: WeatherCareTheme.textSecondary),
+              if (isToday)
+                Text(
+                  '오늘',
+                  key: ValueKey('week-today-${day.forecastDate}'),
+                  style: WeatherCareTheme.specialLabelStyle.copyWith(
+                    fontSize: 11,
+                  ),
                 ),
-                TextSpan(
-                  text: '${day.max}℃',
-                  style: const TextStyle(color: WeatherCareTheme.primaryDeep),
-                ),
-              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.72),
+                shape: BoxShape.circle,
+              ),
+              child: WeatherConditionIcon(
+                condition: day.weatherLabel,
+                color: WeatherCareTheme.primaryDeep,
+                size: 21,
+              ),
             ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                day.weatherLabel,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          Text(
+            '최저 ${day.min}℃ · 최고 ${day.max}℃',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (day.recommendations.isEmpty)
+                Text(
+                  serverFeaturesAvailable ? '준비물 없음' : '운영 서버 미연결로 준비물 미지원',
+                  style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
+                )
+              else
+                Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: [
+                    for (final recommendation in day.recommendations.take(3))
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: recommendation.type.softColor,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              recommendation.type.icon,
+                              size: 12,
+                              color: recommendation.type.accentColor,
+                            ),
+                            const SizedBox(width: 3),
+                            Flexible(
+                                child: Text(
+                              recommendation.type.label,
+                              style: const TextStyle(
+                                fontFamily: WeatherCareTheme.fontMona,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+            ],
           ),
         ],
       ),

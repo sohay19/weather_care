@@ -338,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Main',
             ),
             NavigationDestination(
-              tooltip: '한 주 날씨',
+              tooltip: '날짜별 날씨',
               icon: Icon(
                 Icons.calendar_month_outlined,
                 color: WeatherCareTheme.textSecondary,

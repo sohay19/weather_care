@@ -3,17 +3,12 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/recommendation.dart';
+import '../utils/korea_date.dart';
 
-String preparationDateInKorea(DateTime instant) => instant
-    .toUtc()
-    .add(const Duration(hours: 9))
-    .toIso8601String()
-    .substring(0, 10);
+String preparationDateInKorea(DateTime instant) => dateInKorea(instant);
 
-Duration untilPreparationMidnight(DateTime instant) {
-  final korea = instant.toUtc().add(const Duration(hours: 9));
-  return DateTime.utc(korea.year, korea.month, korea.day + 1).difference(korea);
-}
+Duration untilPreparationMidnight(DateTime instant) =>
+    untilKoreaMidnight(instant);
 
 class PreparationChecklistRepository {
   static const _storageKey = 'weather_care_preparation_checklist_v1';

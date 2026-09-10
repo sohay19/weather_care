@@ -1,12 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
+import router, {
   buildOptionalProviderTimeoutStatusMessages,
   buildTimeline,
   recommendationsForDay,
   settleWithin,
 } from '../src/api/weather';
+import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
+
+describe('weekly calendar date contract', () => {
+  it.each([
+    ['20260910', '2026-09-10', '목'],
+    ['20261231', '2026-12-31', '목'],
+    ['20270101', '2027-01-01', '금'],
+  ])('adds the exact forecast date without replacing the legacy weekday (%s)', async (date, forecastDate, weekday) => {
+    const provider = vi.spyOn(KmaWeatherProvider.prototype, 'getForecastByRegion')
+      .mockResolvedValue({
+        current: snapshot(14),
+        hourly: [],
+        daily: [{ ...day(28), date }],
+        baseDate: '20260910',
+        baseTime: '1100',
+        dataSource: '기상청',
+      });
+    try {
+      const response = await router.request('/weekly?nx=60&ny=121', {}, {
+        KMA_SERVICE_KEY: 'test-key',
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        regionId: '60_121',
+        days: [{ date: weekday, forecastDate, min: '22', max: '28' }],
+      });
+      expect(provider).toHaveBeenCalledWith(60, 121);
+    } finally {
+      provider.mockRestore();
+    }
+  });
+});
 
 describe('weekly recommendation inputs', () => {
   it('uses hourly apparent temperature instead of treating the daily maximum as apparent', () => {

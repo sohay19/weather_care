@@ -9,18 +9,23 @@ import {
   ServerEnv,
   WeatherSnapshot,
 } from '../../types';
-import { AirKoreaAirQualityProvider } from '../air/airKoreaAirQualityProvider';
+import {
+  AirKoreaAirQualityProvider, AirStationCatalog, airStationCatalogSchema,
+  isRecentAirObservation, nearestAirStations,
+} from '../air/airKoreaAirQualityProvider';
 import { AirQualitySnapshot } from '../air/airQualityProvider';
 import { WeatherForecast } from '../weather/weatherProvider';
 import { KmaUvProvider } from '../uv/kmaUvProvider';
 import { UvForecast } from '../uv/uvProvider';
 import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
 import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
+import { kmaGridCoordinates } from '../../regions/kmaGridCoordinates';
 
 const UV_FRESH_MS = 2 * 60 * 60 * 1000;
 const UV_MAX_STALE_MS = 8 * 60 * 60 * 1000;
 const AIR_FRESH_MS = 30 * 60 * 1000;
 const AIR_MAX_STALE_MS = 3 * 60 * 60 * 1000;
+const AIR_STATIONS_FRESH_MS = 24 * 60 * 60 * 1000;
 
 export interface EnvironmentalDataBundle {
   uv?: UvForecast;
@@ -41,7 +46,7 @@ interface EnvironmentalLoadOptions {
 interface ResolveOptions<T> {
   db?: D1Database;
   cacheKey: string;
-  cacheType: 'UV' | 'AIR_QUALITY';
+  cacheType: 'UV' | 'AIR_QUALITY' | 'AIR_STATIONS';
   nx: number;
   ny: number;
   provider: string;
@@ -50,6 +55,7 @@ interface ResolveOptions<T> {
   observedAt: (value: T) => string;
   load: () => Promise<T>;
   now: Date;
+  usableCachedValue?: (value: T) => boolean;
 }
 
 interface ResolvedValue<T> {
@@ -64,16 +70,12 @@ export async function loadEnvironmentalData(
 ): Promise<EnvironmentalDataBundle> {
   const now = options.now ?? new Date();
   const serviceKey = env.KMA_SERVICE_KEY;
-  const nx = region?.nx ?? options.nx;
-  const ny = region?.ny ?? options.ny;
+  const nx = options.nx ?? region?.nx;
+  const ny = options.ny ?? region?.ny;
   const uvAreaNo =
     nx === undefined || ny === undefined
       ? undefined
       : uvAreaNoForGrid(nx, ny);
-  const canLoadAirQuality =
-    nx !== undefined &&
-    ny !== undefined &&
-    (options.coordinates !== undefined || region !== undefined);
   const [uv, airQuality] = await Promise.all([
     uvAreaNo !== undefined && nx !== undefined && ny !== undefined
       ? resolveEnvironmentalValue<UvForecast>({
@@ -93,35 +95,8 @@ export async function loadEnvironmentalData(
       : Promise.resolve<ResolvedValue<UvForecast>>({
           source: unsupportedSource('KMA_LIVING_INDEX_V5'),
         }),
-    canLoadAirQuality
-      ? resolveEnvironmentalValue<AirQualitySnapshot>({
-          db: env.DB,
-          cacheKey: `AIR_${nx}_${ny}`,
-          cacheType: 'AIR_QUALITY',
-          nx,
-          ny,
-          provider: 'AIRKOREA',
-          freshMs: AIR_FRESH_MS,
-          maxStaleMs: AIR_MAX_STALE_MS,
-          observedAt: (value) => value.observedAt,
-          load: () => {
-            const provider = new AirKoreaAirQualityProvider({
-              serviceKey,
-              now: () => now,
-            });
-            return options.coordinates
-              ? provider.getByLocation(
-                  options.coordinates.latitude,
-                  options.coordinates.longitude,
-                )
-              : provider.getByRegion(
-                  nx,
-                  ny,
-                  region?.airKoreaStationName,
-                );
-          },
-          now,
-        })
+    nx !== undefined && ny !== undefined && kmaGridCoordinates(nx, ny)
+      ? loadAirQuality(env, nx, ny, options.coordinates, now)
       : Promise.resolve<ResolvedValue<AirQualitySnapshot>>({
           source: unsupportedSource('AIRKOREA'),
         }),
@@ -135,6 +110,51 @@ export async function loadEnvironmentalData(
       airQuality: airQuality.source,
     },
   };
+}
+
+async function loadAirQuality(
+  env: ServerEnv,
+  nx: number,
+  ny: number,
+  coordinates: EnvironmentalLoadOptions['coordinates'],
+  now: Date,
+): Promise<ResolvedValue<AirQualitySnapshot>> {
+  const unavailable: ResolvedValue<AirQualitySnapshot> = {
+    source: { provider: 'AIRKOREA', state: 'UNAVAILABLE', reason: 'PROVIDER_UNAVAILABLE' },
+  };
+  const target = coordinates ?? kmaGridCoordinates(nx, ny);
+  if (!target) return unavailable;
+  const signal = AbortSignal.timeout(6_000);
+  const provider = new AirKoreaAirQualityProvider({ serviceKey: env.KMA_SERVICE_KEY, now: () => now, signal });
+  // One validated national catalog shared across grids; never cache portal error bodies.
+  // Coordinates here belong to official stations, not to an installation/user.
+  const catalog = await resolveEnvironmentalValue<AirStationCatalog>({
+    db: env.DB, cacheKey: 'AIR_STATIONS_V1', cacheType: 'AIR_STATIONS', nx: 0, ny: 0,
+    provider: 'AIRKOREA', freshMs: AIR_STATIONS_FRESH_MS, maxStaleMs: AIR_STATIONS_FRESH_MS,
+    observedAt: (value) => value.fetchedAt,
+    usableCachedValue: (value) => airStationCatalogSchema.safeParse(value).success,
+    load: () => provider.getStationCatalog(), now,
+  });
+  if (!catalog.value) return unavailable;
+
+  try {
+    for (const station of nearestAirStations(catalog.value, target.latitude, target.longitude)) {
+      if (signal.aborted) break;
+      const observation = await resolveEnvironmentalValue<AirQualitySnapshot>({
+        db: env.DB, cacheKey: `AIR_STATION_V1_${station.stationName}`,
+        cacheType: 'AIR_QUALITY', nx, ny, provider: 'AIRKOREA',
+        freshMs: AIR_FRESH_MS, maxStaleMs: AIR_MAX_STALE_MS,
+        observedAt: (value) => value.observedAt,
+        usableCachedValue: (value) => value?.stationName === station.stationName &&
+          isRecentAirObservation(value.observedAt, now),
+        load: () => provider.getByStation(station.stationName), now,
+      });
+      if (observation.value) return observation;
+    }
+  } catch (error) {
+    logEnvironmentalError('provider_failed', 'AIRKOREA', error);
+  }
+  return unavailable;
 }
 
 export function enrichForecastWithEnvironmentalData(
@@ -179,6 +199,9 @@ async function resolveEnvironmentalValue<T>(
   if (options.db) {
     try {
       cached = await getEnvironmentalCache<T>(options.db, options.cacheKey);
+      if (cached && options.usableCachedValue && !options.usableCachedValue(cached.value)) {
+        cached = null;
+      }
       if (
         cached &&
         ageMs(cached.updatedAt, options.now) <= options.freshMs

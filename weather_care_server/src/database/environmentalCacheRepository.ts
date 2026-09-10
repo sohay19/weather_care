@@ -26,7 +26,7 @@ export async function saveEnvironmentalCache<T>(
   db: D1Database,
   options: {
     cacheKey: string;
-    cacheType: 'UV' | 'AIR_QUALITY';
+    cacheType: 'UV' | 'AIR_QUALITY' | 'AIR_STATIONS';
     nx: number;
     ny: number;
     value: T;

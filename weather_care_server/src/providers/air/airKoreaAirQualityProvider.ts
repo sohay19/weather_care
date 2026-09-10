@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { kmaGridCoordinates } from '../../regions/kmaGridCoordinates';
 import {
   AirQualityProvider,
   AirQualitySnapshot,
@@ -8,7 +9,9 @@ const AIRKOREA_URL =
   'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty';
 const AIRKOREA_STATION_URL =
   'https://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getMsrstnList';
-const NEARBY_STATION_ATTEMPTS = 5;
+export const NEARBY_STATION_ATTEMPTS = 5;
+const STATION_PAGE_SIZE = 1000;
+const MAX_STATION_PAGES = 10;
 
 const airItemSchema = z.object({
   stationName: z.coerce.string().optional(),
@@ -52,17 +55,28 @@ const stationResponseSchema = z.object({
     body: z
       .object({
         items: z.union([stationItemSchema, z.array(stationItemSchema)]),
+        totalCount: z.coerce.number().int().nonnegative(),
+        pageNo: z.coerce.number().int().positive(),
+        numOfRows: z.coerce.number().int().positive(),
       })
       .optional(),
   }),
 });
 
-interface LocatedStation {
-  stationName: string;
-  latitude: number;
-  longitude: number;
+export const airStationCatalogSchema = z.object({
+  fetchedAt: z.string().datetime(),
+  stations: z.array(z.object({
+    stationName: z.string().trim().min(1),
+    latitude: z.number().min(30).max(44),
+    longitude: z.number().min(120).max(134),
+  })).min(1),
+});
+
+export type AirStationCatalog = z.infer<typeof airStationCatalogSchema>;
+
+export type LocatedStation = AirStationCatalog['stations'][number] & {
   distanceMeters: number;
-}
+};
 
 const portalErrorSchema = z.object({
   OpenAPI_ServiceResponse: z.object({
@@ -79,6 +93,7 @@ interface AirKoreaAirQualityProviderOptions {
   fetcher?: typeof fetch;
   now?: () => Date;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 export class AirKoreaAirQualityProviderError extends Error {
@@ -93,6 +108,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
   private readonly fetcher: typeof fetch;
   private readonly now: () => Date;
   private readonly timeoutMs: number;
+  private readonly signal?: AbortSignal;
 
   constructor(options: AirKoreaAirQualityProviderOptions) {
     this.serviceKey = normalizeServiceKey(options.serviceKey);
@@ -100,18 +116,19 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
       options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.now = options.now ?? (() => new Date());
     this.timeoutMs = options.timeoutMs ?? 6_000;
+    this.signal = options.signal;
   }
 
   async getByRegion(
-    _nx: number,
-    _ny: number,
+    nx: number,
+    ny: number,
     stationName?: string,
   ): Promise<AirQualitySnapshot> {
     this.requireServiceKey();
     if (!stationName?.trim()) {
-      throw new AirKoreaAirQualityProviderError(
-        'AirKorea station name is not configured',
-      );
+      const coordinates = kmaGridCoordinates(nx, ny);
+      if (!coordinates) throw new AirKoreaAirQualityProviderError('AirKorea grid is invalid');
+      return this.getByLocation(coordinates.latitude, coordinates.longitude);
     }
 
     return this.getByStation(stationName.trim());
@@ -123,7 +140,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
   ): Promise<AirQualitySnapshot> {
     this.requireServiceKey();
     validateLocation(latitude, longitude);
-    const stations = await this.getNearestStations(latitude, longitude);
+    const stations = nearestAirStations(await this.getStationCatalog(), latitude, longitude);
     let lastError: unknown;
     for (const station of stations.slice(0, NEARBY_STATION_ATTEMPTS)) {
       try {
@@ -139,9 +156,10 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     );
   }
 
-  private async getByStation(
+  async getByStation(
     stationName: string,
   ): Promise<AirQualitySnapshot> {
+    this.requireServiceKey();
     const query = new URLSearchParams({
       serviceKey: this.serviceKey,
       returnType: 'json',
@@ -153,9 +171,9 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     });
     const response = await this.fetcher(`${AIRKOREA_URL}?${query}`, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(this.timeoutMs),
+      signal: this.requestSignal(),
     });
-    const payload: unknown = await response.json();
+    const payload = await boundedJson(response);
     const portalError = portalErrorSchema.safeParse(payload);
     if (portalError.success) {
       const header = portalError.data.OpenAPI_ServiceResponse.cmmMsgHeader;
@@ -188,8 +206,10 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
 
     const items = Array.isArray(body.items) ? body.items : [body.items];
     for (const item of items) {
+      if (item.stationName?.trim() && item.stationName.trim() !== stationName) continue;
       const observedAt = airKoreaTimeToIso(item.dataTime);
-      if (!isRecentObservation(observedAt, this.now())) continue;
+      if (!observedAt) continue;
+      if (!isRecentAirObservation(observedAt, this.now())) continue;
       const pm10 = numericValue(item.pm10Value);
       const pm25 = numericValue(item.pm25Value);
       const ozone = numericValue(item.o3Value);
@@ -217,22 +237,46 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     );
   }
 
-  private async getNearestStations(
-    latitude: number,
-    longitude: number,
-  ): Promise<LocatedStation[]> {
+  async getStationCatalog(): Promise<AirStationCatalog> {
+    this.requireServiceKey();
+    const items: z.infer<typeof stationItemSchema>[] = [];
+    let expectedTotal: number | undefined;
+    for (let pageNo = 1; pageNo <= MAX_STATION_PAGES; pageNo++) {
+      const page = await this.getStationPage(pageNo);
+      const rows = Array.isArray(page.items) ? page.items : [page.items];
+      if (page.pageNo !== pageNo || (expectedTotal !== undefined && expectedTotal !== page.totalCount)) {
+        throw new AirKoreaAirQualityProviderError('AirKorea station response pagination is invalid');
+      }
+      expectedTotal = page.totalCount;
+      items.push(...rows);
+      if (items.length === expectedTotal) break;
+      if (items.length > expectedTotal || rows.length === 0 || pageNo === MAX_STATION_PAGES) {
+        throw new AirKoreaAirQualityProviderError('AirKorea station response is incomplete');
+      }
+    }
+    const stations = items.flatMap((item) => {
+      const coordinates = stationCoordinates(item.dmX, item.dmY);
+      if (!coordinates || !item.stationName.trim()) return [];
+      return [{ stationName: item.stationName.trim(), ...coordinates }];
+    });
+    if (stations.length === 0) {
+      throw new AirKoreaAirQualityProviderError('AirKorea station service returned no usable coordinates');
+    }
+    return { fetchedAt: this.now().toISOString(), stations };
+  }
+
+  private async getStationPage(pageNo: number) {
     const query = new URLSearchParams({
       serviceKey: this.serviceKey,
       returnType: 'json',
-      numOfRows: '1000',
-      pageNo: '1',
+      numOfRows: String(STATION_PAGE_SIZE),
+      pageNo: String(pageNo),
     });
     const response = await this.fetcher(`${AIRKOREA_STATION_URL}?${query}`, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      cf: { cacheEverything: true, cacheTtl: 86_400 },
+      signal: this.requestSignal(),
     });
-    const payload: unknown = await response.json();
+    const payload = await boundedJson(response);
     const portalError = portalErrorSchema.safeParse(payload);
     if (portalError.success) {
       const header = portalError.data.OpenAPI_ServiceResponse.cmmMsgHeader;
@@ -262,29 +306,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
         'AirKorea station service returned no body',
       );
     }
-    const items = Array.isArray(body.items) ? body.items : [body.items];
-    const stations = items
-      .flatMap((item) => {
-        const coordinates = stationCoordinates(item.dmX, item.dmY);
-        if (!coordinates || !item.stationName.trim()) return [];
-        return [{
-          stationName: item.stationName.trim(),
-          ...coordinates,
-          distanceMeters: haversineMeters(
-            latitude,
-            longitude,
-            coordinates.latitude,
-            coordinates.longitude,
-          ),
-        }];
-      })
-      .sort((left, right) => left.distanceMeters - right.distanceMeters);
-    if (stations.length === 0) {
-      throw new AirKoreaAirQualityProviderError(
-        'AirKorea station service returned no usable coordinates',
-      );
-    }
-    return stations;
+    return body;
   }
 
   private requireServiceKey(): void {
@@ -294,6 +316,56 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
       );
     }
   }
+
+  private requestSignal(): AbortSignal {
+    const timeout = AbortSignal.timeout(this.timeoutMs);
+    return this.signal ? AbortSignal.any([this.signal, timeout]) : timeout;
+  }
+}
+
+async function boundedJson(response: Response): Promise<unknown> {
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new AirKoreaAirQualityProviderError(`AirKorea request failed with status ${response.status}`);
+  }
+  const reader = response.body?.getReader();
+  if (!reader) throw new AirKoreaAirQualityProviderError('AirKorea returned no body');
+  const decoder = new TextDecoder();
+  let size = 0;
+  let text = '';
+  try {
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      size += chunk.value.byteLength;
+      if (size > 2 * 1024 * 1024) {
+        await reader.cancel();
+        throw new AirKoreaAirQualityProviderError('AirKorea response size is invalid');
+      }
+      text += decoder.decode(chunk.value, { stream: true });
+    }
+    return JSON.parse(text + decoder.decode()) as unknown;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export function nearestAirStations(
+  catalog: AirStationCatalog,
+  latitude: number,
+  longitude: number,
+): LocatedStation[] {
+  validateLocation(latitude, longitude);
+  const seen = new Set<string>();
+  return catalog.stations.map((station) => ({
+    ...station,
+    distanceMeters: haversineMeters(latitude, longitude, station.latitude, station.longitude),
+  })).sort((left, right) => left.distanceMeters - right.distanceMeters)
+    .filter((station) => {
+      if (seen.has(station.stationName)) return false;
+      seen.add(station.stationName);
+      return true;
+    }).slice(0, NEARBY_STATION_ATTEMPTS);
 }
 
 function stationCoordinates(
@@ -350,7 +422,7 @@ function numericValue(value: unknown): number | undefined {
   const normalized = String(value).trim();
   if (!normalized || normalized === '-') return undefined;
   const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : undefined;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
 function worstGrade(values: unknown[]): string | undefined {
@@ -371,19 +443,17 @@ function gradeLabel(value: unknown): string | undefined {
   }[grade ?? 0];
 }
 
-function airKoreaTimeToIso(value: string): string {
+function airKoreaTimeToIso(value: string): string | undefined {
   const match = /^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/.exec(
     value.trim(),
   );
   if (!match) {
-    throw new AirKoreaAirQualityProviderError(
-      'AirKorea observation time is invalid',
-    );
+    return undefined;
   }
   return `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+09:00`;
 }
 
-function isRecentObservation(observedAt: string, now: Date): boolean {
+export function isRecentAirObservation(observedAt: string, now: Date): boolean {
   const timestamp = Date.parse(observedAt);
   if (!Number.isFinite(timestamp)) return false;
   const age = now.getTime() - timestamp;

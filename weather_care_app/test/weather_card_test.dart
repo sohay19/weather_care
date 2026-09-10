@@ -6,6 +6,66 @@ import 'package:weather_care/features/home/widgets/weather_card.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
+  test('대기질 측정소명과 관측 시각을 읽고 없는 정보는 만들지 않는다', () {
+    final current = CurrentWeather.fromJson({
+      'current': {
+        'pm10': 31,
+        'airQualityStationName': ' 좌동 ',
+        'airQualityObservedAt': '2026-09-10T09:00:00Z',
+      },
+    });
+    expect(current.airQualityStationName, '좌동');
+    expect(current.airQualityObservedAt, '2026-09-10T09:00:00Z');
+    expect(CurrentWeather.fromJson({}).airQualityStationName, isNull);
+    expect(CurrentWeather.fromJson({}).airQualityObservedAt, isNull);
+  });
+
+  for (final timestamp in [
+    '2026-09-10T09:00:00Z',
+    '2026-09-10T18:00:00+09:00'
+  ]) {
+    testWidgets('대기질 상세에 실제 측정소와 한국 관측 시각을 표시한다 ($timestamp)', (tester) async {
+      await _pumpCard(
+          tester,
+          CurrentWeather(
+            temperature: 22,
+            pm10: 31,
+            pm25: 12,
+            airQualityStationName: '좌동',
+            airQualityObservedAt: timestamp,
+          ));
+      for (final label in ['초미세먼지', '미세먼지']) {
+        final metric = find.byKey(ValueKey('weather-metric-$label'));
+        await tester.ensureVisible(metric);
+        await tester.tap(metric);
+        await tester.pumpAndSettle();
+        expect(
+            find.textContaining('좌동 측정소 · 9월 10일 18시 00분 관측'), findsOneWidget);
+        expect(find.textContaining('사용자 위치에서 직접 측정한 농도는 아니에요'), findsOneWidget);
+        await tester.tap(find.text('확인'));
+        await tester.pumpAndSettle();
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('측정소나 관측 시각이 없으면 지역명·예보 시각으로 대체하지 않는다', (tester) async {
+    await _pumpCard(
+        tester,
+        const CurrentWeather(
+          temperature: 22,
+          pm10: 31,
+          forecastAt: '2026-09-10T09:00:00Z',
+          airQualityObservedAt: '2026-09-10T18:00:00',
+        ));
+    final metric = find.byKey(const ValueKey('weather-metric-미세먼지'));
+    await tester.ensureVisible(metric);
+    await tester.tap(metric);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('측정소 정보 없음 · 관측 시각 정보 없음'), findsOneWidget);
+    expect(find.textContaining('18시'), findsNothing);
+  });
+
   test('현재 기온의 결측과 실제 0도를 구분한다', () {
     expect(CurrentWeather.fromJson({}).temperature, isNull);
     expect(

@@ -64,7 +64,7 @@ class WeatherInfoCard extends StatelessWidget {
         dialogTitle: '초미세먼지 공식 등급',
         dialogBody: current.pm25 == null
             ? '초미세먼지 자료가 없어 농도와 등급을 확인하기 어려워요.'
-            : '에어코리아 초미세먼지 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.',
+            : '에어코리아 초미세먼지 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.${_airObservationSource(current)}',
       ),
       _WeatherMetric(
         icon: Icons.grain_rounded,
@@ -73,7 +73,7 @@ class WeatherInfoCard extends StatelessWidget {
         dialogTitle: '미세먼지 공식 등급',
         dialogBody: current.pm10 == null
             ? '미세먼지 자료가 없어 농도와 등급을 확인하기 어려워요.'
-            : '에어코리아 미세먼지 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.',
+            : '에어코리아 미세먼지 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.${_airObservationSource(current)}',
       ),
     ];
 
@@ -169,6 +169,23 @@ class WeatherInfoCard extends StatelessWidget {
   }
 }
 
+String _airObservationSource(CurrentWeather current) {
+  final station = current.airQualityStationName?.trim();
+  final rawTime = current.airQualityObservedAt;
+  final parsed =
+      rawTime != null && RegExp(r'(Z|[+-]\d{2}:\d{2})$').hasMatch(rawTime)
+          ? DateTime.tryParse(rawTime)?.toUtc().add(const Duration(hours: 9))
+          : null;
+  final stationLabel =
+      station == null || station.isEmpty ? '측정소 정보 없음' : '$station 측정소';
+  final timeLabel = parsed == null
+      ? '관측 시각 정보 없음'
+      : '${parsed.month}월 ${parsed.day}일 ${parsed.hour}시 '
+          '${parsed.minute.toString().padLeft(2, '0')}분 관측';
+  return '\n\n$stationLabel · $timeLabel\n'
+      '측정소에서 관측한 값이며, 사용자 위치에서 직접 측정한 농도는 아니에요.';
+}
+
 String _uvGrade(double value) {
   if (value <= 2) return '낮음';
   if (value <= 5) return '보통';
@@ -196,6 +213,7 @@ void _showMetricDialog(BuildContext context, _WeatherMetric metric) {
     context: context,
     builder: (context) => AlertDialog(
       title: Text(metric.dialogTitle),
+      scrollable: true,
       content: Text(metric.dialogBody),
       actions: [
         TextButton(

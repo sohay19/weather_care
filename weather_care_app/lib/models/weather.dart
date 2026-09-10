@@ -36,6 +36,8 @@ class CurrentWeather {
   final int? pm10;
   final int? pm25;
   final String? sky;
+  final String? airQualityStationName;
+  final String? airQualityObservedAt;
 
   const CurrentWeather({
     required this.temperature,
@@ -49,6 +51,8 @@ class CurrentWeather {
     this.pm10,
     this.pm25,
     this.sky,
+    this.airQualityStationName,
+    this.airQualityObservedAt,
   });
 
   factory CurrentWeather.fromJson(Map<String, dynamic> json) {
@@ -65,6 +69,8 @@ class CurrentWeather {
       pm10: (c['pm10'] as num?)?.toInt(),
       pm25: (c['pm25'] as num?)?.toInt(),
       sky: c['skyCondition']?.toString(),
+      airQualityStationName: _optionalText(c['airQualityStationName']),
+      airQualityObservedAt: _optionalText(c['airQualityObservedAt']),
     );
   }
 }

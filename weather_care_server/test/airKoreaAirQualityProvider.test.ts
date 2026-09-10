@@ -94,6 +94,7 @@ describe('AirKoreaAirQualityProvider', () => {
           response: {
             header: { resultCode: '00', resultMsg: 'NORMAL_CODE' },
             body: {
+              totalCount: 2, pageNo: 1, numOfRows: 1000,
               items: [
                 {
                   stationName: '종로구',

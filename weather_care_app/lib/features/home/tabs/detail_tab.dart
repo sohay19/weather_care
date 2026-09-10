@@ -11,12 +11,19 @@ import '../widgets/tab_page_header.dart';
 import '../widgets/weather_card.dart';
 import '../widgets/weather_condition_icon.dart';
 
+enum DetailFocusSource {
+  notification,
+  recommendation,
+}
+
 class DetailTab extends StatefulWidget {
   final TodayWeatherResponse today;
   final List<WeatherRecommendation> recommendations;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
   final NotificationTopic? focusTopic;
+  final DetailFocusSource focusSource;
+  final int focusRequestId;
 
   const DetailTab({
     super.key,
@@ -25,6 +32,8 @@ class DetailTab extends StatefulWidget {
     required this.serverFeaturesAvailable,
     required this.onRefresh,
     this.focusTopic,
+    this.focusSource = DetailFocusSource.notification,
+    this.focusRequestId = 0,
   });
 
   @override
@@ -46,6 +55,8 @@ class _DetailTabState extends State<DetailTab> {
   void didUpdateWidget(covariant DetailTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusTopic != widget.focusTopic ||
+        oldWidget.focusSource != widget.focusSource ||
+        oldWidget.focusRequestId != widget.focusRequestId ||
         oldWidget.today != widget.today) {
       _focusScheduled = false;
       _scheduleFocusScroll();
@@ -93,6 +104,7 @@ class _DetailTabState extends State<DetailTab> {
               key: _evidenceSectionKey,
               today: widget.today,
               focusTopic: widget.focusTopic,
+              focusSource: widget.focusSource,
               focusedItemKey: _focusedEvidenceKey,
             )
           else
@@ -111,12 +123,14 @@ class _DetailTabState extends State<DetailTab> {
 class _RecommendationEvidence extends StatelessWidget {
   final TodayWeatherResponse today;
   final NotificationTopic? focusTopic;
+  final DetailFocusSource focusSource;
   final Key focusedItemKey;
 
   const _RecommendationEvidence({
     super.key,
     required this.today,
     required this.focusTopic,
+    required this.focusSource,
     required this.focusedItemKey,
   });
 
@@ -157,6 +171,7 @@ class _RecommendationEvidence extends StatelessWidget {
                 key: index == focusedIndex ? focusedItemKey : null,
                 message: items[index],
                 focused: index == focusedIndex,
+                focusSource: focusSource,
               ),
               if (index < items.length - 1) ...[
                 const SizedBox(height: 11),
@@ -173,11 +188,13 @@ class _RecommendationEvidence extends StatelessWidget {
 class _EvidenceItem extends StatelessWidget {
   final LifestyleMessage message;
   final bool focused;
+  final DetailFocusSource focusSource;
 
   const _EvidenceItem({
     super.key,
     required this.message,
     required this.focused,
+    required this.focusSource,
   });
 
   @override
@@ -216,7 +233,10 @@ class _EvidenceItem extends StatelessWidget {
               children: [
                 if (focused) ...[
                   Text(
-                    '알림에서 확인한 항목',
+                    switch (focusSource) {
+                      DetailFocusSource.notification => '알림에서 확인한 항목',
+                      DetailFocusSource.recommendation => '선택한 항목의 근거',
+                    },
                     style: WeatherCareTheme.microTextStyle.copyWith(
                       color: WeatherCareTheme.primaryDeep,
                       fontWeight: FontWeight.w800,
@@ -309,6 +329,20 @@ Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
       NotificationTopic.unknown ||
       null =>
         const {},
+    };
+
+NotificationTopic detailTopicForRecommendationType(
+  RecommendationType type,
+) =>
+    switch (type) {
+      RecommendationType.umbrella => NotificationTopic.precipitation,
+      RecommendationType.parasol ||
+      RecommendationType.sunscreen =>
+        NotificationTopic.uv,
+      RecommendationType.heavySnowCaution => NotificationTopic.snow,
+      RecommendationType.outerwear => NotificationTopic.temperature,
+      RecommendationType.mask => NotificationTopic.airQuality,
+      RecommendationType.water => NotificationTopic.heat,
     };
 
 class _HourlyForecastCard extends StatelessWidget {

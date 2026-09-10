@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/detail_tab.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
+import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
@@ -146,6 +147,76 @@ void main() {
     expect(
       lifestyleTypesForNotificationTopic(NotificationTopic.overview),
       isEmpty,
+    );
+  });
+
+  testWidgets('Today 준비물 선택은 해당 근거임을 구분해 표시한다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DetailTab(
+            today: TodayWeatherResponse(
+              dataSource: 'test',
+              region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
+              brief: '테스트',
+              current: const CurrentWeather(temperature: 20),
+              recommendations: const [],
+              lifestyleMessages: [
+                LifestyleMessage(
+                  type: LifestyleMessageType.rainGearUseful,
+                  title: '우산을 챙기세요',
+                ),
+              ],
+              timeline: const [],
+              hourly: const [],
+            ),
+            recommendations: const [],
+            serverFeaturesAvailable: true,
+            focusTopic: NotificationTopic.precipitation,
+            focusSource: DetailFocusSource.recommendation,
+            focusRequestId: 1,
+            onRefresh: () async {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('선택한 항목의 근거'), findsOneWidget);
+    expect(find.text('알림에서 확인한 항목'), findsNothing);
+    expect(find.text('우산을 챙기세요'), findsOneWidget);
+  });
+
+  test('준비물 종류는 관련 상세 주제로 연결된다', () {
+    expect(
+      detailTopicForRecommendationType(RecommendationType.umbrella),
+      NotificationTopic.precipitation,
+    );
+    expect(
+      detailTopicForRecommendationType(RecommendationType.parasol),
+      NotificationTopic.uv,
+    );
+    expect(
+      detailTopicForRecommendationType(
+        RecommendationType.heavySnowCaution,
+      ),
+      NotificationTopic.snow,
+    );
+    expect(
+      detailTopicForRecommendationType(RecommendationType.outerwear),
+      NotificationTopic.temperature,
+    );
+    expect(
+      detailTopicForRecommendationType(RecommendationType.mask),
+      NotificationTopic.airQuality,
+    );
+    expect(
+      detailTopicForRecommendationType(RecommendationType.water),
+      NotificationTopic.heat,
+    );
+    expect(
+      detailTopicForRecommendationType(RecommendationType.sunscreen),
+      NotificationTopic.uv,
     );
   });
 }

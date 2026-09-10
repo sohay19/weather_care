@@ -55,6 +55,9 @@ class _HomeScreenState extends State<HomeScreen> {
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
+  late NotificationTopic? _detailFocusTopic;
+  DetailFocusSource _detailFocusSource = DetailFocusSource.notification;
+  int _detailFocusRequestId = 0;
   bool _loading = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
@@ -78,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : widget.initialIndex > 4
             ? 4
             : widget.initialIndex;
+    _detailFocusTopic = widget.initialNotificationTopic;
     _initialize();
   }
 
@@ -243,7 +247,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
-                      focusTopic: widget.initialNotificationTopic,
+                      focusTopic: _detailFocusTopic,
+                      focusSource: _detailFocusSource,
+                      focusRequestId: _detailFocusRequestId,
                     ),
                     MainTab(
                       today: today,
@@ -367,8 +373,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openRecommendationDetail(RecommendationType _) {
-    setState(() => _selectedIndex = 1);
+  void _openRecommendationDetail(RecommendationType type) {
+    setState(() {
+      _detailFocusTopic = detailTopicForRecommendationType(type);
+      _detailFocusSource = DetailFocusSource.recommendation;
+      _detailFocusRequestId += 1;
+      _selectedIndex = 1;
+    });
   }
 
   Future<void> _handleSettingsChanged(AppSettings updated) {

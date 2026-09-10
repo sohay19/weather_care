@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
+import '../weather_labels.dart';
 import 'weather_condition_icon.dart';
 
 class WeatherInfoCard extends StatelessWidget {
@@ -16,41 +17,64 @@ class WeatherInfoCard extends StatelessWidget {
         icon: Icons.device_thermostat_rounded,
         label: '체감',
         value: current.apparentTemperature == null
-            ? '미지원'
+            ? '자료 없음'
             : '${current.apparentTemperature!.toStringAsFixed(1)}℃',
         dialogTitle: '예상 체감온도',
         dialogBody: current.apparentTemperature == null
             ? '체감온도 계산조건이 맞지 않거나 입력자료가 없어 표시하지 않아요.'
             : '기상청 단기예보의 기온·습도·풍속으로 계산한 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.',
       ),
-      if (current.humidity != null)
-        _WeatherMetric(
-          icon: Icons.water_drop_outlined,
-          label: '습도',
-          value: '${current.humidity!.toStringAsFixed(0)}%',
-          dialogTitle: '실외 상대습도',
-          dialogBody:
-              '기상청은 선택한 지역에 상대습도 ${current.humidity!.toStringAsFixed(0)}%를 예보했어요.',
-        ),
-      if (current.uvIndex != null)
-        _WeatherMetric(
-          icon: Icons.wb_sunny_outlined,
-          label: '자외선',
-          value: current.uvIndex!.toStringAsFixed(1),
-          dialogTitle: '자외선지수 공식 단계',
-          dialogBody:
-              '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${_uvGrade(current.uvIndex!)} 단계예요. 공식 단계는 낮음·보통·높음·매우 높음·위험으로 구분해요.',
-        ),
-      if (current.pm25 != null || current.pm10 != null)
-        _WeatherMetric(
-          icon: Icons.blur_on_rounded,
-          label: current.pm25 != null ? '초미세먼지' : '미세먼지',
-          value: current.pm25?.toString() ?? current.pm10.toString(),
-          dialogTitle: current.pm25 != null ? '초미세먼지 공식 등급' : '미세먼지 공식 등급',
-          dialogBody: current.pm25 != null
-              ? '에어코리아 초미세먼지 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.'
-              : '에어코리아 미세먼지 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.',
-        ),
+      _WeatherMetric(
+        icon: Icons.water_drop_outlined,
+        label: '습도',
+        value: current.humidity == null
+            ? '자료 없음'
+            : '${current.humidity!.toStringAsFixed(0)}%',
+        dialogTitle: '실외 상대습도',
+        dialogBody: current.humidity == null
+            ? '습도 자료가 없어 실외 상대습도를 확인하기 어려워요.'
+            : '기상청은 선택한 지역에 상대습도 ${current.humidity!.toStringAsFixed(0)}%를 예보했어요.',
+      ),
+      _WeatherMetric(
+        icon: Icons.air_rounded,
+        label: '풍속',
+        value: current.windSpeed == null
+            ? '자료 없음'
+            : '${current.windSpeed!.toStringAsFixed(1)}m/s',
+        dialogTitle: '예상 풍속',
+        dialogBody: current.windSpeed == null
+            ? '풍속 자료가 없어 바람의 세기를 확인하기 어려워요.'
+            : '기상청은 선택한 지역에 풍속 ${current.windSpeed!.toStringAsFixed(1)}m/s를 예보했어요.',
+      ),
+      _WeatherMetric(
+        icon: Icons.wb_sunny_outlined,
+        label: '자외선',
+        value: current.uvIndex == null
+            ? '자료 없음'
+            : current.uvIndex!.toStringAsFixed(1),
+        dialogTitle: '자외선지수 공식 단계',
+        dialogBody: current.uvIndex == null
+            ? '자외선 자료가 없어 자외선지수와 단계를 확인하기 어려워요.'
+            : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${_uvGrade(current.uvIndex!)} 단계예요. 공식 단계는 낮음·보통·높음·매우 높음·위험으로 구분해요.',
+      ),
+      _WeatherMetric(
+        icon: Icons.blur_on_rounded,
+        label: '초미세먼지',
+        value: current.pm25 == null ? '자료 없음' : '${current.pm25}㎍/㎥',
+        dialogTitle: '초미세먼지 공식 등급',
+        dialogBody: current.pm25 == null
+            ? '초미세먼지 자료가 없어 농도와 등급을 확인하기 어려워요.'
+            : '에어코리아 초미세먼지 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.',
+      ),
+      _WeatherMetric(
+        icon: Icons.grain_rounded,
+        label: '미세먼지',
+        value: current.pm10 == null ? '자료 없음' : '${current.pm10}㎍/㎥',
+        dialogTitle: '미세먼지 공식 등급',
+        dialogBody: current.pm10 == null
+            ? '미세먼지 자료가 없어 농도와 등급을 확인하기 어려워요.'
+            : '에어코리아 미세먼지 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.',
+      ),
     ];
 
     return Container(
@@ -59,26 +83,41 @@ class WeatherInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            forecastTemperatureLabel(current.forecastAt),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: WeatherCareTheme.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '${current.temperature.toStringAsFixed(1)}℃',
-                style: const TextStyle(
-                  color: WeatherCareTheme.textPrimary,
-                  fontSize: 34,
-                  height: 1,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1.2,
+              Expanded(
+                child: Text(
+                  current.temperature == null
+                      ? '자료 없음'
+                      : '${current.temperature!.toStringAsFixed(1)}℃',
+                  style: TextStyle(
+                    color: WeatherCareTheme.textPrimary,
+                    fontSize: current.temperature == null ? 20 : 34,
+                    height: 1,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1.2,
+                  ),
                 ),
               ),
-              const Spacer(),
-              Text(
-                current.sky ?? '정보 없음',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: WeatherCareTheme.textSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  current.sky ?? '하늘 상태 자료 없음',
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: WeatherCareTheme.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
               ),
               const SizedBox(width: 8),
               WeatherConditionIcon(
@@ -90,27 +129,38 @@ class WeatherInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 13),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: WeatherCareTheme.surfaceMuted,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Row(
-              children: [
-                for (var index = 0; index < metrics.length; index++) ...[
-                  Expanded(
-                    child: _MetricView(
-                      metric: metrics[index],
-                      onTap: () => _showMetricDialog(context, metrics[index]),
-                    ),
-                  ),
-                  if (index < metrics.length - 1)
-                    const SizedBox(
-                      height: 34,
-                      child: VerticalDivider(width: 1),
-                    ),
-                ],
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const spacing = 8.0;
+                final textScale =
+                    MediaQuery.textScalerOf(context).scale(13) / 13;
+                final minWidth = 112 * textScale.clamp(1.0, 3.0);
+                final columns =
+                    ((constraints.maxWidth + spacing) / (minWidth + spacing))
+                        .floor()
+                        .clamp(1, 3);
+                final width =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: 12,
+                  children: [
+                    for (final metric in metrics)
+                      SizedBox(
+                        width: width,
+                        child: _MetricView(
+                          metric: metric,
+                          onTap: () => _showMetricDialog(context, metric),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -166,7 +216,7 @@ class _MetricView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: '${metric.label} 기준 보기',
+      message: '${metric.label} 자료와 기준 보기',
       child: InkWell(
         key: ValueKey('weather-metric-${metric.label}'),
         onTap: onTap,
@@ -179,7 +229,7 @@ class _MetricView extends StatelessWidget {
               const SizedBox(height: 5),
               Text(
                 metric.value,
-                maxLines: 1,
+                textAlign: TextAlign.center,
                 style:
                     const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
               ),
@@ -190,8 +240,6 @@ class _MetricView extends StatelessWidget {
                   Flexible(
                     child: Text(
                       metric.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall

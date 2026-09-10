@@ -24,7 +24,7 @@ class WeatherRegion {
 }
 
 class CurrentWeather {
-  final double temperature;
+  final double? temperature;
   final String? forecastAt;
   final String? issuedAt;
   final double? apparentTemperature;
@@ -53,7 +53,7 @@ class CurrentWeather {
   factory CurrentWeather.fromJson(Map<String, dynamic> json) {
     final c = json['current'] ?? {};
     return CurrentWeather(
-      temperature: (c['temperature'] as num?)?.toDouble() ?? 0,
+      temperature: (c['temperature'] as num?)?.toDouble(),
       forecastAt: c['forecastAt']?.toString(),
       issuedAt: c['issuedAt']?.toString(),
       apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble(),

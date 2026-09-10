@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
+import '../weather_labels.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_condition_icon.dart';
 
@@ -123,7 +124,7 @@ class _TopWeatherCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                _forecastTemperatureLabel(current.forecastAt),
+                forecastTemperatureLabel(current.forecastAt),
                 style: TextStyle(
                   color: WeatherCareTheme.textSecondary,
                   fontSize: 11,
@@ -132,7 +133,9 @@ class _TopWeatherCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '${current.temperature.toStringAsFixed(1)}℃',
+                current.temperature == null
+                    ? '자료 없음'
+                    : '${current.temperature!.toStringAsFixed(1)}℃',
                 style: const TextStyle(
                   color: WeatherCareTheme.primaryDeep,
                   fontSize: 16,
@@ -635,16 +638,8 @@ String _weatherExpression(String? sky) {
   if (value.contains('흐림') || value.contains('구름')) {
     return '구름이 많은 날씨예요.';
   }
-  return '맑은 하늘이 이어지는 날씨예요.';
-}
-
-String _forecastTemperatureLabel(String? forecastAt) {
-  if (forecastAt == null || forecastAt.length < 13) return '예상기온';
-  final hour = int.tryParse(forecastAt.substring(11, 13));
-  if (hour == null) return '예상기온';
-  final period = hour < 12 ? '오전' : '오후';
-  final hour12 = hour % 12 == 0 ? 12 : hour % 12;
-  return '$period $hour12시 예상기온';
+  if (value.contains('맑음')) return '맑은 하늘이 이어지는 날씨예요.';
+  return '하늘 상태 자료가 없어 날씨를 확인하기 어려워요.';
 }
 
 String _weatherSummaryMessage({

@@ -60,6 +60,7 @@ class _DetailTabState extends State<DetailTab> {
         oldWidget.focusLifestyleType != widget.focusLifestyleType ||
         oldWidget.focusSource != widget.focusSource ||
         oldWidget.focusRequestId != widget.focusRequestId ||
+        oldWidget.serverFeaturesAvailable != widget.serverFeaturesAvailable ||
         oldWidget.today != widget.today) {
       _focusScheduled = false;
       _scheduleFocusScroll();
@@ -81,7 +82,7 @@ class _DetailTabState extends State<DetailTab> {
         target,
         duration: const Duration(milliseconds: 420),
         curve: Curves.easeOutCubic,
-        alignment: 0.08,
+        alignment: 0,
       );
     });
   }
@@ -91,43 +92,47 @@ class _DetailTabState extends State<DetailTab> {
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
       onRefresh: widget.onRefresh,
-      child: ListView(
+      child: SingleChildScrollView(
         key: const ValueKey('detail-tab'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-        children: [
-          TabPageHeader(
-            eyebrow: 'DETAIL',
-            title: '날씨 자세히보기',
-            subtitle: '상세한 날씨 정보를 확인해요',
-            icon: Icons.query_stats_rounded,
-          ),
-          const SizedBox(height: 18),
-          WeatherInfoCard(current: widget.today.current),
-          const SizedBox(height: 16),
-          if (widget.serverFeaturesAvailable)
-            _RecommendationEvidence(
-              key: _evidenceSectionKey,
-              today: widget.today,
-              focusTopic: widget.focusTopic,
-              focusLifestyleType: widget.focusLifestyleType,
-              focusSource: widget.focusSource,
-              focusedItemKey: _focusedEvidenceKey,
-            )
-          else
-            const ServerFeatureUnavailableCard(
-              icon: Icons.fact_check_outlined,
-              title: '챙길 이유',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TabPageHeader(
+              eyebrow: 'DETAIL',
+              title: '날씨 자세히보기',
+              subtitle: '상세한 날씨 정보를 확인해요',
+              icon: Icons.query_stats_rounded,
             ),
-          const SizedBox(height: 16),
-          _HourlyForecastCard(items: widget.today.hourly),
-        ],
+            const SizedBox(height: 18),
+            WeatherInfoCard(current: widget.today.current),
+            const SizedBox(height: 16),
+            if (widget.serverFeaturesAvailable)
+              _RecommendationEvidence(
+                key: _evidenceSectionKey,
+                today: widget.today,
+                focusTopic: widget.focusTopic,
+                focusLifestyleType: widget.focusLifestyleType,
+                focusSource: widget.focusSource,
+                focusedItemKey: _focusedEvidenceKey,
+              )
+            else
+              ServerFeatureUnavailableCard(
+                key: _evidenceSectionKey,
+                icon: Icons.fact_check_outlined,
+                title: '근거와 자료',
+              ),
+            const SizedBox(height: 16),
+            _HourlyForecastCard(items: widget.today.hourly),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _RecommendationEvidence extends StatelessWidget {
+class _RecommendationEvidence extends StatefulWidget {
   final TodayWeatherResponse today;
   final NotificationTopic? focusTopic;
   final LifestyleMessageType? focusLifestyleType;
@@ -144,22 +149,58 @@ class _RecommendationEvidence extends StatelessWidget {
   });
 
   @override
+  State<_RecommendationEvidence> createState() =>
+      _RecommendationEvidenceState();
+}
+
+class _RecommendationEvidenceState extends State<_RecommendationEvidence> {
+  static const _previewCount = 5;
+  bool _expanded = false;
+
+  @override
+  void didUpdateWidget(covariant _RecommendationEvidence oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.today.region.id != widget.today.region.id) {
+      _expanded = false;
+    }
+  }
+
+  void _toggleExpanded() {
+    setState(() => _expanded = !_expanded);
+    if (!_expanded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final focusedTypes = focusLifestyleType == null
-        ? lifestyleTypesForNotificationTopic(focusTopic)
-        : {focusLifestyleType!};
+    final focusedTypes = widget.focusLifestyleType == null
+        ? lifestyleTypesForNotificationTopic(widget.focusTopic)
+        : {widget.focusLifestyleType!};
     final orderedItems = [
-      ...today.lifestyleMessages.where(
+      ...widget.today.lifestyleMessages.where(
         (item) => focusedTypes.contains(item.type),
       ),
-      ...today.lifestyleMessages.where(
+      ...widget.today.lifestyleMessages.where(
         (item) => !focusedTypes.contains(item.type),
       ),
     ];
-    final items = orderedItems.take(5).toList();
+    final items =
+        _expanded ? orderedItems : orderedItems.take(_previewCount).toList();
     final focusedIndex = items.indexWhere(
       (item) => focusedTypes.contains(item.type),
     );
+    final missingFocus = focusedTypes.isNotEmpty && focusedIndex < 0;
+    final statuses = widget.today.dataStatusMessages
+        .where((part) => part.text.trim().isNotEmpty)
+        .toList();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.surfaceDecoration(),
@@ -168,21 +209,39 @@ class _RecommendationEvidence extends StatelessWidget {
         children: [
           const HomeSectionHeader(
             title: '근거와 자료',
-            subtitle: '추천 뒤에 공식 정보와 자료 상태를 확인해요',
+            subtitle: '생활 안내의 근거와 자료 상태를 확인해요',
           ),
           const SizedBox(height: 16),
-          if (items.isEmpty)
+          if (missingFocus) ...[
+            Container(
+              key: widget.focusedItemKey,
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: WeatherCareTheme.surfaceMuted,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                widget.focusSource == DetailFocusSource.notification
+                    ? '이 알림과 연결된 근거가 현재 자료에 없어요.'
+                    : '선택한 항목의 근거가 현재 자료에 없어요.',
+                key: const ValueKey('detail-focus-unavailable'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          if (items.isEmpty && !missingFocus)
             Text(
-              '현재 조건에서는 별도 준비물 추천이 없어요.',
+              '현재 자료에 표시할 생활 안내 근거가 없어요.',
               style: Theme.of(context).textTheme.bodyMedium,
             )
           else
             for (var index = 0; index < items.length; index++) ...[
               _EvidenceItem(
-                key: index == focusedIndex ? focusedItemKey : null,
+                key: index == focusedIndex ? widget.focusedItemKey : null,
                 message: items[index],
                 focused: index == focusedIndex,
-                focusSource: focusSource,
+                focusSource: widget.focusSource,
               ),
               if (index < items.length - 1) ...[
                 const SizedBox(height: 11),
@@ -190,6 +249,55 @@ class _RecommendationEvidence extends StatelessWidget {
                 const SizedBox(height: 11),
               ],
             ],
+          if (orderedItems.length > _previewCount) ...[
+            const SizedBox(height: 12),
+            TextButton.icon(
+              key: const ValueKey('detail-evidence-toggle'),
+              onPressed: _toggleExpanded,
+              icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+              label: Text(_expanded
+                  ? '기본 $_previewCount개만 보기'
+                  : '근거 ${orderedItems.length - _previewCount}개 더 보기'),
+            ),
+          ],
+          if (statuses.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _EvidenceDataStatus(parts: statuses),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EvidenceDataStatus extends StatelessWidget {
+  final List<WeatherMessagePart> parts;
+
+  const _EvidenceDataStatus({required this.parts});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('detail-data-status'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: WeatherCareTheme.surfaceMuted,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('자료 상태', style: TextStyle(fontWeight: FontWeight.w800)),
+          for (final part in parts) ...[
+            const SizedBox(height: 8),
+            Text(
+              part.role == WeatherMessageRole.dataStatus
+                  ? part.text
+                  : '${part.role.label} · ${part.text}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ],
       ),
     );
@@ -210,6 +318,12 @@ class _EvidenceItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final parts =
+        message.parts.where((part) => part.text.trim().isNotEmpty).toList();
+    final firstRepeatsTitle =
+        parts.isNotEmpty && parts.first.text.trim() == message.title.trim();
+    // 제목과 같은 첫 문장만 중복 제거한다. 다른 첫 근거는 역할과 함께 보존한다.
+    final details = firstRepeatsTitle ? parts.skip(1) : parts;
     return AnimatedContainer(
       key: focused ? const ValueKey('detail-focused-evidence') : null,
       duration: const Duration(milliseconds: 250),
@@ -255,12 +369,19 @@ class _EvidenceItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                 ],
+                if (firstRepeatsTitle) ...[
+                  Text(
+                    parts.first.role.label,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 3),
+                ],
                 Text(
                   message.title,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
-                for (final part in message.parts.skip(1)) ...[
+                for (final part in details) ...[
                   const SizedBox(height: 4),
                   Text(
                     '${part.role.label} · ${part.text}',

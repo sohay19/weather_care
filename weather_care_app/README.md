@@ -82,5 +82,5 @@ Copy-Item config/kma.config.example.json config/kma.config.json
 ## 다음 단계
 
 - GPS 권한 수집 및 지역 선택 플로우 구현
-- 앱 전경에서 수신한 알림 표시
+- 실제 기기에서 운영 FCM의 전경·백그라운드·종료 상태 발송·수신 검증
 - Setting의 지역 선택과 서버 환경 Provider 지역 카탈로그 연결

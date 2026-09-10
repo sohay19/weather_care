@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:weather_care/firebase_options.dart';
 import 'app.dart';
+import 'services/foreground_notification_service.dart';
 import 'services/notification_navigation_service.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
 final _notificationNavigation = NotificationNavigationService(
   _appNavigatorKey,
 );
+final _foregroundNotifications = ForegroundNotificationService();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -32,6 +34,15 @@ Future<void> main() async {
         (await FirebaseMessaging.instance.getInitialMessage())?.data;
   } catch (error) {
     debugPrint('초기 알림을 확인하지 못했어요: $error');
+  }
+
+  try {
+    final localNotificationData = await _foregroundNotifications.initialize(
+      onNotificationSelected: _notificationNavigation.openMessageData,
+    );
+    initialNotificationData ??= localNotificationData;
+  } catch (error) {
+    debugPrint('전경 알림 표시를 준비하지 못했어요: $error');
   }
 
   _notificationNavigation.start(

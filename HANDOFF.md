@@ -5119,3 +5119,13 @@
 - 초기 알림 확인 실패는 앱 시작 실패로 확대하지 않고 기본 메인 화면으로 시작한다. 전경 수신 알림의 화면 표시는 아직 구현하지 않았으며 다음 작업으로 남겼다.
 - 검증: 앱 `flutter analyze`, Flutter `44 tests`, Android debug APK 빌드를 통과했다.
 - 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.
+
+## 2026-09-10 앱 전경 알림 표시 구현
+
+- Firebase 공식 Flutter 수신 지침에 따라 `FirebaseMessaging.onMessage`를 전경 수신 경로로 연결했다. Android는 중요도 높은 `weather_care_alerts` 채널에서 로컬 알림을 표시하고, iOS는 Firebase 전경 alert·badge·sound 표시 옵션을 활성화한다.
+- Android 전경 알림은 서버의 제목·본문을 그대로 사용한다. 본문이 길면 확장형 본문으로 표시하며, `notificationKey`를 안정적인 알림 ID로 변환해 같은 의미의 알림이 중복으로 쌓이지 않게 했다. 데이터 전용 메시지처럼 표시할 공식 제목·본문이 없으면 문구를 만들어내지 않는다.
+- 전경 알림의 data payload를 JSON으로 보존한다. 실행 중·백그라운드에서 선택하면 기존 알림 이동 서비스로 전달하고, 전경 알림을 받은 뒤 앱이 종료된 경우에도 Android 로컬 알림 시작 payload를 읽어 메인·날씨 상세 목적지로 시작한다. 손상된 payload는 이동에 사용하지 않는다.
+- Android 8 이상 채널을 FCM 기본 채널로도 지정하고 흰색 단색 소형 아이콘을 추가했다. `flutter_local_notifications 20.1.0` 요구사항에 맞춰 Java/Kotlin 17과 core library desugaring을 적용했으며, 현재 AGP 8.9.1·compileSdk 36은 패키지 최소조건을 충족한다.
+- 알림 권한은 기존 `NotificationRegistrationService`가 요청하므로 새 표시 서비스에서 중복으로 요청하지 않는다. 다음 작업은 실제 기기에서 운영 FCM 발송 후 전경·백그라운드·종료 상태의 표시·선택 이동을 검증하는 것이다.
+- 검증: 앱 `flutter analyze`, Flutter `48 tests`, Android debug APK 빌드를 통과했다. 운영 Worker나 외부 설정은 변경하지 않았다.
+- 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.

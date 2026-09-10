@@ -123,14 +123,8 @@ class _WeekSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final precipitationDays =
-        days.where((day) => _isPrecipitationWeather(day.weatherLabel)).length;
-    final prepDays = days.where((day) => day.recommendations.isNotEmpty).length;
-    final maxTemperature = days
-        .map((day) => double.tryParse(day.max))
-        .whereType<double>()
-        .fold<double?>(
-            null, (max, value) => max == null || value > max ? value : max);
+    final summary = buildWeekSummary(days,
+        serverFeaturesAvailable: serverFeaturesAvailable);
 
     return Container(
       padding: const EdgeInsets.all(19),
@@ -148,43 +142,57 @@ class _WeekSummary extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '비 오는 날과 준비물이 필요한 날을 먼저 확인하세요.',
+            '받은 예보와 표시할 준비물 추천을 기준으로 집계해요.',
             style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
-          Row(
-            children: [
+          LayoutBuilder(builder: (context, constraints) {
+            final scale = MediaQuery.textScalerOf(context).scale(12) / 12;
+            final columns =
+                (constraints.maxWidth / (110 * scale)).floor().clamp(1, 3);
+            final width = (constraints.maxWidth - 8 * (columns - 1)) / columns;
+            final metrics = [
               _SummaryMetric(
+                key: const ValueKey('week-summary-precipitation'),
                 icon: const WeatherConditionIcon(
                   condition: '비/눈',
                   size: 21,
                   color: WeatherCareTheme.primaryDeep,
                 ),
                 label: '비/눈 예보',
-                value: '$precipitationDays일',
+                metric: summary.precipitation,
               ),
               _SummaryMetric(
+                key: const ValueKey('week-summary-temperature'),
                 icon: const Icon(
                   Icons.device_thermostat_rounded,
                   color: WeatherCareTheme.primaryDeep,
                   size: 19,
                 ),
-                label: '최고 기온',
-                value: maxTemperature == null
-                    ? '--'
-                    : '${maxTemperature.toStringAsFixed(0)}℃',
+                label: '확인된 최고기온',
+                metric: summary.maximum,
               ),
               _SummaryMetric(
+                key: const ValueKey('week-summary-preparations'),
                 icon: const Icon(
                   Icons.work_outline_rounded,
                   color: WeatherCareTheme.primaryDeep,
                   size: 19,
                 ),
-                label: '준비물',
-                value: serverFeaturesAvailable ? '$prepDays일' : '미지원',
+                label: '준비물 추천',
+                metric: summary.preparations,
               ),
-            ],
-          ),
+            ];
+            return Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final metric in metrics)
+                SizedBox(width: width, child: metric),
+            ]);
+          }),
+          if (summary.excludedNotice != null) ...[
+            const SizedBox(height: 8),
+            Text(summary.excludedNotice!,
+                style: WeatherCareTheme.microTextStyle),
+          ],
         ],
       ),
     );
@@ -194,35 +202,40 @@ class _WeekSummary extends StatelessWidget {
 class _SummaryMetric extends StatelessWidget {
   final Widget icon;
   final String label;
-  final String value;
+  final WeekSummaryMetric metric;
 
   const _SummaryMetric({
+    super.key,
     required this.icon,
     required this.label,
-    required this.value,
+    required this.metric,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.66),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Column(
-          children: [
-            icon,
-            const SizedBox(height: 5),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
-            Text(
-              label,
-              style: WeatherCareTheme.microTextStyle,
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.66),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        children: [
+          icon,
+          const SizedBox(height: 5),
+          Text(metric.value,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w900)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: WeatherCareTheme.microTextStyle,
+          ),
+          const SizedBox(height: 4),
+          Text(metric.detail,
+              textAlign: TextAlign.center,
+              style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 10)),
+        ],
       ),
     );
   }
@@ -241,6 +254,10 @@ class _WeekDayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final weatherLabel = weekWeatherLabel(day);
+    final recommendations = serverFeaturesAvailable
+        ? weekRecommendations(day)
+        : <WeatherRecommendation>[];
     return Container(
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
@@ -297,7 +314,7 @@ class _WeekDayCard extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: WeatherConditionIcon(
-                condition: day.weatherLabel,
+                condition: weatherLabel,
                 color: WeatherCareTheme.primaryDeep,
                 size: 21,
               ),
@@ -305,23 +322,33 @@ class _WeekDayCard extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: Text(
-                day.weatherLabel,
+                weatherLabel ?? '날씨 자료 없음',
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
           ]),
+          if (weatherLabel != null && day.weatherDataComplete == false)
+            Text('일부 시간대 날씨 자료 없음', style: WeatherCareTheme.microTextStyle),
           const SizedBox(height: 6),
           Text(
-            '최저 ${day.min}℃ · 최고 ${day.max}℃',
+            '${weekTemperatureLabel(day, maximum: false)} · ${weekTemperatureLabel(day, maximum: true)}',
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
+          if (day.minTemperatureSource == 'HOURLY' ||
+              day.maxTemperatureSource == 'HOURLY')
+            Text('시간별 최저·최고는 받은 시간대만 비교한 값이에요.',
+                style: WeatherCareTheme.microTextStyle),
           const SizedBox(height: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (day.recommendations.isEmpty)
+              if (recommendations.isEmpty)
                 Text(
-                  serverFeaturesAvailable ? '준비물 없음' : '운영 서버 미연결로 준비물 미지원',
+                  !serverFeaturesAvailable
+                      ? '운영 서버 미연결로 준비물 미지원'
+                      : day.recommendationsAvailable
+                          ? '표시할 준비물 추천 없음'
+                          : '준비물 추천 자료 없음',
                   style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
                 )
               else
@@ -329,7 +356,7 @@ class _WeekDayCard extends StatelessWidget {
                   spacing: 5,
                   runSpacing: 5,
                   children: [
-                    for (final recommendation in day.recommendations.take(3))
+                    for (final recommendation in recommendations)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 7,
@@ -362,14 +389,13 @@ class _WeekDayCard extends StatelessWidget {
                       ),
                   ],
                 ),
+              if (recommendations.isNotEmpty && !day.recommendationsAvailable)
+                Text('일부 준비물 추천 자료를 확인하기 어려워요',
+                    style: WeatherCareTheme.microTextStyle),
             ],
           ),
         ],
       ),
     );
   }
-}
-
-bool _isPrecipitationWeather(String label) {
-  return label.contains('비') || label.contains('소나기') || label.contains('눈');
 }

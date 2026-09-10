@@ -245,23 +245,30 @@ function snapshotFromSlot(
   base: BaseDateTime,
   fetchedAt: Date,
 ): WeatherSnapshot | null {
+  // Retain a weather slot when TMP alone is missing; omit TMN/TMX-only slots.
+  const hourlyCategories = ['TMP', 'REH', 'WSD', 'POP', 'PTY', 'PCP', 'SNO', 'SKY'];
+  if (!hourlyCategories.some((category) => categories.has(category))) return null;
   const temperature = numericValue(categories.get('TMP'));
-  if (temperature === undefined) return null;
 
   const humidity = numericValue(categories.get('REH'));
   const windSpeed = numericValue(categories.get('WSD'));
   const precipitationProbability = numericValue(categories.get('POP'));
-  const precipitationCode = numericValue(categories.get('PTY')) ?? 0;
-  const precipitationType = normalizePrecipitationType(precipitationCode);
+  const rawPrecipitationCode = numericValue(categories.get('PTY'));
+  const precipitationCode = rawPrecipitationCode !== undefined &&
+    Number.isInteger(rawPrecipitationCode) && rawPrecipitationCode >= 0 && rawPrecipitationCode <= 7
+    ? rawPrecipitationCode : undefined;
+  const precipitationType = precipitationCode === undefined
+    ? undefined : normalizePrecipitationType(precipitationCode);
   const precipitationAmountRange = parseAmountRange(
     categories.get('PCP'),
     'MM',
   );
   const snowfallAmountRange = parseAmountRange(categories.get('SNO'), 'CM');
-  const snowExpected = isSnowType(precipitationCode) ||
-    (snowfallAmountRange?.min ?? 0) > 0;
+  const snowExpected = (precipitationCode !== undefined && isSnowType(precipitationCode)) ||
+    (snowfallAmountRange?.min ?? 0) > 0
+    ? true : precipitationCode === undefined ? undefined : false;
   const forecastAt = kmaSlotToIso(slotKey);
-  const calculatedApparentTemperature = apparentTemperature(
+  const calculatedApparentTemperature = temperature === undefined ? undefined : apparentTemperature(
     temperature,
     humidity,
     windSpeed,
@@ -297,9 +304,8 @@ function snapshotFromSlot(
     precipitationProbability,
     precipitationAmount: precipitationAmountRange?.min,
     precipitationAmountRange,
-    snowProbability: snowExpected
-      ? precipitationProbability ?? 0
-      : 0,
+    snowProbability: snowExpected === undefined ? undefined
+      : snowExpected ? precipitationProbability : 0,
     snowExpected,
     snowfallAmount: snowfallAmountRange?.min,
     snowfallAmountRange,
@@ -355,6 +361,13 @@ function buildDailyForecast(
         date,
         minTemperature,
         maxTemperature,
+        minTemperatureSource: minTemperature === undefined ? undefined
+          : firstNumeric(categories.get('TMN')) === undefined ? 'HOURLY' : 'DAILY',
+        maxTemperatureSource: maxTemperature === undefined ? undefined
+          : firstNumeric(categories.get('TMX')) === undefined ? 'HOURLY' : 'DAILY',
+        weatherDataComplete: snapshots.length > 0 &&
+          snapshots.every((snapshot) => snapshot.skyCondition !== undefined) &&
+          (Date.parse(snapshots[snapshots.length - 1].observedAt) - Date.parse(snapshots[0].observedAt)) / 3_600_000 + 1 === snapshots.length,
         skyCondition: representativeWeather(snapshots),
         precipitationProbability,
         precipitationAmount: snapshots.reduce(
@@ -428,7 +441,7 @@ function normalizeServiceKey(value: string): string {
 }
 
 function numericValue(value?: string): number | undefined {
-  if (value === undefined) return undefined;
+  if (value === undefined || value.trim() === '') return undefined;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
@@ -492,9 +505,9 @@ function ifUndefined(
 }
 
 function weatherLabel(
-  precipitationType: number,
+  precipitationType: number | undefined,
   skyCode?: number,
-): string {
+): string | undefined {
   const precipitationLabels: Record<number, string> = {
     1: '비',
     2: '비/눈',
@@ -504,10 +517,12 @@ function weatherLabel(
     6: '빗방울/눈날림',
     7: '눈날림',
   };
+  if (precipitationType === undefined) return undefined;
   if (precipitationLabels[precipitationType]) {
     return precipitationLabels[precipitationType];
   }
-  return { 1: '맑음', 3: '구름 많음', 4: '흐림' }[skyCode ?? 1] ?? '맑음';
+  return precipitationType === 0 && skyCode !== undefined
+    ? { 1: '맑음', 3: '구름 많음', 4: '흐림' }[skyCode] : undefined;
 }
 
 function representativeWeather(snapshots: WeatherSnapshot[]): string {

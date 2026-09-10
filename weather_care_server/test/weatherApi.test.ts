@@ -6,10 +6,35 @@ import router, {
   settleWithin,
 } from '../src/api/weather';
 import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider';
+import * as settingsRepository from '../src/database/notificationSettingsRepository';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
 
 describe('weekly calendar date contract', () => {
+  it('filters disabled recommendations before selecting the first three and exposes coverage metadata', async () => {
+    const settings = { ...settingsRepository.defaultNotificationSettings('test'), umbrellaEnabled: false, parasolEnabled: false };
+    const hourly = [snapshot(14, { temperature: 35, apparentTemperature: 38, humidity: 85, uvIndex: 9, pm25: 90,
+      precipitationProbability: 90, precipitationAmount: 10, precipitationType: 'RAIN' })];
+    const forecastDay = { ...day(35), weatherDataComplete: false, minTemperatureSource: 'HOURLY' as const, maxTemperatureSource: 'DAILY' as const };
+    const expected = recommendationsForDay(forecastDay, hourly, settings).filter((r) => r.recommended).slice(0, 3);
+    expect(expected).toHaveLength(3);
+    expect(recommendationsForDay(forecastDay, hourly, settings).slice(0, 3).some((r) => !r.recommended)).toBe(true);
+    const provider = vi.spyOn(KmaWeatherProvider.prototype, 'getForecastByRegion').mockResolvedValue({
+      current: hourly[0], hourly, daily: [forecastDay], baseDate: '20260820', baseTime: '1100', dataSource: '기상청',
+    });
+    const savedSettings = vi.spyOn(settingsRepository, 'getNotificationSettings').mockResolvedValue(settings);
+    try {
+      const response = await router.request('/weekly?nx=60&ny=121&installationId=test', {}, { KMA_SERVICE_KEY: 'test-key' });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ days: [{
+        weatherDataComplete: false, minTemperatureSource: 'HOURLY', maxTemperatureSource: 'DAILY',
+        recommendations: expected.map(({ type, recommended }) => ({ type, recommended })),
+      }] });
+    } finally {
+      provider.mockRestore();
+      savedSettings.mockRestore();
+    }
+  });
   it.each([
     ['20260910', '2026-09-10', '목'],
     ['20261231', '2026-12-31', '목'],

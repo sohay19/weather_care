@@ -100,11 +100,9 @@ void main() {
     var now = DateTime.parse('2026-09-10T01:00:00Z');
     await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')],
         now: () => now);
-    tester.binding
-        .handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     now = now.add(const Duration(days: 1));
-    tester.binding
-        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsNothing);
     expect(find.byKey(const ValueKey('week-today-2026-09-11')), findsOneWidget);
@@ -122,9 +120,9 @@ void main() {
           'min': '-15',
           'max': '-5',
           'recommendations': [
-            {'type': 'HEAVY_SNOW_CAUTION'},
-            {'type': 'UMBRELLA'},
-            {'type': 'OUTERWEAR'},
+            {'type': 'HEAVY_SNOW_CAUTION', 'recommended': true},
+            {'type': 'UMBRELLA', 'recommended': true},
+            {'type': 'OUTERWEAR', 'recommended': true},
           ],
         },
         {'forecastDate': '2027-01-01', 'weatherLabel': '맑음'}
@@ -141,8 +139,8 @@ WeeklyForecastItem _day(String? date) => WeeklyForecastItem(
       date: '금',
       forecastDate: date,
       weatherLabel: '비',
-      min: '20',
-      max: '25',
+      min: 20,
+      max: 25,
       recommendations: const [],
     );
 

@@ -12,6 +12,55 @@ import {
 const base = { baseDate: '20260820', baseTime: '0800' };
 
 describe('KmaWeatherProvider', () => {
+  it.each([
+    { TMP: '28' },
+    { TMP: '28', PTY: '0' },
+    { TMP: '28', SKY: '1' },
+    { TMP: '28', PTY: '9', SKY: '1' },
+    { TMP: '28', PTY: '0', SKY: '9' },
+    { TMP: '28', PTY: '', SKY: '1' },
+  ])('does not fill missing or invalid weather codes with clear skies (%j)', (values) => {
+    const forecast = buildForecastFromItems(slot('20260820', '1000', values), new Date('2026-08-20T01:00:00Z'), base);
+    expect(forecast.current.skyCondition).toBeUndefined();
+    expect(forecast.daily[0].skyCondition).toBe('정보 없음');
+    expect(forecast.daily[0].weatherDataComplete).toBe(false);
+  });
+
+  it('keeps weather when TMP is missing and does not turn blank temperatures into zero', () => {
+    const forecast = buildForecastFromItems([
+      ...slot('20260820', '1000', { TMP: '', PTY: '1', POP: '90' }),
+      ...slot('20260820', '1100', { REH: '60' }),
+      item('20260820', '0600', 'TMN', ' '),
+    ], new Date('2026-08-20T01:00:00Z'), base);
+    expect(forecast.hourly).toHaveLength(2);
+    expect(forecast.current.temperature).toBeUndefined();
+    expect(forecast.current.apparentTemperature).toBeUndefined();
+    expect(forecast.current.skyCondition).toBe('비');
+    expect(forecast.daily[0].minTemperature).toBeUndefined();
+    expect(forecast.daily[0].maxTemperature).toBeUndefined();
+    expect(forecast.daily[0].weatherDataComplete).toBe(false);
+  });
+
+  it('separates official daily temperatures from the extrema of received hourly slots', () => {
+    const forecast = buildForecastFromItems([
+      ...slot('20260820', '1000', { TMP: '-3', PTY: '0', SKY: '1' }),
+      ...slot('20260820', '1100', { TMP: '0', PTY: '0', SKY: '1' }),
+      item('20260820', '1500', 'TMX', '5'),
+    ], new Date('2026-08-20T01:00:00Z'), base);
+    expect(forecast.daily[0]).toMatchObject({
+      minTemperature: -3, minTemperatureSource: 'HOURLY',
+      maxTemperature: 5, maxTemperatureSource: 'DAILY', weatherDataComplete: true,
+    });
+  });
+
+  it('marks a missing hour between received slots as incomplete weather', () => {
+    const forecast = buildForecastFromItems([
+      ...slot('20260820', '1000', { TMP: '28', PTY: '0', SKY: '1' }),
+      ...slot('20260820', '1200', { TMP: '29', PTY: '0', SKY: '1' }),
+    ], new Date('2026-08-20T01:00:00Z'), base);
+    expect(forecast.daily[0].weatherDataComplete).toBe(false);
+  });
+
   it('selects the latest published base time in Korea', () => {
     expect(
       latestBaseDateTimes(new Date('2026-08-20T01:00:00Z'), 4),

@@ -233,8 +233,12 @@ DirectKmaWeatherBundle _buildBundle(
               forecastDate: '${item.date.substring(0, 4)}-'
                   '${item.date.substring(4, 6)}-${item.date.substring(6, 8)}',
               weatherLabel: item.skyCondition,
-              min: item.minTemperature?.round().toString() ?? '--',
-              max: item.maxTemperature?.round().toString() ?? '--',
+              weatherDataComplete: item.weatherDataComplete,
+              min: item.minTemperature,
+              max: item.maxTemperature,
+              minTemperatureSource: item.minTemperatureSource,
+              maxTemperatureSource: item.maxTemperatureSource,
+              recommendationsAvailable: false,
               recommendations: const [],
             ),
           )
@@ -267,6 +271,23 @@ List<_DirectDaily> _buildDaily(
       minTemperature: _firstNumber(categories['TMN']) ?? _minimum(temperatures),
       maxTemperature: _firstNumber(categories['TMX']) ?? _maximum(temperatures),
       skyCondition: _representativeWeather(snapshots),
+      weatherDataComplete: snapshots.isNotEmpty &&
+          snapshots.every((item) => item.skyCondition != null) &&
+          snapshots.last.observedAt
+                      .difference(snapshots.first.observedAt)
+                      .inHours +
+                  1 ==
+              snapshots.length,
+      minTemperatureSource: _firstNumber(categories['TMN']) != null
+          ? 'DAILY'
+          : temperatures.isEmpty
+              ? null
+              : 'HOURLY',
+      maxTemperatureSource: _firstNumber(categories['TMX']) != null
+          ? 'DAILY'
+          : temperatures.isEmpty
+              ? null
+              : 'HOURLY',
     );
   }).toList();
 }
@@ -617,11 +638,17 @@ class _DirectDaily {
   final double? minTemperature;
   final double? maxTemperature;
   final String skyCondition;
+  final bool weatherDataComplete;
+  final String? minTemperatureSource;
+  final String? maxTemperatureSource;
 
   const _DirectDaily({
     required this.date,
     required this.minTemperature,
     required this.maxTemperature,
     required this.skyCondition,
+    required this.weatherDataComplete,
+    this.minTemperatureSource,
+    this.maxTemperatureSource,
   });
 }

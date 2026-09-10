@@ -4,6 +4,10 @@ export interface DailyWeatherForecast {
   date: string;
   minTemperature?: number;
   maxTemperature?: number;
+  minTemperatureSource?: 'DAILY' | 'HOURLY';
+  maxTemperatureSource?: 'DAILY' | 'HOURLY';
+  /** Completeness of the received slots, not a guarantee of 24-hour coverage. */
+  weatherDataComplete?: boolean;
   skyCondition: string;
   precipitationProbability: number;
   precipitationAmount: number;

@@ -197,19 +197,83 @@ class TimelineItem {
 class WeeklyForecastItem {
   final String date;
   final String? forecastDate;
-  final String weatherLabel;
-  final String min;
-  final String max;
+  final String? weatherLabel;
+  final bool? weatherDataComplete;
+  final double? min;
+  final double? max;
+  final String? minTemperatureSource;
+  final String? maxTemperatureSource;
+  final bool recommendationsAvailable;
   final List<WeatherRecommendation> recommendations;
 
   const WeeklyForecastItem({
     required this.date,
     this.forecastDate,
     required this.weatherLabel,
+    this.weatherDataComplete,
     required this.min,
     required this.max,
+    this.minTemperatureSource,
+    this.maxTemperatureSource,
+    this.recommendationsAvailable = true,
     required this.recommendations,
   });
+
+  factory WeeklyForecastItem.fromJson(Map<String, dynamic> json) {
+    var min = _weeklyNumber(json['min']);
+    var max = _weeklyNumber(json['max']);
+    if (min != null && max != null && min > max) {
+      min = null;
+      max = null;
+    }
+    final raw = json['recommendations'];
+    final valid = raw is List
+        ? raw
+            .whereType<Map<String, dynamic>>()
+            .where(_validWeeklyRecommendation)
+            .toList()
+        : <Map<String, dynamic>>[];
+    final seen = <RecommendationType>{};
+    final active = valid
+        .map(WeatherRecommendation.fromJson)
+        .where((item) => item.recommended && seen.add(item.type))
+        .take(3)
+        .toList();
+    return WeeklyForecastItem(
+      date: _optionalText(json['date']) ?? '',
+      forecastDate: _optionalText(json['forecastDate']),
+      weatherLabel: _optionalText(json['weatherLabel']),
+      weatherDataComplete: json['weatherDataComplete'] is bool
+          ? json['weatherDataComplete'] as bool
+          : null,
+      min: min,
+      max: max,
+      minTemperatureSource: _optionalText(json['minTemperatureSource']),
+      maxTemperatureSource: _optionalText(json['maxTemperatureSource']),
+      recommendationsAvailable: raw is List && valid.length == raw.length,
+      recommendations: active,
+    );
+  }
+}
+
+double? _weeklyNumber(Object? value) {
+  final number =
+      value is String ? double.tryParse(value.trim()) : _optionalNumber(value);
+  return number?.isFinite == true ? number : null;
+}
+
+bool _validWeeklyRecommendation(Map<String, dynamic> json) {
+  if (!RecommendationType.values.any((type) => type.apiName == json['type']) ||
+      json['recommended'] is! bool) {
+    return false;
+  }
+  if (json['priority'] != null && _optionalNumber(json['priority']) == null) {
+    return false;
+  }
+  for (final key in ['title', 'description', 'validFrom', 'validUntil']) {
+    if (json[key] != null && json[key] is! String) return false;
+  }
+  return true;
 }
 
 class TodayWeatherResponse {
@@ -294,23 +358,10 @@ class WeeklyWeatherResponse {
   const WeeklyWeatherResponse({required this.days});
 
   factory WeeklyWeatherResponse.fromJson(Map<String, dynamic> json) {
-    final days = (json['days'] as List<dynamic>? ?? [])
+    final raw = json['days'];
+    final days = (raw is List ? raw : const [])
         .whereType<Map<String, dynamic>>()
-        .map(
-          (e) => WeeklyForecastItem(
-            date: e['date']?.toString() ?? '',
-            forecastDate: e['forecastDate']?.toString(),
-            weatherLabel: e['weatherLabel']?.toString() ?? '맑음',
-            min: e['min']?.toString() ?? '--',
-            max: e['max']?.toString() ?? '--',
-            recommendations: ((e['recommendations'] as List<dynamic>? ?? [])
-                    .whereType<Map<String, dynamic>>()
-                    .map((r) => WeatherRecommendation.fromJson(r))
-                    .toList())
-                .take(3)
-                .toList(),
-          ),
-        )
+        .map(WeeklyForecastItem.fromJson)
         .toList();
     return WeeklyWeatherResponse(days: days);
   }

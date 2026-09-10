@@ -377,13 +377,16 @@ router.get('/weekly', async (c) => {
         date: weekdayLabel(day.date),
         forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
         weatherLabel: day.skyCondition,
+        weatherDataComplete: day.weatherDataComplete,
         min: formatTemperature(day.minTemperature),
         max: formatTemperature(day.maxTemperature),
+        minTemperatureSource: day.minTemperatureSource,
+        maxTemperatureSource: day.maxTemperatureSource,
         recommendations: recommendationsForDay(
           day,
           forecast.hourly,
           settings,
-        ),
+        ).filter((item) => item.recommended).slice(0, 3),
       })),
     });
   } catch (error) {
@@ -472,7 +475,7 @@ export function recommendationsForDay(
     return runRecommendationEngine(
       runLifestyleWeatherEngine(facts, dayHourly),
       settings,
-    ).slice(0, 3);
+    );
   }
 
   const snapshot: WeatherSnapshot = {
@@ -486,7 +489,7 @@ export function recommendationsForDay(
     snowfallAmount: day.snowfallAmount,
     skyCondition: day.skyCondition,
   };
-  return recommendationsForSnapshot(snapshot, settings).slice(0, 3);
+  return recommendationsForSnapshot(snapshot, settings);
 }
 
 async function settingsForRequest(

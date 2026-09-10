@@ -111,6 +111,10 @@ void main() {
     expect(bundle.weekly.days.single.recommendations, isEmpty);
     expect(bundle.weekly.days.single.forecastDate, '2026-08-20');
     expect(bundle.weekly.days.single.date, '목');
+    expect(bundle.weekly.days.single.weatherDataComplete, isTrue);
+    expect(bundle.weekly.days.single.minTemperatureSource, 'DAILY');
+    expect(bundle.weekly.days.single.maxTemperatureSource, 'DAILY');
+    expect(bundle.weekly.days.single.recommendationsAvailable, isFalse);
   });
 
   test('운영 서버 실패 시 기상청 직접 조회로 전환한다', () async {
@@ -232,8 +236,11 @@ void main() {
     expect(zero.snowExpected, isFalse);
     expect(zero.snowfallAmount, 0);
     expect(zero.skyCondition, '맑음');
-    expect(bundle.weekly.days.single.min, '0');
-    expect(bundle.weekly.days.single.max, '3');
+    expect(bundle.weekly.days.single.min, 0);
+    expect(bundle.weekly.days.single.max, 3);
+    expect(bundle.weekly.days.single.weatherDataComplete, isFalse);
+    expect(bundle.weekly.days.single.minTemperatureSource, 'HOURLY');
+    expect(bundle.weekly.days.single.maxTemperatureSource, 'DAILY');
   });
 
   test('직접 조회의 모든 기온이 누락돼도 일 최저·최고를 0으로 계산하지 않는다', () async {
@@ -242,8 +249,8 @@ void main() {
       ..._slot('20260820', '1100', {'REH': '50'}),
     ]);
     expect(bundle.today.hourly, hasLength(2));
-    expect(bundle.weekly.days.single.min, '--');
-    expect(bundle.weekly.days.single.max, '--');
+    expect(bundle.weekly.days.single.min, isNull);
+    expect(bundle.weekly.days.single.max, isNull);
     expect(bundle.weekly.days.single.weatherLabel, '정보 없음');
   });
 

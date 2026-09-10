@@ -5129,3 +5129,16 @@
 - 알림 권한은 기존 `NotificationRegistrationService`가 요청하므로 새 표시 서비스에서 중복으로 요청하지 않는다. 다음 작업은 실제 기기에서 운영 FCM 발송 후 전경·백그라운드·종료 상태의 표시·선택 이동을 검증하는 것이다.
 - 검증: 앱 `flutter analyze`, Flutter `48 tests`, Android debug APK 빌드를 통과했다. 운영 Worker나 외부 설정은 변경하지 않았다.
 - 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.
+
+## 2026-09-10 Android 에뮬레이터 FCM 실수신 검증
+
+- Google Play 지원 Android 17/API 37 `Medium_Phone` 에뮬레이터를 부팅하고 운영 서버 주소가 포함된 Debug APK를 설치했다. Android 알림·정밀 위치 권한과 Location Accuracy를 테스트 환경에서 허용했다.
+- 앱에서 FCM 등록 토큰이 생성된 것을 확인했고 Firebase Console의 테스트 기기로 정상 인식됐다. 토큰 원문은 문서나 저장소에 기록하지 않았다.
+- Firebase Console의 테스트 메시지를 세 번 발송해 다음 경로를 검증했다.
+  - 전경: `weather_care_alerts` 고중요도 채널에 앱 로컬 알림이 게시되고 제목·본문·확장 본문·전용 소형 아이콘이 적용됐다.
+  - 백그라운드: 홈 화면에 머문 상태에서 시스템 알림이 게시됐다. 알림 선택 후 앱이 다시 열리고 기본 `Main` 탭이 선택됐다.
+  - 종료: Android의 강제 종료 상태는 만들지 않고 앱 UID로 프로세스만 종료해 `stopped=false`를 유지했다. 앱 프로세스가 없는 상태에서 알림이 수신됐고, 선택 후 앱 프로세스와 `MainActivity`가 시작됐다.
+- 세 경로 모두 FCM 제목·본문이 일치했으며 앱의 치명적 예외나 알림 처리 실패 로그는 없었다.
+- Firebase Console 테스트 메시지에는 앱의 `notificationTarget`·`notificationTopic` 데이터를 넣지 않았으므로 이번 실수신은 데이터가 없을 때의 안전한 `Main` 이동까지만 검증했다. 운영 Worker가 만든 실제 데이터 payload의 `Detail` 이동은 별도 종단 검증이 남아 있다.
+- 종료 상태 시작 뒤 앱이 표시한 운영 서버 연결 경고는 FCM과 별개다. 호스트와 에뮬레이터의 Worker 연결·DNS는 정상이었지만 운영 Today API가 약 29.6초 걸려 앱 `ApiClient`의 6초 제한을 초과했다. 수원 모의 위치로 바꾼 뒤 재시도해도 같은 경고가 유지되어 서버 응답시간 또는 앱 제한시간 조정이 다음 진단 대상이다.
+- Firebase Console에는 발송하지 않은 알림 작성 화면과 최근 테스트 기기 항목만 남아 있으며 전체 캠페인은 게시하지 않았다. 사용자 소유의 미추적 `scripts/*`, `scripts/__pycache__/`, `tmp/`는 수정하거나 커밋하지 않았다.

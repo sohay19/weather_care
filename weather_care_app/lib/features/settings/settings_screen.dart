@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../../models/app_settings.dart';
 import '../../services/current_location_service.dart';
+import '../../services/region_catalog.dart';
+import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
 import 'location_mode.dart';
+import 'region_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -17,6 +20,8 @@ class SettingsScreen extends StatefulWidget {
   final String? regionName;
   final Future<void> Function()? onLocate;
   final Future<void> Function()? onOpenLocationSettings;
+  final Future<RegionCatalog> Function()? loadRegionCatalog;
+  final String? manualRegionName;
 
   const SettingsScreen({
     super.key,
@@ -28,6 +33,8 @@ class SettingsScreen extends StatefulWidget {
     this.regionName,
     this.onLocate,
     this.onOpenLocationSettings,
+    this.loadRegionCatalog,
+    this.manualRegionName,
   });
 
   @override
@@ -36,6 +43,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late AppSettings settings;
+  bool _pickingRegion = false;
 
   @override
   void initState() {
@@ -86,7 +94,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : '현재 위치 확인이 필요해요'
               : settings.currentRegionId == null
                   ? '선택된 지역이 없어요'
-                  : '${widget.regionName ?? '저장한 지역'}의 날씨를 사용해요',
+                  : settings.manualRegionKey != null &&
+                          widget.manualRegionName == null
+                      ? '저장한 지역을 다시 선택해주세요'
+                      : '${widget.manualRegionName ?? widget.regionName ?? '저장한 지역'} 기준으로 안내해요',
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             RadioGroup<LocationMode>(
@@ -95,6 +106,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : LocationMode.manual,
               onChanged: (mode) {
                 if (mode == null) return;
+                if (mode == LocationMode.manual &&
+                    settings.manualRegionKey == null) {
+                  unawaited(_selectRegion());
+                  return;
+                }
                 _updateSettings(settings.copyWith(locationMode: mode.label));
               },
               child: Column(
@@ -113,7 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: '지역 직접 선택',
                     subtitle: settings.currentRegionId == null
                         ? '저장된 지역이 없어요'
-                        : '선택한 지역을 계속 유지해요',
+                        : widget.manualRegionName ?? '저장한 지역을 사용할 수 있어요',
                     selected: settings.locationMode == 'MANUAL',
                   ),
                 ],
@@ -158,9 +174,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 6),
               Text('백그라운드에서 위치를 계속 추적하지 않아요. 알림은 서버에 마지막으로 등록된 지역 기준이에요.',
                   style: Theme.of(context).textTheme.bodySmall),
-            ] else if (settings.currentRegionId == null) ...[
+            ] else ...[
               const SizedBox(height: 10),
-              const Text('저장된 지역이 없어 날씨를 조회할 수 없어요. 현재 위치 사용으로 전환해주세요.'),
+              if (settings.currentRegionId == null)
+                const Text('저장된 지역이 없어 날씨를 조회할 수 없어요. 기준 지역을 선택해주세요.'),
+              FilledButton.tonalIcon(
+                  key: const ValueKey('region-change'),
+                  onPressed: _pickingRegion ? null : _selectRegion,
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('지역 선택·변경')),
+              const SizedBox(height: 6),
+              const Text(
+                  '선택 지역의 대표 예보 지점 기준이에요. 현재 위치를 추적하지 않으며, 정밀 강수·도로 분석에는 사용하지 않아요.'),
             ],
           ]),
         ),
@@ -489,6 +514,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       }));
     }
+  }
+
+  Future<void> _selectRegion() async {
+    if (_pickingRegion) return;
+    setState(() => _pickingRegion = true);
+    final selected =
+        await Navigator.of(context).push<ForecastRegion>(MaterialPageRoute(
+      builder: (_) => RegionPickerScreen(
+          loadCatalog: widget.loadRegionCatalog,
+          selectedKey: settings.manualRegionKey),
+    ));
+    if (!mounted) return;
+    setState(() => _pickingRegion = false);
+    if (selected == null) return;
+    _updateSettings(settings.copyWith(
+        locationMode: 'MANUAL',
+        currentRegionId: selected.gridId,
+        manualRegionKey: selected.key));
   }
 
   Future<void> _selectNotificationTime() async {

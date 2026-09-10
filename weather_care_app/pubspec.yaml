@@ -37,6 +37,7 @@ flutter:
   uses-material-design: true
   assets:
     - config/
+    - assets/data/kma_regions.json
   fonts:
     - family: SUITE
       fonts:

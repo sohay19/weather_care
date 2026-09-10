@@ -2,6 +2,7 @@ class AppSettings {
   final String installationId;
   final String locationMode;
   final String? currentRegionId;
+  final String? manualRegionKey;
   final bool onboardingCompleted;
   final bool notificationEnabled;
   final String notificationTime;
@@ -22,6 +23,7 @@ class AppSettings {
     required this.installationId,
     required this.locationMode,
     this.currentRegionId,
+    this.manualRegionKey,
     required this.onboardingCompleted,
     required this.notificationEnabled,
     required this.notificationTime,
@@ -42,6 +44,7 @@ class AppSettings {
   AppSettings copyWith({
     String? locationMode,
     String? currentRegionId,
+    String? manualRegionKey,
     bool? onboardingCompleted,
     bool? notificationEnabled,
     String? notificationTime,
@@ -62,6 +65,7 @@ class AppSettings {
       installationId: installationId,
       locationMode: locationMode ?? this.locationMode,
       currentRegionId: currentRegionId ?? this.currentRegionId,
+      manualRegionKey: manualRegionKey ?? this.manualRegionKey,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       notificationTime: notificationTime ?? this.notificationTime,
@@ -114,6 +118,9 @@ class AppSettings {
           json['locationMode'] as String? ?? fallbackSettings.locationMode,
       currentRegionId:
           json['currentRegion'] as String? ?? fallbackSettings.currentRegionId,
+      manualRegionKey: json['manualRegionKey'] is String
+          ? json['manualRegionKey'] as String
+          : null,
       onboardingCompleted: json['onboardingCompleted'] as bool? ??
           fallbackSettings.onboardingCompleted,
       notificationEnabled: json['notificationEnabled'] as bool? ??
@@ -151,6 +158,7 @@ class AppSettings {
       'installationId': installationId,
       'locationMode': locationMode,
       'currentRegion': currentRegionId,
+      'manualRegionKey': manualRegionKey,
       'onboardingCompleted': onboardingCompleted,
       'notificationEnabled': notificationEnabled,
       'notificationTime': notificationTime,

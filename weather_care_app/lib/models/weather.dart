@@ -311,6 +311,18 @@ class TodayWeatherResponse {
     required this.hourly,
   });
 
+  TodayWeatherResponse withRegionName(String name) => TodayWeatherResponse(
+        dataSource: dataSource,
+        region: WeatherRegion(nx: region.nx, ny: region.ny, name: name),
+        brief: brief,
+        current: current,
+        recommendations: recommendations,
+        lifestyleMessages: lifestyleMessages,
+        dataStatusMessages: dataStatusMessages,
+        timeline: timeline,
+        hourly: hourly,
+      );
+
   factory TodayWeatherResponse.fromJson(Map<String, dynamic> json) {
     final recs = (json['recommendations'] as List<dynamic>? ?? [])
         .whereType<Map<String, dynamic>>()

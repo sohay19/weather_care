@@ -17,6 +17,8 @@ import '../../services/notification_destination.dart';
 import '../../services/settings_sync_service.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
+import '../../services/region_catalog.dart';
+import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
 import 'tabs/detail_tab.dart';
@@ -33,6 +35,7 @@ class HomeScreen extends StatefulWidget {
   final WeatherService? weatherService;
   final SettingsSyncService? settingsSync;
   final NotificationRegistrationService? notificationRegistration;
+  final RegionCatalog? regionCatalog;
 
   const HomeScreen({
     super.key,
@@ -42,6 +45,7 @@ class HomeScreen extends StatefulWidget {
     this.weatherService,
     this.settingsSync,
     this.notificationRegistration,
+    this.regionCatalog,
   });
 
   @override
@@ -64,6 +68,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _initialized = false;
   bool _leftApp = false;
   bool _registrationInitialized = false;
+  RegionCatalog? _regionCatalog;
+  ForecastRegion? get _manualRegion =>
+      _regionCatalog?.find(_settings.manualRegionKey);
   int _locationRevision = 0;
   Future<void> _settingsSaveQueue = Future<void>.value();
   int _settingsRevision = 0;
@@ -81,6 +88,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   KmaGrid? get _weatherGrid {
     final coordinates = _coordinates;
     if (_settings.locationMode != 'GPS') {
+      if (_settings.manualRegionKey != null) {
+        final selected = _manualRegion;
+        // Never use an old saved grid when catalog identity is missing/changed.
+        return selected == null
+            ? null
+            : KmaGrid(nx: selected.nx, ny: selected.ny);
+      }
       final match = RegExp(r'^(\d{1,3})_(\d{1,3})$')
           .firstMatch(_settings.currentRegionId ?? '');
       if (match == null) return null;
@@ -115,6 +129,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final config = await AppConfig.load();
     final installationId = await const InstallationIdentity().getOrCreate();
     final savedSettings = await _settingsRepository.load(installationId);
+    try {
+      _regionCatalog = widget.regionCatalog ?? await RegionCatalog.load();
+    } catch (_) {
+      // GPS/legacy grids remain usable; the picker offers an explicit retry.
+    }
     if (!mounted) return;
     _settings = savedSettings;
     final client = ApiClient(baseUrl: config.serverUrl);
@@ -209,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _loadMode = WeatherLoadMode.unavailable;
             _statusMessage = _settings.locationMode == 'GPS'
                 ? '${_location.message}. Setting에서 위치를 다시 확인해주세요. 다른 지역으로 대체하지 않아요.'
-                : '선택된 지역이 없어요. 현재 위치를 사용하거나 지역 선택을 완료해주세요.';
+                : '저장된 지역을 확인할 수 없어요. Setting에서 기준 지역을 다시 선택해주세요.';
           });
           _notificationRegistration?.invalidateLocation();
           continue;
@@ -269,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
         if (!mounted || revision != _locationRevision) return;
         if (serverResult.hasWeather) {
-          _applyResult(serverResult);
+          _applyResult(serverResult, grid);
           return;
         }
 
@@ -290,11 +309,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ny: grid.ny,
           );
           if (!mounted || revision != _locationRevision) return;
-          _applyResult(directResult);
+          _applyResult(directResult, grid);
           return;
         }
 
-        _applyResult(serverResult);
+        _applyResult(serverResult, grid);
         return;
       }
     } finally {
@@ -302,9 +321,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _applyResult(WeatherLoadResult result) {
+  void _applyResult(WeatherLoadResult result, KmaGrid expectedGrid) {
     setState(() {
-      _today = result.today;
+      final received = result.today?.region;
+      if (received != null &&
+          (received.nx != expectedGrid.nx || received.ny != expectedGrid.ny)) {
+        _today = null;
+        _weekly = null;
+        _loadMode = WeatherLoadMode.unavailable;
+        _statusMessage = '기준 지역과 다른 날씨 자료를 받아 표시하지 않았어요. 새로고침해 다시 확인해주세요.';
+        return;
+      }
+      final selected =
+          _settings.locationMode == 'MANUAL' ? _manualRegion : null;
+      final today = result.today;
+      _today = selected != null &&
+              today?.region.nx == selected.nx &&
+              today?.region.ny == selected.ny
+          ? today!.withRegionName(selected.fullName)
+          : today;
       _weekly = result.weekly;
       _loadMode = result.mode;
       _statusMessage = result.message;
@@ -338,6 +373,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final weekly = _weekly;
     final hasWeather = today != null && weekly != null;
     final serverFeaturesAvailable = _loadMode == WeatherLoadMode.server;
+    final settingsPanel = AbsorbPointer(
+        absorbing: !_initialized,
+        child: SettingsScreen(
+          embedded: true,
+          onRefresh: _loadData,
+          initialSettings: _settings,
+          onSettingsChanged: _handleSettingsChanged,
+          location: _location,
+          regionName: _today?.region.name,
+          onLocate: () => _refresh(requestPermission: true),
+          onOpenLocationSettings: _openDeviceLocationSettings,
+          loadRegionCatalog: _loadRegionCatalog,
+          manualRegionName: _manualRegion?.fullName,
+        ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
@@ -382,32 +431,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
                     ),
-                    SettingsScreen(
-                      embedded: true,
-                      onRefresh: _loadData,
-                      initialSettings: _settings,
-                      onSettingsChanged: _handleSettingsChanged,
-                      location: _location,
-                      regionName: _today?.region.name,
-                      onLocate: () => _refresh(requestPermission: true),
-                      onOpenLocationSettings: _openDeviceLocationSettings,
-                    ),
+                    settingsPanel,
                   ]
                 : [
                     _statusView('today-tab'),
                     _statusView('detail-tab'),
                     _statusView('main-tab'),
                     _statusView('week-tab'),
-                    SettingsScreen(
-                      embedded: true,
-                      onRefresh: _loadData,
-                      initialSettings: _settings,
-                      onSettingsChanged: _handleSettingsChanged,
-                      location: _location,
-                      regionName: _today?.region.name,
-                      onLocate: () => _refresh(requestPermission: true),
-                      onOpenLocationSettings: _openDeviceLocationSettings,
-                    ),
+                    settingsPanel,
                   ],
           ),
         ),
@@ -525,7 +556,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _handleSettingsChanged(AppSettings updated) {
     final revision = ++_settingsRevision;
     final locationChanged = _settings.locationMode != updated.locationMode ||
-        _settings.currentRegionId != updated.currentRegionId;
+        _settings.currentRegionId != updated.currentRegionId ||
+        _settings.manualRegionKey != updated.manualRegionKey;
     setState(() {
       _settings = updated;
       if (locationChanged) {
@@ -561,6 +593,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       await _settingsSync?.save(settings);
     } catch (_) {/* Local settings remain valid. */}
   }
+
+  Future<RegionCatalog> _loadRegionCatalog() async =>
+      _regionCatalog ??= await RegionCatalog.load();
 
   Future<void> _openDeviceLocationSettings() async {
     final opened = _location.state == LocationState.serviceDisabled

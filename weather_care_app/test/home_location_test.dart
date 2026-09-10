@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +18,7 @@ import 'package:weather_care/services/kma_grid.dart';
 import 'package:weather_care/services/notification_registration_service.dart';
 import 'package:weather_care/services/settings_sync_service.dart';
 import 'package:weather_care/services/weather_service.dart';
+import 'package:weather_care/services/region_catalog.dart';
 
 const _seoul = DeviceCoordinates(latitude: 37.57, longitude: 126.98);
 const _busan = DeviceCoordinates(latitude: 35.18, longitude: 129.07);
@@ -112,8 +115,12 @@ void main() {
   late _Weather weather;
   late _Sync sync;
   late _Registration registration;
+  final catalog = RegionCatalog.fromJson(
+      jsonDecode(File('assets/data/kma_regions.json').readAsStringSync())
+          as Map<String, dynamic>);
   setUp(() {
     rootBundle.evict('config/kma.config.json');
+    rootBundle.evict('assets/data/kma_regions.json');
     SharedPreferences.setMockInitialValues({});
     location = _Location();
     weather = _Weather();
@@ -127,6 +134,7 @@ void main() {
             locationService: location,
             weatherService: weather,
             settingsSync: sync,
+            regionCatalog: catalog,
             notificationRegistration: registration)));
     // Asset loading and SharedPreferences initialization are asynchronous.
     for (var i = 0; i < 20; i++) {
@@ -266,5 +274,98 @@ void main() {
     await saving;
     expect(sync.calls.last.locationMode, 'MANUAL');
     expect(sync.calls, hasLength(2));
+  });
+
+  testWidgets('선택 지역은 GPS 없이 저장·조회·알림 등록되고 다시 시작해도 복원된다', (tester) async {
+    final selected = catalog.search('부산 해운대 좌1동').single;
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(
+            locationMode: 'MANUAL',
+            currentRegionId: selected.gridId,
+            manualRegionKey: selected.key));
+    await start(tester);
+    expect(location.requests, isEmpty);
+    expect((weather.calls.single.nx, weather.calls.single.ny),
+        (selected.nx, selected.ny));
+    expect(registration.calls.single.coordinates, isNull);
+    expect(screen(tester).regionName, selected.fullName);
+    expect(screen(tester).manualRegionName, selected.fullName);
+    final saved = await const AppSettingsRepository().load('test');
+    expect(saved.manualRegionKey, selected.key);
+    expect(saved.currentRegionId, selected.gridId);
+    await tester.pumpWidget(const SizedBox());
+    await start(tester);
+    expect(screen(tester).regionName, selected.fullName);
+    expect(location.requests, isEmpty);
+  });
+
+  testWidgets('GPS로 전환해도 선택 지역을 보존하고 수동 복귀 때 다시 사용한다', (tester) async {
+    final selected = catalog.search('제주 우도면').single;
+    await start(tester);
+    var settings = screen(tester).initialSettings!;
+    await screen(tester).onSettingsChanged!(settings.copyWith(
+        locationMode: 'MANUAL',
+        currentRegionId: selected.gridId,
+        manualRegionKey: selected.key));
+    await tester.pumpAndSettle();
+    expect(screen(tester).regionName, selected.fullName);
+    settings = screen(tester).initialSettings!;
+    await screen(tester)
+        .onSettingsChanged!(settings.copyWith(locationMode: 'GPS'));
+    await tester.pumpAndSettle();
+    expect(screen(tester).initialSettings!.manualRegionKey, selected.key);
+    expect(weather.calls.last.coordinates, _seoul);
+    settings = screen(tester).initialSettings!;
+    await screen(tester)
+        .onSettingsChanged!(settings.copyWith(locationMode: 'MANUAL'));
+    await tester.pumpAndSettle();
+    expect(screen(tester).regionName, selected.fullName);
+    expect(weather.calls.last.coordinates, isNull);
+  });
+
+  testWidgets('삭제되거나 변경된 지역 식별자를 이전 격자로 대체하지 않는다', (tester) async {
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(
+            locationMode: 'MANUAL',
+            currentRegionId: '60_121',
+            manualRegionKey: 'removed'));
+    await start(tester);
+    expect(weather.calls, isEmpty);
+    expect(registration.calls, isEmpty);
+    expect(screen(tester).regionName, isNull);
+  });
+
+  testWidgets('응답 격자가 다르면 선택 지역의 날씨로 바꿔 표시하지 않는다', (tester) async {
+    final selected = catalog.search('제주 우도면').single;
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(
+            locationMode: 'MANUAL',
+            currentRegionId: selected.gridId,
+            manualRegionKey: selected.key));
+    weather.pending = Completer<WeatherLoadResult>()
+      ..complete(_weather(60, 121));
+    await start(tester);
+    expect(screen(tester).regionName, isNull);
+    await tester.tap(find.text('Main'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('기준 지역과 다른 날씨 자료'), findsOneWidget);
+  });
+
+  testWidgets('같은 격자의 다른 동을 선택해도 선택한 지역명이 갱신된다', (tester) async {
+    final group = catalog.regions.where((r) => r.gridId == '60_127').toList();
+    final first = group.first;
+    final second = group.last;
+    await start(tester);
+    var settings = screen(tester).initialSettings!;
+    await screen(tester).onSettingsChanged!(settings.copyWith(
+        locationMode: 'MANUAL',
+        currentRegionId: first.gridId,
+        manualRegionKey: first.key));
+    await tester.pumpAndSettle();
+    settings = screen(tester).initialSettings!;
+    await screen(tester)
+        .onSettingsChanged!(settings.copyWith(manualRegionKey: second.key));
+    await tester.pumpAndSettle();
+    expect(screen(tester).regionName, second.fullName);
   });
 }

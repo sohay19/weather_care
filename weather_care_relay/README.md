@@ -68,7 +68,7 @@ tailscale funnel status
 
 사용자 확정 및 운영 설정 확인: 2026-09-11. 사용자 실행 결과에서 **health 200,
 relay active, 전용 LogNamespace, 3day 설정 및 타이머 예약**을 확인했다.
-정리 oneshot의 종료 결과와 3일 경과 로그 삭제 실증은 별도 미확인이다.
+정리 oneshot 상태 확인 후 사용자가 성공을 보고했다. 3일 경과 로그 삭제 실증과는 구분한다.
 systemd 245 이상에서 전용 journal namespace를 사용한다. 공용 journal/rsyslog 설정,
 환경파일, 과거 공용 로그는 변경하거나 삭제하지 않는다. 설치 시 릴레이가 한 번
 재시작되어 진행 중인 요청이 끊길 수 있다.

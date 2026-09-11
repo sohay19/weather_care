@@ -5626,3 +5626,10 @@
 - 합성 journal 설정: persistent, MaxRetentionSec=3day, MaxFileSec=15min, SystemMaxUse=32M, RuntimeMaxUse=16M, Syslog/KMsg/Console/Wall 전달 모두 no. 타이머 LAST 04:04:36 UTC, NEXT 04:19:36 UTC 확인.
 - 운영 설정 적용 확인으로 README/검토 최신 상태 갱신. timer LAST는 정리 oneshot 성공 증거는 아니므로 Result/ExecMainStatus 추가 확인 요청. 3일 경과 삭제 실증은 아직 없다. 기존 공용 로그 보존 및 지연 설명 유지.
 - 코드/운영 추가 변경 없이 문서만 갱신·diff 검사·커밋. 사용자 untracked 파일은 보존.
+
+## 2026-09-11 릴레이 정리 성공 보고 및 다음 로그 항목
+
+- 사용자가 정리 서비스 상태 확인 후 성공했다고 보고했다. 원문 추가 수신은 아니며 사용자 확인으로 기록한다. 릴레이 설정·정리 실행 점검 완료, 3일 경과 삭제 실증과는 구분.
+- 다음 Workers 로그 최소화 조사: scheduler logNotificationError가 context 전체(installationId/regionKey/locationKey/notificationKey)를 펼치고 weather.ts 로그에 nx/ny 포함. wrangler observability enabled=true, head_sampling_rate=1.
+- Cloudflare 공식 Workers Logs 문서에서 invocation 로그의 요청 URL 포함 및 invocation_logs=false 옵션 확인. 코드 로그 정제만으로 플랫폼 전체 메타데이터 제거를 보장하지 않는다.
+- 로그 저장 중단은 장애 진단 능력과 기존 3일 보관 방식에 영향을 주므로 사용자 선택 요청. 권장: 코드 개인정보 출력 제거와 Workers Logs 저장 중단 후 안전한 진단 방식 별도 마련. 아직 코드/설정 수정·테스트·배포 없음. 기존 공용 로그 소급 삭제 없음.

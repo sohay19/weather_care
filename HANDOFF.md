@@ -5717,3 +5717,29 @@
 - 사용자 제공 Android ca-app-pub-6152243173470406~7636009442 / iOS ca-app-pub-6152243173470406~9535766125를 각각 Manifest와 Info.plist에 연결. Android 샘플 값 교체, iOS GADApplicationIdentifier 추가. Markdown 이스케이프 역슬래시는 값에 포함하지 않았다.
 - XML 파싱 및 플랫폼별 ID 단일 항목/정확한 값 검증, diff 검사 통과. 설정만 변경했으며 앱 빌드/설치·실제 광고 요청·운영 콘솔 게시 없음. docs/광고_동의_연결.md 최신화.
 - 다음: AdMob 개인정보 보호 및 메시지에서 양 앱 메시지 준비. 공개 개인정보처리방침 URL·대상 연령/지역 등이 미확정이므로 임의 값으로 게시하지 않는다. 사용자 untracked scripts/tmp 보존.
+
+## 2026-09-11 메시지 종류 화면 확인
+
+- 현재 AdMob 개인정보 보호 및 메시지 UI에서 유럽 규정(EEA/영국/스위스), 미국 주 규정, IDFA 설명 만들기 확인. 모든 한국 사용자용 일반 동의 팝업과 동일한 것으로 안내하지 않는다.
+- 앱 출시 국가/이용 대상이 미확정이므로 한국만 배포할지 해외도 포함할지 먼저 질문한다. 전국 날씨 지원 요구를 앱 배포 국가 확정으로 해석하지 않는다. 메시지 생성/게시·계정 설정 변경 없음.
+
+## 2026-09-11 한국 스토어 한정 출시 확정
+
+- 사용자가 한국 스토어만 출시한다고 확정. 실제 Play/App Store 배포 국가 설정을 변경한 것은 아니다. 해외 접속 가능성과 지역별 정책 적용까지 없어지는 것으로 해석하지 않는다. UMP 유지.
+- 다음 결정은 광고 개인화 방식. 권장: 초기에는 비개인화 광고 및 타사 앱/웹 간 추적 미사용. 비개인화도 광고 운영 데이터 처리가 있으며 개인정보 안내·필요 동의 검토를 대체하지 않음. Google AdMob 개인화/비개인화 안내와 Apple User Privacy 공식 문서 확인. 사용자 승인 전 IDFA 메시지 게시·광고 요청 정책 변경 없음.
+
+## 2026-09-11 광고 메시지 즉시 생성 요청
+
+- 사용자 메시지 생성 요청 및 다른 앱·웹사이트 활동 추적 미사용 확정. 추적 권한 요청용 IDFA 메시지는 생성하지 않는다.
+- 저장소 준비 문서에 날씨챙겨 공개 개인정보처리방침 URL이 아직 미확정임을 확인. 기존 Google/Firebase 안내 링크를 앱 자체 방침으로 대체하지 않는다. 사용자에게 실제 공개 URL 요청, 없다면 방침 작성·게시부터 필요함을 설명한다.
+- 메시지 종류/내용을 임의로 법적 준수 완료 처리하거나 가짜 주소로 게시하지 않음. 이번에는 콘솔 생성·게시 미실행.
+
+## 2026-09-11 Cloudflare Pages 개인정보 페이지 작성·초안 배포
+
+- 사용자가 개인정보처리방침 페이지 작성 및 Cloudflare Pages 사용 요청. Cloudflare/Wrangler 스킬, Pages reference 및 공식 Direct Upload/개인정보 관련 자료 확인. 기존 서버/API와 분리한 weather_care_privacy 정적 HTML/CSS 생성.
+- 기존 Pages 2개와 충돌하지 않는 weather-care-privacy 프로젝트 생성(생산 branch master), review branch 배포. 주소 https://review.weather-care-privacy.pages.dev/ , 배포 https://d7fdb79a.weather-care-privacy.pages.dev . Functions/DB/비밀값/트래커 없음. _headers에 CSP·noindex·referrer 등 설정.
+- 확정된 위치/설치/알림/분석/삭제/1년 보유/로그·복원 정책 반영. 외부 계약·국외 이전·Analytics 보관 설정·문의 보관기간·연령이 미확정이라 명확한 검토용 초안으로 게시, 아직 정식 방침이나 AdMob URL로 사용하지 않음. 사용자에게 초안 배포 구분 안내함.
+- 사용자 문의 담당자 ‘코드소하(CODESOHA) 운영자’ 승인 반영. 만14세 미만 포함 여부는 비동기 질문 답변 대기. 사용자 미확정 성명·국외 처리 국가·기간 임의 기재하지 않음.
+- Playwright/Chrome 360·1280px 레이아웃, 가로 넘침 없음, 목차, 초안 표시, script/form 없음 검증. 모바일/배포 데스크톱 스크린샷 검토. 배포 HTTP 200, CSS/CSP/noindex, 실제 script 0, 잘못된 경로 404 확인.
+- 로컬 Wrangler 첫 실행이 sibling 서버 설정을 선택하고 구형 workerd 날짜 오류로 실패(원격 DB 변경 없음). 최종 Pages 배포에는 privacy 절대 --cwd를 명시해 분리, 정적 로컬 검증은 별도 HTTP 서버로 수행. PowerShell 초기 배포 TLS 확인 실패 후 Chrome 정상 HTTPS 확인. 인증 무시 옵션 사용 없음.
+- 서버 배포/AdMob 게시/앱 최종 방침 연결 없음. 다음은 초안 08 항목 확인 후 최종 방침과 생산 배포·AdMob 연결. QA 산출물은 .gitignore, 사용자 scripts/tmp 보존.

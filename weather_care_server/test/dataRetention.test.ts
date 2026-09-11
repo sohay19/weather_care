@@ -15,6 +15,8 @@ import m5 from '../migrations/0005_road_ice_state.sql?raw';
 import m6 from '../migrations/0006_road_control_state.sql?raw';
 import m7 from '../migrations/0007_installation_access.sql?raw';
 import m8 from '../migrations/0008_data_retention.sql?raw';
+import recoveryReset from '../ops/recovery-reset.sql?raw';
+import recoveryVerify from '../ops/recovery-verify.sql?raw';
 
 const now = new Date('2026-09-11T03:00:00.000Z');
 const old = '2025-09-11T03:00:00.000Z';
@@ -58,6 +60,31 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('one-year data retention', () => {
+  it('clears restored personal data regardless of age, preserves shared weather, and is repeatable', async () => {
+    await seed(id, old);
+    await seed(other, now.toISOString());
+    await env.DB.exec("INSERT INTO active_regions VALUES ('r','t',60,121,2,'now'); INSERT INTO weather_cache VALUES ('shared','r',60,121,'weather','{}','AVAILABLE','now'); INSERT INTO daily_weather_snapshots (region_id, observation_date) VALUES ('r','2026-09-11');");
+    const checks = recoveryVerify.replace(/--[^\n]*/g, '').split(';').map(s => s.trim()).filter(Boolean);
+    expect((await env.DB.prepare(checks[0]).all<{remaining: number}>()).results.some(r => r.remaining > 0)).toBe(true);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await apply(recoveryReset);
+      for (const table of tables) {
+        expect(await count(table, id)).toBe(0);
+        expect(await count(table, other)).toBe(0);
+      }
+      for (const check of checks.slice(0, 9)) {
+        expect(await env.DB.prepare(check).first('remaining')).toBe(0);
+      }
+      expect((await env.DB.prepare(checks[9]).all()).results).toEqual([]);
+      expect((await env.DB.prepare(checks[10]).all()).results).toEqual([]);
+      expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM weather_cache').first('n')).toBe(1);
+      expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM daily_weather_snapshots').first('n')).toBe(1);
+    }
+    await env.DB.exec('CREATE TABLE recovery_unreviewed_personal_data (id TEXT);');
+    try {
+      expect((await env.DB.prepare(checks[9]).all()).results).toContainEqual({ unreviewed_table: 'recovery_unreviewed_personal_data' });
+    } finally { await env.DB.exec('DROP TABLE recovery_unreviewed_personal_data;'); }
+  });
   it('expires at exactly one year and deletes all related data, but no active/shared data', async () => {
     await seed(id, old);
     await seed(other, '2025-09-11T03:00:00.001Z');

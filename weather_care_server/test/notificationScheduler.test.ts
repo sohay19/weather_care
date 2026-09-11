@@ -10,6 +10,17 @@ import { NotificationSettings, ServerEnv, WeatherSnapshot } from '../src/types';
 import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('notification scheduler', () => {
+  it('does not send to a new registration without explicit notification settings', async () => {
+    await insertInstallation('private-token');
+    await env.DB.prepare('DELETE FROM notification_settings WHERE installation_id = ?').bind('installation-1').run();
+    const loader = vi.fn(async () => rainyForecast());
+    const sender = vi.fn(collectingSender([]));
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-01T07:00:00+09:00'), forecastLoader: loader, sender,
+    });
+    expect(loader).not.toHaveBeenCalled();
+    expect(sender).not.toHaveBeenCalled();
+  });
   it('omits installation and location context from failure logs', async () => {
     await insertInstallation('private-token');
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -24,7 +35,7 @@ describe('notification scheduler', () => {
   });
   it.each([false, true])('does not send expired registrations before bounded cleanup (delayed cron: %s)', async (delayed) => {
     await insertInstallation('device-token');
-    await env.DB.prepare('INSERT INTO installation_activity VALUES (?, ?)')
+    await env.DB.prepare('INSERT OR REPLACE INTO installation_activity VALUES (?, ?)')
       .bind('installation-1', '2025-09-02T07:00:00+09:00').run();
     const sent: FcmPayload[] = [];
     const loader = vi.fn(async () => rainyForecast());
@@ -693,6 +704,8 @@ async function insertInstallation(
       '2026-09-01T00:00:00Z',
     )
     .run();
+  // Sending fixtures explicitly opt in; a registration alone is not consent.
+  await savePreferences({ notificationEnabled: true });
 }
 
 function testBindings(

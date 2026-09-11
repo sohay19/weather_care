@@ -264,7 +264,7 @@ export async function runRecommendationNotificationJob(
   // current token immediately before sending; deletion may have happened meanwhile.
   const eligible = await env.DB.batch(pending.map((item) => env.DB.prepare(`SELECT 1 FROM installations i
     LEFT JOIN notification_settings s ON s.installation_id = i.installation_id
-    WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 1) = 1
+    WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 0) = 1
       AND NOT EXISTS (SELECT 1 FROM installation_activity a
         WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
     .bind(item.installationId, item.token,
@@ -320,7 +320,7 @@ async function notificationInstallations(
          ON s.installation_id = i.installation_id
        WHERE i.fcm_token IS NOT NULL
          AND TRIM(i.fcm_token) <> ''
-         AND COALESCE(s.notification_enabled, 1) = 1
+         AND COALESCE(s.notification_enabled, 0) = 1
          AND NOT EXISTS (SELECT 1 FROM installation_activity a
            WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`,
     )

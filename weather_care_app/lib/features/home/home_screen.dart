@@ -730,6 +730,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (_serverDataAccess?.mode != ServerDataMode.deleted) return;
     // An expired server registration also resumes with notifications OFF.
     setState(() => _settings = _settings.copyWith(notificationEnabled: false));
+    // Persist OFF while registration is still paused, including across a crash.
+    final saver = _settingsSave;
+    if (saver == null) return;
+    await saver.save(_settings);
+    if (!mounted || saver.state == SettingsSaveState.localFailed) return;
     await _serverDataAccess?.resume();
     if (!mounted || (_serverDataAccess?.paused ?? true)) return;
     // Re-enable registration only, not notification consent or the master switch.

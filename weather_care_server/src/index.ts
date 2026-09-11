@@ -7,8 +7,14 @@ import notificationSettingsRoutes from './api/notificationSettings';
 import installationOwnershipRoutes from './api/installationOwnership';
 import { runRecommendationNotificationJobFromCron } from './cron/jobs';
 import { safeErrorName } from './observability/providerErrorDiagnostics';
+import { recoveryActive, recoveryResponse } from './recovery/maintenance';
 
 const app = new Hono<{ Bindings: ServerEnv }>();
+
+app.use('*', async (c, next) => {
+  if (recoveryActive(c.env.RECOVERY_MODE)) return recoveryResponse();
+  await next();
+});
 
 // Hono's default handler logs the original exception, which may contain user data.
 app.onError((error, c) => {
@@ -29,6 +35,7 @@ app.get('/', (c) => c.json({ app: 'weather-care-server', version: '0.1.0' }));
 export default {
   fetch: app.fetch,
   async scheduled(event: ScheduledController, env: ServerEnv) {
+    if (recoveryActive(env.RECOVERY_MODE)) return;
     try {
       await runRecommendationNotificationJobFromCron(env, event.scheduledTime);
     } catch {

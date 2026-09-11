@@ -5851,3 +5851,9 @@
 - 설치 후 COLD 시작 성공 및 manifest 수집disabled/analytics storage denied 로그, 홈 복귀 후 force-stop/COLD 재시작에서는 setAnalyticsCollectionEnabled(false)로 disabled 및 storage denied 확인.
 - Android 실물/iOS 미연결. 미동의 상태 SDK로그 확인만 완료: 네트워크 패킷, 동의→철회 UI, 오류주입, FCM 백그라운드 시작/기존허용 업그레이드는 미검증. 토큰/식별자 출력 안 함. 기기 저장소 필터 조회는 값 미추출이라 증거 제외.
 - 점검 문서에 결과/한계 기록. 커밋 스킬에 따라 한글 검증 기록 커밋. 운영 서버/Pages/스토어 배포 없음. 다음은 테스트 환경에서 동의·철회 및 백그라운드 경계 검증, 원격 삭제는 별도 미구현.
+
+## 2026-09-11 Analytics 동의→철회→재시작 UI 검증
+
+- emulator5554 원상태 비행기OFF/Wi-FiON 확인 후 비행기ON·Wi-FiOFF 전환. Active default network:none 확인 후 앱 UI로 Analytics false→동의창 승인→true→철회false 확인. force-stop/COLD 재시작 후 오프라인 서버오류에서 ‘단기예보만 보기’로 닫고 설정에서false 유지 확인.
+- 이번 FA 로그 필터 결과 없음으로 로그 검증 추가 주장 안 함. UI 검증만 완료, 패킷 무전송/FCM/iOS/원격 삭제 미검증. 위치·알림 설정 및 서버데이터 삭제 조작 없음.
+- 중요: 시험 대기 이벤트 유무가 미확인이라 에뮬레이터를 비행기ON·Wi-FiOFF 상태로 유지, 사용자에게 명시. 다음은 대기 이벤트 안전 처리 및 원래 네트워크 복구 검토. 전체 앱데이터 삭제 금지. 아직 네트워크 복구하지 않음. 검증 문서 한글 커밋, 운영 배포 없음.

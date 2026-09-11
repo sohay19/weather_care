@@ -5668,3 +5668,11 @@
 - 구현 커밋 e4c9f7f. 서버 버전 69043d04-23e8-4ced-b604-f7b79e9dc941 100% 배포, health HTTP 200/ok, 기존 10분 cron 유지 확인.
 - RECOVERY_MODE 활성화·운영 SQL·실제 복원·개인 데이터 삭제·시험 알림 발송 없음. 앱 변경은 코드/테스트까지이며 기기 설치는 미실행.
 - 다음 항목은 Firebase/광고 SDK의 실제 수집·동의 설정 확인, 이후 공개 개인정보처리방침 연결. 복원 정책은 확정·구현했으나 실제 사고 대응 훈련 완료로 표현하지 않는다.
+
+## 2026-09-11 Firebase·광고 SDK 읽기 전용 점검
+
+- pubspec에 firebase_analytics/core/messaging 및 google_mobile_ads 포함. main에서 Firebase 초기화 및 MobileAds 즉시 초기화. lib 내 Analytics 명시적 이벤트/동의/수집 제어, UMP 흐름, 실제 광고 표시 호출은 검색되지 않았다.
+- Android Manifest/iOS Info.plist에 Analytics 수집 중단과 FCM 자동 초기화 중단 설정 없음. Android 광고 앱 ID는 샘플 값. 실제 콘솔 연결·수집 기록·배포 바이너리의 최종 병합 설정·네트워크 전송은 미확인이다.
+- notification_registration_service는 OS 알림 허용 시에만 getToken을 호출하지만, SDK 자동 초기화 자체를 막는 설정과는 별개다. 서버 데이터 삭제를 Firebase 전체 삭제라고 설명하면 안 된다.
+- 공식 근거: https://firebase.google.com/docs/analytics/android/configure-data-collection , https://firebase.google.com/docs/cloud-messaging/flutter/get-started , https://developers.google.com/admob/flutter/privacy . Analytics 수집 제어와 FCM 자동 초기화 방지, 광고 요청 전 UMP 상태 확인 절차 확인.
+- 첫 결정 권장: 현재 사용하지 않는 Analytics 수집 중단(이용 통계·분석 보고서 영향), 날씨/푸시 기능 유지. 이후 광고 SDK 및 FCM 활성화 정책 별도 결정. 이번에는 정책 선택 전 코드·콘솔·운영 변경 없이 확인 내용만 기록했다. 문서 diff 검사 후 커밋, 테스트/배포 없음.

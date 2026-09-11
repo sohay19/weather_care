@@ -5872,3 +5872,12 @@
 - 설정 안내·개인정보처리방침 검토 초안·Analytics 점검 문서 갱신. 공식 조건: analytics.edit OAuth 범위, 속성 편집자 이상, 속성당 사용자 삭제 하루500건. 계정 전체가 아니라 속성에만 삭제 전용 서비스계정을 추가하도록 운영 순서 기록.
 - 검증: 서버 전체35파일258테스트, tsc 통과. 앱 전체339테스트, flutter analyze 통과. 개인정보 페이지 verify는 모바일/데스크톱/앵커/초안/무스크립트·폼 PASS. 실제 자격증명, Admin API 활성화, 속성 권한, Worker/Pages 배포, Android/iOS 종단 요청은 아직 안 함.
 - 다음: Google Cloud에서 삭제 전용 서비스계정과 키 생성 → Analytics 속성549443110에 해당 이메일 편집자 추가 → 두 Wrangler secret 등록 → Worker 배포 → 테스트 전용 ID로 1회 종단 검증. 실키 원문은 채팅·문서·명령행 인자에 출력하지 않는다.
+
+## 2026-09-11 Analytics 원격 삭제 운영 연결 진행 중
+
+- 사용자 승인 후 Google Cloud 프로젝트 weather-care-2aaa8에서 Google Analytics Admin API를 활성화했다.
+- 삭제 전용 서비스 계정 analytics-deletion@weather-care-2aaa8.iam.gserviceaccount.com(고유 ID 108636071236543436167)을 생성했다. Google Cloud 프로젝트 IAM 역할은 부여하지 않았다.
+- Analytics 속성 549443110의 속성 액세스 관리에 해당 서비스 계정을 편집자로 추가했고, 화면에서 6번째 사용자·편집자 역할을 확인했다. 계정 수준 권한이나 사용자 관리 권한은 주지 않았다.
+- 인앱 브라우저에서 JSON 키를 두 번 생성했으나 다운로드 완료 UI와 달리 호스트 파일시스템에 파일이 전달되지 않았다. 생성된 키 ID는 0be8c1fbf42e0f77e79899bf23b61b23b22efb49 및 bbfe96fb6af596f741bf0b91185c9a3cc3f57320이다. 원문은 확인·출력하지 못했고 Cloudflare에도 등록되지 않았다.
+- 브라우저 보안 정책상 내부 다운로드 관리 화면이나 우회 접근은 사용하지 않는다. 일반 Chrome에서 동일 서비스 계정의 새 JSON 키를 다운로드한 뒤 Cloudflare secret 등록·배포·health/401 검증을 이어간다. 유효 키 검증 뒤 인앱에서 생성된 미사용 키 2개는 별도 확인 후 삭제해야 한다.
+- 현재 Worker에는 GA_ADMIN_CLIENT_EMAIL/GA_ADMIN_PRIVATE_KEY secret이 없으며 새 코드 버전은 아직 배포하지 않았다. 실제 Analytics 삭제 요청이나 이용자 데이터 삭제도 실행하지 않았다.

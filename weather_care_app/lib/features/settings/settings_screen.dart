@@ -17,6 +17,7 @@ import 'settings_guide.dart';
 import 'settings_guide_screen.dart';
 import 'server_data_controls.dart';
 import 'analytics_consent_control.dart';
+import 'ads_privacy_control.dart';
 import '../../services/server_data_access.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -632,6 +633,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => _openGuide(guide),
                 ),
               const AnalyticsConsentControl(),
+              const AdsPrivacyControl(),
               if (widget.serverDataAccess != null) ...[
                 const Divider(height: 24),
                 ServerDataControls(

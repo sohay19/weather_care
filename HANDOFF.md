@@ -5505,3 +5505,8 @@
 - 사용자 제공 결과: 릴레이 `StandardOutput=journal`, `StandardError=inherit`, 빈 `LogNamespace`로 기본 공용 journal 사용. 지정한 기간/용량/저장 항목의 활성 설정은 출력되지 않았다. 실제 만료기간이나 로그 부재·무기한 보관을 확정하지 않는다.
 - `syslog.conf` drop-in 경로가 보여 기존 필터에 없던 ForwardToSyslog 및 rsyslog 실행 여부를 다음 읽기 전용 확인으로 안내한다. 파일명만으로 전달 활성화를 단정하지 않는다. 공용 journal 전역 정책은 다른 서비스에도 영향을 주므로 임의 변경/삭제하지 않는다.
 - 검토 문서와 인계만 갱신·diff 검사·커밋. 원격 접속/실행 코드 수정/운영 변경/테스트 재실행 없음. 사용자 미추적 파일은 보존한다. Proxmox 백업·실제 저장/회전 방식 및 로그 최소화 구현은 여전히 후속 작업이다.
+
+## 2026-09-11 syslog 전달 활성 확인
+
+- 사용자 출력 `ForwardToSyslog=yes`, `rsyslog.service=active`를 확인했다. 특정 파일에 실제 릴레이 로그가 기록됐다고 단정하지 않는다. 다음은 `/etc/rsyslog.conf`와 `/etc/rsyslog.d/*.conf`의 활성 `/var/log/` 경로 줄, `/etc/logrotate.d/rsyslog`의 회전 규칙 확인이다. 실제 로그 원문이나 비밀값은 요청하지 않는다.
+- journal 이외 파일 사본의 보관도 확인해야 한다. 전역 설정/기존 로그 삭제·서비스 재시작·원격 접속 없음. 문서만 갱신하고 diff 검사·한글 커밋하며 실행 테스트는 재실행하지 않는다. 사용자 미추적 파일은 보존한다.

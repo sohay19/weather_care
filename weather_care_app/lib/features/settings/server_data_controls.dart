@@ -26,8 +26,9 @@ class ServerDataControls extends StatelessWidget {
                 ServerDataMode.deleting => access.busy
                     ? '본인 확인과 삭제 결과를 확인하고 있어요. 앱을 열어 두세요.'
                     : '삭제 완료는 확인되지 않았어요. 자동 등록과 설정 전송은 중지했어요.',
-                ServerDataMode.deleted =>
-                  '이 설치의 서버 데이터 삭제를 완료했어요. 자동 등록과 서버 알림을 중지했어요.',
+                ServerDataMode.deleted => access.registrationMissing
+                    ? '서버에 이 설치의 등록정보가 없어요. 자동 등록은 중지했어요. 다시 사용하려면 아래에서 직접 선택하세요.'
+                    : '이 설치의 서버 데이터 삭제를 완료했어요. 자동 등록과 서버 알림을 중지했어요.',
               },
               key: const ValueKey('server-data-status')),
           if (access.error != null)

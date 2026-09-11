@@ -36,6 +36,7 @@ class ServerDataAccess extends ChangeNotifier {
   String? _secret;
   String? _serverId;
   bool _skipLegacy = false;
+  bool registrationMissing = false;
   ServerDataMode mode = ServerDataMode.active;
   bool busy = false;
   String? error;
@@ -72,6 +73,7 @@ class ServerDataAccess extends ChangeNotifier {
           _secret = data['secret'] as String?;
           _serverId = data['serverId'] as String?;
           _skipLegacy = data['skipLegacy'] == true;
+          registrationMissing = data['registrationMissing'] == true;
           if ((_secret != null &&
                   !RegExp(r'^[0-9a-f]{64}$').hasMatch(_secret!)) ||
               (_serverId != null && _secret == null)) {
@@ -93,6 +95,7 @@ class ServerDataAccess extends ChangeNotifier {
         'serverId': _serverId,
         'secret': _secret,
         'skipLegacy': _skipLegacy,
+        'registrationMissing': registrationMissing,
       }));
 
   Future<InstallationCredential> _ensureCredential() async {
@@ -156,8 +159,42 @@ class ServerDataAccess extends ChangeNotifier {
         if (paused) throw const ServerDataPaused();
         final owner = await _ensureCredential();
         if (paused) throw const ServerDataPaused();
-        await action(owner);
+        try {
+          await action(owner);
+        } on ApiException catch (failure) {
+          if (failure.status == 401 && !paused) {
+            await _checkMissingRegistration(owner);
+          }
+          rethrow;
+        }
       });
+
+  Future<void> _checkMissingRegistration(InstallationCredential owner) async {
+    try {
+      await api.requestJson('GET', '/api/v1/installations/${owner.id}/status',
+          headers: owner.headers);
+    } on ApiException catch (failure) {
+      if (failure.status != 410 || failure.code != 'INSTALLATION_GONE') {
+        return;
+      }
+      // Retention may have removed a long-unused registration. Do not silently
+      // enroll again. Reuse still needs the existing explicit confirmation.
+      if (paused) return;
+      mode = ServerDataMode.deleted;
+      registrationMissing = true;
+      _notify();
+      await writeStore(jsonEncode({
+        'mode': ServerDataMode.deleted.name,
+        'serverId': null,
+        'secret': null,
+        'skipLegacy': true,
+        'registrationMissing': true,
+      }));
+      _serverId = null;
+      _secret = null;
+      _skipLegacy = true;
+    }
+  }
 
   Future<void> deleteData() async {
     if (busy || mode == ServerDataMode.deleted) return;
@@ -182,6 +219,7 @@ class ServerDataAccess extends ChangeNotifier {
           'skipLegacy': true
         }));
         mode = ServerDataMode.deleted;
+        registrationMissing = false;
         _serverId = null;
         _secret = null;
         _skipLegacy = true;
@@ -219,6 +257,10 @@ class ServerDataAccess extends ChangeNotifier {
           'skipLegacy': true
         }));
         mode = ServerDataMode.active;
+        _serverId = null;
+        _secret = null;
+        _skipLegacy = true;
+        registrationMissing = false;
       });
     } catch (_) {
       error = '기기에 사용 상태를 저장하지 못해 서버 기능을 다시 켜지 않았어요. 다시 시도해주세요.';

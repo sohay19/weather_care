@@ -20,6 +20,7 @@ class _Api extends ApiClient {
   })>[];
   bool legacy = false;
   Object? deletionError;
+  Object? statusError;
   Completer<void>? pendingDelete;
   StreamController<RemoteMessage>? messages;
   _Api() : super(baseUrl: 'https://example.invalid');
@@ -29,6 +30,10 @@ class _Api extends ApiClient {
       Map<String, String>? headers,
       Map<String, dynamic>? body}) async {
     calls.add((method: method, path: path, body: body, headers: headers));
+    if (path.endsWith('/status')) {
+      if (statusError != null) throw statusError!;
+      return {'registered': true};
+    }
     if (method == 'DELETE') {
       await pendingDelete?.future;
       if (deletionError != null) throw deletionError!;
@@ -93,6 +98,78 @@ void main() {
   tearDown(() async {
     access.dispose();
     await api.messages?.close();
+  });
+
+  test(
+      'missing server registration pauses reuse durably without automatic enrollment',
+      () async {
+    await access.load();
+    await access.mutate((_) async {});
+    api.statusError = const ApiException(410, 'INSTALLATION_GONE');
+    final enrollments =
+        api.calls.where((c) => c.path.endsWith('/enroll')).length;
+    await expectLater(access.mutate((_) async {
+      throw const ApiException(401, 'INSTALLATION_AUTH_REQUIRED');
+    }), throwsA(isA<ApiException>()));
+    expect(access.mode, ServerDataMode.deleted);
+    expect(access.registrationMissing, isTrue);
+    expect(access.credential, isNull);
+    expect(jsonDecode(stored!)['registrationMissing'], isTrue);
+    await expectLater(
+        access.mutate((_) async {}), throwsA(isA<ServerDataPaused>()));
+    expect(
+        api.calls.where((c) => c.path.endsWith('/enroll')).length, enrollments);
+    final restarted = ServerDataAccess(
+        api: api,
+        legacyInstallationId: legacyId,
+        readStore: () async => stored,
+        writeStore: (value) async => stored = value);
+    await restarted.load();
+    expect(restarted.paused, isTrue);
+    expect(restarted.registrationMissing, isTrue);
+    await restarted.resume();
+    await restarted.mutate((_) async {});
+    expect(restarted.registrationMissing, isFalse);
+    expect(api.calls.last.body, isEmpty); // Fresh ID, never claims the old one.
+    restarted.dispose();
+  });
+
+  test(
+      'an authentication error or unconfirmed server status does not imply deletion',
+      () async {
+    await access.load();
+    await access.mutate((_) async {});
+    for (final failure in [
+      const ApiException(401, 'INSTALLATION_AUTH_REQUIRED'),
+      const ApiException(503, 'UNAVAILABLE')
+    ]) {
+      api.statusError = failure;
+      await expectLater(access.mutate((_) async {
+        throw const ApiException(401, 'INSTALLATION_AUTH_REQUIRED');
+      }), throwsA(isA<ApiException>()));
+      expect(access.mode, ServerDataMode.active);
+      expect(access.registrationMissing, isFalse);
+      expect(access.credential, isNotNull);
+    }
+  });
+
+  test(
+      'storage failure while recording missing registration never resumes uploads',
+      () async {
+    await access.load();
+    await access.mutate((_) async {});
+    api.statusError = const ApiException(410, 'INSTALLATION_GONE');
+    await expectLater(access.mutate((_) async {
+      failWrite = true;
+      throw const ApiException(401, 'INSTALLATION_AUTH_REQUIRED');
+    }), throwsA(isA<StateError>()));
+    expect(access.paused, isTrue);
+    await expectLater(
+        access.mutate((_) async {}), throwsA(isA<ServerDataPaused>()));
+    failWrite = false;
+    await access.resume();
+    expect(access.credential, isNull);
+    expect(access.registrationMissing, isFalse);
   });
   Future<void> established() async {
     stored = jsonEncode({

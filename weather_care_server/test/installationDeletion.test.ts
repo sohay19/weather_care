@@ -17,6 +17,7 @@ import m4 from '../migrations/0004_official_warning_state.sql?raw';
 import m5 from '../migrations/0005_road_ice_state.sql?raw';
 import m6 from '../migrations/0006_road_control_state.sql?raw';
 import m7 from '../migrations/0007_installation_access.sql?raw';
+import m8 from '../migrations/0008_data_retention.sql?raw';
 
 const legacyId = 'wc_legacy_synthetic_fixture_0001';
 const noTokenId = 'wc_legacy_without_token_000001';
@@ -29,8 +30,7 @@ const request = (url: string, method = 'GET', body?: object, headers = testAuthH
     { ...env, INSTALLATION_ENROLL_LIMIT: { limit: async () => ({ success: true }) } });
 
 async function apply(sql: string) {
-  const statements = sql.replace(/--[^\n]*/g, '').split(/;\s*(?:\r?\n|$)/).map(s => s.trim()).filter(Boolean);
-  await env.DB.batch(statements.map(s => env.DB.prepare(s)));
+  await env.DB.exec(sql.replace(/--[^\n]*/g, '').replace(/\r?\n/g, ' '));
 }
 async function enrollment() {
   const response = await request(`${path}/enroll`, 'POST', {});
@@ -53,6 +53,7 @@ async function count(table: string, id: string) {
 }
 
 beforeEach(async () => {
+  await env.DB.exec('DROP TABLE IF EXISTS installation_activity');
   // Isolated test binding only. Production data is never used in this suite.
   await env.DB.exec(`DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots;`);
   for (const migration of [m1, m2, m3, m4, m5, m6]) await apply(migration);
@@ -62,6 +63,7 @@ beforeEach(async () => {
       VALUES (?, ?, 60, 121, 'region', 'GPS', 'Asia/Seoul', 'old', 'old')`).bind(id, token).run();
   }
   await apply(m7);
+  await apply(m8);
   vi.spyOn(fcm, 'sendOwnershipChallenge').mockResolvedValue();
 });
 afterEach(() => vi.restoreAllMocks());
@@ -80,7 +82,7 @@ describe('authenticated server data deletion', () => {
     const response = await request(`${path}/${id}`, 'DELETE');
     expect(response.status).toBe(204); expect(response.headers.get('Cache-Control')).toBe('no-store');
     for (const table of ['installations', 'notification_settings', 'notification_history',
-      'installation_warning_state', 'installation_credentials', 'installation_ownership_challenges', 'legacy_installation_ownership']) {
+      'installation_warning_state', 'installation_credentials', 'installation_ownership_challenges', 'legacy_installation_ownership', 'installation_activity']) {
       expect(await count(table, id)).toBe(0);
     }
     expect(await count('installations', other)).toBe(1);

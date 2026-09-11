@@ -42,6 +42,7 @@ import {
   itsRoadControlProviderFromEnvironment,
 } from '../providers/traffic/itsRoadControlProvider';
 import { roadControlNotification } from '../presentation/roadControlMessage';
+import { installationExpirySql } from '../database/dataRetention';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -97,6 +98,7 @@ type WarningStateMutation =
 
 interface SchedulerDependencies {
   now?: Date;
+  retentionNow?: Date;
   forecastLoader?: (
     env: ServerEnv,
     nx: number,
@@ -139,7 +141,7 @@ export async function runRecommendationNotificationJob(
   dependencies: SchedulerDependencies = {},
 ): Promise<void> {
   const now = dependencies.now ?? new Date();
-  const rows = await notificationInstallations(env.DB);
+  const rows = await notificationInstallations(env.DB, dependencies.retentionNow ?? now);
   if (rows.length === 0) return;
 
   const loadForecast = dependencies.forecastLoader ?? defaultForecastLoader;
@@ -264,8 +266,11 @@ export async function runRecommendationNotificationJob(
   // current token immediately before sending; deletion may have happened meanwhile.
   const eligible = await env.DB.batch(pending.map((item) => env.DB.prepare(`SELECT 1 FROM installations i
     LEFT JOIN notification_settings s ON s.installation_id = i.installation_id
-    WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 1) = 1`)
-    .bind(item.installationId, item.token)));
+    WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 1) = 1
+      AND NOT EXISTS (SELECT 1 FROM installation_activity a
+        WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
+    .bind(item.installationId, item.token,
+      (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendable = pending.filter((_, index) => eligible[index].results.length > 0);
   if (!sendable.length) return;
   const payloads = sendable.map<FcmPayload>((item) => ({
@@ -282,6 +287,7 @@ export async function runRecommendationNotificationJob(
 
 async function notificationInstallations(
   db: D1Database,
+  now: Date,
 ): Promise<NotificationInstallationRow[]> {
   const result = await db
     .prepare(
@@ -316,8 +322,11 @@ async function notificationInstallations(
          ON s.installation_id = i.installation_id
        WHERE i.fcm_token IS NOT NULL
          AND TRIM(i.fcm_token) <> ''
-         AND COALESCE(s.notification_enabled, 1) = 1`,
+         AND COALESCE(s.notification_enabled, 1) = 1
+         AND NOT EXISTS (SELECT 1 FROM installation_activity a
+           WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`,
     )
+    .bind(now.toISOString())
     .all<NotificationInstallationRow>();
   return result.results;
 }

@@ -120,4 +120,15 @@ router.delete('/:installationId', async (c) => {
   return c.body(null, 204);
 });
 
+router.get('/:installationId/status', async (c) => {
+  const id = c.req.param('installationId');
+  if (!idSchema.safeParse(id).success) return c.json({ error: 'INVALID_INSTALLATION' }, 400);
+  if (!bearerSecret(c.req.header('Authorization'))) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
+  // Same existence disclosure as idempotent DELETE. Never reveal any fields
+  // from an existing installation to the holder of a different secret.
+  if (!await hasInstallationData(c.env.DB, id)) return c.json({ error: 'INSTALLATION_GONE' }, 410);
+  if (!await ownerForRequest(c, id)) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
+  return c.json({ registered: true });
+});
+
 export default router;

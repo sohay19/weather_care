@@ -32,6 +32,7 @@ try {
   const before = await request('GET', `/api/v1/notification-settings?installationId=${fixtureId}`);
   assert.equal(before.status, 200, 'authenticated settings read');
   assert.equal((await before.json()).notificationEnabled, false);
+  assert.equal((await request('GET', `${profile}/status`)).status, 200, 'authenticated registration status');
   assert.equal((await request('DELETE', profile, undefined,
     { ...headers, Authorization: `Bearer ${randomBytes(32).toString('hex')}` })).status, 401, 'wrong owner rejected');
   assert.equal((await request('DELETE', profile)).status, 204, 'delete succeeds');
@@ -40,6 +41,9 @@ try {
   assert.equal((await request('PUT', profile, { locationMode: 'MANUAL' })).status, 401, 'registration replay rejected');
   assert.equal((await request('PUT', preferences, { notificationEnabled: true })).status, 401, 'settings replay rejected');
   assert.equal((await request('GET', `/api/v1/notification-settings?installationId=${fixtureId}`)).status, 401, 'old credential revoked');
+  const missing = await request('GET', `${profile}/status`);
+  assert.equal(missing.status, 410, 'missing registration confirmed');
+  assert.equal((await missing.json()).error, 'INSTALLATION_GONE');
   console.log('PASS: new synthetic fixture only; authenticated deletion/retry/replay checks; no FCM or coordinates; fixture removed.');
 } finally {
   if (fixtureId && !deleted) {

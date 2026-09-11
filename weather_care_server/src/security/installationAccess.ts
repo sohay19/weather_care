@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import type { ServerEnv } from '../types';
+import { recordInstallationActivity } from '../database/dataRetention';
 
 export function bearerSecret(header: string | undefined): string | null {
   const match = /^Bearer ([0-9a-f]{64})$/.exec(header ?? '');
@@ -29,6 +30,7 @@ export async function installationOwnerHash(
   if (!row || !crypto.subtle.timingSafeEqual(
     new TextEncoder().encode(hash), new TextEncoder().encode(row.secret_hash),
   )) return null;
+  await recordInstallationActivity(db, installationId, hash);
   return hash;
 }
 

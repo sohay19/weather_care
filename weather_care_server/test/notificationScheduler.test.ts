@@ -10,8 +10,24 @@ import { NotificationSettings, ServerEnv, WeatherSnapshot } from '../src/types';
 import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('notification scheduler', () => {
+  it.each([false, true])('does not send expired registrations before bounded cleanup (delayed cron: %s)', async (delayed) => {
+    await insertInstallation('device-token');
+    await env.DB.prepare('INSERT INTO installation_activity VALUES (?, ?)')
+      .bind('installation-1', '2025-09-02T07:00:00+09:00').run();
+    const sent: FcmPayload[] = [];
+    const loader = vi.fn(async () => rainyForecast());
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date(delayed ? '2026-09-01T07:00:00+09:00' : '2026-09-02T07:00:00+09:00'),
+      retentionNow: new Date('2026-09-02T07:00:00+09:00'), forecastLoader: loader, sender: collectingSender(sent),
+    });
+    expect(loader).not.toHaveBeenCalled();
+    expect(sent).toEqual([]);
+    expect(await env.DB.prepare('SELECT last_active_at FROM installation_activity WHERE installation_id = ?')
+      .bind('installation-1').first('last_active_at')).toBe('2025-09-02T07:00:00+09:00');
+  });
   beforeEach(async () => {
     await authorizeFixture('installation-1');
+    await env.DB.prepare('DELETE FROM installation_activity').run();
     await env.DB.batch([
       env.DB.prepare(
         `CREATE TABLE IF NOT EXISTS installations (

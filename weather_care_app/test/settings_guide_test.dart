@@ -162,6 +162,11 @@ void main() {
       'Firebase Analytics',
       'Google Mobile Ads',
       '개인정보처리방침을 대신하지 않아요',
+      '사용 시점부터 1년',
+      '발송 시점부터 1년',
+      '10분마다',
+      '2월 28일',
+      '백업·운영 로그와 Firebase·광고 서비스의 보유기간을 뜻하지는 않아요',
     ]) {
       expect(data, contains(term));
     }

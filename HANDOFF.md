@@ -5633,3 +5633,10 @@
 - 다음 Workers 로그 최소화 조사: scheduler logNotificationError가 context 전체(installationId/regionKey/locationKey/notificationKey)를 펼치고 weather.ts 로그에 nx/ny 포함. wrangler observability enabled=true, head_sampling_rate=1.
 - Cloudflare 공식 Workers Logs 문서에서 invocation 로그의 요청 URL 포함 및 invocation_logs=false 옵션 확인. 코드 로그 정제만으로 플랫폼 전체 메타데이터 제거를 보장하지 않는다.
 - 로그 저장 중단은 장애 진단 능력과 기존 3일 보관 방식에 영향을 주므로 사용자 선택 요청. 권장: 코드 개인정보 출력 제거와 Workers Logs 저장 중단 후 안전한 진단 방식 별도 마련. 아직 코드/설정 수정·테스트·배포 없음. 기존 공용 로그 소급 삭제 없음.
+
+## 2026-09-11 Workers 로그 개인정보 최소화 구현
+
+- 사용자가 Workers Logs 저장 중단 권장안을 승인. cloudflare/workers-best-practices/wrangler 스킬 및 공식 문서·로컬 스키마를 확인했다.
+- observability/logs/traces 및 persist/invocation_logs 비활성. scheduler의 설치·지역·좌표·알림 키 로그 제거, weather 오류 격자 제거. 오류명은 고정 허용 목록만 출력한다. Hono 기본 raw error 로그를 고정 JSON으로 대체하고 cron은 원본 cause 없이 실패를 유지한다.
+- 새 privacy 테스트: provider mutable name/cause 제거, scheduler 개인 context 제거, 날씨 오류 격자 제거, Hono 예외 정제, cron 예외 정제. 32파일/245테스트 통과, tsc 및 wrangler deploy --dry-run 통과. 초기 고정 커스텀 오류명 3개 회귀는 허용 목록으로 수정 후 전체 통과.
+- 기존 운영 9588e04b-ec80-46a5-a718-95fc19f84435 100% 확인. 다음 운영 배포·health·버전/설정 확인. DB/키 변경 없음, 실제 알림 시험 발송 없음, 과거 로그 삭제 없음. untracked 사용자 scripts/tmp는 제외한다.

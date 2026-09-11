@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 
 describe('provider error diagnostics', () => {
+  it('does not trust mutable error names or nested cause fields', () => {
+    const error = Object.assign(new Error('token-secret', { cause: 'location-secret' }), {
+      name: 'https://example.invalid/?key=secret',
+      stack: 'private-stack',
+    });
+    expect(providerErrorDiagnostic(error)).toEqual({ error: 'Error', failureReason: 'UNKNOWN' });
+  });
   it('classifies safe HTTP and provider operation fields', () => {
     expect(
       providerErrorDiagnostic(

@@ -10,6 +10,18 @@ import { NotificationSettings, ServerEnv, WeatherSnapshot } from '../src/types';
 import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 
 describe('notification scheduler', () => {
+  it('omits installation and location context from failure logs', async () => {
+    await insertInstallation('private-token');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await runRecommendationNotificationJob(testBindings(), {
+        now: new Date('2026-09-01T07:00:00+09:00'),
+        forecastLoader: async () => { throw Object.assign(new Error('private-token'), { name: 'installation-1' }); },
+        sender: collectingSender([]),
+      });
+      expect(log.mock.calls).toEqual([[JSON.stringify({ event: 'recommendation_build_failed', error: 'Error' })]]);
+    } finally { log.mockRestore(); }
+  });
   it.each([false, true])('does not send expired registrations before bounded cleanup (delayed cron: %s)', async (delayed) => {
     await insertInstallation('device-token');
     await env.DB.prepare('INSERT INTO installation_activity VALUES (?, ?)')

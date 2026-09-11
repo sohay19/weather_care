@@ -56,7 +56,7 @@ import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
 import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
-import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
+import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
 import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySnapshot,
   withoutPrecipitation } from '../rules/precipitationWindows';
 
@@ -244,9 +244,7 @@ router.get('/today', async (c) => {
             console.error(
               JSON.stringify({
                 event: 'weather_snapshot_persistence_failed',
-                nx,
-                ny,
-                error: error instanceof Error ? error.name : 'UnknownError',
+                error: safeErrorName(error),
               }),
             );
           }),
@@ -254,7 +252,7 @@ router.get('/today', async (c) => {
     }
     return c.json(response);
   } catch (error) {
-    logProviderError('today', nx, ny, error);
+    logProviderError('today', error);
     return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
   }
 });
@@ -402,7 +400,7 @@ router.get('/weekly', async (c) => {
       })),
     });
   } catch (error) {
-    logProviderError('weekly', nx, ny, error);
+    logProviderError('weekly', error);
     return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
   }
 });
@@ -541,8 +539,6 @@ function maximum(values: number[]): number {
 
 function logProviderError(
   route: 'today' | 'weekly',
-  nx: number,
-  ny: number,
   error: unknown,
 ): void {
   console.error(
@@ -550,8 +546,6 @@ function logProviderError(
       event: 'weather_provider_failed',
       provider: 'KMA',
       route,
-      nx,
-      ny,
       ...providerErrorDiagnostic(error),
     }),
   );

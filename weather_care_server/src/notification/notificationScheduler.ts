@@ -43,6 +43,7 @@ import {
 } from '../providers/traffic/itsRoadControlProvider';
 import { roadControlNotification } from '../presentation/roadControlMessage';
 import { installationExpirySql } from '../database/dataRetention';
+import { safeErrorName } from '../observability/providerErrorDiagnostics';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -254,10 +255,7 @@ export async function runRecommendationNotificationJob(
         });
       }
     } catch (error) {
-      logNotificationError('recommendation_build_failed', error, {
-        installationId: row.installationId,
-        regionKey,
-      });
+      logNotificationError('recommendation_build_failed', error);
     }
   }
 
@@ -489,10 +487,7 @@ async function collectRoadIceNotification(
       roadIceRisk: risk,
     });
   } catch (error) {
-    logNotificationError('road_ice_build_failed', error, {
-      installationId: row.installationId,
-      locationKey,
-    });
+    logNotificationError('road_ice_build_failed', error);
   }
 }
 
@@ -565,10 +560,7 @@ async function collectRoadControlNotification(
       roadControl: control,
     });
   } catch (error) {
-    logNotificationError('road_control_build_failed', error, {
-      installationId: row.installationId,
-      locationKey,
-    });
+    logNotificationError('road_control_build_failed', error);
   }
 }
 
@@ -702,10 +694,7 @@ async function collectOfficialWarningNotifications(
       );
     }
   } catch (error) {
-    logNotificationError('official_warning_build_failed', error, {
-      installationId: row.installationId,
-      regionKey,
-    });
+    logNotificationError('official_warning_build_failed', error);
   }
 }
 
@@ -899,10 +888,7 @@ async function collectCurrentRainNotification(
       rainObservedAt: observation.observedAt,
     });
   } catch (error) {
-    logNotificationError('current_rain_build_failed', error, {
-      installationId: row.installationId,
-      locationKey,
-    });
+    logNotificationError('current_rain_build_failed', error);
   }
 }
 
@@ -1052,11 +1038,7 @@ async function recordResults(
         );
       }
     } else {
-      logNotificationError('fcm_send_failed', undefined, {
-        installationId: item.installationId,
-        notificationKey: item.built.notification_key,
-        status: result.status,
-      });
+      logNotificationError('fcm_send_failed', undefined, result.status);
     }
     if (result.unregistered) {
       statements.push(
@@ -1144,13 +1126,13 @@ function logNotificationError(
     | 'road_control_build_failed'
     | 'fcm_send_failed',
   error: unknown,
-  context: Record<string, string | number>,
+  status?: number,
 ): void {
   console.error(
     JSON.stringify({
       event,
-      ...context,
-      error: error instanceof Error ? error.name : undefined,
+      ...(status !== undefined && Number.isInteger(status) && status >= 100 && status <= 599 ? { status } : {}),
+      error: error === undefined ? undefined : safeErrorName(error),
     }),
   );
 }

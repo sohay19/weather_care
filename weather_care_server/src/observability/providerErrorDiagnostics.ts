@@ -46,7 +46,7 @@ export interface ProviderErrorDiagnostic {
 export function providerErrorDiagnostic(
   error: unknown,
 ): ProviderErrorDiagnostic {
-  const errorName = error instanceof Error ? error.name : 'UnknownError';
+  const errorName = safeErrorName(error);
   const message = error instanceof Error ? error.message : '';
   const httpStatus = statusFromMessage(message);
   const operation = operationFromMessage(message);
@@ -59,6 +59,17 @@ export function providerErrorDiagnostic(
     ...(operation === undefined ? {} : { operation }),
     ...(detail === undefined ? {} : { detail }),
   };
+}
+
+// Error.name is mutable and may itself contain a URL, token, or user input.
+export function safeErrorName(error: unknown): string {
+  if (!(error instanceof Error)) return 'UnknownError';
+  const allowed = ['Error', 'TypeError', 'RangeError', 'SyntaxError',
+    'ReferenceError', 'URIError', 'EvalError', 'AggregateError', 'TimeoutError', 'AbortError',
+    'ItsRoadControlProviderError', 'KmaRoadIceProviderError', 'KmaWarningProviderError',
+    'KmaPrecipitationObservationProviderError', 'KmaUvProviderError', 'KmaWeatherProviderError',
+    'AirKoreaAirQualityProviderError'];
+  return allowed.includes(error.name) ? error.name : 'Error';
 }
 
 function failureReason(

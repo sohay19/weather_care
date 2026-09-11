@@ -5510,3 +5510,9 @@
 
 - 사용자 출력 `ForwardToSyslog=yes`, `rsyslog.service=active`를 확인했다. 특정 파일에 실제 릴레이 로그가 기록됐다고 단정하지 않는다. 다음은 `/etc/rsyslog.conf`와 `/etc/rsyslog.d/*.conf`의 활성 `/var/log/` 경로 줄, `/etc/logrotate.d/rsyslog`의 회전 규칙 확인이다. 실제 로그 원문이나 비밀값은 요청하지 않는다.
 - journal 이외 파일 사본의 보관도 확인해야 한다. 전역 설정/기존 로그 삭제·서비스 재시작·원격 접속 없음. 문서만 갱신하고 diff 검사·한글 커밋하며 실행 테스트는 재실행하지 않는다. 사용자 미추적 파일은 보존한다.
+
+## 2026-09-11 syslog 주간 회전·4개 보관 확인
+
+- 사용자 출력으로 일반 로그의 `/var/log/syslog` 기록 규칙 및 rsyslog 로그 묶음의 `weekly/rotate 4/notifempty/compress/delaycompress`를 확인했다. 현재 파일+이전 4개 구조로 정확한 28일 만료가 아니다. 정상 회전 시 약 4~5주 기록이 남을 수 있으나 작업 중단·빈 파일 회전 생략 등으로 실제 기간은 달라진다. 실제 파일/작업 성공 여부는 미확인이다.
+- 다른 시스템 로그까지 묶인 전역 규칙은 변경하지 않는다. 릴레이 전용 로그 분리와 보관 구현은 후속 검토. 다음 사용자 단계는 Proxmox Datacenter → Backup 예약 작업 목록 화면 확인이며, 이후 VM의 실제 Backup/Snapshots와 별도 사본 확인이 남는다.
+- 검토 문서/HANDOFF만 수정·diff 검사·한글 커밋. 운영 설정 변경·삭제·배포·원격 접속·실행 테스트 없음. 사용자 미추적 파일은 보존한다.

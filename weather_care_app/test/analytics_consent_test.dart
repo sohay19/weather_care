@@ -20,7 +20,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('동의하지 않음'));
     await tester.pumpAndSettle();
-    expect(values, [false]);
+    expect(values, [false, false]);
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
     await tester.tap(find.text('동의'));
@@ -42,12 +42,12 @@ void main() {
           calls.add('apply:$v');
         });
     await consent.initialize();
-    expect(calls, ['apply:false']);
+    expect(calls, ['apply:false', 'apply:false']);
     await consent.change(true);
-    expect(calls, ['apply:false', 'write:true', 'apply:true']);
+    expect(calls, ['apply:false', 'apply:false', 'write:true', 'apply:true']);
     expect(consent.enabled, isTrue);
     await consent.change(false);
-    expect(calls.sublist(3), ['apply:false', 'write:false', 'apply:false']);
+    expect(calls.sublist(4), ['apply:false', 'write:false']);
     expect(consent.enabled, isFalse);
   });
   test('failed persistence cannot enable and withdrawal retry stays off',
@@ -82,6 +82,6 @@ void main() {
         });
     await consent.initialize();
     expect(consent.ready, isFalse);
-    expect(calls, [false]);
+    expect(calls, [false, false]);
   });
 }

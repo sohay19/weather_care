@@ -1,6 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'analytics_consent_store.dart';
 
 /// Separate from notification permission and server registration.
 class AnalyticsConsent extends ChangeNotifier {
@@ -16,16 +16,8 @@ class AnalyticsConsent extends ChangeNotifier {
   String? error;
 
   static final instance = AnalyticsConsent(
-    read: () async =>
-        (await SharedPreferences.getInstance())
-            .getBool('analytics_consent_v1') ??
-        false,
-    write: (value) async {
-      if (!await (await SharedPreferences.getInstance())
-          .setBool('analytics_consent_v1', value)) {
-        throw StateError('consent persistence failed');
-      }
-    },
+    read: AnalyticsConsentStore.instance.read,
+    write: AnalyticsConsentStore.instance.write,
     apply: (value) async {
       final analytics = FirebaseAnalytics.instance;
       // Disable first; consent mode alone is not a no-collection switch.
@@ -44,6 +36,8 @@ class AnalyticsConsent extends ChangeNotifier {
     if (ready || busy) return;
     busy = true;
     try {
+      // Never re-enable from persisted preferences before stopping SDK collection.
+      await apply(false);
       enabled = await read();
       await apply(enabled);
       ready = true;
@@ -68,16 +62,35 @@ class AnalyticsConsent extends ChangeNotifier {
     notifyListeners();
     try {
       // Stop immediately on withdrawal, even if storing the choice fails.
-      if (!value) await apply(false);
+      if (!value) {
+        Object? failure;
+        try {
+          await apply(false);
+        } catch (error) {
+          failure = error;
+        }
+        // SDK failure must not prevent persisting the withdrawal.
+        try {
+          await write(false);
+        } catch (error) {
+          failure ??= error;
+        }
+        if (failure != null) throw failure;
+        enabled = false;
+        return;
+      }
       await write(value);
       await apply(value);
       enabled = value;
     } catch (_) {
       try {
+        await write(false);
+      } catch (_) {/* Never treat a failed persistence as success. */}
+      try {
         await apply(false);
       } catch (_) {/* Report failure, never success. */}
       enabled = false;
-      error = '이용 통계 설정을 적용하지 못했어요. 다시 시도해주세요.';
+      error = '이용 통계 설정을 적용하지 못했어요. 수집 중단과 설정 저장을 완료하려면 다시 시도해주세요.';
     } finally {
       busy = false;
       notifyListeners();

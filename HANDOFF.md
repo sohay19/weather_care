@@ -5619,3 +5619,10 @@
 - PID 1 로그에서 relay 시작과 namespaced journald 시작 직후 같은 초에 rollback 재시작이 발생했다. 비동기 socket activation 직후 is-active 검사의 경합이 유력하나 이전 실패 줄이 없어 원인 확정은 아니다.
 - 설치 스크립트에서 전용 journald를 먼저 명시적으로 restart해 시작 작업 완료를 기다린 후 relay를 재시작하도록 수정했다. 재시도 시 남아 있는 namespace 프로세스도 새 설정을 읽게 한다. ERR에 단계/줄/종료코드를 추가하고 재귀 trap을 해제한다. 비밀값 출력 없음.
 - Vitest 12개, Bash 문법 및 diff 검사 통과. Linux 실기 검증은 대기. Windows PowerShell에서 수정된 스크립트 하나만 기존 Ubuntu 설치 폴더로 scp한 뒤 sudo 재실행하도록 안내한다. 운영 SSH 접근권한은 여전히 없고 직접 배포하지 않았다.
+
+## 2026-09-11 사용자 실행으로 운영 로그 설정 확인
+
+- 수정 스크립트 Installed 및 timer enable 성공 후 사용자 출력에서 health HTTP 200, ActiveState=active, LogNamespace=weather-care-relay 확인.
+- 합성 journal 설정: persistent, MaxRetentionSec=3day, MaxFileSec=15min, SystemMaxUse=32M, RuntimeMaxUse=16M, Syslog/KMsg/Console/Wall 전달 모두 no. 타이머 LAST 04:04:36 UTC, NEXT 04:19:36 UTC 확인.
+- 운영 설정 적용 확인으로 README/검토 최신 상태 갱신. timer LAST는 정리 oneshot 성공 증거는 아니므로 Result/ExecMainStatus 추가 확인 요청. 3일 경과 삭제 실증은 아직 없다. 기존 공용 로그 보존 및 지연 설명 유지.
+- 코드/운영 추가 변경 없이 문서만 갱신·diff 검사·커밋. 사용자 untracked 파일은 보존.

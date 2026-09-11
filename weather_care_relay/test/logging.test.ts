@@ -26,10 +26,19 @@ describe('relay-only logging deployment contracts', () => {
   it('preflights existing targets and rolls back new files only', () => {
     const script = read('install-relay-logging.sh');
     expect(script).toContain('Existing target:');
-    expect(script).toContain('trap rollback ERR');
+    expect(script).toContain('trap \'rollback "$LINENO"\' ERR');
+    expect(script).toContain('Failed phase=$phase line=$line exit=$status');
     expect(script).toContain('"${installed[@]}"');
     expect(script).not.toMatch(/rm[^\n]*\/var\/log/);
     expect(script).not.toContain('/etc/rsyslog');
     expect(script).not.toContain('/etc/systemd/journald.conf');
+  });
+  it('waits for namespace startup before restarting the relay', () => {
+    const script = read('install-relay-logging.sh');
+    const start = script.indexOf('systemctl restart systemd-journald@weather-care-relay.service');
+    const relay = script.indexOf('phase=restart-relay');
+    expect(start).toBeGreaterThan(0);
+    expect(relay).toBeGreaterThan(start);
+    expect(script.slice(start, relay)).toContain('systemctl is-active --quiet systemd-journald@weather-care-relay.service');
   });
 });

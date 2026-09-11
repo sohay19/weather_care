@@ -18,7 +18,11 @@ done
 # Validate units before installation. No service/environment secrets are read.
 systemd-analyze verify "$source_dir/weather-care-relay-log-prune.service" "$source_dir/weather-care-relay-log-prune.timer"
 installed=()
+phase=install-files
 rollback() {
+  local status=$? line=${1:-unknown}
+  trap - ERR
+  echo "Failed phase=$phase line=$line exit=$status" >&2
   echo 'Installation failed; removing only the new configuration files.' >&2
   systemctl disable --now "$timer" 2>/dev/null || true
   for target in "${installed[@]}"; do rm -f -- "$target"; done
@@ -26,16 +30,25 @@ rollback() {
   systemctl restart "$service" || true
   echo 'Check relay health manually. Existing logs were not removed.' >&2
 }
-trap rollback ERR
+trap 'rollback "$LINENO"' ERR
 for i in "${!targets[@]}"; do
   installed+=("${targets[$i]}")
   install -D -o root -g root -m 0644 "$source_dir/${sources[$i]}" "${targets[$i]}"
 done
+phase=reload-units
 systemctl daemon-reload
-systemctl restart "$service"
-systemctl is-active --quiet "$service"
-[[ $(systemctl show "$service" -p LogNamespace --value) == weather-care-relay ]]
+# Socket activation can still be starting journald when the relay is active.
+# Restart explicitly and wait for the job, also loading config after a retry.
+phase=start-namespace-journal
+systemctl restart systemd-journald@weather-care-relay.service
 systemctl is-active --quiet systemd-journald@weather-care-relay.service
+phase=restart-relay
+systemctl restart "$service"
+phase=verify-relay
+systemctl is-active --quiet "$service"
+phase=verify-namespace
+[[ $(systemctl show "$service" -p LogNamespace --value) == weather-care-relay ]]
+phase=enable-prune-timer
 systemctl enable --now "$timer"
 systemctl is-active --quiet "$timer"
 trap - ERR

@@ -5606,3 +5606,16 @@
 - README에 scp 전달, sudo 설치, health/namespace/타이머/합성 설정 검증 및 복구 절차를 추가했다. 시간 기반 삭제는 파일 단위 회전/정리 지연이 있으며 기존 공용 로그는 별도 기존 정책이다. 다른 drop-in/외부 수집기 및 실제 systemd 동작은 운영 검증 필요.
 - 검증: Vitest 11개 통과, TypeScript 빌드 통과, Git Bash -n 통과. 새 테스트 4개는 배포 파일 계약 검사이며 실제 Linux 통합 테스트가 아니다. deploy .gitattributes로 LF 유지. 기존 사용자 untracked scripts/tmp는 제외한다.
 - 다음: 사용자 PC에서 README의 scp 명령으로 deploy를 Ubuntu에 전달하고 sudo 설치. 실제 적용 성공 및 health/전용 로그/정리 상태 확인 전 운영 완료로 표현하지 않는다.
+
+## 2026-09-11 사용자 설치 실패 진단 대기
+
+- 사용자가 설치 실행 후 rollback 안내 두 줄을 제공했다. 실패 명령/종료코드가 출력되지 않아 원인은 미확정이다. 설치 성공이나 복구 성공으로 단정하지 않는다.
+- 재설치·재시작을 반복하지 않고 Ubuntu에서 서비스 상태, health HTTP 코드, systemd PID 1의 최근 릴레이 관련 메시지를 읽기 전용으로 요청한다. 환경파일/키/애플리케이션 로그 원문은 요청하지 않는다.
+- 설치 스크립트의 ERR 처리에 실패 위치 출력이 없어 진단성이 부족하다. 실제 진단 결과 수신 후 수정 시 보완할 것. 이번에는 운영 변경이나 구현 변경 없이 인계만 갱신했다.
+
+## 2026-09-11 로그 서비스 시작 경합 보완
+
+- 사용자 결과: relay active/running, Result=success, LogNamespace 비어 있음, health HTTP 200. 기존 공용 로그 방식으로 복구된 현재 상태를 확인했다.
+- PID 1 로그에서 relay 시작과 namespaced journald 시작 직후 같은 초에 rollback 재시작이 발생했다. 비동기 socket activation 직후 is-active 검사의 경합이 유력하나 이전 실패 줄이 없어 원인 확정은 아니다.
+- 설치 스크립트에서 전용 journald를 먼저 명시적으로 restart해 시작 작업 완료를 기다린 후 relay를 재시작하도록 수정했다. 재시도 시 남아 있는 namespace 프로세스도 새 설정을 읽게 한다. ERR에 단계/줄/종료코드를 추가하고 재귀 trap을 해제한다. 비밀값 출력 없음.
+- Vitest 12개, Bash 문법 및 diff 검사 통과. Linux 실기 검증은 대기. Windows PowerShell에서 수정된 스크립트 하나만 기존 Ubuntu 설치 폴더로 scp한 뒤 sudo 재실행하도록 안내한다. 운영 SSH 접근권한은 여전히 없고 직접 배포하지 않았다.

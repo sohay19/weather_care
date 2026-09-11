@@ -1,0 +1,9 @@
+[Unit]
+Description=Prune only Weather Care relay journal after three days
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/journalctl --namespace=weather-care-relay --rotate --vacuum-time=3d
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true

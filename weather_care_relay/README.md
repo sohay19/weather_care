@@ -63,3 +63,55 @@ tailscale funnel status
 
 출력된 `https://...ts.net` 주소를 Worker의 `ITS_RELAY_URL`에 등록한다. 같은
 `RELAY_TOKEN` 값은 Worker의 `ITS_RELAY_TOKEN` Secret으로 등록한다.
+
+## 릴레이 로그만 3일 보관
+
+사용자 확정: 2026-09-11. **설정 파일 준비 상태이며 운영 적용은 아직 미확인**이다.
+systemd 245 이상에서 전용 journal namespace를 사용한다. 공용 journal/rsyslog 설정,
+환경파일, 과거 공용 로그는 변경하거나 삭제하지 않는다. 설치 시 릴레이가 한 번
+재시작되어 진행 중인 요청이 끊길 수 있다.
+
+현재 PC의 PowerShell에서 배포 파일만 Ubuntu 홈으로 복사한다(인증은 직접 입력).
+
+```powershell
+scp -r D:/IdeaProjects/weather_care/weather_care_relay/deploy ubuntu@100.105.212.26:weather-care-log-setup
+```
+
+Ubuntu에서 다음을 실행한다. 기존 설치 대상 파일이 있으면 덮어쓰지 않고 중단한다.
+
+```bash
+sudo bash ~/weather-care-log-setup/install-relay-logging.sh
+curl --fail --silent --show-error http://127.0.0.1:8788/health
+sudo systemctl show weather-care-relay.service -p LogNamespace -p StandardOutput -p StandardError
+sudo systemd-analyze cat-config systemd/journald@weather-care-relay.conf
+sudo systemctl list-timers weather-care-relay-log-prune.timer --all
+sudo journalctl --namespace=weather-care-relay -u weather-care-relay.service --since '-5min' --no-pager
+```
+
+기대값은 `LogNamespace=weather-care-relay`, 출력 두 항목 `journal`, 건강 확인 성공,
+전용 journal의 `relay_listening` 이벤트 및 정리 타이머의 다음 실행시각이다.
+합성 설정에 다른 drop-in이 기간/전달 설정을 덮어쓰는지 반드시 확인한다.
+로그 원문이나 환경파일을 채팅에 붙이지 않는다. 커스텀 포트를 쓰면 health 주소를 맞춘다.
+
+- `MaxRetentionSec=3day`, 파일 회전 15분, 정리 타이머 15분(정밀도 1분).
+  삭제는 파일 단위이므로 정상 가동 중에도 회전·정리 지연이 있다. 정확히 72시간에
+  개별 기록이 즉시 사라진다는 보장은 아니며 서버 정지 시 다음 실행까지 지연된다.
+- 전용 journal 용량 목표는 32MiB(런타임 16MiB)여서 공간에 따라 더 일찍 지워질 수 있다.
+- syslog·커널·콘솔·wall 전달은 끈다. 별도 외부 수집기가 namespace를 읽는지는 별도 확인 대상이다.
+- 적용 전 공용 로그는 기존 보관 규칙으로 남는다. 서비스 시작/종료 등 systemd 관리자
+  자체 메시지도 공용 journal에 남을 수 있으므로 모든 시스템 기록의 3일 삭제 정책은 아니다.
+
+설치 도중 오류면 새 설정 파일만 자동 제거하고 기존 서비스 재시작을 시도한다.
+성공 후 수동 복구가 필요하면 **이번 설치 파일이 이후 변경되지 않았는지 확인 후** 실행한다.
+로그 파일은 삭제하지 않으며 복구하면 이후 서비스 출력은 다시 공용 journal로 들어간다.
+
+```bash
+sudo systemctl disable --now weather-care-relay-log-prune.timer
+sudo rm -- /etc/systemd/system/weather-care-relay.service.d/30-relay-journal.conf /etc/systemd/journald@weather-care-relay.conf /etc/systemd/system/weather-care-relay-log-prune.service /etc/systemd/system/weather-care-relay-log-prune.timer
+sudo systemctl daemon-reload
+sudo systemctl restart weather-care-relay.service
+curl --fail --silent --show-error http://127.0.0.1:8788/health
+```
+
+근거: [systemd journalctl 공식 문서](https://github.com/systemd/systemd/blob/v255/man/journalctl.xml),
+[journald 설정 공식 문서](https://www.freedesktop.org/software/systemd/man/252/journald.conf.html).

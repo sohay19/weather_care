@@ -13,6 +13,20 @@
 - 한계: 모든 영구 저장이 실패하면 이전 허용값을 디스크에서 제거했다고 보장할 수 없다. Firebase 네이티브 자동 시작은 Dart보다 앞서므로 프로세스 초기·백그라운드 네트워크 무전송까지 검증된 것은 아니다. Android/iOS 실기 검증이 남아 있다.
 - Google 원격 Analytics 삭제는 이번 수정에 포함하지 않는다. 배포/기기 설치 없음.
 
+## 후속 Android 에뮬레이터 실행 검증
+
+2026-09-11 수정본 debug APK 빌드 성공. Android17/API37 emulator-5554에서 실행 확인. 실제 휴대전화와 iOS 기기는 연결되지 않았다.
+
+- 최초 `install -r`은 설치된 versionCode2026085100보다 빌드2026081100이 낮아 거절됨. 그 직후 기존 앱 실행은 검증 결과에서 제외했다.
+- `install -r -d`로 데이터 유지 디버그 다운그레이드 설치 성공. uninstall/pm clear는 실행하지 않았다. 운영/스토어 배포 없음.
+- 설치 후 콜드 스타트 성공, 홈 이동 후 앱 복귀 성공, force-stop 후 두 번째 콜드 스타트 성공.
+- 첫 콜드 스타트 FA 로그: `App measurement disabled via the manifest`, `Analytics storage consent denied; will not get app instance id`.
+- 두 번째 콜드 스타트 FA 로그: `App measurement disabled by setAnalyticsCollectionEnabled(false)`, 동일한 analytics storage 거부 메시지.
+- 이 결과는 현재 미동의 상태의 SDK 로그 확인이다. 패킷 캡처를 통한 전송 부재, 기존 허용 상태에서의 업그레이드, 실제 동의→철회 UI, 저장장치 오류 주입, FCM 수신에 의한 백그라운드 시작을 검증한 것은 아니다. 홈 이동은 FCM 백그라운드 테스트를 대신하지 않는다.
+- 기기 저장소 조회에서 대상 동의 항목을 추출하지 못했으므로 해당 결과를 설정 증거로 사용하지 않았다. 전체 저장내용/토큰/식별자를 출력하지 않았다.
+
+다음 우선순위: 별도 테스트 환경에서 동의→철회→재시작 및 FCM 백그라운드 경계 검증. 실기 네트워크 검증 전 무전송 보장을 선언하지 않는다. Google 원격 삭제 연동은 별도 미구현이다.
+
 ## 확인 결과
 
 | 항목 | 현재 구현 |

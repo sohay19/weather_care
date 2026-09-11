@@ -5640,3 +5640,10 @@
 - observability/logs/traces 및 persist/invocation_logs 비활성. scheduler의 설치·지역·좌표·알림 키 로그 제거, weather 오류 격자 제거. 오류명은 고정 허용 목록만 출력한다. Hono 기본 raw error 로그를 고정 JSON으로 대체하고 cron은 원본 cause 없이 실패를 유지한다.
 - 새 privacy 테스트: provider mutable name/cause 제거, scheduler 개인 context 제거, 날씨 오류 격자 제거, Hono 예외 정제, cron 예외 정제. 32파일/245테스트 통과, tsc 및 wrangler deploy --dry-run 통과. 초기 고정 커스텀 오류명 3개 회귀는 허용 목록으로 수정 후 전체 통과.
 - 기존 운영 9588e04b-ec80-46a5-a718-95fc19f84435 100% 확인. 다음 운영 배포·health·버전/설정 확인. DB/키 변경 없음, 실제 알림 시험 발송 없음, 과거 로그 삭제 없음. untracked 사용자 scripts/tmp는 제외한다.
+
+### 운영 배포·검증 완료
+
+- 구현 커밋 f6453ee. wrangler deploy 성공, 버전 39500cac-48b5-48b9-8f25-e7b031d179bf 100%, health HTTP 200, 기존 10분 cron 유지.
+- CLI 버전 조회에는 Observability 필드가 없어 공식 script-settings API를 읽기 전용 조회했다. Wrangler의 기존 인증을 메모리에서만 사용하고 출력하지 않았다. 결과 observability=null, logpush=false, tail_consumers=null. 배포 설정은 enabled/logs/traces/persist false이며 API는 비활성을 null로 반환. 신규 저장 중단 확인과 과거 로그 파기 증명은 구분한다.
+- 테스트 245개/32파일, tsc, dry-run 통과. 운영 DB 수정·테스트 알림 발송·실제 이용자 로그 조회/삭제 없음. 문서 상태 갱신 후 커밋한다.
+- 다음 항목: D1 복원 시 삭제된 사용자 정보가 재사용되지 않도록 할 복원 정책 확정/절차 구현. 복원으로 유효 사용자 등록도 사라질 수 있는 권장안은 별도 설명·확정 필요. 실제 운영 DB 시험 복원은 하지 않는다. 이후 Firebase/광고 SDK, 공개 개인정보처리방침 연결 순서.

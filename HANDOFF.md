@@ -5880,3 +5880,11 @@
 - 서버 전체 35파일 259테스트, tsc, Wrangler dry-run 통과 후 Worker 버전 efd6c82f-ed3a-4696-95f5-0c0ae0119c14를 배포했다. /health 200과 올바른 형식의 미인증 삭제 요청 401을 확인했다.
 - 다운로드한 운영 키 JSON은 계정과 키 ID를 확인한 뒤 로컬에서 삭제했다. 다운로드 재시도로 생성됐지만 사용하지 않은 키 0be8c1fbf42e0f77e79899bf23b61b23b22efb49와 bbfe96fb6af596f741bf0b91185c9a3cc3f57320도 사용자 확인 후 Google Cloud에서 삭제했다. 새 키 목록에서 운영 키 9a533a062f2084f19ccef0073bc2e930909c4810 하나만 Active로 남은 것을 확인했다.
 - 실제 Analytics 삭제 요청은 실행하지 않았다. 테스트 전용 앱 인스턴스가 준비된 뒤 1회 종단 검증해야 하며, 실제 이용자 ID나 출처 불명 ID로 시험하지 않는다. 이번 작업으로 이용 통계 삭제나 앱의 로컬 Analytics 초기화는 발생하지 않았다.
+
+## 2026-09-11 Analytics 삭제 요청 운영 종단 검증
+
+- Android17/API37 emulator-5554만 테스트 인스턴스로 사용했다. 운영 Worker URL을 주입한 최신 앱을 기존 데이터 유지 방식으로 설치했다. 범용 debug APK는 저장공간 부족으로 거부됐고 cache trim도 공간을 늘리지 못해 81.7MiB x86_64 전용 APK로 설치했다. 앱 데이터 전체 삭제는 하지 않았다.
+- 설정에서 기존 Analytics 미동의를 확인한 뒤 테스트 목적으로 명시적 동의했다. 앱 인스턴스 ID와 설치 인증값은 출력·기록하지 않고 앱 UI의 ‘수집 중단 및 삭제 요청’을 1회 실행했다.
+- 운영 Worker 버전 efd6c82f-ed3a-4696-95f5-0c0ae0119c14에서 인증된 analytics-deletion POST가 HTTP202로 완료되고 예외가 없었다. 앱에는 Google Analytics 삭제 요청 접수와 기기 분석 데이터 초기화 성공 문구가 표시됐으며 스위치는 false로 바뀌었다.
+- force-stop/COLD 재시작 뒤에도 이용 통계 false 유지, 일회성 성공 문구 소멸, 보안 저장소 analytics_deletion_record_v1 부재를 확인했다. 재제출 대기 상태는 남지 않았다.
+- 이는 테스트 인스턴스의 Google 요청 접수·앱 수집 중단·로컬 초기화 검증이다. Google 서버의 실제 과거 자료 삭제 완료시각, Android 실물, iOS는 미검증이다. 앱/서버 소스 변경과 추가 Worker 배포는 없다.

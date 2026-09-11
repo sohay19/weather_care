@@ -29,7 +29,18 @@
 - 운영 자격증명으로 `analytics.edit` OAuth 토큰 발급과 Analytics Admin API 속성 읽기가 각각 HTTP 200으로 성공했다.
 - 서버 전체 테스트 35개 파일 259개, TypeScript 검사와 Wrangler dry-run을 통과한 뒤 Worker 버전 `efd6c82f-ed3a-4696-95f5-0c0ae0119c14`를 배포했다. `/health`는 200, 올바른 형식의 미인증 삭제 요청은 401을 반환했다.
 - 다운로드한 운영 키 JSON의 계정과 키 ID를 확인한 뒤 로컬 파일을 삭제했다. 다운로드 재시도로 생성됐지만 사용하지 않은 키 2개도 Google Cloud에서 삭제했으며, 키 목록에는 운영 키 `9a533a062f2084f19ccef0073bc2e930909c4810` 하나만 남겼다.
-- 실제 삭제 API 호출은 테스트 전용 앱 인스턴스가 준비되지 않아 실행하지 않았다. 실제 이용 통계 삭제나 앱의 로컬 Analytics 초기화도 발생하지 않았다.
+- 운영 연결 직후에는 테스트 전용 앱 인스턴스가 준비되지 않아 실제 삭제 API를 호출하지 않았다. 이후 별도 종단 검증 결과는 다음 절에 기록한다.
+
+## Android 테스트 인스턴스 운영 종단 검증
+
+2026-09-11 Android 17/API 37 `emulator-5554`에서만 삭제 요청을 1회 제출했다. 앱 인스턴스 ID와 설치 인증값은 출력하거나 문서에 기록하지 않았다.
+
+- 운영 Worker 주소를 주입한 최신 x86_64 debug APK를 기존 앱 데이터 유지 방식으로 설치했다. 범용 APK는 에뮬레이터 저장공간 부족으로 덮어쓰기가 거부돼 ABI 전용 APK를 사용했으며 앱 데이터 전체 삭제는 하지 않았다.
+- 설정 화면에서 기존 미동의 상태를 확인한 뒤 테스트 목적으로 명시적 동의를 적용했다. 스위치가 허용 상태로 바뀐 것을 확인하고 앱이 보관한 테스트 인스턴스로 ‘수집 중단 및 삭제 요청’을 실행했다.
+- 운영 Worker 버전 `efd6c82f-ed3a-4696-95f5-0c0ae0119c14`의 인증된 `POST /api/v1/installations/:id/analytics-deletion`이 HTTP 202로 완료됐고 Worker 예외는 없었다. 이 응답은 Google Analytics Admin API가 유효한 `deletionRequestTime`을 반환한 경우에만 생성된다.
+- 앱에 `Google Analytics에 삭제 요청이 접수됐어요. 기기의 분석 데이터도 초기화했어요.`가 표시됐고 이용 통계 스위치는 즉시 꺼졌다.
+- 앱을 force-stop한 뒤 콜드 시작해도 이용 통계 스위치가 꺼진 상태로 유지됐다. 일회성 성공 문구는 사라졌고 보안 저장소의 `analytics_deletion_record_v1` 키도 남아 있지 않았다.
+- 이는 테스트 인스턴스에 대한 삭제 **요청 접수**, 앱 수집 중단과 로컬 초기화의 종단 검증이다. Google 서버에서 과거 자료가 실제로 모두 제거된 시각을 확인한 결과는 아니며 실제 이용자 기기·Android 실물·iOS 검증도 아니다.
 
 ## 후속 수정: 철회 실패·재시작 방어
 
@@ -89,7 +100,7 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 | 광고 관련 동의 | SDK 적용 시 광고 저장·사용자 데이터·개인화 동의 false |
 | 철회 저장 실패 | 현재 실행에서는 수집 중단을 재시도하고 오류 표시 |
 | 실패 후 재시작 | 이전 true 값이 남으면 initialize가 다시 수집을 허용할 수 있음. 보완 필요 |
-| 이미 Google에 전송한 데이터 삭제 | 앱·Worker 요청 흐름과 운영 권한·비밀값·배포 완료. 테스트 전용 앱 인스턴스의 실제 접수 종단 검증 전 |
+| 이미 Google에 전송한 데이터 삭제 | Android 에뮬레이터 테스트 인스턴스로 운영 Worker·Google 요청 접수 1회 검증. 실제 삭제 완료시각과 Android 실물·iOS는 미확인 |
 | 서버 내 나의 데이터 삭제 | 앱 서버 설치 데이터 DELETE만 실행. Google Analytics 삭제와 별개 |
 | 로컬 Analytics 초기화 | Google 요청 접수 뒤 resetAnalyticsData 호출. 원격 실제 삭제 완료와 동일시하지 않음 |
 
@@ -105,6 +116,6 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 4. Google 삭제 API 인증정보는 서버에만 두며 최소 권한으로 구성한다. 요청 접수와 실제 삭제 완료를 구분하고 완료가 확인되지 않은 상태에서 삭제 완료 문구를 출력하지 않는다.
 5. Android/iOS 실기에서 미동의·동의·철회·재시작·오류 상태의 네트워크 확인 후 앱 문구와 개인정보처리방침을 최종화한다.
 
-최초 점검 시점에는 앱 동작 변경·삭제 요청·운영 배포를 하지 않았다. 이후 상단의 원격 삭제 요청 흐름을 구현하고 운영 Worker까지 배포했다. 실제 테스트 앱 인스턴스의 Google 삭제 요청은 아직 제출하지 않았다. 보호자 동의 구현 보류도 유지한다.
+최초 점검 시점에는 앱 동작 변경·삭제 요청·운영 배포를 하지 않았다. 이후 상단의 원격 삭제 요청 흐름을 구현하고 운영 Worker까지 배포한 뒤 Android 에뮬레이터 테스트 인스턴스로 요청 접수까지 검증했다. Google 서버의 실제 삭제 완료시각은 확인하지 않았다. 보호자 동의 구현 보류도 유지한다.
 
 공식 참고: [Google Analytics 사용자 삭제 요청](https://developers.google.com/analytics/devguides/config/admin/v1/rpc/google.analytics.admin.v1alpha#google.analytics.admin.v1alpha.SubmitUserDeletionRequest), [Firebase 로컬 데이터 초기화 안내](https://firebase.google.com/support/release-notes/unity).

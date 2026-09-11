@@ -6,6 +6,7 @@ import 'package:weather_care/firebase_options.dart';
 import 'app.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/notification_navigation_service.dart';
+import 'services/analytics_consent.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
 final _notificationNavigation = NotificationNavigationService(
@@ -27,6 +28,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await AnalyticsConsent.instance.initialize();
 
   Map<String, dynamic>? initialNotificationData;
   try {

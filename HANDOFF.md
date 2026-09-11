@@ -5676,3 +5676,12 @@
 - notification_registration_service는 OS 알림 허용 시에만 getToken을 호출하지만, SDK 자동 초기화 자체를 막는 설정과는 별개다. 서버 데이터 삭제를 Firebase 전체 삭제라고 설명하면 안 된다.
 - 공식 근거: https://firebase.google.com/docs/analytics/android/configure-data-collection , https://firebase.google.com/docs/cloud-messaging/flutter/get-started , https://developers.google.com/admob/flutter/privacy . Analytics 수집 제어와 FCM 자동 초기화 방지, 광고 요청 전 UMP 상태 확인 절차 확인.
 - 첫 결정 권장: 현재 사용하지 않는 Analytics 수집 중단(이용 통계·분석 보고서 영향), 날씨/푸시 기능 유지. 이후 광고 SDK 및 FCM 활성화 정책 별도 결정. 이번에는 정책 선택 전 코드·콘솔·운영 변경 없이 확인 내용만 기록했다. 문서 diff 검사 후 커밋, 테스트/배포 없음.
+
+## 2026-09-11 Analytics 선택 동의 구현
+
+- 사용자는 Analytics 수집을 선택했고, 동의 후 시작·설정에서 철회·날씨와 알림 기능 분리에 동의했다. 앞선 수집 중단 권장안은 채택되지 않았다.
+- Android/iOS 네이티브 수집 기본 OFF 및 Analytics/광고 consent 기본 거부 설정. 앱 시작 시 로컬 analytics_consent_v1을 적용하며 기존 동의 없는 이용자는 OFF. 동의 전환은 저장 후 SDK 활성화, 철회는 SDK 중단부터 시도. SDK/저장 실패는 오류와 재시도 표시. 완전한 기기 저장 실패나 SDK 실패를 성공으로 안내하지 않는다.
+- 설정에 선택 스위치 및 동의/비동의 확인 추가. 광고 개인화 동의를 같이 허용하지 않음. FCM·서버 등록·광고 SDK 자체 초기화는 별개이며 이번 변경 대상 아님. 이미 수집된 데이터의 소급 삭제도 수행하지 않음.
+- 공식 Firebase Android/iOS collection 설정 및 Google app consent 문서 확인. 커스텀 이벤트/좌표/설치 ID 전송 추가 없음. SDK 자동 수집만 동의로 제어한다.
+- 분석 controller/확인 취소/철회/실패 테스트와 기존 설정 화면 회귀 실행. 네이티브 실기 네트워크 및 Firebase 콘솔 수집 확인, iOS 빌드, 공개 방침·외부 보관기간 검토는 아직 미수행. 앱 코드만 수정하며 서버 배포 없음.
+- 검증 결과: 관련 테스트 31개 통과, 변경 Dart 5파일 analyze 통과, diff 검사 통과. 다음은 광고 SDK 동의·초기화 정책과 실제 콘솔 설정 확인. 사용자 untracked scripts/tmp 제외.

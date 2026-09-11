@@ -5863,3 +5863,12 @@
 - 사용자 진행 요청. emulator5554 앱 force-stop 후 앱 전용 google_app_measurement_local.db를 ADB→Python 메모리 SQLite(query_only)로 검사: integrity ok, messages0건, journal0바이트. 디스크 사본 및 이벤트 내용 출력 없음.
 - SDK measurement_enabled/from_api=false, 앱 prefs동의false 확인. 삭제 필요 없어 데이터 삭제/초기화 없음. 종료 상태에서 비행기OFF/Wi-FiON 원복(이전 오프라인 유지 지침 종료).
 - 앱 로컬 범위만 검증. GMS 큐/Google원격/패킷/FCM/iOS 미검증 유지, 무전송이나 원격 삭제 완료 주장 안 함. 코드·운영 배포 없음. 다음 원격 Analytics 삭제 식별·권한 설계 및 테스트 환경 FCM/iOS 검증. 검증 기록 한글 커밋.
+
+## 2026-09-11 Google Analytics 원격 삭제 요청 구현
+
+- 앱 설정에 ‘전송된 이용 통계 삭제 요청’ 추가. 명시적 삭제 시 Firebase app_instance_id를 없애기 전에 기기 보안 저장소에서 확보하고, 이용 통계 수집을 먼저 중단한 뒤 설치별 인증으로 Worker에 요청한다. 일반 철회는 ID 확보 완료를 기다리지 않고 수집을 즉시 중단하며, 동의 중 이미 기기에만 보관된 ID가 있으면 이후 요청 가능. 과거 버전에서 이미 철회해 ID가 없는 경우는 삭제 접수를 성공으로 표시하지 않는다.
+- Google 요청 성공 뒤에만 resetAnalyticsData로 기기 분석 데이터/ID 초기화. 요청 접수 상태를 먼저 보안 저장해 재시작 시 로컬 정리를 마치며, 원격 실패 시 수집OFF+ID 유지, 원격 접수 후 로컬 실패는 상태를 구분. UI는 실제 삭제 완료가 아니라 요청 접수라고 명시.
+- Worker에 인증 라우트 POST /api/v1/installations/:id/analytics-deletion, 분당 설치별3회 제한, Analytics Admin API v1alpha submitUserDeletion 클라이언트와 공용 Google 서비스계정 JWT/OAuth 서명 추가. GA_PROPERTY_ID=549443110, 비밀값 GA_ADMIN_CLIENT_EMAIL/GA_ADMIN_PRIVATE_KEY는 Wrangler secret 전용. FCM도 공용 서명기로 전환.
+- 설정 안내·개인정보처리방침 검토 초안·Analytics 점검 문서 갱신. 공식 조건: analytics.edit OAuth 범위, 속성 편집자 이상, 속성당 사용자 삭제 하루500건. 계정 전체가 아니라 속성에만 삭제 전용 서비스계정을 추가하도록 운영 순서 기록.
+- 검증: 서버 전체35파일258테스트, tsc 통과. 앱 전체339테스트, flutter analyze 통과. 개인정보 페이지 verify는 모바일/데스크톱/앵커/초안/무스크립트·폼 PASS. 실제 자격증명, Admin API 활성화, 속성 권한, Worker/Pages 배포, Android/iOS 종단 요청은 아직 안 함.
+- 다음: Google Cloud에서 삭제 전용 서비스계정과 키 생성 → Analytics 속성549443110에 해당 이메일 편집자 추가 → 두 Wrangler secret 등록 → Worker 배포 → 테스트 전용 ID로 1회 종단 검증. 실키 원문은 채팅·문서·명령행 인자에 출력하지 않는다.

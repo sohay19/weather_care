@@ -181,6 +181,17 @@ void main() {
     await access.load();
   }
 
+  test('submits Analytics deletion through the authenticated installation',
+      () async {
+    await established();
+    await access.requestAnalyticsDeletion('analytics-instance-1');
+    final call = api.calls.single;
+    expect(call.method, 'POST');
+    expect(call.path, '/api/v1/installations/$newId/analytics-deletion');
+    expect(call.body, {'appInstanceId': 'analytics-instance-1'});
+    expect(call.headers, {'Authorization': 'Bearer $secret'});
+  });
+
   test(
       'securely persists enrollment before sending personal data; resolves server ID at boundary',
       () async {

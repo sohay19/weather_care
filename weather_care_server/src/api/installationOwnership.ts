@@ -3,6 +3,8 @@ import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import type { ServerEnv } from '../types';
 import { sendOwnershipChallenge } from '../notification/fcmClient';
+import { AnalyticsDeletionProviderError,
+  submitAnalyticsUserDeletion } from '../analytics/analyticsDeletionClient';
 import { bearerSecret, clearExpiredEnrollmentData, deleteInstallationData,
   hasInstallationData, ownerForRequest, randomSecret, secretHash } from '../security/installationAccess';
 
@@ -10,6 +12,9 @@ const idSchema = z.string().regex(/^wc_[A-Za-z0-9_-]{20,80}$/);
 const enrollSchema = z.object({ legacyInstallationId: idSchema.optional() }).strict();
 const challengeSchema = z.object({ requestId: z.string().regex(/^[0-9a-f]{64}$/) }).strict();
 const claimSchema = challengeSchema.extend({ proof: z.string().regex(/^[0-9a-f]{64}$/) });
+const analyticsDeletionSchema = z.object({
+  appInstanceId: z.string().min(1).max(256),
+}).strict();
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', bodyLimit({ maxSize: 4096 }));
 router.use('*', async (c, next) => { c.header('Cache-Control', 'no-store'); await next(); });
@@ -103,6 +108,42 @@ router.post('/:installationId/claim', async (c) => {
   ]);
   if (!await ownerForRequest(c, id)) return c.json({ error: 'OWNERSHIP_PROOF_REJECTED' }, 403);
   return c.json({ installationId: id });
+});
+
+router.post('/:installationId/analytics-deletion', async (c) => {
+  const id = c.req.param('installationId');
+  if (!idSchema.safeParse(id).success) return c.json({ error: 'INVALID_INSTALLATION' }, 400);
+  if (!bearerSecret(c.req.header('Authorization'))) {
+    return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
+  }
+  if (!await ownerForRequest(c, id)) {
+    return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
+  }
+  const parsed = analyticsDeletionSchema.safeParse(
+    await c.req.json<unknown>().catch(() => null),
+  );
+  if (!parsed.success) return c.json({ error: 'INVALID_ANALYTICS_DELETION' }, 400);
+  const { success } = await c.env.ANALYTICS_DELETION_LIMIT.limit({
+    key: `analytics-deletion:${id}`,
+  });
+  if (!success) {
+    c.header('Retry-After', '60');
+    return c.json({ error: 'ANALYTICS_DELETION_RETRY_LATER' }, 429);
+  }
+  try {
+    const result = await submitAnalyticsUserDeletion({
+      propertyId: c.env.GA_PROPERTY_ID,
+      clientEmail: c.env.GA_ADMIN_CLIENT_EMAIL,
+      privateKey: c.env.GA_ADMIN_PRIVATE_KEY,
+    }, parsed.data.appInstanceId);
+    return c.json(result, 202);
+  } catch (error) {
+    if (error instanceof AnalyticsDeletionProviderError && error.status === 429) {
+      c.header('Retry-After', '3600');
+      return c.json({ error: 'ANALYTICS_DELETION_RETRY_LATER' }, 503);
+    }
+    return c.json({ error: 'ANALYTICS_DELETION_UNAVAILABLE' }, 503);
+  }
 });
 
 router.delete('/:installationId', async (c) => {

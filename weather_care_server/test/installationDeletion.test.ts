@@ -5,6 +5,7 @@ import ownership from '../src/api/installationOwnership';
 import registrations from '../src/api/installations';
 import settings from '../src/api/notificationSettings';
 import * as fcm from '../src/notification/fcmClient';
+import * as analyticsDeletion from '../src/analytics/analyticsDeletionClient';
 import { deleteInstallationData, secretHash } from '../src/security/installationAccess';
 import { upsertInstallation } from '../src/database/installationsRepository';
 import { defaultNotificationSettings, upsertNotificationSettings } from '../src/database/notificationSettingsRepository';
@@ -65,10 +66,50 @@ beforeEach(async () => {
   await apply(m7);
   await apply(m8);
   vi.spyOn(fcm, 'sendOwnershipChallenge').mockResolvedValue();
+  vi.spyOn(analyticsDeletion, 'submitAnalyticsUserDeletion').mockResolvedValue({
+    deletionRequestTime: '2026-09-11T01:02:03Z',
+  });
 });
 afterEach(() => vi.restoreAllMocks());
 
 describe('authenticated server data deletion', () => {
+  it('accepts an authenticated Analytics deletion request and rejects other credentials', async () => {
+    const id = await enrollment();
+    const response = await request(`${path}/${id}/analytics-deletion`, 'POST', {
+      appInstanceId: 'analytics-instance-1',
+    });
+    expect(response.status).toBe(202);
+    expect(await response.json()).toEqual({
+      deletionRequestTime: '2026-09-11T01:02:03Z',
+    });
+    expect(analyticsDeletion.submitAnalyticsUserDeletion).toHaveBeenCalledWith(
+      expect.objectContaining({ propertyId: '549443110' }),
+      'analytics-instance-1',
+    );
+    expect((await request(`${path}/${id}/analytics-deletion`, 'POST', {
+      appInstanceId: 'analytics-instance-1',
+    }, { ...testAuthHeaders, Authorization: `Bearer ${'b'.repeat(64)}` })).status).toBe(401);
+    expect((await request(`${path}/${id}/analytics-deletion`, 'POST', {
+      appInstanceId: '',
+    })).status).toBe(400);
+  });
+
+  it('rate limits Analytics deletion before calling Google', async () => {
+    const id = await enrollment();
+    vi.mocked(analyticsDeletion.submitAnalyticsUserDeletion).mockClear();
+    const response = await app.request(
+      `${path}/${id}/analytics-deletion`,
+      { method: 'POST', headers: testAuthHeaders,
+        body: JSON.stringify({ appInstanceId: 'analytics-instance-1' }) },
+      { ...env,
+        INSTALLATION_ENROLL_LIMIT: { limit: async () => ({ success: true }) },
+        ANALYTICS_DELETION_LIMIT: { limit: async () => ({ success: false }) } },
+    );
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('60');
+    expect(analyticsDeletion.submitAnalyticsUserDeletion).not.toHaveBeenCalled();
+  });
+
   it('limits anonymous enrollment without creating a credential', async () => {
     const response = await app.request(`${path}/enroll`, { method: 'POST', headers: testAuthHeaders, body: '{}' },
       { ...env, INSTALLATION_ENROLL_LIMIT: { limit: async () => ({ success: false }) } });

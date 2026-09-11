@@ -632,7 +632,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _openGuide(guide),
                 ),
-              const AnalyticsConsentControl(),
+              AnalyticsConsentControl(
+                onDeleteCollectedData:
+                    widget.serverDataAccess?.requestAnalyticsDeletion,
+              ),
               const AdsPrivacyControl(),
               if (widget.serverDataAccess != null) ...[
                 const Divider(height: 24),

@@ -7,3 +7,9 @@ ITS_API_KEY=국가교통정보센터_인증키
 # Firebase 서비스 계정 JSON의 client_email과 private_key를 사용합니다.
 FCM_CLIENT_EMAIL=firebase-adminsdk@example.iam.gserviceaccount.com
 FCM_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n서비스계정_비공개키\n-----END PRIVATE KEY-----\n"
+# Google Analytics 속성에서 편집자 역할만 부여한 삭제 전용 서비스 계정입니다.
+GA_ADMIN_CLIENT_EMAIL=analytics-delete@example.iam.gserviceaccount.com
+GA_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n삭제전용_서비스계정_비공개키\n-----END PRIVATE KEY-----\n"
+# Google Analytics 속성에서 편집자 권한을 부여한 삭제 전용 서비스 계정
+GA_ADMIN_CLIENT_EMAIL=analytics-deletion@example.iam.gserviceaccount.com
+GA_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n서비스계정_비공개키\n-----END PRIVATE KEY-----\n"

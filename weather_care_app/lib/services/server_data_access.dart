@@ -242,6 +242,17 @@ class ServerDataAccess extends ChangeNotifier {
     }
   }
 
+  Future<void> requestAnalyticsDeletion(String appInstanceId) async {
+    if (appInstanceId.isEmpty || appInstanceId.length > 256) {
+      throw ArgumentError.value(appInstanceId.length, 'appInstanceId');
+    }
+    await mutate((owner) async {
+      await api.requestJson(
+          'POST', '/api/v1/installations/${owner.id}/analytics-deletion',
+          headers: owner.headers, body: {'appInstanceId': appInstanceId});
+    });
+  }
+
   /// Only the explicit, separately confirmed "서버 기능 다시 사용" action calls this.
   Future<void> resume() async {
     if (busy || mode != ServerDataMode.deleted) return;

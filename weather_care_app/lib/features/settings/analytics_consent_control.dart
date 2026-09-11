@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../services/analytics_consent.dart';
 
 class AnalyticsConsentControl extends StatelessWidget {
-  const AnalyticsConsentControl({super.key, this.controller});
+  const AnalyticsConsentControl(
+      {super.key, this.controller, this.onDeleteCollectedData});
   final AnalyticsConsent? controller;
+  final Future<void> Function(String appInstanceId)? onDeleteCollectedData;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +56,55 @@ class AnalyticsConsentControl extends StatelessWidget {
                               : consent.initialize(),
                       child: const Text('다시 시도')),
                 ],
+                if (onDeleteCollectedData != null) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    key: const ValueKey('analytics-data-delete'),
+                    onPressed: !consent.ready || consent.busy
+                        ? null
+                        : () => _confirmDeletion(context, consent),
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('전송된 이용 통계 삭제 요청'),
+                  ),
+                ],
+                if (consent.deletionStatus != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(consent.deletionStatus!,
+                        key: const ValueKey('analytics-deletion-status')),
+                  ),
+                if (consent.deletionError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(consent.deletionError!,
+                        key: const ValueKey('analytics-deletion-error')),
+                  ),
               ],
             ));
+  }
+
+  Future<void> _confirmDeletion(
+      BuildContext context, AnalyticsConsent consent) async {
+    final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('전송된 이용 통계를 삭제할까요?'),
+              scrollable: true,
+              content: const Text(
+                  '이용 통계 수집을 중단하고, 이 기기의 Firebase 앱 인스턴스 ID와 연결된 과거 자료의 삭제를 Google Analytics에 요청해요. 삭제 요청 접수와 실제 삭제 완료는 달라요.\n\n'
+                  '요청이 접수되면 기기에 남은 분석 데이터와 앱 인스턴스 ID도 초기화해요. 서버의 날씨·알림 데이터와 광고 서비스 자료는 이 요청으로 삭제되지 않아요.'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('취소')),
+                FilledButton(
+                    key: const ValueKey('analytics-data-confirm-delete'),
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('수집 중단 및 삭제 요청')),
+              ],
+            ));
+    if (confirmed == true) {
+      await consent.deleteCollectedData(onDeleteCollectedData!);
+    }
   }
 }

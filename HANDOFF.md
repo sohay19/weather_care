@@ -5888,3 +5888,12 @@
 - 운영 Worker 버전 efd6c82f-ed3a-4696-95f5-0c0ae0119c14에서 인증된 analytics-deletion POST가 HTTP202로 완료되고 예외가 없었다. 앱에는 Google Analytics 삭제 요청 접수와 기기 분석 데이터 초기화 성공 문구가 표시됐으며 스위치는 false로 바뀌었다.
 - force-stop/COLD 재시작 뒤에도 이용 통계 false 유지, 일회성 성공 문구 소멸, 보안 저장소 analytics_deletion_record_v1 부재를 확인했다. 재제출 대기 상태는 남지 않았다.
 - 이는 테스트 인스턴스의 Google 요청 접수·앱 수집 중단·로컬 초기화 검증이다. Google 서버의 실제 과거 자료 삭제 완료시각, Android 실물, iOS는 미검증이다. 앱/서버 소스 변경과 추가 Worker 배포는 없다.
+
+## 2026-09-11 FCM 백그라운드 Analytics 비동의 경계 검증
+
+- 사용자 진행 요청으로 Android17/API37 emulator-5554에서 운영 FCM 데이터 전용 메시지 1회 검증. 앱을 홈으로 이동하고 `am kill`해 프로세스 없음·패키지 `stopped=false`를 확인한 뒤 전송했다. force-stop 상태에서 수신되는 것으로 오인하지 않음.
+- 운영 D1에서 최근 갱신 테스트 토큰 후보가 1개임을 값 비노출로 확인하고 임시 설치 ID `wc_bgprobe_20260911_0813` 생성. 기존 ownership-challenge 라우트가 HTTP200 `ok`를 반환했고, 1초 안에 새 앱 프로세스와 FlutterFirebaseMessagingBackgroundService 시작을 확인. 앱 Activity는 전경에 나타나지 않음.
+- 동일 프로세스 FA 로그에서 `setAnalyticsCollectionEnabled(false)`에 의한 measurement disabled와 analytics storage consent denied 확인. 앱 전용 google_app_measurement_local.db를 ADB→Python 메모리 SQLite로 확인한 messages 대기열0건. 이벤트 내용·토큰·인증값·실제 설치ID 출력 없음.
+- 이후 force-stop/COLD 시작 및 설정 화면에서 Analytics 선택 스위치 checked=false 유지 확인. 에뮬레이터 네트워크는 비행기OFF·Wi-FiON 상태이며 앱은 설정 화면에 남아 있음.
+- 임시 activity 삭제 트리거 뒤 설치·설정·이력·특보·challenge·legacy·credential·activity 연결 행이 모두0임을 운영 D1에서 확인. 실제 설치 레코드와 사용자 데이터는 삭제하지 않음.
+- 검증 문서 반영만 수행. 패킷 캡처/GMS 내부 큐/Android 실물/iOS/모든 백그라운드 경로 무전송은 미검증이며 에뮬레이터 1회 결과를 일반 보장으로 표현하지 않음. 앱·서버 소스 및 운영 배포 변경 없음.

@@ -5897,3 +5897,11 @@
 - 이후 force-stop/COLD 시작 및 설정 화면에서 Analytics 선택 스위치 checked=false 유지 확인. 에뮬레이터 네트워크는 비행기OFF·Wi-FiON 상태이며 앱은 설정 화면에 남아 있음.
 - 임시 activity 삭제 트리거 뒤 설치·설정·이력·특보·challenge·legacy·credential·activity 연결 행이 모두0임을 운영 D1에서 확인. 실제 설치 레코드와 사용자 데이터는 삭제하지 않음.
 - 검증 문서 반영만 수행. 패킷 캡처/GMS 내부 큐/Android 실물/iOS/모든 백그라운드 경로 무전송은 미검증이며 에뮬레이터 1회 결과를 일반 보장으로 표현하지 않음. 앱·서버 소스 및 운영 배포 변경 없음.
+
+## 2026-09-11 FCM 백그라운드 앱 UID 통신량 검증
+
+- 연결된 실물 Android/iOS가 없어 동일 범위에서 가능한 에뮬레이터 네트워크 관측을 추가함. emulator-5554 앱 UID10229의 Android BPF 누적 rx/tx bytes·packets를 사용했으며 실제 이용자 토큰·설치ID·인증값은 출력하지 않음.
+- 홈 이동 후 `am kill`, process 없음·stopped=false 확인. 앱 UID 네 수치가 3초 간격 기준선에서 동일한 것을 확인한 뒤 운영 ownership-challenge로 데이터 전용 FCM 1회 전송. HTTP200 ok, 1초 안에 백그라운드 서비스 시작, 앱 Activity 미노출 확인.
+- 전송 후 1초·10초·30초 이상 시점까지 앱 UID의 rx/tx bytes·packets가 모두 기준선에서 증가하지 않음. 동일 프로세스에서 Analytics disabled/storage denied 로그, Analytics 로컬 messages 대기열0건 재확인.
+- 임시 설치 ID `wc_netprobe_20260911_0830`의 8개 관련 테이블 행은 activity 정리 트리거 뒤 모두0 확인. 실제 설치/사용자 데이터 삭제 없음. 앱은 콜드 시작 뒤 설정 화면 Analytics 스위치false, 비행기OFF·Wi-FiON 상태로 복원.
+- 이는 앱 UID의 짧은 구간 통신량 무증가 증거이며 패킷 목적지·내용, GMS UID, 지연 전송, Android 실물/iOS를 검증하지 않음. 소스·운영 배포 변경 없이 점검 문서만 갱신.

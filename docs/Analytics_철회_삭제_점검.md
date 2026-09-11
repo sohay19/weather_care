@@ -99,8 +99,9 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 - 전송 1초 안에 새 앱 프로세스와 `FlutterFirebaseMessagingBackgroundService` 시작이 확인됐다. 앱 Activity는 전경에 나타나지 않았다.
 - 같은 백그라운드 프로세스 로그에서 `App measurement disabled by setAnalyticsCollectionEnabled(false)`와 `Analytics storage consent denied`를 확인했다.
 - 앱 전용 `google_app_measurement_local.db`를 메모리에서 읽은 결과 Analytics 로컬 `messages` 대기열은 0건이었다. 이후 앱을 강제 종료하고 콜드 시작한 설정 화면에서도 `앱 이용 통계 수집 (선택)`은 `checked=false`로 유지됐다.
+- 별도 1회 전송에서는 프로세스 종료 뒤 앱 UID의 BPF 누적 수신·송신 바이트와 패킷 수가 3초 동안 변하지 않는 기준선을 먼저 확인했다. 데이터 전용 FCM 전송 뒤 1초·10초·30초 이상 시점까지 네 수치가 모두 기준선과 같았다. 이때 백그라운드 서비스 시작과 앱 Activity 미노출은 다시 확인됐고 Analytics 로컬 대기열도 0건이었다.
 - 테스트 직후 임시 설치 ID와 연결된 설치·설정·발송 이력·특보 상태·소유권 확인·인증·활동 레코드가 모두 0건임을 확인했다. 실제 설치 레코드는 삭제하지 않았다.
-- 이 결과는 Android 에뮬레이터의 해당 FCM 1회에서 비동의 상태와 로컬 대기열이 유지된 검증이다. 패킷 캡처, Google Play 서비스 내부 큐, Android 실물, iOS 및 모든 백그라운드 진입 경로의 무전송을 입증하지는 않는다.
+- 이 결과는 Android 에뮬레이터의 해당 FCM 2회에서 비동의 상태, 로컬 대기열 0건 및 두 번째 관측의 앱 UID 통신량 무증가를 확인한 것이다. UID 통계는 목적지와 내용을 식별하는 패킷 캡처가 아니며 FCM을 수신한 Google Play 서비스 UID의 통신도 별도다. 짧은 관측 구간을 넘어선 지연 전송, Google Play 서비스 내부 큐, Android 실물, iOS 및 모든 백그라운드 진입 경로의 무전송을 입증하지는 않는다.
 
 ## 확인 결과
 

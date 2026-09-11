@@ -5857,3 +5857,9 @@
 - emulator5554 원상태 비행기OFF/Wi-FiON 확인 후 비행기ON·Wi-FiOFF 전환. Active default network:none 확인 후 앱 UI로 Analytics false→동의창 승인→true→철회false 확인. force-stop/COLD 재시작 후 오프라인 서버오류에서 ‘단기예보만 보기’로 닫고 설정에서false 유지 확인.
 - 이번 FA 로그 필터 결과 없음으로 로그 검증 추가 주장 안 함. UI 검증만 완료, 패킷 무전송/FCM/iOS/원격 삭제 미검증. 위치·알림 설정 및 서버데이터 삭제 조작 없음.
 - 중요: 시험 대기 이벤트 유무가 미확인이라 에뮬레이터를 비행기ON·Wi-FiOFF 상태로 유지, 사용자에게 명시. 다음은 대기 이벤트 안전 처리 및 원래 네트워크 복구 검토. 전체 앱데이터 삭제 금지. 아직 네트워크 복구하지 않음. 검증 문서 한글 커밋, 운영 배포 없음.
+
+## 2026-09-11 Analytics 로컬 대기열 검사·네트워크 복구
+
+- 사용자 진행 요청. emulator5554 앱 force-stop 후 앱 전용 google_app_measurement_local.db를 ADB→Python 메모리 SQLite(query_only)로 검사: integrity ok, messages0건, journal0바이트. 디스크 사본 및 이벤트 내용 출력 없음.
+- SDK measurement_enabled/from_api=false, 앱 prefs동의false 확인. 삭제 필요 없어 데이터 삭제/초기화 없음. 종료 상태에서 비행기OFF/Wi-FiON 원복(이전 오프라인 유지 지침 종료).
+- 앱 로컬 범위만 검증. GMS 큐/Google원격/패킷/FCM/iOS 미검증 유지, 무전송이나 원격 삭제 완료 주장 안 함. 코드·운영 배포 없음. 다음 원격 Analytics 삭제 식별·권한 설계 및 테스트 환경 FCM/iOS 검증. 검증 기록 한글 커밋.

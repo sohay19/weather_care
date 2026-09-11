@@ -41,6 +41,15 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 
 **인계 시 에뮬레이터는 비행기 모드ON·Wi-Fi OFF로 남겨둔다.** 오프라인 동의 과정의 대기 이벤트 유무를 확인하지 못했으므로 시험 통계의 후속 전송을 피하기 위한 조치다. 원래 네트워크로 복원하기 전에 대기 데이터 처리 계획을 검토한다. 앱 데이터 전체 삭제로 해결하지 않는다. 실제 휴대전화·iOS·FCM 백그라운드·패킷 검증·Google 삭제 API는 미완료다.
 
+## 후속 대기열 확인·네트워크 복원
+
+2026-09-11 위 오프라인 인계 상태를 해제했다. 앱을 force-stop한 뒤 앱 전용 `databases/google_app_measurement_local.db`를 ADB로 메모리에만 읽어 Python SQLite의 query_only 상태에서 검사했다. 호스트에 DB 사본을 저장하지 않았으며 이벤트 내용·식별자·토큰을 출력하지 않았다.
+
+- DB integrity_check=ok, messages 행 수=0, rollback journal=0바이트.
+- SDK 저장값 measurement_enabled=false, measurement_enabled_from_api=false 및 앱 analytics_consent_v1=false 확인.
+- 대기열이 비어 있어 삭제/초기화 작업은 하지 않았다. 앱을 종료한 상태로 airplane_mode=0·wifi_on=1 복원.
+- 이는 앱의 로컬 대기열/설정 검사다. Google Play 서비스 내부 큐·원격 Google 데이터·네트워크 전체 무전송을 검증하거나 보장하지 않는다. 로컬0건을 원격 삭제 완료로 표현하지 않는다.
+
 ## 확인 결과
 
 | 항목 | 현재 구현 |

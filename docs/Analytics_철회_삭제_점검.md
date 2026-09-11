@@ -4,14 +4,14 @@
 
 ## 후속 구현: Google Analytics 사용자 삭제 요청
 
-2026-09-11 앱과 Worker에 Firebase `app_instance_id` 기반 삭제 요청 흐름을 구현했다. 운영 자격증명 등록·Google Analytics Admin API 활성화·속성 권한 부여·운영 배포 전이므로 실제 Google 접수까지 완료됐다는 뜻은 아니다.
+2026-09-11 앱과 Worker에 Firebase `app_instance_id` 기반 삭제 요청 흐름을 구현하고 운영 Worker까지 연결했다. 실제 테스트 앱 인스턴스의 삭제 요청은 제출하지 않았으므로 Google 접수까지 완료됐다는 뜻은 아니다.
 
 - 이용 통계에 동의한 동안 앱 인스턴스 ID를 기기 보안 저장소에만 보관한다. 일반 철회 때도 식별자 확보를 시도하지만 그 완료를 기다리지 않고 수집부터 중단하며, 확보 실패가 수집 중단을 막지 않게 했다.
 - 별도 ‘전송된 이용 통계 삭제 요청’에서 수집을 먼저 중단하고 설치별 서버 인증을 거쳐 Worker에 식별자를 전송한다. 앱 서버 설치 ID와 Firebase 앱 인스턴스 ID를 동일한 값으로 취급하지 않는다.
 - Worker는 삭제 전용 서비스 계정으로 `analytics.edit` 범위의 토큰을 발급받아 Analytics Admin API `properties.submitUserDeletion`에 `appInstanceId`만 전송한다. 비공개키는 Wrangler secret으로만 받는다.
 - Google이 요청을 접수한 뒤에만 Firebase `resetAnalyticsData()`로 기기의 분석 데이터와 앱 인스턴스 ID를 초기화한다. 접수 상태를 먼저 보안 저장소에 기록해 앱이 중단된 경우 원격 요청을 불필요하게 반복하지 않는다.
 - 원격 요청 실패 시 수집은 중단된 상태로 유지하고 식별자를 남겨 재시도한다. Google 요청 접수 후 로컬 초기화가 실패하면 두 상태를 구분해 안내한다. UI는 실제 삭제 완료가 아니라 ‘요청 접수’로만 표현한다.
-- Worker 클라이언트·인증 라우트와 앱 저장소·중단·재시도·UI 흐름 테스트를 추가했다. 실제 Android/iOS 기기 및 Google 속성을 이용한 종단 검증은 남아 있다.
+- Worker 클라이언트·인증 라우트와 앱 저장소·중단·재시도·UI 흐름 테스트를 추가했다. 운영 자격증명의 OAuth 토큰 발급과 속성 읽기까지 확인했지만, 실제 Android/iOS 기기에서 삭제 요청을 제출하는 종단 검증은 남아 있다.
 
 운영 연결 순서:
 
@@ -20,6 +20,16 @@
 3. Google Analytics 속성 `549443110`의 속성 액세스 관리에 서비스 계정 이메일을 추가하고 편집자 역할을 부여한다. 계정 전체가 아니라 이 속성에만 부여한다.
 4. Worker secret `GA_ADMIN_CLIENT_EMAIL`, `GA_ADMIN_PRIVATE_KEY`를 등록하고 배포한다. 키 원문은 저장소·명령 기록·문서에 넣지 않는다.
 5. 테스트 전용 앱 인스턴스로 실제 요청을 한 번 제출해 HTTP 접수시각, 앱 수집 중단, 로컬 ID 초기화와 재시도 문구를 확인한다. 공식 한도는 속성당 하루 500건이므로 자동 반복 시험을 하지 않는다.
+
+운영 연결 결과:
+
+- Google Cloud 프로젝트 `weather-care-2aaa8`에서 Google Analytics Admin API를 활성화했다.
+- 삭제 전용 서비스 계정 `analytics-deletion@weather-care-2aaa8.iam.gserviceaccount.com`을 만들고 Analytics 속성 `549443110`에만 편집자 권한을 부여했다. Google Cloud 프로젝트 IAM 역할과 Analytics 계정 수준 권한은 부여하지 않았다.
+- 운영 키의 이메일과 비공개키를 Cloudflare Worker secret `GA_ADMIN_CLIENT_EMAIL`, `GA_ADMIN_PRIVATE_KEY`로 등록했다. 키 원문은 저장소·문서·명령행 인자에 기록하지 않았다.
+- 운영 자격증명으로 `analytics.edit` OAuth 토큰 발급과 Analytics Admin API 속성 읽기가 각각 HTTP 200으로 성공했다.
+- 서버 전체 테스트 35개 파일 259개, TypeScript 검사와 Wrangler dry-run을 통과한 뒤 Worker 버전 `efd6c82f-ed3a-4696-95f5-0c0ae0119c14`를 배포했다. `/health`는 200, 올바른 형식의 미인증 삭제 요청은 401을 반환했다.
+- 다운로드한 운영 키 JSON의 계정과 키 ID를 확인한 뒤 로컬 파일을 삭제했다. 다운로드 재시도로 생성됐지만 사용하지 않은 키 2개도 Google Cloud에서 삭제했으며, 키 목록에는 운영 키 `9a533a062f2084f19ccef0073bc2e930909c4810` 하나만 남겼다.
+- 실제 삭제 API 호출은 테스트 전용 앱 인스턴스가 준비되지 않아 실행하지 않았다. 실제 이용 통계 삭제나 앱의 로컬 Analytics 초기화도 발생하지 않았다.
 
 ## 후속 수정: 철회 실패·재시작 방어
 
@@ -79,7 +89,7 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 | 광고 관련 동의 | SDK 적용 시 광고 저장·사용자 데이터·개인화 동의 false |
 | 철회 저장 실패 | 현재 실행에서는 수집 중단을 재시도하고 오류 표시 |
 | 실패 후 재시작 | 이전 true 값이 남으면 initialize가 다시 수집을 허용할 수 있음. 보완 필요 |
-| 이미 Google에 전송한 데이터 삭제 | 앱·Worker 요청 흐름 구현. 운영 권한·비밀값·배포·종단 검증 전 |
+| 이미 Google에 전송한 데이터 삭제 | 앱·Worker 요청 흐름과 운영 권한·비밀값·배포 완료. 테스트 전용 앱 인스턴스의 실제 접수 종단 검증 전 |
 | 서버 내 나의 데이터 삭제 | 앱 서버 설치 데이터 DELETE만 실행. Google Analytics 삭제와 별개 |
 | 로컬 Analytics 초기화 | Google 요청 접수 뒤 resetAnalyticsData 호출. 원격 실제 삭제 완료와 동일시하지 않음 |
 
@@ -95,6 +105,6 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 4. Google 삭제 API 인증정보는 서버에만 두며 최소 권한으로 구성한다. 요청 접수와 실제 삭제 완료를 구분하고 완료가 확인되지 않은 상태에서 삭제 완료 문구를 출력하지 않는다.
 5. Android/iOS 실기에서 미동의·동의·철회·재시작·오류 상태의 네트워크 확인 후 앱 문구와 개인정보처리방침을 최종화한다.
 
-최초 점검 시점에는 앱 동작 변경·삭제 요청·운영 배포를 하지 않았다. 이후 상단의 원격 삭제 요청 흐름까지 구현했으며, 운영 배포와 실제 Google 요청은 아직 진행하지 않았다. 보호자 동의 구현 보류도 유지한다.
+최초 점검 시점에는 앱 동작 변경·삭제 요청·운영 배포를 하지 않았다. 이후 상단의 원격 삭제 요청 흐름을 구현하고 운영 Worker까지 배포했다. 실제 테스트 앱 인스턴스의 Google 삭제 요청은 아직 제출하지 않았다. 보호자 동의 구현 보류도 유지한다.
 
 공식 참고: [Google Analytics 사용자 삭제 요청](https://developers.google.com/analytics/devguides/config/admin/v1/rpc/google.analytics.admin.v1alpha#google.analytics.admin.v1alpha.SubmitUserDeletionRequest), [Firebase 로컬 데이터 초기화 안내](https://firebase.google.com/support/release-notes/unity).

@@ -5873,11 +5873,10 @@
 - 검증: 서버 전체35파일258테스트, tsc 통과. 앱 전체339테스트, flutter analyze 통과. 개인정보 페이지 verify는 모바일/데스크톱/앵커/초안/무스크립트·폼 PASS. 실제 자격증명, Admin API 활성화, 속성 권한, Worker/Pages 배포, Android/iOS 종단 요청은 아직 안 함.
 - 다음: Google Cloud에서 삭제 전용 서비스계정과 키 생성 → Analytics 속성549443110에 해당 이메일 편집자 추가 → 두 Wrangler secret 등록 → Worker 배포 → 테스트 전용 ID로 1회 종단 검증. 실키 원문은 채팅·문서·명령행 인자에 출력하지 않는다.
 
-## 2026-09-11 Analytics 원격 삭제 운영 연결 진행 중
+## 2026-09-11 Analytics 원격 삭제 운영 연결 완료
 
-- 사용자 승인 후 Google Cloud 프로젝트 weather-care-2aaa8에서 Google Analytics Admin API를 활성화했다.
-- 삭제 전용 서비스 계정 analytics-deletion@weather-care-2aaa8.iam.gserviceaccount.com(고유 ID 108636071236543436167)을 생성했다. Google Cloud 프로젝트 IAM 역할은 부여하지 않았다.
-- Analytics 속성 549443110의 속성 액세스 관리에 해당 서비스 계정을 편집자로 추가했고, 화면에서 6번째 사용자·편집자 역할을 확인했다. 계정 수준 권한이나 사용자 관리 권한은 주지 않았다.
-- 인앱 브라우저에서 JSON 키를 두 번 생성했으나 다운로드 완료 UI와 달리 호스트 파일시스템에 파일이 전달되지 않았다. 생성된 키 ID는 0be8c1fbf42e0f77e79899bf23b61b23b22efb49 및 bbfe96fb6af596f741bf0b91185c9a3cc3f57320이다. 원문은 확인·출력하지 못했고 Cloudflare에도 등록되지 않았다.
-- 브라우저 보안 정책상 내부 다운로드 관리 화면이나 우회 접근은 사용하지 않는다. 일반 Chrome에서 동일 서비스 계정의 새 JSON 키를 다운로드한 뒤 Cloudflare secret 등록·배포·health/401 검증을 이어간다. 유효 키 검증 뒤 인앱에서 생성된 미사용 키 2개는 별도 확인 후 삭제해야 한다.
-- 현재 Worker에는 GA_ADMIN_CLIENT_EMAIL/GA_ADMIN_PRIVATE_KEY secret이 없으며 새 코드 버전은 아직 배포하지 않았다. 실제 Analytics 삭제 요청이나 이용자 데이터 삭제도 실행하지 않았다.
+- Google Cloud 프로젝트 weather-care-2aaa8에서 Google Analytics Admin API를 활성화했다. 삭제 전용 서비스 계정 analytics-deletion@weather-care-2aaa8.iam.gserviceaccount.com(고유 ID 108636071236543436167)을 만들고 Analytics 속성 549443110에만 편집자 권한을 부여했다. Google Cloud 프로젝트 IAM 역할과 Analytics 계정 수준 권한은 부여하지 않았다.
+- 운영 키를 검증해 Cloudflare Worker secret GA_ADMIN_CLIENT_EMAIL/GA_ADMIN_PRIVATE_KEY로 등록했다. 키 원문은 출력·기록하지 않았다. analytics.edit OAuth 토큰 발급과 Analytics Admin API 속성 읽기가 각각 HTTP 200으로 성공했다.
+- 서버 전체 35파일 259테스트, tsc, Wrangler dry-run 통과 후 Worker 버전 efd6c82f-ed3a-4696-95f5-0c0ae0119c14를 배포했다. /health 200과 올바른 형식의 미인증 삭제 요청 401을 확인했다.
+- 다운로드한 운영 키 JSON은 계정과 키 ID를 확인한 뒤 로컬에서 삭제했다. 다운로드 재시도로 생성됐지만 사용하지 않은 키 0be8c1fbf42e0f77e79899bf23b61b23b22efb49와 bbfe96fb6af596f741bf0b91185c9a3cc3f57320도 사용자 확인 후 Google Cloud에서 삭제했다. 새 키 목록에서 운영 키 9a533a062f2084f19ccef0073bc2e930909c4810 하나만 Active로 남은 것을 확인했다.
+- 실제 Analytics 삭제 요청은 실행하지 않았다. 테스트 전용 앱 인스턴스가 준비된 뒤 1회 종단 검증해야 하며, 실제 이용자 ID나 출처 불명 ID로 시험하지 않는다. 이번 작업으로 이용 통계 삭제나 앱의 로컬 Analytics 초기화는 발생하지 않았다.

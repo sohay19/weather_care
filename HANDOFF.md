@@ -5571,3 +5571,10 @@
 - 사용자가 내부 브라우저 확인을 요청했다. CUA 최초 상태 조회 timeout 후 재시도 성공, 기존 인앱 탭 10의 TP-Link Archer AX73 네트워크 맵을 읽었다. 현재 연결된 클라이언트 23개가 표시되며 soha-01은 `192.168.0.67`, 앞선 `.46` 후보는 UI상 `Samsung`으로 표시된다. 현재 목록에서 Proxmox/pve라는 이름은 찾지 못했다. 이름 표시만으로 장비 실제 역할을 확정하지 않는다.
 - 다른 서버형 이름들도 있지만 임의로 Proxmox 후보로 지정하거나 해당 장비를 조회하지 않았다. 연결 목록만으로 고정 IP 호스트/다른 관리 대역의 존재 여부를 배제할 수 없다. 다음은 관리자에게 Proxmox 실제 관리 IP 또는 URL과 허용된 계정/접속 방법 확인을 권장한다.
 - 브라우저 읽기 전용으로 확인했으며 공유기 설정·차단·속도 제한·계정·인증서 설정 변경 없음. 관련 없는 기기 이름/MAC·로그인 URL 토큰은 인계에 복사하지 않는다. 인계만 갱신·diff 검사·커밋. 미니PC 로그 변경과 보관기간 확인 및 Proxmox 백업 점검은 미완료로 유지한다.
+
+## 2026-09-11 조립 부품에서 네트워크 식별 단서 검토
+
+- 사용자 구매 이미지 본체는 ASRock DeskMini X300/2.5G. 공식 제품 사양의 유선 LAN은 Dragon RTL8125BG, 무선은 별도 M.2 슬롯이며 X300W 변형은 키트가 다르다. 사용자 사진만으로 실제 장착 무선카드를 특정하지 않는다. 삼성 RAM/AMD CPU/SSD 브랜드는 공유기 장치 표시를 결정하는 근거가 아니므로 `.46 Samsung`과 RAM을 연결하지 않는다.
+- 앞서 읽은 soha-01 MAC의 `BC:24:11` 접두사를 Proxmox 공식 pve-cluster `src/PVE/DataCenterConfig.pm`의 가상 게스트 기본 접두사와 대조했다. soha-01이 Proxmox 게스트라는 강한 단서이나 MAC은 변경 가능하며 호스트 관리 IP 또는 여러 게스트가 같은 물리 호스트에 있다는 보장은 아니다.
+- 실제 관리 주소는 여전히 미확정. 사용자는 Wi-Fi 연결이라고 했으므로 미니PC의 실제 Wi-Fi 모듈/USB 무선랜 모델 또는 물리 어댑터 MAC이 추가 단서다. 사용자에게 무선랜 제품명을 확인한다. 다른 장비/무선 설정 변경·포트 검색 없음. 인계만 갱신·검사·커밋한다.
+- 근거: https://www.asrock.com/nettop/AMD/DeskMini%20X3002.5G%20Series/index.asp 및 https://raw.githubusercontent.com/proxmox/pve-cluster/master/src/PVE/DataCenterConfig.pm . 구매 금액·주문 내역은 인계에 기록하지 않는다.

@@ -17,7 +17,7 @@
 
         <meta-data
                 android:name="com.google.android.gms.ads.APPLICATION_ID"
-                android:value="ca-app-pub-3940256099942544~3347511713" />
+                android:value="ca-app-pub-6152243173470406~7636009442" />
         <meta-data
                 android:name="com.google.firebase.messaging.default_notification_channel_id"
                 android:value="weather_care_alerts" />

@@ -8,11 +8,17 @@ class InstallationIdentity {
 
   const InstallationIdentity();
 
-  Future<String> getOrCreate() async {
-    final preferences = await SharedPreferences.getInstance();
-    final stored = preferences.getString(_storageKey);
-    if (stored != null && stored.isNotEmpty) return stored;
+  Future<String?> getExisting() async {
+    final stored =
+        (await SharedPreferences.getInstance()).getString(_storageKey);
+    return stored == null || stored.isEmpty ? null : stored;
+  }
 
+  Future<String> getOrCreate() async {
+    final existing = await getExisting();
+    if (existing != null) return existing;
+
+    final preferences = await SharedPreferences.getInstance();
     final random = Random.secure();
     final bytes = List<int>.generate(18, (_) => random.nextInt(256));
     final generated = 'wc_${base64Url.encode(bytes).replaceAll('=', '')}';

@@ -250,6 +250,16 @@ class ServerDataAccess extends ChangeNotifier {
     }
   }
 
+  /// Removes an already established registration without creating a new one.
+  /// Used by the under-14 gate before Firebase or notification services start.
+  Future<bool> deleteExistingData() async {
+    if (!_loaded) await load();
+    if (mode == ServerDataMode.deleted) return true;
+    if (credential == null) return true;
+    await deleteData();
+    return mode == ServerDataMode.deleted;
+  }
+
   Future<void> requestAnalyticsDeletion(String appInstanceId) async {
     if (appInstanceId.isEmpty || appInstanceId.length > 256) {
       throw ArgumentError.value(appInstanceId.length, 'appInstanceId');

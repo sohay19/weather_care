@@ -12,9 +12,13 @@ import 'services/age_eligibility.dart';
 import 'services/age_eligibility_store.dart';
 import 'services/analytics_consent.dart';
 import 'services/ads_consent.dart';
+import 'services/api_client.dart';
+import 'services/app_config.dart';
 import 'services/banner_ad_unit_config.dart';
 import 'services/foreground_notification_service.dart';
+import 'services/installation_identity.dart';
 import 'services/notification_navigation_service.dart';
+import 'services/server_data_access.dart';
 import 'startup.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
@@ -47,8 +51,28 @@ Future<void> main() async {
       ageController: AgeEligibilityController.instance,
       initializeAuthorizedApp: _initializeAuthorizedApp,
       onAuthorizedAppMounted: _startAdsAfterAuthorizedFrame,
+      revokeUnder14ServerData: _revokeUnder14ServerData,
     ),
   );
+}
+
+Future<void> _revokeUnder14ServerData() async {
+  final config = await AppConfig.load();
+  final legacyInstallationId =
+      await const InstallationIdentity().getExisting() ?? '';
+  final access = ServerDataAccess(
+    api: ApiClient(
+      baseUrl: config.serverUrl,
+      timeout: const Duration(seconds: 20),
+    ),
+    legacyInstallationId: legacyInstallationId,
+  );
+  try {
+    final removed = await access.deleteExistingData();
+    if (!removed) throw StateError('Previous server registration remains');
+  } finally {
+    access.dispose();
+  }
 }
 
 Future<Widget> _initializeAuthorizedApp() async {

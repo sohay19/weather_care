@@ -4,19 +4,23 @@ import 'package:flutter/material.dart';
 
 import 'features/age_gate/age_gate_app.dart';
 import 'services/age_eligibility.dart';
+import 'services/age_eligibility_store.dart';
 
 typedef AuthorizedAppInitializer = Future<Widget> Function();
+typedef Under14ServerDataRevoker = Future<void> Function();
 
 class WeatherCareStartup extends StatefulWidget {
   final AgeEligibilityController ageController;
   final AuthorizedAppInitializer initializeAuthorizedApp;
   final VoidCallback? onAuthorizedAppMounted;
+  final Under14ServerDataRevoker? revokeUnder14ServerData;
 
   const WeatherCareStartup({
     super.key,
     required this.ageController,
     required this.initializeAuthorizedApp,
     this.onAuthorizedAppMounted,
+    this.revokeUnder14ServerData,
   });
 
   @override
@@ -27,6 +31,9 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
   Widget? _authorizedApp;
   bool _startingServices = false;
   String? _serviceError;
+  bool _revokingUnder14ServerData = false;
+  bool _under14RevocationAttempted = false;
+  String? _under14RevocationError;
   int _generation = 0;
 
   @override
@@ -64,12 +71,53 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
       _startAuthorizedServices();
       return;
     }
+    final under14 = widget.ageController.ready &&
+        widget.ageController.eligibility == AgeEligibility.under14;
+    if (!under14) {
+      _under14RevocationAttempted = false;
+      _revokingUnder14ServerData = false;
+      _under14RevocationError = null;
+    }
     _generation += 1;
     setState(() {
       _authorizedApp = null;
       _serviceError = null;
       _startingServices = false;
     });
+    if (under14 && !_under14RevocationAttempted) {
+      _startUnder14Revocation();
+    }
+  }
+
+  void _startUnder14Revocation() {
+    if (_revokingUnder14ServerData) return;
+    final revoker = widget.revokeUnder14ServerData;
+    _under14RevocationAttempted = true;
+    if (revoker == null) return;
+    setState(() {
+      _revokingUnder14ServerData = true;
+      _under14RevocationError = null;
+    });
+    unawaited(() async {
+      try {
+        await revoker();
+        if (!mounted ||
+            widget.ageController.eligibility != AgeEligibility.under14) {
+          return;
+        }
+        setState(() => _revokingUnder14ServerData = false);
+      } catch (_) {
+        if (!mounted ||
+            widget.ageController.eligibility != AgeEligibility.under14) {
+          return;
+        }
+        setState(() {
+          _revokingUnder14ServerData = false;
+          _under14RevocationError =
+              '이전에 등록한 서버 알림을 정리하지 못했어요. 앱 기능은 차단되어 있지만 기존 알림이 도착할 수 있으니 다시 시도해주세요.';
+        });
+      }
+    }());
   }
 
   void _startAuthorizedServices() {
@@ -111,6 +159,9 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
       startingServices: _startingServices,
       serviceError: _serviceError,
       onRetryServices: _startAuthorizedServices,
+      revokingUnder14ServerData: _revokingUnder14ServerData,
+      under14RevocationError: _under14RevocationError,
+      onRetryUnder14Revocation: _startUnder14Revocation,
     );
   }
 

@@ -11,11 +11,13 @@ void main() {
 
   test('installation identity remains stable', () async {
     const identity = InstallationIdentity();
+    expect(await identity.getExisting(), isNull);
     final first = await identity.getOrCreate();
     final second = await identity.getOrCreate();
 
     expect(first, startsWith('wc_'));
     expect(second, first);
+    expect(await identity.getExisting(), first);
   });
 
   test('app settings survive a repository reload', () async {

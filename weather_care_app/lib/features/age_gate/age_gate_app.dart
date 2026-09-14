@@ -10,6 +10,9 @@ class AgeGateApp extends StatelessWidget {
   final bool startingServices;
   final String? serviceError;
   final VoidCallback? onRetryServices;
+  final bool revokingUnder14ServerData;
+  final String? under14RevocationError;
+  final VoidCallback? onRetryUnder14Revocation;
 
   const AgeGateApp({
     super.key,
@@ -17,6 +20,9 @@ class AgeGateApp extends StatelessWidget {
     this.startingServices = false,
     this.serviceError,
     this.onRetryServices,
+    this.revokingUnder14ServerData = false,
+    this.under14RevocationError,
+    this.onRetryUnder14Revocation,
   });
 
   @override
@@ -34,6 +40,9 @@ class AgeGateApp extends StatelessWidget {
               startingServices: startingServices,
               serviceError: serviceError,
               onRetryServices: onRetryServices,
+              revokingUnder14ServerData: revokingUnder14ServerData,
+              under14RevocationError: under14RevocationError,
+              onRetryUnder14Revocation: onRetryUnder14Revocation,
             ),
           ),
         ),
@@ -47,12 +56,18 @@ class _AgeGateContent extends StatelessWidget {
   final bool startingServices;
   final String? serviceError;
   final VoidCallback? onRetryServices;
+  final bool revokingUnder14ServerData;
+  final String? under14RevocationError;
+  final VoidCallback? onRetryUnder14Revocation;
 
   const _AgeGateContent({
     required this.controller,
     required this.startingServices,
     required this.serviceError,
     required this.onRetryServices,
+    required this.revokingUnder14ServerData,
+    required this.under14RevocationError,
+    required this.onRetryUnder14Revocation,
   });
 
   @override
@@ -116,12 +131,34 @@ class _AgeGateContent extends StatelessWidget {
                 _NoticeCard(
                   icon: Icons.block_outlined,
                   text:
-                      '만 $minimumServiceAge세 미만은 날씨·위치·알림·이용 통계·광고를 포함한 앱 서비스를 이용할 수 없어요. 온라인 서비스와 기기 권한 요청은 시작하지 않았어요.',
+                      '만 $minimumServiceAge세 미만은 날씨·위치·알림·이용 통계·광고를 포함한 앱 서비스를 이용할 수 없어요. 날씨 서비스와 기기 권한 요청은 시작하지 않았어요.',
                 ),
+                if (revokingUnder14ServerData) ...[
+                  const SizedBox(height: 18),
+                  const Center(child: CircularProgressIndicator()),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '이전에 등록한 서버 알림이 있으면 삭제하고 있어요.',
+                    textAlign: TextAlign.center,
+                  ),
+                ] else if (under14RevocationError != null) ...[
+                  const SizedBox(height: 18),
+                  _NoticeCard(
+                    icon: Icons.sync_problem_outlined,
+                    text: under14RevocationError!,
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    key: const ValueKey('age-revoke-retry'),
+                    onPressed: onRetryUnder14Revocation,
+                    child: const Text('기존 알림 정리 다시 시도'),
+                  ),
+                ],
                 const SizedBox(height: 18),
                 OutlinedButton(
                   key: const ValueKey('age-choose-again'),
-                  onPressed: controller.chooseAgain,
+                  onPressed:
+                      revokingUnder14ServerData ? null : controller.chooseAgain,
                   child: const Text('연령대를 다시 선택할게요'),
                 ),
               ] else if (controller.sdkAccessAllowed &&

@@ -132,7 +132,7 @@ void main() {
 
     expect(find.text('날씨챙겨를 이용할 수 없어요'), findsOneWidget);
     expect(find.textContaining('앱 서비스를 이용할 수 없어요'), findsOneWidget);
-    expect(find.textContaining('온라인 서비스와 기기 권한 요청은 시작하지 않았어요'), findsOneWidget);
+    expect(find.textContaining('날씨 서비스와 기기 권한 요청은 시작하지 않았어요'), findsOneWidget);
     expect(find.text('온라인 날씨'), findsNothing);
     expect(serviceStarts, 0);
     expect(writes, [AgeEligibility.under14]);
@@ -142,6 +142,63 @@ void main() {
     await tester.pump();
     expect(writes, [AgeEligibility.under14, AgeEligibility.unknown]);
     expect(find.byKey(const ValueKey('age-at-least-14')), findsOneWidget);
+  });
+
+  testWidgets('under-14 choice removes a previous server registration once',
+      (tester) async {
+    var revocations = 0;
+    final controller = AgeEligibilityController(
+      read: () async => AgeEligibility.unknown,
+      write: (_) async {},
+    );
+
+    await tester.pumpWidget(WeatherCareStartup(
+      ageController: controller,
+      initializeAuthorizedApp: () async =>
+          const MaterialApp(home: Text('온라인 날씨')),
+      revokeUnder14ServerData: () async => revocations += 1,
+    ));
+    await tester.pump();
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('age-under-14')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(revocations, 1);
+    expect(find.text('온라인 날씨'), findsNothing);
+    expect(find.text('날씨챙겨를 이용할 수 없어요'), findsOneWidget);
+  });
+
+  testWidgets('failed under-14 cleanup stays blocked and supports retry',
+      (tester) async {
+    var revocations = 0;
+    final controller = AgeEligibilityController(
+      read: () async => AgeEligibility.under14,
+      write: (_) async {},
+    );
+
+    await tester.pumpWidget(WeatherCareStartup(
+      ageController: controller,
+      initializeAuthorizedApp: () async =>
+          const MaterialApp(home: Text('온라인 날씨')),
+      revokeUnder14ServerData: () async {
+        revocations += 1;
+        if (revocations == 1) throw StateError('offline');
+      },
+    ));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('age-revoke-retry')), findsOneWidget);
+    expect(find.text('온라인 날씨'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('age-revoke-retry')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(revocations, 2);
+    expect(find.byKey(const ValueKey('age-revoke-retry')), findsNothing);
+    expect(find.text('온라인 날씨'), findsNothing);
   });
 
   testWidgets('matching 14+ choice starts services exactly once',

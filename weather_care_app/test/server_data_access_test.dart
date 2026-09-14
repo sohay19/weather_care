@@ -195,6 +195,21 @@ void main() {
     expect(call.headers, {'Authorization': 'Bearer $secret'});
   });
 
+  test('under-14 cleanup never enrolls when no server credential exists',
+      () async {
+    expect(await access.deleteExistingData(), isTrue);
+    expect(api.calls, isEmpty);
+  });
+
+  test('under-14 cleanup deletes only an established registration', () async {
+    await established();
+    expect(await access.deleteExistingData(), isTrue);
+    expect(api.calls, hasLength(1));
+    expect(api.calls.single.method, 'DELETE');
+    expect(api.calls.single.path, '/api/v1/installations/$newId');
+    expect(access.mode, ServerDataMode.deleted);
+  });
+
   test(
       'securely persists enrollment before sending personal data; resolves server ID at boundary',
       () async {

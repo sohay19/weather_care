@@ -24,7 +24,7 @@ const server = http.createServer((req, res) => {
       for (const href of await page.locator('a[href^="#"]').evaluateAll(nodes => nodes.map(n => n.getAttribute('href')))) {
         assert.equal(await page.locator(href).count(), 1);
       }
-      assert.ok(await page.locator('body').innerText().then(t => t.includes('검토용 초안') && t.includes('서버 내 나의 데이터 삭제')));
+      assert.ok(await page.locator('body').innerText().then(t => t.includes('검토용 초안') && t.includes('서버 내 나의 데이터 삭제') && t.includes('만 14세 이상만 이용')));
       await page.screenshot({ path: path.join(__dirname, '.qa', `${width}.png`), fullPage: true });
       await page.close();
     }

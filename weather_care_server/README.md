@@ -20,6 +20,11 @@ Cloudflare Workers + TypeScript + Hono + D1 기반의 서버 뼈대입니다.
 - `GET /api/v1/notification-settings?installationId=...`
 - `PUT /api/v1/notification-settings/{installationId}`
 
+설치 등록과 신규 설치 자격·기존 설치 소유권 이전 요청은
+`minimumAgeConfirmed: true`, `agePolicyVersion: 1`을 필수로 받습니다. 현재 정책 확인이
+없는 기존 설치는 알림 대상에서 제외되며, 최신 앱에서 만 14세 이상 확인 후 다시
+등록해야 알림이 재개됩니다.
+
 ## 실행
 
 먼저 공공데이터포털에서 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보를 각각 활용신청한 뒤 발급받은 일반 인증키를
@@ -85,7 +90,7 @@ npm run deploy
 - `src/providers/road/kmaRoadIceProvider.ts`: 고속도로 1km 구간별 도로살얼음 공식 단계와 현재 위치 거리 판정
 - `src/providers/traffic/itsRoadControlProvider.ts`: 국가교통정보센터의 현재 돌발상황 중 위치 3km 안의 실제 차로·전면 통제 판정
 - `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드·대기질 측정소·특보구역 매핑
-- `migrations/0001_init.sql`~`0006_road_control_state.sql`: 테이블 DDL과 사용자별 현재 강수·특보·도로살얼음·도로 통제 상태
+- `migrations/0001_init.sql`~`0009_minimum_age_policy.sql`: 테이블 DDL, 사용자별 현재 강수·특보·도로살얼음·도로 통제 상태와 만 14세 이상 정책 확인 상태
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 
@@ -97,7 +102,8 @@ npm run deploy
 
 `/weather/weekly`는 단기예보가 제공하는 오늘부터 글피까지의 날짜만 반환하며 가짜 날짜를 채우지 않습니다.
 
-알림 Cron은 10분마다 실행됩니다. 설치별 시간대와 알림 시간을 확인해 아침 브리핑을
+알림 Cron은 10분마다 실행됩니다. 현재 만 14세 이상 정책 버전이 확인된 설치만
+대상으로 삼고, 설치별 시간대와 알림 시간을 확인해 아침 브리핑을
 한 번만 보내며, 중요한 대설 알림은 설정된 항목이 활성화된 경우 당일 최초 한 번
 전송합니다. FCM 성공 응답을 받은 알림만 `notification_history`에 기록하고,
 Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합니다.

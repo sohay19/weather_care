@@ -13,6 +13,6 @@ node ../weather_care_server/node_modules/wrangler/bin/wrangler.js pages deploy p
 
 검토 완료 후에만 시행일/최종 내용 확정, 초안 표시와 noindex 제거, production branch `master` 배포 및 앱·AdMob 연결을 수행한다. 기존 preview 배포도 별도 공개 사본이므로 개인정보나 비밀값을 넣지 않는다.
 
-확인: 반응형 레이아웃, 목차 이동, 문의 mailto, 외부 링크, HTTP 200/CSP/404, 스크립트 없는 출력. 외부 계약·국외 이전 정보·책임자·대상 연령·문의 보관기간의 최종 확인은 기술 배포와 별개다.
+확인: 반응형 레이아웃, 목차 이동, 문의 mailto, 외부 링크, HTTP 200/CSP/404, 스크립트 없는 출력. 이용 대상은 만 14세 이상으로 확정했다. 외부 계약·국외 이전 정보·책임자·스토어 연령 설정·문의 보관기간의 최종 확인은 기술 배포와 별개다.
 
 `verify.cjs`는 Playwright와 설치된 Chrome을 사용해 정적 페이지를 로컬 검증한다. Playwright가 있는 환경에서 `node verify.cjs` 실행. `.qa` 스크린샷은 배포하지 않는다. Wrangler 실행 시 기존 서버 설정을 잘못 읽지 않도록 이 프로젝트의 절대 `--cwd`를 명시한다.

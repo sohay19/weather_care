@@ -129,6 +129,6 @@ ADB UI 계층의 실제 버튼 영역으로 조작했고 위치·알림 스위�
 4. Google 삭제 API 인증정보는 서버에만 두며 최소 권한으로 구성한다. 요청 접수와 실제 삭제 완료를 구분하고 완료가 확인되지 않은 상태에서 삭제 완료 문구를 출력하지 않는다.
 5. Android/iOS 실기에서 미동의·동의·철회·재시작·오류 상태의 네트워크 확인 후 앱 문구와 개인정보처리방침을 최종화한다.
 
-최초 점검 시점에는 앱 동작 변경·삭제 요청·운영 배포를 하지 않았다. 이후 상단의 원격 삭제 요청 흐름을 구현하고 운영 Worker까지 배포한 뒤 Android 에뮬레이터 테스트 인스턴스로 요청 접수까지 검증했다. Google 서버의 실제 삭제 완료시각은 확인하지 않았다. 보호자 동의 구현 보류도 유지한다.
+최초 점검 시점에는 앱 동작 변경·삭제 요청·운영 배포를 하지 않았다. 이후 상단의 원격 삭제 요청 흐름을 구현하고 운영 Worker까지 배포한 뒤 Android 에뮬레이터 테스트 인스턴스로 요청 접수까지 검증했다. Google 서버의 실제 삭제 완료시각은 확인하지 않았다. 2026-09-14 정책 변경으로 앱은 만 14세 이상만 이용할 수 있으며 보호자 동의 예외 경로는 구현하지 않는다.
 
 공식 참고: [Google Analytics 사용자 삭제 요청](https://developers.google.com/analytics/devguides/config/admin/v1/rpc/google.analytics.admin.v1alpha#google.analytics.admin.v1alpha.SubmitUserDeletionRequest), [Firebase 로컬 데이터 초기화 안내](https://firebase.google.com/support/release-notes/unity).

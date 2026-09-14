@@ -5971,3 +5971,16 @@
 - 새 앱 운영 배포는 차단 상태다. Android Release가 아직 `signingConfigs.debug`를 사용하고 `keystore.properties`가 가리키는 실제 키 파일이 없으며, 로컬 versionCode `2026081100`은 기존 에뮬레이터 설치 `2026085100`보다 낮다. 새 업로드 키나 비밀번호를 임의 생성하지 않았다. Windows에서는 iOS 빌드·배포도 할 수 없다. Release 광고 플래그는 계속 비활성이다.
 - 다음 우선 작업: ① 기존 Play 업로드 키 위치·비밀번호와 다음 versionCode 확정 후 Android 서명/빌드 수정, ② Play Console·App Store Connect·AdMob 대상 연령을 만 14세 이상으로 수동 반영, ③ Android 실물과 macOS/iOS에서 미확인·미만·이상·정정·업그레이드 경계 검증, ④ 개인정보 미확정 항목을 확정해 production Pages 게시와 스토어·AdMob URL 연결, ⑤ 최신 앱 배포 뒤 만 14세 이상 사용자의 서버 재등록과 알림 복구 확인 순이다.
 - 사용자 소유 미추적 `scripts/__pycache__/`, 강수 분석 스크립트 3개와 `tmp/`는 수정·삭제·스테이징하지 않았다.
+
+## 2026-09-14 만 14세 이상 재등록 검증 및 개인정보처리방침 운영 게시
+
+- Android17/API37 `emulator-5554`에서 최신 앱의 `만 14세 이상` 선택 후 운영 서버 재등록을 확인했다. 위치·알림 테스트 권한을 부여하고 재시작한 뒤 운영 D1 집계는 설치1, 연령정책1 적격1, FCM 토큰1, 인증1, 알림 설정1·활성1, 활동1이었다. 앱 force-stop 후 콜드 시작과 최종 Release APK 데이터 유지 설치·콜드 시작 뒤에도 같은 스케줄러 조회 조건에서 발송 대상1을 유지했다. 설치 ID·토큰·인증값은 출력하지 않았다.
+- 위 검증은 `연령정책 확인 + FCM 토큰 + 알림 활성 설정 + 실제 스케줄러 대상`의 복구를 확인한 것이다. 임의 FCM을 보내지 않았으므로 기기 화면의 실제 알림 도착 검증은 아니다. 마지막 D1 읽기 조회는 Cloudflare 7403을 1회 반환했지만 자격증명·설정을 바꾸지 않은 재시도에서 성공했다.
+- 개인정보 보호법 제30조·제28조의8, 개인정보보호위원회 2026 작성지침, Google Play 사용자 데이터 정책과 Cloudflare/Firebase/Analytics 공식 자료를 기준으로 공개 방침을 확정했다. 운영자 코드소하(CODESOHA), 만 14세 이상, 앱 서버·알림 이력1년, 문의 처리 종료 후1년, 릴레이 로그3일, D1 복구·수동 백업 최대7일, Analytics 사용자·이벤트2개월을 명시했다. 운영 광고는 비활성으로 두고 활성화 전 방침 개정 조건을 명시했다.
+- Cloudflare·Google 처리위탁과 국외 이전의 항목·국가·시기·방법·연락처·목적·보유기간·거부 방법/영향을 공개했다. 앱의 선택 Analytics 동의창에도 Google LLC 국외 처리·연락처·처리 항목·2개월 보관·거부 영향을 표시했다. Setting에 `https://weather-care-privacy.pages.dev/` 운영 방침 링크를 추가했다.
+- Android의 `com.google.android.gms.permission.AD_ID`와 `android.permission.ACCESS_ADSERVICES_AD_ID`를 병합 제거하고 iOS에 ATT 권한 설명이 없음을 테스트로 고정했다. 최종 Release 병합 매니페스트에서 광고 ID 권한, FirebaseInitProvider, MobileAdsInitProvider가 모두0건이고 FCM·Analytics 자동 시작은 false임을 확인했다.
+- 개인정보 페이지는 npm/Playwright 검증 의존성을 고정했고 360/1280px 전체 렌더링, 앵커, 최종 문구, 무스크립트·무폼을 통과했다. production branch `master` 배포는 `https://b3bff6e8.weather-care-privacy.pages.dev`, 정식 주소는 `https://weather-care-privacy.pages.dev/`다. 정식 주소 HTTP200, 시행일 2026-09-14, 초안/noindex 없음, CSP 적용, script/form0, 미존재 경로404를 원격 확인했다. 해시 preview 주소에는 Pages가 noindex를 붙이지만 정식 주소에는 없다.
+- 앱 `flutter analyze` 이슈 없음, 전체363개 테스트 통과, 최종 Android x64 Release APK 28.9MB 빌드와 에뮬레이터 데이터 유지 설치 성공. 페이지 `npm run verify` 통과. 앱 커밋 `becfe55 feat(개인정보): 운영 방침 앱 연결`, 페이지·문서 커밋 `0480653 docs(개인정보): 운영 방침 게시`로 분리했다.
+- 운영 변경 전 백업 `C:\WINDOWS\TEMP\weather-care-d1-backup-20260914-121813\weather_care_db.sql`은 개인정보 포함 가능성이 있어 외부 공유하지 않는다. 확정한 최대7일 기준에 따라 2026-09-21 이내 삭제하고 기록해야 한다. 이번 작업에서는 복구 여지를 보존하기 위해 삭제하지 않았다.
+- 남은 배포 작업: Android 기존 Play 업로드 키·비밀번호와 다음 versionCode 확정, production 서명 빌드/AAB, Play Console·App Store의 방침 URL·만 14세 이상 대상 설정, Android 실물/iOS의 연령·동의·권한·실제 알림 도착 검증. 운영 광고는 계속 비활성이다.
+- 사용자 소유 미추적 `scripts/__pycache__/`, 강수 분석 스크립트 3개와 `tmp/`는 수정·삭제·스테이징하지 않았다.

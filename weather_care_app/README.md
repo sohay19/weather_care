@@ -136,4 +136,5 @@ UMP·광고를 포함한 앱 서비스를 시작하지 않습니다. 운영 광�
   만 14세 이상 재등록 진행
 - 앱스토어·Play Console·AdMob의 대상 연령을 만 14세 이상 정책과 일치시키기
 - Android 실물/iOS에서 UMP 동의·거부·변경 및 광고 미요청 경계 검증
-- 공개 개인정보처리방침을 최종화한 뒤 앱·AdMob·스토어 URL 연결
+- [x] 운영 개인정보처리방침 확정·Pages 게시용 본문과 앱 내 URL 연결
+- Play Console·App Store에 `https://weather-care-privacy.pages.dev/` 등록

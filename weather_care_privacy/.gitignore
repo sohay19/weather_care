@@ -1,2 +1,3 @@
 .qa/
 .wrangler/
+node_modules/

@@ -28,7 +28,7 @@ Widget guideApp(SettingsGuide guide,
     );
 
 void main() {
-  testWidgets('360px·2배 글씨의 설정 하단에서 네 안내 항목을 누를 수 있다', (tester) async {
+  testWidgets('360px·2배 글씨의 설정 하단에서 모든 안내 항목을 누를 수 있다', (tester) async {
     tester.view.physicalSize = const Size(360, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -181,11 +181,12 @@ void main() {
       'firebase.google.com',
       'support.google.com',
       'policies.google.com',
+      'weather-care-privacy.pages.dev',
     };
     final links = SettingsGuide.values
         .expand((guide) => guide.sections)
         .expand((section) => section.links);
-    expect(links.length, 8);
+    expect(links.length, 9);
     for (final link in links) {
       final uri = Uri.parse(link.url);
       expect(uri.scheme, 'https');

@@ -51,6 +51,9 @@ void main() {
         home: Scaffold(body: AnalyticsConsentControl(controller: consent))));
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
+    expect(find.textContaining('Google LLC(googlekrsupport@google.com)'),
+        findsOneWidget);
+    expect(find.textContaining('2개월 보관'), findsOneWidget);
     await tester.tap(find.text('동의하지 않음'));
     await tester.pumpAndSettle();
     expect(values, [false, false]);

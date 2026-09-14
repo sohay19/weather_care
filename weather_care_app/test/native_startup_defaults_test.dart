@@ -30,6 +30,17 @@ void main() {
       ).hasMatch(manifest),
       isTrue,
     );
+    for (final permission in [
+      'com.google.android.gms.permission.AD_ID',
+      'android.permission.ACCESS_ADSERVICES_AD_ID',
+    ]) {
+      expect(
+        RegExp(
+          'android:name="${RegExp.escape(permission)}"\\s+tools:node="remove"',
+        ).hasMatch(manifest),
+        isTrue,
+      );
+    }
   });
 
   test('iOS disables FCM and Analytics auto initialization by default', () {
@@ -47,5 +58,6 @@ void main() {
       ).hasMatch(plist),
       isTrue,
     );
+    expect(plist, isNot(contains('NSUserTrackingUsageDescription')));
   });
 }

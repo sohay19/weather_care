@@ -29,7 +29,8 @@ class AnalyticsConsentControl extends StatelessWidget {
                                 builder: (context) => AlertDialog(
                                       title: const Text('앱 이용 통계 수집에 동의할까요?'),
                                       content: const Text(
-                                          '동의하면 이용 통계 수집을 시작해요. 광고 개인화 동의와는 별개이며 설정에서 언제든 철회할 수 있어요.'),
+                                          '동의하면 앱 이용 이벤트, 앱 인스턴스 식별자, 대략적인 지역과 기기·운영체제·앱 정보가 암호화된 통신으로 Google LLC(googlekrsupport@google.com)의 전 세계 시설에 전송돼요. 앱 개선을 위해 사용자·이벤트 자료를 2개월 보관하도록 설정했으며, 표준 집계 보고서는 이 기간의 적용 대상이 아니에요.\n\n'
+                                          '이 국외 이전과 이용 통계 수집은 선택 사항이에요. 동의하지 않아도 날씨·알림 기능을 이용할 수 있고 설정에서 언제든 철회하거나 전송된 자료의 삭제를 요청할 수 있어요. 광고 개인화 동의와는 별개예요.'),
                                       actions: [
                                         TextButton(
                                             onPressed: () =>

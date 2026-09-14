@@ -1,13 +1,21 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
+
 import 'package:weather_care/firebase_options.dart';
+
 import 'app.dart';
-import 'services/foreground_notification_service.dart';
-import 'services/notification_navigation_service.dart';
+import 'services/age_eligibility.dart';
+import 'services/age_eligibility_store.dart';
 import 'services/analytics_consent.dart';
 import 'services/ads_consent.dart';
+import 'services/banner_ad_unit_config.dart';
+import 'services/foreground_notification_service.dart';
+import 'services/notification_navigation_service.dart';
+import 'startup.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
 final _notificationNavigation = NotificationNavigationService(
@@ -17,6 +25,15 @@ final _foregroundNotifications = ForegroundNotificationService();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    final eligibility = await AgeEligibilityStore.instance
+        .read()
+        .timeout(const Duration(seconds: 3));
+    if (eligibility != AgeEligibility.atLeast14) return;
+  } catch (_) {
+    // A background isolate must fail closed when it cannot verify the age gate.
+    return;
+  }
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -25,10 +42,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  runApp(
+    WeatherCareStartup(
+      ageController: AgeEligibilityController.instance,
+      initializeAuthorizedApp: _initializeAuthorizedApp,
+      onAuthorizedAppMounted: _startAdsAfterAuthorizedFrame,
+    ),
+  );
+}
+
+Future<Widget> _initializeAuthorizedApp() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Keep the persisted native default off. Notification registration requests
+  // a token explicitly after permission and the age boundary are both valid.
+  await FirebaseMessaging.instance.setAutoInitEnabled(false);
   await AnalyticsConsent.instance.initialize();
 
   Map<String, dynamic>? initialNotificationData;
@@ -52,14 +82,15 @@ Future<void> main() async {
     FirebaseMessaging.onMessageOpenedApp.map((message) => message.data),
   );
 
-  runApp(
-    WeatherCareApp(
-      navigatorKey: _appNavigatorKey,
-      initialNotificationData: initialNotificationData,
-    ),
+  return WeatherCareApp(
+    navigatorKey: _appNavigatorKey,
+    initialNotificationData: initialNotificationData,
   );
-  // Native consent forms need a visible activity; never delay weather startup.
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+}
+
+void _startAdsAfterAuthorizedFrame() {
+  // Release ads remain off unless the separate build-time kill switch is set.
+  if (!kReleaseMode || BannerAdUnitConfig.current.releaseServingEnabled) {
     unawaited(AdsConsent.instance.refresh());
-  });
+  }
 }

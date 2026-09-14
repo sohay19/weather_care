@@ -5958,3 +5958,16 @@
 - 다음 우선 작업은 만 14세 이상 정책의 운영 반영 준비다. 기존 알림이 일시 중단되는 변경이므로 운영 D1 백업·마이그레이션 검증 후 `D1 0009 → Worker → 최신 앱`을 짧은 간격으로 배포하고, 개인정보처리방침 Pages·스토어·AdMob 대상 연령 설정을 같은 정책으로 맞춘다.
 - 운영 배포 승인 전에는 D1·Worker·앱·Pages·스토어·AdMob 외부 상태를 변경하지 않는다. Android 실물과 iOS에서 연령 미확인·만 14세 미만 상태의 무초기화·무권한 요청도 별도로 검증해야 한다.
 - 사용자 소유 미추적 `scripts/__pycache__/`, 강수 분석 스크립트 3개와 `tmp/`는 계속 제외했다.
+
+## 2026-09-14 만 14세 이상 정책 운영 반영 및 기존 등록 정리
+
+- 운영 변경 전 서버 35파일 264개 테스트, `tsc --noEmit`, Wrangler dry-run과 시작 프로파일 검사를 통과했다. 운영 D1 Time Travel 사전 북마크는 `000007b3-00000000-000050e6-40ef118b135ef616b97a61ad49e70fc9`다. 전체 SQL 백업은 `C:\WINDOWS\TEMP\weather-care-d1-backup-20260914-121813\weather_care_db.sql`, 129894바이트, SHA256 `A1727773BD9B9613AD12CC2C6D30BE60B35BF29DA6297BB6926AF94E0348A87C`로 보관 중이다. 실제 등록·FCM 정보가 포함될 수 있는 민감 백업이므로 외부 공유하지 않는다.
+- 운영 D1에 `0009_minimum_age_policy.sql`을 적용했고 현재 대기 마이그레이션은 없다. 기존 설치는 확인 시각 없음·정책 버전0으로 기본 차단된다. Worker `f817527d-abec-4c7c-8e0c-e4f836c52a54`를 `--keep-vars --strict`로 배포했고 `/health` 200, 연령 확인 누락·구버전 등록 요청 400을 확인했다.
+- 운영 전부터 인증된 앱 등록이 남아 있는 상태에서 로컬 연령값이 미확인·만 14세 미만으로 바뀌면 기존 알림이 계속될 수 있는 경계를 발견했다. 앱이 만 14세 미만 선택·재시작 때 Firebase나 알림 서비스를 시작하지 않고 기존 보안 인증정보가 있는 경우에만 인증된 DELETE를 보내도록 보완했다. 실패 시 앱 차단을 유지하고 기존 알림 가능성과 재시도를 표시한다. 새 설치 ID·등록·삭제 요청은 만들지 않는다.
+- 에뮬레이터의 기존 테스트 등록을 만 14세 미만 선택으로 삭제했고 운영 D1 설치 수와 정책 적격 설치 수가 모두0임을 확인했다. `adb shell pm clear`로 emulator-5554의 앱 전용 로컬 테스트 데이터를 초기화했으며 복구할 수 없다. 운영 사용자 데이터는 아니다. 완전 초기화한 Debug 앱에서 다시 만 14세 미만을 선택해도 일반 저장소에는 연령값만 생기고 설치 ID는 생성되지 않았다. 콜드 재시작에서도 이용 불가 화면이 유지됐으며 Dart Firebase 앱 초기화, 광고 요청, 기기 권한 팝업은 없었다.
+- Android 네이티브 Flutter 플러그인 등록 때문에 Analytics 모듈은 수집 비활성·저장 동의 거부 상태로 로드될 수 있다. 이를 SDK 코드 자체가 로드되지 않는다고 표현하지 않도록 README·아동 설계·광고·개인정보 문서를 수정했다. 앱 전체 361개 테스트, `flutter analyze`, Android x64 Release APK 28.9MB 빌드를 통과했고 Release 병합 매니페스트의 FCM·Analytics 자동 시작 false와 Firebase/Mobile Ads 조기 초기화 provider 각0개를 확인했다.
+- 개인정보처리방침 검토용 초안에 만 14세 이상 정책과 기존 등록 정리를 반영했다. Playwright 모바일·데스크톱 레이아웃/앵커/초안/no-script·form 검증 통과 후 `https://cbfd4b09.weather-care-privacy.pages.dev`와 별칭 `https://review.weather-care-privacy.pages.dev`에 재배포했다. 두 주소 HTTP 200, `noindex`, 최신 문구와 script/form 0개를 확인했다. 외부 서비스 보관·국외 이전·문의 보관기간 등 미확정 항목 때문에 production Pages와 앱·AdMob·스토어 정식 URL에는 아직 연결하지 않는다.
+- 코드 커밋 `97fcd8d fix(연령): 미만 선택 시 기존 등록 삭제`, 문서 커밋 `0f2f496 docs(운영): 연령 정책 배포 상태 기록`으로 분리했다. `cloudflare`/`workers-best-practices`/`wrangler` 지침에 따라 백업·마이그레이션·엄격 배포·연기 검사를 수행했다. `computer-use` 안전 지침상 연령 검증 제출과 개인정보/보안 설정 변경은 자동화하지 않아 Play Console·App Store Connect·AdMob 대상 연령 설정은 사용자가 직접 완료해야 한다.
+- 새 앱 운영 배포는 차단 상태다. Android Release가 아직 `signingConfigs.debug`를 사용하고 `keystore.properties`가 가리키는 실제 키 파일이 없으며, 로컬 versionCode `2026081100`은 기존 에뮬레이터 설치 `2026085100`보다 낮다. 새 업로드 키나 비밀번호를 임의 생성하지 않았다. Windows에서는 iOS 빌드·배포도 할 수 없다. Release 광고 플래그는 계속 비활성이다.
+- 다음 우선 작업: ① 기존 Play 업로드 키 위치·비밀번호와 다음 versionCode 확정 후 Android 서명/빌드 수정, ② Play Console·App Store Connect·AdMob 대상 연령을 만 14세 이상으로 수동 반영, ③ Android 실물과 macOS/iOS에서 미확인·미만·이상·정정·업그레이드 경계 검증, ④ 개인정보 미확정 항목을 확정해 production Pages 게시와 스토어·AdMob URL 연결, ⑤ 최신 앱 배포 뒤 만 14세 이상 사용자의 서버 재등록과 알림 복구 확인 순이다.
+- 사용자 소유 미추적 `scripts/__pycache__/`, 강수 분석 스크립트 3개와 `tmp/`는 수정·삭제·스테이징하지 않았다.

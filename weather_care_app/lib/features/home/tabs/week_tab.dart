@@ -17,6 +17,7 @@ class WeekTab extends StatefulWidget {
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
   final DateTime Function()? now;
+  final Widget? advertisement;
 
   const WeekTab({
     super.key,
@@ -24,6 +25,7 @@ class WeekTab extends StatefulWidget {
     required this.serverFeaturesAvailable,
     required this.onRefresh,
     this.now,
+    this.advertisement,
   });
 
   @override
@@ -98,6 +100,10 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
             )
           else
             const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
+          if (widget.advertisement != null) ...[
+            const SizedBox(height: 18),
+            widget.advertisement!,
+          ],
           const SizedBox(height: 16),
           for (var index = 0; index < weekly.days.length; index++) ...[
             _WeekDayCard(

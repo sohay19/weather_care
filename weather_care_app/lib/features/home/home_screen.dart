@@ -24,6 +24,7 @@ import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
+import '../ads/consent_aware_inline_banner.dart';
 import 'tabs/detail_tab.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
@@ -489,6 +490,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       weekly: weekly,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
+                      advertisement: _selectedIndex == 3
+                          ? const ConsentAwareInlineBanner()
+                          : null,
                     ),
                     settingsPanel,
                   ]

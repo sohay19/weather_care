@@ -84,6 +84,25 @@ void main() {
     expect(find.text('준비물 없음'), findsNothing);
   });
 
+  testWidgets('전달된 광고 영역은 주간 요약과 날짜 카드 사이에만 표시한다', (tester) async {
+    await _pump(
+      tester,
+      [_day('2026-09-10')],
+      advertisement: const SizedBox(
+        key: ValueKey('test-week-advertisement'),
+        height: 50,
+      ),
+    );
+
+    final summary = tester.getTopLeft(find.text('제공된 예보 요약')).dy;
+    final advertisement = tester
+        .getTopLeft(find.byKey(const ValueKey('test-week-advertisement')))
+        .dy;
+    final day = tester.getTopLeft(find.text('9월 10일 (목)')).dy;
+    expect(advertisement, greaterThan(summary));
+    expect(advertisement, lessThan(day));
+  });
+
   testWidgets('자정에는 자료를 다시 받지 않아도 오늘 배지가 바뀐다', (tester) async {
     var now = DateTime.parse('2026-09-10T14:59:59Z');
     await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')],
@@ -149,6 +168,7 @@ Future<void> _pump(
   List<WeeklyForecastItem> days, {
   DateTime Function()? now,
   double textScale = 1,
+  Widget? advertisement,
 }) async {
   addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   await tester.pumpWidget(MaterialApp(
@@ -160,6 +180,7 @@ Future<void> _pump(
         serverFeaturesAvailable: true,
         now: now ?? () => DateTime.parse('2026-09-10T01:00:00Z'),
         onRefresh: () async {},
+        advertisement: advertisement,
       )),
     ),
   ));

@@ -20,35 +20,62 @@ class AdsConsent extends ChangeNotifier {
   bool _initialized = false;
   String? error;
 
+  static const _debugBypassRequested =
+      bool.fromEnvironment('ADMOB_TEST_BYPASS_UMP', defaultValue: false);
+
+  static bool debugBypassAllowed({
+    required bool requested,
+    required bool releaseMode,
+  }) =>
+      requested && !releaseMode;
+
+  static final bool _debugBypass = debugBypassAllowed(
+    requested: _debugBypassRequested,
+    releaseMode: kReleaseMode,
+  );
+
   static final instance = AdsConsent(
-    update: () {
-      final completion = Completer<void>();
-      ConsentInformation.instance
-          .requestConsentInfoUpdate(ConsentRequestParameters(), () {
-        if (!completion.isCompleted) completion.complete();
-      }, (_) {
-        if (!completion.isCompleted) {
-          completion.completeError(StateError('UMP update'));
-        }
-      });
-      return completion.future.timeout(const Duration(seconds: 30));
-    },
-    showRequired: () async {
-      await ConsentForm.loadAndShowConsentFormIfRequired((error) {
-        if (error != null) throw StateError('UMP form');
-      });
-    },
-    showOptions: () async {
-      await ConsentForm.showPrivacyOptionsForm((error) {
-        if (error != null) throw StateError('UMP options');
-      });
-    },
-    allowed: () => ConsentInformation.instance.canRequestAds(),
-    optionsRequired: () async =>
-        await ConsentInformation.instance
-            .getPrivacyOptionsRequirementStatus() ==
-        PrivacyOptionsRequirementStatus.required,
+    update: _debugBypass
+        ? () async {}
+        : () {
+            final completion = Completer<void>();
+            ConsentInformation.instance
+                .requestConsentInfoUpdate(ConsentRequestParameters(), () {
+              if (!completion.isCompleted) completion.complete();
+            }, (_) {
+              if (!completion.isCompleted) {
+                completion.completeError(StateError('UMP update'));
+              }
+            });
+            return completion.future.timeout(const Duration(seconds: 30));
+          },
+    showRequired: _debugBypass
+        ? () async {}
+        : () async {
+            await ConsentForm.loadAndShowConsentFormIfRequired((error) {
+              if (error != null) throw StateError('UMP form');
+            });
+          },
+    showOptions: _debugBypass
+        ? () async {}
+        : () async {
+            await ConsentForm.showPrivacyOptionsForm((error) {
+              if (error != null) throw StateError('UMP options');
+            });
+          },
+    allowed: _debugBypass
+        ? () async => true
+        : () => ConsentInformation.instance.canRequestAds(),
+    optionsRequired: _debugBypass
+        ? () async => false
+        : () async =>
+            await ConsentInformation.instance
+                .getPrivacyOptionsRequirementStatus() ==
+            PrivacyOptionsRequirementStatus.required,
     initializeAds: () async {
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(maxAdContentRating: MaxAdContentRating.g),
+      );
       await MobileAds.instance.initialize();
     },
   );

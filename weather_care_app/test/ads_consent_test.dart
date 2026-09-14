@@ -31,6 +31,20 @@ void main() {
           calls.add('initialize');
         });
   });
+  test('test UMP bypass can never be enabled in a release build', () {
+    expect(
+      AdsConsent.debugBypassAllowed(requested: true, releaseMode: false),
+      isTrue,
+    );
+    expect(
+      AdsConsent.debugBypassAllowed(requested: true, releaseMode: true),
+      isFalse,
+    );
+    expect(
+      AdsConsent.debugBypassAllowed(requested: false, releaseMode: false),
+      isFalse,
+    );
+  });
   test('form and eligibility precede initialization; initializes only once',
       () async {
     await consent.refresh();

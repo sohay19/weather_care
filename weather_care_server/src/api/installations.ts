@@ -8,9 +8,11 @@ import { notificationSettingsBodySchema } from '../validation/notificationSettin
 import { z } from 'zod';
 import { ownerForRequest } from '../security/installationAccess';
 import { bodyLimit } from 'hono/body-limit';
+import { minimumAgeAssertionShape } from '../validation/minimumAge';
 
 const installationBodySchema = z
   .object({
+    ...minimumAgeAssertionShape,
     fcmToken: z.string().min(1).nullable().optional(),
     locationMode: z.enum(['GPS', 'MANUAL']).default('GPS'),
     platform: z.string().max(32).optional(),
@@ -52,6 +54,8 @@ router.put('/:installationId', async (c) => {
     timezone: body.timezone ?? 'Asia/Seoul',
     latitude: body.latitude ?? undefined,
     longitude: body.longitude ?? undefined,
+    minimumAgeConfirmed: body.minimumAgeConfirmed,
+    agePolicyVersion: body.agePolicyVersion,
   };
   if (!await upsertInstallation(c.env.DB, payload, ownerHash)) {
     return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);

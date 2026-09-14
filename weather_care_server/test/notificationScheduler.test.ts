@@ -21,6 +21,16 @@ describe('notification scheduler', () => {
     expect(loader).not.toHaveBeenCalled();
     expect(sender).not.toHaveBeenCalled();
   });
+  it('does not send to a legacy registration without current 14+ confirmation', async () => {
+    await insertInstallation('private-token', false, false);
+    const loader = vi.fn(async () => rainyForecast());
+    const sender = vi.fn(collectingSender([]));
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-01T07:00:00+09:00'), forecastLoader: loader, sender,
+    });
+    expect(loader).not.toHaveBeenCalled();
+    expect(sender).not.toHaveBeenCalled();
+  });
   it('omits installation and location context from failure logs', async () => {
     await insertInstallation('private-token');
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -68,6 +78,8 @@ describe('notification scheduler', () => {
           road_control_event_key TEXT,
           road_control_kind TEXT,
           road_control_started_at TEXT,
+          minimum_age_confirmed_at TEXT,
+          age_policy_version INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(
@@ -688,18 +700,22 @@ function precipitation(state: 'RAIN' | 'DRY' | 'MISMATCH') {
 async function insertInstallation(
   token: string,
   withCoordinates = false,
+  minimumAgeConfirmed = true,
 ): Promise<void> {
   await env.DB.prepare(
     `INSERT INTO installations
      (installation_id, fcm_token, nx, ny, region_topic, location_mode,
-      timezone, latitude, longitude, created_at, updated_at)
-     VALUES (?, ?, 60, 121, 'region_60_121', 'GPS', 'Asia/Seoul', ?, ?, ?, ?)`,
+       timezone, latitude, longitude, minimum_age_confirmed_at,
+       age_policy_version, created_at, updated_at)
+      VALUES (?, ?, 60, 121, 'region_60_121', 'GPS', 'Asia/Seoul', ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       'installation-1',
       token,
       withCoordinates ? 37.2636 : null,
       withCoordinates ? 127.0286 : null,
+      minimumAgeConfirmed ? '2026-09-01T00:00:00Z' : null,
+      minimumAgeConfirmed ? 1 : 0,
       '2026-09-01T00:00:00Z',
       '2026-09-01T00:00:00Z',
     )

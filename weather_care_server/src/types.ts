@@ -196,6 +196,8 @@ export interface NotificationSettings {
 
 export interface Installation {
   installationId: string;
+  minimumAgeConfirmed: true;
+  agePolicyVersion: 1;
   fcmToken?: string;
   nx: number;
   ny: number;

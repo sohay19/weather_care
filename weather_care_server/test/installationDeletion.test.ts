@@ -19,10 +19,12 @@ import m5 from '../migrations/0005_road_ice_state.sql?raw';
 import m6 from '../migrations/0006_road_control_state.sql?raw';
 import m7 from '../migrations/0007_installation_access.sql?raw';
 import m8 from '../migrations/0008_data_retention.sql?raw';
+import m9 from '../migrations/0009_minimum_age_policy.sql?raw';
 
 const legacyId = 'wc_legacy_synthetic_fixture_0001';
 const noTokenId = 'wc_legacy_without_token_000001';
 const path = '/api/v1/installations';
+const minimumAge = { minimumAgeConfirmed: true, agePolicyVersion: 1 } as const;
 const app = new Hono<{ Bindings: ServerEnv }>();
 app.route(path, ownership); app.route(path, registrations);
 app.route('/api/v1/notification-settings', settings);
@@ -34,12 +36,13 @@ async function apply(sql: string) {
   await env.DB.exec(sql.replace(/--[^\n]*/g, '').replace(/\r?\n/g, ' '));
 }
 async function enrollment() {
-  const response = await request(`${path}/enroll`, 'POST', {});
+  const response = await request(`${path}/enroll`, 'POST', minimumAge);
   expect(response.status).toBe(201);
   return (await response.json<{ installationId: string }>()).installationId;
 }
 async function seed(id: string) {
   expect((await request(`${path}/${id}?nx=60&ny=121`, 'PUT', {
+    minimumAgeConfirmed: true, agePolicyVersion: 1,
     fcmToken: 'synthetic-not-a-real-fcm-token', locationMode: 'GPS', latitude: 37.2, longitude: 127.1,
   })).status).toBe(200);
   expect((await request(`/api/v1/notification-settings/${id}`, 'PUT', { notificationEnabled: false })).status).toBe(200);
@@ -65,6 +68,7 @@ beforeEach(async () => {
   }
   await apply(m7);
   await apply(m8);
+  await apply(m9);
   vi.spyOn(fcm, 'sendOwnershipChallenge').mockResolvedValue();
   vi.spyOn(analyticsDeletion, 'submitAnalyticsUserDeletion').mockResolvedValue({
     deletionRequestTime: '2026-09-11T01:02:03Z',
@@ -73,6 +77,17 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('authenticated server data deletion', () => {
+  it('requires the current 14+ policy before enrollment or legacy FCM delivery', async () => {
+    expect((await request(`${path}/enroll`, 'POST', {})).status).toBe(400);
+    expect((await request(`${path}/enroll`, 'POST', {
+      minimumAgeConfirmed: false, agePolicyVersion: 1,
+    })).status).toBe(400);
+    expect((await request(`${path}/${legacyId}/ownership-challenge`, 'POST', {
+      requestId: '1'.repeat(64),
+    })).status).toBe(400);
+    expect(fcm.sendOwnershipChallenge).not.toHaveBeenCalled();
+  });
+
   it('accepts an authenticated Analytics deletion request and rejects other credentials', async () => {
     const id = await enrollment();
     const response = await request(`${path}/${id}/analytics-deletion`, 'POST', {
@@ -169,7 +184,8 @@ describe('authenticated server data deletion', () => {
     const hash = await secretHash(testSecret);
     await deleteInstallationData(env.DB, id, hash);
     expect(await upsertInstallation(env.DB, { installationId: id, nx: 60, ny: 121,
-      regionTopic: 'region', locationMode: 'GPS', timezone: 'Asia/Seoul' }, hash)).toBe(false);
+      regionTopic: 'region', locationMode: 'GPS', timezone: 'Asia/Seoul',
+      minimumAgeConfirmed: true, agePolicyVersion: 1 }, hash)).toBe(false);
     expect(await upsertNotificationSettings(env.DB, defaultNotificationSettings(id), hash)).toBe(false);
     await expect(upsertNotificationSettings(env.DB, defaultNotificationSettings(id))).rejects.toThrow();
     await env.DB.prepare('INSERT INTO notification_history VALUES (?, ?, ?, ?, ?)')
@@ -178,10 +194,11 @@ describe('authenticated server data deletion', () => {
   });
 
   it('does not adopt an old ID or use a newly supplied FCM token as proof', async () => {
-    expect((await request(`${path}/enroll`, 'POST', { legacyInstallationId: legacyId })).status).toBe(409);
+    expect((await request(`${path}/enroll`, 'POST', { ...minimumAge, legacyInstallationId: legacyId })).status).toBe(409);
     expect((await request(`${path}/${legacyId}`, 'PUT', { fcmToken: 'attacker-token' })).status).toBe(401);
     expect((await request(`${path}/${legacyId}`, 'DELETE')).status).toBe(401);
-    expect((await request(`${path}/${noTokenId}/ownership-challenge`, 'POST', { requestId: '1'.repeat(64) })).status).toBe(409);
+    expect((await request(`${path}/${noTokenId}/ownership-challenge`, 'POST',
+      { ...minimumAge, requestId: '1'.repeat(64) })).status).toBe(409);
     expect(fcm.sendOwnershipChallenge).not.toHaveBeenCalled();
   });
 
@@ -190,23 +207,27 @@ describe('authenticated server data deletion', () => {
     // Even a previous Worker changing the live token cannot redirect the proof.
     await env.DB.prepare('UPDATE installations SET fcm_token = ? WHERE installation_id = ?')
       .bind('changed-live-token', legacyId).run();
-    const response = await request(`${path}/${legacyId}/ownership-challenge`, 'POST', { requestId });
+    const response = await request(`${path}/${legacyId}/ownership-challenge`, 'POST',
+      { ...minimumAge, requestId });
     expect(response.status).toBe(200); expect(await response.json()).toEqual({ ok: true });
     const call = vi.mocked(fcm.sendOwnershipChallenge).mock.calls[0];
     expect(call[1]).toBe('original-delivery-token');
     const proof = call[2].proof;
-    expect((await request(`${path}/${legacyId}/claim`, 'POST', { requestId, proof },
+    expect((await request(`${path}/${legacyId}/claim`, 'POST', { ...minimumAge, requestId, proof },
       { ...testAuthHeaders, Authorization: `Bearer ${'b'.repeat(64)}` })).status).toBe(403);
-    expect((await request(`${path}/${legacyId}/claim`, 'POST', { requestId, proof: '0'.repeat(64) })).status).toBe(403);
-    expect((await request(`${path}/${legacyId}/claim`, 'POST', { requestId, proof })).status).toBe(200);
+    expect((await request(`${path}/${legacyId}/claim`, 'POST',
+      { ...minimumAge, requestId, proof: '0'.repeat(64) })).status).toBe(403);
+    expect((await request(`${path}/${legacyId}/claim`, 'POST',
+      { ...minimumAge, requestId, proof })).status).toBe(200);
     expect(await count('installation_ownership_challenges', legacyId)).toBe(0);
     expect(await count('legacy_installation_ownership', legacyId)).toBe(0);
     expect((await request(`${path}/${legacyId}`, 'DELETE')).status).toBe(204);
-    expect((await request(`${path}/${legacyId}/claim`, 'POST', { requestId, proof })).status).toBe(403);
+    expect((await request(`${path}/${legacyId}/claim`, 'POST',
+      { ...minimumAge, requestId, proof })).status).toBe(403);
   });
 
   it('rate limits challenges and refuses expired proofs', async () => {
-    const body = { requestId: '1'.repeat(64) };
+    const body = { ...minimumAge, requestId: '1'.repeat(64) };
     await request(`${path}/${legacyId}/ownership-challenge`, 'POST', body);
     expect((await request(`${path}/${legacyId}/ownership-challenge`, 'POST', body)).status).toBe(429);
     const proof = vi.mocked(fcm.sendOwnershipChallenge).mock.calls[0][2].proof;
@@ -215,11 +236,12 @@ describe('authenticated server data deletion', () => {
   });
 
   it('allows retry after a lost claim response using only the established credential', async () => {
-    const body = { requestId: '1'.repeat(64) };
+    const body = { ...minimumAge, requestId: '1'.repeat(64) };
     await request(`${path}/${legacyId}/ownership-challenge`, 'POST', body);
     const proof = vi.mocked(fcm.sendOwnershipChallenge).mock.calls[0][2].proof;
     await request(`${path}/${legacyId}/claim`, 'POST', { ...body, proof });
-    const response = await request(`${path}/enroll`, 'POST', { legacyInstallationId: legacyId });
+    const response = await request(`${path}/enroll`, 'POST',
+      { ...minimumAge, legacyInstallationId: legacyId });
     expect(await response.json()).toEqual({ installationId: legacyId });
   });
 });

@@ -112,6 +112,8 @@ void main() {
     expect(client.calls.last.query, {'nx': '98', 'ny': '76'});
     expect(client.calls.last.body['latitude'], 35.18);
     expect(client.calls.last.body['fcmToken'], 'refreshed-token');
+    expect(client.calls.last.body['minimumAgeConfirmed'], isTrue);
+    expect(client.calls.last.body['agePolicyVersion'], 1);
   });
 
   test('서버 삭제 중지 상태면 토큰 갱신·앱 복귀로 다시 등록하지 않는다', () async {

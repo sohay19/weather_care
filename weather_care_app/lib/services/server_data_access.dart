@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_client.dart';
+import 'minimum_age_policy.dart';
 
 enum ServerDataMode { active, deleting, deleted }
 
@@ -112,6 +113,7 @@ class ServerDataAccess extends ChangeNotifier {
       response = await api.requestJson('POST', '/api/v1/installations/enroll',
           headers: headers,
           body: {
+            ...minimumAgeServerAssertion,
             if (!_skipLegacy) 'legacyInstallationId': legacyInstallationId
           });
     } on ApiException catch (exception) {
@@ -144,11 +146,17 @@ class ServerDataAccess extends ChangeNotifier {
     try {
       await api.requestJson('POST',
           '/api/v1/installations/$legacyInstallationId/ownership-challenge',
-          headers: headers, body: {'requestId': requestId});
+          headers: headers,
+          body: {...minimumAgeServerAssertion, 'requestId': requestId});
       final received = await proof.future.timeout(proofTimeout);
       return await api.requestJson(
           'POST', '/api/v1/installations/$legacyInstallationId/claim',
-          headers: headers, body: {'requestId': requestId, 'proof': received});
+          headers: headers,
+          body: {
+            ...minimumAgeServerAssertion,
+            'requestId': requestId,
+            'proof': received,
+          });
     } finally {
       await subscription.cancel();
     }

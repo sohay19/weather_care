@@ -9,8 +9,9 @@ export async function upsertInstallation(
   const result = await db
     .prepare(
       `INSERT INTO installations
-       (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, latitude, longitude, created_at, updated_at)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, latitude, longitude,
+        minimum_age_confirmed_at, age_policy_version, created_at, updated_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
        ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
          WHERE installation_id = ? AND secret_hash = ?)`}
        ON CONFLICT(installation_id) DO UPDATE SET
@@ -24,6 +25,8 @@ export async function upsertInstallation(
          timezone=excluded.timezone,
          latitude=excluded.latitude,
          longitude=excluded.longitude,
+         minimum_age_confirmed_at=excluded.minimum_age_confirmed_at,
+         age_policy_version=excluded.age_policy_version,
          updated_at=excluded.updated_at`,
     )
     .bind(
@@ -38,6 +41,8 @@ export async function upsertInstallation(
       payload.timezone,
       payload.latitude ?? null,
       payload.longitude ?? null,
+      payload.minimumAgeConfirmed ? now : null,
+      payload.agePolicyVersion,
       now,
       now,
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),

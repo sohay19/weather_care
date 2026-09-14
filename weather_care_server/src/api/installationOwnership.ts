@@ -7,10 +7,17 @@ import { AnalyticsDeletionProviderError,
   submitAnalyticsUserDeletion } from '../analytics/analyticsDeletionClient';
 import { bearerSecret, clearExpiredEnrollmentData, deleteInstallationData,
   hasInstallationData, ownerForRequest, randomSecret, secretHash } from '../security/installationAccess';
+import { minimumAgeAssertionShape } from '../validation/minimumAge';
 
 const idSchema = z.string().regex(/^wc_[A-Za-z0-9_-]{20,80}$/);
-const enrollSchema = z.object({ legacyInstallationId: idSchema.optional() }).strict();
-const challengeSchema = z.object({ requestId: z.string().regex(/^[0-9a-f]{64}$/) }).strict();
+const enrollSchema = z.object({
+  ...minimumAgeAssertionShape,
+  legacyInstallationId: idSchema.optional(),
+}).strict();
+const challengeSchema = z.object({
+  ...minimumAgeAssertionShape,
+  requestId: z.string().regex(/^[0-9a-f]{64}$/),
+}).strict();
 const claimSchema = challengeSchema.extend({ proof: z.string().regex(/^[0-9a-f]{64}$/) });
 const analyticsDeletionSchema = z.object({
   appInstanceId: z.string().min(1).max(256),

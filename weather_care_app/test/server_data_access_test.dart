@@ -130,7 +130,10 @@ void main() {
     await restarted.resume();
     await restarted.mutate((_) async {});
     expect(restarted.registrationMissing, isFalse);
-    expect(api.calls.last.body, isEmpty); // Fresh ID, never claims the old one.
+    expect(api.calls.last.body, {
+      'minimumAgeConfirmed': true,
+      'agePolicyVersion': 1,
+    }); // Fresh ID, never claims the old one.
     restarted.dispose();
   });
 
@@ -206,6 +209,8 @@ void main() {
         boundary.reads.single.headers!['Authorization'], startsWith('Bearer '));
     expect(boundary.reads.single.query, isNull);
     expect(api.calls.where((c) => c.path.endsWith('/enroll')), hasLength(1));
+    expect(api.calls.firstWhere((c) => c.path.endsWith('/enroll')).body,
+        containsPair('minimumAgeConfirmed', true));
   });
 
   test('a secure-store write failure does not send personal data or DELETE',
@@ -325,7 +330,10 @@ void main() {
     expect(access.mode, ServerDataMode.active);
     expect(access.credential, isNull);
     await access.mutate((_) async {});
-    expect(api.calls.last.body, isEmpty); // Never reclaim the erased legacy ID.
+    expect(api.calls.last.body, {
+      'minimumAgeConfirmed': true,
+      'agePolicyVersion': 1,
+    }); // Never reclaim the erased legacy ID.
   });
 
   test(
@@ -361,6 +369,10 @@ void main() {
     expect(access.mode, ServerDataMode.deleted);
     expect(api.calls.map((c) => c.path.split('/').last),
         ['enroll', 'ownership-challenge', 'claim', legacyId]);
+    for (final call in api.calls.take(3)) {
+      expect(call.body!['minimumAgeConfirmed'], isTrue);
+      expect(call.body!['agePolicyVersion'], 1);
+    }
     expect(api.calls[2].body!['proof'], 'b' * 64);
     expect(api.calls[2].headers, api.calls[3].headers);
   });

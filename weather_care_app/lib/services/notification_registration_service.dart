@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import 'api_client.dart';
 import 'current_location_service.dart';
+import 'minimum_age_policy.dart';
 
 class NotificationRegistrationService {
   final ApiClient client;
@@ -96,6 +97,7 @@ class NotificationRegistrationService {
       await client.putJson(
         '/api/v1/installations/${target.installationId}',
         {
+          ...minimumAgeServerAssertion,
           'fcmToken': token,
           'locationMode': target.locationMode,
           'platform': defaultTargetPlatform.name,

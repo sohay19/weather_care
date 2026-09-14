@@ -59,6 +59,14 @@ export function koreaDate(iso: string): string {
 export function otherDatePrefix(start: string, reference?: string): string {
   if (!reference || !Number.isFinite(Date.parse(reference)) || koreaDate(start) === koreaDate(reference)) return '';
   const date = koreaDate(start);
+  const referenceDate = koreaDate(reference);
+  const dayOffset = Math.round(
+    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${referenceDate}T00:00:00Z`)) /
+      (24 * HOUR),
+  );
+  if (dayOffset === 1) return '내일 ';
+  if (dayOffset === 2) return '모레 ';
+  if (dayOffset === 3) return '글피 ';
   return `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일 `;
 }
 

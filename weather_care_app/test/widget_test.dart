@@ -344,7 +344,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('예상 체감온도'), findsOneWidget);
-    expect(find.textContaining('기온·습도·풍속으로 계산한'), findsOneWidget);
+    expect(find.textContaining('기온·습도·풍속 기준'), findsOneWidget);
   });
 
   testWidgets('five tabs start on a pull-to-refresh Main screen',
@@ -441,7 +441,8 @@ void main() {
       ),
     );
 
-    expect(find.text('수원이라면 확인하세요'), findsOneWidget);
+    expect(find.text('수원 오늘 날씨'), findsOneWidget);
+    expect(find.textContaining('선택 지역'), findsNothing);
     expect(find.text('Check List'), findsOneWidget);
     expect(find.text('오늘 날씨에 체크해야할 일들이에요'), findsOneWidget);
     expect(find.text('현재 예보에서 안내할 생활행동이 없어요.'), findsOneWidget);
@@ -452,8 +453,7 @@ void main() {
     expect(find.text('76㎍'), findsOneWidget);
     expect(find.text('어제와 비교'), findsNothing);
     expect(find.text('오후 3시 예상기온'), findsOneWidget);
-    const weatherFeeling =
-        '구름이 많은 날씨예요. 기상청 예보의 기온·습도·풍속으로 계산한 예상 체감온도는 21.8℃예요.';
+    const weatherFeeling = '구름이 많은 날씨예요. 체감 상 조금 덥게 느껴질 수 있어요.';
     expect(find.text(weatherFeeling), findsOneWidget);
     expect(
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,

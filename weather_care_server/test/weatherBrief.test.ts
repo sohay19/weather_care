@@ -136,11 +136,11 @@ describe('weather brief policy', () => {
     expect(result.expiresAt).toBe('2026-08-21T07:00:00.000Z');
   });
 
-  it('qualifies next-day UV with a calendar date, including a year boundary', () => {
+  it('labels next-day UV relatively, including a year boundary', () => {
     const sample = { ...snapshot(10, { uvIndex: 7 }), forecastAt: '2027-01-01T01:00:00Z' };
     const result = buildWeatherBriefResult(forecast([sample]),
       { now: new Date('2026-12-31T23:30:00+09:00') });
-    expect(result.slots.eventTime).toBe('1월 1일 오전 10시');
+    expect(result.slots.eventTime).toBe('내일 오전 10시');
     expect(result.expiresAt).toBe('2027-01-01T01:00:00.000Z');
   });
 

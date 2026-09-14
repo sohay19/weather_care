@@ -20,6 +20,7 @@ import '../../services/settings_save_controller.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
+import '../../services/gps_region_name_service.dart';
 import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
@@ -36,6 +37,7 @@ class HomeScreen extends StatefulWidget {
   final int initialIndex;
   final NotificationTopic? initialNotificationTopic;
   final CurrentLocationService locationService;
+  final GpsRegionNameService gpsRegionNameService;
   final WeatherService? weatherService;
   final SettingsSyncService? settingsSync;
   final NotificationRegistrationService? notificationRegistration;
@@ -48,6 +50,7 @@ class HomeScreen extends StatefulWidget {
     this.initialIndex = 2,
     this.initialNotificationTopic,
     this.locationService = const CurrentLocationService(),
+    this.gpsRegionNameService = const PlatformGpsRegionNameService(),
     this.weatherService,
     this.settingsSync,
     this.notificationRegistration,
@@ -70,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   ServerDataAccess? _serverDataAccess;
   CurrentLocationService get _locationService => widget.locationService;
   DeviceCoordinates? _coordinates;
+  String? _gpsRegionName;
   LocationResult _location = const LocationResult(LocationState.idle);
   Future<void>? _refreshFuture;
   bool _refreshAgain = false;
@@ -249,6 +253,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _refreshAgain = false;
         final revision = _locationRevision;
         final ask = _requestPermission;
+        Future<String?>? gpsRegionNameFuture;
         _requestPermission = false;
         if (_settings.locationMode == 'GPS') {
           setState(() {
@@ -264,9 +269,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           setState(() {
             _location = result;
             _coordinates = result.coordinates;
+            _gpsRegionName = null;
           });
+          if (result.canUseLocalAnalysis) {
+            gpsRegionNameFuture = _resolveGpsRegionName(result.coordinates!);
+          }
         } else {
           _coordinates = null;
+          _gpsRegionName = null;
           _location = const LocationResult(LocationState.idle);
         }
         final grid = _weatherGrid;
@@ -307,10 +317,48 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               coordinates: preciseCoordinates));
         }
         await _fetchWeather(revision, grid, preciseCoordinates);
+        if (gpsRegionNameFuture != null) {
+          await _applyGpsRegionName(
+            revision,
+            grid,
+            gpsRegionNameFuture,
+          );
+        }
       } while (mounted && _refreshAgain);
     } finally {
       _refreshFuture = null;
     }
+  }
+
+  Future<String?> _resolveGpsRegionName(DeviceCoordinates coordinates) async {
+    try {
+      return await widget.gpsRegionNameService.resolve(coordinates);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _applyGpsRegionName(
+    int revision,
+    KmaGrid expectedGrid,
+    Future<String?> regionNameFuture,
+  ) async {
+    final name = await regionNameFuture;
+    if (!mounted ||
+        revision != _locationRevision ||
+        _settings.locationMode != 'GPS') {
+      return;
+    }
+    final today = _today;
+    if (today == null ||
+        today.region.nx != expectedGrid.nx ||
+        today.region.ny != expectedGrid.ny) {
+      return;
+    }
+    setState(() {
+      _gpsRegionName = name;
+      _today = today.withRegionName(name ?? '현재 위치');
+    });
   }
 
   Future<void> _fetchWeather(
@@ -384,11 +432,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final selected =
           _settings.locationMode == 'MANUAL' ? _manualRegion : null;
       final today = result.today;
-      _today = selected != null &&
-              today?.region.nx == selected.nx &&
-              today?.region.ny == selected.ny
-          ? today!.withRegionName(selected.fullName)
-          : today;
+      if (selected != null &&
+          today?.region.nx == selected.nx &&
+          today?.region.ny == selected.ny) {
+        _today = today!.withRegionName(selected.fullName);
+      } else if (_settings.locationMode == 'GPS' && today != null) {
+        _today = today.withRegionName(_gpsRegionName ?? '현재 위치');
+      } else {
+        _today = today;
+      }
       _weekly = result.weekly;
       _loadMode = result.mode;
       _statusMessage = result.message;
@@ -628,6 +680,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (locationChanged) {
         _locationRevision++;
         _coordinates = null;
+        _gpsRegionName = null;
         _today = null;
         _weekly = null;
         _loadMode = null;

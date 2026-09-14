@@ -49,7 +49,7 @@ class MainTab extends StatelessWidget {
                   children: [
                     TabPageHeader(
                       eyebrow: dateLabel,
-                      title: '${today.region.name}이라면 확인하세요',
+                      title: '${today.region.name} 오늘 날씨',
                       subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                     ),
                     SizedBox(height: compact ? 10 : 14),
@@ -180,8 +180,6 @@ class _TopWeatherCard extends StatelessWidget {
                   _weatherSummaryMessage(
                     sky: current.sky,
                     apparentTemperature: apparentTemperature,
-                    apparentTemperatureSource:
-                        current.apparentTemperatureSource,
                   ),
                   style: feelingStyle,
                 ),
@@ -600,12 +598,13 @@ class _LifestyleActionCard extends StatelessWidget {
                         Text.rich(
                           TextSpan(
                             children: [
-                              TextSpan(
-                                text: '${part.role.label} · ',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
+                              if (_showsChecklistRoleLabel(part.role))
+                                TextSpan(
+                                  text: '${part.role.label} · ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                              ),
                               TextSpan(text: part.text),
                             ],
                           ),
@@ -647,18 +646,39 @@ String _weatherExpression(String? sky) {
 String _weatherSummaryMessage({
   required String? sky,
   required double? apparentTemperature,
-  required String? apparentTemperatureSource,
 }) {
   final weatherExpression = _weatherExpression(sky);
   if (apparentTemperature == null) {
-    return '$weatherExpression 예상 체감온도는 계산조건이 맞을 때 표시해요.';
+    return '$weatherExpression 체감 정보는 계산조건이 맞을 때 표시해요.';
   }
-  final sourceLabel =
-      apparentTemperatureSource == 'APP_KMA_METHOD_FROM_FORECAST'
-          ? '기상청 예보의 기온·습도·풍속으로 계산한'
-          : '제공된 자료로 확인한';
-  return '$weatherExpression $sourceLabel 예상 체감온도는 ${apparentTemperature.toStringAsFixed(1)}℃예요.';
+
+  final feeling = switch (_apparentTemperatureLabel(apparentTemperature)) {
+    '위험한 더위' => '위험할 만큼 매우 덥게',
+    '더위 경계' => '매우 덥게',
+    '더위 주의' => '더위가 강하게',
+    '더움' => '꽤 덥게',
+    '조금 더움' => '조금 덥게',
+    '선선한 편' => '선선하게',
+    '쌀쌀한 편' => '쌀쌀하게',
+    _ => '춥게',
+  };
+  return '$weatherExpression 체감 상 $feeling 느껴질 수 있어요.';
 }
+
+String _apparentTemperatureLabel(double temperature) {
+  if (temperature >= 38) return '위험한 더위';
+  if (temperature >= 35) return '더위 경계';
+  if (temperature >= 33) return '더위 주의';
+  if (temperature >= 28) return '더움';
+  if (temperature >= 20) return '조금 더움';
+  if (temperature >= 10) return '선선한 편';
+  if (temperature >= 0) return '쌀쌀한 편';
+  return '추운 날씨';
+}
+
+bool _showsChecklistRoleLabel(WeatherMessageRole role) =>
+    role != WeatherMessageRole.internalPossibility &&
+    role != WeatherMessageRole.calculatedFact;
 
 List<_TodoItem> _todoItems(List<LifestyleMessage> messages) {
   return messages.map((message) {

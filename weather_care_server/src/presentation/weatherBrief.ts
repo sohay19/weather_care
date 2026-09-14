@@ -4,7 +4,7 @@ import { defaultRuleConfig } from '../config/ruleConfig';
 import { precipitationDecisionSnapshot, precipitationPeriod, periodLabel, otherDatePrefix, koreanHour } from '../rules/precipitationWindows';
 import { snapshotTime } from '../rules/timeWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.3';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.4';
 const HOUR = 3_600_000;
 export type WeatherBriefScene =
   | 'WET_TRAVEL'

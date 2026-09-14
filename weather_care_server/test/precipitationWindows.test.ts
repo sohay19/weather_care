@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildForecastFromItems, KmaForecastItem } from '../src/providers/weather/kmaWeatherProvider';
 import { runWeatherRuleEngine, runWeatherRuleEngineForHourly } from '../src/rules/weatherRuleEngine';
-import { precipitationDecisionSnapshot, precipitationPeriod, periodLabel } from '../src/rules/precipitationWindows';
+import { otherDatePrefix, precipitationDecisionSnapshot, precipitationPeriod, periodLabel } from '../src/rules/precipitationWindows';
 import { enrichTimeSeriesInsights } from '../src/lifestyle/timeSeriesLifestyleBuilder';
 import { runLifestyleWeatherEngine } from '../src/lifestyle/lifestyleWeatherEngine';
 import { buildLifestyleMessages } from '../src/presentation/lifestyleMessages';
@@ -147,10 +147,18 @@ describe('element-specific precipitation windows', () => {
 
   it('includes the date when the future rain belongs to another day', () => {
     const forecast = buildForecastFromItems(items('20260911', '0100', { PCP: '30mm', POP: '90', PTY: '1' }), now, base);
-    expect(buildWeatherBriefResult(forecast, { now }).slots.eventTime).toBe('9월 11일 오전 12시~1시');
+    expect(buildWeatherBriefResult(forecast, { now }).slots.eventTime).toBe('내일 오전 12시~1시');
     const facts = runWeatherRuleEngineForHourly(forecast.hourly);
     const recs = runRecommendationEngine(runLifestyleWeatherEngine(facts, forecast.hourly));
-    expect(buildNotification(recs, now)[0].body).toContain('9월 11일 오전 12시~1시');
+    expect(buildNotification(recs, now)[0].body).toContain('내일 오전 12시~1시');
+  });
+
+  it('다른 날 예보를 내일·모레·글피로 표시한다', () => {
+    const reference = '2026-12-31T14:30:00Z';
+    expect(otherDatePrefix('2027-01-01T01:00:00Z', reference)).toBe('내일 ');
+    expect(otherDatePrefix('2027-01-02T01:00:00Z', reference)).toBe('모레 ');
+    expect(otherDatePrefix('2027-01-03T01:00:00Z', reference)).toBe('글피 ');
+    expect(otherDatePrefix('2027-01-04T01:00:00Z', reference)).toBe('1월 4일 ');
   });
 
   it('rejects invalid interval lengths/ends while keeping legacy providers compatible', () => {

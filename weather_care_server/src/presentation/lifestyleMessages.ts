@@ -490,7 +490,7 @@ function apparentTemperatureFact(
   if (snapshot.apparentTemperature === undefined) return undefined;
   return {
     role: 'CALCULATED_FACT',
-    text: `기상청 단기예보의 기온·습도·풍속으로 계산한 ${formatHour(snapshotTime(snapshot))} 예상 체감온도는 ${formatNumber(snapshot.apparentTemperature)}℃예요`,
+    text: `기상청 단기예보 기온·습도·풍속 기준 ${formatHour(snapshotTime(snapshot))} 예상 체감온도는 ${formatNumber(snapshot.apparentTemperature)}℃예요`,
     source: '날씨챙겨 계산',
     validFrom: snapshot.validFrom ?? snapshot.forecastAt,
     validUntil: snapshot.validTo,

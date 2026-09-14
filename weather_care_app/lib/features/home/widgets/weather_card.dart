@@ -22,7 +22,7 @@ class WeatherInfoCard extends StatelessWidget {
         dialogTitle: '예상 체감온도',
         dialogBody: current.apparentTemperature == null
             ? '체감온도 계산조건이 맞지 않거나 입력자료가 없어 표시하지 않아요.'
-            : '기상청 단기예보의 기온·습도·풍속으로 계산한 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.',
+            : '기상청 단기예보 기온·습도·풍속 기준 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.',
       ),
       _WeatherMetric(
         icon: Icons.water_drop_outlined,

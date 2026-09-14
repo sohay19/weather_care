@@ -11,8 +11,8 @@ afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 describe('Today brief display deadline', () => {
   it.each([
     ['2026-09-10T05:00:00Z', '2026-09-10T04:00:00Z', '오후 2시'],
-    ['2026-09-11T05:00:00Z', '2026-09-10T04:00:00Z', '9월 11일 오후 2시'],
-    ['2027-01-01T05:00:00Z', '2026-12-31T14:00:00Z', '1월 1일 오후 2시'],
+    ['2026-09-11T05:00:00Z', '2026-09-10T04:00:00Z', '내일 오후 2시'],
+    ['2027-01-01T05:00:00Z', '2026-12-31T14:00:00Z', '내일 오후 2시'],
   ])('retains the date and original validity of UV grounding: %s', (forecastAt, fetchedAt, label) => {
     const sample: WeatherSnapshot = { observedAt: forecastAt, forecastAt, fetchedAt, uvIndex: 7 };
     const insights = [LifestyleInsightType.STRONG_SUN_EXPOSURE, LifestyleInsightType.SUNSCREEN_USEFUL]

@@ -14,6 +14,7 @@ import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/app_settings_repository.dart';
 import 'package:weather_care/services/current_location_service.dart';
+import 'package:weather_care/services/gps_region_name_service.dart';
 import 'package:weather_care/services/kma_direct_weather_service.dart';
 import 'package:weather_care/services/kma_grid.dart';
 import 'package:weather_care/services/notification_registration_service.dart';
@@ -51,10 +52,22 @@ class _Location extends CurrentLocationService {
   }
 }
 
-WeatherLoadResult _weather(int nx, int ny) => WeatherLoadResult(
+class _GpsRegionName extends GpsRegionNameService {
+  String? result;
+  final calls = <DeviceCoordinates>[];
+
+  @override
+  Future<String?> resolve(DeviceCoordinates coordinates) async {
+    calls.add(coordinates);
+    return result;
+  }
+}
+
+WeatherLoadResult _weather(int nx, int ny, {String? regionName}) =>
+    WeatherLoadResult(
       today: TodayWeatherResponse.fromJson({
         'dataSource': 'test',
-        'region': {'nx': nx, 'ny': ny, 'name': '검증 지역 $nx/$ny'},
+        'region': {'nx': nx, 'ny': ny, 'name': regionName ?? '검증 지역 $nx/$ny'},
         'current': {'temperature': 20},
         'brief': '지역별 예보',
       }),
@@ -66,6 +79,7 @@ WeatherLoadResult _weather(int nx, int ny) => WeatherLoadResult(
 class _Weather extends WeatherService {
   final calls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   Completer<WeatherLoadResult>? pending;
+  String? regionName;
   _Weather()
       : super(ApiClient(baseUrl: ''),
             directKma: KmaDirectWeatherService(serviceKey: ''));
@@ -76,7 +90,9 @@ class _Weather extends WeatherService {
       int ny = 121,
       DeviceCoordinates? coordinates}) async {
     calls.add((nx: nx, ny: ny, coordinates: coordinates));
-    return pending == null ? _weather(nx, ny) : await pending!.future;
+    return pending == null
+        ? _weather(nx, ny, regionName: regionName)
+        : await pending!.future;
   }
 }
 
@@ -145,6 +161,7 @@ class _NotificationPermission extends NotificationPermissionService {
 
 void main() {
   late _Location location;
+  late _GpsRegionName gpsRegionName;
   late _Weather weather;
   late _Sync sync;
   late _Registration registration;
@@ -158,6 +175,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
     location = _Location();
+    gpsRegionName = _GpsRegionName();
     weather = _Weather();
     sync = _Sync();
     registration = _Registration();
@@ -169,6 +187,7 @@ void main() {
             serverDataAccess: access,
             initialIndex: 4,
             locationService: location,
+            gpsRegionNameService: gpsRegionName,
             weatherService: weather,
             settingsSync: sync,
             regionCatalog: catalog,
@@ -333,6 +352,26 @@ void main() {
     expect(registration.calls.single.coordinates, _seoul);
     expect(screen(tester).location.state, LocationState.ready);
   });
+  testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
+    weather.regionName = '선택 지역';
+    await start(tester);
+    expect(screen(tester).regionName, '현재 위치');
+
+    await tester.tap(find.text('Main'));
+    await tester.pumpAndSettle();
+    expect(find.text('현재 위치 오늘 날씨'), findsOneWidget);
+    expect(find.text('선택 지역 오늘 날씨'), findsNothing);
+  });
+  testWidgets('정밀 GPS 역지오코딩 지역명을 동까지 표시한다', (tester) async {
+    gpsRegionName.result = '서울 강남구 역삼동';
+    await start(tester);
+    expect(gpsRegionName.calls, [_seoul]);
+    expect(screen(tester).regionName, '서울 강남구 역삼동');
+
+    await tester.tap(find.text('Main'));
+    await tester.pumpAndSettle();
+    expect(find.text('서울 강남구 역삼동 오늘 날씨'), findsOneWidget);
+  });
   testWidgets('새로고침과 앱 복귀는 위치를 다시 읽고 알림 지역도 갱신한다', (tester) async {
     await start(tester);
     location.result =
@@ -356,6 +395,8 @@ void main() {
     await start(tester);
     expect(weather.calls.single.coordinates, isNull);
     expect(registration.calls.single.coordinates, isNull);
+    expect(gpsRegionName.calls, isEmpty);
+    expect(screen(tester).regionName, '현재 위치');
     expect(screen(tester).location.hasLocation, isTrue);
   });
   testWidgets('서버 설정 저장 실패가 GPS와 지역 변경을 막지 않는다', (tester) async {

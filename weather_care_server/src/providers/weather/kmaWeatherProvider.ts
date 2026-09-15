@@ -58,6 +58,11 @@ interface BaseDateTime {
   baseTime: string;
 }
 
+interface ForecastItemsAtBase {
+  base: BaseDateTime;
+  items: KmaForecastItem[];
+}
+
 export class KmaWeatherProviderError extends Error {
   constructor(
     message: string,
@@ -83,6 +88,21 @@ export class KmaWeatherProvider implements WeatherProvider {
   }
 
   async getForecastByRegion(nx: number, ny: number): Promise<WeatherForecast> {
+    return this.loadForecast(nx, ny, true);
+  }
+
+  async getLatestForecastByRegion(
+    nx: number,
+    ny: number,
+  ): Promise<WeatherForecast> {
+    return this.loadForecast(nx, ny, false);
+  }
+
+  private async loadForecast(
+    nx: number,
+    ny: number,
+    includeDailyCoverage: boolean,
+  ): Promise<WeatherForecast> {
     if (!this.serviceKey) {
       throw new KmaWeatherProviderError('KMA service key is not configured');
     }
@@ -91,23 +111,36 @@ export class KmaWeatherProvider implements WeatherProvider {
     }
 
     const now = this.now();
-    let lastError: unknown;
-    for (const base of latestBaseDateTimes(now, 4)) {
-      try {
-        const items = await this.fetchForecastItems(base, nx, ny);
-        return buildForecastFromItems(items, now, base);
-      } catch (error) {
-        lastError = error;
-        if (!(error instanceof KmaWeatherProviderError) || !error.retryable) {
-          throw error;
-        }
-      }
-    }
+    const requests = new Map<string, Promise<KmaForecastItem[]>>();
+    const fetchItems = (base: BaseDateTime) => {
+      const key = `${base.baseDate}${base.baseTime}`;
+      const existing = requests.get(key);
+      if (existing) return existing;
+      const pending = this.fetchForecastItems(base, nx, ny);
+      requests.set(key, pending);
+      return pending;
+    };
 
-    throw new KmaWeatherProviderError(
-      lastError instanceof Error
-        ? lastError.message
-        : 'KMA forecast is not available',
+    const latestPromise = firstAvailableForecastItems(
+      latestBaseDateTimes(now, 4),
+      fetchItems,
+    );
+    const coveragePromise = includeDailyCoverage
+      ? firstAvailableForecastItems(
+          dailyCoverageBaseDateTimes(now),
+          fetchItems,
+          true,
+        ).catch(() => undefined)
+      : Promise.resolve(undefined);
+    const latest = await latestPromise;
+    const coverage = await coveragePromise;
+    const items = coverage
+      ? mergeForecastItems(coverage.items, latest.items)
+      : latest.items;
+    return buildForecastFromItems(
+      items,
+      now,
+      latest.base,
     );
   }
 
@@ -190,22 +223,106 @@ export function latestBaseDateTimes(
   return candidates;
 }
 
+export function dailyCoverageBaseDateTimes(now: Date): BaseDateTime[] {
+  const targetKst = new Date(now.getTime() + KST_OFFSET_MS);
+  const effectiveKst = new Date(
+    now.getTime() + KST_OFFSET_MS - PUBLICATION_DELAY_MS,
+  );
+  const targetDate = formatKmaDate(targetKst);
+  const effectiveDate = formatKmaDate(effectiveKst);
+  const effectiveMinutes =
+    effectiveKst.getUTCHours() * 60 + effectiveKst.getUTCMinutes();
+  const previousDate = new Date(
+    Date.UTC(
+      targetKst.getUTCFullYear(),
+      targetKst.getUTCMonth(),
+      targetKst.getUTCDate() - 1,
+    ),
+  );
+  const candidates: BaseDateTime[] = [];
+
+  if (effectiveDate === targetDate && effectiveMinutes >= 2 * 60) {
+    candidates.push({ baseDate: targetDate, baseTime: '0200' });
+  }
+  candidates.push(
+    { baseDate: formatKmaDate(previousDate), baseTime: '2300' },
+    { baseDate: formatKmaDate(previousDate), baseTime: '2000' },
+  );
+  return candidates;
+}
+
+async function firstAvailableForecastItems(
+  bases: BaseDateTime[],
+  fetchItems: (base: BaseDateTime) => Promise<KmaForecastItem[]>,
+  retryAllErrors = false,
+): Promise<ForecastItemsAtBase> {
+  let lastError: unknown;
+  for (const base of bases) {
+    try {
+      return { base, items: await fetchItems(base) };
+    } catch (error) {
+      lastError = error;
+      if (
+        !retryAllErrors &&
+        (!(error instanceof KmaWeatherProviderError) || !error.retryable)
+      ) {
+        throw error;
+      }
+    }
+  }
+  throw new KmaWeatherProviderError(
+    lastError instanceof Error
+      ? lastError.message
+      : 'KMA forecast is not available',
+  );
+}
+
+function mergeForecastItems(
+  older: KmaForecastItem[],
+  newer: KmaForecastItem[],
+): KmaForecastItem[] {
+  const merged = new Map<string, KmaForecastItem>();
+  for (const item of [...older, ...newer]) {
+    merged.set(
+      `${item.fcstDate}${item.fcstTime.padStart(4, '0')}:${item.category}`,
+      item,
+    );
+  }
+  return [...merged.values()];
+}
+
 export function buildForecastFromItems(
   items: KmaForecastItem[],
   now: Date,
   base: BaseDateTime,
 ): WeatherForecast {
-  const slots = new Map<string, Map<string, string>>();
+  const slots = new Map<
+    string,
+    { categories: Map<string, string>; base: BaseDateTime }
+  >();
   for (const item of items) {
     const slotKey = `${item.fcstDate}${item.fcstTime.padStart(4, '0')}`;
-    const categories = slots.get(slotKey) ?? new Map<string, string>();
-    categories.set(item.category, item.fcstValue);
-    slots.set(slotKey, categories);
+    const itemBase = {
+      baseDate: item.baseDate,
+      baseTime: item.baseTime.padStart(4, '0'),
+    };
+    const slot = slots.get(slotKey) ?? {
+      categories: new Map<string, string>(),
+      base: itemBase,
+    };
+    slot.categories.set(item.category, item.fcstValue);
+    if (
+      `${itemBase.baseDate}${itemBase.baseTime}` >=
+      `${slot.base.baseDate}${slot.base.baseTime}`
+    ) {
+      slot.base = itemBase;
+    }
+    slots.set(slotKey, slot);
   }
 
   const allHourly = [...slots.entries()]
-    .map(([slotKey, categories]) =>
-      snapshotFromSlot(slotKey, categories, base, now),
+    .map(([slotKey, slot]) =>
+      snapshotFromSlot(slotKey, slot.categories, slot.base, now),
     )
     .filter((snapshot): snapshot is WeatherSnapshot => snapshot !== null)
     .sort((left, right) => left.observedAt.localeCompare(right.observedAt));
@@ -219,9 +336,18 @@ export function buildForecastFromItems(
   }
 
   const today = formatKmaDate(new Date(now.getTime() + KST_OFFSET_MS));
+  const tomorrow = formatKmaDate(
+    new Date(now.getTime() + KST_OFFSET_MS + 86_400_000),
+  );
+  const timelineHourly = allHourly.filter((snapshot) => {
+    const date = compactDate(snapshot.observedAt);
+    return date === today ||
+      (date === tomorrow && snapshot.observedAt.slice(11, 16) === '00:00');
+  });
   const daily = buildDailyForecast(items, allHourly, base)
     .filter((item) => item.date >= today)
-    .slice(0, 4);
+    // 17·20·23시 발표분은 오늘부터 그글피까지 최대 5개 날짜다.
+    .slice(0, 5);
   const todaySummary = daily.find((item) => item.date === today);
   const current: WeatherSnapshot = {
     ...hourly[0],
@@ -232,6 +358,7 @@ export function buildForecastFromItems(
   return {
     current,
     hourly,
+    timelineHourly,
     daily,
     baseDate: base.baseDate,
     baseTime: base.baseTime,
@@ -358,9 +485,20 @@ function buildDailyForecast(
       const snowProbability = maximum(
         snapshots.map((snapshot) => snapshot.snowProbability ?? 0),
       ) ?? 0;
+      const humidities = snapshots
+        .map((snapshot) => snapshot.humidity)
+        .filter((value): value is number => value !== undefined);
+      const windSpeeds = snapshots
+        .map((snapshot) => snapshot.windSpeed)
+        .filter((value): value is number => value !== undefined);
+      const snowfallDataAvailable = snapshots.some(
+        (snapshot) => snapshot.snowfallAmountRange !== undefined,
+      );
 
       return {
         date,
+        forecastSource: 'KMA_SHORT_TERM',
+        issuedAt: kmaBaseToIso(base),
         precipitationDetail: dailyPrecipitationDetail(date, hourly, base),
         minTemperature,
         maxTemperature,
@@ -368,6 +506,9 @@ function buildDailyForecast(
           : firstNumeric(categories.get('TMN')) === undefined ? 'HOURLY' : 'DAILY',
         maxTemperatureSource: maxTemperature === undefined ? undefined
           : firstNumeric(categories.get('TMX')) === undefined ? 'HOURLY' : 'DAILY',
+        averageHumidity: average(humidities),
+        maximumWindSpeed: maximum(windSpeeds),
+        snowfallDataAvailable,
         weatherDataComplete: snapshots.length > 0 &&
           snapshots.every((snapshot) => snapshot.skyCondition !== undefined) &&
           (Date.parse(snapshots[snapshots.length - 1].observedAt) - Date.parse(snapshots[0].observedAt)) / 3_600_000 + 1 === snapshots.length,
@@ -507,6 +648,11 @@ function minimum(values: number[]): number | undefined {
 
 function maximum(values: number[]): number | undefined {
   return values.length === 0 ? undefined : Math.max(...values);
+}
+
+function average(values: number[]): number | undefined {
+  if (values.length === 0) return undefined;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function formatKmaDate(date: Date): string {

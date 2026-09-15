@@ -64,6 +64,8 @@ describe('weekly precipitation intervals', () => {
   });
 
   it('adds raw range-aware data to the public weekly response without exposing legacy sums', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
     const forecast = buildForecastFromItems(current(), now, base);
     const provider = vi.spyOn(KmaWeatherProvider.prototype, 'getForecastByRegion').mockResolvedValue(forecast);
     try {
@@ -72,6 +74,9 @@ describe('weekly precipitation intervals', () => {
       const payload = await response.json<{ days: Record<string, unknown>[] }>();
       expect(payload.days[0]).toMatchObject({ forecastDate: '2026-12-31', precipitationDetail: forecast.daily[0].precipitationDetail });
       expect(payload.days[0]).not.toHaveProperty('precipitationAmount');
-    } finally { provider.mockRestore(); }
+    } finally {
+      provider.mockRestore();
+      vi.useRealTimers();
+    }
   });
 });

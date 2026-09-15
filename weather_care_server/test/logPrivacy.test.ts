@@ -12,8 +12,15 @@ describe('log privacy boundaries', () => {
     try {
       const response = await worker.fetch(new Request('https://example.invalid/api/v1/weather/weekly?nx=60&ny=121&installationId=private-installation'),
         { ...env, KMA_SERVICE_KEY: 'synthetic-key' }, createExecutionContext());
-      expect(response.status).toBe(502);
-      expect(log.mock.calls).toEqual([[JSON.stringify({ event: 'weather_provider_failed', provider: 'KMA', route: 'weekly', error: 'Error', failureReason: 'UNKNOWN' })]]);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        dataSource: '기상청 자료 없음',
+        days: [],
+      });
+      expect(log.mock.calls).toEqual([
+        [JSON.stringify({ event: 'weather_provider_failed', provider: 'KMA', route: 'weekly', error: 'Error', failureReason: 'UNKNOWN' })],
+        [JSON.stringify({ event: 'weekly_forecast_history_load_failed', error: 'Error' })],
+      ]);
     } finally { log.mockRestore(); provider.mockRestore(); }
   });
 

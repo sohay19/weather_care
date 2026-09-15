@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildForecastFromItems,
   calculateKmaApparentTemperature,
+  dailyCoverageBaseDateTimes,
   KmaForecastItem,
   KmaWeatherProvider,
   latestBaseDateTimes,
@@ -69,6 +70,22 @@ describe('KmaWeatherProvider', () => {
       { baseDate: '20260820', baseTime: '0500' },
       { baseDate: '20260820', baseTime: '0200' },
       { baseDate: '20260819', baseTime: '2300' },
+    ]);
+  });
+
+  it('selects the first daily issue or the previous-night issue for coverage', () => {
+    expect(
+      dailyCoverageBaseDateTimes(new Date('2026-09-15T00:24:00Z')),
+    ).toEqual([
+      { baseDate: '20260915', baseTime: '0200' },
+      { baseDate: '20260914', baseTime: '2300' },
+      { baseDate: '20260914', baseTime: '2000' },
+    ]);
+    expect(
+      dailyCoverageBaseDateTimes(new Date('2026-09-14T16:00:00Z')),
+    ).toEqual([
+      { baseDate: '20260914', baseTime: '2300' },
+      { baseDate: '20260914', baseTime: '2000' },
     ]);
   });
 
@@ -204,6 +221,32 @@ describe('KmaWeatherProvider', () => {
     );
   });
 
+  it('retains the fifth calendar day from an evening extended forecast', () => {
+    const eveningBase = { baseDate: '20260820', baseTime: '1700' };
+    const items = [20, 21, 22, 23, 24, 25].flatMap((day) =>
+      slot(
+        `202608${day}`,
+        '1800',
+        { TMP: String(day), PTY: '0', SKY: '1' },
+        eveningBase,
+      ),
+    );
+
+    const forecast = buildForecastFromItems(
+      items,
+      new Date('2026-08-20T09:00:00Z'),
+      eveningBase,
+    );
+
+    expect(forecast.daily.map((day) => day.date)).toEqual([
+      '20260820',
+      '20260821',
+      '20260822',
+      '20260823',
+      '20260824',
+    ]);
+  });
+
   it('retries the previous base time when the latest data is not ready', async () => {
     const successItems = slot('20260820', '1000', {
       TMP: '27',
@@ -215,16 +258,32 @@ describe('KmaWeatherProvider', () => {
       PTY: '0',
       SKY: '1',
     });
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        Response.json({
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const requestBase = new URL(String(input)).searchParams.get('base_time');
+      if (requestBase === '0800') {
+        return Response.json({
           response: {
             header: { resultCode: '03', resultMsg: 'NO_DATA' },
           },
-        }),
-      )
-      .mockResolvedValueOnce(successResponse(successItems));
+        });
+      }
+      if (requestBase === '0500') {
+        return successResponse(
+          successItems.map((item) => ({ ...item, baseTime: '0500' })),
+        );
+      }
+      if (requestBase === '0200') {
+        return successResponse(
+          slot(
+            '20260820',
+            '0300',
+            { TMP: '21', PTY: '0', SKY: '1' },
+            { baseDate: '20260820', baseTime: '0200' },
+          ),
+        );
+      }
+      throw new Error(`Unexpected base time: ${requestBase}`);
+    });
 
     const provider = new KmaWeatherProvider({
       serviceKey: 'abc%2B123',
@@ -233,13 +292,114 @@ describe('KmaWeatherProvider', () => {
     });
     const forecast = await provider.getForecastByRegion(60, 121);
 
-    expect(fetcher).toHaveBeenCalledTimes(2);
-    const firstUrl = new URL(String(fetcher.mock.calls[0][0]));
-    const secondUrl = new URL(String(fetcher.mock.calls[1][0]));
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    const requestUrls = fetcher.mock.calls.map(([input]) =>
+      new URL(String(input)),
+    );
+    const firstUrl = requestUrls[0];
     expect(firstUrl.searchParams.get('serviceKey')).toBe('abc+123');
     expect(firstUrl.searchParams.get('base_time')).toBe('0800');
-    expect(secondUrl.searchParams.get('base_time')).toBe('0500');
+    expect(requestUrls.map((url) => url.searchParams.get('base_time'))).toEqual(
+      expect.arrayContaining(['0200', '0500', '0800']),
+    );
     expect(forecast.current.temperature).toBe(27);
+    expect(forecast.timelineHourly?.[0].temperature).toBe(21);
+  });
+
+  it('loads the latest issue only for the fast Main response', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const requestBase = new URL(String(input)).searchParams.get('base_time');
+      if (requestBase !== '0800') {
+        throw new Error(`Unexpected base time: ${requestBase}`);
+      }
+      return successResponse(
+        slot(
+          '20260915',
+          '1000',
+          { TMP: '25', REH: '60', WSD: '2', PTY: '0', SKY: '1' },
+          { baseDate: '20260915', baseTime: '0800' },
+        ),
+      );
+    });
+    const provider = new KmaWeatherProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-09-15T00:24:00Z'),
+    });
+
+    const forecast = await provider.getLatestForecastByRegion(60, 121);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(forecast.current.temperature).toBe(25);
+  });
+
+  it('retains early hours from the first issue and lets the latest issue win', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const requestBase = new URL(String(input)).searchParams.get('base_time');
+      if (requestBase === '0800') {
+        return successResponse([
+          ...slot(
+            '20260915',
+            '0900',
+            { TMP: '25', PTY: '0', SKY: '1' },
+            { baseDate: '20260915', baseTime: '0800' },
+          ),
+          ...slot(
+            '20260916',
+            '0000',
+            { TMP: '20', PTY: '0', SKY: '3' },
+            { baseDate: '20260915', baseTime: '0800' },
+          ),
+        ]);
+      }
+      if (requestBase === '0200') {
+        return successResponse([
+          ...slot(
+            '20260915',
+            '0300',
+            { TMP: '18', PTY: '0', SKY: '1' },
+            { baseDate: '20260915', baseTime: '0200' },
+          ),
+          ...slot(
+            '20260915',
+            '0600',
+            { TMP: '20', PTY: '0', SKY: '3' },
+            { baseDate: '20260915', baseTime: '0200' },
+          ),
+          ...slot(
+            '20260915',
+            '0900',
+            { TMP: '23', PTY: '0', SKY: '4' },
+            { baseDate: '20260915', baseTime: '0200' },
+          ),
+        ]);
+      }
+      throw new Error(`Unexpected base time: ${requestBase}`);
+    });
+    const provider = new KmaWeatherProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-09-15T00:24:00Z'),
+    });
+
+    const forecast = await provider.getForecastByRegion(60, 121);
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(forecast.hourly.map((item) => item.observedAt)).toEqual([
+      '2026-09-15T09:00:00+09:00',
+      '2026-09-16T00:00:00+09:00',
+    ]);
+    expect(forecast.current.temperature).toBe(25);
+    expect(forecast.timelineHourly?.map((item) => [
+      item.observedAt,
+      item.temperature,
+      item.issuedAt,
+    ])).toEqual([
+      ['2026-09-15T03:00:00+09:00', 18, '2026-09-15T02:00:00+09:00'],
+      ['2026-09-15T06:00:00+09:00', 20, '2026-09-15T02:00:00+09:00'],
+      ['2026-09-15T09:00:00+09:00', 25, '2026-09-15T08:00:00+09:00'],
+      ['2026-09-16T00:00:00+09:00', 20, '2026-09-15T08:00:00+09:00'],
+    ]);
   });
 });
 
@@ -247,9 +407,10 @@ function slot(
   date: string,
   time: string,
   values: Record<string, string>,
+  sourceBase: { baseDate: string; baseTime: string } = base,
 ): KmaForecastItem[] {
   return Object.entries(values).map(([category, value]) =>
-    item(date, time, category, value),
+    item(date, time, category, value, sourceBase),
   );
 }
 
@@ -258,9 +419,10 @@ function item(
   time: string,
   category: string,
   value: string,
+  sourceBase: { baseDate: string; baseTime: string } = base,
 ): KmaForecastItem {
   return {
-    ...base,
+    ...sourceBase,
     category,
     fcstDate: date,
     fcstTime: time,

@@ -13,9 +13,14 @@ import { WeatherSnapshot, WeatherRuleFactType as Fact, LifestyleInsightType as I
 
 const base = { baseDate: '20260910', baseTime: '1100' };
 const now = new Date('2026-09-10T13:10:00+09:00');
-function items(date: string, time: string, overrides: Record<string, string> = {}): KmaForecastItem[] {
+function items(
+  date: string,
+  time: string,
+  overrides: Record<string, string> = {},
+  sourceBase = base,
+): KmaForecastItem[] {
   return Object.entries({ TMP: '22', REH: '50', WSD: '2', PTY: '0', SKY: '1', POP: '0', PCP: '강수없음', SNO: '적설없음', ...overrides })
-    .map(([category, fcstValue]) => ({ ...base, fcstDate: date, fcstTime: time, category, fcstValue, nx: 60, ny: 121 }));
+    .map(([category, fcstValue]) => ({ ...sourceBase, fcstDate: date, fcstTime: time, category, fcstValue, nx: 60, ny: 121 }));
 }
 function slot(hour: number, overrides: Partial<WeatherSnapshot> = {}): WeatherSnapshot {
   return { ...buildForecastFromItems(items('20260910', `${hour}00`), now, base).current,
@@ -82,12 +87,12 @@ describe('element-specific precipitation windows', () => {
     const sample = rain(15);
     const forecast = { current: sample, hourly: [sample], daily: [], ...base, dataSource: '기상청' };
     expect(buildWeatherBriefResult(forecast, { now }).slots.eventTime).toBe('오후 2시~3시');
-    const timeline = buildTimeline([sample])[0];
+    const timeline = buildTimeline([sample]).find((item) => item.timeLabel === '15')!;
     expect(timeline.timeLabel).toBe('15');
     expect(timeline.detail).toContain('예상기온 22.0℃');
     expect(timeline.detail).toContain('오후 2시~3시 강수 예보');
-    expect(timeline.stateLabel).toContain('오후 2시~3시');
-    expect(buildTimeline([slot(15, { precipitationProbability: undefined })])[0].detail).toContain('강수확률 자료 없음');
+    expect(buildTimeline([slot(15, { precipitationProbability: undefined })])
+      .find((item) => item.timeLabel === '15')!.detail).not.toContain('강수확률');
   });
 
   it('uses the precipitation start for laundry deadlines and replaces past deadlines with now', () => {
@@ -132,7 +137,12 @@ describe('element-specific precipitation windows', () => {
   });
 
   it('handles midnight across year boundaries', () => {
-    const forecast = buildForecastFromItems(items('20270101', '0000'), new Date('2026-12-31T23:10:00+09:00'), { baseDate: '20261231', baseTime: '2000' });
+    const yearEndBase = { baseDate: '20261231', baseTime: '2000' };
+    const forecast = buildForecastFromItems(
+      items('20270101', '0000', {}, yearEndBase),
+      new Date('2026-12-31T23:10:00+09:00'),
+      yearEndBase,
+    );
     expect(forecast.current.precipitationPeriod?.start).toBe('2026-12-31T14:00:00.000Z');
     expect(periodLabel(forecast.current.precipitationPeriod!.start, forecast.current.forecastAt!)).toBe('오후 11시~다음 날 오전 12시');
   });

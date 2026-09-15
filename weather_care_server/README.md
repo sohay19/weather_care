@@ -5,12 +5,15 @@ Cloudflare Workers + TypeScript + Hono + D1 기반의 서버 뼈대입니다.
 날씨·환경 원본 데이터는 공공데이터포털의 다음 서비스를 사용합니다.
 
 - [기상청 단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do)
+- [기상청 중기예보 조회서비스](https://www.data.go.kr/data/15059468/openapi.do)
+- [기상청 지상·AWS 일통계 관측자료](https://apihub.kma.go.kr/apiList.do?seqApi=2&seqApiSub=239)
 - [기상청 생활기상지수 조회서비스](https://www.data.go.kr/data/15085288/openapi.do) V5 `getUVIdxV5`
 - [한국환경공단 에어코리아 대기오염정보](https://www.data.go.kr/data/15073861/openapi.do)
 - [국가교통정보센터 돌발상황정보](https://www.its.go.kr/opendata/opendataList?service=event)
 
 ## API
 
+- `GET /api/v1/weather/main?nx=60&ny=121`
 - `GET /api/v1/weather/today?nx=60&ny=121`
 - `GET /api/v1/weather/weekly?nx=60&ny=121`
 - `GET /api/v1/weather/comparison/yesterday?nx=60&ny=121`
@@ -37,7 +40,7 @@ cp .dev.vars.example .dev.vars
 `.dev.vars`의 `KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
 `client_email`, `private_key`를 각각 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`로
 교체합니다. 현재 위치의 500m 강수 판정과 실제 발효 특보 조회에는 기상청
-API허브에서 고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
+API허브에서 중기예보·지상·AWS 일통계·고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
 `KMA_APIHUB_KEY`도 필요합니다.
 현재 시행 중인 도로 통제를 조회하려면 국가교통정보센터에서 돌발상황정보
 Open API 활용신청을 하고 발급받은 키를 홈서버 중계 서비스의 `ITS_API_KEY`에
@@ -82,6 +85,8 @@ npm run deploy
 - `src/notification/*`: 추천 결과 생성·중복 방지·FCM HTTP v1 전송
 - `src/database/*`: D1 저장/조회 함수
 - `src/providers/weather/kmaWeatherProvider.ts`: 기상청 응답 검증·정규화
+- `src/providers/weather/kmaMidTermProvider.ts`: 06시 중기 기온·육상예보(4~10일) 검증·정규화
+- `src/providers/weather/kmaDailyObservationProvider.ts`: 인근 지상·AWS 관측소의 지난 날 일 최저·최고기온·강수·적설 정규화
 - `src/providers/uv/kmaUvProvider.ts`: 생활기상지수 V5 자외선 3시간 예측 정규화
 - `src/providers/air/airKoreaAirQualityProvider.ts`: 에어코리아 PM10·PM2.5·오존 실시간 관측 정규화
 - `src/providers/environmental/environmentalDataService.ts`: 환경 데이터 캐시·부분 실패·Today 병합
@@ -90,7 +95,9 @@ npm run deploy
 - `src/providers/road/kmaRoadIceProvider.ts`: 고속도로 1km 구간별 도로살얼음 공식 단계와 현재 위치 거리 판정
 - `src/providers/traffic/itsRoadControlProvider.ts`: 국가교통정보센터의 현재 돌발상황 중 위치 3km 안의 실제 차로·전면 통제 판정
 - `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드·대기질 측정소·특보구역 매핑
-- `migrations/0001_init.sql`~`0009_minimum_age_policy.sql`: 테이블 DDL, 사용자별 현재 강수·특보·도로살얼음·도로 통제 상태와 만 14세 이상 정책 확인 상태
+- `migrations/0001_init.sql`~`0010_weekly_forecast_records.sql`: 테이블 DDL, 사용자별 현재 강수·특보·도로살얼음·도로 통제 상태, 만 14세 이상 정책 확인 상태와 날짜별 주간 예보 기록
+
+`/weather/main`은 앱 첫 화면에 필요한 현재 날씨와 요약만 반환합니다. 90분 안의 유효한 D1 현재 날씨가 있으면 이를 사용하고, 없으면 기상청 최신 발표분 한 건만 조회합니다. 시간별 예보·생활기상·대기질·강수·특보·도로 자료는 이 응답을 기다리지 않고 `/weather/today`에서 이어서 채웁니다.
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 
@@ -100,7 +107,9 @@ npm run deploy
 
 현재 환경 지역 카탈로그는 앱에서 사용하는 수원 `60:121`(자외선 `4111000000`, 인계동 측정소)와 검증용 서울 `60:127`(자외선 `1100000000`, 종로구 측정소)를 지원합니다. 지역 선택 기능을 확장할 때 행정코드와 측정소를 카탈로그에 함께 등록해야 합니다.
 
-`/weather/weekly`는 단기예보가 제공하는 오늘부터 글피까지의 날짜만 반환하며 가짜 날짜를 채우지 않습니다.
+`/weather/weekly`는 지역 단기예보를 우선하고, 공식 일 최저·최고가 없는 겹침 날짜와 이후 빈 날짜를 중기 기온·육상예보로 보충합니다. 단기와 중기 Provider는 독립 처리해 한쪽이 실패해도 나머지 자료를 반환합니다. 지난 날짜는 예보격자 대표점에 가장 가까운 기상청 지상·AWS 관측소의 실제 일통계를 우선 반환하고, 관측 미수신 시에만 D1에 남은 `저장된 예보`를 보조로 사용합니다. 두 예보와 관측·저장 기록이 모두 없으면 날씨를 추정하지 않고 결측 상태를 반환합니다.
+
+`/weather/today`의 현재 강수는 관측분석과 500m 레이더 일치를 선택 자료로 병합합니다. 레이더 합성장의 초기 로드가 공통 3.5초 제한을 넘어 정상 결과도 `null`로 반환되던 경로는 강수 전용 8초 대기로 분리했습니다. 전체 API 응답은 앱의 20초 제한 안에서 유지합니다.
 
 알림 Cron은 10분마다 실행됩니다. 현재 만 14세 이상 정책 버전이 확인된 설치만
 대상으로 삼고, 설치별 시간대와 알림 시간을 확인해 아침 브리핑을

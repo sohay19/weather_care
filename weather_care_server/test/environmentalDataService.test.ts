@@ -61,6 +61,43 @@ describe('environmental data enrichment', () => {
     expect(result.hourly[1].pm25).toBeUndefined();
   });
 
+  it('enriches retained timeline hours without moving them into the detail list', () => {
+    const input = forecast();
+    input.timelineHourly = [
+      {
+        observedAt: '2026-08-21T09:00:00+09:00',
+        forecastAt: '2026-08-21T09:00:00+09:00',
+        temperature: 23,
+        provider: 'KMA',
+        providerField: 'TMP',
+      },
+      ...input.hourly,
+    ];
+    const bundle: EnvironmentalDataBundle = {
+      uv: {
+        areaNo: '4111000000',
+        issuedAt: '2026-08-21T06:00:00+09:00',
+        provider: 'KMA_LIVING_INDEX_V5',
+        points: [
+          { forecastAt: '2026-08-21T09:00:00+09:00', uvIndex: 3 },
+        ],
+      },
+      sources: {
+        uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'AVAILABLE' },
+        airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' },
+      },
+    };
+
+    const result = enrichForecastWithEnvironmentalData(input, bundle);
+
+    expect(result.hourly).toHaveLength(3);
+    expect(result.timelineHourly).toHaveLength(4);
+    expect(result.timelineHourly?.[0]).toMatchObject({
+      uvIndex: 3,
+      provider: 'KMA+KMA_LIVING_INDEX_V5',
+    });
+  });
+
   it('keeps weather available and records flags when environmental providers fail', () => {
     const bundle: EnvironmentalDataBundle = {
       sources: {

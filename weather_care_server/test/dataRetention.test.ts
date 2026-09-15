@@ -16,6 +16,7 @@ import m6 from '../migrations/0006_road_control_state.sql?raw';
 import m7 from '../migrations/0007_installation_access.sql?raw';
 import m8 from '../migrations/0008_data_retention.sql?raw';
 import m9 from '../migrations/0009_minimum_age_policy.sql?raw';
+import m10 from '../migrations/0010_weekly_forecast_records.sql?raw';
 import recoveryReset from '../ops/recovery-reset.sql?raw';
 import recoveryVerify from '../ops/recovery-verify.sql?raw';
 
@@ -55,8 +56,8 @@ async function seed(target: string, activeAt: string) {
 
 beforeEach(async () => {
   // This suite uses only an isolated local test binding, never production D1.
-  await env.DB.exec('DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots;');
-  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9]) await apply(sql);
+  await env.DB.exec('DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots; DROP TABLE IF EXISTS weekly_forecast_records;');
+  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9, m10]) await apply(sql);
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -64,7 +65,7 @@ describe('one-year data retention', () => {
   it('clears restored personal data regardless of age, preserves shared weather, and is repeatable', async () => {
     await seed(id, old);
     await seed(other, now.toISOString());
-    await env.DB.exec("INSERT INTO active_regions VALUES ('r','t',60,121,2,'now'); INSERT INTO weather_cache VALUES ('shared','r',60,121,'weather','{}','AVAILABLE','now'); INSERT INTO daily_weather_snapshots (region_id, observation_date) VALUES ('r','2026-09-11');");
+    await env.DB.exec("INSERT INTO active_regions VALUES ('r','t',60,121,2,'now'); INSERT INTO weather_cache VALUES ('shared','r',60,121,'weather','{}','AVAILABLE','now'); INSERT INTO daily_weather_snapshots (region_id, observation_date) VALUES ('r','2026-09-11'); INSERT INTO weekly_forecast_records VALUES ('r','2026-09-11','{}','KMA_SHORT_TERM',NULL,'now');");
     const checks = recoveryVerify.replace(/--[^\n]*/g, '').split(';').map(s => s.trim()).filter(Boolean);
     expect((await env.DB.prepare(checks[0]).all<{remaining: number}>()).results.some(r => r.remaining > 0)).toBe(true);
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -80,6 +81,7 @@ describe('one-year data retention', () => {
       expect((await env.DB.prepare(checks[10]).all()).results).toEqual([]);
       expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM weather_cache').first('n')).toBe(1);
       expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM daily_weather_snapshots').first('n')).toBe(1);
+      expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM weekly_forecast_records').first('n')).toBe(1);
     }
     await env.DB.exec('CREATE TABLE recovery_unreviewed_personal_data (id TEXT);');
     try {

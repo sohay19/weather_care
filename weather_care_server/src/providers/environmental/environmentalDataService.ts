@@ -166,6 +166,22 @@ export function enrichForecastWithEnvironmentalData(
     const airQuality = index === 0 ? bundle.airQuality : undefined;
     return enrichSnapshot(snapshot, uvIndex, airQuality, bundle, index === 0);
   });
+  const enrichedHourlyByTime = new Map(
+    hourly.map((snapshot) => [
+      snapshot.forecastAt ?? snapshot.observedAt,
+      snapshot,
+    ]),
+  );
+  const timelineHourly = forecast.timelineHourly?.map((snapshot) =>
+    enrichedHourlyByTime.get(snapshot.forecastAt ?? snapshot.observedAt) ??
+    enrichSnapshot(
+      snapshot,
+      uvForTime(bundle.uv, snapshot.forecastAt ?? snapshot.observedAt),
+      undefined,
+      bundle,
+      false,
+    ),
+  );
   const first = hourly[0];
   const current = first
     ? {
@@ -188,6 +204,7 @@ export function enrichForecastWithEnvironmentalData(
     ...forecast,
     current,
     hourly,
+    timelineHourly,
     dataSource: dataSourceLabel(forecast.dataSource, bundle),
   };
 }

@@ -56,6 +56,30 @@ void main() {
     );
   });
 
+  test('첫 결과가 시까지만 있어도 뒤 결과의 동 이름을 우선한다', () {
+    expect(
+      preferNeighborhoodDisplayName([
+        '시흥시',
+        '시흥시 대야동',
+        '시흥시 은행동',
+      ]),
+      '시흥시 대야동',
+    );
+    expect(preferNeighborhoodDisplayName(['시흥시', null]), '시흥시');
+  });
+
+  test('행정 필드와 장소명에 동이 없으면 도로 주소에서 동을 보완한다', () {
+    expect(
+      koreanAdministrativeDisplayName(
+        administrativeArea: '경기도',
+        locality: '시흥시',
+        name: '대야역',
+        street: '경기도 시흥시 대야동 서해안로 123',
+      ),
+      '시흥시 대야동',
+    );
+  });
+
   test('행정구역으로 확인할 수 없는 값은 표시하지 않는다', () {
     expect(
       koreanAdministrativeDisplayName(name: '테헤란로 123'),

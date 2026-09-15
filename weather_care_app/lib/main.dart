@@ -8,17 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:weather_care/firebase_options.dart';
 
 import 'app.dart';
-import 'services/age_eligibility.dart';
-import 'services/age_eligibility_store.dart';
 import 'services/analytics_consent.dart';
 import 'services/ads_consent.dart';
-import 'services/api_client.dart';
-import 'services/app_config.dart';
 import 'services/banner_ad_unit_config.dart';
 import 'services/foreground_notification_service.dart';
-import 'services/installation_identity.dart';
 import 'services/notification_navigation_service.dart';
-import 'services/server_data_access.dart';
 import 'startup.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
@@ -29,15 +23,6 @@ final _foregroundNotifications = ForegroundNotificationService();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  try {
-    final eligibility = await AgeEligibilityStore.instance
-        .read()
-        .timeout(const Duration(seconds: 3));
-    if (eligibility != AgeEligibility.atLeast14) return;
-  } catch (_) {
-    // A background isolate must fail closed when it cannot verify the age gate.
-    return;
-  }
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -48,40 +33,19 @@ Future<void> main() async {
 
   runApp(
     WeatherCareStartup(
-      ageController: AgeEligibilityController.instance,
-      initializeAuthorizedApp: _initializeAuthorizedApp,
-      onAuthorizedAppMounted: _startAdsAfterAuthorizedFrame,
-      revokeUnder14ServerData: _revokeUnder14ServerData,
+      initializeApp: _initializeApp,
+      onAppMounted: _startAdsAfterAppFrame,
     ),
   );
 }
 
-Future<void> _revokeUnder14ServerData() async {
-  final config = await AppConfig.load();
-  final legacyInstallationId =
-      await const InstallationIdentity().getExisting() ?? '';
-  final access = ServerDataAccess(
-    api: ApiClient(
-      baseUrl: config.serverUrl,
-      timeout: const Duration(seconds: 20),
-    ),
-    legacyInstallationId: legacyInstallationId,
-  );
-  try {
-    final removed = await access.deleteExistingData();
-    if (!removed) throw StateError('Previous server registration remains');
-  } finally {
-    access.dispose();
-  }
-}
-
-Future<Widget> _initializeAuthorizedApp() async {
+Future<Widget> _initializeApp() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   // Keep the persisted native default off. Notification registration requests
-  // a token explicitly after permission and the age boundary are both valid.
+  // a token explicitly after notification permission is granted.
   await FirebaseMessaging.instance.setAutoInitEnabled(false);
   await AnalyticsConsent.instance.initialize();
 
@@ -112,7 +76,7 @@ Future<Widget> _initializeAuthorizedApp() async {
   );
 }
 
-void _startAdsAfterAuthorizedFrame() {
+void _startAdsAfterAppFrame() {
   // Release ads remain off unless the separate build-time kill switch is set.
   if (!kReleaseMode || BannerAdUnitConfig.current.releaseServingEnabled) {
     unawaited(AdsConsent.instance.refresh());

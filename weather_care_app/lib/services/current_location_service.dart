@@ -77,47 +77,22 @@ class CurrentLocationService {
           permission != LocationPermission.always) {
         return const LocationResult(LocationState.denied);
       }
+      try {
+        final lastKnown = await _platform.getLastKnownPosition();
+        if (lastKnown != null) {
+          final cachedResult = await _resultFromPosition(lastKnown);
+          if (cachedResult.hasLocation) return cachedResult;
+        }
+      } catch (_) {
+        // A missing platform cache must not prevent a fresh location request.
+      }
       final position = await _platform.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 8),
         ),
       );
-      if (!position.latitude.isFinite || !position.longitude.isFinite) {
-        return const LocationResult(LocationState.unavailable);
-      }
-      // Match the server's supported coordinate envelope, not a city fallback.
-      if (position.latitude < 30 ||
-          position.latitude > 44 ||
-          position.longitude < 120 ||
-          position.longitude > 134) {
-        return const LocationResult(LocationState.outsideServiceArea);
-      }
-      final age = (now?.call() ?? DateTime.now())
-          .toUtc()
-          .difference(position.timestamp.toUtc());
-      if (age > const Duration(minutes: 2) ||
-          age < const Duration(minutes: -1)) {
-        return const LocationResult(LocationState.unavailable);
-      }
-      LocationAccuracyStatus accuracy;
-      try {
-        accuracy = await _platform.getLocationAccuracy();
-      } catch (_) {
-        accuracy = LocationAccuracyStatus.unknown;
-      }
-      // Device uncertainty is not 500m-cell forecast accuracy. With coarse or
-      // unknown precision, send only the regional grid, never local-analysis coordinates.
-      final precise = accuracy == LocationAccuracyStatus.precise &&
-          position.hasAccuracy &&
-          position.accuracy.isFinite &&
-          position.accuracy > 0 &&
-          position.accuracy <= 500;
-      return LocationResult(
-          precise ? LocationState.ready : LocationState.approximate,
-          coordinates: DeviceCoordinates(
-              latitude: position.latitude, longitude: position.longitude),
-          measuredAt: position.timestamp.toUtc());
+      return _resultFromPosition(position);
     } on TimeoutException {
       return const LocationResult(LocationState.timedOut);
     } on LocationServiceDisabledException {
@@ -127,6 +102,45 @@ class CurrentLocationService {
     } catch (_) {
       return const LocationResult(LocationState.unavailable);
     }
+  }
+
+  Future<LocationResult> _resultFromPosition(Position position) async {
+    if (!position.latitude.isFinite || !position.longitude.isFinite) {
+      return const LocationResult(LocationState.unavailable);
+    }
+    // Match the server's supported coordinate envelope, not a city fallback.
+    if (position.latitude < 30 ||
+        position.latitude > 44 ||
+        position.longitude < 120 ||
+        position.longitude > 134) {
+      return const LocationResult(LocationState.outsideServiceArea);
+    }
+    final age = (now?.call() ?? DateTime.now())
+        .toUtc()
+        .difference(position.timestamp.toUtc());
+    if (age > const Duration(minutes: 2) || age < const Duration(minutes: -1)) {
+      return const LocationResult(LocationState.unavailable);
+    }
+    LocationAccuracyStatus accuracy;
+    try {
+      accuracy = await _platform.getLocationAccuracy();
+    } catch (_) {
+      accuracy = LocationAccuracyStatus.unknown;
+    }
+    // Device uncertainty is not 500m-cell forecast accuracy. With coarse or
+    // unknown precision, send only the regional grid, never local-analysis coordinates.
+    final precise = accuracy == LocationAccuracyStatus.precise &&
+        position.accuracy.isFinite &&
+        position.accuracy > 0 &&
+        position.accuracy <= 500;
+    return LocationResult(
+      precise ? LocationState.ready : LocationState.approximate,
+      coordinates: DeviceCoordinates(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      ),
+      measuredAt: position.timestamp.toUtc(),
+    );
   }
 
   Future<bool> openAppSettings() async {

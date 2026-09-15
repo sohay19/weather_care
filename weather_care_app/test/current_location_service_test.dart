@@ -32,10 +32,12 @@ class _Platform extends GeolocatorPlatform {
   LocationPermission requested = LocationPermission.whileInUse;
   LocationAccuracyStatus accuracy = LocationAccuracyStatus.precise;
   Position position = _position();
+  Position? lastKnownPosition;
   Object? failure;
   bool failSettings = false;
   int requests = 0;
   int reads = 0;
+  int cachedReads = 0;
   LocationSettings? settings;
 
   @override
@@ -55,6 +57,14 @@ class _Platform extends GeolocatorPlatform {
     settings = locationSettings;
     if (failure != null) throw failure!;
     return position;
+  }
+
+  @override
+  Future<Position?> getLastKnownPosition({
+    bool forceLocationManager = false,
+  }) async {
+    cachedReads++;
+    return lastKnownPosition;
   }
 
   @override
@@ -95,6 +105,30 @@ void main() {
     expect(result.measuredAt, _now);
     expect(platform.settings?.timeLimit, const Duration(seconds: 8));
   });
+  test('2분 이내의 마지막 위치가 있으면 새 GPS 측정을 기다리지 않는다', () async {
+    platform.lastKnownPosition = _position(
+      latitude: 37.43,
+      longitude: 126.80,
+      timestamp: _now.subtract(const Duration(seconds: 30)),
+    );
+
+    final result = await service.locate();
+
+    expect(result.state, LocationState.ready);
+    expect(result.coordinates?.latitude, 37.43);
+    expect(platform.cachedReads, 1);
+    expect(platform.reads, 0);
+  });
+  test('오래된 마지막 위치는 버리고 현재 위치를 측정한다', () async {
+    platform.lastKnownPosition = _position(
+      timestamp: _now.subtract(const Duration(minutes: 3)),
+    );
+
+    final result = await service.locate();
+
+    expect(result.state, LocationState.ready);
+    expect(platform.reads, 1);
+  });
   test('영구 거부와 기기 위치 기능 꺼짐을 구분한다', () async {
     platform.permission = LocationPermission.deniedForever;
     expect((await service.locate(requestPermission: true)).state,
@@ -127,14 +161,20 @@ void main() {
     _position(accuracy: 501),
     _position(accuracy: 0),
     _position(accuracy: double.nan),
-    _position(hasAccuracy: false)
   ]) {
-    test('측정 정확도 ${position.accuracy}/${position.hasAccuracy}는 정밀 분석에서 제외한다',
-        () async {
+    test('정확도 값 ${position.accuracy}는 정밀 분석에서 제외한다', () async {
       platform.position = position;
       expect((await service.locate()).canUseLocalAnalysis, isFalse);
     });
   }
+  test('Android 변환에서 hasAccuracy가 누락돼도 유효한 정밀도 값은 사용한다', () async {
+    platform.position = _position(accuracy: 5, hasAccuracy: false);
+
+    final result = await service.locate();
+
+    expect(result.state, LocationState.ready);
+    expect(result.canUseLocalAnalysis, isTrue);
+  });
   test('오래되거나 미래인 위치는 현재 위치로 사용하지 않는다', () async {
     for (final timestamp in [
       _now.subtract(const Duration(minutes: 3)),

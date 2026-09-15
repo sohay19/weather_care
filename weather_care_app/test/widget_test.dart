@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/app.dart';
+import 'package:weather_care/features/home/tabs/detail_tab.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/home_screen.dart';
@@ -321,14 +322,16 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: WeatherInfoCard(
-            current: CurrentWeather(
-              temperature: 29,
-              apparentTemperature: 32.7,
-              humidity: 72,
-              uvIndex: 7,
-              pm25: 41,
-              sky: '구름 많음',
+          body: SingleChildScrollView(
+            child: WeatherInfoCard(
+              current: CurrentWeather(
+                temperature: 29,
+                apparentTemperature: 32.7,
+                humidity: 72,
+                uvIndex: 7,
+                pm25: 41,
+                sky: '구름 많음',
+              ),
             ),
           ),
         ),
@@ -340,11 +343,11 @@ void main() {
     expect(find.text('초미세먼지'), findsOneWidget);
 
     await tester.tap(
-      find.byKey(const ValueKey('weather-metric-체감')),
+      find.byKey(const ValueKey('weather-metric-detail-체감')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('예상 체감온도'), findsOneWidget);
-    expect(find.textContaining('기온·습도·풍속 기준'), findsOneWidget);
+    expect(find.text('체감온도는 더운 수준이에요'), findsOneWidget);
+    expect(find.textContaining('기온·상대습도·풍속'), findsOneWidget);
   });
 
   testWidgets('five tabs start on a pull-to-refresh Main screen',
@@ -441,11 +444,13 @@ void main() {
       ),
     );
 
-    expect(find.text('수원 오늘 날씨'), findsOneWidget);
+    expect(find.text('수원 지금 날씨'), findsOneWidget);
     expect(find.textContaining('선택 지역'), findsNothing);
     expect(find.text('Check List'), findsOneWidget);
-    expect(find.text('오늘 날씨에 체크해야할 일들이에요'), findsOneWidget);
-    expect(find.text('현재 예보에서 안내할 생활행동이 없어요.'), findsOneWidget);
+    expect(find.text('오늘 준비할 물건을 확인해요'), findsOneWidget);
+    expect(find.text('오늘은 특별히 챙길 준비물이 없어요'), findsOneWidget);
+    expect(find.text('간단한 타임라인'), findsOneWidget);
+    expect(find.text('표시할 타임라인이 없어요'), findsOneWidget);
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
     expect(find.text('물 한 모금 챙기기'), findsNothing);
     expect(find.text('여유 있게 움직이기'), findsNothing);
@@ -453,6 +458,11 @@ void main() {
     expect(find.text('76㎍'), findsOneWidget);
     expect(find.text('어제와 비교'), findsNothing);
     expect(find.text('오후 3시 예상기온'), findsOneWidget);
+    expect(find.text('예상 체감온도'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('오후 3시 예상기온')).dy,
+      tester.getTopLeft(find.text('예상 체감온도')).dy,
+    );
     const weatherFeeling = '구름이 많은 날씨예요. 체감 상 조금 덥게 느껴질 수 있어요.';
     expect(find.text(weatherFeeling), findsOneWidget);
     expect(
@@ -484,8 +494,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Today starts with preparation without repeating the Main brief',
-      (tester) async {
+  testWidgets('Today는 현재 날씨 카드와 시간별 예보를 표시한다', (tester) async {
     const mainBrief = '자외선이 강할 수 있으니, 외출한다면 양산을 준비하세요';
     await tester.pumpWidget(
       MaterialApp(
@@ -499,12 +508,21 @@ void main() {
               recommendations: [],
               lifestyleMessages: [],
               timeline: [],
-              hourly: [],
+              hourly: [
+                HourlyWeatherItem(
+                  time: '15',
+                  temperature: 23,
+                  apparentTemperature: 24,
+                  precipitationProbability: 0,
+                  precipitationAmount: 0,
+                  snowExpected: false,
+                  snowfallAmount: 0,
+                  windSpeed: 2,
+                  skyCondition: '맑음',
+                ),
+              ],
             ),
-            recommendations: const [],
-            serverFeaturesAvailable: true,
             onRefresh: () async {},
-            onDetail: (_) {},
           ),
         ),
       ),
@@ -512,92 +530,101 @@ void main() {
 
     expect(find.text(mainBrief), findsNothing);
     expect(find.textContaining('챙겨야하는 항목'), findsNothing);
-    expect(find.text('Check List'), findsOneWidget);
-    expect(find.text('오늘은 특별히 챙길 준비물이 없어요'), findsOneWidget);
-    expect(find.text('간단한 타임라인'), findsOneWidget);
+    expect(find.byType(WeatherInfoCard), findsOneWidget);
+    expect(find.text('시간별 예보'), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byType(WeatherInfoCard)).dy,
+      lessThan(
+        tester
+            .getTopLeft(
+              find.byKey(const ValueKey('today-hourly-forecast-section')),
+            )
+            .dy,
+      ),
+    );
+    expect(find.text('Check List + 근거와 자료'), findsNothing);
+    expect(find.text('간단한 타임라인'), findsNothing);
+    expect(find.text('오늘 준비할 물건을 확인해요'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('생활행동 카드는 서버 점수를 위험색으로 바꾸지 않는다', (tester) async {
-    tester.view.physicalSize = const Size(360, 800);
+  testWidgets('Detail은 체크할 일과 판단 근거·자료를 항목별 세트로 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(360, 1100);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    LifestyleMessageType? openedDetail;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MainTab(
+          body: DetailTab(
             today: TodayWeatherResponse(
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
-              brief: '가방 속 준비물이 발걸음을 가볍게 해줄 거예요.',
+              brief: '테스트',
               current: const CurrentWeather(temperature: 22),
               recommendations: const [],
               lifestyleMessages: [
                 LifestyleMessage(
                   type: LifestyleMessageType.rainGearUseful,
                   title: '작은 우산을 챙겨요',
-                  score: 90,
+                  parts: const [
+                    WeatherMessagePart(
+                      role: WeatherMessageRole.appSuggestion,
+                      text: '작은 우산을 챙겨요',
+                    ),
+                    WeatherMessagePart(
+                      role: WeatherMessageRole.internalPossibility,
+                      text: '오후에 비가 올 가능성이 있어요.',
+                    ),
+                    WeatherMessagePart(
+                      role: WeatherMessageRole.officialFact,
+                      text: '오후 강수확률은 70%예요.',
+                      source: 'KMA_VILAGE_FCST',
+                    ),
+                  ],
                 ),
-                LifestyleMessage(
-                  type: LifestyleMessageType.outerwearUseful,
-                  title: '가벼운 겉옷을 챙겨요',
-                  score: 70,
-                ),
-                LifestyleMessage(
-                  type: LifestyleMessageType.laundryPickupDue,
-                  title: '실외 빨래가 있다면 실내로 들여놓으세요',
-                  score: 95,
+              ],
+              dataStatusMessages: const [
+                WeatherMessagePart(
+                  role: WeatherMessageRole.dataStatus,
+                  text: '자외선 자료를 확인하지 못했어요.',
                 ),
               ],
               timeline: const [],
               hourly: const [],
             ),
-            dateLabel: '8월 21일 금요일',
-            mood: 'cloudy',
+            recommendations: const [],
             serverFeaturesAvailable: true,
             onRefresh: () async {},
-            onDetail: (type) => openedDetail = type,
           ),
         ),
       ),
     );
 
-    BoxDecoration decorationFor(String title) {
-      final card = tester.widget<Container>(
-        find.byKey(ValueKey('main-todo-$title')),
-      );
-      return card.decoration! as BoxDecoration;
-    }
-
+    final matchedSet = find.byKey(
+      const ValueKey('lifestyle-evidence-set-rain_gear_useful'),
+    );
+    expect(matchedSet, findsOneWidget);
     expect(
-      decorationFor('작은 우산을 챙겨요').color,
-      WeatherCareTheme.surfaceSubtle,
+      find.descendant(of: matchedSet, matching: find.text('체크할 일')),
+      findsOneWidget,
     );
     expect(
-      decorationFor('가벼운 겉옷을 챙겨요').color,
-      WeatherCareTheme.surfaceSubtle,
+      find.descendant(of: matchedSet, matching: find.text('판단 근거')),
+      findsOneWidget,
     );
     expect(
-      decorationFor('실외 빨래가 있다면 실내로 들여놓으세요').color,
-      WeatherCareTheme.surfaceSubtle,
+      find.descendant(of: matchedSet, matching: find.text('사용한 자료')),
+      findsOneWidget,
     );
-    expect(decorationFor('작은 우산을 챙겨요').border, isNull);
-    expect(decorationFor('가벼운 겉옷을 챙겨요').border, isNull);
-    expect(
-      decorationFor('실외 빨래가 있다면 실내로 들여놓으세요').border,
-      isNull,
-    );
-    await tester.tap(
-      find.byKey(const ValueKey('main-todo-작은 우산을 챙겨요')),
-    );
-    await tester.pump();
-    expect(openedDetail, LifestyleMessageType.rainGearUseful);
+    expect(find.text('기상청 자료'), findsOneWidget);
+    expect(find.text('공통 자료 상태'), findsOneWidget);
+    expect(find.byType(WeatherInfoCard), findsNothing);
+    expect(find.text('시간별 예보'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-
   testWidgets('server failure dialog recommends retry before direct forecast',
       (tester) async {
     await tester.pumpWidget(
@@ -639,10 +666,8 @@ void main() {
     expect(bagItem, findsOneWidget);
     expect(find.text('오늘 준비할 물건을 확인해요'), findsOneWidget);
     expect(find.text('오후부터 필요해요'), findsNothing);
-    expect(
-      find.text('준비물은 여기서 체크하고, 필요한 시간은 아래에서 확인하세요'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('준비물은 여기서 체크하고'), findsNothing);
+    expect(find.textContaining('한국시간 0시에 초기화'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.tap(bagItem);
@@ -745,9 +770,9 @@ void main() {
             child: TimelineSection(
               items: [
                 TimelineItem(
-                  timeLabel: '12',
-                  stateLabel: '점심 무렵',
-                  detail: '햇볕이 강하고 체감온도가 높아요.',
+                  timeLabel: '06',
+                  stateLabel: '시간별 예보를 확인하세요',
+                  detail: '예상기온 18.0℃ / 맑음\n강수 예보 · 강수확률 10%',
                   recommendations: recommendations,
                 ),
               ],
@@ -759,12 +784,17 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(tester.getSize(find.text('점심 무렵')).height, lessThan(40));
+    expect(find.text('06'), findsOneWidget);
+    expect(find.text('시간별 예보를 확인하세요'), findsOneWidget);
+    expect(
+      find.text('예상기온 18.0℃ / 맑음\n강수 예보 · 강수확률 10%'),
+      findsOneWidget,
+    );
     expect(find.text('이 시간에 필요해요'), findsOneWidget);
     expect(find.bySemanticsLabel('선크림 근거 보기'), findsOneWidget);
 
     await tester.tap(
-      find.byKey(const ValueKey('timeline-detail-12-sunscreen')),
+      find.byKey(const ValueKey('timeline-detail-06-sunscreen')),
     );
     await tester.pump();
     expect(openedDetail, RecommendationType.sunscreen);
@@ -793,8 +823,11 @@ void main() {
       0.46,
     );
 
-    await tester.drag(find.byType(ListView), const Offset(0, -2200));
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('notification-toggle-heavyRainEnabled')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     expect(find.text('호우특보 안내'), findsOneWidget);
     expect(find.text('폭염특보 안내'), findsOneWidget);

@@ -148,7 +148,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           HomeSectionHeader(
-            icon: Icons.work_outline_rounded,
+            icon: Icons.playlist_add_check_rounded,
             title: 'Check List',
             subtitle: '오늘 준비할 물건을 확인해요',
           ),
@@ -199,35 +199,11 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
                 );
               },
             ),
-          if (visible.isNotEmpty) ...[
-            if (_loadFailed)
-              TextButton(
-                onPressed: () => _refreshDate(retry: true),
-                child: const Text('체크 상태를 불러오지 못했어요 · 다시 시도'),
-              ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const Icon(
-                  Icons.touch_app_outlined,
-                  size: 16,
-                  color: WeatherCareTheme.textSecondary,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '준비물은 여기서 체크하고, 필요한 시간은 아래에서 확인하세요',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              ],
+          if (visible.isNotEmpty && _loadFailed)
+            TextButton(
+              onPressed: () => _refreshDate(retry: true),
+              child: const Text('체크 상태를 불러오지 못했어요 · 다시 시도'),
             ),
-            const SizedBox(height: 6),
-            Text(
-              '체크는 오늘만 유지돼요 · 한국시간 0시에 초기화돼요',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
         ],
       ),
     );

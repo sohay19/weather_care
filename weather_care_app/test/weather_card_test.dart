@@ -35,15 +35,21 @@ void main() {
             airQualityObservedAt: timestamp,
           ));
       for (final label in ['초미세먼지', '미세먼지']) {
-        final metric = find.byKey(ValueKey('weather-metric-$label'));
-        await tester.ensureVisible(metric);
-        await tester.tap(metric);
+        final detailButton =
+            find.byKey(ValueKey('weather-metric-detail-$label'));
+        await tester.ensureVisible(detailButton);
+        await tester.tap(detailButton);
         await tester.pumpAndSettle();
         expect(
             find.textContaining('좌동 측정소 · 9월 10일 18시 00분 관측'), findsOneWidget);
-        expect(find.textContaining('사용자 위치에서 직접 측정한 농도는 아니에요'), findsOneWidget);
-        await tester.tap(find.text('확인'));
+        expect(find.textContaining('사용자 위치에서 직접 측정한 농도는 아니에요'), findsNothing);
+        await tester.ensureVisible(detailButton);
+        await tester.tap(detailButton);
         await tester.pumpAndSettle();
+        expect(
+          find.byKey(ValueKey('weather-metric-detail-content-$label')),
+          findsNothing,
+        );
       }
       expect(tester.takeException(), isNull);
     });
@@ -58,9 +64,10 @@ void main() {
           forecastAt: '2026-09-10T09:00:00Z',
           airQualityObservedAt: '2026-09-10T18:00:00',
         ));
-    final metric = find.byKey(const ValueKey('weather-metric-미세먼지'));
-    await tester.ensureVisible(metric);
-    await tester.tap(metric);
+    final detailButton =
+        find.byKey(const ValueKey('weather-metric-detail-미세먼지'));
+    await tester.ensureVisible(detailButton);
+    await tester.tap(detailButton);
     await tester.pumpAndSettle();
     expect(find.textContaining('측정소 정보 없음 · 관측 시각 정보 없음'), findsOneWidget);
     expect(find.textContaining('18시'), findsNothing);
@@ -120,16 +127,57 @@ void main() {
     expect(find.text('0.0℃'), findsNothing);
     for (final label in ['체감', '습도', '풍속', '자외선', '초미세먼지', '미세먼지']) {
       final metric = find.byKey(ValueKey('weather-metric-$label'));
+      final detailButton = find.byKey(ValueKey('weather-metric-detail-$label'));
       expect(metric, findsOneWidget);
-      await tester.ensureVisible(metric);
-      await tester.tap(metric);
+      await tester.ensureVisible(detailButton);
+      await tester.tap(detailButton);
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.textContaining('자료가 없어'), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('weather-metric-detail-content-$label')),
+        findsOneWidget,
+      );
       expect(find.textContaining('좋음 등급'), findsNothing);
-      expect(find.textContaining('낮음 단계'), findsNothing);
-      await tester.tap(find.text('확인'));
+      await tester.ensureVisible(detailButton);
+      await tester.tap(detailButton);
       await tester.pumpAndSettle();
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('각 지표 상세는 수준을 먼저 보여주고 설명을 아래에 둔다', (tester) async {
+    await _pumpCard(
+      tester,
+      const CurrentWeather(
+        temperature: 25,
+        apparentTemperature: 25,
+        humidity: 72,
+        windSpeed: 10,
+        uvIndex: 7,
+        pm25: 41,
+        pm10: 91,
+      ),
+    );
+
+    final expectedLevels = {
+      '체감': '체감온도는 조금 더운 수준이에요',
+      '습도': '실외 습도는 높은 수준이에요',
+      '풍속': '바람은 강한 수준이에요',
+      '자외선': '자외선은 높음 단계예요',
+      '초미세먼지': '초미세먼지는 나쁨 등급이에요',
+      '미세먼지': '미세먼지는 나쁨 등급이에요',
+    };
+    for (final entry in expectedLevels.entries) {
+      final button = find.byKey(
+        ValueKey('weather-metric-detail-${entry.key}'),
+      );
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      final level = find.byKey(
+        ValueKey('weather-metric-level-${entry.key}'),
+      );
+      expect(level, findsOneWidget);
+      expect(tester.widget<Text>(level).data, entry.value);
     }
     expect(tester.takeException(), isNull);
   });
@@ -207,30 +255,34 @@ void main() {
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-습도')));
       final third =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-풍속')));
-      if (scale == 1) {
-        expect(second.dy, first.dy);
-        expect(second.dx, greaterThan(first.dx));
-      } else {
-        expect(second.dy, greaterThan(first.dy));
-      }
-      expect(third.dy, greaterThan(first.dy));
+      expect(second.dx, first.dx);
+      expect(second.dy, greaterThan(first.dy));
+      expect(third.dx, first.dx);
+      expect(third.dy, greaterThan(second.dy));
 
       for (final label in ['풍속', '초미세먼지', '미세먼지']) {
-        final metric = find.byKey(ValueKey('weather-metric-$label'));
-        await tester.ensureVisible(metric);
-        await tester.tap(metric);
+        final detailButton =
+            find.byKey(ValueKey('weather-metric-detail-$label'));
+        await tester.ensureVisible(detailButton);
+        await tester.tap(detailButton);
         await tester.pumpAndSettle();
-        final body = tester
-            .widget<AlertDialog>(find.byType(AlertDialog))
-            .content! as Text;
+        final detail = find.byKey(
+          ValueKey('weather-metric-detail-content-$label'),
+        );
+        expect(detail, findsOneWidget);
         expect(
-            body.data,
-            contains(label == '풍속'
+          find.descendant(
+            of: detail,
+            matching: find.textContaining(label == '풍속'
                 ? '2.8m/s'
                 : label == '초미세먼지'
                     ? '41㎍/㎥'
-                    : '80㎍/㎥'));
-        await tester.tap(find.text('확인'));
+                    : '80㎍/㎥'),
+          ),
+          findsOneWidget,
+        );
+        await tester.ensureVisible(detailButton);
+        await tester.tap(detailButton);
         await tester.pumpAndSettle();
       }
       expect(tester.takeException(), isNull);
@@ -260,7 +312,7 @@ void main() {
       ),
     ));
     expect(find.text('예상기온'), findsOneWidget);
-    expect(find.text('자료 없음'), findsOneWidget);
+    expect(find.text('자료 없음'), findsNWidgets(2));
     expect(find.text('0.0℃'), findsNothing);
     expect(find.textContaining('하늘 상태 자료가 없어'), findsOneWidget);
     expect(find.textContaining('맑은 하늘'), findsNothing);

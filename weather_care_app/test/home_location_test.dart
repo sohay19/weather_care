@@ -23,6 +23,7 @@ import 'package:weather_care/services/weather_service.dart';
 import 'package:weather_care/services/region_catalog.dart';
 import 'package:weather_care/services/settings_save_controller.dart';
 import 'package:weather_care/services/notification_permission_service.dart';
+import 'package:weather_care/services/permission_onboarding_store.dart';
 import 'package:weather_care/services/server_data_access.dart';
 
 const _seoul = DeviceCoordinates(latitude: 37.57, longitude: 126.98);
@@ -33,7 +34,9 @@ class _DeletionApi extends ApiClient {
   _DeletionApi() : super(baseUrl: 'https://example.invalid');
   @override
   Future<Map<String, dynamic>> requestJson(String method, String path,
-      {Map<String, String>? query, Map<String, String>? headers, Map<String, dynamic>? body}) async {
+      {Map<String, String>? query,
+      Map<String, String>? headers,
+      Map<String, dynamic>? body}) async {
     if (method != 'DELETE') throw StateError('Unexpected request');
     deletes++;
     return {};
@@ -79,20 +82,39 @@ WeatherLoadResult _weather(int nx, int ny, {String? regionName}) =>
 class _Weather extends WeatherService {
   final calls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   Completer<WeatherLoadResult>? pending;
+  bool emitTodayWhilePending = false;
+  TodayWeatherResponse? mainPreview;
   String? regionName;
   _Weather()
       : super(ApiClient(baseUrl: ''),
             directKma: KmaDirectWeatherService(serviceKey: ''));
   @override
+  Future<TodayWeatherResponse?> fetchMainWeather({
+    int nx = 60,
+    int ny = 121,
+  }) async =>
+      mainPreview;
+
+  @override
   Future<WeatherLoadResult> fetchServerWeather(
       {required String installationId,
       int nx = 60,
       int ny = 121,
-      DeviceCoordinates? coordinates}) async {
+      DeviceCoordinates? coordinates,
+      String? regionCode,
+      String? regionName,
+      Future<String?>? regionNameFuture,
+      void Function(TodayWeatherResponse today)? onToday,
+      void Function(WeeklyWeatherResponse weekly)? onWeekly}) async {
     calls.add((nx: nx, ny: ny, coordinates: coordinates));
-    return pending == null
-        ? _weather(nx, ny, regionName: regionName)
-        : await pending!.future;
+    final result = _weather(nx, ny, regionName: regionName);
+    if (pending != null) {
+      if (emitTodayWhilePending) onToday?.call(result.today!);
+      return await pending!.future;
+    }
+    onToday?.call(result.today!);
+    onWeekly?.call(result.weekly!);
+    return result;
   }
 }
 
@@ -172,7 +194,9 @@ void main() {
   setUp(() {
     rootBundle.evict('config/kma.config.json');
     rootBundle.evict('assets/data/kma_regions.json');
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      PermissionOnboardingStore.storageKey: true,
+    });
     FlutterSecureStorage.setMockInitialValues({});
     location = _Location();
     gpsRegionName = _GpsRegionName();
@@ -181,11 +205,14 @@ void main() {
     registration = _Registration();
     notificationPermission = _NotificationPermission();
   });
-  Future<void> start(WidgetTester tester, {bool settle = true, ServerDataAccess? access}) async {
+  Future<void> start(WidgetTester tester,
+      {bool settle = true,
+      ServerDataAccess? access,
+      int initialIndex = 4}) async {
     await tester.pumpWidget(MaterialApp(
         home: HomeScreen(
             serverDataAccess: access,
-            initialIndex: 4,
+            initialIndex: initialIndex,
             locationService: location,
             gpsRegionNameService: gpsRegionName,
             weatherService: weather,
@@ -203,30 +230,100 @@ void main() {
   SettingsScreen screen(WidgetTester tester) =>
       tester.widget<SettingsScreen>(find.byType(SettingsScreen));
 
+  testWidgets('첫 안내 확인 한 번으로 알림과 위치 권한을 차례대로 요청한다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await start(tester, settle: false, initialIndex: 2);
+
+    expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
+        findsOneWidget);
+    expect(notificationPermission.requests, isEmpty);
+    expect(location.requests, isEmpty);
+
+    await tester
+        .tap(find.byKey(const ValueKey('permission-onboarding-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(notificationPermission.requests, [true]);
+    expect(location.requests, [true]);
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getBool(PermissionOnboardingStore.storageKey), isTrue);
+    expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
+        findsNothing);
+  });
+
+  testWidgets('오늘 자료가 먼저 오면 주간 조회를 기다리지 않고 Main을 표시한다', (tester) async {
+    weather.pending = Completer<WeatherLoadResult>();
+    weather.emitTodayWhilePending = true;
+
+    await start(tester, settle: false, initialIndex: 2);
+
+    expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
+    expect(find.textContaining('지금 날씨'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('first-load-duration-guide')), findsNothing);
+
+    weather.pending!.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('경량 자료가 먼저 오면 전체 Today 전에 Main 핵심 카드를 표시한다', (tester) async {
+    weather.mainPreview = _weather(60, 127).today;
+    weather.pending = Completer<WeatherLoadResult>();
+
+    await start(tester, settle: false, initialIndex: 2);
+
+    expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
+    expect(find.text('Check List를 불러오고 있어요'), findsOneWidget);
+    expect(find.text('시간별 자료를 불러오고 있어요'), findsOneWidget);
+
+    weather.pending!.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+    expect(find.text('Check List를 불러오고 있어요'), findsNothing);
+  });
+
   testWidgets('실제 삭제 콜백 후 복귀·새로고침·설정 변경으로 서버에 다시 등록하지 않는다', (tester) async {
-    var stored = jsonEncode({'mode': 'active', 'serverId': 'wc_fixture_server_1234567890', 'secret': 'a' * 64});
+    var stored = jsonEncode({
+      'mode': 'active',
+      'serverId': 'wc_fixture_server_1234567890',
+      'secret': 'a' * 64
+    });
     final api = _DeletionApi();
-    final access = ServerDataAccess(api: api, legacyInstallationId: 'wc_fixture_local_1234567890',
-      readStore: () async => stored, writeStore: (value) async { stored = value; });
+    final access = ServerDataAccess(
+        api: api,
+        legacyInstallationId: 'wc_fixture_local_1234567890',
+        readStore: () async => stored,
+        writeStore: (value) async {
+          stored = value;
+        });
     addTearDown(access.dispose);
-    await const AppSettingsRepository().save(AppSettings.fallback('test').copyWith(
-      locationMode: 'MANUAL', currentRegionId: '98_76', notificationTime: '06:35', umbrellaEnabled: false));
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(
+            locationMode: 'MANUAL',
+            currentRegionId: '98_76',
+            notificationTime: '06:35',
+            umbrellaEnabled: false));
     await start(tester, access: access);
     final registrations = registration.calls.length;
     final settingsWrites = sync.calls.length;
     await screen(tester).onDeleteServerData!();
     await tester.pumpAndSettle();
-    expect(api.deletes, 1); expect(access.mode, ServerDataMode.deleted);
+    expect(api.deletes, 1);
+    expect(access.mode, ServerDataMode.deleted);
     expect(screen(tester).saveState, SettingsSaveState.localOnly);
     final saved = await const AppSettingsRepository().load('test');
-    expect(saved.notificationEnabled, false); expect(saved.currentRegionId, '98_76');
-    expect(saved.notificationTime, '06:35'); expect(saved.umbrellaEnabled, false);
+    expect(saved.notificationEnabled, false);
+    expect(saved.currentRegionId, '98_76');
+    expect(saved.notificationTime, '06:35');
+    expect(saved.umbrellaEnabled, false);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await screen(tester).onRefresh!();
-    await screen(tester).onSettingsChanged!(saved.copyWith(notificationEnabled: true));
+    await screen(tester)
+        .onSettingsChanged!(saved.copyWith(notificationEnabled: true));
     await tester.pumpAndSettle();
-    expect(registration.calls.length, registrations); expect(sync.calls.length, settingsWrites);
+    expect(registration.calls.length, registrations);
+    expect(sync.calls.length, settingsWrites);
     expect(screen(tester).initialSettings!.notificationEnabled, false);
     expect(jsonDecode(stored)['mode'], 'deleted');
   });
@@ -286,7 +383,7 @@ void main() {
     expect(screen(tester).notificationPermission,
         NotificationPermissionState.authorized);
     expect(registration.calls, isEmpty);
-    expect(location.requests, [false]);
+    expect(location.requests, [false, true]);
   });
 
   testWidgets('권한 조회 대기 중 복귀하면 이전 상태를 다시 확인한다', (tester) async {
@@ -331,26 +428,42 @@ void main() {
   testWidgets('권한 거부 시 지역 대체 없이 대기하다 명시적 확인으로 복구한다', (tester) async {
     location.result = const LocationResult(LocationState.denied);
     await start(tester);
-    expect(location.requests, [false]);
+    expect(location.requests, [false, true]);
     expect(weather.calls, isEmpty);
     expect(registration.calls, isEmpty);
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
     expect(find.text('기준 위치를 확인해주세요'), findsOneWidget);
     expect(find.text('날씨 정보 미지원'), findsNothing);
-    await tester.tap(find.text('Setting'));
-    await tester.pumpAndSettle();
+    expect(
+        find.byKey(const ValueKey('location-primary-action')), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('manual-location-action')), findsOneWidget);
     location.result =
         const LocationResult(LocationState.ready, coordinates: _seoul);
-    await screen(tester).onLocate!();
+    await tester.tap(find.byKey(const ValueKey('location-primary-action')));
     await tester.pumpAndSettle();
     final grid = KmaGrid.fromCoordinates(
         latitude: _seoul.latitude, longitude: _seoul.longitude);
-    expect(location.requests, [false, true]);
+    expect(location.requests, [false, true, true]);
     expect(
         (weather.calls.single.nx, weather.calls.single.ny), (grid.nx, grid.ny));
     expect(registration.calls.single.coordinates, _seoul);
+    await tester.tap(find.text('Setting'));
+    await tester.pumpAndSettle();
     expect(screen(tester).location.state, LocationState.ready);
+  });
+  testWidgets('위치를 확인하지 못하면 수동 지역 메뉴로 이동할 수 있다', (tester) async {
+    location.result = const LocationResult(LocationState.denied);
+    await start(tester, initialIndex: 2);
+
+    await tester.tap(find.byKey(const ValueKey('manual-location-action')));
+    await tester.pumpAndSettle();
+
+    final navigation = tester.widget<NavigationBar>(
+        find.byKey(const ValueKey('main-bottom-navigation')));
+    expect(navigation.selectedIndex, 4);
+    expect(find.text('기준 지역'), findsOneWidget);
   });
   testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
     weather.regionName = '선택 지역';
@@ -359,8 +472,8 @@ void main() {
 
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    expect(find.text('현재 위치 오늘 날씨'), findsOneWidget);
-    expect(find.text('선택 지역 오늘 날씨'), findsNothing);
+    expect(find.text('현재 위치 지금 날씨'), findsOneWidget);
+    expect(find.text('선택 지역 지금 날씨'), findsNothing);
   });
   testWidgets('정밀 GPS 역지오코딩 지역명을 동까지 표시한다', (tester) async {
     gpsRegionName.result = '서울 강남구 역삼동';
@@ -370,7 +483,7 @@ void main() {
 
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    expect(find.text('서울 강남구 역삼동 오늘 날씨'), findsOneWidget);
+    expect(find.text('서울 강남구 역삼동 지금 날씨'), findsOneWidget);
   });
   testWidgets('새로고침과 앱 복귀는 위치를 다시 읽고 알림 지역도 갱신한다', (tester) async {
     await start(tester);

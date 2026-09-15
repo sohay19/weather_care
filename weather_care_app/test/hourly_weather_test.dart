@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
+import 'package:weather_care/features/home/widgets/hourly_forecast_section.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
@@ -72,12 +72,12 @@ void main() {
 
   testWidgets('자료가 빠진 시간대도 유지하며 없는 값과 원인을 만들지 않는다', (tester) async {
     await _pumpHourly(tester, [{}]);
-    final row = find.byKey(const ValueKey('detail-hourly-0'));
+    final row = find.byKey(const ValueKey('today-hourly-0'));
     expect(row, findsOneWidget);
     for (final text in [
       '시각 자료 없음',
       '날씨 자료 없음',
-      '예상기온 자료 없음',
+      '예상 기온 자료 없음',
       '예상 체감 자료 없음',
       '자료 없음: 강수확률 · 강수량 · 쌓일 눈 · 풍속',
     ]) {
@@ -86,7 +86,7 @@ void main() {
     }
     for (final text in [
       '맑음',
-      '예상기온 0℃',
+      '예상 기온 0℃',
       '강수확률 0%',
       '강수량 0mm',
       '바람 0.0m/s',
@@ -101,9 +101,9 @@ void main() {
 
   testWidgets('0도·무풍·대기질 0은 표시하고 무강수·무적설은 반복하지 않는다', (tester) async {
     await _pumpHourly(tester, [_zero]);
-    final row = find.byKey(const ValueKey('detail-hourly-0'));
+    final row = find.byKey(const ValueKey('today-hourly-0'));
     for (final text in [
-      '예상기온 0℃',
+      '예상 기온 0℃',
       '예상 체감 0℃',
       '바람 0.0m/s',
       '자외선 0',
@@ -118,6 +118,10 @@ void main() {
     expect(find.text('강수확률 0%'), findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
     expect(find.text('쌓일 눈 0cm'), findsNothing);
+    expect(
+      tester.getCenter(find.text('예상 기온 0℃')).dy,
+      tester.getCenter(find.text('예상 체감 0℃')).dy,
+    );
   });
 
   testWidgets('명시된 NONE 범위는 수치 필드가 없어도 결측으로 안내하지 않는다', (tester) async {
@@ -136,7 +140,7 @@ void main() {
         },
       }
     ]);
-    final row = find.byKey(const ValueKey('detail-hourly-0'));
+    final row = find.byKey(const ValueKey('today-hourly-0'));
     expect(find.descendant(of: row, matching: find.textContaining('자료 없음')),
         findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
@@ -199,7 +203,7 @@ void main() {
           ],
           scale: scale);
       await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('detail-hourly-0')),
+        find.byKey(const ValueKey('today-hourly-0')),
         400,
         scrollable: find.byType(Scrollable),
       );
@@ -223,7 +227,7 @@ void main() {
 
   testWidgets('빈 시간별 예보는 0 값의 행을 만들지 않는다', (tester) async {
     await _pumpHourly(tester, []);
-    expect(find.byKey(const ValueKey('detail-hourly-0')), findsNothing);
+    expect(find.byKey(const ValueKey('today-hourly-0')), findsNothing);
     expect(find.text('시간별 예보 자료가 없어 표시하기 어려워요.'), findsOneWidget);
   });
 }
@@ -249,11 +253,10 @@ Future<void> _pumpHourly(WidgetTester tester, List<Map<String, dynamic>> hourly,
     home: Scaffold(
       body: MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-        child: DetailTab(
-          today: TodayWeatherResponse.fromJson({'hourly': hourly}),
-          recommendations: const [],
-          serverFeaturesAvailable: true,
-          onRefresh: () async {},
+        child: SingleChildScrollView(
+          child: HourlyForecastSection(
+            items: TodayWeatherResponse.fromJson({'hourly': hourly}).hourly,
+          ),
         ),
       ),
     ),

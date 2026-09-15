@@ -2,25 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'features/age_gate/age_gate_app.dart';
-import 'services/age_eligibility.dart';
-import 'services/age_eligibility_store.dart';
-
-typedef AuthorizedAppInitializer = Future<Widget> Function();
-typedef Under14ServerDataRevoker = Future<void> Function();
+typedef WeatherCareAppInitializer = Future<Widget> Function();
 
 class WeatherCareStartup extends StatefulWidget {
-  final AgeEligibilityController ageController;
-  final AuthorizedAppInitializer initializeAuthorizedApp;
-  final VoidCallback? onAuthorizedAppMounted;
-  final Under14ServerDataRevoker? revokeUnder14ServerData;
+  final WeatherCareAppInitializer initializeApp;
+  final VoidCallback? onAppMounted;
 
   const WeatherCareStartup({
     super.key,
-    required this.ageController,
-    required this.initializeAuthorizedApp,
-    this.onAuthorizedAppMounted,
-    this.revokeUnder14ServerData,
+    required this.initializeApp,
+    this.onAppMounted,
   });
 
   @override
@@ -28,100 +19,21 @@ class WeatherCareStartup extends StatefulWidget {
 }
 
 class _WeatherCareStartupState extends State<WeatherCareStartup> {
-  Widget? _authorizedApp;
+  Widget? _app;
   bool _startingServices = false;
   String? _serviceError;
-  bool _revokingUnder14ServerData = false;
-  bool _under14RevocationAttempted = false;
-  String? _under14RevocationError;
   int _generation = 0;
 
   @override
   void initState() {
     super.initState();
-    widget.ageController.addListener(_onAgeChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(() async {
-        await widget.ageController.initialize();
-        if (mounted) _onAgeChanged();
-      }());
+      if (mounted) _startServices();
     });
   }
 
-  @override
-  void didUpdateWidget(covariant WeatherCareStartup oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.ageController == widget.ageController) return;
-    oldWidget.ageController.removeListener(_onAgeChanged);
-    widget.ageController.addListener(_onAgeChanged);
-    _authorizedApp = null;
-    _serviceError = null;
-    _startingServices = false;
-    _generation += 1;
-    unawaited(() async {
-      await widget.ageController.initialize();
-      if (mounted) _onAgeChanged();
-    }());
-  }
-
-  void _onAgeChanged() {
-    if (!mounted) return;
-    if (widget.ageController.sdkAccessAllowed) {
-      _startAuthorizedServices();
-      return;
-    }
-    final under14 = widget.ageController.ready &&
-        widget.ageController.eligibility == AgeEligibility.under14;
-    if (!under14) {
-      _under14RevocationAttempted = false;
-      _revokingUnder14ServerData = false;
-      _under14RevocationError = null;
-    }
-    _generation += 1;
-    setState(() {
-      _authorizedApp = null;
-      _serviceError = null;
-      _startingServices = false;
-    });
-    if (under14 && !_under14RevocationAttempted) {
-      _startUnder14Revocation();
-    }
-  }
-
-  void _startUnder14Revocation() {
-    if (_revokingUnder14ServerData) return;
-    final revoker = widget.revokeUnder14ServerData;
-    _under14RevocationAttempted = true;
-    if (revoker == null) return;
-    setState(() {
-      _revokingUnder14ServerData = true;
-      _under14RevocationError = null;
-    });
-    unawaited(() async {
-      try {
-        await revoker();
-        if (!mounted ||
-            widget.ageController.eligibility != AgeEligibility.under14) {
-          return;
-        }
-        setState(() => _revokingUnder14ServerData = false);
-      } catch (_) {
-        if (!mounted ||
-            widget.ageController.eligibility != AgeEligibility.under14) {
-          return;
-        }
-        setState(() {
-          _revokingUnder14ServerData = false;
-          _under14RevocationError =
-              '이전에 등록한 서버 알림을 정리하지 못했어요. 앱 기능은 차단되어 있지만 기존 알림이 도착할 수 있으니 다시 시도해주세요.';
-        });
-      }
-    }());
-  }
-
-  void _startAuthorizedServices() {
-    if (_startingServices || _authorizedApp != null) return;
+  void _startServices() {
+    if (_startingServices || _app != null) return;
     final generation = ++_generation;
     setState(() {
       _startingServices = true;
@@ -129,15 +41,15 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
     });
     unawaited(() async {
       try {
-        final app = await widget.initializeAuthorizedApp();
+        final app = await widget.initializeApp();
         if (!mounted || generation != _generation) return;
         setState(() {
-          _authorizedApp = app;
+          _app = app;
           _startingServices = false;
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && generation == _generation) {
-            widget.onAuthorizedAppMounted?.call();
+            widget.onAppMounted?.call();
           }
         });
       } catch (_) {
@@ -152,22 +64,54 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
 
   @override
   Widget build(BuildContext context) {
-    final app = _authorizedApp;
+    final app = _app;
     if (app != null) return app;
-    return AgeGateApp(
-      controller: widget.ageController,
-      startingServices: _startingServices,
-      serviceError: _serviceError,
-      onRetryServices: _startAuthorizedServices,
-      revokingUnder14ServerData: _revokingUnder14ServerData,
-      under14RevocationError: _under14RevocationError,
-      onRetryUnder14Revocation: _startUnder14Revocation,
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_serviceError == null)
+                    const Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 18),
+                        Text(
+                          '첫 실행은 권한 선택 시간을 제외하고 날씨 화면까지 최대 약 2분 걸릴 수 있어요.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    )
+                  else ...[
+                    const Icon(Icons.cloud_off_rounded, size: 42),
+                    const SizedBox(height: 16),
+                    Text(
+                      _serviceError!,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      key: const ValueKey('startup-services-retry'),
+                      onPressed: _startServices,
+                      child: const Text('다시 시도'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   @override
   void dispose() {
-    widget.ageController.removeListener(_onAgeChanged);
     _generation += 1;
     super.dispose();
   }

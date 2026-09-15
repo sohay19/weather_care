@@ -218,6 +218,17 @@ class WeeklyForecastItem {
   final double? max;
   final String? minTemperatureSource;
   final String? maxTemperatureSource;
+  final double? averageHumidity;
+  final double? maximumWindSpeed;
+  final double? maximumUvIndex;
+  final double? snowfallAmount;
+  final WeeklyAirQualityForecast? airQualityForecast;
+  final String? forecastSource;
+  final String? issuedAt;
+  final String? recordedAt;
+  final bool historical;
+  final String? observationStationId;
+  final double? observationDistanceKm;
   final bool recommendationsAvailable;
   final List<WeatherRecommendation> recommendations;
 
@@ -231,6 +242,17 @@ class WeeklyForecastItem {
     required this.max,
     this.minTemperatureSource,
     this.maxTemperatureSource,
+    this.averageHumidity,
+    this.maximumWindSpeed,
+    this.maximumUvIndex,
+    this.snowfallAmount,
+    this.airQualityForecast,
+    this.forecastSource,
+    this.issuedAt,
+    this.recordedAt,
+    this.historical = false,
+    this.observationStationId,
+    this.observationDistanceKm,
     this.recommendationsAvailable = true,
     required this.recommendations,
   });
@@ -268,9 +290,59 @@ class WeeklyForecastItem {
       max: max,
       minTemperatureSource: _optionalText(json['minTemperatureSource']),
       maxTemperatureSource: _optionalText(json['maxTemperatureSource']),
+      averageHumidity: _weeklyNumber(json['averageHumidity']),
+      maximumWindSpeed: _weeklyNumber(json['maximumWindSpeed']),
+      maximumUvIndex: _weeklyNumber(json['maximumUvIndex']),
+      snowfallAmount: _weeklyNumber(json['snowfallAmount']),
+      airQualityForecast:
+          WeeklyAirQualityForecast.fromJson(json['airQualityForecast']),
+      forecastSource: _optionalText(json['forecastSource']),
+      issuedAt: _optionalText(json['issuedAt']),
+      recordedAt: _optionalText(json['recordedAt']),
+      historical: json['historical'] == true,
+      observationStationId: _optionalText(json['observationStationId']),
+      observationDistanceKm: _weeklyNumber(json['observationDistanceKm']),
       recommendationsAvailable: raw is List && valid.length == raw.length,
       recommendations: active,
     );
+  }
+}
+
+class WeeklyAirQualityForecast {
+  final String? pm10Grade;
+  final String? pm25Grade;
+  final String? ozoneGrade;
+  final bool yellowDustMentioned;
+  final String? confidence;
+
+  const WeeklyAirQualityForecast({
+    this.pm10Grade,
+    this.pm25Grade,
+    this.ozoneGrade,
+    this.yellowDustMentioned = false,
+    this.confidence,
+  });
+
+  static WeeklyAirQualityForecast? fromJson(Object? value) {
+    if (value is! Map<String, dynamic>) return null;
+    final forecast = WeeklyAirQualityForecast(
+      pm10Grade: _optionalText(value['pm10Grade']),
+      pm25Grade: _optionalText(value['pm25Grade']),
+      ozoneGrade: _optionalText(value['ozoneGrade']),
+      yellowDustMentioned: value['yellowDustMentioned'] == true,
+      confidence: switch (_optionalText(value['confidence'])) {
+        '높음' => '높음',
+        '낮음' => '낮음',
+        _ => null,
+      },
+    );
+    return forecast.pm10Grade == null &&
+            forecast.pm25Grade == null &&
+            forecast.ozoneGrade == null &&
+            !forecast.yellowDustMentioned &&
+            forecast.confidence == null
+        ? null
+        : forecast;
   }
 }
 

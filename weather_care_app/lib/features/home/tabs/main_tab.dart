@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/lifestyle_message.dart';
+import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
+import '../widgets/recommendation_bag_section.dart';
+import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
+import '../widgets/timeline_section.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/weather_brief_text.dart';
 
@@ -13,8 +16,9 @@ class MainTab extends StatelessWidget {
   final String dateLabel;
   final String mood;
   final bool serverFeaturesAvailable;
+  final bool detailsLoading;
   final Future<void> Function() onRefresh;
-  final ValueChanged<LifestyleMessageType> onDetail;
+  final ValueChanged<RecommendationType> onDetail;
 
   const MainTab({
     super.key,
@@ -22,6 +26,7 @@ class MainTab extends StatelessWidget {
     required this.dateLabel,
     required this.mood,
     required this.serverFeaturesAvailable,
+    this.detailsLoading = false,
     required this.onRefresh,
     required this.onDetail,
   });
@@ -49,7 +54,7 @@ class MainTab extends StatelessWidget {
                   children: [
                     TabPageHeader(
                       eyebrow: dateLabel,
-                      title: '${today.region.name} 오늘 날씨',
+                      title: '${today.region.name} 지금 날씨',
                       subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                     ),
                     SizedBox(height: compact ? 10 : 14),
@@ -59,19 +64,79 @@ class MainTab extends StatelessWidget {
                       compact: compact,
                     ),
                     SizedBox(height: compact ? 10 : 14),
-                    _LifestyleDashboard(
-                      messages: today.lifestyleMessages,
-                      dataStatusMessages: today.dataStatusMessages,
-                      compact: compact,
-                      serverFeaturesAvailable: serverFeaturesAvailable,
-                      onDetail: onDetail,
-                    ),
+                    if (detailsLoading)
+                      const _ProgressiveLoadingCard(
+                        icon: Icons.playlist_add_check_rounded,
+                        title: 'Check List를 불러오고 있어요',
+                      )
+                    else if (serverFeaturesAvailable)
+                      RecommendationBagSection(
+                        regionName: today.region.name,
+                        recommendations: today.recommendations,
+                        onDetail: onDetail,
+                      )
+                    else
+                      const ServerFeatureUnavailableCard(
+                        icon: Icons.playlist_add_check_rounded,
+                        title: 'Check List',
+                      ),
+                    SizedBox(height: compact ? 10 : 14),
+                    if (detailsLoading)
+                      const _ProgressiveLoadingCard(
+                        icon: Icons.schedule_rounded,
+                        title: '시간별 자료를 불러오고 있어요',
+                      )
+                    else if (serverFeaturesAvailable)
+                      TimelineSection(
+                        items: today.timeline,
+                        onDetail: onDetail,
+                      )
+                    else
+                      const ServerFeatureUnavailableCard(
+                        icon: Icons.schedule_rounded,
+                        title: '간단한 타임라인',
+                      ),
                   ],
                 ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ProgressiveLoadingCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _ProgressiveLoadingCard({
+    required this.icon,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: WeatherCareTheme.surfaceDecoration(),
+      child: Row(
+        children: [
+          Icon(icon, color: WeatherCareTheme.primaryDeep),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const SizedBox.square(
+            dimension: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ],
       ),
     );
   }
@@ -123,52 +188,54 @@ class _TopWeatherCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: compact ? 22 : 28),
-          Row(
-            children: [
-              Text(
-                forecastTemperatureLabel(current.forecastAt),
-                style: TextStyle(
-                  color: WeatherCareTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                current.temperature == null
-                    ? '자료 없음'
-                    : '${current.temperature!.toStringAsFixed(1)}℃',
-                style: const TextStyle(
-                  color: WeatherCareTheme.primaryDeep,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 7),
-          Row(
+          FittedBox(
             key: const ValueKey('main-apparent-temperature-row'),
-            children: [
-              const Text(
-                '예상 체감온도',
-                style: TextStyle(
-                  color: WeatherCareTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (apparentTemperature != null)
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 Text(
-                  '${apparentTemperature.toStringAsFixed(1)}℃',
+                  forecastTemperatureLabel(current.forecastAt),
+                  style: const TextStyle(
+                    color: WeatherCareTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  current.temperature == null
+                      ? '자료 없음'
+                      : '${current.temperature!.toStringAsFixed(1)}℃',
                   style: const TextStyle(
                     color: WeatherCareTheme.primaryDeep,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-            ],
+                const SizedBox(width: 16),
+                const Text(
+                  '예상 체감온도',
+                  style: TextStyle(
+                    color: WeatherCareTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  apparentTemperature == null
+                      ? '자료 없음'
+                      : '${apparentTemperature.toStringAsFixed(1)}℃',
+                  style: const TextStyle(
+                    color: WeatherCareTheme.primaryDeep,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
           SizedBox(height: compact ? 8 : 10),
           Row(
@@ -365,273 +432,6 @@ _MetricState _pm10State(int? value) {
   return const _MetricState('매우 나쁨', WeatherCareTheme.danger);
 }
 
-class _LifestyleDashboard extends StatelessWidget {
-  final List<LifestyleMessage> messages;
-  final List<WeatherMessagePart> dataStatusMessages;
-  final bool compact;
-  final bool serverFeaturesAvailable;
-  final ValueChanged<LifestyleMessageType> onDetail;
-
-  const _LifestyleDashboard({
-    required this.messages,
-    required this.dataStatusMessages,
-    required this.compact,
-    required this.serverFeaturesAvailable,
-    required this.onDetail,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final display = _todoItems(messages);
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(compact ? 13 : 16),
-      decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: WeatherCareTheme.primarySoft,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: const Text(
-                  'TODAY',
-                  style: WeatherCareTheme.specialLabelStyle,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Check List',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      '오늘 날씨에 체크해야할 일들이에요',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: compact ? 8 : 10),
-          if (!serverFeaturesAvailable)
-            const _LifestyleUnsupported()
-          else if (display.isEmpty && dataStatusMessages.isEmpty)
-            const _NoLifestyleMessages()
-          else ...[
-            for (var index = 0; index < display.length; index++) ...[
-              _LifestyleActionCard(
-                item: display[index],
-                compact: compact,
-                onTap: () => onDetail(display[index].type),
-              ),
-              if (index < display.length - 1) SizedBox(height: compact ? 7 : 9),
-            ],
-            if (display.isNotEmpty && dataStatusMessages.isNotEmpty)
-              SizedBox(height: compact ? 8 : 10),
-            for (final status in dataStatusMessages)
-              _DataStatusLine(status: status),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _NoLifestyleMessages extends StatelessWidget {
-  const _NoLifestyleMessages();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: const Text(
-        '현재 예보에서 안내할 생활행동이 없어요.',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: WeatherCareTheme.textSecondary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _DataStatusLine extends StatelessWidget {
-  final WeatherMessagePart status;
-
-  const _DataStatusLine({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            size: 15,
-            color: WeatherCareTheme.textSecondary,
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              status.text,
-              style: WeatherCareTheme.microTextStyle,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LifestyleUnsupported extends StatelessWidget {
-  const _LifestyleUnsupported();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: const Text(
-        '운영 서버 미연결로 미지원',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: WeatherCareTheme.textSecondary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _LifestyleActionCard extends StatelessWidget {
-  final _TodoItem item;
-  final bool compact;
-  final VoidCallback onTap;
-
-  const _LifestyleActionCard({
-    required this.item,
-    required this.compact,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const style = _TodoStyle(
-      background: WeatherCareTheme.surfaceSubtle,
-      iconBackground: WeatherCareTheme.primarySoft,
-      accent: WeatherCareTheme.primaryDeep,
-    );
-    return Container(
-      key: ValueKey('main-todo-${item.title}'),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: style.background,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 10 : 12,
-              vertical: compact ? 15 : 18,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: compact ? 32 : 36,
-                  height: compact ? 32 : 36,
-                  decoration: BoxDecoration(
-                    color: style.iconBackground,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    item.icon,
-                    color: style.accent,
-                    size: compact ? 17 : 19,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.actionText,
-                        style: TextStyle(
-                          fontSize: compact ? 11 : 12,
-                          height: 1.2,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      for (final part in item.details) ...[
-                        const SizedBox(height: 5),
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              if (_showsChecklistRoleLabel(part.role))
-                                TextSpan(
-                                  text: '${part.role.label} · ',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              TextSpan(text: part.text),
-                            ],
-                          ),
-                          style: WeatherCareTheme.microTextStyle.copyWith(
-                            fontSize: compact ? 8.5 : 9.5,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: WeatherCareTheme.textSecondary,
-                  size: compact ? 18 : 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 String _weatherExpression(String? sky) {
   final value = sky ?? '';
   if (value.contains('비')) return '비가 내리는 날씨예요.';
@@ -674,145 +474,4 @@ String _apparentTemperatureLabel(double temperature) {
   if (temperature >= 10) return '선선한 편';
   if (temperature >= 0) return '쌀쌀한 편';
   return '추운 날씨';
-}
-
-bool _showsChecklistRoleLabel(WeatherMessageRole role) =>
-    role != WeatherMessageRole.internalPossibility &&
-    role != WeatherMessageRole.calculatedFact;
-
-List<_TodoItem> _todoItems(List<LifestyleMessage> messages) {
-  return messages.map((message) {
-    final presentation = _lifestylePresentation(message.type);
-    final actions = message.parts
-        .where((part) => part.role == WeatherMessageRole.appSuggestion)
-        .map((part) => part.text)
-        .toList();
-    final action = actions.isEmpty ? null : actions.first;
-    final details = message.parts
-        .where((part) => part.role != WeatherMessageRole.appSuggestion)
-        .toList();
-    return _TodoItem(
-      type: message.type,
-      icon: presentation.icon,
-      title: message.title,
-      actionText: action ?? message.title,
-      details: details,
-    );
-  }).toList();
-}
-
-class _TodoItem {
-  final LifestyleMessageType type;
-  final IconData icon;
-  final String title;
-  final String actionText;
-  final List<WeatherMessagePart> details;
-
-  const _TodoItem({
-    required this.type,
-    required this.icon,
-    required this.title,
-    required this.actionText,
-    this.details = const [],
-  });
-}
-
-class _TodoStyle {
-  final Color background;
-  final Color iconBackground;
-  final Color accent;
-
-  const _TodoStyle({
-    required this.background,
-    required this.iconBackground,
-    required this.accent,
-  });
-}
-
-_LifestyleCardPresentation _lifestylePresentation(
-  LifestyleMessageType type,
-) {
-  return switch (type) {
-    LifestyleMessageType.rainGearUseful => const _LifestyleCardPresentation(
-        icon: Icons.umbrella_outlined,
-      ),
-    LifestyleMessageType.strongSunExposure => const _LifestyleCardPresentation(
-        icon: Icons.wb_sunny_outlined,
-      ),
-    LifestyleMessageType.laundryPickupDue => const _LifestyleCardPresentation(
-        icon: Icons.local_laundry_service_outlined,
-      ),
-    LifestyleMessageType.outdoorCaution => const _LifestyleCardPresentation(
-        icon: Icons.air_rounded,
-      ),
-    LifestyleMessageType.windowCloseSoon => const _LifestyleCardPresentation(
-        icon: Icons.window_outlined,
-      ),
-    LifestyleMessageType.veryHotAndHumid => const _LifestyleCardPresentation(
-        icon: Icons.thermostat_rounded,
-      ),
-    LifestyleMessageType.coolerThanTemperature =>
-      const _LifestyleCardPresentation(
-        icon: Icons.air_rounded,
-      ),
-    LifestyleMessageType.outerwearUseful => const _LifestyleCardPresentation(
-        icon: Icons.checkroom_rounded,
-      ),
-    LifestyleMessageType.maskUseful => const _LifestyleCardPresentation(
-        icon: Icons.masks_outlined,
-      ),
-    LifestyleMessageType.ozoneCaution => const _LifestyleCardPresentation(
-        icon: Icons.air_rounded,
-      ),
-    LifestyleMessageType.hydrationImportant => const _LifestyleCardPresentation(
-        icon: Icons.local_drink_outlined,
-      ),
-    LifestyleMessageType.sunscreenUseful => const _LifestyleCardPresentation(
-        icon: Icons.spa_outlined,
-      ),
-    LifestyleMessageType.snowTravelCaution => const _LifestyleCardPresentation(
-        icon: Icons.ac_unit_rounded,
-      ),
-    LifestyleMessageType.largeTemperatureSwing =>
-      const _LifestyleCardPresentation(
-        icon: Icons.device_thermostat_outlined,
-      ),
-    LifestyleMessageType.rainBreakWindow => const _LifestyleCardPresentation(
-        icon: Icons.schedule_rounded,
-      ),
-    LifestyleMessageType.bestOutingWindow => const _LifestyleCardPresentation(
-        icon: Icons.schedule_rounded,
-      ),
-    LifestyleMessageType.petWalkWindow => const _LifestyleCardPresentation(
-        icon: Icons.pets_outlined,
-      ),
-    LifestyleMessageType.wetRoadCaution => const _LifestyleCardPresentation(
-        icon: Icons.directions_car_outlined,
-      ),
-    LifestyleMessageType.blackIceCaution => const _LifestyleCardPresentation(
-        icon: Icons.warning_amber_rounded,
-      ),
-    LifestyleMessageType.commuteRouteCaution =>
-      const _LifestyleCardPresentation(
-        icon: Icons.alt_route_rounded,
-      ),
-    LifestyleMessageType.rapidTemperatureDrop =>
-      const _LifestyleCardPresentation(
-        icon: Icons.thermostat_auto_outlined,
-      ),
-    LifestyleMessageType.nightWeatherCheck => const _LifestyleCardPresentation(
-        icon: Icons.bedtime_outlined,
-      ),
-    LifestyleMessageType.unknown => const _LifestyleCardPresentation(
-        icon: Icons.info_outline_rounded,
-      ),
-  };
-}
-
-class _LifestyleCardPresentation {
-  final IconData icon;
-
-  const _LifestyleCardPresentation({
-    required this.icon,
-  });
 }

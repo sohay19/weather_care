@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -185,6 +186,7 @@ void main() {
         now: () => DateTime.parse('2026-08-20T01:00:00Z'),
       ),
       internetProbe: () async => true,
+      serverRetryDelay: Duration.zero,
     );
 
     final result = await service.fetchWeather(installationId: 'test');
@@ -203,6 +205,7 @@ void main() {
         now: () => DateTime.parse('2026-08-20T01:00:00Z'),
       ),
       internetProbe: () async => true,
+      serverRetryDelay: Duration.zero,
     );
 
     final serverResult = await service.fetchServerWeather(
@@ -214,6 +217,79 @@ void main() {
     final directResult = await service.fetchDirectWeather();
     expect(directResult.hasWeather, isTrue);
     expect(directResult.mode, WeatherLoadMode.directKma);
+  });
+
+  test('Main 경량 조회는 위치 격자만 전송하고 전체 Today와 분리한다', () async {
+    final client = _RecordingApiClient();
+    final service = WeatherService(
+      client,
+      directKma: KmaDirectWeatherService(serviceKey: ''),
+    );
+
+    final main = await service.fetchMainWeather(nx: 58, ny: 124);
+
+    expect(main?.current.temperature, 24);
+    expect(client.queries['/api/v1/weather/main'], {
+      'nx': '58',
+      'ny': '124',
+    });
+  });
+
+  test('운영 서버 날씨 묶음은 5초 간격으로 최대 3회 재시도한다', () async {
+    final client = _RetryingApiClient(failuresBeforeSuccess: 3);
+    final waits = <Duration>[];
+    final service = WeatherService(
+      client,
+      directKma: KmaDirectWeatherService(serviceKey: ''),
+      serverRetryWait: (duration) async => waits.add(duration),
+    );
+
+    final result = await service.fetchServerWeather(installationId: 'test');
+
+    expect(result.mode, WeatherLoadMode.server);
+    expect(client.todayCalls, 4);
+    expect(client.weeklyCalls, 4);
+    expect(waits, List.filled(3, const Duration(seconds: 5)));
+  });
+
+  test('오늘 자료를 주간 자료보다 먼저 전달해 Main 선표시를 지원한다', () async {
+    final client = _StagedApiClient();
+    final service = WeatherService(
+      client,
+      directKma: KmaDirectWeatherService(serviceKey: ''),
+    );
+    TodayWeatherResponse? receivedToday;
+    WeeklyWeatherResponse? receivedWeekly;
+
+    final loading = service.fetchServerWeather(
+      installationId: 'test',
+      onToday: (today) => receivedToday = today,
+      onWeekly: (weekly) => receivedWeekly = weekly,
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(receivedToday?.current.temperature, 24);
+    expect(receivedWeekly, isNull);
+
+    client.weekly.complete({'days': <Map<String, dynamic>>[]});
+    final result = await loading;
+    expect(receivedWeekly, isNotNull);
+    expect(result.hasWeather, isTrue);
+  });
+
+  test('먼저 받은 오늘 자료는 주간 재시도 중 다시 요청하지 않는다', () async {
+    final client = _WeeklyRetryApiClient();
+    final service = WeatherService(
+      client,
+      directKma: KmaDirectWeatherService(serviceKey: ''),
+      serverRetryDelay: Duration.zero,
+    );
+
+    final result = await service.fetchServerWeather(installationId: 'test');
+
+    expect(result.hasWeather, isTrue);
+    expect(client.todayCalls, 1);
+    expect(client.weeklyCalls, 4);
   });
 
   test('GPS 좌표는 현재 강수 조회에만 전달한다', () async {
@@ -238,6 +314,35 @@ void main() {
         containsPair('longitude', '127.0286'));
     expect(
         client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
+  });
+
+  test('역지오코딩 지역명과 선택 지역 코드는 중기예보 조회에만 전달한다', () async {
+    final client = _RecordingApiClient();
+    final service = WeatherService(
+      client,
+      directKma: KmaDirectWeatherService(serviceKey: ''),
+    );
+
+    await service.fetchServerWeather(
+      installationId: 'device-1',
+      regionCode: '4139000000',
+      regionNameFuture: Future.value('시흥시 은행동'),
+    );
+
+    expect(
+        client.queries['/api/v1/weather/weekly'],
+        containsPair(
+          'regionCode',
+          '4139000000',
+        ));
+    expect(
+        client.queries['/api/v1/weather/weekly'],
+        containsPair(
+          'regionName',
+          '시흥시 은행동',
+        ));
+    expect(
+        client.queries['/api/v1/weather/today'], isNot(contains('regionName')));
   });
 
   test('시간대 예보는 forecastAt과 눈 예상 파생값을 사용한다', () {
@@ -353,6 +458,7 @@ void main() {
       _FailingApiClient(),
       directKma: KmaDirectWeatherService(serviceKey: ''),
       internetProbe: () async => false,
+      serverRetryDelay: Duration.zero,
     );
 
     final result = await service.fetchWeather(installationId: 'test');
@@ -417,6 +523,81 @@ class _RecordingApiClient extends ApiClient {
     Map<String, String>? query,
   }) async {
     queries[path] = query ?? {};
+    if (path.endsWith('/today') || path.endsWith('/main')) {
+      return {
+        'region': {
+          'nx': int.parse(query?['nx'] ?? '60'),
+          'ny': int.parse(query?['ny'] ?? '121'),
+          'name': '수원',
+        },
+        'current': {'temperature': 24},
+      };
+    }
+    return {'days': <Map<String, dynamic>>[]};
+  }
+}
+
+class _StagedApiClient extends ApiClient {
+  _StagedApiClient() : super(baseUrl: 'https://server.example');
+
+  final weekly = Completer<Map<String, dynamic>>();
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    if (path.endsWith('/today')) {
+      return {
+        'region': {'nx': 60, 'ny': 121, 'name': '수원'},
+        'current': {'temperature': 24},
+      };
+    }
+    return weekly.future;
+  }
+}
+
+class _WeeklyRetryApiClient extends ApiClient {
+  _WeeklyRetryApiClient() : super(baseUrl: 'https://server.example');
+
+  int todayCalls = 0;
+  int weeklyCalls = 0;
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    if (path.endsWith('/today')) {
+      todayCalls += 1;
+      return {
+        'region': {'nx': 60, 'ny': 121, 'name': '수원'},
+        'current': {'temperature': 24},
+      };
+    }
+    weeklyCalls += 1;
+    if (weeklyCalls < 4) throw Exception('weekly not ready');
+    return {'days': <Map<String, dynamic>>[]};
+  }
+}
+
+class _RetryingApiClient extends ApiClient {
+  final int failuresBeforeSuccess;
+  int todayCalls = 0;
+  int weeklyCalls = 0;
+
+  _RetryingApiClient({required this.failuresBeforeSuccess})
+      : super(baseUrl: 'https://server.example');
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    final calls = path.endsWith('/today') ? ++todayCalls : ++weeklyCalls;
+    if (calls <= failuresBeforeSuccess) {
+      throw Exception('temporary server failure');
+    }
     if (path.endsWith('/today')) {
       return {
         'region': {'nx': 60, 'ny': 121, 'name': '수원'},

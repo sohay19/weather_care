@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/detail_tab.dart';
+import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
-  testWidgets('Detail 타임라인은 한국시간 오늘 23시까지만 표시한다', (tester) async {
+  testWidgets('Today 시간별 예보는 한국시간 오늘 23시까지만 표시한다', (tester) async {
     final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
     final today = _isoDate(nowInKorea);
     final tomorrow = _isoDate(nowInKorea.add(const Duration(days: 1)));
@@ -47,7 +48,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DetailTab(
+          body: TodayTab(
             today: TodayWeatherResponse(
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
@@ -58,16 +59,14 @@ void main() {
               timeline: const [],
               hourly: hourly,
             ),
-            recommendations: const [],
-            serverFeaturesAvailable: true,
             onRefresh: () async {},
           ),
         ),
       ),
     );
 
-    expect(find.byKey(const ValueKey('detail-hourly-5')), findsOneWidget);
-    expect(find.byKey(const ValueKey('detail-hourly-6')), findsNothing);
+    expect(find.byKey(const ValueKey('today-hourly-5')), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-6')), findsNothing);
     expect(find.text('23시'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
     expect(find.text('눈 없음'), findsNothing);
@@ -150,7 +149,7 @@ void main() {
     );
   });
 
-  testWidgets('Today 준비물 선택은 해당 근거임을 구분해 표시한다', (tester) async {
+  testWidgets('Main 준비물 선택은 해당 근거임을 구분해 표시한다', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(

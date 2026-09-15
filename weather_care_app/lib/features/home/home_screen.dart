@@ -18,6 +18,7 @@ import '../../services/notification_destination.dart';
 import '../../services/settings_sync_service.dart';
 import '../../services/settings_save_controller.dart';
 import '../../services/notification_permission_service.dart';
+import '../../services/permission_onboarding_store.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
 import '../../services/gps_region_name_service.dart';
@@ -31,6 +32,7 @@ import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
 import 'tabs/week_tab.dart';
 import 'widgets/server_connection_failure_dialog.dart';
+import 'widgets/permission_onboarding_dialog.dart';
 import 'widgets/weather_status_view.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,6 +46,7 @@ class HomeScreen extends StatefulWidget {
   final RegionCatalog? regionCatalog;
   final NotificationPermissionService? notificationPermission;
   final ServerDataAccess? serverDataAccess;
+  final PermissionOnboardingStore permissionOnboardingStore;
 
   const HomeScreen({
     super.key,
@@ -57,6 +60,7 @@ class HomeScreen extends StatefulWidget {
     this.regionCatalog,
     this.notificationPermission,
     this.serverDataAccess,
+    this.permissionOnboardingStore = const PermissionOnboardingStore(),
   });
 
   @override
@@ -78,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void>? _refreshFuture;
   bool _refreshAgain = false;
   bool _requestPermission = false;
+  bool _locationPermissionPrompted = false;
   bool _initialized = false;
   bool _leftApp = false;
   bool _registrationInitialized = false;
@@ -102,6 +107,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   DetailFocusSource _detailFocusSource = DetailFocusSource.notification;
   int _detailFocusRequestId = 0;
   bool _loading = false;
+  bool _weeklyLoading = false;
+  bool _mainDetailsLoading = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
   KmaGrid? get _weatherGrid {
@@ -194,8 +201,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         })
       ..addListener(_onSettingsSaveChanged);
     unawaited(_settingsSave!.save(_settings));
-    unawaited(_readNotificationPermission());
     _initialized = true;
+    final permissionsConfirmed =
+        await widget.permissionOnboardingStore.isConfirmed();
+    if (!mounted) return;
+    if (!permissionsConfirmed) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const PermissionOnboardingDialog(),
+      );
+      if (!mounted) return;
+      if (confirmed == true) {
+        try {
+          await widget.permissionOnboardingStore.confirm();
+        } catch (_) {
+          // Permission requests remain usable even if the guide state cannot persist.
+        }
+        if (_settings.notificationEnabled) {
+          await _readNotificationPermission(request: true, sync: true);
+        }
+        if (!mounted) return;
+        await _refresh(requestPermission: _settings.locationMode == 'GPS');
+        return;
+      }
+    }
     await _loadData();
   }
 
@@ -263,9 +293,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _statusMessage = _location.message;
             }
           });
-          final result = await _locationService.locate(requestPermission: ask);
+          var result = await _locationService.locate(requestPermission: ask);
           if (!mounted) return;
           if (revision != _locationRevision) continue;
+          if (ask) _locationPermissionPrompted = true;
+          if (!ask &&
+              !_locationPermissionPrompted &&
+              result.state == LocationState.denied) {
+            _locationPermissionPrompted = true;
+            result = await _locationService.locate(requestPermission: true);
+            if (!mounted) return;
+            if (revision != _locationRevision) continue;
+          }
           setState(() {
             _location = result;
             _coordinates = result.coordinates;
@@ -286,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _weekly = null;
             _loadMode = WeatherLoadMode.unavailable;
             _statusMessage = _settings.locationMode == 'GPS'
-                ? '${_location.message}. Setting에서 위치를 다시 확인해주세요. 다른 지역으로 대체하지 않아요.'
+                ? '${_location.message}. 위치 권한을 확인하거나 지역을 직접 선택해주세요.'
                 : '저장된 지역을 확인할 수 없어요. Setting에서 기준 지역을 다시 선택해주세요.';
           });
           _notificationRegistration?.invalidateLocation();
@@ -316,7 +355,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               locationMode: _settings.locationMode,
               coordinates: preciseCoordinates));
         }
-        await _fetchWeather(revision, grid, preciseCoordinates);
+        await _fetchWeather(
+          revision,
+          grid,
+          preciseCoordinates,
+          gpsRegionNameFuture: gpsRegionNameFuture,
+          regionCode:
+              _settings.locationMode == 'GPS' ? null : _manualRegion?.code,
+          regionName:
+              _settings.locationMode == 'GPS' ? null : _manualRegion?.fullName,
+        );
         if (gpsRegionNameFuture != null) {
           await _applyGpsRegionName(
             revision,
@@ -362,12 +410,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _fetchWeather(
-      int revision, KmaGrid grid, DeviceCoordinates? coordinates) async {
+    int revision,
+    KmaGrid grid,
+    DeviceCoordinates? coordinates, {
+    Future<String?>? gpsRegionNameFuture,
+    String? regionCode,
+    String? regionName,
+  }) async {
     final service = _service;
     if (service == null || _loading) return;
 
     _loading = true;
-    if (_today == null || _weekly == null) {
+    _weeklyLoading = true;
+    if (_today == null) {
       setState(() {
         _loadMode = null;
         _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
@@ -376,16 +431,55 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     try {
       while (mounted) {
+        var mismatchedToday = false;
+        var fullTodayApplied = false;
+        if (_today == null) {
+          unawaited(service.fetchMainWeather(nx: grid.nx, ny: grid.ny).then(
+            (preview) {
+              if (preview != null && !fullTodayApplied) {
+                _applyServerMainPreview(revision, grid, preview);
+              }
+            },
+          ));
+        }
         final serverResult = await service.fetchServerWeather(
           installationId: _settings.installationId,
           nx: grid.nx,
           ny: grid.ny,
           coordinates: coordinates,
+          regionCode: regionCode,
+          regionName: regionName,
+          regionNameFuture: gpsRegionNameFuture,
+          onToday: (today) {
+            fullTodayApplied = true;
+            mismatchedToday = !_applyServerToday(revision, grid, today);
+          },
+          onWeekly: (weekly) => _applyServerWeekly(
+            revision,
+            weekly,
+          ),
         );
 
         if (!mounted || revision != _locationRevision) return;
-        if (serverResult.hasWeather) {
-          _applyResult(serverResult, grid);
+        if (serverResult.hasAnyWeather) {
+          if (serverResult.today case final today?) {
+            fullTodayApplied = true;
+            mismatchedToday = !_applyServerToday(revision, grid, today);
+          }
+          if (serverResult.weekly case final weekly?) {
+            _applyServerWeekly(revision, weekly);
+          }
+        }
+        if (mismatchedToday) {
+          _rejectUnexpectedGrid();
+          return;
+        }
+        if (serverResult.today != null) {
+          if (serverResult.weekly == null) {
+            setState(() {
+              _statusMessage = 'Main 날씨는 표시했지만 주간 자료를 받지 못했어요. 다시 확인해주세요.';
+            });
+          }
           return;
         }
 
@@ -415,7 +509,85 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     } finally {
       _loading = false;
+      if (mounted) setState(() => _weeklyLoading = false);
     }
+  }
+
+  bool _applyServerToday(
+    int revision,
+    KmaGrid expectedGrid,
+    TodayWeatherResponse today,
+  ) {
+    if (!mounted || revision != _locationRevision) return false;
+    final received = today.region;
+    if (received.nx != expectedGrid.nx || received.ny != expectedGrid.ny) {
+      return false;
+    }
+    final selected = _settings.locationMode == 'MANUAL' ? _manualRegion : null;
+    setState(() {
+      _today = selected != null &&
+              today.region.nx == selected.nx &&
+              today.region.ny == selected.ny
+          ? today.withRegionName(selected.fullName)
+          : _settings.locationMode == 'GPS'
+              ? today.withRegionName(_gpsRegionName ?? '현재 위치')
+              : today;
+      _loadMode = WeatherLoadMode.server;
+      _mainDetailsLoading = false;
+      _statusMessage = 'Main 날씨를 먼저 표시했어요. 주간 자료는 계속 불러오고 있어요.';
+    });
+    return true;
+  }
+
+  bool _applyServerMainPreview(
+    int revision,
+    KmaGrid expectedGrid,
+    TodayWeatherResponse preview,
+  ) {
+    if (!mounted || revision != _locationRevision || _today != null) {
+      return false;
+    }
+    final received = preview.region;
+    if (received.nx != expectedGrid.nx || received.ny != expectedGrid.ny) {
+      return false;
+    }
+    final selected = _settings.locationMode == 'MANUAL' ? _manualRegion : null;
+    setState(() {
+      _today = selected != null &&
+              preview.region.nx == selected.nx &&
+              preview.region.ny == selected.ny
+          ? preview.withRegionName(selected.fullName)
+          : _settings.locationMode == 'GPS'
+              ? preview.withRegionName(_gpsRegionName ?? '현재 위치')
+              : preview;
+      _loadMode = WeatherLoadMode.server;
+      _mainDetailsLoading = true;
+      _statusMessage = 'Main 핵심 날씨를 먼저 표시했어요. 상세 자료를 계속 불러오고 있어요.';
+    });
+    return true;
+  }
+
+  void _rejectUnexpectedGrid() {
+    setState(() {
+      _today = null;
+      _weekly = null;
+      _mainDetailsLoading = false;
+      _loadMode = WeatherLoadMode.unavailable;
+      _statusMessage = '기준 지역과 다른 날씨 자료를 받아 표시하지 않았어요. 새로고침해 다시 확인해주세요.';
+    });
+  }
+
+  void _applyServerWeekly(
+    int revision,
+    WeeklyWeatherResponse weekly,
+  ) {
+    if (!mounted || revision != _locationRevision) return;
+    setState(() {
+      _weekly = weekly;
+      _weeklyLoading = false;
+      _loadMode = WeatherLoadMode.server;
+      _statusMessage = '운영 서버 연결';
+    });
   }
 
   void _applyResult(WeatherLoadResult result, KmaGrid expectedGrid) {
@@ -442,6 +614,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _today = today;
       }
       _weekly = result.weekly;
+      _mainDetailsLoading = false;
       _loadMode = result.mode;
       _statusMessage = result.message;
     });
@@ -472,7 +645,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final today = _today;
     final weekly = _weekly;
-    final hasWeather = today != null && weekly != null;
     final serverFeaturesAvailable = _loadMode == WeatherLoadMode.server;
     final settingsPanel = AbsorbPointer(
         absorbing: !_initialized,
@@ -511,16 +683,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           bottom: false,
           child: IndexedStack(
             index: _selectedIndex,
-            children: hasWeather
-                ? [
-                    TodayTab(
+            children: [
+              today == null
+                  ? _statusView('today-tab')
+                  : TodayTab(
                       today: today,
-                      recommendations: _priorityRecommendations,
-                      serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
-                      onDetail: _openRecommendationDetail,
                     ),
-                    DetailTab(
+              today == null
+                  ? _statusView('detail-tab')
+                  : DetailTab(
                       today: today,
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
@@ -530,15 +702,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       focusSource: _detailFocusSource,
                       focusRequestId: _detailFocusRequestId,
                     ),
-                    MainTab(
+              today == null
+                  ? _statusView('main-tab')
+                  : MainTab(
                       today: today,
                       dateLabel: _dateLabel,
                       mood: _mood,
                       serverFeaturesAvailable: serverFeaturesAvailable,
+                      detailsLoading: _mainDetailsLoading,
                       onRefresh: _loadData,
-                      onDetail: _openLifestyleDetail,
+                      onDetail: _openRecommendationDetail,
                     ),
-                    WeekTab(
+              weekly == null
+                  ? _statusView(
+                      'week-tab',
+                      loading: _weeklyLoading || _loadMode == null,
+                      title: _weeklyLoading ? '주간 자료를 불러오고 있어요' : null,
+                      message: _weeklyLoading
+                          ? '주간 예보와 지난 날짜 자료가 도착하면 화면을 바로 업데이트해요.'
+                          : null,
+                    )
+                  : WeekTab(
                       weekly: weekly,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
@@ -546,15 +730,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ? const ConsentAwareInlineBanner()
                           : null,
                     ),
-                    settingsPanel,
-                  ]
-                : [
-                    _statusView('today-tab'),
-                    _statusView('detail-tab'),
-                    _statusView('main-tab'),
-                    _statusView('week-tab'),
-                    settingsPanel,
-                  ],
+              settingsPanel,
+            ],
           ),
         ),
         bottomNavigationBar: NavigationBar(
@@ -636,15 +813,46 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _statusView(String viewKey) {
+  Widget _statusView(
+    String viewKey, {
+    bool? loading,
+    String? title,
+    String? message,
+  }) {
+    final missingLocation = _loadMode != null && _weatherGrid == null;
     return WeatherStatusView(
       viewKey: viewKey,
-      loading: _loadMode == null,
+      loading: loading ?? (_loadMode == null || _loading),
       offline: _loadMode == WeatherLoadMode.offline,
-      title: _loadMode != null && _weatherGrid == null ? '기준 위치를 확인해주세요' : null,
-      message: _statusMessage,
+      title: missingLocation ? '기준 위치를 확인해주세요' : title,
+      message: message ?? _statusMessage,
       onRetry: _loadData,
+      primaryActionLabel: missingLocation && _settings.locationMode == 'GPS'
+          ? switch (_location.state) {
+              LocationState.deniedForever => '앱 위치 권한 설정 열기',
+              LocationState.serviceDisabled => '기기 위치 설정 열기',
+              LocationState.denied => '위치 권한 다시 요청',
+              _ => '현재 위치 다시 확인',
+            }
+          : null,
+      onPrimaryAction: missingLocation && _settings.locationMode == 'GPS'
+          ? _handleLocationAction
+          : null,
+      secondaryActionLabel: missingLocation ? '지역 직접 선택' : null,
+      onSecondaryAction: missingLocation ? _openManualRegionMenu : null,
     );
+  }
+
+  Future<void> _handleLocationAction() {
+    if (_location.state == LocationState.deniedForever ||
+        _location.state == LocationState.serviceDisabled) {
+      return _openDeviceLocationSettings();
+    }
+    return _refresh(requestPermission: true);
+  }
+
+  void _openManualRegionMenu() {
+    setState(() => _selectedIndex = 4);
   }
 
   void _openRecommendationDetail(RecommendationType type) {
@@ -652,16 +860,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _detailFocusTopic = null;
       _detailFocusLifestyleType =
           detailLifestyleTypeForRecommendationType(type);
-      _detailFocusSource = DetailFocusSource.selection;
-      _detailFocusRequestId += 1;
-      _selectedIndex = 1;
-    });
-  }
-
-  void _openLifestyleDetail(LifestyleMessageType type) {
-    setState(() {
-      _detailFocusTopic = null;
-      _detailFocusLifestyleType = type;
       _detailFocusSource = DetailFocusSource.selection;
       _detailFocusRequestId += 1;
       _selectedIndex = 1;
@@ -683,6 +881,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _gpsRegionName = null;
         _today = null;
         _weekly = null;
+        _mainDetailsLoading = false;
         _loadMode = null;
         _notificationRegistration?.invalidateLocation();
       }

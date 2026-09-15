@@ -45,16 +45,18 @@ class DailyPrecipitationDetail {
   final String kind;
   final List<PrecipitationHour> hours;
   final double? extendedMaxProbability;
+  final double? observedAmount;
 
   const DailyPrecipitationDetail({
     required this.kind,
     required this.hours,
     this.extendedMaxProbability,
+    this.observedAmount,
   });
 
   static DailyPrecipitationDetail? fromJson(Object? value) {
     if (value is! Map<String, dynamic> ||
-        !const ['HOURLY', 'EXTENDED'].contains(value['kind']) ||
+        !const ['HOURLY', 'EXTENDED', 'OBSERVATION'].contains(value['kind']) ||
         value['hours'] is! List) {
       return null;
     }
@@ -67,8 +69,16 @@ class DailyPrecipitationDetail {
       hours: hours.map(PrecipitationHour.fromJson).toList(),
       extendedMaxProbability:
           precipitationProbability(value['extendedMaxProbability']),
+      observedAmount: _nonNegativeAmount(value['observedAmount']),
     );
   }
+}
+
+double? _nonNegativeAmount(Object? value) {
+  final number = value is num ? value.toDouble() : null;
+  return number != null && number.isFinite && number >= 0 && number <= 2000
+      ? number
+      : null;
 }
 
 class PrecipitationHour {

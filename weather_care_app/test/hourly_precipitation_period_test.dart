@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
+import 'package:weather_care/features/home/widgets/hourly_forecast_section.dart';
 import 'package:weather_care/models/precipitation.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/utils/korea_date.dart';
@@ -62,7 +62,9 @@ void main() {
           scale: scale);
       expect(find.text('15시'), findsOneWidget);
       expect(find.text('14~15시 강수 예보'), findsOneWidget);
-      expect(find.text('예상기온 22℃'), findsOneWidget);
+      expect(find.text('예상 기온 22℃'), findsOneWidget);
+      expect(find.text('예상 체감 22℃'), findsOneWidget);
+      expect(find.text('정시 예보'), findsNothing);
       expect(find.text('강수량 1mm 미만'), findsOneWidget);
       expect(find.text('바람 2.0m/s'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -80,14 +82,37 @@ void main() {
     expect(find.text('23시'), findsOneWidget);
     expect(find.text('23~24시 강수 예보'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
-    expect(find.text('예상기온 99℃'), findsNothing);
+    expect(find.text('예상 기온 99℃'), findsNothing);
     expect(find.text('바람 2.0m/s'), findsOneWidget);
+  });
+
+  testWidgets('내일 00시가 명시적인 무강수이면 빈 23~24시 행을 만들지 않는다', (tester) async {
+    final now = DateTime.now();
+    final today = dateInKorea(now);
+    final tomorrow = dateInKorea(now.add(const Duration(days: 1)));
+    await _pump(tester, [
+      _slot(today, 23),
+      {
+        ..._slot(tomorrow, 0),
+        'precipitationProbability': 0,
+        'precipitationAmountRange': {
+          'type': 'NONE',
+          'min': 0,
+          'max': 0,
+          'unit': 'MM'
+        },
+        'skyCondition': '맑음'
+      }
+    ]);
+    expect(find.text('23시'), findsOneWidget);
+    expect(find.text('23~24시 강수 예보'), findsNothing);
+    expect(find.text('00시'), findsNothing);
   });
 
   testWidgets('오늘 00시 기온은 표시해도 어제 23~24시 강수는 오늘에 섞지 않는다', (tester) async {
     await _pump(tester, [_slot(dateInKorea(DateTime.now()), 0)]);
     expect(find.text('00시'), findsOneWidget);
-    expect(find.text('예상기온 22℃'), findsOneWidget);
+    expect(find.text('예상 기온 22℃'), findsOneWidget);
     expect(find.text('23~24시 강수 예보'), findsNothing);
     expect(find.text('강수량 1mm 미만'), findsNothing);
   });
@@ -98,7 +123,7 @@ void main() {
     ]);
     expect(find.text('강수 적용 구간을 확인하기 어려워요'), findsOneWidget);
     expect(find.text('강수량 1mm 미만'), findsNothing);
-    expect(find.text('예상기온 22℃'), findsOneWidget);
+    expect(find.text('예상 기온 22℃'), findsOneWidget);
   });
 }
 
@@ -136,10 +161,10 @@ Future<void> _pump(WidgetTester tester, List<Map<String, dynamic>> hourly,
       home: Scaffold(
           body: MediaQuery(
     data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-    child: DetailTab(
-        today: TodayWeatherResponse.fromJson({'hourly': hourly}),
-        recommendations: const [],
-        serverFeaturesAvailable: true,
-        onRefresh: () async {}),
+    child: SingleChildScrollView(
+      child: HourlyForecastSection(
+        items: TodayWeatherResponse.fromJson({'hourly': hourly}).hourly,
+      ),
+    ),
   ))));
 }

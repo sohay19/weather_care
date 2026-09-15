@@ -9,6 +9,10 @@ class WeatherStatusView extends StatelessWidget {
   final String message;
   final String? title;
   final Future<void> Function() onRetry;
+  final String? primaryActionLabel;
+  final Future<void> Function()? onPrimaryAction;
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
 
   const WeatherStatusView({
     super.key,
@@ -18,6 +22,10 @@ class WeatherStatusView extends StatelessWidget {
     required this.message,
     this.title,
     required this.onRetry,
+    this.primaryActionLabel,
+    this.onPrimaryAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
   });
 
   @override
@@ -73,6 +81,45 @@ class WeatherStatusView extends StatelessWidget {
                               color: WeatherCareTheme.textSecondary,
                             ),
                       ),
+                      if (loading) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          '첫 실행은 권한 선택 시간을 제외하고 서버 재시도를 포함해 최대 약 2분 걸릴 수 있어요.',
+                          key: const ValueKey('first-load-duration-guide'),
+                          textAlign: TextAlign.center,
+                          style: WeatherCareTheme.microTextStyle.copyWith(
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                      if (!loading &&
+                          primaryActionLabel != null &&
+                          onPrimaryAction != null) ...[
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            key: const ValueKey('location-primary-action'),
+                            onPressed: onPrimaryAction,
+                            icon: const Icon(Icons.my_location_rounded),
+                            label: Text(primaryActionLabel!),
+                          ),
+                        ),
+                      ],
+                      if (!loading &&
+                          secondaryActionLabel != null &&
+                          onSecondaryAction != null) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            key: const ValueKey('manual-location-action'),
+                            onPressed: onSecondaryAction,
+                            icon: const Icon(Icons.map_outlined),
+                            label: Text(secondaryActionLabel!),
+                          ),
+                        ),
+                      ],
                       if (!loading) ...[
                         const SizedBox(height: 14),
                         Text(

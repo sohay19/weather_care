@@ -28,6 +28,7 @@ class PlatformGpsRegionNameService extends GpsRegionNameService {
             locale: const Locale('ko', 'KR'),
           )
           .timeout(timeout);
+      final candidates = <String?>[];
       for (final placemark in placemarks) {
         final countryCode = placemark.isoCountryCode?.trim().toUpperCase();
         if (countryCode != null &&
@@ -35,15 +36,16 @@ class PlatformGpsRegionNameService extends GpsRegionNameService {
             countryCode != 'KR') {
           continue;
         }
-        final name = koreanAdministrativeDisplayName(
+        candidates.add(koreanAdministrativeDisplayName(
           administrativeArea: placemark.administrativeArea,
           subAdministrativeArea: placemark.subAdministrativeArea,
           locality: placemark.locality,
           subLocality: placemark.subLocality,
           name: placemark.name,
-        );
-        if (name != null) return name;
+          street: placemark.street,
+        ));
       }
+      return preferNeighborhoodDisplayName(candidates);
     } catch (_) {
       // The platform geocoder is best-effort and may be unavailable or rate-limited.
     }
@@ -57,6 +59,7 @@ String? koreanAdministrativeDisplayName({
   String? locality,
   String? subLocality,
   String? name,
+  String? street,
 }) {
   final topLevel = _administrativeTokens(administrativeArea)
       .where(_isTopLevelRegion)
@@ -78,6 +81,9 @@ String? koreanAdministrativeDisplayName({
   if (!details.any(_isNeighborhood)) {
     addDetails(name, neighborhoodOnly: true);
   }
+  if (!details.any(_isNeighborhood)) {
+    addDetails(street, neighborhoodOnly: true);
+  }
 
   final result = <String>[];
   final topLevelLabel = _topLevelDisplayName(topLevel);
@@ -87,6 +93,17 @@ String? koreanAdministrativeDisplayName({
   }
   result.addAll(details);
   return result.isEmpty ? null : result.join(' ');
+}
+
+String? preferNeighborhoodDisplayName(Iterable<String?> candidates) {
+  String? firstAdministrativeName;
+  for (final candidate in candidates) {
+    final value = candidate?.trim();
+    if (value == null || value.isEmpty) continue;
+    firstAdministrativeName ??= value;
+    if (_administrativeTokens(value).any(_isNeighborhood)) return value;
+  }
+  return firstAdministrativeName;
 }
 
 Iterable<String> _administrativeTokens(String? value) sync* {

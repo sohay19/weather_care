@@ -28,6 +28,7 @@ class WeatherLoadResult {
   });
 
   bool get hasWeather => today != null && weekly != null;
+  bool get hasAnyWeather => today != null || weekly != null;
   bool get serverFeaturesAvailable => mode == WeatherLoadMode.server;
 }
 
@@ -35,12 +36,20 @@ class WeatherService {
   final ApiClient client;
   final KmaDirectWeatherService directKma;
   final Future<bool> Function() internetProbe;
+  final int serverRetryCount;
+  final Duration serverRetryDelay;
+  final Future<void> Function(Duration) serverRetryWait;
 
   WeatherService(
     this.client, {
     required this.directKma,
     Future<bool> Function()? internetProbe,
-  }) : internetProbe = internetProbe ?? _defaultInternetProbe;
+    this.serverRetryCount = 3,
+    this.serverRetryDelay = const Duration(seconds: 5),
+    Future<void> Function(Duration)? serverRetryWait,
+  })  : assert(serverRetryCount >= 0),
+        internetProbe = internetProbe ?? _defaultInternetProbe,
+        serverRetryWait = serverRetryWait ?? _wait;
 
   Future<WeatherLoadResult> fetchWeather({
     required String installationId,
@@ -63,44 +72,100 @@ class WeatherService {
     int nx = 60,
     int ny = 121,
     DeviceCoordinates? coordinates,
+    String? regionCode,
+    String? regionName,
+    Future<String?>? regionNameFuture,
+    void Function(TodayWeatherResponse today)? onToday,
+    void Function(WeeklyWeatherResponse weekly)? onWeekly,
+  }) async {
+    Object? lastError;
+    TodayWeatherResponse? latestToday;
+    WeeklyWeatherResponse? latestWeekly;
+    for (var attempt = 0; attempt <= serverRetryCount; attempt++) {
+      try {
+        final todayFuture = latestToday == null
+            ? client.get(
+                '/api/v1/weather/today',
+                query: {
+                  'nx': '$nx',
+                  'ny': '$ny',
+                  'installationId': installationId,
+                  if (coordinates != null) ...{
+                    'latitude': '${coordinates.latitude}',
+                    'longitude': '${coordinates.longitude}',
+                  },
+                },
+              ).then((data) {
+                final today = TodayWeatherResponse.fromJson(data);
+                latestToday = today;
+                onToday?.call(today);
+                return today;
+              })
+            : Future.value(latestToday!);
+        final weeklyFuture = latestWeekly == null
+            ? () async {
+                final resolvedRegionName = regionName ?? await regionNameFuture;
+                final data = await client.get(
+                  '/api/v1/weather/weekly',
+                  query: {
+                    'nx': '$nx',
+                    'ny': '$ny',
+                    'installationId': installationId,
+                    'includeExtras': 'true',
+                    if (regionCode != null && regionCode.isNotEmpty)
+                      'regionCode': regionCode,
+                    if (resolvedRegionName != null &&
+                        resolvedRegionName.trim().isNotEmpty)
+                      'regionName': resolvedRegionName.trim(),
+                  },
+                );
+                final weekly = WeeklyWeatherResponse.fromJson(data);
+                latestWeekly = weekly;
+                onWeekly?.call(weekly);
+                return weekly;
+              }()
+            : Future.value(latestWeekly!);
+        final responses = await Future.wait([todayFuture, weeklyFuture]);
+        return WeatherLoadResult(
+          today: responses[0] as TodayWeatherResponse,
+          weekly: responses[1] as WeeklyWeatherResponse,
+          mode: WeatherLoadMode.server,
+          message: '운영 서버 연결',
+        );
+      } catch (error) {
+        lastError = error;
+        if (attempt == serverRetryCount) break;
+        await serverRetryWait(serverRetryDelay);
+      }
+    }
+
+    log('Weather server unavailable after '
+        '${serverRetryCount + 1} attempts (${lastError.runtimeType})');
+    return WeatherLoadResult(
+      today: latestToday,
+      weekly: latestWeekly,
+      mode: latestToday != null || latestWeekly != null
+          ? WeatherLoadMode.server
+          : WeatherLoadMode.unavailable,
+      message: latestToday != null || latestWeekly != null
+          ? '일부 날씨 자료만 연결됐습니다.'
+          : '운영 서버에 연결하지 못했습니다.',
+    );
+  }
+
+  Future<TodayWeatherResponse?> fetchMainWeather({
+    int nx = 60,
+    int ny = 121,
   }) async {
     try {
-      final responses = await Future.wait([
-        client.get(
-          '/api/v1/weather/today',
-          query: {
-            'nx': '$nx',
-            'ny': '$ny',
-            'installationId': installationId,
-            if (coordinates != null) ...{
-              'latitude': '${coordinates.latitude}',
-              'longitude': '${coordinates.longitude}',
-            },
-          },
-        ),
-        client.get(
-          '/api/v1/weather/weekly',
-          query: {
-            'nx': '$nx',
-            'ny': '$ny',
-            'installationId': installationId,
-          },
-        ),
-      ]);
-      return WeatherLoadResult(
-        today: TodayWeatherResponse.fromJson(responses[0]),
-        weekly: WeeklyWeatherResponse.fromJson(responses[1]),
-        mode: WeatherLoadMode.server,
-        message: '운영 서버 연결',
+      final data = await client.get(
+        '/api/v1/weather/main',
+        query: {'nx': '$nx', 'ny': '$ny'},
       );
+      return TodayWeatherResponse.fromJson(data);
     } catch (error) {
-      log('Weather server unavailable (${error.runtimeType})');
-      return const WeatherLoadResult(
-        today: null,
-        weekly: null,
-        mode: WeatherLoadMode.unavailable,
-        message: '운영 서버에 연결하지 못했습니다.',
-      );
+      log('Fast Main weather unavailable (${error.runtimeType})');
+      return null;
     }
   }
 
@@ -185,3 +250,5 @@ Future<bool> _defaultInternetProbe() async {
     return false;
   }
 }
+
+Future<void> _wait(Duration duration) => Future<void>.delayed(duration);

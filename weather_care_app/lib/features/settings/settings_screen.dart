@@ -306,72 +306,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 16),
         _SettingsSection(
-          icon: Icons.sync_rounded,
-          title: '저장·기기 알림 상태',
-          subtitle: '설정 저장과 기기의 알림 허용은 별개예요',
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Semantics(
-              liveRegion: true,
-              child: Text(widget.saveState.message,
-                  key: const ValueKey('settings-save-status')),
-            ),
-            if (widget.saveState.canRetry)
-              TextButton.icon(
-                  key: const ValueKey('settings-save-retry'),
-                  onPressed: widget.onRetrySave,
-                  icon: const Icon(Icons.sync_rounded),
-                  label: const Text('설정 저장 다시 시도')),
-            const Divider(height: 24),
-            Semantics(
-              liveRegion: true,
-              child: Text(widget.notificationPermission.message,
-                  key: const ValueKey('notification-permission-status')),
-            ),
-            if (!_alertsEnabled) ...[
-              const SizedBox(height: 8),
-              const Text(
-                  '날씨 알림이 꺼져 있어요. 서버에 등록된 정보가 있다면 서버 반영 후 발송 대상에서 제외돼요. 이미 처리 중이거나 발송된 알림은 도착할 수 있어요.'),
-            ],
-            const SizedBox(height: 8),
-            Wrap(spacing: 8, runSpacing: 4, children: [
-              if (widget.notificationPermission ==
-                      NotificationPermissionState.denied ||
-                  widget.notificationPermission ==
-                      NotificationPermissionState.notDetermined)
-                FilledButton.tonal(
-                    key: const ValueKey('notification-permission-request'),
-                    onPressed: widget.onRequestNotificationPermission,
-                    child: const Text('알림 권한 요청')),
-              TextButton(
-                  key: const ValueKey('notification-permission-refresh'),
-                  onPressed: widget.notificationPermission ==
-                          NotificationPermissionState.checking
-                      ? null
-                      : widget.onRefreshNotificationPermission,
-                  child: const Text('권한 다시 확인')),
-              TextButton(
-                  key: const ValueKey('notification-settings'),
-                  onPressed: widget.notificationPermission ==
-                          NotificationPermissionState.checking
-                      ? null
-                      : widget.onOpenNotificationSettings,
-                  child: const Text('기기 앱 설정 열기')),
-            ]),
-            const SizedBox(height: 6),
-            Text(
-                '기기 앱 설정의 알림 메뉴에서 변경할 수 있어요. 개별 알림 종류·집중 모드·소리 설정에 따라 표시 방식이 달라질 수 있어요. 서버 저장과 권한 허용만으로 실제 수신을 확인할 수는 없어요.',
-                style: Theme.of(context).textTheme.bodySmall),
-            TextButton.icon(
-              key: const ValueKey('notification-guide'),
-              onPressed: () => _openGuide(SettingsGuide.notifications),
-              icon: const Icon(Icons.help_outline_rounded, size: 18),
-              label: const Text('알림 권한과 앱 설정은 어떻게 다른가요?'),
-            ),
-          ]),
-        ),
-        const SizedBox(height: 16),
-        _SettingsSection(
           icon: Icons.schedule_outlined,
           title: '알림 시간',
           subtitle: '준비물 요약에만 적용돼요. 특보·현재 비·도로 안내는 별도로 확인해요',
@@ -435,75 +369,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ]),
         ),
         const SizedBox(height: 16),
-        _SettingsSection(
+        _SettingsMenuButton(
+          key: const ValueKey('carry-notification-menu'),
           icon: Icons.work_outline_rounded,
           title: '챙겨요 알림',
-          subtitle: '준비물 요약 알림에 포함할 항목을 선택해요',
-          child: Column(
-            children: [
-              _SettingsToggleTile(
-                icon: Icons.umbrella_outlined,
-                settingId: 'umbrellaEnabled',
-                title: '우산',
-                subtitle: '준비물 요약과 현재 비 안내에 함께 적용돼요',
-                value: settings.umbrellaEnabled,
-                enabled: _alertsEnabled,
-                onChanged: (value) => _updateSettings(
-                  settings.copyWith(umbrellaEnabled: value),
-                ),
-              ),
-              _SettingsToggleTile(
-                icon: Icons.wb_sunny_outlined,
-                settingId: 'parasolEnabled',
-                title: '양산',
-                value: settings.parasolEnabled,
-                enabled: _alertsEnabled,
-                onChanged: (value) => _updateSettings(
-                  settings.copyWith(parasolEnabled: value),
-                ),
-              ),
-              _SettingsToggleTile(
-                icon: Icons.checkroom_rounded,
-                settingId: 'outerwearEnabled',
-                title: '겉옷',
-                value: settings.outerwearEnabled,
-                enabled: _alertsEnabled,
-                onChanged: (value) => _updateSettings(
-                  settings.copyWith(outerwearEnabled: value),
-                ),
-              ),
-              _SettingsToggleTile(
-                icon: Icons.face_outlined,
-                settingId: 'maskEnabled',
-                title: '마스크',
-                value: settings.maskEnabled,
-                enabled: _alertsEnabled,
-                onChanged: (value) => _updateSettings(
-                  settings.copyWith(maskEnabled: value),
-                ),
-              ),
-              _SettingsToggleTile(
-                icon: Icons.local_drink_outlined,
-                settingId: 'waterEnabled',
-                title: '물',
-                value: settings.waterEnabled,
-                enabled: _alertsEnabled,
-                onChanged: (value) => _updateSettings(
-                  settings.copyWith(waterEnabled: value),
-                ),
-              ),
-              _SettingsToggleTile(
-                icon: Icons.spa_outlined,
-                settingId: 'sunscreenEnabled',
-                title: '선크림',
-                value: settings.sunscreenEnabled,
-                enabled: _alertsEnabled,
-                onChanged: (value) => _updateSettings(
-                  settings.copyWith(sunscreenEnabled: value),
-                ),
-              ),
-            ],
-          ),
+          subtitle: '우산·양산·겉옷 등 세부 항목을 선택해요',
+          onTap: _openCarryNotificationSettings,
         ),
         const SizedBox(height: 16),
         _SettingsSection(
@@ -581,11 +452,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(height: 24),
               const Text(
-                '추가 안내: 블랙아이스(도로살얼음)·도로통제·그 밖의 공식 특보는 개별 스위치 없이 전체 날씨 알림 설정을 따라요. 블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.',
+                '블랙아이스(도로살얼음)·도로통제·그 밖의 공식 특보는 개별 스위치 없이 전체 날씨 알림 설정을 따라요. 블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.',
                 key: ValueKey('additional-notification-contract'),
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 16),
+        _SettingsSection(
+          icon: Icons.sync_rounded,
+          title: '저장·기기 알림 상태',
+          subtitle: '설정 저장과 기기의 알림 허용은 별개예요',
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Semantics(
+              liveRegion: true,
+              child: Text(widget.saveState.message,
+                  key: const ValueKey('settings-save-status')),
+            ),
+            if (widget.saveState.canRetry)
+              TextButton.icon(
+                  key: const ValueKey('settings-save-retry'),
+                  onPressed: widget.onRetrySave,
+                  icon: const Icon(Icons.sync_rounded),
+                  label: const Text('설정 저장 다시 시도')),
+            const Divider(height: 24),
+            Semantics(
+              liveRegion: true,
+              child: Text(widget.notificationPermission.message,
+                  key: const ValueKey('notification-permission-status')),
+            ),
+            if (!_alertsEnabled) ...[
+              const SizedBox(height: 8),
+              const Text(
+                  '날씨 알림이 꺼져 있어요. 서버에 등록된 정보가 있다면 서버 반영 후 발송 대상에서 제외돼요. 이미 처리 중이거나 발송된 알림은 도착할 수 있어요.'),
+            ],
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 4, children: [
+              if (widget.notificationPermission ==
+                      NotificationPermissionState.denied ||
+                  widget.notificationPermission ==
+                      NotificationPermissionState.notDetermined)
+                FilledButton.tonal(
+                    key: const ValueKey('notification-permission-request'),
+                    onPressed: widget.onRequestNotificationPermission,
+                    child: const Text('알림 권한 요청')),
+              TextButton(
+                  key: const ValueKey('notification-permission-refresh'),
+                  onPressed: widget.notificationPermission ==
+                          NotificationPermissionState.checking
+                      ? null
+                      : widget.onRefreshNotificationPermission,
+                  child: const Text('권한 다시 확인')),
+              TextButton(
+                  key: const ValueKey('notification-settings'),
+                  onPressed: widget.notificationPermission ==
+                          NotificationPermissionState.checking
+                      ? null
+                      : widget.onOpenNotificationSettings,
+                  child: const Text('기기 앱 설정 열기')),
+            ]),
+            const SizedBox(height: 6),
+            Text(
+                '기기 앱 설정의 알림 메뉴에서 변경할 수 있어요. 개별 알림 종류·집중 모드·소리 설정에 따라 표시 방식이 달라질 수 있어요. 서버 저장과 권한 허용만으로 실제 수신을 확인할 수는 없어요.',
+                style: Theme.of(context).textTheme.bodySmall),
+            TextButton.icon(
+              key: const ValueKey('notification-guide'),
+              onPressed: () => _openGuide(SettingsGuide.notifications),
+              icon: const Icon(Icons.help_outline_rounded, size: 18),
+              label: const Text('알림 권한과 앱 설정은 어떻게 다른가요?'),
+            ),
+          ]),
         ),
         const SizedBox(height: 16),
         Container(
@@ -680,6 +617,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ));
   }
 
+  void _openCarryNotificationSettings() {
+    Navigator.of(context).push<void>(MaterialPageRoute(
+      builder: (_) => _CarryNotificationSettingsScreen(
+        initialSettings: settings,
+        enabled: _alertsEnabled,
+        onSettingsChanged: _updateSettings,
+      ),
+    ));
+  }
+
   Future<void> _selectRegion() async {
     if (_pickingRegion) return;
     setState(() => _pickingRegion = true);
@@ -718,6 +665,203 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final time =
         '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}';
     _updateSettings(settings.copyWith(notificationTime: time));
+  }
+}
+
+class _CarryNotificationSettingsScreen extends StatefulWidget {
+  final AppSettings initialSettings;
+  final bool enabled;
+  final ValueChanged<AppSettings> onSettingsChanged;
+
+  const _CarryNotificationSettingsScreen({
+    required this.initialSettings,
+    required this.enabled,
+    required this.onSettingsChanged,
+  });
+
+  @override
+  State<_CarryNotificationSettingsScreen> createState() =>
+      _CarryNotificationSettingsScreenState();
+}
+
+class _CarryNotificationSettingsScreenState
+    extends State<_CarryNotificationSettingsScreen> {
+  late AppSettings settings;
+
+  @override
+  void initState() {
+    super.initState();
+    settings = widget.initialSettings;
+  }
+
+  void _update(AppSettings updated) {
+    setState(() => settings = updated);
+    widget.onSettingsChanged(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: const BackButton(key: ValueKey('carry-settings-back')),
+        title: const Text('챙겨요 알림'),
+      ),
+      body: SafeArea(
+        child: ListView(
+          key: const ValueKey('carry-notification-settings'),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            Text(
+              '준비물 요약 알림에 포함할 항목을 선택해요.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: WeatherCareTheme.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            _SettingsSection(
+              icon: Icons.work_outline_rounded,
+              title: '세부 메뉴',
+              subtitle: widget.enabled
+                  ? '필요한 준비물만 켜둘 수 있어요'
+                  : '날씨 알림을 켜면 항목을 변경할 수 있어요',
+              child: Column(
+                children: [
+                  _SettingsToggleTile(
+                    icon: Icons.umbrella_outlined,
+                    settingId: 'umbrellaEnabled',
+                    title: '우산',
+                    subtitle: '준비물 요약과 현재 비 안내에 함께 적용돼요',
+                    value: settings.umbrellaEnabled,
+                    enabled: widget.enabled,
+                    onChanged: (value) => _update(
+                      settings.copyWith(umbrellaEnabled: value),
+                    ),
+                  ),
+                  _SettingsToggleTile(
+                    icon: Icons.wb_sunny_outlined,
+                    settingId: 'parasolEnabled',
+                    title: '양산',
+                    value: settings.parasolEnabled,
+                    enabled: widget.enabled,
+                    onChanged: (value) => _update(
+                      settings.copyWith(parasolEnabled: value),
+                    ),
+                  ),
+                  _SettingsToggleTile(
+                    icon: Icons.checkroom_rounded,
+                    settingId: 'outerwearEnabled',
+                    title: '겉옷',
+                    value: settings.outerwearEnabled,
+                    enabled: widget.enabled,
+                    onChanged: (value) => _update(
+                      settings.copyWith(outerwearEnabled: value),
+                    ),
+                  ),
+                  _SettingsToggleTile(
+                    icon: Icons.face_outlined,
+                    settingId: 'maskEnabled',
+                    title: '마스크',
+                    value: settings.maskEnabled,
+                    enabled: widget.enabled,
+                    onChanged: (value) => _update(
+                      settings.copyWith(maskEnabled: value),
+                    ),
+                  ),
+                  _SettingsToggleTile(
+                    icon: Icons.local_drink_outlined,
+                    settingId: 'waterEnabled',
+                    title: '물',
+                    value: settings.waterEnabled,
+                    enabled: widget.enabled,
+                    onChanged: (value) => _update(
+                      settings.copyWith(waterEnabled: value),
+                    ),
+                  ),
+                  _SettingsToggleTile(
+                    icon: Icons.spa_outlined,
+                    settingId: 'sunscreenEnabled',
+                    title: '선크림',
+                    value: settings.sunscreenEnabled,
+                    enabled: widget.enabled,
+                    onChanged: (value) => _update(
+                      settings.copyWith(sunscreenEnabled: value),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsMenuButton extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsMenuButton({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(18),
+          decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: WeatherCareTheme.primarySoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  icon,
+                  size: 21,
+                  color: WeatherCareTheme.primaryDeep,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: WeatherCareTheme.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

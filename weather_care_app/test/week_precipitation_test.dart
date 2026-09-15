@@ -149,6 +149,27 @@ void main() {
     expect(weekPrecipitationLines(day), contains('확인된 시간대의 강수확률 중 최고 60%'));
     expect(weekPrecipitationLines(day).last, contains('mm 합계를 계산하지 않아요'));
   });
+  test('지난 날은 예보가 아닌 실제 일강수량으로 표시한다', () {
+    final wet = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-12-31',
+      'precipitationDetail': {
+        'kind': 'OBSERVATION',
+        'hours': [],
+        'observedAmount': 4.5,
+      },
+    });
+    final dry = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-12-31',
+      'precipitationDetail': {
+        'kind': 'OBSERVATION',
+        'hours': [],
+        'observedAmount': 0,
+      },
+    });
+
+    expect(weekPrecipitationLines(wet), ['인근 관측소 실제 일강수량 4.5mm']);
+    expect(weekPrecipitationLines(dry), ['인근 관측소에서 강수가 관측되지 않았어요.']);
+  });
   testWidgets('강수 표시가 360px·2배 글자에서 넘치지 않는다', (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -169,7 +190,10 @@ void main() {
         now: () => DateTime.utc(2026, 12, 31),
       )),
     )));
-    await tester.drag(find.byType(ListView), const Offset(0, -700));
+    await tester.drag(
+      find.byKey(const ValueKey('week-tab')),
+      const Offset(0, -700),
+    );
     await tester.pump();
     expect(find.text('예상 누적 강수량 30mm 이상 51mm 미만'), findsOneWidget);
     expect(tester.takeException(), isNull);

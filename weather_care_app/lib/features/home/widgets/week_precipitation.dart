@@ -7,6 +7,15 @@ List<String> weekPrecipitationLines(WeeklyForecastItem day) {
   final detail = day.precipitationDetail;
   final date = parseForecastDate(day.forecastDate);
   if (date == null || detail == null) return ['강수확률·강수량 자료를 확인하기 어려워요'];
+  if (detail.kind == 'OBSERVATION') {
+    final amount = detail.observedAmount;
+    if (amount == null) return ['인근 관측소의 실제 일강수량을 확인하기 어려워요.'];
+    return [
+      amount == 0
+          ? '인근 관측소에서 강수가 관측되지 않았어요.'
+          : '인근 관측소 실제 일강수량 ${_millimetres(amount)}',
+    ];
+  }
   if (detail.kind == 'EXTENDED') {
     final probability = precipitationProbability(detail.extendedMaxProbability);
     return [
@@ -74,3 +83,7 @@ List<String> weekPrecipitationLines(WeeklyForecastItem day) {
 String _percent(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toString();
+
+String _millimetres(double value) => value == value.roundToDouble()
+    ? '${value.toInt()}mm'
+    : '${value.toStringAsFixed(1)}mm';

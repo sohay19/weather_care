@@ -2,6 +2,56 @@ import '../../../models/weather.dart';
 import '../../../models/recommendation.dart';
 import '../../../utils/korea_date.dart';
 
+class WeekCalendarDay {
+  final DateTime date;
+  final WeeklyForecastItem? forecast;
+
+  const WeekCalendarDay({required this.date, required this.forecast});
+}
+
+List<WeekCalendarDay> currentCalendarWeek(
+  List<WeeklyForecastItem> forecasts,
+  DateTime now,
+) {
+  final today = parseForecastDate(dateInKorea(now))!;
+  final sunday = today.subtract(Duration(days: today.weekday % 7));
+  final grouped = <String, List<WeeklyForecastItem>>{};
+  for (final forecast in forecasts) {
+    if (parseForecastDate(forecast.forecastDate) == null) continue;
+    grouped.putIfAbsent(forecast.forecastDate!, () => []).add(forecast);
+  }
+
+  return List.generate(7, (index) {
+    final date = sunday.add(Duration(days: index));
+    final key = _calendarDateKey(date);
+    final matches = grouped[key] ?? const <WeeklyForecastItem>[];
+    return WeekCalendarDay(
+      date: date,
+      forecast: matches.length == 1 ? matches.single : null,
+    );
+  });
+}
+
+String calendarWeekPeriodLabel(List<WeekCalendarDay> days) {
+  if (days.length != 7) return '일요일부터 토요일까지 표시해요';
+  final first = days.first.date;
+  final last = days.last.date;
+  final year = first.year == last.year ? '' : '${first.year}년 ';
+  return '$year${first.month}월 ${first.day}일~'
+      '${last.year != first.year ? '${last.year}년 ' : ''}'
+      '${last.month}월 ${last.day}일 · 일~토';
+}
+
+String calendarDayLabel(DateTime date) {
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  return '${date.month}월 ${date.day}일 (${weekdays[date.weekday - 1]})';
+}
+
+String _calendarDateKey(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
+
 String weekDayLabel(WeeklyForecastItem day) {
   final date = parseForecastDate(day.forecastDate);
   if (date == null) return '날짜 확인 어려움';
@@ -46,6 +96,8 @@ String? weekWeatherLabel(WeeklyForecastItem day) {
     '눈날림' => '눈날림',
     '비/눈' || '비와눈' => '비/눈',
     '빗방울/눈날림' => '빗방울/눈날림',
+    '강수관측없음' => '강수 관측 없음',
+    '하늘상태관측없음' => '하늘 상태 관측 없음',
     _ => null,
   };
 }
@@ -53,6 +105,8 @@ String? weekWeatherLabel(WeeklyForecastItem day) {
 bool? weekPrecipitation(WeeklyForecastItem day) {
   final label = weekWeatherLabel(day);
   if (label == null) return null;
+  if (label == '강수 관측 없음') return false;
+  if (label == '하늘 상태 관측 없음') return null;
   if (!const ['맑음', '구름 많음', '흐림'].contains(label)) return true;
   // A clear received slot does not establish absence in missing slots.
   return day.weatherDataComplete == true ? false : null;
@@ -121,17 +175,28 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
       .toList();
   final duplicates = grouped.length - eligible.length;
   final total = eligible.length;
-  WeekSummaryMetric count(List<bool?> values) {
+  WeekSummaryMetric count(
+    List<bool?> values, {
+    int? denominator,
+    bool zeroWhenNoPositive = false,
+    required String detailLabel,
+  }) {
     final known = values.whereType<bool>().toList();
     final positive = known.where((value) => value).length;
-    final value = known.isEmpty
-        ? '자료 없음'
-        : known.length == total
-            ? '$positive일'
-            : positive > 0
-                ? '$positive일 확인'
-                : '확인 어려움';
-    return WeekSummaryMetric(value, '${known.length}/$total일 자료');
+    final expected = denominator ?? total;
+    final value = zeroWhenNoPositive && positive == 0
+        ? '0일'
+        : known.isEmpty
+            ? '자료 없음'
+            : known.length == expected
+                ? '$positive일'
+                : positive > 0
+                    ? '$positive일 확인'
+                    : '확인 어려움';
+    return WeekSummaryMetric(
+      value,
+      '$detailLabel ${known.length}/$expected일',
+    );
   }
 
   final temperatures = eligible
@@ -148,17 +213,28 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
     if (duplicates > 0) '중복 날짜 $duplicates일',
   ];
   return WeekSummaryData(
-    count(eligible.map(weekPrecipitation).toList()),
+    count(
+      eligible.map(weekPrecipitation).toList(),
+      zeroWhenNoPositive: true,
+      detailLabel: '강수 여부 확인',
+    ),
     WeekSummaryMetric(max == null ? '자료 없음' : weekDegrees(max),
-        '${temperatures.length}/$total일 자료 중 최고${includesHourly ? ' · 시간별 예보 포함' : ''}'),
+        '최고기온 확인 ${temperatures.length}/$total일 중 최고${includesHourly ? ' · 시간별 예보 포함' : ''}'),
     serverFeaturesAvailable
-        ? count(eligible
-            .map((day) => weekRecommendations(day).isNotEmpty
-                ? true
-                : day.recommendationsAvailable
-                    ? false
-                    : null)
-            .toList())
+        ? count(
+            eligible
+                .where((day) => day.forecastSource != 'KMA_OBSERVATION')
+                .map((day) => weekRecommendations(day).isNotEmpty
+                    ? true
+                    : day.recommendationsAvailable
+                        ? false
+                        : null)
+                .toList(),
+            denominator: eligible
+                .where((day) => day.forecastSource != 'KMA_OBSERVATION')
+                .length,
+            detailLabel: '준비물 판단',
+          )
         : const WeekSummaryMetric('미지원', '운영 서버 미연결'),
     exclusions.isEmpty ? null : '요약 제외: ${exclusions.join(' · ')}',
   );

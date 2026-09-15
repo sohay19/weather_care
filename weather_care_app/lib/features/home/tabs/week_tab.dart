@@ -77,43 +77,56 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final weekly = widget.weekly;
-    final today = dateInKorea(_now());
+    final now = _now();
+    final today = dateInKorea(now);
+    final calendarDays = currentCalendarWeek(weekly.days, now);
+    final calendarForecasts = calendarDays
+        .map((day) => day.forecast)
+        .whereType<WeeklyForecastItem>()
+        .toList(growable: false);
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
       onRefresh: widget.onRefresh,
-      child: ListView(
+      child: SingleChildScrollView(
         key: const ValueKey('week-tab'),
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-        children: [
-          TabPageHeader(
-            eyebrow: 'WEEK',
-            title: '날짜별 날씨',
-            subtitle: weekPeriodLabel(weekly.days),
-            icon: Icons.calendar_month_outlined,
-          ),
-          const SizedBox(height: 18),
-          if (weekly.days.isNotEmpty)
-            _WeekSummary(
-              days: weekly.days,
-              serverFeaturesAvailable: widget.serverFeaturesAvailable,
-            )
-          else
-            const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
-          if (widget.advertisement != null) ...[
-            const SizedBox(height: 18),
-            widget.advertisement!,
-          ],
-          const SizedBox(height: 16),
-          for (var index = 0; index < weekly.days.length; index++) ...[
-            _WeekDayCard(
-              day: weekly.days[index],
-              isToday: weekly.days[index].forecastDate == today,
-              serverFeaturesAvailable: widget.serverFeaturesAvailable,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TabPageHeader(
+              eyebrow: 'WEEK',
+              title: '이번 주',
+              subtitle: calendarWeekPeriodLabel(calendarDays),
+              icon: Icons.calendar_month_outlined,
             ),
-            if (index < weekly.days.length - 1) const SizedBox(height: 10),
+            const SizedBox(height: 18),
+            if (calendarForecasts.isNotEmpty)
+              _WeekSummary(
+                days: calendarForecasts,
+                serverFeaturesAvailable: widget.serverFeaturesAvailable,
+              )
+            else
+              const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
+            if (widget.advertisement != null) ...[
+              const SizedBox(height: 18),
+              widget.advertisement!,
+            ],
+            const SizedBox(height: 16),
+            for (var index = 0; index < calendarDays.length; index++) ...[
+              _WeekDayCard(
+                calendarDay: calendarDays[index],
+                isToday: dateInKorea(calendarDays[index].date) == today,
+                isPast: calendarDays[index].date.isBefore(
+                      parseForecastDate(today)!,
+                    ),
+                today: parseForecastDate(today)!,
+                serverFeaturesAvailable: widget.serverFeaturesAvailable,
+              ),
+              if (index < calendarDays.length - 1) const SizedBox(height: 10),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -140,7 +153,7 @@ class _WeekSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '제공된 예보 요약',
+            '제공된 주간 자료 요약',
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               fontSize: 17,
@@ -149,7 +162,7 @@ class _WeekSummary extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '받은 예보와 표시할 준비물 추천을 기준으로 집계해요.',
+            '받은 예보와 지난 날의 실제 관측을 구분해 집계해요.',
             style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
@@ -166,7 +179,7 @@ class _WeekSummary extends StatelessWidget {
                   size: 21,
                   color: WeatherCareTheme.primaryDeep,
                 ),
-                label: '비/눈 예보',
+                label: '예상 강수일',
                 metric: summary.precipitation,
               ),
               _SummaryMetric(
@@ -176,7 +189,7 @@ class _WeekSummary extends StatelessWidget {
                   color: WeatherCareTheme.primaryDeep,
                   size: 19,
                 ),
-                label: '확인된 최고기온',
+                label: '예상 주중 최고기온',
                 metric: summary.maximum,
               ),
               _SummaryMetric(
@@ -186,7 +199,7 @@ class _WeekSummary extends StatelessWidget {
                   color: WeatherCareTheme.primaryDeep,
                   size: 19,
                 ),
-                label: '준비물 추천',
+                label: '예상 준비물',
                 metric: summary.preparations,
               ),
             ];
@@ -228,16 +241,20 @@ class _SummaryMetric extends StatelessWidget {
       ),
       child: Column(
         children: [
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: WeatherCareTheme.microTextStyle.copyWith(
+              color: WeatherCareTheme.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 7),
           icon,
           const SizedBox(height: 5),
           Text(metric.value,
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w900)),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: WeatherCareTheme.microTextStyle,
-          ),
           const SizedBox(height: 4),
           Text(metric.detail,
               textAlign: TextAlign.center,
@@ -249,27 +266,55 @@ class _SummaryMetric extends StatelessWidget {
 }
 
 class _WeekDayCard extends StatelessWidget {
-  final WeeklyForecastItem day;
+  final WeekCalendarDay calendarDay;
   final bool isToday;
+  final bool isPast;
+  final DateTime today;
   final bool serverFeaturesAvailable;
 
   const _WeekDayCard({
-    required this.day,
+    required this.calendarDay,
     required this.isToday,
+    required this.isPast,
+    required this.today,
     required this.serverFeaturesAvailable,
   });
 
   @override
   Widget build(BuildContext context) {
+    final day = calendarDay.forecast;
+    if (day == null) {
+      return _UnavailableWeekDayCard(
+        date: calendarDay.date,
+        isToday: isToday,
+        today: today,
+      );
+    }
     final weatherLabel = weekWeatherLabel(day);
     final precipitationLines = weekPrecipitationLines(day);
     final recommendations = serverFeaturesAvailable
         ? weekRecommendations(day)
         : <WeatherRecommendation>[];
-    return Container(
+    final minimumTemperature = weekTemperature(day, maximum: false);
+    final maximumTemperature = weekTemperature(day, maximum: true);
+    final additionalData = _additionalWeekData(day);
+    final airQualityLines = _airQualityLines(day.airQualityForecast);
+    final sourceLabel = day.forecastSource == 'KMA_OBSERVATION'
+        ? '실제 관측'
+        : day.historical
+            ? '저장된 예보'
+            : day.forecastSource == 'KMA_MID_TERM'
+                ? '중기예보'
+                : '단기예보';
+    final card = Container(
+      key: ValueKey('week-day-${day.forecastDate}'),
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
-        color: isToday ? WeatherCareTheme.primarySoft : Colors.white,
+        color: isPast
+            ? WeatherCareTheme.surfaceMuted
+            : isToday
+                ? WeatherCareTheme.primarySoft
+                : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isToday
@@ -287,21 +332,40 @@ class _WeekDayCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                weekDayLabel(day),
-                style: TextStyle(
-                  color: isToday
-                      ? WeatherCareTheme.primaryDeep
-                      : WeatherCareTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      calendarDayLabel(calendarDay.date),
+                      style: TextStyle(
+                        color: isPast
+                            ? WeatherCareTheme.textSecondary
+                            : isToday
+                                ? WeatherCareTheme.primaryDeep
+                                : WeatherCareTheme.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      sourceLabel,
+                      style: WeatherCareTheme.specialLabelStyle.copyWith(
+                        color: isPast && sourceLabel == '실제 관측'
+                            ? WeatherCareTheme.textPrimary
+                            : WeatherCareTheme.primaryDeep,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              if (isToday || isPast) const SizedBox(width: 8),
               if (isToday)
                 Text(
                   '오늘',
@@ -309,9 +373,27 @@ class _WeekDayCard extends StatelessWidget {
                   style: WeatherCareTheme.specialLabelStyle.copyWith(
                     fontSize: 11,
                   ),
+                )
+              else if (isPast)
+                Text(
+                  '지난 날짜',
+                  key: ValueKey('week-past-${day.forecastDate}'),
+                  style: WeatherCareTheme.specialLabelStyle.copyWith(
+                    color: WeatherCareTheme.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
             ],
           ),
+          if (day.forecastSource == 'KMA_OBSERVATION') ...[
+            const SizedBox(height: 5),
+            Text(
+              '인근 기상청 지상·AWS 관측소의 일자료'
+              '${day.observationDistanceKm == null ? '' : ' · 예보격자 대표점에서 ${day.observationDistanceKm!.toStringAsFixed(1)}km'}',
+              style: WeatherCareTheme.microTextStyle,
+            ),
+          ],
           const SizedBox(height: 10),
           Row(children: [
             Container(
@@ -323,7 +405,9 @@ class _WeekDayCard extends StatelessWidget {
               ),
               child: WeatherConditionIcon(
                 condition: weatherLabel,
-                color: WeatherCareTheme.primaryDeep,
+                color: isPast
+                    ? WeatherCareTheme.textSecondary
+                    : WeatherCareTheme.primaryDeep,
                 size: 21,
               ),
             ),
@@ -331,21 +415,87 @@ class _WeekDayCard extends StatelessWidget {
             Expanded(
               child: Text(
                 weatherLabel ?? '날씨 자료 없음',
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: isPast ? WeatherCareTheme.textSecondary : null,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ]),
           if (weatherLabel != null && day.weatherDataComplete == false)
             Text('일부 시간대 날씨 자료 없음', style: WeatherCareTheme.microTextStyle),
-          const SizedBox(height: 6),
-          Text(
-            '${weekTemperatureLabel(day, maximum: false)} · ${weekTemperatureLabel(day, maximum: true)}',
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
+          if (minimumTemperature != null || maximumTemperature != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (minimumTemperature != null)
+                  Expanded(
+                    child: _WeekTemperaturePeriod(
+                      label: '오전 최저',
+                      value: weekDegrees(minimumTemperature),
+                      isPast: isPast,
+                    ),
+                  ),
+                if (minimumTemperature != null && maximumTemperature != null)
+                  const SizedBox(width: 8),
+                if (maximumTemperature != null)
+                  Expanded(
+                    child: _WeekTemperaturePeriod(
+                      label: '오후 최고',
+                      value: weekDegrees(maximumTemperature),
+                      isPast: isPast,
+                    ),
+                  ),
+              ],
+            ),
+          ],
           if (day.minTemperatureSource == 'HOURLY' ||
               day.maxTemperatureSource == 'HOURLY')
             Text('시간별 최저·최고는 받은 시간대만 비교한 값이에요.',
                 style: WeatherCareTheme.microTextStyle),
+          if (additionalData.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                for (final data in additionalData)
+                  _WeekDataChip(data: data, isPast: isPast),
+              ],
+            ),
+          ],
+          if (airQualityLines.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              key: ValueKey('week-air-quality-${day.forecastDate}'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '대기 상태',
+                    style: TextStyle(
+                      color: isPast ? WeatherCareTheme.textSecondary : null,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    airQualityLines.join(' · '),
+                    style: WeatherCareTheme.microTextStyle.copyWith(
+                      color: isPast ? WeatherCareTheme.textSecondary : null,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (precipitationLines.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
@@ -359,7 +509,10 @@ class _WeekDayCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('강수 예보',
+                  Text(
+                      day.forecastSource == 'KMA_OBSERVATION'
+                          ? '강수 관측'
+                          : '강수 예보',
                       style: TextStyle(fontWeight: FontWeight.w800)),
                   for (final line in precipitationLines)
                     Padding(
@@ -380,9 +533,11 @@ class _WeekDayCard extends StatelessWidget {
                 Text(
                   !serverFeaturesAvailable
                       ? '운영 서버 미연결로 준비물 미지원'
-                      : day.recommendationsAvailable
-                          ? '표시할 준비물 추천 없음'
-                          : '준비물 추천 자료 없음',
+                      : day.forecastSource == 'KMA_OBSERVATION'
+                          ? '지난 날은 준비물 추천 대상이 아니에요'
+                          : day.recommendationsAvailable
+                              ? '표시할 준비물 추천 없음'
+                              : '준비물 추천 자료 없음',
                   style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
                 )
               else
@@ -431,5 +586,230 @@ class _WeekDayCard extends StatelessWidget {
         ],
       ),
     );
+    return card;
+  }
+}
+
+class _WeekTemperaturePeriod extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isPast;
+
+  const _WeekTemperaturePeriod({
+    required this.label,
+    required this.value,
+    required this.isPast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: WeatherCareTheme.microTextStyle.copyWith(
+                color: isPast ? WeatherCareTheme.textSecondary : null,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: isPast ? WeatherCareTheme.textSecondary : null,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeekData {
+  final IconData icon;
+  final String label;
+
+  const _WeekData(this.icon, this.label);
+}
+
+class _WeekDataChip extends StatelessWidget {
+  final _WeekData data;
+  final bool isPast;
+
+  const _WeekDataChip({required this.data, required this.isPast});
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        isPast ? WeatherCareTheme.textSecondary : WeatherCareTheme.primaryDeep;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(data.icon, size: 15, color: color),
+          const SizedBox(width: 5),
+          Text(
+            data.label,
+            style: WeatherCareTheme.microTextStyle.copyWith(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<_WeekData> _additionalWeekData(WeeklyForecastItem day) => [
+      if (day.averageHumidity case final value?)
+        _WeekData(Icons.water_drop_outlined, '평균 습도 ${value.round()}%'),
+      if (day.maximumWindSpeed case final value?)
+        _WeekData(Icons.air_rounded, '최대 풍속 ${_decimal(value)}m/s'),
+      if (day.snowfallAmount case final value?)
+        _WeekData(Icons.ac_unit_rounded, '예상 강설 ${_decimal(value)}cm'),
+      if (day.maximumUvIndex case final value?)
+        _WeekData(Icons.wb_sunny_outlined, '자외선 최고 ${_decimal(value)}'),
+    ];
+
+List<String> _airQualityLines(WeeklyAirQualityForecast? air) {
+  if (air == null) return const [];
+  return [
+    if (air.pm10Grade != null) '미세먼지 ${air.pm10Grade}',
+    if (air.pm25Grade != null) '초미세먼지 ${air.pm25Grade}',
+    if (air.ozoneGrade != null) '오존 ${air.ozoneGrade}',
+    if (air.yellowDustMentioned) '황사 영향 언급',
+    if (air.confidence != null) '신뢰도 ${air.confidence}',
+  ];
+}
+
+String _decimal(double value) => value == value.roundToDouble()
+    ? value.toInt().toString()
+    : value.toStringAsFixed(1);
+
+class _UnavailableWeekDayCard extends StatelessWidget {
+  final DateTime date;
+  final bool isToday;
+  final DateTime today;
+
+  const _UnavailableWeekDayCard({
+    required this.date,
+    required this.isToday,
+    required this.today,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final daysAhead = date.difference(today).inDays;
+    final isPast = date.isBefore(today);
+    final message = isToday
+        ? '지금 날씨 자료를 받지 못했어요.'
+        : date.isBefore(today)
+            ? '인근 관측소의 실제 일관측과 저장된 예보가 모두 없어요.'
+            : daysAhead >= 4
+                ? '단기·중기예보를 모두 받지 못해 표시할 자료가 없어요.'
+                : '예보 범위 안이지만 아직 날씨 자료를 받지 못했어요.';
+    final card = Container(
+      key: ValueKey('week-unavailable-${dateInKorea(date)}'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: isPast
+            ? WeatherCareTheme.surfaceMuted
+            : isToday
+                ? WeatherCareTheme.primarySoft
+                : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isToday
+              ? WeatherCareTheme.primaryBorder
+              : WeatherCareTheme.outline,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: WeatherCareTheme.shadow,
+            blurRadius: 20,
+            offset: Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: const BoxDecoration(
+              color: WeatherCareTheme.surfaceMuted,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.question_mark_rounded,
+              color: WeatherCareTheme.textSecondary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        calendarDayLabel(date),
+                        style: TextStyle(
+                          color: isToday
+                              ? WeatherCareTheme.primaryDeep
+                              : WeatherCareTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    if (isToday)
+                      Text(
+                        '오늘',
+                        key: ValueKey('week-today-${dateInKorea(date)}'),
+                        style: WeatherCareTheme.specialLabelStyle.copyWith(
+                          fontSize: 11,
+                        ),
+                      )
+                    else if (isPast)
+                      Text(
+                        '지난 날짜',
+                        key: ValueKey('week-past-${dateInKorea(date)}'),
+                        style: WeatherCareTheme.specialLabelStyle.copyWith(
+                          color: WeatherCareTheme.textPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                Text(message, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return card;
   }
 }

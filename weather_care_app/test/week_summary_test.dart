@@ -78,18 +78,18 @@ void main() {
       _day('12', {'max': 'NaN'}),
     ]);
     expect(summary.precipitation.value, '1일 확인');
-    expect(summary.precipitation.detail, '2/3일 자료');
+    expect(summary.precipitation.detail, '강수 여부 확인 2/3일');
     expect(summary.maximum.value, '30℃');
-    expect(summary.maximum.detail, '1/3일 자료 중 최고');
+    expect(summary.maximum.detail, '최고기온 확인 1/3일 중 최고');
     expect(summary.preparations.value, '1일 확인');
-    expect(summary.preparations.detail, '2/3일 자료');
+    expect(summary.preparations.detail, '준비물 판단 2/3일');
   });
 
   test('모든 결측·부분 무강수·확인된 무강수를 구분한다', () {
-    expect(_summary([_day('10', {})]).precipitation.value, '자료 없음');
+    expect(_summary([_day('10', {})]).precipitation.value, '0일');
     final clear =
         _day('10', {'weatherLabel': '맑음', 'weatherDataComplete': true});
-    expect(_summary([clear, _day('11', {})]).precipitation.value, '확인 어려움');
+    expect(_summary([clear, _day('11', {})]).precipitation.value, '0일');
     expect(_summary([clear]).precipitation.value, '0일');
   });
 
@@ -103,7 +103,7 @@ void main() {
     ]);
     expect(summary.precipitation.value, '0일');
     expect(summary.maximum.value, '22℃');
-    expect(summary.maximum.detail, '1/1일 자료 중 최고');
+    expect(summary.maximum.detail, '최고기온 확인 1/1일 중 최고');
     expect(summary.excludedNotice, '요약 제외: 날짜 미확인 1개 · 중복 날짜 1일');
   });
 
@@ -169,15 +169,19 @@ void main() {
     expect(_summary([_day('10', {})]).maximum.value, '자료 없음');
   });
 
-  testWidgets('전부 결측이면 날짜 카드는 유지하고 항목별 자료 없음을 표시한다', (tester) async {
+  testWidgets('전부 결측이면 날짜 카드는 유지하고 추가 결측 항목은 비운다', (tester) async {
     await _pump(tester, [_day('10', {})]);
     expect(find.text('날씨 자료 없음'), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-condition-unknown')),
         findsOneWidget);
-    expect(find.text('최저 자료 없음 · 최고 자료 없음'), findsOneWidget);
+    expect(find.text('오전 최저'), findsNothing);
+    expect(find.text('오후 최고'), findsNothing);
     expect(find.text('준비물 추천 자료 없음'), findsOneWidget);
     expect(find.text('준비물 없음'), findsNothing);
-    expect(find.text('0일'), findsNothing);
+    expect(find.text('0일'), findsOneWidget);
+    expect(find.text('예상 강수일'), findsOneWidget);
+    expect(find.text('예상 주중 최고기온'), findsOneWidget);
+    expect(find.text('예상 준비물'), findsOneWidget);
   });
 
   testWidgets('빈 추천은 불필요하다는 뜻으로 표시하지 않는다', (tester) async {
@@ -220,7 +224,9 @@ void main() {
     await tester.scrollUntilVisible(find.text('일부 준비물 추천 자료를 확인하기 어려워요'), 250,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('일부 시간대 날씨 자료 없음'), findsOneWidget);
-    expect(find.text('최저 자료 없음 · 시간별 최고 24℃'), findsOneWidget);
+    expect(find.text('오전 최저'), findsNothing);
+    expect(find.text('오후 최고'), findsOneWidget);
+    expect(find.text('24℃'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/week_tab.dart';
 import 'package:weather_care/features/home/widgets/week_presentation.dart';
 import 'package:weather_care/models/weather.dart';
+import 'package:weather_care/theme/weather_theme.dart';
 import 'package:weather_care/utils/korea_date.dart';
 
 void main() {
@@ -54,34 +55,148 @@ void main() {
     expect(weekPeriodLabel([_day(null)]), '날짜 정보가 없어 예보 기간을 확인하기 어려워요');
   });
 
-  testWidgets('첫 날짜가 내일이면 오늘을 붙이지 않는다', (tester) async {
+  test('현재 한국 날짜가 포함된 주를 일요일부터 토요일까지 고정한다', () {
+    final days = currentCalendarWeek(
+      [
+        _day('2026-09-10'),
+        _day('2026-09-12'),
+        _day('2026-09-13'),
+      ],
+      DateTime.parse('2026-09-10T01:00:00Z'),
+    );
+
+    expect(days.map((day) => calendarDayLabel(day.date)), [
+      '9월 6일 (일)',
+      '9월 7일 (월)',
+      '9월 8일 (화)',
+      '9월 9일 (수)',
+      '9월 10일 (목)',
+      '9월 11일 (금)',
+      '9월 12일 (토)',
+    ]);
+    expect(days.map((day) => day.forecast != null), [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+    ]);
+    expect(calendarWeekPeriodLabel(days), '9월 6일~9월 12일 · 일~토');
+  });
+
+  testWidgets('첫 예보가 내일이어도 오늘을 포함한 일~토 자리를 유지한다', (tester) async {
     await _pump(tester, [_day('2026-09-11')]);
-    expect(find.text('날짜별 날씨'), findsOneWidget);
+    expect(find.text('이번 주'), findsOneWidget);
     expect(find.text('9월 11일 (금)'), findsOneWidget);
-    expect(find.text('오늘'), findsNothing);
+    expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsOneWidget);
     expect(find.textContaining('이번주'), findsNothing);
   });
 
-  testWidgets('목록 위치와 기기 시간대가 아닌 한국 날짜로 오늘을 표시한다', (tester) async {
+  testWidgets('한국 날짜보다 지난 카드는 지난 날짜로 표시한다', (tester) async {
     await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')],
         now: () => DateTime.parse('2026-09-10T15:00:00Z'));
-    expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsNothing);
+    expect(find.byKey(const ValueKey('week-past-2026-09-10')), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-past-2026-09-11')), findsNothing);
     expect(find.byKey(const ValueKey('week-today-2026-09-11')), findsOneWidget);
+    for (final date in ['2026-09-10', '2026-09-11']) {
+      final badge = find.byKey(ValueKey(
+        date == '2026-09-11' ? 'week-today-$date' : 'week-past-$date',
+      ));
+      final card = find.byKey(ValueKey('week-day-$date'));
+      expect(
+        tester.getRect(badge).right,
+        closeTo(tester.getRect(card).right - 17, 1.1),
+      );
+    }
   });
 
-  testWidgets('요일만 받은 기존 서버 자료에는 날짜·오늘을 만들지 않는다', (tester) async {
+  testWidgets('날짜 없는 기존 서버 자료는 주간 슬롯에 임의로 끼워 넣지 않는다', (tester) async {
     await _pump(tester, [_day(null)]);
-    expect(find.text('날짜 확인 어려움'), findsOneWidget);
-    expect(find.text('오늘'), findsNothing);
-    expect(find.text('날짜 정보가 없어 예보 기간을 확인하기 어려워요'), findsOneWidget);
+    expect(find.text('9월 6일 (일)'), findsOneWidget);
+    expect(find.text('9월 12일 (토)'), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsOneWidget);
+    expect(find.text('날짜 확인 어려움'), findsNothing);
   });
 
-  testWidgets('빈 목록에는 0일 요약이나 정상 날씨를 표시하지 않는다', (tester) async {
+  testWidgets('빈 목록도 일~토 자리를 유지하고 정상 날씨를 만들지 않는다', (tester) async {
     await _pump(tester, []);
-    expect(find.text('날짜별 예보 자료가 없어요'), findsOneWidget);
-    expect(find.text('제공된 예보 요약'), findsNothing);
+    expect(find.text('9월 6일~9월 12일 · 일~토'), findsOneWidget);
+    expect(find.text('9월 6일 (일)'), findsOneWidget);
+    expect(find.text('9월 12일 (토)'), findsOneWidget);
+    expect(find.text('제공된 주간 자료 요약'), findsNothing);
     expect(find.text('0일'), findsNothing);
     expect(find.text('준비물 없음'), findsNothing);
+  });
+
+  testWidgets('중기예보까지 실패한 미래 날짜를 구분해 안내한다', (tester) async {
+    await _pump(
+      tester,
+      [],
+      now: () => DateTime.parse('2026-09-15T03:00:00Z'),
+    );
+
+    expect(find.text('9월 19일 (토)'), findsOneWidget);
+    expect(
+      find.text('단기·중기예보를 모두 받지 못해 표시할 자료가 없어요.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('지난 예보와 중기예보의 출처를 카드에 표시한다', (tester) async {
+    await _pump(
+      tester,
+      [
+        _day('2026-09-08', historical: true),
+        _day('2026-09-10', forecastSource: 'KMA_MID_TERM'),
+      ],
+    );
+    expect(find.text('저장된 예보'), findsOneWidget);
+    expect(find.text('중기예보'), findsOneWidget);
+    expect(find.text('지난 날짜'), findsNWidgets(4));
+  });
+
+  testWidgets('지난 날의 실제 관측을 저장된 예보와 구분한다', (tester) async {
+    final observation = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-09-08',
+      'weatherLabel': '강수 관측 없음',
+      'forecastSource': 'KMA_OBSERVATION',
+      'historical': true,
+      'min': 18,
+      'max': 25,
+      'observationDistanceKm': 3.2,
+      'recommendations': [],
+      'precipitationDetail': {
+        'kind': 'OBSERVATION',
+        'hours': [],
+        'observedAmount': 0,
+      },
+    });
+    await _pump(tester, [observation]);
+
+    expect(find.text('실제 관측'), findsOneWidget);
+    expect(find.textContaining('예보격자 대표점에서 3.2km'), findsOneWidget);
+    expect(find.text('강수 관측'), findsOneWidget);
+    expect(find.text('지난 날은 준비물 추천 대상이 아니에요'), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-past-2026-09-08')), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('week-past-2026-09-08')))
+          .style
+          ?.color,
+      WeatherCareTheme.textPrimary,
+    );
+    expect(
+      tester.widget<Text>(find.text('실제 관측')).style?.color,
+      WeatherCareTheme.textPrimary,
+    );
+    expect(find.byType(ColorFiltered), findsNothing);
+    final card = tester.widget<Container>(
+      find.byKey(const ValueKey('week-day-2026-09-08')),
+    );
+    expect((card.decoration as BoxDecoration).color,
+        WeatherCareTheme.surfaceMuted);
   });
 
   testWidgets('전달된 광고 영역은 주간 요약과 날짜 카드 사이에만 표시한다', (tester) async {
@@ -94,7 +209,7 @@ void main() {
       ),
     );
 
-    final summary = tester.getTopLeft(find.text('제공된 예보 요약')).dy;
+    final summary = tester.getTopLeft(find.text('제공된 주간 자료 요약')).dy;
     final advertisement = tester
         .getTopLeft(find.byKey(const ValueKey('test-week-advertisement')))
         .dy;
@@ -103,14 +218,47 @@ void main() {
     expect(advertisement, lessThan(day));
   });
 
+  testWidgets('온도와 날짜별 추가 자료를 값이 있는 항목만 표시한다', (tester) async {
+    final day = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-09-10',
+      'weatherLabel': '맑음',
+      'min': 18,
+      'max': 27,
+      'averageHumidity': 63,
+      'maximumWindSpeed': 4.2,
+      'maximumUvIndex': 7,
+      'snowfallAmount': 0,
+      'airQualityForecast': {
+        'pm10Grade': '보통',
+        'pm25Grade': '낮음',
+        'confidence': '높음',
+      },
+      'recommendations': [],
+    });
+
+    await _pump(tester, [day]);
+
+    expect(find.text('오전 최저'), findsOneWidget);
+    expect(find.text('18℃'), findsOneWidget);
+    expect(find.text('오후 최고'), findsOneWidget);
+    expect(find.text('27℃'), findsNWidgets(2));
+    expect(find.text('평균 습도 63%'), findsOneWidget);
+    expect(find.text('최대 풍속 4.2m/s'), findsOneWidget);
+    expect(find.text('예상 강설 0cm'), findsOneWidget);
+    expect(find.text('자외선 최고 7'), findsOneWidget);
+    expect(find.text('미세먼지 보통 · 초미세먼지 낮음 · 신뢰도 높음'), findsOneWidget);
+    expect(find.textContaining('오존'), findsNothing);
+  });
+
   testWidgets('자정에는 자료를 다시 받지 않아도 오늘 배지가 바뀐다', (tester) async {
     var now = DateTime.parse('2026-09-10T14:59:59Z');
     await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')],
         now: () => now);
     expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-past-2026-09-10')), findsNothing);
     now = now.add(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsNothing);
+    expect(find.byKey(const ValueKey('week-past-2026-09-10')), findsOneWidget);
     expect(find.byKey(const ValueKey('week-today-2026-09-11')), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -123,7 +271,8 @@ void main() {
     now = now.add(const Duration(days: 1));
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
-    expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsNothing);
+    expect(find.byKey(const ValueKey('week-past-2026-09-10')), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-past-2026-09-11')), findsNothing);
     expect(find.byKey(const ValueKey('week-today-2026-09-11')), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -147,19 +296,31 @@ void main() {
         {'forecastDate': '2027-01-01', 'weatherLabel': '맑음'}
       ],
     });
-    await _pump(tester, weekly.days, textScale: 2);
+    await _pump(
+      tester,
+      weekly.days,
+      textScale: 2,
+      now: () => DateTime.parse('2026-12-31T01:00:00Z'),
+    );
     expect(find.text('12월 31일 (목)'), findsOneWidget);
     expect(find.text('많은 눈 대비'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
 
-WeeklyForecastItem _day(String? date) => WeeklyForecastItem(
+WeeklyForecastItem _day(
+  String? date, {
+  bool historical = false,
+  String? forecastSource,
+}) =>
+    WeeklyForecastItem(
       date: '금',
       forecastDate: date,
       weatherLabel: '비',
       min: 20,
       max: 25,
+      historical: historical,
+      forecastSource: forecastSource,
       recommendations: const [],
     );
 

@@ -11,6 +11,8 @@ class WeatherStatusView extends StatelessWidget {
   final Future<void> Function() onRetry;
   final String? primaryActionLabel;
   final Future<void> Function()? onPrimaryAction;
+  final Key? primaryActionKey;
+  final IconData primaryActionIcon;
   final String? secondaryActionLabel;
   final VoidCallback? onSecondaryAction;
 
@@ -24,6 +26,8 @@ class WeatherStatusView extends StatelessWidget {
     required this.onRetry,
     this.primaryActionLabel,
     this.onPrimaryAction,
+    this.primaryActionKey,
+    this.primaryActionIcon = Icons.my_location_rounded,
     this.secondaryActionLabel,
     this.onSecondaryAction,
   });
@@ -99,9 +103,10 @@ class WeatherStatusView extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
-                            key: const ValueKey('location-primary-action'),
+                            key: primaryActionKey ??
+                                const ValueKey('location-primary-action'),
                             onPressed: onPrimaryAction,
-                            icon: const Icon(Icons.my_location_rounded),
+                            icon: Icon(primaryActionIcon),
                             label: Text(primaryActionLabel!),
                           ),
                         ),

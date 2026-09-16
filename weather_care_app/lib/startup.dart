@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'features/home/widgets/weather_status_view.dart';
+import 'theme/weather_theme.dart';
+
 typedef WeatherCareAppInitializer = Future<Widget> Function();
 
 class WeatherCareStartup extends StatefulWidget {
@@ -56,7 +59,7 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
         if (!mounted || generation != _generation) return;
         setState(() {
           _startingServices = false;
-          _serviceError = '온라인 날씨 기능을 준비하지 못했어요. 연결 상태를 확인하고 다시 시도해주세요.';
+          _serviceError = '온라인 날씨 기능을 준비하지 못했어요.\n연결 상태를 확인하고 다시 시도해주세요.';
         });
       }
     }());
@@ -68,42 +71,21 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
     if (app != null) return app;
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: WeatherCareTheme.light(),
       home: Scaffold(
         body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_serviceError == null)
-                    const Column(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 18),
-                        Text(
-                          '첫 실행은 권한 선택 시간을 제외하고 날씨 화면까지 최대 약 2분 걸릴 수 있어요.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    )
-                  else ...[
-                    const Icon(Icons.cloud_off_rounded, size: 42),
-                    const SizedBox(height: 16),
-                    Text(
-                      _serviceError!,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      key: const ValueKey('startup-services-retry'),
-                      onPressed: _startServices,
-                      child: const Text('다시 시도'),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          child: WeatherStatusView(
+            viewKey: 'startup-services',
+            loading: _serviceError == null,
+            offline: false,
+            title: _serviceError == null ? '앱을 초기화 하고 있어요' : null,
+            message: _serviceError ?? '앱에 필요한 날씨·알림 서비스를 준비하고 있어요.',
+            onRetry: () async => _startServices(),
+            primaryActionLabel: _serviceError == null ? null : '다시 시도',
+            onPrimaryAction:
+                _serviceError == null ? null : () async => _startServices(),
+            primaryActionKey: const ValueKey('startup-services-retry'),
+            primaryActionIcon: Icons.refresh_rounded,
           ),
         ),
       ),

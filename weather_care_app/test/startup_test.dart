@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:weather_care/features/home/widgets/weather_status_view.dart';
 import 'package:weather_care/startup.dart';
 
 void main() {
@@ -13,6 +14,9 @@ void main() {
     );
     await tester.pump();
 
+    expect(find.byType(WeatherStatusView), findsOneWidget);
+    expect(find.text('앱을 초기화 하고 있어요'), findsOneWidget);
+    expect(find.text('날씨 정보를 확인하고 있어요'), findsNothing);
     expect(find.textContaining('최대 약 2분'), findsOneWidget);
 
     pending.complete(const MaterialApp(home: Text('온라인 날씨')));

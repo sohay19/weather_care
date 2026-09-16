@@ -153,7 +153,7 @@ class _WeekSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '제공된 주간 자료 요약',
+            '주간 날씨 요약',
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               fontSize: 17,
@@ -162,7 +162,7 @@ class _WeekSummary extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '받은 예보와 지난 날의 실제 관측을 구분해 집계해요.',
+            '한 주의 날씨를 요약해서 보여드려요',
             style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
@@ -256,9 +256,6 @@ class _SummaryMetric extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(metric.detail,
-              textAlign: TextAlign.center,
-              style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 10)),
         ],
       ),
     );
@@ -431,7 +428,7 @@ class _WeekDayCard extends StatelessWidget {
                 if (minimumTemperature != null)
                   Expanded(
                     child: _WeekTemperaturePeriod(
-                      label: '오전 최저',
+                      label: '최저',
                       value: weekDegrees(minimumTemperature),
                       isPast: isPast,
                     ),
@@ -441,7 +438,7 @@ class _WeekDayCard extends StatelessWidget {
                 if (maximumTemperature != null)
                   Expanded(
                     child: _WeekTemperaturePeriod(
-                      label: '오후 최고',
+                      label: '최고',
                       value: weekDegrees(maximumTemperature),
                       isPast: isPast,
                     ),

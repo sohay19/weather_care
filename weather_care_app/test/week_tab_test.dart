@@ -125,7 +125,7 @@ void main() {
     expect(find.text('9월 6일~9월 12일 · 일~토'), findsOneWidget);
     expect(find.text('9월 6일 (일)'), findsOneWidget);
     expect(find.text('9월 12일 (토)'), findsOneWidget);
-    expect(find.text('제공된 주간 자료 요약'), findsNothing);
+    expect(find.text('주간 날씨 요약'), findsNothing);
     expect(find.text('0일'), findsNothing);
     expect(find.text('준비물 없음'), findsNothing);
   });
@@ -209,7 +209,7 @@ void main() {
       ),
     );
 
-    final summary = tester.getTopLeft(find.text('제공된 주간 자료 요약')).dy;
+    final summary = tester.getTopLeft(find.text('주간 날씨 요약')).dy;
     final advertisement = tester
         .getTopLeft(find.byKey(const ValueKey('test-week-advertisement')))
         .dy;
@@ -238,9 +238,9 @@ void main() {
 
     await _pump(tester, [day]);
 
-    expect(find.text('오전 최저'), findsOneWidget);
+    expect(find.text('최저'), findsOneWidget);
     expect(find.text('18℃'), findsOneWidget);
-    expect(find.text('오후 최고'), findsOneWidget);
+    expect(find.text('최고'), findsOneWidget);
     expect(find.text('27℃'), findsNWidgets(2));
     expect(find.text('평균 습도 63%'), findsOneWidget);
     expect(find.text('최대 풍속 4.2m/s'), findsOneWidget);

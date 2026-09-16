@@ -78,11 +78,8 @@ void main() {
       _day('12', {'max': 'NaN'}),
     ]);
     expect(summary.precipitation.value, '1일 확인');
-    expect(summary.precipitation.detail, '강수 여부 확인 2/3일');
     expect(summary.maximum.value, '30℃');
-    expect(summary.maximum.detail, '최고기온 확인 1/3일 중 최고');
     expect(summary.preparations.value, '1일 확인');
-    expect(summary.preparations.detail, '준비물 판단 2/3일');
   });
 
   test('모든 결측·부분 무강수·확인된 무강수를 구분한다', () {
@@ -103,7 +100,6 @@ void main() {
     ]);
     expect(summary.precipitation.value, '0일');
     expect(summary.maximum.value, '22℃');
-    expect(summary.maximum.detail, '최고기온 확인 1/1일 중 최고');
     expect(summary.excludedNotice, '요약 제외: 날짜 미확인 1개 · 중복 날짜 1일');
   });
 
@@ -156,7 +152,7 @@ void main() {
     expect(day.recommendations.single.type, RecommendationType.mask);
   });
 
-  test('시간별 최고 포함을 명시하며 값이 없으면 최고를 만들지 않는다', () {
+  test('시간별 최고를 구분하며 값이 없으면 최고를 만들지 않는다', () {
     final day = _day('10', {
       'min': -2.5,
       'max': 0,
@@ -165,7 +161,7 @@ void main() {
     });
     expect(weekTemperatureLabel(day, maximum: false), '최저 -2.5℃');
     expect(weekTemperatureLabel(day, maximum: true), '시간별 최고 0℃');
-    expect(_summary([day]).maximum.detail, contains('시간별 예보 포함'));
+    expect(_summary([day]).maximum.value, '0℃');
     expect(_summary([_day('10', {})]).maximum.value, '자료 없음');
   });
 
@@ -225,7 +221,7 @@ void main() {
         scrollable: find.byType(Scrollable).first);
     expect(find.text('일부 시간대 날씨 자료 없음'), findsOneWidget);
     expect(find.text('오전 최저'), findsNothing);
-    expect(find.text('오후 최고'), findsOneWidget);
+    expect(find.text('최고'), findsOneWidget);
     expect(find.text('24℃'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });

@@ -144,8 +144,7 @@ List<WeatherRecommendation> weekRecommendations(WeeklyForecastItem day) {
 
 class WeekSummaryMetric {
   final String value;
-  final String detail;
-  const WeekSummaryMetric(this.value, this.detail);
+  const WeekSummaryMetric(this.value);
 }
 
 class WeekSummaryData {
@@ -179,7 +178,6 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
     List<bool?> values, {
     int? denominator,
     bool zeroWhenNoPositive = false,
-    required String detailLabel,
   }) {
     final known = values.whereType<bool>().toList();
     final positive = known.where((value) => value).length;
@@ -193,10 +191,7 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
                 : positive > 0
                     ? '$positive일 확인'
                     : '확인 어려움';
-    return WeekSummaryMetric(
-      value,
-      '$detailLabel ${known.length}/$expected일',
-    );
+    return WeekSummaryMetric(value);
   }
 
   final temperatures = eligible
@@ -205,9 +200,6 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
       .toList();
   final max = temperatures.fold<double?>(
       null, (max, value) => max == null || value > max ? value : max);
-  final includesHourly = eligible.any((day) =>
-      day.maxTemperatureSource == 'HOURLY' &&
-      weekTemperature(day, maximum: true) != null);
   final exclusions = [
     if (missingDates > 0) '날짜 미확인 $missingDates개',
     if (duplicates > 0) '중복 날짜 $duplicates일',
@@ -216,10 +208,8 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
     count(
       eligible.map(weekPrecipitation).toList(),
       zeroWhenNoPositive: true,
-      detailLabel: '강수 여부 확인',
     ),
-    WeekSummaryMetric(max == null ? '자료 없음' : weekDegrees(max),
-        '최고기온 확인 ${temperatures.length}/$total일 중 최고${includesHourly ? ' · 시간별 예보 포함' : ''}'),
+    WeekSummaryMetric(max == null ? '자료 없음' : weekDegrees(max)),
     serverFeaturesAvailable
         ? count(
             eligible
@@ -233,9 +223,8 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
             denominator: eligible
                 .where((day) => day.forecastSource != 'KMA_OBSERVATION')
                 .length,
-            detailLabel: '준비물 판단',
           )
-        : const WeekSummaryMetric('미지원', '운영 서버 미연결'),
+        : const WeekSummaryMetric('미지원'),
     exclusions.isEmpty ? null : '요약 제외: ${exclusions.join(' · ')}',
   );
 }

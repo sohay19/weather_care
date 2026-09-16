@@ -8,6 +8,7 @@ import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
 import '../widgets/tab_page_header.dart';
+import '../widgets/pull_to_refresh_data_hint.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/week_presentation.dart';
 import '../widgets/week_precipitation.dart';
@@ -84,6 +85,15 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
         .map((day) => day.forecast)
         .whereType<WeeklyForecastItem>()
         .toList(growable: false);
+    final showRefreshHint = calendarDays.any((day) {
+      final forecast = day.forecast;
+      return forecast == null ||
+          forecast.min == null ||
+          forecast.max == null ||
+          forecast.weatherLabel == null ||
+          forecast.weatherDataComplete != true ||
+          !forecast.recommendationsAvailable;
+    });
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
       onRefresh: widget.onRefresh,
@@ -108,6 +118,10 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               )
             else
               const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
+            if (showRefreshHint) ...[
+              const SizedBox(height: 16),
+              const PullToRefreshDataHint(),
+            ],
             if (widget.advertisement != null) ...[
               const SizedBox(height: 18),
               widget.advertisement!,

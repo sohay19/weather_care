@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/hourly_forecast_section.dart';
+import '../widgets/pull_to_refresh_data_hint.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_card.dart';
 
@@ -20,6 +21,7 @@ class TodayTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final showRefreshHint = _todayHasMissingData(today);
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
       onRefresh: onRefresh,
@@ -44,9 +46,37 @@ class TodayTab extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             HourlyForecastSection(items: today.hourly),
+            if (showRefreshHint) ...[
+              const SizedBox(height: 16),
+              const PullToRefreshDataHint(),
+            ],
           ],
         ),
       ),
     );
   }
+}
+
+bool _todayHasMissingData(TodayWeatherResponse today) {
+  final current = today.current;
+  if (current.temperature == null ||
+      current.apparentTemperature == null ||
+      current.humidity == null ||
+      current.windSpeed == null ||
+      current.uvIndex == null ||
+      current.pm10 == null ||
+      current.pm25 == null ||
+      current.sky == null ||
+      today.hourly.isEmpty) {
+    return true;
+  }
+  return today.hourly.any(
+    (item) =>
+        item.time == '--' ||
+        item.temperature == null ||
+        item.apparentTemperature == null ||
+        item.precipitationProbability == null ||
+        item.windSpeed == null ||
+        item.skyCondition == null,
+  );
 }

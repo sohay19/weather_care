@@ -81,9 +81,11 @@ WeatherLoadResult _weather(int nx, int ny, {String? regionName}) =>
 
 class _Weather extends WeatherService {
   final calls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
+  final comparisonCalls = <({int nx, int ny})>[];
   Completer<WeatherLoadResult>? pending;
   bool emitTodayWhilePending = false;
   TodayWeatherResponse? mainPreview;
+  ComparisonResponse comparison = const ComparisonResponse.unavailable();
   String? regionName;
   _Weather()
       : super(ApiClient(baseUrl: ''),
@@ -94,6 +96,16 @@ class _Weather extends WeatherService {
     int ny = 121,
   }) async =>
       mainPreview;
+
+  @override
+  Future<ComparisonResponse> fetchYesterdayComparison({
+    required String installationId,
+    int nx = 60,
+    int ny = 121,
+  }) async {
+    comparisonCalls.add((nx: nx, ny: ny));
+    return comparison;
+  }
 
   @override
   Future<WeatherLoadResult> fetchServerWeather(
@@ -289,6 +301,18 @@ void main() {
     expect(readyCount, 1);
   });
 
+  testWidgets('Main은 현재 격자의 어제 비교 자료를 별도 조회해 표시한다', (tester) async {
+    weather.comparison = const ComparisonResponse(
+      comparisonAvailable: true,
+      comparison: ComparisonWeatherSnapshot(temperature: 18),
+    );
+
+    await start(tester, initialIndex: 2);
+
+    expect(weather.comparisonCalls, [(nx: 60, ny: 127)]);
+    expect(find.text('기온은 어제보다 2.0℃ 높아요.'), findsOneWidget);
+  });
+
   testWidgets('경량 자료가 먼저 오면 전체 Today 전에 Main 핵심 카드를 표시한다', (tester) async {
     weather.mainPreview = _weather(60, 127).today;
     weather.pending = Completer<WeatherLoadResult>();
@@ -297,6 +321,11 @@ void main() {
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
     expect(find.text('Check List를 불러오고 있어요'), findsOneWidget);
+    await tester.drag(
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -360),
+    );
+    await tester.pump();
     expect(find.text('시간별 자료를 불러오고 있어요'), findsOneWidget);
 
     weather.pending!.complete(_weather(60, 127));

@@ -6,6 +6,7 @@ import '../../../models/weather.dart';
 import '../../../services/notification_destination.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/lifestyle_evidence_checklist_section.dart';
+import '../widgets/pull_to_refresh_data_hint.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
 
@@ -131,6 +132,11 @@ class _DetailTabState extends State<DetailTab> {
                 icon: Icons.fact_check_outlined,
                 title: '근거와 자료',
               ),
+            if (!widget.serverFeaturesAvailable ||
+                widget.today.dataStatusMessages.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const PullToRefreshDataHint(),
+            ],
           ],
         ),
       ),

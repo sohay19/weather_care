@@ -103,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _permissionSyncRequested = false;
   TodayWeatherResponse? _today;
   WeeklyWeatherResponse? _weekly;
+  ComparisonResponse? _yesterdayComparison;
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
   late bool _todayAdvertisementActivated;
@@ -115,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _loading = false;
   bool _weeklyLoading = false;
   bool _mainDetailsLoading = false;
+  bool _comparisonLoading = false;
   bool _homeReadyReported = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
@@ -432,12 +434,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     _loading = true;
     _weeklyLoading = true;
-    if (_today == null) {
-      setState(() {
+    setState(() {
+      _yesterdayComparison = null;
+      _comparisonLoading = true;
+      if (_today == null) {
         _loadMode = null;
         _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
-      });
-    }
+      }
+    });
+    unawaited(_fetchYesterdayComparison(service, revision, grid));
 
     try {
       while (mounted) {
@@ -521,6 +526,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _loading = false;
       if (mounted) setState(() => _weeklyLoading = false);
     }
+  }
+
+  Future<void> _fetchYesterdayComparison(
+    WeatherService service,
+    int revision,
+    KmaGrid grid,
+  ) async {
+    final comparison = await service.fetchYesterdayComparison(
+      installationId: _settings.installationId,
+      nx: grid.nx,
+      ny: grid.ny,
+    );
+    if (!mounted || revision != _locationRevision) return;
+    final currentGrid = _weatherGrid;
+    if (currentGrid?.nx != grid.nx || currentGrid?.ny != grid.ny) return;
+    setState(() {
+      _yesterdayComparison = comparison;
+      _comparisonLoading = false;
+    });
   }
 
   bool _applyServerToday(
@@ -733,6 +757,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       mood: _mood,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       detailsLoading: _mainDetailsLoading,
+                      yesterdayComparison: _yesterdayComparison,
+                      comparisonLoading: _comparisonLoading,
                       onRefresh: _loadData,
                       onDetail: _openRecommendationDetail,
                       advertisement: _mainAdvertisementActivated

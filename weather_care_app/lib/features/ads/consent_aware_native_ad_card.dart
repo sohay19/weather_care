@@ -268,17 +268,11 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
     return Semantics(
       container: true,
       label: '광고',
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Container(
-            key: ValueKey('${widget.placement.name}-native-ad-card'),
-            height: _cardHeight,
-            clipBehavior: Clip.antiAlias,
-            decoration: WeatherCareTheme.surfaceDecoration(radius: 22),
-            child: nativeAd.buildWidget(),
-          ),
-        ),
+      child: _NativeAdFrame(
+        frameKey: ValueKey('${widget.placement.name}-native-ad-card'),
+        size: widget.size,
+        decoration: WeatherCareTheme.surfaceDecoration(radius: 22),
+        child: nativeAd.buildWidget(),
       ),
     );
   }
@@ -291,11 +285,6 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
     if (nativeAd != null) unawaited(nativeAd.dispose());
     super.dispose();
   }
-
-  double get _cardHeight => switch (widget.size) {
-        NativeAdCardSize.small => 112,
-        NativeAdCardSize.medium => 360,
-      };
 }
 
 class _NativeAdLoadingPlaceholder extends StatelessWidget {
@@ -306,27 +295,59 @@ class _NativeAdLoadingPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Container(
-          key: ValueKey('${placement.name}-native-ad-placeholder'),
-          height: switch (size) {
-            NativeAdCardSize.small => 112,
-            NativeAdCardSize.medium => 360,
-          },
-          decoration: BoxDecoration(
-            color: WeatherCareTheme.surfaceSubtle,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: WeatherCareTheme.outline),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '광고를 불러오고 있어요',
-            style: WeatherCareTheme.microTextStyle,
-          ),
+    return _NativeAdFrame(
+      frameKey: ValueKey('${placement.name}-native-ad-placeholder'),
+      size: size,
+      decoration: BoxDecoration(
+        color: WeatherCareTheme.surfaceSubtle,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: WeatherCareTheme.outline),
+      ),
+      child: Center(
+        child: Text(
+          '광고를 불러오고 있어요',
+          style: WeatherCareTheme.microTextStyle,
         ),
       ),
+    );
+  }
+}
+
+class _NativeAdFrame extends StatelessWidget {
+  final Key frameKey;
+  final NativeAdCardSize size;
+  final Decoration decoration;
+  final Widget child;
+
+  const _NativeAdFrame({
+    required this.frameKey,
+    required this.size,
+    required this.decoration,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.constrainWidth(400);
+        final height = switch (size) {
+          // Google의 소형 네이티브 템플릿은 Android와 iOS 모두 4:1이다.
+          // 템플릿보다 높은 고정 영역을 만들면 내용이 위로 치우쳐 보인다.
+          NativeAdCardSize.small => width / 4,
+          NativeAdCardSize.medium => 360.0,
+        };
+        return Center(
+          child: Container(
+            key: frameKey,
+            width: width,
+            height: height,
+            clipBehavior: Clip.antiAlias,
+            decoration: decoration,
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

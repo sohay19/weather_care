@@ -111,6 +111,27 @@ void main() {
       360,
     );
   });
+
+  testWidgets('소형 카드는 4:1 비율로 카드와 광고 중심을 맞춘다', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(subject());
+    eligible = true;
+    await consent.refresh();
+    await tester.pump();
+    await tester.pump();
+
+    final card = tester.getSize(
+      find.byKey(const ValueKey('week-native-ad-card')),
+    );
+    expect(card.width, 360);
+    expect(card.height, 90);
+    expect(tester.getCenter(find.byKey(const ValueKey('fake-native-ad'))),
+        tester.getCenter(find.byKey(const ValueKey('week-native-ad-card'))));
+  });
 }
 
 class _FakeNativeAdCardLoader implements NativeAdCardLoader {

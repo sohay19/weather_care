@@ -456,7 +456,7 @@ void main() {
     expect(find.text('여유 있게 움직이기'), findsNothing);
     expect(find.text('초미세먼지'), findsOneWidget);
     expect(find.text('76㎍'), findsOneWidget);
-    expect(find.text('어제와 비교'), findsNothing);
+    expect(find.text('어제와 비교'), findsOneWidget);
     expect(find.text('오후 3시 예상기온'), findsOneWidget);
     expect(find.text('예상 체감온도'), findsOneWidget);
     expect(

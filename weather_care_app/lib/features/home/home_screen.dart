@@ -18,6 +18,7 @@ import '../../services/notification_destination.dart';
 import '../../services/settings_sync_service.dart';
 import '../../services/settings_save_controller.dart';
 import '../../services/notification_permission_service.dart';
+import '../../services/native_ad_unit_config.dart';
 import '../../services/permission_onboarding_store.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
@@ -26,7 +27,7 @@ import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
-import '../ads/consent_aware_inline_banner.dart';
+import '../ads/consent_aware_native_ad_card.dart';
 import 'tabs/detail_tab.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
@@ -47,6 +48,7 @@ class HomeScreen extends StatefulWidget {
   final NotificationPermissionService? notificationPermission;
   final ServerDataAccess? serverDataAccess;
   final PermissionOnboardingStore permissionOnboardingStore;
+  final VoidCallback? onHomeReady;
 
   const HomeScreen({
     super.key,
@@ -61,6 +63,7 @@ class HomeScreen extends StatefulWidget {
     this.notificationPermission,
     this.serverDataAccess,
     this.permissionOnboardingStore = const PermissionOnboardingStore(),
+    this.onHomeReady,
   });
 
   @override
@@ -102,6 +105,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   WeeklyWeatherResponse? _weekly;
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
+  late bool _todayAdvertisementActivated;
+  late bool _mainAdvertisementActivated;
+  late bool _weekAdvertisementActivated;
   late NotificationTopic? _detailFocusTopic;
   LifestyleMessageType? _detailFocusLifestyleType;
   DetailFocusSource _detailFocusSource = DetailFocusSource.notification;
@@ -109,6 +115,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _loading = false;
   bool _weeklyLoading = false;
   bool _mainDetailsLoading = false;
+  bool _homeReadyReported = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
 
   KmaGrid? get _weatherGrid {
@@ -147,6 +154,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         : widget.initialIndex > 4
             ? 4
             : widget.initialIndex;
+    _todayAdvertisementActivated = _selectedIndex == 0;
+    _mainAdvertisementActivated = _selectedIndex == 2;
+    _weekAdvertisementActivated = _selectedIndex == 3;
     _detailFocusTopic = widget.initialNotificationTopic;
     _initialize();
   }
@@ -646,6 +656,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final today = _today;
     final weekly = _weekly;
     final serverFeaturesAvailable = _loadMode == WeatherLoadMode.server;
+    final homeReady =
+        today != null || (_initialized && !_loading && _loadMode != null);
+    if (!_homeReadyReported && homeReady) {
+      _homeReadyReported = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onHomeReady?.call();
+      });
+    }
     final settingsPanel = AbsorbPointer(
         absorbing: !_initialized,
         child: SettingsScreen(
@@ -689,6 +707,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   : TodayTab(
                       today: today,
                       onRefresh: _loadData,
+                      advertisement: _todayAdvertisementActivated
+                          ? const ConsentAwareNativeAdCard(
+                              placement: NativeAdPlacement.today,
+                            )
+                          : null,
                     ),
               today == null
                   ? _statusView('detail-tab')
@@ -712,6 +735,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       detailsLoading: _mainDetailsLoading,
                       onRefresh: _loadData,
                       onDetail: _openRecommendationDetail,
+                      advertisement: _mainAdvertisementActivated
+                          ? const ConsentAwareNativeAdCard(
+                              placement: NativeAdPlacement.main,
+                            )
+                          : null,
                     ),
               weekly == null
                   ? _statusView(
@@ -726,8 +754,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       weekly: weekly,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
-                      advertisement: _selectedIndex == 3
-                          ? const ConsentAwareInlineBanner()
+                      advertisement: _weekAdvertisementActivated
+                          ? const ConsentAwareNativeAdCard(
+                              placement: NativeAdPlacement.week,
+                              size: NativeAdCardSize.medium,
+                            )
                           : null,
                     ),
               settingsPanel,
@@ -744,7 +775,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (index) {
             if (_selectedIndex == index) return;
-            setState(() => _selectedIndex = index);
+            setState(() {
+              _selectedIndex = index;
+              if (index == 0) _todayAdvertisementActivated = true;
+              if (index == 2) _mainAdvertisementActivated = true;
+              if (index == 3) _weekAdvertisementActivated = true;
+            });
           },
           destinations: const [
             NavigationDestination(

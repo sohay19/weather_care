@@ -814,7 +814,7 @@ class _NotificationStatusSettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _SettingsSection(
-            icon: Icons.save_alt_outlined,
+            icon: Icons.device_unknown_outlined,
             title: '기기 상태',
             subtitle: '기기에서 알림을 보낼 수 있는 상태인지 확인해요',
             child: Column(

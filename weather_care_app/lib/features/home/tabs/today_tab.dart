@@ -9,11 +9,13 @@ import '../widgets/weather_card.dart';
 class TodayTab extends StatelessWidget {
   final TodayWeatherResponse today;
   final Future<void> Function() onRefresh;
+  final Widget? advertisement;
 
   const TodayTab({
     super.key,
     required this.today,
     required this.onRefresh,
+    this.advertisement,
   });
 
   @override
@@ -37,6 +39,10 @@ class TodayTab extends StatelessWidget {
             const SizedBox(height: 18),
             WeatherInfoCard(current: today.current),
             const SizedBox(height: 16),
+            if (advertisement != null) ...[
+              advertisement!,
+              const SizedBox(height: 16),
+            ],
             HourlyForecastSection(items: today.hourly),
           ],
         ),

@@ -7,11 +7,13 @@ import 'theme/weather_theme.dart';
 class WeatherCareApp extends StatelessWidget {
   final GlobalKey<NavigatorState>? navigatorKey;
   final Map<String, dynamic>? initialNotificationData;
+  final VoidCallback? onHomeReady;
 
   const WeatherCareApp({
     super.key,
     this.navigatorKey,
     this.initialNotificationData,
+    this.onHomeReady,
   });
 
   @override
@@ -26,8 +28,11 @@ class WeatherCareApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
       routes: {
-        '/': (_) => const HomeScreen(),
-        '/settings': (_) => const HomeScreen(initialIndex: 4),
+        '/': (_) => HomeScreen(onHomeReady: onHomeReady),
+        '/settings': (_) => HomeScreen(
+              initialIndex: 4,
+              onHomeReady: onHomeReady,
+            ),
         '/weather-details': (context) {
           final arguments = ModalRoute.of(context)?.settings.arguments;
           final destination = arguments is NotificationDestination
@@ -36,6 +41,7 @@ class WeatherCareApp extends StatelessWidget {
           return HomeScreen(
             initialIndex: 1,
             initialNotificationTopic: destination?.topic,
+            onHomeReady: onHomeReady,
           );
         },
         '/weather/precipitation': (_) =>

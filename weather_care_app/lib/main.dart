@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:weather_care/firebase_options.dart';
@@ -10,7 +9,10 @@ import 'package:weather_care/firebase_options.dart';
 import 'app.dart';
 import 'services/analytics_consent.dart';
 import 'services/ads_consent.dart';
-import 'services/banner_ad_unit_config.dart';
+import 'services/app_open_ad_controller.dart';
+import 'services/app_open_ad_unit_config.dart';
+import 'services/app_open_launch_store.dart';
+import 'services/native_ad_unit_config.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/notification_navigation_service.dart';
 import 'startup.dart';
@@ -20,6 +22,7 @@ final _notificationNavigation = NotificationNavigationService(
   _appNavigatorKey,
 );
 final _foregroundNotifications = ForegroundNotificationService();
+final _appOpenAds = AppOpenAdController();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -73,12 +76,32 @@ Future<Widget> _initializeApp() async {
   return WeatherCareApp(
     navigatorKey: _appNavigatorKey,
     initialNotificationData: initialNotificationData,
+    onHomeReady: _appOpenAds.markHomeReady,
   );
 }
 
 void _startAdsAfterAppFrame() {
-  // Release ads remain off unless the separate build-time kill switch is set.
-  if (!kReleaseMode || BannerAdUnitConfig.current.releaseServingEnabled) {
-    unawaited(AdsConsent.instance.refresh());
+  unawaited(_startAds());
+}
+
+Future<void> _startAds() async {
+  final nativeAdsEnabled = NativeAdPlacement.values.any(
+    (placement) =>
+        NativeAdUnitConfig.current.resolve(placement: placement) != null,
+  );
+  final appOpenAdEnabled = AppOpenAdUnitConfig.current.resolve() != null;
+  if (!nativeAdsEnabled && !appOpenAdEnabled) return;
+
+  if (appOpenAdEnabled) {
+    try {
+      final shouldShow =
+          await const AppOpenLaunchStore().recordLaunchAndShouldShow();
+      if (shouldShow) {
+        await _appOpenAds.start(showOnInitialLoad: true);
+      }
+    } catch (error) {
+      debugPrint('앱 오프닝 광고 실행 횟수를 확인하지 못했어요: $error');
+    }
   }
+  await AdsConsent.instance.refresh();
 }

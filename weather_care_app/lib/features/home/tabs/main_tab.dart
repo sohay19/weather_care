@@ -19,6 +19,7 @@ class MainTab extends StatelessWidget {
   final bool detailsLoading;
   final Future<void> Function() onRefresh;
   final ValueChanged<RecommendationType> onDetail;
+  final Widget? advertisement;
 
   const MainTab({
     super.key,
@@ -29,6 +30,7 @@ class MainTab extends StatelessWidget {
     this.detailsLoading = false,
     required this.onRefresh,
     required this.onDetail,
+    this.advertisement,
   });
 
   @override
@@ -96,6 +98,10 @@ class MainTab extends StatelessWidget {
                         icon: Icons.schedule_rounded,
                         title: '간단한 타임라인',
                       ),
+                    if (advertisement != null) ...[
+                      SizedBox(height: compact ? 10 : 14),
+                      advertisement!,
+                    ],
                   ],
                 ),
               ),

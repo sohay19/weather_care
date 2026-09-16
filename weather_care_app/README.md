@@ -85,28 +85,49 @@ Copy-Item config/kma.config.example.json config/kma.config.json
 
 ## 광고 개발 설정
 
-- 광고는 `Week` 탭을 실제로 보고 있을 때만 주간 요약과 날짜 카드 사이에 인라인
-  적응형 배너로 로드합니다. Main·Today·Detail·Setting에는 표시하지 않습니다.
+- 소형 네이티브 광고 카드는 `Today`의 시간별 예보 바로 위와 `Main`의 콘텐츠 제일
+  하단에 표시합니다. `Week`의 주간 요약과 첫 날짜 카드 사이에는 앱 색상·타이포를
+  적용한 360px 중형 네이티브 카드를 표시합니다. 각 탭을 처음 실제로
+  보았을 때 해당 위치의 광고만 로드하고, 다른 탭으로 이동해도 같은 인스턴스를
+  유지합니다. 위치별 광고 단위를 분리해 요청·노출 성과를 따로 확인할 수 있습니다.
+- 앱 오프닝 광고는 설치 후 최초 실행을 제외하고 두 번째 실행부터 준비합니다. UMP가
+  광고 요청을 허용하면 날씨 로딩과 광고 로딩을 병렬로 진행합니다. 광고가 먼저
+  준비되면 표시하지만 Main 콘텐츠가 먼저 준비되면 이번 콜드 스타트에서는 표시하지
+  않고 다음 전경 진입 기회로 미룹니다. 닫은 뒤에는 다음 전경 진입용 광고를 미리
+  로드하며, 4시간이 지난 캐시는 폐기합니다.
 - UMP가 현재 요청에서 `canRequestAds=true`를 반환하기 전에는 Mobile Ads 초기화와
   광고 요청을 진행하지 않습니다. 선택 변경·오류·허용 철회 시 로드된 광고를 즉시
   화면에서 제거하고 폐기합니다.
-- 모든 배너 요청에 비개인화 광고 옵션을 명시하고 광고 콘텐츠 등급 상한은 `G`로
+- 모든 네이티브 광고 요청에 비개인화 광고 옵션을 명시하고 광고 콘텐츠 등급 상한은 `G`로
   설정합니다. 비개인화 광고도 IP 등 광고 전송·부정 사용 방지에 필요한 처리가 전혀
   없다는 뜻은 아닙니다.
-- Debug/Profile은 Google 공식 Android/iOS 테스트 광고 단위만 사용합니다. 운영 광고
+- Debug/Profile은 Google 공식 Android/iOS 네이티브 테스트 광고 단위만 사용합니다. 운영 광고
   단위 ID를 넣어도 개발 빌드에서는 사용하지 않습니다.
 - AdMob 앱에 UMP 메시지가 아직 게시되지 않은 개발 환경에서 광고 위젯 렌더링만
   확인할 때는 `--dart-define=ADMOB_TEST_BYPASS_UMP=true`를 명시할 수 있습니다. 이
   플래그는 Debug/Profile의 공식 테스트 광고에만 적용되고 Release에서는 항상
   무시됩니다. UMP 동의 흐름 검증 결과로 사용하지 않습니다.
-- Release 광고는 기본 차단됩니다.
-  `ADMOB_ANDROID_BANNER_ID`, `ADMOB_IOS_BANNER_ID`, `ADMOB_RELEASE_ENABLED=true`가 모두
-  있어야 UMP와 광고 경로를 시작합니다. 현재 운영 빌드 환경에는 이 값을 주입하지
-  않았으므로 Release 광고는 계속 꺼져 있습니다.
-- 2026-09-14 생성한 운영 배너 광고 단위 ID는 Android
-  `ca-app-pub-6152243173470406/8661897062`, iOS
-  `ca-app-pub-6152243173470406/6134971926`입니다. 비밀값은 아니지만 소스에는
-  하드코딩하지 않고, 위 선행 조건을 마친 Release 빌드 환경에서만 주입합니다.
+- Release에서는 현재 플랫폼에 유효한 운영 광고 단위 ID가 하나라도 있으면 UMP를
+  확인하고, UMP가 허용한 뒤 해당 ID의 광고를 요청합니다. ID가 없거나 형식이 잘못된
+  위치는 광고를 요청하지 않습니다. Week는 기존
+  `ADMOB_ANDROID_NATIVE_ID`/`ADMOB_IOS_NATIVE_ID`도 하위 호환하지만 새 빌드에서는
+  아래 위치별 이름을 사용합니다.
+  - `ADMOB_ANDROID_TODAY_NATIVE_ID`, `ADMOB_IOS_TODAY_NATIVE_ID`
+  - `ADMOB_ANDROID_MAIN_NATIVE_ID`, `ADMOB_IOS_MAIN_NATIVE_ID`
+  - `ADMOB_ANDROID_WEEK_NATIVE_ID`, `ADMOB_IOS_WEEK_NATIVE_ID`
+  - `ADMOB_ANDROID_APP_OPEN_ID`, `ADMOB_IOS_APP_OPEN_ID`
+- 기존 Android/iOS Week 배너 광고 단위는 2026-09-16 앱 코드에서 사용을 중단했습니다.
+  운영 광고 단위는 다음과 같습니다. ID는 비밀값은 아니지만 소스에 하드코딩하지 않고
+  Release 빌드 환경에서만 위 환경값으로 주입합니다.
+  - Today 네이티브: Android `ca-app-pub-6152243173470406/2970868529`, iOS
+    `ca-app-pub-6152243173470406/2609362710`
+  - Main 네이티브: Android `ca-app-pub-6152243173470406/3701496264`, iOS
+    `ca-app-pub-6152243173470406/8223195209`
+  - Week 중형 네이티브: Android `ca-app-pub-6152243173470406/8770437222`, iOS
+    `ca-app-pub-6152243173470406/8762698363` (AdMob 단위 이름:
+    `날씨챙겨 Week 중형 네이티브`)
+  - 앱 오프닝: Android `ca-app-pub-6152243173470406/2388414592`, iOS
+    `ca-app-pub-6152243173470406/5946806649`
 
 운영 광고 송출은 UMP 메시지, 공개 방침, 스토어 연령 설정과 실기 검증이 끝날 때까지
 완료 상태로 간주하지 않습니다.

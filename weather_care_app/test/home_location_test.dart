@@ -208,7 +208,8 @@ void main() {
   Future<void> start(WidgetTester tester,
       {bool settle = true,
       ServerDataAccess? access,
-      int initialIndex = 4}) async {
+      int initialIndex = 4,
+      VoidCallback? onHomeReady}) async {
     await tester.pumpWidget(MaterialApp(
         home: HomeScreen(
             serverDataAccess: access,
@@ -218,6 +219,7 @@ void main() {
             weatherService: weather,
             settingsSync: sync,
             regionCatalog: catalog,
+            onHomeReady: onHomeReady,
             notificationPermission: notificationPermission,
             notificationRegistration: registration)));
     // Asset loading and SharedPreferences initialization are asynchronous.
@@ -265,6 +267,26 @@ void main() {
 
     weather.pending!.complete(_weather(60, 127));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('Main 콘텐츠가 준비된 뒤 홈 준비 완료를 한 번만 알린다', (tester) async {
+    var readyCount = 0;
+    weather.pending = Completer<WeatherLoadResult>();
+
+    await start(
+      tester,
+      settle: false,
+      initialIndex: 2,
+      onHomeReady: () => readyCount += 1,
+    );
+    expect(readyCount, 0);
+
+    weather.pending!.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+    expect(readyCount, 1);
+
+    await tester.pump();
+    expect(readyCount, 1);
   });
 
   testWidgets('경량 자료가 먼저 오면 전체 Today 전에 Main 핵심 카드를 표시한다', (tester) async {

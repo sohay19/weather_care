@@ -807,6 +807,8 @@ void main() {
       const MaterialApp(home: Scaffold(body: SettingsScreen())),
     );
 
+    await tester.tap(find.byKey(const ValueKey('weather-alerts-menu')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
     await tester.scrollUntilVisible(
@@ -833,10 +835,19 @@ void main() {
     expect(find.text('폭염특보 안내'), findsOneWidget);
     expect(find.text('한파특보 안내'), findsOneWidget);
     expect(find.text('현재 비 안내'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('data-permission-menu')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey('data-permission-menu')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('guide-entry-sources')),
       250,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('기상청·에어코리아·국가교통정보센터'), findsOneWidget);
   });

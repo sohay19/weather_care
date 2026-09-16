@@ -45,7 +45,7 @@ class SettingsGuideScreen extends StatelessWidget {
                   ),
                 ),
               if (guide.sections.any((section) => section.links.isNotEmpty))
-                const Text('링크는 외부 브라우저로 열려요. 인터넷 연결이 필요해요.'),
+                const Text('링크는 외부 브라우저로 열려요.\n인터넷 연결이 필요해요.'),
             ],
           ),
         ),
@@ -104,8 +104,9 @@ class _GuideLinkButtonState extends State<_GuideLinkButton> {
               }
               if (!dialogContext.mounted) return;
               ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
-                content: Text(
-                    copied ? '주소를 복사했어요.' : '주소를 복사하지 못했어요. 주소를 길게 눌러 선택해주세요.'),
+                content: Text(copied
+                    ? '주소를 복사했어요.'
+                    : '주소를 복사하지 못했어요.\n주소를 길게 눌러 선택해주세요.'),
               ));
             },
             child: const Text('주소 복사'),

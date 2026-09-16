@@ -3,13 +3,53 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/server_data_access.dart';
-import 'package:weather_care/features/settings/server_data_controls.dart';
 
 const legacyId = 'wc_legacy_fixture_1234567890';
 const newId = 'wc_server_fixture_1234567890';
 final secret = 'a' * 64;
+
+Future<void> openServerDataControls(
+  WidgetTester tester,
+  ServerDataAccess access, {
+  bool largeText = false,
+}) async {
+  await tester.pumpWidget(MaterialApp(
+    builder: largeText
+        ? (_, child) => MediaQuery(
+              data: const MediaQueryData(
+                size: Size(360, 760),
+                textScaler: TextScaler.linear(2),
+              ),
+              child: child!,
+            )
+        : null,
+    home: SettingsScreen(
+      serverDataAccess: access,
+      onDeleteServerData: access.deleteData,
+      onResumeServerData: access.resume,
+    ),
+  ));
+  final menu = find.byKey(const ValueKey('data-permission-menu'));
+  await tester.scrollUntilVisible(
+    menu,
+    200,
+    scrollable: find.byType(Scrollable).first,
+    maxScrolls: 30,
+  );
+  await tester.tap(menu);
+  await tester.pumpAndSettle();
+  final delete = find.byKey(const ValueKey('server-data-delete'));
+  await tester.scrollUntilVisible(
+    delete,
+    200,
+    scrollable: find.byType(Scrollable).last,
+    maxScrolls: 30,
+  );
+  await tester.pumpAndSettle();
+}
 
 class _Api extends ApiClient {
   final calls = <({
@@ -433,12 +473,7 @@ void main() {
   testWidgets('confirmation explains scope and cancellation never deletes',
       (tester) async {
     await tester.runAsync(established);
-    await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-            body: ServerDataControls(
-                access: access,
-                onDelete: access.deleteData,
-                onResume: access.resume))));
+    await openServerDataControls(tester, access);
     await tester.tap(find.byKey(const ValueKey('server-data-delete')));
     await tester.pumpAndSettle();
     expect(find.textContaining('운영 로그·백업'), findsOneWidget);
@@ -456,17 +491,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.runAsync(established);
     api.pendingDelete = Completer<void>();
-    await tester.pumpWidget(MaterialApp(
-        builder: (_, child) => MediaQuery(
-            data: const MediaQueryData(
-                size: Size(360, 760), textScaler: TextScaler.linear(2)),
-            child: child!),
-        home: Scaffold(
-            body: SingleChildScrollView(
-                child: ServerDataControls(
-                    access: access,
-                    onDelete: access.deleteData,
-                    onResume: access.resume)))));
+    await openServerDataControls(tester, access, largeText: true);
     await tester.tap(find.byKey(const ValueKey('server-data-delete')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('server-data-confirm-delete')));

@@ -18,7 +18,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
           children: [
             _PermissionPurpose(
               icon: Icons.location_on_outlined,
-              title: '위치',
+              title: '지역 선택',
               description: '현재 지역의 날씨와 생활 정보를 확인할 때 사용해요.',
             ),
             SizedBox(height: 14),

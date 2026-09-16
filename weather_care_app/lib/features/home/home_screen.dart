@@ -172,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       await access.load();
     } catch (_) {
-      access.error = '기기의 본인 확인 정보를 읽지 못했어요. 서버 전송을 중지했어요. 앱을 다시 열어주세요.';
+      access.error = '기기의 본인 확인 정보를 읽지 못했어요.\n서버 전송을 중지했어요.\n앱을 다시 열어주세요.';
     }
     if (!mounted) return;
     access.addListener(_onServerDataChanged);
@@ -325,8 +325,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _weekly = null;
             _loadMode = WeatherLoadMode.unavailable;
             _statusMessage = _settings.locationMode == 'GPS'
-                ? '${_location.message}. 위치 권한을 확인하거나 지역을 직접 선택해주세요.'
-                : '저장된 지역을 확인할 수 없어요. Setting에서 기준 지역을 다시 선택해주세요.';
+                ? '${_location.message}.\n위치 권한을 확인하거나 지역을 직접 선택해주세요.'
+                : '저장된 지역을 확인할 수 없어요.\nSetting에서 위치를 다시 선택해주세요.';
           });
           _notificationRegistration?.invalidateLocation();
           continue;
@@ -477,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (serverResult.today != null) {
           if (serverResult.weekly == null) {
             setState(() {
-              _statusMessage = 'Main 날씨는 표시했지만 주간 자료를 받지 못했어요. 다시 확인해주세요.';
+              _statusMessage = 'Main 날씨는 표시했지만 주간 자료를 받지 못했어요.\n다시 확인해주세요.';
             });
           }
           return;
@@ -534,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               : today;
       _loadMode = WeatherLoadMode.server;
       _mainDetailsLoading = false;
-      _statusMessage = 'Main 날씨를 먼저 표시했어요. 주간 자료는 계속 불러오고 있어요.';
+      _statusMessage = 'Main 날씨를 먼저 표시했어요.\n주간 자료는 계속 불러오고 있어요.';
     });
     return true;
   }
@@ -562,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               : preview;
       _loadMode = WeatherLoadMode.server;
       _mainDetailsLoading = true;
-      _statusMessage = 'Main 핵심 날씨를 먼저 표시했어요. 상세 자료를 계속 불러오고 있어요.';
+      _statusMessage = 'Main 핵심 날씨를 먼저 표시했어요.\n상세 자료를 계속 불러오고 있어요.';
     });
     return true;
   }
@@ -573,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _weekly = null;
       _mainDetailsLoading = false;
       _loadMode = WeatherLoadMode.unavailable;
-      _statusMessage = '기준 지역과 다른 날씨 자료를 받아 표시하지 않았어요. 새로고침해 다시 확인해주세요.';
+      _statusMessage = '선택한 지역과 다른 날씨 자료를 받아 표시하지 않았어요.\n새로고침해 다시 확인해주세요.';
     });
   }
 
@@ -598,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _today = null;
         _weekly = null;
         _loadMode = WeatherLoadMode.unavailable;
-        _statusMessage = '기준 지역과 다른 날씨 자료를 받아 표시하지 않았어요. 새로고침해 다시 확인해주세요.';
+        _statusMessage = '선택한 지역과 다른 날씨 자료를 받아 표시하지 않았어요.\n새로고침해 다시 확인해주세요.';
         return;
       }
       final selected =
@@ -957,7 +957,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final opened = await _notificationPermission.openSettings();
     if (!mounted || opened) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('설정을 열지 못했어요. 기기 설정에서 날씨챙겨의 알림을 확인해주세요.')));
+        content: Text('설정을 열지 못했어요.\n기기 설정에서 날씨챙겨의 알림을 확인해주세요.')));
   }
 
   void _onServerDataChanged() {
@@ -1007,6 +1007,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         : await _locationService.openAppSettings();
     if (!mounted || opened) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('설정을 열지 못했어요. 기기 설정에서 위치 권한과 위치 기능을 확인해주세요.')));
+        content: Text('설정을 열지 못했어요.\n기기 설정에서 위치 권한과 위치 기능을 확인해주세요.')));
   }
 }

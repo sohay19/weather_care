@@ -5,6 +5,22 @@ import 'package:weather_care/models/app_settings.dart';
 import 'package:weather_care/services/current_location_service.dart';
 
 void main() {
+  Future<void> openLocationSettings(WidgetTester tester) async {
+    if (find
+            .byKey(const ValueKey('location-settings-menu'))
+            .evaluate()
+            .isEmpty &&
+        find
+            .byKey(const ValueKey('settings-detail-back'))
+            .evaluate()
+            .isNotEmpty) {
+      await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.byKey(const ValueKey('location-settings-menu')));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('권한 거부는 현재 위치 사용 중이라고 안내하지 않고 복구 버튼을 제공한다', (tester) async {
     var located = 0;
     var opened = 0;
@@ -14,6 +30,7 @@ void main() {
       onLocate: () async => located++,
       onOpenLocationSettings: () async => opened++,
     )));
+    await openLocationSettings(tester);
     expect(find.text('현재 위치 확인이 필요해요'), findsOneWidget);
     expect(find.textContaining('확인한 현재 위치를 기준'), findsNothing);
     await tester.ensureVisible(find.byKey(const ValueKey('location-refresh')));
@@ -28,6 +45,7 @@ void main() {
       location: const LocationResult(LocationState.checking),
       onLocate: () async {},
     )));
+    await openLocationSettings(tester);
     expect(
         tester
             .widget<FilledButton>(
@@ -39,6 +57,7 @@ void main() {
       location: const LocationResult(LocationState.serviceDisabled),
       onOpenLocationSettings: () async {},
     )));
+    await openLocationSettings(tester);
     expect(find.text('기기 위치 설정 열기'), findsOneWidget);
   });
   testWidgets('대략적 위치와 측정 시각은 360px 큰 글자에서도 표시된다', (tester) async {
@@ -59,6 +78,7 @@ void main() {
               measuredAt: DateTime.utc(2026, 9, 10, 7, 22)),
           regionName: '서울',
         )));
+    await openLocationSettings(tester);
     await tester.ensureVisible(find.byKey(const ValueKey('location-status')));
     expect(find.textContaining('세밀한 강수·도로 분석은 사용하지 않아요'), findsOneWidget);
     expect(find.text('위치 확인: 9월 10일 16:22'), findsOneWidget);
@@ -70,6 +90,7 @@ void main() {
       initialSettings:
           AppSettings.fallback('test').copyWith(locationMode: 'MANUAL'),
     )));
+    await openLocationSettings(tester);
     expect(find.text('선택된 지역이 없어요'), findsOneWidget);
     expect(find.textContaining('수원'), findsNothing);
     expect(find.byKey(const ValueKey('location-refresh')), findsNothing);

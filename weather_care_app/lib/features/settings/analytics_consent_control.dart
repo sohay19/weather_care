@@ -18,7 +18,7 @@ class AnalyticsConsentControl extends StatelessWidget {
                 SwitchListTile(
                   title: const Text('앱 이용 통계 수집 (선택)'),
                   subtitle: const Text(
-                      '앱 개선을 위해 Firebase Analytics로 앱 이용 기록과 기기·앱 정보를 수집해요. 동의하지 않아도 날씨·알림 기능을 이용할 수 있어요. 끄면 이후 분석 수집을 중단해요. 이미 전송된 자료의 삭제와는 달라요.'),
+                      '앱 개선을 위해 Firebase Analytics로 앱 이용 기록과 기기·앱 정보를 수집해요.\n동의하지 않아도 날씨·알림 기능을 이용할 수 있어요.\n끄면 이후 분석 수집을 중단해요.\n이미 전송된 자료의 삭제와는 달라요.'),
                   value: consent.enabled,
                   onChanged: !consent.ready || consent.busy
                       ? null
@@ -29,8 +29,8 @@ class AnalyticsConsentControl extends StatelessWidget {
                                 builder: (context) => AlertDialog(
                                       title: const Text('앱 이용 통계 수집에 동의할까요?'),
                                       content: const Text(
-                                          '동의하면 앱 이용 이벤트, 앱 인스턴스 식별자, 대략적인 지역과 기기·운영체제·앱 정보가 암호화된 통신으로 Google LLC(googlekrsupport@google.com)의 전 세계 시설에 전송돼요. 앱 개선을 위해 사용자·이벤트 자료를 2개월 보관하도록 설정했으며, 표준 집계 보고서는 이 기간의 적용 대상이 아니에요.\n\n'
-                                          '이 국외 이전과 이용 통계 수집은 선택 사항이에요. 동의하지 않아도 날씨·알림 기능을 이용할 수 있고 설정에서 언제든 철회하거나 전송된 자료의 삭제를 요청할 수 있어요. 광고 개인화 동의와는 별개예요.'),
+                                          '동의하면 앱 이용 이벤트, 앱 인스턴스 식별자, 대략적인 지역과 기기·운영체제·앱 정보가 암호화된 통신으로 Google LLC(googlekrsupport@google.com)의 전 세계 시설에 전송돼요.\n앱 개선을 위해 사용자·이벤트 자료를 2개월 보관하도록 설정했으며, 표준 집계 보고서는 이 기간의 적용 대상이 아니에요.\n\n'
+                                          '이 국외 이전과 이용 통계 수집은 선택 사항이에요.\n동의하지 않아도 날씨·알림 기능을 이용할 수 있고 설정에서 언제든 철회하거나 전송된 자료의 삭제를 요청할 수 있어요.\n광고 개인화 동의와는 별개예요.'),
                                       actions: [
                                         TextButton(
                                             onPressed: () =>
@@ -92,8 +92,8 @@ class AnalyticsConsentControl extends StatelessWidget {
               title: const Text('전송된 이용 통계를 삭제할까요?'),
               scrollable: true,
               content: const Text(
-                  '이용 통계 수집을 중단하고, 이 기기의 Firebase 앱 인스턴스 ID와 연결된 과거 자료의 삭제를 Google Analytics에 요청해요. 삭제 요청 접수와 실제 삭제 완료는 달라요.\n\n'
-                  '요청이 접수되면 기기에 남은 분석 데이터와 앱 인스턴스 ID도 초기화해요. 서버의 날씨·알림 데이터와 광고 서비스 자료는 이 요청으로 삭제되지 않아요.'),
+                  '이용 통계 수집을 중단하고, 이 기기의 Firebase 앱 인스턴스 ID와 연결된 과거 자료의 삭제를 Google Analytics에 요청해요.\n삭제 요청 접수와 실제 삭제 완료는 달라요.\n\n'
+                  '요청이 접수되면 기기에 남은 분석 데이터와 앱 인스턴스 ID도 초기화해요.\n서버의 날씨·알림 데이터와 광고 서비스 자료는 이 요청으로 삭제되지 않아요.'),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context, false),

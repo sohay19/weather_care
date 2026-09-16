@@ -406,7 +406,7 @@ void main() {
     await start(tester);
     await screen(tester).onOpenNotificationSettings!();
     await tester.pump();
-    expect(find.textContaining('설정을 열지 못했어요. 기기 설정에서 날씨챙겨'), findsOneWidget);
+    expect(find.textContaining('설정을 열지 못했어요.\n기기 설정에서 날씨챙겨'), findsOneWidget);
   });
 
   testWidgets('날씨 요청 대기가 설정 저장 완료와 다음 변경을 막지 않는다', (tester) async {
@@ -463,7 +463,7 @@ void main() {
     final navigation = tester.widget<NavigationBar>(
         find.byKey(const ValueKey('main-bottom-navigation')));
     expect(navigation.selectedIndex, 4);
-    expect(find.text('기준 지역'), findsOneWidget);
+    expect(find.text('지역 선택'), findsOneWidget);
   });
   testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
     weather.regionName = '선택 지역';
@@ -665,7 +665,7 @@ void main() {
     expect(screen(tester).regionName, isNull);
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('기준 지역과 다른 날씨 자료'), findsOneWidget);
+    expect(find.textContaining('선택한 지역과 다른 날씨 자료'), findsOneWidget);
   });
 
   testWidgets('같은 격자의 다른 동을 선택해도 선택한 지역명이 갱신된다', (tester) async {

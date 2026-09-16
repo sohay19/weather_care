@@ -17,12 +17,12 @@ extension SettingsSaveStateMessage on SettingsSaveState {
         SettingsSaveState.checking => '설정 저장 상태를 확인하고 있어요.',
         SettingsSaveState.saving => '변경한 설정을 저장하고 있어요.',
         SettingsSaveState.localFailed =>
-          '기기에 설정을 저장하지 못했어요. 앱을 다시 실행하면 변경 내용이 사라질 수 있어요. 서버 반영도 완료되지 않았어요.',
+          '기기에 설정을 저장하지 못했어요.\n앱을 다시 실행하면 변경 내용이 사라질 수 있어요.\n서버 반영도 완료되지 않았어요.',
         SettingsSaveState.serverFailed =>
-          '기기에는 저장했지만 서버 반영을 확인하지 못했어요. 알림은 이전 설정으로 발송될 수 있어요.',
-        SettingsSaveState.saved => '기기에 설정을 저장하고 서버에 반영했어요.',
+          '기기에는 저장했지만 서버 반영을 확인하지 못했어요.\n알림은 이전 설정으로 발송될 수 있어요.',
+        SettingsSaveState.saved => '정상적으로 기기에 설정을 저장하고 서버에 반영했어요.',
         SettingsSaveState.localOnly =>
-          '기기에만 설정을 저장했어요. 서버 등록과 설정 전송은 중지된 상태예요.',
+          '기기에만 설정을 저장했어요.\n서버 등록과 설정 전송은 중지된 상태예요.',
       };
 
   bool get canRetry =>

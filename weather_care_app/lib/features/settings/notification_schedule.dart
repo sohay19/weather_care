@@ -8,5 +8,5 @@ String notificationScheduleDescription(String time) {
   final hour = ((rounded ~/ 60) % 24).toString().padLeft(2, '0');
   final minute = (rounded % 60).toString().padLeft(2, '0');
   final day = rounded >= 1440 ? '다음 날 ' : '';
-  return '서버 확인 시각: $day$hour:$minute (한국시간). 10분 단위로 확인하며 실제 도착은 늦어질 수 있어요.';
+  return '서버 확인 시각: $day$hour:$minute (한국시간).\n10분 단위로 확인하며 실제 도착은 늦어질 수 있어요.';
 }

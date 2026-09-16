@@ -239,10 +239,10 @@ class ServerDataAccess extends ChangeNotifier {
               'OWNERSHIP_PROOF_REJECTED' ||
               'INSTALLATION_AUTH_REQUIRED'
         ) =>
-          '이 설치의 소유 여부를 확인하지 못해 삭제하지 않았어요. 코드소하(CODESOHA) sy40222@gmail.com으로 문의해주세요. 인증키나 알림 토큰은 보내지 마세요.',
+          '이 설치의 소유 여부를 확인하지 못해 삭제하지 않았어요.\n코드소하(CODESOHA) sy40222@gmail.com으로 문의해주세요.\n인증키나 알림 토큰은 보내지 마세요.',
         ApiException(code: 'CHALLENGE_RETRY_LATER' || 'ENROLL_RETRY_LATER') =>
-          '본인 확인을 다시 요청하려면 1분 뒤에 시도해주세요. 삭제 완료는 확인되지 않았어요.',
-        _ => '삭제 완료를 확인하지 못했어요. 앱을 열어 둔 상태에서 다시 시도해주세요. 자동 등록과 설정 전송은 중지했어요.',
+          '본인 확인을 다시 요청하려면 1분 뒤에 시도해주세요.\n삭제 완료는 확인되지 않았어요.',
+        _ => '삭제 완료를 확인하지 못했어요.\n앱을 열어 둔 상태에서 다시 시도해주세요.\n자동 등록과 설정 전송은 중지했어요.',
       };
     } finally {
       busy = false;
@@ -292,7 +292,7 @@ class ServerDataAccess extends ChangeNotifier {
         registrationMissing = false;
       });
     } catch (_) {
-      error = '기기에 사용 상태를 저장하지 못해 서버 기능을 다시 켜지 않았어요. 다시 시도해주세요.';
+      error = '기기에 사용 상태를 저장하지 못해 서버 기능을 다시 켜지 않았어요.\n다시 시도해주세요.';
     } finally {
       busy = false;
       _notify();

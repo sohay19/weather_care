@@ -10,8 +10,27 @@ import 'package:weather_care/models/app_settings.dart';
 import 'package:weather_care/theme/weather_theme.dart';
 
 Future<void> reveal(WidgetTester tester, Finder finder) async {
+  if (finder.evaluate().isEmpty &&
+      find.byType(SettingsScreen).evaluate().isNotEmpty) {
+    final notificationGuide =
+        finder.toString().contains("<'notification-guide'>");
+    final locationGuide = finder.toString().contains("<'location-guide'>");
+    final menu = find.byKey(ValueKey(locationGuide
+        ? 'location-settings-menu'
+        : notificationGuide
+            ? 'notification-status-menu'
+            : 'data-permission-menu'));
+    await tester.scrollUntilVisible(menu, 200,
+        scrollable: find.byType(Scrollable).first, maxScrolls: 90);
+    if (!locationGuide) {
+      await tester.drag(find.byType(ListView).first, const Offset(0, -280));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+  }
   await tester.scrollUntilVisible(finder, 200,
-      scrollable: find.byType(Scrollable).first, maxScrolls: 90);
+      scrollable: find.byType(Scrollable).last, maxScrolls: 90);
   await tester.pumpAndSettle();
 }
 
@@ -76,6 +95,8 @@ void main() {
       expect(
           find.byKey(ValueKey('settings-guide-${guide.name}')), findsOneWidget);
       expect(find.text(guide.sections.first.title), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
       expect(find.byType(SettingsGuideScreen), findsNothing);

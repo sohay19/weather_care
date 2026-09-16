@@ -43,12 +43,12 @@ class LocationResult {
         LocationState.checking => '현재 위치를 확인하고 있어요',
         LocationState.ready => '확인한 현재 위치를 기준으로 안내해요',
         LocationState.approximate =>
-          '대략적인 위치로 지역 예보를 안내해요. 세밀한 강수·도로 분석은 사용하지 않아요',
-        LocationState.serviceDisabled => '기기의 위치 기능이 꺼져 있어요. 위치 설정에서 켜주세요',
+          '대략적인 위치로 지역 예보를 안내해요.\n세밀한 강수·도로 분석은 사용하지 않아요',
+        LocationState.serviceDisabled => '기기의 위치 기능이 꺼져 있어요.\n위치 설정에서 켜주세요',
         LocationState.denied => '위치 권한이 없어 현재 위치를 확인하지 못했어요',
         LocationState.deniedForever => '앱 설정에서 위치 권한을 허용한 뒤 다시 확인해주세요',
-        LocationState.timedOut => '시간 안에 위치를 확인하지 못했어요. 잠시 후 다시 시도해주세요',
-        LocationState.unavailable => '현재 위치를 확인하지 못했어요. 잠시 후 다시 시도해주세요',
+        LocationState.timedOut => '시간 안에 위치를 확인하지 못했어요.\n잠시 후 다시 시도해주세요',
+        LocationState.unavailable => '현재 위치를 확인하지 못했어요.\n잠시 후 다시 시도해주세요',
         LocationState.outsideServiceArea => '국내 날씨를 제공하는 범위 밖의 위치예요',
       };
 }

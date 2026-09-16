@@ -108,7 +108,7 @@ class AdsConsent extends ChangeNotifier {
     } catch (_) {
       // Conservative: no cached-consent fallback on failure in this app.
       canRequestAds = false;
-      error = '광고 개인정보 선택을 확인하지 못했어요. 날씨 기능은 계속 이용할 수 있어요.';
+      error = '광고 개인정보 선택을 확인하지 못했어요.\n날씨 기능은 계속 이용할 수 있어요.';
     } finally {
       busy = false;
       notifyListeners();

@@ -37,7 +37,7 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
               scrollable: true,
               title: const Text('이 지역을 사용할까요?'),
               content: Text(
-                  '${region.fullName}\n\n이 지역의 대표 예보 지점 기준으로 안내해요. 지역 안에서도 실제 날씨는 다를 수 있어요.'),
+                  '${region.fullName}\n\n이 지역의 대표 예보 지점 기준으로 안내해요.\n지역 안에서도 실제 날씨는 다를 수 있어요.'),
               actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(context, false),
@@ -84,7 +84,7 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Text(
-                                        '지역 목록을 불러오지 못했어요. 기존 지역은 변경하지 않았어요.'),
+                                        '지역 목록을 불러오지 못했어요.\n기존 지역은 변경하지 않았어요.'),
                                     TextButton(
                                         onPressed: () => setState(() {
                                               _catalog = _load();
@@ -130,7 +130,7 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
                               const Padding(
                                   padding: EdgeInsets.all(24),
                                   child: Text(
-                                      '일치하는 지역이 없어요. 시·군·구나 읍·면·동 이름으로 다시 검색해주세요.')),
+                                      '일치하는 지역이 없어요.\n시·군·구나 읍·면·동 이름으로 다시 검색해주세요.')),
                           ])),
                           SliverList.builder(
                               itemCount: rows.length,
@@ -163,7 +163,7 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
                               child: Padding(
                                   padding: EdgeInsets.all(16),
                                   child: Text(
-                                      '출처: 기상청 날씨누리 지역·예보 격자 목록\n지역 목록은 앱에 저장돼 있어요. 실제 날씨 조회에는 인터넷 연결이 필요해요.\n목록 확인일: ${catalog.retrievedAt.split('T').first}'))),
+                                      '출처: 기상청 날씨누리 지역·예보 격자 목록\n지역 목록은 앱에 저장돼 있어요.\n실제 날씨 조회에는 인터넷 연결이 필요해요.\n목록 확인일: ${catalog.retrievedAt.split('T').first}'))),
                         ]);
                   })),
         ])),

@@ -6,8 +6,19 @@ import 'package:weather_care/models/app_settings.dart';
 
 void main() {
   Future<void> reveal(WidgetTester tester, Finder finder) async {
-    await tester.scrollUntilVisible(finder, 250,
-        scrollable: find.byType(Scrollable).first, maxScrolls: 60);
+    if (finder.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(finder, 250,
+          scrollable: find.byType(Scrollable).first, maxScrolls: 60);
+    } else {
+      await tester.ensureVisible(finder);
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> openWeatherAlerts(WidgetTester tester) async {
+    final menu = find.byKey(const ValueKey('weather-alerts-menu'));
+    await reveal(tester, menu);
+    await tester.tap(menu);
     await tester.pumpAndSettle();
   }
 
@@ -25,14 +36,6 @@ void main() {
     'showerAndLightRainEnabled': '현재 비 안내',
     'dailyWeatherEnabled': '준비물 요약 알림',
   };
-  const carryFields = {
-    'umbrellaEnabled',
-    'parasolEnabled',
-    'outerwearEnabled',
-    'maskEnabled',
-    'waterEnabled',
-    'sunscreenEnabled',
-  };
   for (final entry in fields.entries) {
     testWidgets('${entry.value} 스위치는 ${entry.key}만 변경한다', (tester) async {
       final initial = AppSettings.fallback('test');
@@ -42,14 +45,7 @@ void main() {
         initialSettings: initial,
         onSettingsChanged: (settings) async => changed.add(settings),
       )));
-      if (carryFields.contains(entry.key)) {
-        final menu = find.byKey(const ValueKey('carry-notification-menu'));
-        await reveal(tester, menu);
-        await tester.tap(menu);
-        await tester.pumpAndSettle();
-        expect(
-            find.byKey(const ValueKey('carry-settings-back')), findsOneWidget);
-      }
+      await openWeatherAlerts(tester);
       final toggle = find.byKey(ValueKey('notification-toggle-${entry.key}'));
       await reveal(tester, toggle);
       expect(find.text(entry.value), findsOneWidget);
@@ -60,23 +56,39 @@ void main() {
     });
   }
 
-  testWidgets('챙겨요 알림은 별도 화면으로 열리고 뒤로가기로 설정 목록에 복귀한다', (tester) async {
+  testWidgets('날씨 알림 화면에서 시간·챙겨요·기상생활 영역을 함께 제공한다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
-    final menu = find.byKey(const ValueKey('carry-notification-menu'));
-    await reveal(tester, menu);
-    await tester.tap(menu);
+    await openWeatherAlerts(tester);
+    for (final key in [
+      'weather-alerts-master-section',
+      'notification-time-section',
+      'carry-notification-section',
+      'weather-notification-section',
+    ]) {
+      await reveal(tester, find.byKey(ValueKey(key)));
+      expect(find.byKey(ValueKey(key)), findsOneWidget);
+    }
+    await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('weather-alerts-menu')), findsOneWidget);
+  });
 
-    expect(find.byKey(const ValueKey('carry-notification-settings')),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('carry-settings-back')), findsOneWidget);
-    expect(find.text('세부 메뉴'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('carry-settings-back')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('carry-notification-settings')),
-        findsNothing);
-    expect(menu, findsOneWidget);
+  testWidgets('설정 최상위에는 묶인 날씨 알림과 상태 메뉴만 표시한다', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
+    for (final key in [
+      'location-settings-menu',
+      'weather-alerts-menu',
+      'notification-status-menu',
+      'data-permission-menu',
+    ]) {
+      final menu = find.byKey(ValueKey(key));
+      await reveal(tester, menu);
+      expect(menu, findsOneWidget);
+    }
+    expect(find.byKey(const ValueKey('notification-time-menu')), findsNothing);
+    expect(find.byKey(const ValueKey('carry-notification-menu')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('weather-notification-menu')), findsNothing);
   });
 
   for (final entry in {
@@ -107,6 +119,7 @@ void main() {
         .copyWith(dailyWeatherEnabled: false, notificationTime: '07:35');
     await tester.pumpWidget(
         MaterialApp(home: SettingsScreen(initialSettings: settings)));
+    await openWeatherAlerts(tester);
     await reveal(tester,
         find.byKey(const ValueKey('notification-schedule-description')));
     expect(find.text('07:35'), findsOneWidget);
@@ -115,25 +128,27 @@ void main() {
     expect(settings.notificationTime, '07:35');
   });
 
-  testWidgets('날씨 알림 뒤에 시간·챙겨요·기상생활·저장 상태 순서로 표시한다', (tester) async {
+  testWidgets('날씨 알림 안에서 전체·시간·챙겨요·기상생활 순서로 표시한다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
+    await openWeatherAlerts(tester);
 
-    final titles = [
-      '날씨 알림',
-      '알림 시간',
-      '챙겨요 알림',
-      '기상·생활 알림',
-      '저장·기기 알림 상태',
+    final titles = <Finder>[
+      find.byKey(const ValueKey('weather-alerts-master-section')),
+      find.byKey(const ValueKey('notification-time-section')),
+      find.byKey(const ValueKey('carry-notification-section')),
+      find.byKey(const ValueKey('weather-notification-section')),
     ];
     final scrollable = find.byType(Scrollable).first;
     var previousOffset = 0.0;
     for (final title in titles) {
-      await tester.scrollUntilVisible(
-        find.text(title),
-        250,
-        scrollable: scrollable,
-        maxScrolls: 60,
-      );
+      if (title.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          title,
+          250,
+          scrollable: scrollable,
+          maxScrolls: 60,
+        );
+      }
       final offset = tester.state<ScrollableState>(scrollable).position.pixels;
       expect(offset, greaterThanOrEqualTo(previousOffset));
       previousOffset = offset;
@@ -142,12 +157,14 @@ void main() {
 
   testWidgets('현재 비의 자료·우산 조건과 개별 스위치 없는 안내를 명시한다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
+    await openWeatherAlerts(tester);
     await reveal(
         tester,
         find.byKey(
             const ValueKey('notification-toggle-showerAndLightRainEnabled')));
     expect(find.textContaining('소나기 예보 알림은 아니에요'), findsOneWidget);
     expect(find.textContaining('우산도 켜고 GPS 정밀 위치'), findsOneWidget);
+    expect(find.textContaining('안내해요.\n우산도'), findsOneWidget);
     expect(find.textContaining('가랑비'), findsNothing);
     await reveal(
         tester, find.byKey(const ValueKey('additional-notification-contract')));
@@ -168,6 +185,7 @@ void main() {
           initialSettings:
               AppSettings.fallback('test').copyWith(notificationTime: '23:55')),
     ));
+    await openWeatherAlerts(tester);
     await reveal(tester,
         find.byKey(const ValueKey('notification-schedule-description')));
     expect(find.textContaining('다음 날 00:00'), findsOneWidget);

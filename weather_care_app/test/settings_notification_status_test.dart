@@ -7,8 +7,22 @@ import 'package:weather_care/services/settings_save_controller.dart';
 
 void main() {
   Future<void> reveal(WidgetTester tester, String key) async {
-    await tester.scrollUntilVisible(find.byKey(ValueKey(key)), 200,
-        scrollable: find.byType(Scrollable).first);
+    if (find.byKey(ValueKey(key)).evaluate().isEmpty) {
+      final menu = find.byKey(const ValueKey('notification-status-menu'));
+      if (menu.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(menu, 200,
+            scrollable: find.byType(Scrollable).first);
+      }
+      if (menu.evaluate().isNotEmpty) {
+        await tester.drag(find.byType(ListView).first, const Offset(0, -350));
+        await tester.pumpAndSettle();
+      }
+      await tester.ensureVisible(
+          find.byKey(const ValueKey('notification-status-menu')));
+      await tester.tap(find.byKey(const ValueKey('notification-status-menu')));
+      await tester.pumpAndSettle();
+    }
+    await tester.ensureVisible(find.byKey(ValueKey(key)));
     await tester.pumpAndSettle();
   }
 
@@ -64,10 +78,16 @@ void main() {
       notificationPermission: NotificationPermissionState.authorized,
       onSettingsChanged: (settings) async => changes.add(settings),
     )));
+    await tester.tap(find.byKey(const ValueKey('weather-alerts-menu')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Switch).first);
     await tester.pump();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await reveal(tester, 'settings-save-status');
+    expect(find.text('정상적으로 기기에 설정을 저장하고 서버에 반영했어요.'), findsOneWidget);
     await reveal(tester, 'notification-permission-status');
-    expect(find.text('기기에서 앱 알림을 허용했어요.'), findsOneWidget);
+    expect(find.text('정상적으로 기기에서 앱 알림을 허용했어요.'), findsOneWidget);
     expect(find.textContaining('날씨 알림이 꺼져 있어요'), findsOneWidget);
     expect(changes.single.notificationEnabled, false);
     expect(changes.single.umbrellaEnabled, false);

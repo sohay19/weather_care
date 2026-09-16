@@ -65,7 +65,7 @@ class AnalyticsConsent extends ChangeNotifier {
       try {
         await apply(false);
       } catch (_) {/* Keep the error visible. */}
-      error = '이용 통계 설정을 확인하지 못했어요. 다시 시도해주세요.';
+      error = '이용 통계 설정을 확인하지 못했어요.\n다시 시도해주세요.';
     } finally {
       busy = false;
       notifyListeners();
@@ -113,7 +113,7 @@ class AnalyticsConsent extends ChangeNotifier {
         await apply(false);
       } catch (_) {/* Report failure, never success. */}
       enabled = false;
-      error = '이용 통계 설정을 적용하지 못했어요. 수집 중단과 설정 저장을 완료하려면 다시 시도해주세요.';
+      error = '이용 통계 설정을 적용하지 못했어요.\n수집 중단과 설정 저장을 완료하려면 다시 시도해주세요.';
     } finally {
       busy = false;
       notifyListeners();
@@ -156,12 +156,12 @@ class AnalyticsConsent extends ChangeNotifier {
       }
       enabled = false;
       if (withdrawalFailure != null) {
-        error = '이용 통계 수집 중단을 완료하지 못했어요. 다시 시도해주세요.';
+        error = '이용 통계 수집 중단을 완료하지 못했어요.\n다시 시도해주세요.';
         deletionError = '수집 중단을 완료한 뒤 삭제를 다시 요청해주세요.';
         return;
       }
       if (record == null) {
-        deletionError = '삭제 요청에 사용할 이용 통계 식별자를 확인하지 못했어요. 이후 수집은 중단했어요.';
+        deletionError = '삭제 요청에 사용할 이용 통계 식별자를 확인하지 못했어요.\n이후 수집은 중단했어요.';
         return;
       }
 
@@ -181,14 +181,14 @@ class AnalyticsConsent extends ChangeNotifier {
         await deletionStore!.clear();
       } catch (_) {
         deletionError = submitted
-            ? 'Google Analytics 삭제 요청은 접수됐지만 기기의 분석 데이터 초기화를 완료하지 못했어요. 다시 시도해주세요.'
-            : 'Google Analytics 삭제 요청을 완료하지 못했어요. 다시 시도해주세요.';
+            ? 'Google Analytics 삭제 요청은 접수됐지만 기기의 분석 데이터 초기화를 완료하지 못했어요.\n다시 시도해주세요.'
+            : 'Google Analytics 삭제 요청을 완료하지 못했어요.\n다시 시도해주세요.';
         return;
       }
-      deletionStatus = 'Google Analytics에 삭제 요청이 접수됐어요. 기기의 분석 데이터도 초기화했어요.';
+      deletionStatus = 'Google Analytics에 삭제 요청이 접수됐어요.\n기기의 분석 데이터도 초기화했어요.';
     } catch (_) {
       deletionError =
-          'Google Analytics 삭제 요청을 접수하지 못했어요. 이용 통계 수집은 중단했으며 다시 시도할 수 있어요.';
+          'Google Analytics 삭제 요청을 접수하지 못했어요.\n이용 통계 수집은 중단했으며 다시 시도할 수 있어요.';
     } finally {
       busy = false;
       notifyListeners();

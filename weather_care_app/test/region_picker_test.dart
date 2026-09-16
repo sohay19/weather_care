@@ -17,6 +17,8 @@ void main() {
         home: SettingsScreen(
             loadRegionCatalog: () async => catalog,
             onSettingsChanged: (s) async => changes.add(s))));
+    await tester.tap(find.byKey(const ValueKey('location-settings-menu')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('지역 직접 선택'));
     await tester.pumpAndSettle();
     expect(find.byType(RegionPickerScreen), findsOneWidget);
@@ -31,6 +33,8 @@ void main() {
         home: SettingsScreen(
             loadRegionCatalog: () async => catalog,
             onSettingsChanged: (s) async => changes.add(s))));
+    await tester.tap(find.byKey(const ValueKey('location-settings-menu')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('지역 직접 선택'));
     await tester.pumpAndSettle();
     await tester.enterText(

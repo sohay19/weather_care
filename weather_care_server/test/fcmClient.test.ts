@@ -33,7 +33,7 @@ describe('FCM HTTP v1 client', () => {
         {
           token: 'device-token',
           title: '오늘 준비할 내용',
-          body: '우산을 챙기세요',
+          body: '비가 올 수 있어요. 우산을 챙기세요',
           notificationKey: 'MORNING_BRIEF',
           notificationTarget: 'MAIN',
           notificationTopic: 'OVERVIEW',
@@ -52,7 +52,7 @@ describe('FCM HTTP v1 client', () => {
         token: 'device-token',
         notification: {
           title: '오늘 준비할 내용',
-          body: '우산을 챙기세요',
+          body: '비가 올 수 있어요.\n우산을 챙기세요',
         },
         data: {
           notificationKey: 'MORNING_BRIEF',

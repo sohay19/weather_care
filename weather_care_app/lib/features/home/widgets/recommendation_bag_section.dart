@@ -120,7 +120,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
       if (!mounted) return;
       if (revision == _loadRevision) setState(() => _checked = previous);
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(content: Text('체크 상태를 저장하지 못했어요. 다시 눌러주세요')),
+        const SnackBar(content: Text('체크 상태를 저장하지 못했어요.\n다시 눌러주세요')),
       );
     } finally {
       if (mounted) {

@@ -23,7 +23,7 @@ class ServerConnectionFailureDialog extends StatelessWidget {
         content: const Text(
           '준비물 추천과 오늘의 TODO는 운영 서버에 연결해야 정확하게 '
           '제공할 수 있어요.\n\n맞춤 안내를 위해 운영 서버 연결을 먼저 '
-          '다시 시도해 주세요. 급한 경우에는 앱에서 기상청 단기예보만 '
+          '다시 시도해 주세요.\n급한 경우에는 앱에서 기상청 단기예보만 '
           '확인할 수 있어요.',
         ),
         actions: [

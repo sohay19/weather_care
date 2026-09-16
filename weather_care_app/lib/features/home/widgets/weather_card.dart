@@ -29,8 +29,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : '${current.apparentTemperature!.toStringAsFixed(1)}℃',
         levelTitle: _apparentTemperatureLevel(current.apparentTemperature),
         detailBody: current.apparentTemperature == null
-            ? '기온·습도·풍속 입력자료가 모두 갖춰지지 않았거나 체감온도 계산조건에 맞지 않아 값을 만들지 않았어요. 빠진 값을 0으로 바꿔 계산하지 않아요.'
-            : '기상청 단기예보의 기온·상대습도·풍속을 이용해 계산한 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요. 햇빛, 옷차림, 활동량, 건물 주변 바람에 따라 실제로 느끼는 정도는 달라질 수 있어요.',
+            ? '기온·습도·풍속 입력자료가 모두 갖춰지지 않았거나 체감온도 계산조건에 맞지 않아 값을 만들지 않았어요.\n빠진 값을 0으로 바꿔 계산하지 않아요.'
+            : '기상청 단기예보의 기온·상대습도·풍속을 이용해 계산한 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.\n햇빛, 옷차림, 활동량, 건물 주변 바람에 따라 실제로 느끼는 정도는 달라질 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.water_drop_outlined,
@@ -40,8 +40,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : '${current.humidity!.toStringAsFixed(0)}%',
         levelTitle: _humidityLevel(current.humidity),
         detailBody: current.humidity == null
-            ? '기상청 단기예보에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요. 실내 습도나 피부가 느끼는 건조함을 임의로 추정하지 않아요.'
-            : '기상청 단기예보의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요. 상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증기량에 얼마나 가까운지를 나타내며, 실내 습도와는 다를 수 있어요.',
+            ? '기상청 단기예보에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요.\n실내 습도나 피부가 느끼는 건조함을 임의로 추정하지 않아요.'
+            : '기상청 단기예보의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요.\n상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증기량에 얼마나 가까운지를 나타내며, 실내 습도와는 다를 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.air_rounded,
@@ -51,8 +51,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : '${current.windSpeed!.toStringAsFixed(1)}m/s',
         levelTitle: _windLevel(current.windSpeed),
         detailBody: current.windSpeed == null
-            ? '기상청 단기예보에서 풍속 자료를 받지 못해 바람의 세기를 표시하지 않아요. 자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.'
-            : '기상청 단기예보의 풍속은 ${current.windSpeed!.toStringAsFixed(1)}m/s예요. 선택한 예보 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.',
+            ? '기상청 단기예보에서 풍속 자료를 받지 못해 바람의 세기를 표시하지 않아요.\n자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.'
+            : '기상청 단기예보의 풍속은 ${current.windSpeed!.toStringAsFixed(1)}m/s예요.\n선택한 예보 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.wb_sunny_outlined,
@@ -64,8 +64,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             ? '자외선 수준을 확인하기 어려워요'
             : '자외선은 ${_uvGrade(current.uvIndex!)} 단계예요',
         detailBody: current.uvIndex == null
-            ? '기상청 생활기상지수 자료를 받지 못해 자외선지수와 단계를 표시하지 않아요. 자료가 없음을 낮음 단계로 바꾸지 않아요.'
-            : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${_uvGrade(current.uvIndex!)} 단계예요. 0~2 낮음, 3~5 보통, 6~7 높음, 8~10 매우 높음, 11 이상 위험으로 구분해요. 구름, 그늘, 고도와 노출 시간에 따라 개인의 실제 노출량은 달라질 수 있어요.',
+            ? '기상청 생활기상지수 자료를 받지 못해 자외선지수와 단계를 표시하지 않아요.\n자료가 없음을 낮음 단계로 바꾸지 않아요.'
+            : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${_uvGrade(current.uvIndex!)} 단계예요.\n0~2 낮음, 3~5 보통, 6~7 높음, 8~10 매우 높음, 11 이상 위험으로 구분해요.\n구름, 그늘, 고도와 노출 시간에 따라 개인의 실제 노출량은 달라질 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.blur_on_rounded,
@@ -75,8 +75,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             ? '초미세먼지 수준을 확인하기 어려워요'
             : '초미세먼지는 ${_pm25Grade(current.pm25!)} 등급이에요',
         detailBody: current.pm25 == null
-            ? '에어코리아 관측자료를 받지 못해 PM2.5 농도와 등급을 표시하지 않아요. PM10 값으로 대신 채우거나 정상 상태로 판단하지 않아요.'
-            : '에어코리아 PM2.5 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요. 좋음 0~15, 보통 16~35, 나쁨 36~75, 매우 나쁨 76 이상으로 구분해요.${_airObservationSource(current)}',
+            ? '에어코리아 관측자료를 받지 못해 PM2.5 농도와 등급을 표시하지 않아요.\nPM10 값으로 대신 채우거나 정상 상태로 판단하지 않아요.'
+            : '에어코리아 PM2.5 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.\n좋음 0~15, 보통 16~35, 나쁨 36~75, 매우 나쁨 76 이상으로 구분해요.${_airObservationSource(current)}',
       ),
       _WeatherMetric(
         icon: Icons.grain_rounded,
@@ -86,8 +86,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             ? '미세먼지 수준을 확인하기 어려워요'
             : '미세먼지는 ${_pm10Grade(current.pm10!)} 등급이에요',
         detailBody: current.pm10 == null
-            ? '에어코리아 관측자료를 받지 못해 PM10 농도와 등급을 표시하지 않아요. PM2.5 값으로 대신 채우거나 정상 상태로 판단하지 않아요.'
-            : '에어코리아 PM10 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요. 좋음 0~30, 보통 31~80, 나쁨 81~150, 매우 나쁨 151 이상으로 구분해요.${_airObservationSource(current)}',
+            ? '에어코리아 관측자료를 받지 못해 PM10 농도와 등급을 표시하지 않아요.\nPM2.5 값으로 대신 채우거나 정상 상태로 판단하지 않아요.'
+            : '에어코리아 PM10 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.\n좋음 0~30, 보통 31~80, 나쁨 81~150, 매우 나쁨 151 이상으로 구분해요.${_airObservationSource(current)}',
       ),
     ];
 

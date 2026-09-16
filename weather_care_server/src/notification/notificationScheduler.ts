@@ -885,7 +885,7 @@ async function collectCurrentRainNotification(
       built: {
         notification_key: 'CURRENT_RAIN',
         title: '현재 강수 안내',
-        body: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+        body: '비가 내리고 있을 수 있어요.\n지금 외출한다면 우산을 챙기세요',
         destination: weatherDetailsDestination('PRECIPITATION'),
       },
       rainObservedAt: observation.observedAt,

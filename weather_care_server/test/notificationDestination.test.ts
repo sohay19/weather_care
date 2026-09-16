@@ -74,6 +74,15 @@ describe('notification destinations', () => {
       },
     ]);
   });
+
+  it('places each morning brief message on its own line', () => {
+    expect(
+      buildNotification([
+        recommendation('UMBRELLA'),
+        recommendation('PARASOL'),
+      ])[0].body,
+    ).toBe('UMBRELLA description\nPARASOL description');
+  });
 });
 
 function recommendation(type: RecommendationType): Recommendation {

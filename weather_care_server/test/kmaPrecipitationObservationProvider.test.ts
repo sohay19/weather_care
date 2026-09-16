@@ -86,7 +86,7 @@ describe('KMA precipitation observation provider', () => {
     expect(buildCurrentPrecipitationMessage(observation, true)?.parts).toEqual([
       expect.objectContaining({
         role: 'APP_SUGGESTION',
-        text: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+        text: '비가 내리고 있을 수 있어요.\n지금 외출한다면 우산을 챙기세요',
       }),
       expect.objectContaining({
         role: 'INTERNAL_POSSIBILITY',

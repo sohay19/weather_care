@@ -4,7 +4,7 @@ export function recoveryActive(mode: string | undefined): boolean {
 }
 
 export function recoveryResponse(): Response {
-  return Response.json({ error: 'SERVICE_RECOVERY', message: '서버 복구 작업 중이에요. 잠시 후 다시 시도해주세요.' }, {
+  return Response.json({ error: 'SERVICE_RECOVERY', message: '서버 복구 작업 중이에요.\n잠시 후 다시 시도해주세요.' }, {
     status: 503,
     headers: { 'Cache-Control': 'no-store', 'Retry-After': '300' },
   });

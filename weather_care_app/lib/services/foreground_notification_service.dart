@@ -42,7 +42,9 @@ class ForegroundNotificationContent {
     return ForegroundNotificationContent(
       id: foregroundNotificationId(idSource),
       title: notification.title,
-      body: notification.body,
+      body: notification.body == null
+          ? null
+          : _sentenceLineBreaks(notification.body!),
       payload: encodeForegroundNotificationData(message.data),
     );
   }
@@ -171,3 +173,10 @@ int foregroundNotificationId(String source) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+String _sentenceLineBreaks(String value) {
+  return value.replaceAllMapped(
+    RegExp(r'([.!?])[\t ]+(?=\S)'),
+    (match) => '${match.group(1)}\n',
+  );
+}

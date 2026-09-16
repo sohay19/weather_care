@@ -13,7 +13,7 @@ export function buildCurrentPrecipitationMessage(
   }
   const possibility = `${formatHour(observation.observedAt)}에는 비가 내리고 있을 수 있어요`;
   const action =
-    '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요';
+    '비가 내리고 있을 수 있어요.\n지금 외출한다면 우산을 챙기세요';
 
   return {
     type: LifestyleInsightType.RAIN_GEAR_USEFUL,

@@ -46,7 +46,7 @@ function composeBody(items: Recommendation[], now?: Date): string {
   return items
     .slice(0, 3)
     .map((item) => timedDescription(item, now))
-    .join(' ');
+    .join('\n');
 }
 
 function timedDescription(item: Recommendation, now?: Date): string {

@@ -118,7 +118,7 @@ async function sendFcmMessage(
           token: payload.token,
           notification: {
             title: payload.title,
-            body: payload.body,
+            body: sentenceLineBreaks(payload.body),
           },
           data: {
             notificationKey: payload.notificationKey,
@@ -146,6 +146,10 @@ async function sendFcmMessage(
       response.status === 404 || errorCode === 'UNREGISTERED',
     status: response.status,
   };
+}
+
+function sentenceLineBreaks(value: string): string {
+  return value.replace(/([.!?])[\t ]+(?=\S)/g, '$1\n');
 }
 
 async function fcmErrorCode(response: Response): Promise<string | undefined> {

@@ -117,7 +117,7 @@ export function activeWarningNotification(
 ): WarningNotificationContent {
   return {
     title: `${warning.type}${warning.level} 발효`,
-    body: `${WARNING_PRESENTATION[warning.typeCode].action} ${activeWarningFact(warning, regionName)}`,
+    body: `${WARNING_PRESENTATION[warning.typeCode].action}\n${activeWarningFact(warning, regionName)}`,
   };
 }
 
@@ -128,7 +128,7 @@ export function changedWarningNotification(
 ): WarningNotificationContent {
   return {
     title: `${warning.type}특보 변경`,
-    body: `${WARNING_PRESENTATION[warning.typeCode].action} 기상청은 ${regionName}의 ${warning.type}${previousLevel}를 ${warning.type}${warning.level}로 변경했어요`,
+    body: `${WARNING_PRESENTATION[warning.typeCode].action}\n기상청은 ${regionName}의 ${warning.type}${previousLevel}를 ${warning.type}${warning.level}로 변경했어요`,
   };
 }
 

@@ -455,7 +455,7 @@ describe('notification scheduler', () => {
       .filter((payload) => payload.notificationKey === 'CURRENT_RAIN');
     expect(currentRainPayloads).toEqual([
       expect.objectContaining({
-        body: '비가 내리고 있을 수 있어요. 지금 외출한다면 우산을 챙기세요',
+        body: '비가 내리고 있을 수 있어요.\n지금 외출한다면 우산을 챙기세요',
         notificationTarget: 'WEATHER_DETAILS',
         notificationTopic: 'PRECIPITATION',
       }),
@@ -488,7 +488,7 @@ describe('notification scheduler', () => {
     expect(sent.filter((item) => item.notificationKey.startsWith('OFFICIAL_WARNING')))
       .toEqual([
         expect.objectContaining({
-          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요 수원에는 호우주의보가 발효 중이에요',
+          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요\n수원에는 호우주의보가 발효 중이에요',
           notificationTarget: 'WEATHER_DETAILS',
           notificationTopic: 'PRECIPITATION',
         }),
@@ -645,7 +645,7 @@ describe('notification scheduler', () => {
           title: '출퇴근 경로',
           notificationTarget: 'WEATHER_DETAILS',
           notificationTopic: 'COMMUTE',
-          body: '수원지하차도 전면 통제가 시행 중이니, 출발 전에 다른 경로와 대중교통 운행정보를 확인하세요 국가교통정보센터는 9월 1일 오후 2시부터 수원지하차도 전면 통제가 시행 중이라고 안내했어요',
+          body: '수원지하차도 전면 통제가 시행 중이니, 출발 전에 다른 경로와 대중교통 운행정보를 확인하세요\n국가교통정보센터는 9월 1일 오후 2시부터 수원지하차도 전면 통제가 시행 중이라고 안내했어요',
         }),
       ]);
 

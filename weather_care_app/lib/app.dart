@@ -195,7 +195,7 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
             child: const _ConnectionNotice(
               title: '추천 근거 데이터',
               message:
-                  '현재는 화면 골격만 제공됩니다. 서버가 연결되면 추천 설명과 강수·UV·체감온도 같은 근거 수치가 표시됩니다.',
+                  '현재는 화면 골격만 제공됩니다.\n서버가 연결되면 추천 설명과 강수·UV·체감온도 같은 근거 수치가 표시됩니다.',
             ),
           ),
         ],

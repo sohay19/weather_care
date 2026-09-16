@@ -22,6 +22,7 @@ void main() {
     expect(content, isNotNull);
     expect(content?.id, foregroundNotificationId('CURRENT_RAIN'));
     expect(content?.title, '현재 강수 안내');
+    expect(content?.body, '비가 내리고 있을 수 있어요.\n지금 외출한다면 우산을 챙기세요');
     expect(
       decodeForegroundNotificationData(content?.payload),
       message.data,

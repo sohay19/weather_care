@@ -120,7 +120,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('bag-item-umbrella')));
     await tester.pumpAndSettle();
     expect(find.text('챙길게요'), findsOneWidget);
-    expect(find.text('체크 상태를 저장하지 못했어요. 다시 눌러주세요'), findsOneWidget);
+    expect(find.text('체크 상태를 저장하지 못했어요.\n다시 눌러주세요'), findsOneWidget);
     failing.failSave = false;
     await tester.tap(find.byKey(const ValueKey('bag-item-umbrella')));
     await tester.pumpAndSettle();

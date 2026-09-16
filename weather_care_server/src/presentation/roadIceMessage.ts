@@ -40,7 +40,7 @@ export function roadIceNotification(
   const action = roadIceAction(risk.level);
   return {
     title: '블랙아이스(도로살얼음)',
-    body: `${action} ${roadIceOfficialFact(risk, regionName)}`,
+    body: `${action}\n${roadIceOfficialFact(risk, regionName)}`,
   };
 }
 

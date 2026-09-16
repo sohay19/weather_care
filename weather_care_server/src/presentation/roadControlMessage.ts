@@ -39,7 +39,7 @@ export function roadControlNotification(
 ): { title: string; body: string } {
   return {
     title: '출퇴근 경로',
-    body: `${roadControlAction(control)} ${roadControlOfficialFact(control)}`,
+    body: `${roadControlAction(control)}\n${roadControlOfficialFact(control)}`,
   };
 }
 

@@ -45,9 +45,10 @@ export async function saveCollectedCache<T>(
     updatedAt?: Date;
   },
 ): Promise<void> {
-  const regionId = input.nx === undefined || input.ny === undefined
-    ? null
-    : `${input.nx}_${input.ny}`;
+  const hasGrid = input.nx !== undefined && input.ny !== undefined;
+  const nx = hasGrid ? input.nx! : 0;
+  const ny = hasGrid ? input.ny! : 0;
+  const regionId = hasGrid ? `${nx}_${ny}` : input.key;
   await db.prepare(
     `INSERT INTO weather_cache
        (cache_key, region_id, nx, ny, cache_type, payload, status, updated_at)
@@ -63,8 +64,8 @@ export async function saveCollectedCache<T>(
   ).bind(
     input.key,
     regionId,
-    input.nx ?? null,
-    input.ny ?? null,
+    nx,
+    ny,
     input.type,
     JSON.stringify(input.value),
     (input.updatedAt ?? new Date()).toISOString(),

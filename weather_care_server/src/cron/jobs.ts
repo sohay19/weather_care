@@ -6,6 +6,7 @@ import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
 
 export const RADAR_COLLECTION_CRON = '2-59/15 * * * *';
 export const ROAD_ICE_COLLECTION_CRON = '7-59/30 * * * *';
+export const CORE_COLLECTION_CRON = '*/10 * * * *';
 
 export async function runForecastRefreshJob(env: ServerEnv): Promise<void> {
   if (!env.DB) return;

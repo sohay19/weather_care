@@ -6,21 +6,34 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "vitest run",
+    "test": "npm run test:worker && npm run test:node",
+    "test:worker": "vitest run",
+    "test:node": "vitest run --config vitest.node.config.mts",
+    "typecheck": "tsc --noEmit",
     "db:migrate": "wrangler d1 migrations apply weather_care_db --local",
-    "db:push": "wrangler d1 execute weather_care_db --file=./migrations/0001_init.sql --local"
+    "db:push": "wrangler d1 execute weather_care_db --file=./migrations/0001_init.sql --local",
+    "node:db:migrate": "tsx src/node/migrate.ts",
+    "node:db:import": "tsx src/node/importD1.ts",
+    "node:server": "tsx src/node/server.ts",
+    "node:scheduler": "tsx src/node/scheduler.ts",
+    "node:job": "tsx src/node/runJob.ts",
+    "node:backup": "tsx src/node/backup.ts"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "better-sqlite3": "^13.0.3",
     "fflate": "^0.8.3",
-    "hono": "^4.5.0",
+    "hono": "^4.13.8",
+    "tsx": "^4.23.13",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260915.1",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.5.2",
     "typescript": "^5.5.4",
     "vitest": "^4.1.11",
-    "wrangler": "^4.124.0"
+    "wrangler": "^4.133.0"
   }
 }

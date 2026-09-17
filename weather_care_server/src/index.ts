@@ -8,8 +8,9 @@ import installationOwnershipRoutes from './api/installationOwnership';
 import { runScheduledJobs } from './cron/jobs';
 import { safeErrorName } from './observability/providerErrorDiagnostics';
 import { recoveryActive, recoveryResponse } from './recovery/maintenance';
+import { legacyOriginEnabled, proxyToLegacyOrigin } from './migration/legacyOriginProxy';
 
-const app = new Hono<{ Bindings: ServerEnv }>();
+export const app = new Hono<{ Bindings: ServerEnv }>();
 
 app.use('*', async (c, next) => {
   if (recoveryActive(c.env.RECOVERY_MODE)) return recoveryResponse();
@@ -33,9 +34,20 @@ app.route('/api/v1/notification-settings', notificationSettingsRoutes);
 app.get('/', (c) => c.json({ app: 'weather-care-server', version: '0.1.0' }));
 
 export default {
-  fetch: app.fetch,
+  async fetch(request: Request, env: ServerEnv, executionCtx: ExecutionContext) {
+    if (recoveryActive(env.RECOVERY_MODE)) return recoveryResponse();
+    if (legacyOriginEnabled(env)) {
+      try {
+        return await proxyToLegacyOrigin(request, env.LEGACY_ORIGIN_URL!);
+      } catch (error) {
+        console.error(JSON.stringify({ event: 'legacy_origin_failed', error: safeErrorName(error) }));
+        return Response.json({ error: 'ORIGIN_UNAVAILABLE' }, { status: 503 });
+      }
+    }
+    return app.fetch(request, env, executionCtx);
+  },
   async scheduled(event: ScheduledController, env: ServerEnv) {
-    if (recoveryActive(env.RECOVERY_MODE)) return;
+    if (recoveryActive(env.RECOVERY_MODE) || legacyOriginEnabled(env)) return;
     try {
       await runScheduledJobs(env, event.cron, event.scheduledTime);
     } catch {

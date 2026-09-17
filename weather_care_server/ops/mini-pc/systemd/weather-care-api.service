@@ -1,0 +1,25 @@
+[Unit]
+Description=날씨챙겨 미니 PC API
+After=network-online.target weather-care-migrate.service
+Wants=network-online.target
+Requires=weather-care-migrate.service
+
+[Service]
+Type=simple
+User=weather-care
+Group=weather-care
+WorkingDirectory=/opt/weather-care/weather_care_server
+EnvironmentFile=/etc/weather-care/weather-care.env
+ExecStart=/opt/weather-care/weather_care_server/node_modules/.bin/tsx src/node/server.ts
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/weather-care
+
+[Install]
+WantedBy=multi-user.target

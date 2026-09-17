@@ -1,0 +1,11 @@
+[Unit]
+Description=날씨챙겨 매일 SQLite 백업
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Asia/Seoul
+Persistent=true
+RandomizedDelaySec=300
+Unit=weather-care-backup.service
+
+[Install]
+WantedBy=timers.target

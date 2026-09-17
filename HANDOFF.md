@@ -6771,3 +6771,16 @@
 - 환경 현재값 정상 갱신은 1시간, 자외선 내부 캐시는 3시간으로 발표 간격에 맞췄고, 부분 실패는 기존대로 10분 뒤 재시도한다. 중기예보는 06시·18시 발표본을 모두 인식한다.
 - 동절기 최대 예약 기준 하루 APIHub 사용량은 4,637회·2,524,896,384바이트(약 2.525GB)다. 공식 20,000회·5GB의 23.19%·50.50%, 내부 차단선 18,000회·4.5GB의 25.76%·56.11%다. 최초 ASOS 스냅샷 구축일에는 최대 3회·384,000바이트가 추가될 수 있다.
 - 검증은 TypeScript `--noEmit`, Vitest 45개 파일 321개 테스트, Wrangler 4.124.0 `deploy --dry-run`을 통과했다. 운영 배포는 이번 요청 범위가 아니므로 수행하지 않았다.
+
+## 2026-09-17 미니 PC Node.js·SQLite 이전 기반 구현
+
+- 기존 Worker 구현과 API 호출 최적화를 복제하지 않고 그대로 재사용하도록 Hono `app`을 공용으로 노출하고, Node.js 22 이상에서 실행하는 API 서버를 추가했다. 기본 바인딩은 Cloudflare Tunnel 연결을 전제로 `127.0.0.1:8787`이며 운영 Secret 누락 시 시작을 중단한다.
+- `D1Database.prepare/bind/first/all/run/batch/exec` 사용 형태를 `better-sqlite3`로 호환하는 SQLite 어댑터를 구현했다. 기존 `0001`~`0011` D1 마이그레이션을 순서대로 적용하고 `d1_migrations`에 기록하므로 비즈니스 저장소와 중앙 수집 로직은 변경하지 않았다. WAL·foreign key·busy timeout을 적용했다.
+- Worker와 동일한 수집 시각을 사용하는 Node 스케줄러를 추가했다. Core/알림은 10분, 전국 HSR 레이더는 `2,17,32,47분`, 도로살얼음은 동절기 `7,37분`에 실행한다. 발표본/source version 중복방지, 레이더 검증 상한 40회, ASOS 시간 스냅샷, AWS 전일분 추가 수집 등 `56d868e`의 최적화 로직을 같은 코드로 호출한다.
+- Cloudflare Rate Limit 바인딩은 단일 미니 PC 프로세스용 고정 구간 제한기로 대체했으며 키 저장 상한을 두어 임의 키 증가에 따른 메모리 고갈을 방지했다. 설치 소유권 SHA-256 비교는 Worker와 Node 모두 지원하는 `node:crypto.timingSafeEqual`로 통일했다.
+- D1 원격 export SQL을 빈 SQLite 파일에 안전하게 가져오는 명령, 수동 단일 작업 실행기, SQLite Online Backup과 7일 보존 명령을 추가했다. import는 기존 DB를 덮어쓰지 않고 임시 파일의 integrity/foreign key 검증 성공 후에만 최종 파일명으로 바꾼다.
+- 구버전 앱의 기본 URL이 `https://weather-care-server.sy40222.workers.dev`로 고정된 점을 고려해 선택적 `LEGACY_ORIGIN_URL` 전환 브리지를 Worker에 추가했다. 이 Secret이 설정되면 HTTPS 미니 PC 원본으로 메서드·본문·경로·쿼리를 전달하고 Worker scheduled handler는 즉시 종료해 Node 스케줄러와 외부 API를 중복 호출하지 않는다. 자기 자신을 원본으로 지정하는 순환과 HTTP 원본은 거부한다.
+- `ops/mini-pc`에 환경변수 예시, Cloudflare Tunnel ingress 예시, API·스케줄러·마이그레이션·백업 systemd 유닛과 한국어 전환/롤백 절차를 추가했다. 운영 전제는 Worker Cron과 Node 스케줄러 동시 실행 금지, shadow 검증 중 앱 `SERVER_URL` 유지, 최종 export를 새 SQLite 파일로 가져오기, 구버전 앱은 Worker 브리지로 유지하는 것이다.
+- Node 런타임 의존성으로 `@hono/node-server`, `better-sqlite3`, `tsx`를 추가했다. Hono는 알려진 보안 수정이 포함된 4.13.8, 직접 사용하는 Wrangler는 4.133.0으로 올렸다. `npm audit --omit=dev`는 취약점 0건이며, 전체 audit의 남은 high 4건은 최신 `@cloudflare/vitest-pool-workers@0.22.0`이 내부 고정한 개발 전용 Miniflare/Wrangler/Sharp 계층으로 강제 downgrade 외 호환 수정이 없어 유지했다.
+- 검증: Worker 46파일·324개 테스트, Node 2파일·6개 테스트, TypeScript `--noEmit`, Wrangler 4.133.0 dry-run을 통과했다. 실제 Node 프로세스에서 `/health` 200, 미수집 Main 503, Core 수동 작업, 11개 SQLite 마이그레이션, 온라인 백업, 스케줄러 기동을 확인했고 스모크용 DB·백업은 삭제했다. `git diff --check`는 줄바꿈 변환 경고 외 오류가 없다.
+- 운영 D1, Worker, Cron, Secret, Cloudflare Tunnel, 미니 PC, 앱 `SERVER_URL`은 변경하거나 배포하지 않았다. 현재 변경은 `master` 작업 트리에 커밋하지 않은 상태이며 기존 브랜치의 다른 변경은 없었다. 실제 이전 다음 단계는 미니 PC의 설치 경로·Node 버전·공개 호스트명을 확인하고 shadow D1 export를 가져와 스케줄러를 끈 채 API 응답을 병행 검증하는 것이다.

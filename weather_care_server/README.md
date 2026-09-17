@@ -1,6 +1,7 @@
 # 날씨챙겨 Server
 
-Cloudflare Workers + TypeScript + Hono + D1 기반의 서버 뼈대입니다.
+TypeScript + Hono 서버입니다. 현재 운영은 Cloudflare Workers + D1이며, 같은 API와
+중앙 수집 로직을 가정용 미니 PC의 Node.js + SQLite에서도 실행할 수 있습니다.
 
 날씨·환경 원본 데이터는 공공데이터포털의 다음 서비스를 사용합니다.
 
@@ -60,6 +61,26 @@ npm run dev -- --ip 0.0.0.0 --port 8787
 `db:migrate`는 로컬 D1에 `weather_cache`를 포함한 필수 테이블을 생성합니다.
 Android 에뮬레이터는 호스트의 이 서버를 `http://10.0.2.2:8787`로 접근합니다.
 
+### 미니 PC Node.js + SQLite
+
+Node.js 22 이상에서 기존 D1 마이그레이션과 Hono 앱을 그대로 사용합니다. 운영
+환경변수는 저장소 밖에서 주입하며 기본 DB 경로는 `./data/weather-care.sqlite`, API
+바인딩은 `127.0.0.1:8787`입니다.
+
+```bash
+cd weather_care_server
+npm ci
+npm run node:db:migrate
+npm run node:server
+```
+
+별도 프로세스에서 `npm run node:scheduler`를 실행하면 Worker Cron과 같은 시각에
+중앙 수집·알림을 수행합니다. Worker Cron과 동시에 켜면 외부 API 사용량이 중복되므로
+전환 전에는 실행하지 않습니다. D1 스냅샷 가져오기, systemd, 백업, Cloudflare
+Tunnel과 최종 전환 순서는 [`ops/mini-pc/README.md`](ops/mini-pc/README.md)에 있습니다.
+전환기에 Worker Secret `LEGACY_ORIGIN_URL`을 설정하면 기존 `workers.dev`를 사용하는
+앱 요청은 새 HTTPS 원본으로 전달되고 Worker Cron은 실행되지 않습니다.
+
 운영 Worker에는 키를 소스나 `wrangler.toml`에 넣지 않고 다음 명령의 대화형
 입력으로 등록합니다.
 
@@ -99,7 +120,7 @@ npm run deploy
 
 `/weather/main`, `/weather/today`, `/weather/weekly`, `/weather/comparison`은 외부 제공자를 호출하지 않고 D1에 저장된 중앙 수집 결과만 읽습니다. 자료가 아직 없으면 `WEATHER_CACHE_NOT_READY` 503을 반환하며 요청 수에 따라 외부 API 호출이 늘어나지 않습니다.
 
-Cron은 10분마다 활성 설치의 예보 격자를 중복 제거해 단기예보·환경·특보·강수를 수집합니다. 전국 500m 레이더는 한 번만 받아 모든 활성 좌표를 배치 판독하고, 공공데이터포털 초단기실황과 강수 판단이 다른 좌표만 APIHub 지점 관측분석으로 재검증합니다. 도로살얼음은 15분마다 12개 노선을 한 번씩만 받아 모든 좌표를 함께 판정합니다.
+Cron은 10분마다 활성 설치의 예보 격자를 중복 제거해 단기예보·환경·특보를 수집하고 알림을 평가합니다. 전국 500m 레이더는 `2,17,32,47분`에 한 번만 받아 모든 활성 좌표를 배치 판독하고, 공공데이터포털 초단기실황과 강수 판단이 다른 좌표만 APIHub 지점 관측분석으로 최대 40개까지 재검증합니다. 도로살얼음은 동절기 `7,37분`에 12개 노선을 한 번씩만 받아 모든 좌표를 함께 판정합니다.
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 

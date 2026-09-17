@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { timingSafeEqual } from 'node:crypto';
 import type { ServerEnv } from '../types';
 import { recordInstallationActivity } from '../database/dataRetention';
 
@@ -17,6 +18,13 @@ export async function secretHash(secret: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function timingSafeDigestEqual(left: string, right: string): boolean {
+  const leftBytes = new TextEncoder().encode(left);
+  const rightBytes = new TextEncoder().encode(right);
+  if (leftBytes.length !== rightBytes.length) return false;
+  return timingSafeEqual(leftBytes, rightBytes);
+}
+
 export async function installationOwnerHash(
   db: D1Database, installationId: string, header: string | undefined,
 ): Promise<string | null> {
@@ -27,9 +35,7 @@ export async function installationOwnerHash(
     'SELECT secret_hash FROM installation_credentials WHERE installation_id = ?',
   ).bind(installationId).first<{ secret_hash: string }>();
   // Compare fixed-length digests in constant time; never log either value.
-  if (!row || !crypto.subtle.timingSafeEqual(
-    new TextEncoder().encode(hash), new TextEncoder().encode(row.secret_hash),
-  )) return null;
+  if (!row || !timingSafeDigestEqual(hash, row.secret_hash)) return null;
   await recordInstallationActivity(db, installationId, hash);
   return hash;
 }

@@ -259,7 +259,27 @@ export interface OfficialRoadControl {
   provider: '국가교통정보센터 돌발상황정보';
 }
 
-export type ServerEnv = CloudflareBindings & {
+export interface RateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
+export type ServerEnv = {
+  DB: D1Database;
+  INSTALLATION_ENROLL_LIMIT: RateLimitBinding;
+  ANALYTICS_DELETION_LIMIT: RateLimitBinding;
+  APP_ORIGIN: string;
+  FCM_PROJECT_ID: string;
+  GA_PROPERTY_ID: string;
+  KMA_SERVICE_KEY: string;
+  KMA_APIHUB_KEY: string;
+  ITS_RELAY_URL: string;
+  ITS_RELAY_TOKEN: string;
+  FCM_CLIENT_EMAIL: string;
+  FCM_PRIVATE_KEY: string;
+  GA_ADMIN_CLIENT_EMAIL: string;
+  GA_ADMIN_PRIVATE_KEY: string;
+  /** 구버전 앱의 workers.dev 요청을 미니 PC로 넘기는 전환기 전용 주소 */
+  LEGACY_ORIGIN_URL?: string;
   /** Operational gate stored outside the database; any non-off value blocks. */
   RECOVERY_MODE?: string;
   /** 중계 전환 전 로컬 개발 또는 비상 직접조회에만 사용하는 선택 바인딩 */

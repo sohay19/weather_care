@@ -6525,3 +6525,11 @@
 - 어제 비교 자료의 로딩·누락 상태와 해당 자료만 다시 요청하는 버튼은 그대로 유지했다. 위젯 테스트는 `yesterday-comparison-card`가 `main-top-weather-card`의 자손인지 확인하도록 보강했다.
 - `flutter analyze`, 관련 위젯 테스트 28개, Flutter 전체 395개 테스트, 서버 전체 306개 테스트, TypeScript 검사, `wrangler deploy --dry-run`, `git diff --check`를 통과했다. `git diff --check`에는 기존 줄바꿈 변환 경고만 있다.
 - 운영 배포 전 상태이며, 원격 D1 0011 마이그레이션 적용 후 Worker를 배포해야 한다.
+
+## 2026-09-17 중앙 수집 운영 배포
+
+- 누적 앱·서버 변경과 Main 통합 카드를 `bcdd218`(`feat: 날씨 수집 중앙화와 홈 카드 통합`)로 커밋했다.
+- 원격 D1 `weather_care_db`에 `0011_central_weather_collection.sql`을 적용했고, `d1_migrations`와 `api_usage_daily` 테이블 존재를 운영 DB에서 재확인했다.
+- Cloudflare Worker `weather-care-server`를 운영 배포했다. 활성 버전은 `170ec385-eb19-43b2-b0dd-156e5f081f35`, 운영 URL은 `https://weather-care-server.sy40222.workers.dev`다.
+- 배포 결과 중앙 수집 Cron `*/10 * * * *`과 동절기 도로 수집 Cron `7-59/15 * * * *`이 등록됐고, 활성 버전 100%와 `/health`의 `ok` 응답을 확인했다.
+- 앱 UI 통합은 소스 커밋까지 완료한 상태다. 사용자 기기에 보이려면 이후 새 앱 빌드·설치 또는 스토어 배포가 필요하다. 서버 자료는 배포 직후 최초 중앙 수집 전까지 최대 약 10분 준비 시간이 생길 수 있다.

@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-const _todayOnlyFallback = '오늘은 외출 전에 시간별 예보를 확인하세요';
+const _todayOnlyFallback = '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요';
+const _legacyTodayOnlyFallback = '오늘은 외출 전에 시간별 예보를 확인하세요';
 
 /// Only the server's time-sensitive summary expires here. Do not change raw
 /// forecast/observation timestamps or try to infer a deadline from Korean text.
@@ -91,10 +92,11 @@ class _WeatherBriefTextState extends State<WeatherBriefText>
   Widget build(BuildContext context) {
     final mentionsAnotherDay =
         ['내일', '모레', '글피', '다음 날'].any(widget.text.contains);
+    final usesLegacyFallback = widget.text.trim() == _legacyTodayOnlyFallback;
     return Text(
       _expired
           ? '${_invalid ? '안내 시간을 확인하기 어려워요.' : '안내 시간이 지났어요.'} 화면을 아래로 당겨 최신 예보를 확인하세요.'
-          : mentionsAnotherDay
+          : mentionsAnotherDay || usesLegacyFallback
               ? _todayOnlyFallback
               : widget.text,
       key: const ValueKey('main-weather-brief'),

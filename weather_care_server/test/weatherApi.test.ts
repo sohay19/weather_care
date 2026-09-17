@@ -21,6 +21,7 @@ import {
 } from 'cloudflare:test';
 import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 import * as environmental from '../src/providers/environmental/environmentalDataService';
+import { buildEnvironmentalDataStatusMessages } from '../src/presentation/lifestyleMessages';
 import { KmaMidTermProvider } from '../src/providers/weather/kmaMidTermProvider';
 import { seedCollectedRegion, seedCollectedWeekly } from './collectedWeatherFixture';
 
@@ -44,6 +45,17 @@ describe('fast Main weather', () => {
     const optional = vi.spyOn(environmental, 'loadEnvironmentalData');
     try {
       await seedCollectedRegion(58, 124, forecast);
+      await seedCollectedWeekly(58, 124, {
+        forecast,
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [
+          {
+            date: '20260820',
+            pm25Grade: '보통',
+          },
+        ],
+      });
       const response = await router.request('/main?nx=58&ny=124', {}, {
         DB: env.DB,
       });
@@ -60,6 +72,7 @@ describe('fast Main weather', () => {
       expect(data.nextForecast).toMatchObject({
         forecastAt: '2026-08-20T18:00:00+09:00',
         temperature: 28,
+        pm25ForecastGrade: '보통',
       });
       expect(data.hourly).toEqual([]);
       expect(optional).not.toHaveBeenCalled();
@@ -560,6 +573,45 @@ describe('today timeline', () => {
 });
 
 describe('today optional provider deadline', () => {
+  it('labels retryable environmental failures by detail item', () => {
+    expect(buildEnvironmentalDataStatusMessages({
+      uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNAVAILABLE' },
+      airQuality: {
+        provider: 'AIRKOREA',
+        state: 'STALE',
+        observedAt: '2026-09-17T12:00:00+09:00',
+      },
+    })).toEqual([
+      {
+        role: 'DATA_STATUS',
+        itemTitle: '자외선지수',
+        text: '자료를 받아오지 못해 자외선지수를 확인하기 어려워요',
+        source: 'KMA_LIVING_INDEX_V5',
+      },
+      {
+        role: 'DATA_STATUS',
+        itemTitle: '대기질',
+        text: '마지막으로 확인한 대기질은 오후 12시 자료예요 · 이후 달라졌을 수 있어요',
+        source: 'AIRKOREA',
+      },
+    ]);
+  });
+
+  it('does not offer a reload for an unsupported region', () => {
+    expect(buildEnvironmentalDataStatusMessages({
+      uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNSUPPORTED_REGION' },
+      airQuality: { provider: 'AIRKOREA', state: 'AVAILABLE' },
+    })).toEqual([
+      {
+        role: 'DATA_STATUS',
+        itemTitle: '자외선지수',
+        text: '선택한 지역에서는 자외선지수 자료를 지원하지 않아 확인하기 어려워요',
+        source: 'KMA_LIVING_INDEX_V5',
+        retryable: false,
+      },
+    ]);
+  });
+
   it('returns a provider result that arrives within the deadline', async () => {
     await expect(settleWithin(Promise.resolve('ready'), 'fallback', 3_500))
       .resolves.toEqual({ value: 'ready', timedOut: false });
@@ -596,16 +648,19 @@ describe('today optional provider deadline', () => {
     ).toEqual([
       {
         role: 'DATA_STATUS',
+        itemTitle: '현재 강수',
         text: '자료를 받아오지 못해 현재 강수 상태를 확인하기 어려워요',
         source: '기상청 관측분석자료·기상청 레이더',
       },
       {
         role: 'DATA_STATUS',
+        itemTitle: '도로 통제',
         text: '자료를 받아오지 못해 현재 도로 통제 상태를 확인하기 어려워요',
         source: '국가교통정보센터 돌발상황정보',
       },
     ]);
   });
+
 });
 
 function day(maxTemperature: number): DailyWeatherForecast {

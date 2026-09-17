@@ -308,6 +308,12 @@ void main() {
     await start(tester, initialIndex: 2);
 
     expect(weather.comparisonCalls, [(nx: 60, ny: 127)]);
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('yesterday-comparison-card')),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('기온은 어제보다 2.0℃ 높아요.'), findsOneWidget);
   });
 
@@ -528,8 +534,8 @@ void main() {
 
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    expect(find.text('현재 위치 지금 날씨'), findsOneWidget);
-    expect(find.text('선택 지역 지금 날씨'), findsNothing);
+    expect(find.text('현재 위치 날씨'), findsOneWidget);
+    expect(find.text('선택 지역 날씨'), findsNothing);
   });
   testWidgets('정밀 GPS 역지오코딩 지역명을 동까지 표시한다', (tester) async {
     gpsRegionName.result = '서울 강남구 역삼동';
@@ -539,7 +545,7 @@ void main() {
 
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    expect(find.text('서울 강남구 역삼동 지금 날씨'), findsOneWidget);
+    expect(find.text('서울 강남구 역삼동 날씨'), findsOneWidget);
   });
   testWidgets('새로고침과 앱 복귀는 위치를 다시 읽고 알림 지역도 갱신한다', (tester) async {
     await start(tester);

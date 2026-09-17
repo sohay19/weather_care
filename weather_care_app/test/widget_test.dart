@@ -79,13 +79,17 @@ void main() {
         {
           'role': 'DATA_STATUS',
           'text': '자료를 받아오지 못해 자외선지수를 확인하기 어려워요',
+          'itemTitle': '자외선지수',
           'source': '기상청',
+          'retryable': false,
         },
       ],
     });
 
     expect(
         response.dataStatusMessages.single.role, WeatherMessageRole.dataStatus);
+    expect(response.dataStatusMessages.single.retryable, isFalse);
+    expect(response.dataStatusMessages.single.itemTitle, '자외선지수');
   });
 
   test('시간별 예보는 자외선과 미세먼지 값을 보존한다', () {
@@ -449,7 +453,7 @@ void main() {
       ),
     );
 
-    expect(find.text('수원 지금 날씨'), findsOneWidget);
+    expect(find.text('수원 날씨'), findsOneWidget);
     expect(find.textContaining('선택 지역'), findsNothing);
     expect(find.text('Check List'), findsOneWidget);
     expect(find.text('외출 전 준비할 물건을 확인해요'), findsOneWidget);
@@ -457,13 +461,14 @@ void main() {
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
     expect(find.text('물 한 모금 챙기기'), findsNothing);
     expect(find.text('여유 있게 움직이기'), findsNothing);
-    expect(find.text('초미세먼지'), findsOneWidget);
+    expect(find.text('초미세먼지'), findsNWidgets(2));
     expect(find.text('76㎍'), findsOneWidget);
     expect(find.text('어제와 비교'), findsOneWidget);
-    expect(find.text('오후 3시 예상기온'), findsOneWidget);
+    expect(find.text('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
+    expect(find.text('예상 기온'), findsOneWidget);
     expect(find.text('예상 체감온도'), findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('오후 3시 예상기온')).dy,
+      tester.getTopLeft(find.text('예상 기온')).dy,
       tester.getTopLeft(find.text('예상 체감온도')).dy,
     );
     const weatherFeeling =
@@ -479,7 +484,7 @@ void main() {
     final weatherFeelingRow = tester.getRect(
       find.byKey(const ValueKey('main-weather-feeling')),
     );
-    expect(weatherFeelingRow.top, greaterThan(apparentTemperatureRow.bottom));
+    expect(apparentTemperatureRow.top, greaterThan(weatherFeelingRow.bottom));
     expect(
       tester.widget<Text>(find.text('76㎍')).style?.color,
       WeatherCareTheme.danger,
@@ -495,6 +500,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('간단한 타임라인'), findsOneWidget);
+    expect(find.text('표시할 타임라인이 없어요'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('timeline-toggle')));
+    await tester.pumpAndSettle();
     expect(find.text('표시할 타임라인이 없어요'), findsOneWidget);
 
     final scrollable = tester.state<ScrollableState>(
@@ -612,6 +620,7 @@ void main() {
                 WeatherMessagePart(
                   role: WeatherMessageRole.dataStatus,
                   text: '자외선 자료를 확인하지 못했어요.',
+                  itemTitle: '자외선지수',
                 ),
               ],
               timeline: const [],
@@ -642,7 +651,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('기상청 자료'), findsOneWidget);
-    expect(find.text('공통 자료 상태'), findsOneWidget);
+    expect(find.text('공통 자료 상태'), findsNothing);
+    expect(find.text('자외선지수'), findsOneWidget);
     expect(find.byType(WeatherInfoCard), findsNothing);
     expect(find.text('시간별 예보'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -806,6 +816,12 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
+    expect(find.text('06'), findsNothing);
+    expect(find.byKey(const ValueKey('timeline-content')), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('timeline-toggle')));
+    await tester.pumpAndSettle();
+
     expect(find.text('06'), findsOneWidget);
     expect(find.text('시간별 예보를 확인하세요'), findsOneWidget);
     expect(
@@ -820,6 +836,10 @@ void main() {
     );
     await tester.pump();
     expect(openedDetail, RecommendationType.sunscreen);
+
+    await tester.tap(find.byKey(const ValueKey('timeline-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('06'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

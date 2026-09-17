@@ -6,12 +6,13 @@ import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
-  testWidgets('모든 근거와 공통 자료 상태를 함께 표시한다', (tester) async {
+  testWidgets('모든 근거와 자료 상태를 항목 제목별 카드로 표시한다', (tester) async {
     final statuses = List.generate(
         7,
         (index) => WeatherMessagePart(
               role: WeatherMessageRole.dataStatus,
               text: '자료 상태 원문 $index',
+              itemTitle: '자료 항목 ${index % 3}',
             ));
     await _pump(tester, messages: _messages(8), statuses: statuses);
     for (var index = 0; index < 8; index++) {
@@ -24,7 +25,10 @@ void main() {
     expect(tester.getTopLeft(find.text('생활 근거 7')).dy,
         greaterThan(tester.getTopLeft(find.text('생활 근거 6')).dy));
     expect(find.text('자료 상태 원문 6'), findsOneWidget);
-    expect(find.text('공통 자료 상태'), findsOneWidget);
+    expect(find.text('공통 자료 상태'), findsNothing);
+    for (var index = 0; index < 3; index++) {
+      expect(find.text('자료 항목 $index'), findsOneWidget);
+    }
     expect(tester.takeException(), isNull);
   });
 
@@ -32,8 +36,7 @@ void main() {
     await _pump(tester, messages: _messages(5));
     expect(find.text('생활 근거 4'), findsOneWidget);
     expect(find.byKey(const ValueKey('detail-evidence-toggle')), findsNothing);
-    expect(
-        find.byKey(const ValueKey('detail-common-data-status')), findsNothing);
+    expect(find.text('자료 상태'), findsNothing);
   });
 
   testWidgets('근거 없이 자료 상태만 있어도 원문을 모두 보여준다', (tester) async {
@@ -48,13 +51,87 @@ void main() {
         WeatherMessagePart(role: WeatherMessageRole.dataStatus, text: text),
       const WeatherMessagePart(role: WeatherMessageRole.dataStatus, text: ' '),
     ]);
-    expect(find.text('현재 예보에서 안내할 체크 항목과 근거가 없어요.'), findsOneWidget);
+    expect(find.text('현재 예보에서 안내할 체크 항목과 근거가 없어요.'), findsNothing);
     expect(find.text('현재 조건에서는 별도 준비물 추천이 없어요.'), findsNothing);
     expect(find.textContaining('정상'), findsNothing);
     for (final text in texts) {
       expect(find.text(text), findsOneWidget);
     }
     expect(find.text(' '), findsNothing);
+  });
+
+  testWidgets('제공기간이 아닌 블랙아이스 자료는 카드 자체를 표시하지 않는다', (tester) async {
+    const seasonalMessage =
+        '블랙아이스(도로살얼음)는 현재 제공기간이 아닌 항목이에요 (11월 15일~3월 15일 제공)';
+    await _pump(
+      tester,
+      statuses: const [
+        WeatherMessagePart(
+          role: WeatherMessageRole.dataStatus,
+          text: seasonalMessage,
+          itemTitle: '블랙아이스(도로살얼음)',
+          retryable: false,
+        ),
+      ],
+      onRetryData: () async {},
+    );
+
+    expect(find.text(seasonalMessage), findsNothing);
+    expect(find.text('블랙아이스(도로살얼음)'), findsNothing);
+    expect(find.byKey(const ValueKey('detail-data-retry-블랙아이스(도로살얼음)')),
+        findsNothing);
+  });
+
+  testWidgets('재시도는 서버 저장 자료를 다시 받는 동작으로 안내한다', (tester) async {
+    var retryCount = 0;
+    await _pump(
+      tester,
+      statuses: const [
+        WeatherMessagePart(
+          role: WeatherMessageRole.dataStatus,
+          text: '마지막으로 확인한 대기질은 오후 12시 자료예요',
+          itemTitle: '대기질',
+          retryable: true,
+        ),
+        WeatherMessagePart(
+          role: WeatherMessageRole.dataStatus,
+          text: '자외선지수 자료를 받아오지 못했어요',
+          itemTitle: '자외선지수',
+          retryable: true,
+        ),
+      ],
+      onRetryData: () async => retryCount += 1,
+    );
+
+    expect(
+      find.text(
+        '서버에 저장된 대기질 자료를 다시 받아올 수 있어요. '
+        '외부 자료는 서버가 다음 수집 주기에 다시 확인해요.',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Tooltip && widget.message == '서버의 대기질 자료 다시 받기',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Tooltip && widget.message == '서버의 자외선지수 자료 다시 받기',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('detail-data-retry-대기질')),
+    );
+    await tester.pump();
+    expect(retryCount, 1);
+    await tester.tap(
+      find.byKey(const ValueKey('detail-data-retry-자외선지수')),
+    );
+    await tester.pump();
+    expect(retryCount, 2);
   });
 
   testWidgets('제목과 다른 첫 근거를 버리지 않고 역할을 보존한다', (tester) async {
@@ -225,7 +302,8 @@ void main() {
         statuses: const [
           WeatherMessagePart(
               role: WeatherMessageRole.dataStatus,
-              text: '자료를 받아오지 못해 현재 강수 상태를 확인하기 어려워요'),
+              text: '자료를 받아오지 못해 현재 강수 상태를 확인하기 어려워요',
+              itemTitle: '현재 강수'),
         ],
         focusType: LifestyleMessageType.petWalkWindow,
         focusSource: DetailFocusSource.selection,
@@ -234,8 +312,8 @@ void main() {
     expect(focused, findsOneWidget);
     expect(tester.getTopLeft(focused).dy, inInclusiveRange(0, 600));
     expect(find.text('생활 근거 6'), findsOneWidget);
-    expect(find.byKey(const ValueKey('detail-common-data-status')),
-        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('detail-data-status-현재 강수')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -264,8 +342,7 @@ void main() {
   testWidgets('전체 근거와 상태가 비어 있으면 빈 안내만 표시한다', (tester) async {
     await _pump(tester);
     expect(find.text('현재 예보에서 안내할 체크 항목과 근거가 없어요.'), findsOneWidget);
-    expect(
-        find.byKey(const ValueKey('detail-common-data-status')), findsNothing);
+    expect(find.text('자료 상태'), findsNothing);
     expect(find.byKey(const ValueKey('detail-evidence-toggle')), findsNothing);
     expect(
         find.byKey(const ValueKey('detail-focus-unavailable')), findsNothing);
@@ -287,6 +364,7 @@ Future<void> _pump(
   LifestyleMessageType? focusType,
   DetailFocusSource focusSource = DetailFocusSource.notification,
   bool serverAvailable = true,
+  Future<void> Function()? onRetryData,
   int regionNx = 60,
   double scale = 1,
 }) async {
@@ -312,6 +390,7 @@ Future<void> _pump(
           focusLifestyleType: focusType,
           focusSource: focusSource,
           onRefresh: () async {},
+          onRetryData: onRetryData,
         ),
       ),
     ),

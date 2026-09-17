@@ -587,6 +587,7 @@ function environmentalStatusPart(
   if (source.state === 'STALE') {
     return {
       role: 'DATA_STATUS',
+      itemTitle: label,
       text: source.observedAt
         ? `마지막으로 확인한 ${label}은 ${formatHour(source.observedAt)} 자료예요 · 이후 달라졌을 수 있어요`
         : `마지막으로 확인한 ${label}은 이전 자료예요 · 현재 상태는 달라졌을 수 있어요`,
@@ -596,15 +597,25 @@ function environmentalStatusPart(
   if (source.state === 'UNSUPPORTED_REGION') {
     return {
       role: 'DATA_STATUS',
+      itemTitle: label,
       text: `선택한 지역에서는 ${label} 자료를 지원하지 않아 확인하기 어려워요`,
       source: source.provider,
+      retryable: false,
     };
   }
   return {
     role: 'DATA_STATUS',
-    text: `자료를 받아오지 못해 ${label}을 확인하기 어려워요`,
+    itemTitle: label,
+    text: `자료를 받아오지 못해 ${label}${koreanObjectParticle(label)} 확인하기 어려워요`,
     source: source.provider,
   };
+}
+
+function koreanObjectParticle(value: string): '을' | '를' {
+  const lastCode = value.charCodeAt(value.length - 1) - 0xac00;
+  return lastCode >= 0 && lastCode <= 0x2ba3 && lastCode % 28 === 0
+    ? '를'
+    : '을';
 }
 
 function officialFact(

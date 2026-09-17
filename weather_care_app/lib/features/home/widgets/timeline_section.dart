@@ -6,7 +6,7 @@ import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
 
-class TimelineSection extends StatelessWidget {
+class TimelineSection extends StatefulWidget {
   final List<TimelineItem> items;
   final ValueChanged<RecommendationType> onDetail;
 
@@ -17,6 +17,13 @@ class TimelineSection extends StatelessWidget {
   });
 
   @override
+  State<TimelineSection> createState() => _TimelineSectionState();
+}
+
+class _TimelineSectionState extends State<TimelineSection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -24,24 +31,58 @@ class TimelineSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const HomeSectionHeader(
-            icon: Icons.schedule_rounded,
-            title: '간단한 타임라인',
-            subtitle: '준비물이 필요한 시간과 날씨를 확인해요',
-          ),
-          const SizedBox(height: 18),
-          if (items.isEmpty)
-            Text(
-              '표시할 타임라인이 없어요',
-              style: Theme.of(context).textTheme.bodyMedium,
-            )
-          else
-            for (var index = 0; index < items.length; index++)
-              _TimelineItemView(
-                item: items[index],
-                isLast: index == items.length - 1,
-                onDetail: onDetail,
+          Semantics(
+            button: true,
+            label: _expanded ? '간단한 타임라인 접기' : '간단한 타임라인 펼치기',
+            child: InkWell(
+              key: const ValueKey('timeline-toggle'),
+              onTap: () => setState(() => _expanded = !_expanded),
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: HomeSectionHeader(
+                  icon: Icons.schedule_rounded,
+                  title: '간단한 타임라인',
+                  subtitle: '준비물이 필요한 시간과 날씨를 확인해요',
+                  trailing: AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: WeatherCareTheme.primaryDeep,
+                    ),
+                  ),
+                ),
               ),
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            child: _expanded
+                ? Column(
+                    key: const ValueKey('timeline-content'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 18),
+                      if (widget.items.isEmpty)
+                        Text(
+                          '표시할 타임라인이 없어요',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        )
+                      else
+                        for (var index = 0;
+                            index < widget.items.length;
+                            index++)
+                          _TimelineItemView(
+                            item: widget.items[index],
+                            isLast: index == widget.items.length - 1,
+                            onDetail: widget.onDetail,
+                          ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );

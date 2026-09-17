@@ -7,6 +7,7 @@ class MissingDataRetry extends StatelessWidget {
   final Future<void> Function() onRetry;
   final bool retrying;
   final String retryKey;
+  final String retryTooltip;
 
   const MissingDataRetry({
     super.key,
@@ -14,6 +15,7 @@ class MissingDataRetry extends StatelessWidget {
     required this.onRetry,
     required this.retryKey,
     this.retrying = false,
+    this.retryTooltip = '이 자료만 다시 요청',
   });
 
   @override
@@ -51,7 +53,7 @@ class MissingDataRetry extends StatelessWidget {
             )
           else
             Tooltip(
-              message: '이 자료만 다시 요청',
+              message: retryTooltip,
               child: IconButton(
                 key: ValueKey(retryKey),
                 onPressed: onRetry,

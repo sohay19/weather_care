@@ -57,16 +57,20 @@ void main() {
     expect(find.text(action), findsOneWidget);
   });
 
-  testWidgets('내일·모레를 언급한 서버 문구는 오늘 안내로 대체한다', (tester) async {
+  testWidgets('다른 날·구버전 기본 문구는 새 오늘 안내로 대체한다', (tester) async {
     for (final text in [
       '내일 오후 2시 비가 와요',
       '모레 오전 9시 자외선이 강해요',
       '글피 바람이 강해요',
       '다음 날 눈이 와요',
+      '오늘은 외출 전에 시간별 예보를 확인하세요',
     ]) {
       await tester.pumpWidget(subject(text: text));
       expect(find.text(text), findsNothing);
-      expect(find.text('오늘은 외출 전에 시간별 예보를 확인하세요'), findsOneWidget);
+      expect(
+        find.text('오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요'),
+        findsOneWidget,
+      );
     }
   });
 
@@ -143,7 +147,7 @@ void main() {
     ))));
     expect(find.text(action), findsNothing);
     expect(find.textContaining('안내 시간이 지났어요.'), findsOneWidget);
-    expect(find.textContaining('오후 3시 예상기온'), findsOneWidget);
+    expect(find.textContaining('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -58,7 +58,9 @@ describe('Today brief display deadline', () => {
     expect(data.current.forecastAt).toBe(time);
     expect(data.generatedAt).toBe(new Date().toISOString());
     if (label) expect(data.brief).toContain(`${label} 외출한다면`);
-    else expect(data.brief).toBe('오늘은 외출 전에 시간별 예보를 확인하세요');
+    else expect(data.brief).toBe(
+      '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요',
+    );
     await waitOnExecutionContext(ctx);
   });
 });

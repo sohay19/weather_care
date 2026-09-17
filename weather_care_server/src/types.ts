@@ -128,6 +128,8 @@ export interface WeatherSnapshot {
   skyCondition?: string;
   pm10?: number;
   pm25?: number;
+  /** 해당 예보일의 에어코리아 초미세먼지 통보 등급 */
+  pm25ForecastGrade?: string;
   airQualityStationName?: string;
   airQualityObservedAt?: string;
   airQualityGrade?: string;
@@ -289,9 +291,13 @@ export type WeatherMessageRole =
 export interface WeatherMessagePart {
   role: WeatherMessageRole;
   text: string;
+  /** 독립 자료 상태를 Detail에서 묶어 표시할 항목 제목 */
+  itemTitle?: string;
   source?: string;
   validFrom?: string;
   validUntil?: string;
+  /** false이면 재요청으로 해결되지 않는 제공기간·지원범위 상태 */
+  retryable?: boolean;
 }
 
 export interface TodayWeatherResponse {

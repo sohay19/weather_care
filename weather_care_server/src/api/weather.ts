@@ -40,6 +40,7 @@ import {
 import { buildCurrentPrecipitationMessage } from '../presentation/currentPrecipitationMessage';
 import { buildActiveWarningMessages } from '../presentation/officialWarningMessages';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
+import { isRoadIceSeason } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { defaultRuleConfig } from '../config/ruleConfig';
@@ -90,10 +91,16 @@ router.get('/main', async (c) => {
 
   try {
     const generatedAt = new Date();
-    const collected = await getCollectedCache<CollectedRegionBundle>(
-      c.env.DB,
-      `COLLECTED_REGION_${nx}_${ny}`,
-    );
+    const [collected, weekly] = await Promise.all([
+      getCollectedCache<CollectedRegionBundle>(
+        c.env.DB,
+        `COLLECTED_REGION_${nx}_${ny}`,
+      ),
+      getCollectedCache<CollectedWeeklyBundle>(
+        c.env.DB,
+        collectedCacheKey.weekly(nx, ny),
+      ),
+    ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
@@ -109,7 +116,13 @@ router.get('/main', async (c) => {
       briefExpiresAt: brief.expiresAt,
       current: forecast.current,
       nextForecast:
-        nextForecastSnapshot(forecast.hourly, generatedAt) ?? forecast.current,
+        nextForecastSnapshot(
+          forecast.hourly,
+          generatedAt,
+          weekly?.status === 'AVAILABLE'
+            ? weekly.value.airQuality
+            : undefined,
+        ) ?? forecast.current,
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
@@ -135,9 +148,11 @@ router.get('/today', async (c) => {
     c.req.query('longitude'),
   );
   try {
+    const generatedAt = new Date();
+    const roadIceInSeason = isRoadIceSeason(generatedAt);
     const region = regionMetadataForGrid(nx, ny);
     const [regionRecord, settings, precipitationRecord, warningRecord,
-      roadIceRecord, roadControlRecord] = await Promise.all([
+      roadIceRecord, roadControlRecord, weeklyRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
         c.env.DB,
         `COLLECTED_REGION_${nx}_${ny}`,
@@ -169,6 +184,10 @@ router.get('/today', async (c) => {
             collectedCacheKey.roadControl(coordinates.latitude, coordinates.longitude),
           )
         : Promise.resolve(null),
+      getCollectedCache<CollectedWeeklyBundle>(
+        c.env.DB,
+        collectedCacheKey.weekly(nx, ny),
+      ),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
@@ -185,7 +204,10 @@ router.get('/today', async (c) => {
     const optionalTimeouts: OptionalProviderTimeouts = {
       precipitation: coordinates !== undefined && precipitationRecord === null,
       warning: warningRecord === null,
-      roadIce: coordinates !== undefined && roadIceRecord === null,
+      roadIce:
+        roadIceInSeason &&
+        coordinates !== undefined &&
+        roadIceRecord === null,
       roadControl: coordinates !== undefined && roadControlRecord === null,
     };
     logOptionalProviderTimeouts({
@@ -221,7 +243,6 @@ router.get('/today', async (c) => {
     );
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
-    const generatedAt = new Date();
     const brief = buildWeatherBriefResult(forecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
     const response: TodayWeatherResponse = {
       dataSource: `${forecast.dataSource} · 서버 중앙 수집`,
@@ -233,7 +254,13 @@ router.get('/today', async (c) => {
         activeWarnings: warnings,
       },
       nextForecast:
-        nextForecastSnapshot(forecast.hourly, generatedAt) ?? forecast.current,
+        nextForecastSnapshot(
+          forecast.hourly,
+          generatedAt,
+          weeklyRecord?.status === 'AVAILABLE'
+            ? weeklyRecord.value.airQuality
+            : undefined,
+        ) ?? forecast.current,
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
@@ -471,6 +498,7 @@ export default router;
 export function nextForecastSnapshot(
   hourly: WeatherSnapshot[],
   now = new Date(),
+  airQuality: DailyAirQualityForecastAtDate[] = [],
 ): WeatherSnapshot | undefined {
   const reference = now.getTime();
   let next: WeatherSnapshot | undefined;
@@ -486,7 +514,16 @@ export function nextForecastSnapshot(
       nextTime = forecastTime;
     }
   }
-  return next;
+  if (!next) return undefined;
+
+  const forecastDate = koreaDate(next.forecastAt ?? next.observedAt)
+    .replaceAll('-', '');
+  const pm25ForecastGrade = airQuality.find(
+    (item) => item.date.replaceAll('-', '') === forecastDate,
+  )?.pm25Grade;
+  return pm25ForecastGrade
+    ? { ...next, pm25ForecastGrade }
+    : next;
 }
 
 export function buildTimeline(
@@ -869,24 +906,28 @@ export function buildOptionalProviderTimeoutStatusMessages(
   return [
     timeouts.precipitation
       ? dataStatusMessage(
+          '현재 강수',
           '자료를 받아오지 못해 현재 강수 상태를 확인하기 어려워요',
           '기상청 관측분석자료·기상청 레이더',
         )
       : undefined,
     timeouts.warning
       ? dataStatusMessage(
+          '기상특보',
           '자료를 받아오지 못해 현재 기상특보 상태를 확인하기 어려워요',
           '기상청 특보정보',
         )
       : undefined,
     timeouts.roadIce
       ? dataStatusMessage(
+          '블랙아이스(도로살얼음)',
           '자료를 받아오지 못해 블랙아이스(도로살얼음) 발생 가능 정보를 확인하기 어려워요',
           '기상청 도로살얼음 발생 가능 정보',
         )
       : undefined,
     timeouts.roadControl
       ? dataStatusMessage(
+          '도로 통제',
           '자료를 받아오지 못해 현재 도로 통제 상태를 확인하기 어려워요',
           '국가교통정보센터 돌발상황정보',
         )
@@ -894,8 +935,15 @@ export function buildOptionalProviderTimeoutStatusMessages(
   ].filter((message): message is WeatherMessagePart => message !== undefined);
 }
 
-function dataStatusMessage(text: string, source: string): WeatherMessagePart {
-  return { role: 'DATA_STATUS', text, source };
+function dataStatusMessage(
+  itemTitle: string,
+  text: string,
+  source: string,
+  retryable = true,
+): WeatherMessagePart {
+  return retryable
+    ? { role: 'DATA_STATUS', itemTitle, text, source }
+    : { role: 'DATA_STATUS', itemTitle, text, source, retryable: false };
 }
 
 function logOptionalProviderTimeouts(

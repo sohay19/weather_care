@@ -45,8 +45,14 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
     );
     final missingFocus = focusedTypes.isNotEmpty && focusedIndex < 0;
     final statuses = dataStatusMessages
-        .where((part) => part.text.trim().isNotEmpty)
+        .where((part) =>
+            part.text.trim().isNotEmpty && !_isOffSeasonRoadIceStatus(part))
         .toList(growable: false);
+    final groupedStatuses = <String, List<WeatherMessagePart>>{};
+    for (final part in statuses) {
+      (groupedStatuses[_dataStatusTitle(part)] ??= []).add(part);
+    }
+    final statusGroups = groupedStatuses.entries.toList(growable: false);
 
     return Container(
       key: const ValueKey('lifestyle-evidence-checklist'),
@@ -80,7 +86,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
           ],
-          if (orderedMessages.isEmpty && !missingFocus)
+          if (orderedMessages.isEmpty && !missingFocus && statusGroups.isEmpty)
             const _EmptyLifestyleChecklist()
           else
             for (var index = 0; index < orderedMessages.length; index++) ...[
@@ -93,13 +99,17 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
               if (index < orderedMessages.length - 1)
                 const SizedBox(height: 12),
             ],
-          if (statuses.isNotEmpty) ...[
+          if (statusGroups.isNotEmpty) ...[
             const SizedBox(height: 14),
-            _CommonDataStatus(
-              parts: statuses,
-              onRetry: onRetryMissingData,
-              retrying: retrying,
-            ),
+            for (var index = 0; index < statusGroups.length; index++) ...[
+              _DataStatusCard(
+                title: statusGroups[index].key,
+                parts: statusGroups[index].value,
+                onRetry: onRetryMissingData,
+                retrying: retrying,
+              ),
+              if (index < statusGroups.length - 1) const SizedBox(height: 12),
+            ],
           ],
         ],
       ),
@@ -311,12 +321,14 @@ class _MatchedDetail extends StatelessWidget {
   }
 }
 
-class _CommonDataStatus extends StatelessWidget {
+class _DataStatusCard extends StatelessWidget {
+  final String title;
   final List<WeatherMessagePart> parts;
   final Future<void> Function()? onRetry;
   final bool retrying;
 
-  const _CommonDataStatus({
+  const _DataStatusCard({
+    required this.title,
     required this.parts,
     this.onRetry,
     this.retrying = false,
@@ -325,29 +337,44 @@ class _CommonDataStatus extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      key: const ValueKey('detail-common-data-status'),
+      key: ValueKey('detail-data-status-$title'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
-        borderRadius: BorderRadius.circular(15),
+        color: WeatherCareTheme.surfaceSubtle,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: WeatherCareTheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '공통 자료 상태',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                size: 20,
+                color: WeatherCareTheme.primaryDeep,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
           ),
           for (final part in parts) ...[
             const SizedBox(height: 7),
             Text(part.text, style: Theme.of(context).textTheme.bodySmall),
           ],
-          if (onRetry != null) ...[
+          if (onRetry != null && parts.any((part) => part.retryable)) ...[
             const SizedBox(height: 10),
             MissingDataRetry(
-              message: '받지 못한 상세 자료가 있어요.',
-              retryKey: 'detail-data-retry',
+              message: '서버에 저장된 $title 자료를 다시 받아올 수 있어요. '
+                  '외부 자료는 서버가 다음 수집 주기에 다시 확인해요.',
+              retryKey: 'detail-data-retry-$title',
+              retryTooltip: '서버의 $title 자료 다시 받기',
               onRetry: onRetry!,
               retrying: retrying,
             ),
@@ -357,6 +384,23 @@ class _CommonDataStatus extends StatelessWidget {
     );
   }
 }
+
+String _dataStatusTitle(WeatherMessagePart part) {
+  final itemTitle = part.itemTitle?.trim();
+  if (itemTitle != null && itemTitle.isNotEmpty) return itemTitle;
+  return switch (part.source) {
+    'AIRKOREA' => '대기질',
+    'KMA_LIVING_INDEX_V5' => '자외선지수',
+    '기상청 관측분석자료·기상청 레이더' => '현재 강수',
+    '기상청 특보정보' => '기상특보',
+    '기상청 도로살얼음 발생 가능 정보' => '블랙아이스(도로살얼음)',
+    '국가교통정보센터 돌발상황정보' => '도로 통제',
+    _ => '자료 상태',
+  };
+}
+
+bool _isOffSeasonRoadIceStatus(WeatherMessagePart part) =>
+    part.text.contains('블랙아이스') && part.text.contains('제공기간이 아닌');
 
 class _EmptyLifestyleChecklist extends StatelessWidget {
   const _EmptyLifestyleChecklist();

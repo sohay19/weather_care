@@ -67,7 +67,7 @@ class MainTab extends StatelessWidget {
                   children: [
                     TabPageHeader(
                       eyebrow: dateLabel,
-                      title: '${today.region.name} 지금 날씨',
+                      title: '${today.region.name} 날씨',
                       subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                     ),
                     SizedBox(height: compact ? 20 : 24),
@@ -78,7 +78,6 @@ class MainTab extends StatelessWidget {
                       comparison: yesterdayComparison,
                       comparisonLoading: comparisonLoading,
                       onRetry: onRetryData,
-                      onRetryComparison: onRetryComparison,
                       retrying: retryingData,
                     ),
                     SizedBox(height: compact ? 12 : 16),
@@ -100,6 +99,18 @@ class MainTab extends StatelessWidget {
                         onRetry: onRetryData,
                         retrying: retryingData,
                       ),
+                    SizedBox(height: compact ? 12 : 16),
+                    _YesterdayComparisonSection(
+                      comparison: yesterdayComparison,
+                      loading: comparisonLoading,
+                      onRetry: onRetryComparison,
+                    ),
+                    SizedBox(height: compact ? 12 : 16),
+                    _TodayFutureSection(
+                      today: today,
+                      current: today.current,
+                      mood: mood,
+                    ),
                     SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(
@@ -148,7 +159,6 @@ class _TodaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nextForecast = today.nextForecast ?? current;
     final observedCurrent =
         comparison?.comparisonAvailable == true ? comparison?.current : null;
     final feelingTemperature =
@@ -162,19 +172,21 @@ class _TodaySection extends StatelessWidget {
       height: 1.45,
       fontWeight: FontWeight.w600,
     );
+    final fineDustValue = current.pm25 ?? current.pm10;
+    final usesPm25 = current.pm25 != null;
     return Column(
       children: [
         const Row(
           children: [
             Icon(
               Icons.calendar_today_outlined,
-              size: 21,
+              size: 18,
               color: WeatherCareTheme.primaryDeep,
             ),
             SizedBox(width: 9),
             Expanded(
               child: Text(
-                '오늘의 날씨',
+                '지금 날씨',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -192,39 +204,76 @@ class _TodaySection extends StatelessWidget {
           apparentTemperature: observedCurrent?.apparentTemperature,
           loading: loading,
         ),
-        const SizedBox(height: 9),
-        _TemperatureLine(
-          lineKey: const ValueKey('main-apparent-temperature-row'),
-          temperatureLabel: forecastTemperatureLabel(nextForecast.forecastAt),
-          temperature: nextForecast.temperature,
-          apparentLabel: '예상 체감온도',
-          apparentTemperature: nextForecast.apparentTemperature,
+        const SizedBox(height: 13),
+        Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10),
+          child: Row(
+            key: const ValueKey('main-weather-feeling'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  _weatherSummaryMessage(
+                    sky: feelingSky,
+                    temperature: feelingTemperature,
+                    apparentTemperature: feelingApparentTemperature,
+                  ),
+                  style: feelingStyle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 1),
+                child: WeatherConditionIcon(
+                  condition: feelingSky,
+                  color: WeatherCareTheme.textPrimary,
+                  size: 25,
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 13),
-        Row(
-          key: const ValueKey('main-weather-feeling'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                _weatherSummaryMessage(
-                  sky: feelingSky,
-                  temperature: feelingTemperature,
-                  apparentTemperature: feelingApparentTemperature,
-                ),
-                style: feelingStyle,
+        Container(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.62),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Row(
+            children: [
+              _TopMetric(
+                icon: Icons.water_drop_outlined,
+                label: '습도',
+                value: current.humidity == null
+                    ? '--'
+                    : '${current.humidity!.toStringAsFixed(0)}%',
+                state: _humidityState(current.humidity),
               ),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(top: 1),
-              child: WeatherConditionIcon(
-                condition: feelingSky,
-                color: WeatherCareTheme.textPrimary,
-                size: 25,
+              _TopMetric(
+                icon: Icons.air_rounded,
+                label: '풍속',
+                value: current.windSpeed == null
+                    ? '--'
+                    : '${current.windSpeed!.toStringAsFixed(1)}m/s',
+                state: _windState(current.windSpeed),
               ),
-            ),
-          ],
+              _TopMetric(
+                icon: Icons.wb_sunny_outlined,
+                label: '자외선',
+                value: current.uvIndex?.toStringAsFixed(0) ?? '--',
+                state: _uvState(current.uvIndex),
+              ),
+              _TopMetric(
+                icon: Icons.grain_rounded,
+                label: usesPm25 ? '초미세먼지' : '미세먼지',
+                value: fineDustValue == null ? '--' : '$fineDustValue㎍',
+                state: usesPm25
+                    ? _pm25State(current.pm25)
+                    : _pm10State(current.pm10),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -285,79 +334,190 @@ class _YesterdayComparisonSection extends StatelessWidget {
     final available = _hasUsableComparison(comparison);
     final basis = comparison?.basis;
 
-    return Column(
+    return Container(
       key: const ValueKey('yesterday-comparison-card'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(
-              Icons.compare_arrows_rounded,
-              size: 21,
-              color: WeatherCareTheme.primaryDeep,
-            ),
-            SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                '어제와 비교',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        Text(
-          basis?.provider == 'KMA_ASOS'
-              ? '현재 관측값과 어제 같은 시각 관측값을 비교해요'
-              : '같은 지역의 같은 기준시각 자료만 비교해요',
-          style: TextStyle(
-            color: WeatherCareTheme.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 13),
-        if (loading) ...[
-          const LinearProgressIndicator(minHeight: 3),
-          const SizedBox(height: 10),
-          const Text('어제 날씨를 확인하고 있어요.'),
-        ] else if (!available) ...[
-          Row(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: WeatherCareTheme.surfaceDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
             children: [
-              const Expanded(
+              Icon(
+                Icons.compare_arrows_rounded,
+                size: 21,
+                color: WeatherCareTheme.primaryDeep,
+              ),
+              SizedBox(width: 9),
+              Expanded(
                 child: Text(
-                  '받지 못한 자료: 어제와 같은 시각의 관측값',
+                  '어제와 비교',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-              if (onRetry != null)
-                IconButton(
-                  key: const ValueKey('yesterday-comparison-retry'),
-                  tooltip: '어제 비교 자료만 다시 요청',
-                  visualDensity: VisualDensity.compact,
-                  constraints:
-                      const BoxConstraints.tightFor(width: 36, height: 36),
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded),
-                  color: WeatherCareTheme.primaryDeep,
-                ),
             ],
           ),
-        ] else ...[
-          if (skyComparable)
-            Text(
-              '하늘 상태는 오늘 ${current!.skyCondition}, 어제 ${previous!.skyCondition}였어요.',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+          const SizedBox(height: 5),
+          Text(
+            basis?.provider == 'KMA_ASOS'
+                ? '현재 관측값과 어제 같은 시각 관측값을 비교해요'
+                : '같은 지역의 같은 기준시각 자료만 비교해요',
+            style: TextStyle(
+              color: WeatherCareTheme.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
             ),
-          if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
-          for (var index = 0; index < metrics.length; index++) ...[
-            _ComparisonMetric(metric: metrics[index]),
-            if (index < metrics.length - 1) const SizedBox(height: 9),
+          ),
+          const SizedBox(height: 13),
+          if (loading) ...[
+            const LinearProgressIndicator(minHeight: 3),
+            const SizedBox(height: 10),
+            const Text('어제 날씨를 확인하고 있어요.'),
+          ] else if (!available) ...[
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '받지 못한 자료: 어제와 같은 시각의 관측값',
+                  ),
+                ),
+                if (onRetry != null)
+                  IconButton(
+                    key: const ValueKey('yesterday-comparison-retry'),
+                    tooltip: '어제 비교 자료만 다시 요청',
+                    visualDensity: VisualDensity.compact,
+                    constraints:
+                        const BoxConstraints.tightFor(width: 36, height: 36),
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh_rounded),
+                    color: WeatherCareTheme.primaryDeep,
+                  ),
+              ],
+            ),
+          ] else ...[
+            if (skyComparable)
+              Text(
+                '하늘 상태는 오늘 ${current!.skyCondition}, 어제 ${previous!.skyCondition}였어요.',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
+            for (var index = 0; index < metrics.length; index++) ...[
+              _ComparisonMetric(metric: metrics[index]),
+              if (index < metrics.length - 1) const SizedBox(height: 9),
+            ],
           ],
         ],
-      ],
+      ),
+    );
+  }
+}
+
+class _TodayFutureSection extends StatelessWidget {
+  final TodayWeatherResponse today;
+  final CurrentWeather current;
+  final String mood;
+
+  const _TodayFutureSection({
+    required this.today,
+    required this.current,
+    required this.mood,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final nextForecast = today.nextForecast ?? current;
+    return Container(
+      key: const ValueKey('main-future-weather-card'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: WeatherCareTheme.mood(mood),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.question_mark_outlined,
+                size: 18,
+                color: WeatherCareTheme.primaryDeep,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  '미래 예상 날씨',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            '${forecastTemperatureLabel(nextForecast.forecastAt)}의 기온과 체감온도를 예상해요',
+            style: TextStyle(
+              color: WeatherCareTheme.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 13),
+          _TemperatureLine(
+            lineKey: const ValueKey('main-apparent-temperature-row'),
+            temperatureLabel: '예상 기온',
+            temperature: nextForecast.temperature,
+            apparentLabel: '예상 체감온도',
+            apparentTemperature: nextForecast.apparentTemperature,
+          ),
+          const SizedBox(height: 13),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.62),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Row(
+              children: [
+                _TopMetric(
+                  icon: Icons.water_drop_outlined,
+                  label: '습도',
+                  value: nextForecast.humidity == null
+                      ? '--'
+                      : '${nextForecast.humidity!.toStringAsFixed(0)}%',
+                  state: _humidityState(nextForecast.humidity),
+                ),
+                _TopMetric(
+                  icon: Icons.air_rounded,
+                  label: '풍속',
+                  value: nextForecast.windSpeed == null
+                      ? '--'
+                      : '${nextForecast.windSpeed!.toStringAsFixed(1)}m/s',
+                  state: _windState(nextForecast.windSpeed),
+                ),
+                _TopMetric(
+                  icon: Icons.wb_sunny_outlined,
+                  label: '자외선',
+                  value: nextForecast.uvIndex?.toStringAsFixed(0) ?? '--',
+                  state: _uvState(nextForecast.uvIndex),
+                ),
+                _TopMetric(
+                  icon: Icons.grain_rounded,
+                  label: '초미세먼지',
+                  value: nextForecast.pm25ForecastGrade ?? '--',
+                  state: _pm25ForecastState(
+                    nextForecast.pm25ForecastGrade,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -486,7 +646,6 @@ class _TopWeatherCard extends StatelessWidget {
   final ComparisonResponse? comparison;
   final bool comparisonLoading;
   final Future<void> Function()? onRetry;
-  final Future<void> Function()? onRetryComparison;
   final bool retrying;
 
   const _TopWeatherCard({
@@ -496,7 +655,6 @@ class _TopWeatherCard extends StatelessWidget {
     this.comparison,
     this.comparisonLoading = false,
     this.onRetry,
-    this.onRetryComparison,
     this.retrying = false,
   });
   @override
@@ -512,8 +670,6 @@ class _TopWeatherCard extends StatelessWidget {
       if (current.pm25 == null) '초미세먼지',
       if (current.pm10 == null) '미세먼지',
     ];
-    final fineDustValue = current.pm25 ?? current.pm10;
-    final usesPm25 = current.pm25 != null;
 
     return AnimatedContainer(
       key: const ValueKey('main-top-weather-card'),
@@ -543,86 +699,6 @@ class _TopWeatherCard extends StatelessWidget {
             current: current,
             comparison: comparison,
             loading: comparisonLoading,
-          ),
-          SizedBox(height: compact ? 14 : 18),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: WeatherCareTheme.textSecondary.withValues(alpha: 0.18),
-          ),
-          SizedBox(height: compact ? 14 : 18),
-          _YesterdayComparisonSection(
-            comparison: comparison,
-            loading: comparisonLoading,
-            onRetry: onRetryComparison,
-          ),
-          SizedBox(height: compact ? 14 : 18),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: WeatherCareTheme.textSecondary.withValues(alpha: 0.18),
-          ),
-          SizedBox(height: compact ? 14 : 18),
-          const Row(
-            children: [
-              Icon(
-                Icons.eco_outlined,
-                size: 21,
-                color: WeatherCareTheme.primaryDeep,
-              ),
-              SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  '생활 지수',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Container(
-            padding: EdgeInsets.symmetric(vertical: compact ? 7 : 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.62),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Row(
-              children: [
-                _TopMetric(
-                  icon: Icons.water_drop_outlined,
-                  label: '습도',
-                  value: current.humidity == null
-                      ? '--'
-                      : '${current.humidity!.toStringAsFixed(0)}%',
-                  state: _humidityState(current.humidity),
-                ),
-                _TopMetric(
-                  icon: Icons.air_rounded,
-                  label: '풍속',
-                  value: current.windSpeed == null
-                      ? '--'
-                      : '${current.windSpeed!.toStringAsFixed(1)}m/s',
-                  state: _windState(current.windSpeed),
-                ),
-                _TopMetric(
-                  icon: Icons.wb_sunny_outlined,
-                  label: '자외선',
-                  value: current.uvIndex?.toStringAsFixed(0) ?? '--',
-                  state: _uvState(current.uvIndex),
-                ),
-                _TopMetric(
-                  icon: Icons.grain_rounded,
-                  label: usesPm25 ? '초미세먼지' : '미세먼지',
-                  value: fineDustValue == null ? '--' : '$fineDustValue㎍',
-                  state: usesPm25
-                      ? _pm25State(current.pm25)
-                      : _pm10State(current.pm10),
-                ),
-              ],
-            ),
           ),
           if (missing.isNotEmpty && onRetry != null) ...[
             SizedBox(height: compact ? 8 : 10),
@@ -833,6 +909,18 @@ _MetricState _pm25State(int? value) {
     return const _MetricState('나쁨', WeatherCareTheme.attentionDeep);
   }
   return const _MetricState('매우 나쁨', WeatherCareTheme.danger);
+}
+
+_MetricState _pm25ForecastState(String? value) {
+  if (value == null || value.trim().isEmpty) return _unavailableMetric;
+  final grade = value.trim();
+  if (grade.contains('매우 나쁨') || grade.contains('매우 높음')) {
+    return _MetricState(grade, WeatherCareTheme.danger);
+  }
+  if (grade.contains('나쁨') || grade.contains('높음')) {
+    return _MetricState(grade, WeatherCareTheme.attentionDeep);
+  }
+  return _MetricState(grade, WeatherCareTheme.primaryDeep);
 }
 
 _MetricState _pm10State(int? value) {

@@ -107,15 +107,15 @@ void main() {
       '2026-09-10T06:00:00Z',
       '2026-09-10T15:00:00',
     ]) {
-      expect(forecastTemperatureLabel(timestamp), '오후 3시 예상기온');
+      expect(forecastTemperatureLabel(timestamp), '오후 3시');
     }
     expect(
       forecastTemperatureLabel('2026-09-10T15:00:00Z'),
-      '오전 12시 예상기온',
+      '오전 12시',
     );
-    expect(forecastTemperatureLabel(null), '예상기온');
-    expect(forecastTemperatureLabel('unknown'), '예상기온');
-    expect(forecastTemperatureLabel('2026-09-10'), '예상기온');
+    expect(forecastTemperatureLabel(null), '시');
+    expect(forecastTemperatureLabel('unknown'), '시');
+    expect(forecastTemperatureLabel('2026-09-10'), '시');
   });
 
   testWidgets('결측이어도 6개 지표를 유지하고 0이나 정상 등급으로 표시하지 않는다', (tester) async {
@@ -243,7 +243,7 @@ void main() {
         ),
         scale: scale,
       );
-      expect(find.text('오후 3시 예상기온'), findsOneWidget);
+      expect(find.text('오후 3시'), findsOneWidget);
       expect(find.text('29.0℃'), findsOneWidget);
       expect(find.text('32.7℃'), findsOneWidget);
       expect(find.text('2.8m/s'), findsOneWidget);
@@ -311,7 +311,16 @@ void main() {
         ),
       ),
     ));
-    expect(find.text('예상기온'), findsOneWidget);
+    expect(find.textContaining('하늘 상태 자료가 없어'), findsOneWidget);
+    expect(find.textContaining('맑은 하늘'), findsNothing);
+    expect(find.text('0.0℃'), findsNothing);
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('main-future-weather-card')),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('예상 기온'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('main-apparent-temperature-row')),
@@ -320,8 +329,6 @@ void main() {
       findsNWidgets(2),
     );
     expect(find.text('0.0℃'), findsNothing);
-    expect(find.textContaining('하늘 상태 자료가 없어'), findsOneWidget);
-    expect(find.textContaining('맑은 하늘'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

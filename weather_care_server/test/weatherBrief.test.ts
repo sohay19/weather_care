@@ -82,7 +82,7 @@ describe('weather brief policy', () => {
       [
         forecast([snapshot(12)]),
         'DAILY_RHYTHM',
-        /시간별 예보를 확인하세요/,
+        /특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요/,
       ],
     ];
 

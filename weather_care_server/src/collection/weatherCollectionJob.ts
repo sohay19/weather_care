@@ -39,6 +39,7 @@ import {
   getCollectedCache,
   locationCacheKey,
   saveCollectedCache,
+  type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
 import { reserveApiHubBudget } from '../database/apiUsageRepository';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
@@ -56,6 +57,7 @@ import type {
 
 const FORECAST_MAX_AGE_MS = 2 * 60 * 60 * 1000 + 40 * 60 * 1000;
 const ENVIRONMENTAL_MAX_AGE_MS = 30 * 60 * 1000;
+const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
 const WEEKLY_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const ULTRA_SHORT_MAX_AGE_MS = 70 * 60 * 1000;
 const RADAR_BYTES = 13_281_414;
@@ -145,7 +147,7 @@ async function collectRegionForecasts(
         env.DB,
         collectedCacheKey.environmental(nx, ny),
       );
-      if (!cacheRecordIsFresh(environmentalRecord, ENVIRONMENTAL_MAX_AGE_MS, now)) {
+      if (shouldRefreshEnvironmentalRecord(environmentalRecord, now)) {
         const environmental = await loadEnvironmentalData(
           env,
           regionMetadataForGrid(nx, ny),
@@ -184,6 +186,22 @@ async function collectRegionForecasts(
       logCollectionFailure('region', error, { nx, ny });
     }
   });
+}
+
+export function shouldRefreshEnvironmentalRecord(
+  record: CollectedCacheRecord<EnvironmentalDataBundle> | null,
+  now = new Date(),
+): boolean {
+  if (!record) return true;
+  const updatedAt = Date.parse(record.updatedAt);
+  if (!Number.isFinite(updatedAt)) return true;
+  const hasTemporaryFailure = Object.values(record.value.sources ?? {}).some(
+    ({ state }) => state === 'STALE' || state === 'UNAVAILABLE',
+  );
+  const maxAgeMs = hasTemporaryFailure
+    ? ENVIRONMENTAL_RETRY_INTERVAL_MS
+    : ENVIRONMENTAL_MAX_AGE_MS;
+  return now.getTime() - updatedAt >= maxAgeMs;
 }
 
 async function collectWeekly(

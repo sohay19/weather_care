@@ -4,7 +4,7 @@ import { defaultRuleConfig } from '../config/ruleConfig';
 import { koreaDate, precipitationDecisionSnapshot, precipitationPeriod, periodLabel, koreanHour } from '../rules/precipitationWindows';
 import { snapshotTime } from '../rules/timeWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.5';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.6';
 const HOUR = 3_600_000;
 export type WeatherBriefScene =
   | 'WET_TRAVEL'
@@ -159,7 +159,7 @@ function messageFor(selection: SceneSelection, eventTime: string): string {
     case 'STEADY_PACE':
       return `바람이 강할 수 있으니, ${eventTime} 외출한다면 소지품을 단단히 고정하세요`;
     case 'DAILY_RHYTHM':
-      return '오늘은 외출 전에 시간별 예보를 확인하세요';
+      return '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요';
   }
 }
 

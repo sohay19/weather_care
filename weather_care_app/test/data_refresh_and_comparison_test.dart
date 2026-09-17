@@ -50,6 +50,13 @@ void main() {
       ),
     ));
     expect(find.textContaining('받지 못한 현재 날씨:'), findsOneWidget);
+    expect(find.text(removedHint), findsNothing);
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('yesterday-comparison-card')),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('받지 못한 자료: 어제와 같은 시각의 관측값'), findsOneWidget);
     expect(find.text(removedHint), findsNothing);
 
@@ -82,8 +89,8 @@ void main() {
     expect(find.text(removedHint), findsNothing);
   });
 
-  testWidgets('Main 최상단 날씨와 어제 비교 결과를 하나의 카드에 표시한다', (tester) async {
-    tester.view.physicalSize = const Size(400, 1400);
+  testWidgets('Main 카드를 날씨, Check List, 어제 비교, 예상 순서로 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(400, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -107,6 +114,10 @@ void main() {
         temperature: 23,
         forecastAt: '2026-09-16T11:00:00+09:00',
         apparentTemperature: 22.5,
+        humidity: 64,
+        windSpeed: 3.2,
+        uvIndex: 5,
+        pm25ForecastGrade: '보통',
       ),
       recommendations: [],
       lifestyleMessages: [],
@@ -149,10 +160,28 @@ void main() {
     expect(find.text('22.3℃'), findsOneWidget);
     expect(find.text('현재 체감온도'), findsOneWidget);
     expect(find.text('22.1℃'), findsOneWidget);
-    expect(find.text('오전 11시 예상기온'), findsOneWidget);
+    expect(find.text('오전 11시의 기온과 체감온도를 예상해요'), findsOneWidget);
+    expect(find.text('예상 기온'), findsOneWidget);
     expect(find.text('23.0℃'), findsOneWidget);
     expect(find.text('예상 체감온도'), findsOneWidget);
     expect(find.text('22.5℃'), findsOneWidget);
+    final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
+    expect(
+      find.descendant(of: futureCard, matching: find.text('64%')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: futureCard, matching: find.text('3.2m/s')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: futureCard, matching: find.text('5')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: futureCard, matching: find.text('보통')),
+      findsOneWidget,
+    );
     expect(
       find.text(
         '맑은 하늘이 이어지는 날씨예요. 실제 기온보다 0.2℃ 낮지만, 체감 상 조금 덥게 느껴질 수 있어요.',
@@ -175,12 +204,26 @@ void main() {
     final top = tester.getTopLeft(topCard);
     final comparison = tester.getTopLeft(comparisonCard);
     final checklist = tester.getTopLeft(find.text('Check List'));
+    final future = tester.getTopLeft(futureCard);
+    final topDecoration =
+        tester.widget<AnimatedContainer>(topCard).decoration as BoxDecoration;
+    final futureDecoration =
+        tester.widget<Container>(futureCard).decoration as BoxDecoration;
+    expect(
+      (futureDecoration.gradient as LinearGradient).colors,
+      (topDecoration.gradient as LinearGradient).colors,
+    );
     expect(
       find.ancestor(of: comparisonCard, matching: topCard),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(comparison.dy, greaterThan(top.dy));
-    expect(comparison.dy, lessThan(checklist.dy));
+    expect(
+      find.ancestor(of: futureCard, matching: topCard),
+      findsNothing,
+    );
+    expect(checklist.dy, greaterThan(top.dy));
+    expect(comparison.dy, greaterThan(checklist.dy));
+    expect(future.dy, greaterThan(comparison.dy));
   });
 
   testWidgets('카드의 새로고침 버튼은 해당 자료 콜백만 실행한다', (tester) async {
@@ -217,6 +260,12 @@ void main() {
         ),
       ),
     ));
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('yesterday-comparison-card')),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(
       find.byKey(const ValueKey('yesterday-comparison-retry')),
     );

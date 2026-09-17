@@ -99,16 +99,20 @@ extension WeatherMessageRoleLabel on WeatherMessageRole {
 class WeatherMessagePart {
   final WeatherMessageRole role;
   final String text;
+  final String? itemTitle;
   final String? source;
   final String? validFrom;
   final String? validUntil;
+  final bool retryable;
 
   const WeatherMessagePart({
     required this.role,
     required this.text,
+    this.itemTitle,
     this.source,
     this.validFrom,
     this.validUntil,
+    this.retryable = true,
   });
 
   factory WeatherMessagePart.fromJson(Map<String, dynamic> json) {
@@ -123,9 +127,11 @@ class WeatherMessagePart {
     return WeatherMessagePart(
       role: role,
       text: json['text']?.toString() ?? '',
+      itemTitle: json['itemTitle']?.toString(),
       source: json['source']?.toString(),
       validFrom: json['validFrom']?.toString(),
       validUntil: json['validUntil']?.toString(),
+      retryable: json['retryable'] != false,
     );
   }
 }

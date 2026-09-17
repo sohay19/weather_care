@@ -6539,3 +6539,5 @@
 - 운영 배포 후 D1 스키마를 재확인하면서 기존 `weather_cache.region_id`, `nx`, `ny`가 `NOT NULL`인 반면 좌표 전용 강수·도로 캐시는 이 값을 비워 저장하려던 문제를 발견했다.
 - 격자가 없는 중앙 캐시는 `region_id`에 고유 캐시 키를, `nx`·`ny`에 예약값 0을 기록하도록 바꿨다. 캐시 조회는 `cache_key`만 사용하므로 기존 격자 자료와 충돌하지 않는다.
 - 실제 운영과 같은 `NOT NULL` 스키마에서 좌표 전용 캐시 저장·조회 회귀 테스트를 추가했다. 서버 전체 43파일·307개 테스트, TypeScript 검사, `wrangler deploy --dry-run`, `git diff --check`를 통과했다.
+- 수정사항을 `8608fb8`(`fix(캐시): 좌표 전용 자료 저장 호환`)로 커밋하고 Worker를 재배포했다. 최종 활성 버전은 `cf2be76d-f804-4d43-abb8-0b45b60b6d4e`이며 `/health` 정상과 100% 활성화를 확인했다.
+- 09:50 KST 첫 운영 중앙 수집 후 D1에 `COLLECTED_FORECAST` 2건, `COLLECTED_ENVIRONMENTAL` 2건, `COLLECTED_REGION` 2건, `COLLECTED_ULTRA_SHORT` 2건, `COLLECTED_WEEKLY` 2건, 좌표 전용 `COLLECTED_ROAD_CONTROL` 1건이 생성됐다. APIHub 레이더·특보 계열은 당일 제공자 한도 소진 영향으로 아직 결과가 없지만 내부 예산 예약과 다른 자료의 수집 격리는 정상 동작했다.

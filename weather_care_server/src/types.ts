@@ -301,6 +301,8 @@ export interface TodayWeatherResponse {
   /** Exclusive deadline for displaying the time-sensitive Main brief. */
   briefExpiresAt?: string;
   current: WeatherSnapshot;
+  /** First hourly forecast whose valid time is later than generatedAt. */
+  nextForecast: WeatherSnapshot;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;
   currentRoadControl?: OfficialRoadControl;

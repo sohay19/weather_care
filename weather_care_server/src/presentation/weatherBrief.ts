@@ -1,10 +1,10 @@
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../types';
 import { defaultRuleConfig } from '../config/ruleConfig';
-import { precipitationDecisionSnapshot, precipitationPeriod, periodLabel, otherDatePrefix, koreanHour } from '../rules/precipitationWindows';
+import { koreaDate, precipitationDecisionSnapshot, precipitationPeriod, periodLabel, koreanHour } from '../rules/precipitationWindows';
 import { snapshotTime } from '../rules/timeWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.4';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.5';
 const HOUR = 3_600_000;
 export type WeatherBriefScene =
   | 'WET_TRAVEL'
@@ -60,8 +60,7 @@ export function buildWeatherBriefResult(
     const start = new Date(selection.start).toISOString();
     const end = new Date(selection.end).toISOString();
     eventTime = active ? '지금'
-      : otherDatePrefix(start, now.toISOString()) +
-        (selection.precipitation ? periodLabel(start, end) : koreanHour(start));
+      : selection.precipitation ? periodLabel(start, end) : koreanHour(start);
     expiresAt = active ? end : start;
   }
   return {
@@ -76,6 +75,7 @@ export function buildWeatherBriefResult(
 
 function selectScene(forecast: WeatherForecast, now: Date): SceneSelection {
   const reference = now.getTime();
+  const today = koreaDate(now.toISOString());
   const candidates = [forecast.current, ...forecast.hourly.slice(0, 24)]
     .map((item) => precipitationDecisionSnapshot(item, now))
     .filter((item) => Number.isFinite(Date.parse(snapshotTime(item))))
@@ -92,8 +92,11 @@ function selectScene(forecast: WeatherForecast, now: Date): SceneSelection {
       const end = period ? Date.parse(period.end)
         : snapshot.validTo === undefined ? point + HOUR
           : Math.min(Date.parse(snapshot.validTo), point + HOUR);
-      if (!Number.isFinite(reference) || !Number.isFinite(end) || end <= start ||
+      if (!Number.isFinite(reference) || !Number.isFinite(start) ||
+        !Number.isFinite(end) || end <= start ||
         end <= reference || start >= reference + 24 * HOUR) continue;
+      const active = start <= reference;
+      if (!active && koreaDate(new Date(start).toISOString()) !== today) continue;
       if (predicate(snapshot)) return { scene, snapshot, start, end, precipitation: !!period };
     }
     return undefined;

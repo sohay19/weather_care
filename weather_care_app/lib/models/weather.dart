@@ -372,6 +372,7 @@ class TodayWeatherResponse {
   final String brief;
   final String? briefExpiresAt;
   final CurrentWeather current;
+  final CurrentWeather? nextForecast;
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
   final List<WeatherMessagePart> dataStatusMessages;
@@ -384,6 +385,7 @@ class TodayWeatherResponse {
     required this.brief,
     this.briefExpiresAt,
     required this.current,
+    this.nextForecast,
     required this.recommendations,
     required this.lifestyleMessages,
     this.dataStatusMessages = const [],
@@ -397,6 +399,7 @@ class TodayWeatherResponse {
         brief: brief,
         briefExpiresAt: briefExpiresAt,
         current: current,
+        nextForecast: nextForecast,
         recommendations: recommendations,
         lifestyleMessages: lifestyleMessages,
         dataStatusMessages: dataStatusMessages,
@@ -439,6 +442,7 @@ class TodayWeatherResponse {
         .whereType<Map<String, dynamic>>()
         .map(HourlyWeatherItem.fromJson)
         .toList();
+    final nextForecast = json['nextForecast'];
 
     return TodayWeatherResponse(
       dataSource: json['dataSource']?.toString() ?? '서버 데이터',
@@ -449,6 +453,11 @@ class TodayWeatherResponse {
       brief: json['brief']?.toString() ?? '외출 전에 시간별 예보를 확인하세요.',
       briefExpiresAt: json['briefExpiresAt']?.toString(),
       current: CurrentWeather.fromJson(json),
+      nextForecast: nextForecast is Map
+          ? CurrentWeather.fromJson({
+              'current': Map<String, dynamic>.from(nextForecast),
+            })
+          : null,
       recommendations: recs,
       lifestyleMessages: lifestyles,
       dataStatusMessages: dataStatusMessages,

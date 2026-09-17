@@ -133,6 +133,104 @@ class MainTab extends StatelessWidget {
   }
 }
 
+class _TodaySection extends StatelessWidget {
+  final TodayWeatherResponse today;
+  final CurrentWeather current;
+  final ComparisonResponse? comparison;
+  final bool loading;
+
+  const _TodaySection({
+    required this.today,
+    required this.current,
+    required this.comparison,
+    required this.loading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final nextForecast = today.nextForecast ?? current;
+    final observedCurrent =
+        comparison?.comparisonAvailable == true ? comparison?.current : null;
+    final feelingTemperature =
+        observedCurrent?.temperature ?? current.temperature;
+    final feelingApparentTemperature =
+        observedCurrent?.apparentTemperature ?? current.apparentTemperature;
+    final feelingSky = observedCurrent?.skyCondition ?? current.sky;
+    final feelingStyle = TextStyle(
+      color: WeatherCareTheme.textPrimary,
+      fontSize: 13,
+      height: 1.45,
+      fontWeight: FontWeight.w600,
+    );
+    return Column(
+      children: [
+        const Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 21,
+              color: WeatherCareTheme.primaryDeep,
+            ),
+            SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                '오늘의 날씨',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 13),
+        _TemperatureLine(
+          lineKey: const ValueKey('main-current-observation-row'),
+          temperatureLabel: '현재 기온',
+          temperature: observedCurrent?.temperature,
+          apparentLabel: '현재 체감온도',
+          apparentTemperature: observedCurrent?.apparentTemperature,
+          loading: loading,
+        ),
+        const SizedBox(height: 9),
+        _TemperatureLine(
+          lineKey: const ValueKey('main-apparent-temperature-row'),
+          temperatureLabel: forecastTemperatureLabel(nextForecast.forecastAt),
+          temperature: nextForecast.temperature,
+          apparentLabel: '예상 체감온도',
+          apparentTemperature: nextForecast.apparentTemperature,
+        ),
+        const SizedBox(height: 13),
+        Row(
+          key: const ValueKey('main-weather-feeling'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                _weatherSummaryMessage(
+                  sky: feelingSky,
+                  temperature: feelingTemperature,
+                  apparentTemperature: feelingApparentTemperature,
+                ),
+                style: feelingStyle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: WeatherConditionIcon(
+                condition: feelingSky,
+                color: WeatherCareTheme.textPrimary,
+                size: 25,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _YesterdayComparisonSection extends StatelessWidget {
   final ComparisonResponse? comparison;
   final bool loading;
@@ -213,17 +311,14 @@ class _YesterdayComparisonSection extends StatelessWidget {
         const SizedBox(height: 5),
         Text(
           basis?.provider == 'KMA_ASOS'
-              ? '가까운 관측소의 같은 시각 관측값을 비교해요'
+              ? '현재 관측값과 어제 같은 시각 관측값을 비교해요'
               : '같은 지역의 같은 기준시각 자료만 비교해요',
-          style: WeatherCareTheme.microTextStyle,
-        ),
-        if (basis?.distanceKm != null) ...[
-          const SizedBox(height: 3),
-          Text(
-            '관측소 ${basis!.stationId ?? ''} · 기준점에서 ${basis.distanceKm!.toStringAsFixed(1)}km',
-            style: WeatherCareTheme.microTextStyle,
+          style: TextStyle(
+            color: WeatherCareTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
           ),
-        ],
+        ),
         const SizedBox(height: 13),
         if (loading) ...[
           const LinearProgressIndicator(minHeight: 3),
@@ -404,7 +499,6 @@ class _TopWeatherCard extends StatelessWidget {
     this.onRetryComparison,
     this.retrying = false,
   });
-
   @override
   Widget build(BuildContext context) {
     final current = today.current;
@@ -418,15 +512,8 @@ class _TopWeatherCard extends StatelessWidget {
       if (current.pm25 == null) '초미세먼지',
       if (current.pm10 == null) '미세먼지',
     ];
-    final apparentTemperature = current.apparentTemperature;
     final fineDustValue = current.pm25 ?? current.pm10;
     final usesPm25 = current.pm25 != null;
-    final feelingStyle = TextStyle(
-      color: WeatherCareTheme.textPrimary,
-      fontSize: 13,
-      height: 1.45,
-      fontWeight: FontWeight.w600,
-    );
 
     return AnimatedContainer(
       key: const ValueKey('main-top-weather-card'),
@@ -451,82 +538,51 @@ class _TopWeatherCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: compact ? 22 : 28),
-          FittedBox(
-            key: const ValueKey('main-apparent-temperature-row'),
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  forecastTemperatureLabel(current.forecastAt),
-                  style: const TextStyle(
-                    color: WeatherCareTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  current.temperature == null
-                      ? '자료 없음'
-                      : '${current.temperature!.toStringAsFixed(1)}℃',
-                  style: const TextStyle(
-                    color: WeatherCareTheme.primaryDeep,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Text(
-                  '예상 체감온도',
-                  style: TextStyle(
-                    color: WeatherCareTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  apparentTemperature == null
-                      ? '자료 없음'
-                      : '${apparentTemperature.toStringAsFixed(1)}℃',
-                  style: const TextStyle(
-                    color: WeatherCareTheme.primaryDeep,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
+          _TodaySection(
+            today: today,
+            current: current,
+            comparison: comparison,
+            loading: comparisonLoading,
           ),
-          SizedBox(height: compact ? 8 : 10),
-          Row(
-            key: const ValueKey('main-weather-feeling'),
-            crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(height: compact ? 14 : 18),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: WeatherCareTheme.textSecondary.withValues(alpha: 0.18),
+          ),
+          SizedBox(height: compact ? 14 : 18),
+          _YesterdayComparisonSection(
+            comparison: comparison,
+            loading: comparisonLoading,
+            onRetry: onRetryComparison,
+          ),
+          SizedBox(height: compact ? 14 : 18),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: WeatherCareTheme.textSecondary.withValues(alpha: 0.18),
+          ),
+          SizedBox(height: compact ? 14 : 18),
+          const Row(
             children: [
+              Icon(
+                Icons.eco_outlined,
+                size: 21,
+                color: WeatherCareTheme.primaryDeep,
+              ),
+              SizedBox(width: 9),
               Expanded(
                 child: Text(
-                  _weatherSummaryMessage(
-                    sky: current.sky,
-                    temperature: current.temperature,
-                    apparentTemperature: apparentTemperature,
+                  '생활 지수',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                   ),
-                  style: feelingStyle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 1),
-                child: WeatherConditionIcon(
-                  condition: current.sky,
-                  color: WeatherCareTheme.textPrimary,
-                  size: compact ? 20 : 23,
                 ),
               ),
             ],
           ),
-          SizedBox(height: compact ? 12 : 16),
+          const SizedBox(height: 13),
           Container(
             padding: EdgeInsets.symmetric(vertical: compact ? 7 : 8),
             decoration: BoxDecoration(
@@ -577,19 +633,95 @@ class _TopWeatherCard extends StatelessWidget {
               retrying: retrying,
             ),
           ],
-          SizedBox(height: compact ? 14 : 18),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: WeatherCareTheme.textSecondary.withValues(alpha: 0.18),
-          ),
-          SizedBox(height: compact ? 13 : 16),
-          _YesterdayComparisonSection(
-            comparison: comparison,
-            loading: comparisonLoading,
-            onRetry: onRetryComparison,
-          ),
         ],
+      ),
+    );
+  }
+}
+
+class _TemperatureLine extends StatelessWidget {
+  final Key lineKey;
+  final String temperatureLabel;
+  final double? temperature;
+  final String apparentLabel;
+  final double? apparentTemperature;
+  final bool loading;
+
+  const _TemperatureLine({
+    required this.lineKey,
+    required this.temperatureLabel,
+    required this.temperature,
+    required this.apparentLabel,
+    required this.apparentTemperature,
+    this.loading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: WeatherCareTheme.surfaceMuted,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: FittedBox(
+        key: lineKey,
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _TemperatureLabel(temperatureLabel),
+            const SizedBox(width: 8),
+            _TemperatureValue(value: temperature, loading: loading),
+            const SizedBox(width: 16),
+            _TemperatureLabel(apparentLabel),
+            const SizedBox(width: 8),
+            _TemperatureValue(value: apparentTemperature, loading: loading),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TemperatureLabel extends StatelessWidget {
+  final String text;
+
+  const _TemperatureLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: WeatherCareTheme.textSecondary,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+class _TemperatureValue extends StatelessWidget {
+  final double? value;
+  final bool loading;
+
+  const _TemperatureValue({required this.value, required this.loading});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      value == null
+          ? loading
+              ? '확인 중'
+              : '자료 없음'
+          : '${value!.toStringAsFixed(1)}℃',
+      style: const TextStyle(
+        color: WeatherCareTheme.primaryDeep,
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
       ),
     );
   }
@@ -738,13 +870,17 @@ String _weatherSummaryMessage({
     return '$weatherExpression 체감 정보는 계산조건이 맞을 때 표시해요.';
   }
 
+  final displayedApparentTemperature =
+      double.parse(apparentTemperature.toStringAsFixed(1));
+
   final comparison = temperature == null
       ? null
       : _apparentTemperatureComparison(
-          temperature: temperature,
-          apparentTemperature: apparentTemperature,
+          temperature: double.parse(temperature.toStringAsFixed(1)),
+          apparentTemperature: displayedApparentTemperature,
         );
-  final feeling = switch (_apparentTemperatureLabel(apparentTemperature)) {
+  final feeling =
+      switch (_apparentTemperatureLabel(displayedApparentTemperature)) {
     '위험한 더위' => '위험할 만큼 매우 덥게',
     '더위 경계' => '매우 덥게',
     '더위 주의' => '더위가 강하게',

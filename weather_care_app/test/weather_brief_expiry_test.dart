@@ -57,13 +57,24 @@ void main() {
     expect(find.text(action), findsOneWidget);
   });
 
+  testWidgets('내일·모레를 언급한 서버 문구는 오늘 안내로 대체한다', (tester) async {
+    for (final text in [
+      '내일 오후 2시 비가 와요',
+      '모레 오전 9시 자외선이 강해요',
+      '글피 바람이 강해요',
+      '다음 날 눈이 와요',
+    ]) {
+      await tester.pumpWidget(subject(text: text));
+      expect(find.text(text), findsNothing);
+      expect(find.text('오늘은 외출 전에 시간별 예보를 확인하세요'), findsOneWidget);
+    }
+  });
+
   testWidgets('앱으로 복귀할 때 실제 시각을 확인해 지난 문구를 제거한다', (tester) async {
     await tester.pumpWidget(subject());
-    tester.binding
-        .handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     now = now.add(const Duration(minutes: 5));
-    tester.binding
-        .handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.text(action), findsNothing);
     expect(find.textContaining('안내 시간이 지났어요.'), findsOneWidget);
@@ -99,10 +110,12 @@ void main() {
       'brief': action,
       'briefExpiresAt': '2026-09-10T06:00:00Z',
       'current': {'forecastAt': '2026-09-10T15:00:00+09:00'},
+      'nextForecast': {'forecastAt': '2026-09-10T16:00:00+09:00'},
     }).withRegionName('부산 해운대구');
     expect(response.briefExpiresAt, '2026-09-10T06:00:00Z');
     expect(response.brief, action);
     expect(response.current.forecastAt, '2026-09-10T15:00:00+09:00');
+    expect(response.nextForecast?.forecastAt, '2026-09-10T16:00:00+09:00');
     expect(TodayWeatherResponse.fromJson({'brief': action}).briefExpiresAt,
         isNull);
   });

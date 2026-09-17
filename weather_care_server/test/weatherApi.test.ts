@@ -5,6 +5,7 @@ import router, {
   enrichWeeklyForecastDays,
   isFreshMainSnapshot,
   mergeWeeklyForecastDays,
+  nextForecastSnapshot,
   recommendationsForDay,
   settleWithin,
   weeklyCalendarDays,
@@ -25,9 +26,11 @@ import { seedCollectedRegion, seedCollectedWeekly } from './collectedWeatherFixt
 
 describe('fast Main weather', () => {
   it('returns KMA core weather without waiting for optional providers', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T15:35:00+09:00'));
     const forecast = {
       current: snapshot(15),
-      hourly: [snapshot(15), snapshot(18)],
+      hourly: [snapshot(15), snapshot(18, { temperature: 28 })],
       timelineHourly: [snapshot(15), snapshot(18)],
       daily: [day(28)],
       baseDate: '20260915',
@@ -47,19 +50,36 @@ describe('fast Main weather', () => {
       const data = await response.json<{
         region: { nx: number; ny: number };
         current: WeatherSnapshot;
+        nextForecast: WeatherSnapshot;
         hourly: WeatherSnapshot[];
       }>();
 
       expect(response.status).toBe(200);
       expect(data.region).toMatchObject({ nx: 58, ny: 124 });
       expect(data.current.temperature).toBe(24);
+      expect(data.nextForecast).toMatchObject({
+        forecastAt: '2026-08-20T18:00:00+09:00',
+        temperature: 28,
+      });
       expect(data.hourly).toEqual([]);
       expect(optional).not.toHaveBeenCalled();
       expect(provider).not.toHaveBeenCalled();
     } finally {
       provider.mockRestore();
       optional.mockRestore();
+      vi.useRealTimers();
     }
+  });
+
+  it('selects the earliest forecast strictly after the current time', () => {
+    expect(nextForecastSnapshot(
+      [snapshot(12), snapshot(11), snapshot(10)],
+      new Date('2026-08-20T10:35:00+09:00'),
+    )?.forecastAt).toBe('2026-08-20T11:00:00+09:00');
+    expect(nextForecastSnapshot(
+      [snapshot(11), snapshot(10)],
+      new Date('2026-08-20T10:00:00+09:00'),
+    )?.forecastAt).toBe('2026-08-20T11:00:00+09:00');
   });
 
   it('uses cached Main weather only inside its short freshness window', () => {
@@ -392,6 +412,7 @@ describe('today timeline', () => {
       );
       const data = await response.json<{
         hourly: WeatherSnapshot[];
+        nextForecast: WeatherSnapshot;
         timeline: ReturnType<typeof buildTimeline>;
       }>();
 
@@ -400,6 +421,7 @@ describe('today timeline', () => {
         '09',
         '12',
       ]);
+      expect(data.nextForecast.forecastAt).toBe('2026-08-20T12:00:00+09:00');
       expect(data.timeline[0].detail).toBe('예상기온 24.0℃ / 맑음');
       expect(data.timeline[1].detail).toBe('예상기온 24.0℃ / 맑음');
       await waitOnExecutionContext(ctx);

@@ -312,7 +312,13 @@ void main() {
       ),
     ));
     expect(find.text('예상기온'), findsOneWidget);
-    expect(find.text('자료 없음'), findsNWidgets(2));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('main-apparent-temperature-row')),
+        matching: find.text('자료 없음'),
+      ),
+      findsNWidgets(2),
+    );
     expect(find.text('0.0℃'), findsNothing);
     expect(find.textContaining('하늘 상태 자료가 없어'), findsOneWidget);
     expect(find.textContaining('맑은 하늘'), findsNothing);

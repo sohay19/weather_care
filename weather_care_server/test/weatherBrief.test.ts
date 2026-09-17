@@ -136,12 +136,22 @@ describe('weather brief policy', () => {
     expect(result.expiresAt).toBe('2026-08-21T07:00:00.000Z');
   });
 
-  it('labels next-day UV relatively, including a year boundary', () => {
+  it('does not select next-day weather, including across a year boundary', () => {
     const sample = { ...snapshot(10, { uvIndex: 7 }), forecastAt: '2027-01-01T01:00:00Z' };
     const result = buildWeatherBriefResult(forecast([sample]),
       { now: new Date('2026-12-31T23:30:00+09:00') });
-    expect(result.slots.eventTime).toBe('내일 오전 10시');
-    expect(result.expiresAt).toBe('2027-01-01T01:00:00.000Z');
+    expect(result.scene).toBe('DAILY_RHYTHM');
+    expect(result.slots).toEqual({});
+    expect(result.expiresAt).toBeUndefined();
+    expect(result.text).not.toMatch(/내일|모레/);
+  });
+
+  it('does not select the day-after-tomorrow weather', () => {
+    const sample = { ...snapshot(10, { uvIndex: 7 }), forecastAt: '2026-08-23T10:00:00+09:00' };
+    const result = buildWeatherBriefResult(forecast([sample]),
+      { now: new Date('2026-08-21T20:00:00+09:00') });
+    expect(result.scene).toBe('DAILY_RHYTHM');
+    expect(result.text).not.toMatch(/내일|모레/);
   });
 
   it('does not let old snow/rain mask a remaining UV action', () => {

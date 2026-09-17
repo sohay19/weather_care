@@ -454,8 +454,6 @@ void main() {
     expect(find.text('Check List'), findsOneWidget);
     expect(find.text('외출 전 준비할 물건을 확인해요'), findsOneWidget);
     expect(find.text('지금은 특별히 챙길 준비물이 없어요'), findsOneWidget);
-    expect(find.text('간단한 타임라인'), findsOneWidget);
-    expect(find.text('표시할 타임라인이 없어요'), findsOneWidget);
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
     expect(find.text('물 한 모금 챙기기'), findsNothing);
     expect(find.text('여유 있게 움직이기'), findsNothing);
@@ -489,6 +487,24 @@ void main() {
     expect(find.byTooltip('날씨 새로고침'), findsNothing);
     expect(tester.widget<Text>(find.text(brief)).maxLines, isNull);
     expect(tester.takeException(), isNull);
+
+    await tester.dragUntilVisible(
+      find.text('간단한 타임라인'),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('간단한 타임라인'), findsOneWidget);
+    expect(find.text('표시할 타임라인이 없어요'), findsOneWidget);
+
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byKey(const ValueKey('main-tab')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    scrollable.position.jumpTo(0);
+    await tester.pumpAndSettle();
 
     await tester.drag(
       find.byKey(const ValueKey('main-tab')),

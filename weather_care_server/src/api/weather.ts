@@ -108,6 +108,8 @@ router.get('/main', async (c) => {
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
       current: forecast.current,
+      nextForecast:
+        nextForecastSnapshot(forecast.hourly, generatedAt) ?? forecast.current,
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
@@ -230,6 +232,8 @@ router.get('/today', async (c) => {
         ...forecast.current,
         activeWarnings: warnings,
       },
+      nextForecast:
+        nextForecastSnapshot(forecast.hourly, generatedAt) ?? forecast.current,
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
@@ -463,6 +467,27 @@ function compactCalendarDate(value: string): string {
 }
 
 export default router;
+
+export function nextForecastSnapshot(
+  hourly: WeatherSnapshot[],
+  now = new Date(),
+): WeatherSnapshot | undefined {
+  const reference = now.getTime();
+  let next: WeatherSnapshot | undefined;
+  let nextTime = Number.POSITIVE_INFINITY;
+  for (const snapshot of hourly) {
+    const forecastTime = Date.parse(snapshot.forecastAt ?? snapshot.observedAt);
+    if (
+      Number.isFinite(forecastTime) &&
+      forecastTime > reference &&
+      forecastTime < nextTime
+    ) {
+      next = snapshot;
+      nextTime = forecastTime;
+    }
+  }
+  return next;
+}
 
 export function buildTimeline(
   hourly: WeatherSnapshot[],

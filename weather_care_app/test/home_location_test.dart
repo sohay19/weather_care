@@ -86,8 +86,7 @@ class _Weather extends WeatherService {
   TodayWeatherResponse? mainPreview;
   ComparisonResponse comparison = const ComparisonResponse.unavailable();
   String? regionName;
-  _Weather()
-      : super(ApiClient(baseUrl: ''));
+  _Weather() : super(ApiClient(baseUrl: ''));
   @override
   Future<TodayWeatherResponse?> fetchMainWeather({
     int nx = 60,
@@ -319,15 +318,17 @@ void main() {
     await start(tester, settle: false, initialIndex: 2);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
-    await tester.drag(
+    await tester.dragUntilVisible(
+      find.text('Check List를 불러오고 있어요'),
       find.byKey(const ValueKey('main-tab')),
-      const Offset(0, -160),
+      const Offset(0, -200),
     );
     await tester.pump();
     expect(find.text('Check List를 불러오고 있어요'), findsOneWidget);
-    await tester.drag(
+    await tester.dragUntilVisible(
+      find.text('시간별 자료를 불러오고 있어요'),
       find.byKey(const ValueKey('main-tab')),
-      const Offset(0, -360),
+      const Offset(0, -200),
     );
     await tester.pump();
     expect(find.text('시간별 자료를 불러오고 있어요'), findsOneWidget);

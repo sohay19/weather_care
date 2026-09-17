@@ -380,6 +380,18 @@ void main() {
       ['Today', 'Detail', 'Main', 'Week', 'Setting'],
     );
     expect(
+      navigation.destinations
+          .whereType<NavigationDestination>()
+          .map((destination) => destination.tooltip),
+      [
+        '오늘 날씨와 시간별 예보',
+        '항목별 근거와 자료',
+        '날씨, Check List, 간단한 타임라인',
+        '이번 주 날씨',
+        '설정',
+      ],
+    );
+    expect(
       find.descendant(
         of: find.byKey(const ValueKey('main-tab')),
         matching: find.byType(Scrollable),
@@ -411,7 +423,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Main shows forecast roles without fallback TODO items',
+  testWidgets('Main shows forecast roles without fallback checklist items',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -663,8 +675,10 @@ void main() {
       const MaterialApp(home: ServerConnectionFailureDialog()),
     );
 
-    expect(find.text('운영 서버에 연결하지 못했어요'), findsOneWidget);
-    expect(find.textContaining('서버 연결을 다시 시도'), findsOneWidget);
+    expect(find.text('운영 서버 날씨 자료를 받지 못했어요'), findsOneWidget);
+    expect(find.textContaining('Check List와 간단한 타임라인'), findsOneWidget);
+    expect(find.textContaining('자료 준비가 잠시 지연'), findsOneWidget);
+    expect(find.textContaining('오늘의 TODO'), findsNothing);
     expect(find.text('단기예보만 보기'), findsNothing);
     expect(find.text('운영 서버 다시 시도'), findsOneWidget);
   });

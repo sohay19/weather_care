@@ -87,7 +87,7 @@ class WeatherDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('상세 날씨')),
+      appBar: AppBar(title: const Text('항목별 근거와 자료')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [

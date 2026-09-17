@@ -41,6 +41,8 @@ void main() {
       onRefreshNotificationPermission: () async => reads++,
     )));
     await reveal(tester, 'settings-save-status');
+    expect(find.text('저장·기기 알림 상태'), findsOneWidget);
+    expect(find.text('데이터·기기 상태'), findsNothing);
     expect(find.textContaining('알림은 이전 설정으로 발송될 수 있어요'), findsOneWidget);
     await reveal(tester, 'settings-save-retry');
     await tester.tap(find.byKey(const ValueKey('settings-save-retry')));

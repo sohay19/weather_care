@@ -14,7 +14,7 @@
 
 | 영역 | 앱 (`weather_care_app`) | 서버 (`weather_care_server`) |
 | --- | --- | --- |
-| 날씨 데이터 | 서버를 우선 호출하고, 서버 장애 시 기상청 단기예보 원시 데이터와 공식 산식 체감온도를 직접 조회 | 기상청 단기예보·생활기상지수 V5와 에어코리아 관측값을 공통 모델로 정규화·병합하고 기상청 계절별 산식으로 체감온도를 계산 |
+| 날씨 데이터 | 운영 서버가 중앙 수집한 날씨 응답만 표시 | 기상청 단기예보·생활기상지수 V5와 에어코리아 관측값을 공통 모델로 정규화·병합하고 기상청 계절별 산식으로 체감온도를 계산 |
 | 날씨 판단 | 서버가 내려준 상태와 설명을 신뢰하고 표시 | `WeatherRuleEngine`에서 강수, 강설, 자외선, 더위, 추위, 대기질 등의 객관적 상태를 판단 |
 | 생활 해석 | LifestyleMessage를 생활 날씨 UI로 표시 | `LifestyleWeatherEngine`에서 RuleFact를 생활 관점의 LifestyleInsight로 변환 |
 | 준비물 추천 | Recommendation을 우선순위대로 표시하고 아이콘·색상·딥링크를 매핑 | `RecommendationEngine`에서 우산, 양산, 겉옷, 마스크, 물, 선크림, 폭설 주의를 생성하고 중복·우선순위·사용자 설정을 적용 |
@@ -39,28 +39,27 @@ flowchart LR
     app --> ui["브리핑 · Check List · 타임라인 · 생활 날씨"]
 ```
 
-## 서버 장애 및 오프라인 동작
+## 서버 자료 지연 및 오프라인 동작
 
 앱 화면에서는 내장 고정 응답을 사용하지 않습니다.
 
-1. 앱이 운영 서버의 Today/Weekly API를 먼저 호출합니다.
-2. 서버 연결에 실패하고 인터넷은 연결되어 있으면 앱이 기상청 단기예보를 직접 조회합니다.
-3. 직접 조회에서는 기온·습도·바람·강수·하늘 상태, 기상청 공식 산식 체감온도와 시간별·일별 예보를 표시합니다.
-4. 추천, 생활 날씨, 준비물, 타임라인처럼 서버 판단이 필요한 항목은 `운영 서버 미연결로 미지원`으로 표시합니다.
-5. 인터넷 연결도 없으면 날씨 화면 전체를 `인터넷 연결 불가로 미지원`으로 표시합니다.
+1. 앱이 운영 서버의 Main/Today/Weekly API를 호출합니다.
+2. 연결 오류나 선택 지역의 중앙 수집 자료 미준비가 발생하면 묶음 요청을 재시도합니다.
+3. 재시도 후에도 자료를 받지 못하면 `운영 서버 날씨 자료를 받지 못했어요` 팝업에서 다시 시도할 수 있습니다.
+4. 앱은 기상청 API를 직접 호출하거나 내장 고정 날씨로 대체하지 않습니다.
 
 홈 상단 데이터 출처 배지는 현재 상태를 다음과 같이 표시합니다.
 
 - `서버 확인 중`: 서버 연결을 시도하는 중
 - `기상청 단기예보`: 운영 서버의 기상청 응답을 사용 중
-- `기상청 직접 조회`: 운영 서버 장애로 앱이 기상청 원시 예보를 사용 중
+- `기상청 단기예보 · 서버 중앙 수집`: 운영 서버가 수집한 날씨를 사용 중
 
 ## 현재 구현 상태
 
 ### 앱
 
 - Final Home 및 Soft Weather UI 구현
-- Today/Weekly API 클라이언트와 기상청 직접 조회 Fallback 구현
+- Main/Today/Weekly API 클라이언트와 운영 서버 재시도 구현
 - Recommendation 표시, 로컬 `챙겼어요` 상태, 상세 화면 이동 구현
 - GPS/MANUAL 및 알림 설정 UI 구현
 - 알림 설정의 기기 영구 저장·서버 동기화와 설치별 추천 적용 구현
@@ -85,16 +84,15 @@ flowchart LR
 
 서버의 공공데이터포털 일반 인증키는 로컬 `.dev.vars` 또는 운영 Worker Secret의 `KMA_SERVICE_KEY`로 주입합니다. 같은 키를 사용하더라도 공공데이터포털에서 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보 세 서비스를 각각 활용신청해야 전체 지표가 제공됩니다.
 현재 위치 강수 알림은 사용자가 GPS 모드를 선택하고 위치 권한을 허용한 경우에만 위·경도를 서버에 전달합니다. 서버는 같은 500m 기준시각의 기상청 관측분석자료와 레이더가 모두 강수를 나타낼 때만 가능성형 알림을 만들며, 이를 위해 Worker Secret `KMA_APIHUB_KEY`와 API허브의 고해상도 격자자료·레이더 활용 권한이 필요합니다.
-앱 직접 조회용 키는 Git 제외 대상 `config/kma.config.json`에 저장하며 앱 시작 시
-불러옵니다. 이 파일은 Debug/Release 바이너리에 포함되어 추출될 수 있으므로 호출량과
-키 교체 정책을 별도로 관리해야 합니다.
+앱의 Git 제외 대상 `config/kma.config.json`에는 운영 서버 주소만 저장합니다.
+기상청 인증키는 서버 Secret으로 관리하며 앱 바이너리에 포함하지 않습니다.
 
 ## 서버 연결
 
-앱은 별도 실행 인자 없이 다음 Cloudflare 운영 서버를 기본으로 사용합니다.
+앱은 별도 실행 인자 없이 Cloudflare Tunnel로 공개한 다음 미니 PC 운영 서버를 기본으로 사용합니다.
 
 ```text
-https://weather-care-server.sy40222.workers.dev
+https://weather-api.codesoha.com
 ```
 
 로컬 Workers 서버를 사용할 때 Android 에뮬레이터에서는 호스트 PC의 `localhost`가
@@ -107,14 +105,13 @@ cd weather_care_app
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-운영 서버 장애 시 앱 직접 조회까지 사용하려면
-`weather_care_app/config/kma.config.json`에 기상청 일반 인증키를 입력합니다. 앱이
-설정 파일을 자산으로 읽으므로 IntelliJ Debug와 Release 빌드에 모두 자동 적용됩니다.
+운영 주소를 자산 설정으로 지정하려면 `weather_care_app/config/kma.config.json`에
+서버 주소만 입력합니다. 앱이 설정 파일을 자산으로 읽으므로 IntelliJ Debug와
+Release 빌드에 모두 자동 적용됩니다.
 
 ```json
 {
-  "SERVER_URL": "https://weather-care-server.sy40222.workers.dev",
-  "KMA_SERVICE_KEY": "발급받은_일반인증키"
+  "SERVER_URL": "https://weather-api.codesoha.com"
 }
 ```
 

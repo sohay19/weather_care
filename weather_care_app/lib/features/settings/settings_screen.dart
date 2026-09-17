@@ -783,7 +783,7 @@ class _NotificationStatusSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SettingsDetailScaffold(
-      title: '데이터·기기 상태',
+      title: '저장·기기 알림 상태',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

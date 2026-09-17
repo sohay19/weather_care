@@ -6784,3 +6784,12 @@
 - Node 런타임 의존성으로 `@hono/node-server`, `better-sqlite3`, `tsx`를 추가했다. Hono는 알려진 보안 수정이 포함된 4.13.8, 직접 사용하는 Wrangler는 4.133.0으로 올렸다. `npm audit --omit=dev`는 취약점 0건이며, 전체 audit의 남은 high 4건은 최신 `@cloudflare/vitest-pool-workers@0.22.0`이 내부 고정한 개발 전용 Miniflare/Wrangler/Sharp 계층으로 강제 downgrade 외 호환 수정이 없어 유지했다.
 - 검증: Worker 46파일·324개 테스트, Node 2파일·6개 테스트, TypeScript `--noEmit`, Wrangler 4.133.0 dry-run을 통과했다. 실제 Node 프로세스에서 `/health` 200, 미수집 Main 503, Core 수동 작업, 11개 SQLite 마이그레이션, 온라인 백업, 스케줄러 기동을 확인했고 스모크용 DB·백업은 삭제했다. `git diff --check`는 줄바꿈 변환 경고 외 오류가 없다.
 - 운영 D1, Worker, Cron, Secret, Cloudflare Tunnel, 미니 PC, 앱 `SERVER_URL`은 변경하거나 배포하지 않았다. 현재 변경은 `master` 작업 트리에 커밋하지 않은 상태이며 기존 브랜치의 다른 변경은 없었다. 실제 이전 다음 단계는 미니 PC의 설치 경로·Node 버전·공개 호스트명을 확인하고 shadow D1 export를 가져와 스케줄러를 끈 채 API 응답을 병행 검증하는 것이다.
+
+## 2026-09-17 운영 서버 연결 진단·메뉴 명칭 정합화
+
+- 현재 기본 주소 `https://weather-api.codesoha.com`의 DNS·TLS와 `/health` 200 응답, 미니 PC의 `weather-care-api`·`weather-care-scheduler`·`cloudflared` 활성 상태를 확인했다. 등록된 격자 `57/124`, `58/125`의 Main/Today/Weekly API도 모두 200을 반환해 현재 앱의 운영 서버 연결은 정상이다.
+- 에뮬레이터에는 신규 패키지 `com.codesoha.weathercare`와 구 패키지 `com.codesoha.weather_care`가 함께 설치돼 있었다. 구 패키지가 사용하는 이전 Worker 주소는 404(Cloudflare 1042)를 반환하고, 신규 패키지는 Tunnel 주소를 사용한다. 설치 앱을 삭제하거나 운영 서비스를 변경하지는 않았다.
+- 미수집 격자 `60/121`은 Main/Today/Weekly에서 503 `WEATHER_CACHE_NOT_READY`를 반환했다. 네트워크 단절이 아니라 중앙 수집 캐시가 아직 없는 상태도 기존 팝업이 모두 서버 미연결로 표현한 것이 원인이므로, 팝업을 `운영 서버 날씨 자료를 받지 못했어요`로 바꾸고 서버 연결 또는 선택 지역 자료 준비 지연을 함께 안내한다.
+- 팝업의 `오늘의 TODO`를 현재 명칭 `Check List`로 교체했다. 하단 탭 툴팁, 설정 상세 제목, 사용 중인 문서와 과거 점검 기록을 전수 검색해 `오늘의 TODO`, `단기예보만 보기`, `기준 지역`, `데이터·기기 상태` 등 현재 화면처럼 읽히는 이전 명칭을 정리하고 회귀 검증을 추가했다.
+- README와 앱 탭 현황 문서를 현재의 서버 중앙 수집 전용 흐름과 Tunnel 주소에 맞췄다. 운영 서버·앱 배포 및 원격 데이터 변경은 수행하지 않았다.
+- 검증: `flutter analyze` 이슈 없음, Flutter 전체 399개 테스트 통과, `git diff --check` 공백 오류 없음.

@@ -50,7 +50,7 @@ void main() {
     });
   }
 
-  testWidgets('구버전 서버·기상청 직접 조회처럼 만료 정보가 없으면 기존 문구를 유지한다', (tester) async {
+  testWidgets('만료 정보가 없는 이전 응답은 기존 문구를 유지한다', (tester) async {
     await tester.pumpWidget(subject(expiry: null));
     now = now.add(const Duration(days: 1));
     await tester.pump(const Duration(days: 1));

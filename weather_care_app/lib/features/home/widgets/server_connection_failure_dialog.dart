@@ -18,12 +18,11 @@ class ServerConnectionFailureDialog extends StatelessWidget {
           Icons.cloud_off_outlined,
           color: WeatherCareTheme.primaryDeep,
         ),
-        title: const Text('운영 서버에 연결하지 못했어요'),
+        title: const Text('운영 서버 날씨 자료를 받지 못했어요'),
         content: const Text(
-          '준비물 추천과 오늘의 TODO는 운영 서버에 연결해야 정확하게 '
-          '제공할 수 있어요.\n\n이 앱은 기상청 API를 직접 호출하지 '
-          '않으며, 운영 서버가 준비한 자료만 사용해요. '
-          '잠시 후 서버 연결을 다시 시도해 주세요.',
+          'Check List와 간단한 타임라인은 운영 서버가 준비한 날씨 '
+          '자료가 있어야 제공할 수 있어요.\n\n서버 연결 또는 선택 지역의 '
+          '자료 준비가 잠시 지연될 수 있어요. 잠시 후 다시 시도해 주세요.',
         ),
         actions: [
           FilledButton.icon(

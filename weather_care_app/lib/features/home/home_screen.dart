@@ -872,7 +872,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           },
           destinations: const [
             NavigationDestination(
-              tooltip: 'Check List, 간단한 타임라인',
+              tooltip: '오늘 날씨와 시간별 예보',
               icon: Icon(
                 Icons.work_outline_rounded,
                 color: WeatherCareTheme.textSecondary,
@@ -884,7 +884,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Today',
             ),
             NavigationDestination(
-              tooltip: '상세 날씨',
+              tooltip: '항목별 근거와 자료',
               icon: Icon(
                 Icons.query_stats_outlined,
                 color: WeatherCareTheme.textSecondary,
@@ -896,7 +896,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Detail',
             ),
             NavigationDestination(
-              tooltip: '메인',
+              tooltip: '날씨, Check List, 간단한 타임라인',
               icon: Icon(
                 Icons.home_outlined,
                 color: WeatherCareTheme.textSecondary,
@@ -908,7 +908,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Main',
             ),
             NavigationDestination(
-              tooltip: '날짜별 날씨',
+              tooltip: '이번 주 날씨',
               icon: Icon(
                 Icons.calendar_month_outlined,
                 color: WeatherCareTheme.textSecondary,

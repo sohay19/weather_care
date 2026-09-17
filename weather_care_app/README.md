@@ -23,10 +23,10 @@ flutter run
 
 ## 환경 변수
 
-별도 실행 인자 없이 Cloudflare 운영 서버를 기본으로 사용합니다.
+별도 실행 인자 없이 Cloudflare Tunnel로 공개한 미니 PC 운영 서버를 기본으로 사용합니다.
 
 ```text
-https://weather-care-server.sy40222.workers.dev
+https://weather-api.codesoha.com
 ```
 
 로컬 서버나 다른 환경을 사용할 때만 `--dart-define`으로 덮어쓸 수 있습니다.
@@ -39,7 +39,7 @@ flutter run --dart-define=SERVER_URL=http://localhost:8787
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-별도 값을 지정하지 않으면 모든 플랫폼에서 위 Cloudflare 운영 서버를 사용합니다.
+별도 값을 지정하지 않으면 모든 플랫폼에서 위 운영 서버를 사용합니다.
 앱은 최초 실행 시 기기별 설치 ID를 생성해 보관하고, 알림 권한이 허용되면 FCM
 토큰을 설치 위치와 함께 서버에 등록합니다. Firebase가 토큰을 갱신할 때도 같은
 설치 ID로 서버 등록값을 자동 갱신합니다.
@@ -53,7 +53,7 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 
 ```json
 {
-  "SERVER_URL": "https://weather-care-server.sy40222.workers.dev"
+  "SERVER_URL": "https://weather-api.codesoha.com"
 }
 ```
 

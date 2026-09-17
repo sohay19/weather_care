@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/services.dart';
 
-const _defaultServerUrl = 'https://weather-care-server.sy40222.workers.dev';
+const _defaultServerUrl = 'https://weather-api.codesoha.com';
 const _configAssetPath = 'config/kma.config.json';
 
 class AppConfig {

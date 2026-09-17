@@ -7,6 +7,11 @@ import 'package:weather_care/services/current_location_service.dart';
 import 'package:weather_care/services/weather_service.dart';
 
 void main() {
+  test('별도 설정이 없으면 미니 PC 운영 서버를 사용한다', () async {
+    final config = await AppConfig.load(bundle: _JsonAssetBundle({}));
+    expect(config.serverUrl, 'https://weather-api.codesoha.com');
+  });
+
   test('앱 설정에서는 운영 서버 주소만 로드한다', () async {
     final config = await AppConfig.load(
       bundle: _JsonAssetBundle({

@@ -63,7 +63,7 @@ export class KmaMidTermProvider {
     }
 
     let lastError: unknown;
-    for (const issueTime of latestMidTermMorningIssueTimes(this.now(), 3)) {
+    for (const issueTime of latestMidTermIssueTimes(this.now(), 3)) {
       try {
         const [temperature, land] = await Promise.all([
           this.fetchItem('getMidTa', region.temperatureRegionId, issueTime),
@@ -142,17 +142,23 @@ export class KmaMidTermProvider {
   }
 }
 
-export function latestMidTermMorningIssueTimes(now: Date, limit: number): string[] {
+export function latestMidTermIssueTimes(now: Date, limit: number): string[] {
   const effectiveKst = new Date(now.getTime() + KST_OFFSET_MS - PUBLICATION_DELAY_MS);
-  const latest = Date.UTC(
-    effectiveKst.getUTCFullYear(),
-    effectiveKst.getUTCMonth(),
-    effectiveKst.getUTCDate() - (effectiveKst.getUTCHours() < 6 ? 1 : 0),
-    6,
-  );
-  return Array.from({ length: limit }, (_, index) =>
-    compactIssueTime(new Date(latest - index * 86_400_000)),
-  );
+  const candidates: string[] = [];
+  for (let dayOffset = 0; candidates.length < limit; dayOffset += 1) {
+    const date = new Date(Date.UTC(
+      effectiveKst.getUTCFullYear(),
+      effectiveKst.getUTCMonth(),
+      effectiveKst.getUTCDate() - dayOffset,
+    ));
+    for (const hour of [18, 6]) {
+      if (dayOffset === 0 && hour > effectiveKst.getUTCHours()) continue;
+      date.setUTCHours(hour, 0, 0, 0);
+      candidates.push(compactIssueTime(date));
+      if (candidates.length === limit) break;
+    }
+  }
+  return candidates;
 }
 
 export function buildMidTermDailyForecast(
@@ -168,7 +174,7 @@ export function buildMidTermDailyForecast(
     Number(issueTime.slice(4, 6)) - 1,
     Number(issueTime.slice(6, 8)),
   ));
-  const issuedAt = `${issueTime.slice(0, 4)}-${issueTime.slice(4, 6)}-${issueTime.slice(6, 8)}T06:00:00+09:00`;
+  const issuedAt = `${issueTime.slice(0, 4)}-${issueTime.slice(4, 6)}-${issueTime.slice(6, 8)}T${issueTime.slice(8, 10)}:${issueTime.slice(10, 12)}:00+09:00`;
 
   return Array.from({ length: 7 }, (_, index) => index + 4).flatMap((offset) => {
     const minTemperature = numeric(temperature[`taMin${offset}`]);

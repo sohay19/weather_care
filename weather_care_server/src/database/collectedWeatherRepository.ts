@@ -22,7 +22,14 @@ export const collectedCacheKey = {
     `COLLECTED_ROAD_ICE_${locationCacheKey(latitude, longitude)}`,
   roadControl: (latitude: number, longitude: number) =>
     `COLLECTED_ROAD_CONTROL_${locationCacheKey(latitude, longitude)}`,
+  sourceVersion: (source: string) => `COLLECTED_SOURCE_VERSION_${source}`,
+  hourlyObservation: (version: string) =>
+    `COLLECTED_HOURLY_OBSERVATION_${version}`,
 };
+
+export interface CollectedSourceVersion {
+  version: string;
+}
 
 export function locationCacheKey(latitude: number, longitude: number): string {
   const normalized = `${latitude.toFixed(5)}:${longitude.toFixed(5)}`;
@@ -95,6 +102,32 @@ export async function getCollectedCache<T>(
   } catch {
     return null;
   }
+}
+
+export async function collectedSourceVersionIsCurrent(
+  db: D1Database,
+  source: string,
+  version: string,
+): Promise<boolean> {
+  const record = await getCollectedCache<CollectedSourceVersion>(
+    db,
+    collectedCacheKey.sourceVersion(source),
+  );
+  return record?.value.version === version;
+}
+
+export async function saveCollectedSourceVersion(
+  db: D1Database,
+  source: string,
+  version: string,
+  updatedAt: Date,
+): Promise<void> {
+  await saveCollectedCache(db, {
+    key: collectedCacheKey.sourceVersion(source),
+    type: 'COLLECTED_SOURCE_VERSION',
+    value: { version } satisfies CollectedSourceVersion,
+    updatedAt,
+  });
 }
 
 export function cacheRecordIsFresh(

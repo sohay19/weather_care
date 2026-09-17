@@ -4,14 +4,22 @@ import type {
   RoadIceRisk,
   ServerEnv,
 } from '../types';
-import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
+import {
+  KmaWeatherProvider,
+  latestBaseDateTimes,
+} from '../providers/weather/kmaWeatherProvider';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import {
   enrichForecastWithEnvironmentalData,
   loadEnvironmentalData,
   type EnvironmentalDataBundle,
 } from '../providers/environmental/environmentalDataService';
-import { KmaUltraShortObservationProvider, type UltraShortObservation } from '../providers/weather/kmaUltraShortObservationProvider';
+import {
+  KmaUltraShortObservationProvider,
+  latestUltraShortPublishedHour,
+  ultraShortKoreanIso,
+  type UltraShortObservation,
+} from '../providers/weather/kmaUltraShortObservationProvider';
 import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import {
   KmaWarningProvider,
@@ -23,10 +31,18 @@ import {
   ROAD_ICE_ROAD_NUMBERS,
 } from '../providers/road/kmaRoadIceProvider';
 import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
-import { KmaHourlyObservationProvider } from '../providers/weather/kmaHourlyObservationProvider';
+import {
+  buildHourlyComparisons,
+  KmaHourlyObservationProvider,
+  latestCompletedKoreanHour,
+  type KmaHourlyObservationSnapshot,
+} from '../providers/weather/kmaHourlyObservationProvider';
 import { KmaDailyObservationProvider } from '../providers/weather/kmaDailyObservationProvider';
-import { KmaMidTermProvider } from '../providers/weather/kmaMidTermProvider';
-import { KmaUvProvider } from '../providers/uv/kmaUvProvider';
+import {
+  KmaMidTermProvider,
+  latestMidTermIssueTimes,
+} from '../providers/weather/kmaMidTermProvider';
+import { KmaUvProvider, latestUvPublicationTimes } from '../providers/uv/kmaUvProvider';
 import { AirKoreaForecastProvider } from '../providers/air/airKoreaForecastProvider';
 import { resolveKmaMidTermRegionIds } from '../regions/kmaMidTermRegionCatalog';
 import { uvAreaNoForGrid } from '../regions/kmaUvAreaGridCatalog';
@@ -35,19 +51,28 @@ import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { mapWithConcurrency } from '../utils/concurrencyLimiter';
 import {
   cacheRecordIsFresh,
+  collectedSourceVersionIsCurrent,
   collectedCacheKey,
   getCollectedCache,
   locationCacheKey,
   saveCollectedCache,
+  saveCollectedSourceVersion,
   type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
 import { reserveApiHubBudget } from '../database/apiUsageRepository';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
 import {
   currentKoreanCalendarWeek,
-  koreanCalendarDate,
 } from '../database/weeklyForecastRepository';
 import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
+import {
+  compactIssueToIso,
+  koreanObservationVersion,
+  latestAirKoreaForecastIssue,
+  latestRadarProductVersion,
+  pollingWindowVersion,
+  previousKoreanDate,
+} from './sourcePublicationSchedule';
 import type {
   CollectedRegionBundle,
   CollectedWarningBundle,
@@ -55,17 +80,15 @@ import type {
   CollectionTarget,
 } from './collectionTypes';
 
-const FORECAST_MAX_AGE_MS = 2 * 60 * 60 * 1000 + 40 * 60 * 1000;
-const ENVIRONMENTAL_MAX_AGE_MS = 30 * 60 * 1000;
+const ENVIRONMENTAL_MAX_AGE_MS = 60 * 60 * 1000;
 const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
-const WEEKLY_MAX_AGE_MS = 6 * 60 * 60 * 1000;
-const ULTRA_SHORT_MAX_AGE_MS = 70 * 60 * 1000;
 const RADAR_BYTES = 13_281_414;
-const ANALYSIS_VALIDATION_LIMIT = 69;
+const ANALYSIS_VALIDATION_LIMIT = 40;
 
 export interface WeatherCollectionOptions {
   now?: Date;
   collectCore?: boolean;
+  collectRadar?: boolean;
   collectRoadIce?: boolean;
 }
 
@@ -83,7 +106,7 @@ export async function runWeatherCollectionJob(
   if (options.collectCore !== false) {
     await collectRegionForecasts(env, regions, now);
     await collectWarnings(env, regions, now);
-    await collectCurrentPrecipitation(env, targets, locations, now);
+    await collectUltraShortObservations(env, regions, now);
     await collectRoadControls(env, locations, now);
     if (koreanMinute(now) === 0) {
       await collectYesterdayComparisons(env, targets, now);
@@ -91,6 +114,9 @@ export async function runWeatherCollectionJob(
         await collectDailyObservations(env, regions, now);
       }
     }
+  }
+  if (options.collectRadar === true) {
+    await collectCurrentPrecipitation(env, targets, locations, now);
   }
   if (options.collectRoadIce === true) {
     await collectRoadIce(env, locations, now);
@@ -127,9 +153,13 @@ async function collectRegionForecasts(
         env.DB,
         collectedCacheKey.forecast(nx, ny),
       );
-      if (!cacheRecordIsFresh(forecastRecord, FORECAST_MAX_AGE_MS, now)) {
+      const latestForecastIssue = latestBaseDateTimes(now, 1)[0];
+      if (!forecastRecord ||
+          forecastRecord.value.baseDate !== latestForecastIssue?.baseDate ||
+          forecastRecord.value.baseTime !== latestForecastIssue?.baseTime) {
         const forecast = await new KmaWeatherProvider({
           serviceKey: env.KMA_SERVICE_KEY,
+          now: () => now,
         }).getForecastByRegion(nx, ny);
         await saveCollectedCache(env.DB, {
           key: collectedCacheKey.forecast(nx, ny),
@@ -151,7 +181,7 @@ async function collectRegionForecasts(
         const environmental = await loadEnvironmentalData(
           env,
           regionMetadataForGrid(nx, ny),
-          { nx, ny, coordinates: kmaGridCoordinates(nx, ny), providerTimeoutMs: 7_500 },
+          { now, nx, ny, coordinates: kmaGridCoordinates(nx, ny), providerTimeoutMs: 7_500 },
         );
         await saveCollectedCache(env.DB, {
           key: collectedCacheKey.environmental(nx, ny),
@@ -215,21 +245,67 @@ async function collectWeekly(
   const cached = await getCollectedCache<CollectedWeeklyBundle>(env.DB, key);
   const sameForecastIssue = cached?.value.forecast?.baseDate === forecast?.baseDate &&
     cached?.value.forecast?.baseTime === forecast?.baseTime;
-  if (sameForecastIssue && cacheRecordIsFresh(cached, WEEKLY_MAX_AGE_MS, now)) return;
   const midRegion = resolveKmaMidTermRegionIds(undefined, undefined, nx, ny);
   const uvAreaNo = uvAreaNoForGrid(nx, ny);
-  const [midTermDays, uv, airQuality] = await Promise.all([
-    midRegion
-      ? new KmaMidTermProvider({ serviceKey: env.KMA_SERVICE_KEY })
-          .getForecast(midRegion).catch(() => [])
-      : Promise.resolve([]),
-    uvAreaNo
-      ? new KmaUvProvider({ serviceKey: env.KMA_SERVICE_KEY })
-          .getForecast(uvAreaNo).catch(() => undefined)
-      : Promise.resolve(undefined),
-    new AirKoreaForecastProvider({ serviceKey: env.KMA_SERVICE_KEY })
-      .getForecast(undefined, nx, ny).catch(() => []),
-  ]);
+  const midTermIssue = latestMidTermIssueTimes(now, 1)[0];
+  const uvIssue = latestUvPublicationTimes(now, 1)[0];
+  const expectedMidTermIssue = compactIssueToIso(midTermIssue);
+  const expectedUvIssue = compactIssueToIso(uvIssue);
+  const airQualityIssue = latestAirKoreaForecastIssue(now);
+  const needsMidTerm = cached?.value.midTermIssue !== expectedMidTermIssue;
+  const needsUv = cached?.value.uvIssue !== expectedUvIssue;
+  const needsAirQuality = cached?.value.airQualityIssue !== airQualityIssue;
+  if (sameForecastIssue && !needsMidTerm && !needsUv && !needsAirQuality) return;
+
+  let midTermDays = cached?.value.midTermDays ?? [];
+  let resolvedMidTermIssue = cached?.value.midTermIssue;
+  if (needsMidTerm) {
+    if (!midRegion) {
+      resolvedMidTermIssue = expectedMidTermIssue;
+    } else {
+      try {
+        midTermDays = await new KmaMidTermProvider({
+          serviceKey: env.KMA_SERVICE_KEY,
+          now: () => now,
+        }).getForecast(midRegion);
+        resolvedMidTermIssue = midTermDays[0]?.issuedAt;
+      } catch (error) {
+        logCollectionFailure('mid_term', error, { nx, ny });
+      }
+    }
+  }
+
+  let uv = cached?.value.uv;
+  let resolvedUvIssue = cached?.value.uvIssue;
+  if (needsUv) {
+    if (!uvAreaNo) {
+      resolvedUvIssue = expectedUvIssue;
+    } else {
+      try {
+        uv = await new KmaUvProvider({
+          serviceKey: env.KMA_SERVICE_KEY,
+          now: () => now,
+        }).getForecast(uvAreaNo);
+        resolvedUvIssue = uv.issuedAt;
+      } catch (error) {
+        logCollectionFailure('weekly_uv', error, { nx, ny });
+      }
+    }
+  }
+
+  let airQuality = cached?.value.airQuality ?? [];
+  let resolvedAirQualityIssue = cached?.value.airQualityIssue;
+  if (needsAirQuality) {
+    try {
+      airQuality = await new AirKoreaForecastProvider({
+        serviceKey: env.KMA_SERVICE_KEY,
+        now: () => now,
+      }).getForecast(undefined, nx, ny);
+      resolvedAirQualityIssue = airQualityIssue;
+    } catch (error) {
+      logCollectionFailure('air_quality_forecast', error, { nx, ny });
+    }
+  }
   await saveCollectedCache(env.DB, {
     key,
     type: 'COLLECTED_WEEKLY',
@@ -239,6 +315,9 @@ async function collectWeekly(
       observedDays: cached?.value.observedDays ?? [],
       uv,
       airQuality,
+      midTermIssue: resolvedMidTermIssue,
+      uvIssue: resolvedUvIssue,
+      airQualityIssue: resolvedAirQualityIssue,
       collectedAt: now.toISOString(),
     } satisfies CollectedWeeklyBundle,
     nx,
@@ -253,6 +332,18 @@ async function collectWarnings(
   now: Date,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
+  const sourceVersion = pollingWindowVersion(now, 30);
+  if (await collectedSourceVersionIsCurrent(
+    env.DB,
+    'WARNING_30_MINUTES',
+    sourceVersion,
+  )) return;
+  await saveCollectedSourceVersion(
+    env.DB,
+    'WARNING_30_MINUTES',
+    sourceVersion,
+    now,
+  );
   const metadata: Array<{
     region: CollectionTarget;
     value: { name: string; warningRegionIds: string[] };
@@ -355,6 +446,40 @@ async function collectWarnings(
   }
 }
 
+async function collectUltraShortObservations(
+  env: ServerEnv,
+  regions: CollectionTarget[],
+  now: Date,
+): Promise<void> {
+  const expectedObservedAt = ultraShortKoreanIso(
+    latestUltraShortPublishedHour(now),
+  );
+  await mapWithConcurrency(regions, 2, async (region) => {
+    const key = collectedCacheKey.ultraShortObservation(region.nx, region.ny);
+    const record = await getCollectedCache<UltraShortObservation>(env.DB, key);
+    if (record?.value.observedAt === expectedObservedAt) return;
+    try {
+      const value = await new KmaUltraShortObservationProvider({
+        serviceKey: env.KMA_SERVICE_KEY,
+        now: () => now,
+      }).getCurrent(region.nx, region.ny);
+      await saveCollectedCache(env.DB, {
+        key,
+        type: 'COLLECTED_ULTRA_SHORT',
+        value,
+        nx: region.nx,
+        ny: region.ny,
+        updatedAt: now,
+      });
+    } catch (error) {
+      logCollectionFailure('ultra_short', error, {
+        nx: region.nx,
+        ny: region.ny,
+      });
+    }
+  });
+}
+
 async function collectCurrentPrecipitation(
   env: ServerEnv,
   targets: CollectionTarget[],
@@ -365,29 +490,7 @@ async function collectCurrentPrecipitation(
   const ultraByGrid = new Map<string, UltraShortObservation>();
   for (const region of distinctRegions(targets)) {
     const key = collectedCacheKey.ultraShortObservation(region.nx, region.ny);
-    let record = await getCollectedCache<UltraShortObservation>(env.DB, key);
-    if (!cacheRecordIsFresh(record, ULTRA_SHORT_MAX_AGE_MS, now)) {
-      try {
-        const value = await new KmaUltraShortObservationProvider({
-          serviceKey: env.KMA_SERVICE_KEY,
-          now: () => now,
-        }).getCurrent(region.nx, region.ny);
-        await saveCollectedCache(env.DB, {
-          key,
-          type: 'COLLECTED_ULTRA_SHORT',
-          value,
-          nx: region.nx,
-          ny: region.ny,
-          updatedAt: now,
-        });
-        record = { value, status: 'AVAILABLE', updatedAt: now.toISOString() };
-      } catch (error) {
-        logCollectionFailure('ultra_short', error, {
-          nx: region.nx,
-          ny: region.ny,
-        });
-      }
-    }
+    const record = await getCollectedCache<UltraShortObservation>(env.DB, key);
     if (record) ultraByGrid.set(`${region.nx}_${region.ny}`, record.value);
   }
 
@@ -405,6 +508,18 @@ async function collectCurrentPrecipitation(
       referenceObservedAt: reference.observedAt }] : [];
   });
   if (inputs.length === 0) return;
+  const sourceVersion = latestRadarProductVersion(now);
+  if (await collectedSourceVersionIsCurrent(
+    env.DB,
+    'RADAR_15_MINUTES',
+    sourceVersion,
+  )) return;
+  await saveCollectedSourceVersion(
+    env.DB,
+    'RADAR_15_MINUTES',
+    sourceVersion,
+    now,
+  );
   const reserved = await reserveApiHubBudget(
     env.DB,
     'RADAR_AND_POINT_VALIDATION',
@@ -437,6 +552,18 @@ async function collectRoadIce(
   now: Date,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY || locations.length === 0 || !isRoadIceSeason(now)) return;
+  const sourceVersion = pollingWindowVersion(now, 30);
+  if (await collectedSourceVersionIsCurrent(
+    env.DB,
+    'ROAD_ICE_30_MINUTES',
+    sourceVersion,
+  )) return;
+  await saveCollectedSourceVersion(
+    env.DB,
+    'ROAD_ICE_30_MINUTES',
+    sourceVersion,
+    now,
+  );
   if (!await reserveApiHubBudget(
     env.DB,
     'ROAD_ICE',
@@ -470,6 +597,18 @@ async function collectRoadControls(
 ): Promise<void> {
   const provider = itsRoadControlProviderFromEnvironment(env);
   if (!provider || locations.length === 0) return;
+  const sourceVersion = pollingWindowVersion(now, 30);
+  if (await collectedSourceVersionIsCurrent(
+    env.DB,
+    'ROAD_CONTROL_30_MINUTES',
+    sourceVersion,
+  )) return;
+  await saveCollectedSourceVersion(
+    env.DB,
+    'ROAD_CONTROL_30_MINUTES',
+    sourceVersion,
+    now,
+  );
   await mapWithConcurrency(locations, 2, async (location) => {
     try {
       const value = await provider.getNearestActiveControl(
@@ -498,12 +637,53 @@ async function collectYesterdayComparisons(
     const coordinates = kmaGridCoordinates(target.nx, target.ny);
     return coordinates ? [{ target, coordinates }] : [];
   });
-  if (regions.length === 0 || !await reserveApiHubBudget(env.DB, 'ASOS_HOURLY', 3, 384_000, now)) return;
+  if (regions.length === 0) return;
+  const currentHour = latestCompletedKoreanHour(now);
+  const comparisonHour = new Date(currentHour.getTime() - 24 * 60 * 60 * 1000);
+  const currentVersion = koreanObservationVersion(currentHour);
+  const comparisonVersion = koreanObservationVersion(comparisonHour);
+  let current = await getCollectedCache<KmaHourlyObservationSnapshot>(
+    env.DB,
+    collectedCacheKey.hourlyObservation(currentVersion),
+  );
+  let comparison = await getCollectedCache<KmaHourlyObservationSnapshot>(
+    env.DB,
+    collectedCacheKey.hourlyObservation(comparisonVersion),
+  );
+  const missing = [
+    ...(current ? [] : [{ version: currentVersion, hour: currentHour }]),
+    ...(comparison ? [] : [{ version: comparisonVersion, hour: comparisonHour }]),
+  ];
+  if (missing.length > 0 && !await reserveApiHubBudget(
+    env.DB,
+    'ASOS_HOURLY',
+    missing.length * 3,
+    missing.length * 384_000,
+    now,
+  )) return;
   try {
-    const values = await new KmaHourlyObservationProvider({
+    const provider = new KmaHourlyObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY,
       now: () => now,
-    }).getYesterdayComparisons(regions.map(({ coordinates }) => coordinates));
+    });
+    for (const target of missing) {
+      const value = await provider.getObservationsAt(target.hour);
+      await saveCollectedCache(env.DB, {
+        key: collectedCacheKey.hourlyObservation(target.version),
+        type: 'COLLECTED_HOURLY_OBSERVATION',
+        value,
+        updatedAt: now,
+      });
+      const record = { value, status: 'AVAILABLE' as const, updatedAt: now.toISOString() };
+      if (target.version === currentVersion) current = record;
+      if (target.version === comparisonVersion) comparison = record;
+    }
+    if (!current || !comparison) return;
+    const values = buildHourlyComparisons(
+      current.value,
+      comparison.value,
+      regions.map(({ coordinates }) => coordinates),
+    );
     await Promise.all(regions.flatMap(({ target }, index) => {
       const value = values[index];
       if (!value) return [];
@@ -528,13 +708,34 @@ async function collectDailyObservations(
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
   const calendarWeek = currentKoreanCalendarWeek(now);
-  const today = koreanCalendarDate(now);
-  const endDate = calendarWeek.dates.filter((date) => date < today).at(-1);
-  if (!endDate) return;
+  const endDate = previousKoreanDate(now);
+  if (endDate < calendarWeek.startDate) return;
+  if (await collectedSourceVersionIsCurrent(
+    env.DB,
+    'AWS_DAILY',
+    endDate,
+  )) return;
   const regions = distinctRegions(targets).flatMap((target) => {
     const coordinates = kmaGridCoordinates(target.nx, target.ny);
     return coordinates ? [{ target, coordinates }] : [];
   });
+  const cachedByRegion = new Map<string, CollectedCacheRecord<CollectedWeeklyBundle> | null>();
+  let startDate = endDate;
+  for (const { target } of regions) {
+    const regionKey = `${target.nx}_${target.ny}`;
+    const cached = await getCollectedCache<CollectedWeeklyBundle>(
+      env.DB,
+      collectedCacheKey.weekly(target.nx, target.ny),
+    );
+    cachedByRegion.set(regionKey, cached);
+    const observedDates = new Set(
+      cached?.value.observedDays.map((day) => compactCalendarDate(day.date)) ?? [],
+    );
+    const earliestMissing = calendarWeek.dates.find(
+      (date) => date <= endDate && !observedDates.has(date),
+    );
+    if (earliestMissing && earliestMissing < startDate) startDate = earliestMissing;
+  }
   if (regions.length === 0 || !await reserveApiHubBudget(
     env.DB,
     'AWS_DAILY',
@@ -542,35 +743,48 @@ async function collectDailyObservations(
     2_048_000,
     now,
   )) return;
+  await saveCollectedSourceVersion(env.DB, 'AWS_DAILY', endDate, now);
   try {
     const values = await new KmaDailyObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY,
     }).getDailyByLocations(
       regions.map(({ coordinates }) => coordinates),
-      calendarWeek.startDate,
+      startDate,
       endDate,
     );
     await Promise.all(regions.flatMap(({ target }, index) => {
       const key = collectedCacheKey.weekly(target.nx, target.ny);
-      return [getCollectedCache<CollectedWeeklyBundle>(env.DB, key).then((cached) => {
-        if (!cached) return;
-        return saveCollectedCache(env.DB, {
-          key,
-          type: 'COLLECTED_WEEKLY',
-          value: {
-            ...cached.value,
-            observedDays: values[index] ?? [],
-            collectedAt: now.toISOString(),
-          },
-          nx: target.nx,
-          ny: target.ny,
-          updatedAt: now,
-        });
+      const cached = cachedByRegion.get(`${target.nx}_${target.ny}`);
+      if (!cached) return [];
+      const incoming = values[index] ?? [];
+      const incomingDates = new Set(incoming.map((day) => day.date));
+      return [saveCollectedCache(env.DB, {
+        key,
+        type: 'COLLECTED_WEEKLY',
+        value: {
+          ...cached.value,
+          observedDays: [
+            ...cached.value.observedDays.filter(
+              (day) => !incomingDates.has(day.date),
+            ),
+            ...incoming,
+          ].sort((left, right) => left.date.localeCompare(right.date)),
+          collectedAt: now.toISOString(),
+        },
+        nx: target.nx,
+        ny: target.ny,
+        updatedAt: now,
       })];
     }));
   } catch (error) {
     logCollectionFailure('daily_observation', error);
   }
+}
+
+function compactCalendarDate(value: string): string {
+  return /^\d{8}$/.test(value)
+    ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+    : value;
 }
 
 function distinctRegions(targets: CollectionTarget[]): CollectionTarget[] {

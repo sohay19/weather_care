@@ -4,6 +4,9 @@ import { clearExpiredEnrollmentData } from '../security/installationAccess';
 import { runDataRetentionJob } from '../database/dataRetention';
 import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
 
+export const RADAR_COLLECTION_CRON = '2-59/15 * * * *';
+export const ROAD_ICE_COLLECTION_CRON = '7-59/30 * * * *';
+
 export async function runForecastRefreshJob(env: ServerEnv): Promise<void> {
   if (!env.DB) return;
   await runWeatherCollectionJob(env, { collectCore: true });
@@ -15,7 +18,7 @@ export async function runScheduledJobs(
   scheduledTime?: number,
 ): Promise<void> {
   const now = scheduledTime === undefined ? new Date() : new Date(scheduledTime);
-  if (cron === '7-59/15 * * * *') {
+  if (cron === ROAD_ICE_COLLECTION_CRON) {
     await runWeatherCollectionJob(env, {
       now,
       collectCore: false,
@@ -23,9 +26,18 @@ export async function runScheduledJobs(
     });
     return;
   }
+  if (cron === RADAR_COLLECTION_CRON) {
+    await runWeatherCollectionJob(env, {
+      now,
+      collectCore: false,
+      collectRadar: true,
+    });
+    return;
+  }
   await runWeatherCollectionJob(env, {
     now,
     collectCore: true,
+    collectRadar: false,
     collectRoadIce: false,
   });
   await runRecommendationNotificationJobFromCron(env, scheduledTime);

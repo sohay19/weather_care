@@ -46,7 +46,7 @@ interface ProviderOptions {
   now?: () => Date;
 }
 
-interface StationHour {
+export interface KmaHourlyStationObservation {
   observedAt: string;
   stationId: string;
   longitude: number;
@@ -54,6 +54,11 @@ interface StationHour {
   temperature?: number;
   humidity?: number;
   windSpeed?: number;
+}
+
+export interface KmaHourlyObservationSnapshot {
+  observedAt: string;
+  stations: KmaHourlyStationObservation[];
 }
 
 export class KmaHourlyObservationProviderError extends Error {
@@ -120,7 +125,7 @@ export class KmaHourlyObservationProvider {
       throw temperatureResult.reason;
     }
 
-    const stationHours = new Map<string, StationHour>();
+    const stationHours = new Map<string, KmaHourlyStationObservation>();
     for (const result of metrics) {
       if (result.status !== 'fulfilled') continue;
       for (const row of result.value.rows) {
@@ -185,6 +190,56 @@ export class KmaHourlyObservationProvider {
         },
       };
     });
+  }
+
+  async getObservationsAt(
+    koreanHour: Date,
+  ): Promise<KmaHourlyObservationSnapshot> {
+    if (!this.serviceKey) {
+      throw new KmaHourlyObservationProviderError(
+        'KMA APIHub service key is not configured',
+      );
+    }
+    const target = formatKmaHour(koreanHour);
+    const metrics = await Promise.all(
+      (['TA', 'HM', 'WS'] as const).map(async (metric) => ({
+        metric,
+        rows: await this.fetchMetric(metric, target, target),
+      })),
+    );
+
+    const stations = new Map<string, KmaHourlyStationObservation>();
+    for (const result of metrics) {
+      for (const row of result.rows) {
+        if (row.observedAt !== target) continue;
+        const station = stations.get(row.stationId) ?? {
+          observedAt: row.observedAt,
+          stationId: row.stationId,
+          longitude: row.longitude,
+          latitude: row.latitude,
+        };
+        if (result.metric === 'TA' && validTemperature(row.value)) {
+          station.temperature = row.value;
+        } else if (result.metric === 'HM' && validHumidity(row.value)) {
+          station.humidity = row.value;
+        } else if (result.metric === 'WS' && validWindSpeed(row.value)) {
+          station.windSpeed = row.value;
+        }
+        stations.set(row.stationId, station);
+      }
+    }
+    const values = [...stations.values()].filter(
+      (station) => station.temperature !== undefined,
+    );
+    if (values.length === 0) {
+      throw new KmaHourlyObservationProviderError(
+        'KMA hourly observation response has no temperature stations',
+      );
+    }
+    return {
+      observedAt: toKoreanIso(target),
+      stations: values,
+    };
   }
 
   private async fetchMetric(
@@ -276,7 +331,7 @@ function toKoreanIso(value: string): string {
 }
 
 function apparentTemperature(
-  station: StationHour,
+  station: KmaHourlyStationObservation,
   observedAt: string,
 ): number | undefined {
   const month = Number(observedAt.slice(5, 7));
@@ -296,6 +351,56 @@ function apparentTemperature(
     station.windSpeed,
     observedAt,
   );
+}
+
+export function buildHourlyComparisons(
+  current: KmaHourlyObservationSnapshot,
+  comparison: KmaHourlyObservationSnapshot,
+  locations: readonly HourlyComparisonLocation[],
+): Array<KmaHourlyComparison | undefined> {
+  const comparisonByStation = new Map(
+    comparison.stations.map((station) => [station.stationId, station]),
+  );
+  const comparable = current.stations.flatMap((station) => {
+    const previous = comparisonByStation.get(station.stationId);
+    return station.temperature === undefined || previous?.temperature === undefined
+      ? []
+      : [{ current: station, comparison: previous }];
+  });
+  return locations.map(({ latitude, longitude }) => {
+    const nearest = comparable
+      .map((value) => ({
+        ...value,
+        distanceKm: distanceKm(
+          latitude,
+          longitude,
+          value.current.latitude,
+          value.current.longitude,
+        ),
+      }))
+      .sort((left, right) => left.distanceKm - right.distanceKm)[0];
+    if (!nearest) return undefined;
+    return {
+      stationId: nearest.current.stationId,
+      distanceKm: Number(nearest.distanceKm.toFixed(1)),
+      currentObservedAt: current.observedAt,
+      comparisonObservedAt: comparison.observedAt,
+      current: {
+        temperature: nearest.current.temperature!,
+        apparentTemperature: apparentTemperature(
+          nearest.current,
+          current.observedAt,
+        ),
+      },
+      comparison: {
+        temperature: nearest.comparison.temperature!,
+        apparentTemperature: apparentTemperature(
+          nearest.comparison,
+          comparison.observedAt,
+        ),
+      },
+    };
+  });
 }
 
 function validTemperature(value: number): boolean {

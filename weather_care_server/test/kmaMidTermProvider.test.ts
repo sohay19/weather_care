@@ -2,22 +2,22 @@ import { describe, expect, it } from 'vitest';
 import {
   buildMidTermDailyForecast,
   KmaMidTermProvider,
-  latestMidTermMorningIssueTimes,
+  latestMidTermIssueTimes,
 } from '../src/providers/weather/kmaMidTermProvider';
 import {
   resolveKmaMidTermRegionIds,
 } from '../src/regions/kmaMidTermRegionCatalog';
 
 describe('KmaMidTermProvider', () => {
-  it('uses the latest published 06:00 issue so day 4 is retained', () => {
-    expect(latestMidTermMorningIssueTimes(
+  it('uses the latest published 06:00 or 18:00 issue', () => {
+    expect(latestMidTermIssueTimes(
       new Date('2026-09-14T20:00:00Z'),
       2,
-    )).toEqual(['202609140600', '202609130600']);
-    expect(latestMidTermMorningIssueTimes(
+    )).toEqual(['202609141800', '202609140600']);
+    expect(latestMidTermIssueTimes(
       new Date('2026-09-15T01:00:00Z'),
       2,
-    )).toEqual(['202609150600', '202609140600']);
+    )).toEqual(['202609150600', '202609141800']);
   });
 
   it('builds days 4 through 10 without inventing hourly amounts', () => {

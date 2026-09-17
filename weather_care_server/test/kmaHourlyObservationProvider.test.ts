@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  buildHourlyComparisons,
   KmaHourlyObservationProvider,
   latestCompletedKoreanHour,
   parseKmaHourlyObservationRows,
@@ -82,5 +83,44 @@ describe('KMA hourly observation provider', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(result.map((item) => item?.stationId)).toEqual(['108', '999']);
+  });
+
+  it('한 시간 전국 관측을 저장 가능한 스냅샷으로 만든다', async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      const metric = url.searchParams.get('obs');
+      const value = metric === 'TA' ? 24 : metric === 'HM' ? 55 : 3;
+      expect(url.searchParams.get('tm1')).toBe('202609161400');
+      expect(url.searchParams.get('tm2')).toBe('202609161400');
+      return new Response(`202609161400,108,126.9658,37.5714,85.67,${value}`);
+    });
+    const provider = new KmaHourlyObservationProvider({
+      serviceKey: 'test-key',
+      fetcher,
+    });
+
+    const current = await provider.getObservationsAt(
+      new Date('2026-09-16T14:00:00.000Z'),
+    );
+    const comparison = {
+      observedAt: '2026-09-15T14:00:00+09:00',
+      stations: [{ ...current.stations[0], temperature: 20 }],
+    };
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(current.stations[0]).toMatchObject({
+      stationId: '108',
+      temperature: 24,
+      humidity: 55,
+      windSpeed: 3,
+    });
+    expect(buildHourlyComparisons(current, comparison, [{
+      latitude: 37.56,
+      longitude: 126.97,
+    }])[0]).toMatchObject({
+      stationId: '108',
+      current: { temperature: 24 },
+      comparison: { temperature: 20 },
+    });
   });
 });

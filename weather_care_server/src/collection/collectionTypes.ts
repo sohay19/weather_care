@@ -15,6 +15,9 @@ export interface CollectedWeeklyBundle {
   observedDays: DailyWeatherForecast[];
   uv?: UvForecast;
   airQuality: DailyAirQualityForecastAtDate[];
+  midTermIssue?: string;
+  uvIssue?: string;
+  airQualityIssue?: string;
   collectedAt: string;
 }
 

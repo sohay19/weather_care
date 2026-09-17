@@ -21,9 +21,9 @@ import { providerErrorDiagnostic } from '../../observability/providerErrorDiagno
 import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
 import { kmaGridCoordinates } from '../../regions/kmaGridCoordinates';
 
-const UV_FRESH_MS = 2 * 60 * 60 * 1000;
+const UV_FRESH_MS = 3 * 60 * 60 * 1000;
 const UV_MAX_STALE_MS = 8 * 60 * 60 * 1000;
-const AIR_FRESH_MS = 30 * 60 * 1000;
+const AIR_FRESH_MS = 60 * 60 * 1000;
 const AIR_MAX_STALE_MS = 3 * 60 * 60 * 1000;
 const AIR_STATIONS_FRESH_MS = 24 * 60 * 60 * 1000;
 
@@ -96,6 +96,7 @@ export async function loadEnvironmentalData(
           load: () =>
             new KmaUvProvider({
               serviceKey,
+              now: () => now,
               timeoutMs: options.providerTimeoutMs,
             }).getForecast(uvAreaNo),
           now,

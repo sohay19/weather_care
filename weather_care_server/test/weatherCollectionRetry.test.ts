@@ -36,15 +36,15 @@ describe('environmental collection retry interval', () => {
   );
 
   it.each(['AVAILABLE', 'CACHED', 'UNSUPPORTED_REGION'] as const)(
-    '%s 상태는 기존 30분 수집 주기를 유지한다',
+    '%s 상태는 정상 자료의 1시간 수집 주기를 유지한다',
     (state) => {
       expect(shouldRefreshEnvironmentalRecord(
         record(state),
-        new Date('2026-09-17T04:29:59.999Z'),
+        new Date('2026-09-17T04:59:59.999Z'),
       )).toBe(false);
       expect(shouldRefreshEnvironmentalRecord(
         record(state),
-        new Date('2026-09-17T04:30:00.000Z'),
+        new Date('2026-09-17T05:00:00.000Z'),
       )).toBe(true);
     },
   );

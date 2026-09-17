@@ -39,4 +39,4 @@ enabled = false
 persist = false
 
 [triggers]
-crons = ["*/10 * * * *", "7-59/15 * * * *"]
+crons = ["*/10 * * * *", "2-59/15 * * * *", "7-59/30 * * * *"]

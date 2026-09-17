@@ -34,7 +34,7 @@ export class KmaUltraShortObservationProvider {
 
   async getCurrent(nx: number, ny: number): Promise<UltraShortObservation> {
     if (!this.serviceKey) throw new Error('KMA service key is not configured');
-    const base = latestPublishedHour(this.now());
+    const base = latestUltraShortPublishedHour(this.now());
     const query = new URLSearchParams({
       serviceKey: this.serviceKey,
       pageNo: '1',
@@ -71,7 +71,7 @@ export class KmaUltraShortObservationProvider {
       throw new Error('KMA ultra-short observation has no PTY');
     }
     return {
-      observedAt: koreanIso(base),
+      observedAt: ultraShortKoreanIso(base),
       rainDetected: precipitationType > 0,
       precipitationAmount: finiteOrUndefined(values.get('RN1')),
       temperature: finiteOrUndefined(values.get('T1H')),
@@ -82,7 +82,7 @@ export class KmaUltraShortObservationProvider {
   }
 }
 
-function latestPublishedHour(now: Date): Date {
+export function latestUltraShortPublishedHour(now: Date): Date {
   const koreanClock = new Date(now.getTime() + KST_OFFSET_MS - 50 * 60 * 1000);
   koreanClock.setUTCMinutes(0, 0, 0);
   return koreanClock;
@@ -92,7 +92,7 @@ function formatDate(koreanClock: Date): string {
   return `${koreanClock.getUTCFullYear()}${String(koreanClock.getUTCMonth() + 1).padStart(2, '0')}${String(koreanClock.getUTCDate()).padStart(2, '0')}`;
 }
 
-function koreanIso(koreanClock: Date): string {
+export function ultraShortKoreanIso(koreanClock: Date): string {
   return `${formatDate(koreanClock).slice(0, 4)}-${formatDate(koreanClock).slice(4, 6)}-${formatDate(koreanClock).slice(6, 8)}T${String(koreanClock.getUTCHours()).padStart(2, '0')}:00:00+09:00`;
 }
 

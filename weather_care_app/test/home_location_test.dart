@@ -15,7 +15,6 @@ import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/app_settings_repository.dart';
 import 'package:weather_care/services/current_location_service.dart';
 import 'package:weather_care/services/gps_region_name_service.dart';
-import 'package:weather_care/services/kma_direct_weather_service.dart';
 import 'package:weather_care/services/kma_grid.dart';
 import 'package:weather_care/services/notification_registration_service.dart';
 import 'package:weather_care/services/settings_sync_service.dart';
@@ -88,8 +87,7 @@ class _Weather extends WeatherService {
   ComparisonResponse comparison = const ComparisonResponse.unavailable();
   String? regionName;
   _Weather()
-      : super(ApiClient(baseUrl: ''),
-            directKma: KmaDirectWeatherService(serviceKey: ''));
+      : super(ApiClient(baseUrl: ''));
   @override
   Future<TodayWeatherResponse?> fetchMainWeather({
     int nx = 60,
@@ -304,6 +302,7 @@ void main() {
   testWidgets('Main은 현재 격자의 어제 비교 자료를 별도 조회해 표시한다', (tester) async {
     weather.comparison = const ComparisonResponse(
       comparisonAvailable: true,
+      current: ComparisonWeatherSnapshot(temperature: 20),
       comparison: ComparisonWeatherSnapshot(temperature: 18),
     );
 
@@ -320,6 +319,11 @@ void main() {
     await start(tester, settle: false, initialIndex: 2);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
+    await tester.drag(
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -160),
+    );
+    await tester.pump();
     expect(find.text('Check List를 불러오고 있어요'), findsOneWidget);
     await tester.drag(
       find.byKey(const ValueKey('main-tab')),

@@ -40,7 +40,11 @@ describe('notification scheduler', () => {
         forecastLoader: async () => { throw Object.assign(new Error('private-token'), { name: 'installation-1' }); },
         sender: collectingSender([]),
       });
-      expect(log.mock.calls).toEqual([[JSON.stringify({ event: 'recommendation_build_failed', error: 'Error' })]]);
+      expect(log.mock.calls).toContainEqual([
+        JSON.stringify({ event: 'recommendation_build_failed', error: 'Error' }),
+      ]);
+      expect(JSON.stringify(log.mock.calls)).not.toContain('private-token');
+      expect(JSON.stringify(log.mock.calls)).not.toContain('installation-1');
     } finally { log.mockRestore(); }
   });
   it.each([false, true])('does not send expired registrations before bounded cleanup (delayed cron: %s)', async (delayed) => {

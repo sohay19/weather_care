@@ -4,16 +4,34 @@ import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
 import 'home_section_header.dart';
+import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
 class HourlyForecastSection extends StatelessWidget {
   final List<HourlyWeatherItem> items;
+  final Future<void> Function()? onRetryMissingData;
+  final bool retrying;
 
-  const HourlyForecastSection({super.key, required this.items});
+  const HourlyForecastSection({
+    super.key,
+    required this.items,
+    this.onRetryMissingData,
+    this.retrying = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final visibleItems = _todayHourlyItems(items);
+    final hasMissingData = visibleItems.isEmpty ||
+        visibleItems.any(
+          (item) =>
+              item.time == '--' ||
+              item.temperature == null ||
+              item.apparentTemperature == null ||
+              item.precipitationProbability == null ||
+              item.windSpeed == null ||
+              item.skyCondition == null,
+        );
     return Container(
       key: const ValueKey('today-hourly-forecast-section'),
       padding: const EdgeInsets.all(20),
@@ -60,6 +78,15 @@ class HourlyForecastSection extends StatelessWidget {
               ),
               if (index < visibleItems.length - 1) const SizedBox(height: 9),
             ],
+          if (hasMissingData && onRetryMissingData != null) ...[
+            const SizedBox(height: 12),
+            MissingDataRetry(
+              message: '받지 못한 시간별 예보 항목이 있어요.',
+              retryKey: 'today-hourly-data-retry',
+              onRetry: onRetryMissingData!,
+              retrying: retrying,
+            ),
+          ],
         ],
       ),
     );

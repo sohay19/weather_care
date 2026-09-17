@@ -150,7 +150,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
           HomeSectionHeader(
             icon: Icons.playlist_add_check_rounded,
             title: 'Check List',
-            subtitle: '오늘 준비할 물건을 확인해요',
+            subtitle: '외출 전 준비할 물건을 확인해요',
           ),
           const SizedBox(height: 18),
           if (visible.isEmpty)
@@ -353,7 +353,7 @@ class _EmptyBag extends StatelessWidget {
           SizedBox(width: 14),
           Expanded(
             child: Text(
-              '오늘은 특별히 챙길 준비물이 없어요',
+              '지금은 특별히 챙길 준비물이 없어요',
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),

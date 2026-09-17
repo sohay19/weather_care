@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DailyWeatherForecast } from './weatherProvider';
 import { KmaMidTermRegionIds } from '../../regions/kmaMidTermRegionCatalog';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const KMA_PUBLIC_MID_TERM_URL =
   'https://apis.data.go.kr/1360000/MidFcstInfoService';
@@ -102,11 +103,16 @@ export class KmaMidTermProvider {
     const response = await this.fetcher(`${baseUrl}/${endpoint}?${query}`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(this.timeoutMs),
+      cf: { cacheEverything: true, cacheTtl: 21_600 },
     });
     const text = await response.text();
     if (!response.ok) {
       throw new KmaMidTermProviderError(
-        `KMA mid-term request failed with status ${response.status}`,
+        await providerHttpFailureMessage(
+          response,
+          'KMA mid-term request',
+          text,
+        ),
         response.status >= 500,
       );
     }

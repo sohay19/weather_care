@@ -217,6 +217,19 @@ void main() {
           })
         ],
         scale: 2);
+    final precipitation = tester.getRect(
+      find.byKey(const ValueKey('week-summary-precipitation')),
+    );
+    final temperature = tester.getRect(
+      find.byKey(const ValueKey('week-summary-temperature')),
+    );
+    final preparations = tester.getRect(
+      find.byKey(const ValueKey('week-summary-preparations')),
+    );
+    expect(precipitation.top, closeTo(temperature.top, 0.1));
+    expect(temperature.top, closeTo(preparations.top, 0.1));
+    expect(precipitation.right, lessThan(temperature.left));
+    expect(temperature.right, lessThan(preparations.left));
     await tester.scrollUntilVisible(find.text('일부 준비물 추천 자료를 확인하기 어려워요'), 250,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('일부 시간대 날씨 자료 없음'), findsOneWidget);

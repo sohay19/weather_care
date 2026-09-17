@@ -30,6 +30,10 @@ const AIR_STATIONS_FRESH_MS = 24 * 60 * 60 * 1000;
 export interface EnvironmentalDataBundle {
   uv?: UvForecast;
   airQuality?: AirQualitySnapshot;
+  providerTimeouts?: {
+    uv: boolean;
+    airQuality: boolean;
+  };
   sources: {
     uv: EnvironmentalSourceStatus;
     airQuality: EnvironmentalSourceStatus;
@@ -41,6 +45,7 @@ interface EnvironmentalLoadOptions {
   nx?: number;
   ny?: number;
   coordinates?: { latitude: number; longitude: number };
+  providerTimeoutMs?: number;
 }
 
 interface ResolveOptions<T> {
@@ -76,7 +81,7 @@ export async function loadEnvironmentalData(
     nx === undefined || ny === undefined
       ? undefined
       : uvAreaNoForGrid(nx, ny);
-  const [uv, airQuality] = await Promise.all([
+  const uvPromise =
     uvAreaNo !== undefined && nx !== undefined && ny !== undefined
       ? resolveEnvironmentalValue<UvForecast>({
           db: env.DB,
@@ -89,27 +94,77 @@ export async function loadEnvironmentalData(
           maxStaleMs: UV_MAX_STALE_MS,
           observedAt: (value) => value.issuedAt,
           load: () =>
-            new KmaUvProvider({ serviceKey }).getForecast(uvAreaNo),
+            new KmaUvProvider({
+              serviceKey,
+              timeoutMs: options.providerTimeoutMs,
+            }).getForecast(uvAreaNo),
           now,
         })
       : Promise.resolve<ResolvedValue<UvForecast>>({
           source: unsupportedSource('KMA_LIVING_INDEX_V5'),
-        }),
+        });
+  const airQualityPromise =
     nx !== undefined && ny !== undefined && kmaGridCoordinates(nx, ny)
-      ? loadAirQuality(env, nx, ny, options.coordinates, now)
+      ? loadAirQuality(
+          env,
+          nx,
+          ny,
+          options.coordinates,
+          now,
+          options.providerTimeoutMs,
+        )
       : Promise.resolve<ResolvedValue<AirQualitySnapshot>>({
           source: unsupportedSource('AIRKOREA'),
-        }),
+        });
+  const [uv, airQuality] = await Promise.all([
+    settleEnvironmentalWithin(
+      uvPromise,
+      'KMA_LIVING_INDEX_V5',
+      options.providerTimeoutMs,
+    ),
+    settleEnvironmentalWithin(
+      airQualityPromise,
+      'AIRKOREA',
+      options.providerTimeoutMs,
+    ),
   ]);
 
   return {
     uv: uv.value,
     airQuality: airQuality.value,
+    providerTimeouts: {
+      uv: uv.timedOut,
+      airQuality: airQuality.timedOut,
+    },
     sources: {
       uv: uv.source,
       airQuality: airQuality.source,
     },
   };
+}
+
+async function settleEnvironmentalWithin<T>(
+  promise: Promise<ResolvedValue<T>>,
+  provider: string,
+  timeoutMs: number | undefined,
+): Promise<ResolvedValue<T> & { timedOut: boolean }> {
+  if (timeoutMs === undefined) {
+    return { ...(await promise), timedOut: false };
+  }
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise.then((value) => ({ ...value, timedOut: false })),
+      new Promise<ResolvedValue<T> & { timedOut: boolean }>((resolve) => {
+        timeoutId = setTimeout(
+          () => resolve({ source: unavailableSource(provider), timedOut: true }),
+          timeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
 }
 
 async function loadAirQuality(
@@ -118,14 +173,21 @@ async function loadAirQuality(
   ny: number,
   coordinates: EnvironmentalLoadOptions['coordinates'],
   now: Date,
+  providerTimeoutMs?: number,
 ): Promise<ResolvedValue<AirQualitySnapshot>> {
   const unavailable: ResolvedValue<AirQualitySnapshot> = {
     source: { provider: 'AIRKOREA', state: 'UNAVAILABLE', reason: 'PROVIDER_UNAVAILABLE' },
   };
   const target = coordinates ?? kmaGridCoordinates(nx, ny);
   if (!target) return unavailable;
-  const signal = AbortSignal.timeout(6_000);
-  const provider = new AirKoreaAirQualityProvider({ serviceKey: env.KMA_SERVICE_KEY, now: () => now, signal });
+  const signal = AbortSignal.timeout(
+    Math.min(6_000, providerTimeoutMs ?? 6_000),
+  );
+  const provider = new AirKoreaAirQualityProvider({
+    serviceKey: env.KMA_SERVICE_KEY,
+    now: () => now,
+    signal,
+  });
   // One validated national catalog shared across grids; never cache portal error bodies.
   // Coordinates here belong to official stations, not to an installation/user.
   const catalog = await resolveEnvironmentalValue<AirStationCatalog>({
@@ -381,6 +443,14 @@ function unsupportedSource(provider: string): EnvironmentalSourceStatus {
     provider,
     state: 'UNSUPPORTED_REGION',
     reason: 'UNSUPPORTED_REGION',
+  };
+}
+
+function unavailableSource(provider: string): EnvironmentalSourceStatus {
+  return {
+    provider,
+    state: 'UNAVAILABLE',
+    reason: 'PROVIDER_UNAVAILABLE',
   };
 }
 

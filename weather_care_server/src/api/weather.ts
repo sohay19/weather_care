@@ -11,7 +11,6 @@ import {
   WeatherMessagePart,
   WeatherSnapshot,
 } from '../types';
-import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
 import {
   DailyWeatherForecast,
   WeatherForecast,
@@ -23,10 +22,6 @@ import {
 } from '../rules/weatherRuleEngine';
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
-import {
-  getCurrentWeather,
-  saveCurrentWeather,
-} from '../database/weatherCacheRepository';
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBriefResult } from '../presentation/weatherBrief';
@@ -35,11 +30,6 @@ import {
   buildLifestyleMessages,
 } from '../presentation/lifestyleMessages';
 import {
-  enrichForecastWithEnvironmentalData,
-  EnvironmentalDataBundle,
-  loadEnvironmentalData,
-} from '../providers/environmental/environmentalDataService';
-import {
   regionMetadataForGrid,
   regionName,
 } from '../regions/regionCatalog';
@@ -47,39 +37,31 @@ import {
   defaultNotificationSettings,
   getNotificationSettings,
 } from '../database/notificationSettingsRepository';
-import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import { buildCurrentPrecipitationMessage } from '../presentation/currentPrecipitationMessage';
-import {
-  KmaWarningProvider,
-  OfficialWeatherWarning,
-} from '../providers/warnings/kmaWarningProvider';
 import { buildActiveWarningMessages } from '../presentation/officialWarningMessages';
-import { RegionMetadata } from '../regions/regionCatalog';
-import { KmaRoadIceProvider } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
-import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
-import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
+import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { defaultRuleConfig } from '../config/ruleConfig';
 import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySnapshot,
   withoutPrecipitation } from '../rules/precipitationWindows';
-import { KmaMidTermProvider } from '../providers/weather/kmaMidTermProvider';
-import { resolveKmaMidTermRegionIds } from '../regions/kmaMidTermRegionCatalog';
-import { KmaDailyObservationProvider } from '../providers/weather/kmaDailyObservationProvider';
-import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
-import { KmaUvProvider } from '../providers/uv/kmaUvProvider';
 import type { UvForecast } from '../providers/uv/uvProvider';
-import { uvAreaNoForGrid } from '../regions/kmaUvAreaGridCatalog';
-import {
-  AirKoreaForecastProvider,
-  type DailyAirQualityForecastAtDate,
-} from '../providers/air/airKoreaForecastProvider';
+import type { DailyAirQualityForecastAtDate } from '../providers/air/airKoreaForecastProvider';
 import {
   currentKoreanCalendarWeek,
   getWeeklyForecastRecords,
   koreanCalendarDate,
   saveWeeklyForecastRecords,
 } from '../database/weeklyForecastRepository';
+import {
+  collectedCacheKey,
+  getCollectedCache,
+} from '../database/collectedWeatherRepository';
+import type {
+  CollectedRegionBundle,
+  CollectedWarningBundle,
+  CollectedWeeklyBundle,
+} from '../collection/collectionTypes';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -105,38 +87,23 @@ interface OptionalProviderTimeouts {
 
 router.get('/main', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
-  if (!c.env.KMA_SERVICE_KEY) {
-    return c.json({ error: 'KMA_SERVICE_KEY_NOT_CONFIGURED' }, 503);
-  }
 
   try {
     const generatedAt = new Date();
-    let cached: WeatherSnapshot | null = null;
-    if (c.env.DB) {
-      try {
-        cached = await getCurrentWeather(c.env.DB, nx, ny);
-      } catch (error) {
-        console.error(JSON.stringify({
-          event: 'main_weather_cache_load_failed',
-          error: safeErrorName(error),
-        }));
-      }
+    const collected = await getCollectedCache<CollectedRegionBundle>(
+      c.env.DB,
+      `COLLECTED_REGION_${nx}_${ny}`,
+    );
+    if (!collected || collected.status !== 'AVAILABLE') {
+      return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-
-    const cachedIsFresh = cached !== null &&
-      isFreshMainSnapshot(cached, generatedAt);
-    const forecast = cachedIsFresh
-      ? forecastFromCachedSnapshot(cached)
-      : await new KmaWeatherProvider({
-          serviceKey: c.env.KMA_SERVICE_KEY,
-        }).getLatestForecastByRegion(nx, ny);
+    const forecast = collected.value.forecast;
     const brief = buildWeatherBriefResult(forecast, {
       regionKey: `${nx}:${ny}`,
       now: generatedAt,
     });
-    const environmental = unavailableEnvironmentalData();
     const response: TodayWeatherResponse = {
-      dataSource: cachedIsFresh ? '기상청 빠른 캐시' : forecast.dataSource,
+      dataSource: `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
@@ -146,28 +113,16 @@ router.get('/main', async (c) => {
       lifestyleMessages: [],
       dataStatusMessages: [],
       timeline: [],
-      environmentalSources: environmental.sources,
+      environmentalSources: collected.value.environmental.sources,
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
       generatedAt: generatedAt.toISOString(),
     };
 
-    if (!cachedIsFresh && c.env.DB) {
-      c.executionCtx.waitUntil(
-        saveCurrentWeather(c.env.DB, nx, ny, forecast.current).catch(
-          (error: unknown) => {
-            console.error(JSON.stringify({
-              event: 'main_weather_cache_persistence_failed',
-              error: safeErrorName(error),
-            }));
-          },
-        ),
-      );
-    }
     return c.json(response);
   } catch (error) {
-    logProviderError('main', error);
-    return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
+    console.error(JSON.stringify({ event: 'main_weather_cache_failed', error: safeErrorName(error) }));
+    return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
 
@@ -177,97 +132,66 @@ router.get('/today', async (c) => {
     c.req.query('latitude'),
     c.req.query('longitude'),
   );
-  if (!c.env.KMA_SERVICE_KEY) {
-    return c.json({ error: 'KMA_SERVICE_KEY_NOT_CONFIGURED' }, 503);
-  }
-
   try {
     const region = regionMetadataForGrid(nx, ny);
-    const weatherForecastPromise = new KmaWeatherProvider({
-      serviceKey: c.env.KMA_SERVICE_KEY,
-    }).getForecastByRegion(nx, ny);
-    const environmentalDataPromise = loadEnvironmentalData(
-      c.env,
-      region,
-      { nx, ny, coordinates },
-    );
-    const settingsPromise = settingsForRequest(
+    const [regionRecord, settings, precipitationRecord, warningRecord,
+      roadIceRecord, roadControlRecord] = await Promise.all([
+      getCollectedCache<CollectedRegionBundle>(
+        c.env.DB,
+        `COLLECTED_REGION_${nx}_${ny}`,
+      ),
+      settingsForRequest(
       c.env.DB,
       c.req.query('installationId'),
       c.req.header('Authorization'),
-    );
-    const precipitationPromise = loadCurrentPrecipitation(c.env, coordinates);
-    const warningPromise = loadActiveWarnings(c.env, region, coordinates);
-    const roadIcePromise = loadRoadIce(c.env, coordinates);
-    const roadControlPromise = loadRoadControl(c.env, coordinates);
-    const optionalPromises = [
-      environmentalDataPromise,
-      precipitationPromise,
-      warningPromise,
-      roadIcePromise,
-      roadControlPromise,
-    ] as const;
-
-    c.executionCtx.waitUntil(
-      Promise.allSettled(optionalPromises).then(() => undefined),
-    );
-
-    const [
-      weatherForecast,
-      settings,
-      environmentalResult,
-      precipitationResult,
-      warningResult,
-      roadIceResult,
-      roadControlResult,
-    ] = await Promise.all([
-      weatherForecastPromise,
-      settingsPromise,
-      settleWithin(
-        environmentalDataPromise,
-        unavailableEnvironmentalData(),
-        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
       ),
-      settleWithin(
-        precipitationPromise,
-        undefined,
-        CURRENT_PRECIPITATION_PROVIDER_BUDGET_MS,
+      coordinates
+        ? getCollectedCache<CurrentPrecipitationObservation>(
+            c.env.DB,
+            collectedCacheKey.precipitation(coordinates.latitude, coordinates.longitude),
+          )
+        : Promise.resolve(null),
+      getCollectedCache<CollectedWarningBundle>(
+        c.env.DB,
+        collectedCacheKey.warning(nx, ny),
       ),
-      settleWithin(
-        warningPromise,
-        { warnings: [], regionName: region?.name },
-        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
-      ),
-      settleWithin(
-        roadIcePromise,
-        undefined,
-        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
-      ),
-      settleWithin(
-        roadControlPromise,
-        undefined,
-        TODAY_OPTIONAL_PROVIDER_BUDGET_MS,
-      ),
+      coordinates
+        ? getCollectedCache<RoadIceRisk | null>(
+            c.env.DB,
+            collectedCacheKey.roadIce(coordinates.latitude, coordinates.longitude),
+          )
+        : Promise.resolve(null),
+      coordinates
+        ? getCollectedCache<OfficialRoadControl | null>(
+            c.env.DB,
+            collectedCacheKey.roadControl(coordinates.latitude, coordinates.longitude),
+          )
+        : Promise.resolve(null),
     ]);
-    const environmentalData = environmentalResult.value;
-    const precipitation = precipitationResult.value;
-    const warningsResultValue = warningResult.value;
-    const roadIce = roadIceResult.value;
-    const roadControl = roadControlResult.value;
+    if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
+      return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
+    }
+    const forecast = regionRecord.value.forecast;
+    const environmentalData = regionRecord.value.environmental;
+    const precipitation = precipitationRecord?.value;
+    const warningsResultValue = warningRecord?.value ?? {
+      warnings: [],
+      regionName: region?.name,
+    };
+    const roadIce = roadIceRecord?.value ?? undefined;
+    const roadControl = roadControlRecord?.value ?? undefined;
     const optionalTimeouts: OptionalProviderTimeouts = {
-      precipitation: precipitationResult.timedOut,
-      warning: warningResult.timedOut,
-      roadIce: roadIceResult.timedOut,
-      roadControl: roadControlResult.timedOut,
+      precipitation: coordinates !== undefined && precipitationRecord === null,
+      warning: warningRecord === null,
+      roadIce: coordinates !== undefined && roadIceRecord === null,
+      roadControl: coordinates !== undefined && roadControlRecord === null,
     };
     logOptionalProviderTimeouts({
-      environmental: environmentalResult.timedOut,
+      environmentalUv: environmentalData.providerTimeouts?.uv ?? false,
+      environmentalAirQuality:
+        environmentalData.providerTimeouts?.airQuality ?? false,
       ...optionalTimeouts,
     });
-    const forecast = enrichForecastWithEnvironmentalData(
-      weatherForecast,
-      environmentalData,
-    );
     const decisionHourly = forecast.hourly.slice(0, 24);
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
@@ -298,7 +222,7 @@ router.get('/today', async (c) => {
     const generatedAt = new Date();
     const brief = buildWeatherBriefResult(forecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
     const response: TodayWeatherResponse = {
-      dataSource: forecast.dataSource,
+      dataSource: `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionLabel },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
@@ -333,250 +257,56 @@ router.get('/today', async (c) => {
       generatedAt: generatedAt.toISOString(),
     };
 
-    if (c.env.DB) {
-      c.executionCtx.waitUntil(
-        saveCurrentWeather(c.env.DB, nx, ny, forecast.current)
-          .catch((error: unknown) => {
-            console.error(
-              JSON.stringify({
-                event: 'weather_snapshot_persistence_failed',
-                error: safeErrorName(error),
-              }),
-            );
-          }),
-      );
-    }
     return c.json(response);
   } catch (error) {
-    logProviderError('today', error);
-    return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
+    console.error(JSON.stringify({ event: 'today_weather_cache_failed', error: safeErrorName(error) }));
+    return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
 
-async function loadCurrentPrecipitation(
-  env: ServerEnv,
-  coordinates: { latitude: number; longitude: number } | undefined,
-): Promise<CurrentPrecipitationObservation | undefined> {
-  if (!coordinates || !env.KMA_APIHUB_KEY) return undefined;
-  try {
-    return await new KmaPrecipitationObservationProvider({
-      serviceKey: env.KMA_APIHUB_KEY,
-    }).getCurrentByLocation(coordinates.latitude, coordinates.longitude);
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        event: 'current_precipitation_provider_failed',
-        provider: 'KMA_ANALYSIS_RADAR',
-        ...providerErrorDiagnostic(error),
-      }),
-    );
-    return undefined;
-  }
-}
-
-async function loadRoadControl(
-  env: ServerEnv,
-  coordinates: { latitude: number; longitude: number } | undefined,
-): Promise<OfficialRoadControl | undefined> {
-  if (!coordinates) return undefined;
-  try {
-    const provider = itsRoadControlProviderFromEnvironment(env);
-    if (!provider) return undefined;
-    return await provider.getNearestActiveControl(
-      coordinates.latitude,
-      coordinates.longitude,
-    );
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        event: 'road_control_provider_failed',
-        provider: 'ITS_EVENT_INFO',
-        ...providerErrorDiagnostic(error),
-      }),
-    );
-    return undefined;
-  }
-}
-
-async function loadRoadIce(
-  env: ServerEnv,
-  coordinates: { latitude: number; longitude: number } | undefined,
-): Promise<RoadIceRisk | undefined> {
-  if (!env.KMA_APIHUB_KEY || !coordinates) return undefined;
-  try {
-    return await new KmaRoadIceProvider({
-      serviceKey: env.KMA_APIHUB_KEY,
-    }).getNearestRiskByLocation(
-      coordinates.latitude,
-      coordinates.longitude,
-    );
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        event: 'road_ice_provider_failed',
-        provider: 'KMA_ROAD_RISK',
-        ...providerErrorDiagnostic(error),
-      }),
-    );
-    return undefined;
-  }
-}
-
-async function loadActiveWarnings(
-  env: ServerEnv,
-  region: RegionMetadata | undefined,
-  coordinates: { latitude: number; longitude: number } | undefined,
-): Promise<{
-  warnings: OfficialWeatherWarning[];
-  regionName?: string;
-}> {
-  if (!env.KMA_APIHUB_KEY) return { warnings: [] };
-  try {
-    const provider = new KmaWarningProvider({
-      serviceKey: env.KMA_APIHUB_KEY,
-    });
-    if (region) {
-      return {
-        warnings: await provider.getActiveForRegions(region.warningRegionIds),
-        regionName: region.name,
-      };
-    }
-    if (!coordinates) return { warnings: [] };
-    const matchedRegion = await provider.resolveRegionByLocation(
-      coordinates.latitude,
-      coordinates.longitude,
-    );
-    return {
-      warnings: await provider.getActiveForRegions([matchedRegion.regionId]),
-      regionName: matchedRegion.regionName,
-    };
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        event: 'official_warning_provider_failed',
-        provider: 'KMA_WARNING_STATUS',
-        ...providerErrorDiagnostic(error),
-      }),
-    );
-    return { warnings: [], regionName: region?.name };
-  }
-}
-
 router.get('/weekly', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
-  if (!c.env.KMA_SERVICE_KEY && !c.env.KMA_APIHUB_KEY) {
-    return c.json({ error: 'KMA_SERVICE_KEY_NOT_CONFIGURED' }, 503);
-  }
 
   try {
     const now = new Date();
     const regionId = `${nx}_${ny}`;
     const calendarWeek = currentKoreanCalendarWeek(now);
     const today = koreanCalendarDate(now);
-    const includeExtras = c.req.query('includeExtras') === 'true';
-    const requestedRegionName = c.req.query('regionName');
-    const midTermRegion = resolveKmaMidTermRegionIds(
-      c.req.query('regionName'),
-      c.req.query('regionCode'),
-      nx,
-      ny,
-    );
-    const shortTermPromise = c.env.KMA_SERVICE_KEY
-      ? new KmaWeatherProvider({
-          serviceKey: c.env.KMA_SERVICE_KEY,
-        }).getForecastByRegion(nx, ny).catch((error: unknown) => {
-          logProviderError('weekly', error);
-          return undefined;
-        })
-      : Promise.resolve(undefined);
-    const midTermPromise = midTermRegion &&
-      (c.env.KMA_APIHUB_KEY || c.env.KMA_SERVICE_KEY)
-      ? new KmaMidTermProvider({
-          apiHubKey: c.env.KMA_APIHUB_KEY,
-          serviceKey: c.env.KMA_SERVICE_KEY,
-        })
-          .getForecast(midTermRegion)
-          .catch((error: unknown) => {
+    const [collected, settings, savedDays] = await Promise.all([
+      getCollectedCache<CollectedWeeklyBundle>(
+        c.env.DB,
+        collectedCacheKey.weekly(nx, ny),
+      ),
+      settingsForRequest(
+        c.env.DB,
+        c.req.query('installationId'),
+        c.req.header('Authorization'),
+      ),
+      c.env.DB
+        ? getWeeklyForecastRecords(
+            c.env.DB,
+            regionId,
+            calendarWeek.startDate,
+            calendarWeek.endDate,
+          ).catch((error: unknown) => {
             console.error(JSON.stringify({
-              event: 'mid_term_weather_provider_failed',
-              provider: 'KMA_MID_TERM',
-              ...providerErrorDiagnostic(error),
+              event: 'weekly_forecast_history_load_failed',
+              error: safeErrorName(error),
             }));
             return [];
           })
-      : Promise.resolve([] as DailyWeatherForecast[]);
-    const observationCoordinates = kmaGridCoordinates(nx, ny);
-    const observationEnd = calendarWeek.dates
-      .filter((date) => date < today)
-      .at(-1);
-    const observationPromise = c.env.KMA_APIHUB_KEY &&
-      observationCoordinates &&
-      observationEnd
-      ? new KmaDailyObservationProvider({
-          serviceKey: c.env.KMA_APIHUB_KEY,
-          timeoutMs: 7_500,
-        }).getDailyByLocation(
-          observationCoordinates.latitude,
-          observationCoordinates.longitude,
-          calendarWeek.startDate,
-          observationEnd,
-        ).catch((error: unknown) => {
-          console.error(JSON.stringify({
-            event: 'daily_weather_observation_provider_failed',
-            provider: 'KMA_DAILY_OBSERVATION',
-            ...providerErrorDiagnostic(error),
-          }));
-          return [];
-        })
-      : Promise.resolve([] as DailyWeatherForecast[]);
-    const savedPromise = c.env.DB
-      ? getWeeklyForecastRecords(
-          c.env.DB,
-          regionId,
-          calendarWeek.startDate,
-          calendarWeek.endDate,
-        ).catch((error: unknown) => {
-          console.error(JSON.stringify({
-            event: 'weekly_forecast_history_load_failed',
-            error: safeErrorName(error),
-          }));
-          return [];
-        })
-      : Promise.resolve([] as DailyWeatherForecast[]);
-    const uvAreaNo = includeExtras ? uvAreaNoForGrid(nx, ny) : undefined;
-    const uvPromise = includeExtras && uvAreaNo && c.env.KMA_SERVICE_KEY
-      ? new KmaUvProvider({ serviceKey: c.env.KMA_SERVICE_KEY })
-          .getForecast(uvAreaNo)
-          .catch((error: unknown) => {
-            console.error(JSON.stringify({
-              event: 'weekly_uv_provider_failed',
-              provider: 'KMA_LIVING_INDEX_V5',
-              ...providerErrorDiagnostic(error),
-            }));
-            return undefined;
-          })
-      : Promise.resolve(undefined);
-    const airPromise = includeExtras && c.env.KMA_SERVICE_KEY
-      ? new AirKoreaForecastProvider({ serviceKey: c.env.KMA_SERVICE_KEY })
-          .getForecast(requestedRegionName, nx, ny)
-          .catch((error: unknown) => {
-            console.error(JSON.stringify({
-              event: 'weekly_air_quality_provider_failed',
-              provider: 'AIRKOREA_FORECAST',
-              ...providerErrorDiagnostic(error),
-            }));
-            return [];
-          })
-      : Promise.resolve([] as DailyAirQualityForecastAtDate[]);
-    const [forecast, settings, midTermDays, observedDays, savedDays, uv, airQuality] = await Promise.all([
-      shortTermPromise,
-      settingsForRequest(c.env.DB, c.req.query('installationId'), c.req.header('Authorization')),
-      midTermPromise,
-      observationPromise,
-      savedPromise,
-      uvPromise,
-      airPromise,
+        : Promise.resolve([] as DailyWeatherForecast[]),
     ]);
+    if (!collected || collected.status !== 'AVAILABLE') {
+      return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
+    }
+    const {
+      forecast,
+      midTermDays,
+      observedDays,
+      uv,
+      airQuality,
+    } = collected.value;
     const liveDays = enrichWeeklyForecastDays(
       mergeWeeklyForecastDays(forecast?.daily ?? [], midTermDays),
       uv,
@@ -634,8 +364,8 @@ router.get('/weekly', async (c) => {
       })),
     });
   } catch (error) {
-    logProviderError('weekly', error);
-    return c.json({ error: 'WEATHER_PROVIDER_UNAVAILABLE' }, 502);
+    console.error(JSON.stringify({ event: 'weekly_weather_cache_failed', error: safeErrorName(error) }));
+    return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
 
@@ -1072,20 +802,6 @@ function maximum(values: number[]): number {
   return values.length === 0 ? 0 : Math.max(...values);
 }
 
-function logProviderError(
-  route: 'main' | 'today' | 'weekly',
-  error: unknown,
-): void {
-  console.error(
-    JSON.stringify({
-      event: 'weather_provider_failed',
-      provider: 'KMA',
-      route,
-      ...providerErrorDiagnostic(error),
-    }),
-  );
-}
-
 export function isFreshMainSnapshot(
   snapshot: WeatherSnapshot,
   now = new Date(),
@@ -1099,20 +815,6 @@ export function isFreshMainSnapshot(
     fetchedAt <= reference + 5 * 60 * 1000 &&
     forecastAt >= reference - 90 * 60 * 1000 &&
     forecastAt <= reference + 3 * 60 * 60 * 1000;
-}
-
-function forecastFromCachedSnapshot(
-  current: WeatherSnapshot,
-): WeatherForecast {
-  return {
-    current,
-    hourly: [current],
-    timelineHourly: [current],
-    daily: [],
-    baseDate: '',
-    baseTime: '',
-    dataSource: '기상청 빠른 캐시',
-  };
 }
 
 export async function settleWithin<T>(
@@ -1167,29 +869,15 @@ export function buildOptionalProviderTimeoutStatusMessages(
   ].filter((message): message is WeatherMessagePart => message !== undefined);
 }
 
-function unavailableEnvironmentalData(): EnvironmentalDataBundle {
-  return {
-    sources: {
-      uv: {
-        provider: 'KMA_LIVING_INDEX_V5',
-        state: 'UNAVAILABLE',
-        reason: 'PROVIDER_UNAVAILABLE',
-      },
-      airQuality: {
-        provider: 'AIRKOREA',
-        state: 'UNAVAILABLE',
-        reason: 'PROVIDER_UNAVAILABLE',
-      },
-    },
-  };
-}
-
 function dataStatusMessage(text: string, source: string): WeatherMessagePart {
   return { role: 'DATA_STATUS', text, source };
 }
 
 function logOptionalProviderTimeouts(
-  timeouts: OptionalProviderTimeouts & { environmental: boolean },
+  timeouts: OptionalProviderTimeouts & {
+    environmentalUv: boolean;
+    environmentalAirQuality: boolean;
+  },
 ): void {
   for (const [provider, timedOut] of Object.entries(timeouts)) {
     if (!timedOut) continue;

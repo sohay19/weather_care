@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/lifestyle_message.dart';
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
+import 'missing_data_retry.dart';
 
 class LifestyleEvidenceChecklistSection extends StatelessWidget {
   final List<LifestyleMessage> messages;
@@ -11,6 +12,8 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
   final String? focusLabel;
   final Key? focusedItemKey;
   final String? missingFocusMessage;
+  final Future<void> Function()? onRetryMissingData;
+  final bool retrying;
 
   const LifestyleEvidenceChecklistSection({
     super.key,
@@ -20,6 +23,8 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
     this.focusLabel,
     this.focusedItemKey,
     this.missingFocusMessage,
+    this.onRetryMissingData,
+    this.retrying = false,
   });
 
   @override
@@ -90,7 +95,11 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
             ],
           if (statuses.isNotEmpty) ...[
             const SizedBox(height: 14),
-            _CommonDataStatus(parts: statuses),
+            _CommonDataStatus(
+              parts: statuses,
+              onRetry: onRetryMissingData,
+              retrying: retrying,
+            ),
           ],
         ],
       ),
@@ -304,8 +313,14 @@ class _MatchedDetail extends StatelessWidget {
 
 class _CommonDataStatus extends StatelessWidget {
   final List<WeatherMessagePart> parts;
+  final Future<void> Function()? onRetry;
+  final bool retrying;
 
-  const _CommonDataStatus({required this.parts});
+  const _CommonDataStatus({
+    required this.parts,
+    this.onRetry,
+    this.retrying = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -327,6 +342,15 @@ class _CommonDataStatus extends StatelessWidget {
           for (final part in parts) ...[
             const SizedBox(height: 7),
             Text(part.text, style: Theme.of(context).textTheme.bodySmall),
+          ],
+          if (onRetry != null) ...[
+            const SizedBox(height: 10),
+            MissingDataRetry(
+              message: '받지 못한 상세 자료가 있어요.',
+              retryKey: 'detail-data-retry',
+              onRetry: onRetry!,
+              retrying: retrying,
+            ),
           ],
         ],
       ),

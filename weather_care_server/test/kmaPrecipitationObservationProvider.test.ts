@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   KmaPrecipitationObservationProvider,
   parseAnalysisRain,
@@ -96,6 +96,67 @@ describe('KMA precipitation observation provider', () => {
     ]);
   });
 
+  it('does not retry a quota response and reports it separately', async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({
+      result: {
+        status: 403,
+        message: '일일 최대 호출 용량 제한으로 사용할 수 없습니다.',
+      },
+    }), { status: 403 }));
+    const provider = new KmaPrecipitationObservationProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-09-01T05:20:00Z'),
+      attempts: 4,
+    });
+
+    let error: unknown;
+    try {
+      await provider.getCurrentByLocation(37.2636, 127.0286);
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(providerErrorDiagnostic(error)).toMatchObject({
+      failureReason: 'QUOTA_EXCEEDED',
+      httpStatus: 403,
+    });
+  });
+
+  it('전국 레이더를 한 번만 받고 불일치 좌표만 관측분석한다', async () => {
+    const locations = [
+      { latitude: 37.2636, longitude: 127.0286 },
+      { latitude: 35.18, longitude: 129.07 },
+    ];
+    const radar = radarPayloadMany(locations.map((location) => ({
+      point: radarGridPoint(location.latitude, location.longitude),
+      value: 1234,
+    })));
+    const fetcher = vi.fn(async (input: RequestInfo | URL) =>
+      String(input).includes('nph-rdr_cmp1_api')
+        ? new Response(radar)
+        : new Response('# tm rn_ox\n202609011410 0\n'),
+    );
+    const provider = new KmaPrecipitationObservationProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-09-01T05:20:00Z'),
+      attempts: 1,
+    });
+
+    const result = await provider.getCurrentByLocations([
+      { ...locations[0], referenceRainDetected: true,
+        referenceObservedAt: '2026-09-01T14:00:00+09:00' },
+      { ...locations[1], referenceRainDetected: false,
+        referenceObservedAt: '2026-09-01T14:00:00+09:00' },
+    ]);
+
+    expect(fetcher.mock.calls.filter(([url]) => String(url).includes('nph-rdr_cmp1_api'))).toHaveLength(1);
+    expect(fetcher.mock.calls.filter(([url]) => String(url).includes('nph-sfc_obs_nc_pt_api'))).toHaveLength(1);
+    expect(result.map((item) => item.state)).toEqual(['RAIN', 'MISMATCH']);
+  });
+
   it('treats the official no-echo code as dry', () => {
     const point = { x: 10, y: 20 };
     expect(radarRainAtPoint(radarPayload(point, -25_000), point)).toEqual({
@@ -123,6 +184,21 @@ describe('KMA precipitation observation provider', () => {
     ).toBeUndefined();
   });
 });
+
+function radarPayloadMany(
+  values: Array<{ point: { x: number; y: number }; value: number }>,
+): ArrayBuffer {
+  const nx = 2305;
+  const ny = 2881;
+  const payload = new ArrayBuffer(4 + nx * ny * 2);
+  const view = new DataView(payload);
+  view.setUint16(0, nx, true);
+  view.setUint16(2, ny, true);
+  for (const { point, value } of values) {
+    view.setInt16(4 + (point.y * nx + point.x) * 2, value, true);
+  }
+  return payload;
+}
 
 function radarPayload(
   point: { x: number; y: number },

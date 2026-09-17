@@ -48,13 +48,12 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 다시 동기화합니다.
 운영 응답에서는 서버가 기상청 단기예보에 생활기상지수 자외선과 에어코리아 PM10·PM2.5를 병합합니다. 앱은 `current.uvIndex`, `current.pm10`, `current.pm25`를 파싱하고, 결측시 `--`를 표시합니다.
 
-운영 서버 장애 시 앱이 기상청 단기예보를 직접 조회하게 하려면
-`config/kma.config.json`에 공공데이터포털 일반 인증키를 입력합니다.
+앱은 외부 날씨 API를 직접 호출하지 않습니다. `config/kma.config.json`에는
+운영 서버 주소만 저장하며 기상청 인증키는 앱 바이너리에 포함하지 않습니다.
 
 ```json
 {
-  "SERVER_URL": "https://weather-care-server.sy40222.workers.dev",
-  "KMA_SERVICE_KEY": "발급받은_일반인증키"
+  "SERVER_URL": "https://weather-care-server.sy40222.workers.dev"
 }
 ```
 
@@ -65,23 +64,9 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 상단 날씨 카드를 우선 표시합니다. Today 상세 자료와 Week 자료는 동시에 계속 조회해
 도착하는 순서대로 화면을 갱신합니다.
 
-파일이 없는 새 개발 환경에서는 예제 파일을 복사한 뒤 키를 입력합니다.
-
-```powershell
-Copy-Item config/kma.config.example.json config/kma.config.json
-```
-
-실제 `config/kma.config.json`은 Git에서 제외됩니다. `--dart-define`을 별도로 지정하면
-해당 값이 설정 파일보다 우선하므로 로컬 서버나 CI 설정도 계속 사용할 수 있습니다.
-
-키가 설정된 상태에서 운영 서버만 실패하면 기상청 원시 예보를 직접 표시합니다.
-추천·생활 날씨·준비물·타임라인·체감온도 등 서버 연산 항목은 `미지원`으로 표시하며,
-인터넷 연결도 없으면 날씨 화면 전체를 `인터넷 연결 불가로 미지원`으로 표시합니다.
-내장 고정 데이터 파일은 제거되어 런타임 폴백으로 사용되지 않습니다.
-
-주의: 설정 파일은 Debug/Release 앱 바이너리에 자산으로 포함되므로 완전한 Secret으로
-보호되지 않습니다. 직접 조회 기능을 운영할 경우 호출량 제한과 키 교체 정책을 함께
-관리해야 합니다.
+운영 서버가 연결되지 않거나 중앙 수집 자료가 아직 준비되지 않으면
+앱은 날씨를 임의로 대체하지 않고 재시도 안내를 표시합니다. 내장 고정 데이터나
+외부 API 직접 조회는 런타임 폴백으로 사용하지 않습니다.
 
 ## 광고 개발 설정
 

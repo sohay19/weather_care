@@ -5,6 +5,8 @@ import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider'
 import * as environmental from '../src/providers/environmental/environmentalDataService';
 import { LifestyleInsightType, WeatherRuleFactType, type WeatherSnapshot } from '../src/types';
 import { buildLifestyleMessages } from '../src/presentation/lifestyleMessages';
+import { env } from 'cloudflare:test';
+import { seedCollectedRegion } from './collectedWeatherFixture';
 
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
@@ -38,17 +40,18 @@ describe('Today brief display deadline', () => {
       observedAt: time, forecastAt: time, validTo: `2026-09-10T${hour}:59:59+09:00`,
       uvIndex: 7, temperature: 25, apparentTemperature: 25,
     };
-    vi.spyOn(KmaWeatherProvider.prototype, 'getForecastByRegion').mockResolvedValue({
+    const forecast = {
       current: sample, hourly: [sample], daily: [], baseDate: '20260910',
       baseTime: '1100', dataSource: '기상청',
-    });
+    };
+    await seedCollectedRegion(60, 121, forecast);
     vi.spyOn(environmental, 'loadEnvironmentalData').mockResolvedValue({ sources: {
       uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNAVAILABLE' },
       airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' },
     } });
     vi.spyOn(environmental, 'enrichForecastWithEnvironmentalData').mockImplementation((input) => input);
     const ctx = createExecutionContext();
-    const response = await router.request('/today?nx=60&ny=121', {}, { KMA_SERVICE_KEY: 'test-key' }, ctx);
+    const response = await router.request('/today?nx=60&ny=121', {}, { DB: env.DB }, ctx);
     expect(response.status).toBe(200);
     const data = await response.json<{ brief: string; briefExpiresAt?: string; current: WeatherSnapshot; generatedAt: string }>();
     expect(data.briefExpiresAt).toBe(expiry);

@@ -159,6 +159,59 @@ describe('environmental data enrichment', () => {
     const requestUrl = new URL(fetcher.mock.calls[0][0].toString());
     expect(requestUrl.searchParams.get('areaNo')).toBe('2623056000');
   });
+
+  it('keeps UV when only the AirKorea lookup exceeds its deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const stalled = new Promise<Response>(() => undefined);
+      const fetcher = vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes('LivingWthrIdxServiceV5')) {
+          return Promise.resolve(new Response(JSON.stringify({
+            response: {
+              header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
+              body: {
+                items: {
+                  item: {
+                    areaNo: '2623056000',
+                    date: '2026090112',
+                    h0: '6',
+                  },
+                },
+              },
+            },
+          })));
+        }
+        return stalled;
+      });
+      vi.stubGlobal('fetch', fetcher);
+
+      const resultPromise = loadEnvironmentalData(
+        { KMA_SERVICE_KEY: 'test-key' } as ServerEnv,
+        undefined,
+        {
+          nx: 98,
+          ny: 76,
+          coordinates: { latitude: 35.1796, longitude: 129.0756 },
+          now: new Date('2026-09-01T03:40:00Z'),
+          providerTimeoutMs: 3_500,
+        },
+      );
+      await vi.advanceTimersByTimeAsync(3_500);
+      const result = await resultPromise;
+
+      expect(result.uv?.points[0]?.uvIndex).toBe(6);
+      expect(result.airQuality).toBeUndefined();
+      expect(result.providerTimeouts).toEqual({
+        uv: false,
+        airQuality: true,
+      });
+      expect(result.sources.uv.state).toBe('AVAILABLE');
+      expect(result.sources.airQuality.state).toBe('UNAVAILABLE');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 function forecast(): WeatherForecast {

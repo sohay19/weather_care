@@ -318,6 +318,43 @@ void main() {
     expect(find.textContaining('맑은 하늘'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Main 체감 문구는 실제 기온과의 차이를 먼저 설명한다', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: MainTab(
+          today: const TodayWeatherResponse(
+            dataSource: 'test',
+            region: WeatherRegion(nx: 60, ny: 127, name: '서울'),
+            brief: '테스트',
+            current: CurrentWeather(
+              temperature: 29,
+              apparentTemperature: 27,
+              sky: '맑음',
+            ),
+            recommendations: [],
+            lifestyleMessages: [],
+            timeline: [],
+            hourly: [],
+          ),
+          dateLabel: '9월 16일',
+          mood: 'clear',
+          serverFeaturesAvailable: true,
+          onRefresh: () async {},
+          onDetail: (_) {},
+        ),
+      ),
+    ));
+
+    expect(
+      find.text(
+        '맑은 하늘이 이어지는 날씨예요. 실제 기온보다 2.0℃ 낮지만, '
+        '체감 상 조금 덥게 느껴질 수 있어요.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Future<void> _pumpCard(

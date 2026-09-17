@@ -1,6 +1,7 @@
 export type ProviderFailureReason =
   | 'NOT_CONFIGURED'
   | 'AUTHORIZATION_FAILED'
+  | 'QUOTA_EXCEEDED'
   | 'RATE_LIMITED'
   | 'UPSTREAM_CLIENT_ERROR'
   | 'UPSTREAM_SERVER_ERROR'
@@ -68,7 +69,8 @@ export function safeErrorName(error: unknown): string {
     'ReferenceError', 'URIError', 'EvalError', 'AggregateError', 'TimeoutError', 'AbortError',
     'ItsRoadControlProviderError', 'KmaRoadIceProviderError', 'KmaWarningProviderError',
     'KmaPrecipitationObservationProviderError', 'KmaUvProviderError', 'KmaWeatherProviderError',
-    'AirKoreaAirQualityProviderError'];
+    'AirKoreaAirQualityProviderError', 'KmaDailyObservationProviderError',
+    'KmaHourlyObservationProviderError', 'KmaMidTermProviderError'];
   return allowed.includes(error.name) ? error.name : 'Error';
 }
 
@@ -86,6 +88,9 @@ function failureReason(
   if (errorName === 'TypeError') return 'NETWORK_ERROR';
   if (/\bnetwork\b/i.test(message)) return 'NETWORK_ERROR';
   if (/not configured/i.test(message)) return 'NOT_CONFIGURED';
+  if (/quota\s+exceeded|일일\s*최대\s*호출|호출\s*용량\s*제한/i.test(message)) {
+    return 'QUOTA_EXCEEDED';
+  }
   if (httpStatus === 401 || httpStatus === 403) {
     return 'AUTHORIZATION_FAILED';
   }

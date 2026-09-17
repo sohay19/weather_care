@@ -112,6 +112,10 @@ void main() {
     final response = ComparisonResponse.fromJson({
       'comparisonAvailable': true,
       'targetDate': '2026-08-23',
+      'current': {
+        'temperature': 22,
+        'apparentTemperature': 21.0,
+      },
       'comparison': {
         'temperature': 20,
         'apparentTemperature': 19.5,
@@ -123,6 +127,7 @@ void main() {
 
     expect(response.comparisonAvailable, isTrue);
     expect(response.targetDate, '2026-08-23');
+    expect(response.current?.temperature, 22);
     expect(response.comparison?.temperature, 20);
     expect(response.comparison?.apparentTemperature, 19.5);
     expect(response.comparison?.pm25, 20);
@@ -447,8 +452,8 @@ void main() {
     expect(find.text('수원 지금 날씨'), findsOneWidget);
     expect(find.textContaining('선택 지역'), findsNothing);
     expect(find.text('Check List'), findsOneWidget);
-    expect(find.text('오늘 준비할 물건을 확인해요'), findsOneWidget);
-    expect(find.text('오늘은 특별히 챙길 준비물이 없어요'), findsOneWidget);
+    expect(find.text('외출 전 준비할 물건을 확인해요'), findsOneWidget);
+    expect(find.text('지금은 특별히 챙길 준비물이 없어요'), findsOneWidget);
     expect(find.text('간단한 타임라인'), findsOneWidget);
     expect(find.text('표시할 타임라인이 없어요'), findsOneWidget);
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
@@ -463,7 +468,8 @@ void main() {
       tester.getTopLeft(find.text('오후 3시 예상기온')).dy,
       tester.getTopLeft(find.text('예상 체감온도')).dy,
     );
-    const weatherFeeling = '구름이 많은 날씨예요. 체감 상 조금 덥게 느껴질 수 있어요.';
+    const weatherFeeling =
+        '구름이 많은 날씨예요. 실제 기온보다 0.6℃ 낮지만, 체감 상 조금 덥게 느껴질 수 있어요.';
     expect(find.text(weatherFeeling), findsOneWidget);
     expect(
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
@@ -545,7 +551,7 @@ void main() {
     );
     expect(find.text('Check List + 근거와 자료'), findsNothing);
     expect(find.text('간단한 타임라인'), findsNothing);
-    expect(find.text('오늘 준비할 물건을 확인해요'), findsNothing);
+    expect(find.text('외출 전 준비할 물건을 확인해요'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -625,15 +631,15 @@ void main() {
     expect(find.text('시간별 예보'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('server failure dialog recommends retry before direct forecast',
+  testWidgets('server failure dialog retries without direct API fallback',
       (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: ServerConnectionFailureDialog()),
     );
 
     expect(find.text('운영 서버에 연결하지 못했어요'), findsOneWidget);
-    expect(find.textContaining('운영 서버 연결을 먼저 다시 시도'), findsOneWidget);
-    expect(find.text('단기예보만 보기'), findsOneWidget);
+    expect(find.textContaining('서버 연결을 다시 시도'), findsOneWidget);
+    expect(find.text('단기예보만 보기'), findsNothing);
     expect(find.text('운영 서버 다시 시도'), findsOneWidget);
   });
 
@@ -664,7 +670,7 @@ void main() {
     final bagItem = find.byKey(const ValueKey('bag-item-umbrella'));
     await tester.pumpAndSettle();
     expect(bagItem, findsOneWidget);
-    expect(find.text('오늘 준비할 물건을 확인해요'), findsOneWidget);
+    expect(find.text('외출 전 준비할 물건을 확인해요'), findsOneWidget);
     expect(find.text('오후부터 필요해요'), findsNothing);
     expect(find.textContaining('준비물은 여기서 체크하고'), findsNothing);
     expect(find.textContaining('한국시간 0시에 초기화'), findsNothing);
@@ -702,7 +708,7 @@ void main() {
     }
 
     await tester.pumpWidget(section(const []));
-    expect(find.text('오늘은 특별히 챙길 준비물이 없어요'), findsOneWidget);
+    expect(find.text('지금은 특별히 챙길 준비물이 없어요'), findsOneWidget);
     expect(find.textContaining('준비물은 여기서 체크하고'), findsNothing);
     expect(tester.takeException(), isNull);
 

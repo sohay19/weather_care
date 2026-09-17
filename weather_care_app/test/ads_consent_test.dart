@@ -44,6 +44,14 @@ void main() {
       AdsConsent.debugBypassAllowed(requested: false, releaseMode: false),
       isFalse,
     );
+    expect(
+      AdsConsent.debugBypassAllowed(
+        requested: false,
+        releaseMode: false,
+        debugMode: true,
+      ),
+      isTrue,
+    );
   });
   test('form and eligibility precede initialization; initializes only once',
       () async {

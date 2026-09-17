@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
+import 'missing_data_retry.dart';
 
 class ServerFeatureUnavailableCard extends StatelessWidget {
   final IconData icon;
   final String title;
+  final Future<void> Function()? onRetry;
+  final bool retrying;
 
   const ServerFeatureUnavailableCard({
     super.key,
     required this.icon,
     required this.title,
+    this.onRetry,
+    this.retrying = false,
   });
 
   @override
@@ -54,6 +59,15 @@ class ServerFeatureUnavailableCard extends StatelessWidget {
               ],
             ),
           ),
+          if (onRetry != null) ...[
+            const SizedBox(height: 10),
+            MissingDataRetry(
+              message: '$title 자료를 받지 못했어요.',
+              retryKey: 'server-feature-retry-$title',
+              onRetry: onRetry!,
+              retrying: retrying,
+            ),
+          ],
         ],
       ),
     );

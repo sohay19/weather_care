@@ -26,12 +26,14 @@ class AdsConsent extends ChangeNotifier {
   static bool debugBypassAllowed({
     required bool requested,
     required bool releaseMode,
+    bool debugMode = false,
   }) =>
-      requested && !releaseMode;
+      !releaseMode && (requested || debugMode);
 
   static final bool _debugBypass = debugBypassAllowed(
     requested: _debugBypassRequested,
     releaseMode: kReleaseMode,
+    debugMode: kDebugMode,
   );
 
   static final instance = AdsConsent(
@@ -85,6 +87,11 @@ class AdsConsent extends ChangeNotifier {
 
   Future<void> _run(bool options) async {
     if (busy || (options && !privacyOptionsRequired)) return;
+    if (kDebugMode) {
+      debugPrint(
+        _debugBypass ? '광고 동의 확인: Debug 테스트 우회 사용' : '광고 동의 확인: UMP 사용',
+      );
+    }
     busy = true;
     canRequestAds = false;
     error = null;
@@ -105,10 +112,14 @@ class AdsConsent extends ChangeNotifier {
         _initialized = true;
       }
       canRequestAds = eligible;
-    } catch (_) {
+      if (kDebugMode) debugPrint('광고 요청 가능 상태: $eligible');
+    } catch (caught) {
       // Conservative: no cached-consent fallback on failure in this app.
       canRequestAds = false;
       error = '광고 개인정보 선택을 확인하지 못했어요.\n날씨 기능은 계속 이용할 수 있어요.';
+      if (kDebugMode) {
+        debugPrint('광고 동의 확인 실패: ${caught.runtimeType}');
+      }
     } finally {
       busy = false;
       notifyListeners();

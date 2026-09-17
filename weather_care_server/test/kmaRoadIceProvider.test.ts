@@ -80,6 +80,26 @@ describe('KMA road ice provider', () => {
       parseRoadIceArchive(toArrayBuffer(bytes), '050'),
     ).toThrow('not a ZIP archive');
   });
+
+  it('도로 파일을 한 번만 받아 여러 좌표를 함께 판정한다', async () => {
+    const fetcher = vi.fn(async () => new Response(roadIceArchive(), {
+      headers: { 'Content-Type': 'application/zip' },
+    }));
+    const provider = new KmaRoadIceProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-01-15T01:00:00Z'),
+    });
+
+    const risks = await provider.getNearestRisksByLocations([
+      { latitude: 37.2636, longitude: 127.0286 },
+      { latitude: 37.2640, longitude: 127.0290 },
+    ], ['050']);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(risks).toHaveLength(2);
+    expect(risks[0]).toMatchObject({ roadNumber: '050', level: 2 });
+  });
 });
 
 function roadIceArchive(level = 2, roadNumber = '050'): ArrayBuffer {

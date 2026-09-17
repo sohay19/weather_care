@@ -2,7 +2,12 @@ import {
   CurrentPrecipitationObservation,
   PrecipitationConsensusState,
 } from '../../types';
-import { kmaApiHubErrorStatus } from '../kmaApiHubResponse';
+import {
+  kmaApiHubErrorReason,
+  kmaApiHubErrorStatus,
+} from '../kmaApiHubResponse';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
+import { mapWithConcurrency } from '../../utils/concurrencyLimiter';
 
 const ANALYSIS_POINT_URL =
   'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-sfc_obs_nc_pt_api';
@@ -35,6 +40,13 @@ interface KmaPrecipitationObservationProviderOptions {
   timeoutMs?: number;
   observationDelayMinutes?: number;
   attempts?: number;
+}
+
+export interface PrecipitationCollectionLocation {
+  latitude: number;
+  longitude: number;
+  referenceRainDetected: boolean;
+  referenceObservedAt: string;
 }
 
 type KmaPrecipitationFailureDetail =
@@ -117,6 +129,12 @@ export class KmaPrecipitationObservationProvider {
         };
       } catch (error) {
         lastError = error;
+        if (
+          error instanceof Error &&
+          /\bstatus\s+4\d{2}\b/i.test(error.message)
+        ) {
+          throw error;
+        }
       }
     }
 
@@ -128,6 +146,95 @@ export class KmaPrecipitationObservationProvider {
         ? lastError.providerFailureDetail
         : undefined,
     );
+  }
+
+  async getCurrentByLocations(
+    locations: readonly PrecipitationCollectionLocation[],
+    maxValidationRequests = 69,
+  ): Promise<CurrentPrecipitationObservation[]> {
+    for (const location of locations) {
+      validateLocation(location.latitude, location.longitude);
+    }
+    if (locations.length === 0) return [];
+    if (!this.serviceKey) {
+      throw new KmaPrecipitationObservationProviderError(
+        'KMA APIHub service key is not configured',
+      );
+    }
+
+    const latest = floorToFiveMinutes(
+      new Date(this.now().getTime() - this.observationDelayMinutes * 60 * 1000),
+    );
+    let target = latest;
+    let payload: ArrayBuffer | undefined;
+    let lastError: unknown;
+    for (let index = 0; index < this.attempts; index += 1) {
+      target = new Date(latest.getTime() - index * FIVE_MINUTES_MS);
+      try {
+        payload = await this.fetchRadarComposite(target);
+        break;
+      } catch (error) {
+        lastError = error;
+        if (error instanceof Error && /\bstatus\s+4\d{2}\b/i.test(error.message)) {
+          throw error;
+        }
+      }
+    }
+    if (!payload) {
+      throw new KmaPrecipitationObservationProviderError(
+        lastError instanceof Error ? lastError.message : 'KMA radar is not available',
+      );
+    }
+
+    const radar = locations.map((location) =>
+      radarRainAtPoint(payload!, radarGridPoint(location.latitude, location.longitude)),
+    );
+    const mismatchIndexes = locations
+      .map((location, index) => ({ location, index }))
+      .filter(({ location, index }) =>
+        location.referenceRainDetected !== radar[index].rainDetected,
+      )
+      .slice(0, Math.max(0, maxValidationRequests));
+    const validations = await mapWithConcurrency(
+      mismatchIndexes,
+      2,
+      async ({ location, index }) => {
+        try {
+          return {
+            index,
+            value: await this.fetchAnalysisRain(
+              target,
+              location.latitude,
+              location.longitude,
+            ),
+          };
+        } catch {
+          return { index, value: undefined };
+        }
+      },
+    );
+    const validationByIndex = new Map(
+      validations.map((validation) => [validation.index, validation.value]),
+    );
+
+    return locations.map((location, index) => {
+      const validation = validationByIndex.get(index);
+      const analysisRainDetected = validation?.rainDetected ??
+        location.referenceRainDetected;
+      return {
+        observedAt: validation?.observedAt ?? location.referenceObservedAt,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        analysisRainDetected,
+        radarRainDetected: radar[index].rainDetected,
+        state: validation === undefined &&
+            location.referenceRainDetected !== radar[index].rainDetected
+          ? 'MISMATCH'
+          : consensusState(analysisRainDetected, radar[index].rainDetected),
+        radarDbz: radar[index].dbz,
+        provider: 'KMA_ANALYSIS_RADAR',
+      };
+    });
   }
 
   private async fetchAnalysisRain(
@@ -152,7 +259,7 @@ export class KmaPrecipitationObservationProvider {
     });
     if (!response.ok) {
       throw new KmaPrecipitationObservationProviderError(
-        `KMA analysis request failed with status ${response.status}`,
+        await providerHttpFailureMessage(response, 'KMA analysis request'),
       );
     }
     return parseAnalysisRain(await response.text(), targetKst);
@@ -163,6 +270,11 @@ export class KmaPrecipitationObservationProvider {
     latitude: number,
     longitude: number,
   ): Promise<{ rainDetected: boolean; dbz?: number }> {
+    const point = radarGridPoint(latitude, longitude);
+    return radarRainAtPoint(await this.fetchRadarComposite(target), point);
+  }
+
+  private async fetchRadarComposite(target: Date): Promise<ArrayBuffer> {
     const query = new URLSearchParams({
       tm: compactKst(target),
       cmp: 'HSR',
@@ -179,11 +291,10 @@ export class KmaPrecipitationObservationProvider {
     });
     if (!response.ok) {
       throw new KmaPrecipitationObservationProviderError(
-        `KMA radar request failed with status ${response.status}`,
+        await providerHttpFailureMessage(response, 'KMA radar request'),
       );
     }
-    const point = radarGridPoint(latitude, longitude);
-    return radarRainAtPoint(await response.arrayBuffer(), point);
+    return response.arrayBuffer();
   }
 }
 
@@ -193,8 +304,11 @@ export function parseAnalysisRain(
 ): { observedAt: string; rainDetected: boolean } {
   const apiHubStatus = kmaApiHubErrorStatus(payload);
   if (apiHubStatus !== undefined) {
+    const reason = kmaApiHubErrorReason(payload);
     throw new KmaPrecipitationObservationProviderError(
-      `KMA analysis response failed with status ${apiHubStatus}`,
+      `KMA analysis response failed with status ${apiHubStatus}${
+        reason ? `: ${reason}` : ''
+      }`,
     );
   }
   const rows = payload

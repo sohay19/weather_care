@@ -1,5 +1,7 @@
 import { strFromU8, unzipSync } from 'fflate';
 import { RoadIceRisk } from '../../types';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
+import { mapWithConcurrency } from '../../utils/concurrencyLimiter';
 
 const ROAD_RISK_URL =
   'https://apihub.kma.go.kr/api/typ04/url/road_file_down.php';
@@ -42,6 +44,11 @@ interface RoadIceSegment {
   toLongitude: number;
 }
 
+export interface RoadIceCollectionLocation {
+  latitude: number;
+  longitude: number;
+}
+
 export class KmaRoadIceProviderError extends Error {
   constructor(message: string) {
     super(message);
@@ -81,49 +88,46 @@ export class KmaRoadIceProvider {
       return undefined;
     }
 
-    const segmentGroups = await Promise.all(
-      roadNumbers.map((roadNumber) => this.fetchRoadSegments(roadNumber)),
+    const segmentGroups = await mapWithConcurrency(
+      roadNumbers,
+      2,
+      (roadNumber) => this.fetchRoadSegments(roadNumber),
     );
-    const candidates = segmentGroups
-      .flat()
-      .filter((segment) => segment.level > 0)
-      .map((segment) => ({
-        segment,
-        distanceMeters: distanceToSegmentMeters(
-          latitude,
-          longitude,
-          segment.fromLatitude,
-          segment.fromLongitude,
-          segment.toLatitude,
-          segment.toLongitude,
-        ),
-      }))
-      .filter((item) => item.distanceMeters <= this.maxDistanceMeters)
-      .sort(
-        (left, right) =>
-          right.segment.level - left.segment.level ||
-          left.distanceMeters - right.distanceMeters,
-      );
-    const selected = candidates[0];
-    if (!selected) return undefined;
+    return nearestRisk(
+      segmentGroups.flat(),
+      latitude,
+      longitude,
+      this.maxDistanceMeters,
+    );
+  }
 
-    const segment = selected.segment;
-    const level = segment.level as 1 | 2 | 3;
-    return {
-      producedAt: segment.producedAt,
-      roadNumber: segment.roadNumber,
-      roadName: ROAD_NAMES[segment.roadNumber] ?? `고속도로 ${segment.roadNumber}`,
-      linkId: segment.linkId,
-      level,
-      levelLabel: level === 1 ? '관심' : level === 2 ? '주의' : '위험',
-      sourceType: segment.sourceType,
-      fromLatitude: segment.fromLatitude,
-      fromLongitude: segment.fromLongitude,
-      toLatitude: segment.toLatitude,
-      toLongitude: segment.toLongitude,
-      distanceMeters: Math.round(selected.distanceMeters),
-      provider: '기상청 도로살얼음 발생 가능 정보',
-    };
+  async getNearestRisksByLocations(
+    locations: readonly RoadIceCollectionLocation[],
+    roadNumbers: readonly string[] = ROAD_ICE_ROAD_NUMBERS,
+  ): Promise<Array<RoadIceRisk | undefined>> {
+    for (const location of locations) {
+      validateLocation(location.latitude, location.longitude);
+    }
+    if (!this.serviceKey) {
+      throw new KmaRoadIceProviderError(
+        'KMA APIHub service key is not configured',
+      );
+    }
+    if (locations.length === 0 || !isRoadIceSeason(this.now()) || roadNumbers.length === 0) {
+      return locations.map(() => undefined);
+    }
+    const segmentGroups = await mapWithConcurrency(
+      roadNumbers,
+      2,
+      (roadNumber) => this.fetchRoadSegments(roadNumber),
+    );
+    const segments = segmentGroups.flat();
+    return locations.map((location) => nearestRisk(
+      segments,
+      location.latitude,
+      location.longitude,
+      this.maxDistanceMeters,
+    ));
   }
 
   private async fetchRoadSegments(
@@ -145,11 +149,58 @@ export class KmaRoadIceProvider {
     });
     if (!response.ok) {
       throw new KmaRoadIceProviderError(
-        `KMA road risk request failed with status ${response.status}`,
+        await providerHttpFailureMessage(response, 'KMA road risk request'),
       );
     }
     return parseRoadIceArchive(await response.arrayBuffer(), roadNumber);
   }
+}
+
+function nearestRisk(
+  segments: readonly RoadIceSegment[],
+  latitude: number,
+  longitude: number,
+  maxDistanceMeters: number,
+): RoadIceRisk | undefined {
+  const candidates = segments
+      .filter((segment) => segment.level > 0)
+      .map((segment) => ({
+        segment,
+        distanceMeters: distanceToSegmentMeters(
+          latitude,
+          longitude,
+          segment.fromLatitude,
+          segment.fromLongitude,
+          segment.toLatitude,
+          segment.toLongitude,
+        ),
+      }))
+      .filter((item) => item.distanceMeters <= maxDistanceMeters)
+      .sort(
+        (left, right) =>
+          right.segment.level - left.segment.level ||
+          left.distanceMeters - right.distanceMeters,
+      );
+  const selected = candidates[0];
+  if (!selected) return undefined;
+
+  const segment = selected.segment;
+  const level = segment.level as 1 | 2 | 3;
+  return {
+      producedAt: segment.producedAt,
+      roadNumber: segment.roadNumber,
+      roadName: ROAD_NAMES[segment.roadNumber] ?? `고속도로 ${segment.roadNumber}`,
+      linkId: segment.linkId,
+      level,
+      levelLabel: level === 1 ? '관심' : level === 2 ? '주의' : '위험',
+      sourceType: segment.sourceType,
+      fromLatitude: segment.fromLatitude,
+      fromLongitude: segment.fromLongitude,
+      toLatitude: segment.toLatitude,
+      toLongitude: segment.toLongitude,
+      distanceMeters: Math.round(selected.distanceMeters),
+      provider: '기상청 도로살얼음 발생 가능 정보',
+  };
 }
 
 export function parseRoadIceArchive(
@@ -256,7 +307,7 @@ function parseRoadIceCsv(
   });
 }
 
-function isRoadIceSeason(now: Date): boolean {
+export function isRoadIceSeason(now: Date): boolean {
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   const month = kst.getUTCMonth() + 1;
   const day = kst.getUTCDate();

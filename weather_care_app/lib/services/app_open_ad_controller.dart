@@ -26,7 +26,7 @@ class GoogleAppOpenAdLoader implements AppOpenAdLoader {
   Future<AppOpenAdHandle?> load({required String adUnitId}) async {
     final completion = Completer<AppOpenAdHandle?>();
     try {
-      await AppOpenAd.load(
+      unawaited(AppOpenAd.load(
         adUnitId: adUnitId,
         request: const AdRequest(nonPersonalizedAds: true),
         adLoadCallback: AppOpenAdLoadCallback(
@@ -41,12 +41,14 @@ class GoogleAppOpenAdLoader implements AppOpenAdLoader {
             if (!completion.isCompleted) completion.complete(null);
           },
         ),
-      );
+      ).catchError((_) {
+        if (!completion.isCompleted) completion.complete(null);
+      }));
     } catch (_) {
       if (!completion.isCompleted) completion.complete(null);
     }
     return completion.future.timeout(
-      const Duration(seconds: 30),
+      const Duration(seconds: 65),
       onTimeout: () {
         if (!completion.isCompleted) completion.complete(null);
         return null;
@@ -142,9 +144,9 @@ class AppOpenAdController {
     }
     _started = true;
     consent.addListener(_syncConsent);
+    _lifecycleSubscription = lifecycle.states.listen(_onAppStateChanged);
     try {
-      await lifecycle.startListening();
-      _lifecycleSubscription = lifecycle.states.listen(_onAppStateChanged);
+      await lifecycle.startListening().timeout(const Duration(seconds: 3));
     } catch (_) {
       // Cold-start loading still works if lifecycle events are unavailable.
     }
@@ -208,6 +210,7 @@ class AppOpenAdController {
     }
 
     _loading = true;
+    if (kDebugMode) debugPrint('앱 오프닝 광고 로드 요청');
     final loaded = await loader.load(adUnitId: adUnitId);
     _loading = false;
     if (!_started || !consent.canRequestAds) {
@@ -215,10 +218,12 @@ class AppOpenAdController {
       return;
     }
     if (loaded == null) {
+      if (kDebugMode) debugPrint('앱 오프닝 광고 로드 실패');
       _initialShowPending = false;
       return;
     }
 
+    if (kDebugMode) debugPrint('앱 오프닝 광고 로드 완료');
     _ad = loaded;
     _loadedAt = now();
     if (_initialShowPending && !_homeReady) {

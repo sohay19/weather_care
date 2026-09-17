@@ -10,7 +10,6 @@ import '../../services/api_client.dart';
 import '../../services/server_data_access.dart';
 import '../../services/app_config.dart';
 import '../../services/app_settings_repository.dart';
-import '../../services/kma_direct_weather_service.dart';
 import '../../services/kma_grid.dart';
 import '../../services/installation_identity.dart';
 import '../../services/notification_registration_service.dart';
@@ -115,6 +114,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _detailFocusRequestId = 0;
   bool _loading = false;
   bool _weeklyLoading = false;
+  bool _todayRetrying = false;
+  bool _weeklyRetrying = false;
   bool _mainDetailsLoading = false;
   bool _comparisonLoading = false;
   bool _homeReadyReported = false;
@@ -194,13 +195,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final client =
         InstallationApiClient(baseUrl: config.serverUrl, access: access);
     _settingsSync = widget.settingsSync ?? SettingsSyncService(client);
-    _service = widget.weatherService ??
-        WeatherService(
-          client,
-          directKma: KmaDirectWeatherService(
-            serviceKey: config.kmaServiceKey,
-          ),
-        );
+    _service = widget.weatherService ?? WeatherService(client);
     _notificationRegistration = widget.notificationRegistration ??
         NotificationRegistrationService(client,
             canRegister: () => !access.paused);
@@ -509,16 +504,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           continue;
         }
 
-        if (action == ServerFailureAction.useDirectForecast) {
-          final directResult = await service.fetchDirectWeather(
-            nx: grid.nx,
-            ny: grid.ny,
-          );
-          if (!mounted || revision != _locationRevision) return;
-          _applyResult(directResult, grid);
-          return;
-        }
-
         _applyResult(serverResult, grid);
         return;
       }
@@ -545,6 +530,74 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _yesterdayComparison = comparison;
       _comparisonLoading = false;
     });
+  }
+
+  Future<void> _retryTodayData() async {
+    final service = _service;
+    final grid = _weatherGrid;
+    if (service == null || grid == null || _todayRetrying) return;
+    final revision = _locationRevision;
+    setState(() => _todayRetrying = true);
+    try {
+      final today = await service.fetchTodayWeather(
+        installationId: _settings.installationId,
+        nx: grid.nx,
+        ny: grid.ny,
+        coordinates:
+            _settings.locationMode == 'GPS' && _location.canUseLocalAnalysis
+                ? _coordinates
+                : null,
+      );
+      if (!_applyServerToday(revision, grid, today)) {
+        if (mounted && revision == _locationRevision) _rejectUnexpectedGrid();
+      }
+    } catch (_) {
+      if (mounted && revision == _locationRevision) {
+        setState(() => _statusMessage = '오늘 자료를 다시 받지 못했어요.');
+      }
+    } finally {
+      if (mounted && revision == _locationRevision) {
+        setState(() => _todayRetrying = false);
+      }
+    }
+  }
+
+  Future<void> _retryWeeklyData() async {
+    final service = _service;
+    final grid = _weatherGrid;
+    if (service == null || grid == null || _weeklyRetrying) return;
+    final revision = _locationRevision;
+    setState(() => _weeklyRetrying = true);
+    try {
+      final weekly = await service.fetchWeeklyWeather(
+        installationId: _settings.installationId,
+        nx: grid.nx,
+        ny: grid.ny,
+        regionCode:
+            _settings.locationMode == 'GPS' ? null : _manualRegion?.code,
+        regionName: _settings.locationMode == 'GPS'
+            ? _gpsRegionName
+            : _manualRegion?.fullName,
+      );
+      _applyServerWeekly(revision, weekly);
+    } catch (_) {
+      if (mounted && revision == _locationRevision) {
+        setState(() => _statusMessage = '주간 자료를 다시 받지 못했어요.');
+      }
+    } finally {
+      if (mounted && revision == _locationRevision) {
+        setState(() => _weeklyRetrying = false);
+      }
+    }
+  }
+
+  Future<void> _retryYesterdayComparison() async {
+    final service = _service;
+    final grid = _weatherGrid;
+    if (service == null || grid == null || _comparisonLoading) return;
+    final revision = _locationRevision;
+    setState(() => _comparisonLoading = true);
+    await _fetchYesterdayComparison(service, revision, grid);
   }
 
   bool _applyServerToday(
@@ -731,6 +784,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   : TodayTab(
                       today: today,
                       onRefresh: _loadData,
+                      onRetryData: _retryTodayData,
+                      retrying: _todayRetrying,
                       advertisement: _todayAdvertisementActivated
                           ? const ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.today,
@@ -744,6 +799,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
+                      onRetryData: _retryTodayData,
+                      retrying: _todayRetrying,
                       focusTopic: _detailFocusTopic,
                       focusLifestyleType: _detailFocusLifestyleType,
                       focusSource: _detailFocusSource,
@@ -760,6 +817,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       yesterdayComparison: _yesterdayComparison,
                       comparisonLoading: _comparisonLoading,
                       onRefresh: _loadData,
+                      onRetryData: _retryTodayData,
+                      onRetryComparison: _retryYesterdayComparison,
+                      retryingData: _todayRetrying,
                       onDetail: _openRecommendationDetail,
                       advertisement: _mainAdvertisementActivated
                           ? const ConsentAwareNativeAdCard(
@@ -780,6 +840,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       weekly: weekly,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _loadData,
+                      onRetryData: _retryWeeklyData,
+                      retrying: _weeklyRetrying,
                       advertisement: _weekAdvertisementActivated
                           ? const ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.week,
@@ -885,7 +947,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return WeatherStatusView(
       viewKey: viewKey,
       loading: loading ?? (_loadMode == null || _loading),
-      offline: _loadMode == WeatherLoadMode.offline,
+      offline: _loadMode == WeatherLoadMode.unavailable,
       title: missingLocation ? '기준 위치를 확인해주세요' : title,
       message: message ?? _statusMessage,
       onRetry: _loadData,

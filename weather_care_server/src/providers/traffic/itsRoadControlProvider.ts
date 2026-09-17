@@ -1,4 +1,5 @@
 import { OfficialRoadControl } from '../../types';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const DEFAULT_RADIUS_METERS = 3_000;
 const ITS_EVENT_URL = 'https://openapi.its.go.kr:9443/eventInfo';
@@ -91,7 +92,9 @@ export class ItsRoadControlProvider {
       );
     }
     if (!response.ok) {
-      throw new Error(`ITS road control request failed: ${response.status}`);
+      throw new Error(
+        await providerHttpFailureMessage(response, 'ITS road control request'),
+      );
     }
     let payload: unknown;
     try {
@@ -111,14 +114,21 @@ export class ItsRoadControlProvider {
 
 export function itsRoadControlProviderFromEnvironment(
   environment: ItsRoadControlEnvironment,
+  options: { timeoutMs?: number } = {},
 ): ItsRoadControlProvider | undefined {
   const relayUrl = environment.ITS_RELAY_URL?.trim();
   const relayToken = environment.ITS_RELAY_TOKEN?.trim();
   if (relayUrl && relayToken) {
-    return new ItsRoadControlProvider({ relayUrl, relayToken });
+    return new ItsRoadControlProvider({
+      relayUrl,
+      relayToken,
+      timeoutMs: options.timeoutMs,
+    });
   }
   const apiKey = environment.ITS_API_KEY?.trim();
-  return apiKey ? new ItsRoadControlProvider({ apiKey }) : undefined;
+  return apiKey
+    ? new ItsRoadControlProvider({ apiKey, timeoutMs: options.timeoutMs })
+    : undefined;
 }
 
 export function hasItsRoadControlConfiguration(

@@ -5,7 +5,7 @@ import comparisonRoutes from './api/comparison';
 import installationsRoutes from './api/installations';
 import notificationSettingsRoutes from './api/notificationSettings';
 import installationOwnershipRoutes from './api/installationOwnership';
-import { runRecommendationNotificationJobFromCron } from './cron/jobs';
+import { runScheduledJobs } from './cron/jobs';
 import { safeErrorName } from './observability/providerErrorDiagnostics';
 import { recoveryActive, recoveryResponse } from './recovery/maintenance';
 
@@ -37,7 +37,7 @@ export default {
   async scheduled(event: ScheduledController, env: ServerEnv) {
     if (recoveryActive(env.RECOVERY_MODE)) return;
     try {
-      await runRecommendationNotificationJobFromCron(env, event.scheduledTime);
+      await runScheduledJobs(env, event.cron, event.scheduledTime);
     } catch {
       // Preserve failed-job semantics without exposing the original error/cause.
       throw new Error('SCHEDULED_JOB_FAILED');

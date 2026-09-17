@@ -1,13 +1,6 @@
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
-import {
-  enrichForecastWithEnvironmentalData,
-  loadEnvironmentalData,
-} from '../providers/environmental/environmentalDataService';
-import { KmaWeatherProvider } from '../providers/weather/kmaWeatherProvider';
 import { WeatherForecast } from '../providers/weather/weatherProvider';
-import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import {
-  KmaWarningProvider,
   KmaWarningRegionMatch,
   OfficialWeatherWarning,
 } from '../providers/warnings/kmaWarningProvider';
@@ -32,18 +25,16 @@ import {
   changedWarningNotification,
   releasedWarningNotification,
 } from '../presentation/officialWarningMessages';
-import {
-  KmaRoadIceProvider,
-  ROAD_ICE_ROAD_NUMBERS,
-} from '../providers/road/kmaRoadIceProvider';
+import { ROAD_ICE_ROAD_NUMBERS } from '../providers/road/kmaRoadIceProvider';
 import { roadIceNotification } from '../presentation/roadIceMessage';
-import {
-  hasItsRoadControlConfiguration,
-  itsRoadControlProviderFromEnvironment,
-} from '../providers/traffic/itsRoadControlProvider';
 import { roadControlNotification } from '../presentation/roadControlMessage';
 import { installationExpirySql } from '../database/dataRetention';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
+import {
+  collectedCacheKey,
+  getCollectedCache,
+} from '../database/collectedWeatherRepository';
+import type { CollectedRegionBundle, CollectedWarningBundle } from '../collection/collectionTypes';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -354,15 +345,14 @@ async function defaultForecastLoader(
   ny: number,
   coordinates?: { latitude: number; longitude: number },
 ): Promise<WeatherForecast> {
-  const forecast = await new KmaWeatherProvider({
-    serviceKey: env.KMA_SERVICE_KEY,
-  }).getForecastByRegion(nx, ny);
-  const environmental = await loadEnvironmentalData(
-    env,
-    regionMetadataForGrid(nx, ny),
-    { nx, ny, coordinates },
+  const cached = await getCollectedCache<CollectedRegionBundle>(
+    env.DB,
+    `COLLECTED_REGION_${nx}_${ny}`,
   );
-  return enrichForecastWithEnvironmentalData(forecast, environmental);
+  if (!cached || cached.status !== 'AVAILABLE') {
+    throw new Error('COLLECTED_FORECAST_NOT_READY');
+  }
+  return cached.value.forecast;
 }
 
 async function defaultSender(
@@ -384,18 +374,33 @@ async function defaultPrecipitationLoader(
   latitude: number,
   longitude: number,
 ): Promise<CurrentPrecipitationObservation> {
-  return new KmaPrecipitationObservationProvider({
-    serviceKey: env.KMA_APIHUB_KEY,
-  }).getCurrentByLocation(latitude, longitude);
+  const cached = await getCollectedCache<CurrentPrecipitationObservation>(
+    env.DB,
+    collectedCacheKey.precipitation(latitude, longitude),
+  );
+  if (!cached || cached.status !== 'AVAILABLE') {
+    throw new Error('COLLECTED_PRECIPITATION_NOT_READY');
+  }
+  return cached.value;
 }
 
 async function defaultWarningLoader(
   env: ServerEnv,
   regionIds: readonly string[],
 ): Promise<OfficialWeatherWarning[]> {
-  return new KmaWarningProvider({
-    serviceKey: env.KMA_APIHUB_KEY,
-  }).getActiveForRegions(regionIds);
+  const result = await env.DB.prepare(
+    `SELECT payload FROM weather_cache
+     WHERE cache_type = 'COLLECTED_WARNING' AND status = 'AVAILABLE'`,
+  ).all<{ payload: string }>();
+  const requested = new Set(regionIds);
+  return result.results.flatMap((row) => {
+    try {
+      const bundle = JSON.parse(row.payload) as CollectedWarningBundle;
+      return bundle.warnings.filter((warning) => requested.has(warning.regionId));
+    } catch {
+      return [];
+    }
+  });
 }
 
 async function defaultWarningRegionResolver(
@@ -403,9 +408,7 @@ async function defaultWarningRegionResolver(
   latitude: number,
   longitude: number,
 ): Promise<KmaWarningRegionMatch> {
-  return new KmaWarningProvider({
-    serviceKey: env.KMA_APIHUB_KEY,
-  }).resolveRegionByLocation(latitude, longitude);
+  throw new Error('COLLECTED_WARNING_REGION_NOT_READY');
 }
 
 async function defaultRoadIceLoader(
@@ -414,9 +417,11 @@ async function defaultRoadIceLoader(
   longitude: number,
   roadNumbers: readonly string[],
 ): Promise<RoadIceRisk | undefined> {
-  return new KmaRoadIceProvider({
-    serviceKey: env.KMA_APIHUB_KEY,
-  }).getNearestRiskByLocation(latitude, longitude, roadNumbers);
+  const cached = await getCollectedCache<RoadIceRisk | null>(
+    env.DB,
+    collectedCacheKey.roadIce(latitude, longitude),
+  );
+  return cached?.value ?? undefined;
 }
 
 async function defaultRoadControlLoader(
@@ -424,10 +429,11 @@ async function defaultRoadControlLoader(
   latitude: number,
   longitude: number,
 ): Promise<OfficialRoadControl | undefined> {
-  return itsRoadControlProviderFromEnvironment(env)?.getNearestActiveControl(
-    latitude,
-    longitude,
+  const cached = await getCollectedCache<OfficialRoadControl | null>(
+    env.DB,
+    collectedCacheKey.roadControl(latitude, longitude),
   );
+  return cached?.value ?? undefined;
 }
 
 async function collectRoadIceNotification(
@@ -443,7 +449,6 @@ async function collectRoadIceNotification(
     roadNumbers: readonly string[],
   ) => Promise<RoadIceRisk | undefined>,
 ): Promise<void> {
-  if (!env.KMA_APIHUB_KEY) return;
   if (row.latitude === null || row.longitude === null) return;
   const region = regionMetadataForGrid(row.nx, row.ny);
   const displayRegionName = region?.name ?? '현재 위치';
@@ -526,7 +531,6 @@ async function collectRoadControlNotification(
     longitude: number,
   ) => Promise<OfficialRoadControl | undefined>,
 ): Promise<void> {
-  if (!hasItsRoadControlConfiguration(env)) return;
   if (row.latitude === null || row.longitude === null) return;
   const locationKey = `${row.latitude.toFixed(5)}:${row.longitude.toFixed(5)}`;
   let controlPromise = roadControlByLocation.get(locationKey);
@@ -610,7 +614,6 @@ async function collectOfficialWarningNotifications(
     longitude: number,
   ) => Promise<KmaWarningRegionMatch>,
 ): Promise<void> {
-  if (!env.KMA_APIHUB_KEY) return;
   let regionKey = `${row.nx}:${row.ny}`;
 
   try {
@@ -846,7 +849,6 @@ async function collectCurrentRainNotification(
   ) => Promise<CurrentPrecipitationObservation>,
 ): Promise<void> {
   if (row.latitude === null || row.longitude === null) return;
-  if (!env.KMA_APIHUB_KEY) return;
   const locationKey = `${row.latitude.toFixed(5)}:${row.longitude.toFixed(5)}`;
   let observationPromise = precipitationByLocation.get(locationKey);
   if (!observationPromise) {

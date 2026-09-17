@@ -1,5 +1,9 @@
-import { kmaApiHubErrorStatus } from '../kmaApiHubResponse';
+import {
+  kmaApiHubErrorReason,
+  kmaApiHubErrorStatus,
+} from '../kmaApiHubResponse';
 import { DailyWeatherForecast } from './weatherProvider';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const DAILY_OBSERVATION_URL =
   'https://apihub.kma.go.kr/api/typ01/url/sfc_aws_day.php';
@@ -57,13 +61,29 @@ export class KmaDailyObservationProvider {
     startDate: string,
     endDate: string,
   ): Promise<DailyWeatherForecast[]> {
-    validateLocation(latitude, longitude);
+    const result = await this.getDailyByLocations(
+      [{ latitude, longitude }],
+      startDate,
+      endDate,
+    );
+    return result[0] ?? [];
+  }
+
+  async getDailyByLocations(
+    locations: readonly { latitude: number; longitude: number }[],
+    startDate: string,
+    endDate: string,
+  ): Promise<DailyWeatherForecast[][]> {
+    for (const location of locations) {
+      validateLocation(location.latitude, location.longitude);
+    }
     validateDateRange(startDate, endDate);
     if (!this.serviceKey) {
       throw new KmaDailyObservationProviderError(
         'KMA APIHub service key is not configured',
       );
     }
+    if (locations.length === 0) return [];
 
     const metrics = await Promise.allSettled(
       (['ta_min', 'ta_max', 'rn_day', 'sd_day_max'] as const).map(
@@ -110,30 +130,31 @@ export class KmaDailyObservationProvider {
       }
     }
 
-    const days: DailyWeatherForecast[] = [];
-    for (const date of calendarDates(startDate, endDate)) {
-      const candidates = [...byStationDay.values()]
-        .filter((station) =>
-          station.date === date &&
-          station.minTemperature !== undefined &&
-          station.maxTemperature !== undefined,
-        )
-        .map((station) => ({
-          station,
-          distanceKm:
-            distanceMetres(
-              latitude,
-              longitude,
-              station.latitude,
-              station.longitude,
-            ) / 1_000,
-        }))
-        .sort((left, right) => left.distanceKm - right.distanceKm);
-      const nearest = candidates[0];
-      if (!nearest) continue;
-      days.push(toDailyForecast(nearest.station, nearest.distanceKm));
-    }
-    return days;
+    return locations.map(({ latitude, longitude }) => {
+      const days: DailyWeatherForecast[] = [];
+      for (const date of calendarDates(startDate, endDate)) {
+        const candidates = [...byStationDay.values()]
+          .filter((station) =>
+            station.date === date &&
+            station.minTemperature !== undefined &&
+            station.maxTemperature !== undefined,
+          )
+          .map((station) => ({
+            station,
+            distanceKm:
+              distanceMetres(
+                latitude,
+                longitude,
+                station.latitude,
+                station.longitude,
+              ) / 1_000,
+          }))
+          .sort((left, right) => left.distanceKm - right.distanceKm);
+        const nearest = candidates[0];
+        if (nearest) days.push(toDailyForecast(nearest.station, nearest.distanceKm));
+      }
+      return days;
+    });
   }
 
   private async fetchMetric(
@@ -158,7 +179,11 @@ export class KmaDailyObservationProvider {
     const payload = await response.text();
     if (!response.ok) {
       throw new KmaDailyObservationProviderError(
-        `KMA daily observation request failed with status ${response.status}`,
+        await providerHttpFailureMessage(
+          response,
+          'KMA daily observation request',
+          payload,
+        ),
       );
     }
     return parseKmaDailyObservationRows(payload);
@@ -170,8 +195,11 @@ export function parseKmaDailyObservationRows(
 ): KmaDailyObservationRow[] {
   const apiHubStatus = kmaApiHubErrorStatus(payload);
   if (apiHubStatus !== undefined) {
+    const reason = kmaApiHubErrorReason(payload);
     throw new KmaDailyObservationProviderError(
-      `KMA daily observation response failed with status ${apiHubStatus}`,
+      `KMA daily observation response failed with status ${apiHubStatus}${
+        reason ? `: ${reason}` : ''
+      }`,
     );
   }
   return payload.split(/\r?\n/).flatMap((line) => {

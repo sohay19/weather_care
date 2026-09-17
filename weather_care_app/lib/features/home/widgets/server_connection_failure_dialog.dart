@@ -4,7 +4,6 @@ import '../../../theme/weather_theme.dart';
 
 enum ServerFailureAction {
   retryServer,
-  useDirectForecast,
 }
 
 class ServerConnectionFailureDialog extends StatelessWidget {
@@ -22,17 +21,11 @@ class ServerConnectionFailureDialog extends StatelessWidget {
         title: const Text('운영 서버에 연결하지 못했어요'),
         content: const Text(
           '준비물 추천과 오늘의 TODO는 운영 서버에 연결해야 정확하게 '
-          '제공할 수 있어요.\n\n맞춤 안내를 위해 운영 서버 연결을 먼저 '
-          '다시 시도해 주세요.\n급한 경우에는 앱에서 기상청 단기예보만 '
-          '확인할 수 있어요.',
+          '제공할 수 있어요.\n\n이 앱은 기상청 API를 직접 호출하지 '
+          '않으며, 운영 서버가 준비한 자료만 사용해요. '
+          '잠시 후 서버 연결을 다시 시도해 주세요.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(
-              ServerFailureAction.useDirectForecast,
-            ),
-            child: const Text('단기예보만 보기'),
-          ),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(
               ServerFailureAction.retryServer,

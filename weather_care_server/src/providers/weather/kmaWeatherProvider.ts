@@ -9,6 +9,7 @@ import {
   WeatherForecast,
   WeatherProvider,
 } from './weatherProvider';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const KMA_FORECAST_URL =
   'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst';
@@ -166,7 +167,7 @@ export class KmaWeatherProvider implements WeatherProvider {
 
     if (!response.ok) {
       throw new KmaWeatherProviderError(
-        `KMA request failed with status ${response.status}`,
+        await providerHttpFailureMessage(response, 'KMA request'),
       );
     }
 

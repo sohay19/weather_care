@@ -3,12 +3,20 @@ import 'package:flutter/material.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
+import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
 class WeatherInfoCard extends StatefulWidget {
   final CurrentWeather current;
+  final Future<void> Function()? onRetryMissingData;
+  final bool retrying;
 
-  const WeatherInfoCard({super.key, required this.current});
+  const WeatherInfoCard({
+    super.key,
+    required this.current,
+    this.onRetryMissingData,
+    this.retrying = false,
+  });
 
   @override
   State<WeatherInfoCard> createState() => _WeatherInfoCardState();
@@ -20,6 +28,16 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
   @override
   Widget build(BuildContext context) {
     final current = widget.current;
+    final missing = <String>[
+      if (current.temperature == null) '예상 기온',
+      if (current.sky == null) '하늘 상태',
+      if (current.apparentTemperature == null) '체감온도',
+      if (current.humidity == null) '습도',
+      if (current.windSpeed == null) '풍속',
+      if (current.uvIndex == null) '자외선',
+      if (current.pm25 == null) '초미세먼지',
+      if (current.pm10 == null) '미세먼지',
+    ];
     final metrics = [
       _WeatherMetric(
         icon: Icons.device_thermostat_rounded,
@@ -167,6 +185,15 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               ],
             ),
           ),
+          if (missing.isNotEmpty && widget.onRetryMissingData != null) ...[
+            const SizedBox(height: 12),
+            MissingDataRetry(
+              message: '받지 못한 현재 날씨: ${missing.join(' · ')}',
+              retryKey: 'today-current-data-retry',
+              onRetry: widget.onRetryMissingData!,
+              retrying: widget.retrying,
+            ),
+          ],
         ],
       ),
     );

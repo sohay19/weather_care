@@ -476,30 +476,76 @@ class WeeklyWeatherResponse {
 class ComparisonResponse {
   final bool comparisonAvailable;
   final String? targetDate;
+  final ComparisonWeatherSnapshot? current;
   final ComparisonWeatherSnapshot? comparison;
+  final ComparisonBasis? basis;
 
   const ComparisonResponse({
     required this.comparisonAvailable,
     this.targetDate,
+    this.current,
     this.comparison,
+    this.basis,
   });
 
   const ComparisonResponse.unavailable()
       : comparisonAvailable = false,
         targetDate = null,
-        comparison = null;
+        current = null,
+        comparison = null,
+        basis = null;
 
   factory ComparisonResponse.fromJson(Map<String, dynamic> json) {
+    final currentJson = json['current'];
     final comparisonJson = json['comparison'];
+    final basisJson = json['basis'];
     return ComparisonResponse(
-      comparisonAvailable:
-          json['comparisonAvailable'] == true && comparisonJson is Map,
+      comparisonAvailable: json['comparisonAvailable'] == true &&
+          currentJson is Map &&
+          comparisonJson is Map,
       targetDate: json['targetDate']?.toString(),
+      current: currentJson is Map
+          ? ComparisonWeatherSnapshot.fromJson(
+              Map<String, dynamic>.from(currentJson),
+            )
+          : null,
       comparison: comparisonJson is Map
           ? ComparisonWeatherSnapshot.fromJson(
               Map<String, dynamic>.from(comparisonJson),
             )
           : null,
+      basis: basisJson is Map
+          ? ComparisonBasis.fromJson(Map<String, dynamic>.from(basisJson))
+          : null,
+    );
+  }
+}
+
+class ComparisonBasis {
+  final String? provider;
+  final String? dataRole;
+  final String? stationId;
+  final double? distanceKm;
+  final String? currentObservedAt;
+  final String? comparisonObservedAt;
+
+  const ComparisonBasis({
+    this.provider,
+    this.dataRole,
+    this.stationId,
+    this.distanceKm,
+    this.currentObservedAt,
+    this.comparisonObservedAt,
+  });
+
+  factory ComparisonBasis.fromJson(Map<String, dynamic> json) {
+    return ComparisonBasis(
+      provider: json['provider']?.toString(),
+      dataRole: json['dataRole']?.toString(),
+      stationId: json['stationId']?.toString(),
+      distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      currentObservedAt: json['currentObservedAt']?.toString(),
+      comparisonObservedAt: json['comparisonObservedAt']?.toString(),
     );
   }
 }

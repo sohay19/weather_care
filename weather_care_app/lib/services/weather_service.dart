@@ -1,16 +1,11 @@
 import 'dart:developer';
 
-import 'package:http/http.dart' as http;
-
 import '../models/weather.dart';
 import 'api_client.dart';
-import 'kma_direct_weather_service.dart';
 import 'current_location_service.dart';
 
 enum WeatherLoadMode {
   server,
-  directKma,
-  offline,
   unavailable,
 }
 
@@ -34,21 +29,16 @@ class WeatherLoadResult {
 
 class WeatherService {
   final ApiClient client;
-  final KmaDirectWeatherService directKma;
-  final Future<bool> Function() internetProbe;
   final int serverRetryCount;
   final Duration serverRetryDelay;
   final Future<void> Function(Duration) serverRetryWait;
 
   WeatherService(
     this.client, {
-    required this.directKma,
-    Future<bool> Function()? internetProbe,
     this.serverRetryCount = 3,
     this.serverRetryDelay = const Duration(seconds: 5),
     Future<void> Function(Duration)? serverRetryWait,
   })  : assert(serverRetryCount >= 0),
-        internetProbe = internetProbe ?? _defaultInternetProbe,
         serverRetryWait = serverRetryWait ?? _wait;
 
   Future<WeatherLoadResult> fetchWeather({
@@ -63,8 +53,7 @@ class WeatherService {
       ny: ny,
       coordinates: coordinates,
     );
-    if (serverResult.hasWeather) return serverResult;
-    return fetchDirectWeather(nx: nx, ny: ny);
+    return serverResult;
   }
 
   Future<WeatherLoadResult> fetchServerWeather({
@@ -84,19 +73,12 @@ class WeatherService {
     for (var attempt = 0; attempt <= serverRetryCount; attempt++) {
       try {
         final todayFuture = latestToday == null
-            ? client.get(
-                '/api/v1/weather/today',
-                query: {
-                  'nx': '$nx',
-                  'ny': '$ny',
-                  'installationId': installationId,
-                  if (coordinates != null) ...{
-                    'latitude': '${coordinates.latitude}',
-                    'longitude': '${coordinates.longitude}',
-                  },
-                },
-              ).then((data) {
-                final today = TodayWeatherResponse.fromJson(data);
+            ? fetchTodayWeather(
+                installationId: installationId,
+                nx: nx,
+                ny: ny,
+                coordinates: coordinates,
+              ).then((today) {
                 latestToday = today;
                 onToday?.call(today);
                 return today;
@@ -105,21 +87,13 @@ class WeatherService {
         final weeklyFuture = latestWeekly == null
             ? () async {
                 final resolvedRegionName = regionName ?? await regionNameFuture;
-                final data = await client.get(
-                  '/api/v1/weather/weekly',
-                  query: {
-                    'nx': '$nx',
-                    'ny': '$ny',
-                    'installationId': installationId,
-                    'includeExtras': 'true',
-                    if (regionCode != null && regionCode.isNotEmpty)
-                      'regionCode': regionCode,
-                    if (resolvedRegionName != null &&
-                        resolvedRegionName.trim().isNotEmpty)
-                      'regionName': resolvedRegionName.trim(),
-                  },
+                final weekly = await fetchWeeklyWeather(
+                  installationId: installationId,
+                  nx: nx,
+                  ny: ny,
+                  regionCode: regionCode,
+                  regionName: resolvedRegionName,
                 );
-                final weekly = WeeklyWeatherResponse.fromJson(data);
                 latestWeekly = weekly;
                 onWeekly?.call(weekly);
                 return weekly;
@@ -153,6 +127,50 @@ class WeatherService {
     );
   }
 
+  Future<TodayWeatherResponse> fetchTodayWeather({
+    required String installationId,
+    int nx = 60,
+    int ny = 121,
+    DeviceCoordinates? coordinates,
+  }) async {
+    final data = await client.get(
+      '/api/v1/weather/today',
+      query: {
+        'nx': '$nx',
+        'ny': '$ny',
+        'installationId': installationId,
+        if (coordinates != null) ...{
+          'latitude': '${coordinates.latitude}',
+          'longitude': '${coordinates.longitude}',
+        },
+      },
+    );
+    return TodayWeatherResponse.fromJson(data);
+  }
+
+  Future<WeeklyWeatherResponse> fetchWeeklyWeather({
+    required String installationId,
+    int nx = 60,
+    int ny = 121,
+    String? regionCode,
+    String? regionName,
+  }) async {
+    final data = await client.get(
+      '/api/v1/weather/weekly',
+      query: {
+        'nx': '$nx',
+        'ny': '$ny',
+        'installationId': installationId,
+        'includeExtras': 'true',
+        if (regionCode != null && regionCode.isNotEmpty)
+          'regionCode': regionCode,
+        if (regionName != null && regionName.trim().isNotEmpty)
+          'regionName': regionName.trim(),
+      },
+    );
+    return WeeklyWeatherResponse.fromJson(data);
+  }
+
   Future<TodayWeatherResponse?> fetchMainWeather({
     int nx = 60,
     int ny = 121,
@@ -167,44 +185,6 @@ class WeatherService {
       log('Fast Main weather unavailable (${error.runtimeType})');
       return null;
     }
-  }
-
-  Future<WeatherLoadResult> fetchDirectWeather({
-    int nx = 60,
-    int ny = 121,
-  }) async {
-    if (directKma.isConfigured) {
-      try {
-        final direct = await directKma.fetch(nx: nx, ny: ny);
-        return WeatherLoadResult(
-          today: direct.today,
-          weekly: direct.weekly,
-          mode: WeatherLoadMode.directKma,
-          message: '운영 서버 미연결 · 기상청 직접 조회',
-        );
-      } catch (error) {
-        log('Direct KMA unavailable (${error.runtimeType})');
-      }
-    }
-
-    final online = await internetProbe();
-    if (!online) {
-      return const WeatherLoadResult(
-        today: null,
-        weekly: null,
-        mode: WeatherLoadMode.offline,
-        message: '인터넷 연결 불가로 날씨 정보를 지원하지 않습니다.',
-      );
-    }
-
-    return WeatherLoadResult(
-      today: null,
-      weekly: null,
-      mode: WeatherLoadMode.unavailable,
-      message: directKma.isConfigured
-          ? '운영 서버와 기상청 직접 조회를 사용할 수 없습니다.'
-          : '운영 서버 미연결 · KMA_SERVICE_KEY 미설정으로 직접 조회가 미지원됩니다.',
-    );
   }
 
   Future<ComparisonResponse> fetchYesterdayComparison({
@@ -237,17 +217,6 @@ class WeatherService {
     } catch (_) {
       return const ComparisonResponse.unavailable();
     }
-  }
-}
-
-Future<bool> _defaultInternetProbe() async {
-  try {
-    await http
-        .get(Uri.https('cp.cloudflare.com', '/generate_204'))
-        .timeout(const Duration(seconds: 4));
-    return true;
-  } catch (_) {
-    return false;
   }
 }
 

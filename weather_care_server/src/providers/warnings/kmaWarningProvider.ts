@@ -1,5 +1,9 @@
 import { WeatherWarning } from '../../types';
-import { kmaApiHubErrorStatus } from '../kmaApiHubResponse';
+import {
+  kmaApiHubErrorReason,
+  kmaApiHubErrorStatus,
+} from '../kmaApiHubResponse';
+import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const WARNING_STATUS_URL =
   'https://apihub.kma.go.kr/api/typ01/url/wrn_now_data_new.php';
@@ -118,7 +122,7 @@ export class KmaWarningProvider {
     const now = this.now();
     const query = new URLSearchParams({
       fe: 'e',
-      tm: compactKst(now),
+      tm: compactKst(floorToFiveMinutes(now)),
       disp: '0',
       help: '0',
       authKey: this.serviceKey,
@@ -130,7 +134,7 @@ export class KmaWarningProvider {
     });
     if (!response.ok) {
       throw new KmaWarningProviderError(
-        `KMA warning request failed with status ${response.status}`,
+        await providerHttpFailureMessage(response, 'KMA warning request'),
       );
     }
 
@@ -141,16 +145,26 @@ export class KmaWarningProvider {
     latitude: number,
     longitude: number,
   ): Promise<KmaWarningRegionMatch> {
+    const matches = await this.resolveRegionsByLocations([{ latitude, longitude }]);
+    return matches[0];
+  }
+
+  async resolveRegionsByLocations(
+    locations: readonly { latitude: number; longitude: number }[],
+  ): Promise<KmaWarningRegionMatch[]> {
     if (!this.serviceKey) {
       throw new KmaWarningProviderError(
         'KMA APIHub service key is not configured',
       );
     }
-    if (!isKoreanCoordinate(latitude, longitude)) {
-      throw new KmaWarningProviderError(
-        'KMA warning location is outside the valid Korean coordinate range',
-      );
+    for (const { latitude, longitude } of locations) {
+      if (!isKoreanCoordinate(latitude, longitude)) {
+        throw new KmaWarningProviderError(
+          'KMA warning location is outside the valid Korean coordinate range',
+        );
+      }
     }
+    if (locations.length === 0) return [];
 
     const query = new URLSearchParams({
       tm: '',
@@ -165,36 +179,40 @@ export class KmaWarningProvider {
     });
     if (!response.ok) {
       throw new KmaWarningProviderError(
-        `KMA warning region mapping request failed with status ${response.status}`,
+        await providerHttpFailureMessage(
+          response,
+          'KMA warning region mapping request',
+        ),
       );
     }
 
     const stations = parseWarningRegionStations(await response.text());
-    const nearest = stations
-      .map((station) => ({
-        station,
-        distanceMeters: haversineMeters(
-          latitude,
-          longitude,
-          station.latitude,
-          station.longitude,
-        ),
-      }))
-      .sort((left, right) => left.distanceMeters - right.distanceMeters)[0];
-    if (!nearest) {
-      throw new KmaWarningProviderError(
-        'KMA warning region mapping response has no usable stations',
-        'WARNING_REGION_MAPPING_INVALID',
-      );
-    }
-
-    return {
-      regionId: nearest.station.regionId,
-      regionName: nearest.station.regionName,
-      stationId: nearest.station.stationId,
-      stationName: nearest.station.stationName,
-      distanceMeters: Math.round(nearest.distanceMeters),
-    };
+    return locations.map(({ latitude, longitude }) => {
+      const nearest = stations
+        .map((station) => ({
+          station,
+          distanceMeters: haversineMeters(
+            latitude,
+            longitude,
+            station.latitude,
+            station.longitude,
+          ),
+        }))
+        .sort((left, right) => left.distanceMeters - right.distanceMeters)[0];
+      if (!nearest) {
+        throw new KmaWarningProviderError(
+          'KMA warning region mapping response has no usable stations',
+          'WARNING_REGION_MAPPING_INVALID',
+        );
+      }
+      return {
+        regionId: nearest.station.regionId,
+        regionName: nearest.station.regionName,
+        stationId: nearest.station.stationId,
+        stationName: nearest.station.stationName,
+        distanceMeters: Math.round(nearest.distanceMeters),
+      };
+    });
   }
 }
 
@@ -221,8 +239,11 @@ export function parseActiveWarnings(
 ): OfficialWeatherWarning[] {
   const apiHubStatus = kmaApiHubErrorStatus(payload);
   if (apiHubStatus !== undefined) {
+    const reason = kmaApiHubErrorReason(payload);
     throw new KmaWarningProviderError(
-      `KMA warning response failed with status ${apiHubStatus}`,
+      `KMA warning response failed with status ${apiHubStatus}${
+        reason ? `: ${reason}` : ''
+      }`,
     );
   }
   if (/AUTH|인증|ERROR/i.test(payload) && !/L\d{7}/.test(payload)) {
@@ -291,8 +312,11 @@ export function parseWarningRegionStations(
 ): KmaWarningRegionStation[] {
   const apiHubStatus = kmaApiHubErrorStatus(payload);
   if (apiHubStatus !== undefined) {
+    const reason = kmaApiHubErrorReason(payload);
     throw new KmaWarningProviderError(
-      `KMA warning region mapping response failed with status ${apiHubStatus}`,
+      `KMA warning region mapping response failed with status ${apiHubStatus}${
+        reason ? `: ${reason}` : ''
+      }`,
     );
   }
   if (/AUTH|인증|ERROR/i.test(payload) && !/L\d{7}/.test(payload)) {
@@ -398,6 +422,10 @@ function isWarningTypeCode(value: string): value is KmaWarningTypeCode {
 function compactKst(value: Date): string {
   const kst = new Date(value.getTime() + KST_OFFSET_MS);
   return `${kst.getUTCFullYear()}${String(kst.getUTCMonth() + 1).padStart(2, '0')}${String(kst.getUTCDate()).padStart(2, '0')}${String(kst.getUTCHours()).padStart(2, '0')}${String(kst.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function floorToFiveMinutes(value: Date): Date {
+  return new Date(Math.floor(value.getTime() / 300_000) * 300_000);
 }
 
 function compactKstToIso(value: string): string {

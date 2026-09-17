@@ -6,7 +6,6 @@ import '../../../models/weather.dart';
 import '../../../services/notification_destination.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/lifestyle_evidence_checklist_section.dart';
-import '../widgets/pull_to_refresh_data_hint.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
 
@@ -20,6 +19,8 @@ class DetailTab extends StatefulWidget {
   final List<WeatherRecommendation> recommendations;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
+  final Future<void> Function()? onRetryData;
+  final bool retrying;
   final NotificationTopic? focusTopic;
   final LifestyleMessageType? focusLifestyleType;
   final DetailFocusSource focusSource;
@@ -31,6 +32,8 @@ class DetailTab extends StatefulWidget {
     required this.recommendations,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
+    this.onRetryData,
+    this.retrying = false,
     this.focusTopic,
     this.focusLifestyleType,
     this.focusSource = DetailFocusSource.notification,
@@ -125,18 +128,17 @@ class _DetailTabState extends State<DetailTab> {
                     widget.focusSource == DetailFocusSource.notification
                         ? '이 알림과 연결된 근거가 현재 자료에 없어요.'
                         : '선택한 항목의 근거가 현재 자료에 없어요.',
+                onRetryMissingData: widget.onRetryData,
+                retrying: widget.retrying,
               )
             else
               ServerFeatureUnavailableCard(
                 key: _evidenceSectionKey,
                 icon: Icons.fact_check_outlined,
                 title: '근거와 자료',
+                onRetry: widget.onRetryData,
+                retrying: widget.retrying,
               ),
-            if (!widget.serverFeaturesAvailable ||
-                widget.today.dataStatusMessages.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const PullToRefreshDataHint(),
-            ],
           ],
         ),
       ),

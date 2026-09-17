@@ -44,7 +44,12 @@ class GoogleNativeAdCardLoader implements NativeAdCardLoader {
           }
           completion.complete(_GoogleNativeAdCardHandle(loaded));
         },
-        onAdFailedToLoad: (ad, _) {
+        onAdFailedToLoad: (ad, error) {
+          if (kDebugMode) {
+            debugPrint(
+              '네이티브 광고 SDK 실패: ${error.code} · ${error.message}',
+            );
+          }
           unawaited(ad.dispose());
           if (!completion.isCompleted) completion.complete(null);
         },
@@ -83,9 +88,11 @@ class GoogleNativeAdCardLoader implements NativeAdCardLoader {
     );
 
     try {
-      await nativeAd.load();
+      unawaited(nativeAd.load().catchError((_) {
+        if (!completion.isCompleted) completion.complete(null);
+      }));
       return await completion.future.timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 65),
         onTimeout: () {
           if (!completion.isCompleted) completion.complete(null);
           unawaited(nativeAd.dispose());

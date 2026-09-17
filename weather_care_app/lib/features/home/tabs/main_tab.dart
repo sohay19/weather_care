@@ -4,8 +4,8 @@ import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
+import '../widgets/missing_data_retry.dart';
 import '../widgets/recommendation_bag_section.dart';
-import '../widgets/pull_to_refresh_data_hint.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/timeline_section.dart';
@@ -21,6 +21,9 @@ class MainTab extends StatelessWidget {
   final ComparisonResponse? yesterdayComparison;
   final bool comparisonLoading;
   final Future<void> Function() onRefresh;
+  final Future<void> Function()? onRetryData;
+  final Future<void> Function()? onRetryComparison;
+  final bool retryingData;
   final ValueChanged<RecommendationType> onDetail;
   final Widget? advertisement;
 
@@ -34,6 +37,9 @@ class MainTab extends StatelessWidget {
     this.yesterdayComparison,
     this.comparisonLoading = false,
     required this.onRefresh,
+    this.onRetryData,
+    this.onRetryComparison,
+    this.retryingData = false,
     required this.onDetail,
     this.advertisement,
   });
@@ -46,10 +52,6 @@ class MainTab extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 380;
-          final showRefreshHint = _mainHasMissingData(today) ||
-              !serverFeaturesAvailable ||
-              (!comparisonLoading &&
-                  !_hasUsableComparison(today.current, yesterdayComparison));
           return CustomScrollView(
             key: const ValueKey('main-tab'),
             physics: const AlwaysScrollableScrollPhysics(),
@@ -68,23 +70,18 @@ class MainTab extends StatelessWidget {
                       title: '${today.region.name} 지금 날씨',
                       subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                     ),
-                    SizedBox(height: compact ? 10 : 14),
+                    SizedBox(height: compact ? 20 : 24),
                     _TopWeatherCard(
                       today: today,
                       mood: mood,
                       compact: compact,
-                    ),
-                    SizedBox(height: compact ? 10 : 14),
-                    _YesterdayComparisonCard(
-                      current: today.current,
                       comparison: yesterdayComparison,
-                      loading: comparisonLoading,
+                      comparisonLoading: comparisonLoading,
+                      onRetry: onRetryData,
+                      onRetryComparison: onRetryComparison,
+                      retrying: retryingData,
                     ),
-                    if (showRefreshHint) ...[
-                      SizedBox(height: compact ? 10 : 14),
-                      const PullToRefreshDataHint(),
-                    ],
-                    SizedBox(height: compact ? 10 : 14),
+                    SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(
                         icon: Icons.playlist_add_check_rounded,
@@ -97,11 +94,13 @@ class MainTab extends StatelessWidget {
                         onDetail: onDetail,
                       )
                     else
-                      const ServerFeatureUnavailableCard(
+                      ServerFeatureUnavailableCard(
                         icon: Icons.playlist_add_check_rounded,
                         title: 'Check List',
+                        onRetry: onRetryData,
+                        retrying: retryingData,
                       ),
-                    SizedBox(height: compact ? 10 : 14),
+                    SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(
                         icon: Icons.schedule_rounded,
@@ -113,12 +112,14 @@ class MainTab extends StatelessWidget {
                         onDetail: onDetail,
                       )
                     else
-                      const ServerFeatureUnavailableCard(
+                      ServerFeatureUnavailableCard(
                         icon: Icons.schedule_rounded,
                         title: '간단한 타임라인',
+                        onRetry: onRetryData,
+                        retrying: retryingData,
                       ),
                     if (advertisement != null) ...[
-                      SizedBox(height: compact ? 10 : 14),
+                      SizedBox(height: compact ? 12 : 16),
                       advertisement!,
                     ],
                   ],
@@ -132,21 +133,22 @@ class MainTab extends StatelessWidget {
   }
 }
 
-class _YesterdayComparisonCard extends StatelessWidget {
-  final CurrentWeather current;
+class _YesterdayComparisonSection extends StatelessWidget {
   final ComparisonResponse? comparison;
   final bool loading;
+  final Future<void> Function()? onRetry;
 
-  const _YesterdayComparisonCard({
-    required this.current,
+  const _YesterdayComparisonSection({
     required this.comparison,
     required this.loading,
+    this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
+    final current = comparison?.current;
     final previous = comparison?.comparison;
-    final metrics = previous == null
+    final metrics = current == null || previous == null
         ? const <_ComparisonMetricData>[]
         : [
             _ComparisonMetricData(
@@ -180,62 +182,87 @@ class _YesterdayComparisonCard extends StatelessWidget {
                 fractionDigits: 0,
               ),
           ].where((metric) => metric.isComparable).toList(growable: false);
-    final skyComparable = current.sky != null && previous?.skyCondition != null;
-    final available = _hasUsableComparison(current, comparison);
+    final skyComparable =
+        current?.skyCondition != null && previous?.skyCondition != null;
+    final available = _hasUsableComparison(comparison);
+    final basis = comparison?.basis;
 
-    return Container(
+    return Column(
       key: const ValueKey('yesterday-comparison-card'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(17),
-      decoration: WeatherCareTheme.surfaceDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.compare_arrows_rounded,
-                size: 21,
-                color: WeatherCareTheme.primaryDeep,
-              ),
-              SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  '어제와 비교',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(
+              Icons.compare_arrows_rounded,
+              size: 21,
+              color: WeatherCareTheme.primaryDeep,
+            ),
+            SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                '어제와 비교',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 5),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        Text(
+          basis?.provider == 'KMA_ASOS'
+              ? '가까운 관측소의 같은 시각 관측값을 비교해요'
+              : '같은 지역의 같은 기준시각 자료만 비교해요',
+          style: WeatherCareTheme.microTextStyle,
+        ),
+        if (basis?.distanceKm != null) ...[
+          const SizedBox(height: 3),
           Text(
-            '같은 지역의 같은 기준시각 자료만 비교해요',
+            '관측소 ${basis!.stationId ?? ''} · 기준점에서 ${basis.distanceKm!.toStringAsFixed(1)}km',
             style: WeatherCareTheme.microTextStyle,
           ),
-          const SizedBox(height: 13),
-          if (loading) ...[
-            const LinearProgressIndicator(minHeight: 3),
-            const SizedBox(height: 10),
-            const Text('어제 날씨를 확인하고 있어요.'),
-          ] else if (!available)
-            const Text('같은 기준으로 비교할 수 있는 어제 자료를 아직 받지 못했어요.')
-          else ...[
-            if (skyComparable)
-              Text(
-                '하늘 상태는 오늘 ${current.sky}, 어제 ${previous!.skyCondition}였어요.',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+        ],
+        const SizedBox(height: 13),
+        if (loading) ...[
+          const LinearProgressIndicator(minHeight: 3),
+          const SizedBox(height: 10),
+          const Text('어제 날씨를 확인하고 있어요.'),
+        ] else if (!available) ...[
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '받지 못한 자료: 어제와 같은 시각의 관측값',
+                ),
               ),
-            if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
-            for (var index = 0; index < metrics.length; index++) ...[
-              _ComparisonMetric(metric: metrics[index]),
-              if (index < metrics.length - 1) const SizedBox(height: 9),
+              if (onRetry != null)
+                IconButton(
+                  key: const ValueKey('yesterday-comparison-retry'),
+                  tooltip: '어제 비교 자료만 다시 요청',
+                  visualDensity: VisualDensity.compact,
+                  constraints:
+                      const BoxConstraints.tightFor(width: 36, height: 36),
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  color: WeatherCareTheme.primaryDeep,
+                ),
             ],
+          ),
+        ] else ...[
+          if (skyComparable)
+            Text(
+              '하늘 상태는 오늘 ${current!.skyCondition}, 어제 ${previous!.skyCondition}였어요.',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
+          for (var index = 0; index < metrics.length; index++) ...[
+            _ComparisonMetric(metric: metrics[index]),
+            if (index < metrics.length - 1) const SizedBox(height: 9),
           ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -305,29 +332,21 @@ class _ComparisonMetricData {
 }
 
 bool _hasUsableComparison(
-  CurrentWeather current,
   ComparisonResponse? response,
 ) {
+  final current = response?.current;
   final previous = response?.comparison;
-  if (response?.comparisonAvailable != true || previous == null) return false;
+  if (response?.comparisonAvailable != true ||
+      current == null ||
+      previous == null) {
+    return false;
+  }
   return (current.temperature != null && previous.temperature != null) ||
       (current.apparentTemperature != null &&
           previous.apparentTemperature != null) ||
       (current.pm10 != null && previous.pm10 != null) ||
       (current.pm25 != null && previous.pm25 != null) ||
-      (current.sky != null && previous.skyCondition != null);
-}
-
-bool _mainHasMissingData(TodayWeatherResponse today) {
-  final current = today.current;
-  return current.temperature == null ||
-      current.apparentTemperature == null ||
-      current.humidity == null ||
-      current.windSpeed == null ||
-      current.uvIndex == null ||
-      current.pm10 == null ||
-      current.pm25 == null ||
-      current.sky == null;
+      (current.skyCondition != null && previous.skyCondition != null);
 }
 
 class _ProgressiveLoadingCard extends StatelessWidget {
@@ -369,16 +388,36 @@ class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
   final String mood;
   final bool compact;
+  final ComparisonResponse? comparison;
+  final bool comparisonLoading;
+  final Future<void> Function()? onRetry;
+  final Future<void> Function()? onRetryComparison;
+  final bool retrying;
 
   const _TopWeatherCard({
     required this.today,
     required this.mood,
     required this.compact,
+    this.comparison,
+    this.comparisonLoading = false,
+    this.onRetry,
+    this.onRetryComparison,
+    this.retrying = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final current = today.current;
+    final missing = <String>[
+      if (current.temperature == null) '예상 기온',
+      if (current.apparentTemperature == null) '체감온도',
+      if (current.sky == null) '하늘 상태',
+      if (current.humidity == null) '습도',
+      if (current.windSpeed == null) '풍속',
+      if (current.uvIndex == null) '자외선',
+      if (current.pm25 == null) '초미세먼지',
+      if (current.pm10 == null) '미세먼지',
+    ];
     final apparentTemperature = current.apparentTemperature;
     final fineDustValue = current.pm25 ?? current.pm10;
     final usesPm25 = current.pm25 != null;
@@ -470,6 +509,7 @@ class _TopWeatherCard extends StatelessWidget {
                 child: Text(
                   _weatherSummaryMessage(
                     sky: current.sky,
+                    temperature: current.temperature,
                     apparentTemperature: apparentTemperature,
                   ),
                   style: feelingStyle,
@@ -486,7 +526,7 @@ class _TopWeatherCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: compact ? 8 : 10),
+          SizedBox(height: compact ? 12 : 16),
           Container(
             padding: EdgeInsets.symmetric(vertical: compact ? 7 : 8),
             decoration: BoxDecoration(
@@ -527,6 +567,27 @@ class _TopWeatherCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          if (missing.isNotEmpty && onRetry != null) ...[
+            SizedBox(height: compact ? 8 : 10),
+            MissingDataRetry(
+              message: '받지 못한 현재 날씨: ${missing.join(' · ')}',
+              retryKey: 'main-current-data-retry',
+              onRetry: onRetry!,
+              retrying: retrying,
+            ),
+          ],
+          SizedBox(height: compact ? 14 : 18),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: WeatherCareTheme.textSecondary.withValues(alpha: 0.18),
+          ),
+          SizedBox(height: compact ? 13 : 16),
+          _YesterdayComparisonSection(
+            comparison: comparison,
+            loading: comparisonLoading,
+            onRetry: onRetryComparison,
           ),
         ],
       ),
@@ -669,6 +730,7 @@ String _weatherExpression(String? sky) {
 
 String _weatherSummaryMessage({
   required String? sky,
+  required double? temperature,
   required double? apparentTemperature,
 }) {
   final weatherExpression = _weatherExpression(sky);
@@ -676,6 +738,12 @@ String _weatherSummaryMessage({
     return '$weatherExpression 체감 정보는 계산조건이 맞을 때 표시해요.';
   }
 
+  final comparison = temperature == null
+      ? null
+      : _apparentTemperatureComparison(
+          temperature: temperature,
+          apparentTemperature: apparentTemperature,
+        );
   final feeling = switch (_apparentTemperatureLabel(apparentTemperature)) {
     '위험한 더위' => '위험할 만큼 매우 덥게',
     '더위 경계' => '매우 덥게',
@@ -686,7 +754,19 @@ String _weatherSummaryMessage({
     '쌀쌀한 편' => '쌀쌀하게',
     _ => '춥게',
   };
-  return '$weatherExpression 체감 상 $feeling 느껴질 수 있어요.';
+  return '$weatherExpression '
+      '${comparison == null ? '' : '$comparison, '}'
+      '체감 상 $feeling 느껴질 수 있어요.';
+}
+
+String _apparentTemperatureComparison({
+  required double temperature,
+  required double apparentTemperature,
+}) {
+  final difference = apparentTemperature - temperature;
+  if (difference.abs() < 0.05) return '실제 기온과 비슷하지만';
+  return '실제 기온보다 ${difference.abs().toStringAsFixed(1)}℃ '
+      '${difference > 0 ? '높지만' : '낮지만'}';
 }
 
 String _apparentTemperatureLabel(double temperature) {

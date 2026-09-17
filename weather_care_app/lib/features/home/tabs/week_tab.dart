@@ -8,7 +8,7 @@ import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
 import '../widgets/tab_page_header.dart';
-import '../widgets/pull_to_refresh_data_hint.dart';
+import '../widgets/missing_data_retry.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/week_presentation.dart';
 import '../widgets/week_precipitation.dart';
@@ -17,6 +17,8 @@ class WeekTab extends StatefulWidget {
   final WeeklyWeatherResponse weekly;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
+  final Future<void> Function()? onRetryData;
+  final bool retrying;
   final DateTime Function()? now;
   final Widget? advertisement;
 
@@ -25,6 +27,8 @@ class WeekTab extends StatefulWidget {
     required this.weekly,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
+    this.onRetryData,
+    this.retrying = false,
     this.now,
     this.advertisement,
   });
@@ -85,15 +89,6 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
         .map((day) => day.forecast)
         .whereType<WeeklyForecastItem>()
         .toList(growable: false);
-    final showRefreshHint = calendarDays.any((day) {
-      final forecast = day.forecast;
-      return forecast == null ||
-          forecast.min == null ||
-          forecast.max == null ||
-          forecast.weatherLabel == null ||
-          forecast.weatherDataComplete != true ||
-          !forecast.recommendationsAvailable;
-    });
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
       onRefresh: widget.onRefresh,
@@ -118,10 +113,6 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               )
             else
               const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
-            if (showRefreshHint) ...[
-              const SizedBox(height: 16),
-              const PullToRefreshDataHint(),
-            ],
             if (widget.advertisement != null) ...[
               const SizedBox(height: 18),
               widget.advertisement!,
@@ -136,6 +127,8 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
                     ),
                 today: parseForecastDate(today)!,
                 serverFeaturesAvailable: widget.serverFeaturesAvailable,
+                onRetry: widget.onRetryData,
+                retrying: widget.retrying,
               ),
               if (index < calendarDays.length - 1) const SizedBox(height: 10),
             ],
@@ -180,48 +173,49 @@ class _WeekSummary extends StatelessWidget {
             style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
-          LayoutBuilder(builder: (context, constraints) {
-            final scale = MediaQuery.textScalerOf(context).scale(12) / 12;
-            final columns =
-                (constraints.maxWidth / (110 * scale)).floor().clamp(1, 3);
-            final width = (constraints.maxWidth - 8 * (columns - 1)) / columns;
-            final metrics = [
-              _SummaryMetric(
-                key: const ValueKey('week-summary-precipitation'),
-                icon: const WeatherConditionIcon(
-                  condition: '비/눈',
-                  size: 21,
-                  color: WeatherCareTheme.primaryDeep,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _SummaryMetric(
+                  key: const ValueKey('week-summary-precipitation'),
+                  icon: const WeatherConditionIcon(
+                    condition: '비/눈',
+                    size: 21,
+                    color: WeatherCareTheme.primaryDeep,
+                  ),
+                  label: '예상 강수일',
+                  metric: summary.precipitation,
                 ),
-                label: '예상 강수일',
-                metric: summary.precipitation,
               ),
-              _SummaryMetric(
-                key: const ValueKey('week-summary-temperature'),
-                icon: const Icon(
-                  Icons.device_thermostat_rounded,
-                  color: WeatherCareTheme.primaryDeep,
-                  size: 19,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SummaryMetric(
+                  key: const ValueKey('week-summary-temperature'),
+                  icon: const Icon(
+                    Icons.device_thermostat_rounded,
+                    color: WeatherCareTheme.primaryDeep,
+                    size: 19,
+                  ),
+                  label: '예상 주중 최고기온',
+                  metric: summary.maximum,
                 ),
-                label: '예상 주중 최고기온',
-                metric: summary.maximum,
               ),
-              _SummaryMetric(
-                key: const ValueKey('week-summary-preparations'),
-                icon: const Icon(
-                  Icons.work_outline_rounded,
-                  color: WeatherCareTheme.primaryDeep,
-                  size: 19,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _SummaryMetric(
+                  key: const ValueKey('week-summary-preparations'),
+                  icon: const Icon(
+                    Icons.work_outline_rounded,
+                    color: WeatherCareTheme.primaryDeep,
+                    size: 19,
+                  ),
+                  label: '예상 준비물',
+                  metric: summary.preparations,
                 ),
-                label: '예상 준비물',
-                metric: summary.preparations,
               ),
-            ];
-            return Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final metric in metrics)
-                SizedBox(width: width, child: metric),
-            ]);
-          }),
+            ],
+          ),
           if (summary.excludedNotice != null) ...[
             const SizedBox(height: 8),
             Text(summary.excludedNotice!,
@@ -282,6 +276,8 @@ class _WeekDayCard extends StatelessWidget {
   final bool isPast;
   final DateTime today;
   final bool serverFeaturesAvailable;
+  final Future<void> Function()? onRetry;
+  final bool retrying;
 
   const _WeekDayCard({
     required this.calendarDay,
@@ -289,6 +285,8 @@ class _WeekDayCard extends StatelessWidget {
     required this.isPast,
     required this.today,
     required this.serverFeaturesAvailable,
+    this.onRetry,
+    this.retrying = false,
   });
 
   @override
@@ -299,6 +297,8 @@ class _WeekDayCard extends StatelessWidget {
         date: calendarDay.date,
         isToday: isToday,
         today: today,
+        onRetry: onRetry,
+        retrying: retrying,
       );
     }
     final weatherLabel = weekWeatherLabel(day);
@@ -317,6 +317,12 @@ class _WeekDayCard extends StatelessWidget {
             : day.forecastSource == 'KMA_MID_TERM'
                 ? '중기예보'
                 : '단기예보';
+    final missing = <String>[
+      if (weatherLabel == null || day.weatherDataComplete != true) '날씨',
+      if (minimumTemperature == null) '최저기온',
+      if (maximumTemperature == null) '최고기온',
+      if (serverFeaturesAvailable && !day.recommendationsAvailable) '준비물 추천',
+    ];
     final card = Container(
       key: ValueKey('week-day-${day.forecastDate}'),
       padding: const EdgeInsets.all(17),
@@ -594,6 +600,15 @@ class _WeekDayCard extends StatelessWidget {
                     style: WeatherCareTheme.microTextStyle),
             ],
           ),
+          if (missing.isNotEmpty && onRetry != null) ...[
+            const SizedBox(height: 10),
+            MissingDataRetry(
+              message: '받지 못한 항목: ${missing.join(' · ')}',
+              retryKey: 'week-day-retry-${day.forecastDate}',
+              onRetry: onRetry!,
+              retrying: retrying,
+            ),
+          ],
         ],
       ),
     );
@@ -716,11 +731,15 @@ class _UnavailableWeekDayCard extends StatelessWidget {
   final DateTime date;
   final bool isToday;
   final DateTime today;
+  final Future<void> Function()? onRetry;
+  final bool retrying;
 
   const _UnavailableWeekDayCard({
     required this.date,
     required this.isToday,
     required this.today,
+    this.onRetry,
+    this.retrying = false,
   });
 
   @override
@@ -815,6 +834,15 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(message, style: Theme.of(context).textTheme.bodySmall),
+                if (onRetry != null) ...[
+                  const SizedBox(height: 10),
+                  MissingDataRetry(
+                    message: '받지 못한 항목: 이 날짜의 날씨',
+                    retryKey: 'week-unavailable-retry-${dateInKorea(date)}',
+                    onRetry: onRetry!,
+                    retrying: retrying,
+                  ),
+                ],
               ],
             ),
           ),

@@ -22,6 +22,19 @@ describe('provider error diagnostics', () => {
     });
   });
 
+  it('distinguishes an exhausted provider quota from authorization failure', () => {
+    expect(
+      providerErrorDiagnostic(
+        new Error('KMA warning request failed with status 403: quota exceeded'),
+      ),
+    ).toEqual({
+      error: 'Error',
+      failureReason: 'QUOTA_EXCEEDED',
+      httpStatus: 403,
+      operation: 'WARNING',
+    });
+  });
+
   it('classifies network and invalid-response failures', () => {
     expect(providerErrorDiagnostic(new TypeError('fetch failed'))).toEqual({
       error: 'TypeError',

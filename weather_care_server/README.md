@@ -95,9 +95,11 @@ npm run deploy
 - `src/providers/road/kmaRoadIceProvider.ts`: 고속도로 1km 구간별 도로살얼음 공식 단계와 현재 위치 거리 판정
 - `src/providers/traffic/itsRoadControlProvider.ts`: 국가교통정보센터의 현재 돌발상황 중 위치 3km 안의 실제 차로·전면 통제 판정
 - `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드·대기질 측정소·특보구역 매핑
-- `migrations/0001_init.sql`~`0010_weekly_forecast_records.sql`: 테이블 DDL, 사용자별 현재 강수·특보·도로살얼음·도로 통제 상태, 만 14세 이상 정책 확인 상태와 날짜별 주간 예보 기록
+- `migrations/0001_init.sql`~`0011_central_weather_collection.sql`: 테이블 DDL, 사용자별 상태, 중앙 수집 캐시와 APIHub 일일 호출·용량 예산
 
-`/weather/main`은 앱 첫 화면에 필요한 현재 날씨와 요약만 반환합니다. 90분 안의 유효한 D1 현재 날씨가 있으면 이를 사용하고, 없으면 기상청 최신 발표분 한 건만 조회합니다. 시간별 예보·생활기상·대기질·강수·특보·도로 자료는 이 응답을 기다리지 않고 `/weather/today`에서 이어서 채웁니다.
+`/weather/main`, `/weather/today`, `/weather/weekly`, `/weather/comparison`은 외부 제공자를 호출하지 않고 D1에 저장된 중앙 수집 결과만 읽습니다. 자료가 아직 없으면 `WEATHER_CACHE_NOT_READY` 503을 반환하며 요청 수에 따라 외부 API 호출이 늘어나지 않습니다.
+
+Cron은 10분마다 활성 설치의 예보 격자를 중복 제거해 단기예보·환경·특보·강수를 수집합니다. 전국 500m 레이더는 한 번만 받아 모든 활성 좌표를 배치 판독하고, 공공데이터포털 초단기실황과 강수 판단이 다른 좌표만 APIHub 지점 관측분석으로 재검증합니다. 도로살얼음은 15분마다 12개 노선을 한 번씩만 받아 모든 좌표를 함께 판정합니다.
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 

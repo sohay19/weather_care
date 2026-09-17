@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:weather_care/firebase_options.dart';
@@ -81,6 +82,7 @@ Future<Widget> _initializeApp() async {
 }
 
 void _startAdsAfterAppFrame() {
+  if (kDebugMode) debugPrint('광고 시작 예약');
   unawaited(_startAds());
 }
 
@@ -90,18 +92,27 @@ Future<void> _startAds() async {
         NativeAdUnitConfig.current.resolve(placement: placement) != null,
   );
   final appOpenAdEnabled = AppOpenAdUnitConfig.current.resolve() != null;
+  if (kDebugMode) {
+    debugPrint(
+      '광고 설정 확인: 네이티브=$nativeAdsEnabled, 오프닝=$appOpenAdEnabled',
+    );
+  }
   if (!nativeAdsEnabled && !appOpenAdEnabled) return;
+
+  if (kDebugMode) debugPrint('광고 동의 확인 호출');
+  await AdsConsent.instance.refresh();
 
   if (appOpenAdEnabled) {
     try {
       final shouldShow =
           await const AppOpenLaunchStore().recordLaunchAndShouldShow();
+      if (kDebugMode) debugPrint('앱 오프닝 광고 대상: $shouldShow');
       if (shouldShow) {
         await _appOpenAds.start(showOnInitialLoad: true);
+        if (kDebugMode) debugPrint('앱 오프닝 광고 시작 완료');
       }
     } catch (error) {
       debugPrint('앱 오프닝 광고 실행 횟수를 확인하지 못했어요: $error');
     }
   }
-  await AdsConsent.instance.refresh();
 }

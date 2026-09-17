@@ -1,238 +1,32 @@
-import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/app_config.dart';
-import 'package:weather_care/services/kma_direct_weather_service.dart';
-import 'package:weather_care/services/weather_service.dart';
 import 'package:weather_care/services/current_location_service.dart';
-import 'package:weather_care/features/home/widgets/week_precipitation.dart';
+import 'package:weather_care/services/weather_service.dart';
 
 void main() {
-  test('직접 조회도 강수 이전 1시간과 정시 기온을 분리하고 연장 구간은 추정하지 않는다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {'TMP': '20', 'POP': '60', 'PCP': '1mm 미만'}),
-      ..._slot('20260821', '0000', {'TMP': '21', 'POP': '90', 'PCP': '3mm'}),
-      ..._slot('20260823', '0300', {'POP': '60', 'PCP': '2'}),
-    ]);
-    final hourly = bundle.today.hourly;
-    expect(hourly.first.time, '10');
-    expect(hourly.first.temperature, 20);
-    expect(hourly.first.precipitationPeriod?.label, '9~10시');
-    expect(hourly[1].forecastDate, '2026-08-21');
-    expect(hourly[1].precipitationPeriod?.date, '2026-08-20');
-    expect(hourly[1].precipitationPeriod?.label, '23~24시');
-    expect(hourly.last.precipitationPeriodProvided, isTrue);
-    expect(hourly.last.precipitationPeriod, isNull);
-  });
-
-  test('직접 조회의 Week도 자정 구간·미만 범위·결측을 보존한다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {'TMP': '20', 'POP': '60', 'PCP': '1mm 미만'}),
-      ..._slot('20260820', '1100', {'POP': '80', 'PCP': '2mm'}),
-      ..._slot('20260821', '0000', {'POP': '90', 'PCP': '3mm'}),
-      ..._slot('20260821', '0100', {'POP': '50', 'PCP': '1mm 미만'}),
-      ..._slot('20260821', '0200', {'POP': '30'}),
-    ]);
-    final days = bundle.weekly.days;
-    expect(days.first.precipitationDetail?.hours.length, 3);
-    expect(days.first.precipitationDetail?.hours.first.amount?.label, '1mm 미만');
-    expect(days.first.precipitationDetail?.hours.last.probability, 90);
-    expect(weekPrecipitationLines(days.first).join(),
-        contains('예상 누적량을 계산하기 어려워요'));
-    expect(days[1].precipitationDetail?.hours.length, 2);
-    expect(days[1].precipitationDetail?.hours.last.amount, isNull);
-    expect(weekPrecipitationLines(days[1]).first, '0~2시 예보 기준 · 하루 중 일부 시간');
-  });
-
-  test('직접 조회도 연장 예보의 단계 코드를 mm로 합산하지 않는다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {'TMP': '20'}),
-      ..._slot('20260823', '0300', {'POP': '60', 'PCP': '2'}),
-    ]);
-    final extended = bundle.weekly.days.last;
-    expect(extended.precipitationDetail?.kind, 'EXTENDED');
-    expect(extended.precipitationDetail?.hours, isEmpty);
-    expect(weekPrecipitationLines(extended).join(), contains('강수확률 중 최고 60%'));
-    expect(weekPrecipitationLines(extended).last, contains('mm 합계를 계산하지 않아요'));
-  });
-
-  test('직접 조회의 Week도 48시간 뒤 자료를 사용한다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {'TMP': '20'}),
-      ..._slot('20260822', '1000', {'POP': '60', 'PCP': '2mm'}),
-      ..._slot('20260822', '1100', {'POP': '30', 'PCP': '1mm 미만'}),
-    ]);
-    expect(weekPrecipitationLines(bundle.weekly.days.last),
-        contains('예상 누적 강수량 2mm 이상 3mm 미만'));
-  });
-
-  late MockClient kmaClient;
-
-  setUp(() {
-    kmaClient = MockClient((request) async {
-      expect(request.url.queryParameters['serviceKey'], 'test+key');
-      return http.Response(
-        jsonEncode({
-          'response': {
-            'header': {'resultCode': '00', 'resultMsg': 'NORMAL_SERVICE'},
-            'body': {
-              'items': {
-                'item': [
-                  ..._slot('20260820', '1000', {
-                    'TMP': '28',
-                    'REH': '70',
-                    'WSD': '2.2',
-                    'POP': '20',
-                    'PCP': '강수없음',
-                    'SNO': '적설없음',
-                    'PTY': '0',
-                    'SKY': '3',
-                  }),
-                  ..._slot('20260820', '1100', {
-                    'TMP': '29',
-                    'REH': '72',
-                    'WSD': '2.8',
-                    'POP': '70',
-                    'PCP': '1.0mm 미만',
-                    'SNO': '적설없음',
-                    'PTY': '1',
-                    'SKY': '4',
-                  }),
-                  _item('20260820', '0600', 'TMN', '22'),
-                  _item('20260820', '1500', 'TMX', '31'),
-                ],
-              },
-            },
-          },
-        }),
-        200,
-        headers: const {'content-type': 'application/json'},
-      );
-    });
-  });
-
-  test('KMA 설정 자산은 빌드 모드와 무관하게 로드된다', () async {
+  test('앱 설정에서는 운영 서버 주소만 로드한다', () async {
     final config = await AppConfig.load(
       bundle: _JsonAssetBundle({
         'SERVER_URL': 'https://weather.example.com',
-        'KMA_SERVICE_KEY': 'asset-key',
+        'KMA_SERVICE_KEY': '앱에-남으면-안되는-값',
       }),
     );
-
     expect(config.serverUrl, 'https://weather.example.com');
-    expect(config.kmaServiceKey, 'asset-key');
   });
 
-  test('앱 직접 조회도 기상청 계절별 체감온도 산식을 사용한다', () {
-    expect(
-      calculateKmaApparentTemperature(
-        28,
-        humidity: 70,
-        windSpeed: 2.2,
-        forecastAt: DateTime.parse('2026-08-20T01:00:00Z'),
-      ),
-      29.3,
-    );
-    expect(
-      calculateKmaApparentTemperature(
-        0,
-        humidity: 60,
-        windSpeed: 1.3,
-        forecastAt: DateTime.parse('2026-02-20T01:00:00Z'),
-      ),
-      -1.4,
-    );
-  });
-
-  test('앱 직접 기상청 조회는 원시 날씨와 기상청 체감온도를 제공한다', () async {
-    final direct = KmaDirectWeatherService(
-      serviceKey: 'test%2Bkey',
-      client: kmaClient,
-      now: () => DateTime.parse('2026-08-20T01:00:00Z'),
-    );
-
-    final bundle = await direct.fetch(nx: 60, ny: 121);
-
-    expect(bundle.today.dataSource, '기상청 직접 조회');
-    expect(bundle.today.current.temperature, 28);
-    expect(bundle.today.current.apparentTemperature, 29.3);
-    expect(bundle.today.hourly.first.apparentTemperature, 29.3);
-    expect(bundle.today.hourly.first.time, '10');
-    expect(bundle.today.hourly.first.forecastDate, '2026-08-20');
-    expect(bundle.today.recommendations, isEmpty);
-    expect(bundle.today.lifestyleMessages, isEmpty);
-    expect(bundle.today.timeline, isEmpty);
-    expect(bundle.weekly.days.single.recommendations, isEmpty);
-    expect(bundle.weekly.days.single.forecastDate, '2026-08-20');
-    expect(bundle.weekly.days.single.date, '목');
-    expect(bundle.weekly.days.single.weatherDataComplete, isTrue);
-    expect(bundle.weekly.days.single.minTemperatureSource, 'DAILY');
-    expect(bundle.weekly.days.single.maxTemperatureSource, 'DAILY');
-    expect(bundle.weekly.days.single.recommendationsAvailable, isFalse);
-  });
-
-  test('운영 서버 실패 시 기상청 직접 조회로 전환한다', () async {
+  test('운영 서버 실패 시 외부 API로 우회하지 않는다', () async {
     final service = WeatherService(
       _FailingApiClient(),
-      directKma: KmaDirectWeatherService(
-        serviceKey: 'test%2Bkey',
-        client: kmaClient,
-        now: () => DateTime.parse('2026-08-20T01:00:00Z'),
-      ),
-      internetProbe: () async => true,
+      serverRetryCount: 0,
       serverRetryDelay: Duration.zero,
     );
-
     final result = await service.fetchWeather(installationId: 'test');
-
-    expect(result.mode, WeatherLoadMode.directKma);
-    expect(result.hasWeather, isTrue);
-    expect(result.serverFeaturesAvailable, isFalse);
-  });
-
-  test('운영 서버와 앱 단기예보 조회를 선택적으로 실행할 수 있다', () async {
-    final service = WeatherService(
-      _FailingApiClient(),
-      directKma: KmaDirectWeatherService(
-        serviceKey: 'test%2Bkey',
-        client: kmaClient,
-        now: () => DateTime.parse('2026-08-20T01:00:00Z'),
-      ),
-      internetProbe: () async => true,
-      serverRetryDelay: Duration.zero,
-    );
-
-    final serverResult = await service.fetchServerWeather(
-      installationId: 'test',
-    );
-    expect(serverResult.hasWeather, isFalse);
-    expect(serverResult.mode, WeatherLoadMode.unavailable);
-
-    final directResult = await service.fetchDirectWeather();
-    expect(directResult.hasWeather, isTrue);
-    expect(directResult.mode, WeatherLoadMode.directKma);
-  });
-
-  test('Main 경량 조회는 위치 격자만 전송하고 전체 Today와 분리한다', () async {
-    final client = _RecordingApiClient();
-    final service = WeatherService(
-      client,
-      directKma: KmaDirectWeatherService(serviceKey: ''),
-    );
-
-    final main = await service.fetchMainWeather(nx: 58, ny: 124);
-
-    expect(main?.current.temperature, 24);
-    expect(client.queries['/api/v1/weather/main'], {
-      'nx': '58',
-      'ny': '124',
-    });
+    expect(result.mode, WeatherLoadMode.unavailable);
+    expect(result.hasWeather, isFalse);
+    expect(result.message, contains('운영 서버'));
   });
 
   test('운영 서버 날씨 묶음은 5초 간격으로 최대 3회 재시도한다', () async {
@@ -240,65 +34,18 @@ void main() {
     final waits = <Duration>[];
     final service = WeatherService(
       client,
-      directKma: KmaDirectWeatherService(serviceKey: ''),
       serverRetryWait: (duration) async => waits.add(duration),
     );
-
     final result = await service.fetchServerWeather(installationId: 'test');
-
     expect(result.mode, WeatherLoadMode.server);
     expect(client.todayCalls, 4);
     expect(client.weeklyCalls, 4);
     expect(waits, List.filled(3, const Duration(seconds: 5)));
   });
 
-  test('오늘 자료를 주간 자료보다 먼저 전달해 Main 선표시를 지원한다', () async {
-    final client = _StagedApiClient();
-    final service = WeatherService(
-      client,
-      directKma: KmaDirectWeatherService(serviceKey: ''),
-    );
-    TodayWeatherResponse? receivedToday;
-    WeeklyWeatherResponse? receivedWeekly;
-
-    final loading = service.fetchServerWeather(
-      installationId: 'test',
-      onToday: (today) => receivedToday = today,
-      onWeekly: (weekly) => receivedWeekly = weekly,
-    );
-    await Future<void>.delayed(Duration.zero);
-
-    expect(receivedToday?.current.temperature, 24);
-    expect(receivedWeekly, isNull);
-
-    client.weekly.complete({'days': <Map<String, dynamic>>[]});
-    final result = await loading;
-    expect(receivedWeekly, isNotNull);
-    expect(result.hasWeather, isTrue);
-  });
-
-  test('먼저 받은 오늘 자료는 주간 재시도 중 다시 요청하지 않는다', () async {
-    final client = _WeeklyRetryApiClient();
-    final service = WeatherService(
-      client,
-      directKma: KmaDirectWeatherService(serviceKey: ''),
-      serverRetryDelay: Duration.zero,
-    );
-
-    final result = await service.fetchServerWeather(installationId: 'test');
-
-    expect(result.hasWeather, isTrue);
-    expect(client.todayCalls, 1);
-    expect(client.weeklyCalls, 4);
-  });
-
-  test('GPS 좌표는 현재 강수 조회에만 전달한다', () async {
+  test('GPS 좌표는 Today 서버 요청에만 전달한다', () async {
     final client = _RecordingApiClient();
-    final service = WeatherService(
-      client,
-      directKma: KmaDirectWeatherService(serviceKey: ''),
-    );
-
+    final service = WeatherService(client);
     final result = await service.fetchServerWeather(
       installationId: 'device-1',
       coordinates: const DeviceCoordinates(
@@ -306,186 +53,10 @@ void main() {
         longitude: 127.0286,
       ),
     );
-
     expect(result.hasWeather, isTrue);
-    expect(client.queries['/api/v1/weather/today'],
-        containsPair('latitude', '37.2636'));
-    expect(client.queries['/api/v1/weather/today'],
-        containsPair('longitude', '127.0286'));
-    expect(
-        client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
+    expect(client.queries['/api/v1/weather/today'], containsPair('latitude', '37.2636'));
+    expect(client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
   });
-
-  test('역지오코딩 지역명과 선택 지역 코드는 중기예보 조회에만 전달한다', () async {
-    final client = _RecordingApiClient();
-    final service = WeatherService(
-      client,
-      directKma: KmaDirectWeatherService(serviceKey: ''),
-    );
-
-    await service.fetchServerWeather(
-      installationId: 'device-1',
-      regionCode: '4139000000',
-      regionNameFuture: Future.value('시흥시 은행동'),
-    );
-
-    expect(
-        client.queries['/api/v1/weather/weekly'],
-        containsPair(
-          'regionCode',
-          '4139000000',
-        ));
-    expect(
-        client.queries['/api/v1/weather/weekly'],
-        containsPair(
-          'regionName',
-          '시흥시 은행동',
-        ));
-    expect(
-        client.queries['/api/v1/weather/today'], isNot(contains('regionName')));
-  });
-
-  test('시간대 예보는 forecastAt과 눈 예상 파생값을 사용한다', () {
-    final response = TodayWeatherResponse.fromJson({
-      'region': {'nx': 60, 'ny': 121, 'name': '수원'},
-      'current': {'temperature': 0},
-      'hourly': [
-        {
-          'forecastAt': '2026-08-20T18:00:00+09:00',
-          'temperature': 0,
-          'snowExpected': true,
-          'snowfallAmount': 1.2,
-        },
-      ],
-    });
-
-    expect(response.hourly.single.time, '18');
-    expect(response.hourly.single.forecastDate, '2026-08-20');
-    expect(response.hourly.single.snowExpected, isTrue);
-    expect(response.hourly.single.snowfallAmount, 1.2);
-  });
-
-  test('직접 조회에서도 기온 누락 슬롯을 유지하고 나머지 결측을 0으로 채우지 않는다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {'REH': '70'}),
-      ..._slot('20260820', '1100', {
-        'TMP': '0',
-        'WSD': '0',
-        'POP': '0',
-        'PCP': '강수없음',
-        'SNO': '적설없음',
-        'PTY': '0',
-        'SKY': '1',
-      }),
-      _item('20260820', '1500', 'TMX', '3'),
-    ]);
-    expect(bundle.today.hourly, hasLength(2));
-    final missing = bundle.today.hourly.first;
-    expect(missing.time, '10');
-    expect(missing.temperature, isNull);
-    expect(missing.apparentTemperature, isNull);
-    expect(missing.windSpeed, isNull);
-    expect(missing.precipitationProbability, isNull);
-    expect(missing.precipitationAmount, isNull);
-    expect(missing.snowExpected, isNull);
-    expect(missing.snowfallAmount, isNull);
-    expect(missing.skyCondition, isNull);
-    expect(bundle.today.current.temperature, isNull);
-    expect(bundle.today.current.sky, isNull);
-    final zero = bundle.today.hourly.last;
-    expect(zero.temperature, 0);
-    expect(zero.windSpeed, 0);
-    expect(zero.precipitationProbability, 0);
-    expect(zero.precipitationAmount, 0);
-    expect(zero.snowExpected, isFalse);
-    expect(zero.snowfallAmount, 0);
-    expect(zero.skyCondition, '맑음');
-    expect(bundle.weekly.days.single.min, 0);
-    expect(bundle.weekly.days.single.max, 3);
-    expect(bundle.weekly.days.single.weatherDataComplete, isFalse);
-    expect(bundle.weekly.days.single.minTemperatureSource, 'HOURLY');
-    expect(bundle.weekly.days.single.maxTemperatureSource, 'DAILY');
-  });
-
-  test('직접 조회의 모든 기온이 누락돼도 일 최저·최고를 0으로 계산하지 않는다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {'WSD': '2'}),
-      ..._slot('20260820', '1100', {'REH': '50'}),
-    ]);
-    expect(bundle.today.hourly, hasLength(2));
-    expect(bundle.weekly.days.single.min, isNull);
-    expect(bundle.weekly.days.single.max, isNull);
-    expect(bundle.weekly.days.single.weatherLabel, '정보 없음');
-  });
-
-  test('직접 조회의 미만 범위를 상한값으로 바꾸지 않고 비정상 자료를 결측으로 유지한다', () async {
-    final bundle = await _fetchPartialSlots([
-      ..._slot('20260820', '1000', {
-        'TMP': '5',
-        'PTY': '3',
-        'PCP': '1.0mm 미만',
-        'SNO': '0.5cm 미만',
-      }),
-      ..._slot('20260820', '1100', {
-        'TMP': 'NaN',
-        'WSD': '--',
-        'POP': '자료없음',
-        'PCP': '확인 불가',
-        'SNO': '자료없음',
-        'SKY': '1',
-      }),
-    ]);
-    final range = bundle.today.hourly.first;
-    expect(range.precipitationAmount, 0);
-    expect(range.precipitationAmountLabel, '1.0mm 미만');
-    expect(range.snowfallAmount, 0);
-    expect(range.snowfallAmountLabel, '0.5cm 미만');
-    expect(range.snowExpected, isTrue);
-    expect(range.skyCondition, '눈');
-    final missing = bundle.today.hourly.last;
-    expect(missing.temperature, isNull);
-    expect(missing.windSpeed, isNull);
-    expect(missing.precipitationProbability, isNull);
-    expect(missing.precipitationAmount, isNull);
-    expect(missing.precipitationAmountLabel, isNull);
-    expect(missing.snowfallAmount, isNull);
-    expect(missing.snowfallAmountLabel, isNull);
-    expect(missing.skyCondition, isNull);
-  });
-
-  test('인터넷 연결이 없으면 날씨 미지원 상태를 반환한다', () async {
-    final service = WeatherService(
-      _FailingApiClient(),
-      directKma: KmaDirectWeatherService(serviceKey: ''),
-      internetProbe: () async => false,
-      serverRetryDelay: Duration.zero,
-    );
-
-    final result = await service.fetchWeather(installationId: 'test');
-
-    expect(result.mode, WeatherLoadMode.offline);
-    expect(result.hasWeather, isFalse);
-    expect(result.message, contains('인터넷 연결 불가'));
-  });
-}
-
-Future<DirectKmaWeatherBundle> _fetchPartialSlots(
-    List<Map<String, dynamic>> items) {
-  return KmaDirectWeatherService(
-    serviceKey: 'test-key',
-    now: () => DateTime.parse('2026-08-20T01:00:00Z'),
-    client: MockClient((_) async => http.Response(
-        jsonEncode({
-          'response': {
-            'header': {'resultCode': '00'},
-            'body': {
-              'items': {'item': items}
-            },
-          },
-        }),
-        200,
-        headers: {'content-type': 'application/json'})),
-  ).fetch(nx: 60, ny: 121);
 }
 
 class _JsonAssetBundle extends CachingAssetBundle {
@@ -504,80 +75,8 @@ class _FailingApiClient extends ApiClient {
   _FailingApiClient() : super(baseUrl: 'https://server.invalid');
 
   @override
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? query,
-  }) {
+  Future<Map<String, dynamic>> get(String path, {Map<String, String>? query}) {
     return Future.error(Exception('server unavailable'));
-  }
-}
-
-class _RecordingApiClient extends ApiClient {
-  _RecordingApiClient() : super(baseUrl: 'https://server.example');
-
-  final Map<String, Map<String, String>> queries = {};
-
-  @override
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? query,
-  }) async {
-    queries[path] = query ?? {};
-    if (path.endsWith('/today') || path.endsWith('/main')) {
-      return {
-        'region': {
-          'nx': int.parse(query?['nx'] ?? '60'),
-          'ny': int.parse(query?['ny'] ?? '121'),
-          'name': '수원',
-        },
-        'current': {'temperature': 24},
-      };
-    }
-    return {'days': <Map<String, dynamic>>[]};
-  }
-}
-
-class _StagedApiClient extends ApiClient {
-  _StagedApiClient() : super(baseUrl: 'https://server.example');
-
-  final weekly = Completer<Map<String, dynamic>>();
-
-  @override
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? query,
-  }) async {
-    if (path.endsWith('/today')) {
-      return {
-        'region': {'nx': 60, 'ny': 121, 'name': '수원'},
-        'current': {'temperature': 24},
-      };
-    }
-    return weekly.future;
-  }
-}
-
-class _WeeklyRetryApiClient extends ApiClient {
-  _WeeklyRetryApiClient() : super(baseUrl: 'https://server.example');
-
-  int todayCalls = 0;
-  int weeklyCalls = 0;
-
-  @override
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? query,
-  }) async {
-    if (path.endsWith('/today')) {
-      todayCalls += 1;
-      return {
-        'region': {'nx': 60, 'ny': 121, 'name': '수원'},
-        'current': {'temperature': 24},
-      };
-    }
-    weeklyCalls += 1;
-    if (weeklyCalls < 4) throw Exception('weekly not ready');
-    return {'days': <Map<String, dynamic>>[]};
   }
 }
 
@@ -590,48 +89,33 @@ class _RetryingApiClient extends ApiClient {
       : super(baseUrl: 'https://server.example');
 
   @override
-  Future<Map<String, dynamic>> get(
-    String path, {
-    Map<String, String>? query,
-  }) async {
-    final calls = path.endsWith('/today') ? ++todayCalls : ++weeklyCalls;
-    if (calls <= failuresBeforeSuccess) {
-      throw Exception('temporary server failure');
-    }
+  Future<Map<String, dynamic>> get(String path, {Map<String, String>? query}) async {
     if (path.endsWith('/today')) {
-      return {
-        'region': {'nx': 60, 'ny': 121, 'name': '수원'},
-        'current': {'temperature': 24},
-      };
+      todayCalls++;
+      if (todayCalls <= failuresBeforeSuccess) throw Exception('retry');
+      return _todayJson;
     }
+    weeklyCalls++;
+    if (weeklyCalls <= failuresBeforeSuccess) throw Exception('retry');
     return {'days': <Map<String, dynamic>>[]};
   }
 }
 
-List<Map<String, dynamic>> _slot(
-  String date,
-  String time,
-  Map<String, String> values,
-) {
-  return values.entries
-      .map((entry) => _item(date, time, entry.key, entry.value))
-      .toList();
+class _RecordingApiClient extends ApiClient {
+  final Map<String, Map<String, String>> queries = {};
+
+  _RecordingApiClient() : super(baseUrl: 'https://server.example');
+
+  @override
+  Future<Map<String, dynamic>> get(String path, {Map<String, String>? query}) async {
+    queries[path] = query ?? {};
+    if (path.endsWith('/today')) return _todayJson;
+    return {'days': <Map<String, dynamic>>[]};
+  }
 }
 
-Map<String, dynamic> _item(
-  String date,
-  String time,
-  String category,
-  String value,
-) {
-  return {
-    'baseDate': '20260820',
-    'baseTime': '0800',
-    'category': category,
-    'fcstDate': date,
-    'fcstTime': time,
-    'fcstValue': value,
-    'nx': 60,
-    'ny': 121,
-  };
-}
+final _todayJson = <String, dynamic>{
+  'region': {'nx': 60, 'ny': 121, 'name': '테스트'},
+  'current': {'temperature': 24},
+  'hourly': <Map<String, dynamic>>[],
+};

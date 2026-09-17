@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import router from '../src/api/weather';
 import { buildForecastFromItems, KmaWeatherProvider, type KmaForecastItem } from '../src/providers/weather/kmaWeatherProvider';
+import { env } from 'cloudflare:test';
+import { seedCollectedWeekly } from './collectedWeatherFixture';
 
 const base = { baseDate: '20261231', baseTime: '0800' };
 const now = new Date('2026-12-31T01:00:00Z');
@@ -67,15 +69,19 @@ describe('weekly precipitation intervals', () => {
     vi.useFakeTimers();
     vi.setSystemTime(now);
     const forecast = buildForecastFromItems(current(), now, base);
-    const provider = vi.spyOn(KmaWeatherProvider.prototype, 'getForecastByRegion').mockResolvedValue(forecast);
+    await seedCollectedWeekly(60, 121, {
+      forecast,
+      midTermDays: [],
+      observedDays: [],
+      airQuality: [],
+    });
     try {
-      const response = await router.request('/weekly?nx=60&ny=121', {}, { KMA_SERVICE_KEY: 'test-key' });
+      const response = await router.request('/weekly?nx=60&ny=121', {}, { DB: env.DB });
       expect(response.status).toBe(200);
       const payload = await response.json<{ days: Record<string, unknown>[] }>();
       expect(payload.days[0]).toMatchObject({ forecastDate: '2026-12-31', precipitationDetail: forecast.daily[0].precipitationDetail });
       expect(payload.days[0]).not.toHaveProperty('precipitationAmount');
     } finally {
-      provider.mockRestore();
       vi.useRealTimers();
     }
   });

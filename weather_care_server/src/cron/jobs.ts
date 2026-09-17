@@ -2,11 +2,33 @@ import { runRecommendationNotificationJob } from '../notification/notificationSc
 import { ServerEnv } from '../types';
 import { clearExpiredEnrollmentData } from '../security/installationAccess';
 import { runDataRetentionJob } from '../database/dataRetention';
+import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
 
 export async function runForecastRefreshJob(env: ServerEnv): Promise<void> {
   if (!env.DB) return;
-  // TODO: 외부 API 호출 후 날씨 캐시 업데이트 및 active_regions 기반 refresh
-  return;
+  await runWeatherCollectionJob(env, { collectCore: true });
+}
+
+export async function runScheduledJobs(
+  env: ServerEnv,
+  cron: string,
+  scheduledTime?: number,
+): Promise<void> {
+  const now = scheduledTime === undefined ? new Date() : new Date(scheduledTime);
+  if (cron === '7-59/15 * * * *') {
+    await runWeatherCollectionJob(env, {
+      now,
+      collectCore: false,
+      collectRoadIce: true,
+    });
+    return;
+  }
+  await runWeatherCollectionJob(env, {
+    now,
+    collectCore: true,
+    collectRoadIce: false,
+  });
+  await runRecommendationNotificationJobFromCron(env, scheduledTime);
 }
 
 export async function runRecommendationNotificationJobFromCron(

@@ -21,6 +21,7 @@ import {
 import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 import * as environmental from '../src/providers/environmental/environmentalDataService';
 import { KmaMidTermProvider } from '../src/providers/weather/kmaMidTermProvider';
+import { seedCollectedRegion, seedCollectedWeekly } from './collectedWeatherFixture';
 
 describe('fast Main weather', () => {
   it('returns KMA core weather without waiting for optional providers', async () => {
@@ -39,8 +40,9 @@ describe('fast Main weather', () => {
     ).mockResolvedValue(forecast);
     const optional = vi.spyOn(environmental, 'loadEnvironmentalData');
     try {
+      await seedCollectedRegion(58, 124, forecast);
       const response = await router.request('/main?nx=58&ny=124', {}, {
-        KMA_SERVICE_KEY: 'test-key',
+        DB: env.DB,
       });
       const data = await response.json<{
         region: { nx: number; ny: number };
@@ -53,6 +55,7 @@ describe('fast Main weather', () => {
       expect(data.current.temperature).toBe(24);
       expect(data.hourly).toEqual([]);
       expect(optional).not.toHaveBeenCalled();
+      expect(provider).not.toHaveBeenCalled();
     } finally {
       provider.mockRestore();
       optional.mockRestore();
@@ -169,6 +172,15 @@ describe('weekly calendar date contract', () => {
     });
     const savedSettings = vi.spyOn(settingsRepository, 'getNotificationSettings').mockResolvedValue(settings);
     try {
+      await seedCollectedWeekly(60, 121, {
+        forecast: {
+          current: hourly[0], hourly, daily: [forecastDay], baseDate: '20260820',
+          baseTime: '1100', dataSource: '기상청',
+        },
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [],
+      });
       const response = await router.request('/weekly?nx=60&ny=121&installationId=test', { headers: testAuthHeaders }, { DB: env.DB, KMA_SERVICE_KEY: 'test-key' });
       expect(response.status).toBe(200);
       expect(await response.json()).toMatchObject({ days: [{
@@ -198,15 +210,28 @@ describe('weekly calendar date contract', () => {
         dataSource: '기상청',
       });
     try {
+      await seedCollectedWeekly(60, 121, {
+        forecast: {
+          current: snapshot(14),
+          hourly: [],
+          daily: [{ ...day(28), date }],
+          baseDate: '20260910',
+          baseTime: '1100',
+          dataSource: '기상청',
+        },
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [],
+      });
       const response = await router.request('/weekly?nx=60&ny=121', {}, {
-        KMA_SERVICE_KEY: 'test-key',
+        DB: env.DB,
       });
       expect(response.status).toBe(200);
       expect(await response.json()).toMatchObject({
         regionId: '60_121',
         days: [{ date: weekday, forecastDate, min: '22', max: '28' }],
       });
-      expect(provider).toHaveBeenCalledWith(60, 121);
+      expect(provider).not.toHaveBeenCalled();
     } finally {
       provider.mockRestore();
       vi.useRealTimers();
@@ -228,6 +253,12 @@ describe('weekly provider independence', () => {
     const mid = vi.spyOn(KmaMidTermProvider.prototype, 'getForecast')
       .mockResolvedValue([midDay]);
     try {
+      await seedCollectedWeekly(58, 124, {
+        forecast: undefined,
+        midTermDays: [midDay],
+        observedDays: [],
+        airQuality: [],
+      });
       const response = await router.request(
         '/weekly?nx=58&ny=124&regionName=%EC%8B%9C%ED%9D%A5%EC%8B%9C',
         {},
@@ -253,6 +284,12 @@ describe('weekly provider independence', () => {
     const mid = vi.spyOn(KmaMidTermProvider.prototype, 'getForecast')
       .mockRejectedValue(new Error('mid unavailable'));
     try {
+      await seedCollectedWeekly(58, 124, {
+        forecast: undefined,
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [],
+      });
       const response = await router.request(
         '/weekly?nx=58&ny=124&regionName=%EC%8B%9C%ED%9D%A5%EC%8B%9C',
         {},
@@ -338,10 +375,19 @@ describe('today timeline', () => {
     const ctx = createExecutionContext();
 
     try {
+      await seedCollectedRegion(60, 121, {
+        current: hourly[0],
+        hourly,
+        timelineHourly,
+        daily: [day(28)],
+        baseDate: '20260820',
+        baseTime: '0800',
+        dataSource: '기상청',
+      });
       const response = await router.request(
         '/today?nx=60&ny=121',
         {},
-        { KMA_SERVICE_KEY: 'test-key' },
+        { DB: env.DB },
         ctx,
       );
       const data = await response.json<{

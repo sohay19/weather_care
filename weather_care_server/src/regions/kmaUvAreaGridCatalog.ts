@@ -1,7 +1,7 @@
 // 기상청 생활기상지수 조회서비스(4.0) 공식 지점 코드표에서 생성했습니다.
 // 원본: dfs-zone-tree_excel_20260701.xlsx (공공데이터포털 데이터셋 15085288)
 
-const UV_AREA_GRID_ROWS: ReadonlyArray<readonly [number, number, string]> = [
+export const UV_AREA_GRID_ROWS: ReadonlyArray<readonly [number, number, string]> = [
   [21, 132, '2872034000'],
   [21, 135, '2872033000'],
   [28, 8, '5019000000'],

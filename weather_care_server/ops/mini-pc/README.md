@@ -135,9 +135,21 @@ npx wrangler deploy --keep-vars --strict --message "미니 PC API 전환 브리�
 스케줄러 전환 명령은 다음과 같습니다.
 
 ```bash
+sudo systemctl stop weather-care-scheduler.service
+sudo systemd-run --unit=weather-care-prewarm --wait --pipe --collect \
+  --uid=weather-care \
+  --working-directory=/opt/weather-care/weather_care_server \
+  --property=EnvironmentFile=/etc/weather-care/weather-care.env \
+  /usr/bin/npm run node:prewarm
 sudo systemctl enable --now weather-care-scheduler.service
 journalctl -u weather-care-scheduler.service -f
 ```
+
+`node:prewarm`은 앱이 지원하는 전국 1,633개 예보 격자를 최초 한 번 모두 채우고,
+하나라도 빠지면 실패 코드로 종료합니다. 이후 스케줄러가 18개 묶음을 10분마다
+순환해 전체를 3시간 안에 갱신합니다. 운영 환경의
+`NATIONWIDE_PRECOLLECT_ENABLED=true`를 유지합니다. 활성 설치 지역의 환경·특보·
+초단기실황·좌표 기반 자료는 별도로 계속 수집합니다.
 
 ## 6. 백업과 복구
 

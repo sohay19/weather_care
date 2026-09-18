@@ -63,4 +63,13 @@ describe('SQLite D1 호환 계층', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: 'WEATHER_CACHE_NOT_READY' });
   });
+
+  it('Node 운영 환경은 전국 선수집을 기본으로 켠다', () => {
+    const database = temporaryDatabase();
+
+    expect(nodeServerEnv(database, {}).NATIONWIDE_PRECOLLECT_ENABLED).toBe('true');
+    expect(nodeServerEnv(database, {
+      NATIONWIDE_PRECOLLECT_ENABLED: 'false',
+    }).NATIONWIDE_PRECOLLECT_ENABLED).toBe('false');
+  });
 });

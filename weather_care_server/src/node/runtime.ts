@@ -43,6 +43,8 @@ export function nodeServerEnv(
     GA_ADMIN_CLIENT_EMAIL: environment.GA_ADMIN_CLIENT_EMAIL ?? '',
     GA_ADMIN_PRIVATE_KEY: environment.GA_ADMIN_PRIVATE_KEY ?? '',
     RECOVERY_MODE: environment.RECOVERY_MODE,
+    NATIONWIDE_PRECOLLECT_ENABLED:
+      environment.NATIONWIDE_PRECOLLECT_ENABLED ?? 'true',
   };
 }
 

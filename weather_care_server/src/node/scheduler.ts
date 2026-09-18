@@ -18,6 +18,7 @@ assertNodeEnvironment();
 const runtime = createNodeRuntime();
 const delivered = new Set<string>();
 const running = new Set<Promise<void>>();
+const runningJobs = new Set<ScheduledJobName>();
 
 function runDueJobs(now = new Date()): void {
   const scheduledAt = scheduledMinute(now);
@@ -25,6 +26,15 @@ function runDueJobs(now = new Date()): void {
     const deliveryKey = `${job}:${scheduledAt.toISOString()}`;
     if (delivered.has(deliveryKey)) continue;
     delivered.add(deliveryKey);
+    if (runningJobs.has(job)) {
+      console.warn(JSON.stringify({
+        event: 'node_scheduled_job_skipped_overlap',
+        job,
+        scheduledAt: scheduledAt.toISOString(),
+      }));
+      continue;
+    }
+    runningJobs.add(job);
     const promise = runScheduledJobs(
       runtime.env,
       cronByJob[job],
@@ -37,7 +47,10 @@ function runDueJobs(now = new Date()): void {
       console.error(JSON.stringify({
         event: 'node_scheduled_job_failed', job, error: safeErrorName(error),
       }));
-    }).finally(() => running.delete(promise));
+    }).finally(() => {
+      running.delete(promise);
+      runningJobs.delete(job);
+    });
     running.add(promise);
   }
 

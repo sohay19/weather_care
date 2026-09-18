@@ -282,6 +282,8 @@ export type ServerEnv = {
   LEGACY_ORIGIN_URL?: string;
   /** Operational gate stored outside the database; any non-off value blocks. */
   RECOVERY_MODE?: string;
+  /** Node 중앙 수집기가 앱 지원 전국 격자를 순환 선수집할지 여부 */
+  NATIONWIDE_PRECOLLECT_ENABLED?: string;
   /** 중계 전환 전 로컬 개발 또는 비상 직접조회에만 사용하는 선택 바인딩 */
   ITS_API_KEY?: string;
 };

@@ -81,6 +81,12 @@ Tunnel과 최종 전환 순서는 [`ops/mini-pc/README.md`](ops/mini-pc/README.m
 전환기에 Worker Secret `LEGACY_ORIGIN_URL`을 설정하면 기존 `workers.dev`를 사용하는
 앱 요청은 새 HTTPS 원본으로 전달되고 Worker Cron은 실행되지 않습니다.
 
+Node 중앙 수집기는 기본적으로 앱이 지원하는 전국 1,633개 예보 격자를 18개 묶음으로
+나눠 10분마다 한 묶음씩 갱신합니다. 따라서 정상 운영 중에는 모든 격자의 기본 예보가
+3시간 안에 순환 갱신됩니다. 최초 배포 직후 전부 즉시 채울 때는 스케줄러를 잠시 멈춘
+상태에서 `npm run node:prewarm`을 한 번 실행합니다. 활성 설치 지역은 기존처럼 환경·
+특보·초단기실황 등 상세 자료도 함께 수집합니다.
+
 운영 Worker에는 키를 소스나 `wrangler.toml`에 넣지 않고 다음 명령의 대화형
 입력으로 등록합니다.
 
@@ -118,9 +124,9 @@ npm run deploy
 - `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드·대기질 측정소·특보구역 매핑
 - `migrations/0001_init.sql`~`0011_central_weather_collection.sql`: 테이블 DDL, 사용자별 상태, 중앙 수집 캐시와 APIHub 일일 호출·용량 예산
 
-`/weather/main`, `/weather/today`, `/weather/weekly`, `/weather/comparison`은 외부 제공자를 호출하지 않고 D1에 저장된 중앙 수집 결과만 읽습니다. 자료가 아직 없으면 `WEATHER_CACHE_NOT_READY` 503을 반환하며 요청 수에 따라 외부 API 호출이 늘어나지 않습니다.
+`/weather/main`, `/weather/today`, `/weather/weekly`, `/weather/comparison`은 외부 제공자를 호출하지 않고 중앙 수집 결과만 읽습니다. Node 운영 서버는 앱 지원 전국 격자를 미리 채우므로 최초 선수집이 끝난 뒤 지역 선택으로 외부 API 호출이나 `WEATHER_CACHE_NOT_READY`가 새로 발생하지 않습니다.
 
-Cron은 10분마다 활성 설치의 예보 격자를 중복 제거해 단기예보·환경·특보를 수집하고 알림을 평가합니다. 전국 500m 레이더는 `2,17,32,47분`에 한 번만 받아 모든 활성 좌표를 배치 판독하고, 공공데이터포털 초단기실황과 강수 판단이 다른 좌표만 APIHub 지점 관측분석으로 최대 40개까지 재검증합니다. 도로살얼음은 동절기 `7,37분`에 12개 노선을 한 번씩만 받아 모든 좌표를 함께 판정합니다.
+Cron은 10분마다 전국 격자 한 묶음의 단기예보와 활성 설치의 환경·특보를 수집하고 알림을 평가합니다. 전국 500m 레이더는 `2,17,32,47분`에 한 번만 받아 모든 활성 좌표를 배치 판독하고, 공공데이터포털 초단기실황과 강수 판단이 다른 좌표만 APIHub 지점 관측분석으로 최대 40개까지 재검증합니다. 도로살얼음은 동절기 `7,37분`에 12개 노선을 한 번씩만 받아 모든 활성 좌표를 함께 판정합니다.
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 

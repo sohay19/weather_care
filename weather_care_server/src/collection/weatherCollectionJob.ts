@@ -48,6 +48,11 @@ import { resolveKmaMidTermRegionIds } from '../regions/kmaMidTermRegionCatalog';
 import { uvAreaNoForGrid } from '../regions/kmaUvAreaGridCatalog';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
+import {
+  NATIONWIDE_FORECAST_GRIDS,
+  nationwideForecastGridShard,
+  scheduledNationwideForecastGridShard,
+} from '../regions/nationwideForecastGridCatalog';
 import { mapWithConcurrency } from '../utils/concurrencyLimiter';
 import {
   cacheRecordIsFresh,
@@ -90,6 +95,8 @@ export interface WeatherCollectionOptions {
   collectCore?: boolean;
   collectRadar?: boolean;
   collectRoadIce?: boolean;
+  collectActiveDetails?: boolean;
+  nationwideShardIndex?: number;
 }
 
 export async function runWeatherCollectionJob(
@@ -98,20 +105,49 @@ export async function runWeatherCollectionJob(
 ): Promise<void> {
   if (!env.DB) return;
   const now = options.now ?? new Date();
-  const targets = await loadCollectionTargets(env.DB);
-  if (targets.length === 0) return;
-  const regions = distinctRegions(targets);
+  const targets = await loadActiveCollectionTargets(env.DB);
+  const activeRegions = distinctRegions(targets);
+  const precollectNationwide = env.NATIONWIDE_PRECOLLECT_ENABLED === 'true';
+  const nationwideShard = precollectNationwide
+    ? options.nationwideShardIndex === undefined
+      ? scheduledNationwideForecastGridShard(now)
+      : {
+          shardIndex: options.nationwideShardIndex,
+          grids: nationwideForecastGridShard(options.nationwideShardIndex),
+        }
+    : undefined;
+  const regions = distinctRegions([
+    ...(nationwideShard?.grids ?? []),
+    ...activeRegions,
+  ]);
+  if (regions.length === 0) return;
   const locations = distinctLocations(targets);
+  const activeRegionKeys = new Set(
+    activeRegions.map(({ nx, ny }) => `${nx}_${ny}`),
+  );
+  const allForecastTargets: CollectionTarget[] = precollectNationwide
+    ? [...NATIONWIDE_FORECAST_GRIDS]
+    : activeRegions;
+
+  console.log(JSON.stringify({
+    event: 'weather_collection_targets_loaded',
+    activeRegions: activeRegions.length,
+    nationwideShard: nationwideShard?.shardIndex,
+    nationwideRegions: nationwideShard?.grids.length ?? 0,
+    totalRegions: regions.length,
+  }));
 
   if (options.collectCore !== false) {
-    await collectRegionForecasts(env, regions, now);
-    await collectWarnings(env, regions, now);
-    await collectUltraShortObservations(env, regions, now);
-    await collectRoadControls(env, locations, now);
-    if (koreanMinute(now) === 0) {
-      await collectYesterdayComparisons(env, targets, now);
-      if (koreanHour(now) === 2) {
-        await collectDailyObservations(env, regions, now);
+    await collectRegionForecasts(env, regions, activeRegionKeys, now);
+    if (options.collectActiveDetails !== false) {
+      await collectWarnings(env, activeRegions, now);
+      await collectUltraShortObservations(env, activeRegions, now);
+      await collectRoadControls(env, locations, now);
+      if (koreanMinute(now) === 0) {
+        await collectYesterdayComparisons(env, allForecastTargets, now);
+        if (koreanHour(now) === 2) {
+          await collectDailyObservations(env, allForecastTargets, now);
+        }
       }
     }
   }
@@ -123,7 +159,7 @@ export async function runWeatherCollectionJob(
   }
 }
 
-async function loadCollectionTargets(db: D1Database): Promise<CollectionTarget[]> {
+async function loadActiveCollectionTargets(db: D1Database): Promise<CollectionTarget[]> {
   const result = await db.prepare(
     `SELECT nx, ny, latitude, longitude
      FROM installations
@@ -145,10 +181,12 @@ async function loadCollectionTargets(db: D1Database): Promise<CollectionTarget[]
 async function collectRegionForecasts(
   env: ServerEnv,
   regions: CollectionTarget[],
+  activeRegionKeys: ReadonlySet<string>,
   now: Date,
 ): Promise<void> {
   await mapWithConcurrency(regions, 2, async ({ nx, ny }) => {
     try {
+      const includeSupplemental = activeRegionKeys.has(`${nx}_${ny}`);
       let forecastRecord = await getCollectedCache<WeatherForecast>(
         env.DB,
         collectedCacheKey.forecast(nx, ny),
@@ -157,27 +195,30 @@ async function collectRegionForecasts(
       if (!forecastRecord ||
           forecastRecord.value.baseDate !== latestForecastIssue?.baseDate ||
           forecastRecord.value.baseTime !== latestForecastIssue?.baseTime) {
-        const forecast = await new KmaWeatherProvider({
+        const provider = new KmaWeatherProvider({
           serviceKey: env.KMA_SERVICE_KEY,
           now: () => now,
-        }).getForecastByRegion(nx, ny);
+        });
+        const value = includeSupplemental
+          ? await provider.getForecastByRegion(nx, ny)
+          : await provider.getLatestForecastByRegion(nx, ny);
         await saveCollectedCache(env.DB, {
           key: collectedCacheKey.forecast(nx, ny),
           type: 'COLLECTED_FORECAST',
-          value: forecast,
+          value,
           nx,
           ny,
           updatedAt: now,
         });
-        await saveCurrentWeather(env.DB, nx, ny, forecast.current);
-        forecastRecord = { value: forecast, status: 'AVAILABLE', updatedAt: now.toISOString() };
+        await saveCurrentWeather(env.DB, nx, ny, value.current);
+        forecastRecord = { value, status: 'AVAILABLE', updatedAt: now.toISOString() };
       }
 
       let environmentalRecord = await getCollectedCache<EnvironmentalDataBundle>(
         env.DB,
         collectedCacheKey.environmental(nx, ny),
       );
-      if (shouldRefreshEnvironmentalRecord(environmentalRecord, now)) {
+      if (includeSupplemental && shouldRefreshEnvironmentalRecord(environmentalRecord, now)) {
         const environmental = await loadEnvironmentalData(
           env,
           regionMetadataForGrid(nx, ny),
@@ -194,13 +235,14 @@ async function collectRegionForecasts(
         environmentalRecord = { value: environmental, status: 'AVAILABLE', updatedAt: now.toISOString() };
       }
 
-      if (forecastRecord && environmentalRecord) {
+      if (forecastRecord) {
+        const environmental = environmentalRecord?.value ?? nationwideBaseEnvironmentalData();
         const bundle: CollectedRegionBundle = {
           forecast: enrichForecastWithEnvironmentalData(
             forecastRecord.value,
-            environmentalRecord.value,
+            environmental,
           ),
-          environmental: environmentalRecord.value,
+          environmental,
         };
         await saveCollectedCache(env.DB, {
           key: `COLLECTED_REGION_${nx}_${ny}`,
@@ -211,7 +253,14 @@ async function collectRegionForecasts(
           updatedAt: now,
         });
       }
-      await collectWeekly(env, nx, ny, forecastRecord?.value, now);
+      await collectWeekly(
+        env,
+        nx,
+        ny,
+        forecastRecord?.value,
+        now,
+        includeSupplemental,
+      );
     } catch (error) {
       logCollectionFailure('region', error, { nx, ny });
     }
@@ -240,11 +289,34 @@ async function collectWeekly(
   ny: number,
   forecast: WeatherForecast | undefined,
   now: Date,
+  includeSupplemental: boolean,
 ): Promise<void> {
   const key = collectedCacheKey.weekly(nx, ny);
   const cached = await getCollectedCache<CollectedWeeklyBundle>(env.DB, key);
   const sameForecastIssue = cached?.value.forecast?.baseDate === forecast?.baseDate &&
     cached?.value.forecast?.baseTime === forecast?.baseTime;
+  if (!includeSupplemental) {
+    if (sameForecastIssue) return;
+    await saveCollectedCache(env.DB, {
+      key,
+      type: 'COLLECTED_WEEKLY',
+      value: {
+        forecast,
+        midTermDays: cached?.value.midTermDays ?? [],
+        observedDays: cached?.value.observedDays ?? [],
+        uv: cached?.value.uv,
+        airQuality: cached?.value.airQuality ?? [],
+        midTermIssue: cached?.value.midTermIssue,
+        uvIssue: cached?.value.uvIssue,
+        airQualityIssue: cached?.value.airQualityIssue,
+        collectedAt: now.toISOString(),
+      } satisfies CollectedWeeklyBundle,
+      nx,
+      ny,
+      updatedAt: now,
+    });
+    return;
+  }
   const midRegion = resolveKmaMidTermRegionIds(undefined, undefined, nx, ny);
   const uvAreaNo = uvAreaNoForGrid(nx, ny);
   const midTermIssue = latestMidTermIssueTimes(now, 1)[0];
@@ -324,6 +396,23 @@ async function collectWeekly(
     ny,
     updatedAt: now,
   });
+}
+
+function nationwideBaseEnvironmentalData(): EnvironmentalDataBundle {
+  return {
+    sources: {
+      uv: {
+        provider: 'KMA_LIVING_INDEX_V5',
+        state: 'UNAVAILABLE',
+        reason: 'PROVIDER_UNAVAILABLE',
+      },
+      airQuality: {
+        provider: 'AIRKOREA',
+        state: 'UNAVAILABLE',
+        reason: 'PROVIDER_UNAVAILABLE',
+      },
+    },
+  };
 }
 
 async function collectWarnings(

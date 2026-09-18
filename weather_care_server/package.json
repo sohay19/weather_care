@@ -17,6 +17,7 @@
     "node:server": "tsx src/node/server.ts",
     "node:scheduler": "tsx src/node/scheduler.ts",
     "node:job": "tsx src/node/runJob.ts",
+    "node:prewarm": "tsx src/node/prewarmNationwide.ts",
     "node:backup": "tsx src/node/backup.ts"
   },
   "dependencies": {

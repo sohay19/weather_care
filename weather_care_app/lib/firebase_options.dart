@@ -51,18 +51,17 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyC03iGjjUIl0HjutjbTpfug3w2DTuUwLLE',
-    appId: '1:753467123768:android:f3ec240681c39cb6095ecd',
+    appId: '1:753467123768:android:f81ccdab56b2ac36095ecd',
     messagingSenderId: '753467123768',
     projectId: 'weather-care-2aaa8',
     storageBucket: 'weather-care-2aaa8.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCqdaVPorZH2THp2B-ZC3XJeFa3KOlThpg',
-    appId: '1:753467123768:ios:366c0d0634edaecd095ecd',
+    appId: '1:753467123768:ios:b3f0148613052995095ecd',
     messagingSenderId: '753467123768',
     projectId: 'weather-care-2aaa8',
     storageBucket: 'weather-care-2aaa8.firebasestorage.app',
-    iosBundleId: 'com.codesoha.weatherCare',
+    iosBundleId: 'com.codesoha.weathercare',
   );
 }

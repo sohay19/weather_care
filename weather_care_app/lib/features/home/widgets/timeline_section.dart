@@ -5,6 +5,7 @@ import '../../../models/weather.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
+import 'preparation_icon.dart';
 
 class TimelineSection extends StatefulWidget {
   final List<TimelineItem> items;
@@ -215,8 +216,8 @@ class _TimelineItemView extends StatelessWidget {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
-                                          recommendation.type.icon,
+                                        PreparationIcon(
+                                          type: recommendation.type,
                                           size: 14,
                                           color:
                                               recommendation.type.accentColor,

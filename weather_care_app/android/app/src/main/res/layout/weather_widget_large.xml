@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="@font/suite_semibold"
             android:maxLines="1"
             android:text="시흥시 은행동"
             android:textColor="#25374E"
@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:fontFamily="sans-serif"
+            android:fontFamily="@font/suite_regular"
             android:maxLines="1"
             android:text="오전 8:20 기준"
             android:textColor="#60758A"
@@ -43,95 +43,122 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="74dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/widget_weather_icon"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:contentDescription="@string/weather_widget_icon_description"
-            android:scaleType="fitCenter" />
-
-        <TextView
-            android:id="@+id/widget_current_temperature"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:fontFamily="sans-serif"
-            android:includeFontPadding="false"
-            android:text="18°"
-            android:textColor="#25374E"
-            android:textSize="38sp" />
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="38dp"
-            android:layout_marginStart="18dp"
-            android:layout_marginEnd="18dp"
-            android:background="#ABC3D6" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:includeFontPadding="false"
-                android:text="체감"
-                android:textColor="#60758A"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/widget_apparent_temperature"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:includeFontPadding="false"
-                android:text="18°"
-                android:textColor="#25374E"
-                android:textSize="38sp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/widget_brief"
-        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
-        android:gravity="center_vertical"
-        android:maxLines="2"
-        android:minLines="2"
-        android:text="오전에는 선선하고 오후에는 포근해요.\n얇은 겉옷을 챙기면 좋아요."
-        android:textColor="#25374E"
-        android:textSize="14sp" />
-
-    <LinearLayout
-        android:id="@+id/widget_preparation_row"
-        android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:gravity="center"
+        android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/widget_preparation_1"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:gravity="center"
             android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/widget_weather_icon"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:contentDescription="@string/weather_widget_icon_description"
+                android:scaleType="fitCenter" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                android:fontFamily="@font/suite_regular"
+                    android:includeFontPadding="false"
+                    android:text="현재"
+                    android:textColor="#60758A"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/widget_current_temperature"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/suite_extra_bold"
+                    android:includeFontPadding="false"
+                    android:text="18°"
+                    android:textColor="#25374E"
+                    android:textSize="38sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="1dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="18dp"
+                android:layout_marginEnd="18dp"
+                android:background="#ABC3D6" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/suite_regular"
+                    android:includeFontPadding="false"
+                    android:text="체감"
+                    android:textColor="#60758A"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/widget_apparent_temperature"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/suite_extra_bold"
+                    android:includeFontPadding="false"
+                    android:text="18°"
+                    android:textColor="#25374E"
+                    android:textSize="38sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_brief"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/suite_semibold"
+            android:lineSpacingExtra="2dp"
+            android:maxLines="2"
+            android:minLines="2"
+            android:text="오전에는 선선하고 오후에는 포근해요.\n얇은 겉옷을 챙기면 좋아요."
+            android:textColor="#25374E"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:id="@+id/widget_preparation_row"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/widget_preparation_1"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/weather_widget_panel_background"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <ImageView
                 android:id="@+id/widget_preparation_icon_1"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:contentDescription="@string/weather_widget_preparation_description" />
 
             <TextView
@@ -139,7 +166,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="@font/suite_semibold"
                 android:maxLines="1"
                 android:text="우산"
                 android:textColor="#25374E"
@@ -148,16 +175,20 @@
 
         <LinearLayout
             android:id="@+id/widget_preparation_2"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="3dp"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/weather_widget_panel_background"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
             <ImageView
                 android:id="@+id/widget_preparation_icon_2"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:contentDescription="@string/weather_widget_preparation_description" />
 
             <TextView
@@ -165,7 +196,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="@font/suite_semibold"
                 android:maxLines="1"
                 android:text="겉옷"
                 android:textColor="#25374E"
@@ -174,16 +205,19 @@
 
         <LinearLayout
             android:id="@+id/widget_preparation_3"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="3dp"
+            android:background="@drawable/weather_widget_panel_background"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
             <ImageView
                 android:id="@+id/widget_preparation_icon_3"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:contentDescription="@string/weather_widget_preparation_description" />
 
             <TextView
@@ -191,12 +225,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:fontFamily="sans-serif-medium"
+                android:fontFamily="@font/suite_semibold"
                 android:maxLines="1"
                 android:text="마스크"
                 android:textColor="#25374E"
                 android:textSize="13sp" />
         </LinearLayout>
+    </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -206,20 +241,12 @@
         android:orientation="horizontal">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:text="다음 시간 예보"
-            android:textColor="#60758A"
-            android:textSize="12sp" />
-
-        <TextView
             android:id="@+id/widget_next_time"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:fontFamily="sans-serif"
+            android:fontFamily="@font/suite_regular"
+            android:gravity="center"
             android:maxLines="1"
             android:text="오전 9시"
             android:textColor="#25374E"
@@ -227,20 +254,22 @@
 
         <ImageView
             android:id="@+id/widget_next_icon"
-            android:layout_width="32dp"
+            android:layout_width="0dp"
             android:layout_height="32dp"
-            android:contentDescription="@string/weather_widget_icon_description" />
+            android:layout_weight="1"
+            android:contentDescription="@string/weather_widget_icon_description"
+            android:scaleType="centerInside" />
 
         <TextView
             android:id="@+id/widget_next_temperature"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif"
+            android:layout_weight="1"
+            android:fontFamily="@font/suite_bold"
+            android:gravity="center"
             android:text="19°"
             android:textColor="#25374E"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+            android:textSize="17sp" />
     </LinearLayout>
 
     <TextView
@@ -248,7 +277,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/weather_widget_panel_background"
-        android:fontFamily="sans-serif"
+        android:fontFamily="@font/suite"
         android:gravity="center"
         android:maxLines="1"
         android:paddingStart="12dp"

@@ -9,6 +9,7 @@ import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/missing_data_retry.dart';
+import '../widgets/preparation_icon.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/week_presentation.dart';
 import '../widgets/week_precipitation.dart';
@@ -575,8 +576,8 @@ class _WeekDayCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              recommendation.type.icon,
+                            PreparationIcon(
+                              type: recommendation.type,
                               size: 12,
                               color: recommendation.type.accentColor,
                             ),

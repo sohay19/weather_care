@@ -7,7 +7,15 @@ private let appGroup = "group.com.codesoha.weathercare"
 private let snapshotKey = "snapshot"
 private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
 private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
-private let surface = Color(red: 221 / 255, green: 236 / 255, blue: 247 / 255)
+private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
+private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
+
+private enum SuiteFont {
+  static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", size: size) }
+  static func semibold(_ size: CGFloat) -> Font { .custom("SUITE-SemiBold", size: size) }
+  static func bold(_ size: CGFloat) -> Font { .custom("SUITE-Bold", size: size) }
+  static func extraBold(_ size: CGFloat) -> Font { .custom("SUITE-ExtraBold", size: size) }
+}
 
 struct WeatherCareEntry: TimelineEntry {
   let date: Date
@@ -58,7 +66,7 @@ struct WidgetSnapshot: Codable {
     apparentTemperature: "18°",
     minimumTemperature: "12°",
     maximumTemperature: "20°",
-    shortMessage: "겉옷 챙겨요",
+    shortMessage: "겉옷을 챙기세요",
     brief: "오전에는 선선하고 오후에는 포근해요. 얇은 겉옷을 챙기면 좋아요.",
     nextTime: "오전 9시",
     nextCondition: "clear",
@@ -127,12 +135,12 @@ private struct WidgetHeader: View {
   var body: some View {
     HStack(spacing: 6) {
       Text(snapshot.region)
-        .font(.system(size: regionSize, weight: .semibold))
+        .font(SuiteFont.semibold(regionSize))
         .lineLimit(1)
         .minimumScaleFactor(0.72)
       Spacer(minLength: 2)
       Text(snapshot.refreshTime)
-        .font(.system(size: timeSize, weight: .regular))
+        .font(SuiteFont.regular(timeSize))
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
         .minimumScaleFactor(0.72)
@@ -146,16 +154,13 @@ private struct MinMaxRow: View {
   let size: CGFloat
 
   var body: some View {
-    HStack(spacing: 4) {
-      Text("최저")
-      Text(snapshot.minimumTemperature).fontWeight(.bold)
-      Text("  최고")
-      Text(snapshot.maximumTemperature).fontWeight(.bold)
-    }
-    .font(.system(size: size))
-    .foregroundStyle(ink.opacity(0.82))
-    .lineLimit(1)
-    .minimumScaleFactor(0.75)
+    (Text("최저 ").font(SuiteFont.regular(size))
+      + Text(snapshot.minimumTemperature).font(SuiteFont.bold(size))
+      + Text("  최고 ").font(SuiteFont.regular(size))
+      + Text(snapshot.maximumTemperature).font(SuiteFont.bold(size)))
+      .foregroundStyle(ink.opacity(0.82))
+      .lineLimit(1)
+      .minimumScaleFactor(0.62)
   }
 }
 
@@ -165,15 +170,16 @@ private struct SmallWeatherWidget: View {
   var body: some View {
     VStack(spacing: 4) {
       WidgetHeader(snapshot: snapshot, regionSize: 12, timeSize: 9)
-      HStack(spacing: 3) {
+      HStack(spacing: 8) {
         WeatherIconView(condition: snapshot.condition)
-          .frame(width: 62, height: 62)
+          .frame(width: 56, height: 56)
         Text(snapshot.currentTemperature)
-          .font(.system(size: 38, weight: .regular))
+          .font(SuiteFont.extraBold(38))
           .foregroundStyle(ink)
           .lineLimit(1)
-          .minimumScaleFactor(0.72)
+          .minimumScaleFactor(0.62)
       }
+      .frame(maxWidth: .infinity, alignment: .center)
       .frame(maxHeight: .infinity)
       MinMaxRow(snapshot: snapshot, size: 13)
         .frame(maxWidth: .infinity)
@@ -181,8 +187,8 @@ private struct SmallWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 14)
-    .padding(.vertical, 12)
+    .padding(.horizontal, 6)
+    .padding(.vertical, 6)
   }
 }
 
@@ -192,26 +198,31 @@ private struct MediumWeatherWidget: View {
   var body: some View {
     VStack(spacing: 3) {
       WidgetHeader(snapshot: snapshot, regionSize: 13, timeSize: 10)
-      HStack(spacing: 10) {
+      HStack(spacing: 12) {
         WeatherIconView(condition: snapshot.condition)
           .frame(width: 58, height: 58)
-        Text(snapshot.currentTemperature)
-          .font(.system(size: 34, weight: .regular))
+        VStack(spacing: -1) {
+          Text("현재")
+            .font(SuiteFont.regular(10))
+            .foregroundStyle(secondaryInk)
+          Text(snapshot.currentTemperature)
+            .font(SuiteFont.extraBold(34))
+        }
         Divider().frame(height: 36).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
         VStack(spacing: -1) {
           Text("체감")
-            .font(.system(size: 10))
+            .font(SuiteFont.regular(10))
             .foregroundStyle(secondaryInk)
           Text(snapshot.apparentTemperature)
-            .font(.system(size: 34, weight: .regular))
+            .font(SuiteFont.extraBold(34))
         }
-        Spacer(minLength: 0)
       }
       .foregroundStyle(ink)
+      .frame(maxWidth: .infinity, alignment: .center)
       .frame(maxHeight: .infinity)
       HStack(spacing: 8) {
         Text(snapshot.shortMessage)
-          .font(.system(size: 13, weight: .semibold))
+          .font(SuiteFont.bold(13))
           .lineLimit(1)
         Spacer(minLength: 2)
         MinMaxRow(snapshot: snapshot, size: 12)
@@ -221,8 +232,8 @@ private struct MediumWeatherWidget: View {
       .padding(.vertical, 6)
       .widgetInfoPanel()
     }
-    .padding(.horizontal, 16)
-    .padding(.vertical, 11)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 6)
   }
 }
 
@@ -232,57 +243,67 @@ private struct LargeWeatherWidget: View {
   var body: some View {
     VStack(spacing: 5) {
       WidgetHeader(snapshot: snapshot, regionSize: 14, timeSize: 11)
-      HStack(spacing: 10) {
-        WeatherIconView(condition: snapshot.condition)
-          .frame(width: 72, height: 72)
-        Text(snapshot.currentTemperature)
-          .font(.system(size: 38, weight: .regular))
-        Divider().frame(height: 40).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
-        VStack(spacing: -1) {
-          Text("체감")
-            .font(.system(size: 11))
-            .foregroundStyle(secondaryInk)
-          Text(snapshot.apparentTemperature)
-            .font(.system(size: 38, weight: .regular))
-        }
-        Spacer(minLength: 0)
-      }
-      .foregroundStyle(ink)
-      Text(snapshot.brief)
-        .font(.system(size: 14, weight: .medium))
-        .foregroundStyle(ink)
-        .lineLimit(2)
-        .frame(maxWidth: .infinity, alignment: .leading)
-      if !snapshot.preparations.isEmpty {
-        HStack(spacing: 10) {
-          ForEach(Array(snapshot.preparations.prefix(3)), id: \.self) { item in
-            HStack(spacing: 5) {
-              Image(systemName: preparationSymbol(item.type))
-                .font(.system(size: 17, weight: .semibold))
-              Text(item.label)
-                .font(.system(size: 13, weight: .semibold))
-                .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+      VStack(spacing: 10) {
+        HStack(spacing: 12) {
+          WeatherIconView(condition: snapshot.condition)
+            .frame(width: 72, height: 72)
+          VStack(spacing: -1) {
+            Text("현재")
+              .font(SuiteFont.regular(11))
+              .foregroundStyle(secondaryInk)
+            Text(snapshot.currentTemperature)
+              .font(SuiteFont.extraBold(38))
+          }
+          Divider().frame(height: 40).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
+          VStack(spacing: -1) {
+            Text("체감")
+              .font(SuiteFont.regular(11))
+              .foregroundStyle(secondaryInk)
+            Text(snapshot.apparentTemperature)
+              .font(SuiteFont.extraBold(38))
           }
         }
         .foregroundStyle(ink)
-        .frame(height: 34)
+        .frame(maxWidth: .infinity, alignment: .center)
+        Text(snapshot.brief)
+          .font(SuiteFont.semibold(14))
+          .foregroundStyle(ink)
+          .lineLimit(2)
+          .frame(maxWidth: .infinity, alignment: .leading)
+        if !snapshot.preparations.isEmpty {
+          HStack(spacing: 6) {
+            ForEach(Array(snapshot.preparations.prefix(3)), id: \.self) { item in
+              HStack(spacing: 5) {
+                PreparationIconView(type: item.type)
+                  .frame(width: 28, height: 28)
+                Text(item.label)
+                  .font(SuiteFont.semibold(13))
+                  .lineLimit(1)
+                  .minimumScaleFactor(0.8)
+              }
+              .frame(maxWidth: .infinity)
+              .padding(.horizontal, 7)
+              .padding(.vertical, 6)
+              .widgetInfoPanel()
+            }
+          }
+          .foregroundStyle(ink)
+        }
       }
-      HStack(spacing: 7) {
-        Text("다음 시간 예보")
-          .font(.system(size: 12, weight: .semibold))
-          .foregroundStyle(secondaryInk)
+      .frame(maxHeight: .infinity, alignment: .center)
+      HStack(spacing: 12) {
         Text(snapshot.nextTime)
-          .font(.system(size: 12))
+          .font(SuiteFont.regular(12))
           .foregroundStyle(ink)
           .lineLimit(1)
-        Spacer(minLength: 2)
+          .frame(maxWidth: .infinity)
         WeatherIconView(condition: snapshot.nextCondition, monochrome: true)
           .frame(width: 31, height: 31)
+          .frame(maxWidth: .infinity)
         Text(snapshot.nextTemperature)
-          .font(.system(size: 17, weight: .bold))
+          .font(SuiteFont.bold(17))
           .foregroundStyle(ink)
+          .frame(maxWidth: .infinity)
       }
       MinMaxRow(snapshot: snapshot, size: 13)
         .frame(maxWidth: .infinity)
@@ -290,21 +311,269 @@ private struct LargeWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 18)
-    .padding(.vertical, 14)
+    .padding(.horizontal, 8)
+    .padding(.vertical, 8)
   }
 }
 
-private func preparationSymbol(_ type: String) -> String {
+private struct PreparationIconView: View {
+  let type: String
+
+  var body: some View {
+    Canvas { context, size in
+      let side = min(size.width, size.height)
+      let origin = CGPoint(
+        x: (size.width - side) / 2,
+        y: (size.height - side) / 2
+      )
+      let circleRect = CGRect(origin: origin, size: CGSize(width: side, height: side))
+      context.fill(Path(ellipseIn: circleRect), with: .color(preparationCircle))
+      PreparationIconPainter.draw(
+        type: type,
+        context: &context,
+        rect: circleRect.insetBy(dx: side * 0.18, dy: side * 0.18)
+      )
+    }
+    .accessibilityLabel(preparationDescription(type))
+  }
+}
+
+private enum PreparationIconPainter {
+  static func draw(
+    type: String,
+    context: inout GraphicsContext,
+    rect: CGRect
+  ) {
+    let style = StrokeStyle(
+      lineWidth: rect.width * 0.075,
+      lineCap: .round,
+      lineJoin: .round
+    )
+    switch type {
+    case "PARASOL":
+      drawUmbrella(context: &context, rect: rect, style: style, parasol: true)
+    case "HEAVY_SNOW_CAUTION":
+      drawSnowflake(context: &context, rect: rect, style: style)
+    case "OUTERWEAR":
+      drawOuterwear(context: &context, rect: rect, style: style)
+    case "MASK":
+      drawMask(context: &context, rect: rect, style: style)
+    case "WATER":
+      drawBottle(context: &context, rect: rect, style: style, sunscreen: false)
+    case "SUNSCREEN":
+      drawBottle(context: &context, rect: rect, style: style, sunscreen: true)
+    default:
+      drawUmbrella(context: &context, rect: rect, style: style, parasol: false)
+    }
+  }
+
+  private static func point(_ x: CGFloat, _ y: CGFloat, in rect: CGRect) -> CGPoint {
+    CGPoint(
+      x: rect.minX + rect.width * x / 100,
+      y: rect.minY + rect.height * y / 100
+    )
+  }
+
+  private static func drawUmbrella(
+    context: inout GraphicsContext,
+    rect: CGRect,
+    style: StrokeStyle,
+    parasol: Bool
+  ) {
+    var canopy = Path()
+    canopy.move(to: point(13, 51, in: rect))
+    canopy.addQuadCurve(
+      to: point(87, 51, in: rect),
+      control: point(50, 8, in: rect)
+    )
+    context.stroke(canopy, with: .color(ink), style: style)
+
+    var handle = Path()
+    handle.move(to: point(50, 31, in: rect))
+    handle.addLine(to: point(50, 82, in: rect))
+    handle.addCurve(
+      to: point(70, 78, in: rect),
+      control1: point(50, 94, in: rect),
+      control2: point(70, 94, in: rect)
+    )
+    context.stroke(handle, with: .color(ink), style: style)
+
+    guard parasol else { return }
+    let sunCenter = point(78, 18, in: rect)
+    let sunRadius = rect.width * 0.065
+    context.stroke(
+      Path(ellipseIn: CGRect(
+        x: sunCenter.x - sunRadius,
+        y: sunCenter.y - sunRadius,
+        width: sunRadius * 2,
+        height: sunRadius * 2
+      )),
+      with: .color(ink),
+      style: style
+    )
+    for index in 0..<4 {
+      let angle = CGFloat(index) * .pi / 2
+      var ray = Path()
+      ray.move(to: CGPoint(
+        x: sunCenter.x + cos(angle) * sunRadius * 1.45,
+        y: sunCenter.y + sin(angle) * sunRadius * 1.45
+      ))
+      ray.addLine(to: CGPoint(
+        x: sunCenter.x + cos(angle) * sunRadius * 1.95,
+        y: sunCenter.y + sin(angle) * sunRadius * 1.95
+      ))
+      context.stroke(ray, with: .color(ink), style: style)
+    }
+  }
+
+  private static func drawSnowflake(
+    context: inout GraphicsContext,
+    rect: CGRect,
+    style: StrokeStyle
+  ) {
+    let center = point(50, 50, in: rect)
+    let radius = rect.width * 0.35
+    for index in 0..<3 {
+      let angle = CGFloat(index) * .pi / 3
+      let offset = CGPoint(x: cos(angle) * radius, y: sin(angle) * radius)
+      var branch = Path()
+      branch.move(to: CGPoint(x: center.x - offset.x, y: center.y - offset.y))
+      branch.addLine(to: CGPoint(x: center.x + offset.x, y: center.y + offset.y))
+      context.stroke(branch, with: .color(ink), style: style)
+    }
+  }
+
+  private static func drawOuterwear(
+    context: inout GraphicsContext,
+    rect: CGRect,
+    style: StrokeStyle
+  ) {
+    var coat = Path()
+    coat.move(to: point(38, 20, in: rect))
+    coat.addLine(to: point(20, 36, in: rect))
+    coat.addLine(to: point(27, 55, in: rect))
+    coat.addLine(to: point(36, 50, in: rect))
+    coat.addLine(to: point(33, 86, in: rect))
+    coat.addLine(to: point(67, 86, in: rect))
+    coat.addLine(to: point(64, 50, in: rect))
+    coat.addLine(to: point(73, 55, in: rect))
+    coat.addLine(to: point(80, 36, in: rect))
+    coat.addLine(to: point(62, 20, in: rect))
+    coat.addLine(to: point(50, 34, in: rect))
+    coat.closeSubpath()
+    coat.move(to: point(50, 34, in: rect))
+    coat.addLine(to: point(50, 85, in: rect))
+    context.stroke(coat, with: .color(ink), style: style)
+  }
+
+  private static func drawMask(
+    context: inout GraphicsContext,
+    rect: CGRect,
+    style: StrokeStyle
+  ) {
+    let maskRect = CGRect(
+      x: point(20, 30, in: rect).x,
+      y: point(20, 30, in: rect).y,
+      width: rect.width * 0.6,
+      height: rect.height * 0.42
+    )
+    context.stroke(
+      Path(roundedRect: maskRect, cornerRadius: rect.width * 0.11),
+      with: .color(ink),
+      style: style
+    )
+    var loops = Path()
+    loops.move(to: point(20, 38, in: rect))
+    loops.addCurve(
+      to: point(20, 66, in: rect),
+      control1: point(2, 35, in: rect),
+      control2: point(2, 69, in: rect)
+    )
+    loops.move(to: point(80, 38, in: rect))
+    loops.addCurve(
+      to: point(80, 66, in: rect),
+      control1: point(98, 35, in: rect),
+      control2: point(98, 69, in: rect)
+    )
+    loops.move(to: point(30, 46, in: rect))
+    loops.addLine(to: point(70, 46, in: rect))
+    loops.move(to: point(30, 58, in: rect))
+    loops.addLine(to: point(70, 58, in: rect))
+    context.stroke(loops, with: .color(ink), style: style)
+  }
+
+  private static func drawBottle(
+    context: inout GraphicsContext,
+    rect: CGRect,
+    style: StrokeStyle,
+    sunscreen: Bool
+  ) {
+    let bodyRect = CGRect(
+      x: point(31, 31, in: rect).x,
+      y: point(31, 31, in: rect).y,
+      width: rect.width * 0.38,
+      height: rect.height * 0.57
+    )
+    context.stroke(
+      Path(roundedRect: bodyRect, cornerRadius: rect.width * 0.08),
+      with: .color(ink),
+      style: style
+    )
+    var cap = Path()
+    cap.addRect(CGRect(
+      x: point(40, 17, in: rect).x,
+      y: point(40, 17, in: rect).y,
+      width: rect.width * 0.2,
+      height: rect.height * 0.14
+    ))
+    context.stroke(cap, with: .color(ink), style: style)
+
+    if sunscreen {
+      let center = point(50, 58, in: rect)
+      let radius = rect.width * 0.09
+      context.stroke(
+        Path(ellipseIn: CGRect(
+          x: center.x - radius,
+          y: center.y - radius,
+          width: radius * 2,
+          height: radius * 2
+        )),
+        with: .color(ink),
+        style: style
+      )
+      for index in 0..<4 {
+        let angle = CGFloat(index) * .pi / 2
+        var ray = Path()
+        ray.move(to: CGPoint(
+          x: center.x + cos(angle) * radius * 1.3,
+          y: center.y + sin(angle) * radius * 1.3
+        ))
+        ray.addLine(to: CGPoint(
+          x: center.x + cos(angle) * radius * 1.65,
+          y: center.y + sin(angle) * radius * 1.65
+        ))
+        context.stroke(ray, with: .color(ink), style: style)
+      }
+    } else {
+      var drop = Path()
+      drop.move(to: point(50, 46, in: rect))
+      drop.addQuadCurve(to: point(50, 70, in: rect), control: point(38, 63, in: rect))
+      drop.addQuadCurve(to: point(50, 46, in: rect), control: point(62, 63, in: rect))
+      context.stroke(drop, with: .color(ink), style: style)
+    }
+  }
+}
+
+private func preparationDescription(_ type: String) -> String {
   switch type {
-  case "UMBRELLA": return "umbrella.fill"
-  case "PARASOL": return "sun.max.fill"
-  case "HEAVY_SNOW_CAUTION": return "snowflake"
-  case "OUTERWEAR": return "tshirt.fill"
-  case "MASK": return "facemask.fill"
-  case "WATER": return "drop.fill"
-  case "SUNSCREEN": return "sun.max.fill"
-  default: return "checkmark.circle.fill"
+  case "UMBRELLA": return "우산"
+  case "PARASOL": return "양산"
+  case "HEAVY_SNOW_CAUTION": return "많은 눈 대비"
+  case "OUTERWEAR": return "겉옷"
+  case "MASK": return "마스크"
+  case "WATER": return "물"
+  case "SUNSCREEN": return "선크림"
+  default: return "준비물"
   }
 }
 
@@ -399,7 +668,7 @@ private enum WeatherIconPainter {
       drawCloud(&context, center: point(origin, s, 0.5, 0.5), width: s * 0.8,
                 height: s * 0.42, color: cloudColor)
       let question = context.resolve(
-        Text("?").font(.system(size: s * 0.3, weight: .bold)).foregroundColor(monochrome ? ink : secondaryInk)
+        Text("?").font(SuiteFont.bold(s * 0.3)).foregroundColor(monochrome ? ink : secondaryInk)
       )
       context.draw(question, at: point(origin, s, 0.52, 0.52), anchor: .center)
     }
@@ -511,7 +780,7 @@ private func weatherDescription(_ condition: String) -> String {
 private extension View {
   func widgetInfoPanel() -> some View {
     background(Color.white.opacity(0.72))
-      .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+      .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
   }
 
   @ViewBuilder

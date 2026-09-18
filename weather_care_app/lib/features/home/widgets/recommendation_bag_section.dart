@@ -8,6 +8,7 @@ import '../../../services/preparation_checklist_repository.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
+import 'preparation_icon.dart';
 
 class RecommendationBagSection extends StatefulWidget {
   final String regionName;
@@ -261,11 +262,17 @@ class _BagItem extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: Icon(
-                        checked ? Icons.check_rounded : type.icon,
-                        color: checked ? Colors.white : type.accentColor,
-                        size: 24,
-                      ),
+                      child: checked
+                          ? const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            )
+                          : PreparationIcon(
+                              type: type,
+                              color: type.accentColor,
+                              size: 24,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 10),

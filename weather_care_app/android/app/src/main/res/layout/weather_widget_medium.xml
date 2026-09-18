@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="@font/suite_semibold"
             android:maxLines="1"
             android:text="시흥시 은행동"
             android:textColor="#25374E"
@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:fontFamily="sans-serif"
+            android:fontFamily="@font/suite_regular"
             android:maxLines="1"
             android:text="오전 8:20 기준"
             android:textColor="#60758A"
@@ -45,7 +45,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <ImageView
@@ -55,18 +55,34 @@
             android:contentDescription="@string/weather_widget_icon_description"
             android:scaleType="fitCenter" />
 
-        <TextView
-            android:id="@+id/widget_current_temperature"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:fontFamily="sans-serif"
-            android:includeFontPadding="false"
-            android:text="18°"
-            android:textColor="#25374E"
-            android:textSize="34sp" />
+            android:layout_marginStart="12dp"
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <View
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/suite_regular"
+                android:includeFontPadding="false"
+                android:text="현재"
+                android:textColor="#60758A"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/widget_current_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/suite_extra_bold"
+                android:includeFontPadding="false"
+                android:text="18°"
+                android:textColor="#25374E"
+                android:textSize="34sp" />
+        </LinearLayout>
+
+        <TextView
             android:layout_width="1dp"
             android:layout_height="34dp"
             android:layout_marginStart="16dp"
@@ -82,7 +98,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/suite_regular"
                 android:includeFontPadding="false"
                 android:text="체감"
                 android:textColor="#60758A"
@@ -92,7 +108,7 @@
                 android:id="@+id/widget_apparent_temperature"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
+                android:fontFamily="@font/suite_extra_bold"
                 android:includeFontPadding="false"
                 android:text="18°"
                 android:textColor="#25374E"
@@ -118,7 +134,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="@font/suite_bold"
             android:maxLines="1"
             android:text="겉옷 챙겨요"
             android:textColor="#25374E"
@@ -129,7 +145,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:fontFamily="sans-serif"
+            android:fontFamily="@font/suite"
             android:maxLines="1"
             android:text="최저 12°   최고 20°"
             android:textColor="#425A72"

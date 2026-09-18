@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="@font/suite_semibold"
             android:maxLines="1"
             android:text="시흥시 은행동"
             android:textColor="#25374E"
@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:fontFamily="sans-serif"
+            android:fontFamily="@font/suite_regular"
             android:maxLines="1"
             android:text="오전 8:20 기준"
             android:textColor="#60758A"
@@ -60,13 +60,12 @@
             android:id="@+id/widget_current_temperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:fontFamily="sans-serif"
+            android:layout_marginStart="10dp"
+            android:fontFamily="@font/suite_extra_bold"
             android:includeFontPadding="false"
             android:text="18°"
             android:textColor="#25374E"
-            android:textSize="38sp"
-            android:textStyle="normal" />
+            android:textSize="38sp" />
     </LinearLayout>
 
     <TextView
@@ -75,7 +74,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:background="@drawable/weather_widget_panel_background"
-        android:fontFamily="sans-serif"
+        android:fontFamily="@font/suite"
         android:gravity="center"
         android:maxLines="1"
         android:paddingStart="10dp"

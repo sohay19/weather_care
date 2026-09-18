@@ -21,6 +21,10 @@
 		A10000000000000000000002 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* WidgetKit.framework */; };
 		A10000000000000000000003 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* SwiftUI.framework */; };
 		A10000000000000000000004 /* WeatherCareWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* WeatherCareWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A10000000000000000000005 /* SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* SUITE-Regular.ttf */; };
+		A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* SUITE-SemiBold.ttf */; };
+		A10000000000000000000007 /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SUITE-Bold.ttf */; };
+		A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* SUITE-ExtraBold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +100,10 @@
 		A20000000000000000000004 /* WeatherCareWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WeatherCareWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000005 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A20000000000000000000006 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		A20000000000000000000007 /* SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000008 /* SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000009 /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000A /* SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,6 +224,10 @@
 				A20000000000000000000001 /* WeatherCareWidget.swift */,
 				A20000000000000000000002 /* Info.plist */,
 				A20000000000000000000003 /* WeatherCareWidget.entitlements */,
+				A20000000000000000000007 /* SUITE-Regular.ttf */,
+				A20000000000000000000008 /* SUITE-SemiBold.ttf */,
+				A20000000000000000000009 /* SUITE-Bold.ttf */,
+				A2000000000000000000000A /* SUITE-ExtraBold.ttf */,
 			);
 			path = WeatherCareWidget;
 			sourceTree = "<group>";
@@ -362,6 +374,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000005 /* SUITE-Regular.ttf in Resources */,
+				A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */,
+				A10000000000000000000007 /* SUITE-Bold.ttf in Resources */,
+				A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

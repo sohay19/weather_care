@@ -38,7 +38,7 @@ void main() {
     expect(snapshot.apparentTemperature, '17.5°');
     expect(snapshot.minimumTemperature, '12°');
     expect(snapshot.maximumTemperature, '20°');
-    expect(snapshot.shortMessage, '겉옷 챙겨요');
+    expect(snapshot.shortMessage, '겉옷을 챙기세요');
     expect(snapshot.nextTime, '오전 9시');
     expect(snapshot.nextTemperature, '19°');
     expect(
@@ -93,6 +93,26 @@ void main() {
     expect(compactWidgetRegionName('경기도 시흥시 은행동'), '시흥시 은행동');
     expect(compactWidgetRegionName('서울특별시 종로구 청운효자동'), '종로구 청운효자동');
     expect(compactWidgetRegionName('시흥시 은행동'), '시흥시 은행동');
+  });
+
+  test('짧은 브리핑은 준비물 이름이 아닌 행동 문장으로 표시한다', () {
+    const expected = {
+      RecommendationType.umbrella: '우산을 챙기세요',
+      RecommendationType.parasol: '양산을 챙기세요',
+      RecommendationType.heavySnowCaution: '많은 눈에 대비하세요',
+      RecommendationType.outerwear: '겉옷을 챙기세요',
+      RecommendationType.mask: '마스크를 챙기세요',
+      RecommendationType.water: '물을 챙기세요',
+      RecommendationType.sunscreen: '선크림을 챙기세요',
+    };
+
+    for (final entry in expected.entries) {
+      final snapshot = HomeWidgetSnapshot.fromWeather(
+        today: _today(recommendations: [_recommendation(entry.key, 1)]),
+        now: DateTime.parse('2026-09-18T23:30:00Z'),
+      );
+      expect(snapshot.shortMessage, entry.value);
+    }
   });
 }
 

@@ -16,6 +16,7 @@ final class WidgetIconRenderer {
     private static final int CLOUD_DARK = Color.rgb(84, 112, 139);
     private static final int RAIN = Color.rgb(73, 143, 203);
     private static final int QUESTION = Color.rgb(118, 133, 151);
+    private static final int PREPARATION_CIRCLE = Color.rgb(226, 239, 248);
 
     private WidgetIconRenderer() { }
 
@@ -105,8 +106,15 @@ final class WidgetIconRenderer {
         int pixels = pixels(context, sizeDp);
         Bitmap bitmap = Bitmap.createBitmap(pixels, pixels, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
-        Paint paint = stroke(pixels * .075f, NAVY);
         float s = pixels;
+        Paint background = fill();
+        background.setColor(PREPARATION_CIRCLE);
+        canvas.drawCircle(s * .5f, s * .5f, s * .48f, background);
+
+        canvas.save();
+        canvas.translate(s * .17f, s * .17f);
+        canvas.scale(.66f, .66f);
+        Paint paint = stroke(s * .075f, NAVY);
         switch (type) {
             case "UMBRELLA" -> drawUmbrella(canvas, paint, s, false);
             case "PARASOL" -> drawUmbrella(canvas, paint, s, true);
@@ -118,6 +126,7 @@ final class WidgetIconRenderer {
             case "SUNSCREEN" -> drawBottle(canvas, paint, s, true);
             default -> drawUmbrella(canvas, paint, s, false);
         }
+        canvas.restore();
         return bitmap;
     }
 
@@ -221,6 +230,14 @@ final class WidgetIconRenderer {
         canvas.drawArc(new RectF(s * .5f, s * .7f, s * .73f, s * .92f), 90, 180, false, paint);
         if (parasol) {
             canvas.drawCircle(s * .77f, s * .19f, s * .07f, paint);
+            for (int index = 0; index < 4; index++) {
+                double angle = Math.PI * index / 2d;
+                float x1 = s * .77f + (float) Math.cos(angle) * s * .1f;
+                float y1 = s * .19f + (float) Math.sin(angle) * s * .1f;
+                float x2 = s * .77f + (float) Math.cos(angle) * s * .14f;
+                float y2 = s * .19f + (float) Math.sin(angle) * s * .14f;
+                canvas.drawLine(x1, y1, x2, y2, paint);
+            }
         }
     }
 

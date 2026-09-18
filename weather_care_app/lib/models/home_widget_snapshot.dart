@@ -80,7 +80,7 @@ class HomeWidgetSnapshot {
       minimumTemperature: _temperature(daily?.min),
       maximumTemperature: _temperature(daily?.max),
       shortMessage: activeRecommendations.isNotEmpty
-          ? activeRecommendations.first.title.trim()
+          ? _preparationMessage(activeRecommendations.first.type)
           : _shortMessage(brief),
       brief: brief.isEmpty ? '외출 전에 시간별 예보를 확인하세요.' : brief,
       nextTime: widgetForecastTime(next?.forecastAt ?? next?.issuedAt),
@@ -202,6 +202,18 @@ String _shortMessage(String brief) {
   final sentenceEnd = brief.indexOf(RegExp(r'[.!?。]'));
   final sentence = sentenceEnd > 0 ? brief.substring(0, sentenceEnd) : brief;
   return sentence.length <= 22 ? sentence : '${sentence.substring(0, 21)}…';
+}
+
+String _preparationMessage(RecommendationType type) {
+  return switch (type) {
+    RecommendationType.umbrella => '우산을 챙기세요',
+    RecommendationType.parasol => '양산을 챙기세요',
+    RecommendationType.heavySnowCaution => '많은 눈에 대비하세요',
+    RecommendationType.outerwear => '겉옷을 챙기세요',
+    RecommendationType.mask => '마스크를 챙기세요',
+    RecommendationType.water => '물을 챙기세요',
+    RecommendationType.sunscreen => '선크림을 챙기세요',
+  };
 }
 
 String _singleSpaced(String value) =>

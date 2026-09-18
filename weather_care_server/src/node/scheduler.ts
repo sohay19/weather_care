@@ -4,6 +4,7 @@ import {
   ROAD_ICE_COLLECTION_CRON,
   runScheduledJobs,
 } from '../cron/jobs';
+import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { assertNodeEnvironment, createNodeRuntime } from './runtime';
 import { dueScheduledJobs, scheduledMinute, type ScheduledJobName } from './schedule';
@@ -19,6 +20,8 @@ const runtime = createNodeRuntime();
 const delivered = new Set<string>();
 const running = new Set<Promise<void>>();
 const runningJobs = new Set<ScheduledJobName>();
+let timer: ReturnType<typeof setInterval> | undefined;
+let closing = false;
 
 function runDueJobs(now = new Date()): void {
   const scheduledAt = scheduledMinute(now);
@@ -63,15 +66,34 @@ function runDueJobs(now = new Date()): void {
   }
 }
 
-runDueJobs();
-const timer = setInterval(runDueJobs, 15_000);
-console.log(JSON.stringify({ event: 'node_scheduler_started' }));
+async function startScheduler(): Promise<void> {
+  try {
+    await runWeatherCollectionJob(runtime.env, {
+      collectCore: false,
+      collectActiveDetails: false,
+      dailyObservationLookbackDays: 7,
+    });
+    console.log(JSON.stringify({ event: 'node_recent_observation_backfill_finished' }));
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: 'node_recent_observation_backfill_failed',
+      error: safeErrorName(error),
+    }));
+  }
+  if (closing) return;
+  runDueJobs();
+  timer = setInterval(runDueJobs, 15_000);
+  console.log(JSON.stringify({ event: 'node_scheduler_started' }));
+}
 
-let closing = false;
+const startup = startScheduler();
+running.add(startup);
+void startup.finally(() => running.delete(startup));
+
 async function shutdown(signal: string): Promise<void> {
   if (closing) return;
   closing = true;
-  clearInterval(timer);
+  if (timer !== undefined) clearInterval(timer);
   await Promise.allSettled([...running]);
   runtime.close();
   console.log(JSON.stringify({ event: 'node_scheduler_stopped', signal }));

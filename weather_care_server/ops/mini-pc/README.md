@@ -151,6 +151,10 @@ journalctl -u weather-care-scheduler.service -f
 `NATIONWIDE_PRECOLLECT_ENABLED=true`를 유지합니다. 활성 설치 지역의 환경·특보·
 초단기실황·좌표 기반 자료는 별도로 계속 수집합니다.
 
+스케줄러는 시작 시 어제까지의 최근 7일 중 누락된 AWS 일관측을 먼저 보충합니다.
+전국 일관측 원본 네 종류를 한 번씩 조회해 기존 주간 캐시에 병합한 뒤 정규 스케줄을
+시작하므로, 오전 2시 이후 배포에서도 Week의 지난 날짜가 비어 있지 않게 됩니다.
+
 ## 6. 백업과 복구
 
 `weather-care-backup.timer`는 매일 03:30 KST에 SQLite Online Backup을 실행하고

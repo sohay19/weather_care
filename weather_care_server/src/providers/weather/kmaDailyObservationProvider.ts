@@ -106,6 +106,9 @@ export class KmaDailyObservationProvider {
           : 'KMA daily observation is unavailable',
       );
     }
+    const snowfallMetricAvailable = available.some(
+      ({ metric }) => metric === 'sd_day_max',
+    );
 
     const byStationDay = new Map<string, StationDay>();
     for (const { metric, rows } of available) {
@@ -133,9 +136,11 @@ export class KmaDailyObservationProvider {
     return locations.map(({ latitude, longitude }) => {
       const days: DailyWeatherForecast[] = [];
       for (const date of calendarDates(startDate, endDate)) {
-        const candidates = [...byStationDay.values()]
+        const stationDays = [...byStationDay.values()].filter(
+          (station) => station.date === date,
+        );
+        const candidates = stationDays
           .filter((station) =>
-            station.date === date &&
             station.minTemperature !== undefined &&
             station.maxTemperature !== undefined,
           )
@@ -151,7 +156,26 @@ export class KmaDailyObservationProvider {
           }))
           .sort((left, right) => left.distanceKm - right.distanceKm);
         const nearest = candidates[0];
-        if (nearest) days.push(toDailyForecast(nearest.station, nearest.distanceKm));
+        const rain = nearestMetric(
+          stationDays,
+          latitude,
+          longitude,
+          (station) => station.precipitationAmount,
+        );
+        const snow = nearestMetric(
+          stationDays,
+          latitude,
+          longitude,
+          (station) => station.snowfallAmount,
+        );
+        if (nearest) {
+          days.push(toDailyForecast(
+            nearest.station,
+            nearest.distanceKm,
+            rain,
+            snow ?? (snowfallMetricAvailable ? 0 : undefined),
+          ));
+        }
       }
       return days;
     });
@@ -236,9 +260,9 @@ export function parseKmaDailyObservationRows(
 function toDailyForecast(
   station: StationDay,
   distanceKm: number,
+  rain: number | undefined,
+  snow: number | undefined,
 ): DailyWeatherForecast {
-  const rain = station.precipitationAmount;
-  const snow = station.snowfallAmount;
   const hasRain = rain !== undefined && rain > 0;
   const hasSnow = snow !== undefined && snow > 0;
   const skyCondition = hasRain && hasSnow
@@ -277,6 +301,31 @@ function toDailyForecast(
     snowProbability: 0,
     snowfallAmount: snow ?? 0,
   };
+}
+
+function nearestMetric(
+  stations: StationDay[],
+  latitude: number,
+  longitude: number,
+  value: (station: StationDay) => number | undefined,
+): number | undefined {
+  return stations
+    .flatMap((station) => {
+      const metric = value(station);
+      return metric === undefined
+        ? []
+        : [{
+            metric,
+            distanceMetres: distanceMetres(
+              latitude,
+              longitude,
+              station.latitude,
+              station.longitude,
+            ),
+          }];
+    })
+    .sort((left, right) => left.distanceMetres - right.distanceMetres)[0]
+    ?.metric;
 }
 
 function validateDateRange(startDate: string, endDate: string): void {

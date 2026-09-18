@@ -96,6 +96,7 @@ export interface WeatherCollectionOptions {
   collectRadar?: boolean;
   collectRoadIce?: boolean;
   collectActiveDetails?: boolean;
+  dailyObservationLookbackDays?: number;
   nationwideShardIndex?: number;
 }
 
@@ -138,6 +139,16 @@ export async function runWeatherCollectionJob(
     nationwideRegions: nationwideShard?.grids.length ?? 0,
     totalRegions: regions.length,
   }));
+
+  if (options.dailyObservationLookbackDays !== undefined) {
+    await collectDailyObservations(env, allForecastTargets, now, {
+      candidateDates: recentCompletedKoreanDates(
+        now,
+        options.dailyObservationLookbackDays,
+      ),
+      ignoreSourceVersion: true,
+    });
+  }
 
   if (options.collectCore !== false) {
     await collectRegionForecasts(env, regions, activeRegionKeys, now);
@@ -796,12 +807,19 @@ async function collectDailyObservations(
   env: ServerEnv,
   targets: CollectionTarget[],
   now: Date,
+  options: {
+    candidateDates?: string[];
+    ignoreSourceVersion?: boolean;
+  } = {},
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
   const calendarWeek = currentKoreanCalendarWeek(now);
   const endDate = previousKoreanDate(now);
-  if (endDate < calendarWeek.startDate) return;
-  if (await collectedSourceVersionIsCurrent(
+  const candidateDates = options.candidateDates ?? calendarWeek.dates.filter(
+    (date) => date <= endDate,
+  );
+  if (candidateDates.length === 0) return;
+  if (!options.ignoreSourceVersion && await collectedSourceVersionIsCurrent(
     env.DB,
     'AWS_DAILY',
     endDate,
@@ -810,40 +828,45 @@ async function collectDailyObservations(
     const coordinates = kmaGridCoordinates(target.nx, target.ny);
     return coordinates ? [{ target, coordinates }] : [];
   });
+  const missingRegions: typeof regions = [];
   const cachedByRegion = new Map<string, CollectedCacheRecord<CollectedWeeklyBundle> | null>();
   let startDate = endDate;
-  for (const { target } of regions) {
+  for (const region of regions) {
+    const { target } = region;
     const regionKey = `${target.nx}_${target.ny}`;
     const cached = await getCollectedCache<CollectedWeeklyBundle>(
       env.DB,
       collectedCacheKey.weekly(target.nx, target.ny),
     );
-    cachedByRegion.set(regionKey, cached);
+    if (!cached) continue;
     const observedDates = new Set(
-      cached?.value.observedDays.map((day) => compactCalendarDate(day.date)) ?? [],
+      cached?.value.observedDays
+        .filter((day) => day.weatherDataComplete === true)
+        .map((day) => compactCalendarDate(day.date)) ?? [],
     );
-    const earliestMissing = calendarWeek.dates.find(
-      (date) => date <= endDate && !observedDates.has(date),
-    );
-    if (earliestMissing && earliestMissing < startDate) startDate = earliestMissing;
+    const earliestMissing = candidateDates.find((date) => !observedDates.has(date));
+    if (earliestMissing) {
+      missingRegions.push(region);
+      cachedByRegion.set(regionKey, cached);
+      if (earliestMissing < startDate) startDate = earliestMissing;
+    }
   }
-  if (regions.length === 0 || !await reserveApiHubBudget(
+  if (missingRegions.length === 0 || !await reserveApiHubBudget(
     env.DB,
     'AWS_DAILY',
     4,
     2_048_000,
     now,
   )) return;
-  await saveCollectedSourceVersion(env.DB, 'AWS_DAILY', endDate, now);
   try {
     const values = await new KmaDailyObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY,
     }).getDailyByLocations(
-      regions.map(({ coordinates }) => coordinates),
+      missingRegions.map(({ coordinates }) => coordinates),
       startDate,
       endDate,
     );
-    await Promise.all(regions.flatMap(({ target }, index) => {
+    await Promise.all(missingRegions.flatMap(({ target }, index) => {
       const key = collectedCacheKey.weekly(target.nx, target.ny);
       const cached = cachedByRegion.get(`${target.nx}_${target.ny}`);
       if (!cached) return [];
@@ -867,9 +890,23 @@ async function collectDailyObservations(
         updatedAt: now,
       })];
     }));
+    await saveCollectedSourceVersion(env.DB, 'AWS_DAILY', endDate, now);
   } catch (error) {
     logCollectionFailure('daily_observation', error);
   }
+}
+
+function recentCompletedKoreanDates(now: Date, lookbackDays: number): string[] {
+  if (!Number.isInteger(lookbackDays) || lookbackDays < 1 || lookbackDays > 7) {
+    throw new RangeError('Daily observation lookback must be between 1 and 7 days');
+  }
+  const endDate = previousKoreanDate(now);
+  const end = new Date(`${endDate}T00:00:00Z`).getTime();
+  return Array.from({ length: lookbackDays }, (_, index) =>
+    new Date(end - (lookbackDays - index - 1) * 86_400_000)
+      .toISOString()
+      .slice(0, 10),
+  );
 }
 
 function compactCalendarDate(value: string): string {

@@ -4,7 +4,7 @@ PODS:
   - Firebase/Messaging (12.18.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 12.18.0)
-  - firebase_analytics (12.4.6):
+  - firebase_analytics (12.6.0):
     - firebase_core
     - FirebaseAnalytics (= 12.18.0)
     - Flutter
@@ -214,7 +214,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Firebase: 5523dd53ebe603451b4e1befcd99fa20a5c015cd
-  firebase_analytics: b22777271dca3a5ebd713322a640fe0cbab9b6d1
+  firebase_analytics: 3bb05d2ab2b4ba9e4ff0810ac75865e2b15a914d
   firebase_core: 9bb8d013f9b36a31d32e34629e5348dd51d8e35e
   firebase_messaging: 7fa0f5b499bab6d0e658f3d591f8d45d0d7dd8b1
   FirebaseAnalytics: 651ecdc96c7dd8df0c15d55b6c6b70f78c2987b9

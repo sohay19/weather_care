@@ -9,6 +9,25 @@
       "client_info": {
         "mobilesdk_app_id": "1:753467123768:android:f3ec240681c39cb6095ecd",
         "android_client_info": {
+          "package_name": "com.codesoha.weather_care"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC03iGjjUIl0HjutjbTpfug3w2DTuUwLLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:753467123768:android:f81ccdab56b2ac36095ecd",
+        "android_client_info": {
           "package_name": "com.codesoha.weathercare"
         }
       },

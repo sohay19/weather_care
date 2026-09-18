@@ -3,6 +3,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/app_open_ad_unit_config.dart';
 
 void main() {
+  test('기본 Release 설정은 코드에 포함된 운영 단위 ID를 사용한다', () {
+    expect(
+      AppOpenAdUnitConfig.current.resolve(
+        platform: TargetPlatform.android,
+        releaseMode: true,
+        web: false,
+      ),
+      AppOpenAdUnitConfig.defaultAndroidReleaseId,
+    );
+    expect(
+      AppOpenAdUnitConfig.current.resolve(
+        platform: TargetPlatform.iOS,
+        releaseMode: true,
+        web: false,
+      ),
+      AppOpenAdUnitConfig.defaultIosReleaseId,
+    );
+  });
+
   test('Debug는 Google 공식 앱 오프닝 테스트 단위를 사용한다', () {
     const config = AppOpenAdUnitConfig();
 

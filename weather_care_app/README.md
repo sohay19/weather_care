@@ -92,9 +92,10 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
   확인할 때는 `--dart-define=ADMOB_TEST_BYPASS_UMP=true`를 명시할 수 있습니다. 이
   플래그는 Debug/Profile의 공식 테스트 광고에만 적용되고 Release에서는 항상
   무시됩니다. UMP 동의 흐름 검증 결과로 사용하지 않습니다.
-- Release에서는 현재 플랫폼에 유효한 운영 광고 단위 ID가 하나라도 있으면 UMP를
-  확인하고, UMP가 허용한 뒤 해당 ID의 광고를 요청합니다. ID가 없거나 형식이 잘못된
-  위치는 광고를 요청하지 않습니다. Week는 기존
+- Release에서는 코드에 포함된 플랫폼별 운영 광고 단위 ID를 기본값으로 사용합니다.
+  필요하면 아래 `--dart-define`으로 빌드별 ID를 덮어쓸 수 있습니다. 유효한 운영 광고
+  단위 ID가 하나라도 있으면 UMP를 확인하고, UMP가 허용한 뒤 해당 ID의 광고를
+  요청합니다. ID가 없거나 형식이 잘못된 위치는 광고를 요청하지 않습니다. Week는 기존
   `ADMOB_ANDROID_NATIVE_ID`/`ADMOB_IOS_NATIVE_ID`도 하위 호환하지만 새 빌드에서는
   아래 위치별 이름을 사용합니다.
   - `ADMOB_ANDROID_TODAY_NATIVE_ID`, `ADMOB_IOS_TODAY_NATIVE_ID`
@@ -102,8 +103,8 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
   - `ADMOB_ANDROID_WEEK_NATIVE_ID`, `ADMOB_IOS_WEEK_NATIVE_ID`
   - `ADMOB_ANDROID_APP_OPEN_ID`, `ADMOB_IOS_APP_OPEN_ID`
 - 기존 Android/iOS Week 배너 광고 단위는 2026-09-16 앱 코드에서 사용을 중단했습니다.
-  운영 광고 단위는 다음과 같습니다. ID는 비밀값은 아니지만 소스에 하드코딩하지 않고
-  Release 빌드 환경에서만 위 환경값으로 주입합니다.
+  운영 광고 단위는 다음과 같습니다. ID는 비밀값이 아니며 앱 코드의 Release 기본값으로
+  포함합니다.
   - Today 네이티브: Android `ca-app-pub-6152243173470406/2970868529`, iOS
     `ca-app-pub-6152243173470406/2609362710`
   - Main 네이티브: Android `ca-app-pub-6152243173470406/3701496264`, iOS
@@ -116,6 +117,14 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 
 운영 광고 송출은 UMP 메시지, 공개 방침, 스토어 연령 설정과 실기 검증이 끝날 때까지
 완료 상태로 간주하지 않습니다.
+
+## 글자 크기
+
+- 앱의 기본 글자 배율은 `1.1`이며, iOS·Android 시스템 글자 크기는 최대 `1.3`까지만
+  반영합니다. 테마 글자뿐 아니라 화면에서 직접 지정한 작은 글자에도 같은 전역 규칙을
+  적용합니다.
+- 시스템의 디스플레이 확대는 글자 배율과 달리 화면의 논리 크기 자체를 바꾸므로 앱에서
+  임의로 고정하지 않고 각 화면의 반응형 레이아웃으로 수용합니다.
 
 ## 앱 시작 경계
 

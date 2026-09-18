@@ -72,6 +72,7 @@ class _WeatherCareStartupState extends State<WeatherCareStartup> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
+      builder: WeatherCareTheme.textScaleBuilder,
       home: Scaffold(
         body: SafeArea(
           child: WeatherStatusView(

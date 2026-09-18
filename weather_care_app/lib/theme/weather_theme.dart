@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 class WeatherCareTheme {
   // 카테고리는 아이콘과 문구로 구분하고, 화면 색상은 이 팔레트 안에서만 사용한다.
+  static const double minimumTextScale = 1.1;
+  static const double maximumTextScale = 1.3;
   static const String fontSuite = 'SUITE';
   static const String fontChosunSg = 'ChosunSg';
   static const String fontMona = 'Mona';
@@ -38,6 +40,22 @@ class WeatherCareTheme {
     fontSize: 10,
     height: 1.4,
   );
+
+  static MediaQueryData scaledMediaQuery(MediaQueryData data) {
+    return data.copyWith(
+      textScaler: data.textScaler.clamp(
+        minScaleFactor: minimumTextScale,
+        maxScaleFactor: maximumTextScale,
+      ),
+    );
+  }
+
+  static Widget textScaleBuilder(BuildContext context, Widget? child) {
+    return MediaQuery(
+      data: scaledMediaQuery(MediaQuery.of(context)),
+      child: child ?? const SizedBox.shrink(),
+    );
+  }
 
   static ThemeData light() {
     return ThemeData(

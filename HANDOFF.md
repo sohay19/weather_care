@@ -6916,3 +6916,45 @@
 - 서버는 Firebase 프로젝트가 기존 `weather-care-2aaa8`로 동일하고 `FCM_PROJECT_ID`도 일치하므로 서비스 계정·프로젝트 ID·서버 코드·배포를 바꿀 필요가 없다. Firebase 프로젝트 자체를 바꾸거나 서비스 계정을 폐기한 경우에만 `FCM_CLIENT_EMAIL`/`FCM_PRIVATE_KEY` 교체가 필요하다.
 - 운영 DB의 구 FCM 토큰을 일괄 삭제할 필요는 없다. 재실행한 앱이 새 토큰을 갱신하고, 발송 시 Firebase가 `UNREGISTERED`로 반환한 만료 토큰은 스케줄러가 `installations.fcm_token`을 NULL로 자동 정리한다.
 - 현재 앱 기능인 FCM·Analytics만으로 Android SHA-1/SHA-256 등록은 필수가 아니다. 향후 Google 로그인, 전화 인증, App Check 등 인증서 지문을 사용하는 기능을 도입할 때 debug/release/Play App Signing 지문을 Firebase 새 Android 앱에 추가한다.
+
+## 2026-09-18 iOS 90683 위치 권한 문구 검토
+
+- App Store Connect의 `NSLocationAlwaysAndWhenInUseUsageDescription` 누락 경고에 대해 현재 앱의 위치 사용 흐름과 `Info.plist`를 읽기 전용으로 확인했다.
+- 현재 앱은 앱 사용 중 현재 위치를 확인해 지역 날씨·강수·도로 정보와 날씨 알림 기준 지역에 사용하며, 백그라운드에서 위치를 계속 추적하지 않는다.
+- 추천 문구는 `현재 위치를 기준으로 날씨와 강수·도로 정보를 제공하고, 사용자가 설정한 날씨 알림의 기준 지역을 등록하기 위해 위치를 사용합니다. 위치는 앱을 사용하는 동안 확인하며 백그라운드에서 지속적으로 추적하지 않습니다.`로 정리했다.
+- 이번 요청은 문구 추천만 수행했고 `Info.plist`나 iOS 빌드 설정은 변경하지 않았다. 앱이 Always 권한을 실제로 요청하지 않으므로, 후속으로 iOS 위치 플러그인이 Always API를 포함하지 않도록 빌드 설정을 제한할지 검토하는 것이 좋다.
+
+## 2026-09-18 iOS 글자 크기 고정 가능 여부 점검
+
+- Flutter 앱의 `MaterialApp`과 테마를 읽기 전용으로 확인했으며, 현재 전역 `MediaQuery.textScaler` 제한은 없어 iOS 시스템 글자 크기 배율을 그대로 따른다.
+- 시스템 설정과 무관한 완전 고정은 `MediaQuery`의 `textScaler: TextScaler.noScaling`으로 가능하지만 접근성 저하가 있어 권장하지 않는다.
+- 현재 앱에는 `8.5~11sp`의 작은 보조 문구가 여러 곳에 있어, iPhone 가독성 개선에는 완전 고정보다 최소 글자 크기 상향과 전역 배율 범위 제한(예: `1.0~1.3`)을 함께 적용하는 편이 적합하다.
+- 이번 요청은 가능 여부와 권장 방향만 검토했으며 앱 코드는 변경하지 않았다.
+
+## 2026-09-18 iPhone 광고 미노출 원인 점검
+
+- iOS `Info.plist`에는 AdMob 앱 ID(`GADApplicationIdentifier`)가 정상적으로 들어 있지만, Release 광고 요청에 필요한 iOS 광고 단위 ID는 모두 `String.fromEnvironment`로만 읽으며 Xcode/Flutter 설정에는 `DART_DEFINES` 주입이 없다.
+- 따라서 현재 설정 그대로 만든 Release/Archive에서는 `ADMOB_IOS_TODAY_NATIVE_ID`, `ADMOB_IOS_MAIN_NATIVE_ID`, `ADMOB_IOS_WEEK_NATIVE_ID`, `ADMOB_IOS_APP_OPEN_ID`가 빈 값이 되고, 유효성 검사에서 `null`이 반환되어 UMP 및 Mobile Ads 초기화 이전에 광고 시작 로직이 종료된다.
+- 앱 오프닝 광고는 설치 후 첫 실행에는 표시하지 않고, 두 번째 실행부터 대상으로 삼는다. 두 번째 실행에서도 광고보다 Main 콘텐츠가 먼저 준비되면 해당 콜드 스타트 표시는 취소되고 다음 백그라운드→포그라운드 진입까지 미뤄진다.
+- Debug 빌드는 Google 공식 iOS 테스트 광고 단위와 코드상 UMP 디버그 우회를 사용하므로, Debug에서도 네이티브 광고가 안 보이면 Xcode 콘솔의 `광고 설정 확인`, `광고 요청 가능 상태`, `네이티브 광고 SDK 실패` 로그로 SDK/네트워크 실패를 별도로 확인해야 한다.
+- 이번 점검은 읽기 전용으로 수행했으며 앱 광고 설정이나 코드는 변경하지 않았다.
+
+## 2026-09-18 운영 광고 ID 기본값 및 전역 글자 배율 적용
+
+- Android/iOS의 Today·Main·Week 네이티브 광고와 앱 오프닝 광고 운영 단위 ID를 코드 기본값으로 추가했다. Release/Archive 빌드에서 별도 `--dart-define`이 없어도 운영 ID를 사용하며, 기존 환경값을 지정하면 빌드별로 덮어쓸 수 있다.
+- 앱 본문과 초기화 화면의 `MaterialApp.builder`에 공통 `MediaQuery` 규칙을 연결했다. 모든 글자는 기본 `1.1`배로 표시하고 시스템 글자 배율은 `1.1~1.3` 범위에서만 반영한다.
+- 시스템 디스플레이 확대는 Flutter의 글자 배율과 달리 논리 화면 크기 자체를 변경하므로 강제로 축소하지 않고 기존 반응형 레이아웃으로 수용한다.
+- 운영 광고를 사용하도록 이미 변경된 Android 광고 ID 권한 선언에 맞춰 오래된 매니페스트 회귀 테스트와 설명을 정합화했다.
+- 광고 기본 ID와 글자 배율 하한·중간값·상한 회귀 테스트를 추가했다.
+- 검증 결과: `flutter analyze` 이슈 없음, Flutter 전체 404개 테스트 통과, `flutter build apk --release` 성공(`build/app/outputs/flutter-apk/app-release.apk`, 약 60.1MB).
+- Windows 환경이라 iOS Archive와 iPhone 실기 광고 송출은 실행하지 못했다. Mac에서 새 Archive를 설치한 뒤 UMP 허용 상태, 네이티브 광고 3개 위치와 두 번째 실행 이후 앱 오프닝 광고를 확인해야 한다.
+
+## 2026-09-18 글자 배율 1.3 UI 회귀 점검
+
+- 연결된 iOS/Android 실기기가 없어 iPhone 실기 캡처 대신 가장 좁은 iPhone SE급 논리 화면 `320×568`로 검증했다.
+- 시스템 글자 배율을 `2.0`으로 주입하고 앱의 전역 제한이 실제 `1.3`으로 적용되는지 각 화면에서 확인했다.
+- Main·Today·Detail·Week·Setting 다섯 탭을 각각 렌더링하고 화면 하단까지 반복 스크롤해 텍스트, 카드, 하단 내비게이션의 RenderFlex/레이아웃 오버플로를 검사했다. 다섯 화면 모두 예외가 없었다.
+- Main과 Today 첫 화면 렌더 이미지도 확인했으며 카드와 하단 내비게이션의 겹침이나 잘림은 발견되지 않았다. Flutter 테스트 렌더에서는 번들 한글 폰트가 사각형 대체 글리프로 표시되어 실제 글꼴 모양 평가는 제한적이었다.
+- `test/_scale_13_visual_check_test.dart`에 5개 회귀 테스트를 추가했다.
+- 최종 검증: Flutter 전체 409개 테스트 통과, `flutter analyze` 이슈 없음.
+- 남은 실기 확인: Mac/Xcode에서 작은 iPhone 시뮬레이터와 실제 iPhone을 사용해 한글 글꼴 렌더링, iOS Display Zoom, 실제 광고가 삽입된 화면 높이를 확인하는 것이 좋다.

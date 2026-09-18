@@ -27,6 +27,7 @@ class WeatherCareApp extends StatelessWidget {
       title: '날씨챙겨',
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
+      builder: WeatherCareTheme.textScaleBuilder,
       routes: {
         '/': (_) => HomeScreen(onHomeReady: onHomeReady),
         '/settings': (_) => HomeScreen(

@@ -3,6 +3,41 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/native_ad_unit_config.dart';
 
 void main() {
+  test('기본 Release 설정은 코드에 포함된 운영 단위 ID를 사용한다', () {
+    String? resolve(TargetPlatform platform, NativeAdPlacement placement) =>
+        NativeAdUnitConfig.current.resolve(
+          platform: platform,
+          placement: placement,
+          releaseMode: true,
+          web: false,
+        );
+
+    expect(
+      resolve(TargetPlatform.android, NativeAdPlacement.today),
+      NativeAdUnitConfig.defaultAndroidTodayReleaseId,
+    );
+    expect(
+      resolve(TargetPlatform.iOS, NativeAdPlacement.today),
+      NativeAdUnitConfig.defaultIosTodayReleaseId,
+    );
+    expect(
+      resolve(TargetPlatform.android, NativeAdPlacement.main),
+      NativeAdUnitConfig.defaultAndroidMainReleaseId,
+    );
+    expect(
+      resolve(TargetPlatform.iOS, NativeAdPlacement.main),
+      NativeAdUnitConfig.defaultIosMainReleaseId,
+    );
+    expect(
+      resolve(TargetPlatform.android, NativeAdPlacement.week),
+      NativeAdUnitConfig.defaultAndroidWeekReleaseId,
+    );
+    expect(
+      resolve(TargetPlatform.iOS, NativeAdPlacement.week),
+      NativeAdUnitConfig.defaultIosWeekReleaseId,
+    );
+  });
+
   test('Debug는 항상 Google 공식 네이티브 테스트 단위를 사용한다', () {
     const config = NativeAdUnitConfig(
       androidWeekReleaseId: 'ca-app-pub-1234567890123456/1234567890',

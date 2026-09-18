@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('Android disables FCM and Analytics auto initialization by default', () {
+  test('Android keeps SDK auto initialization off and ad permissions enabled',
+      () {
     final manifest =
         File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
 
@@ -36,9 +37,15 @@ void main() {
     ]) {
       expect(
         RegExp(
-          'android:name="${RegExp.escape(permission)}"\\s+tools:node="remove"',
+          'android:name="${RegExp.escape(permission)}"',
         ).hasMatch(manifest),
         isTrue,
+      );
+      expect(
+        RegExp(
+          'android:name="${RegExp.escape(permission)}"\\s+tools:node="remove"',
+        ).hasMatch(manifest),
+        isFalse,
       );
     }
   });

@@ -6885,3 +6885,34 @@
 - 서명된 Android AAB는 약 55MB의 재생성 가능한 빌드 산출물이므로 `android/app/release/`를 Git 제외 경로에 추가했다. 로컬 파일은 삭제하지 않았고, 검증용 새 번들은 `weather_care_app/build/app/outputs/bundle/release/app-release.aab`에 생성했다.
 - 검증: `flutter analyze` 이슈 없음, Flutter 전체 399개 테스트 통과, `flutter build appbundle --release` 성공, AAB JAR 서명 검증 통과. 병합 매니페스트의 패키지·버전과 광고 ID 권한 부재를 확인했다.
 - 개인정보 페이지 `npm run verify`가 개인정보처리방침·삭제 안내 페이지의 모바일/데스크톱 레이아웃, 링크, 필수 문구와 스크립트·폼 부재를 통과했다. 스토어 생성 스크립트 문법, 휴대전화·태블릿·그래픽·아이콘 22개 이미지 규격, 두 ZIP과 DOCX의 CRC도 통과했다.
+
+## 2026-09-18 iOS 첫 빌드 설정 점검
+
+- Flutter 앱의 iOS 프로젝트·`Info.plist`·entitlements·Firebase/알림/위치/광고 플러그인 설정을 읽기 전용으로 점검했다. 앱 소스와 iOS 설정은 변경하지 않았다.
+- 현재 `firebase_core 4.14.0`, `firebase_messaging 16.6.0`, `firebase_analytics 12.4.6`이 사용하는 Firebase Apple SDK 12.18.0은 iOS 15 이상을 요구하지만, Xcode 프로젝트와 `Flutter/AppFrameworkInfo.plist`는 iOS 13으로 설정돼 있어 첫 Pod 설치/빌드 전에 iOS 15로 올려야 한다.
+- Xcode의 Signing & Capabilities에서 Apple Developer Team을 선택하고, 정확한 번들 ID `com.codesoha.weatherCare`로 자동 서명을 구성해야 한다. Firebase iOS 옵션도 같은 번들 ID를 사용한다.
+- FCM을 위해 Push Notifications와 Background Modes를 추가하고 `Background fetch`, `Remote notifications`를 모두 활성화해야 한다. 현재 `Info.plist`에는 `remote-notification`만 있고 `fetch`가 없다. Firebase Console에는 Apple APNs 인증 키(`.p8`, Key ID, Team ID)도 업로드해야 한다.
+- `NSLocationWhenInUseUsageDescription`, AdMob 앱 ID, Firebase/Analytics 기본 비활성 설정, `aps-environment`, 빈 Keychain Sharing 그룹은 이미 존재한다. 현재 위치만 사용하므로 Always 위치 권한 문구는 필요하지 않으며, FCM method swizzling을 끄는 키도 추가하지 않는다.
+- 광고를 iOS 운영 빌드에서 실제 활성화할 경우 Google 공식 최신 `SKAdNetworkItems` 목록을 `Info.plist`에 추가하고 iOS 광고 단위 ID를 빌드 define으로 주입해야 한다. ATT 기반 추적을 구현하지 않는 현재 상태에서는 `NSUserTrackingUsageDescription`을 임의로 추가하지 않는다.
+- `pubspec.yaml`의 버전은 아직 `0.1.0+1`이라 iOS Archive도 기본적으로 해당 버전을 사용한다. 첫 배포 전 `1.0.0`과 고유 증가 build number로 맞춰야 한다.
+- 앱 전용 `PrivacyInfo.xcprivacy`는 아직 없다. 단순 로컬 빌드 차단 요인은 아니지만 App Store 제출 전 Xcode Privacy Report와 실제 위치·설치 식별자·Analytics·AdMob 수집 동작을 기준으로 앱 수준 선언 및 App Store 개인정보 라벨을 다시 대조해야 한다.
+- 이 Windows 환경에서는 Xcode/iOS 실빌드를 실행할 수 없다. 현재 잠금된 Firebase 12.18.0 CocoaPods 배포는 공식적으로 Xcode 26.2 이상과 CocoaPods 1.12 이상을 요구하므로 Mac 환경 버전도 먼저 확인한다.
+
+## 2026-09-18 Firebase Android·iOS 앱 재등록 후 설정 점검
+
+- Firebase Console에서 Android·iOS 앱을 삭제 후 올바른 ID로 다시 추가하고 내려받은 설정 파일을 기준으로 앱 구성을 읽기 전용 점검했다. Firebase 또는 운영 서버 설정은 변경하지 않았다.
+- Android Gradle의 패키지 `com.codesoha.weathercare`와 새 `google-services.json`의 일치 클라이언트는 정상이며, 새 Android Firebase App ID는 `...android:f81ccdab56b2ac36095ecd`다.
+- iOS Xcode Runner 번들 ID와 새 `GoogleService-Info.plist`의 번들 ID는 모두 `com.codesoha.weathercare`로 일치하며, 새 iOS Firebase App ID는 `...ios:b3f0148613052995095ecd`다.
+- `lib/firebase_options.dart`와 루트 `firebase.json`은 아직 삭제한 이전 앱을 가리킨다. Android는 `...android:f3ec240681c39cb6095ecd`, iOS는 `...ios:366c0d0634edaecd095ecd`이고 iOS 번들 ID도 이전 대소문자 `com.codesoha.weatherCare`이므로 `flutterfire configure`로 재생성해야 한다. 앱은 `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`을 사용하므로 이 불일치는 실제 런타임에 영향을 준다.
+- `ios/Runner/GoogleService-Info.plist`는 파일시스템에는 있지만 Xcode `Runner` 타깃의 파일 참조·Copy Bundle Resources에는 등록돼 있지 않다. plist를 네이티브 설정 파일로 유지하려면 Xcode에서 Runner 타깃 멤버십을 켜고 번들 리소스에 포함해야 한다.
+- Firebase 프로젝트 자체는 계속 `weather-care-2aaa8`이고 서버 `FCM_PROJECT_ID`도 동일하므로, 같은 Firebase 프로젝트 안에서 앱만 다시 만든 경우 서버 서비스 계정과 프로젝트 ID는 교체할 필요가 없다.
+- 새 iOS 앱 항목에는 Firebase Console의 Cloud Messaging에서 APNs 인증 키 연결을 다시 확인해야 한다. 새 앱 설정으로 설치·실행하면 FCM 토큰이 새로 발급되며 앱의 기존 설치 동기화 경로가 서버 토큰을 갱신한다.
+- 별도 iOS 빌드 설정으로 Runner와 Podfile은 iOS 15 이상으로 올라갔고 Background fetch/Remote notifications도 모두 들어갔지만, `ios/Flutter/AppFrameworkInfo.plist`의 `MinimumOSVersion`은 아직 13.0이므로 15.0 이상으로 정합화가 남아 있다.
+
+### Android·서버 후속 확인
+
+- Android의 `namespace`·`applicationId`는 `com.codesoha.weathercare`이고 새 `google-services.json`에 같은 패키지의 새 Firebase App ID가 있어 네이티브 Android 매칭은 정상이다. JSON에 이전 `com.codesoha.weather_care` 클라이언트가 함께 남아 있어도 Google Services Gradle 플러그인은 현재 applicationId와 정확히 일치하는 클라이언트를 선택하므로 파일을 수동 편집하지 않는다.
+- Android도 앱이 명시적 `firebase_options.dart`로 Firebase를 초기화하므로 FlutterFire 재구성 후 clean rebuild·재설치가 필요하다. 새 설정에서는 FCM 토큰이 다시 발급되고, 앱의 `onTokenRefresh`/설치 동기화가 운영 서버의 같은 installation 행에 새 토큰을 덮어쓴다.
+- 서버는 Firebase 프로젝트가 기존 `weather-care-2aaa8`로 동일하고 `FCM_PROJECT_ID`도 일치하므로 서비스 계정·프로젝트 ID·서버 코드·배포를 바꿀 필요가 없다. Firebase 프로젝트 자체를 바꾸거나 서비스 계정을 폐기한 경우에만 `FCM_CLIENT_EMAIL`/`FCM_PRIVATE_KEY` 교체가 필요하다.
+- 운영 DB의 구 FCM 토큰을 일괄 삭제할 필요는 없다. 재실행한 앱이 새 토큰을 갱신하고, 발송 시 Firebase가 `UNREGISTERED`로 반환한 만료 토큰은 스케줄러가 `installations.fcm_token`을 NULL로 자동 정리한다.
+- 현재 앱 기능인 FCM·Analytics만으로 Android SHA-1/SHA-256 등록은 필수가 아니다. 향후 Google 로그인, 전화 인증, App Check 등 인증서 지문을 사용하는 기능을 도입할 때 debug/release/Play App Signing 지문을 Firebase 새 Android 앱에 추가한다.

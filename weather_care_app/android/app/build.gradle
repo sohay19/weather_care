@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.codesoha.weather_care"
+    namespace = "com.codesoha.weathercare"
     compileSdk = 36
     ndkVersion "29.0.13113456"
 
@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.codesoha.weather_care"
+        applicationId = "com.codesoha.weathercare"
         minSdkVersion 27
         targetSdk 36
         versionCode keystoreProperties["versionCode"].toInteger()

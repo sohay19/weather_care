@@ -6785,6 +6785,29 @@
 - 검증: Worker 46파일·324개 테스트, Node 2파일·6개 테스트, TypeScript `--noEmit`, Wrangler 4.133.0 dry-run을 통과했다. 실제 Node 프로세스에서 `/health` 200, 미수집 Main 503, Core 수동 작업, 11개 SQLite 마이그레이션, 온라인 백업, 스케줄러 기동을 확인했고 스모크용 DB·백업은 삭제했다. `git diff --check`는 줄바꿈 변환 경고 외 오류가 없다.
 - 운영 D1, Worker, Cron, Secret, Cloudflare Tunnel, 미니 PC, 앱 `SERVER_URL`은 변경하거나 배포하지 않았다. 현재 변경은 `master` 작업 트리에 커밋하지 않은 상태이며 기존 브랜치의 다른 변경은 없었다. 실제 이전 다음 단계는 미니 PC의 설치 경로·Node 버전·공개 호스트명을 확인하고 shadow D1 export를 가져와 스케줄러를 끈 채 API 응답을 병행 검증하는 것이다.
 
+## 2026-09-17 iOS·Android 스토어 스크린샷 제작
+
+- 앱의 `Main`, `Today`, `Detail`, `Week`, `Setting` 5개 탭을 Android 에뮬레이터의 release 빌드에서 실제 화면으로 캡처했다. 디버그 전용 AdMob 검사 팝업과 테스트 광고가 없는 상태를 사용했으며 앱 소스는 변경하지 않았다.
+- 앱 아이콘 계열의 단색 `#4C77A4` 배경, 상단 탭 이름과 한글 홍보 문구, 하단 실제 앱 화면으로 구성했다. 스토어 노출 순서는 핵심 화면 우선으로 `Main → Today → Detail → Week → Setting`이다.
+- iOS는 Apple App Store Connect의 최신 6.9형 허용 규격 중 `1320×2868`, Android는 Google Play 추천 세로 비율 `1080×1920`으로 각 5장씩 생성했다. 최종 PNG 10개 모두 24-bit RGB이며 알파 채널이 없다.
+- 결과물은 `weather_care_app/store/screenshots/ios`, `weather_care_app/store/screenshots/android`에 있고, 전체 미리보기와 실제 캡처 원본·한국어 안내 문서도 같은 `screenshots` 폴더에 저장했다.
+- 전달 편의를 위해 전체 결과물을 `weather_care_app/store/weather-care-store-screenshots.zip`으로 함께 묶었다.
+- `weather_care_app/store/generate_store_screenshots.py`를 추가해 같은 레이아웃을 재생성할 수 있게 했다. Pillow로 10개 파일의 픽셀 크기와 RGB 모드를 검사해 통과했다.
+
+## 2026-09-17 Flutter 미니 PC API 기본 주소 전환
+
+- 구버전 앱이 없다는 운영 전제에 따라 Flutter의 기본 서버 주소를 기존 `workers.dev` Worker에서 Cloudflare Tunnel 공개 주소 `https://weather-api.codesoha.com`으로 변경했다.
+- 앱 README의 기본 운영 주소와 `config/kma.config.json` 예시를 같은 Tunnel 주소로 갱신했다. 현재 로컬의 ignored `config/kma.config.json`도 맞췄지만 커밋 대상에는 포함하지 않는다.
+- 별도 `SERVER_URL`이나 에셋 설정이 없을 때 새 기본 주소가 선택되는 회귀 테스트를 추가했다.
+- 검증: `flutter analyze` 이슈 없음, `flutter test test/weather_fallback_test.dart` 5개 테스트 통과.
+
+## 2026-09-17 Google Play 그래픽 이미지 제작
+
+- Google Play 기본 스토어 등록정보용 그래픽 이미지를 `weather_care_app/store/google-play/feature-graphic.png`에 생성했다.
+- 공식 요구사항인 `1024×500`, 24비트 RGB PNG, 알파 채널 없음으로 제작했다. 브랜드 블루 `#4C77A4` 배경에 `날씨챙겨`, `오늘 필요한 날씨, 미리 챙겨요`, `생활에 필요한 날씨만 한눈에` 문구와 실제 Main 브리핑 영역을 배치했다.
+- Google 권장사항에 맞춰 앱 아이콘을 크게 반복하거나 기기 프레임을 사용하지 않았고, 핵심 문구와 UI는 중앙 안전영역에 두었다. 순위·가격·설치 유도 표현은 포함하지 않았다.
+- `weather_care_app/store/generate_store_screenshots.py`가 그래픽 이미지도 함께 재생성하도록 확장했고, 한국어 대체 텍스트 권장안을 스토어 안내 문서에 추가했다.
+
 ## 2026-09-17 운영 서버 연결 진단·메뉴 명칭 정합화
 
 - 현재 기본 주소 `https://weather-api.codesoha.com`의 DNS·TLS와 `/health` 200 응답, 미니 PC의 `weather-care-api`·`weather-care-scheduler`·`cloudflared` 활성 상태를 확인했다. 등록된 격자 `57/124`, `58/125`의 Main/Today/Weekly API도 모두 200을 반환해 현재 앱의 운영 서버 연결은 정상이다.
@@ -6793,6 +6816,16 @@
 - 팝업의 `오늘의 TODO`를 현재 명칭 `Check List`로 교체했다. 하단 탭 툴팁, 설정 상세 제목, 사용 중인 문서와 과거 점검 기록을 전수 검색해 `오늘의 TODO`, `단기예보만 보기`, `기준 지역`, `데이터·기기 상태` 등 현재 화면처럼 읽히는 이전 명칭을 정리하고 회귀 검증을 추가했다.
 - README와 앱 탭 현황 문서를 현재의 서버 중앙 수집 전용 흐름과 Tunnel 주소에 맞췄다. 운영 서버·앱 배포 및 원격 데이터 변경은 수행하지 않았다.
 - 검증: `flutter analyze` 이슈 없음, Flutter 전체 399개 테스트 통과, `git diff --check` 공백 오류 없음.
+
+## 2026-09-17 스토어 배포 자료 종합 제작
+
+- 기존 Android·iOS 휴대전화 스크린샷에 이어 실제 반응형 태블릿 화면을 캡처하고, Android 태블릿 `1440×2560` 및 iPad 13형 `2064×2752` 규격으로 각 5장씩 제작했다. 탭 구성과 노출 순서는 `Main → Today → Detail → Week → Setting`이다.
+- Google Play용 그래픽 이미지 `1024×500`과 앱 아이콘 `512×512`를 제작했다. 그래픽 이미지는 RGB·무알파, 앱 아이콘은 RGBA이며 파일 크기 제한을 충족한다.
+- 앱 간단 설명·상세 설명, App Store 부제·홍보 문구·키워드, Google Play 검색어·카테고리·선언 항목, App Store Connect 메타데이터·연령 등급·개인정보·심사 메모, 권한과 출시 체크리스트를 `weather_care_app/store/스토어_등록정보.md` 및 `날씨챙겨_스토어_등록정보.docx`에 정리했다.
+- Word 문서는 번들 환경에 LibreOffice가 없어 Microsoft Word COM으로 PDF 변환한 뒤 Poppler로 13쪽 전체를 렌더링해 육안 검수했다. 표 잘림, 글리프 누락, 페이지 경계 문제 없이 확인했으며 QA 임시 산출물은 제거했다.
+- 최종 이미지 검증 결과 Android 휴대전화 5장 `1080×1920`, iOS 휴대전화 5장 `1320×2868`, Android 태블릿 5장 `1440×2560`, iPad 5장 `2064×2752`, Google Play 그래픽 이미지 `1024×500`, 앱 아이콘 `512×512`가 모두 지정 크기와 색상 모드를 통과했다.
+- 모든 최종 이미지·미리보기·문서·재생성 스크립트를 `weather_care_app/store/weather-care-store-assets.zip`에 묶었다.
+- 출시 전 남은 확인사항은 역지오코딩 처리업체·국외처리 여부의 개인정보처리방침 반영, Android 실기기와 실제 iOS/iPad 환경 캡처·동작 검증, 광고 활성화 여부 확정, 전용 지원 URL·전화번호 등 미확정 연락처 입력이다.
 
 ## 2026-09-18 미수집 지역 발생 원인 확인
 
@@ -6808,6 +6841,15 @@
 - 현재 앱 지역 카탈로그는 행정지역 3,838개, 고유 예보 격자 1,633개다. 이 전체를 선수집하려면 활성 격자 기반 대상 로더를 카탈로그 기반으로 교체하고, 단기·초단기·환경 자료의 별도 호출량·저장량 정책을 다시 설계해야 한다.
 - 운영 미니 PC의 `weather-care-api`·`weather-care-scheduler`·`cloudflared`는 모두 활성이고, 실행 중인 수집 코드도 `FROM installations GROUP BY nx, ny, latitude, longitude`를 사용함을 읽기 전용으로 확인했다. 코드·운영 데이터·서비스·배포는 변경하지 않았다.
 
+## 2026-09-18 데이터 삭제 요청 공개 링크 추가
+
+- Google Play 데이터 보안 입력에 사용할 전용 공개 페이지를 `weather_care_privacy/public/data-deletion.html`로 추가하고 Cloudflare Pages production branch `master`에 배포했다. 최종 URL은 `https://weather-care-privacy.pages.dev/data-deletion`이며 로그인 없이 HTTP 200으로 열린다.
+- 페이지에는 앱 이름 `날씨챙겨`, 개발자명 `코드소하(CODESOHA)`, 회원 계정이 없다는 설명, 앱 안의 인증된 서버·Analytics 삭제 경로, 앱을 사용할 수 없을 때의 이메일 요청 경로, 삭제 대상·보존기간·백업 최대 7일과 보안 주의사항을 표시했다. 이메일 링크는 `sy40222@gmail.com`으로 삭제 요청을 시작한다.
+- 개인정보처리방침의 권리 행사 절과 푸터에서 전용 페이지를 연결하고 최종 개정일·개정 이력을 2026-09-18로 갱신했다. 기존 처리 항목과 보유기간은 바꾸지 않았다.
+- 반응형 검증기를 개인정보처리방침과 삭제 페이지 모두 확인하도록 확장했다. 모바일 `360px`·데스크톱 `1280px`에서 HTTP 200, 가로 넘침 없음, 앱·개발자명·삭제 범위·이메일 경로, 스크립트·폼 없음 검증을 통과했고 운영 URL의 CSP·`nosniff` 헤더도 확인했다.
+- `weather_care_app/store/스토어_등록정보.md`와 `날씨챙겨_스토어_등록정보.docx`에 데이터 삭제 URL을 반영하고 종합 ZIP의 문서도 교체했다. Word 문서는 13쪽 전체를 다시 렌더링해 표·문자·페이지 경계를 확인했다.
+- Cloudflare Pages 최종 배포 미리보기 주소는 `https://a589c9e4.weather-care-privacy.pages.dev`다. Play Console에는 미리보기 주소가 아니라 고정 운영 URL `https://weather-care-privacy.pages.dev/data-deletion`을 입력한다.
+
 ## 2026-09-18 전국 지원 지역 선수집 구현
 
 - 앱 행정지역 카탈로그 3,838개를 1,633개 고유 기상청 격자로 정리해 서버 전국 예보 카탈로그를 추가했다. Node 운영 서버는 설치 등록 여부와 무관하게 18개 묶음을 10분마다 하나씩 수집하므로 전체 격자의 기본 단기예보를 3시간 안에 순환 갱신한다.
@@ -6818,3 +6860,28 @@
 - 커밋 `2e1f951`을 운영 미니 PC `soha-01`에 배포했다. 배포 전 소스는 `/var/backups/weather-care/source-before-2e1f951-20260918-0915.tar.gz`에 보관했고, `weather-care-api`·`weather-care-scheduler`·`cloudflared`가 모두 `active`이며 내부·공개 `/health`가 200임을 확인했다.
 - 최초 전국 선수집은 18개 묶음을 모두 마치고 운영 DB의 `COLLECTED_REGION`·`COLLECTED_WEEKLY`가 각각 1,633개, 고유 격자 1,633개, 누락 0개임을 전수 확인했다. 기존 미수집 격자 `60/121`과 카탈로그 경계 격자 `52/33`, `94/99`, `97/103`의 Main·Today·Weekly가 공개 운영 API에서 200을 반환한다.
 - 초기 선수집 중 활성 격자 2개를 매 묶음마다 상세 갱신해 불필요한 실패 로그가 남는 현상을 확인했다. `collectActiveDetails: false`일 때 활성 격자를 별도 합류 대상과 상세수집 키에서 제외하도록 보정했고, 활성 설치가 있어도 전국 기본 예보만 호출하는 Node 회귀 테스트를 통과했다.
+
+## 2026-09-18 전국 선수집 API 한도·미니 PC 용량 점검
+
+- 09:47 KST 운영 미니 PC에서 `weather-care-api`·`weather-care-scheduler`·`cloudflared`가 모두 활성이고, 최종 재시작 뒤 API 서비스 오류와 디스크·SQLite 용량 오류는 없음을 확인했다.
+- APIHub 당일 내부 보수 예약량은 1,642건·525,767,652바이트다. 공식 일반회원 한도 20,000건·5GB의 8.21%·10.52%, 내부 차단선 18,000건·4.5GB의 9.12%·11.68%다. 현재 로그에는 APIHub quota·429·403 오류가 없다.
+- 미니 PC는 96GB 디스크 중 92GB가 남아 있고 메모리는 7.8GiB 중 6.9GiB를 사용할 수 있다. 운영 SQLite는 약 391MB, WAL은 약 4MB여서 현재 저장·메모리 용량은 충분하다.
+- 전국 단기예보는 공공데이터포털 `getVilageFcst`를 1,633개 격자별로 호출한다. 단기예보 발표가 하루 8회이고 각 격자를 발표본마다 갱신하므로 정상 하루 호출량은 최소 13,064건이다. 공공데이터포털 공식 개발계정 기본 한도 10,000건/일보다 3,064건 많다.
+- 공공데이터포털 호출은 현재 `api_usage_daily` 집계·차단 대상이 아니며, 운영 키에 트래픽 증액이 적용됐는지도 서버에서 확인할 수 없다. 최초 선수집 1,633건은 성공했고 아직 한도 오류는 없지만 배포 후 24시간이 지나지 않아 전체 일주기를 검증한 상태는 아니다.
+- 결론: APIHub와 미니 PC 자원은 문제없으나, 공공데이터포털 단기예보 한도가 15,000건 이상으로 증액됐는지 확인하기 전에는 전국 발표본 전부 선수집의 호출량이 안전하다고 단정할 수 없다. 이번 점검은 읽기 전용으로 수행했으며 코드·설정·서비스는 변경하지 않았다.
+
+## 2026-09-18 공공데이터포털 운영계정 신청 대상 점검
+
+- 운영 서버 소스의 `apis.data.go.kr` 호출을 전수 확인한 결과 공공데이터포털 활용신청 대상은 5개다: `기상청_단기예보 조회서비스`, `기상청_중기예보 조회서비스`, `기상청_생활기상지수 조회서비스`, `한국환경공단_에어코리아_대기오염정보`, `한국환경공단_에어코리아_측정소정보`.
+- 단기예보 서비스에서는 `getVilageFcst`와 `getUltraSrtNcst`, 중기예보에서는 `getMidTa`와 `getMidLandFcst`, 생활기상지수에서는 `getUVIdxV5`를 사용한다.
+- 에어코리아 대기오염정보에서는 측정소별 실시간 측정값·대기질 예보통보·초미세먼지 주간예보를 사용하고, 측정소정보에서는 전국 측정소 목록을 하루 캐시로 사용한다.
+- 전국 1,633격자의 발표본별 단기예보만 최소 13,064건/일이므로 단기예보 운영계정은 20,000건/일 신청을 권장한다. 나머지 네 서비스는 현재 활성 지역 중심 호출이라 기본 한도 안이지만 실제 앱 운영 서비스이므로 함께 운영계정으로 전환한다.
+- APIHub의 레이더·지점분석·특보·ASOS·AWS·도로살얼음은 기상청 APIHub에서 별도 관리되며, ITS 도로통제는 국가교통정보센터 OpenAPI에서 별도 관리되므로 공공데이터포털 신청 대상이 아니다.
+
+## 2026-09-18 스토어 배포 변경 최종 검증
+
+- 작업 트리의 Android 패키지 ID 변경, 스토어 제출 이미지·문서, 공개 데이터 삭제 안내 페이지를 함께 검토했다. Firebase Android 클라이언트와 앱 설정은 `com.codesoha.weathercare`, 버전 코드는 `26091800`, 버전명은 `1.0.0`으로 일치한다.
+- 스토어 문서와 개인정보처리방침은 운영 광고 비활성 및 Android 광고 ID 권한 제거를 전제로 하므로, 매니페스트에서도 `AD_ID`와 `ACCESS_ADSERVICES_AD_ID`를 병합 제거하는 기존 정책을 유지했다.
+- 서명된 Android AAB는 약 55MB의 재생성 가능한 빌드 산출물이므로 `android/app/release/`를 Git 제외 경로에 추가했다. 로컬 파일은 삭제하지 않았고, 검증용 새 번들은 `weather_care_app/build/app/outputs/bundle/release/app-release.aab`에 생성했다.
+- 검증: `flutter analyze` 이슈 없음, Flutter 전체 399개 테스트 통과, `flutter build appbundle --release` 성공, AAB JAR 서명 검증 통과. 병합 매니페스트의 패키지·버전과 광고 ID 권한 부재를 확인했다.
+- 개인정보 페이지 `npm run verify`가 개인정보처리방침·삭제 안내 페이지의 모바일/데스크톱 레이아웃, 링크, 필수 문구와 스크립트·폼 부재를 통과했다. 스토어 생성 스크립트 문법, 휴대전화·태블릿·그래픽·아이콘 22개 이미지 규격, 두 ZIP과 DOCX의 CRC도 통과했다.

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="날씨챙겨 앱에서 처리하는 설치별 서버 자료와 이용 통계의 삭제 요청 방법을 안내합니다.">
+  <title>데이터 삭제 요청 | 날씨챙겨</title>
+  <link rel="canonical" href="https://weather-care-privacy.pages.dev/data-deletion">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#content">본문 바로가기</a>
+<header class="brand"><a href="/" aria-label="날씨챙겨 개인정보처리방침 홈"><span class="symbol" aria-hidden="true">☀</span> 날씨챙겨</a><span>코드소하 · CODESOHA</span></header>
+<main id="content" class="deletion-main">
+  <div class="hero deletion-hero">
+    <p class="eyebrow">DATA DELETION REQUEST</p>
+    <h1>날씨챙겨<br>데이터 삭제 요청</h1>
+    <p class="intro">회원 계정 없이 이용하는 앱입니다. 앱 안에서 설치별 자료를 직접 삭제하거나 이메일로 삭제 요청을 시작할 수 있습니다.</p>
+  </div>
+
+  <section aria-labelledby="request-title">
+    <p class="number">01</p>
+    <h2 id="request-title">삭제를 요청하는 방법</h2>
+    <div class="request-grid">
+      <article class="request-card">
+        <p class="request-label">앱을 사용할 수 있는 경우</p>
+        <h3>앱에서 본인 확인 후 바로 요청</h3>
+        <ol>
+          <li>날씨챙겨의 <strong>Setting</strong> 탭을 엽니다.</li>
+          <li><strong>데이터·권한 안내</strong>를 선택합니다.</li>
+          <li><strong>서버 내 나의 데이터 삭제</strong>를 눌러 설치별 서버 자료를 삭제합니다.</li>
+          <li>선택적으로 수집된 이용 통계가 있다면 <strong>전송된 이용 통계 삭제 요청</strong>도 별도로 진행합니다.</li>
+        </ol>
+        <p>앱이 보관한 설치별 비밀값으로 요청자를 확인하므로 가장 빠르고 정확한 방법입니다.</p>
+      </article>
+      <article class="request-card">
+        <p class="request-label">앱을 사용할 수 없거나 이미 삭제한 경우</p>
+        <h3>이메일로 삭제 요청 시작</h3>
+        <p>아래 이메일 링크를 열어 삭제하려는 자료의 범위와 사용한 플랫폼(Android 또는 iOS)을 적어 보내 주세요. 접수 후 필요한 최소 확인 절차와 처리 결과를 회신합니다.</p>
+        <a class="action-link" href="mailto:sy40222@gmail.com?subject=%5B%EB%82%A0%EC%94%A8%EC%B1%99%EA%B2%A8%5D%20%EB%8D%B0%EC%9D%B4%ED%84%B0%20%EC%82%AD%EC%A0%9C%20%EC%9A%94%EC%B2%AD">데이터 삭제 요청 이메일 보내기 →</a>
+        <p class="muted">문의 주소: sy40222@gmail.com</p>
+      </article>
+    </div>
+    <p class="warning-text"><strong>보안을 위해 설치 인증키, 비밀번호, FCM 토큰이나 정확한 GPS 좌표는 이메일에 적지 마세요.</strong></p>
+  </section>
+
+  <section aria-labelledby="scope-title">
+    <p class="number">02</p>
+    <h2 id="scope-title">삭제되는 자료</h2>
+    <ul class="delete-list">
+      <li><strong>앱 서버 자료:</strong> 무작위 설치 식별자, 설치별 인증정보의 해시, FCM 토큰, 선택 지역·위치 정보, 알림 설정, 플랫폼·앱 버전·시간대, 연령정책 확인 상태, 마지막 사용 확인 시각, 알림 발송 이력과 중복 방지 상태</li>
+      <li><strong>선택 이용 통계:</strong> 이용 통계에 동의한 경우 Firebase 앱 인스턴스 식별자를 기준으로 Google Analytics 사용자 삭제 요청을 제출합니다. 요청 접수와 Google 시스템의 실제 삭제 완료 시점은 다를 수 있습니다.</li>
+      <li><strong>이메일 문의 기록:</strong> 삭제 요청 이메일과 처리 기록은 요청 처리와 분쟁 대응을 위해 처리 종료 후 1년 보관할 수 있습니다. 법령상 보존 사유가 있으면 해당 기간에는 필요한 범위만 보관합니다.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="timing-title">
+    <p class="number">03</p>
+    <h2 id="timing-title">처리 시점과 남을 수 있는 자료</h2>
+    <p>앱의 인증된 서버 삭제가 완료되면 운영 데이터베이스의 해당 설치 자료를 삭제하고 자동 재등록과 서버 알림을 중지합니다. 복구 이력과 운영 변경용 백업에서는 최대 7일 동안 사본이 남을 수 있으며, 보존주기가 끝나면 삭제합니다.</p>
+    <p>기기에만 저장된 연령대·지역 선택·준비물 체크와 동의 설정은 서버 삭제 대상이 아닙니다. 기기 설정의 앱 데이터 삭제 기능을 사용하거나 앱을 제거해 관리할 수 있습니다.</p>
+    <p>날씨챙겨는 이름이나 이메일로 로그인하는 회원 계정을 만들지 않습니다. 이메일 주소와 익명 설치 자료를 미리 연결해 두지 않으므로, 앱을 삭제한 뒤에는 이메일만으로 특정 설치 자료를 식별하지 못할 수 있습니다. 확인 가능한 범위와 대체 절차를 회신으로 안내합니다.</p>
+  </section>
+
+  <section aria-labelledby="more-title">
+    <p class="number">04</p>
+    <h2 id="more-title">추가 안내</h2>
+    <p>자료의 처리 목적, 국외 처리, 보유기간과 이용자의 권리에 관한 전체 내용은 개인정보처리방침에서 확인할 수 있습니다.</p>
+    <div class="page-links"><a href="/">개인정보처리방침 보기 →</a><a href="mailto:sy40222@gmail.com">개인정보 문의 →</a></div>
+  </section>
+</main>
+<footer><span>날씨챙겨 · 코드소하(CODESOHA)</span><a href="/">개인정보처리방침</a><a href="#content">맨 위로 ↑</a></footer>
+</body>
+</html>

@@ -189,33 +189,71 @@ void main() {
   });
 
   testWidgets('유효일시는 항목 제목 아래에 두고 모든 앱 계산 출처를 통일한다', (tester) async {
-    await _pump(tester, messages: [
-      LifestyleMessage(
-        type: LifestyleMessageType.rapidTemperatureDrop,
-        title: '기온이 빠르게 낮아져요',
-        parts: const [
-          WeatherMessagePart(
-            role: WeatherMessageRole.appSuggestion,
-            text: '겉옷을 준비하세요',
-            validFrom: '2026-09-10T06:00:00Z',
-            validUntil: '2026-09-10T09:00:00Z',
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pump(tester,
+        messages: [
+          LifestyleMessage(
+            type: LifestyleMessageType.rapidTemperatureDrop,
+            title: '기온이 빠르게 낮아져요',
+            parts: const [
+              WeatherMessagePart(
+                role: WeatherMessageRole.appSuggestion,
+                text: '겉옷을 준비하세요',
+                validFrom: '2026-09-18T03:00:00Z',
+                validUntil: '2026-09-19T02:59:00Z',
+              ),
+              WeatherMessagePart(
+                role: WeatherMessageRole.calculatedFact,
+                text: '기온 차를 계산했어요',
+                source: 'APP_RULE_ENGINE',
+              ),
+              WeatherMessagePart(
+                role: WeatherMessageRole.officialFact,
+                text: '자외선지수 예보예요',
+                source: '기상청 생활기상지수',
+              ),
+            ],
           ),
-          WeatherMessagePart(
-            role: WeatherMessageRole.calculatedFact,
-            text: '기온 차를 계산했어요',
-            source: 'APP_RULE_ENGINE',
+          LifestyleMessage(
+            type: LifestyleMessageType.outdoorCaution,
+            title: '12시간 유효 예보',
+            parts: const [
+              WeatherMessagePart(
+                role: WeatherMessageRole.appSuggestion,
+                text: '예보를 확인하세요',
+                validFrom: '2026-09-18T03:00:00Z',
+                validUntil: '2026-09-18T14:59:00Z',
+              ),
+            ],
           ),
-          WeatherMessagePart(
-            role: WeatherMessageRole.officialFact,
-            text: '자외선지수 예보예요',
-            source: '기상청 생활기상지수',
+          LifestyleMessage(
+            type: LifestyleMessageType.rainGearUseful,
+            title: '3시간 유효 예보',
+            parts: const [
+              WeatherMessagePart(
+                role: WeatherMessageRole.appSuggestion,
+                text: '우산을 챙기세요',
+                validFrom: '2026-09-18T03:00:00Z',
+                validUntil: '2026-09-18T05:59:00Z',
+              ),
+            ],
           ),
         ],
-      ),
-    ]);
+        scale: 1.3);
 
-    const validPeriod = '9월 10일 15시~9월 10일 18시 유효';
+    const validPeriod = '9월 18일 12시~9월 19일 11시 59분 유효 (24H)';
     expect(find.text(validPeriod), findsOneWidget);
+    expect(
+      find.text('9월 18일 12시~9월 18일 23시 59분 유효 (12H)'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('9월 18일 12시~9월 18일 14시 59분 유효 (3H)'),
+      findsOneWidget,
+    );
     expect(
       tester.getTopLeft(find.text('기온 하강')).dy,
       lessThan(tester.getTopLeft(find.text(validPeriod)).dy),
@@ -228,6 +266,7 @@ void main() {
       );
       expect(provider.style?.fontWeight, FontWeight.w800);
     }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('첫 문장이 제목과 같으면 한 번만 표시하고 공식 역할은 유지한다', (tester) async {

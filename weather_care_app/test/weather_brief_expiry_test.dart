@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
+import 'package:weather_care/features/home/weather_labels.dart';
 import 'package:weather_care/features/home/widgets/weather_brief_text.dart';
 import 'package:weather_care/models/weather.dart';
 
@@ -113,15 +114,28 @@ void main() {
     final response = TodayWeatherResponse.fromJson({
       'brief': action,
       'briefExpiresAt': '2026-09-10T06:00:00Z',
+      'generatedAt': '2026-09-18T04:33:00Z',
       'current': {'forecastAt': '2026-09-10T15:00:00+09:00'},
       'nextForecast': {'forecastAt': '2026-09-10T16:00:00+09:00'},
     }).withRegionName('부산 해운대구');
     expect(response.briefExpiresAt, '2026-09-10T06:00:00Z');
+    expect(response.generatedAt, '2026-09-18T04:33:00Z');
     expect(response.brief, action);
     expect(response.current.forecastAt, '2026-09-10T15:00:00+09:00');
     expect(response.nextForecast?.forecastAt, '2026-09-10T16:00:00+09:00');
     expect(TodayWeatherResponse.fromJson({'brief': action}).briefExpiresAt,
         isNull);
+  });
+
+  test('메인 갱신 시각은 서버 UTC 시각을 한국시간으로 표시한다', () {
+    expect(
+      weatherRefreshLabel('2026-09-18T04:33:00Z'),
+      '9월 18일 오후 1시 33분 기준',
+    );
+    expect(
+      weatherRefreshLabel('2026-09-18T00:05:00Z'),
+      '9월 18일 오전 9시 05분 기준',
+    );
   });
 
   testWidgets('Main 실제 화면은 지난 행동만 숨기고 공식 예보 시각은 바꾸지 않는다', (tester) async {

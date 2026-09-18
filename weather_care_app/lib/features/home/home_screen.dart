@@ -27,6 +27,7 @@ import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../settings/settings_screen.dart';
 import '../ads/consent_aware_native_ad_card.dart';
+import 'weather_labels.dart';
 import 'tabs/detail_tab.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
@@ -722,11 +723,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return 'clear';
   }
 
-  String get _dateLabel {
-    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    final now = DateTime.now();
-    return '${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일';
-  }
+  String get _dateLabel => weatherRefreshLabel(_today?.generatedAt);
 
   @override
   Widget build(BuildContext context) {

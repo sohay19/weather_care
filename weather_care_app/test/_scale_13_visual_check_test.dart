@@ -110,7 +110,7 @@ void main() {
   final screens = <String, Widget Function()>{
     'main': () => MainTab(
           today: _today,
-          dateLabel: '9월 18일 금요일',
+          dateLabel: '9월 18일 오후 1시 33분 기준',
           mood: 'cloudy',
           serverFeaturesAvailable: true,
           onRefresh: () async {},

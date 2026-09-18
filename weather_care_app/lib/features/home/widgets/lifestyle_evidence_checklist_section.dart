@@ -474,21 +474,32 @@ String? _messageValidPeriod(List<WeatherMessagePart> parts) {
 }
 
 String? _validPeriodLabel(String? from, String? until) {
-  String? format(String? value) {
+  DateTime? parse(String? value) {
     if (value == null || value.trim().isEmpty) return null;
-    final parsed = DateTime.tryParse(value);
-    if (parsed == null) return null;
+    return DateTime.tryParse(value);
+  }
+
+  String format(DateTime parsed) {
     final korea = parsed.isUtc ? parsed.add(const Duration(hours: 9)) : parsed;
     return '${korea.month}월 ${korea.day}일 '
         '${korea.hour.toString().padLeft(2, '0')}시'
         '${korea.minute == 0 ? '' : ' ${korea.minute.toString().padLeft(2, '0')}분'}';
   }
 
-  final start = format(from);
-  final end = format(until);
-  if (start == null) return end == null ? null : '$end까지 유효';
-  if (end == null) return '$start부터 유효';
-  return '$start~$end 유효';
+  final startAt = parse(from);
+  final endAt = parse(until);
+  if (startAt == null) {
+    return endAt == null ? null : '${format(endAt)}까지 유효';
+  }
+  if (endAt == null) return '${format(startAt)}부터 유효';
+
+  final duration = endAt.difference(startAt);
+  final hours = duration > Duration.zero
+      ? (duration.inMilliseconds / const Duration(hours: 1).inMilliseconds)
+          .ceil()
+      : null;
+  final durationLabel = hours == null ? '' : ' (${hours}H)';
+  return '${format(startAt)}~${format(endAt)} 유효$durationLabel';
 }
 
 IconData _lifestyleIcon(LifestyleMessageType type) => switch (type) {

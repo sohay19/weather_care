@@ -371,6 +371,7 @@ bool _validWeeklyRecommendation(Map<String, dynamic> json) {
 
 class TodayWeatherResponse {
   final String dataSource;
+  final String? generatedAt;
   final WeatherRegion region;
   final String brief;
   final String? briefExpiresAt;
@@ -384,6 +385,7 @@ class TodayWeatherResponse {
 
   const TodayWeatherResponse({
     required this.dataSource,
+    this.generatedAt,
     required this.region,
     required this.brief,
     this.briefExpiresAt,
@@ -398,6 +400,7 @@ class TodayWeatherResponse {
 
   TodayWeatherResponse withRegionName(String name) => TodayWeatherResponse(
         dataSource: dataSource,
+        generatedAt: generatedAt,
         region: WeatherRegion(nx: region.nx, ny: region.ny, name: name),
         brief: brief,
         briefExpiresAt: briefExpiresAt,
@@ -449,6 +452,7 @@ class TodayWeatherResponse {
 
     return TodayWeatherResponse(
       dataSource: json['dataSource']?.toString() ?? '서버 데이터',
+      generatedAt: _optionalText(json['generatedAt']),
       region: WeatherRegion.fromJson(
         json['region'] as Map<String, dynamic>? ??
             {'name': '수원', 'nx': 60, 'ny': 121},

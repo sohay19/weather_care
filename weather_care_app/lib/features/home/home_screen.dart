@@ -6,6 +6,7 @@ import '../../models/app_settings.dart';
 import '../../models/lifestyle_message.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
+import '../../models/home_widget_snapshot.dart';
 import '../../services/api_client.dart';
 import '../../services/server_data_access.dart';
 import '../../services/app_config.dart';
@@ -22,6 +23,7 @@ import '../../services/permission_onboarding_store.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
 import '../../services/gps_region_name_service.dart';
+import '../../services/home_widget_service.dart';
 import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
@@ -48,6 +50,7 @@ class HomeScreen extends StatefulWidget {
   final NotificationPermissionService? notificationPermission;
   final ServerDataAccess? serverDataAccess;
   final PermissionOnboardingStore permissionOnboardingStore;
+  final HomeWidgetService homeWidgetService;
   final VoidCallback? onHomeReady;
 
   const HomeScreen({
@@ -63,6 +66,7 @@ class HomeScreen extends StatefulWidget {
     this.notificationPermission,
     this.serverDataAccess,
     this.permissionOnboardingStore = const PermissionOnboardingStore(),
+    this.homeWidgetService = const HomeWidgetService(),
     this.onHomeReady,
   });
 
@@ -122,6 +126,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _comparisonLoading = false;
   bool _homeReadyReported = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
+
+  void _publishHomeWidget() {
+    final today = _today;
+    if (today == null) return;
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: today,
+      weekly: _weekly,
+    );
+    unawaited(widget.homeWidgetService.publish(snapshot));
+  }
+
+  void _clearHomeWidget() => unawaited(widget.homeWidgetService.clear());
 
   KmaGrid? get _weatherGrid {
     final coordinates = _coordinates;
@@ -347,6 +363,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ? '${_location.message}.\n위치 권한을 확인하거나 지역을 직접 선택해주세요.'
                 : '저장된 지역을 확인할 수 없어요.\nSetting에서 위치를 다시 선택해주세요.';
           });
+          _clearHomeWidget();
           _notificationRegistration?.invalidateLocation();
           continue;
         }
@@ -427,6 +444,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _gpsRegionName = name;
       _today = today.withRegionName(name ?? '현재 위치');
     });
+    _publishHomeWidget();
   }
 
   Future<void> _fetchWeather(
@@ -659,6 +677,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _mainDetailsLoading = false;
       _statusMessage = 'Main 날씨를 먼저 표시했어요.\n주간 자료는 계속 불러오고 있어요.';
     });
+    _publishHomeWidget();
     return true;
   }
 
@@ -687,6 +706,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _mainDetailsLoading = true;
       _statusMessage = 'Main 핵심 날씨를 먼저 표시했어요.\n상세 자료를 계속 불러오고 있어요.';
     });
+    _publishHomeWidget();
     return true;
   }
 
@@ -698,6 +718,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _loadMode = WeatherLoadMode.unavailable;
       _statusMessage = '선택한 지역과 다른 날씨 자료를 받아 표시하지 않았어요.\n새로고침해 다시 확인해주세요.';
     });
+    _clearHomeWidget();
   }
 
   void _applyServerWeekly(
@@ -711,6 +732,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _loadMode = WeatherLoadMode.server;
       _statusMessage = '운영 서버 연결';
     });
+    _publishHomeWidget();
   }
 
   void _applyResult(WeatherLoadResult result, KmaGrid expectedGrid) {
@@ -741,6 +763,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _loadMode = result.mode;
       _statusMessage = result.message;
     });
+    if (_today == null) {
+      _clearHomeWidget();
+    } else {
+      _publishHomeWidget();
+    }
   }
 
   List<WeatherRecommendation> get _priorityRecommendations {
@@ -1051,6 +1078,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     });
     if (locationChanged) {
+      _clearHomeWidget();
       unawaited(_refresh(
           requestPermission: updated.locationMode == 'GPS', supersede: true));
     }
@@ -1141,6 +1169,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _today = null;
         _weekly = null;
       });
+      _clearHomeWidget();
       await _settingsSave?.save(_settings);
       if (mounted) unawaited(_refresh(supersede: true));
     }

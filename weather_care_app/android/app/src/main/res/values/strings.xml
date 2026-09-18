@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="weather_widget_description">현재 날씨와 외출 준비물을 보여줍니다.</string>
+    <string name="weather_widget_icon_description">날씨 아이콘</string>
+    <string name="weather_widget_preparation_description">준비물 아이콘</string>
+</resources>

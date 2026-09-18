@@ -107,6 +107,7 @@ export async function runWeatherCollectionJob(
   const now = options.now ?? new Date();
   const targets = await loadActiveCollectionTargets(env.DB);
   const activeRegions = distinctRegions(targets);
+  const collectActiveDetails = options.collectActiveDetails !== false;
   const precollectNationwide = env.NATIONWIDE_PRECOLLECT_ENABLED === 'true';
   const nationwideShard = precollectNationwide
     ? options.nationwideShardIndex === undefined
@@ -118,12 +119,13 @@ export async function runWeatherCollectionJob(
     : undefined;
   const regions = distinctRegions([
     ...(nationwideShard?.grids ?? []),
-    ...activeRegions,
+    ...(collectActiveDetails ? activeRegions : []),
   ]);
   if (regions.length === 0) return;
   const locations = distinctLocations(targets);
   const activeRegionKeys = new Set(
-    activeRegions.map(({ nx, ny }) => `${nx}_${ny}`),
+    (collectActiveDetails ? activeRegions : [])
+      .map(({ nx, ny }) => `${nx}_${ny}`),
   );
   const allForecastTargets: CollectionTarget[] = precollectNationwide
     ? [...NATIONWIDE_FORECAST_GRIDS]
@@ -139,7 +141,7 @@ export async function runWeatherCollectionJob(
 
   if (options.collectCore !== false) {
     await collectRegionForecasts(env, regions, activeRegionKeys, now);
-    if (options.collectActiveDetails !== false) {
+    if (collectActiveDetails) {
       await collectWarnings(env, activeRegions, now);
       await collectUltraShortObservations(env, activeRegions, now);
       await collectRoadControls(env, locations, now);

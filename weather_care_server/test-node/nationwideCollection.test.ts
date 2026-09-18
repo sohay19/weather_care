@@ -19,7 +19,7 @@ describe('Node 전국 선수집', () => {
     while (cleanup.length > 0) cleanup.pop()?.();
   });
 
-  it('설치 지역이 없어도 지정한 전국 묶음의 기본 예보 캐시를 만든다', async () => {
+  it('활성 설치 상세수집 없이 지정한 전국 묶음의 기본 예보 캐시를 만든다', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'weather-care-prewarm-'));
     const database = new SqliteD1Database(join(directory, 'weather-care.sqlite'));
     cleanup.push(() => {
@@ -27,6 +27,26 @@ describe('Node 전국 선수집', () => {
       rmSync(directory, { recursive: true, force: true });
     });
     runSqliteMigrations(database);
+    database.sqlite.prepare(
+      `INSERT INTO installation_credentials
+         (installation_id, secret_hash, created_at)
+       VALUES (?, ?, ?)`,
+    ).run('active-installation', 'test-secret-hash', nowIso());
+    database.sqlite.prepare(
+      `INSERT INTO installations
+         (installation_id, nx, ny, region_topic, location_mode, timezone,
+          created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      'active-installation',
+      60,
+      121,
+      'region_60_121',
+      'MANUAL',
+      'Asia/Seoul',
+      nowIso(),
+      nowIso(),
+    );
 
     const now = new Date('2026-09-18T09:30:00Z');
     const issue = latestBaseDateTimes(now, 1)[0]!;
@@ -57,3 +77,7 @@ describe('Node 전국 선수집', () => {
     expect(row.count).toBe(expected);
   });
 });
+
+function nowIso(): string {
+  return new Date('2026-09-18T09:00:00Z').toISOString();
+}

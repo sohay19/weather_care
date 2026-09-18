@@ -6815,4 +6815,6 @@
 - 최초 배포에서 18개 묶음을 연속 실행하고 1,633개 `COLLECTED_REGION` 존재 여부를 검증하는 `npm run node:prewarm`을 추가했다. 같은 스케줄 작업이 10분을 넘겨도 중복 실행하지 않도록 Node 스케줄러에 작업별 실행 잠금을 추가했다.
 - Node 환경은 `NATIONWIDE_PRECOLLECT_ENABLED`가 없을 때도 기본 `true`이며, Worker는 해당 값이 없어 기존 활성 격자 방식으로 유지된다. 운영 절차와 환경변수 예시를 함께 갱신했다.
 - 검증: TypeScript 검사, Worker 47파일·327개 테스트, Node 3파일·8개 테스트, Wrangler 4.133.0 배포 dry-run, `git diff --check`를 통과했다.
-- 공개 운영 API `/health`는 200이지만 기존 미니 PC SSH 주소 `192.168.0.53:22`가 시간 초과되어 이 시점에는 운영 코드 배포와 실제 전국 초기 선수집을 수행하지 못했다.
+- 커밋 `2e1f951`을 운영 미니 PC `soha-01`에 배포했다. 배포 전 소스는 `/var/backups/weather-care/source-before-2e1f951-20260918-0915.tar.gz`에 보관했고, `weather-care-api`·`weather-care-scheduler`·`cloudflared`가 모두 `active`이며 내부·공개 `/health`가 200임을 확인했다.
+- 최초 전국 선수집은 18개 묶음을 모두 마치고 운영 DB의 `COLLECTED_REGION`·`COLLECTED_WEEKLY`가 각각 1,633개, 고유 격자 1,633개, 누락 0개임을 전수 확인했다. 기존 미수집 격자 `60/121`과 카탈로그 경계 격자 `52/33`, `94/99`, `97/103`의 Main·Today·Weekly가 공개 운영 API에서 200을 반환한다.
+- 초기 선수집 중 활성 격자 2개를 매 묶음마다 상세 갱신해 불필요한 실패 로그가 남는 현상을 확인했다. `collectActiveDetails: false`일 때 활성 격자를 별도 합류 대상과 상세수집 키에서 제외하도록 보정했고, 활성 설치가 있어도 전국 기본 예보만 호출하는 Node 회귀 테스트를 통과했다.

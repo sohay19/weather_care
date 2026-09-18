@@ -893,15 +893,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           surfaceTintColor: Colors.transparent,
           indicatorColor: WeatherCareTheme.primarySoft,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          onDestinationSelected: (index) {
-            if (_selectedIndex == index) return;
-            setState(() {
-              _selectedIndex = index;
-              if (index == 0) _todayAdvertisementActivated = true;
-              if (index == 2) _mainAdvertisementActivated = true;
-              if (index == 3) _weekAdvertisementActivated = true;
-            });
-          },
+          onDestinationSelected: _selectTab,
           destinations: const [
             NavigationDestination(
               tooltip: '오늘 날씨와 시간별 예보',
@@ -1008,7 +1000,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openManualRegionMenu() {
-    setState(() => _selectedIndex = 4);
+    _selectTab(4);
+  }
+
+  void _selectTab(int index) {
+    if (_selectedIndex == index) return;
+    setState(() {
+      if (_selectedIndex == 1 &&
+          _detailFocusSource == DetailFocusSource.selection) {
+        _detailFocusTopic = null;
+        _detailFocusLifestyleType = null;
+        _detailFocusSource = DetailFocusSource.notification;
+      }
+      _selectedIndex = index;
+      if (index == 0) _todayAdvertisementActivated = true;
+      if (index == 2) _mainAdvertisementActivated = true;
+      if (index == 3) _weekAdvertisementActivated = true;
+    });
   }
 
   void _openRecommendationDetail(RecommendationType type) {

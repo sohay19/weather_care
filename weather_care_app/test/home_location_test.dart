@@ -583,6 +583,54 @@ void main() {
     expect(navigation.selectedIndex, 4);
     expect(find.text('지역 선택'), findsOneWidget);
   });
+  testWidgets('선택한 항목의 근거는 다른 탭으로 이동하면 초기화된다', (tester) async {
+    weather.response = WeatherLoadResult(
+      today: TodayWeatherResponse.fromJson({
+        'dataSource': 'test',
+        'region': {'nx': 60, 'ny': 127, 'name': '서울'},
+        'current': {'temperature': 20},
+        'brief': '비 예보가 있어요',
+        'recommendations': [
+          {
+            'type': 'UMBRELLA',
+            'recommended': true,
+            'priority': 90,
+            'title': '우산이 필요해요',
+            'description': '오후에 비가 와요.',
+            'notificationEligible': true,
+          },
+        ],
+        'lifestyleMessages': [
+          {
+            'type': 'RAIN_GEAR_USEFUL',
+            'title': '우산을 챙겨요',
+            'priority': 90,
+            'parts': [
+              {'role': 'APP_SUGGESTION', 'text': '우산을 챙겨요'},
+              {'role': 'OFFICIAL_FACT', 'text': '오후에 비가 예보됐어요'},
+            ],
+          },
+        ],
+      }),
+      weekly: WeeklyWeatherResponse.fromJson({'days': []}),
+      mode: WeatherLoadMode.server,
+      message: 'test',
+    );
+    await start(tester, initialIndex: 2);
+
+    final detailButton = find.byKey(const ValueKey('bag-detail-umbrella'));
+    tester.widget<IconButton>(detailButton).onPressed!.call();
+    await tester.pumpAndSettle();
+    expect(find.text('선택한 항목의 근거'), findsOneWidget);
+
+    await tester.tap(find.text('Today'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Detail'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('선택한 항목의 근거'), findsNothing);
+    expect(find.text('우산을 챙겨요'), findsWidgets);
+  });
   testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
     weather.regionName = '선택 지역';
     await start(tester);

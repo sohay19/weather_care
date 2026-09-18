@@ -86,6 +86,7 @@ class _Weather extends WeatherService {
   TodayWeatherResponse? mainPreview;
   ComparisonResponse comparison = const ComparisonResponse.unavailable();
   String? regionName;
+  WeatherLoadResult? response;
   _Weather() : super(ApiClient(baseUrl: ''));
   @override
   Future<TodayWeatherResponse?> fetchMainWeather({
@@ -116,13 +117,13 @@ class _Weather extends WeatherService {
       void Function(TodayWeatherResponse today)? onToday,
       void Function(WeeklyWeatherResponse weekly)? onWeekly}) async {
     calls.add((nx: nx, ny: ny, coordinates: coordinates));
-    final result = _weather(nx, ny, regionName: regionName);
+    final result = response ?? _weather(nx, ny, regionName: regionName);
     if (pending != null) {
       if (emitTodayWhilePending) onToday?.call(result.today!);
       return await pending!.future;
     }
-    onToday?.call(result.today!);
-    onWeekly?.call(result.weekly!);
+    if (result.today case final today?) onToday?.call(today);
+    if (result.weekly case final weekly?) onWeekly?.call(weekly);
     return result;
   }
 }
@@ -296,6 +297,61 @@ void main() {
 
     await tester.pump();
     expect(readyCount, 1);
+  });
+
+  testWidgets('탭 스와이프 새로고침이 서버 실패하면 기존 자료와 팝업을 유지한다', (tester) async {
+    await start(tester, initialIndex: 2);
+    final originalRegion = find.text('현재 위치 날씨');
+    expect(originalRegion, findsOneWidget);
+    weather.response = const WeatherLoadResult(
+      today: null,
+      weekly: null,
+      mode: WeatherLoadMode.unavailable,
+      message: '운영 서버에 연결하지 못했습니다.',
+    );
+
+    await tester.drag(
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, 320),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('날씨 자료를 새로고침하지 못했어요'), findsOneWidget);
+    expect(find.textContaining('현재 화면의 기존 자료는 유지'), findsOneWidget);
+    expect(find.text('확인'), findsOneWidget);
+    expect(find.text('다시 시도'), findsOneWidget);
+    expect(originalRegion, findsOneWidget);
+
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(originalRegion, findsOneWidget);
+  });
+
+  testWidgets('탭 스와이프에서 일부 자료만 받아도 부분 실패 팝업을 표시한다', (tester) async {
+    await start(tester, initialIndex: 3);
+    weather.response = WeatherLoadResult(
+      today: _weather(60, 127).today,
+      weekly: null,
+      mode: WeatherLoadMode.server,
+      message: '일부 날씨 자료만 연결됐습니다.',
+    );
+
+    await tester.drag(
+      find.byKey(const ValueKey('week-tab')),
+      const Offset(0, 320),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.text('날씨 자료를 모두 새로고침하지 못했어요'), findsOneWidget);
+    expect(find.textContaining('일부 자료만 새로 받았어요'), findsOneWidget);
+
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byKey(const ValueKey('week-tab')), findsOneWidget);
   });
 
   testWidgets('Main은 현재 격자의 어제 비교 자료를 별도 조회해 표시한다', (tester) async {

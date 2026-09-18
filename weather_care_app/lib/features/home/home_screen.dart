@@ -84,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   LocationResult _location = const LocationResult(LocationState.idle);
   Future<void>? _refreshFuture;
   bool _refreshAgain = false;
+  bool _notifyRefreshFailure = false;
   bool _requestPermission = false;
   bool _locationPermissionPrompted = false;
   bool _initialized = false;
@@ -268,11 +269,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return _refresh();
   }
 
+  Future<void> _refreshFromTab() {
+    unawaited(_readNotificationPermission());
+    return _refresh(notifyFailure: true);
+  }
+
   Future<void> _refresh(
-      {bool requestPermission = false, bool supersede = false}) {
+      {bool requestPermission = false,
+      bool supersede = false,
+      bool notifyFailure = false}) {
     if (_service == null) return Future<void>.value();
+    _notifyRefreshFailure |= notifyFailure;
     if (_refreshFuture != null) {
-      if (supersede) {
+      if (supersede || notifyFailure) {
         _refreshAgain = true;
         _requestPermission |= requestPermission;
       }
@@ -291,8 +300,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _refreshAgain = false;
         final revision = _locationRevision;
         final ask = _requestPermission;
+        final notifyFailure = _notifyRefreshFailure;
         Future<String?>? gpsRegionNameFuture;
         _requestPermission = false;
+        _notifyRefreshFailure = false;
         if (_settings.locationMode == 'GPS') {
           setState(() {
             _location = const LocationResult(LocationState.checking);
@@ -372,6 +383,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _settings.locationMode == 'GPS' ? null : _manualRegion?.code,
           regionName:
               _settings.locationMode == 'GPS' ? null : _manualRegion?.fullName,
+          notifyFailure: notifyFailure,
         );
         if (gpsRegionNameFuture != null) {
           await _applyGpsRegionName(
@@ -424,10 +436,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     Future<String?>? gpsRegionNameFuture,
     String? regionCode,
     String? regionName,
+    bool notifyFailure = false,
   }) async {
     final service = _service;
     if (service == null || _loading) return;
 
+    final hadWeatherBeforeRefresh = _today != null || _weekly != null;
     _loading = true;
     _weeklyLoading = true;
     setState(() {
@@ -490,19 +504,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             setState(() {
               _statusMessage = 'Main 날씨는 표시했지만 주간 자료를 받지 못했어요.\n다시 확인해주세요.';
             });
+            if (notifyFailure) {
+              final action = await showDialog<ServerFailureAction>(
+                context: context,
+                barrierDismissible: true,
+                builder: (_) => const ServerConnectionFailureDialog(
+                  refreshFailure: true,
+                  partialFailure: true,
+                ),
+              );
+              if (!mounted || revision != _locationRevision) return;
+              if (action == ServerFailureAction.retryServer) continue;
+            }
           }
           return;
         }
 
+        final canKeepExistingWeather = notifyFailure && hadWeatherBeforeRefresh;
         final action = await showDialog<ServerFailureAction>(
           context: context,
-          barrierDismissible: false,
-          builder: (_) => const ServerConnectionFailureDialog(),
+          barrierDismissible: canKeepExistingWeather,
+          builder: (_) => ServerConnectionFailureDialog(
+            refreshFailure: canKeepExistingWeather,
+            partialFailure: serverResult.hasAnyWeather,
+          ),
         );
         if (!mounted || revision != _locationRevision) return;
 
         if (action == ServerFailureAction.retryServer) {
           continue;
+        }
+
+        if (canKeepExistingWeather) {
+          setState(() => _statusMessage = serverResult.message);
+          return;
         }
 
         _applyResult(serverResult, grid);
@@ -780,7 +815,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? _statusView('today-tab')
                   : TodayTab(
                       today: today,
-                      onRefresh: _loadData,
+                      onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       retrying: _todayRetrying,
                       advertisement: _todayAdvertisementActivated
@@ -795,7 +830,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       today: today,
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
-                      onRefresh: _loadData,
+                      onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       retrying: _todayRetrying,
                       focusTopic: _detailFocusTopic,
@@ -813,7 +848,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       detailsLoading: _mainDetailsLoading,
                       yesterdayComparison: _yesterdayComparison,
                       comparisonLoading: _comparisonLoading,
-                      onRefresh: _loadData,
+                      onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       onRetryComparison: _retryYesterdayComparison,
                       retryingData: _todayRetrying,
@@ -836,7 +871,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   : WeekTab(
                       weekly: weekly,
                       serverFeaturesAvailable: serverFeaturesAvailable,
-                      onRefresh: _loadData,
+                      onRefresh: _refreshFromTab,
                       onRetryData: _retryWeeklyData,
                       retrying: _weeklyRetrying,
                       advertisement: _weekAdvertisementActivated

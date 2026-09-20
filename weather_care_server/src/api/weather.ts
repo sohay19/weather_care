@@ -66,7 +66,7 @@ import type {
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
-  if (c.req.header('Authorization')) c.header('Cache-Control', 'private, no-store');
+  c.header('Cache-Control', 'no-store');
   await next();
 });
 const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
@@ -104,7 +104,7 @@ router.get('/main', async (c) => {
     if (!collected || collected.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-    const forecast = collected.value.forecast;
+    const forecast = forecastForCurrentHour(collected.value.forecast, generatedAt);
     const brief = buildWeatherBriefResult(forecast, {
       regionKey: `${nx}:${ny}`,
       now: generatedAt,
@@ -192,7 +192,10 @@ router.get('/today', async (c) => {
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-    const forecast = regionRecord.value.forecast;
+    const forecast = forecastForCurrentHour(
+      regionRecord.value.forecast,
+      generatedAt,
+    );
     const environmentalData = regionRecord.value.environmental;
     const precipitation = precipitationRecord?.value;
     const warningsResultValue = warningRecord?.value ?? {
@@ -524,6 +527,40 @@ export function nextForecastSnapshot(
   return pm25ForecastGrade
     ? { ...next, pm25ForecastGrade }
     : next;
+}
+
+export function forecastForCurrentHour(
+  forecast: WeatherForecast,
+  now = new Date(),
+): WeatherForecast {
+  const hourStart = new Date(now);
+  hourStart.setUTCMinutes(0, 0, 0);
+  const hourly = forecast.hourly.filter((snapshot) => {
+    const forecastAt = Date.parse(snapshot.forecastAt ?? snapshot.observedAt);
+    return Number.isFinite(forecastAt) && forecastAt >= hourStart.getTime();
+  });
+  const first = hourly[0];
+  if (!first) return { ...forecast, hourly: [] };
+
+  return {
+    ...forecast,
+    current: {
+      ...first,
+      minTemperature: forecast.current.minTemperature,
+      maxTemperature: forecast.current.maxTemperature,
+      pm10: first.pm10 ?? forecast.current.pm10,
+      pm25: first.pm25 ?? forecast.current.pm25,
+      airQualityStationName:
+        first.airQualityStationName ?? forecast.current.airQualityStationName,
+      airQualityObservedAt:
+        first.airQualityObservedAt ?? forecast.current.airQualityObservedAt,
+      airQualityGrade:
+        first.airQualityGrade ?? forecast.current.airQualityGrade,
+      ozone: first.ozone ?? forecast.current.ozone,
+      ozoneGrade: first.ozoneGrade ?? forecast.current.ozoneGrade,
+    },
+    hourly,
+  };
 }
 
 export function buildTimeline(

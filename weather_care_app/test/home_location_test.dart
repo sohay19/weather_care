@@ -82,6 +82,7 @@ class _Weather extends WeatherService {
   final calls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   final comparisonCalls = <({int nx, int ny})>[];
   Completer<WeatherLoadResult>? pending;
+  Completer<ComparisonResponse>? comparisonPending;
   bool emitTodayWhilePending = false;
   TodayWeatherResponse? mainPreview;
   ComparisonResponse comparison = const ComparisonResponse.unavailable();
@@ -102,7 +103,9 @@ class _Weather extends WeatherService {
     int ny = 121,
   }) async {
     comparisonCalls.add((nx: nx, ny: ny));
-    return comparison;
+    final held = comparisonPending;
+    comparisonPending = null;
+    return held == null ? comparison : await held.future;
   }
 
   @override
@@ -219,7 +222,8 @@ void main() {
       {bool settle = true,
       ServerDataAccess? access,
       int initialIndex = 4,
-      VoidCallback? onHomeReady}) async {
+      VoidCallback? onHomeReady,
+      DateTime Function()? now}) async {
     await tester.pumpWidget(MaterialApp(
         home: HomeScreen(
             serverDataAccess: access,
@@ -230,6 +234,7 @@ void main() {
             settingsSync: sync,
             regionCatalog: catalog,
             onHomeReady: onHomeReady,
+            now: now,
             notificationPermission: notificationPermission,
             notificationRegistration: registration)));
     // Asset loading and SharedPreferences initialization are asynchronous.
@@ -327,6 +332,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
     expect(originalRegion, findsOneWidget);
+  });
+
+  for (final tab in <({int index, String key})>[
+    (index: 0, key: 'today-tab'),
+    (index: 1, key: 'detail-tab'),
+    (index: 2, key: 'main-tab'),
+    (index: 3, key: 'week-tab'),
+  ]) {
+    testWidgets('${tab.key} 새로고침은 오늘·주간·비교 자료를 모두 받을 때까지 기다린다', (tester) async {
+      await start(tester, initialIndex: tab.index);
+      final weatherCalls = weather.calls.length;
+      final comparisonCalls = weather.comparisonCalls.length;
+      final pending = Completer<ComparisonResponse>();
+      weather.comparisonPending = pending;
+
+      final indicator = tester.widget<RefreshIndicator>(find.ancestor(
+        of: find.byKey(ValueKey(tab.key)),
+        matching: find.byType(RefreshIndicator),
+      ));
+      var completed = false;
+      final refresh =
+          indicator.onRefresh().whenComplete(() => completed = true);
+      for (var i = 0; i < 10 && weather.calls.length == weatherCalls; i++) {
+        await tester.pump();
+      }
+
+      expect(weather.calls.length, weatherCalls + 1);
+      expect(weather.comparisonCalls.length, comparisonCalls + 1);
+      expect(completed, isFalse);
+
+      pending.complete(const ComparisonResponse.unavailable());
+      await refresh;
+      await tester.pump();
+      expect(completed, isTrue);
+    });
+  }
+
+  testWidgets('한국시간 정시가 되면 현재 탭과 관계없이 전체 날씨를 다시 받는다', (tester) async {
+    var now = DateTime.parse('2026-09-21T22:59:50Z');
+    await start(tester, initialIndex: 3, now: () => now);
+    final weatherCalls = weather.calls.length;
+    final comparisonCalls = weather.comparisonCalls.length;
+
+    now = DateTime.parse('2026-09-21T23:00:00Z');
+    await tester.pump(const Duration(seconds: 10));
+    for (var i = 0; i < 10 && weather.calls.length == weatherCalls; i++) {
+      await tester.pump();
+    }
+
+    expect(weather.calls.length, weatherCalls + 1);
+    expect(weather.comparisonCalls.length, comparisonCalls + 1);
   });
 
   testWidgets('탭 스와이프에서 일부 자료만 받아도 부분 실패 팝업을 표시한다', (tester) async {

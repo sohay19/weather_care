@@ -7053,3 +7053,13 @@
 - Android `Medium_Phone` 에뮬레이터에 x86_64 Debug APK를 덮어설치해 SUITE 글꼴, 커스텀 양산·선크림 아이콘과 원형 배경, 제목 없는 3등분 다음 예보 행을 확인했다. `AppWidgetHostView` 인플레이트 오류는 없었다.
 - 검증: `flutter analyze` 이슈 없음, Flutter 전체 418개 테스트 통과, `flutter build apk --debug --target-platform android-x64 --split-per-abi` 성공, iOS plist 파싱·Swift/PBX 중괄호 정합성 및 `git diff --check` 통과.
 - Windows 환경이라 iOS WidgetKit 실빌드는 수행하지 못했다. Mac/Xcode에서 확장 번들에 포함된 SUITE PostScript 이름과 세 위젯 크기의 실제 렌더링을 최종 확인해야 한다.
+
+## 2026-09-21 탭 전체 날씨 갱신·정시 재확인
+
+- Today·Detail·Main·Week 어느 탭에서 당겨서 새로고침해도 Today, Week, 어제 비교 자료를 모두 다시 요청하고 세 요청이 끝난 뒤에만 새로고침이 종료되도록 묶었다.
+- 앱이 실행 중이면 한국시간 매 정시에 전체 날씨 묶음을 자동 갱신한다. 백그라운드에서 시간대가 바뀐 뒤 복귀한 경우도 지난 성공 갱신 시간과 비교해 재요청한다. GPS 모드의 기존 복귀 시 위치 재확인은 유지했다.
+- 7시에 새로고침해도 5시 현재 예보가 보일 수 있던 원인을 확인했다. 서버가 5시 기상청 발표 회차를 수집할 때 `forecast.current`를 5시 슬롯으로 고정해 캐시했고, 8시 신규 발표 전에는 캐시 발표 회차가 같아 7시 요청에서도 고정된 `current`를 반환했다.
+- Main·Today API가 캐시 원본을 요청 시각의 한국시간 정시로 재기준화하여, 이전 시간 슬롯을 제외하고 현재 시간 슬롯을 `current`로 사용하도록 수정했다. 날씨 API 응답은 중간 캐시에서 재사용되지 않도록 `Cache-Control: no-store`를 명시했다.
+- 에어코리아 관측 시각이나 기상청 발표 시각은 응답 생성 시각과 다른 출처 메타데이터이므로, 새로고침 후에도 이전 시각으로 표시될 수 있다. 이 값은 유지하되 현재 예보 `forecastAt`이 이전 시간대에 멈추는 문제만 분리해 수정했다.
+- 검증: Flutter 전체 424개 테스트 통과, `flutter analyze` 이슈 없음, Worker 47파일·328개 및 Node 3파일·9개 테스트 통과, 서버 `tsc --noEmit` 통과, `git diff --check` 오류 없음. 실제 운영 배포는 수행하지 않았다.
+- 기존에 진행 중이던 Android·iOS 위젯, 아이콘 미리보기 및 임시 캡처 변경은 수정하거나 정리하지 않았다.

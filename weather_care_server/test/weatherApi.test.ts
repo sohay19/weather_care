@@ -30,8 +30,12 @@ describe('fast Main weather', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T15:35:00+09:00'));
     const forecast = {
-      current: snapshot(15),
-      hourly: [snapshot(15), snapshot(18, { temperature: 28 })],
+      current: snapshot(14, { temperature: 21 }),
+      hourly: [
+        snapshot(14, { temperature: 21 }),
+        snapshot(15),
+        snapshot(18, { temperature: 28 }),
+      ],
       timelineHourly: [snapshot(15), snapshot(18)],
       daily: [day(28)],
       baseDate: '20260915',
@@ -67,8 +71,10 @@ describe('fast Main weather', () => {
       }>();
 
       expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
       expect(data.region).toMatchObject({ nx: 58, ny: 124 });
       expect(data.current.temperature).toBe(24);
+      expect(data.current.forecastAt).toBe('2026-08-20T15:00:00+09:00');
       expect(data.nextForecast).toMatchObject({
         forecastAt: '2026-08-20T18:00:00+09:00',
         temperature: 28,
@@ -380,7 +386,7 @@ describe('today timeline', () => {
   it('uses retained early hours while keeping the detail forecast current-first', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T09:30:00+09:00'));
-    const hourly = [snapshot(9), snapshot(12)];
+    const cachedHourly = [snapshot(8), snapshot(9), snapshot(12)];
     const timelineHourly = [3, 6, 9, 12, 15, 18, 21, 24].map((hour) =>
       snapshot(hour),
     );
@@ -388,8 +394,8 @@ describe('today timeline', () => {
       KmaWeatherProvider.prototype,
       'getForecastByRegion',
     ).mockResolvedValue({
-      current: hourly[0],
-      hourly,
+      current: cachedHourly[0],
+      hourly: cachedHourly,
       timelineHourly,
       daily: [day(28)],
       baseDate: '20260820',
@@ -409,8 +415,8 @@ describe('today timeline', () => {
 
     try {
       await seedCollectedRegion(60, 121, {
-        current: hourly[0],
-        hourly,
+        current: cachedHourly[0],
+        hourly: cachedHourly,
         timelineHourly,
         daily: [day(28)],
         baseDate: '20260820',
@@ -424,12 +430,14 @@ describe('today timeline', () => {
         ctx,
       );
       const data = await response.json<{
+        current: WeatherSnapshot;
         hourly: WeatherSnapshot[];
         nextForecast: WeatherSnapshot;
         timeline: ReturnType<typeof buildTimeline>;
       }>();
 
       expect(response.status).toBe(200);
+      expect(data.current.forecastAt).toBe('2026-08-20T09:00:00+09:00');
       expect(data.hourly.map((item) => item.observedAt.slice(11, 13))).toEqual([
         '09',
         '12',

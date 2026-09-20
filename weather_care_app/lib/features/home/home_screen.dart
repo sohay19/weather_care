@@ -27,6 +27,7 @@ import '../../services/home_widget_service.dart';
 import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
+import '../../utils/korea_date.dart';
 import '../settings/settings_screen.dart';
 import '../ads/consent_aware_native_ad_card.dart';
 import 'weather_labels.dart';
@@ -52,6 +53,7 @@ class HomeScreen extends StatefulWidget {
   final PermissionOnboardingStore permissionOnboardingStore;
   final HomeWidgetService homeWidgetService;
   final VoidCallback? onHomeReady;
+  final DateTime Function()? now;
 
   const HomeScreen({
     super.key,
@@ -68,6 +70,7 @@ class HomeScreen extends StatefulWidget {
     this.permissionOnboardingStore = const PermissionOnboardingStore(),
     this.homeWidgetService = const HomeWidgetService(),
     this.onHomeReady,
+    this.now,
   });
 
   @override
@@ -126,6 +129,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _comparisonLoading = false;
   bool _homeReadyReported = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
+  Timer? _weatherHourTimer;
+  String? _lastCompletedWeatherHour;
+
+  DateTime _now() => (widget.now ?? DateTime.now)();
 
   void _publishHomeWidget() {
     final today = _today;
@@ -179,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _mainAdvertisementActivated = _selectedIndex == 2;
     _weekAdvertisementActivated = _selectedIndex == 3;
     _detailFocusTopic = widget.initialNotificationTopic;
+    _scheduleWeatherHourRefresh();
     _initialize();
   }
 
@@ -260,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _locationRevision++;
     _settingsSave?.dispose();
     _serverDataAccess?.removeListener(_onServerDataChanged);
+    _weatherHourTimer?.cancel();
     if (widget.serverDataAccess == null) _serverDataAccess?.dispose();
     unawaited(_notificationRegistration?.dispose() ?? Future<void>.value());
     super.dispose();
@@ -274,10 +283,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed && _leftApp) {
       _leftApp = false;
       if (_initialized) unawaited(_readNotificationPermission(sync: true));
-      if (_initialized && _settings.locationMode == 'GPS') {
+      final crossedWeatherHour =
+          _lastCompletedWeatherHour != koreaHourKey(_now());
+      if (_initialized &&
+          (_settings.locationMode == 'GPS' || crossedWeatherHour)) {
         unawaited(_refresh(supersede: true));
       }
     }
+  }
+
+  void _scheduleWeatherHourRefresh() {
+    _weatherHourTimer?.cancel();
+    _weatherHourTimer = Timer(untilNextKoreaHour(_now()), () {
+      _scheduleWeatherHourRefresh();
+      if (_initialized && mounted) {
+        unawaited(_refresh(supersede: true));
+      }
+    });
   }
 
   Future<void> _loadData() {
@@ -470,10 +492,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
       }
     });
-    unawaited(_fetchYesterdayComparison(service, revision, grid));
-
     try {
       while (mounted) {
+        setState(() => _comparisonLoading = true);
+        final comparisonFuture =
+            _fetchYesterdayComparison(service, revision, grid);
         var mismatchedToday = false;
         var fullTodayApplied = false;
         if (_today == null) {
@@ -502,6 +525,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             weekly,
           ),
         );
+        await comparisonFuture;
 
         if (!mounted || revision != _locationRevision) return;
         if (serverResult.hasAnyWeather) {
@@ -518,6 +542,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           return;
         }
         if (serverResult.today != null) {
+          if (serverResult.hasWeather) {
+            _lastCompletedWeatherHour = koreaHourKey(_now());
+          }
           if (serverResult.weekly == null) {
             setState(() {
               _statusMessage = 'Main 날씨는 표시했지만 주간 자료를 받지 못했어요.\n다시 확인해주세요.';
@@ -901,6 +928,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryWeeklyData,
                       retrying: _weeklyRetrying,
+                      now: widget.now,
                       advertisement: _weekAdvertisementActivated
                           ? const ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.week,

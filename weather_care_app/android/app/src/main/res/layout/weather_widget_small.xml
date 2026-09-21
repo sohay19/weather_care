@@ -18,29 +18,22 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_region"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:fontFamily="@font/suite_extra_bold"
-            android:maxLines="1"
-            android:text="시흥시 은행동"
-            android:textColor="#25374E"
-            android:textStyle="bold"
-            android:textSize="12dp" />
+            android:contentDescription="시흥시 은행동"
+            android:scaleType="fitStart" />
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_refresh_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:fontFamily="@font/suite_regular"
-            android:maxLines="1"
-            android:text="오전 8:20 기준"
-            android:textColor="#60758A"
-            android:textSize="9dp" />
+            android:adjustViewBounds="true"
+            android:contentDescription="오전 8:20 기준"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
     <LinearLayout
@@ -57,33 +50,26 @@
             android:contentDescription="@string/weather_widget_icon_description"
             android:scaleType="fitCenter" />
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_current_temperature"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:fontFamily="@font/suite_heavy"
-            android:includeFontPadding="false"
-            android:text="18°"
-            android:textColor="#25374E"
-            android:textSize="38dp"
-            android:textStyle="bold" />
+            android:adjustViewBounds="true"
+            android:contentDescription="18°"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
-    <TextView
+    <ImageView
         android:id="@+id/widget_min_max"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:background="@drawable/weather_widget_panel_background"
-        android:fontFamily="@font/suite"
-        android:gravity="center"
-        android:maxLines="1"
+        android:contentDescription="최저 12° 최고 20°"
         android:paddingStart="10dp"
         android:paddingTop="5dp"
         android:paddingEnd="10dp"
         android:paddingBottom="5dp"
-        android:text="최저 12°   최고 20°"
-        android:textColor="#425A72"
-        android:textSize="13dp" />
+        android:scaleType="centerInside" />
 </LinearLayout>

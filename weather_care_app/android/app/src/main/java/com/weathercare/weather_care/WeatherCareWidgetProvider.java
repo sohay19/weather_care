@@ -7,11 +7,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Typeface;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.StyleSpan;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -23,6 +21,9 @@ import java.util.List;
 
 public class WeatherCareWidgetProvider extends AppWidgetProvider {
     private static final int MEDIUM_MIN_WIDTH_DP = 220;
+    private static final int TEXT_PRIMARY = Color.rgb(37, 55, 78);
+    private static final int TEXT_SECONDARY = Color.rgb(96, 117, 138);
+    private static final int TEXT_MIN_MAX = Color.rgb(66, 90, 114);
     // Pixel Launcher 측정값(2칸 108dp, 3칸 169dp)의 중간값이다.
     private static final int LARGE_MIN_HEIGHT_DP = 140;
 
@@ -77,27 +78,69 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), layout);
         Snapshot snapshot = readSnapshot(context);
 
-        bindHeader(views, snapshot);
+        bindHeader(context, views, snapshot, size);
         bindTemperature(context, views, snapshot, size);
-        views.setTextViewText(R.id.widget_min_max, minMax(snapshot));
+        bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
 
-        if (size != WidgetSize.SMALL) {
-            views.setTextViewText(R.id.widget_apparent_temperature, snapshot.apparentTemperature);
-        }
         if (size == WidgetSize.MEDIUM) {
-            views.setTextViewText(R.id.widget_short_message, snapshot.shortMessage);
+            setTextBitmap(
+                    views,
+                    R.id.widget_short_message,
+                    WidgetTextRenderer.line(
+                            context,
+                            snapshot.shortMessage,
+                            R.font.suite_extra_bold,
+                            13,
+                            TEXT_PRIMARY,
+                            180
+                    ),
+                    snapshot.shortMessage
+            );
         }
         if (size == WidgetSize.LARGE) {
-            bindLargeContent(context, views, snapshot);
+            bindLargeContent(context, views, snapshot, minWidth);
         }
 
         manager.updateAppWidget(appWidgetId, views);
     }
 
-    private static void bindHeader(RemoteViews views, Snapshot snapshot) {
-        views.setTextViewText(R.id.widget_region, snapshot.region);
-        views.setTextViewText(R.id.widget_refresh_time, snapshot.refreshTime);
+    private static void bindHeader(
+            Context context,
+            RemoteViews views,
+            Snapshot snapshot,
+            WidgetSize size
+    ) {
+        float regionSize = size == WidgetSize.SMALL ? 12 : size == WidgetSize.MEDIUM ? 13 : 14;
+        int regionWidth = size == WidgetSize.SMALL ? 78 : size == WidgetSize.MEDIUM ? 210 : 220;
+        float refreshSize = size == WidgetSize.SMALL ? 9 : size == WidgetSize.MEDIUM ? 10 : 11;
+        int refreshWidth = size == WidgetSize.SMALL ? 78 : size == WidgetSize.MEDIUM ? 90 : 100;
+        setTextBitmap(
+                views,
+                R.id.widget_region,
+                WidgetTextRenderer.line(
+                        context,
+                        snapshot.region,
+                        R.font.suite_extra_bold,
+                        regionSize,
+                        TEXT_PRIMARY,
+                        regionWidth
+                ),
+                snapshot.region
+        );
+        setTextBitmap(
+                views,
+                R.id.widget_refresh_time,
+                WidgetTextRenderer.line(
+                        context,
+                        snapshot.refreshTime,
+                        R.font.suite_regular,
+                        refreshSize,
+                        TEXT_SECONDARY,
+                        refreshWidth
+                ),
+                snapshot.refreshTime
+        );
     }
 
     private static void bindTemperature(
@@ -106,7 +149,62 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             Snapshot snapshot,
             WidgetSize size
     ) {
-        views.setTextViewText(R.id.widget_current_temperature, snapshot.currentTemperature);
+        float temperatureSize = size == WidgetSize.MEDIUM ? 34 : 38;
+        setTextBitmap(
+                views,
+                R.id.widget_current_temperature,
+                WidgetTextRenderer.line(
+                        context,
+                        snapshot.currentTemperature,
+                        R.font.suite_heavy,
+                        temperatureSize,
+                        TEXT_PRIMARY,
+                        100
+                ),
+                snapshot.currentTemperature
+        );
+        if (size != WidgetSize.SMALL) {
+            float labelSize = size == WidgetSize.MEDIUM ? 10 : 11;
+            setTextBitmap(
+                    views,
+                    R.id.widget_current_label,
+                    WidgetTextRenderer.line(
+                            context,
+                            "현재",
+                            R.font.suite_regular,
+                            labelSize,
+                            TEXT_SECONDARY,
+                            40
+                    ),
+                    "현재"
+            );
+            setTextBitmap(
+                    views,
+                    R.id.widget_apparent_label,
+                    WidgetTextRenderer.line(
+                            context,
+                            "체감",
+                            R.font.suite_regular,
+                            labelSize,
+                            TEXT_SECONDARY,
+                            40
+                    ),
+                    "체감"
+            );
+            setTextBitmap(
+                    views,
+                    R.id.widget_apparent_temperature,
+                    WidgetTextRenderer.line(
+                            context,
+                            snapshot.apparentTemperature,
+                            R.font.suite_heavy,
+                            temperatureSize,
+                            TEXT_PRIMARY,
+                            100
+                    ),
+                    snapshot.apparentTemperature
+            );
+        }
         int iconSizeDp = size == WidgetSize.SMALL ? 64 : size == WidgetSize.MEDIUM ? 58 : 72;
         views.setImageViewBitmap(
                 R.id.widget_weather_icon,
@@ -121,11 +219,65 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     private static void bindLargeContent(
             Context context,
             RemoteViews views,
-            Snapshot snapshot
+            Snapshot snapshot,
+            int minWidth
     ) {
-        views.setTextViewText(R.id.widget_brief, snapshot.brief);
-        views.setTextViewText(R.id.widget_next_time, snapshot.nextTime);
-        views.setTextViewText(R.id.widget_next_temperature, snapshot.nextTemperature);
+        int contentWidth = Math.max(180, minWidth - 72);
+        setTextBitmap(
+                views,
+                R.id.widget_brief,
+                WidgetTextRenderer.paragraph(
+                        context,
+                        snapshot.brief,
+                        R.font.suite_extra_bold,
+                        14,
+                        TEXT_PRIMARY,
+                        contentWidth,
+                        2,
+                        2,
+                        2
+                ),
+                snapshot.brief
+        );
+        setTextBitmap(
+                views,
+                R.id.widget_next_title,
+                WidgetTextRenderer.line(
+                        context,
+                        "다음 시간 예보",
+                        R.font.suite_extra_bold,
+                        12,
+                        TEXT_PRIMARY,
+                        100
+                ),
+                "다음 시간 예보"
+        );
+        setTextBitmap(
+                views,
+                R.id.widget_next_time,
+                WidgetTextRenderer.line(
+                        context,
+                        snapshot.nextTime,
+                        R.font.suite_regular,
+                        12,
+                        TEXT_PRIMARY,
+                        100
+                ),
+                snapshot.nextTime
+        );
+        setTextBitmap(
+                views,
+                R.id.widget_next_temperature,
+                WidgetTextRenderer.line(
+                        context,
+                        snapshot.nextTemperature,
+                        R.font.suite_heavy,
+                        17,
+                        TEXT_PRIMARY,
+                        60
+                ),
+                snapshot.nextTemperature
+        );
         views.setImageViewBitmap(
                 R.id.widget_next_icon,
                 WidgetIconRenderer.weather(context, snapshot.nextCondition, 32, true)
@@ -152,39 +304,70 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             }
             Preparation preparation = snapshot.preparations.get(index);
             views.setViewVisibility(slots[index], View.VISIBLE);
-            views.setTextViewText(labels[index], preparation.label);
+            setTextBitmap(
+                    views,
+                    labels[index],
+                    WidgetTextRenderer.line(
+                            context,
+                            preparation.label,
+                            R.font.suite_extra_bold,
+                            12,
+                            TEXT_PRIMARY,
+                            90
+                    ),
+                    preparation.label
+            );
             views.setImageViewBitmap(
                     icons[index],
-                    WidgetIconRenderer.preparation(context, preparation.type, 28)
+                    WidgetIconRenderer.preparation(context, preparation.type, 36)
             );
             views.setContentDescription(icons[index], preparation.label);
         }
     }
 
-    private static CharSequence minMax(Snapshot snapshot) {
+    private static void bindMinMax(
+            Context context,
+            RemoteViews views,
+            Snapshot snapshot,
+            WidgetSize size
+    ) {
         String minimumPrefix = "최저 ";
         String divider = "   최고 ";
-        SpannableStringBuilder text = new SpannableStringBuilder()
-                .append(minimumPrefix)
-                .append(snapshot.minimumTemperature)
-                .append(divider)
-                .append(snapshot.maximumTemperature);
-        int minimumStart = minimumPrefix.length();
-        int minimumEnd = minimumStart + snapshot.minimumTemperature.length();
-        int maximumStart = minimumEnd + divider.length();
-        text.setSpan(
-                new StyleSpan(Typeface.BOLD),
-                minimumStart,
-                minimumEnd,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        String description = minimumPrefix + snapshot.minimumTemperature
+                + divider + snapshot.maximumTemperature;
+        float textSize = size == WidgetSize.MEDIUM ? 12 : 13;
+        int maxWidth = size == WidgetSize.MEDIUM ? 160 : 190;
+        setTextBitmap(
+                views,
+                R.id.widget_min_max,
+                WidgetTextRenderer.mixedLine(
+                        context,
+                        textSize,
+                        TEXT_MIN_MAX,
+                        maxWidth,
+                        WidgetTextRenderer.part(minimumPrefix, R.font.suite_regular),
+                        WidgetTextRenderer.part(
+                                snapshot.minimumTemperature,
+                                R.font.suite_extra_bold
+                        ),
+                        WidgetTextRenderer.part(divider, R.font.suite_regular),
+                        WidgetTextRenderer.part(
+                                snapshot.maximumTemperature,
+                                R.font.suite_extra_bold
+                        )
+                ),
+                description
         );
-        text.setSpan(
-                new StyleSpan(Typeface.BOLD),
-                maximumStart,
-                text.length(),
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        );
-        return text;
+    }
+
+    private static void setTextBitmap(
+            RemoteViews views,
+            int viewId,
+            Bitmap bitmap,
+            String contentDescription
+    ) {
+        views.setImageViewBitmap(viewId, bitmap);
+        views.setContentDescription(viewId, contentDescription);
     }
 
     private static PendingIntent launchAppIntent(Context context) {

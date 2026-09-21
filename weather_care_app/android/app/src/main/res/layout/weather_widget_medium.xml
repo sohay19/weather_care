@@ -17,29 +17,22 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_region"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:fontFamily="@font/suite_extra_bold"
-            android:maxLines="1"
-            android:text="시흥시 은행동"
-            android:textColor="#25374E"
-            android:textStyle="bold"
-            android:textSize="13dp" />
+            android:contentDescription="시흥시 은행동"
+            android:scaleType="fitStart" />
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_refresh_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:fontFamily="@font/suite_regular"
-            android:maxLines="1"
-            android:text="오전 8:20 기준"
-            android:textColor="#60758A"
-            android:textSize="10dp" />
+            android:adjustViewBounds="true"
+            android:contentDescription="오전 8:20 기준"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 
     <LinearLayout
@@ -63,25 +56,21 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView
+            <ImageView
+                android:id="@+id/widget_current_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/suite_regular"
-                android:includeFontPadding="false"
-                android:text="현재"
-                android:textColor="#60758A"
-                android:textSize="10dp" />
+                android:adjustViewBounds="true"
+                android:contentDescription="현재"
+                android:scaleType="fitCenter" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/widget_current_temperature"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/suite_heavy"
-                android:includeFontPadding="false"
-                android:text="18°"
-                android:textColor="#25374E"
-                android:textSize="34dp"
-                android:textStyle="bold" />
+                android:adjustViewBounds="true"
+                android:contentDescription="18°"
+                android:scaleType="fitCenter" />
         </LinearLayout>
 
         <TextView
@@ -97,25 +86,21 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView
+            <ImageView
+                android:id="@+id/widget_apparent_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/suite_regular"
-                android:includeFontPadding="false"
-                android:text="체감"
-                android:textColor="#60758A"
-                android:textSize="10dp" />
+                android:adjustViewBounds="true"
+                android:contentDescription="체감"
+                android:scaleType="fitCenter" />
 
-            <TextView
+            <ImageView
                 android:id="@+id/widget_apparent_temperature"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/suite_heavy"
-                android:includeFontPadding="false"
-                android:text="18°"
-                android:textColor="#25374E"
-                android:textSize="34dp"
-                android:textStyle="bold" />
+                android:adjustViewBounds="true"
+                android:contentDescription="18°"
+                android:scaleType="fitCenter" />
         </LinearLayout>
     </LinearLayout>
 
@@ -131,28 +116,21 @@
         android:paddingEnd="12dp"
         android:paddingBottom="6dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_short_message"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:ellipsize="end"
-            android:fontFamily="@font/suite_extra_bold"
-            android:maxLines="1"
-            android:text="두꺼운 겉옷 챙겨요"
-            android:textColor="#25374E"
-            android:textSize="13dp"
-            android:textStyle="bold" />
+            android:contentDescription="두꺼운 겉옷 챙겨요"
+            android:scaleType="fitStart" />
 
-        <TextView
+        <ImageView
             android:id="@+id/widget_min_max"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:fontFamily="@font/suite"
-            android:maxLines="1"
-            android:text="최저 12°   최고 20°"
-            android:textColor="#425A72"
-            android:textSize="12dp" />
+            android:adjustViewBounds="true"
+            android:contentDescription="최저 12° 최고 20°"
+            android:scaleType="fitCenter" />
     </LinearLayout>
 </LinearLayout>

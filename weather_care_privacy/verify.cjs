@@ -86,6 +86,10 @@ const routes = {
   '/weather-map/map.css': 'weather-map/map.css',
   '/weather-map/map.js': 'weather-map/map.js',
   '/weather-map/data/grid-areas.json': 'weather-map/data/grid-areas.json',
+  '/weather-map/select': 'weather-map/select/index.html',
+  '/weather-map/select/': 'weather-map/select/index.html',
+  '/weather-map/select/select.css': 'weather-map/select/select.css',
+  '/weather-map/select/select.js': 'weather-map/select/select.js',
 };
 
 const server = http.createServer((request, response) => {
@@ -207,6 +211,53 @@ async function verifyMapPage(browser, port, width) {
   await page.close();
 }
 
+async function verifySelectorPage(browser, port, width) {
+  const page = await browser.newPage({ viewport: { width, height: 820 } });
+  await page.addInitScript(() => {
+    window.WeatherGridSelection = {
+      postMessage(message) { window.receivedGridSelection = message; },
+    };
+  });
+  await page.route('https://oapi.map.naver.com/**', (route) => route.fulfill({
+    contentType: 'text/javascript; charset=utf-8',
+    body: naverMapStub,
+  }));
+  const response = await page.goto(
+    `http://127.0.0.1:${port}/weather-map/select?grid=28_8`,
+  );
+  assert.equal(response.status(), 200);
+  assert.equal(await page.title(), '예보 구역 선택 | 날씨챙겨');
+  assert.equal(await page.locator('meta[name="robots"][content="noindex,nofollow"]').count(), 1);
+  assert.equal(await page.locator('.site-header, footer, .meaning').count(), 0);
+  assert.equal(await page.locator('.legend-scale i').count(), 4);
+  await page.waitForFunction(() =>
+    document.querySelector('#grid-map')?.dataset.gridCount === '1633');
+  assert.equal(await page.locator('#map-status').isHidden(), true);
+  assert.equal(await page.locator('#confirm-grid').isEnabled(), true);
+  const text = await page.locator('body').innerText();
+  assert.ok(text.includes('1개') &&
+    text.includes('2–4개') &&
+    text.includes('5–9개') &&
+    text.includes('10개 이상') &&
+    text.includes('날씨 위험도를 뜻하지 않습니다') &&
+    text.includes('nx 28 · ny 8') &&
+    text.includes('이 예보 구역 사용'));
+  await page.locator('#confirm-grid').click();
+  await page.waitForFunction(() => window.receivedGridSelection);
+  assert.deepEqual(
+    JSON.parse(await page.evaluate(() => window.receivedGridSelection)),
+    { type: 'weather-grid-selection', gridId: '28_8', nx: 28, ny: 8 },
+  );
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  assert.equal(await page.locator('#grid-map').evaluate((element) =>
+    element.getBoundingClientRect().height >= 260), true);
+  await page.screenshot({
+    path: path.join(__dirname, '.qa', `map-selector-${width}.png`),
+    fullPage: true,
+  });
+  await page.close();
+}
+
 (async () => {
   const gridData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
   assert.equal(gridData.meta.regionCount, 3838);
@@ -234,7 +285,10 @@ async function verifyMapPage(browser, port, width) {
     for (const width of [360, 1280]) {
       await verifyMapPage(browser, port, width);
     }
-    console.log('PASS: 개인정보·삭제 안내·지도, 모바일/데스크톱 레이아웃, 지도 검색과 1,633개 격자');
+    for (const width of [360, 800]) {
+      await verifySelectorPage(browser, port, width);
+    }
+    console.log('PASS: 개인정보·삭제 안내·공개 지도·앱용 지도 선택, 모바일/데스크톱 레이아웃과 1,633개 격자');
   } finally {
     if (browser) await browser.close();
     server.close();

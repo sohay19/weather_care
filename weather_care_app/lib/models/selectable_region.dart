@@ -18,3 +18,12 @@ class ForecastRegion {
   String get key => '$code|$name|$nx|$ny';
   String get gridId => '${nx}_$ny';
 }
+
+class ForecastGridSelection {
+  final int nx;
+  final int ny;
+
+  const ForecastGridSelection({required this.nx, required this.ny});
+
+  String get gridId => '${nx}_$ny';
+}

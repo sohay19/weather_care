@@ -1,0 +1,186 @@
+@font-face {
+  font-family: "SUITE";
+  src: url("/assets/fonts/SUITE-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SUITE";
+  src: url("/assets/fonts/SUITE-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NeoHyundai";
+  src: url("/assets/fonts/NeoHyundai-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+:root {
+  color-scheme: light;
+  --ink: #193a34;
+  --muted: #60716c;
+  --primary: #27618f;
+  --line: #dce5ea;
+  --paper: #f4f7fa;
+}
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font: 14px/1.45 "SUITE", system-ui, sans-serif;
+  word-break: keep-all;
+}
+button, input { font: inherit; }
+button:focus-visible, input:focus-visible { outline: 3px solid #f2b544; outline-offset: 2px; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.selector-page { height: 100%; display: flex; flex-direction: column; }
+.map-stage { position: relative; min-height: 260px; flex: 1 1 auto; overflow: hidden; }
+#grid-map { width: 100%; height: 100%; background: #dbe6ed; }
+.map-toolbar {
+  position: absolute;
+  z-index: 20;
+  top: max(10px, env(safe-area-inset-top));
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+}
+.search-wrap { position: relative; min-width: 0; flex: 1; }
+#region-search {
+  width: 100%;
+  height: 44px;
+  border: 1px solid rgba(39, 97, 143, .2);
+  border-radius: 14px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, .97);
+  color: var(--ink);
+  box-shadow: 0 5px 18px rgba(28, 59, 79, .15);
+}
+#reset-map {
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 5px 18px rgba(28, 59, 79, .15);
+}
+.search-results {
+  position: absolute;
+  z-index: 30;
+  top: 50px;
+  left: 0;
+  right: 0;
+  max-height: min(38vh, 260px);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(28, 59, 79, .2);
+}
+.search-results button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #edf1f3;
+  padding: 11px 13px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+.search-results button:last-child { border-bottom: 0; }
+.search-results small, .region-row small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+.selector-legend {
+  position: absolute;
+  z-index: 10;
+  top: max(64px, calc(env(safe-area-inset-top) + 64px));
+  left: 10px;
+  right: 10px;
+  padding: 9px 11px 8px;
+  border: 1px solid rgba(39, 97, 143, .15);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .93);
+  box-shadow: 0 4px 15px rgba(28, 59, 79, .12);
+  backdrop-filter: blur(5px);
+}
+.legend-title { font-family: "NeoHyundai", "SUITE", sans-serif; font-weight: 700; font-size: 12px; }
+.legend-scale { display: flex; gap: 10px; margin-top: 5px; font-size: 11px; }
+.legend-scale span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.legend-scale i { width: 13px; height: 13px; border-radius: 4px; border: 1px solid rgba(21, 89, 120, .18); }
+.level-1 { background: #d5ebf6; }
+.level-2 { background: #91c9df; }
+.level-3 { background: #4598bf; }
+.level-4 { background: #155978; }
+.selector-legend p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+.map-status {
+  position: absolute;
+  z-index: 15;
+  left: 50%;
+  top: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  padding: 10px 13px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 5px 18px rgba(28, 59, 79, .15);
+  text-align: center;
+}
+.map-status.error { width: min(86%, 340px); color: #923d35; }
+.selection-panel {
+  flex: 0 0 auto;
+  max-height: 36%;
+  padding: 14px 16px max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: #fff;
+  overflow-y: auto;
+  box-shadow: 0 -5px 20px rgba(28, 59, 79, .1);
+}
+.selection-copy h1 {
+  margin: 0;
+  font: 700 18px/1.35 "NeoHyundai", "SUITE", sans-serif;
+}
+#selection-summary { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.selection-count { color: var(--primary); font-weight: 600; }
+.selection-regions {
+  display: grid;
+  gap: 4px;
+  max-height: 74px;
+  margin-top: 7px;
+  overflow-y: auto;
+}
+.region-row { padding: 6px 8px; border-radius: 8px; background: #f3f7f9; font-size: 11px; }
+.confirm-grid {
+  width: 100%;
+  min-height: 45px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.confirm-grid:disabled { background: #c7d0d5; color: #f7f9fa; }
+.bridge-status { min-height: 0; margin: 5px 0 0; color: #923d35; font-size: 11px; text-align: center; }
+.source-date { margin: 4px 0 0; color: var(--muted); font-size: 9px; text-align: center; }
+@media (max-width: 350px) {
+  .legend-scale { gap: 6px; font-size: 10px; }
+  .legend-scale i { width: 11px; height: 11px; }
+  .selector-legend p { font-size: 9px; }
+}
+@media (min-width: 700px) {
+  .map-toolbar, .selector-legend { left: 18px; right: auto; width: 440px; }
+  .selection-panel { padding-left: max(24px, calc((100% - 720px) / 2)); padding-right: max(24px, calc((100% - 720px) / 2)); }
+}

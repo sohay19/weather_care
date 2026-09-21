@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>예보 구역 선택 | 날씨챙겨</title>
+  <link rel="icon" href="/app-icon.png" type="image/png">
+  <link rel="stylesheet" href="/weather-map/select/select.css">
+  <script src="/weather-map/map.js" defer></script>
+  <script src="/weather-map/select/select.js" defer></script>
+  <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=s34pw0ko54&amp;callback=initNaverWeatherMap" defer></script>
+</head>
+<body data-map-mode="select">
+<main class="selector-page">
+  <section class="map-stage" aria-label="예보 구역 지도">
+    <div class="map-toolbar">
+      <div class="search-wrap">
+        <label class="sr-only" for="region-search">지역 이름 검색</label>
+        <input id="region-search" type="search" placeholder="지역 이름 검색" autocomplete="off">
+        <div id="search-results" class="search-results" role="listbox" hidden></div>
+      </div>
+      <button id="reset-map" type="button">전국</button>
+    </div>
+
+    <aside class="selector-legend" aria-label="격자 색상의 의미">
+      <div class="legend-title">격자 색상</div>
+      <div class="legend-scale">
+        <span><i class="level-1"></i>1개</span>
+        <span><i class="level-2"></i>2–4개</span>
+        <span><i class="level-3"></i>5–9개</span>
+        <span><i class="level-4"></i>10개 이상</span>
+      </div>
+      <p>색상이 진할수록 같은 격자를 공유하는 행정지역 항목이 많습니다. 날씨 위험도를 뜻하지 않습니다.</p>
+    </aside>
+
+    <p id="map-status" class="map-status" role="status">지도를 불러오는 중입니다.</p>
+    <div id="grid-map" aria-label="네이버 지도 위 기상청 예보 격자"></div>
+  </section>
+
+  <section class="selection-panel" aria-labelledby="selection-title">
+    <div class="selection-copy">
+      <h1 id="selection-title">지도에서 예보 구역을 선택해주세요</h1>
+      <p id="selection-summary">색칠된 격자를 누르면 연결된 행정지역을 확인할 수 있어요.</p>
+      <div id="selection-regions" class="selection-regions"></div>
+    </div>
+    <button id="confirm-grid" class="confirm-grid" type="button" disabled>이 예보 구역 사용</button>
+    <p id="bridge-status" class="bridge-status" role="status"></p>
+    <p id="source-date" class="source-date"></p>
+  </section>
+</main>
+</body>
+</html>

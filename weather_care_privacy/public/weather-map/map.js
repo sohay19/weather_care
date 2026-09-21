@@ -6,6 +6,7 @@
   const selectionTitle = document.getElementById('selection-title');
   const selectionSummary = document.getElementById('selection-summary');
   const selectionRegions = document.getElementById('selection-regions');
+  const selectionMode = document.body.dataset.mapMode === 'select';
   const number = new Intl.NumberFormat('ko-KR');
   const koreaCenter = [36.35, 127.85];
   const colors = {
@@ -80,6 +81,10 @@
         row.append(code);
       }
       return row;
+    }));
+    window.weatherSelectedGrid = { id: grid.id, nx: grid.nx, ny: grid.ny };
+    window.dispatchEvent(new CustomEvent('weather-grid-selected', {
+      detail: window.weatherSelectedGrid,
     }));
   }
 
@@ -174,8 +179,8 @@
       minZoom: 6,
       maxZoom: 18,
       mapTypeId: naver.maps.MapTypeId?.NORMAL ?? 'normal',
-      mapTypeControl: true,
-      zoomControl: true,
+      mapTypeControl: !selectionMode,
+      zoomControl: !selectionMode,
       zoomControlOptions: {
         position: naver.maps.Position.TOP_RIGHT,
       },

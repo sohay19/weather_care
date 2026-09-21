@@ -23,6 +23,17 @@ import '../../services/server_data_access.dart';
 
 const _weatherMapUrl = 'https://weather-care.pages.dev/weather-map';
 
+String? _forecastGridLabel(String? gridId) {
+  final match = RegExp(r'^(\d{1,3})_(\d{1,3})$').firstMatch(gridId ?? '');
+  if (match == null) return null;
+  return '예보 구역 nx ${match.group(1)} · ny ${match.group(2)}';
+}
+
+String? _manualSelectionLabel(AppSettings settings, String? regionName) {
+  if (settings.manualRegionKey != null && regionName != null) return regionName;
+  return _forecastGridLabel(settings.currentRegionId);
+}
+
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
   final Future<void> Function()? onRefresh;
@@ -44,6 +55,7 @@ class SettingsScreen extends StatefulWidget {
   final Future<void> Function()? onDeleteServerData;
   final Future<void> Function()? onResumeServerData;
   final Future<bool> Function(Uri)? openExternalLink;
+  final RegionMapBuilder? regionMapBuilder;
 
   const SettingsScreen({
     super.key,
@@ -67,6 +79,7 @@ class SettingsScreen extends StatefulWidget {
     this.onDeleteServerData,
     this.onResumeServerData,
     this.openExternalLink,
+    this.regionMapBuilder,
   });
 
   @override
@@ -128,7 +141,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ? widget.location.hasLocation
                   ? '${widget.regionName ?? '확인한 위치'} 기준으로 안내해요'
                   : '현재 위치 확인이 필요해요'
-              : widget.manualRegionName ?? '선택 지역을 확인해요',
+              : _manualSelectionLabel(settings, widget.manualRegionName) ??
+                  '선택 지역을 확인해요',
           onTap: _openLocationSettings,
         ),
         const SizedBox(height: 16),
@@ -201,6 +215,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onSettingsChanged: _updateSettings,
         onOpenGuide: () => _openGuide(SettingsGuide.location),
         openExternalLink: widget.openExternalLink,
+        regionMapBuilder: widget.regionMapBuilder,
       ),
     ));
   }
@@ -259,6 +274,7 @@ class _LocationSettingsScreen extends StatefulWidget {
   final ValueChanged<AppSettings> onSettingsChanged;
   final VoidCallback onOpenGuide;
   final Future<bool> Function(Uri)? openExternalLink;
+  final RegionMapBuilder? regionMapBuilder;
 
   const _LocationSettingsScreen({
     required this.initialSettings,
@@ -271,6 +287,7 @@ class _LocationSettingsScreen extends StatefulWidget {
     required this.onSettingsChanged,
     required this.onOpenGuide,
     required this.openExternalLink,
+    required this.regionMapBuilder,
   });
 
   @override
@@ -297,11 +314,12 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
   Future<void> _selectRegion() async {
     if (_pickingRegion) return;
     setState(() => _pickingRegion = true);
-    final selected =
-        await Navigator.of(context).push<ForecastRegion>(MaterialPageRoute(
+    final selected = await Navigator.of(context)
+        .push<ForecastGridSelection>(MaterialPageRoute(
       builder: (_) => RegionPickerScreen(
         loadCatalog: widget.loadRegionCatalog,
-        selectedKey: settings.manualRegionKey,
+        selectedGridId: settings.currentRegionId,
+        mapBuilder: widget.regionMapBuilder,
       ),
     ));
     if (!mounted) return;
@@ -310,7 +328,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
     _update(settings.copyWith(
       locationMode: 'MANUAL',
       currentRegionId: selected.gridId,
-      manualRegionKey: selected.key,
+      clearManualRegionKey: true,
     ));
   }
 
@@ -349,7 +367,11 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                       : '현재 위치 확인이 필요해요'
                   : settings.currentRegionId == null
                       ? '선택된 지역이 없어요'
-                      : widget.manualRegionName ?? '저장한 지역 기준으로 안내해요',
+                      : _manualSelectionLabel(
+                            settings,
+                            widget.manualRegionName,
+                          ) ??
+                          '저장한 지역 기준으로 안내해요',
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -360,7 +382,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                       onChanged: (mode) {
                         if (mode == null) return;
                         if (mode == LocationMode.manual &&
-                            settings.manualRegionKey == null) {
+                            settings.currentRegionId == null) {
                           unawaited(_selectRegion());
                           return;
                         }
@@ -381,7 +403,11 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                           title: '지역 직접 선택',
                           subtitle: settings.currentRegionId == null
                               ? '저장된 지역이 없어요'
-                              : widget.manualRegionName ?? '저장한 지역을 사용할 수 있어요',
+                              : _manualSelectionLabel(
+                                    settings,
+                                    widget.manualRegionName,
+                                  ) ??
+                                  '저장한 지역을 사용할 수 있어요',
                           selected: settings.locationMode == 'MANUAL',
                         ),
                       ]),

@@ -45,6 +45,7 @@ class AppSettings {
     String? locationMode,
     String? currentRegionId,
     String? manualRegionKey,
+    bool clearManualRegionKey = false,
     bool? onboardingCompleted,
     bool? notificationEnabled,
     String? notificationTime,
@@ -65,7 +66,8 @@ class AppSettings {
       installationId: installationId,
       locationMode: locationMode ?? this.locationMode,
       currentRegionId: currentRegionId ?? this.currentRegionId,
-      manualRegionKey: manualRegionKey ?? this.manualRegionKey,
+      manualRegionKey:
+          clearManualRegionKey ? null : manualRegionKey ?? this.manualRegionKey,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       notificationTime: notificationTime ?? this.notificationTime,

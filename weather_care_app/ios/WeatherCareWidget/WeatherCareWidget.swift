@@ -157,9 +157,9 @@ private struct MinMaxRow: View {
 
   var body: some View {
     (Text("최저 ").font(SuiteFont.regular(size))
-      + Text(snapshot.minimumTemperature).font(SuiteFont.bold(size))
+      + Text(snapshot.minimumTemperature).font(SuiteFont.extraBold(size))
       + Text("  최고 ").font(SuiteFont.regular(size))
-      + Text(snapshot.maximumTemperature).font(SuiteFont.bold(size)))
+      + Text(snapshot.maximumTemperature).font(SuiteFont.extraBold(size)))
       .foregroundStyle(ink.opacity(0.82))
       .lineLimit(1)
       .minimumScaleFactor(0.62)
@@ -174,7 +174,7 @@ private struct SmallWeatherWidget: View {
       WidgetHeader(snapshot: snapshot, regionSize: 12, timeSize: 9)
       HStack(spacing: 8) {
         WeatherIconView(condition: snapshot.condition)
-          .frame(width: 56, height: 56)
+          .frame(width: 64, height: 64)
         Text(snapshot.currentTemperature)
           .font(SuiteFont.heavy(38))
           .foregroundStyle(ink)
@@ -272,19 +272,20 @@ private struct LargeWeatherWidget: View {
           .foregroundStyle(ink)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.horizontal, 18)
         if !snapshot.preparations.isEmpty {
           HStack(spacing: 6) {
             ForEach(Array(snapshot.preparations.prefix(3)), id: \.self) { item in
-              HStack(spacing: 5) {
+              HStack(spacing: 4) {
                 PreparationIconView(type: item.type)
-                  .frame(width: 28, height: 28)
+                  .frame(width: 36, height: 36)
                 Text(item.label)
-                  .font(SuiteFont.semiBold(13))
+                  .font(SuiteFont.extraBold(12))
                   .lineLimit(1)
                   .minimumScaleFactor(0.8)
               }
               .frame(maxWidth: .infinity)
-              .padding(.horizontal, 7)
+              .padding(.horizontal, 10)
               .padding(.vertical, 6)
               .widgetInfoPanel()
             }
@@ -293,7 +294,12 @@ private struct LargeWeatherWidget: View {
         }
       }
       .frame(maxHeight: .infinity, alignment: .center)
-      HStack(spacing: 3) {
+      HStack(spacing: 0) {
+        Text("다음 시간 예보")
+          .font(SuiteFont.extraBold(12))
+          .foregroundStyle(ink)
+          .lineLimit(1)
+          .padding(.trailing, 10)
         Text(snapshot.nextTime)
           .font(SuiteFont.regular(12))
           .foregroundStyle(ink)
@@ -303,9 +309,12 @@ private struct LargeWeatherWidget: View {
           .font(SuiteFont.heavy(17))
           .foregroundStyle(ink)
         WeatherIconView(condition: snapshot.nextCondition, monochrome: true)
-          .frame(width: 31, height: 31)
+          .frame(width: 32, height: 32)
+          .padding(.leading, 3)
+          .padding(.trailing, 10)
       }
-      .padding(.trailing, 16)
+      .padding(.leading, 12)
+      .padding(.trailing, 18)
       MinMaxRow(snapshot: snapshot, size: 13)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 12)

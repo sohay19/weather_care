@@ -7634,3 +7634,27 @@
 - 검증: Flutter 3.47.4 `flutter analyze` 무경고, 전체 444개 테스트, `flutter analyze --suggestions` 도구 호환 판정, Android Debug APK 빌드, 서버 TypeScript 검사, Worker 49파일·343개와 Node 3파일·11개 테스트, 공개 지도 1,633개 격자 Playwright 검증, 아이콘 생성 스크립트 문법·재현성 검사, `git diff --check`를 통과했다.
 - Android Debug 빌드는 현재 성공한다. 일부 플러그인이 아직 Kotlin Gradle Plugin을 직접 적용해 향후 Flutter에서 Built-in Kotlin 전환이 필요하다는 경고는 남아 있으나, 현재 Java/Gradle/AGP/KGP 조합은 호환 판정을 받았다.
 - 검토한 전체 변경을 `feat: 날씨·지역·광고 흐름 통합` 커밋으로 묶는다. 운영 미니 PC 배포와 앱 스토어 배포는 이번 요청 범위에 포함하지 않았다.
+
+## 2026-09-21 광고 제거 구매 화면 캡처
+
+- Android 에뮬레이터에서 `설정 > 광고 제거`로 진입해 실제 구매 화면을 1080×2400으로 캡처했다.
+- 화면은 Flutter 공통 UI이고 `이 플랫폼`, `스토어`라는 중립 표현을 써 Android·iOS 어느 쪽에도 사용할 수 있다.
+- 현재 에뮬레이터 사이드로드 빌드는 스토어 상품 정보를 받지 못해 가격 영역에 `스토어 가격으로 표시돼요`가 나타난다. 콘솔에서 `ad_free_lifetime`을 활성화한 스토어 설치본은 현지화 가격을 표시한다.
+- 원본 `1080×2400` 캡처는 App Store Connect 허용 규격이 아니어 업로드 오류가 발생했다. 하단 60px만 잘라 허용되는 iPhone 6.1형 `1080×2340` 크기로 맞추고 24bit RGB PNG로 알파 채널을 제거한 `C:\WINDOWS\TEMP\weather-care-ad-removal-appstore-1080x2340.png`를 생성했다.
+- 코드와 앱 상태는 변경하지 않았다.
+
+## 2026-09-21 iOS 위젯 Android 디자인 정합화
+
+- iOS WidgetKit의 최저·최고 행은 `최저`·`최고` 라벨을 SUITE Regular로 유지하고 온도값만 SUITE ExtraBold로 표시하도록 Android와 맞췄다.
+- 작은 위젯의 현재 날씨 아이콘을 56→64pt로 키웠다. 큰 위젯 준비물은 아이콘을 28→36pt로 키우고 라벨을 SUITE ExtraBold 12pt로 변경했으며 카드 내부 간격도 Android 기준에 맞췄다.
+- 큰 위젯 2줄 브리핑에 좌우 18pt 내부 여백을 추가했다.
+- 큰 위젯 다음 예보 행을 `다음 시간 예보 → 시간 → 기온 → 흑백 날씨 아이콘` 순서로 변경했다. 제목은 SUITE ExtraBold 12pt, 다음 아이콘은 32pt를 사용하고 제목·기온·아이콘 사이 및 행 좌우 여백을 Android 구성에 맞춰 조정했다.
+- 저장소 지정 Flutter 3.47.4/Dart 3.13.3으로 `flutter analyze`와 홈 위젯 스냅샷 테스트 5개를 통과했다. Swift/PBX 중괄호 정합성, Widget Info.plist XML 파싱, 변경 파일 `git diff --check`도 통과했다.
+- Windows 환경이라 Xcode의 WidgetKit 실빌드·시뮬레이터 렌더링은 수행하지 못했다. Mac에서 systemSmall·systemLarge의 실제 잘림 여부를 최종 확인해야 한다.
+
+## 2026-09-21 Android 위젯 준비물 간격 정합화
+
+- Android 큰 위젯 준비물 카드의 텍스트 비트맵 정렬을 `centerInside`에서 `fitStart`로 변경했다. 기존 아이콘 뒤 4dp 여백은 유지하면서 짧은 준비물명도 남은 영역 가운데로 밀리지 않고 iOS처럼 아이콘 바로 다음 위치에서 시작한다.
+- 텍스트 영역의 가중치와 비트맵 축소 방식은 유지해 `휴대용 선풍기`, `두꺼운 겉옷`처럼 긴 준비물명도 카드 너비 안에서 계속 축소된다.
+- 저장소 지정 Flutter 3.47.4로 `flutter analyze`, 홈 위젯 스냅샷 테스트 5개, Android x86_64 Debug APK 빌드와 변경 파일 `git diff --check`를 통과했다.
+- iOS 위젯 디자인 정합화, Android 준비물 간격 보정, Android `versionCode` 변경과 이 인계 기록까지 남아 있던 수정 4개 파일을 모두 한 커밋으로 묶는다. `keystore.properties`의 비밀번호·별칭·파일 경로 등 민감한 서명값은 변경되지 않았다.

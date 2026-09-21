@@ -155,7 +155,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:contentDescription="우산"
-                android:scaleType="centerInside" />
+                android:scaleType="fitStart" />
         </LinearLayout>
 
         <LinearLayout
@@ -186,7 +186,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:contentDescription="두꺼운 겉옷"
-                android:scaleType="centerInside" />
+                android:scaleType="fitStart" />
         </LinearLayout>
 
         <LinearLayout
@@ -216,7 +216,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:contentDescription="마스크"
-                android:scaleType="centerInside" />
+                android:scaleType="fitStart" />
         </LinearLayout>
     </LinearLayout>
     </LinearLayout>

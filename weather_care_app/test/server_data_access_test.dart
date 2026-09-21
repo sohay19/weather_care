@@ -39,6 +39,11 @@ Future<void> openServerDataControls(
     scrollable: find.byType(Scrollable).first,
     maxScrolls: 30,
   );
+  await tester.drag(
+    find.byType(Scrollable).first,
+    const Offset(0, -80),
+  );
+  await tester.pumpAndSettle();
   await tester.tap(menu);
   await tester.pumpAndSettle();
   final delete = find.byKey(const ValueKey('server-data-delete'));

@@ -10,6 +10,7 @@ import '../../services/notification_permission_service.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
+import 'ad_removal_purchase_screen.dart';
 import 'location_mode.dart';
 import 'region_picker_screen.dart';
 import 'notification_schedule.dart';
@@ -112,6 +113,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
           ),
         const SizedBox(height: 20),
+        _AdRemovalBanner(onTap: _openAdRemovalPurchase),
+        const SizedBox(height: 16),
         _SettingsMenuButton(
           key: const ValueKey('location-settings-menu'),
           icon: Icons.location_on_outlined,
@@ -218,6 +221,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onOpenNotificationSettings: widget.onOpenNotificationSettings,
         onOpenGuide: () => _openGuide(SettingsGuide.notifications),
       ),
+    ));
+  }
+
+  void _openAdRemovalPurchase() {
+    Navigator.of(context).push<void>(MaterialPageRoute(
+      builder: (_) => const AdRemovalPurchaseScreen(),
     ));
   }
 
@@ -1085,6 +1094,88 @@ class _SettingsMenuButton extends StatelessWidget {
               const Icon(
                 Icons.chevron_right_rounded,
                 color: WeatherCareTheme.textSecondary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdRemovalBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AdRemovalBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      key: const ValueKey('ad-removal-menu'),
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(18),
+          decoration: WeatherCareTheme.mood(
+            'clear',
+            borderRadius: BorderRadius.circular(24),
+          ).copyWith(
+            border: Border.all(color: WeatherCareTheme.primaryBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.84),
+                  borderRadius: BorderRadius.circular(17),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_outlined,
+                  size: 25,
+                  color: WeatherCareTheme.primaryDeep,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AD-FREE · 평생 이용',
+                      style: WeatherCareTheme.specialLabelStyle.copyWith(
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '날씨만, 광고 없이 편안하게',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '한 번 구매하고 모든 광고를 제거해요',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 19,
+                  color: WeatherCareTheme.primaryDeep,
+                ),
               ),
             ],
           ),

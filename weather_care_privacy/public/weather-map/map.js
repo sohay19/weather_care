@@ -180,8 +180,11 @@
       maxZoom: 18,
       mapTypeId: naver.maps.MapTypeId?.NORMAL ?? 'normal',
       mapTypeControl: !selectionMode,
-      zoomControl: !selectionMode,
-      zoomControlOptions: {
+      zoomControl: true,
+      zoomControlOptions: selectionMode ? {
+        style: naver.maps.ZoomControlStyle.LARGE,
+        position: naver.maps.Position.RIGHT_CENTER,
+      } : {
         position: naver.maps.Position.TOP_RIGHT,
       },
     });

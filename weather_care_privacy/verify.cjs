@@ -44,6 +44,9 @@ const naverMapStub = `
       this.center = options.center;
       this.zoom = options.zoom;
       this.data = new DataLayer();
+      element.dataset.zoomControl = String(options.zoomControl);
+      element.dataset.zoomControlStyle = String(options.zoomControlOptions?.style);
+      element.dataset.zoomControlPosition = String(options.zoomControlOptions?.position);
       element.classList.add('naver-map-test-stub');
     }
     setCenter(center) { this.center = center; }
@@ -55,7 +58,8 @@ const naverMapStub = `
       Map: NaverMap,
       LatLng,
       MapTypeId: { NORMAL: 'normal' },
-      Position: { TOP_RIGHT: 'top-right' },
+      Position: { TOP_RIGHT: 'top-right', RIGHT_CENTER: 'right-center' },
+      ZoomControlStyle: { LARGE: 'large' },
     },
   };
   setTimeout(() => window.initNaverWeatherMap(), 0);
@@ -233,6 +237,9 @@ async function verifySelectorPage(browser, port, width) {
   await page.waitForFunction(() =>
     document.querySelector('#grid-map')?.dataset.gridCount === '1633');
   assert.equal(await page.locator('#map-status').isHidden(), true);
+  assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control'), 'true');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control-style'), 'large');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control-position'), 'right-center');
   assert.equal(await page.locator('#confirm-grid').isEnabled(), true);
   const text = await page.locator('body').innerText();
   assert.ok(text.includes('1개') &&

@@ -1,3 +1,5 @@
+import { calculateKmaApparentTemperature } from './kmaWeatherProvider';
+
 const ULTRA_SHORT_OBSERVATION_URL =
   'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -33,15 +35,27 @@ export class KmaUltraShortObservationProvider {
   }
 
   async getCurrent(nx: number, ny: number): Promise<UltraShortObservation> {
-    if (!this.serviceKey) throw new Error('KMA service key is not configured');
     const base = latestUltraShortPublishedHour(this.now());
+    return this.getAt(nx, ny, base);
+  }
+
+  async getAt(
+    nx: number,
+    ny: number,
+    koreanClock: Date,
+  ): Promise<UltraShortObservation> {
+    if (!this.serviceKey) throw new Error('KMA service key is not configured');
+    if (!Number.isInteger(nx) || nx < 1 || nx > 149 ||
+        !Number.isInteger(ny) || ny < 1 || ny > 253) {
+      throw new Error('KMA ultra-short grid is invalid');
+    }
     const query = new URLSearchParams({
       serviceKey: this.serviceKey,
       pageNo: '1',
       numOfRows: '20',
       dataType: 'JSON',
-      base_date: formatDate(base),
-      base_time: `${String(base.getUTCHours()).padStart(2, '0')}00`,
+      base_date: formatDate(koreanClock),
+      base_time: `${String(koreanClock.getUTCHours()).padStart(2, '0')}00`,
       nx: String(nx),
       ny: String(ny),
     });
@@ -71,7 +85,7 @@ export class KmaUltraShortObservationProvider {
       throw new Error('KMA ultra-short observation has no PTY');
     }
     return {
-      observedAt: ultraShortKoreanIso(base),
+      observedAt: ultraShortKoreanIso(koreanClock),
       rainDetected: precipitationType > 0,
       precipitationAmount: finiteOrUndefined(values.get('RN1')),
       temperature: finiteOrUndefined(values.get('T1H')),
@@ -80,6 +94,22 @@ export class KmaUltraShortObservationProvider {
       provider: 'KMA_ULTRA_SHORT_OBSERVATION',
     };
   }
+}
+
+export function ultraShortApparentTemperature(
+  observation: UltraShortObservation,
+): number | undefined {
+  if (observation.temperature === undefined) return undefined;
+  const month = Number(observation.observedAt.slice(5, 7));
+  if (month >= 5 && month <= 9 && observation.humidity === undefined) {
+    return undefined;
+  }
+  return calculateKmaApparentTemperature(
+    observation.temperature,
+    observation.humidity,
+    observation.windSpeed,
+    observation.observedAt,
+  );
 }
 
 export function latestUltraShortPublishedHour(now: Date): Date {

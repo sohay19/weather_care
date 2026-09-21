@@ -32,11 +32,9 @@ import {
 } from '../providers/road/kmaRoadIceProvider';
 import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
 import {
-  buildHourlyComparisons,
   KmaHourlyObservationProvider,
   latestCompletedKoreanHour,
   nearestVisibilityObservations,
-  type KmaHourlyObservationSnapshot,
 } from '../providers/weather/kmaHourlyObservationProvider';
 import { KmaDailyObservationProvider } from '../providers/weather/kmaDailyObservationProvider';
 import {
@@ -73,7 +71,6 @@ import {
 import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
 import {
   compactIssueToIso,
-  koreanObservationVersion,
   latestAirKoreaForecastIssue,
   latestRadarProductVersion,
   pollingWindowVersion,
@@ -153,7 +150,7 @@ export async function runWeatherCollectionJob(
   }
 
   if (options.collectHourlyObservations === true) {
-    await collectYesterdayComparisons(env, allForecastTargets, now);
+    await collectCurrentVisibility(env, allForecastTargets, now);
   }
 
   if (options.collectCore !== false) {
@@ -163,7 +160,7 @@ export async function runWeatherCollectionJob(
       await collectUltraShortObservations(env, activeRegions, now);
       await collectRoadControls(env, locations, now);
       if (koreanMinute(now) === 0 && options.collectHourlyObservations !== true) {
-        await collectYesterdayComparisons(env, allForecastTargets, now);
+        await collectCurrentVisibility(env, allForecastTargets, now);
         if (koreanHour(now) === 2) {
           await collectDailyObservations(env, allForecastTargets, now);
         }
@@ -741,7 +738,7 @@ async function collectRoadControls(
   }
 }
 
-async function collectYesterdayComparisons(
+async function collectCurrentVisibility(
   env: ServerEnv,
   targets: CollectionTarget[],
   now: Date,
@@ -753,41 +750,17 @@ async function collectYesterdayComparisons(
   });
   if (regions.length === 0) return;
   const currentHour = latestCompletedKoreanHour(now);
-  const comparisonHour = new Date(currentHour.getTime() - 24 * 60 * 60 * 1000);
-  const currentVersion = koreanObservationVersion(currentHour);
-  const comparisonVersion = koreanObservationVersion(comparisonHour);
-  let current = await getCollectedCache<KmaHourlyObservationSnapshot>(
+  const sourceVersion = ultraShortKoreanIso(currentHour);
+  if (await collectedSourceVersionIsCurrent(
     env.DB,
-    collectedCacheKey.hourlyObservation(currentVersion),
-  );
-  let comparison = await getCollectedCache<KmaHourlyObservationSnapshot>(
+    'ASOS_VISIBILITY_HOURLY',
+    sourceVersion,
+  )) return;
+  if (!await reserveApiHubBudget(
     env.DB,
-    collectedCacheKey.hourlyObservation(comparisonVersion),
-  );
-  const currentHasVisibility = current?.value.stations.some(
-    (station) => station.visibilityMeters !== undefined,
-  ) === true;
-  const missing = [
-    ...(current && currentHasVisibility ? [] : [{
-      version: currentVersion,
-      hour: currentHour,
-      includeVisibility: true,
-    }]),
-    ...(comparison ? [] : [{
-      version: comparisonVersion,
-      hour: comparisonHour,
-      includeVisibility: false,
-    }]),
-  ];
-  const requestedCalls = missing.reduce(
-    (sum, target) => sum + (target.includeVisibility ? 4 : 3),
-    0,
-  );
-  if (missing.length > 0 && !await reserveApiHubBudget(
-    env.DB,
-    'ASOS_HOURLY',
-    requestedCalls,
-    requestedCalls * 128_000,
+    'ASOS_VISIBILITY',
+    4,
+    4 * 128_000,
     now,
   )) return;
   try {
@@ -795,58 +768,33 @@ async function collectYesterdayComparisons(
       serviceKey: env.KMA_APIHUB_KEY,
       now: () => now,
     });
-    for (const target of missing) {
-      const value = await provider.getObservationsAt(target.hour, {
-        includeVisibility: target.includeVisibility,
-      });
-      await saveCollectedCache(env.DB, {
-        key: collectedCacheKey.hourlyObservation(target.version),
-        type: 'COLLECTED_HOURLY_OBSERVATION',
-        value,
-        updatedAt: now,
-      });
-      const record = { value, status: 'AVAILABLE' as const, updatedAt: now.toISOString() };
-      if (target.version === currentVersion) current = record;
-      if (target.version === comparisonVersion) comparison = record;
-    }
-    if (current) {
-      const visibility = nearestVisibilityObservations(
-        current.value,
-        regions.map(({ coordinates }) => coordinates),
-      );
-      await Promise.all(regions.flatMap(({ target }, index) => {
-        const value = visibility[index];
-        if (!value) return [];
-        return [saveCollectedCache(env.DB, {
-          key: collectedCacheKey.visibility(target.nx, target.ny),
-          type: 'COLLECTED_VISIBILITY',
-          value,
-          nx: target.nx,
-          ny: target.ny,
-          updatedAt: now,
-        })];
-      }));
-    }
-    if (!current || !comparison) return;
-    const values = buildHourlyComparisons(
-      current.value,
-      comparison.value,
+    const current = await provider.getObservationsAt(currentHour, {
+      includeVisibility: true,
+    });
+    const visibility = nearestVisibilityObservations(
+      current,
       regions.map(({ coordinates }) => coordinates),
     );
     await Promise.all(regions.flatMap(({ target }, index) => {
-      const value = values[index];
+      const value = visibility[index];
       if (!value) return [];
       return [saveCollectedCache(env.DB, {
-        key: collectedCacheKey.comparison(target.nx, target.ny),
-        type: 'COLLECTED_COMPARISON',
+        key: collectedCacheKey.visibility(target.nx, target.ny),
+        type: 'COLLECTED_VISIBILITY',
         value,
         nx: target.nx,
         ny: target.ny,
         updatedAt: now,
       })];
     }));
+    await saveCollectedSourceVersion(
+      env.DB,
+      'ASOS_VISIBILITY_HOURLY',
+      sourceVersion,
+      now,
+    );
   } catch (error) {
-    logCollectionFailure('comparison', error);
+    logCollectionFailure('visibility', error);
   }
 }
 

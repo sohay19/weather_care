@@ -49,7 +49,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.textContaining('받지 못한 현재 날씨:'), findsOneWidget);
+    expect(find.textContaining('받지 못한 날씨 자료:'), findsOneWidget);
     expect(find.text(removedHint), findsNothing);
     await tester.dragUntilVisible(
       find.byKey(const ValueKey('yesterday-comparison-card')),
@@ -148,7 +148,13 @@ void main() {
               pm25: 18,
               skyCondition: '구름 많음',
             ),
-            basis: ComparisonBasis(provider: 'KMA_ASOS'),
+            basis: ComparisonBasis(
+              provider: 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION',
+              gridX: 57,
+              gridY: 124,
+              currentForecastAt: '2026-09-16T10:00:00+09:00',
+              comparisonObservedAt: '2026-09-15T10:00:00+09:00',
+            ),
           ),
           onRefresh: () async {},
           onDetail: (_) {},
@@ -156,14 +162,16 @@ void main() {
       ),
     ));
 
-    expect(find.text('현재 기온'), findsOneWidget);
-    expect(find.text('22.3℃'), findsOneWidget);
-    expect(find.text('현재 체감온도'), findsOneWidget);
-    expect(find.text('22.1℃'), findsOneWidget);
+    expect(
+      find.text('하늘·기온·습도·바람은 오전 10시 단기예보 기준'),
+      findsOneWidget,
+    );
+    expect(find.text('예상 기온'), findsNWidgets(2));
+    expect(find.text('22.0℃'), findsOneWidget);
+    expect(find.text('예상 체감온도'), findsNWidgets(2));
+    expect(find.text('21.5℃'), findsOneWidget);
     expect(find.text('오전 11시의 기온과 체감온도를 예상해요'), findsOneWidget);
-    expect(find.text('예상 기온'), findsOneWidget);
     expect(find.text('23.0℃'), findsOneWidget);
-    expect(find.text('예상 체감온도'), findsOneWidget);
     expect(find.text('22.5℃'), findsOneWidget);
     final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
     expect(
@@ -184,21 +192,35 @@ void main() {
     );
     expect(
       find.text(
-        '맑은 하늘이 이어지는 날씨예요. 실제 기온보다 0.2℃ 낮지만, 체감 상 조금 덥게 느껴질 수 있어요.',
+        '맑은 하늘이 이어지는 날씨예요. 실제 기온보다 0.5℃ 낮지만, 체감 상 조금 덥게 느껴질 수 있어요.',
       ),
       findsOneWidget,
     );
     final currentWeatherRow = tester.getRect(
-      find.byKey(const ValueKey('main-current-observation-row')),
+      find.byKey(const ValueKey('main-current-forecast-row')),
     );
     final forecastWeatherRow = tester.getRect(
       find.byKey(const ValueKey('main-apparent-temperature-row')),
     );
     expect(forecastWeatherRow.top, greaterThan(currentWeatherRow.bottom));
     expect(find.text('어제와 비교'), findsOneWidget);
-    expect(find.text('현재 관측값과 어제 같은 시각 관측값을 비교해요'), findsOneWidget);
-    expect(find.text('기온은 어제보다 2.3℃ 높아요.'), findsOneWidget);
+    expect(
+      find.text('오전 10시 기준, 다음 시간 예상기온을 어제 실황과 비교해요'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('선택 격자 57/124'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('예상 기온은 어제 실황보다 2.3℃ 높아요.'),
+      findsOneWidget,
+    );
     final topCard = find.byKey(const ValueKey('main-top-weather-card'));
+    expect(
+      find.descendant(of: topCard, matching: find.text('22.3℃')),
+      findsNothing,
+    );
     final comparisonCard =
         find.byKey(const ValueKey('yesterday-comparison-card'));
     final top = tester.getTopLeft(topCard);

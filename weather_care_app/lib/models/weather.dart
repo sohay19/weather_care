@@ -519,7 +519,12 @@ class WeeklyWeatherResponse {
 class ComparisonResponse {
   final bool comparisonAvailable;
   final String? targetDate;
+
+  /// 오직 비교 카드의 '다음 시간 예보' 값이다.
+  /// 선택 지역의 현재 날씨나 [CurrentWeather]를 대체하지 않는다.
   final ComparisonWeatherSnapshot? current;
+
+  /// [current]와 같은 선택지역 격자·시각 기준의 '어제 실황' 값이다.
   final ComparisonWeatherSnapshot? comparison;
   final ComparisonBasis? basis;
 
@@ -569,6 +574,10 @@ class ComparisonBasis {
   final String? dataRole;
   final String? stationId;
   final double? distanceKm;
+  final int? gridX;
+  final int? gridY;
+  final String? currentForecastAt;
+  final String? forecastIssuedAt;
   final String? currentObservedAt;
   final String? comparisonObservedAt;
 
@@ -577,6 +586,10 @@ class ComparisonBasis {
     this.dataRole,
     this.stationId,
     this.distanceKm,
+    this.gridX,
+    this.gridY,
+    this.currentForecastAt,
+    this.forecastIssuedAt,
     this.currentObservedAt,
     this.comparisonObservedAt,
   });
@@ -587,6 +600,10 @@ class ComparisonBasis {
       dataRole: json['dataRole']?.toString(),
       stationId: json['stationId']?.toString(),
       distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      gridX: (json['gridX'] as num?)?.toInt(),
+      gridY: (json['gridY'] as num?)?.toInt(),
+      currentForecastAt: json['currentForecastAt']?.toString(),
+      forecastIssuedAt: json['forecastIssuedAt']?.toString(),
       currentObservedAt: json['currentObservedAt']?.toString(),
       comparisonObservedAt: json['comparisonObservedAt']?.toString(),
     );

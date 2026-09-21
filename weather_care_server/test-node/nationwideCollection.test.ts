@@ -24,7 +24,6 @@ import {
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import { nationwideForecastGridShard } from '../src/regions/nationwideForecastGridCatalog';
 import { kmaGridCoordinates } from '../src/regions/kmaGridCoordinates';
-import { koreanObservationVersion } from '../src/collection/sourcePublicationSchedule';
 
 describe('Node 전국 선수집', () => {
   const cleanup: Array<() => void> = [];
@@ -210,9 +209,6 @@ describe('Node 전국 선수집', () => {
     });
     const now = new Date('2026-09-18T01:23:00Z');
     const currentHour = latestCompletedKoreanHour(now);
-    const comparisonHour = new Date(
-      currentHour.getTime() - 24 * 60 * 60 * 1000,
-    );
     const coordinates = kmaGridCoordinates(60, 121)!;
     const snapshot = (
       observedAt: string,
@@ -229,22 +225,6 @@ describe('Node 전국 선수집', () => {
         windSpeed: 2,
         visibilityMeters,
       }],
-    });
-    await saveCollectedCache(env.DB, {
-      key: collectedCacheKey.hourlyObservation(
-        koreanObservationVersion(currentHour),
-      ),
-      type: 'COLLECTED_HOURLY_OBSERVATION',
-      value: snapshot('2026-09-18T08:00:00+09:00'),
-      updatedAt: now,
-    });
-    await saveCollectedCache(env.DB, {
-      key: collectedCacheKey.hourlyObservation(
-        koreanObservationVersion(comparisonHour),
-      ),
-      type: 'COLLECTED_HOURLY_OBSERVATION',
-      value: snapshot('2026-09-17T08:00:00+09:00'),
-      updatedAt: now,
     });
     const getObservations = vi.spyOn(
       KmaHourlyObservationProvider.prototype,

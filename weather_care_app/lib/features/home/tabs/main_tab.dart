@@ -77,8 +77,6 @@ class MainTab extends StatelessWidget {
                       today: today,
                       mood: mood,
                       compact: compact,
-                      comparison: yesterdayComparison,
-                      comparisonLoading: comparisonLoading,
                       onRetry: onRetryData,
                       retrying: retryingData,
                       metricColumns: metricColumns,
@@ -150,27 +148,16 @@ class MainTab extends StatelessWidget {
 class _TodaySection extends StatelessWidget {
   final TodayWeatherResponse today;
   final CurrentWeather current;
-  final ComparisonResponse? comparison;
-  final bool loading;
   final int metricColumns;
 
   const _TodaySection({
     required this.today,
     required this.current,
-    required this.comparison,
-    required this.loading,
     required this.metricColumns,
   });
 
   @override
   Widget build(BuildContext context) {
-    final observedCurrent =
-        comparison?.comparisonAvailable == true ? comparison?.current : null;
-    final feelingTemperature =
-        observedCurrent?.temperature ?? current.temperature;
-    final feelingApparentTemperature =
-        observedCurrent?.apparentTemperature ?? current.apparentTemperature;
-    final feelingSky = observedCurrent?.skyCondition ?? current.sky;
     final feelingStyle = TextStyle(
       color: WeatherCareTheme.textPrimary,
       fontSize: 13,
@@ -199,14 +186,22 @@ class _TodaySection extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 5),
+        Text(
+          _currentForecastBasisLabel(current.forecastAt),
+          style: TextStyle(
+            color: WeatherCareTheme.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 13),
         _TemperatureLine(
-          lineKey: const ValueKey('main-current-observation-row'),
-          temperatureLabel: '현재 기온',
-          temperature: observedCurrent?.temperature,
-          apparentLabel: '현재 체감온도',
-          apparentTemperature: observedCurrent?.apparentTemperature,
-          loading: loading,
+          lineKey: const ValueKey('main-current-forecast-row'),
+          temperatureLabel: '예상 기온',
+          temperature: current.temperature,
+          apparentLabel: '예상 체감온도',
+          apparentTemperature: current.apparentTemperature,
         ),
         const SizedBox(height: 13),
         Padding(
@@ -218,9 +213,9 @@ class _TodaySection extends StatelessWidget {
               Expanded(
                 child: Text(
                   _weatherSummaryMessage(
-                    sky: feelingSky,
-                    temperature: feelingTemperature,
-                    apparentTemperature: feelingApparentTemperature,
+                    sky: current.sky,
+                    temperature: current.temperature,
+                    apparentTemperature: current.apparentTemperature,
                   ),
                   style: feelingStyle,
                 ),
@@ -229,7 +224,7 @@ class _TodaySection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 1),
                 child: WeatherConditionIcon(
-                  condition: feelingSky,
+                  condition: current.sky,
                   color: WeatherCareTheme.textPrimary,
                   size: 25,
                 ),
@@ -321,46 +316,57 @@ class _YesterdayComparisonSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = comparison?.current;
-    final previous = comparison?.comparison;
-    final metrics = current == null || previous == null
+    final todayObservation = comparison?.current;
+    final yesterdayObservation = comparison?.comparison;
+    final forecastComparison = comparison?.basis?.provider ==
+        'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION';
+    final metrics = todayObservation == null || yesterdayObservation == null
         ? const <_ComparisonMetricData>[]
         : [
             _ComparisonMetricData(
-              subject: '기온은',
-              current: current.temperature,
-              previous: previous.temperature,
+              subject: forecastComparison ? '예상 기온은' : '기온은',
+              current: todayObservation.temperature,
+              previous: yesterdayObservation.temperature,
               unit: '℃',
               fractionDigits: 1,
+              currentLabel: forecastComparison ? '오늘 예보' : '오늘',
+              previousLabel: forecastComparison ? '어제 실황' : '어제',
+              previousReference: forecastComparison ? '어제 실황보다' : '어제보다',
             ),
             _ComparisonMetricData(
-              subject: '체감온도는',
-              current: current.apparentTemperature,
-              previous: previous.apparentTemperature,
+              subject: forecastComparison ? '예상 체감온도는' : '체감온도는',
+              current: todayObservation.apparentTemperature,
+              previous: yesterdayObservation.apparentTemperature,
               unit: '℃',
               fractionDigits: 1,
+              currentLabel: forecastComparison ? '오늘 예보' : '오늘',
+              previousLabel: forecastComparison ? '어제 실황' : '어제',
+              previousReference: forecastComparison ? '어제 실황보다' : '어제보다',
             ),
-            if (current.pm25 != null && previous.pm25 != null)
+            if (todayObservation.pm25 != null &&
+                yesterdayObservation.pm25 != null)
               _ComparisonMetricData(
                 subject: '초미세먼지는',
-                current: current.pm25?.toDouble(),
-                previous: previous.pm25?.toDouble(),
+                current: todayObservation.pm25?.toDouble(),
+                previous: yesterdayObservation.pm25?.toDouble(),
                 unit: '㎍/㎥',
                 fractionDigits: 0,
               )
-            else if (current.pm10 != null && previous.pm10 != null)
+            else if (todayObservation.pm10 != null &&
+                yesterdayObservation.pm10 != null)
               _ComparisonMetricData(
                 subject: '미세먼지는',
-                current: current.pm10?.toDouble(),
-                previous: previous.pm10?.toDouble(),
+                current: todayObservation.pm10?.toDouble(),
+                previous: yesterdayObservation.pm10?.toDouble(),
                 unit: '㎍/㎥',
                 fractionDigits: 0,
               ),
           ].where((metric) => metric.isComparable).toList(growable: false);
-    final skyComparable =
-        current?.skyCondition != null && previous?.skyCondition != null;
+    final skyComparable = todayObservation?.skyCondition != null &&
+        yesterdayObservation?.skyCondition != null;
     final available = _hasUsableComparison(comparison);
     final basis = comparison?.basis;
+    final basisLabel = _comparisonBasisLabel(basis);
 
     return Container(
       key: const ValueKey('yesterday-comparison-card'),
@@ -391,9 +397,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            basis?.provider == 'KMA_ASOS'
-                ? '현재 관측값과 어제 같은 시각 관측값을 비교해요'
-                : '같은 지역의 같은 기준시각 자료만 비교해요',
+            _comparisonSubtitle(basis),
             style: TextStyle(
               color: WeatherCareTheme.textSecondary,
               fontSize: 11,
@@ -427,9 +431,23 @@ class _YesterdayComparisonSection extends StatelessWidget {
               ],
             ),
           ] else ...[
+            if (basisLabel != null) ...[
+              Text(
+                basisLabel,
+                key: const ValueKey('yesterday-comparison-basis'),
+                style: TextStyle(
+                  color: WeatherCareTheme.textSecondary,
+                  fontSize: 11,
+                  height: 1.4,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             if (skyComparable)
               Text(
-                '하늘 상태는 오늘 ${current!.skyCondition}, 어제 ${previous!.skyCondition}였어요.',
+                '하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
+                '어제 ${yesterdayObservation!.skyCondition}였어요.',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
@@ -576,8 +594,8 @@ class _ComparisonMetric extends StatelessWidget {
     final difference = metric.current! - metric.previous!;
     final same = difference.abs() < (metric.fractionDigits == 0 ? 0.5 : 0.05);
     final change = same
-        ? '어제와 같아요'
-        : '어제보다 ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
+        ? '${metric.previousLabel}과 같아요'
+        : '${metric.previousReference} ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
             '${difference > 0 ? '높아요' : '낮아요'}';
     String value(double value) =>
         '${value.toStringAsFixed(metric.fractionDigits)}${metric.unit}';
@@ -600,7 +618,8 @@ class _ComparisonMetric extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '오늘 ${value(metric.current!)} · 어제 ${value(metric.previous!)}',
+                  '${metric.currentLabel} ${value(metric.current!)} · '
+                  '${metric.previousLabel} ${value(metric.previous!)}',
                   style: WeatherCareTheme.microTextStyle,
                 ),
               ],
@@ -618,6 +637,9 @@ class _ComparisonMetricData {
   final double? previous;
   final String unit;
   final int fractionDigits;
+  final String currentLabel;
+  final String previousLabel;
+  final String previousReference;
 
   const _ComparisonMetricData({
     this.subject = '기온은',
@@ -625,6 +647,9 @@ class _ComparisonMetricData {
     required this.previous,
     required this.unit,
     required this.fractionDigits,
+    this.currentLabel = '오늘',
+    this.previousLabel = '어제',
+    this.previousReference = '어제보다',
   });
 
   bool get isComparable => current != null && previous != null;
@@ -633,19 +658,92 @@ class _ComparisonMetricData {
 bool _hasUsableComparison(
   ComparisonResponse? response,
 ) {
-  final current = response?.current;
-  final previous = response?.comparison;
+  final todayObservation = response?.current;
+  final yesterdayObservation = response?.comparison;
   if (response?.comparisonAvailable != true ||
-      current == null ||
-      previous == null) {
+      todayObservation == null ||
+      yesterdayObservation == null) {
     return false;
   }
-  return (current.temperature != null && previous.temperature != null) ||
-      (current.apparentTemperature != null &&
-          previous.apparentTemperature != null) ||
-      (current.pm10 != null && previous.pm10 != null) ||
-      (current.pm25 != null && previous.pm25 != null) ||
-      (current.skyCondition != null && previous.skyCondition != null);
+  return (todayObservation.temperature != null &&
+          yesterdayObservation.temperature != null) ||
+      (todayObservation.apparentTemperature != null &&
+          yesterdayObservation.apparentTemperature != null) ||
+      (todayObservation.pm10 != null && yesterdayObservation.pm10 != null) ||
+      (todayObservation.pm25 != null && yesterdayObservation.pm25 != null) ||
+      (todayObservation.skyCondition != null &&
+          yesterdayObservation.skyCondition != null);
+}
+
+String? _comparisonBasisLabel(ComparisonBasis? basis) {
+  if (basis == null) return null;
+  final source = <String>[];
+  if (basis.gridX case final gridX?) {
+    if (basis.gridY case final gridY?) source.add('선택 격자 $gridX/$gridY');
+  }
+  if (basis.stationId case final station?) source.add('관측소 $station');
+  if (basis.distanceKm case final distance?) {
+    source.add('대표 위치에서 ${distance.toStringAsFixed(1)}km');
+  }
+  if (basis.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION') {
+    return source.isEmpty ? null : source.join(' · ');
+  }
+  final current = basis.currentForecastAt == null
+      ? _comparisonObservationClock('오늘', basis.currentObservedAt)
+      : _comparisonObservationClock('오늘 예보', basis.currentForecastAt);
+  final previous = _comparisonObservationClock(
+    basis.currentForecastAt == null ? '어제' : '어제 실황',
+    basis.comparisonObservedAt,
+  );
+  if (current != null) source.add(current);
+  if (previous != null) source.add(previous);
+  return source.isEmpty ? null : source.join(' · ');
+}
+
+String _comparisonSubtitle(ComparisonBasis? basis) {
+  if (basis?.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION') {
+    final time = _comparisonTimeLabel(basis?.currentForecastAt);
+    return time == null
+        ? '다음 시간 예상기온을 어제 같은 시간 실황과 비교해요'
+        : '$time 기준, 다음 시간 예상기온을 어제 실황과 비교해요';
+  }
+  if (basis?.provider == 'KMA_ULTRA_SHORT_OBSERVATION') {
+    return '선택지역 동네예보 격자의 오늘·어제 같은 시각을 비교해요';
+  }
+  if (basis?.provider == 'KMA_ASOS') {
+    return '인근 ASOS 관측소의 오늘·어제 같은 시각을 비교해요';
+  }
+  return '같은 지역의 같은 기준시각 자료만 비교해요';
+}
+
+String? _comparisonTimeLabel(String? raw) {
+  if (raw == null || !RegExp(r'(Z|[+-]\d{2}:\d{2})$').hasMatch(raw)) {
+    return null;
+  }
+  final parsed = DateTime.tryParse(raw);
+  if (parsed == null) return null;
+  final inKorea = parsed.toUtc().add(const Duration(hours: 9));
+  final period = inKorea.hour < 12 ? '오전' : '오후';
+  final hour = inKorea.hour % 12 == 0 ? 12 : inKorea.hour % 12;
+  return '$period $hour시';
+}
+
+String _currentForecastBasisLabel(String? forecastAt) {
+  final time = forecastTemperatureLabel(forecastAt);
+  final basis = time == '시' ? '현재 시간대' : time;
+  return '하늘·기온·습도·바람은 $basis 단기예보 기준';
+}
+
+String? _comparisonObservationClock(String prefix, String? raw) {
+  if (raw == null || !RegExp(r'(Z|[+-]\d{2}:\d{2})$').hasMatch(raw)) {
+    return null;
+  }
+  final parsed = DateTime.tryParse(raw);
+  if (parsed == null) return null;
+  final inKorea = parsed.toUtc().add(const Duration(hours: 9));
+  final period = inKorea.hour < 12 ? '오전' : '오후';
+  final hour = inKorea.hour % 12 == 0 ? 12 : inKorea.hour % 12;
+  return '$prefix ${inKorea.month}월 ${inKorea.day}일 $period $hour시';
 }
 
 class _ProgressiveLoadingCard extends StatelessWidget {
@@ -687,8 +785,6 @@ class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
   final String mood;
   final bool compact;
-  final ComparisonResponse? comparison;
-  final bool comparisonLoading;
   final Future<void> Function()? onRetry;
   final bool retrying;
   final int metricColumns;
@@ -697,8 +793,6 @@ class _TopWeatherCard extends StatelessWidget {
     required this.today,
     required this.mood,
     required this.compact,
-    this.comparison,
-    this.comparisonLoading = false,
     this.onRetry,
     this.retrying = false,
     required this.metricColumns,
@@ -744,14 +838,12 @@ class _TopWeatherCard extends StatelessWidget {
           _TodaySection(
             today: today,
             current: current,
-            comparison: comparison,
-            loading: comparisonLoading,
             metricColumns: metricColumns,
           ),
           if (missing.isNotEmpty && onRetry != null) ...[
             SizedBox(height: compact ? 8 : 10),
             MissingDataRetry(
-              message: '받지 못한 현재 날씨: ${missing.join(' · ')}',
+              message: '받지 못한 날씨 자료: ${missing.join(' · ')}',
               retryKey: 'main-current-data-retry',
               onRetry: onRetry!,
               retrying: retrying,
@@ -769,7 +861,6 @@ class _TemperatureLine extends StatelessWidget {
   final double? temperature;
   final String apparentLabel;
   final double? apparentTemperature;
-  final bool loading;
 
   const _TemperatureLine({
     required this.lineKey,
@@ -777,7 +868,6 @@ class _TemperatureLine extends StatelessWidget {
     required this.temperature,
     required this.apparentLabel,
     required this.apparentTemperature,
-    this.loading = false,
   });
 
   @override
@@ -798,11 +888,11 @@ class _TemperatureLine extends StatelessWidget {
           children: [
             _TemperatureLabel(temperatureLabel),
             const SizedBox(width: 8),
-            _TemperatureValue(value: temperature, loading: loading),
+            _TemperatureValue(value: temperature),
             const SizedBox(width: 16),
             _TemperatureLabel(apparentLabel),
             const SizedBox(width: 8),
-            _TemperatureValue(value: apparentTemperature, loading: loading),
+            _TemperatureValue(value: apparentTemperature),
           ],
         ),
       ),
@@ -830,18 +920,13 @@ class _TemperatureLabel extends StatelessWidget {
 
 class _TemperatureValue extends StatelessWidget {
   final double? value;
-  final bool loading;
 
-  const _TemperatureValue({required this.value, required this.loading});
+  const _TemperatureValue({required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      value == null
-          ? loading
-              ? '확인 중'
-              : '자료 없음'
-          : '${value!.toStringAsFixed(1)}℃',
+      value == null ? '자료 없음' : '${value!.toStringAsFixed(1)}℃',
       style: const TextStyle(
         color: WeatherCareTheme.primaryDeep,
         fontSize: 16,

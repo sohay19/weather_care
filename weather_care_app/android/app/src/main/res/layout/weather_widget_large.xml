@@ -150,12 +150,13 @@
 
             <ImageView
                 android:id="@+id/widget_preparation_label_1"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
                 android:contentDescription="우산"
-                android:scaleType="fitStart" />
+                android:maxWidth="48dp"
+                android:scaleType="fitCenter" />
         </LinearLayout>
 
         <LinearLayout
@@ -181,12 +182,13 @@
 
             <ImageView
                 android:id="@+id/widget_preparation_label_2"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
                 android:contentDescription="두꺼운 겉옷"
-                android:scaleType="fitStart" />
+                android:maxWidth="48dp"
+                android:scaleType="fitCenter" />
         </LinearLayout>
 
         <LinearLayout
@@ -211,12 +213,13 @@
 
             <ImageView
                 android:id="@+id/widget_preparation_label_3"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:adjustViewBounds="true"
                 android:contentDescription="마스크"
-                android:scaleType="fitStart" />
+                android:maxWidth="48dp"
+                android:scaleType="fitCenter" />
         </LinearLayout>
     </LinearLayout>
     </LinearLayout>

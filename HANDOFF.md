@@ -7643,6 +7643,21 @@
 - 원본 `1080×2400` 캡처는 App Store Connect 허용 규격이 아니어 업로드 오류가 발생했다. 하단 60px만 잘라 허용되는 iPhone 6.1형 `1080×2340` 크기로 맞추고 24bit RGB PNG로 알파 채널을 제거한 `C:\WINDOWS\TEMP\weather-care-ad-removal-appstore-1080x2340.png`를 생성했다.
 - 코드와 앱 상태는 변경하지 않았다.
 
+## 2026-09-21 iOS 광고 제거 결제 테스트 절차 확인
+
+- App Store Connect에 인앱결제 상품을 등록한 다음에는 Sandbox Apple Account를 만들고, TestFlight 빌드 또는 Xcode 개발 서명 빌드로 실제 StoreKit Sandbox 거래를 테스트할 수 있다.
+- TestFlight에서 발생한 인앱결제는 자동으로 Sandbox에서 처리되며 실제 청구되지 않는다. 상품 아이디는 앱 코드와 동일한 `ad_free_lifetime`, 번들 ID는 `com.codesoha.weathercare`여야 한다.
+- 성공 구매, 구매 취소, 앱 재시작 후 권한 유지, 같은 Sandbox 계정의 다른 기기에서 구매 복원, Today·Main·Week 및 앱 실행 광고 제거를 필수 시나리오로 안내했다.
+- 코드와 앱 상태는 변경하지 않았다.
+
+## 2026-09-21 Android 광고 제거 결제 테스트 절차 확인
+
+- Google Play Console에서 결제용 Google 계정을 `설정 > 라이선스 테스트`와 내부 테스트 테스터 목록 두 곳에 추가하고, 내부 테스트 링크로 Play 스토어 설치한 빌드를 사용하는 절차를 안내했다.
+- 패키지명은 `com.codesoha.weathercare`, 일회성 비소모성 상품 ID는 `ad_free_lifetime`이고 상품과 구매 옵션이 활성화되어야 한다.
+- 라이선스 테스터의 결제창에 `테스트 구매`와 테스트 결제 수단이 나타나야 실제 청구를 피할 수 있다. 성공·거부·취소·복원·광고 제거·거래 완료 처리를 필수 시나리오로 안내했다.
+- 현재 앱은 구매 권한을 로컬 Secure Storage에도 저장하므로, Play Console에서 환불·권한 회수 후 재테스트할 때는 앱 데이터를 지우거나 재설치해야 한다. 서버 검증·환불 동기화는 아직 없다.
+- 코드와 앱 상태는 변경하지 않았다.
+
 ## 2026-09-21 iOS 위젯 Android 디자인 정합화
 
 - iOS WidgetKit의 최저·최고 행은 `최저`·`최고` 라벨을 SUITE Regular로 유지하고 온도값만 SUITE ExtraBold로 표시하도록 Android와 맞췄다.
@@ -7658,3 +7673,10 @@
 - 텍스트 영역의 가중치와 비트맵 축소 방식은 유지해 `휴대용 선풍기`, `두꺼운 겉옷`처럼 긴 준비물명도 카드 너비 안에서 계속 축소된다.
 - 저장소 지정 Flutter 3.47.4로 `flutter analyze`, 홈 위젯 스냅샷 테스트 5개, Android x86_64 Debug APK 빌드와 변경 파일 `git diff --check`를 통과했다.
 - iOS 위젯 디자인 정합화, Android 준비물 간격 보정, Android `versionCode` 변경과 이 인계 기록까지 남아 있던 수정 4개 파일을 모두 한 커밋으로 묶는다. `keystore.properties`의 비밀번호·별칭·파일 경로 등 민감한 서명값은 변경되지 않았다.
+
+## 2026-09-21 Android 위젯 준비물 내용 중앙 정렬
+
+- Android 큰 위젯의 각 준비물 카드에서 라벨 `ImageView`가 남은 폭 전체를 차지하던 가중치를 제거했다. 아이콘 36dp, 고정 간격 4dp, 실제 텍스트 폭을 하나의 묶음으로 계산해 카드의 `gravity=center`가 아이콘과 텍스트 전체를 중앙에 배치한다.
+- 라벨은 `wrap_content`, `adjustViewBounds=true`, 최대 폭 48dp로 설정했다. 짧은 준비물명은 자연 너비로 중앙 정렬되고 긴 준비물명은 최대 3개 카드 안에서 잘리지 않도록 비율 축소된다.
+- Flutter 3.47.4 `flutter analyze`, 홈 위젯 스냅샷 테스트 5개, Android 레이아웃 XML 파싱, Android x86_64 Debug APK 빌드와 `git diff --check`를 통과했다.
+- 검증 빌드가 자동 증가시킨 `keystore.properties`의 `versionCode`는 이번 UI 변경과 무관해 직전 커밋 값으로 복원했다.

@@ -5,6 +5,7 @@ import {
   OfficialWeatherWarning,
 } from '../providers/warnings/kmaWarningProvider';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
+import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
 import {
@@ -116,6 +117,8 @@ interface SchedulerDependencies {
     env: ServerEnv,
     latitude: number,
     longitude: number,
+    nx: number,
+    ny: number,
   ) => Promise<KmaWarningRegionMatch>;
   roadIceLoader?: (
     env: ServerEnv,
@@ -281,7 +284,13 @@ export async function runRecommendationNotificationJob(
     notificationTarget: item.built.destination.target,
     notificationTopic: item.built.destination.topic,
   }));
-  const results = await (dependencies.sender ?? defaultSender)(env, payloads);
+  let results: FcmSendResult[];
+  try {
+    results = await (dependencies.sender ?? defaultSender)(env, payloads);
+  } catch (error) {
+    logNotificationError('fcm_send_failed', error);
+    return;
+  }
   await recordResults(env.DB, sendable, results, now.toISOString());
 }
 
@@ -425,9 +434,16 @@ async function defaultWarningLoader(
 
 async function defaultWarningRegionResolver(
   env: ServerEnv,
-  latitude: number,
-  longitude: number,
+  _latitude: number,
+  _longitude: number,
+  nx: number,
+  ny: number,
 ): Promise<KmaWarningRegionMatch> {
+  const cached = await getCollectedCache<KmaWarningRegionMatch>(
+    env.DB,
+    collectedCacheKey.warningRegion(nx, ny),
+  );
+  if (cached?.status === 'AVAILABLE') return cached.value;
   throw new Error('COLLECTED_WARNING_REGION_NOT_READY');
 }
 
@@ -632,6 +648,8 @@ async function collectOfficialWarningNotifications(
     env: ServerEnv,
     latitude: number,
     longitude: number,
+    nx: number,
+    ny: number,
   ) => Promise<KmaWarningRegionMatch>,
 ): Promise<void> {
   let regionKey = `${row.nx}:${row.ny}`;
@@ -644,11 +662,20 @@ async function collectOfficialWarningNotifications(
       regionIds = catalogRegion.warningRegionIds;
       displayRegionName = catalogRegion.name;
     } else {
-      if (row.latitude === null || row.longitude === null) return;
-      const locationKey = `${row.latitude.toFixed(5)}:${row.longitude.toFixed(5)}`;
+      const coordinates = row.latitude !== null && row.longitude !== null
+        ? { latitude: row.latitude, longitude: row.longitude }
+        : kmaGridCoordinates(row.nx, row.ny);
+      if (!coordinates) return;
+      const locationKey = `${row.nx}:${row.ny}`;
       let matchPromise = warningRegionsByLocation.get(locationKey);
       if (!matchPromise) {
-        matchPromise = regionResolver(env, row.latitude, row.longitude);
+        matchPromise = regionResolver(
+          env,
+          coordinates.latitude,
+          coordinates.longitude,
+          row.nx,
+          row.ny,
+        );
         warningRegionsByLocation.set(locationKey, matchPromise);
       }
       const match = await matchPromise;

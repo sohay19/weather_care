@@ -8,6 +8,10 @@ import { FcmPayload } from '../src/notification/fcmClient';
 import { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import { NotificationSettings, ServerEnv, WeatherSnapshot } from '../src/types';
 import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
+import {
+  collectedCacheKey,
+  saveCollectedCache,
+} from '../src/database/collectedWeatherRepository';
 
 describe('notification scheduler', () => {
   it('does not send to a new registration without explicit notification settings', async () => {
@@ -445,6 +449,26 @@ describe('notification scheduler', () => {
     expect(history?.count).toBe(0);
   });
 
+  it('keeps the scheduled job alive when FCM authentication fails', async () => {
+    await insertInstallation('device-token');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(runRecommendationNotificationJob(testBindings(), {
+        now: new Date('2026-09-01T22:00:00Z'),
+        forecastLoader: async () => rainyForecast(),
+        warningLoader: async () => [],
+        sender: async () => {
+          throw new Error('FCM authentication failed');
+        },
+      })).resolves.toBeUndefined();
+      expect(log.mock.calls).toContainEqual([
+        JSON.stringify({ event: 'fcm_send_failed', error: 'Error' }),
+      ]);
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it('sends current rain once per rain episode only after both 500m sources agree', async () => {
     await insertInstallation('device-token', true);
     const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) =>
@@ -546,17 +570,35 @@ describe('notification scheduler', () => {
     const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) =>
       payloads.map(successResult),
     );
-
-    await runRecommendationNotificationJob(testBindings('test-apihub-key'), {
-      now: new Date('2026-09-01T12:00:00Z'),
-      forecastLoader: async () => rainyForecast(),
-      warningRegionResolver: async () => ({
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS weather_cache (
+        cache_key TEXT PRIMARY KEY,
+        region_id TEXT NOT NULL,
+        nx INTEGER NOT NULL,
+        ny INTEGER NOT NULL,
+        cache_type TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+    ).run();
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.warningRegion(98, 76),
+      type: 'COLLECTED_WARNING_REGION',
+      value: {
         regionId: 'L1080100',
         regionName: '부산',
         stationId: '159',
         stationName: '부산',
         distanceMeters: 2_000,
-      }),
+      },
+      nx: 98,
+      ny: 76,
+    });
+
+    await runRecommendationNotificationJob(testBindings('test-apihub-key'), {
+      now: new Date('2026-09-01T12:00:00Z'),
+      forecastLoader: async () => rainyForecast(),
       warningLoader,
       sender,
     });

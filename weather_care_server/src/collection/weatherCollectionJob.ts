@@ -343,7 +343,8 @@ async function collectWeekly(
   const expectedMidTermIssue = compactIssueToIso(midTermIssue);
   const expectedUvIssue = compactIssueToIso(uvIssue);
   const airQualityIssue = latestAirKoreaForecastIssue(now);
-  const needsMidTerm = cached?.value.midTermIssue !== expectedMidTermIssue;
+  const needsMidTerm = cached?.value.midTermIssue !== expectedMidTermIssue ||
+    (midRegion !== undefined && (cached?.value.midTermDays.length ?? 0) === 0);
   const needsUv = cached?.value.uvIssue !== expectedUvIssue;
   const needsAirQuality = cached?.value.airQualityIssue !== airQualityIssue;
   if (sameForecastIssue && !needsMidTerm && !needsUv && !needsAirQuality) return;
@@ -357,6 +358,7 @@ async function collectWeekly(
       try {
         midTermDays = await new KmaMidTermProvider({
           serviceKey: env.KMA_SERVICE_KEY,
+          apiHubKey: env.KMA_APIHUB_KEY,
           now: () => now,
         }).getForecast(midRegion);
         resolvedMidTermIssue = midTermDays[0]?.issuedAt;
@@ -446,12 +448,6 @@ async function collectWarnings(
     'WARNING_30_MINUTES',
     sourceVersion,
   )) return;
-  await saveCollectedSourceVersion(
-    env.DB,
-    'WARNING_30_MINUTES',
-    sourceVersion,
-    now,
-  );
   const metadata: Array<{
     region: CollectionTarget;
     value: { name: string; warningRegionIds: string[] };
@@ -549,6 +545,12 @@ async function collectWarnings(
         updatedAt: now,
       }),
     ));
+    await saveCollectedSourceVersion(
+      env.DB,
+      'WARNING_30_MINUTES',
+      sourceVersion,
+      now,
+    );
   } catch (error) {
     logCollectionFailure('warning', error);
   }
@@ -622,12 +624,6 @@ async function collectCurrentPrecipitation(
     'RADAR_15_MINUTES',
     sourceVersion,
   )) return;
-  await saveCollectedSourceVersion(
-    env.DB,
-    'RADAR_15_MINUTES',
-    sourceVersion,
-    now,
-  );
   const reserved = await reserveApiHubBudget(
     env.DB,
     'RADAR_AND_POINT_VALIDATION',
@@ -649,6 +645,12 @@ async function collectCurrentPrecipitation(
       value,
       updatedAt: now,
     })));
+    await saveCollectedSourceVersion(
+      env.DB,
+      'RADAR_15_MINUTES',
+      sourceVersion,
+      now,
+    );
   } catch (error) {
     logCollectionFailure('precipitation', error);
   }
@@ -666,12 +668,6 @@ async function collectRoadIce(
     'ROAD_ICE_30_MINUTES',
     sourceVersion,
   )) return;
-  await saveCollectedSourceVersion(
-    env.DB,
-    'ROAD_ICE_30_MINUTES',
-    sourceVersion,
-    now,
-  );
   if (!await reserveApiHubBudget(
     env.DB,
     'ROAD_ICE',
@@ -693,6 +689,12 @@ async function collectRoadIce(
         updatedAt: now,
       },
     )));
+    await saveCollectedSourceVersion(
+      env.DB,
+      'ROAD_ICE_30_MINUTES',
+      sourceVersion,
+      now,
+    );
   } catch (error) {
     logCollectionFailure('road_ice', error);
   }
@@ -711,12 +713,7 @@ async function collectRoadControls(
     'ROAD_CONTROL_30_MINUTES',
     sourceVersion,
   )) return;
-  await saveCollectedSourceVersion(
-    env.DB,
-    'ROAD_CONTROL_30_MINUTES',
-    sourceVersion,
-    now,
-  );
+  let failed = false;
   await mapWithConcurrency(locations, 2, async (location) => {
     try {
       const value = await provider.getNearestActiveControl(
@@ -730,9 +727,18 @@ async function collectRoadControls(
         updatedAt: now,
       });
     } catch (error) {
+      failed = true;
       logCollectionFailure('road_control', error);
     }
   });
+  if (!failed) {
+    await saveCollectedSourceVersion(
+      env.DB,
+      'ROAD_CONTROL_30_MINUTES',
+      sourceVersion,
+      now,
+    );
+  }
 }
 
 async function collectYesterdayComparisons(

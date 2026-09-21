@@ -27,10 +27,11 @@ export function previousKoreanDate(now: Date): string {
 }
 
 export function compactIssueToIso(issueTime: string): string {
-  if (!/^\d{12}$/.test(issueTime)) {
-    throw new Error('Issue time must use yyyyMMddHHmm');
+  if (!/^\d{10}(\d{2})?$/.test(issueTime)) {
+    throw new Error('Issue time must use yyyyMMddHH or yyyyMMddHHmm');
   }
-  return `${issueTime.slice(0, 4)}-${issueTime.slice(4, 6)}-${issueTime.slice(6, 8)}T${issueTime.slice(8, 10)}:${issueTime.slice(10, 12)}:00+09:00`;
+  const minute = issueTime.length === 12 ? issueTime.slice(10, 12) : '00';
+  return `${issueTime.slice(0, 4)}-${issueTime.slice(4, 6)}-${issueTime.slice(6, 8)}T${issueTime.slice(8, 10)}:${minute}:00+09:00`;
 }
 
 export function latestAirKoreaForecastIssue(now: Date): string {

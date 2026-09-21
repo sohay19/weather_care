@@ -1,3 +1,5 @@
+import { temperatureRegionIdForGrid } from './kmaMidTermGridCatalog';
+
 export interface KmaMidTermRegionIds {
   temperatureRegionId: string;
   landRegionId: string;
@@ -236,6 +238,7 @@ export function resolveKmaMidTermRegionIds(
   );
   const temperatureRegionId =
     matches[0]?.temperatureRegionId ??
+    temperatureRegionIdForGrid(nx, ny) ??
     (adminPrefix ? DEFAULT_BY_ADMIN_PREFIX[adminPrefix] : undefined);
   if (!temperatureRegionId) return undefined;
   return {

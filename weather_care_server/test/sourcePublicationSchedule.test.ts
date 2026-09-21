@@ -37,6 +37,8 @@ describe('source publication schedule', () => {
   it('converts Korean issue times and calendar dates deterministically', () => {
     expect(compactIssueToIso('202609171800'))
       .toBe('2026-09-17T18:00:00+09:00');
+    expect(compactIssueToIso('2026091718'))
+      .toBe('2026-09-17T18:00:00+09:00');
     expect(previousKoreanDate(new Date('2026-09-17T00:00:00.000Z')))
       .toBe('2026-09-16');
   });

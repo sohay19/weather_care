@@ -7,6 +7,9 @@ import {
 import {
   resolveKmaMidTermRegionIds,
 } from '../src/regions/kmaMidTermRegionCatalog';
+import {
+  NATIONWIDE_FORECAST_GRIDS,
+} from '../src/regions/nationwideForecastGridCatalog';
 
 describe('KmaMidTermProvider', () => {
   it('uses the latest published 06:00 or 18:00 issue', () => {
@@ -111,5 +114,31 @@ describe('KMA mid-term region catalog', () => {
       .toMatchObject({ temperatureRegionId: '11D20402' });
     expect(resolveKmaMidTermRegionIds('고성군', '4882000000', 85, 128))
       .toMatchObject({ temperatureRegionId: '11H20404' });
+  });
+
+  it('resolves active grids without request region metadata', () => {
+    expect(resolveKmaMidTermRegionIds(undefined, undefined, 57, 124))
+      .toEqual({
+        temperatureRegionId: '11B20202',
+        landRegionId: '11B00000',
+      });
+    expect(resolveKmaMidTermRegionIds(undefined, undefined, 87, 141))
+      .toEqual({
+        temperatureRegionId: '11D20401',
+        landRegionId: '11D20000',
+      });
+  });
+
+  it('resolves every supported forecast grid', () => {
+    const unresolved = NATIONWIDE_FORECAST_GRIDS.filter(
+      ({ nx, ny }) => !resolveKmaMidTermRegionIds(
+        undefined,
+        undefined,
+        nx,
+        ny,
+      ),
+    );
+    expect(NATIONWIDE_FORECAST_GRIDS).toHaveLength(1633);
+    expect(unresolved).toEqual([]);
   });
 });

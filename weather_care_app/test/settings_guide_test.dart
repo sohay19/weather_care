@@ -202,7 +202,7 @@ void main() {
       'firebase.google.com',
       'support.google.com',
       'policies.google.com',
-      'weather-care-privacy.pages.dev',
+      'weather-care.pages.dev',
     };
     final links = SettingsGuide.values
         .expand((guide) => guide.sections)

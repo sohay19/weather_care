@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/app_settings.dart';
 import '../../services/current_location_service.dart';
@@ -19,6 +20,8 @@ import 'settings_guide_screen.dart';
 import 'analytics_consent_control.dart';
 import 'ads_privacy_control.dart';
 import '../../services/server_data_access.dart';
+
+const _weatherMapUrl = 'https://weather-care.pages.dev/weather-map';
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -40,6 +43,7 @@ class SettingsScreen extends StatefulWidget {
   final ServerDataAccess? serverDataAccess;
   final Future<void> Function()? onDeleteServerData;
   final Future<void> Function()? onResumeServerData;
+  final Future<bool> Function(Uri)? openExternalLink;
 
   const SettingsScreen({
     super.key,
@@ -62,6 +66,7 @@ class SettingsScreen extends StatefulWidget {
     this.serverDataAccess,
     this.onDeleteServerData,
     this.onResumeServerData,
+    this.openExternalLink,
   });
 
   @override
@@ -195,6 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         loadRegionCatalog: widget.loadRegionCatalog,
         onSettingsChanged: _updateSettings,
         onOpenGuide: () => _openGuide(SettingsGuide.location),
+        openExternalLink: widget.openExternalLink,
       ),
     ));
   }
@@ -252,6 +258,7 @@ class _LocationSettingsScreen extends StatefulWidget {
   final Future<RegionCatalog> Function()? loadRegionCatalog;
   final ValueChanged<AppSettings> onSettingsChanged;
   final VoidCallback onOpenGuide;
+  final Future<bool> Function(Uri)? openExternalLink;
 
   const _LocationSettingsScreen({
     required this.initialSettings,
@@ -263,6 +270,7 @@ class _LocationSettingsScreen extends StatefulWidget {
     required this.loadRegionCatalog,
     required this.onSettingsChanged,
     required this.onOpenGuide,
+    required this.openExternalLink,
   });
 
   @override
@@ -273,6 +281,7 @@ class _LocationSettingsScreen extends StatefulWidget {
 class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
   late AppSettings settings;
   bool _pickingRegion = false;
+  bool _openingWeatherMap = false;
 
   @override
   void initState() {
@@ -303,6 +312,25 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
       currentRegionId: selected.gridId,
       manualRegionKey: selected.key,
     ));
+  }
+
+  Future<void> _openWeatherMap() async {
+    if (_openingWeatherMap) return;
+    setState(() => _openingWeatherMap = true);
+    var opened = false;
+    try {
+      final uri = Uri.parse(_weatherMapUrl);
+      opened = await (widget.openExternalLink?.call(uri) ??
+          launchUrl(uri, mode: LaunchMode.externalApplication));
+    } catch (_) {
+      // 브라우저가 없거나 실행할 수 없으면 아래 안내를 표시한다.
+    }
+    if (!mounted) return;
+    setState(() => _openingWeatherMap = false);
+    if (opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('예보 구역 지도를 열지 못했어요.\n인터넷 연결을 확인해주세요.')),
+    );
   }
 
   @override
@@ -426,6 +454,12 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
               onPressed: widget.onOpenGuide,
               icon: const Icon(Icons.help_outline_rounded, size: 18),
               label: const Text('위치 권한은 어디에 쓰이나요?'),
+            ),
+            TextButton.icon(
+              key: const ValueKey('weather-grid-guide'),
+              onPressed: _openingWeatherMap ? null : _openWeatherMap,
+              icon: const Icon(Icons.grid_view_rounded, size: 18),
+              label: const Text('예보 기준 구역은 어떻게 되어있나요?'),
             ),
           ],
         ));

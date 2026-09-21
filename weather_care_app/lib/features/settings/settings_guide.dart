@@ -136,7 +136,7 @@ enum SettingsGuide {
               '방침은 외부 브라우저로 열려요.\n인터넷 연결이 없으면 열리지 않을 수 있으며 개인정보 문의는 sy40222@gmail.com으로 보낼 수 있어요.',
             ], links: [
               GuideLink(
-                  '날씨챙겨 개인정보처리방침', 'https://weather-care-privacy.pages.dev/'),
+                  '날씨챙겨 개인정보처리방침', 'https://weather-care.pages.dev/'),
             ]),
           ],
       };

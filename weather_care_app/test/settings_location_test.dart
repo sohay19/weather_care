@@ -95,4 +95,23 @@ void main() {
     expect(find.textContaining('수원'), findsNothing);
     expect(find.byKey(const ValueKey('location-refresh')), findsNothing);
   });
+  testWidgets('예보 기준 구역 안내는 운영 지도를 외부 브라우저로 연다', (tester) async {
+    Uri? openedUri;
+    await tester.pumpWidget(MaterialApp(home: SettingsScreen(
+      openExternalLink: (uri) async {
+        openedUri = uri;
+        return true;
+      },
+    )));
+    await openLocationSettings(tester);
+    final button = find.byKey(const ValueKey('weather-grid-guide'));
+    await tester.scrollUntilVisible(button, 200,
+        scrollable: find.byType(Scrollable).last);
+    await tester.tap(button);
+    await tester.pump();
+    expect(
+      openedUri,
+      Uri.parse('https://weather-care.pages.dev/weather-map'),
+    );
+  });
 }

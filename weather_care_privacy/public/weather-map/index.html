@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="날씨챙겨가 같은 기본예보를 사용하는 기상청 5km 예보 격자와 연결 지역을 지도에서 확인합니다.">
+  <title>'날씨챙겨' 예보 구역 지도 | 날씨챙겨</title>
+  <link rel="icon" href="/app-icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/app-icon.png">
+  <link rel="canonical" href="https://weather-care.pages.dev/weather-map">
+  <link rel="stylesheet" href="/weather-map/map.css">
+  <script src="/weather-map/map.js" defer></script>
+  <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=s34pw0ko54&amp;callback=initNaverWeatherMap" defer></script>
+</head>
+<body>
+<a class="skip" href="#map-content">지도 본문 바로가기</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="날씨챙겨 개인정보처리방침"><img class="brand-icon" src="/app-icon.png" alt="" width="34" height="34"> 날씨챙겨</a>
+  <nav aria-label="공개 안내 페이지">
+    <a href="/">개인정보처리방침</a>
+    <a href="/data-deletion">데이터 삭제</a>
+  </nav>
+</header>
+
+<main id="map-content">
+  <section class="intro" aria-labelledby="page-title">
+    <p class="eyebrow">WEATHER FORECAST GRID</p>
+    <h1 id="page-title">'날씨챙겨' 예보 구역 지도</h1>
+    <p>날씨챙겨는 기상청 단기예보의 5km 격자 <strong>nx·ny</strong>를 기본 판단 단위로 사용합니다. 같은 칸을 선택하면 같은 중앙 수집 예보를 사용합니다.</p>
+  </section>
+
+  <section class="meaning" aria-labelledby="meaning-title">
+    <p class="section-kicker">WHAT THE GRID MEANS</p>
+    <h2 id="meaning-title">격자 별 공유/비공유 항목</h2>
+    <div class="meaning-grid">
+      <article class="shared">
+        <h3>공유 항목</h3>
+        <ul>
+          <li>현재 기온·습도·바람 등 초단기 관측</li>
+          <li>시간별·주간 기온, 하늘 상태, 강수, 습도, 풍향·풍속</li>
+          <li>자외선지수와 대기질</li>
+          <li>관측소 기반 가시거리와 기상특보</li>
+          <li>공통 자료로 만든 날씨 브리핑과 생활 안내</li>
+          <li>사용자 설정이 같을 때의 준비물 추천과 타임라인</li>
+        </ul>
+      </article>
+      <article class="different">
+        <h3>비공유 항목</h3>
+        <ul>
+          <li>GPS 좌표 기준 실시간 레이더 강수</li>
+          <li>도로 결빙 위험과 도로 통제 정보</li>
+          <li>GPS 모드의 일출·일몰 시각</li>
+          <li>준비물 추천 사용 여부와 알림 설정·시각</li>
+          <li>사용자가 선택한 행정지역명과 앱의 체크 기록</li>
+          <li>요청 시점과 기기에 남은 캐시 상태</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="map-section" aria-labelledby="map-title">
+    <div class="map-heading">
+      <div>
+        <p class="section-kicker">INTERACTIVE MAP</p>
+        <h2 id="map-title">지역을 검색하거나 격자를 선택하세요</h2>
+        <p class="map-provider-note">네이버 지도를 확대하면 시도·시군구·읍면동 이름과 주변 도로를 함께 확인할 수 있어요.</p>
+      </div>
+      <div class="search-wrap">
+        <label for="region-search">지역명 검색</label>
+        <input id="region-search" type="search" placeholder="예: 관악구, 수원시, 제주" autocomplete="off">
+        <div id="search-results" class="search-results" role="listbox" hidden></div>
+      </div>
+    </div>
+
+    <div class="legend" aria-label="격자 색상의 의미">
+      <p><strong>격자 색상의 의미는?</strong><span>색상이 진할수록 같은 격자를 함께 사용하는 행정지역 항목이 많다는 것을 의미합니다.</span></p>
+      <div class="legend-scale">
+        <span><i class="level-1"></i>1개</span>
+        <span><i class="level-2"></i>2–4개</span>
+        <span><i class="level-3"></i>5–9개</span>
+        <span><i class="level-4"></i>10개 이상</span>
+      </div>
+    </div>
+
+    <div class="map-layout">
+      <div class="map-panel">
+        <div class="map-tools" aria-label="지도 초기화">
+          <button id="reset-map" type="button">전국 보기</button>
+        </div>
+        <div id="grid-map" role="application" tabindex="0" aria-label="네이버 지도 위에 표시된 대한민국 기상청 5km 예보 격자. 확대하면 행정지역명을 볼 수 있고 격자를 선택하면 연결 지역을 확인할 수 있습니다."></div>
+        <p id="map-status" class="map-status" role="status" hidden></p>
+      </div>
+
+      <aside class="selection" aria-labelledby="selection-title" aria-live="polite">
+        <p class="section-kicker">SELECTED GRID</p>
+        <h2 id="selection-title">격자를 선택해 주세요</h2>
+        <p id="selection-summary">지도에서 칸을 누르거나 지역명을 검색하면 같은 격자를 사용하는 지역을 보여드려요.</p>
+        <div id="selection-regions" class="selection-regions"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="coordinate-note" aria-label="지역 선택 방식과 격자 안내">
+    <div class="coordinate-note-card">
+      <p><strong>수동 지역 선택</strong>은 격자 중심 좌표를 사용합니다.</p>
+      <p><strong>현재 위치</strong>는 같은 격자 안에서도 실제 좌표를 함께 사용하므로 정밀 강수·도로·일출·일몰 정보가 달라질 수 있습니다.</p>
+    </div>
+  </section>
+
+  <section class="source" aria-labelledby="source-title">
+    <p class="section-kicker">DATA SOURCE</p>
+    <h2 id="source-title">자료 기준</h2>
+    <p>행정지역명·도로·지형은 네이버 Web Dynamic Map을 사용하고, 기상청 날씨누리 행정동 검색 목록의 지역별 단기예보 격자를 그 위에 표시합니다. 격자 하나는 약 5km 간격의 예보 좌표이며 행정구역 전체의 실제 경계와 일치하지 않습니다.</p>
+    <p id="source-date" class="source-date"></p>
+  </section>
+</main>
+
+<footer>
+  <span>날씨챙겨 · 코드소하(CODESOHA)</span>
+  <a href="/">개인정보처리방침</a>
+  <a href="/data-deletion">데이터 삭제 요청</a>
+  <a href="#map-content">맨 위로 ↑</a>
+</footer>
+</body>
+</html>

@@ -1,8 +1,9 @@
 {
-  "name": "weather-care-privacy",
+  "name": "weather-care",
   "private": true,
   "scripts": {
-    "verify": "node verify.cjs"
+    "build:data": "node build-grid-data.cjs",
+    "verify": "npm run build:data && node verify.cjs"
   },
   "devDependencies": {
     "playwright": "1.63.0"

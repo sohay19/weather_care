@@ -142,4 +142,4 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 - 앱스토어·Play Console·AdMob의 대상 연령 설정 재검토
 - Android 실물/iOS에서 UMP 동의·거부·변경 및 광고 미요청 경계 검증
 - [x] 운영 개인정보처리방침 확정·Pages 게시용 본문과 앱 내 URL 연결
-- Play Console·App Store에 `https://weather-care-privacy.pages.dev/` 등록
+- Play Console·App Store에 `https://weather-care.pages.dev/` 등록

@@ -1,20 +1,29 @@
-# 날씨챙겨 개인정보 페이지
+# 날씨챙겨 공개 페이지
 
-Cloudflare Pages 정적 사이트. 배포 대상은 `public`만이며 서버 바인딩/Functions/외부 스크립트가 없다. 기존 API Worker와 분리한다.
+Cloudflare Pages 정적 사이트다. 하나의 `weather-care` 프로젝트에서 다음 주소를 제공한다.
 
-현재 **운영 개인정보처리방침**이다. 공고일·시행일은 2026-09-14이며 검색엔진 차단 표시는 제거했다. 정식 주소는 `https://weather-care-privacy.pages.dev/`이다.
+- `https://weather-care.pages.dev/`: 개인정보처리방침
+- `https://weather-care.pages.dev/data-deletion`: 데이터 삭제 요청 안내
+- `https://weather-care.pages.dev/weather-map`: 날씨 판단 구역 지도
 
-서버 프로젝트에 설치된 Wrangler를 사용한다(이 폴더 기준):
+배포 대상은 `public`이며 Pages Functions와 서버 바인딩은 사용하지 않는다. `/weather-map`만 네이버 Web Dynamic Map 스크립트와 지도 타일을 사용하고, 나머지 페이지는 외부 스크립트를 불러오지 않는다. 기존 날씨 API Worker와도 분리되어 있다.
+
+## 지도 데이터
+
+`build-grid-data.cjs`는 앱의 `assets/data/kma_regions.json`을 읽어 동일한 기상청 단기예보 `nx·ny`를 사용하는 지역을 묶고, 약 5km 격자 폴리곤을 생성한다. 생성 결과는 `public/weather-map/data/grid-areas.json`이며 배포 전에 반드시 다시 만든다.
+
+지도에서 같은 격자가 공유하는 값과 GPS·설치 설정에 따라 달라질 수 있는 값을 함께 설명한다. 네이버 지도는 행정지역명·도로·지형을 보여주고, 반투명 격자 도형은 앱의 기본예보 판단 단위다. Web Dynamic Map의 브라우저용 Client ID는 공개 값이며 Client Secret은 소스에 넣지 않는다. 네이버 클라우드의 Web 서비스 URL에는 `weather-care.pages.dev`가 등록되어 있어야 한다.
+
+## 검증과 배포
+
+서버 프로젝트에 설치된 Wrangler를 사용한다. 이 폴더에서 실행한다.
 
 ```powershell
-node ../weather_care_server/node_modules/wrangler/bin/wrangler.js pages dev public --cwd D:/IdeaProjects/weather_care/weather_care_privacy
-node ../weather_care_server/node_modules/wrangler/bin/wrangler.js pages deploy public --cwd D:/IdeaProjects/weather_care/weather_care_privacy --project-name weather-care-privacy --branch master
+npm run verify
+node ../weather_care_server/node_modules/wrangler/bin/wrangler.js pages dev public
+node ../weather_care_server/node_modules/wrangler/bin/wrangler.js pages deploy public --project-name weather-care --branch master
 ```
 
-변경 시 본문과 개정 이력·시행일을 함께 수정하고 검증한 뒤 production branch `master`에 배포한다. 기존 preview 배포도 별도 공개 사본이므로 개인정보나 비밀값을 넣지 않는다.
+`npm run verify`는 지도 데이터를 생성한 뒤 개인정보처리방침·삭제 안내·지도를 모바일과 데스크톱 크기에서 검사하고 `.qa`에 스크린샷을 만든다. `.qa`는 배포하지 않는다.
 
-공개 페이지는 개인정보처리방침 `/`와 Google Play 데이터 삭제 요청 URL로 제출할 `/data-deletion`이다. 삭제 안내 페이지에서는 앱 안의 인증된 삭제 경로와 앱을 사용할 수 없을 때의 이메일 요청 경로를 함께 제공한다.
-
-확인: 두 페이지의 반응형 레이아웃, 목차 이동, 문의 mailto, 내부·외부 링크, HTTP 200/CSP/404, 스크립트 없는 출력. 이용 대상은 만 14세 이상이고 문의 기록은 처리 종료 후 1년, 운영 변경용 수동 DB 백업은 최대 7일로 확정했다. 운영 광고는 비활성 상태이며 활성화 전에 실제 처리와 동의 흐름을 검증해 방침을 개정한다.
-
-`npm install` 후 `npm run verify`를 실행하면 Playwright와 설치된 Chrome으로 정적 페이지를 검증한다. `.qa` 스크린샷은 배포하지 않는다. Wrangler 실행 시 기존 서버 설정을 잘못 읽지 않도록 이 프로젝트의 절대 `--cwd`를 명시한다.
+개인정보처리방침을 변경할 때는 본문, 개정 이력과 시행일을 함께 수정한다. 현재 공고일·시행일은 2026-09-14이다. 운영 광고는 비활성 상태이며 활성화 전에 실제 처리와 동의 흐름을 검증해 방침을 개정한다.

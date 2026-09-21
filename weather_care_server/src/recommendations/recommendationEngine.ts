@@ -30,18 +30,22 @@ const LEGACY_RECOMMENDATIONS: Partial<
   COOLER_THAN_TEMPERATURE: ['OUTERWEAR'],
 };
 
-const EXPANDED_RECOMMENDATIONS: Partial<
-  Record<LifestyleInsight['type'], RecommendationType[]>
-> = {
-  RAIN_GEAR_USEFUL: ['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS'],
-  STRONG_SUN_EXPOSURE: ['PARASOL', 'SUNGLASSES'],
-  OUTERWEAR_USEFUL: ['OUTERWEAR', 'SCARF', 'HAND_WARMER'],
-  MASK_USEFUL: ['MASK'],
-  HYDRATION_IMPORTANT: ['WATER', 'PORTABLE_FAN'],
-  SUNSCREEN_USEFUL: ['SUNSCREEN'],
-  VERY_HOT_AND_HUMID: ['WATER', 'PORTABLE_FAN', 'COOLING_ITEM'],
-  COOLER_THAN_TEMPERATURE: ['OUTERWEAR', 'SCARF', 'HAND_WARMER'],
-  SNOW_TRAVEL_CAUTION: ['SNOW_CHAINS', 'POWER_BANK', 'WINTER_BOOTS'],
+const PREPARATION_RANK: Partial<Record<RecommendationType, number>> = {
+  UMBRELLA: 0,
+  RAINCOAT: 1,
+  RAIN_BOOTS: 2,
+  SUNSCREEN: 0,
+  PARASOL: 1,
+  SUNGLASSES: 2,
+  WATER: 0,
+  PORTABLE_FAN: 1,
+  COOLING_ITEM: 2,
+  OUTERWEAR: 0,
+  SCARF: 1,
+  HAND_WARMER: 2,
+  SNOW_CHAINS: 0,
+  WINTER_BOOTS: 1,
+  POWER_BANK: 2,
 };
 
 export function runRecommendationEngine(
@@ -85,7 +89,16 @@ export function runRecommendationEngine(
       recs.push({
         type,
         recommended: enabled[type],
-        priority: Math.min(100, Math.max(10, insight.score)),
+        priority: Math.min(
+          100,
+          Math.max(
+            10,
+            insight.score -
+              (options.expandedPreparations
+                ? (PREPARATION_RANK[type] ?? 0)
+                : 0),
+          ),
+        ),
         title: titleFor(type),
         description: descriptionFor(type, allInsightTypes),
         reasonCodes,
@@ -113,22 +126,58 @@ function recommendationTypesFor(
   insight: LifestyleInsight,
   options: RecommendationEngineOptions,
 ): RecommendationType[] {
-  const heavySnow = insight.sourceFacts.includes(WeatherRuleFactType.HEAVY_SNOW);
+  const heavySnow = insight.score >= 95;
   if (insight.type === 'SNOW_TRAVEL_CAUTION') {
     if (!options.expandedPreparations) {
       return heavySnow ? ['HEAVY_SNOW_CAUTION'] : [];
     }
     return [
-      ...(EXPANDED_RECOMMENDATIONS.SNOW_TRAVEL_CAUTION ?? []),
+      ...(heavySnow ? ['SNOW_CHAINS' as const] : []),
+      'WINTER_BOOTS',
+      ...(insight.score >= 70 ? ['POWER_BANK' as const] : []),
       ...(heavySnow && options.includeLegacyHeavySnowCaution
         ? ['HEAVY_SNOW_CAUTION' as const]
         : []),
     ];
   }
-  const mapping = options.expandedPreparations
-    ? EXPANDED_RECOMMENDATIONS
-    : LEGACY_RECOMMENDATIONS;
-  return mapping[insight.type] ?? [];
+  if (!options.expandedPreparations) {
+    return LEGACY_RECOMMENDATIONS[insight.type] ?? [];
+  }
+  switch (insight.type) {
+    case 'RAIN_GEAR_USEFUL':
+      return [
+        'UMBRELLA',
+        ...(insight.score >= 70 ? ['RAINCOAT' as const] : []),
+        ...(insight.score >= 90 ? ['RAIN_BOOTS' as const] : []),
+      ];
+    case 'STRONG_SUN_EXPOSURE':
+      return [
+        'SUNSCREEN',
+        ...(insight.score >= 80 ? ['PARASOL' as const] : []),
+        ...(insight.score >= 100 ? ['SUNGLASSES' as const] : []),
+      ];
+    case 'SUNSCREEN_USEFUL':
+      return ['SUNSCREEN'];
+    case 'HYDRATION_IMPORTANT':
+      return [
+        'WATER',
+        ...(insight.score >= 35 ? ['PORTABLE_FAN' as const] : []),
+        ...(insight.score >= 38 ? ['COOLING_ITEM' as const] : []),
+      ];
+    case 'VERY_HOT_AND_HUMID':
+      return ['WATER', 'PORTABLE_FAN', 'COOLING_ITEM'];
+    case 'OUTERWEAR_USEFUL':
+    case 'COOLER_THAN_TEMPERATURE':
+      return [
+        'OUTERWEAR',
+        ...(insight.score >= 90 ? ['SCARF' as const] : []),
+        ...(insight.score >= 95 ? ['HAND_WARMER' as const] : []),
+      ];
+    case 'MASK_USEFUL':
+      return ['MASK'];
+    default:
+      return [];
+  }
 }
 
 function stringContext(

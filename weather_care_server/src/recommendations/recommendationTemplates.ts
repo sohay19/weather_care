@@ -1,6 +1,6 @@
 import { LifestyleInsightType, RecommendationType } from '../types';
 
-export const CATALOG_VERSION = 'ko-KR-2026.09.2';
+export const CATALOG_VERSION = 'ko-KR-2026.09.3';
 
 export const recommendationMessageCatalog: Record<RecommendationType, string[]> = {
   UMBRELLA: [

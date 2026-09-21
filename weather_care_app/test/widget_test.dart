@@ -6,6 +6,7 @@ import 'package:weather_care/features/home/tabs/detail_tab.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/home_screen.dart';
+import 'package:weather_care/features/home/widgets/preparation_icon.dart';
 import 'package:weather_care/features/home/widgets/tab_page_header.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/features/home/widgets/server_connection_failure_dialog.dart';
@@ -871,7 +872,7 @@ void main() {
 
   testWidgets('recommendation grid handles empty and full narrow layouts',
       (tester) async {
-    tester.view.physicalSize = const Size(360, 1000);
+    tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -880,10 +881,13 @@ void main() {
       return MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: RecommendationBagSection(
-              regionName: '수원',
-              recommendations: recommendations,
-              onDetail: (_) {},
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: RecommendationBagSection(
+                regionName: '수원',
+                recommendations: recommendations,
+                onDetail: (_) {},
+              ),
             ),
           ),
         ),
@@ -915,12 +919,20 @@ void main() {
     expect(first, findsOneWidget);
     expect(second, findsOneWidget);
     expect(third, findsOneWidget);
-    expect(tester.getSize(first).width, greaterThanOrEqualTo(124));
+    expect(tester.getSize(first).width, greaterThanOrEqualTo(78));
     expect(
         tester.getTopLeft(second).dx, greaterThan(tester.getTopLeft(first).dx));
-    expect(tester.getTopLeft(third).dx, tester.getTopLeft(first).dx);
     expect(
-        tester.getTopLeft(third).dy, greaterThan(tester.getTopLeft(first).dy));
+        tester.getTopLeft(third).dx, greaterThan(tester.getTopLeft(second).dx));
+    expect(tester.getTopLeft(third).dy, tester.getTopLeft(first).dy);
+    expect(
+      tester
+          .widget<PreparationIcon>(
+            find.descendant(of: first, matching: find.byType(PreparationIcon)),
+          )
+          .size,
+      34,
+    );
     expect(find.text('장화'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

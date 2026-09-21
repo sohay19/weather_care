@@ -32,7 +32,7 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(umbrella).toEqual(
       expect.objectContaining({
         decisionVersion: 'weather-rules-1.2.0',
-        catalogVersion: 'ko-KR-2026.09.2',
+        catalogVersion: 'ko-KR-2026.09.3',
         reasonCodes: expect.arrayContaining(['RAIN_LIKELY']),
         sourceFields: expect.arrayContaining(['precipitationType']),
       }),
@@ -180,47 +180,105 @@ describe('Lifestyle v1.1 catalog', () => {
     );
   });
 
-  it('returns all five three-item preparation sets only for the expanded catalog', () => {
-    const insights: LifestyleInsight[] = [
+  it('날씨 강도에 따라 준비물을 세트가 아닌 1·2·3개로 늘린다', () => {
+    const insights = ({
+      rain,
+      uv,
+      heat,
+      cold,
+      snow,
+      heavyRain = false,
+      heavySnow = false,
+    }: {
+      rain: number;
+      uv: number;
+      heat: number;
+      cold: number;
+      snow: number;
+      heavyRain?: boolean;
+      heavySnow?: boolean;
+    }): LifestyleInsight[] => [
       {
         type: LifestyleInsightType.RAIN_GEAR_USEFUL,
-        score: 80,
-        sourceFacts: [WeatherRuleFactType.RAIN_LIKELY],
+        score: rain,
+        sourceFacts: [
+          heavyRain
+            ? WeatherRuleFactType.HEAVY_RAIN
+            : WeatherRuleFactType.RAIN_LIKELY,
+        ],
       },
       {
         type: LifestyleInsightType.STRONG_SUN_EXPOSURE,
-        score: 80,
+        score: uv,
         sourceFacts: [WeatherRuleFactType.UV_HIGH],
       },
       {
         type: LifestyleInsightType.SUNSCREEN_USEFUL,
-        score: 80,
+        score: uv,
         sourceFacts: [WeatherRuleFactType.UV_HIGH],
       },
       {
         type: LifestyleInsightType.HYDRATION_IMPORTANT,
-        score: 80,
+        score: heat,
         sourceFacts: [WeatherRuleFactType.APPARENT_TEMPERATURE_HIGH],
       },
       {
-        type: LifestyleInsightType.VERY_HOT_AND_HUMID,
-        score: 80,
-        sourceFacts: [
-          WeatherRuleFactType.APPARENT_TEMPERATURE_HIGH,
-          WeatherRuleFactType.HUMIDITY_HIGH,
-        ],
-      },
-      {
         type: LifestyleInsightType.OUTERWEAR_USEFUL,
-        score: 80,
+        score: cold,
         sourceFacts: [WeatherRuleFactType.TEMPERATURE_LOW],
       },
       {
         type: LifestyleInsightType.SNOW_TRAVEL_CAUTION,
-        score: 80,
-        sourceFacts: [WeatherRuleFactType.SNOW_LIKELY],
+        score: snow,
+        sourceFacts: [
+          heavySnow
+            ? WeatherRuleFactType.HEAVY_SNOW
+            : WeatherRuleFactType.SNOW_LIKELY,
+        ],
       },
     ];
+    const mild = runRecommendationEngine(insights({
+      rain: 55,
+      uv: 60,
+      heat: 33,
+      cold: 88,
+      snow: 55,
+    }), undefined, { expandedPreparations: true });
+    expect(mild.map((item) => item.type)).toEqual([
+      'OUTERWEAR',
+      'SUNSCREEN',
+      'UMBRELLA',
+      'WINTER_BOOTS',
+      'WATER',
+    ]);
+
+    const mediumInsights = insights({
+      rain: 75,
+      uv: 80,
+      heat: 35,
+      cold: 90,
+      snow: 70,
+    });
+    const medium = runRecommendationEngine(mediumInsights, undefined, {
+      expandedPreparations: true,
+    });
+    expect(new Set(medium.map((item) => item.type))).toEqual(new Set([
+      'UMBRELLA', 'RAINCOAT',
+      'SUNSCREEN', 'PARASOL',
+      'WATER', 'PORTABLE_FAN',
+      'OUTERWEAR', 'SCARF',
+      'WINTER_BOOTS', 'POWER_BANK',
+    ]));
+
+    const severeInsights = insights({
+      rain: 95,
+      uv: 100,
+      heat: 40,
+      cold: 95,
+      snow: 95,
+      heavyRain: true,
+      heavySnow: true,
+    });
     const expectedExpanded = new Set([
       'UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS',
       'PARASOL', 'SUNSCREEN', 'SUNGLASSES',
@@ -229,15 +287,22 @@ describe('Lifestyle v1.1 catalog', () => {
       'SNOW_CHAINS', 'POWER_BANK', 'WINTER_BOOTS',
     ]);
 
-    expect(new Set(runRecommendationEngine(insights).map((item) => item.type)))
+    expect(new Set(runRecommendationEngine(mediumInsights).map((item) => item.type)))
       .toEqual(new Set(['UMBRELLA', 'PARASOL', 'SUNSCREEN', 'WATER', 'OUTERWEAR']));
 
-    const expanded = runRecommendationEngine(insights, undefined, {
+    const expanded = runRecommendationEngine(severeInsights, undefined, {
       expandedPreparations: true,
     });
     expect(new Set(expanded.map((item) => item.type))).toEqual(expectedExpanded);
+    const priorities = Object.fromEntries(
+      expanded.map((item) => [item.type, item.priority]),
+    );
+    expect(priorities.UMBRELLA).toBeGreaterThan(priorities.RAINCOAT);
+    expect(priorities.RAINCOAT).toBeGreaterThan(priorities.RAIN_BOOTS);
+    expect(priorities.SUNSCREEN).toBeGreaterThan(priorities.PARASOL);
+    expect(priorities.SNOW_CHAINS).toBeGreaterThan(priorities.WINTER_BOOTS);
 
-    const disabled = runRecommendationEngine(insights, {
+    const disabled = runRecommendationEngine(severeInsights, {
       umbrellaEnabled: false,
       parasolEnabled: false,
       sunscreenEnabled: false,

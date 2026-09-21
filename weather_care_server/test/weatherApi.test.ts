@@ -251,7 +251,7 @@ describe('weekly calendar date contract', () => {
     }
   });
 
-  it('returns the three rain preparations only when the expanded catalog is requested', async () => {
+  it('adjusts the number of rain preparations to the severity in the expanded catalog', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T01:00:00Z'));
     const hourly = [14, 15].map((hour) => snapshot(hour, {
@@ -311,7 +311,7 @@ describe('weekly calendar date contract', () => {
       expect(legacyDay?.recommendations.map((item) => item.type))
         .toEqual(['UMBRELLA']);
       expect(expandedDay?.recommendations.map((item) => item.type))
-        .toEqual(['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS']);
+        .toEqual(['UMBRELLA', 'RAINCOAT']);
     } finally {
       vi.useRealTimers();
     }

@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
@@ -159,15 +157,8 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
           else
             LayoutBuilder(
               builder: (context, constraints) {
-                const spacing = 8.0;
-                const minimumItemWidth = 124.0;
-                final fittingColumns = ((constraints.maxWidth + spacing) /
-                        (minimumItemWidth + spacing))
-                    .floor();
-                final columns = math.min(
-                  visible.length,
-                  math.max(1, math.min(3, fittingColumns)),
-                );
+                const spacing = 6.0;
+                final columns = visible.length.clamp(1, 3);
                 final itemWidth =
                     (constraints.maxWidth - (columns - 1) * spacing) / columns;
 
@@ -178,7 +169,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
                     for (final recommendation in visible)
                       SizedBox(
                         width: itemWidth,
-                        height: 164,
+                        height: 178,
                         child: _BagItem(
                           key: ValueKey(
                             'bag-item-${recommendation.type.apiName.toLowerCase()}',
@@ -239,7 +230,7 @@ class _BagItem extends StatelessWidget {
         onTap: onToggle,
         borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+          padding: const EdgeInsets.fromLTRB(6, 12, 6, 9),
           child: Stack(
             children: [
               Column(
@@ -249,8 +240,8 @@ class _BagItem extends StatelessWidget {
                     alignment: Alignment.center,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
-                      width: 48,
-                      height: 48,
+                      width: 56,
+                      height: 56,
                       decoration: BoxDecoration(
                         color: checked ? type.accentColor : Colors.white,
                         shape: BoxShape.circle,
@@ -272,12 +263,12 @@ class _BagItem extends StatelessWidget {
                               child: PreparationIcon(
                                 type: type,
                                 color: type.accentColor,
-                                size: 26,
+                                size: 34,
                               ),
                             ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     type.label,
                     textAlign: TextAlign.center,
@@ -285,7 +276,7 @@ class _BagItem extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: WeatherCareTheme.textPrimary,
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

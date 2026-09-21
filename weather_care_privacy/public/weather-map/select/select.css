@@ -141,7 +141,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #f2b544; outline-
 .map-status.error { width: min(86%, 340px); color: #923d35; }
 .selection-panel {
   flex: 0 0 auto;
-  max-height: 36%;
+  max-height: 44%;
   padding: 14px 16px max(12px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
   background: #fff;
@@ -157,11 +157,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid #f2b544; outline-
 .selection-regions {
   display: grid;
   gap: 4px;
-  max-height: 74px;
+  max-height: 124px;
   margin-top: 7px;
   overflow-y: auto;
 }
 .region-row { padding: 6px 8px; border-radius: 8px; background: #f3f7f9; font-size: 11px; }
+.region-choice { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.region-choice input { flex: 0 0 auto; margin: 2px 0 0; accent-color: var(--primary); }
+.region-choice span { min-width: 0; }
 .confirm-grid {
   width: 100%;
   min-height: 45px;

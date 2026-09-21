@@ -18,12 +18,14 @@ typedef RegionMapBuilder = Widget Function(
 class RegionPickerScreen extends StatefulWidget {
   final Future<RegionCatalog> Function()? loadCatalog;
   final String? selectedGridId;
+  final String? selectedRegionKey;
   final RegionMapBuilder? mapBuilder;
 
   const RegionPickerScreen({
     super.key,
     this.loadCatalog,
     this.selectedGridId,
+    this.selectedRegionKey,
     this.mapBuilder,
   });
 
@@ -51,7 +53,10 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
     if (selected == null || !RegExp(r'^\d{1,3}_\d{1,3}$').hasMatch(selected)) {
       return uri;
     }
-    return uri.replace(queryParameters: {'grid': selected});
+    return uri.replace(queryParameters: {
+      'grid': selected,
+      if (widget.selectedRegionKey case final regionKey?) 'region': regionKey,
+    });
   }
 
   void _initializeWebView() {
@@ -115,19 +120,35 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
       }
       final nx = nxValue.toInt();
       final ny = nyValue.toInt();
-      final selection = ForecastGridSelection(nx: nx, ny: ny);
+      final gridId = '${nx}_$ny';
       if (nx < 1 ||
           nx > 149 ||
           ny < 1 ||
           ny > 253 ||
-          decoded['gridId'] != selection.gridId) {
+          decoded['gridId'] != gridId) {
         throw const FormatException('Grid is out of range');
       }
+      final regionKey = decoded['regionKey'];
+      if (regionKey is! String || regionKey.isEmpty) {
+        throw const FormatException('Missing display region');
+      }
       final catalog = await _catalog;
-      final exists = catalog.regions.any(
-        (region) => region.nx == nx && region.ny == ny,
+      ForecastRegion? selectedRegion;
+      for (final region in catalog.regions) {
+        if (region.key == regionKey && region.nx == nx && region.ny == ny) {
+          selectedRegion = region;
+          break;
+        }
+      }
+      if (selectedRegion == null) {
+        throw const FormatException('Unknown display region');
+      }
+      final selection = ForecastGridSelection(
+        nx: nx,
+        ny: ny,
+        regionKey: selectedRegion.key,
+        regionName: selectedRegion.fullName,
       );
-      if (!exists) throw const FormatException('Unknown forecast grid');
       if (mounted) Navigator.pop(context, selection);
     } catch (_) {
       if (mounted) {

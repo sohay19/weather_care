@@ -26,6 +26,9 @@ class WeatherRegion {
 
 class CurrentWeather {
   final double? temperature;
+  final String? observedAt;
+  final String? dataRole;
+  final String? provider;
   final String? forecastAt;
   final String? issuedAt;
   final double? apparentTemperature;
@@ -47,6 +50,9 @@ class CurrentWeather {
 
   const CurrentWeather({
     required this.temperature,
+    this.observedAt,
+    this.dataRole,
+    this.provider,
     this.forecastAt,
     this.issuedAt,
     this.apparentTemperature,
@@ -71,6 +77,9 @@ class CurrentWeather {
     final c = json['current'] ?? {};
     return CurrentWeather(
       temperature: (c['temperature'] as num?)?.toDouble(),
+      observedAt: c['observedAt']?.toString(),
+      dataRole: c['dataRole']?.toString(),
+      provider: c['provider']?.toString(),
       forecastAt: c['forecastAt']?.toString(),
       issuedAt: c['issuedAt']?.toString(),
       apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble(),

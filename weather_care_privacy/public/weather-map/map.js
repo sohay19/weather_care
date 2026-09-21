@@ -55,40 +55,92 @@
 
   window.initNaverWeatherMap = markNaverReady;
 
-  function updateUrl(id) {
+  function displayRegionKey(grid, region) {
+    return `${region.code}|${region.name}|${grid.nx}|${grid.ny}`;
+  }
+
+  function displayRegionName(region) {
+    return region.fullName.replace(/제(?=\d+동(?:\s|$))/g, '');
+  }
+
+  function updateUrl(id, regionKey) {
     const url = new URL(window.location.href);
     url.searchParams.set('grid', id);
+    if (regionKey) url.searchParams.set('region', regionKey);
+    else url.searchParams.delete('region');
     history.replaceState(null, '', url);
   }
 
-  function updateSelection(grid) {
-    selectionTitle.textContent = `nx ${grid.nx} · ny ${grid.ny}`;
-    const count = document.createElement('span');
-    count.className = 'selection-count';
-    count.textContent = `${number.format(grid.count)}개 지역 항목`;
-    selectionSummary.replaceChildren(
-      count,
-      document.createElement('br'),
-      '아래 지역들이 같은 기본예보 격자를 사용합니다.',
-    );
-    selectionRegions.replaceChildren(...grid.regions.map((region) => {
-      const row = document.createElement('div');
-      row.className = 'region-row';
-      row.textContent = region.fullName;
-      if (region.code) {
-        const code = document.createElement('small');
-        code.textContent = `지역 코드 ${region.code}`;
-        row.append(code);
-      }
-      return row;
-    }));
-    window.weatherSelectedGrid = { id: grid.id, nx: grid.nx, ny: grid.ny };
+  function publishSelection(grid, region) {
+    window.weatherSelectedGrid = {
+      id: grid.id,
+      nx: grid.nx,
+      ny: grid.ny,
+      regionKey: region ? displayRegionKey(grid, region) : null,
+    };
     window.dispatchEvent(new CustomEvent('weather-grid-selected', {
       detail: window.weatherSelectedGrid,
     }));
   }
 
-  function selectGrid(id, focusMap = false) {
+  function regionRow(grid, region, selectedRegionKey) {
+    const row = document.createElement(selectionMode ? 'label' : 'div');
+    row.className = selectionMode ? 'region-row region-choice' : 'region-row';
+    const copy = selectionMode ? document.createElement('span') : row;
+    copy.textContent = displayRegionName(region);
+    if (selectionMode) {
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'display-region';
+      input.value = displayRegionKey(grid, region);
+      input.checked = input.value === selectedRegionKey;
+      input.addEventListener('change', () => {
+        updateUrl(grid.id, input.value);
+        publishSelection(grid, region);
+      });
+      row.append(input, copy);
+    }
+    if (region.code) {
+      const code = document.createElement('small');
+      code.textContent = `지역 코드 ${region.code}`;
+      copy.append(code);
+    }
+    return row;
+  }
+
+  function updateSelection(grid, selectedRegion) {
+    const displayRegions = selectionMode
+      ? grid.regions.filter((region, index, regions) =>
+        regions.findIndex((candidate) =>
+          displayRegionName(candidate) === displayRegionName(region)) === index)
+      : grid.regions;
+    const displayRegion = selectedRegion
+      ? displayRegions.find((region) =>
+        displayRegionName(region) === displayRegionName(selectedRegion))
+      : undefined;
+    selectionTitle.textContent = `nx ${grid.nx} · ny ${grid.ny}`;
+    const count = document.createElement('span');
+    count.className = 'selection-count';
+    count.textContent = selectionMode
+      ? `${number.format(displayRegions.length)}개 표시명`
+      : `${number.format(grid.count)}개 지역 항목`;
+    selectionSummary.replaceChildren(
+      count,
+      document.createElement('br'),
+      selectionMode
+        ? '같은 예보 구역을 공유합니다. Main에 표시할 지역명을 골라주세요.'
+        : '아래 지역들이 같은 기본예보 격자를 사용합니다.',
+    );
+    const selectedRegionKey = displayRegion
+      ? displayRegionKey(grid, displayRegion)
+      : null;
+    selectionRegions.replaceChildren(...displayRegions.map((region) =>
+      regionRow(grid, region, selectedRegionKey)));
+    publishSelection(grid, displayRegion);
+    return displayRegion;
+  }
+
+  function selectGrid(id, focusMap = false, selectedRegion) {
     const grid = gridById.get(id);
     const feature = featureById.get(id);
     if (!grid || !feature || !map) return;
@@ -102,8 +154,8 @@
       strokeWeight: 4,
       zIndex: 100,
     });
-    updateSelection(grid);
-    updateUrl(id);
+    const displayRegion = updateSelection(grid, selectedRegion);
+    updateUrl(id, displayRegion ? displayRegionKey(grid, displayRegion) : null);
 
     if (focusMap) {
       map.setCenter(new naver.maps.LatLng(grid.center[1], grid.center[0]));
@@ -122,8 +174,11 @@
       closeSearchResults();
       return;
     }
-    const matches = searchItems.filter((item) =>
-      item.region.fullName.toLocaleLowerCase('ko-KR').includes(query)).slice(0, 10);
+    const matches = searchItems.filter((item) => {
+      const originalName = item.region.fullName.toLocaleLowerCase('ko-KR');
+      const displayName = displayRegionName(item.region).toLocaleLowerCase('ko-KR');
+      return originalName.includes(query) || displayName.includes(query);
+    }).slice(0, 10);
     if (matches.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'region-row';
@@ -136,14 +191,14 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.setAttribute('role', 'option');
-      button.textContent = item.region.fullName;
+      button.textContent = displayRegionName(item.region);
       const detail = document.createElement('small');
       detail.textContent = `nx ${item.grid.nx} · ny ${item.grid.ny} · ${number.format(item.grid.count)}개 연결`;
       button.append(detail);
       button.addEventListener('click', () => {
-        search.value = item.region.fullName;
+        search.value = displayRegionName(item.region);
         closeSearchResults();
-        selectGrid(item.grid.id, true);
+        selectGrid(item.grid.id, true, item.region);
       });
       return button;
     }));
@@ -224,7 +279,14 @@
     });
 
     const requested = new URL(window.location.href).searchParams.get('grid');
-    if (requested && gridById.has(requested)) selectGrid(requested, true);
+    if (requested && gridById.has(requested)) {
+      const grid = gridById.get(requested);
+      const requestedRegionKey = new URL(window.location.href)
+        .searchParams.get('region');
+      const requestedRegion = grid.regions.find((region) =>
+        displayRegionKey(grid, region) === requestedRegionKey);
+      selectGrid(requested, true, requestedRegion);
+    }
   }
 
   async function loadCatalog() {

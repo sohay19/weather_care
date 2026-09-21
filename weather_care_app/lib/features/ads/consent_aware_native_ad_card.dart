@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../services/ads_consent.dart';
+import '../../services/ad_removal_service.dart';
 import '../../services/native_ad_unit_config.dart';
 import '../../theme/weather_theme.dart';
 
@@ -123,6 +124,7 @@ class ConsentAwareNativeAdCard extends StatefulWidget {
   final NativeAdPlacement placement;
   final NativeAdCardSize size;
   final AdsConsent? controller;
+  final AdRemovalService? adRemoval;
   final NativeAdCardLoader loader;
   final NativeAdUnitConfig adUnitConfig;
   final TargetPlatform? platformOverride;
@@ -134,6 +136,7 @@ class ConsentAwareNativeAdCard extends StatefulWidget {
     this.placement = NativeAdPlacement.week,
     this.size = NativeAdCardSize.small,
     this.controller,
+    this.adRemoval,
     this.loader = const GoogleNativeAdCardLoader(),
     this.adUnitConfig = NativeAdUnitConfig.current,
     this.platformOverride,
@@ -154,22 +157,32 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
   int _generation = 0;
 
   AdsConsent get _controller => widget.controller ?? AdsConsent.instance;
+  AdRemovalService get _adRemoval =>
+      widget.adRemoval ?? AdRemovalService.instance;
 
   @override
   void initState() {
     super.initState();
     _controller.addListener(_onConsentChanged);
+    _adRemoval.addListener(_onAdRemovalChanged);
   }
 
   @override
   void didUpdateWidget(covariant ConsentAwareNativeAdCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     final oldController = oldWidget.controller ?? AdsConsent.instance;
+    final oldAdRemoval = oldWidget.adRemoval ?? AdRemovalService.instance;
     if (oldController != _controller) {
       oldController.removeListener(_onConsentChanged);
       _controller.addListener(_onConsentChanged);
       _clearAd(notify: false);
-    } else if (oldWidget.loader != widget.loader ||
+    }
+    if (oldAdRemoval != _adRemoval) {
+      oldAdRemoval.removeListener(_onAdRemovalChanged);
+      _adRemoval.addListener(_onAdRemovalChanged);
+      _clearAd(notify: false);
+    }
+    if (oldWidget.loader != widget.loader ||
         oldWidget.adUnitConfig != widget.adUnitConfig ||
         oldWidget.placement != widget.placement ||
         oldWidget.size != widget.size ||
@@ -186,6 +199,14 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
       return;
     }
     _failedId = null;
+    if (mounted) setState(() {});
+  }
+
+  void _onAdRemovalChanged() {
+    if (_adRemoval.isOwned) {
+      _clearAd();
+      return;
+    }
     if (mounted) setState(() {});
   }
 
@@ -214,7 +235,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
   }
 
   Future<void> _load(String adUnitId) async {
-    if (!_controller.canRequestAds) {
+    if (_adRemoval.isOwned || !_controller.canRequestAds) {
       _loadingId = null;
       return;
     }
@@ -233,6 +254,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
     );
     if (!mounted ||
         generation != _generation ||
+        _adRemoval.isOwned ||
         !_controller.canRequestAds ||
         _loadingId != adUnitId) {
       if (loaded != null) await loaded.dispose();
@@ -261,7 +283,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
       releaseMode: widget.releaseModeOverride,
       web: widget.webOverride,
     );
-    if (!_controller.canRequestAds || adUnitId == null) {
+    if (_adRemoval.isOwned || !_controller.canRequestAds || adUnitId == null) {
       return const SizedBox.shrink();
     }
 
@@ -287,6 +309,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
   @override
   void dispose() {
     _controller.removeListener(_onConsentChanged);
+    _adRemoval.removeListener(_onAdRemovalChanged);
     _generation += 1;
     final nativeAd = _nativeAd;
     if (nativeAd != null) unawaited(nativeAd.dispose());

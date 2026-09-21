@@ -101,6 +101,48 @@ void main() {
     expect(zero.pm25, 0);
   });
 
+  test('현재 날씨의 초단기실황 역할과 관측 시각을 보존한다', () {
+    final current = CurrentWeather.fromJson({
+      'current': {
+        'temperature': 25.5,
+        'observedAt': '2026-09-21T14:00:00+09:00',
+        'dataRole': 'OBSERVATION',
+        'provider': 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
+      },
+    });
+
+    expect(current.temperature, 25.5);
+    expect(current.observedAt, '2026-09-21T14:00:00+09:00');
+    expect(current.dataRole, 'OBSERVATION');
+    expect(current.provider, 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST');
+  });
+
+  testWidgets('초단기실황 현재 날씨는 관측 시각과 실황 계산 근거를 표시한다', (tester) async {
+    await _pumpCard(
+      tester,
+      const CurrentWeather(
+        temperature: 25.5,
+        observedAt: '2026-09-21T14:00:00+09:00',
+        dataRole: 'OBSERVATION',
+        provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
+        apparentTemperature: 26,
+        humidity: 58,
+        windSpeed: 1.5,
+      ),
+    );
+
+    expect(find.text('오후 2시 실황'), findsOneWidget);
+    final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
+    await tester.ensureVisible(detailButton);
+    await tester.tap(detailButton);
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('기상청 초단기실황의 기온·상대습도·풍속'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('예상 체감온도'), findsNothing);
+  });
+
   test('예상기온 시각은 한국시간을 사용하고 없는 시각은 만들지 않는다', () {
     for (final timestamp in [
       '2026-09-10T15:00:00+09:00',

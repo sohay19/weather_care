@@ -592,12 +592,17 @@ void main() {
       const Offset(0, -250),
     );
     await tester.pumpAndSettle();
+    final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
     expect(find.text('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
-    expect(find.text('예상 기온'), findsOneWidget);
-    expect(find.text('예상 체감온도'), findsOneWidget);
+    final futureTemperatureLabel =
+        find.descendant(of: futureCard, matching: find.text('예상 기온'));
+    final futureApparentLabel =
+        find.descendant(of: futureCard, matching: find.text('예상 체감온도'));
+    expect(futureTemperatureLabel, findsOneWidget);
+    expect(futureApparentLabel, findsOneWidget);
     expect(
-      tester.getTopLeft(find.text('예상 기온')).dy,
-      tester.getTopLeft(find.text('예상 체감온도')).dy,
+      tester.getTopLeft(futureTemperatureLabel).dy,
+      tester.getTopLeft(futureApparentLabel).dy,
     );
     final apparentTemperatureRow = tester.getRect(
       find.byKey(const ValueKey('main-apparent-temperature-row')),

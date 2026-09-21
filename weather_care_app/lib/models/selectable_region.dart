@@ -22,8 +22,15 @@ class ForecastRegion {
 class ForecastGridSelection {
   final int nx;
   final int ny;
+  final String regionKey;
+  final String regionName;
 
-  const ForecastGridSelection({required this.nx, required this.ny});
+  const ForecastGridSelection({
+    required this.nx,
+    required this.ny,
+    required this.regionKey,
+    required this.regionName,
+  });
 
   String get gridId => '${nx}_$ny';
 }

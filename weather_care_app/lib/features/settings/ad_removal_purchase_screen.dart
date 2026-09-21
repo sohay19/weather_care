@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../services/ad_removal_service.dart';
 import '../../theme/weather_theme.dart';
 
 class AdRemovalPurchaseScreen extends StatefulWidget {
@@ -9,6 +10,7 @@ class AdRemovalPurchaseScreen extends StatefulWidget {
   final bool isOwned;
   final Future<void> Function()? onPurchase;
   final Future<void> Function()? onRestore;
+  final AdRemovalService? controller;
 
   const AdRemovalPurchaseScreen({
     super.key,
@@ -16,6 +18,7 @@ class AdRemovalPurchaseScreen extends StatefulWidget {
     this.isOwned = false,
     this.onPurchase,
     this.onRestore,
+    this.controller,
   });
 
   @override
@@ -25,6 +28,25 @@ class AdRemovalPurchaseScreen extends StatefulWidget {
 
 class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
   bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller?.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant AdRemovalPurchaseScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller?.removeListener(_onControllerChanged);
+      widget.controller?.addListener(_onControllerChanged);
+    }
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _run(
     Future<void> Function()? action,
@@ -40,6 +62,20 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
     setState(() => _busy = true);
     try {
       await action();
+    } on AdRemovalException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(content: Text('요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요.')),
+          );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -80,7 +116,7 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
               style: TextStyle(fontWeight: FontWeight.w800),
             ),
             SizedBox(height: 6),
-            Text('실제 가격은 결제 연결 후 스토어에서 불러와 표시할 예정이에요.'),
+            Text('실제 가격은 현재 기기의 스토어에서 불러와 표시해요.'),
           ],
         ),
         actions: [
@@ -96,7 +132,13 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final owned = widget.isOwned;
+    final controller = widget.controller;
+    final owned = controller?.isOwned ?? widget.isOwned;
+    final busy = _busy || (controller?.busy ?? false);
+    final storeLoading = controller?.storeLoading ?? false;
+    final purchaseAction = widget.onPurchase ?? controller?.purchase;
+    final restoreAction = widget.onRestore ?? controller?.restore;
+    final localizedPrice = controller?.localizedPrice ?? widget.localizedPrice;
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(key: ValueKey('ad-removal-back')),
@@ -234,7 +276,8 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    widget.localizedPrice ?? '스토어 가격으로 표시돼요',
+                    localizedPrice ??
+                        (storeLoading ? '스토어 가격 확인 중' : '스토어 가격으로 표시돼요'),
                     key: const ValueKey('ad-removal-price'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: WeatherCareTheme.primaryDeep,
@@ -271,13 +314,14 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                   else
                     FilledButton.icon(
                       key: const ValueKey('ad-removal-purchase'),
-                      onPressed: _busy
+                      onPressed: busy ||
+                              (controller != null && !controller.canPurchase)
                           ? null
                           : () => unawaited(_run(
-                                widget.onPurchase,
+                                purchaseAction,
                                 '지금은 UI 미리보기예요. 결제 기능은 다음 단계에서 연결해요.',
                               )),
-                      icon: _busy
+                      icon: busy
                           ? const SizedBox.square(
                               dimension: 18,
                               child: CircularProgressIndicator(
@@ -289,14 +333,36 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                       label: const Text('광고 제거 구매하기'),
                     ),
                   const SizedBox(height: 8),
+                  if (controller?.message case final message?) ...[
+                    Text(
+                      message,
+                      key: const ValueKey('ad-removal-store-message'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (!owned && !storeLoading && !controller!.canPurchase)
+                      TextButton.icon(
+                        key: const ValueKey('ad-removal-store-retry'),
+                        onPressed: busy
+                            ? null
+                            : () => unawaited(_run(
+                                  controller.refreshStore,
+                                  '',
+                                )),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('스토어 다시 확인'),
+                      ),
+                    const SizedBox(height: 4),
+                  ],
                   TextButton(
                     key: const ValueKey('ad-removal-restore'),
-                    onPressed: _busy
-                        ? null
-                        : () => unawaited(_run(
-                              widget.onRestore,
-                              '지금은 UI 미리보기예요. 구매 내역 복원은 다음 단계에서 연결해요.',
-                            )),
+                    onPressed:
+                        busy || (controller != null && !controller.canRestore)
+                            ? null
+                            : () => unawaited(_run(
+                                  restoreAction,
+                                  '지금은 UI 미리보기예요. 구매 내역 복원은 다음 단계에서 연결해요.',
+                                )),
                     child: const Text('구매 내역 복원'),
                   ),
                 ],
@@ -306,6 +372,12 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_onControllerChanged);
+    super.dispose();
   }
 }
 

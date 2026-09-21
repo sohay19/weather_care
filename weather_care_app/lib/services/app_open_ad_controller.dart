@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'ad_removal_service.dart';
 import 'ads_consent.dart';
 import 'app_open_ad_unit_config.dart';
 
@@ -106,6 +107,7 @@ class AppOpenAdController {
   static const maxCacheDuration = Duration(hours: 4);
 
   final AdsConsent consent;
+  final AdRemovalService adRemoval;
   final AppOpenAdLoader loader;
   final AppOpenLifecycle lifecycle;
   final AppOpenAdUnitConfig adUnitConfig;
@@ -116,6 +118,7 @@ class AppOpenAdController {
 
   AppOpenAdController({
     AdsConsent? consent,
+    AdRemovalService? adRemoval,
     this.loader = const GoogleAppOpenAdLoader(),
     this.lifecycle = const GoogleAppOpenLifecycle(),
     this.adUnitConfig = AppOpenAdUnitConfig.current,
@@ -124,6 +127,7 @@ class AppOpenAdController {
     this.webOverride,
     DateTime Function()? now,
   })  : consent = consent ?? AdsConsent.instance,
+        adRemoval = adRemoval ?? AdRemovalService.instance,
         now = now ?? DateTime.now;
 
   AppOpenAdHandle? _ad;
@@ -144,6 +148,7 @@ class AppOpenAdController {
     }
     _started = true;
     consent.addListener(_syncConsent);
+    adRemoval.addListener(_syncConsent);
     _lifecycleSubscription = lifecycle.states.listen(_onAppStateChanged);
     try {
       await lifecycle.startListening().timeout(const Duration(seconds: 3));
@@ -161,7 +166,7 @@ class AppOpenAdController {
   }
 
   void _syncConsent() {
-    if (!consent.canRequestAds) {
+    if (adRemoval.isOwned || !consent.canRequestAds) {
       _clearCachedAd();
       return;
     }
@@ -179,7 +184,7 @@ class AppOpenAdController {
   }
 
   void _onForeground() {
-    if (!consent.canRequestAds || _showing) return;
+    if (adRemoval.isOwned || !consent.canRequestAds || _showing) return;
     if (_hasValidAd) {
       unawaited(_show());
     } else {
@@ -197,7 +202,13 @@ class AppOpenAdController {
 
   Future<void> _load({required bool showWhenLoaded}) async {
     _initialShowPending |= showWhenLoaded && !_homeReady;
-    if (_loading || _showing || _hasValidAd || !consent.canRequestAds) return;
+    if (_loading ||
+        _showing ||
+        _hasValidAd ||
+        adRemoval.isOwned ||
+        !consent.canRequestAds) {
+      return;
+    }
 
     final adUnitId = adUnitConfig.resolve(
       platform: platformOverride,
@@ -213,7 +224,7 @@ class AppOpenAdController {
     if (kDebugMode) debugPrint('앱 오프닝 광고 로드 요청');
     final loaded = await loader.load(adUnitId: adUnitId);
     _loading = false;
-    if (!_started || !consent.canRequestAds) {
+    if (!_started || adRemoval.isOwned || !consent.canRequestAds) {
       await loaded?.dispose();
       return;
     }
@@ -233,7 +244,12 @@ class AppOpenAdController {
   }
 
   Future<void> _show() async {
-    if (_showing || !_hasValidAd || !consent.canRequestAds) return;
+    if (_showing ||
+        !_hasValidAd ||
+        adRemoval.isOwned ||
+        !consent.canRequestAds) {
+      return;
+    }
     final ad = _ad!;
     _ad = null;
     _loadedAt = null;
@@ -245,7 +261,7 @@ class AppOpenAdController {
       finished = true;
       _showing = false;
       unawaited(ad.dispose());
-      if (_started && consent.canRequestAds) {
+      if (_started && !adRemoval.isOwned && consent.canRequestAds) {
         unawaited(_load(showWhenLoaded: false));
       }
     }
@@ -268,6 +284,7 @@ class AppOpenAdController {
     if (!_started) return;
     _started = false;
     consent.removeListener(_syncConsent);
+    adRemoval.removeListener(_syncConsent);
     await _lifecycleSubscription?.cancel();
     _lifecycleSubscription = null;
     await lifecycle.stopListening();

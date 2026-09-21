@@ -23,7 +23,11 @@ import { authorizeFixture, testAuthHeaders } from './installationAuthFixture';
 import * as environmental from '../src/providers/environmental/environmentalDataService';
 import { buildEnvironmentalDataStatusMessages } from '../src/presentation/lifestyleMessages';
 import { KmaMidTermProvider } from '../src/providers/weather/kmaMidTermProvider';
-import { seedCollectedRegion, seedCollectedWeekly } from './collectedWeatherFixture';
+import {
+  seedCollectedRegion,
+  seedCollectedUltraShortObservation,
+  seedCollectedWeekly,
+} from './collectedWeatherFixture';
 
 describe('fast Main weather', () => {
   it('returns KMA core weather without waiting for optional providers', async () => {
@@ -60,6 +64,14 @@ describe('fast Main weather', () => {
           },
         ],
       });
+      await seedCollectedUltraShortObservation(58, 124, {
+        observedAt: '2026-08-20T15:00:00+09:00',
+        rainDetected: false,
+        temperature: 26,
+        humidity: 60,
+        windSpeed: 2,
+        provider: 'KMA_ULTRA_SHORT_OBSERVATION',
+      });
       const response = await router.request('/main?nx=58&ny=124', {}, {
         DB: env.DB,
       });
@@ -73,8 +85,18 @@ describe('fast Main weather', () => {
       expect(response.status).toBe(200);
       expect(response.headers.get('Cache-Control')).toBe('no-store');
       expect(data.region).toMatchObject({ nx: 58, ny: 124 });
-      expect(data.current.temperature).toBe(24);
-      expect(data.current.forecastAt).toBe('2026-08-20T15:00:00+09:00');
+      expect(data.current).toMatchObject({
+        observedAt: '2026-08-20T15:00:00+09:00',
+        dataRole: 'OBSERVATION',
+        temperature: 26,
+        humidity: 60,
+        windSpeed: 2,
+        provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
+        providerField: 'T1H,REH,WSD;SKY=FORECAST',
+      });
+      expect(data.current.forecastAt).toBeUndefined();
+      expect(data.current.apparentTemperatureSource)
+        .toBe('APP_KMA_METHOD_FROM_OBSERVATION');
       expect(data.nextForecast).toMatchObject({
         forecastAt: '2026-08-20T18:00:00+09:00',
         temperature: 28,
@@ -86,6 +108,91 @@ describe('fast Main weather', () => {
     } finally {
       provider.mockRestore();
       optional.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the grid observation after the full Today response replaces Main', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T15:35:00+09:00'));
+    const forecast = {
+      current: snapshot(14, { temperature: 21 }),
+      hourly: [snapshot(15), snapshot(18)],
+      timelineHourly: [snapshot(15), snapshot(18)],
+      daily: [day(28)],
+      baseDate: '20260820',
+      baseTime: '1400',
+      dataSource: '기상청 단기예보',
+    };
+    const ctx = createExecutionContext();
+    try {
+      await seedCollectedRegion(59, 125, forecast);
+      await seedCollectedUltraShortObservation(59, 125, {
+        observedAt: '2026-08-20T15:00:00+09:00',
+        rainDetected: false,
+        temperature: 25.5,
+        humidity: 58,
+        windSpeed: 1.5,
+        provider: 'KMA_ULTRA_SHORT_OBSERVATION',
+      });
+
+      const response = await router.request(
+        '/today?nx=59&ny=125',
+        {},
+        { DB: env.DB },
+        ctx,
+      );
+      const data = await response.json<{ current: WeatherSnapshot }>();
+
+      expect(response.status).toBe(200);
+      expect(data.current).toMatchObject({
+        observedAt: '2026-08-20T15:00:00+09:00',
+        dataRole: 'OBSERVATION',
+        temperature: 25.5,
+        humidity: 58,
+        windSpeed: 1.5,
+      });
+      expect(data.current.forecastAt).toBeUndefined();
+      await waitOnExecutionContext(ctx);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not present a stale observation or forecast as current temperature', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T15:35:00+09:00'));
+    const forecast = {
+      current: snapshot(14, { temperature: 21 }),
+      hourly: [snapshot(15), snapshot(18)],
+      timelineHourly: [snapshot(15), snapshot(18)],
+      daily: [day(28)],
+      baseDate: '20260820',
+      baseTime: '1400',
+      dataSource: '기상청 단기예보',
+    };
+    try {
+      await seedCollectedRegion(59, 126, forecast);
+      await seedCollectedUltraShortObservation(59, 126, {
+        observedAt: '2026-08-20T12:00:00+09:00',
+        rainDetected: false,
+        temperature: 30,
+        humidity: 40,
+        windSpeed: 3,
+        provider: 'KMA_ULTRA_SHORT_OBSERVATION',
+      });
+
+      const response = await router.request('/main?nx=59&ny=126', {}, {
+        DB: env.DB,
+      });
+      const data = await response.json<{ current: WeatherSnapshot }>();
+
+      expect(response.status).toBe(200);
+      expect(data.current.temperature).toBeUndefined();
+      expect(data.current.apparentTemperature).toBeUndefined();
+      expect(data.current.qualityFlags)
+        .toContain('CURRENT_OBSERVATION_UNAVAILABLE');
+    } finally {
       vi.useRealTimers();
     }
   });

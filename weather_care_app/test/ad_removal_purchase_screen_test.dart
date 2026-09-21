@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/settings/ad_removal_purchase_screen.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
+import 'package:weather_care/services/ad_removal_service.dart';
 import 'package:weather_care/theme/weather_theme.dart';
+
+import 'support/fake_ad_removal.dart';
 
 Widget _app(Widget home) => MaterialApp(
       theme: WeatherCareTheme.light(),
@@ -55,6 +58,43 @@ void main() {
     expect(find.textContaining('구매 내역 복원은 다음 단계'), findsOneWidget);
   });
 
+  testWidgets('스토어 가격을 표시하고 구매 완료 시 광고 제거 상태로 전환한다', (tester) async {
+    final gateway = FakeAdRemovalPurchaseGateway();
+    final service = AdRemovalService(
+      gateway: gateway,
+      ownershipStore: MemoryAdRemovalOwnershipStore(),
+    );
+    addTearDown(() async {
+      service.dispose();
+      await gateway.close();
+    });
+    await service.initialize();
+    await tester.pump();
+
+    await tester.pumpWidget(_app(AdRemovalPurchaseScreen(controller: service)));
+    await tester.pump();
+    expect(find.text('₩3,300'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('ad-removal-purchase')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('ad-removal-purchase')));
+    await tester.pump();
+    expect(gateway.purchaseCalls, 1);
+
+    gateway.emit(fakeAdRemovalPurchase());
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+        find.byKey(const ValueKey('ad-removal-owned-status')), findsOneWidget);
+    expect(find.text('광고 없이 이용 중이에요'), findsOneWidget);
+  });
+
   testWidgets('구매 박스 도움말에서 복원 조건과 기존 하단 안내를 확인한다', (tester) async {
     await tester.pumpWidget(_app(const AdRemovalPurchaseScreen()));
 
@@ -74,7 +114,7 @@ void main() {
     expect(find.textContaining('구매와 복원은 현재 기기의 플랫폼 스토어 계정'), findsOneWidget);
     expect(find.textContaining('Android와 iOS의 구매 내역은 서로 복원되지 않아요'),
         findsOneWidget);
-    expect(find.textContaining('실제 가격은 결제 연결 후 스토어에서 불러와'), findsOneWidget);
+    expect(find.textContaining('실제 가격은 현재 기기의 스토어에서 불러와'), findsOneWidget);
 
     await tester
         .tap(find.byKey(const ValueKey('ad-removal-purchase-help-close')));

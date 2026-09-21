@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:weather_care/services/ad_removal_service.dart';
 import 'package:weather_care/services/ads_consent.dart';
 import 'package:weather_care/services/app_open_ad_controller.dart';
+
+import 'support/fake_ad_removal.dart';
 
 void main() {
   late bool eligible;
@@ -12,6 +15,8 @@ void main() {
   late _FakeAppOpenAdLoader loader;
   late _FakeAppOpenLifecycle lifecycle;
   late AppOpenAdController controller;
+  late FakeAdRemovalPurchaseGateway purchaseGateway;
+  late AdRemovalService adRemoval;
 
   setUp(() async {
     eligible = true;
@@ -26,8 +31,14 @@ void main() {
     await consent.refresh();
     loader = _FakeAppOpenAdLoader();
     lifecycle = _FakeAppOpenLifecycle();
+    purchaseGateway = FakeAdRemovalPurchaseGateway();
+    adRemoval = AdRemovalService(
+      gateway: purchaseGateway,
+      ownershipStore: MemoryAdRemovalOwnershipStore(),
+    );
     controller = AppOpenAdController(
       consent: consent,
+      adRemoval: adRemoval,
       loader: loader,
       lifecycle: lifecycle,
       platformOverride: TargetPlatform.android,
@@ -39,6 +50,8 @@ void main() {
   tearDown(() async {
     await controller.dispose();
     await lifecycle.close();
+    adRemoval.dispose();
+    await purchaseGateway.close();
   });
 
   test('홈이 준비되지 않았으면 초기 광고를 로드 후 표시한다', () async {
@@ -114,6 +127,23 @@ void main() {
     await pumpEventQueue();
 
     expect(cached.disposeCount, 1);
+  });
+
+  test('광고 제거 구매가 적용되면 캐시된 앱 오프닝 광고를 폐기한다', () async {
+    await adRemoval.initialize();
+    await controller.start(showOnInitialLoad: false);
+    await pumpEventQueue();
+    final cached = loader.handles.single;
+
+    purchaseGateway.emit(fakeAdRemovalPurchase());
+    await pumpEventQueue();
+
+    expect(adRemoval.isOwned, isTrue);
+    expect(cached.disposeCount, 1);
+    lifecycle.background();
+    lifecycle.foreground();
+    await pumpEventQueue();
+    expect(loader.requests, hasLength(1));
   });
 }
 

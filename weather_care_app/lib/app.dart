@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'features/home/home_screen.dart';
+import 'services/ad_removal_service.dart';
 import 'services/notification_destination.dart';
 import 'theme/weather_theme.dart';
 
@@ -8,12 +9,14 @@ class WeatherCareApp extends StatelessWidget {
   final GlobalKey<NavigatorState>? navigatorKey;
   final Map<String, dynamic>? initialNotificationData;
   final VoidCallback? onHomeReady;
+  final AdRemovalService? adRemoval;
 
   const WeatherCareApp({
     super.key,
     this.navigatorKey,
     this.initialNotificationData,
     this.onHomeReady,
+    this.adRemoval,
   });
 
   @override
@@ -29,10 +32,14 @@ class WeatherCareApp extends StatelessWidget {
       theme: WeatherCareTheme.light(),
       builder: WeatherCareTheme.textScaleBuilder,
       routes: {
-        '/': (_) => HomeScreen(onHomeReady: onHomeReady),
+        '/': (_) => HomeScreen(
+              onHomeReady: onHomeReady,
+              adRemoval: adRemoval,
+            ),
         '/settings': (_) => HomeScreen(
               initialIndex: 4,
               onHomeReady: onHomeReady,
+              adRemoval: adRemoval,
             ),
         '/weather-details': (context) {
           final arguments = ModalRoute.of(context)?.settings.arguments;
@@ -43,6 +50,7 @@ class WeatherCareApp extends StatelessWidget {
             initialIndex: 1,
             initialNotificationTopic: destination?.topic,
             onHomeReady: onHomeReady,
+            adRemoval: adRemoval,
           );
         },
         '/weather/precipitation': (_) =>

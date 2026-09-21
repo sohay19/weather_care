@@ -6,8 +6,11 @@
   function updateSelectedGrid(grid) {
     if (!grid || !Number.isInteger(grid.nx) || !Number.isInteger(grid.ny)) return;
     selectedGrid = grid;
-    confirmButton.disabled = false;
-    bridgeStatus.textContent = '';
+    const hasDisplayRegion = typeof grid.regionKey === 'string' && grid.regionKey;
+    confirmButton.disabled = !hasDisplayRegion;
+    bridgeStatus.textContent = hasDisplayRegion
+      ? ''
+      : 'Main에 표시할 지역명을 선택해주세요.';
   }
 
   window.addEventListener('weather-grid-selected', (event) => {
@@ -28,6 +31,7 @@
       gridId: selectedGrid.id,
       nx: selectedGrid.nx,
       ny: selectedGrid.ny,
+      regionKey: selectedGrid.regionKey,
     }));
     setTimeout(() => {
       confirmButton.disabled = false;

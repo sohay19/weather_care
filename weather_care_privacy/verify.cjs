@@ -240,7 +240,8 @@ async function verifySelectorPage(browser, port, width) {
   assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control'), 'true');
   assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control-style'), 'large');
   assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control-position'), 'right-center');
-  assert.equal(await page.locator('#confirm-grid').isEnabled(), true);
+  assert.equal(await page.locator('#confirm-grid').isEnabled(), false);
+  assert.equal(await page.locator('input[name="display-region"]').count(), 1);
   const text = await page.locator('body').innerText();
   assert.ok(text.includes('1개') &&
     text.includes('2–4개') &&
@@ -248,12 +249,44 @@ async function verifySelectorPage(browser, port, width) {
     text.includes('10개 이상') &&
     text.includes('날씨 위험도를 뜻하지 않습니다') &&
     text.includes('nx 28 · ny 8') &&
-    text.includes('이 예보 구역 사용'));
+    text.includes('1개 표시명') &&
+    text.includes('Main에 표시할 지역명을 골라주세요') &&
+    text.includes('선택한 지역명으로 사용'));
+  const regionChoice = page.locator('input[name="display-region"]').first();
+  const regionKey = await regionChoice.getAttribute('value');
+  await regionChoice.check();
+  assert.equal(await page.locator('#confirm-grid').isEnabled(), true);
+  assert.equal(new URL(page.url()).searchParams.get('region'), regionKey);
+  await page.reload();
+  await page.waitForFunction(() =>
+    document.querySelector('#grid-map')?.dataset.gridCount === '1633');
+  assert.equal(await page.locator('input[name="display-region"]').first().isChecked(), true);
+  assert.equal(await page.locator('#confirm-grid').isEnabled(), true);
   await page.locator('#confirm-grid').click();
   await page.waitForFunction(() => window.receivedGridSelection);
   assert.deepEqual(
     JSON.parse(await page.evaluate(() => window.receivedGridSelection)),
-    { type: 'weather-grid-selection', gridId: '28_8', nx: 28, ny: 8 },
+    {
+      type: 'weather-grid-selection',
+      gridId: '28_8',
+      nx: 28,
+      ny: 8,
+      regionKey,
+    },
+  );
+  await page.locator('#region-search').fill('구로1동');
+  const normalizedRegion = page.locator('#search-results button').first();
+  await normalizedRegion.waitFor();
+  assert.ok((await normalizedRegion.innerText()).includes('서울특별시 구로구 구로1동'));
+  assert.equal((await normalizedRegion.innerText()).includes('구로제1동'), false);
+  await normalizedRegion.click();
+  assert.equal(await page.locator('#region-search').inputValue(), '서울특별시 구로구 구로1동');
+  const selectedNames = await page.locator('#selection-regions').innerText();
+  assert.ok(selectedNames.includes('서울특별시 구로구 구로1동'));
+  assert.equal(selectedNames.includes('구로제1동'), false);
+  assert.equal(
+    await page.locator('input[value="1153052000|구로제1동|58|125"]').isChecked(),
+    true,
   );
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   assert.equal(await page.locator('#grid-map').evaluate((element) =>

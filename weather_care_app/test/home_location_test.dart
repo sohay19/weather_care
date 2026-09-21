@@ -675,6 +675,14 @@ void main() {
     await start(tester, initialIndex: 2);
 
     final detailButton = find.byKey(const ValueKey('bag-detail-umbrella'));
+    await tester.scrollUntilVisible(
+      detailButton,
+      120,
+      scrollable: find.descendant(
+        of: find.byKey(const ValueKey('main-tab')),
+        matching: find.byType(Scrollable),
+      ),
+    );
     tester.widget<IconButton>(detailButton).onPressed!.call();
     await tester.pumpAndSettle();
     expect(find.text('선택한 항목의 근거'), findsOneWidget);

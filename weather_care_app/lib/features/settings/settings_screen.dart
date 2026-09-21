@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/app_settings.dart';
+import '../../services/ad_removal_service.dart';
 import '../../services/current_location_service.dart';
 import '../../services/region_catalog.dart';
 import '../../services/settings_save_controller.dart';
@@ -56,6 +57,7 @@ class SettingsScreen extends StatefulWidget {
   final Future<void> Function()? onResumeServerData;
   final Future<bool> Function(Uri)? openExternalLink;
   final RegionMapBuilder? regionMapBuilder;
+  final AdRemovalService? adRemoval;
 
   const SettingsScreen({
     super.key,
@@ -80,6 +82,7 @@ class SettingsScreen extends StatefulWidget {
     this.onResumeServerData,
     this.openExternalLink,
     this.regionMapBuilder,
+    this.adRemoval,
   });
 
   @override
@@ -94,6 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     settings =
         widget.initialSettings ?? AppSettings.fallback('local-installation');
+    widget.adRemoval?.addListener(_onAdRemovalChanged);
   }
 
   @override
@@ -103,6 +107,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (updated != null && updated != oldWidget.initialSettings) {
       settings = updated;
     }
+    if (oldWidget.adRemoval != widget.adRemoval) {
+      oldWidget.adRemoval?.removeListener(_onAdRemovalChanged);
+      widget.adRemoval?.addListener(_onAdRemovalChanged);
+    }
+  }
+
+  void _onAdRemovalChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.adRemoval?.removeListener(_onAdRemovalChanged);
+    super.dispose();
   }
 
   bool get _alertsEnabled =>
@@ -131,7 +149,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
           ),
         const SizedBox(height: 20),
-        _AdRemovalBanner(onTap: _openAdRemovalPurchase),
+        _AdRemovalBanner(
+          isOwned: widget.adRemoval?.isOwned ?? false,
+          onTap: _openAdRemovalPurchase,
+        ),
         const SizedBox(height: 16),
         _SettingsMenuButton(
           key: const ValueKey('location-settings-menu'),
@@ -247,7 +268,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _openAdRemovalPurchase() {
     Navigator.of(context).push<void>(MaterialPageRoute(
-      builder: (_) => const AdRemovalPurchaseScreen(),
+      builder: (_) => AdRemovalPurchaseScreen(
+        controller: widget.adRemoval,
+      ),
     ));
   }
 
@@ -297,6 +320,7 @@ class _LocationSettingsScreen extends StatefulWidget {
 
 class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
   late AppSettings settings;
+  late String? _manualRegionName;
   bool _pickingRegion = false;
   bool _openingWeatherMap = false;
 
@@ -304,6 +328,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
   void initState() {
     super.initState();
     settings = widget.initialSettings;
+    _manualRegionName = widget.manualRegionName;
   }
 
   void _update(AppSettings updated) {
@@ -319,16 +344,18 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
       builder: (_) => RegionPickerScreen(
         loadCatalog: widget.loadRegionCatalog,
         selectedGridId: settings.currentRegionId,
+        selectedRegionKey: settings.manualRegionKey,
         mapBuilder: widget.regionMapBuilder,
       ),
     ));
     if (!mounted) return;
     setState(() => _pickingRegion = false);
     if (selected == null) return;
+    _manualRegionName = selected.regionName;
     _update(settings.copyWith(
       locationMode: 'MANUAL',
       currentRegionId: selected.gridId,
-      clearManualRegionKey: true,
+      manualRegionKey: selected.regionKey,
     ));
   }
 
@@ -369,7 +396,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                       ? '선택된 지역이 없어요'
                       : _manualSelectionLabel(
                             settings,
-                            widget.manualRegionName,
+                            _manualRegionName,
                           ) ??
                           '저장한 지역 기준으로 안내해요',
               child: Column(
@@ -405,7 +432,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                               ? '저장된 지역이 없어요'
                               : _manualSelectionLabel(
                                     settings,
-                                    widget.manualRegionName,
+                                    _manualRegionName,
                                   ) ??
                                   '저장한 지역을 사용할 수 있어요',
                           selected: settings.locationMode == 'MANUAL',
@@ -1015,13 +1042,16 @@ class _DataPermissionSettingsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final guide in SettingsGuide.values)
-              ListTile(
-                key: ValueKey('guide-entry-${guide.name}'),
-                contentPadding: EdgeInsets.zero,
-                title: Text(guide.title),
-                subtitle: Text(guide.subtitle),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => onOpenGuide(guide),
+              Material(
+                type: MaterialType.transparency,
+                child: ListTile(
+                  key: ValueKey('guide-entry-${guide.name}'),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(guide.title),
+                  subtitle: Text(guide.subtitle),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => onOpenGuide(guide),
+                ),
               ),
             AnalyticsConsentControl(
               onDeleteCollectedData: access?.requestAnalyticsDeletion,
@@ -1165,8 +1195,9 @@ class _SettingsMenuButton extends StatelessWidget {
 
 class _AdRemovalBanner extends StatelessWidget {
   final VoidCallback onTap;
+  final bool isOwned;
 
-  const _AdRemovalBanner({required this.onTap});
+  const _AdRemovalBanner({required this.onTap, required this.isOwned});
 
   @override
   Widget build(BuildContext context) {
@@ -1193,8 +1224,10 @@ class _AdRemovalBanner extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.84),
                   borderRadius: BorderRadius.circular(17),
                 ),
-                child: const Icon(
-                  Icons.workspace_premium_outlined,
+                child: Icon(
+                  isOwned
+                      ? Icons.verified_rounded
+                      : Icons.workspace_premium_outlined,
                   size: 25,
                   color: WeatherCareTheme.primaryDeep,
                 ),
@@ -1205,19 +1238,21 @@ class _AdRemovalBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AD-FREE · 평생 이용',
+                      isOwned ? 'AD-FREE · 구매 완료' : 'AD-FREE · 평생 이용',
                       style: WeatherCareTheme.specialLabelStyle.copyWith(
                         letterSpacing: 0.3,
                       ),
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      '날씨만, 광고 없이 편안하게',
+                      isOwned ? '광고 없이 이용 중이에요' : '날씨만, 광고 없이 편안하게',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '한 번 구매하고 모든 광고를 제거해요',
+                      isOwned
+                          ? '구매가 적용되어 모든 광고를 제거했어요'
+                          : '한 번 구매하고 모든 광고를 제거해요',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -1328,13 +1363,13 @@ class _LocationRadioTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: selected
-            ? WeatherCareTheme.primarySoft
-            : WeatherCareTheme.surfaceSubtle,
+    return Material(
+      color: selected
+          ? WeatherCareTheme.primarySoft
+          : WeatherCareTheme.surfaceSubtle,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
+        side: BorderSide(
           color: selected
               ? WeatherCareTheme.primaryBorder
               : WeatherCareTheme.outline,

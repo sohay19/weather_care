@@ -8,6 +8,7 @@ import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../models/home_widget_snapshot.dart';
 import '../../services/api_client.dart';
+import '../../services/ad_removal_service.dart';
 import '../../services/server_data_access.dart';
 import '../../services/app_config.dart';
 import '../../services/app_settings_repository.dart';
@@ -52,6 +53,7 @@ class HomeScreen extends StatefulWidget {
   final ServerDataAccess? serverDataAccess;
   final PermissionOnboardingStore permissionOnboardingStore;
   final HomeWidgetService homeWidgetService;
+  final AdRemovalService? adRemoval;
   final VoidCallback? onHomeReady;
   final DateTime Function()? now;
 
@@ -69,6 +71,7 @@ class HomeScreen extends StatefulWidget {
     this.serverDataAccess,
     this.permissionOnboardingStore = const PermissionOnboardingStore(),
     this.homeWidgetService = const HomeWidgetService(),
+    this.adRemoval,
     this.onHomeReady,
     this.now,
   });
@@ -176,6 +179,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.adRemoval?.addListener(_onAdRemovalChanged);
     _settings = AppSettings.fallback('initializing-installation');
     _selectedIndex = widget.initialIndex < 0
         ? 0
@@ -263,8 +267,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.adRemoval != widget.adRemoval) {
+      oldWidget.adRemoval?.removeListener(_onAdRemovalChanged);
+      widget.adRemoval?.addListener(_onAdRemovalChanged);
+    }
+  }
+
+  void _onAdRemovalChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    widget.adRemoval?.removeListener(_onAdRemovalChanged);
     _locationRevision++;
     _settingsSave?.dispose();
     _serverDataAccess?.removeListener(_onServerDataChanged);
@@ -851,6 +869,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           serverDataAccess: _serverDataAccess,
           onDeleteServerData: _deleteServerData,
           onResumeServerData: _resumeServerData,
+          adRemoval: widget.adRemoval,
         ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -872,9 +891,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       retrying: _todayRetrying,
-                      advertisement: _todayAdvertisementActivated
-                          ? const ConsentAwareNativeAdCard(
+                      advertisement: _todayAdvertisementActivated &&
+                              !(widget.adRemoval?.isOwned ?? false)
+                          ? ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.today,
+                              adRemoval: widget.adRemoval,
                             )
                           : null,
                     ),
@@ -907,9 +928,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRetryComparison: _retryYesterdayComparison,
                       retryingData: _todayRetrying,
                       onDetail: _openRecommendationDetail,
-                      advertisement: _mainAdvertisementActivated
-                          ? const ConsentAwareNativeAdCard(
+                      advertisement: _mainAdvertisementActivated &&
+                              !(widget.adRemoval?.isOwned ?? false)
+                          ? ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.main,
+                              adRemoval: widget.adRemoval,
                             )
                           : null,
                     ),
@@ -924,16 +947,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     )
                   : WeekTab(
                       weekly: weekly,
-                      currentWeather: today?.current,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryWeeklyData,
                       retrying: _weeklyRetrying,
                       now: widget.now,
-                      advertisement: _weekAdvertisementActivated
-                          ? const ConsentAwareNativeAdCard(
+                      advertisement: _weekAdvertisementActivated &&
+                              !(widget.adRemoval?.isOwned ?? false)
+                          ? ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.week,
                               size: NativeAdCardSize.medium,
+                              adRemoval: widget.adRemoval,
                             )
                           : null,
                     ),

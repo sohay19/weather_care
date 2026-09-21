@@ -9,6 +9,7 @@ import 'package:weather_care/firebase_options.dart';
 
 import 'app.dart';
 import 'services/analytics_consent.dart';
+import 'services/ad_removal_service.dart';
 import 'services/ads_consent.dart';
 import 'services/app_open_ad_controller.dart';
 import 'services/app_open_ad_unit_config.dart';
@@ -44,6 +45,7 @@ Future<void> main() async {
 }
 
 Future<Widget> _initializeApp() async {
+  await AdRemovalService.instance.initialize();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -78,6 +80,7 @@ Future<Widget> _initializeApp() async {
     navigatorKey: _appNavigatorKey,
     initialNotificationData: initialNotificationData,
     onHomeReady: _appOpenAds.markHomeReady,
+    adRemoval: AdRemovalService.instance,
   );
 }
 
@@ -87,6 +90,7 @@ void _startAdsAfterAppFrame() {
 }
 
 Future<void> _startAds() async {
+  if (AdRemovalService.instance.isOwned) return;
   final nativeAdsEnabled = NativeAdPlacement.values.any(
     (placement) =>
         NativeAdUnitConfig.current.resolve(placement: placement) != null,

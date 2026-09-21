@@ -186,21 +186,12 @@ class _TodaySection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 5),
-        Text(
-          _currentForecastBasisLabel(current.forecastAt),
-          style: TextStyle(
-            color: WeatherCareTheme.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
         const SizedBox(height: 13),
         _TemperatureLine(
           lineKey: const ValueKey('main-current-forecast-row'),
-          temperatureLabel: '예상 기온',
+          temperatureLabel: '현재 기온',
           temperature: current.temperature,
-          apparentLabel: '예상 체감온도',
+          apparentLabel: '현재 체감온도',
           apparentTemperature: current.apparentTemperature,
         ),
         const SizedBox(height: 13),
@@ -324,7 +315,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
         ? const <_ComparisonMetricData>[]
         : [
             _ComparisonMetricData(
-              subject: forecastComparison ? '예상 기온은' : '기온은',
+              subject: '기온은',
               current: todayObservation.temperature,
               previous: yesterdayObservation.temperature,
               unit: '℃',
@@ -334,7 +325,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
               previousReference: '어제보다',
             ),
             _ComparisonMetricData(
-              subject: forecastComparison ? '예상 체감온도는' : '체감온도는',
+              subject: '체감온도는',
               current: todayObservation.apparentTemperature,
               previous: yesterdayObservation.apparentTemperature,
               unit: '℃',
@@ -678,9 +669,6 @@ bool _hasUsableComparison(
 String? _comparisonBasisLabel(ComparisonBasis? basis) {
   if (basis == null) return null;
   final source = <String>[];
-  if (basis.gridX case final gridX?) {
-    if (basis.gridY case final gridY?) source.add('선택 격자 $gridX/$gridY');
-  }
   if (basis.stationId case final station?) source.add('관측소 $station');
   if (basis.distanceKm case final distance?) {
     source.add('대표 위치에서 ${distance.toStringAsFixed(1)}km');
@@ -704,8 +692,8 @@ String _comparisonSubtitle(ComparisonBasis? basis) {
   if (basis?.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION') {
     final time = _comparisonTimeLabel(basis?.currentForecastAt);
     return time == null
-        ? '다음 시간 예상기온을 어제 같은 시간 실황과 비교해요'
-        : '$time 기준, 다음 시간 예상기온을 어제 실황과 비교해요';
+        ? '다음 시간 기온 예보를 어제 같은 시간 실황과 비교해요'
+        : '$time 기준, 다음 시간 기온 예보를 어제 실황과 비교해요';
   }
   if (basis?.provider == 'KMA_ULTRA_SHORT_OBSERVATION') {
     return '선택지역 동네예보 격자의 오늘·어제 같은 시각을 비교해요';
@@ -726,12 +714,6 @@ String? _comparisonTimeLabel(String? raw) {
   final period = inKorea.hour < 12 ? '오전' : '오후';
   final hour = inKorea.hour % 12 == 0 ? 12 : inKorea.hour % 12;
   return '$period $hour시';
-}
-
-String _currentForecastBasisLabel(String? forecastAt) {
-  final time = forecastTemperatureLabel(forecastAt);
-  final basis = time == '시' ? '현재 시간대' : time;
-  return '하늘·기온·습도·바람은 $basis 단기예보 기준';
 }
 
 String? _comparisonObservationClock(String prefix, String? raw) {
@@ -801,8 +783,8 @@ class _TopWeatherCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final current = today.current;
     final missing = <String>[
-      if (current.temperature == null) '예상 기온',
-      if (current.apparentTemperature == null) '체감온도',
+      if (current.temperature == null) '현재 기온',
+      if (current.apparentTemperature == null) '현재 체감온도',
       if (current.sky == null) '하늘 상태',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',

@@ -164,11 +164,13 @@ void main() {
 
     expect(
       find.text('하늘·기온·습도·바람은 오전 10시 단기예보 기준'),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('예상 기온'), findsNWidgets(2));
+    expect(find.text('현재 기온'), findsOneWidget);
+    expect(find.text('예상 기온'), findsOneWidget);
     expect(find.text('22.0℃'), findsOneWidget);
-    expect(find.text('예상 체감온도'), findsNWidgets(2));
+    expect(find.text('현재 체감온도'), findsOneWidget);
+    expect(find.text('예상 체감온도'), findsOneWidget);
     expect(find.text('21.5℃'), findsOneWidget);
     expect(find.text('오전 11시의 기온과 체감온도를 예상해요'), findsOneWidget);
     expect(find.text('23.0℃'), findsOneWidget);
@@ -205,15 +207,19 @@ void main() {
     expect(forecastWeatherRow.top, greaterThan(currentWeatherRow.bottom));
     expect(find.text('어제와 비교'), findsOneWidget);
     expect(
-      find.text('오전 10시 기준, 다음 시간 예상기온을 어제 실황과 비교해요'),
+      find.text('오전 10시 기준, 다음 시간 기온 예보를 어제 실황과 비교해요'),
       findsOneWidget,
     );
     expect(
       find.text('선택 격자 57/124'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
-      find.text('예상 기온은 어제보다 2.3℃ 높아요.'),
+      find.byKey(const ValueKey('yesterday-comparison-basis')),
+      findsNothing,
+    );
+    expect(
+      find.text('기온은 어제보다 2.3℃ 높아요.'),
       findsOneWidget,
     );
     final topCard = find.byKey(const ValueKey('main-top-weather-card'));

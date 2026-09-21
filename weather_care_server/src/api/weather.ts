@@ -61,6 +61,7 @@ import {
 import {
   collectedCacheKey,
   getCollectedCache,
+  type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
 import type {
   CollectedRegionBundle,
@@ -70,6 +71,10 @@ import type {
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
 import { calculateSunTimes } from '../presentation/sunTimes';
+import {
+  ultraShortApparentTemperature,
+  type UltraShortObservation,
+} from '../providers/weather/kmaUltraShortObservationProvider';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -77,6 +82,7 @@ router.use('*', async (c, next) => {
   await next();
 });
 const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
+const CURRENT_OBSERVATION_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 // A cold 13 MB radar composite regularly needs more than the shared 3.5 s
 // optional-source deadline. Keep it within the app's 20 s API timeout.
 const CURRENT_PRECIPITATION_PROVIDER_BUDGET_MS = 8_000;
@@ -98,7 +104,7 @@ router.get('/main', async (c) => {
 
   try {
     const generatedAt = new Date();
-    const [collected, weekly, visibilityRecord] = await Promise.all([
+    const [collected, weekly, visibilityRecord, ultraShortRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
         c.env.DB,
         `COLLECTED_REGION_${nx}_${ny}`,
@@ -111,6 +117,10 @@ router.get('/main', async (c) => {
         c.env.DB,
         collectedCacheKey.visibility(nx, ny),
       ),
+      getCollectedCache<UltraShortObservation>(
+        c.env.DB,
+        collectedCacheKey.ultraShortObservation(nx, ny),
+      ),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
@@ -120,18 +130,25 @@ router.get('/main', async (c) => {
       visibilityRecord?.value,
       generatedAt,
     );
+    const current = currentFromUltraShortObservation(
+      forecast.current,
+      ultraShortRecord,
+      generatedAt,
+    );
     const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
     const brief = buildWeatherBriefResult(forecast, {
       regionKey: `${nx}:${ny}`,
       now: generatedAt,
     });
     const response: TodayWeatherResponse = {
-      dataSource: `${forecast.dataSource} · 서버 중앙 수집`,
+      dataSource: current.dataRole === 'OBSERVATION'
+        ? `${forecast.dataSource} · 기상청 초단기실황 · 서버 중앙 수집`
+        : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
       ...sunTimes,
-      current: forecast.current,
+      current,
       nextForecast:
         nextForecastSnapshot(
           forecast.hourly,
@@ -173,7 +190,7 @@ router.get('/today', async (c) => {
     const region = regionMetadataForGrid(nx, ny);
     const [regionRecord, settings, precipitationRecord, warningRecord,
       roadIceRecord, roadControlRecord, weeklyRecord,
-      visibilityRecord] = await Promise.all([
+      visibilityRecord, ultraShortRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
         c.env.DB,
         `COLLECTED_REGION_${nx}_${ny}`,
@@ -213,6 +230,10 @@ router.get('/today', async (c) => {
         c.env.DB,
         collectedCacheKey.visibility(nx, ny),
       ),
+      getCollectedCache<UltraShortObservation>(
+        c.env.DB,
+        collectedCacheKey.ultraShortObservation(nx, ny),
+      ),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
@@ -220,6 +241,11 @@ router.get('/today', async (c) => {
     const forecast = enrichForecastWithVisibility(
       forecastForCurrentHour(regionRecord.value.forecast, generatedAt),
       visibilityRecord?.value,
+      generatedAt,
+    );
+    const current = currentFromUltraShortObservation(
+      forecast.current,
+      ultraShortRecord,
       generatedAt,
     );
     const environmentalData = regionRecord.value.environmental;
@@ -282,13 +308,15 @@ router.get('/today', async (c) => {
       coordinates,
     );
     const response: TodayWeatherResponse = {
-      dataSource: `${forecast.dataSource} · 서버 중앙 수집`,
+      dataSource: current.dataRole === 'OBSERVATION'
+        ? `${forecast.dataSource} · 기상청 초단기실황 · 서버 중앙 수집`
+        : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionLabel },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
       ...sunTimes,
       current: {
-        ...forecast.current,
+        ...current,
         activeWarnings: warnings,
       },
       nextForecast:
@@ -579,6 +607,68 @@ export function nextForecastSnapshot(
   return pm25ForecastGrade
     ? { ...next, pm25ForecastGrade }
     : next;
+}
+
+export function currentFromUltraShortObservation(
+  forecast: WeatherSnapshot,
+  record: CollectedCacheRecord<UltraShortObservation> | null,
+  now = new Date(),
+): WeatherSnapshot {
+  const observedAt = record?.value.observedAt;
+  const observedInstant = observedAt === undefined
+    ? Number.NaN
+    : Date.parse(observedAt);
+  const observationAge = now.getTime() - observedInstant;
+  const available = record?.status === 'AVAILABLE' &&
+    record.value.temperature !== undefined &&
+    Number.isFinite(observedInstant) &&
+    observationAge >= -5 * 60 * 1000 &&
+    observationAge <= CURRENT_OBSERVATION_MAX_AGE_MS;
+
+  if (!available || !record) {
+    return {
+      ...forecast,
+      temperature: undefined,
+      apparentTemperature: undefined,
+      apparentTemperatureSource: undefined,
+      apparentTemperatureFormulaVersion: undefined,
+      humidity: undefined,
+      windSpeed: undefined,
+      windDirection: undefined,
+      qualityFlags: [
+        ...(forecast.qualityFlags ?? []),
+        'CURRENT_OBSERVATION_UNAVAILABLE',
+      ],
+    };
+  }
+
+  const observation = record.value;
+  const apparentTemperature = ultraShortApparentTemperature(observation);
+  return {
+    ...forecast,
+    observedAt: observation.observedAt,
+    dataRole: 'OBSERVATION',
+    forecastAt: undefined,
+    issuedAt: undefined,
+    fetchedAt: record.updatedAt,
+    temperature: observation.temperature,
+    apparentTemperature,
+    apparentTemperatureSource: apparentTemperature === undefined
+      ? undefined
+      : 'APP_KMA_METHOD_FROM_OBSERVATION',
+    apparentTemperatureFormulaVersion: apparentTemperature === undefined
+      ? undefined
+      : 'KMA_APPARENT_TEMPERATURE_2026.1',
+    humidity: observation.humidity,
+    windSpeed: observation.windSpeed,
+    windDirection: undefined,
+    provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
+    providerField: 'T1H,REH,WSD;SKY=FORECAST',
+    qualityFlags: [
+      ...(forecast.qualityFlags ?? []),
+      'SKY_FROM_FORECAST',
+    ],
+  };
 }
 
 export function forecastForCurrentHour(

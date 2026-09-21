@@ -4,6 +4,7 @@ import { collectedCacheKey, saveCollectedCache } from '../src/database/collected
 import type { EnvironmentalDataBundle } from '../src/providers/environmental/environmentalDataService';
 import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { KmaHourlyComparison } from '../src/providers/weather/kmaHourlyObservationProvider';
+import type { UltraShortObservation } from '../src/providers/weather/kmaUltraShortObservationProvider';
 
 export const unavailableEnvironmental: EnvironmentalDataBundle = {
   sources: {
@@ -40,6 +41,23 @@ export async function seedCollectedWeekly(
     value: { ...value, collectedAt: new Date().toISOString() },
     nx,
     ny,
+  });
+}
+
+export async function seedCollectedUltraShortObservation(
+  nx: number,
+  ny: number,
+  value: UltraShortObservation,
+  updatedAt = new Date(),
+): Promise<void> {
+  await ensureWeatherCache();
+  await saveCollectedCache(env.DB, {
+    key: collectedCacheKey.ultraShortObservation(nx, ny),
+    type: 'COLLECTED_ULTRA_SHORT',
+    value,
+    nx,
+    ny,
+    updatedAt,
   });
 }
 

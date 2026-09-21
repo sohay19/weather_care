@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/ads/consent_aware_native_ad_card.dart';
+import 'package:weather_care/services/ad_removal_service.dart';
 import 'package:weather_care/services/ads_consent.dart';
+
+import 'support/fake_ad_removal.dart';
 
 void main() {
   late bool eligible;
   late AdsConsent consent;
   late _FakeNativeAdCardLoader loader;
+  late FakeAdRemovalPurchaseGateway purchaseGateway;
+  late AdRemovalService adRemoval;
 
   setUp(() {
     eligible = false;
@@ -21,6 +26,16 @@ void main() {
       initializeAds: () async {},
     );
     loader = _FakeNativeAdCardLoader();
+    purchaseGateway = FakeAdRemovalPurchaseGateway();
+    adRemoval = AdRemovalService(
+      gateway: purchaseGateway,
+      ownershipStore: MemoryAdRemovalOwnershipStore(),
+    );
+  });
+
+  tearDown(() async {
+    adRemoval.dispose();
+    await purchaseGateway.close();
   });
 
   Widget subject({NativeAdCardSize size = NativeAdCardSize.small}) =>
@@ -29,6 +44,7 @@ void main() {
           body: ConsentAwareNativeAdCard(
             size: size,
             controller: consent,
+            adRemoval: adRemoval,
             loader: loader,
             platformOverride: TargetPlatform.android,
             releaseModeOverride: false,
@@ -80,6 +96,24 @@ void main() {
     await consent.openPrivacyOptions();
     await tester.pump();
 
+    expect(find.byKey(const ValueKey('week-native-ad-card')), findsNothing);
+    expect(loaded.disposeCount, 1);
+  });
+
+  testWidgets('광고 제거 구매가 적용되면 표시 중인 광고를 제거하고 폐기한다', (tester) async {
+    await adRemoval.initialize();
+    await tester.pumpWidget(subject());
+    eligible = true;
+    await consent.refresh();
+    await tester.pump();
+    await tester.pump();
+    final loaded = loader.handles.single;
+
+    purchaseGateway.emit(fakeAdRemovalPurchase());
+    await tester.pump();
+    await tester.pump();
+
+    expect(adRemoval.isOwned, isTrue);
     expect(find.byKey(const ValueKey('week-native-ad-card')), findsNothing);
     expect(loaded.disposeCount, 1);
   });

@@ -63,7 +63,7 @@ class RegionCatalog {
           name: row[2],
           nx: row[3],
           ny: row[4],
-          fullName: parts.join(' '));
+          fullName: _displayName(parts.join(' ')));
       if (!keys.add(region.key)) {
         throw const FormatException('Duplicate region');
       }
@@ -120,4 +120,7 @@ class RegionCatalog {
       .replaceAll('강원도', '강원')
       .replaceAll('전북도', '전북')
       .replaceAll('제주도', '제주');
+
+  static String _displayName(String value) =>
+      value.replaceAll(RegExp(r'제(?=\d+동(?:\s|$))'), '');
 }

@@ -32,8 +32,10 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
   @override
   Widget build(BuildContext context) {
     final current = widget.current;
+    final isObservation = current.dataRole == 'OBSERVATION';
+    final currentSource = isObservation ? '기상청 초단기실황' : '기상청 단기예보';
     final missing = <String>[
-      if (current.temperature == null) '예상 기온',
+      if (current.temperature == null) '현재 기온',
       if (current.sky == null) '하늘 상태',
       if (current.apparentTemperature == null) '체감온도',
       if (current.humidity == null) '습도',
@@ -53,7 +55,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
         levelTitle: _apparentTemperatureLevel(current.apparentTemperature),
         detailBody: current.apparentTemperature == null
             ? '기온·습도·풍속 입력자료가 모두 갖춰지지 않았거나 체감온도 계산조건에 맞지 않아 값을 만들지 않았어요.\n빠진 값을 0으로 바꿔 계산하지 않아요.'
-            : '기상청 단기예보의 기온·상대습도·풍속을 이용해 계산한 예상 체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.\n햇빛, 옷차림, 활동량, 건물 주변 바람에 따라 실제로 느끼는 정도는 달라질 수 있어요.',
+            : '$currentSource의 기온·상대습도·풍속을 이용해 계산한 ${isObservation ? '' : '예상 '}체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.\n햇빛, 옷차림, 활동량, 건물 주변 바람에 따라 실제로 느끼는 정도는 달라질 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.water_drop_outlined,
@@ -63,8 +65,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : '${current.humidity!.toStringAsFixed(0)}%',
         levelTitle: _humidityLevel(current.humidity),
         detailBody: current.humidity == null
-            ? '기상청 단기예보에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요.\n실내 습도나 피부가 느끼는 건조함을 임의로 추정하지 않아요.'
-            : '기상청 단기예보의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요.\n상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증기량에 얼마나 가까운지를 나타내며, 실내 습도와는 다를 수 있어요.',
+            ? '$currentSource에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요.\n실내 습도나 피부가 느끼는 건조함을 임의로 추정하지 않아요.'
+            : '$currentSource의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요.\n상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증기량에 얼마나 가까운지를 나타내며, 실내 습도와는 다를 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.air_rounded,
@@ -72,8 +74,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
         value: _windValue(current.windDirection, current.windSpeed),
         levelTitle: _windLevel(current.windSpeed),
         detailBody: current.windSpeed == null && current.windDirection == null
-            ? '기상청 단기예보에서 풍향과 풍속 자료를 받지 못해 바람을 표시하지 않아요.\n자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.'
-            : '기상청 단기예보의 바람은 ${_windValue(current.windDirection, current.windSpeed)}예요.\n선택한 예보 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.',
+            ? '$currentSource에서 풍속 자료를 받지 못해 바람을 표시하지 않아요.\n자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.'
+            : '$currentSource의 바람은 ${_windValue(current.windDirection, current.windSpeed)}예요.\n선택한 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.wb_sunny_outlined,
@@ -124,7 +126,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            forecastTemperatureLabel(current.forecastAt),
+            '${forecastTemperatureLabel(current.observedAt ?? current.forecastAt)}${isObservation ? ' 실황' : ''}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: WeatherCareTheme.textSecondary,
                   fontWeight: FontWeight.w700,
@@ -363,7 +365,7 @@ String _humidityLevel(double? value) {
 }
 
 String _windLevel(double? value) {
-  if (value == null) return '예상 풍속 수준을 확인하기 어려워요';
+  if (value == null) return '현재 풍속 수준을 확인하기 어려워요';
   final level = switch (value) {
     < 4 => '약한',
     < 9 => '약간 강한',

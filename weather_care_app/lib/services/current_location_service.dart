@@ -92,7 +92,7 @@ class CurrentLocationService {
           timeLimit: Duration(seconds: 8),
         ),
       );
-      return _resultFromPosition(position);
+      return await _resultFromPosition(position);
     } on TimeoutException {
       return const LocationResult(LocationState.timedOut);
     } on LocationServiceDisabledException {

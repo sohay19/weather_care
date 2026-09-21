@@ -15,18 +15,19 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
-		CF62BA7D305CE19600A72CCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */; };
-		DBDCE0F8A9E5218C4A5AC6E1 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 716353AA5D5210FF1760CC0E /* Pods_RunnerTests.framework */; };
 		A10000000000000000000001 /* WeatherCareWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* WeatherCareWidget.swift */; };
 		A10000000000000000000002 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* WidgetKit.framework */; };
 		A10000000000000000000003 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* SwiftUI.framework */; };
 		A10000000000000000000004 /* WeatherCareWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* WeatherCareWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A10000000000000000000005 /* SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* SUITE-Regular.ttf */; };
-		A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* SUITE-SemiBold.ttf */; };
-		A10000000000000000000007 /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SUITE-Bold.ttf */; };
-		A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* SUITE-ExtraBold.ttf */; };
-		A10000000000000000000009 /* SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* SUITE-Heavy.ttf */; };
+		A10000000000000000000005 /* Fonts/SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */; };
+		A10000000000000000000006 /* Fonts/SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */; };
+		A10000000000000000000007 /* Fonts/SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */; };
+		A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */; };
+		A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */; };
 		A1000000000000000000000A /* Icons in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* Icons */; };
+		CF62BA7D305CE19600A72CCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */; };
+		CFDE0D51306124F2006508F1 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFDE0D50306124F2006508F1 /* StoreKit.framework */; };
+		DBDCE0F8A9E5218C4A5AC6E1 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 716353AA5D5210FF1760CC0E /* Pods_RunnerTests.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -94,20 +95,21 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9EE4DEE434D7C313E0568C36 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
-		A63F90F5FDDEFBACB5A29F7D /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
-		CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A20000000000000000000001 /* WeatherCareWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherCareWidget.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A20000000000000000000003 /* WeatherCareWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WeatherCareWidget.entitlements; sourceTree = "<group>"; };
 		A20000000000000000000004 /* WeatherCareWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WeatherCareWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000005 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A20000000000000000000006 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		A20000000000000000000007 /* SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
-		A20000000000000000000008 /* SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
-		A20000000000000000000009 /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
-		A2000000000000000000000A /* SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
-		A2000000000000000000000B /* SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Icons; sourceTree = "<group>"; };
+		A63F90F5FDDEFBACB5A29F7D /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		CFDE0D50306124F2006508F1 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,14 +118,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3EE6CE834E4A3250240E2649 /* Pods_Runner.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F55AC9D5CB9C93BACDD67F77 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				DBDCE0F8A9E5218C4A5AC6E1 /* Pods_RunnerTests.framework in Frameworks */,
+				CFDE0D51306124F2006508F1 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -133,6 +128,14 @@
 			files = (
 				A10000000000000000000002 /* WidgetKit.framework in Frameworks */,
 				A10000000000000000000003 /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F55AC9D5CB9C93BACDD67F77 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DBDCE0F8A9E5218C4A5AC6E1 /* Pods_RunnerTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +166,7 @@
 		34C5AD06C0DA2F595E4FBDAF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CFDE0D50306124F2006508F1 /* StoreKit.framework */,
 				A20000000000000000000005 /* WidgetKit.framework */,
 				A20000000000000000000006 /* SwiftUI.framework */,
 				13D1CCD84EB3B2E7070800F3 /* Pods_Runner.framework */,
@@ -228,11 +232,11 @@
 				A20000000000000000000001 /* WeatherCareWidget.swift */,
 				A20000000000000000000002 /* Info.plist */,
 				A20000000000000000000003 /* WeatherCareWidget.entitlements */,
-				A20000000000000000000007 /* SUITE-Regular.ttf */,
-				A20000000000000000000008 /* SUITE-SemiBold.ttf */,
-				A20000000000000000000009 /* SUITE-Bold.ttf */,
-				A2000000000000000000000A /* SUITE-ExtraBold.ttf */,
-				A2000000000000000000000B /* SUITE-Heavy.ttf */,
+				A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */,
+				A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */,
+				A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */,
+				A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */,
+				A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */,
 				A2000000000000000000000C /* Icons */,
 			);
 			path = WeatherCareWidget;
@@ -312,15 +316,6 @@
 				LastUpgradeCheck = 1510;
 				ORGANIZATIONNAME = "";
 				TargetAttributes = {
-					A50000000000000000000001 = {
-						CreatedOnToolsVersion = 15.0;
-						ProvisioningStyle = Automatic;
-						SystemCapabilities = {
-							com.apple.ApplicationGroups.iOS = {
-								enabled = 1;
-							};
-						};
-					};
 					331C8080294A63A400263BE5 = {
 						CreatedOnToolsVersion = 14.0;
 						TestTargetID = 97C146ED1CF9000F007C117D;
@@ -328,6 +323,15 @@
 					97C146ED1CF9000F007C117D = {
 						CreatedOnToolsVersion = 7.3.1;
 						LastSwiftMigration = 1100;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.ApplicationGroups.iOS = {
 								enabled = 1;
@@ -380,11 +384,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000005 /* SUITE-Regular.ttf in Resources */,
-				A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */,
-				A10000000000000000000007 /* SUITE-Bold.ttf in Resources */,
-				A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */,
-				A10000000000000000000009 /* SUITE-Heavy.ttf in Resources */,
+				A10000000000000000000005 /* Fonts/SUITE-Regular.ttf in Resources */,
+				A10000000000000000000006 /* Fonts/SUITE-SemiBold.ttf in Resources */,
+				A10000000000000000000007 /* Fonts/SUITE-Bold.ttf in Resources */,
+				A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */,
+				A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */,
 				A1000000000000000000000A /* Icons in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -634,7 +638,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26091801;
+				CURRENT_PROJECT_VERSION = 26092100;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
 				ENABLE_BITCODE = NO;
@@ -835,7 +839,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26091801;
+				CURRENT_PROJECT_VERSION = 26092100;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
 				ENABLE_BITCODE = NO;
@@ -876,7 +880,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26091801;
+				CURRENT_PROJECT_VERSION = 26092100;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
 				ENABLE_BITCODE = NO;

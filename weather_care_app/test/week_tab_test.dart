@@ -7,19 +7,12 @@ import 'package:weather_care/theme/weather_theme.dart';
 import 'package:weather_care/utils/korea_date.dart';
 
 void main() {
-  testWidgets('Week은 현재 가시거리와 주간 예보 한계를 구분한다', (tester) async {
+  testWidgets('Week에는 현재 관측 가시거리를 표시하지 않는다', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: WeekTab(
             weekly: const WeeklyWeatherResponse(days: []),
-            currentWeather: const CurrentWeather(
-              temperature: 20,
-              visibilityMeters: 12000,
-              visibilityObservedAt: '2026-09-21T14:00:00+09:00',
-              visibilityStationId: '108',
-              visibilityStationDistanceKm: 4.2,
-            ),
             serverFeaturesAvailable: true,
             onRefresh: () async {},
             now: () => DateTime.utc(2026, 9, 21),
@@ -28,11 +21,9 @@ void main() {
       ),
     );
 
-    expect(find.text('가시거리와 주간 예보'), findsOneWidget);
-    expect(find.text('12 km'), findsOneWidget);
-    expect(find.byKey(const ValueKey('visibility-forecast-limit')),
-        findsOneWidget);
-    expect(find.textContaining('시간별·주간 미래 예보'), findsOneWidget);
+    expect(find.textContaining('가시거리'), findsNothing);
+    expect(
+        find.byKey(const ValueKey('visibility-forecast-limit')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

@@ -804,11 +804,11 @@ void main() {
     expect(find.text('자외선지수'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('visibility-observation-card')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('800 m'), findsOneWidget);
-    expect(find.byKey(const ValueKey('visibility-forecast-limit')),
-        findsOneWidget);
+    expect(find.text('800 m'), findsNothing);
+    expect(
+        find.byKey(const ValueKey('visibility-forecast-limit')), findsNothing);
     expect(find.byType(WeatherInfoCard), findsNothing);
     expect(find.text('시간별 예보'), findsNothing);
     expect(tester.takeException(), isNull);

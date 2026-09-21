@@ -13,7 +13,6 @@ import '../widgets/preparation_icon.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/week_presentation.dart';
 import '../widgets/week_precipitation.dart';
-import '../widgets/visibility_observation_card.dart';
 
 class WeekTab extends StatefulWidget {
   final WeeklyWeatherResponse weekly;
@@ -23,7 +22,6 @@ class WeekTab extends StatefulWidget {
   final bool retrying;
   final DateTime Function()? now;
   final Widget? advertisement;
-  final CurrentWeather? currentWeather;
 
   const WeekTab({
     super.key,
@@ -34,7 +32,6 @@ class WeekTab extends StatefulWidget {
     this.retrying = false,
     this.now,
     this.advertisement,
-    this.currentWeather,
   });
 
   @override
@@ -117,11 +114,6 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               )
             else
               const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
-            const SizedBox(height: 16),
-            VisibilityObservationCard(
-              current: widget.currentWeather,
-              title: '가시거리와 주간 예보',
-            ),
             if (widget.advertisement != null) ...[
               const SizedBox(height: 18),
               widget.advertisement!,

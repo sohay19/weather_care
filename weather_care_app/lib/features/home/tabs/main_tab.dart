@@ -331,7 +331,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
               fractionDigits: 1,
               currentLabel: forecastComparison ? '오늘 예보' : '오늘',
               previousLabel: forecastComparison ? '어제 실황' : '어제',
-              previousReference: forecastComparison ? '어제 실황보다' : '어제보다',
+              previousReference: '어제보다',
             ),
             _ComparisonMetricData(
               subject: forecastComparison ? '예상 체감온도는' : '체감온도는',
@@ -341,7 +341,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
               fractionDigits: 1,
               currentLabel: forecastComparison ? '오늘 예보' : '오늘',
               previousLabel: forecastComparison ? '어제 실황' : '어제',
-              previousReference: forecastComparison ? '어제 실황보다' : '어제보다',
+              previousReference: '어제보다',
             ),
             if (todayObservation.pm25 != null &&
                 yesterdayObservation.pm25 != null)

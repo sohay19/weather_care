@@ -213,7 +213,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('예상 기온은 어제 실황보다 2.3℃ 높아요.'),
+      find.text('예상 기온은 어제보다 2.3℃ 높아요.'),
       findsOneWidget,
     );
     final topCard = find.byKey(const ValueKey('main-top-weather-card'));

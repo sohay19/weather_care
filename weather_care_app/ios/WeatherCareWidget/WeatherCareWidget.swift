@@ -12,10 +12,11 @@ private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
 
 private enum SuiteFont {
-  static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", size: size) }
-  static func semibold(_ size: CGFloat) -> Font { .custom("SUITE-SemiBold", size: size) }
-  static func bold(_ size: CGFloat) -> Font { .custom("SUITE-Bold", size: size) }
-  static func extraBold(_ size: CGFloat) -> Font { .custom("SUITE-ExtraBold", size: size) }
+  static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
+  static func semiBold(_ size: CGFloat) -> Font { .custom("SUITE-SemiBold", fixedSize: size) }
+  static func bold(_ size: CGFloat) -> Font { .custom("SUITE-Bold", fixedSize: size) }
+  static func extraBold(_ size: CGFloat) -> Font { .custom("SUITE-ExtraBold", fixedSize: size) }
+  static func heavy(_ size: CGFloat) -> Font { .custom("SUITE-Heavy", fixedSize: size) }
 }
 
 struct WeatherCareEntry: TimelineEntry {
@@ -136,7 +137,7 @@ private struct WidgetHeader: View {
   var body: some View {
     HStack(spacing: 6) {
       Text(snapshot.region)
-        .font(SuiteFont.semibold(regionSize))
+        .font(SuiteFont.extraBold(regionSize))
         .lineLimit(1)
         .minimumScaleFactor(0.72)
       Spacer(minLength: 2)
@@ -175,7 +176,7 @@ private struct SmallWeatherWidget: View {
         WeatherIconView(condition: snapshot.condition)
           .frame(width: 56, height: 56)
         Text(snapshot.currentTemperature)
-          .font(SuiteFont.extraBold(38))
+          .font(SuiteFont.heavy(38))
           .foregroundStyle(ink)
           .lineLimit(1)
           .minimumScaleFactor(0.62)
@@ -188,8 +189,8 @@ private struct SmallWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 6)
-    .padding(.vertical, 6)
+    .padding(.horizontal, 2)
+    .padding(.vertical, 2)
   }
 }
 
@@ -207,7 +208,7 @@ private struct MediumWeatherWidget: View {
             .font(SuiteFont.regular(10))
             .foregroundStyle(secondaryInk)
           Text(snapshot.currentTemperature)
-            .font(SuiteFont.extraBold(34))
+            .font(SuiteFont.heavy(34))
         }
         Divider().frame(height: 36).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
         VStack(spacing: -1) {
@@ -215,7 +216,7 @@ private struct MediumWeatherWidget: View {
             .font(SuiteFont.regular(10))
             .foregroundStyle(secondaryInk)
           Text(snapshot.apparentTemperature)
-            .font(SuiteFont.extraBold(34))
+            .font(SuiteFont.heavy(34))
         }
       }
       .foregroundStyle(ink)
@@ -223,7 +224,7 @@ private struct MediumWeatherWidget: View {
       .frame(maxHeight: .infinity)
       HStack(spacing: 8) {
         Text(snapshot.shortMessage)
-          .font(SuiteFont.bold(13))
+          .font(SuiteFont.extraBold(13))
           .lineLimit(1)
         Spacer(minLength: 2)
         MinMaxRow(snapshot: snapshot, size: 12)
@@ -233,8 +234,8 @@ private struct MediumWeatherWidget: View {
       .padding(.vertical, 6)
       .widgetInfoPanel()
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 6)
+    .padding(.horizontal, 2)
+    .padding(.vertical, 2)
   }
 }
 
@@ -244,7 +245,7 @@ private struct LargeWeatherWidget: View {
   var body: some View {
     VStack(spacing: 5) {
       WidgetHeader(snapshot: snapshot, regionSize: 14, timeSize: 11)
-      VStack(spacing: 10) {
+      VStack(spacing: 20) {
         HStack(spacing: 12) {
           WeatherIconView(condition: snapshot.condition)
             .frame(width: 72, height: 72)
@@ -253,7 +254,7 @@ private struct LargeWeatherWidget: View {
               .font(SuiteFont.regular(11))
               .foregroundStyle(secondaryInk)
             Text(snapshot.currentTemperature)
-              .font(SuiteFont.extraBold(38))
+              .font(SuiteFont.heavy(38))
           }
           Divider().frame(height: 40).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
           VStack(spacing: -1) {
@@ -261,13 +262,13 @@ private struct LargeWeatherWidget: View {
               .font(SuiteFont.regular(11))
               .foregroundStyle(secondaryInk)
             Text(snapshot.apparentTemperature)
-              .font(SuiteFont.extraBold(38))
+              .font(SuiteFont.heavy(38))
           }
         }
         .foregroundStyle(ink)
         .frame(maxWidth: .infinity, alignment: .center)
         Text(snapshot.brief)
-          .font(SuiteFont.semibold(14))
+          .font(SuiteFont.extraBold(14))
           .foregroundStyle(ink)
           .lineLimit(2)
           .frame(maxWidth: .infinity, alignment: .leading)
@@ -278,7 +279,7 @@ private struct LargeWeatherWidget: View {
                 PreparationIconView(type: item.type)
                   .frame(width: 28, height: 28)
                 Text(item.label)
-                  .font(SuiteFont.semibold(13))
+                  .font(SuiteFont.semiBold(13))
                   .lineLimit(1)
                   .minimumScaleFactor(0.8)
               }
@@ -292,28 +293,27 @@ private struct LargeWeatherWidget: View {
         }
       }
       .frame(maxHeight: .infinity, alignment: .center)
-      HStack(spacing: 12) {
+      HStack(spacing: 3) {
         Text(snapshot.nextTime)
           .font(SuiteFont.regular(12))
           .foregroundStyle(ink)
           .lineLimit(1)
           .frame(maxWidth: .infinity)
+        Text(snapshot.nextTemperature)
+          .font(SuiteFont.heavy(17))
+          .foregroundStyle(ink)
         WeatherIconView(condition: snapshot.nextCondition, monochrome: true)
           .frame(width: 31, height: 31)
-          .frame(maxWidth: .infinity)
-        Text(snapshot.nextTemperature)
-          .font(SuiteFont.bold(17))
-          .foregroundStyle(ink)
-          .frame(maxWidth: .infinity)
       }
+      .padding(.trailing, 16)
       MinMaxRow(snapshot: snapshot, size: 13)
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 8)
+    .padding(.horizontal, 3)
+    .padding(.vertical, 3)
   }
 }
 

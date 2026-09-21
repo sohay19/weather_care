@@ -26,6 +26,7 @@
         <string>SUITE-SemiBold.ttf</string>
         <string>SUITE-Bold.ttf</string>
         <string>SUITE-ExtraBold.ttf</string>
+        <string>SUITE-Heavy.ttf</string>
     </array>
     <key>NSExtension</key>
     <dict>

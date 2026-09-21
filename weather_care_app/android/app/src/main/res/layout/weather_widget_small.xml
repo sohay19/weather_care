@@ -24,11 +24,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="@font/suite_semibold"
+            android:fontFamily="@font/suite_extra_bold"
             android:maxLines="1"
             android:text="시흥시 은행동"
             android:textColor="#25374E"
-            android:textSize="12sp" />
+            android:textStyle="bold"
+            android:textSize="12dp" />
 
         <TextView
             android:id="@+id/widget_refresh_time"
@@ -39,7 +40,7 @@
             android:maxLines="1"
             android:text="오전 8:20 기준"
             android:textColor="#60758A"
-            android:textSize="9sp" />
+            android:textSize="9dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -61,11 +62,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:fontFamily="@font/suite_extra_bold"
+            android:fontFamily="@font/suite_heavy"
             android:includeFontPadding="false"
             android:text="18°"
             android:textColor="#25374E"
-            android:textSize="38sp" />
+            android:textSize="38dp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <TextView
@@ -83,5 +85,5 @@
         android:paddingBottom="5dp"
         android:text="최저 12°   최고 20°"
         android:textColor="#425A72"
-        android:textSize="13sp" />
+        android:textSize="13dp" />
 </LinearLayout>

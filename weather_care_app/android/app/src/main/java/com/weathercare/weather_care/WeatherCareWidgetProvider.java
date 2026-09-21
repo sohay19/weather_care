@@ -23,7 +23,8 @@ import java.util.List;
 
 public class WeatherCareWidgetProvider extends AppWidgetProvider {
     private static final int MEDIUM_MIN_WIDTH_DP = 220;
-    private static final int LARGE_MIN_HEIGHT_DP = 220;
+    // Pixel Launcher 측정값(2칸 108dp, 3칸 169dp)의 중간값이다.
+    private static final int LARGE_MIN_HEIGHT_DP = 140;
 
     @Override
     public void onUpdate(
@@ -61,7 +62,9 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         Bundle options = manager.getAppWidgetOptions(appWidgetId);
         int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110);
         int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
+        // 2열은 작은, 3열 이상은 2행에서 중간·3행 이상에서 큰 위젯으로 표시한다.
         WidgetSize size = minHeight >= LARGE_MIN_HEIGHT_DP
+                && minWidth >= MEDIUM_MIN_WIDTH_DP
                 ? WidgetSize.LARGE
                 : minWidth >= MEDIUM_MIN_WIDTH_DP
                         ? WidgetSize.MEDIUM
@@ -79,7 +82,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_min_max, minMax(snapshot));
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
 
-        if (size == WidgetSize.MEDIUM || size == WidgetSize.LARGE) {
+        if (size != WidgetSize.SMALL) {
             views.setTextViewText(R.id.widget_apparent_temperature, snapshot.apparentTemperature);
         }
         if (size == WidgetSize.MEDIUM) {

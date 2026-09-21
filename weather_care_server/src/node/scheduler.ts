@@ -4,8 +4,8 @@ import {
   ROAD_ICE_COLLECTION_CRON,
   runScheduledJobs,
 } from '../cron/jobs';
-import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
+import { prewarmNationwideInRuntime } from './prewarmNationwide';
 import { assertNodeEnvironment, createNodeRuntime } from './runtime';
 import { dueScheduledJobs, scheduledMinute, type ScheduledJobName } from './schedule';
 
@@ -67,29 +67,30 @@ function runDueJobs(now = new Date()): void {
 }
 
 async function startScheduler(): Promise<void> {
-  try {
-    await runWeatherCollectionJob(runtime.env, {
-      collectCore: false,
-      collectActiveDetails: false,
-      collectHourlyObservations: true,
-      dailyObservationLookbackDays: 7,
-    });
-    console.log(JSON.stringify({ event: 'node_recent_observation_backfill_finished' }));
-  } catch (error) {
-    console.error(JSON.stringify({
-      event: 'node_recent_observation_backfill_failed',
-      error: safeErrorName(error),
-    }));
-  }
+  const summary = await prewarmNationwideInRuntime(runtime);
+  console.log(JSON.stringify({
+    event: 'node_operational_prewarm_finished',
+    ...summary,
+  }));
   if (closing) return;
   runDueJobs();
   timer = setInterval(runDueJobs, 15_000);
   console.log(JSON.stringify({ event: 'node_scheduler_started' }));
 }
 
-const startup = startScheduler();
+const startup = startScheduler().catch((error) => {
+  closing = true;
+  console.error(JSON.stringify({
+    event: 'node_operational_prewarm_failed',
+    error: safeErrorName(error),
+  }));
+  process.exitCode = 1;
+});
 running.add(startup);
-void startup.finally(() => running.delete(startup));
+void startup.finally(() => {
+  running.delete(startup);
+  if (process.exitCode) runtime.close();
+});
 
 async function shutdown(signal: string): Promise<void> {
   if (closing) return;

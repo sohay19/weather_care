@@ -1,8 +1,8 @@
 [Unit]
 Description=날씨챙겨 중앙 수집·알림 스케줄러
-After=network-online.target weather-care-migrate.service
+After=network-online.target weather-care-prewarm.service
 Wants=network-online.target
-Requires=weather-care-migrate.service
+Requires=weather-care-prewarm.service
 
 [Service]
 Type=simple
@@ -12,7 +12,7 @@ WorkingDirectory=/opt/weather-care/weather_care_server
 EnvironmentFile=/etc/weather-care/weather-care.env
 ExecStart=/opt/weather-care/weather_care_server/node_modules/.bin/tsx src/node/scheduler.ts
 Restart=on-failure
-RestartSec=10
+RestartSec=60
 TimeoutStopSec=60
 UMask=0077
 NoNewPrivileges=true

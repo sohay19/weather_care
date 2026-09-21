@@ -73,15 +73,18 @@ sudo -u weather-care env \
 sudo cp ops/mini-pc/systemd/*.service ops/mini-pc/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now weather-care-migrate.service
+sudo systemctl enable weather-care-prewarm.service
 sudo systemctl enable --now weather-care-api.service
 sudo systemctl enable --now weather-care-backup.timer
 ```
 
-API와 백업까지만 먼저 켭니다. 스케줄러는 최종 수집 주체 전환 때 켭니다.
+전체 선수집·검증이 완료된 뒤에만 API가 시작됩니다. 스케줄러는 최종 수집 주체
+전환 때 켭니다.
 
 ```bash
 curl --fail http://127.0.0.1:8787/health
 systemctl status weather-care-api.service weather-care-backup.timer
+systemctl show weather-care-prewarm.service --property=ActiveState,Result,ExecMainStatus
 ```
 
 ## 4. Cloudflare Tunnel 연결
@@ -136,26 +139,38 @@ npx wrangler deploy --keep-vars --strict --message "미니 PC API 전환 브리�
 
 ```bash
 sudo systemctl stop weather-care-scheduler.service
-sudo systemd-run --unit=weather-care-prewarm --wait --pipe --collect \
-  --uid=weather-care \
-  --working-directory=/opt/weather-care/weather_care_server \
-  --property=EnvironmentFile=/etc/weather-care/weather-care.env \
-  /usr/bin/npm run node:prewarm
 sudo systemctl enable --now weather-care-scheduler.service
 journalctl -u weather-care-scheduler.service -f
 ```
 
-`node:prewarm`은 앱이 지원하는 전국 1,633개 예보 격자를 최초 한 번 모두 채우고,
-하나라도 빠지면 실패 코드로 종료합니다. 이후 스케줄러가 18개 묶음을 10분마다
-순환해 전체를 3시간 안에 갱신합니다. 운영 환경의
-`NATIONWIDE_PRECOLLECT_ENABLED=true`를 유지합니다. 활성 설치 지역의 환경·특보·
-초단기실황·좌표 기반 자료는 별도로 계속 수집합니다.
+운영 systemd는 `weather-care-prewarm.service`를 API와 스케줄러가 시작될 때마다
+호출하는 필수 선행 서비스로 사용합니다. 성공 후에는 종료되는 일회성 장벽이며,
+스케줄러 단독 실행에도 같은 선수집이 내장되어 있습니다. 이 단계에서
+보충 수집과 정각 core 수집을 함께 호출하여
+전국 1,633개의 기본·현재·주간 예보, ASOS 가시거리, 최근 7일 일관측을 채우고,
+활성 지역의 환경·특보·초단기실황·레이더·도로 자료까지 호출합니다.
 
-스케줄러는 시작 시 현재 시간 ASOS 캐시의 가시거리 누락을 먼저 확인합니다. 비어
-있으면 가시거리 원본을 먼저 받고 기온·습도·바람을 이어 받은 뒤 지역별 현재 가시거리를
-바로 저장합니다. 이후 어제까지의 최근 7일 중 누락된 AWS 일관측을 보충합니다. 전국 일관측
-원본 네 종류를 한 번씩 조회해 기존 주간 캐시에 병합한 뒤 정규 스케줄을 시작하므로, 새 항목
-배포 직후와 오전 2시 이후 배포에서도 필요한 관측 자료를 바로 채울 수 있습니다.
+선수집은 전국 격자와 활성 지역·좌표의 필수 캐시 및 최근 7일 일관측을 전수
+검증합니다. 키 누락뿐 아니라 빈 payload·손상 JSON·`UNAVAILABLE`도 미완료로 보고
+최대 3회 재시도합니다. 여전히 빈 항목이 있으면 스케줄러 프로세스를 실패로 종료해
+정규 수집을 시작하지 않습니다.
+`node:prewarm`은 같은 절차를 수동으로 재검증할 때만 사용합니다. 운영 환경의
+`NATIONWIDE_PRECOLLECT_ENABLED=true`를 유지합니다.
+
+정규 core 작업에서도 가시거리를 10분마다 재확인합니다. 정각 회차가 중복으로
+건너뛰거나 실패해도 다음 core 회차에서 재시도하므로 3시간 경계에서 빈 값이 생기는
+문제를 막습니다. 최근 7일 일관측 보충도 오전 2시 정각 한 회차가 아니라
+2시대 core 회차에서 누락을 계속 확인합니다.
+
+새 릴리스를 배포할 때는 아래 순서를 고정합니다. 선수집이 실패하면 뒤의 `start`가
+실패하므로 빈 캐시 상태의 신규 API를 외부에 열지 않습니다.
+
+```bash
+sudo systemctl stop weather-care-api.service weather-care-scheduler.service
+sudo systemctl restart weather-care-migrate.service
+sudo systemctl restart weather-care-prewarm.service
+sudo systemctl start weather-care-api.service weather-care-scheduler.service
+```
 
 ## 6. 백업과 복구
 

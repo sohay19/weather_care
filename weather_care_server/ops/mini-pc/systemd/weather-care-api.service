@@ -1,8 +1,8 @@
 [Unit]
 Description=날씨챙겨 미니 PC API
-After=network-online.target weather-care-migrate.service
+After=network-online.target weather-care-prewarm.service
 Wants=network-online.target
-Requires=weather-care-migrate.service
+Requires=weather-care-prewarm.service
 
 [Service]
 Type=simple

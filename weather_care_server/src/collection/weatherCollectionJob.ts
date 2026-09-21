@@ -97,6 +97,7 @@ export interface WeatherCollectionOptions {
   collectHourlyObservations?: boolean;
   dailyObservationLookbackDays?: number;
   nationwideShardIndex?: number;
+  forceSourceRefresh?: boolean;
 }
 
 export async function runWeatherCollectionJob(
@@ -108,6 +109,7 @@ export async function runWeatherCollectionJob(
   const targets = await loadActiveCollectionTargets(env.DB);
   const activeRegions = distinctRegions(targets);
   const collectActiveDetails = options.collectActiveDetails !== false;
+  const forceSourceRefresh = options.forceSourceRefresh === true;
   const precollectNationwide = env.NATIONWIDE_PRECOLLECT_ENABLED === 'true';
   const nationwideShard = precollectNationwide
     ? options.nationwideShardIndex === undefined
@@ -150,28 +152,44 @@ export async function runWeatherCollectionJob(
   }
 
   if (options.collectHourlyObservations === true) {
-    await collectCurrentVisibility(env, allForecastTargets, now);
+    await collectCurrentVisibility(
+      env,
+      allForecastTargets,
+      now,
+      forceSourceRefresh,
+    );
   }
 
   if (options.collectCore !== false) {
     await collectRegionForecasts(env, regions, activeRegionKeys, now);
     if (collectActiveDetails) {
-      await collectWarnings(env, activeRegions, now);
+      await collectWarnings(env, activeRegions, now, forceSourceRefresh);
       await collectUltraShortObservations(env, activeRegions, now);
-      await collectRoadControls(env, locations, now);
-      if (koreanMinute(now) === 0 && options.collectHourlyObservations !== true) {
-        await collectCurrentVisibility(env, allForecastTargets, now);
-        if (koreanHour(now) === 2) {
-          await collectDailyObservations(env, allForecastTargets, now);
-        }
+      await collectRoadControls(env, locations, now, forceSourceRefresh);
+      if (options.collectHourlyObservations !== true) {
+        await collectCurrentVisibility(
+          env,
+          allForecastTargets,
+          now,
+          forceSourceRefresh,
+        );
+      }
+      if (koreanHour(now) === 2) {
+        await collectDailyObservations(env, allForecastTargets, now);
       }
     }
   }
   if (options.collectRadar === true) {
-    await collectCurrentPrecipitation(env, targets, locations, now);
+    await collectCurrentPrecipitation(
+      env,
+      targets,
+      locations,
+      now,
+      forceSourceRefresh,
+    );
   }
   if (options.collectRoadIce === true) {
-    await collectRoadIce(env, locations, now);
+    await collectRoadIce(env, locations, now, forceSourceRefresh);
   }
 }
 
@@ -437,10 +455,11 @@ async function collectWarnings(
   env: ServerEnv,
   regions: CollectionTarget[],
   now: Date,
+  forceSourceRefresh = false,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
   const sourceVersion = pollingWindowVersion(now, 30);
-  if (await collectedSourceVersionIsCurrent(
+  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
     'WARNING_30_MINUTES',
     sourceVersion,
@@ -592,6 +611,7 @@ async function collectCurrentPrecipitation(
   targets: CollectionTarget[],
   locations: Array<{ latitude: number; longitude: number }>,
   now: Date,
+  forceSourceRefresh = false,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY || locations.length === 0) return;
   const ultraByGrid = new Map<string, UltraShortObservation>();
@@ -616,7 +636,7 @@ async function collectCurrentPrecipitation(
   });
   if (inputs.length === 0) return;
   const sourceVersion = latestRadarProductVersion(now);
-  if (await collectedSourceVersionIsCurrent(
+  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
     'RADAR_15_MINUTES',
     sourceVersion,
@@ -657,10 +677,11 @@ async function collectRoadIce(
   env: ServerEnv,
   locations: Array<{ latitude: number; longitude: number }>,
   now: Date,
+  forceSourceRefresh = false,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY || locations.length === 0 || !isRoadIceSeason(now)) return;
   const sourceVersion = pollingWindowVersion(now, 30);
-  if (await collectedSourceVersionIsCurrent(
+  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
     'ROAD_ICE_30_MINUTES',
     sourceVersion,
@@ -701,11 +722,12 @@ async function collectRoadControls(
   env: ServerEnv,
   locations: Array<{ latitude: number; longitude: number }>,
   now: Date,
+  forceSourceRefresh = false,
 ): Promise<void> {
   const provider = itsRoadControlProviderFromEnvironment(env);
   if (!provider || locations.length === 0) return;
   const sourceVersion = pollingWindowVersion(now, 30);
-  if (await collectedSourceVersionIsCurrent(
+  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
     'ROAD_CONTROL_30_MINUTES',
     sourceVersion,
@@ -742,6 +764,7 @@ async function collectCurrentVisibility(
   env: ServerEnv,
   targets: CollectionTarget[],
   now: Date,
+  forceSourceRefresh = false,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
   const regions = distinctRegions(targets).flatMap((target) => {
@@ -751,7 +774,7 @@ async function collectCurrentVisibility(
   if (regions.length === 0) return;
   const currentHour = latestCompletedKoreanHour(now);
   const sourceVersion = ultraShortKoreanIso(currentHour);
-  if (await collectedSourceVersionIsCurrent(
+  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
     'ASOS_VISIBILITY_HOURLY',
     sourceVersion,
@@ -775,6 +798,7 @@ async function collectCurrentVisibility(
       current,
       regions.map(({ coordinates }) => coordinates),
     );
+    const missingCount = visibility.filter((value) => value === undefined).length;
     await Promise.all(regions.flatMap(({ target }, index) => {
       const value = visibility[index];
       if (!value) return [];
@@ -787,6 +811,9 @@ async function collectCurrentVisibility(
         updatedAt: now,
       })];
     }));
+    if (missingCount > 0) {
+      throw new Error(`VISIBILITY_COLLECTION_INCOMPLETE:${missingCount}`);
+    }
     await saveCollectedSourceVersion(
       env.DB,
       'ASOS_VISIBILITY_HOURLY',
@@ -928,10 +955,6 @@ function distinctLocations(
           longitude: target.longitude,
         }] as const],
   )).values()];
-}
-
-function koreanMinute(now: Date): number {
-  return new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCMinutes();
 }
 
 function koreanHour(now: Date): number {

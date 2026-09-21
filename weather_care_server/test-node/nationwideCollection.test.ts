@@ -18,6 +18,9 @@ import {
   type KmaHourlyObservationSnapshot,
 } from '../src/providers/weather/kmaHourlyObservationProvider';
 import {
+  inspectOperationalPrewarm,
+} from '../src/node/prewarmNationwide';
+import {
   latestBaseDateTimes,
   KmaWeatherProvider,
 } from '../src/providers/weather/kmaWeatherProvider';
@@ -258,6 +261,152 @@ describe('Node 전국 선수집', () => {
       collectHourlyObservations: true,
     });
     expect(getObservations).not.toHaveBeenCalled();
+
+    database.sqlite.prepare(
+      'DELETE FROM weather_cache WHERE cache_key IN (?, ?)',
+    ).run(
+      collectedCacheKey.visibility(60, 121),
+      collectedCacheKey.sourceVersion('ASOS_VISIBILITY_HOURLY'),
+    );
+    getObservations.mockResolvedValue(
+      snapshot('2026-09-18T08:00:00+09:00'),
+    );
+    await runWeatherCollectionJob(env, {
+      now,
+      collectCore: false,
+      collectHourlyObservations: true,
+    });
+    await runWeatherCollectionJob(env, {
+      now,
+      collectCore: false,
+      collectHourlyObservations: true,
+    });
+    expect(getObservations).toHaveBeenCalledTimes(2);
+    await expect(getCollectedCache(
+      env.DB,
+      collectedCacheKey.sourceVersion('ASOS_VISIBILITY_HOURLY'),
+    )).resolves.toBeNull();
+  });
+
+  it('운영 선수집은 전국·활성 지역·좌표 필수 캐시를 모두 검증한다', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'weather-care-completeness-'));
+    const database = new SqliteD1Database(join(directory, 'weather-care.sqlite'));
+    cleanup.push(() => {
+      database.close();
+      rmSync(directory, { recursive: true, force: true });
+    });
+    runSqliteMigrations(database);
+    database.sqlite.prepare(
+      `INSERT INTO installation_credentials
+         (installation_id, secret_hash, created_at)
+       VALUES (?, ?, ?)`,
+    ).run('active-installation', 'test-secret-hash', nowIso());
+    database.sqlite.prepare(
+      `INSERT INTO installations
+         (installation_id, nx, ny, region_topic, location_mode, timezone,
+          latitude, longitude, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      'active-installation',
+      60,
+      121,
+      'region_60_121',
+      'GPS',
+      'Asia/Seoul',
+      37.2636,
+      127.0286,
+      nowIso(),
+      nowIso(),
+    );
+    const env = nodeServerEnv(database, {});
+    const runtime = { database, env, close: () => database.close() };
+    const grid = [{ nx: 60, ny: 121 }] as const;
+    const requiredCaches = [
+      collectedCacheKey.forecast(60, 121),
+      'CURRENT_60_121',
+      'COLLECTED_REGION_60_121',
+      collectedCacheKey.weekly(60, 121),
+      collectedCacheKey.environmental(60, 121),
+      collectedCacheKey.warning(60, 121),
+      collectedCacheKey.ultraShortObservation(60, 121),
+      collectedCacheKey.precipitation(37.2636, 127.0286),
+      collectedCacheKey.roadControl(37.2636, 127.0286),
+    ];
+    for (const key of requiredCaches) {
+      await saveCollectedCache(env.DB, {
+        key,
+        type: 'TEST',
+        value: key.startsWith('COLLECTED_ROAD_CONTROL_')
+          ? null
+          : key.startsWith('COLLECTED_WEEKLY_')
+            ? {
+                observedDays: [
+                  '20260914',
+                  '20260915',
+                  '20260916',
+                  '20260917',
+                  '20260918',
+                  '20260919',
+                  '20260920',
+                ].map((date) => ({ date, weatherDataComplete: true })),
+              }
+            : { ready: true },
+        nx: key.includes('60_121') ? 60 : undefined,
+        ny: key.includes('60_121') ? 121 : undefined,
+      });
+    }
+
+    const incomplete = inspectOperationalPrewarm(
+      runtime,
+      new Date('2026-09-21T05:00:00Z'),
+      grid,
+    );
+    expect(incomplete.missingCaches).toBe(1);
+    expect(incomplete.missingSample).toEqual([
+      collectedCacheKey.visibility(60, 121),
+    ]);
+
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.visibility(60, 121),
+      type: 'COLLECTED_VISIBILITY',
+      value: {},
+      nx: 60,
+      ny: 121,
+    });
+    expect(inspectOperationalPrewarm(
+      runtime,
+      new Date('2026-09-21T05:00:00Z'),
+      grid,
+    ).missingCaches).toBe(1);
+
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.visibility(60, 121),
+      type: 'COLLECTED_VISIBILITY',
+      value: { visibilityMeters: 20_000 },
+      nx: 60,
+      ny: 121,
+    });
+    database.sqlite.prepare(
+      'UPDATE weather_cache SET status = ? WHERE cache_key = ?',
+    ).run('UNAVAILABLE', collectedCacheKey.forecast(60, 121));
+    expect(inspectOperationalPrewarm(
+      runtime,
+      new Date('2026-09-21T05:00:00Z'),
+      grid,
+    ).missingSample).toEqual([collectedCacheKey.forecast(60, 121)]);
+    database.sqlite.prepare(
+      'UPDATE weather_cache SET status = ? WHERE cache_key = ?',
+    ).run('AVAILABLE', collectedCacheKey.forecast(60, 121));
+
+    expect(inspectOperationalPrewarm(
+      runtime,
+      new Date('2026-09-21T05:00:00Z'),
+      grid,
+    )).toMatchObject({
+      requiredCaches: 10,
+      collectedCaches: 10,
+      missingCaches: 0,
+    });
   });
 });
 

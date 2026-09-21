@@ -1,0 +1,24 @@
+[Unit]
+Description=날씨챙겨 운영 전체 선수집·검증
+After=network-online.target weather-care-migrate.service
+Wants=network-online.target
+Requires=weather-care-migrate.service
+Before=weather-care-api.service weather-care-scheduler.service
+
+[Service]
+Type=oneshot
+User=weather-care
+Group=weather-care
+WorkingDirectory=/opt/weather-care/weather_care_server
+EnvironmentFile=/etc/weather-care/weather-care.env
+ExecStart=/opt/weather-care/weather_care_server/node_modules/.bin/tsx src/node/prewarmNationwide.ts
+TimeoutStartSec=infinity
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/weather-care
+
+[Install]
+WantedBy=multi-user.target

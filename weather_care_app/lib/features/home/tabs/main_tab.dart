@@ -26,6 +26,7 @@ class MainTab extends StatelessWidget {
   final bool retryingData;
   final ValueChanged<RecommendationType> onDetail;
   final Widget? advertisement;
+  final int metricColumns;
 
   const MainTab({
     super.key,
@@ -42,7 +43,8 @@ class MainTab extends StatelessWidget {
     this.retryingData = false,
     required this.onDetail,
     this.advertisement,
-  });
+    this.metricColumns = 2,
+  }) : assert(metricColumns == 2 || metricColumns == 3);
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +81,7 @@ class MainTab extends StatelessWidget {
                       comparisonLoading: comparisonLoading,
                       onRetry: onRetryData,
                       retrying: retryingData,
+                      metricColumns: metricColumns,
                     ),
                     SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
@@ -149,12 +152,14 @@ class _TodaySection extends StatelessWidget {
   final CurrentWeather current;
   final ComparisonResponse? comparison;
   final bool loading;
+  final int metricColumns;
 
   const _TodaySection({
     required this.today,
     required this.current,
     required this.comparison,
     required this.loading,
+    required this.metricColumns,
   });
 
   @override
@@ -240,14 +245,17 @@ class _TodaySection extends StatelessWidget {
             borderRadius: BorderRadius.circular(15),
           ),
           child: _TopMetricGrid(
+            columns: metricColumns,
             metrics: [
               _TopMetric(
+                key: const ValueKey('main-top-metric-자외선'),
                 icon: Icons.wb_sunny_outlined,
                 label: '자외선',
                 value: current.uvIndex?.toStringAsFixed(0) ?? '--',
                 state: _uvState(current.uvIndex),
               ),
               _TopMetric(
+                key: const ValueKey('main-top-metric-대기질'),
                 icon: Icons.eco_outlined,
                 label: '대기질',
                 value: airQualityState == _unavailableMetric
@@ -256,12 +264,14 @@ class _TodaySection extends StatelessWidget {
                 state: airQualityState,
               ),
               _TopMetric(
+                key: const ValueKey('main-top-metric-가시거리'),
                 icon: Icons.visibility_outlined,
                 label: '가시거리',
                 value: _visibilityValue(current.visibilityMeters),
                 state: _visibilityState(current.visibilityMeters),
               ),
               _TopMetric(
+                key: const ValueKey('main-top-metric-습도'),
                 icon: Icons.water_drop_outlined,
                 label: '습도',
                 value: current.humidity == null
@@ -270,6 +280,7 @@ class _TodaySection extends StatelessWidget {
                 state: _humidityState(current.humidity),
               ),
               _TopMetric(
+                key: const ValueKey('main-top-metric-바람'),
                 icon: Icons.air_rounded,
                 label: '바람',
                 value: _windValue(
@@ -279,6 +290,7 @@ class _TodaySection extends StatelessWidget {
                 state: _windState(current.windSpeed),
               ),
               _TopMetric(
+                key: const ValueKey('main-top-metric-일출·일몰'),
                 icon: Icons.wb_twilight_rounded,
                 label: '일출·일몰',
                 value: _sunTimesValue(today.sunriseAt, today.sunsetAt),
@@ -668,6 +680,7 @@ class _TopWeatherCard extends StatelessWidget {
   final bool comparisonLoading;
   final Future<void> Function()? onRetry;
   final bool retrying;
+  final int metricColumns;
 
   const _TopWeatherCard({
     required this.today,
@@ -677,6 +690,7 @@ class _TopWeatherCard extends StatelessWidget {
     this.comparisonLoading = false,
     this.onRetry,
     this.retrying = false,
+    required this.metricColumns,
   });
   @override
   Widget build(BuildContext context) {
@@ -721,6 +735,7 @@ class _TopWeatherCard extends StatelessWidget {
             current: current,
             comparison: comparison,
             loading: comparisonLoading,
+            metricColumns: metricColumns,
           ),
           if (missing.isNotEmpty && onRetry != null) ...[
             SizedBox(height: compact ? 8 : 10),
@@ -832,6 +847,7 @@ class _TopMetric extends StatelessWidget {
   final _MetricState state;
 
   const _TopMetric({
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
@@ -844,30 +860,37 @@ class _TopMetric extends StatelessWidget {
       child: Semantics(
         label: '$label $value, ${state.label}',
         excludeSemantics: true,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: state.color),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: state.color,
-                fontSize: 10.5,
-                height: 1.1,
-                fontWeight: FontWeight.w800,
-              ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: WeatherCareTheme.microTextStyle.copyWith(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(icon, size: 13, color: state.color),
+                const SizedBox(width: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: state.color,
+                    fontSize: 10.5,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 1),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 8.5),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -876,17 +899,30 @@ class _TopMetric extends StatelessWidget {
 
 class _TopMetricGrid extends StatelessWidget {
   final List<_TopMetric> metrics;
+  final int columns;
 
-  const _TopMetricGrid({required this.metrics}) : assert(metrics.length == 6);
+  const _TopMetricGrid({required this.metrics, required this.columns})
+      : assert(metrics.length == 6),
+        assert(columns == 2 || columns == 3);
 
   @override
   Widget build(BuildContext context) {
+    final rowCount = (metrics.length / columns).ceil();
     return Column(
-      children: [
-        Row(children: metrics.take(3).toList(growable: false)),
-        const SizedBox(height: 9),
-        Row(children: metrics.skip(3).toList(growable: false)),
-      ],
+      children: List.generate(rowCount, (rowIndex) {
+        final start = rowIndex * columns;
+        final end = (start + columns).clamp(0, metrics.length);
+        return Padding(
+          padding: EdgeInsets.only(top: rowIndex == 0 ? 0 : 18),
+          child: Row(
+            children: [
+              ...metrics.sublist(start, end),
+              for (var index = end - start; index < columns; index++)
+                const Expanded(child: SizedBox()),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -1082,7 +1118,7 @@ String? _koreaClock(String? timestamp) {
   final value = _parseTimestamp(timestamp);
   if (value == null) return null;
   final korea = value.add(const Duration(hours: 9));
-  return '${korea.hour.toString().padLeft(2, '0')}:'
+  return '${korea.hour}:'
       '${korea.minute.toString().padLeft(2, '0')}';
 }
 

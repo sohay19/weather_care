@@ -497,28 +497,75 @@ void main() {
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
     expect(find.text('물 한 모금 챙기기'), findsNothing);
     expect(find.text('여유 있게 움직이기'), findsNothing);
-    expect(find.text('대기질'), findsOneWidget);
-    expect(find.text('매우 나쁨'), findsOneWidget);
-    expect(find.text('가시거리'), findsOneWidget);
-    expect(find.text('12km'), findsOneWidget);
-    expect(find.text('바람'), findsOneWidget);
-    expect(find.text('남서 2.1m/s'), findsOneWidget);
-    expect(find.text('일출·일몰'), findsOneWidget);
-    expect(find.text('05:53 · 19:18'), findsOneWidget);
-    final uvPosition = tester.getCenter(find.text('자외선').first);
-    final airQualityPosition = tester.getCenter(find.text('대기질').first);
-    final visibilityPosition = tester.getCenter(find.text('가시거리'));
-    final humidityPosition = tester.getCenter(find.text('습도').first);
-    final windPosition = tester.getCenter(find.text('바람').first);
-    final sunPosition = tester.getCenter(find.text('일출·일몰'));
-    expect(airQualityPosition.dy, uvPosition.dy);
-    expect(visibilityPosition.dy, uvPosition.dy);
-    expect(humidityPosition.dy, greaterThan(uvPosition.dy));
-    expect(windPosition.dy, humidityPosition.dy);
-    expect(sunPosition.dy, humidityPosition.dy);
-    expect(humidityPosition.dx, uvPosition.dx);
-    expect(windPosition.dx, airQualityPosition.dx);
-    expect(sunPosition.dx, visibilityPosition.dx);
+    final uvMetric = find.byKey(const ValueKey('main-top-metric-자외선'));
+    final airQualityMetric = find.byKey(const ValueKey('main-top-metric-대기질'));
+    final visibilityMetric = find.byKey(const ValueKey('main-top-metric-가시거리'));
+    final humidityMetric = find.byKey(const ValueKey('main-top-metric-습도'));
+    final windMetric = find.byKey(const ValueKey('main-top-metric-바람'));
+    final sunMetric = find.byKey(const ValueKey('main-top-metric-일출·일몰'));
+    expect(
+      find.descendant(of: airQualityMetric, matching: find.text('매우 나쁨')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: visibilityMetric, matching: find.text('12km')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: windMetric, matching: find.text('남서 2.1m/s')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sunMetric, matching: find.text('5:53 · 19:18')),
+      findsOneWidget,
+    );
+    final uvLabelPosition = tester.getCenter(
+      find.descendant(of: uvMetric, matching: find.text('자외선')),
+    );
+    final uvIconPosition = tester.getCenter(
+      find.descendant(
+        of: uvMetric,
+        matching: find.byIcon(Icons.wb_sunny_outlined),
+      ),
+    );
+    final uvValuePosition = tester.getCenter(
+      find.descendant(of: uvMetric, matching: find.text('4')),
+    );
+    expect(uvIconPosition.dy, uvLabelPosition.dy);
+    expect(uvValuePosition.dy, uvLabelPosition.dy);
+    expect(
+      tester
+          .widget<Text>(
+            find.descendant(of: uvMetric, matching: find.text('자외선')),
+          )
+          .style
+          ?.fontWeight,
+      FontWeight.w400,
+    );
+    expect(
+      tester
+          .widget<Text>(
+            find.descendant(of: uvMetric, matching: find.text('자외선')),
+          )
+          .style
+          ?.fontSize,
+      9,
+    );
+    final uvPosition = tester.getCenter(uvMetric);
+    final airQualityPosition = tester.getCenter(airQualityMetric);
+    final visibilityPosition = tester.getCenter(visibilityMetric);
+    final humidityPosition = tester.getCenter(humidityMetric);
+    final windPosition = tester.getCenter(windMetric);
+    final sunPosition = tester.getCenter(sunMetric);
+    expect(airQualityPosition.dy, closeTo(uvPosition.dy, 0.01));
+    expect(visibilityPosition.dy, greaterThan(uvPosition.dy));
+    expect(humidityPosition.dy, closeTo(visibilityPosition.dy, 0.01));
+    expect(windPosition.dy, greaterThan(visibilityPosition.dy));
+    expect(sunPosition.dy, closeTo(windPosition.dy, 0.01));
+    expect(visibilityPosition.dx, closeTo(uvPosition.dx, 0.01));
+    expect(humidityPosition.dx, closeTo(airQualityPosition.dx, 0.01));
+    expect(windPosition.dx, closeTo(uvPosition.dx, 0.01));
+    expect(sunPosition.dx, closeTo(airQualityPosition.dx, 0.01));
     expect(find.text('어제와 비교'), findsOneWidget);
     const weatherFeeling =
         '구름이 많은 날씨예요. 실제 기온보다 0.6℃ 낮지만, 체감 상 조금 덥게 느껴질 수 있어요.';

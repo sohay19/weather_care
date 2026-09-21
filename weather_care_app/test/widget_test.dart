@@ -366,7 +366,7 @@ void main() {
 
     expect(find.text('29.0℃'), findsOneWidget);
     expect(find.text('32.7℃'), findsOneWidget);
-    expect(find.text('초미세먼지'), findsOneWidget);
+    expect(find.text('대기질'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey('weather-metric-detail-체감')),
@@ -602,6 +602,23 @@ void main() {
       find.byKey(const ValueKey('main-apparent-temperature-row')),
     );
     expect(apparentTemperatureRow.top, greaterThan(weatherFeelingRow.bottom));
+    final futureHumidity = find.byKey(const ValueKey('main-future-metric-습도'));
+    final futureWind = find.byKey(const ValueKey('main-future-metric-바람'));
+    final futureUv = find.byKey(const ValueKey('main-future-metric-자외선'));
+    final futureAir = find.byKey(const ValueKey('main-future-metric-대기질'));
+    final futureHumidityPosition = tester.getCenter(futureHumidity);
+    final futureWindPosition = tester.getCenter(futureWind);
+    final futureUvPosition = tester.getCenter(futureUv);
+    final futureAirPosition = tester.getCenter(futureAir);
+    expect(futureWindPosition.dy, closeTo(futureHumidityPosition.dy, 0.01));
+    expect(futureUvPosition.dy, greaterThan(futureHumidityPosition.dy));
+    expect(futureAirPosition.dy, closeTo(futureUvPosition.dy, 0.01));
+    expect(futureUvPosition.dx, closeTo(futureHumidityPosition.dx, 0.01));
+    expect(futureAirPosition.dx, closeTo(futureWindPosition.dx, 0.01));
+    expect(
+      find.byKey(const ValueKey('main-future-visibility-notice')),
+      findsOneWidget,
+    );
 
     await tester.dragUntilVisible(
       find.text('간단한 타임라인'),
@@ -642,9 +659,18 @@ void main() {
           body: TodayTab(
             today: const TodayWeatherResponse(
               dataSource: 'test',
+              sunriseAt: '2026-09-20T21:17:00Z',
+              sunsetAt: '2026-09-21T09:28:00Z',
               region: WeatherRegion(nx: 60, ny: 121, name: '수원'),
               brief: mainBrief,
-              current: CurrentWeather(temperature: 22),
+              current: CurrentWeather(
+                temperature: 22,
+                windSpeed: 2.1,
+                windDirection: 225,
+                visibilityMeters: 12000,
+                pm10: 24,
+                pm25: 76,
+              ),
               recommendations: [],
               lifestyleMessages: [],
               timeline: [],
@@ -671,6 +697,12 @@ void main() {
     expect(find.text(mainBrief), findsNothing);
     expect(find.textContaining('챙겨야하는 항목'), findsNothing);
     expect(find.byType(WeatherInfoCard), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-바람')), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-대기질')), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-가시거리')), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-일출·일몰')), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
+        findsOneWidget);
     expect(find.text('시간별 예보'), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
     expect(
@@ -703,7 +735,13 @@ void main() {
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
               brief: '테스트',
-              current: const CurrentWeather(temperature: 22),
+              current: const CurrentWeather(
+                temperature: 22,
+                visibilityMeters: 800,
+                visibilityObservedAt: '2026-09-21T14:00:00+09:00',
+                visibilityStationId: '108',
+                visibilityStationDistanceKm: 4.2,
+              ),
               recommendations: const [],
               lifestyleMessages: [
                 LifestyleMessage(
@@ -763,6 +801,13 @@ void main() {
     expect(find.text('기상청 자료'), findsOneWidget);
     expect(find.text('공통 자료 상태'), findsNothing);
     expect(find.text('자외선지수'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('visibility-observation-card')),
+      findsOneWidget,
+    );
+    expect(find.text('800 m'), findsOneWidget);
+    expect(find.byKey(const ValueKey('visibility-forecast-limit')),
+        findsOneWidget);
     expect(find.byType(WeatherInfoCard), findsNothing);
     expect(find.text('시간별 예보'), findsNothing);
     expect(tester.takeException(), isNull);

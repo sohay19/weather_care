@@ -43,6 +43,8 @@ class TodayTab extends StatelessWidget {
             const SizedBox(height: 18),
             WeatherInfoCard(
               current: today.current,
+              sunriseAt: today.sunriseAt,
+              sunsetAt: today.sunsetAt,
               onRetryMissingData: onRetryData,
               retrying: retrying,
             ),

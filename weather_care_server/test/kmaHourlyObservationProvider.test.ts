@@ -87,6 +87,7 @@ describe('KMA hourly observation provider', () => {
   });
 
   it('한 시간 전국 관측을 저장 가능한 스냅샷으로 만든다', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
     const fetcher = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));
       const metric = url.searchParams.get('obs');
@@ -112,6 +113,8 @@ describe('KMA hourly observation provider', () => {
     };
 
     expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(timeout.mock.calls.map(([milliseconds]) => milliseconds))
+      .toEqual([30_000, 7_500, 7_500, 7_500]);
     expect(current.stations[0]).toMatchObject({
       stationId: '108',
       temperature: 24,
@@ -135,5 +138,6 @@ describe('KMA hourly observation provider', () => {
       current: { temperature: 24 },
       comparison: { temperature: 20 },
     });
+    timeout.mockRestore();
   });
 });

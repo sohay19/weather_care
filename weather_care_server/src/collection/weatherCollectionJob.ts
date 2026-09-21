@@ -97,6 +97,7 @@ export interface WeatherCollectionOptions {
   collectRadar?: boolean;
   collectRoadIce?: boolean;
   collectActiveDetails?: boolean;
+  collectHourlyObservations?: boolean;
   dailyObservationLookbackDays?: number;
   nationwideShardIndex?: number;
 }
@@ -151,13 +152,17 @@ export async function runWeatherCollectionJob(
     });
   }
 
+  if (options.collectHourlyObservations === true) {
+    await collectYesterdayComparisons(env, allForecastTargets, now);
+  }
+
   if (options.collectCore !== false) {
     await collectRegionForecasts(env, regions, activeRegionKeys, now);
     if (collectActiveDetails) {
       await collectWarnings(env, activeRegions, now);
       await collectUltraShortObservations(env, activeRegions, now);
       await collectRoadControls(env, locations, now);
-      if (koreanMinute(now) === 0) {
+      if (koreanMinute(now) === 0 && options.collectHourlyObservations !== true) {
         await collectYesterdayComparisons(env, allForecastTargets, now);
         if (koreanHour(now) === 2) {
           await collectDailyObservations(env, allForecastTargets, now);
@@ -753,8 +758,11 @@ async function collectYesterdayComparisons(
     env.DB,
     collectedCacheKey.hourlyObservation(comparisonVersion),
   );
+  const currentHasVisibility = current?.value.stations.some(
+    (station) => station.visibilityMeters !== undefined,
+  ) === true;
   const missing = [
-    ...(current ? [] : [{
+    ...(current && currentHasVisibility ? [] : [{
       version: currentVersion,
       hour: currentHour,
       includeVisibility: true,

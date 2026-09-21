@@ -8,12 +8,16 @@ import 'weather_condition_icon.dart';
 
 class WeatherInfoCard extends StatefulWidget {
   final CurrentWeather current;
+  final String? sunriseAt;
+  final String? sunsetAt;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
 
   const WeatherInfoCard({
     super.key,
     required this.current,
+    this.sunriseAt,
+    this.sunsetAt,
     this.onRetryMissingData,
     this.retrying = false,
   });
@@ -33,10 +37,11 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
       if (current.sky == null) '하늘 상태',
       if (current.apparentTemperature == null) '체감온도',
       if (current.humidity == null) '습도',
-      if (current.windSpeed == null) '풍속',
+      if (current.windSpeed == null && current.windDirection == null) '바람',
+      if (current.visibilityMeters == null) '가시거리',
       if (current.uvIndex == null) '자외선',
-      if (current.pm25 == null) '초미세먼지',
-      if (current.pm10 == null) '미세먼지',
+      if (current.pm25 == null && current.pm10 == null) '대기질',
+      if (widget.sunriseAt == null || widget.sunsetAt == null) '일출·일몰',
     ];
     final metrics = [
       _WeatherMetric(
@@ -63,14 +68,12 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
       ),
       _WeatherMetric(
         icon: Icons.air_rounded,
-        label: '풍속',
-        value: current.windSpeed == null
-            ? '자료 없음'
-            : '${current.windSpeed!.toStringAsFixed(1)}m/s',
+        label: '바람',
+        value: _windValue(current.windDirection, current.windSpeed),
         levelTitle: _windLevel(current.windSpeed),
-        detailBody: current.windSpeed == null
-            ? '기상청 단기예보에서 풍속 자료를 받지 못해 바람의 세기를 표시하지 않아요.\n자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.'
-            : '기상청 단기예보의 풍속은 ${current.windSpeed!.toStringAsFixed(1)}m/s예요.\n선택한 예보 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.',
+        detailBody: current.windSpeed == null && current.windDirection == null
+            ? '기상청 단기예보에서 풍향과 풍속 자료를 받지 못해 바람을 표시하지 않아요.\n자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.'
+            : '기상청 단기예보의 바람은 ${_windValue(current.windDirection, current.windSpeed)}예요.\n선택한 예보 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.',
       ),
       _WeatherMetric(
         icon: Icons.wb_sunny_outlined,
@@ -86,26 +89,31 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${_uvGrade(current.uvIndex!)} 단계예요.\n0~2 낮음, 3~5 보통, 6~7 높음, 8~10 매우 높음, 11 이상 위험으로 구분해요.\n구름, 그늘, 고도와 노출 시간에 따라 개인의 실제 노출량은 달라질 수 있어요.',
       ),
       _WeatherMetric(
-        icon: Icons.blur_on_rounded,
-        label: '초미세먼지',
-        value: current.pm25 == null ? '자료 없음' : '${current.pm25}㎍/㎥',
-        levelTitle: current.pm25 == null
-            ? '초미세먼지 수준을 확인하기 어려워요'
-            : '초미세먼지는 ${_pm25Grade(current.pm25!)} 등급이에요',
-        detailBody: current.pm25 == null
-            ? '에어코리아 관측자료를 받지 못해 PM2.5 농도와 등급을 표시하지 않아요.\nPM10 값으로 대신 채우거나 정상 상태로 판단하지 않아요.'
-            : '에어코리아 PM2.5 농도는 ${current.pm25}㎍/㎥, ${_pm25Grade(current.pm25!)} 등급이에요.\n좋음 0~15, 보통 16~35, 나쁨 36~75, 매우 나쁨 76 이상으로 구분해요.${_airObservationSource(current)}',
+        icon: Icons.eco_outlined,
+        label: '대기질',
+        value: _airQualityGrade(current.pm10, current.pm25) ?? '자료 없음',
+        levelTitle: _airQualityGrade(current.pm10, current.pm25) == null
+            ? '대기질 수준을 확인하기 어려워요'
+            : '대기질은 ${_airQualityGrade(current.pm10, current.pm25)} 등급이에요',
+        detailBody: _airQualityDetail(current),
       ),
       _WeatherMetric(
-        icon: Icons.grain_rounded,
-        label: '미세먼지',
-        value: current.pm10 == null ? '자료 없음' : '${current.pm10}㎍/㎥',
-        levelTitle: current.pm10 == null
-            ? '미세먼지 수준을 확인하기 어려워요'
-            : '미세먼지는 ${_pm10Grade(current.pm10!)} 등급이에요',
-        detailBody: current.pm10 == null
-            ? '에어코리아 관측자료를 받지 못해 PM10 농도와 등급을 표시하지 않아요.\nPM2.5 값으로 대신 채우거나 정상 상태로 판단하지 않아요.'
-            : '에어코리아 PM10 농도는 ${current.pm10}㎍/㎥, ${_pm10Grade(current.pm10!)} 등급이에요.\n좋음 0~30, 보통 31~80, 나쁨 81~150, 매우 나쁨 151 이상으로 구분해요.${_airObservationSource(current)}',
+        icon: Icons.visibility_outlined,
+        label: '가시거리',
+        value: _visibilityValue(current.visibilityMeters),
+        levelTitle: _visibilityLevel(current.visibilityMeters),
+        detailBody: _visibilityDetail(current),
+      ),
+      _WeatherMetric(
+        icon: Icons.wb_twilight_rounded,
+        label: '일출·일몰',
+        value: _sunTimesValue(widget.sunriseAt, widget.sunsetAt),
+        levelTitle: widget.sunriseAt == null || widget.sunsetAt == null
+            ? '일출·일몰 시각을 확인하기 어려워요'
+            : '오늘의 일출·일몰 시각이에요',
+        detailBody: widget.sunriseAt == null || widget.sunsetAt == null
+            ? '요청 지역과 날짜로 계산한 일출·일몰 시각을 받지 못해 임의의 시각을 표시하지 않아요.'
+            : '요청 지역의 대표 좌표와 한국 날짜를 기준으로 계산한 시각이에요.\n지형과 건물 때문에 실제로 해가 보이는 시각은 달라질 수 있어요.',
       ),
     ];
 
@@ -214,6 +222,118 @@ String _airObservationSource(CurrentWeather current) {
       : '${parsed.month}월 ${parsed.day}일 ${parsed.hour}시 '
           '${parsed.minute.toString().padLeft(2, '0')}분 관측';
   return '\n\n$stationLabel · $timeLabel\n'.trimRight();
+}
+
+String? _airQualityGrade(int? pm10, int? pm25) {
+  final grades = [
+    if (pm10 != null) _pm10Grade(pm10),
+    if (pm25 != null) _pm25Grade(pm25),
+  ];
+  if (grades.isEmpty) return null;
+  const severity = {'좋음': 0, '보통': 1, '나쁨': 2, '매우 나쁨': 3};
+  return grades.reduce(
+    (left, right) =>
+        (severity[right] ?? 0) > (severity[left] ?? 0) ? right : left,
+  );
+}
+
+String _airQualityDetail(CurrentWeather current) {
+  final grade = _airQualityGrade(current.pm10, current.pm25);
+  if (grade == null) {
+    return '에어코리아 관측자료를 받지 못해 대기질을 표시하지 않아요.\n자료가 없음을 좋음 등급으로 바꾸지 않아요.';
+  }
+  final values = [
+    if (current.pm25 != null) '초미세먼지 ${current.pm25}㎍/㎥',
+    if (current.pm10 != null) '미세먼지 ${current.pm10}㎍/㎥',
+  ].join(' · ');
+  return '에어코리아 관측값 중 더 나쁜 등급을 대기질로 표시해요.\n'
+      '$values · 종합 $grade${_airObservationSource(current)}';
+}
+
+String _windValue(double? direction, double? speed) {
+  if (direction == null && speed == null) return '자료 없음';
+  final directionLabel = _windDirectionLabel(direction);
+  if (speed == null) {
+    return directionLabel == null ? '자료 없음' : '$directionLabel풍';
+  }
+  return '${directionLabel == null ? '' : '$directionLabel '}'
+      '${speed.toStringAsFixed(1)}m/s';
+}
+
+String? _windDirectionLabel(double? direction) {
+  if (direction == null || !direction.isFinite) return null;
+  const labels = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+  final normalized = ((direction % 360) + 360) % 360;
+  return labels[((normalized + 22.5) ~/ 45) % labels.length];
+}
+
+String _visibilityValue(double? meters) {
+  if (meters == null) return '자료 없음';
+  if (meters >= 20000) return '20km 이상';
+  if (meters >= 1000) {
+    final kilometres = meters / 1000;
+    final value = kilometres == kilometres.roundToDouble()
+        ? kilometres.toStringAsFixed(0)
+        : kilometres.toStringAsFixed(1);
+    return '$value km';
+  }
+  return '${meters.round()} m';
+}
+
+String _visibilityLevel(double? meters) {
+  if (meters == null) return '현재 가시거리 수준을 확인하기 어려워요';
+  final level = switch (meters) {
+    < 200 => '매우 짧은',
+    < 1000 => '짧은',
+    < 5000 => '제한적인',
+    < 10000 => '보통',
+    < 20000 => '좋은',
+    _ => '매우 좋은',
+  };
+  return '현재 시야는 $level 수준이에요';
+}
+
+String _visibilityDetail(CurrentWeather current) {
+  final meters = current.visibilityMeters;
+  if (meters == null) {
+    return '기상청 지상관측 자료를 받지 못해 현재 가시거리를 표시하지 않아요.\n가시거리는 미래 예보값으로 대신 채우지 않아요.';
+  }
+  final source = <String>[];
+  if (current.visibilityStationId case final station?) {
+    source.add('관측소 $station');
+  }
+  if (current.visibilityStationDistanceKm case final distance?) {
+    source.add('대표 지점에서 ${distance.toStringAsFixed(1)}km');
+  }
+  final observed = _koreaObservationClock(current.visibilityObservedAt);
+  if (observed != null) source.add(observed);
+  final sourceText = source.isEmpty ? '' : '\n${source.join(' · ')}';
+  return '기상청 지상관측의 현재 가시거리는 ${_visibilityValue(meters)}예요.'
+      '$sourceText\n시간별·주간 미래 가시거리 예보로 확대하지 않아요.';
+}
+
+String _sunTimesValue(String? sunriseAt, String? sunsetAt) {
+  final sunrise = _koreaClock(sunriseAt);
+  final sunset = _koreaClock(sunsetAt);
+  if (sunrise == null && sunset == null) return '자료 없음';
+  return '${sunrise ?? '--:--'} · ${sunset ?? '--:--'}';
+}
+
+String? _koreaClock(String? timestamp) {
+  final parsed =
+      timestamp == null ? null : DateTime.tryParse(timestamp)?.toUtc();
+  if (parsed == null) return null;
+  final korea = parsed.add(const Duration(hours: 9));
+  return '${korea.hour}:${korea.minute.toString().padLeft(2, '0')}';
+}
+
+String? _koreaObservationClock(String? timestamp) {
+  final parsed =
+      timestamp == null ? null : DateTime.tryParse(timestamp)?.toUtc();
+  if (parsed == null) return null;
+  final korea = parsed.add(const Duration(hours: 9));
+  return '${korea.month}월 ${korea.day}일 ${korea.hour}시 '
+      '${korea.minute.toString().padLeft(2, '0')}분 관측';
 }
 
 String _apparentTemperatureLevel(double? value) {

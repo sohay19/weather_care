@@ -13,11 +13,18 @@ import { nodeServerEnv } from '../src/node/runtime';
 import { runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
 import { KmaDailyObservationProvider } from '../src/providers/weather/kmaDailyObservationProvider';
 import {
+  KmaHourlyObservationProvider,
+  latestCompletedKoreanHour,
+  type KmaHourlyObservationSnapshot,
+} from '../src/providers/weather/kmaHourlyObservationProvider';
+import {
   latestBaseDateTimes,
   KmaWeatherProvider,
 } from '../src/providers/weather/kmaWeatherProvider';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
 import { nationwideForecastGridShard } from '../src/regions/nationwideForecastGridCatalog';
+import { kmaGridCoordinates } from '../src/regions/kmaGridCoordinates';
+import { koreanObservationVersion } from '../src/collection/sourcePublicationSchedule';
 
 describe('Node 전국 선수집', () => {
   const cleanup: Array<() => void> = [];
@@ -167,6 +174,110 @@ describe('Node 전국 선수집', () => {
     getDaily.mockClear();
     await runWeatherCollectionJob(env, options);
     expect(getDaily).not.toHaveBeenCalled();
+  });
+
+  it('스케줄러 시작 시 기존 시간관측 캐시에 없는 가시거리를 즉시 보충한다', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'weather-care-visibility-backfill-'));
+    const database = new SqliteD1Database(join(directory, 'weather-care.sqlite'));
+    cleanup.push(() => {
+      database.close();
+      rmSync(directory, { recursive: true, force: true });
+    });
+    runSqliteMigrations(database);
+    database.sqlite.prepare(
+      `INSERT INTO installation_credentials
+         (installation_id, secret_hash, created_at)
+       VALUES (?, ?, ?)`,
+    ).run('active-installation', 'test-secret-hash', nowIso());
+    database.sqlite.prepare(
+      `INSERT INTO installations
+         (installation_id, nx, ny, region_topic, location_mode, timezone,
+          created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      'active-installation',
+      60,
+      121,
+      'region_60_121',
+      'MANUAL',
+      'Asia/Seoul',
+      nowIso(),
+      nowIso(),
+    );
+    const env = nodeServerEnv(database, {
+      KMA_APIHUB_KEY: 'test-api-hub-key',
+      NATIONWIDE_PRECOLLECT_ENABLED: 'false',
+    });
+    const now = new Date('2026-09-18T01:23:00Z');
+    const currentHour = latestCompletedKoreanHour(now);
+    const comparisonHour = new Date(
+      currentHour.getTime() - 24 * 60 * 60 * 1000,
+    );
+    const coordinates = kmaGridCoordinates(60, 121)!;
+    const snapshot = (
+      observedAt: string,
+      visibilityMeters?: number,
+    ): KmaHourlyObservationSnapshot => ({
+      observedAt,
+      stations: [{
+        observedAt,
+        stationId: 'TEST',
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+        temperature: 23,
+        humidity: 60,
+        windSpeed: 2,
+        visibilityMeters,
+      }],
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.hourlyObservation(
+        koreanObservationVersion(currentHour),
+      ),
+      type: 'COLLECTED_HOURLY_OBSERVATION',
+      value: snapshot('2026-09-18T08:00:00+09:00'),
+      updatedAt: now,
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.hourlyObservation(
+        koreanObservationVersion(comparisonHour),
+      ),
+      type: 'COLLECTED_HOURLY_OBSERVATION',
+      value: snapshot('2026-09-17T08:00:00+09:00'),
+      updatedAt: now,
+    });
+    const getObservations = vi.spyOn(
+      KmaHourlyObservationProvider.prototype,
+      'getObservationsAt',
+    ).mockResolvedValue(
+      snapshot('2026-09-18T08:00:00+09:00', 20_000),
+    );
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await runWeatherCollectionJob(env, {
+      now,
+      collectCore: false,
+      collectHourlyObservations: true,
+    });
+
+    expect(getObservations).toHaveBeenCalledOnce();
+    expect(getObservations).toHaveBeenCalledWith(
+      currentHour,
+      { includeVisibility: true },
+    );
+    const visibility = await getCollectedCache<{ visibilityMeters: number }>(
+      env.DB,
+      collectedCacheKey.visibility(60, 121),
+    );
+    expect(visibility?.value.visibilityMeters).toBe(20_000);
+
+    getObservations.mockClear();
+    await runWeatherCollectionJob(env, {
+      now,
+      collectCore: false,
+      collectHourlyObservations: true,
+    });
+    expect(getObservations).not.toHaveBeenCalled();
   });
 });
 

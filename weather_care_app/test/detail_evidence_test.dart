@@ -122,14 +122,16 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(
-      find.byKey(const ValueKey('detail-data-retry-대기질')),
-    );
+    final airQualityRetry = find.byKey(const ValueKey('detail-data-retry-대기질'));
+    await tester.ensureVisible(airQualityRetry);
+    await tester.pumpAndSettle();
+    await tester.tap(airQualityRetry);
     await tester.pump();
     expect(retryCount, 1);
-    await tester.tap(
-      find.byKey(const ValueKey('detail-data-retry-자외선지수')),
-    );
+    final uvRetry = find.byKey(const ValueKey('detail-data-retry-자외선지수'));
+    await tester.ensureVisible(uvRetry);
+    await tester.pumpAndSettle();
+    await tester.tap(uvRetry);
     await tester.pump();
     expect(retryCount, 2);
   });

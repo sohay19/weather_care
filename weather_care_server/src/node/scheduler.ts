@@ -71,6 +71,7 @@ async function startScheduler(): Promise<void> {
     await runWeatherCollectionJob(runtime.env, {
       collectCore: false,
       collectActiveDetails: false,
+      collectHourlyObservations: true,
       dailyObservationLookbackDays: 7,
     });
     console.log(JSON.stringify({ event: 'node_recent_observation_backfill_finished' }));

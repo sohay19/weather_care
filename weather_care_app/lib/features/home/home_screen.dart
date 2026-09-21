@@ -924,6 +924,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     )
                   : WeekTab(
                       weekly: weekly,
+                      currentWeather: today?.current,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryWeeklyData,

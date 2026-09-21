@@ -513,9 +513,11 @@ class _TodayFutureSection extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.62),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Row(
-              children: [
+            child: _TopMetricGrid(
+              columns: 2,
+              metrics: [
                 _TopMetric(
+                  key: const ValueKey('main-future-metric-습도'),
                   icon: Icons.water_drop_outlined,
                   label: '습도',
                   value: nextForecast.humidity == null
@@ -524,6 +526,7 @@ class _TodayFutureSection extends StatelessWidget {
                   state: _humidityState(nextForecast.humidity),
                 ),
                 _TopMetric(
+                  key: const ValueKey('main-future-metric-바람'),
                   icon: Icons.air_rounded,
                   label: '바람',
                   value: _windValue(
@@ -533,12 +536,14 @@ class _TodayFutureSection extends StatelessWidget {
                   state: _windState(nextForecast.windSpeed),
                 ),
                 _TopMetric(
+                  key: const ValueKey('main-future-metric-자외선'),
                   icon: Icons.wb_sunny_outlined,
                   label: '자외선',
                   value: nextForecast.uvIndex?.toStringAsFixed(0) ?? '--',
                   state: _uvState(nextForecast.uvIndex),
                 ),
                 _TopMetric(
+                  key: const ValueKey('main-future-metric-대기질'),
                   icon: Icons.eco_outlined,
                   label: '대기질',
                   value: airQualityState == _unavailableMetric
@@ -548,6 +553,12 @@ class _TodayFutureSection extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            '가시거리는 현재 관측자료만 제공돼 미래 예보에는 포함하지 않아요.',
+            key: const ValueKey('main-future-visibility-notice'),
+            style: WeatherCareTheme.microTextStyle,
           ),
         ],
       ),
@@ -902,7 +913,7 @@ class _TopMetricGrid extends StatelessWidget {
   final int columns;
 
   const _TopMetricGrid({required this.metrics, required this.columns})
-      : assert(metrics.length == 6),
+      : assert(metrics.length > 0),
         assert(columns == 2 || columns == 3);
 
   @override

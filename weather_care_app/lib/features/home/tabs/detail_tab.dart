@@ -8,6 +8,7 @@ import '../../../theme/weather_theme.dart';
 import '../widgets/lifestyle_evidence_checklist_section.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
+import '../widgets/visibility_observation_card.dart';
 
 enum DetailFocusSource {
   notification,
@@ -115,6 +116,8 @@ class _DetailTabState extends State<DetailTab> {
               icon: Icons.query_stats_rounded,
             ),
             const SizedBox(height: 18),
+            VisibilityObservationCard(current: widget.today.current),
+            const SizedBox(height: 16),
             if (widget.serverFeaturesAvailable)
               LifestyleEvidenceChecklistSection(
                 key: _evidenceSectionKey,

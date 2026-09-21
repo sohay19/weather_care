@@ -8,6 +8,7 @@ import { providerHttpFailureMessage } from '../providerHttpFailure';
 const HOURLY_OBSERVATION_URL =
   'https://apihub.kma.go.kr/api/typ01/url/kma_sfctm5.php';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const VISIBILITY_TIMEOUT_MS = 30_000;
 
 type HourlyMetric = 'TA' | 'HM' | 'WS' | 'VS';
 
@@ -203,15 +204,26 @@ export class KmaHourlyObservationProvider {
       );
     }
     const target = formatKmaHour(koreanHour);
-    const requestedMetrics: HourlyMetric[] = options.includeVisibility === false
-      ? ['TA', 'HM', 'WS']
-      : ['TA', 'HM', 'WS', 'VS'];
-    const metricResults = await Promise.allSettled(
-      requestedMetrics.map(async (metric) => ({
+    const visibilityResults: Array<PromiseSettledResult<{
+      metric: HourlyMetric;
+      rows: KmaHourlyObservationRow[];
+    }>> = options.includeVisibility === false
+      ? []
+      : await Promise.allSettled([this.fetchMetric(
+          'VS',
+          target,
+          target,
+        ).then((rows) => ({ metric: 'VS' as const, rows }))]);
+    const metricResults: Array<PromiseSettledResult<{
+      metric: HourlyMetric;
+      rows: KmaHourlyObservationRow[];
+    }>> = await Promise.allSettled(
+      (['TA', 'HM', 'WS'] as const).map(async (metric) => ({
         metric,
         rows: await this.fetchMetric(metric, target, target),
       })),
     );
+    metricResults.push(...visibilityResults);
     const temperatureResult = metricResults.find(
       (result) => result.status === 'fulfilled' && result.value.metric === 'TA',
     );
@@ -276,9 +288,12 @@ export class KmaHourlyObservationProvider {
       help: '0',
       authKey: this.serviceKey,
     });
+    const timeoutMs = metric === 'VS'
+      ? Math.max(this.timeoutMs, VISIBILITY_TIMEOUT_MS)
+      : this.timeoutMs;
     const response = await this.fetcher(`${HOURLY_OBSERVATION_URL}?${query}`, {
       headers: { Accept: 'text/plain' },
-      signal: AbortSignal.timeout(this.timeoutMs),
+      signal: AbortSignal.timeout(timeoutMs),
       cf: { cacheEverything: true, cacheTtl: 300 },
     });
     const payload = await response.text();

@@ -46,8 +46,14 @@ class HourlyForecastSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선과 대기질은 자료가 경우에만 표시해요.',
+            '기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선과 대기질은 자료가 있는 경우에만 표시해요.',
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '가시거리는 현재 관측자료만 제공돼 시간별 예보에는 표시하지 않아요.',
+            key: const ValueKey('today-hourly-visibility-notice'),
+            style: WeatherCareTheme.microTextStyle,
           ),
           const SizedBox(height: 16),
           if (visibleItems.isEmpty)

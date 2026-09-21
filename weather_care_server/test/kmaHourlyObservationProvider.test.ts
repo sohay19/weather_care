@@ -3,6 +3,7 @@ import {
   buildHourlyComparisons,
   KmaHourlyObservationProvider,
   latestCompletedKoreanHour,
+  nearestVisibilityObservations,
   parseKmaHourlyObservationRows,
 } from '../src/providers/weather/kmaHourlyObservationProvider';
 
@@ -89,7 +90,10 @@ describe('KMA hourly observation provider', () => {
     const fetcher = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));
       const metric = url.searchParams.get('obs');
-      const value = metric === 'TA' ? 24 : metric === 'HM' ? 55 : 3;
+      const value = metric === 'TA' ? 24
+        : metric === 'HM' ? 55
+        : metric === 'VS' ? 2_000
+        : 3;
       expect(url.searchParams.get('tm1')).toBe('202609161400');
       expect(url.searchParams.get('tm2')).toBe('202609161400');
       return new Response(`202609161400,108,126.9658,37.5714,85.67,${value}`);
@@ -107,12 +111,21 @@ describe('KMA hourly observation provider', () => {
       stations: [{ ...current.stations[0], temperature: 20 }],
     };
 
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(4);
     expect(current.stations[0]).toMatchObject({
       stationId: '108',
       temperature: 24,
       humidity: 55,
       windSpeed: 3,
+      visibilityMeters: 20_000,
+    });
+    expect(nearestVisibilityObservations(current, [{
+      latitude: 37.56,
+      longitude: 126.97,
+    }])[0]).toMatchObject({
+      stationId: '108',
+      visibilityMeters: 20_000,
+      provider: 'KMA_ASOS',
     });
     expect(buildHourlyComparisons(current, comparison, [{
       latitude: 37.56,

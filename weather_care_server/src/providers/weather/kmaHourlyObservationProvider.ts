@@ -9,7 +9,7 @@ const HOURLY_OBSERVATION_URL =
   'https://apihub.kma.go.kr/api/typ01/url/kma_sfctm5.php';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
-type HourlyMetric = 'TA' | 'HM' | 'WS';
+type HourlyMetric = 'TA' | 'HM' | 'WS' | 'VS';
 
 export interface KmaHourlyObservationRow {
   observedAt: string;
@@ -54,6 +54,7 @@ export interface KmaHourlyStationObservation {
   temperature?: number;
   humidity?: number;
   windSpeed?: number;
+  visibilityMeters?: number;
 }
 
 export interface KmaHourlyObservationSnapshot {
@@ -194,6 +195,7 @@ export class KmaHourlyObservationProvider {
 
   async getObservationsAt(
     koreanHour: Date,
+    options: { includeVisibility?: boolean } = {},
   ): Promise<KmaHourlyObservationSnapshot> {
     if (!this.serviceKey) {
       throw new KmaHourlyObservationProviderError(
@@ -201,15 +203,31 @@ export class KmaHourlyObservationProvider {
       );
     }
     const target = formatKmaHour(koreanHour);
-    const metrics = await Promise.all(
-      (['TA', 'HM', 'WS'] as const).map(async (metric) => ({
+    const requestedMetrics: HourlyMetric[] = options.includeVisibility === false
+      ? ['TA', 'HM', 'WS']
+      : ['TA', 'HM', 'WS', 'VS'];
+    const metricResults = await Promise.allSettled(
+      requestedMetrics.map(async (metric) => ({
         metric,
         rows: await this.fetchMetric(metric, target, target),
       })),
     );
+    const temperatureResult = metricResults.find(
+      (result) => result.status === 'fulfilled' && result.value.metric === 'TA',
+    );
+    if (!temperatureResult) {
+      const failure = metricResults.find(
+        (result): result is PromiseRejectedResult => result.status === 'rejected',
+      );
+      throw failure?.reason ?? new KmaHourlyObservationProviderError(
+        'KMA hourly observation response has no temperature metric',
+      );
+    }
 
     const stations = new Map<string, KmaHourlyStationObservation>();
-    for (const result of metrics) {
+    for (const settled of metricResults) {
+      if (settled.status !== 'fulfilled') continue;
+      const result = settled.value;
       for (const row of result.rows) {
         if (row.observedAt !== target) continue;
         const station = stations.get(row.stationId) ?? {
@@ -224,6 +242,8 @@ export class KmaHourlyObservationProvider {
           station.humidity = row.value;
         } else if (result.metric === 'WS' && validWindSpeed(row.value)) {
           station.windSpeed = row.value;
+        } else if (result.metric === 'VS' && validVisibility(row.value)) {
+          station.visibilityMeters = row.value * 10;
         }
         stations.set(row.stationId, station);
       }
@@ -403,6 +423,44 @@ export function buildHourlyComparisons(
   });
 }
 
+export function nearestVisibilityObservations(
+  snapshot: KmaHourlyObservationSnapshot,
+  locations: readonly HourlyComparisonLocation[],
+): Array<{
+  observedAt: string;
+  stationId: string;
+  distanceKm: number;
+  visibilityMeters: number;
+  provider: 'KMA_ASOS';
+} | undefined> {
+  const stations = snapshot.stations.filter(
+    (station) => station.visibilityMeters !== undefined,
+  );
+  return locations.map(({ latitude, longitude }) => {
+    const nearest = stations
+      .map((station) => ({
+        station,
+        distanceKm: distanceKm(
+          latitude,
+          longitude,
+          station.latitude,
+          station.longitude,
+        ),
+      }))
+      .sort((left, right) => left.distanceKm - right.distanceKm)[0];
+    if (!nearest || nearest.station.visibilityMeters === undefined) {
+      return undefined;
+    }
+    return {
+      observedAt: snapshot.observedAt,
+      stationId: nearest.station.stationId,
+      distanceKm: Number(nearest.distanceKm.toFixed(1)),
+      visibilityMeters: nearest.station.visibilityMeters,
+      provider: 'KMA_ASOS',
+    };
+  });
+}
+
 function validTemperature(value: number): boolean {
   return value >= -80 && value <= 60;
 }
@@ -413,6 +471,10 @@ function validHumidity(value: number): boolean {
 
 function validWindSpeed(value: number): boolean {
   return value >= 0 && value <= 100;
+}
+
+function validVisibility(value: number): boolean {
+  return value >= 0 && value <= 10_000;
 }
 
 function normalizeServiceKey(value: string): string {

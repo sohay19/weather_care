@@ -32,6 +32,11 @@ class CurrentWeather {
   final String? apparentTemperatureSource;
   final double? humidity;
   final double? windSpeed;
+  final double? windDirection;
+  final double? visibilityMeters;
+  final String? visibilityObservedAt;
+  final String? visibilityStationId;
+  final double? visibilityStationDistanceKm;
   final double? uvIndex;
   final int? pm10;
   final int? pm25;
@@ -48,6 +53,11 @@ class CurrentWeather {
     this.apparentTemperatureSource,
     this.humidity,
     this.windSpeed,
+    this.windDirection,
+    this.visibilityMeters,
+    this.visibilityObservedAt,
+    this.visibilityStationId,
+    this.visibilityStationDistanceKm,
     this.uvIndex,
     this.pm10,
     this.pm25,
@@ -67,6 +77,12 @@ class CurrentWeather {
       apparentTemperatureSource: c['apparentTemperatureSource']?.toString(),
       humidity: (c['humidity'] as num?)?.toDouble(),
       windSpeed: (c['windSpeed'] as num?)?.toDouble(),
+      windDirection: (c['windDirection'] as num?)?.toDouble(),
+      visibilityMeters: (c['visibilityMeters'] as num?)?.toDouble(),
+      visibilityObservedAt: _optionalText(c['visibilityObservedAt']),
+      visibilityStationId: _optionalText(c['visibilityStationId']),
+      visibilityStationDistanceKm:
+          (c['visibilityStationDistanceKm'] as num?)?.toDouble(),
       uvIndex: (c['uvIndex'] as num?)?.toDouble(),
       pm10: (c['pm10'] as num?)?.toInt(),
       pm25: (c['pm25'] as num?)?.toInt(),
@@ -92,6 +108,7 @@ class HourlyWeatherItem {
   final double? snowfallAmount;
   final String? snowfallAmountLabel;
   final double? windSpeed;
+  final double? windDirection;
   final double? uvIndex;
   final int? pm10;
   final int? pm25;
@@ -111,6 +128,7 @@ class HourlyWeatherItem {
     required this.snowfallAmount,
     this.snowfallAmountLabel,
     required this.windSpeed,
+    this.windDirection,
     this.uvIndex,
     this.pm10,
     this.pm25,
@@ -163,6 +181,7 @@ class HourlyWeatherItem {
         'cm',
       ),
       windSpeed: _optionalNumber(json['windSpeed']),
+      windDirection: _optionalNumber(json['windDirection']),
       uvIndex: _optionalNumber(json['uvIndex']),
       pm10: _optionalNumber(json['pm10'])?.toInt(),
       pm25: _optionalNumber(json['pm25'])?.toInt(),
@@ -375,6 +394,8 @@ class TodayWeatherResponse {
   final WeatherRegion region;
   final String brief;
   final String? briefExpiresAt;
+  final String? sunriseAt;
+  final String? sunsetAt;
   final CurrentWeather current;
   final CurrentWeather? nextForecast;
   final List<WeatherRecommendation> recommendations;
@@ -389,6 +410,8 @@ class TodayWeatherResponse {
     required this.region,
     required this.brief,
     this.briefExpiresAt,
+    this.sunriseAt,
+    this.sunsetAt,
     required this.current,
     this.nextForecast,
     required this.recommendations,
@@ -404,6 +427,8 @@ class TodayWeatherResponse {
         region: WeatherRegion(nx: region.nx, ny: region.ny, name: name),
         brief: brief,
         briefExpiresAt: briefExpiresAt,
+        sunriseAt: sunriseAt,
+        sunsetAt: sunsetAt,
         current: current,
         nextForecast: nextForecast,
         recommendations: recommendations,
@@ -459,6 +484,8 @@ class TodayWeatherResponse {
       ),
       brief: json['brief']?.toString() ?? '외출 전에 시간별 예보를 확인하세요.',
       briefExpiresAt: json['briefExpiresAt']?.toString(),
+      sunriseAt: _optionalText(json['sunriseAt']),
+      sunsetAt: _optionalText(json['sunsetAt']),
       current: CurrentWeather.fromJson(json),
       nextForecast: nextForecast is Map
           ? CurrentWeather.fromJson({

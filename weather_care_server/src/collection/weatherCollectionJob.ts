@@ -35,6 +35,7 @@ import {
   buildHourlyComparisons,
   KmaHourlyObservationProvider,
   latestCompletedKoreanHour,
+  nearestVisibilityObservations,
   type KmaHourlyObservationSnapshot,
 } from '../providers/weather/kmaHourlyObservationProvider';
 import { KmaDailyObservationProvider } from '../providers/weather/kmaDailyObservationProvider';
@@ -753,14 +754,26 @@ async function collectYesterdayComparisons(
     collectedCacheKey.hourlyObservation(comparisonVersion),
   );
   const missing = [
-    ...(current ? [] : [{ version: currentVersion, hour: currentHour }]),
-    ...(comparison ? [] : [{ version: comparisonVersion, hour: comparisonHour }]),
+    ...(current ? [] : [{
+      version: currentVersion,
+      hour: currentHour,
+      includeVisibility: true,
+    }]),
+    ...(comparison ? [] : [{
+      version: comparisonVersion,
+      hour: comparisonHour,
+      includeVisibility: false,
+    }]),
   ];
+  const requestedCalls = missing.reduce(
+    (sum, target) => sum + (target.includeVisibility ? 4 : 3),
+    0,
+  );
   if (missing.length > 0 && !await reserveApiHubBudget(
     env.DB,
     'ASOS_HOURLY',
-    missing.length * 3,
-    missing.length * 384_000,
+    requestedCalls,
+    requestedCalls * 128_000,
     now,
   )) return;
   try {
@@ -769,7 +782,9 @@ async function collectYesterdayComparisons(
       now: () => now,
     });
     for (const target of missing) {
-      const value = await provider.getObservationsAt(target.hour);
+      const value = await provider.getObservationsAt(target.hour, {
+        includeVisibility: target.includeVisibility,
+      });
       await saveCollectedCache(env.DB, {
         key: collectedCacheKey.hourlyObservation(target.version),
         type: 'COLLECTED_HOURLY_OBSERVATION',
@@ -779,6 +794,24 @@ async function collectYesterdayComparisons(
       const record = { value, status: 'AVAILABLE' as const, updatedAt: now.toISOString() };
       if (target.version === currentVersion) current = record;
       if (target.version === comparisonVersion) comparison = record;
+    }
+    if (current) {
+      const visibility = nearestVisibilityObservations(
+        current.value,
+        regions.map(({ coordinates }) => coordinates),
+      );
+      await Promise.all(regions.flatMap(({ target }, index) => {
+        const value = visibility[index];
+        if (!value) return [];
+        return [saveCollectedCache(env.DB, {
+          key: collectedCacheKey.visibility(target.nx, target.ny),
+          type: 'COLLECTED_VISIBILITY',
+          value,
+          nx: target.nx,
+          ny: target.ny,
+          updatedAt: now,
+        })];
+      }));
     }
     if (!current || !comparison) return;
     const values = buildHourlyComparisons(

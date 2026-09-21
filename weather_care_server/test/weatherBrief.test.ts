@@ -80,6 +80,26 @@ describe('weather brief policy', () => {
         /소지품을 단단히 고정하세요/,
       ],
       [
+        forecast([snapshot(12, { visibilityMeters: 700 })]),
+        'LOW_VISIBILITY',
+        /운전한다면 감속하고 주변을 살펴주세요/,
+      ],
+      [
+        forecast([snapshot(12, { humidity: 85 })]),
+        'HUMID_AIR',
+        /눅눅하게 느껴지고 빨래가 더디게 마를 수 있어요/,
+      ],
+      [
+        forecast([snapshot(12, { humidity: 30 })]),
+        'DRY_AIR',
+        /건조해 코나 목이 마르게 느껴질 수 있어요/,
+      ],
+      [
+        forecast([snapshot(12)], { visibilityMeters: 20_000 }),
+        'CLEAR_VIEW',
+        /멀리 있는 건물까지 또렷하게 보일 만큼 시야가 좋아요/,
+      ],
+      [
         forecast([snapshot(12)]),
         'DAILY_RHYTHM',
         /특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요/,
@@ -91,6 +111,18 @@ describe('weather brief policy', () => {
       expect(result.scene).toBe(scene);
       expect(result.text).toMatch(action);
     }
+  });
+
+  it('describes visibility and humidity without exposing measurements', () => {
+    const lowVisibility = buildWeatherBriefResult(
+      forecast([snapshot(12, { visibilityMeters: 180 })]),
+    );
+    const humid = buildWeatherBriefResult(
+      forecast([snapshot(12, { humidity: 88 })]),
+    );
+
+    expect(lowVisibility.text).not.toMatch(/180|m\b|km/);
+    expect(humid.text).not.toMatch(/88|%/);
   });
 
   it('keeps the same brief for the same weather input', () => {

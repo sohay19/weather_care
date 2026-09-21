@@ -25,6 +25,8 @@ export const collectedCacheKey = {
   sourceVersion: (source: string) => `COLLECTED_SOURCE_VERSION_${source}`,
   hourlyObservation: (version: string) =>
     `COLLECTED_HOURLY_OBSERVATION_${version}`,
+  visibility: (nx: number, ny: number) =>
+    `COLLECTED_VISIBILITY_${nx}_${ny}`,
 };
 
 export interface CollectedSourceVersion {

@@ -205,6 +205,29 @@ describe('notification scheduler', () => {
     expect(sent[0].body).toContain(word);
   });
 
+  it('습한 날은 수치 대신 체감 문구로 아침 날씨를 알린다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({
+      umbrellaEnabled: false, parasolEnabled: false, outerwearEnabled: false,
+      maskEnabled: false, waterEnabled: false, sunscreenEnabled: false,
+      heavySnowEnabled: false, dailyWeatherEnabled: true,
+    });
+    const sent: FcmPayload[] = [];
+    const forecast = rainyForecast();
+    forecast.hourly = forecast.hourly.map((item) => ({ ...item, humidity: 85 }));
+
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'),
+      forecastLoader: async () => forecast,
+      sender: collectingSender(sent),
+    });
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0].notificationKey).toBe('MORNING_BRIEF');
+    expect(sent[0].body).toContain('빨래가 더디게 마를 수 있어요');
+    expect(sent[0].body).not.toMatch(/85|%/);
+  });
+
   it('준비물 요약 끄기는 현재 비나 많은 눈 별도 안내를 끄지 않는다', async () => {
     await insertInstallation('device-token', true);
     await savePreferences({ dailyWeatherEnabled: false });
@@ -688,7 +711,7 @@ function preparationForecast(cold: boolean): WeatherForecast {
   const forecast = rainyForecast();
   forecast.hourly = [9, 10, 11].map((hour) => ({ ...snapshot(hour),
     temperature: cold ? -10 : 35, apparentTemperature: cold ? -15 : 40,
-    humidity: 80, uvIndex: 10, pm10: 120, pm25: 70, airQualityGrade: 4,
+    humidity: 60, uvIndex: 10, pm10: 120, pm25: 70, airQualityGrade: 4,
   }));
   return forecast;
 }

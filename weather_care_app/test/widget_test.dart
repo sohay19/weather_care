@@ -72,9 +72,19 @@ void main() {
   test('오늘 응답은 독립 자료상태 문구를 보존한다', () {
     final response = TodayWeatherResponse.fromJson({
       'dataSource': 'test',
+      'generatedAt': '2026-09-21T06:00:00Z',
+      'sunriseAt': '2026-09-20T21:17:00Z',
+      'sunsetAt': '2026-09-21T09:28:00Z',
       'region': {'nx': 60, 'ny': 121, 'name': '수원'},
       'brief': '예보를 확인하세요',
-      'current': {'temperature': 20},
+      'current': {
+        'temperature': 20,
+        'windDirection': 225,
+        'visibilityMeters': 800,
+        'visibilityObservedAt': '2026-09-21T14:00:00+09:00',
+        'visibilityStationId': '108',
+        'visibilityStationDistanceKm': 4.2,
+      },
       'dataStatusMessages': [
         {
           'role': 'DATA_STATUS',
@@ -90,6 +100,11 @@ void main() {
         response.dataStatusMessages.single.role, WeatherMessageRole.dataStatus);
     expect(response.dataStatusMessages.single.retryable, isFalse);
     expect(response.dataStatusMessages.single.itemTitle, '자외선지수');
+    expect(response.sunriseAt, '2026-09-20T21:17:00Z');
+    expect(response.sunsetAt, '2026-09-21T09:28:00Z');
+    expect(response.current.windDirection, 225);
+    expect(response.current.visibilityMeters, 800);
+    expect(response.current.visibilityStationId, '108');
   });
 
   test('시간별 예보는 자외선과 미세먼지 값을 보존한다', () {
@@ -101,6 +116,7 @@ void main() {
       'snowExpected': false,
       'snowfallAmount': 0,
       'windSpeed': 2,
+      'windDirection': 180,
       'skyCondition': '구름 많음',
       'uvIndex': 7,
       'pm10': 52,
@@ -110,6 +126,7 @@ void main() {
     expect(item.uvIndex, 7);
     expect(item.pm10, 52);
     expect(item.pm25, 31);
+    expect(item.windDirection, 180);
   });
 
   test('어제 비교 응답은 기온과 체감온도 등 날씨 값을 보존한다', () {
@@ -438,8 +455,11 @@ void main() {
           body: MainTab(
             today: const TodayWeatherResponse(
               dataSource: 'test',
+              generatedAt: '2026-08-21T06:00:00Z',
               region: WeatherRegion(nx: 60, ny: 121, name: '수원'),
               brief: brief,
+              sunriseAt: '2026-08-20T20:53:00Z',
+              sunsetAt: '2026-08-21T10:18:00Z',
               current: CurrentWeather(
                 temperature: 22.4,
                 forecastAt: '2026-08-21T15:00:00+09:00',
@@ -447,6 +467,10 @@ void main() {
                 apparentTemperatureSource: 'APP_KMA_METHOD_FROM_FORECAST',
                 humidity: 60,
                 windSpeed: 2.1,
+                windDirection: 225,
+                visibilityMeters: 12000,
+                uvIndex: 4,
+                pm10: 24,
                 pm25: 76,
                 sky: '구름 많음',
               ),
@@ -473,16 +497,29 @@ void main() {
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
     expect(find.text('물 한 모금 챙기기'), findsNothing);
     expect(find.text('여유 있게 움직이기'), findsNothing);
-    expect(find.text('초미세먼지'), findsNWidgets(2));
-    expect(find.text('76㎍'), findsOneWidget);
+    expect(find.text('대기질'), findsOneWidget);
+    expect(find.text('매우 나쁨'), findsOneWidget);
+    expect(find.text('가시거리'), findsOneWidget);
+    expect(find.text('12km'), findsOneWidget);
+    expect(find.text('바람'), findsOneWidget);
+    expect(find.text('남서 2.1m/s'), findsOneWidget);
+    expect(find.text('일출·일몰'), findsOneWidget);
+    expect(find.text('05:53 · 19:18'), findsOneWidget);
+    final uvPosition = tester.getCenter(find.text('자외선').first);
+    final airQualityPosition = tester.getCenter(find.text('대기질').first);
+    final visibilityPosition = tester.getCenter(find.text('가시거리'));
+    final humidityPosition = tester.getCenter(find.text('습도').first);
+    final windPosition = tester.getCenter(find.text('바람').first);
+    final sunPosition = tester.getCenter(find.text('일출·일몰'));
+    expect(airQualityPosition.dy, uvPosition.dy);
+    expect(visibilityPosition.dy, uvPosition.dy);
+    expect(humidityPosition.dy, greaterThan(uvPosition.dy));
+    expect(windPosition.dy, humidityPosition.dy);
+    expect(sunPosition.dy, humidityPosition.dy);
+    expect(humidityPosition.dx, uvPosition.dx);
+    expect(windPosition.dx, airQualityPosition.dx);
+    expect(sunPosition.dx, visibilityPosition.dx);
     expect(find.text('어제와 비교'), findsOneWidget);
-    expect(find.text('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
-    expect(find.text('예상 기온'), findsOneWidget);
-    expect(find.text('예상 체감온도'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('예상 기온')).dy,
-      tester.getTopLeft(find.text('예상 체감온도')).dy,
-    );
     const weatherFeeling =
         '구름이 많은 날씨예요. 실제 기온보다 0.6℃ 낮지만, 체감 상 조금 덥게 느껴질 수 있어요.';
     expect(find.text(weatherFeeling), findsOneWidget);
@@ -490,20 +527,34 @@ void main() {
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
       13,
     );
-    final apparentTemperatureRow = tester.getRect(
-      find.byKey(const ValueKey('main-apparent-temperature-row')),
-    );
     final weatherFeelingRow = tester.getRect(
       find.byKey(const ValueKey('main-weather-feeling')),
     );
-    expect(apparentTemperatureRow.top, greaterThan(weatherFeelingRow.bottom));
     expect(
-      tester.widget<Text>(find.text('76㎍')).style?.color,
+      tester.widget<Text>(find.text('매우 나쁨').first).style?.color,
       WeatherCareTheme.danger,
     );
     expect(find.byTooltip('날씨 새로고침'), findsNothing);
     expect(tester.widget<Text>(find.text(brief)).maxLines, isNull);
     expect(tester.takeException(), isNull);
+
+    await tester.dragUntilVisible(
+      find.byKey(const ValueKey('main-future-weather-card')),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -250),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
+    expect(find.text('예상 기온'), findsOneWidget);
+    expect(find.text('예상 체감온도'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('예상 기온')).dy,
+      tester.getTopLeft(find.text('예상 체감온도')).dy,
+    );
+    final apparentTemperatureRow = tester.getRect(
+      find.byKey(const ValueKey('main-apparent-temperature-row')),
+    );
+    expect(apparentTemperatureRow.top, greaterThan(weatherFeelingRow.bottom));
 
     await tester.dragUntilVisible(
       find.text('간단한 타임라인'),

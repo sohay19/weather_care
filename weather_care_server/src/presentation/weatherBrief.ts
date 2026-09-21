@@ -4,7 +4,7 @@ import { defaultRuleConfig } from '../config/ruleConfig';
 import { koreaDate, precipitationDecisionSnapshot, precipitationPeriod, periodLabel, koreanHour } from '../rules/precipitationWindows';
 import { snapshotTime } from '../rules/timeWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.6';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.7';
 const HOUR = 3_600_000;
 export type WeatherBriefScene =
   | 'WET_TRAVEL'
@@ -13,6 +13,10 @@ export type WeatherBriefScene =
   | 'SHADE_BREAK'
   | 'LAYER_READY'
   | 'STEADY_PACE'
+  | 'LOW_VISIBILITY'
+  | 'HUMID_AIR'
+  | 'DRY_AIR'
+  | 'CLEAR_VIEW'
   | 'DAILY_RHYTHM';
 
 export interface WeatherBriefContext {
@@ -108,6 +112,12 @@ function selectScene(forecast: WeatherForecast, now: Date): SceneSelection {
   const rainy = find('WET_TRAVEL', isRainy, true);
   if (rainy) return rainy;
 
+  const lowVisibility = find(
+    'LOW_VISIBILITY',
+    (item) => (item.visibilityMeters ?? Infinity) < 1_000,
+  );
+  if (lowVisibility) return lowVisibility;
+
   const poorAir = find('MASK_READY', hasPoorAirQuality);
   if (poorAir) return poorAir;
 
@@ -136,6 +146,22 @@ function selectScene(forecast: WeatherForecast, now: Date): SceneSelection {
   );
   if (strongWind) return strongWind;
 
+  const humidAir = find(
+    'HUMID_AIR',
+    (item) => (item.humidity ?? -Infinity) >= defaultRuleConfig.humidity.high,
+  );
+  if (humidAir) return humidAir;
+
+  const dryAir = find(
+    'DRY_AIR',
+    (item) => (item.humidity ?? Infinity) <= defaultRuleConfig.humidity.low,
+  );
+  if (dryAir) return dryAir;
+
+  if ((forecast.current.visibilityMeters ?? 0) >= 20_000) {
+    return { scene: 'CLEAR_VIEW', snapshot: forecast.current };
+  }
+
   return { scene: 'DAILY_RHYTHM', snapshot: forecast.current };
 }
 
@@ -158,6 +184,18 @@ function messageFor(selection: SceneSelection, eventTime: string): string {
       return `기온이 낮거나 예상 체감온도가 낮게 계산됐으니, ${eventTime} 외출한다면 겉옷을 준비하세요`;
     case 'STEADY_PACE':
       return `바람이 강할 수 있으니, ${eventTime} 외출한다면 소지품을 단단히 고정하세요`;
+    case 'LOW_VISIBILITY':
+      return (snapshot.visibilityMeters ?? Infinity) < 200
+        ? '앞이 매우 잘 보이지 않을 수 있으니, 운전한다면 속도를 줄이고 차간 거리를 넉넉히 두세요'
+        : '시야가 짧아 앞이 흐리게 보일 수 있으니, 운전한다면 감속하고 주변을 살펴주세요';
+    case 'HUMID_AIR':
+      return (snapshot.temperature ?? 0) >= 25
+        ? `${eventTime} 공기가 후텁지근하고 땀이 잘 마르지 않을 수 있어요`
+        : `${eventTime} 실외 공기가 눅눅하게 느껴지고 빨래가 더디게 마를 수 있어요`;
+    case 'DRY_AIR':
+      return `${eventTime} 실외 공기가 건조해 코나 목이 마르게 느껴질 수 있어요`;
+    case 'CLEAR_VIEW':
+      return '날씨 조건만 보면 멀리 있는 건물까지 또렷하게 보일 만큼 시야가 좋아요';
     case 'DAILY_RHYTHM':
       return '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요';
   }

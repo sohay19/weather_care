@@ -114,6 +114,11 @@ export interface WeatherSnapshot {
   humidity?: number;
   windSpeed?: number;
   windDirection?: number;
+  /** 가장 가까운 기상청 ASOS 관측소의 수평 시정 */
+  visibilityMeters?: number;
+  visibilityObservedAt?: string;
+  visibilityStationId?: string;
+  visibilityStationDistanceKm?: number;
   precipitationType?: PrecipitationType;
   precipitationProbability?: number;
   /** 이전 앱과의 호환을 위한 보수적 하한값 */
@@ -328,6 +333,8 @@ export interface TodayWeatherResponse {
   brief: string;
   /** Exclusive deadline for displaying the time-sensitive Main brief. */
   briefExpiresAt?: string;
+  sunriseAt?: string;
+  sunsetAt?: string;
   current: WeatherSnapshot;
   /** First hourly forecast whose valid time is later than generatedAt. */
   nextForecast: WeatherSnapshot;
@@ -357,4 +364,12 @@ export interface TodayWeatherResponse {
   decisionVersion?: string;
   catalogVersion?: string;
   generatedAt?: string;
+}
+
+export interface CurrentVisibilityObservation {
+  observedAt: string;
+  stationId: string;
+  distanceKm: number;
+  visibilityMeters: number;
+  provider: 'KMA_ASOS';
 }

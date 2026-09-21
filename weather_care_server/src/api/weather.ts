@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { installationOwnerHash } from '../security/installationAccess';
 import {
   NotificationSettings,
+  CurrentVisibilityObservation,
   CurrentPrecipitationObservation,
   OfficialRoadControl,
   RoadIceRisk,
@@ -63,6 +64,9 @@ import type {
   CollectedWarningBundle,
   CollectedWeeklyBundle,
 } from '../collection/collectionTypes';
+import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
+import { enrichForecastWithVisibility } from '../providers/weather/visibility';
+import { calculateSunTimes } from '../presentation/sunTimes';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -91,7 +95,7 @@ router.get('/main', async (c) => {
 
   try {
     const generatedAt = new Date();
-    const [collected, weekly] = await Promise.all([
+    const [collected, weekly, visibilityRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
         c.env.DB,
         `COLLECTED_REGION_${nx}_${ny}`,
@@ -100,11 +104,20 @@ router.get('/main', async (c) => {
         c.env.DB,
         collectedCacheKey.weekly(nx, ny),
       ),
+      getCollectedCache<CurrentVisibilityObservation>(
+        c.env.DB,
+        collectedCacheKey.visibility(nx, ny),
+      ),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-    const forecast = forecastForCurrentHour(collected.value.forecast, generatedAt);
+    const forecast = enrichForecastWithVisibility(
+      forecastForCurrentHour(collected.value.forecast, generatedAt),
+      visibilityRecord?.value,
+      generatedAt,
+    );
+    const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
     const brief = buildWeatherBriefResult(forecast, {
       regionKey: `${nx}:${ny}`,
       now: generatedAt,
@@ -114,6 +127,7 @@ router.get('/main', async (c) => {
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
+      ...sunTimes,
       current: forecast.current,
       nextForecast:
         nextForecastSnapshot(
@@ -152,7 +166,8 @@ router.get('/today', async (c) => {
     const roadIceInSeason = isRoadIceSeason(generatedAt);
     const region = regionMetadataForGrid(nx, ny);
     const [regionRecord, settings, precipitationRecord, warningRecord,
-      roadIceRecord, roadControlRecord, weeklyRecord] = await Promise.all([
+      roadIceRecord, roadControlRecord, weeklyRecord,
+      visibilityRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
         c.env.DB,
         `COLLECTED_REGION_${nx}_${ny}`,
@@ -188,12 +203,17 @@ router.get('/today', async (c) => {
         c.env.DB,
         collectedCacheKey.weekly(nx, ny),
       ),
+      getCollectedCache<CurrentVisibilityObservation>(
+        c.env.DB,
+        collectedCacheKey.visibility(nx, ny),
+      ),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-    const forecast = forecastForCurrentHour(
-      regionRecord.value.forecast,
+    const forecast = enrichForecastWithVisibility(
+      forecastForCurrentHour(regionRecord.value.forecast, generatedAt),
+      visibilityRecord?.value,
       generatedAt,
     );
     const environmentalData = regionRecord.value.environmental;
@@ -247,11 +267,18 @@ router.get('/today', async (c) => {
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
     const brief = buildWeatherBriefResult(forecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
+    const sunTimes = sunTimesForRequest(
+      generatedAt,
+      nx,
+      ny,
+      coordinates,
+    );
     const response: TodayWeatherResponse = {
       dataSource: `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionLabel },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
+      ...sunTimes,
       current: {
         ...forecast.current,
         activeWarnings: warnings,
@@ -297,6 +324,18 @@ router.get('/today', async (c) => {
     return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
+
+function sunTimesForRequest(
+  now: Date,
+  nx: number,
+  ny: number,
+  coordinates?: { latitude: number; longitude: number },
+): ReturnType<typeof calculateSunTimes> {
+  const resolved = coordinates ?? kmaGridCoordinates(nx, ny);
+  return resolved
+    ? calculateSunTimes(now, resolved.latitude, resolved.longitude)
+    : {};
+}
 
 router.get('/weekly', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));

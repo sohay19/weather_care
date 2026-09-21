@@ -9,6 +9,7 @@ import { runRecommendationEngine } from '../recommendations/recommendationEngine
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
 import {
   CurrentPrecipitationObservation,
+  CurrentVisibilityObservation,
   NotificationSettings,
   OfficialRoadControl,
   RoadIceRisk,
@@ -35,6 +36,7 @@ import {
   getCollectedCache,
 } from '../database/collectedWeatherRepository';
 import type { CollectedRegionBundle, CollectedWarningBundle } from '../collection/collectionTypes';
+import { enrichForecastWithVisibility } from '../providers/weather/visibility';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -224,7 +226,11 @@ export async function runRecommendationNotificationJob(
         row.installationId,
         local.date,
       );
-      const notifications = buildNotification(recommendations, now).filter(
+      const notifications = buildNotification(
+        recommendations,
+        now,
+        forecast,
+      ).filter(
         (notification) => {
           if (alreadySent.has(notification.notification_key)) return false;
           if (notification.notification_key === 'MORNING_BRIEF') {
@@ -345,14 +351,24 @@ async function defaultForecastLoader(
   ny: number,
   coordinates?: { latitude: number; longitude: number },
 ): Promise<WeatherForecast> {
-  const cached = await getCollectedCache<CollectedRegionBundle>(
-    env.DB,
-    `COLLECTED_REGION_${nx}_${ny}`,
-  );
+  const [cached, visibility] = await Promise.all([
+    getCollectedCache<CollectedRegionBundle>(
+      env.DB,
+      `COLLECTED_REGION_${nx}_${ny}`,
+    ),
+    getCollectedCache<CurrentVisibilityObservation>(
+      env.DB,
+      collectedCacheKey.visibility(nx, ny),
+    ),
+  ]);
   if (!cached || cached.status !== 'AVAILABLE') {
     throw new Error('COLLECTED_FORECAST_NOT_READY');
   }
-  return cached.value.forecast;
+  return enrichForecastWithVisibility(
+    cached.value.forecast,
+    visibility?.value,
+    new Date(),
+  );
 }
 
 async function defaultSender(

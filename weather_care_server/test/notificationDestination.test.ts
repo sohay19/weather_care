@@ -5,6 +5,7 @@ import {
   warningDestination,
 } from '../src/notification/notificationDestination';
 import { buildNotification } from '../src/notification/notificationBuilder';
+import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import { Recommendation, RecommendationType } from '../src/types';
 
 describe('notification destinations', () => {
@@ -83,6 +84,22 @@ describe('notification destinations', () => {
       ])[0].body,
     ).toBe('UMBRELLA description\nPARASOL description');
   });
+
+  it('sends qualitative visibility and humidity context without measurements', () => {
+    const forecast = sampleForecast();
+    forecast.current.visibilityMeters = 500;
+    forecast.current.humidity = 85;
+
+    const notification = buildNotification([], undefined, forecast)[0];
+
+    expect(notification).toMatchObject({
+      notification_key: 'MORNING_BRIEF',
+      title: '오늘 날씨 안내',
+    });
+    expect(notification.body).toContain('운전할 때는 감속하고');
+    expect(notification.body).toContain('빨래가 더디게 마를 수 있어요');
+    expect(notification.body).not.toMatch(/500|85|m\b|%/);
+  });
 });
 
 function recommendation(type: RecommendationType): Recommendation {
@@ -94,5 +111,20 @@ function recommendation(type: RecommendationType): Recommendation {
     description: `${type} description`,
     reasonCodes: [],
     notificationEligible: true,
+  };
+}
+
+function sampleForecast(): WeatherForecast {
+  return {
+    current: {
+      observedAt: '2026-09-21T08:00:00+09:00',
+      temperature: 22,
+      humidity: 60,
+    },
+    hourly: [],
+    daily: [],
+    baseDate: '20260921',
+    baseTime: '0800',
+    dataSource: 'test',
   };
 }

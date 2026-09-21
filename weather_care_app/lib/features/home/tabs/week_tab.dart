@@ -578,7 +578,7 @@ class _WeekDayCard extends StatelessWidget {
                           children: [
                             PreparationIcon(
                               type: recommendation.type,
-                              size: 12,
+                              size: 10,
                               color: recommendation.type.accentColor,
                             ),
                             const SizedBox(width: 3),

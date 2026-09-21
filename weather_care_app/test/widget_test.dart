@@ -818,10 +818,8 @@ void main() {
     await tester.pumpWidget(section(recommendations));
 
     final first = find.byKey(const ValueKey('bag-item-umbrella'));
-    final second = find.byKey(const ValueKey('bag-item-parasol'));
-    final third = find.byKey(
-      const ValueKey('bag-item-heavy_snow_caution'),
-    );
+    final second = find.byKey(const ValueKey('bag-item-raincoat'));
+    final third = find.byKey(const ValueKey('bag-item-rain_boots'));
     expect(first, findsOneWidget);
     expect(second, findsOneWidget);
     expect(third, findsOneWidget);
@@ -831,7 +829,7 @@ void main() {
     expect(tester.getTopLeft(third).dx, tester.getTopLeft(first).dx);
     expect(
         tester.getTopLeft(third).dy, greaterThan(tester.getTopLeft(first).dy));
-    expect(find.text('많은 눈 대비'), findsOneWidget);
+    expect(find.text('장화'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

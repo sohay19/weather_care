@@ -38,12 +38,12 @@ void main() {
     expect(snapshot.apparentTemperature, '17.5°');
     expect(snapshot.minimumTemperature, '12°');
     expect(snapshot.maximumTemperature, '20°');
-    expect(snapshot.shortMessage, '겉옷을 챙기세요');
+    expect(snapshot.shortMessage, '두꺼운 겉옷을 챙기세요');
     expect(snapshot.nextTime, '오전 9시');
     expect(snapshot.nextTemperature, '19°');
     expect(
       snapshot.preparations.map((item) => item.label),
-      ['겉옷', '우산', '마스크'],
+      ['두꺼운 겉옷', '우산', '마스크'],
     );
     expect(snapshot.preparations, hasLength(3));
 
@@ -98,12 +98,22 @@ void main() {
   test('짧은 브리핑은 준비물 이름이 아닌 행동 문장으로 표시한다', () {
     const expected = {
       RecommendationType.umbrella: '우산을 챙기세요',
+      RecommendationType.raincoat: '우비를 챙기세요',
+      RecommendationType.rainBoots: '장화를 챙기세요',
       RecommendationType.parasol: '양산을 챙기세요',
-      RecommendationType.heavySnowCaution: '많은 눈에 대비하세요',
-      RecommendationType.outerwear: '겉옷을 챙기세요',
-      RecommendationType.mask: '마스크를 챙기세요',
-      RecommendationType.water: '물을 챙기세요',
       RecommendationType.sunscreen: '선크림을 챙기세요',
+      RecommendationType.sunglasses: '선글라스를 챙기세요',
+      RecommendationType.water: '물을 챙기세요',
+      RecommendationType.portableFan: '휴대용 선풍기를 챙기세요',
+      RecommendationType.coolingItem: '쿨링제품을 챙기세요',
+      RecommendationType.outerwear: '두꺼운 겉옷을 챙기세요',
+      RecommendationType.scarf: '목도리를 챙기세요',
+      RecommendationType.handWarmer: '핫팩을 챙기세요',
+      RecommendationType.snowChains: '스노우체인을 챙기세요',
+      RecommendationType.powerBank: '보조배터리를 챙기세요',
+      RecommendationType.winterBoots: '방한부츠를 챙기세요',
+      RecommendationType.heavySnowCaution: '많은 눈에 대비하세요',
+      RecommendationType.mask: '마스크를 챙기세요',
     };
 
     for (final entry in expected.entries) {

@@ -268,10 +268,12 @@ class _BagItem extends StatelessWidget {
                               color: Colors.white,
                               size: 24,
                             )
-                          : PreparationIcon(
-                              type: type,
-                              color: type.accentColor,
-                              size: 24,
+                          : Center(
+                              child: PreparationIcon(
+                                type: type,
+                                color: type.accentColor,
+                                size: 26,
+                              ),
                             ),
                     ),
                   ),

@@ -217,6 +217,10 @@ export async function runRecommendationNotificationJob(
       const recommendations = runRecommendationEngine(
         insights,
         settingsFromRow(row),
+        {
+          expandedPreparations: true,
+          includeLegacyHeavySnowCaution: true,
+        },
       ).filter(
         (recommendation) =>
           recommendation.recommended && recommendation.notificationEligible,

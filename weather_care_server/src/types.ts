@@ -1,11 +1,21 @@
 export type RecommendationType =
   | 'UMBRELLA'
+  | 'RAINCOAT'
+  | 'RAIN_BOOTS'
   | 'PARASOL'
+  | 'SUNGLASSES'
   | 'HEAVY_SNOW_CAUTION'
   | 'OUTERWEAR'
+  | 'SCARF'
+  | 'HAND_WARMER'
   | 'MASK'
   | 'WATER'
-  | 'SUNSCREEN';
+  | 'PORTABLE_FAN'
+  | 'COOLING_ITEM'
+  | 'SUNSCREEN'
+  | 'SNOW_CHAINS'
+  | 'POWER_BANK'
+  | 'WINTER_BOOTS';
 
 export enum WeatherRuleFactType {
   RAIN_LIKELY = 'RAIN_LIKELY',

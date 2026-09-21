@@ -218,7 +218,7 @@ class _TimelineItemView extends StatelessWidget {
                                       children: [
                                         PreparationIcon(
                                           type: recommendation.type,
-                                          size: 14,
+                                          size: 12,
                                           color:
                                               recommendation.type.accentColor,
                                         ),

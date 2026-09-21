@@ -41,6 +41,7 @@ flutter:
   assets:
     - config/
     - assets/data/kma_regions.json
+    - assets/icons/
   fonts:
     - family: SUITE
       fonts:

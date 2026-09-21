@@ -139,6 +139,7 @@ class WeatherService {
         'nx': '$nx',
         'ny': '$ny',
         'installationId': installationId,
+        'recommendationCatalog': 'PREPARATION_15',
         if (coordinates != null) ...{
           'latitude': '${coordinates.latitude}',
           'longitude': '${coordinates.longitude}',
@@ -162,6 +163,7 @@ class WeatherService {
         'ny': '$ny',
         'installationId': installationId,
         'includeExtras': 'true',
+        'recommendationCatalog': 'PREPARATION_15',
         if (regionCode != null && regionCode.isNotEmpty)
           'regionCode': regionCode,
         if (regionName != null && regionName.trim().isNotEmpty)

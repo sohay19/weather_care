@@ -221,11 +221,21 @@ LifestyleMessageType detailLifestyleTypeForRecommendationType(
 ) =>
     switch (type) {
       RecommendationType.umbrella => LifestyleMessageType.rainGearUseful,
+      RecommendationType.raincoat => LifestyleMessageType.rainGearUseful,
+      RecommendationType.rainBoots => LifestyleMessageType.rainGearUseful,
       RecommendationType.parasol => LifestyleMessageType.strongSunExposure,
+      RecommendationType.sunscreen => LifestyleMessageType.sunscreenUseful,
+      RecommendationType.sunglasses => LifestyleMessageType.strongSunExposure,
+      RecommendationType.water => LifestyleMessageType.hydrationImportant,
+      RecommendationType.portableFan => LifestyleMessageType.hydrationImportant,
+      RecommendationType.coolingItem => LifestyleMessageType.hydrationImportant,
+      RecommendationType.outerwear => LifestyleMessageType.outerwearUseful,
+      RecommendationType.scarf => LifestyleMessageType.outerwearUseful,
+      RecommendationType.handWarmer => LifestyleMessageType.outerwearUseful,
+      RecommendationType.snowChains => LifestyleMessageType.snowTravelCaution,
+      RecommendationType.powerBank => LifestyleMessageType.snowTravelCaution,
+      RecommendationType.winterBoots => LifestyleMessageType.snowTravelCaution,
       RecommendationType.heavySnowCaution =>
         LifestyleMessageType.snowTravelCaution,
-      RecommendationType.outerwear => LifestyleMessageType.outerwearUseful,
       RecommendationType.mask => LifestyleMessageType.maskUseful,
-      RecommendationType.water => LifestyleMessageType.hydrationImportant,
-      RecommendationType.sunscreen => LifestyleMessageType.sunscreenUseful,
     };

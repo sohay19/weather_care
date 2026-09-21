@@ -48,7 +48,7 @@ void main() {
     expect(waits, List.filled(3, const Duration(seconds: 5)));
   });
 
-  test('GPS 좌표는 Today 서버 요청에만 전달한다', () async {
+  test('GPS 좌표와 준비물 카탈로그를 서버 요청에 전달한다', () async {
     final client = _RecordingApiClient();
     final service = WeatherService(client);
     final result = await service.fetchServerWeather(
@@ -61,6 +61,14 @@ void main() {
     expect(result.hasWeather, isTrue);
     expect(client.queries['/api/v1/weather/today'], containsPair('latitude', '37.2636'));
     expect(client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
+    expect(
+      client.queries['/api/v1/weather/today'],
+      containsPair('recommendationCatalog', 'PREPARATION_15'),
+    );
+    expect(
+      client.queries['/api/v1/weather/weekly'],
+      containsPair('recommendationCatalog', 'PREPARATION_15'),
+    );
   });
 }
 

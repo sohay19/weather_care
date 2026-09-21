@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import UIKit
 import WidgetKit
 
 private let widgetKind = "WeatherCareWidget"
@@ -66,14 +67,14 @@ struct WidgetSnapshot: Codable {
     apparentTemperature: "18°",
     minimumTemperature: "12°",
     maximumTemperature: "20°",
-    shortMessage: "겉옷을 챙기세요",
+    shortMessage: "두꺼운 겉옷을 챙기세요",
     brief: "오전에는 선선하고 오후에는 포근해요. 얇은 겉옷을 챙기면 좋아요.",
     nextTime: "오전 9시",
     nextCondition: "clear",
     nextTemperature: "19°",
     preparations: [
       WidgetPreparation(type: "UMBRELLA", label: "우산"),
-      WidgetPreparation(type: "OUTERWEAR", label: "겉옷"),
+      WidgetPreparation(type: "OUTERWEAR", label: "두꺼운 겉옷"),
       WidgetPreparation(type: "MASK", label: "마스크")
     ]
   )
@@ -320,21 +321,64 @@ private struct PreparationIconView: View {
   let type: String
 
   var body: some View {
-    Canvas { context, size in
-      let side = min(size.width, size.height)
-      let origin = CGPoint(
-        x: (size.width - side) / 2,
-        y: (size.height - side) / 2
-      )
-      let circleRect = CGRect(origin: origin, size: CGSize(width: side, height: side))
-      context.fill(Path(ellipseIn: circleRect), with: .color(preparationCircle))
-      PreparationIconPainter.draw(
-        type: type,
-        context: &context,
-        rect: circleRect.insetBy(dx: side * 0.18, dy: side * 0.18)
-      )
+    GeometryReader { geometry in
+      let side = min(geometry.size.width, geometry.size.height)
+      ZStack {
+        Circle().fill(preparationCircle)
+        if let image = preparationImage(type) {
+          Image(uiImage: image)
+            .resizable()
+            .interpolation(.high)
+            .scaledToFit()
+            .padding(side * 0.16)
+        } else {
+          Canvas { context, size in
+            let rect = CGRect(origin: .zero, size: size)
+            PreparationIconPainter.draw(
+              type: type,
+              context: &context,
+              rect: rect.insetBy(dx: side * 0.18, dy: side * 0.18)
+            )
+          }
+        }
+      }
+      .frame(width: side, height: side)
+      .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
     }
     .accessibilityLabel(preparationDescription(type))
+  }
+}
+
+private func preparationImage(_ type: String) -> UIImage? {
+  guard
+    let name = preparationAssetName(type),
+    let url = Bundle.main.url(
+      forResource: name,
+      withExtension: "png",
+      subdirectory: "Icons"
+    )
+  else { return nil }
+  return UIImage(contentsOfFile: url.path)
+}
+
+private func preparationAssetName(_ type: String) -> String? {
+  switch type {
+  case "UMBRELLA": return "prep_umbrella"
+  case "RAINCOAT": return "prep_raincoat"
+  case "RAIN_BOOTS": return "prep_rain_boots"
+  case "PARASOL": return "prep_parasol"
+  case "SUNSCREEN": return "prep_sunscreen"
+  case "SUNGLASSES": return "prep_sunglasses"
+  case "WATER": return "prep_water"
+  case "PORTABLE_FAN": return "prep_portable_fan"
+  case "COOLING_ITEM": return "prep_cooling_item"
+  case "OUTERWEAR": return "prep_outerwear"
+  case "SCARF": return "prep_scarf"
+  case "HAND_WARMER": return "prep_hand_warmer"
+  case "SNOW_CHAINS": return "prep_snow_chains"
+  case "POWER_BANK": return "prep_power_bank"
+  case "WINTER_BOOTS": return "prep_winter_boots"
+  default: return nil
   }
 }
 
@@ -390,11 +434,11 @@ private enum PreparationIconPainter {
 
     var handle = Path()
     handle.move(to: point(50, 31, in: rect))
-    handle.addLine(to: point(50, 82, in: rect))
+    handle.addLine(to: point(50, 77, in: rect))
     handle.addCurve(
-      to: point(70, 78, in: rect),
-      control1: point(50, 94, in: rect),
-      control2: point(70, 94, in: rect)
+      to: point(68, 77, in: rect),
+      control1: point(50, 88, in: rect),
+      control2: point(68, 88, in: rect)
     )
     context.stroke(handle, with: .color(ink), style: style)
 
@@ -567,12 +611,22 @@ private enum PreparationIconPainter {
 private func preparationDescription(_ type: String) -> String {
   switch type {
   case "UMBRELLA": return "우산"
+  case "RAINCOAT": return "우비"
+  case "RAIN_BOOTS": return "장화"
   case "PARASOL": return "양산"
-  case "HEAVY_SNOW_CAUTION": return "많은 눈 대비"
-  case "OUTERWEAR": return "겉옷"
-  case "MASK": return "마스크"
-  case "WATER": return "물"
   case "SUNSCREEN": return "선크림"
+  case "SUNGLASSES": return "선글라스"
+  case "WATER": return "물"
+  case "PORTABLE_FAN": return "휴대용 선풍기"
+  case "COOLING_ITEM": return "쿨링제품"
+  case "OUTERWEAR": return "두꺼운 겉옷"
+  case "SCARF": return "목도리"
+  case "HAND_WARMER": return "핫팩"
+  case "SNOW_CHAINS": return "스노우체인"
+  case "POWER_BANK": return "보조배터리"
+  case "WINTER_BOOTS": return "방한부츠"
+  case "HEAVY_SNOW_CAUTION": return "많은 눈 대비"
+  case "MASK": return "마스크"
   default: return "준비물"
   }
 }

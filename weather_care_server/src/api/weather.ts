@@ -22,7 +22,10 @@ import {
   runWeatherRuleEngineForHourly,
 } from '../rules/weatherRuleEngine';
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
-import { runRecommendationEngine } from '../recommendations/recommendationEngine';
+import {
+  PREPARATION_RECOMMENDATION_CATALOG,
+  runRecommendationEngine,
+} from '../recommendations/recommendationEngine';
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBriefResult } from '../presentation/weatherBrief';
@@ -157,6 +160,9 @@ router.get('/main', async (c) => {
 
 router.get('/today', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const expandedPreparations = supportsExpandedPreparations(
+    c.req.query('recommendationCatalog'),
+  );
   const coordinates = coordinatesFromQuery(
     c.req.query('latitude'),
     c.req.query('longitude'),
@@ -242,7 +248,9 @@ router.get('/today', async (c) => {
     const decisionHourly = forecast.hourly.slice(0, 24);
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
-    const recommendations = runRecommendationEngine(lifestyle, settings);
+    const recommendations = runRecommendationEngine(lifestyle, settings, {
+      expandedPreparations,
+    });
     const regionLabel = regionName(
       nx,
       ny,
@@ -311,6 +319,7 @@ router.get('/today', async (c) => {
         forecast.timelineHourly ?? forecast.hourly,
         settings,
         generatedAt.toISOString(),
+        expandedPreparations,
       ),
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
@@ -339,6 +348,9 @@ function sunTimesForRequest(
 
 router.get('/weekly', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const expandedPreparations = supportsExpandedPreparations(
+    c.req.query('recommendationCatalog'),
+  );
 
   try {
     const now = new Date();
@@ -433,6 +445,7 @@ router.get('/weekly', async (c) => {
               day,
               forecast?.hourly ?? [],
               settings,
+              expandedPreparations,
             ).filter((item) => item.recommended).slice(0, 3),
       })),
     });
@@ -607,6 +620,7 @@ export function buildTimeline(
   settings: Partial<NotificationSettings> =
     defaultNotificationSettings('anonymous'),
   referenceTime?: string,
+  expandedPreparations = false,
 ) {
   const firstTime = hourly[0]?.forecastAt ?? hourly[0]?.observedAt;
   const targetDate = referenceTime
@@ -653,7 +667,11 @@ export function buildTimeline(
         recommendations: [],
       };
     }
-    const recommendations = recommendationsForSnapshot(item, settings);
+    const recommendations = recommendationsForSnapshot(
+      item,
+      settings,
+      expandedPreparations,
+    );
     const topRecommendation = recommendations[0]?.type;
     const previousTemperature = slots
       .slice(0, index)
@@ -666,7 +684,15 @@ export function buildTimeline(
       previousTemperature,
     });
     const precipitationRelated =
-      ['UMBRELLA', 'HEAVY_SNOW_CAUTION'].includes(topRecommendation ?? '') ||
+      [
+        'UMBRELLA',
+        'RAINCOAT',
+        'RAIN_BOOTS',
+        'HEAVY_SNOW_CAUTION',
+        'SNOW_CHAINS',
+        'POWER_BANK',
+        'WINTER_BOOTS',
+      ].includes(topRecommendation ?? '') ||
       (!topRecommendation && timelinePrecipitationStateLabel(item) !== undefined);
     return {
       timeLabel,
@@ -716,12 +742,22 @@ function timelineStateLabel(
   const recommendation = recommendations[0]?.type;
   const labels: Partial<Record<Recommendation['type'], string>> = {
     UMBRELLA: '비가 예보됐어요',
+    RAINCOAT: '비가 예보됐어요',
+    RAIN_BOOTS: '비가 예보됐어요',
     PARASOL: '자외선지수가 높게 예보됐어요',
+    SUNGLASSES: '자외선지수가 높게 예보됐어요',
     HEAVY_SNOW_CAUTION: '많은 눈이 예보됐어요',
     OUTERWEAR: '기온이 낮게 예보됐어요',
+    SCARF: '기온이 낮게 예보됐어요',
+    HAND_WARMER: '기온이 낮게 예보됐어요',
     MASK: '대기질이 나쁨 단계예요',
     WATER: '예상 체감온도가 높게 계산됐어요',
+    PORTABLE_FAN: '예상 체감온도가 높게 계산됐어요',
+    COOLING_ITEM: '예상 체감온도가 높게 계산됐어요',
     SUNSCREEN: '자외선지수가 높게 예보됐어요',
+    SNOW_CHAINS: '눈이 예보됐어요',
+    POWER_BANK: '눈이 예보됐어요',
+    WINTER_BOOTS: '눈이 예보됐어요',
   };
   if (recommendation && labels[recommendation]) {
     return labels[recommendation];
@@ -861,10 +897,12 @@ function precipitationForecastLabel(snapshot: WeatherSnapshot): string {
 function recommendationsForSnapshot(
   snapshot: WeatherSnapshot,
   settings: Partial<NotificationSettings>,
+  expandedPreparations = false,
 ): Recommendation[] {
   return runRecommendationEngine(
     runLifestyleWeatherEngine(runWeatherRuleEngine(snapshot)),
     settings,
+    { expandedPreparations },
   );
 }
 
@@ -873,6 +911,7 @@ export function recommendationsForDay(
   hourly: WeatherSnapshot[],
   settings: Partial<NotificationSettings> =
     defaultNotificationSettings('anonymous'),
+  expandedPreparations = false,
 ): Recommendation[] {
   const dayHourly = hourly.flatMap((item) => {
     const pointDate = koreaDate(item.forecastAt ?? item.observedAt).replaceAll('-', '');
@@ -887,6 +926,7 @@ export function recommendationsForDay(
     return runRecommendationEngine(
       runLifestyleWeatherEngine(facts, dayHourly),
       settings,
+      { expandedPreparations },
     );
   }
 
@@ -901,7 +941,11 @@ export function recommendationsForDay(
     snowfallAmount: day.snowfallAmount,
     skyCondition: day.skyCondition,
   };
-  return recommendationsForSnapshot(snapshot, settings);
+  return recommendationsForSnapshot(snapshot, settings, expandedPreparations);
+}
+
+function supportsExpandedPreparations(catalog: string | undefined): boolean {
+  return catalog === PREPARATION_RECOMMENDATION_CATALOG;
 }
 
 async function settingsForRequest(

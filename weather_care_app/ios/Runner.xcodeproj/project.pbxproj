@@ -25,6 +25,7 @@
 		A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* SUITE-SemiBold.ttf */; };
 		A10000000000000000000007 /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SUITE-Bold.ttf */; };
 		A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* SUITE-ExtraBold.ttf */; };
+		A1000000000000000000000A /* Icons in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* Icons */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +105,7 @@
 		A20000000000000000000008 /* SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
 		A20000000000000000000009 /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
 		A2000000000000000000000A /* SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000C /* Icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Icons; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -228,6 +230,7 @@
 				A20000000000000000000008 /* SUITE-SemiBold.ttf */,
 				A20000000000000000000009 /* SUITE-Bold.ttf */,
 				A2000000000000000000000A /* SUITE-ExtraBold.ttf */,
+				A2000000000000000000000C /* Icons */,
 			);
 			path = WeatherCareWidget;
 			sourceTree = "<group>";
@@ -378,6 +381,7 @@
 				A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */,
 				A10000000000000000000007 /* SUITE-Bold.ttf in Resources */,
 				A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */,
+				A1000000000000000000000A /* Icons in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

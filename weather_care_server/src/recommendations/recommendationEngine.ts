@@ -10,53 +10,70 @@ import { CATALOG_VERSION } from './recommendationTemplates';
 import { sortRecommendations } from './recommendationPriority';
 import { DECISION_VERSION } from '../rules/weatherRuleEngine';
 
-const INSIGHT_TO_RECOMMENDATION: Record<string, RecommendationType> = {
-  RAIN_GEAR_USEFUL: 'UMBRELLA',
-  STRONG_SUN_EXPOSURE: 'PARASOL',
-  SNOW_TRAVEL_CAUTION: 'HEAVY_SNOW_CAUTION',
-  OUTERWEAR_USEFUL: 'OUTERWEAR',
-  MASK_USEFUL: 'MASK',
-  HYDRATION_IMPORTANT: 'WATER',
-  SUNSCREEN_USEFUL: 'SUNSCREEN',
-  VERY_HOT_AND_HUMID: 'WATER',
-  COOLER_THAN_TEMPERATURE: 'OUTERWEAR',
+export const PREPARATION_RECOMMENDATION_CATALOG = 'PREPARATION_15';
+
+export interface RecommendationEngineOptions {
+  expandedPreparations?: boolean;
+  includeLegacyHeavySnowCaution?: boolean;
+}
+
+const LEGACY_RECOMMENDATIONS: Partial<
+  Record<LifestyleInsight['type'], RecommendationType[]>
+> = {
+  RAIN_GEAR_USEFUL: ['UMBRELLA'],
+  STRONG_SUN_EXPOSURE: ['PARASOL'],
+  OUTERWEAR_USEFUL: ['OUTERWEAR'],
+  MASK_USEFUL: ['MASK'],
+  HYDRATION_IMPORTANT: ['WATER'],
+  SUNSCREEN_USEFUL: ['SUNSCREEN'],
+  VERY_HOT_AND_HUMID: ['WATER'],
+  COOLER_THAN_TEMPERATURE: ['OUTERWEAR'],
+};
+
+const EXPANDED_RECOMMENDATIONS: Partial<
+  Record<LifestyleInsight['type'], RecommendationType[]>
+> = {
+  RAIN_GEAR_USEFUL: ['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS'],
+  STRONG_SUN_EXPOSURE: ['PARASOL', 'SUNGLASSES'],
+  OUTERWEAR_USEFUL: ['OUTERWEAR', 'SCARF', 'HAND_WARMER'],
+  MASK_USEFUL: ['MASK'],
+  HYDRATION_IMPORTANT: ['WATER', 'PORTABLE_FAN'],
+  SUNSCREEN_USEFUL: ['SUNSCREEN'],
+  VERY_HOT_AND_HUMID: ['WATER', 'PORTABLE_FAN', 'COOLING_ITEM'],
+  COOLER_THAN_TEMPERATURE: ['OUTERWEAR', 'SCARF', 'HAND_WARMER'],
+  SNOW_TRAVEL_CAUTION: ['SNOW_CHAINS', 'POWER_BANK', 'WINTER_BOOTS'],
 };
 
 export function runRecommendationEngine(
   insights: LifestyleInsight[],
   settings?: Partial<NotificationSettings>,
+  options: RecommendationEngineOptions = {},
 ): Recommendation[] {
-  const enabled = {
+  const enabled: Record<RecommendationType, boolean> = {
     UMBRELLA: settings?.umbrellaEnabled ?? true,
+    RAINCOAT: settings?.umbrellaEnabled ?? true,
+    RAIN_BOOTS: settings?.umbrellaEnabled ?? true,
     PARASOL: settings?.parasolEnabled ?? true,
+    SUNGLASSES: settings?.parasolEnabled ?? true,
     HEAVY_SNOW_CAUTION: settings?.heavySnowEnabled ?? true,
     OUTERWEAR: settings?.outerwearEnabled ?? true,
+    SCARF: settings?.outerwearEnabled ?? true,
+    HAND_WARMER: settings?.outerwearEnabled ?? true,
     MASK: settings?.maskEnabled ?? true,
     WATER: settings?.waterEnabled ?? true,
+    PORTABLE_FAN: settings?.waterEnabled ?? true,
+    COOLING_ITEM: settings?.waterEnabled ?? true,
     SUNSCREEN: settings?.sunscreenEnabled ?? true,
+    SNOW_CHAINS: settings?.heavySnowEnabled ?? true,
+    POWER_BANK: settings?.heavySnowEnabled ?? true,
+    WINTER_BOOTS: settings?.heavySnowEnabled ?? true,
   };
-
-  const allTypes = new Set<RecommendationType>([
-    'UMBRELLA',
-    'PARASOL',
-    'HEAVY_SNOW_CAUTION',
-    'OUTERWEAR',
-    'MASK',
-    'WATER',
-    'SUNSCREEN',
-  ]);
 
   const recs: Recommendation[] = [];
   const allInsightTypes = insights.map((item) => item.type);
   for (const insight of insights) {
-    const t = INSIGHT_TO_RECOMMENDATION[insight.type];
-    if (!t || !allTypes.has(t)) continue;
-    if (
-      t === 'HEAVY_SNOW_CAUTION' &&
-      !insight.sourceFacts.includes(WeatherRuleFactType.HEAVY_SNOW)
-    ) {
-      continue;
-    }
+    const types = recommendationTypesFor(insight, options);
+    if (types.length === 0) continue;
     const reasonCodes =
       insight.sourceFacts.length > 0
         ? [...new Set(insight.sourceFacts.map(String))]
@@ -64,28 +81,54 @@ export function runRecommendationEngine(
     const validFrom = stringContext(insight, 'validFrom');
     const validUntil = stringContext(insight, 'validUntil');
     const actionDeadline = stringContext(insight, 'actionDeadline');
-    recs.push({
-      type: t,
-      recommended: !!enabled[t],
-      priority: Math.min(100, Math.max(10, insight.score)),
-      title: titleFor(t),
-      description: descriptionFor(t, allInsightTypes),
-      reasonCodes,
-      validFrom,
-      validUntil,
-      notificationEligible: t !== 'OUTERWEAR' || insight.score >= 70,
-      reasons: [reasonLabel(insight.type)],
-      sourceFields: sourceFieldsFor(insight),
-      actionDeadline,
-      providerRefs: providerRefsFor(insight),
-      decisionVersion: DECISION_VERSION,
-      catalogVersion: CATALOG_VERSION,
-    });
+    for (const type of types) {
+      recs.push({
+        type,
+        recommended: enabled[type],
+        priority: Math.min(100, Math.max(10, insight.score)),
+        title: titleFor(type),
+        description: descriptionFor(type, allInsightTypes),
+        reasonCodes,
+        validFrom,
+        validUntil,
+        notificationEligible:
+          !['OUTERWEAR', 'SCARF', 'HAND_WARMER'].includes(type) ||
+          insight.score >= 70,
+        reasons: [reasonLabel(insight.type)],
+        sourceFields: sourceFieldsFor(insight),
+        actionDeadline,
+        providerRefs: providerRefsFor(insight),
+        decisionVersion: DECISION_VERSION,
+        catalogVersion: CATALOG_VERSION,
+      });
+    }
   }
 
   // 기본 가드: 우산/양산/선크림은 함께 나올 수 있어도 duplicate는 제거
   const dedup = deduplicate(recs);
   return sortRecommendations(dedup);
+}
+
+function recommendationTypesFor(
+  insight: LifestyleInsight,
+  options: RecommendationEngineOptions,
+): RecommendationType[] {
+  const heavySnow = insight.sourceFacts.includes(WeatherRuleFactType.HEAVY_SNOW);
+  if (insight.type === 'SNOW_TRAVEL_CAUTION') {
+    if (!options.expandedPreparations) {
+      return heavySnow ? ['HEAVY_SNOW_CAUTION'] : [];
+    }
+    return [
+      ...(EXPANDED_RECOMMENDATIONS.SNOW_TRAVEL_CAUTION ?? []),
+      ...(heavySnow && options.includeLegacyHeavySnowCaution
+        ? ['HEAVY_SNOW_CAUTION' as const]
+        : []),
+    ];
+  }
+  const mapping = options.expandedPreparations
+    ? EXPANDED_RECOMMENDATIONS
+    : LEGACY_RECOMMENDATIONS;
+  return mapping[insight.type] ?? [];
 }
 
 function stringContext(

@@ -32,7 +32,7 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(umbrella).toEqual(
       expect.objectContaining({
         decisionVersion: 'weather-rules-1.2.0',
-        catalogVersion: 'ko-KR-2026.09.1',
+        catalogVersion: 'ko-KR-2026.09.2',
         reasonCodes: expect.arrayContaining(['RAIN_LIKELY']),
         sourceFields: expect.arrayContaining(['precipitationType']),
       }),
@@ -178,6 +178,75 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(heavySnow.map((item) => item.type)).toContain(
       'HEAVY_SNOW_CAUTION',
     );
+  });
+
+  it('returns all five three-item preparation sets only for the expanded catalog', () => {
+    const insights: LifestyleInsight[] = [
+      {
+        type: LifestyleInsightType.RAIN_GEAR_USEFUL,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.RAIN_LIKELY],
+      },
+      {
+        type: LifestyleInsightType.STRONG_SUN_EXPOSURE,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.UV_HIGH],
+      },
+      {
+        type: LifestyleInsightType.SUNSCREEN_USEFUL,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.UV_HIGH],
+      },
+      {
+        type: LifestyleInsightType.HYDRATION_IMPORTANT,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.APPARENT_TEMPERATURE_HIGH],
+      },
+      {
+        type: LifestyleInsightType.VERY_HOT_AND_HUMID,
+        score: 80,
+        sourceFacts: [
+          WeatherRuleFactType.APPARENT_TEMPERATURE_HIGH,
+          WeatherRuleFactType.HUMIDITY_HIGH,
+        ],
+      },
+      {
+        type: LifestyleInsightType.OUTERWEAR_USEFUL,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.TEMPERATURE_LOW],
+      },
+      {
+        type: LifestyleInsightType.SNOW_TRAVEL_CAUTION,
+        score: 80,
+        sourceFacts: [WeatherRuleFactType.SNOW_LIKELY],
+      },
+    ];
+    const expectedExpanded = new Set([
+      'UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS',
+      'PARASOL', 'SUNSCREEN', 'SUNGLASSES',
+      'WATER', 'PORTABLE_FAN', 'COOLING_ITEM',
+      'OUTERWEAR', 'SCARF', 'HAND_WARMER',
+      'SNOW_CHAINS', 'POWER_BANK', 'WINTER_BOOTS',
+    ]);
+
+    expect(new Set(runRecommendationEngine(insights).map((item) => item.type)))
+      .toEqual(new Set(['UMBRELLA', 'PARASOL', 'SUNSCREEN', 'WATER', 'OUTERWEAR']));
+
+    const expanded = runRecommendationEngine(insights, undefined, {
+      expandedPreparations: true,
+    });
+    expect(new Set(expanded.map((item) => item.type))).toEqual(expectedExpanded);
+
+    const disabled = runRecommendationEngine(insights, {
+      umbrellaEnabled: false,
+      parasolEnabled: false,
+      sunscreenEnabled: false,
+      waterEnabled: false,
+      outerwearEnabled: false,
+      heavySnowEnabled: false,
+    }, { expandedPreparations: true });
+    expect(disabled).toHaveLength(15);
+    expect(disabled.every((item) => !item.recommended)).toBe(true);
   });
 
   it('creates a mask recommendation from a bad air-quality grade alone', () => {

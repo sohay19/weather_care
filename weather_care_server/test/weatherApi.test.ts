@@ -204,6 +204,12 @@ describe('weekly calendar date contract', () => {
       precipitationProbability: 90, precipitationAmount: 10, precipitationType: 'RAIN' })];
     const forecastDay = { ...day(35), weatherDataComplete: false, minTemperatureSource: 'HOURLY' as const, maxTemperatureSource: 'DAILY' as const };
     const expected = recommendationsForDay(forecastDay, hourly, settings).filter((r) => r.recommended).slice(0, 3);
+    const expandedExpected = recommendationsForDay(
+      forecastDay,
+      hourly,
+      settings,
+      true,
+    ).filter((r) => r.recommended).slice(0, 3);
     expect(expected).toHaveLength(3);
     expect(recommendationsForDay(forecastDay, hourly, settings).slice(0, 3).some((r) => !r.recommended)).toBe(true);
     const provider = vi.spyOn(KmaWeatherProvider.prototype, 'getForecastByRegion').mockResolvedValue({
@@ -226,9 +232,87 @@ describe('weekly calendar date contract', () => {
         weatherDataComplete: false, minTemperatureSource: 'HOURLY', maxTemperatureSource: 'DAILY',
         recommendations: expected.map(({ type, recommended }) => ({ type, recommended })),
       }] });
+      const expandedResponse = await router.request(
+        '/weekly?nx=60&ny=121&installationId=test&recommendationCatalog=PREPARATION_15',
+        { headers: testAuthHeaders },
+        { DB: env.DB, KMA_SERVICE_KEY: 'test-key' },
+      );
+      const expandedData = await expandedResponse.json<{
+        days: Array<{ recommendations: Array<{ type: string; recommended: boolean }> }>;
+      }>();
+      expect(expandedResponse.status).toBe(200);
+      expect(expandedData.days[0].recommendations).toMatchObject(
+        expandedExpected.map(({ type, recommended }) => ({ type, recommended })),
+      );
     } finally {
       provider.mockRestore();
       savedSettings.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('returns the three rain preparations only when the expanded catalog is requested', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-20T01:00:00Z'));
+    const hourly = [14, 15].map((hour) => snapshot(hour, {
+      precipitationProbability: 90,
+      precipitationAmount: 10,
+      precipitationType: 'RAIN',
+    }));
+    const forecastDay = {
+      ...day(24),
+      skyCondition: '비',
+      precipitationProbability: 90,
+      precipitationAmount: 10,
+    };
+    try {
+      await seedCollectedWeekly(61, 122, {
+        forecast: {
+          current: hourly[0],
+          hourly,
+          daily: [forecastDay],
+          baseDate: '20260820',
+          baseTime: '1100',
+          dataSource: '기상청',
+        },
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [],
+      });
+      const legacy = await router.request(
+        '/weekly?nx=61&ny=122',
+        {},
+        { DB: env.DB },
+      );
+      const expanded = await router.request(
+        '/weekly?nx=61&ny=122&recommendationCatalog=PREPARATION_15',
+        {},
+        { DB: env.DB },
+      );
+      const legacyData = await legacy.json<{
+        days: Array<{
+          forecastDate: string;
+          recommendations: Array<{ type: string }>;
+        }>;
+      }>();
+      const expandedData = await expanded.json<{
+        days: Array<{
+          forecastDate: string;
+          recommendations: Array<{ type: string }>;
+        }>;
+      }>();
+      const legacyDay = legacyData.days.find(
+        (item) => item.forecastDate === '2026-08-20',
+      );
+      const expandedDay = expandedData.days.find(
+        (item) => item.forecastDate === '2026-08-20',
+      );
+
+      expect(legacyDay?.recommendations.map((item) => item.type))
+        .toEqual(['UMBRELLA']);
+      expect(expandedDay?.recommendations.map((item) => item.type))
+        .toEqual(['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS']);
+    } finally {
       vi.useRealTimers();
     }
   });

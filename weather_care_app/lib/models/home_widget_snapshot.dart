@@ -207,12 +207,22 @@ String _shortMessage(String brief) {
 String _preparationMessage(RecommendationType type) {
   return switch (type) {
     RecommendationType.umbrella => '우산을 챙기세요',
+    RecommendationType.raincoat => '우비를 챙기세요',
+    RecommendationType.rainBoots => '장화를 챙기세요',
     RecommendationType.parasol => '양산을 챙기세요',
-    RecommendationType.heavySnowCaution => '많은 눈에 대비하세요',
-    RecommendationType.outerwear => '겉옷을 챙기세요',
-    RecommendationType.mask => '마스크를 챙기세요',
-    RecommendationType.water => '물을 챙기세요',
     RecommendationType.sunscreen => '선크림을 챙기세요',
+    RecommendationType.sunglasses => '선글라스를 챙기세요',
+    RecommendationType.water => '물을 챙기세요',
+    RecommendationType.portableFan => '휴대용 선풍기를 챙기세요',
+    RecommendationType.coolingItem => '쿨링제품을 챙기세요',
+    RecommendationType.outerwear => '두꺼운 겉옷을 챙기세요',
+    RecommendationType.scarf => '목도리를 챙기세요',
+    RecommendationType.handWarmer => '핫팩을 챙기세요',
+    RecommendationType.snowChains => '스노우체인을 챙기세요',
+    RecommendationType.powerBank => '보조배터리를 챙기세요',
+    RecommendationType.winterBoots => '방한부츠를 챙기세요',
+    RecommendationType.heavySnowCaution => '많은 눈에 대비하세요',
+    RecommendationType.mask => '마스크를 챙기세요',
   };
 }
 

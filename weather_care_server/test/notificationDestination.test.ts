@@ -19,11 +19,21 @@ describe('notification destinations', () => {
   it('maps recommendation types to weather detail topics', () => {
     const cases: Array<[RecommendationType, string]> = [
       ['UMBRELLA', 'PRECIPITATION'],
+      ['RAINCOAT', 'PRECIPITATION'],
+      ['RAIN_BOOTS', 'PRECIPITATION'],
       ['PARASOL', 'UV'],
+      ['SUNGLASSES', 'UV'],
       ['HEAVY_SNOW_CAUTION', 'SNOW'],
+      ['SNOW_CHAINS', 'SNOW'],
+      ['POWER_BANK', 'SNOW'],
+      ['WINTER_BOOTS', 'SNOW'],
       ['OUTERWEAR', 'TEMPERATURE'],
+      ['SCARF', 'TEMPERATURE'],
+      ['HAND_WARMER', 'TEMPERATURE'],
       ['MASK', 'AIR_QUALITY'],
       ['WATER', 'HEAT'],
+      ['PORTABLE_FAN', 'HEAT'],
+      ['COOLING_ITEM', 'HEAT'],
       ['SUNSCREEN', 'UV'],
     ];
 

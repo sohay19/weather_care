@@ -23,18 +23,66 @@ class PreparationIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final assetPath = type.assetPath;
+    final icon = assetPath == null
+        ? CustomPaint(
+            size: Size.square(size),
+            painter: _PreparationIconPainter(
+              type: type,
+              color: color,
+              circularBackground: circularBackground,
+              backgroundColor: backgroundColor,
+            ),
+          )
+        : _AssetPreparationIcon(
+            assetPath: assetPath,
+            size: size,
+            circularBackground: circularBackground,
+            backgroundColor: backgroundColor,
+          );
     return Semantics(
       image: true,
       label: type.label,
-      child: CustomPaint(
-        size: Size.square(size),
-        painter: _PreparationIconPainter(
-          type: type,
-          color: color,
-          circularBackground: circularBackground,
-          backgroundColor: backgroundColor,
-        ),
-      ),
+      child: icon,
+    );
+  }
+}
+
+class _AssetPreparationIcon extends StatelessWidget {
+  final String assetPath;
+  final double size;
+  final bool circularBackground;
+  final Color backgroundColor;
+
+  const _AssetPreparationIcon({
+    required this.assetPath,
+    required this.size,
+    required this.circularBackground,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final image = Image.asset(
+      assetPath,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+      excludeFromSemantics: true,
+    );
+    return SizedBox.square(
+      dimension: size,
+      child: circularBackground
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                shape: BoxShape.circle,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(size * 0.17),
+                child: image,
+              ),
+            )
+          : image,
     );
   }
 }
@@ -94,6 +142,8 @@ class _PreparationIconPainter extends CustomPainter {
         _drawBottle(canvas, stroke, sunscreen: false);
       case RecommendationType.sunscreen:
         _drawBottle(canvas, stroke, sunscreen: true);
+      default:
+        _drawUmbrella(canvas, stroke, parasol: false);
     }
     canvas.restore();
   }
@@ -106,14 +156,11 @@ class _PreparationIconPainter extends CustomPainter {
       false,
       paint,
     );
-    canvas.drawLine(const Offset(50, 47), const Offset(50, 82), paint);
-    canvas.drawArc(
-      const Rect.fromLTWH(50, 70, 23, 22),
-      math.pi / 2,
-      math.pi,
-      false,
-      paint,
-    );
+    final handle = Path()
+      ..moveTo(50, 47)
+      ..lineTo(50, 77)
+      ..cubicTo(50, 88, 68, 88, 68, 77);
+    canvas.drawPath(handle, paint);
     if (parasol) {
       canvas.drawCircle(const Offset(77, 19), 7, paint);
       for (var index = 0; index < 4; index++) {

@@ -39,17 +39,27 @@ export function recommendationDestination(
 ): NotificationDestination {
   switch (type) {
     case 'UMBRELLA':
+    case 'RAINCOAT':
+    case 'RAIN_BOOTS':
       return weatherDetailsDestination('PRECIPITATION');
     case 'PARASOL':
     case 'SUNSCREEN':
+    case 'SUNGLASSES':
       return weatherDetailsDestination('UV');
     case 'HEAVY_SNOW_CAUTION':
+    case 'SNOW_CHAINS':
+    case 'POWER_BANK':
+    case 'WINTER_BOOTS':
       return weatherDetailsDestination('SNOW');
     case 'OUTERWEAR':
+    case 'SCARF':
+    case 'HAND_WARMER':
       return weatherDetailsDestination('TEMPERATURE');
     case 'MASK':
       return weatherDetailsDestination('AIR_QUALITY');
     case 'WATER':
+    case 'PORTABLE_FAN':
+    case 'COOLING_ITEM':
       return weatherDetailsDestination('HEAT');
   }
 }

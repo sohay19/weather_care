@@ -197,36 +197,30 @@ void main() {
   });
 
   test('준비물 종류는 관련 상세 주제로 연결된다', () {
-    expect(
-      detailLifestyleTypeForRecommendationType(RecommendationType.umbrella),
-      LifestyleMessageType.rainGearUseful,
-    );
-    expect(
-      detailLifestyleTypeForRecommendationType(RecommendationType.parasol),
-      LifestyleMessageType.strongSunExposure,
-    );
-    expect(
-      detailLifestyleTypeForRecommendationType(
-        RecommendationType.heavySnowCaution,
-      ),
-      LifestyleMessageType.snowTravelCaution,
-    );
-    expect(
-      detailLifestyleTypeForRecommendationType(RecommendationType.outerwear),
-      LifestyleMessageType.outerwearUseful,
-    );
-    expect(
-      detailLifestyleTypeForRecommendationType(RecommendationType.mask),
-      LifestyleMessageType.maskUseful,
-    );
-    expect(
-      detailLifestyleTypeForRecommendationType(RecommendationType.water),
-      LifestyleMessageType.hydrationImportant,
-    );
-    expect(
-      detailLifestyleTypeForRecommendationType(RecommendationType.sunscreen),
-      LifestyleMessageType.sunscreenUseful,
-    );
+    const expected = {
+      RecommendationType.umbrella: LifestyleMessageType.rainGearUseful,
+      RecommendationType.raincoat: LifestyleMessageType.rainGearUseful,
+      RecommendationType.rainBoots: LifestyleMessageType.rainGearUseful,
+      RecommendationType.parasol: LifestyleMessageType.strongSunExposure,
+      RecommendationType.sunscreen: LifestyleMessageType.sunscreenUseful,
+      RecommendationType.sunglasses: LifestyleMessageType.strongSunExposure,
+      RecommendationType.water: LifestyleMessageType.hydrationImportant,
+      RecommendationType.portableFan: LifestyleMessageType.hydrationImportant,
+      RecommendationType.coolingItem: LifestyleMessageType.hydrationImportant,
+      RecommendationType.outerwear: LifestyleMessageType.outerwearUseful,
+      RecommendationType.scarf: LifestyleMessageType.outerwearUseful,
+      RecommendationType.handWarmer: LifestyleMessageType.outerwearUseful,
+      RecommendationType.snowChains: LifestyleMessageType.snowTravelCaution,
+      RecommendationType.powerBank: LifestyleMessageType.snowTravelCaution,
+      RecommendationType.winterBoots: LifestyleMessageType.snowTravelCaution,
+      RecommendationType.heavySnowCaution:
+          LifestyleMessageType.snowTravelCaution,
+      RecommendationType.mask: LifestyleMessageType.maskUseful,
+    };
+
+    for (final entry in expected.entries) {
+      expect(detailLifestyleTypeForRecommendationType(entry.key), entry.value);
+    }
   });
 }
 

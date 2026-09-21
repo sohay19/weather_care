@@ -101,7 +101,16 @@ function qualitativeWeatherContext(
 }
 
 function timedDescription(item: Recommendation, now?: Date): string {
-  if (!['UMBRELLA', 'HEAVY_SNOW_CAUTION'].includes(item.type) || !item.validFrom || !item.validUntil) return item.description;
+  const timedTypes: Recommendation['type'][] = [
+    'UMBRELLA',
+    'RAINCOAT',
+    'RAIN_BOOTS',
+    'HEAVY_SNOW_CAUTION',
+    'SNOW_CHAINS',
+    'POWER_BANK',
+    'WINTER_BOOTS',
+  ];
+  if (!timedTypes.includes(item.type) || !item.validFrom || !item.validUntil) return item.description;
   const start = Date.parse(item.validFrom);
   const end = Date.parse(item.validUntil);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return item.description;

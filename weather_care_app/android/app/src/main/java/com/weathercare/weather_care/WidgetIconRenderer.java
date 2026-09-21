@@ -2,11 +2,15 @@ package com.codesoha.weathercare;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 final class WidgetIconRenderer {
     private static final int NAVY = Color.rgb(37, 55, 78);
@@ -111,6 +115,28 @@ final class WidgetIconRenderer {
         background.setColor(PREPARATION_CIRCLE);
         canvas.drawCircle(s * .5f, s * .5f, s * .48f, background);
 
+        String assetName = preparationAssetName(type);
+        if (assetName != null) {
+            try (InputStream input = context.getAssets().open(
+                    "flutter_assets/assets/icons/" + assetName)) {
+                Bitmap source = BitmapFactory.decodeStream(input);
+                if (source != null) {
+                    Paint imagePaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+                    RectF destination = new RectF(
+                            s * .16f,
+                            s * .16f,
+                            s * .84f,
+                            s * .84f
+                    );
+                    canvas.drawBitmap(source, null, destination, imagePaint);
+                    source.recycle();
+                    return bitmap;
+                }
+            } catch (IOException ignored) {
+                // 번들 이미지가 없으면 기존 벡터 아이콘으로 안전하게 대체합니다.
+            }
+        }
+
         canvas.save();
         canvas.translate(s * .17f, s * .17f);
         canvas.scale(.66f, .66f);
@@ -128,6 +154,27 @@ final class WidgetIconRenderer {
         }
         canvas.restore();
         return bitmap;
+    }
+
+    private static String preparationAssetName(String type) {
+        return switch (type) {
+            case "UMBRELLA" -> "prep_umbrella.png";
+            case "RAINCOAT" -> "prep_raincoat.png";
+            case "RAIN_BOOTS" -> "prep_rain_boots.png";
+            case "PARASOL" -> "prep_parasol.png";
+            case "SUNSCREEN" -> "prep_sunscreen.png";
+            case "SUNGLASSES" -> "prep_sunglasses.png";
+            case "WATER" -> "prep_water.png";
+            case "PORTABLE_FAN" -> "prep_portable_fan.png";
+            case "COOLING_ITEM" -> "prep_cooling_item.png";
+            case "OUTERWEAR" -> "prep_outerwear.png";
+            case "SCARF" -> "prep_scarf.png";
+            case "HAND_WARMER" -> "prep_hand_warmer.png";
+            case "SNOW_CHAINS" -> "prep_snow_chains.png";
+            case "POWER_BANK" -> "prep_power_bank.png";
+            case "WINTER_BOOTS" -> "prep_winter_boots.png";
+            default -> null;
+        };
     }
 
     static String weatherDescription(String condition) {
@@ -226,8 +273,11 @@ final class WidgetIconRenderer {
     private static void drawUmbrella(Canvas canvas, Paint paint, float s, boolean parasol) {
         RectF canopy = new RectF(s * .13f, s * .2f, s * .87f, s * .74f);
         canvas.drawArc(canopy, 190, 160, false, paint);
-        canvas.drawLine(s * .5f, s * .47f, s * .5f, s * .82f, paint);
-        canvas.drawArc(new RectF(s * .5f, s * .7f, s * .73f, s * .92f), 90, 180, false, paint);
+        Path handle = new Path();
+        handle.moveTo(s * .5f, s * .47f);
+        handle.lineTo(s * .5f, s * .77f);
+        handle.cubicTo(s * .5f, s * .88f, s * .68f, s * .88f, s * .68f, s * .77f);
+        canvas.drawPath(handle, paint);
         if (parasol) {
             canvas.drawCircle(s * .77f, s * .19f, s * .07f, paint);
             for (int index = 0; index < 4; index++) {

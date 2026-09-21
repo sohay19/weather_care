@@ -15,8 +15,8 @@ TypeScript + Hono 서버입니다. 현재 운영은 Cloudflare Workers + D1이�
 ## API
 
 - `GET /api/v1/weather/main?nx=60&ny=121`
-- `GET /api/v1/weather/today?nx=60&ny=121`
-- `GET /api/v1/weather/weekly?nx=60&ny=121`
+- `GET /api/v1/weather/today?nx=60&ny=121&recommendationCatalog=PREPARATION_15`
+- `GET /api/v1/weather/weekly?nx=60&ny=121&recommendationCatalog=PREPARATION_15`
 - `GET /api/v1/weather/comparison/yesterday?nx=60&ny=121`
 - `GET /api/v1/weather/comparison/last-year?nx=60&ny=121`
 - `PUT /api/v1/installations/{installationId}`
@@ -169,3 +169,10 @@ Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합�
 `/weather/today`와 `/weather/weekly`에 `installationId`를 전달하면 설치별 알림
 설정을 Recommendation의 `recommended` 값에 적용합니다. 설정 API는 camelCase로
 응답하며, 알림 시간은 24시간제 `HH:mm`만 허용합니다.
+
+신규 앱은 `recommendationCatalog=PREPARATION_15`를 전달해 비(우산·우비·장화),
+햇빛·자외선(양산·선크림·선글라스), 더위(물·휴대용 선풍기·쿨링제품),
+추위(두꺼운 겉옷·목도리·핫팩), 눈·결빙(스노우체인·보조배터리·방한부츠)의
+확장 준비물 추천을 받습니다. 이 값이 없으면 구버전 앱 호환을 위해 기존 추천 타입만
+반환합니다. 새 준비물은 DB 컬럼을 늘리지 않고 같은 날씨군의 기존 설정을 함께
+따릅니다.

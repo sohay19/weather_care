@@ -7227,3 +7227,12 @@
 - 값과 아이콘 크기, 2열×3행 배치, 18px 행 간격은 유지했다.
 - `docs/visualizations/메인_날씨지표_2열3행.png`를 현재 코드 기준으로 다시 렌더링했다.
 - 검증: `flutter test test/widget_test.dart` 25개 통과, 변경 파일 `flutter analyze` 이슈 없음, `git diff --check` 오류 없음.
+
+## 2026-09-21 생활 지표 운영 자료 누락 진단·커밋
+
+- 공개 운영 API `https://weather-api.codesoha.com`의 수원(`60/121`), 서울(`60/127`), 부산(`98/76`) Today 응답을 직접 확인했다.
+- 세 지역 모두 `current.uvIndex`가 없고 `environmentalSources.uv`는 `UNAVAILABLE / PROVIDER_UNAVAILABLE`이었다. 활성 설치 지역에만 환경 보조자료를 수집하는 구조이므로 지역 등록 누락과 생활기상지수 V5 제공자 실패를 운영 수집 로그로 구분해야 한다.
+- 세 지역 모두 `current.visibilityMeters`, `sunriseAt`, `sunsetAt` 필드가 없었다. 현재 로컬 코드는 유효한 격자 좌표만으로 일출·일몰을 계산하므로, 운영 미니 PC에 Main 생활 지표 서버 변경이 반영되지 않은 상태로 판단했다.
+- 가시거리는 최신 코드 배포 후에도 기상청 APIHub ASOS 시간관측 권한이 필요하다. 과거 운영 점검에서 동일 API가 403 `AUTHORIZATION_FAILED`를 반환한 기록이 있어 활용 승인·한도도 재확인이 필요하다.
+- 미니 PC SSH는 현재 외부 환경에서 공개키 거부 및 내부 IP 연결 시간초과로 접근하지 못해, 이번에는 운영 스케줄러의 제공자 오류 로그까지 확인하지 못했다. 코드·배포·운영 데이터는 변경하지 않았다.
+- 완료 작업을 `c7fec80 feat(설정): 광고 제거 구매 UI 추가`, `3f5473d feat(메인): 생활 지표 2열 배치 적용`으로 분리 커밋했다.

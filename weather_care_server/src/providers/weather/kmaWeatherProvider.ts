@@ -473,6 +473,8 @@ function buildDailyForecast(
       const snapshots = hourly.filter(
         (snapshot) => compactDate(snapshot.observedAt) === date,
       );
+      const precipitationDetail = dailyPrecipitationDetail(date, hourly, base);
+      const expectedIntervalHours = precipitationDetail.kind === 'EXTENDED' ? 3 : 1;
       const temperatures = snapshots
         .map((snapshot) => snapshot.temperature)
         .filter((value): value is number => value !== undefined);
@@ -500,7 +502,7 @@ function buildDailyForecast(
         date,
         forecastSource: 'KMA_SHORT_TERM',
         issuedAt: kmaBaseToIso(base),
-        precipitationDetail: dailyPrecipitationDetail(date, hourly, base),
+        precipitationDetail,
         minTemperature,
         maxTemperature,
         minTemperatureSource: minTemperature === undefined ? undefined
@@ -512,7 +514,10 @@ function buildDailyForecast(
         snowfallDataAvailable,
         weatherDataComplete: snapshots.length > 0 &&
           snapshots.every((snapshot) => snapshot.skyCondition !== undefined) &&
-          (Date.parse(snapshots[snapshots.length - 1].observedAt) - Date.parse(snapshots[0].observedAt)) / 3_600_000 + 1 === snapshots.length,
+          snapshots.slice(1).every((snapshot, index) =>
+            (Date.parse(snapshot.observedAt) - Date.parse(snapshots[index].observedAt)) /
+              3_600_000 === expectedIntervalHours
+          ),
         skyCondition: representativeWeather(snapshots),
         precipitationProbability,
         precipitationAmount: snapshots.reduce(

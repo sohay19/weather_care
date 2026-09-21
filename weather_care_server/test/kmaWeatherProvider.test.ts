@@ -62,6 +62,29 @@ describe('KmaWeatherProvider', () => {
     expect(forecast.daily[0].weatherDataComplete).toBe(false);
   });
 
+  it('accepts complete 3-hour extended slots and detects a missing slot', () => {
+    const current = slot('20260820', '1000', { TMP: '28', PTY: '0', SKY: '1' });
+    const extended = (times: string[]) => times.flatMap((time) =>
+      slot('20260823', time, { TMP: '25', PTY: '0', SKY: '4' }),
+    );
+    const complete = buildForecastFromItems(
+      [...current, ...extended(['0000', '0300', '0600'])],
+      new Date('2026-08-20T01:00:00Z'),
+      base,
+    );
+    const incomplete = buildForecastFromItems(
+      [...current, ...extended(['0000', '0600'])],
+      new Date('2026-08-20T01:00:00Z'),
+      base,
+    );
+
+    expect(complete.daily.find((day) => day.date === '20260823')).toMatchObject({
+      precipitationDetail: { kind: 'EXTENDED' },
+      weatherDataComplete: true,
+    });
+    expect(incomplete.daily.find((day) => day.date === '20260823')?.weatherDataComplete).toBe(false);
+  });
+
   it('selects the latest published base time in Korea', () => {
     expect(
       latestBaseDateTimes(new Date('2026-08-20T01:00:00Z'), 4),

@@ -36,7 +36,7 @@ export async function runDataRetentionJob(db: D1Database, now = new Date()) {
     db.prepare(`DELETE FROM api_usage_daily
       WHERE usage_date < date(?, '-31 days')`).bind(timestamp),
     db.prepare(`DELETE FROM weather_cache
-      WHERE cache_type IN ('COLLECTED_PRECIPITATION', 'COLLECTED_ROAD_ICE', 'COLLECTED_ROAD_CONTROL', 'COLLECTED_HOURLY_OBSERVATION')
+      WHERE cache_type IN ('COLLECTED_PRECIPITATION', 'COLLECTED_ROAD_ICE', 'COLLECTED_ROAD_CONTROL', 'COLLECTED_ROAD_CONTROL_SNAPSHOT', 'COLLECTED_HOURLY_OBSERVATION')
         AND julianday(updated_at) < julianday(?, '-2 days')`).bind(timestamp),
   ]);
   return {

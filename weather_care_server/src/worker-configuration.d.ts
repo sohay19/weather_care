@@ -9,8 +9,7 @@ interface __BaseEnv_CloudflareBindings {
 	GA_PROPERTY_ID: "549443110";
 	KMA_SERVICE_KEY: string;
 	KMA_APIHUB_KEY: string;
-	ITS_RELAY_URL: string;
-	ITS_RELAY_TOKEN: string;
+	ITS_API_KEY: string;
 	FCM_CLIENT_EMAIL: string;
 	FCM_PRIVATE_KEY: string;
 	GA_ADMIN_CLIENT_EMAIL: string;
@@ -27,5 +26,5 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_ORIGIN" | "FCM_PROJECT_ID" | "GA_PROPERTY_ID" | "KMA_SERVICE_KEY" | "KMA_APIHUB_KEY" | "ITS_RELAY_URL" | "ITS_RELAY_TOKEN" | "FCM_CLIENT_EMAIL" | "FCM_PRIVATE_KEY" | "GA_ADMIN_CLIENT_EMAIL" | "GA_ADMIN_PRIVATE_KEY">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "APP_ORIGIN" | "FCM_PROJECT_ID" | "GA_PROPERTY_ID" | "KMA_SERVICE_KEY" | "KMA_APIHUB_KEY" | "ITS_API_KEY" | "FCM_CLIENT_EMAIL" | "FCM_PRIVATE_KEY" | "GA_ADMIN_CLIENT_EMAIL" | "GA_ADMIN_PRIVATE_KEY">> {}
 }

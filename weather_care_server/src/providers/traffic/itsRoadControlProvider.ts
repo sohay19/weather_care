@@ -3,11 +3,15 @@ import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const DEFAULT_RADIUS_METERS = 3_000;
 const ITS_EVENT_URL = 'https://openapi.its.go.kr:9443/eventInfo';
+const NATIONWIDE_BOUNDS = {
+  minLongitude: 124,
+  maxLongitude: 132,
+  minLatitude: 32,
+  maxLatitude: 39.5,
+};
 
 interface ItsRoadControlProviderOptions {
-  apiKey?: string;
-  relayUrl?: string;
-  relayToken?: string;
+  apiKey: string;
   fetcher?: typeof fetch;
   now?: () => Date;
   radiusMeters?: number;
@@ -16,9 +20,9 @@ interface ItsRoadControlProviderOptions {
 
 export interface ItsRoadControlEnvironment {
   ITS_API_KEY?: string;
-  ITS_RELAY_URL?: string;
-  ITS_RELAY_TOKEN?: string;
 }
+
+export type RoadControlSnapshotItem = Omit<OfficialRoadControl, 'distanceMeters'>;
 
 interface ItsEventItem {
   type?: unknown;
@@ -38,9 +42,7 @@ interface ItsEventItem {
 }
 
 export class ItsRoadControlProvider {
-  private readonly apiKey?: string;
-  private readonly relayEndpoint?: string;
-  private readonly relayToken?: string;
+  private readonly apiKey: string;
   private readonly fetcher: typeof fetch;
   private readonly now: () => Date;
   private readonly radiusMeters: number;
@@ -48,17 +50,10 @@ export class ItsRoadControlProvider {
 
   constructor(options: ItsRoadControlProviderOptions) {
     const apiKey = options.apiKey?.trim();
-    const relayUrl = options.relayUrl?.trim();
-    const relayToken = options.relayToken?.trim();
-    if ((relayUrl && !relayToken) || (!relayUrl && relayToken)) {
-      throw new Error('ITS relay is not configured completely');
-    }
-    if (!apiKey && !relayUrl) {
+    if (!apiKey) {
       throw new Error('ITS road control provider is not configured');
     }
     this.apiKey = apiKey;
-    this.relayEndpoint = relayUrl ? relayEndpoint(relayUrl) : undefined;
-    this.relayToken = relayToken;
     this.fetcher =
       options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.now = options.now ?? (() => new Date());
@@ -70,10 +65,16 @@ export class ItsRoadControlProvider {
     latitude: number,
     longitude: number,
   ): Promise<OfficialRoadControl | undefined> {
-    const bounds = boundingBox(latitude, longitude, this.radiusMeters);
-    const request = this.relayEndpoint
-      ? relayRequest(this.relayEndpoint, this.relayToken!, bounds)
-      : directRequest(this.apiKey!, bounds);
+    const snapshot = await this.getActiveControlSnapshot();
+    return nearestRoadControl(snapshot, {
+      latitude,
+      longitude,
+      radiusMeters: this.radiusMeters,
+    });
+  }
+
+  async getActiveControlSnapshot(): Promise<RoadControlSnapshotItem[]> {
+    const request = directRequest(this.apiKey, NATIONWIDE_BOUNDS);
 
     let response: Response;
     try {
@@ -103,12 +104,7 @@ export class ItsRoadControlProvider {
       throw new Error('ITS road control response is not JSON');
     }
 
-    return parseItsRoadControls(payload, {
-      latitude,
-      longitude,
-      radiusMeters: this.radiusMeters,
-      now: this.now(),
-    })[0];
+    return parseItsRoadControlSnapshot(payload, this.now());
   }
 }
 
@@ -116,15 +112,6 @@ export function itsRoadControlProviderFromEnvironment(
   environment: ItsRoadControlEnvironment,
   options: { timeoutMs?: number } = {},
 ): ItsRoadControlProvider | undefined {
-  const relayUrl = environment.ITS_RELAY_URL?.trim();
-  const relayToken = environment.ITS_RELAY_TOKEN?.trim();
-  if (relayUrl && relayToken) {
-    return new ItsRoadControlProvider({
-      relayUrl,
-      relayToken,
-      timeoutMs: options.timeoutMs,
-    });
-  }
   const apiKey = environment.ITS_API_KEY?.trim();
   return apiKey
     ? new ItsRoadControlProvider({ apiKey, timeoutMs: options.timeoutMs })
@@ -134,11 +121,7 @@ export function itsRoadControlProviderFromEnvironment(
 export function hasItsRoadControlConfiguration(
   environment: ItsRoadControlEnvironment,
 ): boolean {
-  const relayConfigured = Boolean(
-    environment.ITS_RELAY_URL?.trim() &&
-      environment.ITS_RELAY_TOKEN?.trim(),
-  );
-  return relayConfigured || Boolean(environment.ITS_API_KEY?.trim());
+  return Boolean(environment.ITS_API_KEY?.trim());
 }
 
 class ItsRoadControlProviderError extends Error {
@@ -159,6 +142,14 @@ export function parseItsRoadControls(
     now: Date;
   },
 ): OfficialRoadControl[] {
+  const snapshot = parseItsRoadControlSnapshot(payload, options.now);
+  return nearbyRoadControls(snapshot, options);
+}
+
+export function parseItsRoadControlSnapshot(
+  payload: unknown,
+  now: Date,
+): RoadControlSnapshotItem[] {
   const root = record(payload);
   const response = record(root.response ?? root);
   const header = record(response.header);
@@ -176,11 +167,33 @@ export function parseItsRoadControls(
     : itemValue === undefined || itemValue === null
       ? []
       : [itemValue];
-  const radiusMeters = options.radiusMeters ?? DEFAULT_RADIUS_METERS;
-
   return items
-    .map((value) => roadControlFromItem(record(value) as ItsEventItem, options))
-    .filter((value): value is OfficialRoadControl => value !== undefined)
+    .map((value) => roadControlFromItem(record(value) as ItsEventItem, now))
+    .filter((value): value is RoadControlSnapshotItem => value !== undefined);
+}
+
+export function nearestRoadControl(
+  snapshot: RoadControlSnapshotItem[],
+  options: { latitude: number; longitude: number; radiusMeters?: number },
+): OfficialRoadControl | undefined {
+  return nearbyRoadControls(snapshot, options)[0];
+}
+
+function nearbyRoadControls(
+  snapshot: RoadControlSnapshotItem[],
+  options: { latitude: number; longitude: number; radiusMeters?: number },
+): OfficialRoadControl[] {
+  const radiusMeters = options.radiusMeters ?? DEFAULT_RADIUS_METERS;
+  return snapshot
+    .map((value) => ({
+      ...value,
+      distanceMeters: Math.round(distanceMeters(
+        options.latitude,
+        options.longitude,
+        value.latitude,
+        value.longitude,
+      )),
+    }))
     .filter((value) => value.distanceMeters <= radiusMeters)
     .sort((left, right) => {
       const kindDifference = controlRank(right.controlKind) - controlRank(left.controlKind);
@@ -191,14 +204,14 @@ export function parseItsRoadControls(
 
 function roadControlFromItem(
   item: ItsEventItem,
-  options: { latitude: number; longitude: number; now: Date },
-): OfficialRoadControl | undefined {
+  now: Date,
+): RoadControlSnapshotItem | undefined {
   const startedAt = parseKoreanDate(text(item.startDate));
-  if (!startedAt || startedAt.getTime() > options.now.getTime()) return undefined;
+  if (!startedAt || startedAt.getTime() > now.getTime()) return undefined;
   const rawEndDate = text(item.endDate);
   const endsAt = rawEndDate ? parseKoreanDate(rawEndDate) : undefined;
   if (rawEndDate && !endsAt) return undefined;
-  if (endsAt && endsAt.getTime() <= options.now.getTime()) return undefined;
+  if (endsAt && endsAt.getTime() <= now.getTime()) return undefined;
 
   const latitude = number(item.coordY);
   const longitude = number(item.coordX);
@@ -238,9 +251,6 @@ function roadControlFromItem(
     linkId: linkId || undefined,
     latitude,
     longitude,
-    distanceMeters: Math.round(
-      distanceMeters(options.latitude, options.longitude, latitude, longitude),
-    ),
     provider: '국가교통정보센터 돌발상황정보',
   };
 }
@@ -275,21 +285,9 @@ function parseKoreanDate(value: string): Date | undefined {
   return Number.isNaN(result.getTime()) ? undefined : result;
 }
 
-function boundingBox(latitude: number, longitude: number, radiusMeters: number) {
-  const latitudeDelta = radiusMeters / 111_320;
-  const longitudeDelta =
-    radiusMeters / (111_320 * Math.max(Math.cos((latitude * Math.PI) / 180), 0.01));
-  return {
-    minLatitude: latitude - latitudeDelta,
-    maxLatitude: latitude + latitudeDelta,
-    minLongitude: longitude - longitudeDelta,
-    maxLongitude: longitude + longitudeDelta,
-  };
-}
-
 function directRequest(
   apiKey: string,
-  bounds: ReturnType<typeof boundingBox>,
+  bounds: typeof NATIONWIDE_BOUNDS,
 ): { url: URL; init: RequestInit } {
   const url = new URL(ITS_EVENT_URL);
   url.searchParams.set('apiKey', apiKey);
@@ -301,35 +299,6 @@ function directRequest(
   url.searchParams.set('maxY', bounds.maxLatitude.toFixed(6));
   url.searchParams.set('getType', 'json');
   return { url, init: {} };
-}
-
-function relayRequest(
-  endpoint: string,
-  relayToken: string,
-  bounds: ReturnType<typeof boundingBox>,
-): { url: URL; init: RequestInit } {
-  return {
-    url: new URL(endpoint),
-    init: {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${relayToken}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(bounds),
-    },
-  };
-}
-
-function relayEndpoint(value: string): string {
-  const url = new URL(value);
-  if (url.protocol !== 'https:') {
-    throw new Error('ITS relay URL must use HTTPS');
-  }
-  if ((url.pathname && url.pathname !== '/') || url.search || url.hash) {
-    throw new Error('ITS relay URL must contain only an HTTPS origin');
-  }
-  return new URL('/v1/its/event-info', url.origin).toString();
 }
 
 function distanceMeters(

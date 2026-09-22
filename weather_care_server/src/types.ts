@@ -445,8 +445,6 @@ export type ServerEnv = {
   GA_PROPERTY_ID: string;
   KMA_SERVICE_KEY: string;
   KMA_APIHUB_KEY: string;
-  ITS_RELAY_URL: string;
-  ITS_RELAY_TOKEN: string;
   FCM_CLIENT_EMAIL: string;
   FCM_PRIVATE_KEY: string;
   GA_ADMIN_CLIENT_EMAIL: string;
@@ -457,7 +455,7 @@ export type ServerEnv = {
   RECOVERY_MODE?: string;
   /** Node 중앙 수집기가 앱 지원 전국 격자를 순환 선수집할지 여부 */
   NATIONWIDE_PRECOLLECT_ENABLED?: string;
-  /** 중계 전환 전 로컬 개발 또는 비상 직접조회에만 사용하는 선택 바인딩 */
+  /** 국가교통정보센터 돌발상황정보 직접조회 인증키 */
   ITS_API_KEY?: string;
 };
 

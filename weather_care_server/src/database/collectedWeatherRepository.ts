@@ -22,6 +22,7 @@ export const collectedCacheKey = {
     `COLLECTED_ROAD_ICE_${locationCacheKey(latitude, longitude)}`,
   roadControl: (latitude: number, longitude: number) =>
     `COLLECTED_ROAD_CONTROL_${locationCacheKey(latitude, longitude)}`,
+  roadControlSnapshot: 'COLLECTED_ROAD_CONTROL_SNAPSHOT',
   sourceVersion: (source: string) => `COLLECTED_SOURCE_VERSION_${source}`,
   hourlyObservation: (version: string) =>
     `COLLECTED_HOURLY_OBSERVATION_${version}`,

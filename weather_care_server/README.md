@@ -44,10 +44,10 @@ cp .dev.vars.example .dev.vars
 API허브에서 중기예보·지상·AWS 일통계·고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
 `KMA_APIHUB_KEY`도 필요합니다.
 현재 시행 중인 도로 통제를 조회하려면 국가교통정보센터에서 돌발상황정보
-Open API 활용신청을 하고 발급받은 키를 홈서버 중계 서비스의 `ITS_API_KEY`에
-저장해야 합니다. 운영 Worker에는 Tailscale Funnel의 HTTPS 주소와 같은 중계 토큰을
-각각 `ITS_RELAY_URL`, `ITS_RELAY_TOKEN` Secret으로 저장합니다. 두 중계 Secret이
-없을 때만 Worker의 기존 `ITS_API_KEY`를 직접 조회용으로 사용합니다.
+Open API 활용신청을 하고 발급받은 키를 운영 미니 PC의 `ITS_API_KEY`에 저장해야
+합니다. 미니 PC는 10분마다 전국 돌발상황을 한 번 직접 조회해 SQLite 공용
+스냅샷으로 저장하고, 각 위치의 3km 이내 통제는 외부 재호출 없이 로컬에서
+판정합니다. 31일 기준 최대 호출 수는 4,464회이며 내부 월 안전한도는 9,000회입니다.
 Firebase 프로젝트 ID는 공개 설정값
 `weather-care-2aaa8`로 고정되어 있습니다.
 
@@ -103,16 +103,15 @@ payload·손상 JSON·`UNAVAILABLE`이 있으면 최대 3회 재시도하고, �
 ```bash
 npx wrangler secret put KMA_SERVICE_KEY
 npx wrangler secret put KMA_APIHUB_KEY
-npx wrangler secret put ITS_RELAY_URL
-npx wrangler secret put ITS_RELAY_TOKEN
+npx wrangler secret put ITS_API_KEY
 npx wrangler secret put FCM_CLIENT_EMAIL
 npx wrangler secret put FCM_PRIVATE_KEY
 npx wrangler d1 migrations apply weather_care_db --remote
 npm run deploy
 ```
 
-`ITS_API_KEY`를 Worker에 등록하는 방식은 중계 서비스가 없는 로컬 개발 또는 비상
-직접조회에만 선택적으로 사용합니다.
+현재 운영 원본은 미니 PC이므로 Worker의 `ITS_API_KEY`는 비상 전환 시에만
+사용합니다. 이전 Tailscale ITS 중계 서비스는 운영 경로에서 사용하지 않습니다.
 
 ## 핵심 구조
 

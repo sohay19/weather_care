@@ -35,7 +35,11 @@ import {
   KmaRoadIceProvider,
   ROAD_ICE_ROAD_NUMBERS,
 } from '../providers/road/kmaRoadIceProvider';
-import { itsRoadControlProviderFromEnvironment } from '../providers/traffic/itsRoadControlProvider';
+import {
+  itsRoadControlProviderFromEnvironment,
+  nearestRoadControl,
+  type RoadControlSnapshotItem,
+} from '../providers/traffic/itsRoadControlProvider';
 import {
   KmaHourlyObservationProvider,
   latestCompletedKoreanHour,
@@ -70,7 +74,10 @@ import {
   saveCollectedSourceVersion,
   type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
-import { reserveApiHubBudget } from '../database/apiUsageRepository';
+import {
+  reserveApiHubBudget,
+  reserveMonthlyRequestBudget,
+} from '../database/apiUsageRepository';
 import { saveCurrentWeather } from '../database/weatherCacheRepository';
 import {
   currentKoreanCalendarWeek,
@@ -98,6 +105,7 @@ const ENVIRONMENTAL_MAX_AGE_MS = 60 * 60 * 1000;
 const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
 const RADAR_BYTES = 13_281_414;
 const ANALYSIS_VALIDATION_LIMIT = 40;
+const ITS_MONTHLY_REQUEST_LIMIT = 9_000;
 
 export interface WeatherCollectionOptions {
   now?: Date;
@@ -846,37 +854,44 @@ async function collectRoadControls(
 ): Promise<void> {
   const provider = itsRoadControlProviderFromEnvironment(env);
   if (!provider || locations.length === 0) return;
-  const sourceVersion = pollingWindowVersion(now, 30);
+  const sourceVersion = pollingWindowVersion(now, 10);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
-    'ROAD_CONTROL_30_MINUTES',
+    'ROAD_CONTROL_10_MINUTES',
     sourceVersion,
   )) return;
-  let failed = false;
-  await mapWithConcurrency(locations, 2, async (location) => {
-    try {
-      const value = await provider.getNearestActiveControl(
-        location.latitude,
-        location.longitude,
-      );
-      await saveCollectedCache<OfficialRoadControl | null>(env.DB, {
+  if (!await reserveMonthlyRequestBudget(
+    env.DB,
+    'ITS_ROAD_CONTROL',
+    1,
+    ITS_MONTHLY_REQUEST_LIMIT,
+    now,
+  )) return;
+  try {
+    const snapshot = await provider.getActiveControlSnapshot();
+    await saveCollectedCache<RoadControlSnapshotItem[]>(env.DB, {
+      key: collectedCacheKey.roadControlSnapshot,
+      type: 'COLLECTED_ROAD_CONTROL_SNAPSHOT',
+      value: snapshot,
+      updatedAt: now,
+    });
+    await Promise.all(locations.map((location) => {
+      const value = nearestRoadControl(snapshot, location);
+      return saveCollectedCache<OfficialRoadControl | null>(env.DB, {
         key: collectedCacheKey.roadControl(location.latitude, location.longitude),
         type: 'COLLECTED_ROAD_CONTROL',
         value: value ?? null,
         updatedAt: now,
       });
-    } catch (error) {
-      failed = true;
-      logCollectionFailure('road_control', error);
-    }
-  });
-  if (!failed) {
+    }));
     await saveCollectedSourceVersion(
       env.DB,
-      'ROAD_CONTROL_30_MINUTES',
+      'ROAD_CONTROL_10_MINUTES',
       sourceVersion,
       now,
     );
+  } catch (error) {
+    logCollectionFailure('road_control', error);
   }
 }
 

@@ -35,8 +35,6 @@ export function nodeServerEnv(
     GA_PROPERTY_ID: environment.GA_PROPERTY_ID ?? '549443110',
     KMA_SERVICE_KEY: environment.KMA_SERVICE_KEY ?? '',
     KMA_APIHUB_KEY: environment.KMA_APIHUB_KEY ?? '',
-    ITS_RELAY_URL: environment.ITS_RELAY_URL ?? '',
-    ITS_RELAY_TOKEN: environment.ITS_RELAY_TOKEN ?? '',
     ITS_API_KEY: environment.ITS_API_KEY,
     FCM_CLIENT_EMAIL: environment.FCM_CLIENT_EMAIL ?? '',
     FCM_PRIVATE_KEY: environment.FCM_PRIVATE_KEY ?? '',
@@ -50,12 +48,7 @@ export function nodeServerEnv(
 
 export function assertNodeEnvironment(environment: NodeJS.ProcessEnv = process.env): void {
   const missing: string[] = REQUIRED_SECRET_NAMES.filter((name) => !environment[name]?.trim());
-  const relayConfigured = Boolean(
-    environment.ITS_RELAY_URL?.trim() && environment.ITS_RELAY_TOKEN?.trim(),
-  );
-  if (!relayConfigured && !environment.ITS_API_KEY?.trim()) {
-    missing.push('ITS_RELAY_URL/ITS_RELAY_TOKEN 또는 ITS_API_KEY');
-  }
+  if (!environment.ITS_API_KEY?.trim()) missing.push('ITS_API_KEY');
   if (missing.length > 0) {
     throw new Error(`NODE_ENVIRONMENT_MISSING:${missing.join(',')}`);
   }

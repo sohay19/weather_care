@@ -7836,5 +7836,17 @@
 - AWS 지점목록 API는 인증에 성공하지만 2026년 9월과 8월이 `발간되지 않은 기간`이고 2026년 7월이 최신 정상 발간분이었다. 실제 정상 응답의 지점 배열은 `items.item[0].stn_aws.info`인데 현재 파서는 `items.item`을 지점 배열로 간주하고 있어 AWS fallback이 동작하려면 최신 발간월 탐색과 중첩 응답 파싱을 별도 수정·배포해야 한다.
 - 현재 관측 캐시는 최신 스냅샷이므로 승인 전 10분 자료를 소급 채우지 않는다. 격자 실황 승인이 활성화되면 10분 core Job이 오래된 활성 지역 캐시를 자동 재시도하므로 캐시 삭제나 재배포는 필요 없다. 즉시 반영 확인이 필요할 때만 승인 후 core Job을 1회 실행한다.
 - 현재 미니 PC 서버 환경에는 `ITS_RELAY_URL/ITS_RELAY_TOKEN`이 없고 `ITS_API_KEY`만 있어, Node 서버가 `openapi.its.go.kr:9443/eventInfo`를 직접 호출한다. 사용자가 확인한 ITS 돌발상황정보 한도는 월 1,000회이고 현재 월 한도가 이미 소진되어 운영 HTTP 401이 발생한다.
-- ITS relay는 Cloudflare Worker의 9443 직접 연결 제약을 우회하려고 만든 구성이라 미니 PC Node 운영에는 네트워크 중계로서 필요 없다. 다만 현재 직접 조회는 위치별·30분마다 호출해 활성 위치 4개 기준 월 최대 5,760회이고 실패하면 10분마다 재시도하므로 1,000회를 다시 초과한다. relay의 호출 절감 역할은 본 서버로 옮겨 `전국 돌발정보 시간당 1회 직접 조회 → SQLite 공용 snapshot → 모든 위치 로컬 필터`, 월 900회 하드스톱으로 구현한 뒤 relay와 Funnel을 stop/disable해야 한다. 이미 소진된 이번 달은 ITS 측 초기화·증량 없이는 복구할 수 없다.
+- ITS relay는 Cloudflare Worker의 9443 직접 연결 제약을 우회하려고 만든 구성이라 미니 PC Node 운영에는 네트워크 중계로서 필요 없다. 사용자가 ITS 월 한도를 10,000회로 증량 요청했으므로 `전국 돌발정보 10분마다 1회 직접 조회 → SQLite 공용 snapshot → 모든 위치 로컬 필터`, 31일 최대 4,464회와 내부 월 9,000회 하드스톱으로 구현하고 relay와 Funnel을 stop/disable하는 방향으로 결정했다. 이미 소진된 이번 달은 ITS 측 초기화·증량 승인 전에는 401이 계속될 수 있다.
 - 이번 점검에서는 코드·운영 환경·서비스 상태를 변경하지 않았다.
+
+## 2026-09-22 APIHub 실황·ITS 전국 공용 캐시 배포
+
+- APIHub 격자 실황의 차원 헤더 없는 `149×253=37,697`개 운영 원본과, AWS 지점목록의 미발간 월·`items.item[0].stn_aws.info` 중첩 응답을 지원했다. 커밋은 `d8e0ab8 fix(관측): APIHub 운영 응답 형식 지원`이다.
+- ITS 중계 의존성을 서버 코드와 운영 설정에서 제거했다. 미니 PC가 10분마다 전국 돌발상황정보를 한 번 직접 조회해 `COLLECTED_ROAD_CONTROL_SNAPSHOT`으로 저장한 뒤 모든 설치 위치의 3km 이내 통제를 로컬 판정한다. 31일 최대 4,464회이고 `api_usage_daily` 기반 내부 월 안전한도는 9,000회다. 커밋은 `b4ed7ec refactor(교통): ITS 전국 조회를 10분 캐시로 공용화`이다.
+- 최초 배포 확인에서 APIHub 전국 격자 응답을 받으면서 활성 설치 지역만 저장하는 기존 범위 문제를 발견했다. 같은 6개 전국 변수 요청 결과를 전국 1,633개 지원 격자에 모두 저장하고, 운영 선수집 필수항목에도 전국 실황 캐시를 포함하도록 보완했다. 커밋은 `0168aa8 fix(실황): 전국 격자 캐시를 10분마다 채움`이다.
+- 최종 선수집은 전국 1,633개 격자, 필수 캐시 10,000개를 모두 확인해 `missingCaches=0`으로 완료됐다. SQLite 온라인 백업은 `/var/backups/weather-care/weather-care-20260922T055606Z.sqlite`, 직전 소스는 `/opt/weather-care/weather_care_server.previous-before-0168aa8-20260922-1457`에 보존했다.
+- 공개 항동 Main은 `observedAt=2026-09-22T14:40:00+09:00`, `dataRole=OBSERVATION`, 실제기온 `32.0℃`, 습도 `30.9%`, 풍속 `1.6m/s`, `provider=KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST`, `sourceLocation=EXACT_GRID 57/125`를 반환했다. 전국 `COLLECTED_ULTRA_SHORT_*` 가용 캐시는 정확히 1,633개다.
+- 공개 항동 Weekly는 `1153080000 + 서울특별시 구로구 항동` 입력에 `11B10101 / 11B00000`, `midTermCacheStatus=HIT`를 반환했고 2026-09-26 카드의 최저·최고기온과 날씨가 채워져 있다.
+- 15:00 정규 core 회차에서 활성 위치 4개임에도 ITS 사용계수가 `3 → 4`로 정확히 1만 증가했다. 증량 승인이 아직 반영되지 않아 운영 응답은 HTTP 401이고 공용 snapshot은 교체되지 않았지만, 다음 10분 회차에 전국 1회만 재시도한다. 승인 후 별도 배포나 캐시 삭제는 필요 없다.
+- `weather-care-relay.service`와 `weather-care-relay-log-prune.timer`는 stop/disable했고 Tailscale Funnel은 reset했다. 구성·소스는 롤백용으로 삭제하지 않았다. `weather-care-api`, `weather-care-scheduler`, `cloudflared`는 active이고 내부·공개 `/health`는 `ok`다.
+- 서버 검증은 TypeScript 검사, Worker 52파일·385개 테스트, Node 3파일·11개 테스트를 모두 통과했다. 운영 스케줄러의 `fcm_send_failed`는 이번 배포 전부터 10분 회차마다 반복된 별도 기존 문제로 남아 있다.

@@ -112,6 +112,12 @@ interface OptionalProviderTimeouts {
 
 router.get('/main', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const locationKey = briefingLocationKey(
+    nx,
+    ny,
+    c.req.query('adminCode') ?? c.req.query('regionCode'),
+    c.req.query('regionName'),
+  );
 
   try {
     const generatedAt = new Date();
@@ -150,7 +156,7 @@ router.get('/main', async (c) => {
     const thermalForecast = enrichForecastWithPerceivedTemperature(
       { ...forecast, current },
       {
-        regionKey: `${nx}:${ny}`,
+        regionKey: locationKey,
         latitude: coordinates?.latitude,
         longitude: coordinates?.longitude,
         now: generatedAt,
@@ -161,8 +167,9 @@ router.get('/main', async (c) => {
     );
     const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
     const brief = buildWeatherBriefResult(thermalForecast, {
-      regionKey: `${nx}:${ny}`,
+      regionKey: locationKey,
       now: generatedAt,
+      ...sunTimes,
     });
     const thermalCurrent = thermalForecast.current;
     const response: TodayWeatherResponse = {
@@ -172,6 +179,8 @@ router.get('/main', async (c) => {
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
+      briefing: brief.intent,
+      briefingTimeline: brief.timeline,
       ...sunTimes,
       current: thermalCurrent,
       nextForecast:
@@ -202,6 +211,12 @@ router.get('/main', async (c) => {
 
 router.get('/today', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const locationKey = briefingLocationKey(
+    nx,
+    ny,
+    c.req.query('adminCode') ?? c.req.query('regionCode'),
+    c.req.query('regionName'),
+  );
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
@@ -277,7 +292,7 @@ router.get('/today', async (c) => {
     const thermalForecast = enrichForecastWithPerceivedTemperature(
       { ...forecast, current },
       {
-        regionKey: `${nx}:${ny}`,
+        regionKey: locationKey,
         latitude: thermalCoordinates?.latitude,
         longitude: thermalCoordinates?.longitude,
         now: generatedAt,
@@ -341,13 +356,17 @@ router.get('/today', async (c) => {
     );
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
-    const brief = buildWeatherBriefResult(thermalForecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
     const sunTimes = sunTimesForRequest(
       generatedAt,
       nx,
       ny,
       coordinates,
     );
+    const brief = buildWeatherBriefResult(thermalForecast, {
+      regionKey: locationKey,
+      now: generatedAt,
+      ...sunTimes,
+    });
     const response: TodayWeatherResponse = {
       dataSource: thermalCurrent.dataRole === 'OBSERVATION'
         ? `${forecast.dataSource} · ${currentObservationSourceLabel(thermalCurrent)} · 서버 중앙 수집`
@@ -355,6 +374,8 @@ router.get('/today', async (c) => {
       region: { nx, ny, name: regionLabel },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
+      briefing: brief.intent,
+      briefingTimeline: brief.timeline,
       ...sunTimes,
       current: {
         ...thermalCurrent,
@@ -615,6 +636,20 @@ function datesMissingUsableShortTermForecast(
     shortTermDays.filter(isUsableWeeklyDay).map(({ date }) => calendarDate(date)),
   );
   return calendarDates.filter((date) => date >= today && !usableDates.has(date));
+}
+
+export function briefingLocationKey(
+  nx: number,
+  ny: number,
+  adminCode?: string,
+  regionNameValue?: string,
+): string {
+  const grid = `${nx}:${ny}`;
+  const normalizedCode = adminCode?.trim().replace(/[^0-9A-Za-z_-]/g, '')
+    .slice(0, 24);
+  if (normalizedCode) return `${grid}:admin:${normalizedCode}`;
+  const normalizedName = regionNameValue?.trim().replace(/\s+/g, ' ').slice(0, 80);
+  return normalizedName ? `${grid}:name:${normalizedName}` : grid;
 }
 
 function coversDates(

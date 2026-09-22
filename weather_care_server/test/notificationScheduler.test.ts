@@ -185,7 +185,7 @@ describe('notification scheduler', () => {
   it.each([
     ['umbrellaEnabled', '우산'], ['parasolEnabled', '양산'],
     ['outerwearEnabled', '겉옷'], ['maskEnabled', '마스크'],
-    ['waterEnabled', '물'], ['sunscreenEnabled', '차단제'],
+    ['waterEnabled', '물'], ['sunscreenEnabled', '선크림'],
   ] as const)('%s는 해당 준비물 요약을 실제로 제어한다', async (field, word) => {
     await insertInstallation('device-token');
     const sent: FcmPayload[] = [];
@@ -320,7 +320,7 @@ describe('notification scheduler', () => {
     expect(sent.map((item) => item.notificationKey)).toEqual(['MORNING_BRIEF']);
   });
 
-  it('요약은 추천할 준비물이 없으면 발송하지 않고 있으면 최대 세 개다', async () => {
+  it('요약은 유효한 scene이 없으면 발송하지 않고 있으면 1~3개 scene을 쓴다', async () => {
     await insertInstallation('device-token');
     const sent: FcmPayload[] = [];
     const forecast = rainyForecast();
@@ -332,7 +332,9 @@ describe('notification scheduler', () => {
     forecast.hourly = preparationForecast(false).hourly;
     await runRecommendationNotificationJob(testBindings(), dependencies);
     expect(sent).toHaveLength(1);
-    expect(sent[0].body.split('.').filter((part) => part.trim())).toHaveLength(3);
+    const sentences = sent[0].body.split('.').filter((part) => part.trim());
+    expect(sentences.length).toBeGreaterThanOrEqual(1);
+    expect(sentences.length).toBeLessThanOrEqual(3);
   });
 
   it('개별 특보 스위치와 별개로 기타 특보·블랙아이스·도로통제는 전체 설정을 따른다', async () => {

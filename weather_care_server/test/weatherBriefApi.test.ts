@@ -1,9 +1,15 @@
 import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import router from '../src/api/weather';
+import router, { briefingLocationKey } from '../src/api/weather';
 import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider';
 import * as environmental from '../src/providers/environmental/environmentalDataService';
-import { LifestyleInsightType, WeatherRuleFactType, type WeatherSnapshot } from '../src/types';
+import {
+  LifestyleInsightType,
+  WeatherRuleFactType,
+  type BriefingTimelineEntry,
+  type CanonicalBriefingIntent,
+  type WeatherSnapshot,
+} from '../src/types';
 import { buildLifestyleMessages } from '../src/presentation/lifestyleMessages';
 import { env } from 'cloudflare:test';
 import { seedCollectedRegion } from './collectedWeatherFixture';
@@ -11,6 +17,21 @@ import { seedCollectedRegion } from './collectedWeatherFixture';
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe('Today brief display deadline', () => {
+  it('같은 57/125에서도 항동 행정구역 context를 briefingId에 반영한다', () => {
+    expect(briefingLocationKey(
+      57,
+      125,
+      '1153080000',
+      '서울특별시 구로구 항동',
+    )).toBe('57:125:admin:1153080000');
+    expect(briefingLocationKey(
+      57,
+      125,
+      undefined,
+      '경기도 부천시 범박동',
+    )).not.toBe('57:125:admin:1153080000');
+  });
+
   it.each([
     ['2026-09-10T05:00:00Z', '2026-09-10T04:00:00Z', '오후 2시'],
     ['2026-09-11T05:00:00Z', '2026-09-10T04:00:00Z', '내일 오후 2시'],
@@ -29,10 +50,10 @@ describe('Today brief display deadline', () => {
   });
 
   it.each([
-    ['14:10:00', 14, '지금', '2026-09-10T05:59:59.000Z'],
-    ['14:10:00', 15, '오후 3시', '2026-09-10T06:00:00.000Z'],
-    ['16:00:00', 14, undefined, undefined],
-  ])('serializes the deadline at %s for hour %s without shifting official time', async (clock, hour, label, expiry) => {
+    ['14:10:00', 14, 'UV'],
+    ['14:10:00', 15, 'UV'],
+    ['16:00:00', 14, 'DEFAULT'],
+  ])('serializes canonical briefing at %s for hour %s without shifting official time', async (clock, hour, sceneId) => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(`2026-09-10T${clock}+09:00`));
     const time = `2026-09-10T${hour}:00:00+09:00`;
@@ -51,16 +72,36 @@ describe('Today brief display deadline', () => {
     } });
     vi.spyOn(environmental, 'enrichForecastWithEnvironmentalData').mockImplementation((input) => input);
     const ctx = createExecutionContext();
-    const response = await router.request('/today?nx=60&ny=121', {}, { DB: env.DB }, ctx);
+    const response = await router.request(
+      '/today?nx=60&ny=121&regionCode=1153080000&regionName='
+        + encodeURIComponent('서울특별시 구로구 항동'),
+      {},
+      { DB: env.DB },
+      ctx,
+    );
     expect(response.status).toBe(200);
-    const data = await response.json<{ brief: string; briefExpiresAt?: string; current: WeatherSnapshot; generatedAt: string }>();
-    expect(data.briefExpiresAt).toBe(expiry);
+    const data = await response.json<{
+      brief: string;
+      briefExpiresAt?: string;
+      briefing: CanonicalBriefingIntent;
+      briefingTimeline: BriefingTimelineEntry[];
+      current: WeatherSnapshot;
+      generatedAt: string;
+    }>();
+    expect(data.briefing.sceneId).toBe(sceneId);
+    expect(data.briefing.locationKey).toBe('60:121:admin:1153080000');
+    expect(data.brief).toBe(data.briefing.copy.medium);
+    expect(data.briefExpiresAt).toBe(data.briefing.nextBriefingBoundary);
+    expect(data.briefingTimeline[0]).toMatchObject({
+      briefingId: data.briefing.briefingId,
+      sceneId,
+      validFrom: data.briefing.validFrom,
+      validUntil: data.briefing.validUntil,
+    });
     expect(data.current.forecastAt).toBe(time);
     expect(data.generatedAt).toBe(new Date().toISOString());
-    if (label) expect(data.brief).toContain(`${label} 외출한다면`);
-    else expect(data.brief).toBe(
-      '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요',
-    );
+    if (sceneId === 'UV') expect(data.brief).toContain('자외선');
+    else expect(data.brief).not.toContain('자외선');
     await waitOnExecutionContext(ctx);
   });
 });

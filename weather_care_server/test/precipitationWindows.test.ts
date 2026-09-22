@@ -158,7 +158,7 @@ describe('element-specific precipitation windows', () => {
   it('keeps another day out of WeatherBrief while retaining it in notifications', () => {
     const forecast = buildForecastFromItems(items('20260911', '0100', { PCP: '30mm', POP: '90', PTY: '1' }), now, base);
     const brief = buildWeatherBriefResult(forecast, { now });
-    expect(brief.scene).toBe('DAILY_RHYTHM');
+    expect(brief.scene).toBe('DEFAULT');
     expect(brief.slots).toEqual({});
     expect(brief.text).not.toMatch(/내일|모레/);
     const facts = runWeatherRuleEngineForHourly(forecast.hourly);

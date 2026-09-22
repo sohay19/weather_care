@@ -6,6 +6,7 @@ import {
 } from '../src/notification/notificationDestination';
 import { buildNotification } from '../src/notification/notificationBuilder';
 import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
+import { buildWeatherBriefResult } from '../src/presentation/weatherBrief';
 import { Recommendation, RecommendationType } from '../src/types';
 
 describe('notification destinations', () => {
@@ -95,20 +96,47 @@ describe('notification destinations', () => {
     ).toBe('UMBRELLA description\nPARASOL description');
   });
 
-  it('sends qualitative visibility and humidity context without measurements', () => {
+  it('요약 알림은 발송 시점 canonical intent의 알림 copy를 재사용한다', () => {
     const forecast = sampleForecast();
     forecast.current.visibilityMeters = 500;
     forecast.current.humidity = 85;
+    const now = new Date('2026-09-21T08:10:00+09:00');
+    const canonical = buildWeatherBriefResult(forecast, { now }).intent;
 
-    const notification = buildNotification([], undefined, forecast)[0];
+    const notification = buildNotification([], now, forecast)[0];
 
-    expect(notification).toMatchObject({
+    expect(notification).toEqual({
       notification_key: 'MORNING_BRIEF',
-      title: '오늘 날씨 안내',
+      title: canonical.copy.notificationTitle,
+      body: canonical.copy.notificationBody,
+      destination: morningBriefDestination,
     });
-    expect(notification.body).toContain('운전할 때는 감속하고');
-    expect(notification.body).toContain('빨래가 더디게 마를 수 있어요');
     expect(notification.body).not.toMatch(/500|85|m\b|%/);
+  });
+
+  it('20시 요약 알림에서 종료된 낮 UV 행동을 제거한다', () => {
+    const forecast = sampleForecast();
+    forecast.current = {
+      observedAt: '2026-09-21T20:00:00+09:00',
+      forecastAt: '2026-09-21T20:00:00+09:00',
+      temperature: 22,
+      thermalSensation: 'COMFORTABLE',
+    };
+    forecast.hourly = [{
+      observedAt: '2026-09-21T14:00:00+09:00',
+      forecastAt: '2026-09-21T14:00:00+09:00',
+      validTo: '2026-09-21T15:00:00+09:00',
+      uvIndex: 8,
+    }];
+
+    const notification = buildNotification(
+      [],
+      new Date('2026-09-21T20:00:00+09:00'),
+      forecast,
+      { sunsetAt: '2026-09-21T18:40:00+09:00' },
+    )[0];
+
+    expect(notification.body).not.toMatch(/자외선|선크림|양산|햇볕/);
   });
 });
 

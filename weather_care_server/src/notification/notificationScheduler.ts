@@ -38,6 +38,7 @@ import {
 } from '../database/collectedWeatherRepository';
 import type { CollectedRegionBundle, CollectedWarningBundle } from '../collection/collectionTypes';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
+import { calculateSunTimes } from '../presentation/sunTimes';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -233,10 +234,23 @@ export async function runRecommendationNotificationJob(
         row.installationId,
         local.date,
       );
+      const briefingCoordinates = row.latitude !== null && row.longitude !== null
+        ? { latitude: row.latitude, longitude: row.longitude }
+        : kmaGridCoordinates(row.nx, row.ny);
       const notifications = buildNotification(
         recommendations,
         now,
         forecast,
+        {
+          regionKey,
+          ...(briefingCoordinates
+            ? calculateSunTimes(
+                now,
+                briefingCoordinates.latitude,
+                briefingCoordinates.longitude,
+              )
+            : {}),
+        },
       ).filter(
         (notification) => {
           if (alreadySent.has(notification.notification_key)) return false;

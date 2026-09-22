@@ -17,6 +17,87 @@ export type RecommendationType =
   | 'POWER_BANK'
   | 'WINTER_BOOTS';
 
+export type BriefingSceneId =
+  | 'OFFICIAL_WARNING'
+  | 'CURRENT_PRECIPITATION'
+  | 'HEAVY_RAIN'
+  | 'SNOW'
+  | 'ROAD_ICE'
+  | 'ROAD_CONTROL'
+  | 'RAIN'
+  | 'UV'
+  | 'AIR_QUALITY'
+  | 'OZONE'
+  | 'VISIBILITY'
+  | 'THERMAL_HOT'
+  | 'THERMAL_COLD'
+  | 'THERMAL_COMFORTABLE'
+  | 'THERMAL_CHANGE'
+  | 'WIND'
+  | 'HUMIDITY_HIGH'
+  | 'HUMIDITY_LOW'
+  | 'CLEAR_COMFORTABLE'
+  | 'DEFAULT';
+
+export type BriefingScope =
+  | 'CURRENT'
+  | 'NEAR_FUTURE'
+  | 'TODAY'
+  | 'TOMORROW'
+  | 'EVENT';
+
+export interface BriefingCopy {
+  short: string;
+  medium: string;
+  long: string;
+  notificationTitle: string;
+  notificationBody: string;
+}
+
+export interface CanonicalBriefingIntent {
+  briefingId: string;
+  locationKey: string;
+  sceneId: BriefingSceneId;
+  topic: string;
+  scope: BriefingScope;
+  severity: 'INFO' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  targetFrom?: string;
+  targetUntil?: string;
+  validFrom: string;
+  validUntil: string;
+  nextBriefingBoundary?: string;
+  dataRole?: 'FORECAST' | 'OBSERVATION' | 'ANALYSIS';
+  observedAt?: string;
+  forecastAt?: string;
+  issuedAt?: string;
+  sourceLocation?: WeatherSnapshot['sourceLocation'];
+  qualityFlags: string[];
+  evidenceFields: string[];
+  headlineFact: string;
+  supportingFact?: string;
+  action?: string;
+  recommendedItems: RecommendationType[];
+  thermalSensation?: WeatherSnapshot['thermalSensation'];
+  perceivedTemperature?: number;
+  dominantFactor?: NonNullable<WeatherSnapshot['dominantFactors']>[number];
+  copyVariantKey: string;
+  copy: BriefingCopy;
+}
+
+export interface BriefingTimelineEntry {
+  briefingId: string;
+  sceneId: BriefingSceneId;
+  validFrom: string;
+  validUntil: string;
+  targetFrom?: string;
+  targetUntil?: string;
+  action?: string;
+  recommendedItems: RecommendationType[];
+  copyVariantKey: string;
+  copy: BriefingCopy;
+}
+
 export enum WeatherRuleFactType {
   RAIN_LIKELY = 'RAIN_LIKELY',
   HEAVY_RAIN = 'HEAVY_RAIN',
@@ -420,6 +501,10 @@ export interface TodayWeatherResponse {
   brief: string;
   /** Exclusive deadline for displaying the time-sensitive Main brief. */
   briefExpiresAt?: string;
+  /** 모든 앱·위젯·요약 알림이 공유하는 대표 날씨 의미. */
+  briefing: CanonicalBriefingIntent;
+  /** 외부 재조회 없이 시간 경계에서 위젯 문구를 교체하기 위한 목록. */
+  briefingTimeline: BriefingTimelineEntry[];
   sunriseAt?: string;
   sunsetAt?: string;
   current: WeatherSnapshot;

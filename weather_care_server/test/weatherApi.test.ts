@@ -14,7 +14,7 @@ import router, {
 import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider';
 import * as settingsRepository from '../src/database/notificationSettingsRepository';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
-import type { WeatherSnapshot } from '../src/types';
+import type { CanonicalBriefingIntent, WeatherSnapshot } from '../src/types';
 import {
   createExecutionContext,
   env,
@@ -84,6 +84,7 @@ describe('fast Main weather', () => {
       const data = await response.json<{
         region: { nx: number; ny: number };
         brief: string;
+        briefing: CanonicalBriefingIntent;
         current: WeatherSnapshot;
         nextForecast: WeatherSnapshot;
         hourly: WeatherSnapshot[];
@@ -118,7 +119,12 @@ describe('fast Main weather', () => {
       expect(data.current.perceivedTemperature).toEqual(expect.any(Number));
       expect(data.current.thermalSensation).toEqual(expect.any(String));
       expect(data.current.thermalBrief).toEqual(expect.any(String));
-      expect(data.brief).toBe(data.current.thermalBrief);
+      expect(data.briefing).toMatchObject({
+        sceneId: 'THERMAL_COMFORTABLE',
+        dataRole: 'OBSERVATION',
+        observedAt: '2026-08-20T15:20:00+09:00',
+      });
+      expect(data.brief).toBe(data.briefing.copy.medium);
       expect(data.nextForecast).toMatchObject({
         forecastAt: '2026-08-20T18:00:00+09:00',
         temperature: 28,

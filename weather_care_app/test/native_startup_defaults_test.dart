@@ -67,4 +67,18 @@ void main() {
     );
     expect(plist, isNot(contains('NSUserTrackingUsageDescription')));
   });
+
+  test('Android 3-column medium widget renders the short briefing', () {
+    final provider = File(
+      'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java',
+    ).readAsStringSync();
+
+    expect(provider, contains('MEDIUM_MIN_WIDTH_DP = 150'));
+    expect(
+      RegExp(r'WidgetSize\.MEDIUM[\s\S]*?snapshot\.shortMessage')
+          .hasMatch(provider),
+      isTrue,
+    );
+    expect(provider, contains('json.optJSONArray("preparationCatalog")'));
+  });
 }

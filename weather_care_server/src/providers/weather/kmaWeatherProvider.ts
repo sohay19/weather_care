@@ -418,6 +418,7 @@ function snapshotFromSlot(
     fetchedAt: fetchedAt.toISOString(),
     temperature,
     apparentTemperature: calculatedApparentTemperature,
+    kmaApparentTemperature: calculatedApparentTemperature,
     apparentTemperatureSource:
       calculatedApparentTemperature === undefined
         ? undefined

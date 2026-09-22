@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import router, {
+  buildCurrentOptionalDataStatusMessages,
   buildOptionalProviderTimeoutStatusMessages,
   buildTimeline,
   currentFromUltraShortObservation,
@@ -109,16 +110,13 @@ describe('fast Main weather', () => {
       expect(data.current.kmaApparentTemperature)
         .toBe(data.current.apparentTemperature);
       expect(data.current).toMatchObject({
-        perceivedModelVersion: 'KR_PERCEIVED_V2_2026.1',
-        modelSource: 'KR_PT_V2_FROM_OBSERVATION',
-        perceivedConfidence: 'LOW',
         sourceLocation: {
           type: 'GRID', nx: 58, ny: 124, locationMatch: 'EXACT_GRID',
         },
       });
-      expect(data.current.perceivedTemperature).toEqual(expect.any(Number));
-      expect(data.current.thermalSensation).toEqual(expect.any(String));
-      expect(data.current.thermalBrief).toEqual(expect.any(String));
+      expect(data.current).not.toHaveProperty('perceivedTemperature');
+      expect(data.current).not.toHaveProperty('thermalSensation');
+      expect(data.current).not.toHaveProperty('thermalBrief');
       expect(data.briefing).toMatchObject({
         sceneId: 'THERMAL_COMFORTABLE',
         dataRole: 'OBSERVATION',
@@ -128,6 +126,7 @@ describe('fast Main weather', () => {
       expect(data.nextForecast).toMatchObject({
         forecastAt: '2026-08-20T18:00:00+09:00',
         temperature: 28,
+        kmaApparentTemperature: 24,
         pm25ForecastGrade: '보통',
       });
       expect(data.hourly).toEqual([]);
@@ -1068,6 +1067,41 @@ describe('today optional provider deadline', () => {
         text: '자료를 받아오지 못해 현재 도로 통제 상태를 확인하기 어려워요',
         source: '국가교통정보센터 돌발상황정보',
       },
+    ]);
+  });
+
+  it('shows successful no-event results for current rain and road controls', () => {
+    expect(buildCurrentOptionalDataStatusMessages({
+      coordinatesAvailable: true,
+      precipitationRecord: {
+        status: 'AVAILABLE',
+        updatedAt: '2026-09-22T07:17:00Z',
+        value: {
+          observedAt: '2026-09-22T07:00:00Z',
+          latitude: 37.4877,
+          longitude: 126.8939,
+          analysisRainDetected: false,
+          radarRainDetected: false,
+          state: 'DRY',
+          provider: 'KMA_ANALYSIS_RADAR',
+        },
+      },
+      roadControlRecord: {
+        status: 'AVAILABLE',
+        updatedAt: '2026-09-22T07:20:00Z',
+        value: null,
+      },
+    })).toEqual([
+      expect.objectContaining({
+        role: 'DATA_STATUS',
+        itemTitle: '현재 강수',
+        retryable: false,
+      }),
+      expect.objectContaining({
+        role: 'DATA_STATUS',
+        itemTitle: '도로 통제',
+        retryable: false,
+      }),
     ]);
   });
 

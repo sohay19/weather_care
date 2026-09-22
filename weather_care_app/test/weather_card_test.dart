@@ -117,36 +117,17 @@ void main() {
     expect(current.provider, 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST');
   });
 
-  test('서버의 사람 중심 체감 필드와 주요 원인을 그대로 읽는다', () {
+  test('서버의 기상청 체감온도를 우선해서 읽는다', () {
     final current = CurrentWeather.fromJson({
       'current': {
         'temperature': 25,
         'apparentTemperature': 25.1,
         'kmaApparentTemperature': 25.1,
-        'perceivedTemperature': 25.3,
-        'perceivedDifference': 0.3,
-        'perceivedModelVersion': 'KR_PERCEIVED_V2_2026.1',
-        'perceivedConfidence': 'MEDIUM',
-        'modelSource': 'KR_PT_V2_FROM_OBSERVATION',
-        'thermalSensation': 'WARM_COMFORTABLE',
-        'thermalBrief': '따뜻하지만 크게 덥지 않아 쾌적해요.',
-        'estimatedClothingClo': 0.65,
-        'estimatedClothingLabel': 'LIGHT',
-        'thermalSeason': 'HOT',
-        'recentMeanTemperature7d': 24,
-        'temperatureTrend': 'STABLE',
-        'meanRadiantTemperature': 28,
-        'radiationLevel': 'MODERATE',
-        'dominantFactors': ['RADIATION', 'HUMIDITY'],
       },
     });
 
-    expect(current.displayedPerceivedTemperature, 25.3);
+    expect(current.displayedApparentTemperature, 25.1);
     expect(current.kmaApparentTemperature, 25.1);
-    expect(current.perceivedDifference, 0.3);
-    expect(current.perceivedModelVersion, 'KR_PERCEIVED_V2_2026.1');
-    expect(current.thermalSensation, 'WARM_COMFORTABLE');
-    expect(current.dominantFactors, ['RADIATION', 'HUMIDITY']);
   });
 
   testWidgets('초단기실황 현재 날씨는 관측 시각과 실황 계산 근거를 표시한다', (tester) async {
@@ -169,7 +150,7 @@ void main() {
     await tester.tap(detailButton);
     await tester.pumpAndSettle();
     expect(
-      find.textContaining('기상청 초단기실황의 기온·상대습도·풍속'),
+      find.textContaining('기상청 초단기실황의 기온과 상대습도'),
       findsOneWidget,
     );
     expect(find.textContaining('예상 체감온도'), findsNothing);
@@ -183,8 +164,7 @@ void main() {
         observedAt: '2026-09-21T14:10:00+09:00',
         dataRole: 'OBSERVATION',
         provider: 'KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST',
-        perceivedTemperature: 26,
-        thermalSensation: 'WARM_COMFORTABLE',
+        apparentTemperature: 26,
         humidity: 58,
         windSpeed: 1.5,
       ),
@@ -195,7 +175,7 @@ void main() {
     await tester.tap(detailButton);
     await tester.pumpAndSettle();
     expect(
-      find.textContaining('기상청 10분 격자 실황의 기온·상대습도·풍속'),
+      find.textContaining('기상청 10분 격자 실황의 기온과 상대습도'),
       findsOneWidget,
     );
   });
@@ -253,7 +233,7 @@ void main() {
 
   testWidgets('각 지표 상세는 수준을 먼저 보여주고 설명을 아래에 둔다', (tester) async {
     final expectedLevels = {
-      '체감': '사람 중심 체감은 따뜻하고 쾌적한 수준이에요',
+      '체감': '기상청 방식으로 계산한 체감온도예요',
       '습도': '실외 습도는 높은 수준이에요',
       '바람': '바람은 강한 수준이에요',
       '자외선': '자외선은 높음 단계예요',
@@ -266,8 +246,6 @@ void main() {
       const CurrentWeather(
         temperature: 25,
         apparentTemperature: 25,
-        perceivedTemperature: 25.3,
-        thermalSensation: 'WARM_COMFORTABLE',
         humidity: 72,
         windSpeed: 10,
         windDirection: 225,
@@ -453,7 +431,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Main 체감 문구는 앱 재판정 없이 서버 문구를 사용한다', (tester) async {
+  testWidgets('Main 날씨 문구는 앱 재판정 없이 서버 문구를 사용한다', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MainTab(
@@ -464,9 +442,6 @@ void main() {
             current: CurrentWeather(
               temperature: 29,
               apparentTemperature: 27,
-              perceivedTemperature: 25.1,
-              thermalSensation: 'WARM_COMFORTABLE',
-              thermalBrief: '따뜻하지만 크게 덥지 않아 쾌적해요.',
               sky: '맑음',
             ),
             recommendations: [],
@@ -484,7 +459,7 @@ void main() {
     ));
 
     expect(
-      find.text('따뜻하지만 크게 덥지 않아 쾌적해요.'),
+      find.text('맑은 하늘이 이어지는 날씨예요.'),
       findsOneWidget,
     );
     expect(find.textContaining('실제 기온보다 2.0℃'), findsNothing);

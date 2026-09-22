@@ -23,6 +23,7 @@ import {
 } from '../rules/weatherRuleEngine';
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import {
+  enabledRecommendationTypes,
   PREPARATION_RECOMMENDATION_CATALOG,
   runRecommendationEngine,
 } from '../recommendations/recommendationEngine';
@@ -81,10 +82,6 @@ import {
   type MidTermCacheStatus,
 } from '../services/midTermForecastCache';
 import { resolveKmaMidTermLocation } from '../regions/kmaMidTermRegionCatalog';
-import {
-  enrichForecastWithPerceivedTemperature,
-  recentTemperatureContext,
-} from '../thermal/perceivedTemperature';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -152,29 +149,16 @@ router.get('/main', async (c) => {
       ultraShortRecord,
       generatedAt,
     );
-    const coordinates = kmaGridCoordinates(nx, ny);
-    const thermalForecast = enrichForecastWithPerceivedTemperature(
-      { ...forecast, current },
-      {
-        regionKey: locationKey,
-        latitude: coordinates?.latitude,
-        longitude: coordinates?.longitude,
-        now: generatedAt,
-        recentTemperature: recentTemperatureContext(
-          weekly?.status === 'AVAILABLE' ? weekly.value.observedDays : [],
-        ),
-      },
-    );
+    const responseForecast = { ...forecast, current };
     const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
-    const brief = buildWeatherBriefResult(thermalForecast, {
+    const brief = buildWeatherBriefResult(responseForecast, {
       regionKey: locationKey,
       now: generatedAt,
       ...sunTimes,
     });
-    const thermalCurrent = thermalForecast.current;
     const response: TodayWeatherResponse = {
-      dataSource: thermalCurrent.dataRole === 'OBSERVATION'
-        ? `${forecast.dataSource} · ${currentObservationSourceLabel(thermalCurrent)} · 서버 중앙 수집`
+      dataSource: current.dataRole === 'OBSERVATION'
+        ? `${forecast.dataSource} · ${currentObservationSourceLabel(current)} · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
@@ -182,10 +166,10 @@ router.get('/main', async (c) => {
       briefing: brief.intent,
       briefingTimeline: brief.timeline,
       ...sunTimes,
-      current: thermalCurrent,
+      current,
       nextForecast:
         nextForecastSnapshot(
-          thermalForecast.hourly,
+          responseForecast.hourly,
           generatedAt,
           weekly?.status === 'AVAILABLE'
             ? weekly.value.airQuality
@@ -288,38 +272,29 @@ router.get('/today', async (c) => {
       ultraShortRecord,
       generatedAt,
     );
-    const thermalCoordinates = coordinates ?? kmaGridCoordinates(nx, ny);
-    const thermalForecast = enrichForecastWithPerceivedTemperature(
-      { ...forecast, current },
-      {
-        regionKey: locationKey,
-        latitude: thermalCoordinates?.latitude,
-        longitude: thermalCoordinates?.longitude,
-        now: generatedAt,
-        recentTemperature: recentTemperatureContext(
-          weeklyRecord?.status === 'AVAILABLE'
-            ? weeklyRecord.value.observedDays
-            : [],
-        ),
-      },
-    );
-    const thermalCurrent = thermalForecast.current;
+    const responseForecast = { ...forecast, current };
     const environmentalData = regionRecord.value.environmental;
-    const precipitation = precipitationRecord?.value;
+    const precipitation = precipitationRecord?.status === 'AVAILABLE'
+      ? precipitationRecord.value
+      : undefined;
     const warningsResultValue = warningRecord?.value ?? {
       warnings: [],
       regionName: region?.name,
     };
     const roadIce = roadIceRecord?.value ?? undefined;
-    const roadControl = roadControlRecord?.value ?? undefined;
+    const roadControl = roadControlRecord?.status === 'AVAILABLE'
+      ? roadControlRecord.value ?? undefined
+      : undefined;
     const optionalTimeouts: OptionalProviderTimeouts = {
-      precipitation: coordinates !== undefined && precipitationRecord === null,
+      precipitation:
+        coordinates !== undefined && precipitationRecord?.status !== 'AVAILABLE',
       warning: warningRecord === null,
       roadIce:
         roadIceInSeason &&
         coordinates !== undefined &&
         roadIceRecord === null,
-      roadControl: coordinates !== undefined && roadControlRecord === null,
+      roadControl:
+        coordinates !== undefined && roadControlRecord?.status !== 'AVAILABLE',
     };
     logOptionalProviderTimeouts({
       environmentalUv: environmentalData.providerTimeouts?.uv ?? false,
@@ -327,7 +302,7 @@ router.get('/today', async (c) => {
         environmentalData.providerTimeouts?.airQuality ?? false,
       ...optionalTimeouts,
     });
-    const decisionHourly = thermalForecast.hourly.slice(0, 24);
+    const decisionHourly = responseForecast.hourly.slice(0, 24);
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
     const recommendations = runRecommendationEngine(lifestyle, settings, {
@@ -362,14 +337,16 @@ router.get('/today', async (c) => {
       ny,
       coordinates,
     );
-    const brief = buildWeatherBriefResult(thermalForecast, {
+    const brief = buildWeatherBriefResult(responseForecast, {
       regionKey: locationKey,
       now: generatedAt,
+      allowedRecommendedItems: enabledRecommendationTypes(settings),
+      expandedPreparations,
       ...sunTimes,
     });
     const response: TodayWeatherResponse = {
-      dataSource: thermalCurrent.dataRole === 'OBSERVATION'
-        ? `${forecast.dataSource} · ${currentObservationSourceLabel(thermalCurrent)} · 서버 중앙 수집`
+      dataSource: current.dataRole === 'OBSERVATION'
+        ? `${forecast.dataSource} · ${currentObservationSourceLabel(current)} · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionLabel },
       brief: brief.text,
@@ -378,12 +355,12 @@ router.get('/today', async (c) => {
       briefingTimeline: brief.timeline,
       ...sunTimes,
       current: {
-        ...thermalCurrent,
+        ...current,
         activeWarnings: warnings,
       },
       nextForecast:
         nextForecastSnapshot(
-          thermalForecast.hourly,
+          responseForecast.hourly,
           generatedAt,
           weeklyRecord?.status === 'AVAILABLE'
             ? weeklyRecord.value.airQuality
@@ -392,7 +369,7 @@ router.get('/today', async (c) => {
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
-      hourly: thermalForecast.hourly,
+      hourly: responseForecast.hourly,
       recommendations,
       lifestyleMessages: [
         ...warningMessages,
@@ -404,9 +381,14 @@ router.get('/today', async (c) => {
       dataStatusMessages: [
         ...buildEnvironmentalDataStatusMessages(environmentalData.sources),
         ...buildOptionalProviderTimeoutStatusMessages(optionalTimeouts),
+        ...buildCurrentOptionalDataStatusMessages({
+          coordinatesAvailable: coordinates !== undefined,
+          precipitationRecord,
+          roadControlRecord,
+        }),
       ],
       timeline: buildTimeline(
-        thermalForecast.timelineHourly ?? thermalForecast.hourly,
+        responseForecast.timelineHourly ?? responseForecast.hourly,
         settings,
         generatedAt.toISOString(),
         expandedPreparations,
@@ -842,6 +824,7 @@ export function currentFromUltraShortObservation(
       ...forecast,
       temperature: undefined,
       apparentTemperature: undefined,
+      kmaApparentTemperature: undefined,
       apparentTemperatureSource: undefined,
       apparentTemperatureFormulaVersion: undefined,
       humidity: undefined,
@@ -870,6 +853,7 @@ export function currentFromUltraShortObservation(
     fetchedAt: record.updatedAt,
     temperature: observation.temperature,
     apparentTemperature,
+    kmaApparentTemperature: apparentTemperature,
     apparentTemperatureSource: apparentTemperature === undefined
       ? undefined
       : 'APP_KMA_METHOD_FROM_OBSERVATION',
@@ -961,12 +945,17 @@ export function forecastForCurrentHour(
 ): WeatherForecast {
   const hourStart = new Date(now);
   hourStart.setUTCMinutes(0, 0, 0);
-  const hourly = forecast.hourly.filter((snapshot) => {
-    const forecastAt = Date.parse(snapshot.forecastAt ?? snapshot.observedAt);
-    return Number.isFinite(forecastAt) && forecastAt >= hourStart.getTime();
-  });
+  const hourly = forecast.hourly
+    .filter((snapshot) => {
+      const forecastAt = Date.parse(snapshot.forecastAt ?? snapshot.observedAt);
+      return Number.isFinite(forecastAt) && forecastAt >= hourStart.getTime();
+    })
+    .map(withKmaApparentTemperature);
+  const timelineHourly = forecast.timelineHourly?.map(
+    withKmaApparentTemperature,
+  );
   const first = hourly[0];
-  if (!first) return { ...forecast, hourly: [] };
+  if (!first) return { ...forecast, hourly: [], timelineHourly };
 
   return {
     ...forecast,
@@ -986,6 +975,22 @@ export function forecastForCurrentHour(
       ozoneGrade: first.ozoneGrade ?? forecast.current.ozoneGrade,
     },
     hourly,
+    timelineHourly,
+  };
+}
+
+function withKmaApparentTemperature(
+  snapshot: WeatherSnapshot,
+): WeatherSnapshot {
+  if (
+    snapshot.kmaApparentTemperature !== undefined ||
+    snapshot.apparentTemperature === undefined
+  ) {
+    return snapshot;
+  }
+  return {
+    ...snapshot,
+    kmaApparentTemperature: snapshot.apparentTemperature,
   };
 }
 
@@ -1424,6 +1429,42 @@ export function buildOptionalProviderTimeoutStatusMessages(
           '도로 통제',
           '자료를 받아오지 못해 현재 도로 통제 상태를 확인하기 어려워요',
           '국가교통정보센터 돌발상황정보',
+        )
+      : undefined,
+  ].filter((message): message is WeatherMessagePart => message !== undefined);
+}
+
+export function buildCurrentOptionalDataStatusMessages(input: {
+  coordinatesAvailable: boolean;
+  precipitationRecord: CollectedCacheRecord<CurrentPrecipitationObservation> | null;
+  roadControlRecord: CollectedCacheRecord<OfficialRoadControl | null> | null;
+}): WeatherMessagePart[] {
+  if (!input.coordinatesAvailable) return [];
+  const precipitation = input.precipitationRecord?.status === 'AVAILABLE'
+    ? input.precipitationRecord.value
+    : undefined;
+  const roadControlAvailable = input.roadControlRecord?.status === 'AVAILABLE';
+  return [
+    precipitation?.state === 'DRY'
+      ? dataStatusMessage(
+          '현재 강수',
+          '기상청 관측분석자료와 레이더에서 현재 강수가 확인되지 않았어요',
+          '기상청 관측분석자료·기상청 레이더',
+          false,
+        )
+      : precipitation?.state === 'MISMATCH'
+        ? dataStatusMessage(
+            '현재 강수',
+            '기상청 관측분석자료와 레이더의 판단이 달라 현재 강수 여부를 확정하기 어려워요',
+            '기상청 관측분석자료·기상청 레이더',
+          )
+        : undefined,
+    roadControlAvailable && input.roadControlRecord?.value == null
+      ? dataStatusMessage(
+          '도로 통제',
+          '현재 위치 반경 3km 이내에 명시된 활성 도로 통제가 없어요',
+          '국가교통정보센터 돌발상황정보',
+          false,
         )
       : undefined,
   ].filter((message): message is WeatherMessagePart => message !== undefined);

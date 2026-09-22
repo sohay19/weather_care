@@ -103,9 +103,6 @@ void main() {
         temperature: 22,
         forecastAt: '2026-09-16T10:00:00+09:00',
         apparentTemperature: 21.5,
-        perceivedTemperature: 21.5,
-        thermalSensation: 'COMFORTABLE',
-        thermalBrief: '햇볕과 바람을 반영하면 쾌적하게 느껴져요.',
         humidity: 55,
         windSpeed: 2,
         uvIndex: 4,
@@ -117,8 +114,6 @@ void main() {
         temperature: 23,
         forecastAt: '2026-09-16T11:00:00+09:00',
         apparentTemperature: 22.5,
-        perceivedTemperature: 22.5,
-        thermalSensation: 'COMFORTABLE',
         humidity: 64,
         windSpeed: 3.2,
         uvIndex: 5,
@@ -198,7 +193,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.text('햇볕과 바람을 반영하면 쾌적하게 느껴져요.'),
+      find.text('맑은 하늘이 이어지는 날씨예요.'),
       findsOneWidget,
     );
     final currentWeatherRow = tester.getRect(

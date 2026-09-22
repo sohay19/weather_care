@@ -93,6 +93,7 @@ struct WidgetSnapshot: Codable {
   let nextCondition: String
   let nextTemperature: String
   let preparations: [WidgetPreparation]
+  let preparationCatalog: [WidgetPreparation]?
 
   static let placeholder = WidgetSnapshot(
     briefingId: nil,
@@ -118,7 +119,8 @@ struct WidgetSnapshot: Codable {
       WidgetPreparation(type: "UMBRELLA", label: "우산"),
       WidgetPreparation(type: "OUTERWEAR", label: "두꺼운 겉옷"),
       WidgetPreparation(type: "MASK", label: "마스크")
-    ]
+    ],
+    preparationCatalog: nil
   )
 
   static let empty = WidgetSnapshot(
@@ -141,7 +143,8 @@ struct WidgetSnapshot: Codable {
     nextTime: "예보 준비 중",
     nextCondition: "unknown",
     nextTemperature: "--°",
-    preparations: []
+    preparations: [],
+    preparationCatalog: nil
   )
 
   static func load() -> WidgetSnapshot {
@@ -177,7 +180,10 @@ struct WidgetSnapshot: Codable {
       scene: active.sceneId,
       short: active.shortMessage,
       long: active.longMessage,
-      preparations: preparations.filter { intended.contains($0.type) }
+      preparations: (preparationCatalog ?? preparations)
+        .filter { intended.contains($0.type) }
+        .prefix(3)
+        .map { $0 }
     )
   }
 
@@ -224,7 +230,8 @@ struct WidgetSnapshot: Codable {
       nextTime: nextTime,
       nextCondition: nextCondition,
       nextTemperature: nextTemperature,
-      preparations: preparations
+      preparations: preparations,
+      preparationCatalog: preparationCatalog
     )
   }
 }

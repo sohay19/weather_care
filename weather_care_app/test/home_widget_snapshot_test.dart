@@ -42,7 +42,7 @@ void main() {
     expect(snapshot.refreshTime, '오전 8:20 기준');
     expect(snapshot.condition, 'drizzle');
     expect(snapshot.currentTemperature, '18°');
-    expect(snapshot.apparentTemperature, '16.8°');
+    expect(snapshot.apparentTemperature, '17.5°');
     expect(snapshot.minimumTemperature, '12°');
     expect(snapshot.maximumTemperature, '20°');
     expect(snapshot.sceneId, 'RAIN');
@@ -158,6 +158,39 @@ void main() {
     expect(snapshot.shortMessage, '선선하고 편안한 날씨예요.');
     expect(snapshot.shortMessage, isNot(contains('자외선')));
   });
+
+  test('위젯 준비물은 추천 엔진이 아니라 현재 브리핑을 따르고 미래 목록도 보존한다', () {
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: _today(
+        briefingTimeline: [
+          _timelineEntry(
+            sceneId: 'HUMIDITY_LOW',
+            from: '2026-09-19T03:00:00Z',
+            until: '2026-09-19T04:00:00Z',
+            short: '공기가 건조해요.',
+            recommendedItems: const ['WATER'],
+          ),
+          _timelineEntry(
+            sceneId: 'RAIN',
+            from: '2026-09-19T04:00:00Z',
+            until: '2026-09-19T05:00:00Z',
+            short: '비 소식, 우산 챙기세요.',
+            recommendedItems: const ['UMBRELLA', 'RAINCOAT'],
+          ),
+        ],
+        recommendations: const [],
+      ),
+      now: DateTime.parse('2026-09-19T03:30:00Z'),
+    );
+
+    expect(snapshot.preparations.map((item) => item.type), ['WATER']);
+    expect(
+      snapshot.preparationCatalog.map((item) => item.type),
+      ['WATER', 'UMBRELLA', 'RAINCOAT'],
+    );
+    final encoded = jsonDecode(snapshot.encode()) as Map<String, dynamic>;
+    expect((encoded['preparationCatalog'] as List), hasLength(3));
+  });
 }
 
 TodayWeatherResponse _today({
@@ -179,8 +212,6 @@ TodayWeatherResponse _today({
     current: const CurrentWeather(
       temperature: 18,
       apparentTemperature: 17.5,
-      perceivedTemperature: 16.8,
-      thermalSensation: 'COOL_COMFORTABLE',
       sky: '빗방울',
     ),
     nextForecast: const CurrentWeather(
@@ -226,12 +257,14 @@ BriefingTimelineEntry _timelineEntry({
   required String from,
   required String until,
   required String short,
+  List<String> recommendedItems = const [],
 }) =>
     BriefingTimelineEntry(
       briefingId: '57/124:20260919:$sceneId',
       sceneId: sceneId,
       validFrom: from,
       validUntil: until,
+      recommendedItems: recommendedItems,
       copy: BriefingCopy(
         short: short,
         medium: short,

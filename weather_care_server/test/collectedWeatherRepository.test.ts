@@ -2,6 +2,7 @@ import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getCollectedCache,
+  locationCacheKey,
   saveCollectedCache,
 } from '../src/database/collectedWeatherRepository';
 
@@ -44,5 +45,14 @@ describe('collected weather repository', () => {
     });
     await expect(getCollectedCache(env.DB, 'COLLECTED_PRECIPITATION_12345678'))
       .resolves.toMatchObject({ value: { precipitation: true } });
+  });
+
+  it('uses one cache key for ordinary stationary GPS drift', () => {
+    expect(locationCacheKey(37.48771, 126.89391)).toBe(
+      locationCacheKey(37.48774, 126.89394),
+    );
+    expect(locationCacheKey(37.48771, 126.89391)).not.toBe(
+      locationCacheKey(37.48901, 126.89501),
+    );
   });
 });

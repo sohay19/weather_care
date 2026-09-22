@@ -41,11 +41,11 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : current.provider?.contains('AWS') == true
                 ? '기상청 AWS 관측'
                 : '기상청 초단기실황';
-    final perceivedTemperature = current.displayedPerceivedTemperature;
+    final apparentTemperature = current.displayedApparentTemperature;
     final missing = <String>[
       if (current.temperature == null) '현재 기온',
       if (current.sky == null) '하늘 상태',
-      if (perceivedTemperature == null) '체감온도',
+      if (apparentTemperature == null) '체감온도',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null && current.windDirection == null) '바람',
       if (current.visibilityMeters == null) '가시거리',
@@ -57,13 +57,13 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
       _WeatherMetric(
         icon: Icons.device_thermostat_rounded,
         label: '체감',
-        value: perceivedTemperature == null
+        value: apparentTemperature == null
             ? '자료 없음'
-            : '${perceivedTemperature.toStringAsFixed(1)}℃',
-        levelTitle: _thermalSensationLevel(current.thermalSensation),
-        detailBody: perceivedTemperature == null
+            : '${apparentTemperature.toStringAsFixed(1)}℃',
+        levelTitle: '기상청 방식으로 계산한 체감온도예요',
+        detailBody: apparentTemperature == null
             ? '기온·습도·풍속 입력자료가 모두 갖춰지지 않았거나 체감온도 계산조건에 맞지 않아 값을 만들지 않았어요.\n빠진 값을 0으로 바꿔 계산하지 않아요.'
-            : _perceivedTemperatureDetail(
+            : _kmaApparentTemperatureDetail(
                 current,
                 currentSource,
                 isObservation,
@@ -350,44 +350,24 @@ String? _koreaObservationClock(String? timestamp) {
       '${korea.minute.toString().padLeft(2, '0')}분 관측';
 }
 
-String _thermalSensationLevel(String? sensation) {
-  final level = switch (sensation) {
-    'VERY_COLD' => '매우 춥고 매서운',
-    'COLD' => '추운',
-    'CHILLY' => '꽤 쌀쌀한',
-    'COOL' => '서늘한',
-    'COOL_COMFORTABLE' => '선선하고 쾌적한',
-    'COMFORTABLE' => '쾌적한',
-    'WARM_COMFORTABLE' => '따뜻하고 쾌적한',
-    'WARM' => '따뜻함이 뚜렷한',
-    'SLIGHTLY_HOT' => '조금 더운',
-    'HOT' => '더운',
-    'VERY_HOT' => '매우 더운',
-    'EXTREME_HOT' => '극심하게 더운',
-    _ => null,
-  };
-  return level == null ? '체감온도 수준을 확인하기 어려워요' : '사람 중심 체감은 $level 수준이에요';
-}
-
-String _perceivedTemperatureDetail(
+String _kmaApparentTemperatureDetail(
   CurrentWeather current,
   String currentSource,
   bool isObservation,
 ) {
-  final perceived = current.displayedPerceivedTemperature!;
+  final apparent = current.displayedApparentTemperature!;
   final parts = <String>[
-    '$currentSource의 기온·상대습도·풍속과 햇볕·옷차림 추정치를 함께 반영한 '
-        '${isObservation ? '' : '예상 '}체감온도는 ${perceived.toStringAsFixed(1)}℃예요.',
+    '$currentSource의 기온과 상대습도(5~9월) 또는 기온과 풍속(10~4월)을 '
+        '기상청 산식에 적용한 ${isObservation ? '' : '예상 '}체감온도는 '
+        '${apparent.toStringAsFixed(1)}℃예요.',
   ];
-  final difference = current.perceivedDifference;
-  if (difference != null && difference.abs() >= 0.6) {
+  final temperature = current.temperature;
+  if (temperature != null && (apparent - temperature).abs() >= 0.6) {
+    final difference = apparent - temperature;
     parts.add(
       '실제 기온보다 ${difference.abs().toStringAsFixed(1)}℃ '
       '${difference > 0 ? '높게' : '낮게'} 계산됐어요.',
     );
-  }
-  if (current.perceivedConfidence == 'LOW') {
-    parts.add('일부 환경자료가 없어 기온과 바람·습도를 중심으로 계산했어요.');
   }
   return parts.join('\n');
 }

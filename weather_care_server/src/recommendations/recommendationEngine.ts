@@ -17,6 +17,15 @@ export interface RecommendationEngineOptions {
   includeLegacyHeavySnowCaution?: boolean;
 }
 
+export function enabledRecommendationTypes(
+  settings?: Partial<NotificationSettings>,
+): RecommendationType[] {
+  return (Object.entries(recommendationTypeSettings(settings)) as
+    [RecommendationType, boolean][])
+    .filter(([, enabled]) => enabled)
+    .map(([type]) => type);
+}
+
 const LEGACY_RECOMMENDATIONS: Partial<
   Record<LifestyleInsight['type'], RecommendationType[]>
 > = {
@@ -53,25 +62,7 @@ export function runRecommendationEngine(
   settings?: Partial<NotificationSettings>,
   options: RecommendationEngineOptions = {},
 ): Recommendation[] {
-  const enabled: Record<RecommendationType, boolean> = {
-    UMBRELLA: settings?.umbrellaEnabled ?? true,
-    RAINCOAT: settings?.umbrellaEnabled ?? true,
-    RAIN_BOOTS: settings?.umbrellaEnabled ?? true,
-    PARASOL: settings?.parasolEnabled ?? true,
-    SUNGLASSES: settings?.parasolEnabled ?? true,
-    HEAVY_SNOW_CAUTION: settings?.heavySnowEnabled ?? true,
-    OUTERWEAR: settings?.outerwearEnabled ?? true,
-    SCARF: settings?.outerwearEnabled ?? true,
-    HAND_WARMER: settings?.outerwearEnabled ?? true,
-    MASK: settings?.maskEnabled ?? true,
-    WATER: settings?.waterEnabled ?? true,
-    PORTABLE_FAN: settings?.waterEnabled ?? true,
-    COOLING_ITEM: settings?.waterEnabled ?? true,
-    SUNSCREEN: settings?.sunscreenEnabled ?? true,
-    SNOW_CHAINS: settings?.heavySnowEnabled ?? true,
-    POWER_BANK: settings?.heavySnowEnabled ?? true,
-    WINTER_BOOTS: settings?.heavySnowEnabled ?? true,
-  };
+  const enabled = recommendationTypeSettings(settings);
 
   const recs: Recommendation[] = [];
   const allInsightTypes = insights.map((item) => item.type);
@@ -104,13 +95,13 @@ export function runRecommendationEngine(
         reasonCodes,
         validFrom,
         validUntil,
+        actionDeadline,
+        providerRefs: providerRefsFor(insight),
+        sourceFields: sourceFieldsFor(insight),
         notificationEligible:
           !['OUTERWEAR', 'SCARF', 'HAND_WARMER'].includes(type) ||
           insight.score >= 70,
         reasons: [reasonLabel(insight.type)],
-        sourceFields: sourceFieldsFor(insight),
-        actionDeadline,
-        providerRefs: providerRefsFor(insight),
         decisionVersion: DECISION_VERSION,
         catalogVersion: CATALOG_VERSION,
       });
@@ -120,6 +111,30 @@ export function runRecommendationEngine(
   // 기본 가드: 우산/양산/선크림은 함께 나올 수 있어도 duplicate는 제거
   const dedup = deduplicate(recs);
   return sortRecommendations(dedup);
+}
+
+function recommendationTypeSettings(
+  settings?: Partial<NotificationSettings>,
+): Record<RecommendationType, boolean> {
+  return {
+    UMBRELLA: settings?.umbrellaEnabled ?? true,
+    RAINCOAT: settings?.umbrellaEnabled ?? true,
+    RAIN_BOOTS: settings?.umbrellaEnabled ?? true,
+    PARASOL: settings?.parasolEnabled ?? true,
+    SUNGLASSES: settings?.parasolEnabled ?? true,
+    HEAVY_SNOW_CAUTION: settings?.heavySnowEnabled ?? true,
+    OUTERWEAR: settings?.outerwearEnabled ?? true,
+    SCARF: settings?.outerwearEnabled ?? true,
+    HAND_WARMER: settings?.outerwearEnabled ?? true,
+    MASK: settings?.maskEnabled ?? true,
+    WATER: settings?.waterEnabled ?? true,
+    PORTABLE_FAN: settings?.waterEnabled ?? true,
+    COOLING_ITEM: settings?.waterEnabled ?? true,
+    SUNSCREEN: settings?.sunscreenEnabled ?? true,
+    SNOW_CHAINS: settings?.heavySnowEnabled ?? true,
+    POWER_BANK: settings?.heavySnowEnabled ?? true,
+    WINTER_BOOTS: settings?.heavySnowEnabled ?? true,
+  };
 }
 
 function recommendationTypesFor(

@@ -120,7 +120,7 @@ describe('notification destinations', () => {
       observedAt: '2026-09-21T20:00:00+09:00',
       forecastAt: '2026-09-21T20:00:00+09:00',
       temperature: 22,
-      thermalSensation: 'COMFORTABLE',
+      apparentTemperature: 22,
     };
     forecast.hourly = [{
       observedAt: '2026-09-21T14:00:00+09:00',

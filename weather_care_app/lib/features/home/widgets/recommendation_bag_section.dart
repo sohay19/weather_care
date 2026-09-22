@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
+import '../../../models/weather.dart';
 import '../../../services/preparation_checklist_repository.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
@@ -11,6 +12,8 @@ import 'preparation_icon.dart';
 class RecommendationBagSection extends StatefulWidget {
   final String regionName;
   final List<WeatherRecommendation> recommendations;
+  final CanonicalBriefing? briefing;
+  final List<BriefingTimelineEntry> briefingTimeline;
   final ValueChanged<RecommendationType> onDetail;
   final PreparationChecklistRepository checklistRepository;
   final DateTime Function()? now;
@@ -19,6 +22,8 @@ class RecommendationBagSection extends StatefulWidget {
     super.key,
     required this.regionName,
     required this.recommendations,
+    this.briefing,
+    this.briefingTimeline = const [],
     required this.onDetail,
     this.checklistRepository = const PreparationChecklistRepository(),
     this.now,
@@ -34,6 +39,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   Set<RecommendationType> _checked = {};
   String? _date;
   Timer? _midnightTimer;
+  Timer? _briefingTimer;
   int _loadRevision = 0;
   bool _loading = true;
   bool _saving = false;
@@ -46,19 +52,112 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _refreshDate();
+    _scheduleBriefingBoundary();
   }
 
   @override
   void didUpdateWidget(covariant RecommendationBagSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     _refreshDate();
+    _scheduleBriefingBoundary();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _refreshDate(retry: _loadFailed);
+      _scheduleBriefingBoundary();
+      setState(() {});
+    } else {
+      _briefingTimer?.cancel();
     }
+  }
+
+  void _scheduleBriefingBoundary() {
+    _briefingTimer?.cancel();
+    final now = _now;
+    final boundaries = <DateTime>[];
+    for (final entry in widget.briefingTimeline) {
+      for (final raw in [entry.validFrom, entry.validUntil]) {
+        final value = DateTime.tryParse(raw);
+        if (value != null && value.isAfter(now)) boundaries.add(value);
+      }
+    }
+    if (widget.briefingTimeline.isEmpty && widget.briefing != null) {
+      for (final raw in [
+        widget.briefing!.validFrom,
+        widget.briefing!.validUntil,
+      ]) {
+        final value = DateTime.tryParse(raw);
+        if (value != null && value.isAfter(now)) boundaries.add(value);
+      }
+    }
+    if (boundaries.isEmpty) return;
+    boundaries.sort();
+    final remaining = boundaries.first.difference(now);
+    final delay = remaining > const Duration(minutes: 1)
+        ? const Duration(minutes: 1)
+        : remaining;
+    _briefingTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleBriefingBoundary();
+    });
+  }
+
+  List<WeatherRecommendation> _visibleRecommendations() {
+    final now = _now;
+    List<String>? intended;
+    String description = '';
+    if (widget.briefingTimeline.isNotEmpty) {
+      for (final entry in widget.briefingTimeline) {
+        final from = DateTime.tryParse(entry.validFrom);
+        final until = DateTime.tryParse(entry.validUntil);
+        if (from != null &&
+            until != null &&
+            !now.isBefore(from) &&
+            now.isBefore(until)) {
+          intended = entry.recommendedItems;
+          description = entry.copy.medium;
+          break;
+        }
+      }
+      intended ??= const [];
+    } else if (widget.briefing != null) {
+      final from = DateTime.tryParse(widget.briefing!.validFrom);
+      final until = DateTime.tryParse(widget.briefing!.validUntil);
+      final active = from != null &&
+          until != null &&
+          !now.isBefore(from) &&
+          now.isBefore(until);
+      intended = active ? widget.briefing!.recommendedItems : const [];
+      description = widget.briefing!.copy.medium;
+    }
+    if (intended == null) {
+      return widget.recommendations.where((item) => item.recommended).toList();
+    }
+
+    final existing = {
+      for (final item in widget.recommendations) item.type: item,
+    };
+    final visible = <WeatherRecommendation>[];
+    final seen = <RecommendationType>{};
+    for (final raw in intended) {
+      final type = recommendationTypeFromApiName(raw);
+      if (type == null || !seen.add(type)) continue;
+      final item = existing[type];
+      visible.add(item?.copyWith(recommended: true) ??
+          WeatherRecommendation(
+            type: type,
+            recommended: true,
+            priority: 100 - visible.length,
+            title: type.title,
+            description: description,
+            notificationEligible: false,
+          ));
+      if (visible.length == 3) break;
+    }
+    return visible;
   }
 
   void _refreshDate({bool retry = false}) {
@@ -132,13 +231,14 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   @override
   void dispose() {
     _midnightTimer?.cancel();
+    _briefingTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final visible = widget.recommendations.where((r) => r.recommended).toList();
+    final visible = _visibleRecommendations();
 
     return Container(
       padding: const EdgeInsets.all(20),

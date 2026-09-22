@@ -78,9 +78,6 @@ export interface CanonicalBriefingIntent {
   supportingFact?: string;
   action?: string;
   recommendedItems: RecommendationType[];
-  thermalSensation?: WeatherSnapshot['thermalSensation'];
-  perceivedTemperature?: number;
-  dominantFactor?: NonNullable<WeatherSnapshot['dominantFactors']>[number];
   copyVariantKey: string;
   copy: BriefingCopy;
 }
@@ -202,54 +199,6 @@ export interface WeatherSnapshot {
   apparentTemperatureFormulaVersion?: string;
   /** 기상청 계절별 산식 결과. apparentTemperature는 구버전 호환 별칭이다. */
   kmaApparentTemperature?: number;
-  /** 한국 생활환경을 반영한 사람 중심 열수지 기반 체감온도. */
-  perceivedTemperature?: number;
-  perceivedDifference?: number;
-  perceivedModelVersion?: string;
-  perceivedConfidence?: 'HIGH' | 'MEDIUM' | 'LOW';
-  modelSource?:
-    | 'KR_PT_V2_FROM_OBSERVATION'
-    | 'KR_PT_V2_FROM_FORECAST'
-    | 'KMA_FALLBACK_FROM_OBSERVATION'
-    | 'KMA_FALLBACK_FROM_FORECAST';
-  thermalSensation?:
-    | 'VERY_COLD'
-    | 'COLD'
-    | 'CHILLY'
-    | 'COOL'
-    | 'COOL_COMFORTABLE'
-    | 'COMFORTABLE'
-    | 'WARM_COMFORTABLE'
-    | 'WARM'
-    | 'SLIGHTLY_HOT'
-    | 'HOT'
-    | 'VERY_HOT'
-    | 'EXTREME_HOT';
-  thermalBrief?: string;
-  estimatedClothingClo?: number;
-  estimatedClothingLabel?:
-    | 'VERY_LIGHT'
-    | 'LIGHT'
-    | 'LIGHT_LAYER'
-    | 'JACKET'
-    | 'COAT'
-    | 'LIGHT_PADDING'
-    | 'WINTER_LAYER';
-  thermalSeason?: 'COLD' | 'COOL_TRANSITION' | 'MILD' | 'HOT';
-  recentMeanTemperature7d?: number;
-  temperatureTrend?: 'COLDER_THAN_RECENT' | 'STABLE' | 'WARMER_THAN_RECENT';
-  solarRadiation?: number;
-  meanRadiantTemperature?: number;
-  radiationLevel?: 'LOW' | 'MODERATE' | 'HIGH' | 'VERY_HIGH';
-  dominantFactors?: Array<
-    | 'TEMPERATURE'
-    | 'HUMIDITY'
-    | 'WIND'
-    | 'RADIATION'
-    | 'CLOTHING'
-    | 'PRECIPITATION'
-    | 'RECENT_TEMPERATURE'
-  >;
   dataAgeMinutes?: number;
   sourceLocation?: {
     type: 'GRID' | 'STATION';

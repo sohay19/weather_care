@@ -91,6 +91,8 @@ class MainTab extends StatelessWidget {
                       RecommendationBagSection(
                         regionName: today.region.name,
                         recommendations: today.recommendations,
+                        briefing: today.briefing,
+                        briefingTimeline: today.briefingTimeline,
                         onDetail: onDetail,
                       )
                     else
@@ -192,7 +194,7 @@ class _TodaySection extends StatelessWidget {
           temperatureLabel: '현재 기온',
           temperature: current.temperature,
           apparentLabel: '현재 체감온도',
-          apparentTemperature: current.displayedPerceivedTemperature,
+          apparentTemperature: current.displayedApparentTemperature,
         ),
         const SizedBox(height: 13),
         Padding(
@@ -205,8 +207,6 @@ class _TodaySection extends StatelessWidget {
                 child: Text(
                   _weatherSummaryMessage(
                     sky: current.sky,
-                    thermalBrief: current.thermalBrief,
-                    topLevelBrief: today.brief,
                   ),
                   style: feelingStyle,
                 ),
@@ -513,7 +513,7 @@ class _TodayFutureSection extends StatelessWidget {
             temperatureLabel: '예상 기온',
             temperature: nextForecast.temperature,
             apparentLabel: '예상 체감온도',
-            apparentTemperature: nextForecast.displayedPerceivedTemperature,
+            apparentTemperature: nextForecast.displayedApparentTemperature,
           ),
           const SizedBox(height: 13),
           Container(
@@ -784,7 +784,7 @@ class _TopWeatherCard extends StatelessWidget {
     final current = today.current;
     final missing = <String>[
       if (current.temperature == null) '현재 기온',
-      if (current.displayedPerceivedTemperature == null) '현재 체감온도',
+      if (current.displayedApparentTemperature == null) '현재 체감온도',
       if (current.sky == null) '하늘 상태',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',
@@ -1220,15 +1220,6 @@ String _weatherExpression(String? sky) {
 
 String _weatherSummaryMessage({
   required String? sky,
-  required String? thermalBrief,
-  required String topLevelBrief,
 }) {
-  final serverBrief = thermalBrief?.trim();
-  if (serverBrief != null &&
-      serverBrief.isNotEmpty &&
-      serverBrief != topLevelBrief.trim()) {
-    return serverBrief;
-  }
-  if (serverBrief == topLevelBrief.trim()) return _weatherExpression(sky);
-  return '${_weatherExpression(sky)} 체감 설명을 준비하고 있어요.';
+  return _weatherExpression(sky);
 }

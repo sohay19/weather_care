@@ -28,7 +28,8 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     private static final String ACTION_BRIEFING_BOUNDARY =
             "com.codesoha.weathercare.BRIEFING_BOUNDARY";
     private static final int BRIEFING_ALARM_REQUEST = 1702;
-    private static final int MEDIUM_MIN_WIDTH_DP = 220;
+    // Pixel Launcher 3열(약 169dp)부터 중간 위젯이다.
+    private static final int MEDIUM_MIN_WIDTH_DP = 150;
     private static final int TEXT_PRIMARY = Color.rgb(37, 55, 78);
     private static final int TEXT_SECONDARY = Color.rgb(96, 117, 138);
     private static final int TEXT_MIN_MAX = Color.rgb(66, 90, 114);
@@ -644,10 +645,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     }
                 }
             }
-            JSONArray rawPreparations = json.optJSONArray("preparations");
+            JSONArray rawPreparations = json.optJSONArray("preparationCatalog");
+            if (rawPreparations == null) {
+                rawPreparations = json.optJSONArray("preparations");
+            }
             List<Preparation> preparations = new ArrayList<>();
             if (rawPreparations != null) {
-                for (int index = 0; index < rawPreparations.length() && index < 3; index++) {
+                for (int index = 0; index < rawPreparations.length(); index++) {
                     JSONObject item = rawPreparations.optJSONObject(index);
                     if (item == null) continue;
                     preparations.add(new Preparation(
@@ -706,6 +710,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             for (Preparation item : preparations) {
                 if (selected.recommendedItems().contains(item.type())) {
                     matching.add(item);
+                    if (matching.size() == 3) break;
                 }
             }
             return withBriefing(

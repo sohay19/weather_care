@@ -36,6 +36,7 @@ describe('KmaWeatherProvider', () => {
     expect(forecast.hourly).toHaveLength(2);
     expect(forecast.current.temperature).toBeUndefined();
     expect(forecast.current.apparentTemperature).toBeUndefined();
+    expect(forecast.current.kmaApparentTemperature).toBeUndefined();
     expect(forecast.current.skyCondition).toBe('비');
     expect(forecast.daily[0].minTemperature).toBeUndefined();
     expect(forecast.daily[0].maxTemperature).toBeUndefined();
@@ -210,6 +211,7 @@ describe('KmaWeatherProvider', () => {
     expect(forecast.dataSource).toBe('기상청 단기예보');
     expect(forecast.current.temperature).toBe(28);
     expect(forecast.current.apparentTemperature).toBe(29.3);
+    expect(forecast.current.kmaApparentTemperature).toBe(29.3);
     expect(forecast.current.minTemperature).toBe(22);
     expect(forecast.current.maxTemperature).toBe(31);
     expect(forecast.hourly).toHaveLength(3);

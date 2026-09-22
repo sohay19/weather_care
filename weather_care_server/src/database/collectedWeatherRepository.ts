@@ -40,7 +40,9 @@ export interface CollectedSourceVersion {
 }
 
 export function locationCacheKey(latitude: number, longitude: number): string {
-  const normalized = `${latitude.toFixed(5)}:${longitude.toFixed(5)}`;
+  // GPS는 정지 상태에서도 수 m씩 흔들린다. 500 m 레이더/3 km 도로 조회를
+  // 1 m 단위 키로 나누면 새로고침 직후마다 아직 수집되지 않은 캐시를 찾게 된다.
+  const normalized = `${latitude.toFixed(3)}:${longitude.toFixed(3)}`;
   let hash = 2166136261;
   for (let index = 0; index < normalized.length; index += 1) {
     hash ^= normalized.charCodeAt(index);

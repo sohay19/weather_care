@@ -95,7 +95,7 @@ class HomeWidgetBriefingEntry {
 }
 
 class HomeWidgetSnapshot {
-  static const schemaVersion = 2;
+  static const schemaVersion = 3;
 
   final String generatedAt;
   final String locationKey;
@@ -119,6 +119,7 @@ class HomeWidgetSnapshot {
   final String nextCondition;
   final String nextTemperature;
   final List<HomeWidgetPreparation> preparations;
+  final List<HomeWidgetPreparation> preparationCatalog;
 
   const HomeWidgetSnapshot({
     required this.generatedAt,
@@ -143,6 +144,7 @@ class HomeWidgetSnapshot {
     required this.nextCondition,
     required this.nextTemperature,
     required this.preparations,
+    required this.preparationCatalog,
   });
 
   factory HomeWidgetSnapshot.fromWeather({
@@ -152,7 +154,7 @@ class HomeWidgetSnapshot {
   }) {
     final instant = now ?? DateTime.now();
     final daily = _todayForecast(weekly?.days ?? const [], instant);
-    final activeRecommendations = List<WeatherRecommendation>.from(
+    final fallbackRecommendations = List<WeatherRecommendation>.from(
       today.recommendations.where((item) => item.recommended),
     )..sort((a, b) => b.priority.compareTo(a.priority));
     final briefingTimeline = today.briefingTimeline
@@ -164,20 +166,17 @@ class HomeWidgetSnapshot {
       );
     }
     final activeBriefing = _activeBriefing(briefingTimeline, instant);
-    final intendedItems =
-        briefingTimeline.expand((entry) => entry.recommendedItems).toSet();
-    final distinctPreparations = <RecommendationType>{};
-    final preparations = activeRecommendations
-        .where((item) => intendedItems.contains(item.type.apiName))
-        .where((item) => distinctPreparations.add(item.type))
-        .take(3)
-        .map(
-          (item) => HomeWidgetPreparation(
-            type: item.type.apiName,
-            label: item.type.label,
-          ),
-        )
-        .toList(growable: false);
+    final hasCanonicalBriefing = briefingTimeline.isNotEmpty;
+    final fallbackTypes =
+        fallbackRecommendations.map((item) => item.type.apiName);
+    final currentTypes = hasCanonicalBriefing
+        ? activeBriefing?.recommendedItems ?? const <String>[]
+        : fallbackTypes;
+    final catalogTypes = hasCanonicalBriefing
+        ? briefingTimeline.expand((entry) => entry.recommendedItems)
+        : fallbackTypes;
+    final preparations = _preparationsFromTypes(currentTypes, limit: 3);
+    final preparationCatalog = _preparationsFromTypes(catalogTypes);
     final fallbackBrief = _singleSpaced(today.brief);
     final brief = _singleSpaced(
       activeBriefing?.longMessage ??
@@ -204,7 +203,7 @@ class HomeWidgetSnapshot {
       condition: widgetWeatherCondition(today.current.sky),
       currentTemperature: _temperature(today.current.temperature),
       apparentTemperature: _temperature(
-          today.current.displayedPerceivedTemperature ??
+          today.current.displayedApparentTemperature ??
               today.current.temperature),
       minimumTemperature: _temperature(daily?.min),
       maximumTemperature: _temperature(daily?.max),
@@ -215,6 +214,7 @@ class HomeWidgetSnapshot {
       nextCondition: widgetWeatherCondition(next?.sky ?? today.current.sky),
       nextTemperature: _temperature(next?.temperature),
       preparations: preparations,
+      preparationCatalog: preparationCatalog,
     );
   }
 
@@ -243,9 +243,26 @@ class HomeWidgetSnapshot {
         'nextCondition': nextCondition,
         'nextTemperature': nextTemperature,
         'preparations': preparations.map((item) => item.toJson()).toList(),
+        'preparationCatalog':
+            preparationCatalog.map((item) => item.toJson()).toList(),
       };
 
   String encode() => jsonEncode(toJson());
+}
+
+List<HomeWidgetPreparation> _preparationsFromTypes(
+  Iterable<String> rawTypes, {
+  int? limit,
+}) {
+  final result = <HomeWidgetPreparation>[];
+  final seen = <RecommendationType>{};
+  for (final raw in rawTypes) {
+    final type = recommendationTypeFromApiName(raw);
+    if (type == null || !seen.add(type)) continue;
+    result.add(HomeWidgetPreparation(type: type.apiName, label: type.label));
+    if (limit != null && result.length >= limit) break;
+  }
+  return result;
 }
 
 String compactWidgetRegionName(String value) {

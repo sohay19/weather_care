@@ -7885,6 +7885,16 @@
 - 개인 위치정보를 외부에 제공하지 않고 서버에서 공용 돌발정보를 임시 저장한 뒤 위치 주변 자료를 필터링한다는 개인정보·호출 절감 원칙을 포함했다.
 - 이번 작업은 신청 문구 추천만 수행했으며 앱·서버 코드는 변경하지 않았다.
 
+## 2026-09-22 현재 UI 기준 스토어 스크린샷 갱신
+
+- Android 에뮬레이터에서 현재 Flutter UI를 실제 실행해 Main·Today·Detail·Week·Setting 원본을 다시 캡처했다. 휴대전화 원본은 1080×2400, 태블릿 원본은 1440×2560(약 823dp 폭)이다.
+- 캡처 전용 Debug APK에서만 네이티브 광고·앱 오프닝 광고 시작과 설정의 광고 제거 구매 배너를 숨겼다. 캡처 뒤 임시 소스 분기는 모두 되돌려 앱 코드에는 남기지 않았다.
+- `store/generate_store_screenshots.py`로 Android 1080×1920, iOS 1320×2868, Android 태블릿 1440×2560, iPad 2064×2752 결과물 각 5장과 4개 미리보기를 재생성했다.
+- 최신 Main 원본을 사용해 Google Play feature graphic도 다시 생성하고, `weather-care-store-screenshots.zip`과 `weather-care-store-assets.zip`을 최신 결과로 교체했다.
+- 설정 스크린샷에는 외부 광고와 광고 제거 구매 배너가 모두 보이지 않는다. 현재 운영 자료 상태를 그대로 사용해 Today의 자외선·대기질 일부 항목은 `자료 없음`으로 표시된다.
+- 네 플랫폼 최종 PNG 20장이 규격 크기와 RGB 24비트 형식임을 자동 확인했고, 휴대전화·태블릿·iOS·iPad 미리보기에서 잘림·겹침·광고 노출이 없음을 시각 검토했다. 압축본 목록도 정상 조회했다.
+- Flutter 3.47.4 캡처용 Debug APK 빌드는 성공했다. Release 빌드는 앱 코드 오류가 아니라 플러그인 중간 class 파일을 찾지 못하는 Android Lint 내부 오류로 중단되어 캡처에는 사용하지 않았다.
+
 ## 2026-09-22 APIHub 실황·ITS 전국 공용 캐시 배포
 
 - APIHub 격자 실황의 차원 헤더 없는 `149×253=37,697`개 운영 원본과, AWS 지점목록의 미발간 월·`items.item[0].stn_aws.info` 중첩 응답을 지원했다. 커밋은 `d8e0ab8 fix(관측): APIHub 운영 응답 형식 지원`이다.
@@ -7906,3 +7916,121 @@
 - 미니 PC에서는 `/opt/weather-care-relay`, `/etc/weather-care-relay.env`, relay systemd 서비스·정리 타이머, 전용 journald 설정·17MB 전용 로그, `/home/ubuntu/weather-care-log-setup` 설치 사본을 삭제했다. relay 서비스와 타이머는 `not-found`, Tailscale Funnel은 `No serve config`이며 `weather-care-api`·`weather-care-scheduler`·`cloudflared`는 active, 내부 `/health`는 `ok`다. 삭제한 운영 환경파일과 전용 로그는 이 작업에서 별도 백업하지 않았다.
 - API 사용 한도는 사용자 요청대로 변경하지 않았다. `APIHUB_DAILY_CALL_LIMIT=18,000`, `APIHUB_DAILY_BYTE_LIMIT=4,500,000,000`, `ITS_MONTHLY_REQUEST_LIMIT=9,000`을 유지했고 `weather_care_server`에는 작업 diff가 없다.
 - 기존 작업 중이던 앱 광고 설정과 스토어 스크린샷 변경은 수정하지 않았다.
+
+## 2026-09-22 구로동 기상청·앱 체감온도 차이 진단
+
+- 사용자가 제공한 기상청 날씨누리 화면은 15:20 현재 기온 `29.3℃`, 체감온도 `26.9℃`였다.
+- 같은 구로동 단기예보 격자 `58/125`의 운영 `/main`·`/today`를 읽기 전용으로 조회했다. 15:20 APIHub 격자 실황은 `T1H=29.3℃`, `REH=31.4%`, `WSD=1.1m/s`였고 서버의 기상청 여름 산식 결과 `apparentTemperature`·`kmaApparentTemperature`도 모두 `26.9℃`여서 날씨누리 표시와 일치했다.
+- 서버는 같은 입력에 맑음·자외선지수 4로 평균복사온도 `41.0℃`를 추정하고 최근 7일 평균기온·예상 착의량·가벼운 걷기를 Fanger PMV 등가온도에 반영해 자체 `perceivedTemperature=31.7℃`를 만들었다. 앱의 `displayedPerceivedTemperature`가 이 자체 값을 `apparentTemperature`보다 우선하므로 사용자가 본 `32.1℃`도 기상청 수신값이 아니라 직전 관측 회차의 자체 계산값이다.
+- 사용자가 본 앱 기온 `29.8℃`와 날씨누리 `29.3℃`의 0.5℃ 차이는 10분 수집·캐시 회차 차이로 판단된다. 점검 시 운영 서버는 15:30 수집에서 15:20 관측을 받아 날씨누리와 같은 `29.3℃`로 갱신돼 있었다.
+- 권고안은 앱의 일반 `체감` 숫자를 기상청 방식 값(`kmaApparentTemperature`, 호환용 `apparentTemperature`)으로 표시하고, 현재 자체 모델은 필요할 때 `햇볕 아래 활동 체감`처럼 별도 이름의 보조정보로 분리하는 것이다. 현재 자체 모델의 복사환경은 실측 일사가 아니라 하늘상태·태양고도·UV 추정치이므로 일반 체감온도와 같은 이름으로 단일 숫자를 노출하기에는 불확실성이 크다.
+- 이번 작업은 원인 진단과 운영 응답 확인만 수행했다. 앱·서버 코드와 운영 배포는 변경하지 않았다.
+
+### 기상청에 가까운 자체 체감온도 방향
+
+- 기상청과 최대한 비슷한 숫자가 목표라면 현재 PMV 등가온도를 추가 보정하는 방식보다 이미 구현된 `calculateKmaApparentTemperature`를 체감 숫자의 기준으로 그대로 사용해야 한다.
+- 일반 `체감온도`는 `kmaApparentTemperature → apparentTemperature → temperature` 순서로 표시하고, 현재 `perceivedTemperature`의 햇볕·착의량·활동량·최근 기온 요소는 숫자 대신 보조 문구와 준비 행동에 쓰는 구성이 가장 일관적이다.
+- 자체 숫자를 유지해야 한다면 별도 `햇볕 아래 활동 체감` 필드·명칭으로 분리하고, 실측 일사가 없을 때는 수치 보정을 하지 않는 것이 적절하다. 기상청과 유사한 일반 체감값과 직사광선 환경값을 하나의 숫자로 동시에 만족시킬 수는 없다.
+- 이번 답변은 설계 방향만 정리했으며 코드와 운영 배포는 변경하지 않았다.
+
+## 2026-09-22 Android 12 위젯 생성 후 앱 강제 종료 진단
+
+- Play 내부 테스트에서 설치된 `com.codesoha.weathercare` 버전 `1.0.0 (26092202)`을 연결된 Galaxy S10+ Android 12(API 31)에서 재현했다. Samsung Launcher에 `WeatherCareWidgetProvider` 위젯 ID 2가 등록된 상태에서 앱을 실행하면 약 3초 뒤 메인 스레드가 종료됐다.
+- 새 버전의 실제 크래시는 `java.lang.NoSuchMethodError: No interface method toList()Ljava/util/List; in class java.util.stream.Stream`이며, R8 스택은 `WeatherCareWidgetProvider`를 가리킨다. 소스상 직접 원인은 `WeatherCareWidgetProvider.java` 611~613행의 `preparations.stream().filter(...).toList()`이다.
+- Flutter가 위젯 snapshot을 저장하면 `MainActivity.java` 35행에서 `WeatherCareWidgetProvider.updateAll()`을 호출한다. 위젯이 없을 때는 갱신 대상 ID가 없어 문제가 드러나지 않지만, 위젯을 만든 뒤에는 표시 데이터 필터링 경로가 실행되어 Android 12 런타임에 없는 `Stream.toList()` 호출로 앱까지 함께 종료된다.
+- `sourceCompatibility/targetCompatibility Java 17`과 `desugar_jdk_libs 2.1.4` 설정은 컴파일을 허용하지만 이 호출을 Android 12 호환 구현으로 바꾸지 못했다. 단순 반복문으로 목록을 만들거나 호환 가능한 수집 방식으로 교체해야 한다.
+- 앞선 `WorkDatabase` 문제는 앱 모듈의 `androidx.work:work-runtime:2.11.2` 명시 후 이번 설치본에서는 재현되지 않았다. 이번 크래시는 `google_mobile_ads`, 광고 표시, WorkManager 또는 Android 12 지원 설정이 아니라 새 위젯 Java 코드의 API 호환성 문제다.
+- 이번 작업은 원인 진단만 수행했으며 앱 코드, 단말 데이터, Play 내부 테스트 배포는 변경하지 않았다.
+
+## 2026-09-22 Android 12 위젯 강제 종료 수정
+
+- `WeatherCareWidgetProvider.Snapshot.forTime()`의 Java 16 `Stream.toList()` 호출을 Android 12에서도 지원되는 명시적 `ArrayList` 반복문으로 교체했다. 추천 준비물 필터링 결과와 순서는 기존 로직과 동일하다.
+- Android Java 소스 전체를 다시 검색해 `Stream.toList()` 호출이 더 없음을 확인했다. Flutter 3.47.4로 R8가 포함된 Release APK를 정상 생성했으며 결과물은 `weather_care_app/build/app/outputs/flutter-apk/app-release.apk`다.
+- Release Java 바이트코드를 `javap`으로 검사해 수정된 `forTime()`이 `ArrayList`, `List.iterator()`, `Set.contains()`, `List.add()`만 호출하고 `Stream` 또는 `toList()`를 참조하지 않는 것을 확인했다.
+- 위젯 snapshot 전용 테스트 6개와 Flutter 전체 테스트 450개가 모두 통과했다. 중간 점검에서 광고 ID 임시 변경 때문에 실패했던 2개도 운영 ID 복구 후 정상 통과했다.
+- 연결된 Android 12 실기기의 Play 설치본은 Play 서명과 로컬 Debug 서명이 달라 데이터 보존 상태로 덮어쓸 수 없으므로 설치하지 않았다. 수정본을 확인하려면 versionCode를 올린 새 AAB를 내부 테스트에 게시해야 한다.
+
+## 2026-09-22 Android 실기기 설치 버전 확인
+
+- 연결된 Galaxy S10+ `R39M402191D`의 실제 설치 패키지 `com.codesoha.weathercare`는 `versionName 1.0.0`, `versionCode 26092202`다.
+- 설치자는 Google Play(`com.android.vending`)이며 마지막 설치·업데이트 시각은 2026-09-22 15:53:25다. 저장소에서 준비한 수정 버전 `26092203`은 아직 이 기기에 설치되지 않았다.
+- 이번 작업은 패키지 정보 조회만 수행했으며 앱·단말 데이터는 변경하지 않았다.
+
+## 2026-09-22 설정 탭 앱 버전 표기
+
+- 설정 화면 진입 시 우측 하단에 현재 설치된 앱 버전을 `버전 1.0.0` 형식의 작은 보조 문구로 고정 표시하도록 추가했다.
+- `package_info_plus`를 직접 의존성으로 등록해 Android/iOS 빌드에 실제 반영된 버전명을 읽으며, 플랫폼 정보 조회에 실패하면 빈 문구를 노출하지 않도록 처리했다.
+- 버전 문구의 노출 값과 우측 정렬을 확인하는 위젯 테스트를 추가했다.
+- 검증 결과: `flutter analyze` 이슈 없음, 신규 버전 표기 테스트 1개 및 기존 `widget_test.dart` 25개 모두 통과, `git diff --check` 오류 없음.
+
+## 2026-09-22 Android 위젯 체감온도 잘림 검토
+
+- 연결된 Galaxy S10+의 현재 날씨챙겨 위젯은 Samsung Launcher에서 `277×374dp`, 3×3 대형 위젯으로 전달된다. 현재 대형 온도 행은 루트 좌우 패딩 36dp, 날씨 아이콘·간격 86dp, 구분선·양쪽 여백 37dp를 사용해 현재·체감 온도에는 약 59dp씩만 남는다.
+- `bindTemperature()`는 실제 `minWidth`를 받지 않고 중형 34dp, 대형 38dp의 고정 글자 크기와 각 온도 최대 100dp를 사용한다. `WidgetTextRenderer.line()`은 넘치는 문자열을 축소하지 않고 말줄임 처리하므로 `32.1°`, `-12.3°` 같은 소수점·음수 값이 잘리기 쉽다.
+- 폭 기반 동적 조절은 가능하다. `updateWidget()`에서 이미 읽는 `OPTION_APPWIDGET_MIN_WIDTH`를 `bindTemperature()`에 전달하고, 레이아웃의 고정 폭을 뺀 각 온도 칸의 가용 폭을 구한 뒤 두 문자열을 같은 폰트로 측정해 공통 글자 크기를 상한에서 하한까지 줄이면 된다. 위젯 크기 변경 시 `onAppWidgetOptionsChanged()`가 다시 호출되므로 자동 재계산도 가능하다.
+- 현재 온도 값은 `ImageView`에 글자 Bitmap을 넣는 구조라 `RemoteViews.setTextViewTextSize()`를 직접 쓰는 방식보다 `WidgetTextRenderer`가 폭에 맞는 Bitmap 글자 크기를 계산하는 방식이 기존 디자인과 폰트를 보존하는 최소 변경이다.
+- 이번 작업은 구현 가능성과 원인만 확인했으며 코드는 변경하지 않았다.
+
+## 2026-09-22 Android 위젯 온도·날씨 아이콘 동적 크기 적용
+
+- `WeatherCareWidgetProvider`가 위젯의 `OPTION_APPWIDGET_MIN_WIDTH`에서 레이아웃별 좌우 패딩·간격을 뺀 실제 온도 행 폭을 계산하도록 수정했다. 현재·체감 온도 문자열을 Suite Heavy 폰트로 직접 측정하고, 행에 들어올 때까지 두 온도의 공통 글자 크기와 날씨 아이콘 크기를 함께 단계적으로 축소한다.
+- 소형·중형·대형의 기존 최대 크기는 각각 유지하고, 좁은 폭에서는 글자 16dp·아이콘 24dp까지 축소할 수 있게 했다. 온도 Bitmap의 최대 폭도 고정 100dp 대신 최종 측정 폭을 사용하므로 정상 범위의 소수점·음수 값을 말줄임하지 않는다.
+- 세 위젯 레이아웃의 날씨 아이콘을 고정 dp 크기에서 `wrap_content + adjustViewBounds`로 바꿨다. `WidgetIconRenderer`가 Bitmap에 단말 density를 기록해 고밀도 기기에서도 계산한 dp 크기 그대로 표시되도록 했다.
+- 위젯 크기 변경 시 기존 `onAppWidgetOptionsChanged()` 경로가 다시 크기를 계산한다. Android Release Java·리소스 컴파일과 R8 포함 Release APK 빌드가 성공했고, Flutter 전체 테스트 451개가 모두 통과했다.
+- 연결된 실기기의 Play 설치본은 변경하지 않았다. 수정 결과의 실제 Samsung Launcher 표시는 새 내부 테스트 빌드 설치 후 확인해야 한다.
+
+## 2026-09-22 자체 체감온도 제거·기상청 단일값 운영 반영
+
+- 서버의 `KR_PERCEIVED_V2_2026.1` PMV·복사열·옷차림·최근 기온 보정 모듈과 전용 테스트를 삭제했다. `/main`·`/today`는 더 이상 `perceivedTemperature`, `thermalSensation`, `thermalBrief` 등 자체 체감 필드를 만들거나 반환하지 않는다.
+- 관측과 단기예보는 기상청 계절별 산식 결과를 `kmaApparentTemperature`와 구버전 호환용 `apparentTemperature`에 같은 값으로 제공한다. 기존 캐시에 `apparentTemperature`만 있어도 API 응답 경계에서 `kmaApparentTemperature`를 채워 현재·다음·시간별 값의 계약을 일치시킨다.
+- 브리핑의 더위·추위·쾌적 장면과 행동 판단도 기상청 체감온도만 사용한다. Flutter의 Main·Detail·시간별·홈 위젯 모델과 설명에서 자체 체감 필드·감각 등급을 제거하고 `kmaApparentTemperature → apparentTemperature` 순서로만 표시한다.
+- 체감온도 기준 문서를 기상청 단일값 정책으로 개정하고, 자체 체감 구현을 설명하던 현황 문서는 과거 조사 기록임을 표시했다.
+- 검증: 서버 TypeScript 검사, Worker 51파일·348개와 Node 3파일·11개 테스트, Wrangler dry-run, Flutter 3.47.4 정적 분석과 전체 451개 테스트, `git diff --check`를 통과했다.
+- 운영 미니 PC 배포 중 활성 지역 `67/118`의 특보 지역 매핑 캐시가 없어 선수집이 `10,005/10,006`에서 중단됐다. SQLite 온라인 백업 후 정확한 `COLLECTED_WARNING_MAPPING_REFRESH` 표식 1건만 제거해 재매핑했고, 선수집은 `10,006/10,006`으로 완료됐다. 삭제한 표식은 정상 수집 과정에서 다시 생성됐다.
+- 최종 서버 아카이브 SHA-256은 `14bc0dad517653bf59b084d5d0455ae8d346e561673fcf03c32c1fc08b1ae0d7`이다. DB 백업은 `/var/backups/weather-care/weather-care-20260922T071317Z.sqlite`, 소스 백업은 `/var/backups/weather-care/source-before-kma-alias-20260922-1614.tar.gz`, 즉시 롤백 디렉터리는 `/opt/weather-care/weather_care_server.previous-before-kma-alias-20260922-1614`에 보관했다. 전달용 로컬·원격 임시 아카이브는 삭제했다.
+- 배포 후 API·스케줄러·Cloudflare Tunnel은 모두 active이고 내부·공개 `/health`는 `ok`다. 공개 구로동 응답은 관측 `28.8℃`, 기상청 체감 `26.4℃`이며 두 체감 필드가 동일하고 자체 체감 필드는 0개다. 시간별 46개도 기상청 필드 누락·값 불일치가 0개다. 기존 설치 앱도 자체 필드가 없으면 원래의 `apparentTemperature` fallback을 사용하므로 서버 배포 즉시 기상청 값으로 바뀐다. Flutter 앱 정리분은 다음 앱 배포에 포함해야 한다.
+- 배포 후에도 기존 별도 문제인 `fcm_send_failed` 로그 1건은 반복되고 있으며 이번 체감온도 변경과는 관련이 없다.
+
+## 2026-09-22 Android 위젯 준비물 미노출 진단
+
+- 연결된 Galaxy S10+의 Play 내부 테스트 설치본 `1.0.0 (26092203)`에서 위젯 저장 데이터를 직접 확인했다. 현재 활성 브리핑은 `HUMIDITY_LOW`이고 `recommendedItems=["WATER"]`이지만, 위젯 최상위 `preparations` 배열은 비어 있었다.
+- 설치 앱 설정의 `waterEnabled`는 `true`라서 사용자 설정으로 물 추천이 꺼진 문제는 아니다. 위젯도 `appWidgetMinWidth=373`, 4×4 대형으로 판정되어 크기 때문에 준비물 영역이 제외된 문제도 아니다.
+- 앱의 `HomeWidgetSnapshot.fromWeather()`는 브리핑의 `recommendedItems`를 그대로 준비물로 만들지 않고, `today.recommendations` 중 `recommended=true`인 항목과 교집합인 것만 직렬화한다. 따라서 `WATER` 추천 객체가 없으면 브리핑에 물이 있어도 `preparations=[]`가 된다.
+- 서버 브리핑은 저습도 장면에 `WATER`를 지정하지만, 생활 추천 엔진의 `HYDRATION_IMPORTANT → WATER`는 `APPARENT_TEMPERATURE_HIGH`에서만 생성되고 `HUMIDITY_LOW`에서는 생성되지 않는다. 두 생성 기준이 불일치하는 것이 이번 미노출의 직접 원인이다.
+- Android 위젯 Provider는 `snapshot.preparations.isEmpty()`이면 준비물 행을 `GONE` 처리하므로 빈 배열을 정상적으로 숨기고 있다. 표시 레이아웃이나 Android 버전 문제가 아니라 upstream 데이터 조합 문제다.
+- 이번 작업은 원인 확인만 수행했고 코드·설정·단말 데이터는 변경하지 않았다. 수정 시 브리핑 `recommendedItems`를 기준으로 위젯 준비물을 직접 구성하거나, 서버 추천 엔진이 저습도 `WATER`를 같은 기준으로 생성하도록 계약을 통일하고 불일치 회귀 테스트를 추가해야 한다.
+
+## 2026-09-22 브리핑·준비물 전체 상충 점검
+
+- 준비물이 지정된 브리핑 7종(`SNOW`, `RAIN`, `UV`, `AIR_QUALITY`, `THERMAL_HOT`, `THERMAL_COLD`, `HUMIDITY_LOW`)을 추천 엔진과 대조하고 합성 입력으로 실행 확인했다. 저습도 외에도 조건부 상충이 있다.
+- 브리핑은 현재 관측과 한 개 시간대만으로도 장면을 선택하지만 Today 준비물은 현재 관측을 제외한 `hourly.slice(0, 24)`에서 생성한다. 일반 비·눈·더위·추위·UV는 대체로 2개 연속 시간대를 요구한다. 합성 입력에서 1시간 비·눈, UV 7, 체감 33.5℃, 기온 11℃는 각각 브리핑 준비물이 있었지만 추천 목록과 위젯 교집합은 비었다. 2시간 연속 조건에서는 우산·방한부츠·물·겉옷이 생성됐다.
+- `HUMIDITY_LOW → WATER`는 추천 엔진에 대응 경로가 없어 가장 확실한 상충이다. 저습도 3시간으로 `HUMIDITY_LOW` 규칙 사실까지 생성해도 생활 인사이트가 이를 소비하지 않아 물이 만들어지지 않았다.
+- `UV` 브리핑은 항상 `SUNSCREEN`과 `PARASOL`을 요구하지만, UV 6~7이 2시간 지속될 때 추천 엔진은 선크림만 만들고 양산은 점수 80 이상에서만 만든다. 또한 브리핑은 실제 일출·일몰을 사용하지만 추천 규칙은 고정 10~16시만 낮으로 보므로 여름 17~18시 UV 브리핑은 준비물이 비기 쉽다.
+- `THERMAL_HOT` 브리핑은 기온 33℃만으로도 물을 요구하지만 추천 엔진은 체감온도 33℃만 본다. 체감 33~34.9℃ 한 시간, 기온만 33℃, 고온이 고정 낮 시간대 밖인 경우에도 물이 빠질 수 있다.
+- `AIR_QUALITY → MASK`는 시간별 PM10·PM2.5 숫자가 기준을 넘는 일반 사례에서는 일치했다. 다만 현재 관측에만 나쁜 값이 있거나, 브리핑이 한글 등급 `나쁨`을 인식했지만 추천 규칙의 정확한 영문 등급(`Bad`, `Very Bad`)과 숫자 기준이 충족되지 않으면 마스크가 빠질 수 있다.
+- `/today`의 브리핑 생성에는 설치별 허용 준비물 목록을 전달하지 않는다. 따라서 우산·양산·선크림·마스크·물·겉옷·눈 대비 설정을 꺼도 브리핑 문구와 `recommendedItems`는 그대로지만, 추천 객체는 `recommended=false`가 되어 위젯에서는 사라진다. 현재 실기기의 `waterEnabled=true` 사례와는 별개의 전 항목 공통 문제다.
+- 위젯 snapshot은 하루 전체 timeline의 준비물 후보를 우선순위로 정렬해 먼저 3개로 자른 뒤, Android에서 현재 장면의 타입으로 다시 거른다. 하루에 4종 이상 후보가 있으면 현재 장면의 준비물이 전역 상위 3개 밖이라 비어 보일 수 있다. 추천 객체의 `validFrom/validUntil`도 위젯 조합에서 검사하지 않아 같은 타입의 다른 시간대 추천이 우연히 현재 장면에 사용될 수 있다.
+- 확장 준비물 가운데 우비·장화·선글라스·휴대용 선풍기·쿨링제품·목도리·핫팩·스노우체인·보조배터리는 브리핑 `recommendedItems`에 들어가는 장면이 없어 추천 엔진이 생성해도 현재 위젯 필터를 절대 통과하지 않는다. 의도적으로 대표 준비물만 보이려는 설계인지 확인이 필요하다.
+- Android 쪽 15종 이미지 자산, 타입별 asset 매핑, Flutter 타입·한글 라벨은 모두 존재한다. 표시 누락은 아이콘 렌더링 문제가 아니라 서버의 두 판단 체계와 앱의 교집합·상위 3개 조합 문제다.
+- 현재 테스트는 브리핑과 추천 엔진의 계약을 교차 검증하지 않는다. 비 브리핑의 `recommendedItems` 단독 검사와 이미 일치하는 위젯 입력만 검사해 위 상충을 잡지 못한다. 이번 작업에서는 진단만 수행했고 제품 코드는 변경하지 않았다.
+
+## 2026-09-22 Detail 자료·Main 갱신 주기·준비물 시간 기준 점검
+
+- 다른 작업 컨텍스트와 현재 작업 트리를 함께 확인했다. 운영 구조는 APIHub 전국 격자 실황 10분 수집, GPS 좌표별 현재 강수 15분 수집, ITS 전국 돌발상황 10분 1회 수집 후 위치별 3km 판정이며, ITS 중계는 제거된 상태다.
+- 운영에서 가장 최근 활동한 GPS 위치의 Today 응답을 직접 확인했다. 16:24 생성 응답에 현재 강수는 16:00 관측 `DRY`, 공급자는 `KMA_ANALYSIS_RADAR`로 정상 포함됐고 강수 자료상태 오류도 없었다. 운영 강수 캐시는 16:17 회차에 갱신됐으며 최근 3시간 강수 수집 실패 로그는 없다.
+- Detail에서 강수 미수신으로 보인 시점은 GPS 좌표 캐시가 생기기 전 응답을 앱이 유지했거나 수동 지역처럼 정밀 좌표가 없는 요청인 경우다. 앱은 서버의 15분 강수 수집 직후 자동으로 다시 요청하지 않고 정각·앱 시작·수동 새로고침·GPS 모드 복귀 시에만 다시 받으므로, 16:17에 서버가 정상화돼도 16:15 응답은 화면에 남을 수 있다.
+- ITS 내부 월 안전한도는 9,000회이고 운영 9월 누계는 16:20 기준 23회뿐이다. 월 한도 소진이 아니다. 앞선 실패는 증량 승인 미반영에 따른 HTTP 401 `AUTHORIZATION_FAILED`였으며, 16:20 전국 snapshot 수집은 성공했다. 현재 위치 응답의 `currentRoadControl=null`과 빈 자료상태는 조회 실패가 아니라 3km 내 명시적 활성 통제가 없다는 뜻이다.
+- 서버는 현재 기상 실황을 매 10분 수집하지만 앱 Main은 앱 시작·당겨서 새로고침·매 정각·GPS 모드에서 백그라운드 복귀 시 서버를 재조회한다. 앱을 전경에 계속 둔 동안 10분 단위 자동 갱신은 없으므로 서버 최신값보다 최대 약 1시간 늦을 수 있다.
+- Main Check List는 응답 생성 시 현재 시간의 정각 이전 예보를 제거하고, 그 시점부터 최대 24개 시간별 예보를 대상으로 추천을 만든다. 따라서 현재시간을 기준으로 다시 계산되지만 현재 한 시간만의 준비물은 아니다. 16:24 운영 응답에는 다음 날 10:00~14:59 조건으로 양산·선크림이 추천돼 이 범위를 확인했다. 앱의 체크 완료 상태만 한국 날짜별로 자정에 초기화된다.
+- 이번 작업은 읽기 전용 운영·코드 진단만 수행했으며 앱·서버·운영 데이터는 변경하지 않았다.
+
+## 2026-09-22 Detail 현재 자료·브리핑/준비물 시간 기준 통합
+
+- Detail의 현재 강수·도로 통제 누락을 수정했다. GPS 좌표 캐시 키를 소수점 5자리(약 1m)에서 3자리(약 100m)로 안정화해 정지 상태 GPS 흔들림마다 새 캐시를 찾던 문제를 막았다. 현재 강수가 `DRY`이면 `현재 강수가 확인되지 않았어요`, ITS 조회가 성공했지만 3km 안에 활성 통제가 없으면 `활성 도로 통제가 없어요`를 `DATA_STATUS`로 명시한다. 미수신과 정상적인 없음이 이제 Detail에서 구분된다.
+- 운영 확인 당시 ITS 9월 내부 사용량은 `23/9000`이었으므로 월 한도 소진이 원인이 아니다. 앞선 401은 활용 승인 반영 전 인증 실패였고 16:20 회차 전국 snapshot은 성공했다.
+- `/today` 브리핑 생성에 설치별 준비물 설정과 확장 카탈로그 여부를 전달한다. 꺼 둔 준비물을 요구하는 장면은 선택하지 않고, 허용된 준비물만 `recommendedItems`에 남긴다. 확장 카탈로그에서는 비·눈·UV·더위·추위 장면이 우비·장화·선글라스·선풍기·쿨링제품·목도리·핫팩·체인·보조배터리까지 같은 브리핑 계약으로 제공한다.
+- Main Check List와 홈 위젯의 준비물은 더 이상 별도 추천 엔진과 브리핑 결과의 교집합을 사용하지 않는다. 현재 활성 브리핑 timeline의 `recommendedItems`를 단일 기준으로 최대 3개 표시하며, 장면 경계와 앱 복귀 시 다시 선택한다. 저습도 `WATER`, 1시간 비·눈·더위·추위, 현재 관측만 나쁜 대기질처럼 기존 엔진 임계값 차이로 사라지던 준비물이 표시된다.
+- 위젯 snapshot schema를 3으로 올리고 하루 timeline에 필요한 준비물 카탈로그를 별도로 저장했다. Android와 iOS는 각 시각의 활성 장면에서 해당 준비물만 최대 3개 선택하므로 하루 전역 상위 3개 선절단과 다른 시간대 타입 혼입 문제가 사라진다.
+- Android 중간 위젯 폭 기준을 220dp에서 150dp로 바로잡았다. Pixel Launcher 3열 약 169dp 위젯이 더 이상 소형으로 오분류되지 않고, 중간 레이아웃에서 `shortMessage` 짧은 브리핑을 표시한다.
+- Main 브리핑은 기존처럼 서버 timeline의 현재 활성 구간을 사용하며 최대 1분 간격·정확한 경계에서 다시 평가한다. Main과 위젯의 준비물도 같은 현재 구간을 사용하도록 맞췄다. 서버 날씨 자체 수집은 10분 단위지만 앱 데이터 재조회는 앱 시작·당겨서 새로고침·매 정각·GPS 모드 복귀 시다.
+- 검증: 서버 TypeScript 검사, Worker 51파일 352개 + Node 3파일 11개 전체 테스트, Flutter 3.47.4 정적 분석과 전체 454개 테스트, Android Debug Java 컴파일, `git diff --check`를 통과했다. 앱·서버 운영 배포는 수행하지 않았다.

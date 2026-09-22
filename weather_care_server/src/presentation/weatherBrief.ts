@@ -31,6 +31,8 @@ export interface WeatherBriefContext {
   sunsetAt?: string;
   /** 알림 설정에서 허용된 준비물로 action scene을 제한한다. */
   allowedRecommendedItems?: RecommendationType[];
+  /** 새 앱의 확장 준비물 카탈로그를 브리핑과 함께 사용한다. */
+  expandedPreparations?: boolean;
 }
 
 export interface WeatherBriefResult {
@@ -152,8 +154,8 @@ function buildIntentAt(
     koreaDate(now.toISOString()),
     timeContext(selection, context),
     selection.scene,
-    selection.snapshot.thermalSensation ?? '',
-    selection.snapshot.dominantFactors?.[0] ?? '',
+    selection.snapshot.kmaApparentTemperature ??
+      selection.snapshot.apparentTemperature ?? '',
   ].join(':');
   const rendered = renderCopy(selection, seed);
   const sourceTime = selection.snapshot.forecastAt ??
@@ -169,7 +171,14 @@ function buildIntentAt(
     compactTime(targetFrom ?? validFrom),
     compactTime(targetUntil ?? validUntil),
   ].join(':');
-  const meaning = sceneMeaning(selection.scene, selection.snapshot);
+  const meaning = sceneMeaning(
+    selection.scene,
+    context.expandedPreparations ?? false,
+  );
+  const recommendedItems = context.allowedRecommendedItems === undefined
+    ? meaning.recommendedItems
+    : meaning.recommendedItems.filter((item) =>
+        context.allowedRecommendedItems?.includes(item));
   return {
     eventTime,
     intent: {
@@ -201,10 +210,7 @@ function buildIntentAt(
       headlineFact: meaning.headlineFact,
       supportingFact: eventTime,
       action: meaning.action,
-      recommendedItems: meaning.recommendedItems,
-      thermalSensation: selection.snapshot.thermalSensation,
-      perceivedTemperature: selection.snapshot.perceivedTemperature,
-      dominantFactor: selection.snapshot.dominantFactors?.[0],
+      recommendedItems,
       copyVariantKey: rendered.variantKey,
       copy: rendered.copy,
     },
@@ -302,7 +308,10 @@ function sceneAllowedByContext(
   context: WeatherBriefContext,
 ): boolean {
   if (context.allowedRecommendedItems === undefined) return true;
-  const required = sceneMeaning(scene, {}).recommendedItems;
+  const required = sceneMeaning(
+    scene,
+    context.expandedPreparations ?? false,
+  ).recommendedItems;
   return required.length === 0 || required.some((item) =>
     context.allowedRecommendedItems?.includes(item));
 }
@@ -433,7 +442,6 @@ function copyVariants(
     observed: boolean;
   },
 ): BriefingCopy[] {
-  const thermal = selection.snapshot.thermalBrief?.trim();
   switch (selection.scene) {
     case 'SNOW':
       return [copy(
@@ -499,16 +507,16 @@ function copyVariants(
     case 'THERMAL_HOT':
       return [copy(
         '덥게 느껴져요. 물을 챙기세요.',
-        thermal ?? '덥게 느껴질 수 있어요. 물을 자주 마셔주세요.',
-        thermal ?? '기온과 습도 등을 함께 보면 덥게 느껴질 수 있어요. 오래 활동한다면 물을 자주 마셔주세요.',
+        '기상청 방식 체감온도가 높아요. 물을 자주 마셔주세요.',
+        '기상청 방식 체감온도가 높아요. 오래 활동한다면 물을 자주 마셔주세요.',
         '덥게 느껴지는 날씨예요',
         '덥게 느껴질 수 있어요. 오래 활동한다면 물을 자주 마셔주세요.',
       )];
     case 'THERMAL_COLD':
       return [copy(
         '쌀쌀하게 느껴져요. 겉옷을 챙기세요.',
-        thermal ?? '쌀쌀하게 느껴질 수 있어요. 겉옷을 챙기세요.',
-        thermal ?? '기온과 바람 등을 함께 보면 쌀쌀하게 느껴질 수 있어요. 외출한다면 겉옷을 챙기는 게 좋아요.',
+        '기상청 방식 체감온도가 낮아요. 겉옷을 챙기세요.',
+        '기상청 방식 체감온도가 낮아요. 외출한다면 겉옷을 챙기는 게 좋아요.',
         '쌀쌀하게 느껴지는 날씨예요',
         '쌀쌀하게 느껴질 수 있어요. 외출한다면 겉옷을 챙기세요.',
       )];
@@ -570,10 +578,10 @@ function copyVariants(
     default:
       return [copy(
         '시간별 예보를 확인하세요.',
-        thermal ?? '오늘은 특별한 예보가 없어요. 외출 전에 시간별 예보를 확인해 보세요.',
-        thermal ?? '오늘은 특별한 예보가 없어요. 외출 계획이 있다면 시간별 예보를 한 번 확인해 보세요.',
+        '오늘은 특별한 예보가 없어요. 외출 전에 시간별 예보를 확인해 보세요.',
+        '오늘은 특별한 예보가 없어요. 외출 계획이 있다면 시간별 예보를 한 번 확인해 보세요.',
         '오늘 날씨 안내',
-        thermal ?? '외출 전에 시간별 예보를 확인해 주세요.',
+        '외출 전에 시간별 예보를 확인해 주세요.',
       )];
   }
 }
@@ -605,7 +613,7 @@ function normalizeSentence(value: string): string {
 
 function sceneMeaning(
   scene: WeatherBriefScene,
-  snapshot: Partial<WeatherSnapshot>,
+  expandedPreparations = false,
 ): {
   topic: string;
   severity: CanonicalBriefingIntent['severity'];
@@ -615,15 +623,15 @@ function sceneMeaning(
   recommendedItems: RecommendationType[];
 } {
   switch (scene) {
-    case 'SNOW': return meaning('눈', 'HIGH', ['PTY', 'POP', 'SNO'], '눈 가능성', 'CHECK_SNOW_TRAVEL', ['WINTER_BOOTS']);
-    case 'RAIN': return meaning('비', 'MODERATE', ['PTY', 'POP', 'PCP'], '비 가능성', 'TAKE_UMBRELLA', ['UMBRELLA']);
-    case 'UV': return meaning('자외선', 'MODERATE', ['UV'], '높은 자외선', 'SUN_PROTECTION', ['SUNSCREEN', 'PARASOL']);
+    case 'SNOW': return meaning('눈', 'HIGH', ['PTY', 'POP', 'SNO'], '눈 가능성', 'CHECK_SNOW_TRAVEL', expandedPreparations ? ['WINTER_BOOTS', 'SNOW_CHAINS', 'POWER_BANK'] : ['WINTER_BOOTS']);
+    case 'RAIN': return meaning('비', 'MODERATE', ['PTY', 'POP', 'PCP'], '비 가능성', 'TAKE_UMBRELLA', expandedPreparations ? ['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS'] : ['UMBRELLA']);
+    case 'UV': return meaning('자외선', 'MODERATE', ['UV'], '높은 자외선', 'SUN_PROTECTION', expandedPreparations ? ['SUNSCREEN', 'PARASOL', 'SUNGLASSES'] : ['SUNSCREEN', 'PARASOL']);
     case 'AIR_QUALITY': return meaning('대기질', 'MODERATE', ['PM10', 'PM25'], '좋지 않은 대기질', 'TAKE_MASK', ['MASK']);
     case 'OZONE': return meaning('오존', 'MODERATE', ['O3'], '높은 오존', 'LIMIT_OUTDOOR_ACTIVITY', []);
     case 'VISIBILITY': return meaning('가시거리', 'HIGH', ['VS'], '낮은 가시거리', 'DRIVE_CAREFULLY', []);
-    case 'THERMAL_HOT': return meaning('체감온도', 'MODERATE', ['perceivedTemperature', ...(snapshot.dominantFactors ?? [])], '더운 체감', 'HYDRATE', ['WATER']);
-    case 'THERMAL_COLD': return meaning('체감온도', 'MODERATE', ['perceivedTemperature', ...(snapshot.dominantFactors ?? [])], '추운 체감', 'TAKE_OUTERWEAR', ['OUTERWEAR']);
-    case 'THERMAL_COMFORTABLE': return meaning('체감온도', 'INFO', ['perceivedTemperature', 'thermalSensation'], '쾌적한 체감', undefined, []);
+    case 'THERMAL_HOT': return meaning('체감온도', 'MODERATE', ['apparentTemperature', 'temperature'], '높은 기상청 체감온도', 'HYDRATE', expandedPreparations ? ['WATER', 'PORTABLE_FAN', 'COOLING_ITEM'] : ['WATER']);
+    case 'THERMAL_COLD': return meaning('체감온도', 'MODERATE', ['apparentTemperature', 'temperature'], '낮은 기상청 체감온도', 'TAKE_OUTERWEAR', expandedPreparations ? ['OUTERWEAR', 'SCARF', 'HAND_WARMER'] : ['OUTERWEAR']);
+    case 'THERMAL_COMFORTABLE': return meaning('체감온도', 'INFO', ['apparentTemperature'], '쾌적한 기상청 체감온도', undefined, []);
     case 'WIND': return meaning('바람', 'MODERATE', ['WSD'], '강한 바람', 'SECURE_BELONGINGS', []);
     case 'HUMIDITY_HIGH': return meaning('습도', 'INFO', ['REH'], '높은 습도', undefined, []);
     case 'HUMIDITY_LOW': return meaning('습도', 'INFO', ['REH'], '낮은 습도', 'HYDRATE', ['WATER']);
@@ -722,7 +730,7 @@ function confidenceFor(
 ): CanonicalBriefingIntent['confidence'] {
   if (snapshot.qualityFlags?.some((flag) =>
     ['SOURCE_DELAYED', 'LOCATION_FALLBACK'].includes(flag))) return 'MEDIUM';
-  return snapshot.perceivedConfidence ?? 'HIGH';
+  return 'HIGH';
 }
 
 function isSnowy(snapshot: WeatherSnapshot): boolean {
@@ -746,27 +754,29 @@ function hasPoorAirQuality(snapshot: WeatherSnapshot): boolean {
 }
 
 function isHot(snapshot: WeatherSnapshot): boolean {
-  return [
-    'SLIGHTLY_HOT', 'HOT', 'VERY_HOT', 'EXTREME_HOT',
-  ].includes(snapshot.thermalSensation ?? '') ||
-    (snapshot.perceivedTemperature ?? snapshot.apparentTemperature ?? -Infinity) >=
+  return (officialApparentTemperature(snapshot) ?? -Infinity) >=
       defaultRuleConfig.heat.actionApparentTemperature ||
     (snapshot.temperature ?? -Infinity) >=
       defaultRuleConfig.heat.actionAirTemperature;
 }
 
 function isCold(snapshot: WeatherSnapshot): boolean {
-  return ['VERY_COLD', 'COLD', 'CHILLY', 'COOL'].includes(
-    snapshot.thermalSensation ?? '',
-  ) || (snapshot.perceivedTemperature ?? snapshot.apparentTemperature ?? Infinity) <=
+  return (officialApparentTemperature(snapshot) ?? Infinity) <=
       defaultRuleConfig.cold.apparentTemperature ||
     (snapshot.temperature ?? Infinity) <= defaultRuleConfig.cold.temperature;
 }
 
 function isComfortable(snapshot: WeatherSnapshot): boolean {
-  return [
-    'COOL_COMFORTABLE', 'COMFORTABLE', 'WARM_COMFORTABLE', 'WARM',
-  ].includes(snapshot.thermalSensation ?? '');
+  const apparentTemperature = officialApparentTemperature(snapshot);
+  return apparentTemperature !== undefined &&
+    apparentTemperature > defaultRuleConfig.cold.apparentTemperature &&
+    apparentTemperature < defaultRuleConfig.heat.actionApparentTemperature;
+}
+
+function officialApparentTemperature(
+  snapshot: WeatherSnapshot,
+): number | undefined {
+  return snapshot.kmaApparentTemperature ?? snapshot.apparentTemperature;
 }
 
 function koreanDayPeriod(value: number): string {

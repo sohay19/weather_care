@@ -354,8 +354,6 @@ void main() {
               current: CurrentWeather(
                 temperature: 29,
                 apparentTemperature: 32.7,
-                perceivedTemperature: 32.7,
-                thermalSensation: 'HOT',
                 humidity: 72,
                 uvIndex: 7,
                 pm25: 41,
@@ -375,8 +373,8 @@ void main() {
       find.byKey(const ValueKey('weather-metric-detail-체감')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('사람 중심 체감은 더운 수준이에요'), findsOneWidget);
-    expect(find.textContaining('기온·상대습도·풍속'), findsOneWidget);
+    expect(find.text('기상청 방식으로 계산한 체감온도예요'), findsOneWidget);
+    expect(find.textContaining('기온과 상대습도'), findsOneWidget);
   });
 
   testWidgets('five tabs start on a pull-to-refresh Main screen',
@@ -468,9 +466,6 @@ void main() {
                 forecastAt: '2026-08-21T15:00:00+09:00',
                 apparentTemperature: 21.8,
                 apparentTemperatureSource: 'APP_KMA_METHOD_FROM_FORECAST',
-                perceivedTemperature: 21.8,
-                thermalSensation: 'COMFORTABLE',
-                thermalBrief: '구름과 바람을 반영하면 쾌적하게 느껴져요.',
                 humidity: 60,
                 windSpeed: 2.1,
                 windDirection: 225,
@@ -573,7 +568,7 @@ void main() {
     expect(windPosition.dx, closeTo(uvPosition.dx, 0.01));
     expect(sunPosition.dx, closeTo(airQualityPosition.dx, 0.01));
     expect(find.text('어제와 비교'), findsOneWidget);
-    const weatherFeeling = '구름과 바람을 반영하면 쾌적하게 느껴져요.';
+    const weatherFeeling = '구름이 많은 날씨예요.';
     expect(find.text(weatherFeeling), findsOneWidget);
     expect(
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,

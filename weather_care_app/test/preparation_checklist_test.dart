@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/models/recommendation.dart';
+import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/preparation_checklist_repository.dart';
 
 void main() {
@@ -142,6 +143,66 @@ void main() {
     await tester.tap(find.text('체크 상태를 불러오지 못했어요 · 다시 시도'));
     await tester.pumpAndSettle();
     expect(find.text('챙겼어요'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('현재 브리핑의 준비물을 추천 엔진 결과 없이도 표시하고 경계에서 교체한다', (tester) async {
+    var now = DateTime.parse('2026-09-10T12:30:00+09:00');
+    BriefingTimelineEntry entry(
+      String scene,
+      String from,
+      String until,
+      String item,
+    ) =>
+        BriefingTimelineEntry(
+          briefingId: scene,
+          sceneId: scene,
+          validFrom: from,
+          validUntil: until,
+          recommendedItems: [item],
+          copy: const BriefingCopy(
+            short: '현재 안내',
+            medium: '현재 시각 안내',
+            long: '현재 시각의 긴 안내',
+            notificationTitle: '날씨 안내',
+            notificationBody: '현재 시각 안내',
+          ),
+        );
+    Widget currentBag() => MaterialApp(
+          home: Scaffold(
+            body: RecommendationBagSection(
+              regionName: '서울',
+              now: () => now,
+              recommendations: const [],
+              briefingTimeline: [
+                entry(
+                  'HUMIDITY_LOW',
+                  '2026-09-10T12:00:00+09:00',
+                  '2026-09-10T13:00:00+09:00',
+                  'WATER',
+                ),
+                entry(
+                  'RAIN',
+                  '2026-09-10T13:00:00+09:00',
+                  '2026-09-10T14:00:00+09:00',
+                  'UMBRELLA',
+                ),
+              ],
+              onDetail: (_) {},
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(currentBag());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bag-item-water')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bag-item-umbrella')), findsNothing);
+
+    now = DateTime.parse('2026-09-10T13:00:00+09:00');
+    await tester.pumpWidget(currentBag());
+    await tester.pump();
+    expect(find.byKey(const ValueKey('bag-item-water')), findsNothing);
+    expect(find.byKey(const ValueKey('bag-item-umbrella')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 }

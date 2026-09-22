@@ -77,7 +77,6 @@ describe('Canonical Briefing Intent v2', () => {
     const input = forecast([
       snapshot(18, {
         uvIndex: 7,
-        thermalSensation: 'COMFORTABLE',
         validTo: '2026-08-21T19:00:00+09:00',
       }),
     ]);
@@ -106,7 +105,6 @@ describe('Canonical Briefing Intent v2', () => {
       forecast([
         snapshot(18, {
           uvIndex: 7,
-          thermalSensation: 'COMFORTABLE',
           validTo: '2026-08-21T20:00:00+09:00',
         }),
       ]),
@@ -171,7 +169,6 @@ describe('Canonical Briefing Intent v2', () => {
       observedAt: '2026-08-21T14:00:00+09:00',
       validTo: '2026-08-21T14:59:59+09:00',
       precipitationType: 'RAIN',
-      thermalBrief: '지금 후텁지근하게 느껴져요.',
     });
     const input = { ...forecast([]), current: observed };
     const current = buildWeatherBriefResult(input, {
@@ -227,6 +224,42 @@ describe('Canonical Briefing Intent v2', () => {
     const copies = Object.values(result.intent.copy).join(' ');
 
     expect(copies).not.toMatch(/오후\s+(1[3-9]|2[0-3])시|현재 지금|0\.1℃ 높지만|자외선 때문에 기온/);
+  });
+
+  it('확장 카탈로그에서는 현재 scene 준비물을 같은 기준으로 제공한다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(15, {
+        precipitationType: 'RAIN',
+        precipitationProbability: 70,
+      }),
+    ]), {
+      expandedPreparations: true,
+      allowedRecommendedItems: ['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS'],
+    });
+
+    expect(result.intent.recommendedItems).toEqual([
+      'UMBRELLA',
+      'RAINCOAT',
+      'RAIN_BOOTS',
+    ]);
+    expect(result.timeline[0].recommendedItems).toEqual(
+      result.intent.recommendedItems,
+    );
+  });
+
+  it('꺼 둔 준비물을 요구하는 scene과 문구를 선택하지 않는다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(15, {
+        precipitationType: 'RAIN',
+        precipitationProbability: 70,
+      }),
+    ]), {
+      allowedRecommendedItems: ['WATER'],
+    });
+
+    expect(result.scene).not.toBe('RAIN');
+    expect(result.intent.recommendedItems).not.toContain('UMBRELLA');
+    expect(result.text).not.toContain('우산');
   });
 });
 

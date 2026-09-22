@@ -34,21 +34,6 @@ class CurrentWeather {
   final double? apparentTemperature;
   final String? apparentTemperatureSource;
   final double? kmaApparentTemperature;
-  final double? perceivedTemperature;
-  final double? perceivedDifference;
-  final String? perceivedModelVersion;
-  final String? perceivedConfidence;
-  final String? modelSource;
-  final String? thermalSensation;
-  final String? thermalBrief;
-  final double? estimatedClothingClo;
-  final String? estimatedClothingLabel;
-  final String? thermalSeason;
-  final double? recentMeanTemperature7d;
-  final String? temperatureTrend;
-  final double? meanRadiantTemperature;
-  final String? radiationLevel;
-  final List<String> dominantFactors;
   final double? humidity;
   final double? windSpeed;
   final double? windDirection;
@@ -74,21 +59,6 @@ class CurrentWeather {
     this.apparentTemperature,
     this.apparentTemperatureSource,
     this.kmaApparentTemperature,
-    this.perceivedTemperature,
-    this.perceivedDifference,
-    this.perceivedModelVersion,
-    this.perceivedConfidence,
-    this.modelSource,
-    this.thermalSensation,
-    this.thermalBrief,
-    this.estimatedClothingClo,
-    this.estimatedClothingLabel,
-    this.thermalSeason,
-    this.recentMeanTemperature7d,
-    this.temperatureTrend,
-    this.meanRadiantTemperature,
-    this.radiationLevel,
-    this.dominantFactors = const [],
     this.humidity,
     this.windSpeed,
     this.windDirection,
@@ -117,24 +87,6 @@ class CurrentWeather {
       apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble(),
       apparentTemperatureSource: c['apparentTemperatureSource']?.toString(),
       kmaApparentTemperature: (c['kmaApparentTemperature'] as num?)?.toDouble(),
-      perceivedTemperature: (c['perceivedTemperature'] as num?)?.toDouble(),
-      perceivedDifference: (c['perceivedDifference'] as num?)?.toDouble(),
-      perceivedModelVersion: _optionalText(c['perceivedModelVersion']),
-      perceivedConfidence: _optionalText(c['perceivedConfidence']),
-      modelSource: _optionalText(c['modelSource']),
-      thermalSensation: _optionalText(c['thermalSensation']),
-      thermalBrief: _optionalText(c['thermalBrief']),
-      estimatedClothingClo: (c['estimatedClothingClo'] as num?)?.toDouble(),
-      estimatedClothingLabel: _optionalText(c['estimatedClothingLabel']),
-      thermalSeason: _optionalText(c['thermalSeason']),
-      recentMeanTemperature7d:
-          (c['recentMeanTemperature7d'] as num?)?.toDouble(),
-      temperatureTrend: _optionalText(c['temperatureTrend']),
-      meanRadiantTemperature: (c['meanRadiantTemperature'] as num?)?.toDouble(),
-      radiationLevel: _optionalText(c['radiationLevel']),
-      dominantFactors: (c['dominantFactors'] as List<dynamic>? ?? const [])
-          .map((value) => value.toString())
-          .toList(growable: false),
       humidity: (c['humidity'] as num?)?.toDouble(),
       windSpeed: (c['windSpeed'] as num?)?.toDouble(),
       windDirection: (c['windDirection'] as num?)?.toDouble(),
@@ -153,8 +105,8 @@ class CurrentWeather {
     );
   }
 
-  double? get displayedPerceivedTemperature =>
-      perceivedTemperature ?? apparentTemperature;
+  double? get displayedApparentTemperature =>
+      kmaApparentTemperature ?? apparentTemperature;
 }
 
 class HourlyWeatherItem {
@@ -164,8 +116,7 @@ class HourlyWeatherItem {
   final String? forecastDate;
   final double? temperature;
   final double? apparentTemperature;
-  final double? perceivedTemperature;
-  final String? thermalSensation;
+  final double? kmaApparentTemperature;
   final double? precipitationProbability;
   final double? precipitationAmount;
   final String? precipitationAmountLabel;
@@ -186,8 +137,7 @@ class HourlyWeatherItem {
     this.forecastDate,
     required this.temperature,
     this.apparentTemperature,
-    this.perceivedTemperature,
-    this.thermalSensation,
+    this.kmaApparentTemperature,
     required this.precipitationProbability,
     required this.precipitationAmount,
     this.precipitationAmountLabel,
@@ -226,8 +176,7 @@ class HourlyWeatherItem {
       forecastDate: json['forecastDate']?.toString() ?? parsedDate,
       temperature: _optionalNumber(json['temperature']),
       apparentTemperature: _optionalNumber(json['apparentTemperature']),
-      perceivedTemperature: _optionalNumber(json['perceivedTemperature']),
-      thermalSensation: _optionalText(json['thermalSensation']),
+      kmaApparentTemperature: _optionalNumber(json['kmaApparentTemperature']),
       precipitationProbability:
           _optionalNumber(json['precipitationProbability']),
       precipitationAmount: _optionalNumber(json['precipitationAmount']),
@@ -258,8 +207,8 @@ class HourlyWeatherItem {
     );
   }
 
-  double? get displayedPerceivedTemperature =>
-      perceivedTemperature ?? apparentTemperature;
+  double? get displayedApparentTemperature =>
+      kmaApparentTemperature ?? apparentTemperature;
 }
 
 double? _optionalNumber(Object? value) =>
@@ -515,9 +464,6 @@ class CanonicalBriefing {
   final String? supportingFact;
   final String? action;
   final List<String> recommendedItems;
-  final String? thermalSensation;
-  final double? perceivedTemperature;
-  final String? dominantFactor;
   final String? copyVariantKey;
   final BriefingCopy copy;
 
@@ -545,9 +491,6 @@ class CanonicalBriefing {
     this.supportingFact,
     this.action,
     this.recommendedItems = const [],
-    this.thermalSensation,
-    this.perceivedTemperature,
-    this.dominantFactor,
     this.copyVariantKey,
     required this.copy,
   });
@@ -579,9 +522,6 @@ class CanonicalBriefing {
       supportingFact: _optionalText(json['supportingFact']),
       action: _optionalText(json['action']),
       recommendedItems: _stringList(json['recommendedItems']),
-      thermalSensation: _optionalText(json['thermalSensation']),
-      perceivedTemperature: _optionalNumber(json['perceivedTemperature']),
-      dominantFactor: _optionalText(json['dominantFactor']),
       copyVariantKey: _optionalText(json['copyVariantKey']),
       copy: BriefingCopy.fromJson(
         json['copy'] is Map

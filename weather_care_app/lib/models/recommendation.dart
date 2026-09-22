@@ -180,11 +180,15 @@ class WeatherRecommendation {
   }
 
   factory WeatherRecommendation.fromJson(Map<String, dynamic> json) {
+    final type = recommendationTypeFromApiName(
+          (json['type'] ?? '').toString(),
+        ) ??
+        RecommendationType.umbrella;
     return WeatherRecommendation(
-      type: _parseType((json['type'] ?? '').toString()),
+      type: type,
       recommended: json['recommended'] == true,
       priority: (json['priority'] as num?)?.toInt() ?? 0,
-      title: json['title'] ?? _parseType((json['type'] ?? '').toString()).title,
+      title: json['title'] ?? type.title,
       description: json['description'] ?? '',
       notificationEligible: json['notificationEligible'] == true,
       validFrom: json['validFrom'] as String?,
@@ -193,7 +197,7 @@ class WeatherRecommendation {
   }
 }
 
-RecommendationType _parseType(String raw) {
+RecommendationType? recommendationTypeFromApiName(String raw) {
   switch (raw) {
     case 'UMBRELLA':
       return RecommendationType.umbrella;
@@ -230,6 +234,6 @@ RecommendationType _parseType(String raw) {
     case 'MASK':
       return RecommendationType.mask;
     default:
-      return RecommendationType.umbrella;
+      return null;
   }
 }

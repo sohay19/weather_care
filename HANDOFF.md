@@ -7821,3 +7821,9 @@
 - 최종적으로 `weather-care-api`·`weather-care-scheduler`·`cloudflared`가 모두 active이고 내부·공개 `/health`가 HTTP 200 `ok`다. 공개 항동 `57/125 + 1153080000 + 서울특별시 구로구 항동` WEEK는 `11B10101 / 11B00000`, 캐시 `HIT`, 7일 카드와 빈 카드 0개를 확인했다. Main·Today는 동일 `THERMAL_HOT` 장면과 각각 12개 브리핑 timeline을 반환한다.
 - 배포 아카이브 SHA-256은 `dc7fff48a40811e01419c3d8a2839e75b0b7d49d6d5d1655bf3707b606ffbe3f`다. 직전 소스는 `/opt/weather-care/weather_care_server.previous-before-20ff192-20260922-134003`, 압축 백업은 `/var/backups/weather-care/source-before-20ff192-20260922-134003.tar.gz`에 보관했다.
 - 운영 키에는 APIHub 격자 실황·AWS fallback 403과 도로통제 401이 남아 있다. 기존 캐시로 전체 선수집은 완결됐지만 30분 신선도 정책에 따라 현재 Main·Today 기온은 `CURRENT_OBSERVATION_UNAVAILABLE`로 비어 있다. 최신 현재 기온을 다시 표시하려면 해당 APIHub 자료의 활용 승인과 ITS 인증을 별도로 갱신해야 한다.
+
+## 2026-09-22 APIHub 현재 관측 활용승인 확인
+
+- 현재 기온 복구에 필수인 1순위 신청 항목은 API허브 `예보 > 동네예보(단기예보, 초단기예보, 실황) 격자자료 > 실황`이며 실제 호출 경로는 `nph-dfs_odam_grd`다. 서버는 이 자료의 `T1H/REH/WSD/VEC/PTY/RN1`을 10분 단위로 사용한다.
+- 장애·결측 fallback까지 완성하려면 `지상관측 > AWS 매분자료`의 `nph-aws2_min`과 `지상관측 > 방재기상관측지점일람표조회`의 `AwsMtlyInfoService/getAwsStnLstTbl`도 함께 신청해야 한다.
+- `초단기예보`나 공공데이터포털의 별도 초단기실황 승인만으로 위 API허브 3개 경로의 403은 해소되지 않는다. 도로통제 401은 기상청 API허브가 아닌 ITS 인증 문제이므로 별도로 처리한다.

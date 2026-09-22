@@ -13,6 +13,8 @@ import {
   NATIONWIDE_FORECAST_GRID_SHARD_COUNT,
 } from '../regions/nationwideForecastGridCatalog';
 import { previousKoreanDate } from '../collection/sourcePublicationSchedule';
+import { latestMidTermIssueTimes } from '../providers/weather/kmaMidTermProvider';
+import { supportedKmaMidTermRegionIds } from '../regions/kmaMidTermRegionCatalog';
 import {
   assertNodeEnvironment,
   createNodeRuntime,
@@ -154,6 +156,17 @@ export function inspectOperationalPrewarm(
     required.add(`COLLECTED_REGION_${nx}_${ny}`);
     required.add(collectedCacheKey.weekly(nx, ny));
     required.add(collectedCacheKey.visibility(nx, ny));
+  }
+  const midTermIssue = latestMidTermIssueTimes(now, 1)[0];
+  if (midTermIssue) {
+    for (const { temperatureRegionId, landRegionId } of
+      supportedKmaMidTermRegionIds()) {
+      required.add(collectedCacheKey.midTermTemperature(
+        temperatureRegionId,
+        midTermIssue,
+      ));
+      required.add(collectedCacheKey.midTermLand(landRegionId, midTermIssue));
+    }
   }
   for (const { nx, ny } of activeRegions) {
     required.add(collectedCacheKey.environmental(nx, ny));

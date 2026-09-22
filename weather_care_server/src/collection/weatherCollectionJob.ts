@@ -38,12 +38,14 @@ import {
 } from '../providers/weather/kmaHourlyObservationProvider';
 import { KmaDailyObservationProvider } from '../providers/weather/kmaDailyObservationProvider';
 import {
-  KmaMidTermProvider,
   latestMidTermIssueTimes,
 } from '../providers/weather/kmaMidTermProvider';
 import { KmaUvProvider, latestUvPublicationTimes } from '../providers/uv/kmaUvProvider';
 import { AirKoreaForecastProvider } from '../providers/air/airKoreaForecastProvider';
-import { resolveKmaMidTermRegionIds } from '../regions/kmaMidTermRegionCatalog';
+import {
+  resolveKmaMidTermRegionIds,
+  supportedKmaMidTermRegionIds,
+} from '../regions/kmaMidTermRegionCatalog';
 import { uvAreaNoForGrid } from '../regions/kmaUvAreaGridCatalog';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
@@ -82,6 +84,10 @@ import type {
   CollectedWeeklyBundle,
   CollectionTarget,
 } from './collectionTypes';
+import {
+  hydrateMidTermForecast,
+  hydrateResolvedMidTermForecast,
+} from '../services/midTermForecastCache';
 
 const ENVIRONMENTAL_MAX_AGE_MS = 60 * 60 * 1000;
 const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
@@ -123,6 +129,10 @@ export async function runWeatherCollectionJob(
     ...(nationwideShard?.grids ?? []),
     ...(collectActiveDetails ? activeRegions : []),
   ]);
+  if (precollectNationwide && options.collectCore !== false &&
+      options.nationwideShardIndex === undefined) {
+    await collectSupportedMidTermForecasts(env, now);
+  }
   if (regions.length === 0) return;
   const locations = distinctLocations(targets);
   const activeRegionKeys = new Set(
@@ -190,6 +200,47 @@ export async function runWeatherCollectionJob(
   }
   if (options.collectRoadIce === true) {
     await collectRoadIce(env, locations, now, forceSourceRefresh);
+  }
+}
+
+export async function collectSupportedMidTermForecasts(
+  env: ServerEnv,
+  now = new Date(),
+): Promise<void> {
+  const expectedIssue = latestMidTermIssueTimes(now, 1)[0];
+  if (!expectedIssue || await collectedSourceVersionIsCurrent(
+    env.DB,
+    'KMA_MID_TERM_SUPPORTED_REGIONS',
+    expectedIssue,
+  )) return;
+
+  const regions = supportedKmaMidTermRegionIds();
+  let completed = 0;
+  await mapWithConcurrency(regions, 4, async (region) => {
+    const hydrated = await hydrateResolvedMidTermForecast({
+      db: env.DB,
+      serviceKey: env.KMA_SERVICE_KEY,
+      apiHubKey: env.KMA_APIHUB_KEY,
+      region,
+      now,
+    });
+    if (hydrated.issueTime === expectedIssue && hydrated.days.length > 0) {
+      completed += 1;
+    }
+  });
+  console.log(JSON.stringify({
+    event: 'mid_term_supported_regions_collected',
+    expectedIssue,
+    completed,
+    total: regions.length,
+  }));
+  if (completed === regions.length) {
+    await saveCollectedSourceVersion(
+      env.DB,
+      'KMA_MID_TERM_SUPPORTED_REGIONS',
+      expectedIssue,
+      now,
+    );
   }
 }
 
@@ -341,6 +392,8 @@ async function collectWeekly(
         uv: cached?.value.uv,
         airQuality: cached?.value.airQuality ?? [],
         midTermIssue: cached?.value.midTermIssue,
+        midTermTaRegId: cached?.value.midTermTaRegId,
+        midTermLandRegId: cached?.value.midTermLandRegId,
         uvIssue: cached?.value.uvIssue,
         airQualityIssue: cached?.value.airQualityIssue,
         collectedAt: now.toISOString(),
@@ -366,17 +419,26 @@ async function collectWeekly(
 
   let midTermDays = cached?.value.midTermDays ?? [];
   let resolvedMidTermIssue = cached?.value.midTermIssue;
+  let midTermTaRegId = cached?.value.midTermTaRegId;
+  let midTermLandRegId = cached?.value.midTermLandRegId;
   if (needsMidTerm) {
     if (!midRegion) {
       resolvedMidTermIssue = expectedMidTermIssue;
     } else {
       try {
-        midTermDays = await new KmaMidTermProvider({
+        const hydrated = await hydrateMidTermForecast({
+          db: env.DB,
           serviceKey: env.KMA_SERVICE_KEY,
           apiHubKey: env.KMA_APIHUB_KEY,
-          now: () => now,
-        }).getForecast(midRegion);
-        resolvedMidTermIssue = midTermDays[0]?.issuedAt;
+          location: { nx, ny },
+          now,
+        });
+        if (hydrated.days.length > 0) {
+          midTermDays = hydrated.days;
+          resolvedMidTermIssue = hydrated.issuedAt;
+          midTermTaRegId = hydrated.region.temperatureRegionId;
+          midTermLandRegId = hydrated.region.landRegionId;
+        }
       } catch (error) {
         logCollectionFailure('mid_term', error, { nx, ny });
       }
@@ -424,6 +486,8 @@ async function collectWeekly(
       uv,
       airQuality,
       midTermIssue: resolvedMidTermIssue,
+      midTermTaRegId,
+      midTermLandRegId,
       uvIssue: resolvedUvIssue,
       airQualityIssue: resolvedAirQualityIssue,
       collectedAt: now.toISOString(),

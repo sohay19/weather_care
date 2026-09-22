@@ -25,8 +25,10 @@ import {
   KmaWeatherProvider,
 } from '../src/providers/weather/kmaWeatherProvider';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
+import { latestMidTermIssueTimes } from '../src/providers/weather/kmaMidTermProvider';
 import { nationwideForecastGridShard } from '../src/regions/nationwideForecastGridCatalog';
 import { kmaGridCoordinates } from '../src/regions/kmaGridCoordinates';
+import { supportedKmaMidTermRegionIds } from '../src/regions/kmaMidTermRegionCatalog';
 
 describe('Node 전국 선수집', () => {
   const cleanup: Array<() => void> = [];
@@ -355,6 +357,29 @@ describe('Node 전국 선수집', () => {
         ny: key.includes('60_121') ? 121 : undefined,
       });
     }
+    const midTermIssue = latestMidTermIssueTimes(
+      new Date('2026-09-21T05:00:00Z'),
+      1,
+    )[0];
+    const midTermKeys = new Map<string, string>();
+    for (const { temperatureRegionId, landRegionId } of
+      supportedKmaMidTermRegionIds()) {
+      midTermKeys.set(
+        collectedCacheKey.midTermTemperature(temperatureRegionId, midTermIssue),
+        temperatureRegionId,
+      );
+      midTermKeys.set(
+        collectedCacheKey.midTermLand(landRegionId, midTermIssue),
+        landRegionId,
+      );
+    }
+    for (const [key, regionId] of midTermKeys) {
+      await saveCollectedCache(env.DB, {
+        key,
+        type: 'TEST_MID_TERM',
+        value: { regionId, issueTime: midTermIssue, item: { regId: regionId } },
+      });
+    }
 
     const incomplete = inspectOperationalPrewarm(
       runtime,
@@ -403,8 +428,8 @@ describe('Node 전국 선수집', () => {
       new Date('2026-09-21T05:00:00Z'),
       grid,
     )).toMatchObject({
-      requiredCaches: 10,
-      collectedCaches: 10,
+      requiredCaches: 10 + midTermKeys.size,
+      collectedCaches: 10 + midTermKeys.size,
       missingCaches: 0,
     });
   });

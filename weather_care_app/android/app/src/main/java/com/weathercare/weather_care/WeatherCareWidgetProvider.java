@@ -608,9 +608,12 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 );
             }
             BriefingEntry selected = active;
-            List<Preparation> matching = preparations.stream()
-                    .filter(item -> selected.recommendedItems().contains(item.type()))
-                    .toList();
+            List<Preparation> matching = new ArrayList<>();
+            for (Preparation item : preparations) {
+                if (selected.recommendedItems().contains(item.type())) {
+                    matching.add(item);
+                }
+            }
             return withBriefing(
                     active.briefingId(),
                     active.sceneId(),

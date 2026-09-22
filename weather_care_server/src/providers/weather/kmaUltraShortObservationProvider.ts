@@ -8,10 +8,25 @@ export interface UltraShortObservation {
   observedAt: string;
   rainDetected: boolean;
   precipitationAmount?: number;
+  precipitationTypeCode?: number;
   temperature?: number;
   humidity?: number;
   windSpeed?: number;
-  provider: 'KMA_ULTRA_SHORT_OBSERVATION';
+  windDirection?: number;
+  provider:
+    | 'KMA_APIHUB_GRID_OBSERVATION'
+    | 'KMA_AWS_OBSERVATION'
+    | 'KMA_ULTRA_SHORT_OBSERVATION';
+  sourceLocation?: {
+    type: 'GRID' | 'STATION';
+    nx?: number;
+    ny?: number;
+    stationId?: string;
+    stationName?: string;
+    distanceKm?: number;
+    locationMatch: 'EXACT_GRID' | 'NEAREST_STATION';
+  };
+  qualityFlags?: string[];
 }
 
 interface ProviderOptions {

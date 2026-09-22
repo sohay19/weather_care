@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import router, {
   buildOptionalProviderTimeoutStatusMessages,
   buildTimeline,
+  currentFromUltraShortObservation,
   enrichWeeklyForecastDays,
   isFreshMainSnapshot,
   mergeWeeklyForecastDays,
@@ -65,12 +66,17 @@ describe('fast Main weather', () => {
         ],
       });
       await seedCollectedUltraShortObservation(58, 124, {
-        observedAt: '2026-08-20T15:00:00+09:00',
+        observedAt: '2026-08-20T15:20:00+09:00',
         rainDetected: false,
+        precipitationTypeCode: 0,
         temperature: 26,
         humidity: 60,
         windSpeed: 2,
-        provider: 'KMA_ULTRA_SHORT_OBSERVATION',
+        windDirection: 180,
+        provider: 'KMA_APIHUB_GRID_OBSERVATION',
+        sourceLocation: {
+          type: 'GRID', nx: 58, ny: 124, locationMatch: 'EXACT_GRID',
+        },
       });
       const response = await router.request('/main?nx=58&ny=124', {}, {
         DB: env.DB,
@@ -87,13 +93,14 @@ describe('fast Main weather', () => {
       expect(response.headers.get('Cache-Control')).toBe('no-store');
       expect(data.region).toMatchObject({ nx: 58, ny: 124 });
       expect(data.current).toMatchObject({
-        observedAt: '2026-08-20T15:00:00+09:00',
+        observedAt: '2026-08-20T15:20:00+09:00',
         dataRole: 'OBSERVATION',
         temperature: 26,
         humidity: 60,
         windSpeed: 2,
-        provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
-        providerField: 'T1H,REH,WSD,PTY,RN1;SKY=FORECAST',
+        windDirection: 180,
+        provider: 'KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST',
+        providerField: 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST',
       });
       expect(data.current.forecastAt).toBeUndefined();
       expect(data.current.apparentTemperatureSource)
@@ -143,7 +150,7 @@ describe('fast Main weather', () => {
     try {
       await seedCollectedRegion(59, 125, forecast);
       await seedCollectedUltraShortObservation(59, 125, {
-        observedAt: '2026-08-20T15:00:00+09:00',
+        observedAt: '2026-08-20T15:20:00+09:00',
         rainDetected: false,
         temperature: 25.5,
         humidity: 58,
@@ -161,7 +168,7 @@ describe('fast Main weather', () => {
 
       expect(response.status).toBe(200);
       expect(data.current).toMatchObject({
-        observedAt: '2026-08-20T15:00:00+09:00',
+        observedAt: '2026-08-20T15:20:00+09:00',
         dataRole: 'OBSERVATION',
         temperature: 25.5,
         humidity: 58,
@@ -210,6 +217,34 @@ describe('fast Main weather', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('marks 20~30 minute observations delayed and rejects older values', () => {
+    const forecast = snapshot(15, { temperature: 21 });
+    const value = {
+      observedAt: '2026-08-20T15:10:00+09:00',
+      rainDetected: false,
+      temperature: 25,
+      humidity: 60,
+      windSpeed: 2,
+      provider: 'KMA_APIHUB_GRID_OBSERVATION' as const,
+    };
+
+    const delayed = currentFromUltraShortObservation(
+      forecast,
+      { status: 'AVAILABLE', updatedAt: value.observedAt, value },
+      new Date('2026-08-20T15:35:00+09:00'),
+    );
+    expect(delayed.temperature).toBe(25);
+    expect(delayed.qualityFlags).toContain('SOURCE_DELAYED');
+
+    const unavailable = currentFromUltraShortObservation(
+      forecast,
+      { status: 'AVAILABLE', updatedAt: value.observedAt, value },
+      new Date('2026-08-20T15:41:00+09:00'),
+    );
+    expect(unavailable.temperature).toBeUndefined();
+    expect(unavailable.qualityFlags).toContain('CURRENT_OBSERVATION_UNAVAILABLE');
   });
 
   it('selects the earliest forecast strictly after the current time', () => {

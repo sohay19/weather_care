@@ -98,10 +98,6 @@ export function enrichSnapshotWithPerceivedTemperature(
       return { ...snapshot, ...trace };
     }
     const perceivedTemperature = roundOne(kmaApparentTemperature);
-    const thermalSensation = classifyThermalSensation(
-      perceivedTemperature,
-      context.previousThermalSensation,
-    );
     return {
       ...snapshot,
       ...trace,
@@ -113,17 +109,9 @@ export function enrichSnapshotWithPerceivedTemperature(
       modelSource: role === 'OBSERVATION'
         ? 'KMA_FALLBACK_FROM_OBSERVATION'
         : 'KMA_FALLBACK_FROM_FORECAST',
-      thermalSensation,
       dominantFactors: ['TEMPERATURE'],
-      thermalBrief: buildThermalBrief({
-        regionKey: context.regionKey,
-        at,
-        thermalSensation,
-        perceivedTemperature,
-        airTemperature: temperature,
-        dominantFactors: ['TEMPERATURE'],
-        fallback: true,
-      }),
+      thermalBrief:
+        '현재 자료로는 기온과 바람·습도를 중심으로 체감을 계산했어요.',
     };
   }
 
@@ -273,7 +261,6 @@ export function buildThermalBrief(options: {
   dominantFactors: DominantFactor[];
   clothingLabel?: NonNullable<WeatherSnapshot['estimatedClothingLabel']>;
   trend?: NonNullable<WeatherSnapshot['temperatureTrend']>;
-  fallback?: boolean;
 }): string {
   const factor = options.dominantFactors[0] ?? 'TEMPERATURE';
   const candidates = sensationMessages(options.thermalSensation, factor, options.trend);
@@ -295,9 +282,6 @@ export function buildThermalBrief(options: {
     ? undefined
     : clothingMessage(options.clothingLabel, options.thermalSensation);
   if (clothing && blocks.length < 3) blocks.push(clothing);
-  if (options.fallback) {
-    blocks.push('현재 자료로는 기온과 바람·습도를 중심으로 체감을 계산했어요.');
-  }
   return blocks.slice(0, 3).join(' ');
 }
 

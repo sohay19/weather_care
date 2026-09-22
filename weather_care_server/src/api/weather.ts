@@ -92,7 +92,8 @@ router.use('*', async (c, next) => {
   await next();
 });
 const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
-const CURRENT_OBSERVATION_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+const CURRENT_OBSERVATION_DELAYED_AGE_MS = 20 * 60 * 1000;
+const CURRENT_OBSERVATION_MAX_AGE_MS = 30 * 60 * 1000;
 // A cold 13 MB radar composite regularly needs more than the shared 3.5 s
 // optional-source deadline. Keep it within the app's 20 s API timeout.
 const CURRENT_PRECIPITATION_PROVIDER_BUDGET_MS = 8_000;
@@ -166,7 +167,7 @@ router.get('/main', async (c) => {
     const thermalCurrent = thermalForecast.current;
     const response: TodayWeatherResponse = {
       dataSource: thermalCurrent.dataRole === 'OBSERVATION'
-        ? `${forecast.dataSource} · 기상청 초단기실황 · 서버 중앙 수집`
+        ? `${forecast.dataSource} · ${currentObservationSourceLabel(thermalCurrent)} · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
@@ -349,7 +350,7 @@ router.get('/today', async (c) => {
     );
     const response: TodayWeatherResponse = {
       dataSource: thermalCurrent.dataRole === 'OBSERVATION'
-        ? `${forecast.dataSource} · 기상청 초단기실황 · 서버 중앙 수집`
+        ? `${forecast.dataSource} · ${currentObservationSourceLabel(thermalCurrent)} · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionLabel },
       brief: brief.text,
@@ -820,6 +821,11 @@ export function currentFromUltraShortObservation(
 
   const observation = record.value;
   const apparentTemperature = ultraShortApparentTemperature(observation);
+  const awsFallback = observation.provider === 'KMA_AWS_OBSERVATION';
+  const precipitationType = precipitationTypeFromObservation(
+    observation,
+    forecast.precipitationType,
+  );
   return {
     ...forecast,
     observedAt: observation.observedAt,
@@ -837,21 +843,81 @@ export function currentFromUltraShortObservation(
       : 'KMA_APPARENT_TEMPERATURE_2026.1',
     humidity: observation.humidity,
     windSpeed: observation.windSpeed,
-    windDirection: undefined,
-    precipitationType: observation.rainDetected
-      ? forecast.precipitationType === 'SNOW' ||
-        forecast.precipitationType === 'RAIN_SNOW'
-        ? forecast.precipitationType
-        : 'RAIN'
-      : 'NONE',
+    windDirection: observation.windDirection,
+    precipitationType,
     precipitationAmount: observation.precipitationAmount,
-    provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
-    providerField: 'T1H,REH,WSD,PTY,RN1;SKY=FORECAST',
+    provider: `${observation.provider}+KMA_FORECAST`,
+    providerField: awsFallback
+      ? 'TA,HM,WS,WD,RN;SKY=FORECAST'
+      : observation.provider === 'KMA_APIHUB_GRID_OBSERVATION'
+        ? 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST'
+        : 'T1H,REH,WSD,PTY,RN1;SKY=FORECAST',
+    ...(observation.sourceLocation
+      ? { sourceLocation: observation.sourceLocation }
+      : {}),
+    fieldSources: {
+      temperature: {
+        role: 'OBSERVATION',
+        field: awsFallback ? 'TA' : 'T1H',
+        observedAt: observation.observedAt,
+      },
+      humidity: {
+        role: 'OBSERVATION',
+        field: awsFallback ? 'HM' : 'REH',
+        observedAt: observation.observedAt,
+      },
+      windSpeed: {
+        role: 'OBSERVATION',
+        field: awsFallback ? 'WS' : 'WSD',
+        observedAt: observation.observedAt,
+      },
+      sky: {
+        role: 'FORECAST_PROXY',
+        field: 'SKY',
+        forecastAt: forecast.forecastAt ?? forecast.observedAt,
+      },
+    },
     qualityFlags: [
       ...(forecast.qualityFlags ?? []),
+      ...(observation.qualityFlags ?? []),
+      ...(observationAge > CURRENT_OBSERVATION_DELAYED_AGE_MS
+        ? ['SOURCE_DELAYED']
+        : []),
       'SKY_FROM_FORECAST',
     ],
   };
+}
+
+function precipitationTypeFromObservation(
+  observation: UltraShortObservation,
+  forecastType: WeatherSnapshot['precipitationType'],
+): WeatherSnapshot['precipitationType'] {
+  if (!observation.rainDetected) return 'NONE';
+  switch (observation.precipitationTypeCode) {
+    case 2:
+    case 6:
+      return 'RAIN_SNOW';
+    case 3:
+    case 7:
+      return 'SNOW';
+    case 1:
+    case 5:
+      return 'RAIN';
+    default:
+      return forecastType === 'SNOW' || forecastType === 'RAIN_SNOW'
+        ? forecastType
+        : 'RAIN';
+  }
+}
+
+function currentObservationSourceLabel(snapshot: WeatherSnapshot): string {
+  if (snapshot.provider?.includes('KMA_AWS_OBSERVATION')) {
+    return '기상청 최근접 AWS 관측';
+  }
+  if (snapshot.provider?.includes('KMA_APIHUB_GRID_OBSERVATION')) {
+    return '기상청 APIHub 10분 격자 실황';
+  }
+  return '기상청 초단기실황';
 }
 
 export function forecastForCurrentHour(

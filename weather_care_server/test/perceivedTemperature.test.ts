@@ -113,6 +113,7 @@ describe('사람 중심 체감온도 v2', () => {
     expect(result.perceivedTemperature).toBe(25);
     expect(result.modelSource).toBe('KMA_FALLBACK_FROM_OBSERVATION');
     expect(result.perceivedConfidence).toBe('LOW');
+    expect(result.thermalSensation).toBeUndefined();
     expect(result.thermalBrief).toContain('기온과 바람·습도를 중심으로');
   });
 

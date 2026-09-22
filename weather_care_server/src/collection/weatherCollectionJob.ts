@@ -15,11 +15,16 @@ import {
   type EnvironmentalDataBundle,
 } from '../providers/environmental/environmentalDataService';
 import {
-  KmaUltraShortObservationProvider,
-  latestUltraShortPublishedHour,
   ultraShortKoreanIso,
   type UltraShortObservation,
 } from '../providers/weather/kmaUltraShortObservationProvider';
+import {
+  GRID_OBSERVATION_VARIABLES,
+  gridObservationKoreanIso,
+  KmaGridObservationProvider,
+  latestGridObservationTime,
+} from '../providers/weather/kmaGridObservationProvider';
+import { KmaAwsMinuteObservationProvider } from '../providers/weather/kmaAwsMinuteObservationProvider';
 import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
 import {
   KmaWarningProvider,
@@ -641,33 +646,84 @@ async function collectUltraShortObservations(
   regions: CollectionTarget[],
   now: Date,
 ): Promise<void> {
-  const expectedObservedAt = ultraShortKoreanIso(
-    latestUltraShortPublishedHour(now),
-  );
-  await mapWithConcurrency(regions, 2, async (region) => {
-    const key = collectedCacheKey.ultraShortObservation(region.nx, region.ny);
-    const record = await getCollectedCache<UltraShortObservation>(env.DB, key);
-    if (record?.value.observedAt === expectedObservedAt) return;
+  if (!env.KMA_APIHUB_KEY || regions.length === 0) return;
+  const targetClock = latestGridObservationTime(now);
+  const expectedObservedAt = gridObservationKoreanIso(targetClock);
+  const pending: CollectionTarget[] = [];
+  for (const region of regions) {
+    const record = await getCollectedCache<UltraShortObservation>(
+      env.DB,
+      collectedCacheKey.ultraShortObservation(region.nx, region.ny),
+    );
+    if (record?.status !== 'AVAILABLE' ||
+        record.value.observedAt < expectedObservedAt) {
+      pending.push(region);
+    }
+  }
+  if (pending.length === 0) return;
+
+  const observations = new Map<string, UltraShortObservation>();
+  if (await reserveApiHubBudget(
+    env.DB,
+    'GRID_OBSERVATION_10_MINUTES',
+    GRID_OBSERVATION_VARIABLES.length,
+    6_000_000,
+    now,
+  )) {
     try {
-      const value = await new KmaUltraShortObservationProvider({
-        serviceKey: env.KMA_SERVICE_KEY,
+      const exact = await new KmaGridObservationProvider({
+        serviceKey: env.KMA_APIHUB_KEY,
+      }).getAt(pending, targetClock);
+      for (const [key, value] of exact) observations.set(key, value);
+    } catch (error) {
+      logCollectionFailure('grid_observation', error);
+    }
+  }
+
+  const missing = pending.filter(
+    (region) => !observations.has(`${region.nx}:${region.ny}`),
+  );
+  const fallbackTargets = missing.flatMap((region) => {
+    const coordinates = region.latitude !== undefined &&
+        region.longitude !== undefined
+      ? { latitude: region.latitude, longitude: region.longitude }
+      : kmaGridCoordinates(region.nx, region.ny);
+    return coordinates ? [{ region, coordinates }] : [];
+  });
+  if (fallbackTargets.length > 0 && await reserveApiHubBudget(
+    env.DB,
+    'AWS_CURRENT_FALLBACK',
+    3,
+    3_000_000,
+    now,
+  )) {
+    try {
+      const fallback = await new KmaAwsMinuteObservationProvider({
+        serviceKey: env.KMA_APIHUB_KEY,
         now: () => now,
-      }).getCurrent(region.nx, region.ny);
-      await saveCollectedCache(env.DB, {
-        key,
-        type: 'COLLECTED_ULTRA_SHORT',
-        value,
-        nx: region.nx,
-        ny: region.ny,
-        updatedAt: now,
+      }).getCurrentByLocations(fallbackTargets.map(({ coordinates }) => coordinates));
+      fallback.forEach((value, index) => {
+        if (!value) return;
+        const region = fallbackTargets[index].region;
+        observations.set(`${region.nx}:${region.ny}`, value);
       });
     } catch (error) {
-      logCollectionFailure('ultra_short', error, {
-        nx: region.nx,
-        ny: region.ny,
-      });
+      logCollectionFailure('aws_current_fallback', error);
     }
-  });
+  }
+
+  await Promise.all(pending.flatMap((region) => {
+    const value = observations.get(`${region.nx}:${region.ny}`);
+    if (!value) return [];
+    return [saveCollectedCache(env.DB, {
+      key: collectedCacheKey.ultraShortObservation(region.nx, region.ny),
+      type: 'COLLECTED_ULTRA_SHORT',
+      value,
+      nx: region.nx,
+      ny: region.ny,
+      updatedAt: now,
+    })];
+  }));
 }
 
 async function collectCurrentPrecipitation(

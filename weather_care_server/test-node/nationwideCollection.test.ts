@@ -322,7 +322,7 @@ describe('Node 전국 선수집', () => {
     );
     const env = nodeServerEnv(database, {});
     const runtime = { database, env, close: () => database.close() };
-    const grid = [{ nx: 60, ny: 121 }] as const;
+    const grid = [{ nx: 60, ny: 121 }, { nx: 61, ny: 121 }] as const;
     const requiredCaches = [
       collectedCacheKey.forecast(60, 121),
       'CURRENT_60_121',
@@ -333,6 +333,11 @@ describe('Node 전국 선수집', () => {
       collectedCacheKey.ultraShortObservation(60, 121),
       collectedCacheKey.precipitation(37.2636, 127.0286),
       collectedCacheKey.roadControl(37.2636, 127.0286),
+      collectedCacheKey.forecast(61, 121),
+      'CURRENT_61_121',
+      'COLLECTED_REGION_61_121',
+      collectedCacheKey.weekly(61, 121),
+      collectedCacheKey.visibility(61, 121),
     ];
     for (const key of requiredCaches) {
       await saveCollectedCache(env.DB, {
@@ -388,9 +393,10 @@ describe('Node 전국 선수집', () => {
       new Date('2026-09-21T05:00:00Z'),
       grid,
     );
-    expect(incomplete.missingCaches).toBe(1);
+    expect(incomplete.missingCaches).toBe(2);
     expect(incomplete.missingSample).toEqual([
       collectedCacheKey.visibility(60, 121),
+      collectedCacheKey.ultraShortObservation(61, 121),
     ]);
 
     await saveCollectedCache(env.DB, {
@@ -404,7 +410,7 @@ describe('Node 전국 선수집', () => {
       runtime,
       new Date('2026-09-21T05:00:00Z'),
       grid,
-    ).missingCaches).toBe(1);
+    ).missingCaches).toBe(2);
 
     await saveCollectedCache(env.DB, {
       key: collectedCacheKey.visibility(60, 121),
@@ -420,18 +426,28 @@ describe('Node 전국 선수집', () => {
       runtime,
       new Date('2026-09-21T05:00:00Z'),
       grid,
-    ).missingSample).toEqual([collectedCacheKey.forecast(60, 121)]);
+    ).missingSample).toEqual([
+      collectedCacheKey.forecast(60, 121),
+      collectedCacheKey.ultraShortObservation(61, 121),
+    ]);
     database.sqlite.prepare(
       'UPDATE weather_cache SET status = ? WHERE cache_key = ?',
     ).run('AVAILABLE', collectedCacheKey.forecast(60, 121));
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.ultraShortObservation(61, 121),
+      type: 'COLLECTED_ULTRA_SHORT',
+      value: { observedAt: '2026-09-21T13:50:00+09:00' },
+      nx: 61,
+      ny: 121,
+    });
 
     expect(inspectOperationalPrewarm(
       runtime,
       new Date('2026-09-21T05:00:00Z'),
       grid,
     )).toMatchObject({
-      requiredCaches: 10 + midTermKeys.size,
-      collectedCaches: 10 + midTermKeys.size,
+      requiredCaches: 16 + midTermKeys.size,
+      collectedCaches: 16 + midTermKeys.size,
       missingCaches: 0,
     });
   });

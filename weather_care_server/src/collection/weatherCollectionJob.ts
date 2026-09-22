@@ -187,7 +187,7 @@ export async function runWeatherCollectionJob(
     await collectRegionForecasts(env, regions, activeRegionKeys, now);
     if (collectActiveDetails) {
       await collectWarnings(env, activeRegions, now, forceSourceRefresh);
-      await collectUltraShortObservations(env, activeRegions, now);
+      await collectUltraShortObservations(env, allForecastTargets, now);
       await collectRoadControls(env, locations, now, forceSourceRefresh);
       if (options.collectHourlyObservations !== true) {
         await collectCurrentVisibility(

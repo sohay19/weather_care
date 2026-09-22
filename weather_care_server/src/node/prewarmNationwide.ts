@@ -156,6 +156,7 @@ export function inspectOperationalPrewarm(
     required.add(`COLLECTED_REGION_${nx}_${ny}`);
     required.add(collectedCacheKey.weekly(nx, ny));
     required.add(collectedCacheKey.visibility(nx, ny));
+    required.add(collectedCacheKey.ultraShortObservation(nx, ny));
   }
   const midTermIssue = latestMidTermIssueTimes(now, 1)[0];
   if (midTermIssue) {
@@ -173,7 +174,6 @@ export function inspectOperationalPrewarm(
   for (const { nx, ny } of activeRegions) {
     required.add(collectedCacheKey.environmental(nx, ny));
     required.add(collectedCacheKey.warning(nx, ny));
-    required.add(collectedCacheKey.ultraShortObservation(nx, ny));
   }
   for (const { latitude, longitude } of activeLocations) {
     required.add(collectedCacheKey.precipitation(latitude, longitude));

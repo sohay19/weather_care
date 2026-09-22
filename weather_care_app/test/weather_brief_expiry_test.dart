@@ -27,7 +27,7 @@ void main() {
     now = now.add(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
     expect(find.text(action), findsNothing);
-    expect(find.textContaining('안내 시간이 지났어요.'), findsOneWidget);
+    expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -39,7 +39,7 @@ void main() {
     testWidgets('이미 만료된 응답을 처음 열어도 안내하지 않는다: $expiry', (tester) async {
       await tester.pumpWidget(subject(expiry: expiry));
       expect(find.text(action), findsNothing);
-      expect(find.textContaining('안내 시간이 지났어요.'), findsOneWidget);
+      expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
     });
   }
 
@@ -82,7 +82,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.text(action), findsNothing);
-    expect(find.textContaining('안내 시간이 지났어요.'), findsOneWidget);
+    expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
   });
 
   testWidgets('시계가 앞으로 조정되어도 주기 점검으로 만료를 반영한다', (tester) async {
@@ -90,6 +90,49 @@ void main() {
     now = now.add(const Duration(hours: 2));
     await tester.pump(const Duration(minutes: 1));
     expect(find.text(action), findsNothing);
+  });
+
+  testWidgets('서버 timeline 경계에서 앱 재조회 없이 다음 scene으로 바꾼다', (tester) async {
+    const copyUv = BriefingCopy(
+      short: '자외선이 강해요.',
+      medium: '낮 동안 자외선이 강해요. 양산을 챙기세요.',
+      long: '낮 동안 자외선이 강해요.',
+      notificationTitle: '자외선 안내',
+      notificationBody: '양산을 챙기세요.',
+    );
+    const copyEvening = BriefingCopy(
+      short: '선선한 날씨예요.',
+      medium: '해가 진 뒤에는 선선하고 편안해요.',
+      long: '해가 진 뒤에는 선선하고 편안해요.',
+      notificationTitle: '저녁 날씨',
+      notificationBody: '선선한 날씨예요.',
+    );
+    final timeline = [
+      const BriefingTimelineEntry(
+        briefingId: 'uv',
+        sceneId: 'UV',
+        validFrom: '2026-09-10T09:40:00Z',
+        validUntil: '2026-09-10T09:47:00Z',
+        copy: copyUv,
+      ),
+      const BriefingTimelineEntry(
+        briefingId: 'evening',
+        sceneId: 'THERMAL_COMFORTABLE',
+        validFrom: '2026-09-10T09:47:00Z',
+        validUntil: '2026-09-10T15:00:00Z',
+        copy: copyEvening,
+      ),
+    ];
+    now = DateTime.parse('2026-09-10T18:46:59+09:00');
+    await tester.pumpWidget(MaterialApp(
+      home: WeatherBriefText(text: action, timeline: timeline, now: () => now),
+    ));
+    expect(find.text(copyUv.medium), findsOneWidget);
+    now = now.add(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text(copyEvening.medium), findsOneWidget);
+    expect(find.textContaining('자외선'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('새 응답을 받으면 만료 상태를 해제하고 이전 타이머를 취소한다', (tester) async {
@@ -160,7 +203,7 @@ void main() {
       onDetail: (_) {},
     ))));
     expect(find.text(action), findsNothing);
-    expect(find.textContaining('안내 시간이 지났어요.'), findsOneWidget);
+    expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
     expect(find.textContaining('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

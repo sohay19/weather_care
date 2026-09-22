@@ -1,5 +1,6 @@
 package com.codesoha.weathercare;
 
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -17,15 +18,31 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 public class WeatherCareWidgetProvider extends AppWidgetProvider {
+    private static final String ACTION_BRIEFING_BOUNDARY =
+            "com.codesoha.weathercare.BRIEFING_BOUNDARY";
+    private static final int BRIEFING_ALARM_REQUEST = 1702;
     private static final int MEDIUM_MIN_WIDTH_DP = 220;
     private static final int TEXT_PRIMARY = Color.rgb(37, 55, 78);
     private static final int TEXT_SECONDARY = Color.rgb(96, 117, 138);
     private static final int TEXT_MIN_MAX = Color.rgb(66, 90, 114);
     // Pixel Launcher 측정값(2칸 108dp, 3칸 169dp)의 중간값이다.
     private static final int LARGE_MIN_HEIGHT_DP = 140;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (ACTION_BRIEFING_BOUNDARY.equals(intent.getAction())) {
+            updateAll(context);
+            return;
+        }
+        super.onReceive(context, intent);
+    }
 
     @Override
     public void onUpdate(
@@ -76,7 +93,9 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             case LARGE -> R.layout.weather_widget_large;
         };
         RemoteViews views = new RemoteViews(context.getPackageName(), layout);
-        Snapshot snapshot = readSnapshot(context);
+        Snapshot stored = readSnapshot(context);
+        long now = System.currentTimeMillis();
+        Snapshot snapshot = stored.forTime(now);
 
         bindHeader(context, views, snapshot, size);
         bindTemperature(context, views, snapshot, size);
@@ -103,6 +122,23 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         }
 
         manager.updateAppWidget(appWidgetId, views);
+        scheduleBriefingBoundary(context, stored.nextBoundaryAfter(now));
+    }
+
+    private static void scheduleBriefingBoundary(Context context, long boundary) {
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        if (alarmManager == null) return;
+        PendingIntent pending = PendingIntent.getBroadcast(
+                context,
+                BRIEFING_ALARM_REQUEST,
+                new Intent(context, WeatherCareWidgetProvider.class)
+                        .setAction(ACTION_BRIEFING_BOUNDARY),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        alarmManager.cancel(pending);
+        if (boundary > System.currentTimeMillis()) {
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, boundary, pending);
+        }
     }
 
     private static void bindHeader(
@@ -401,7 +437,48 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
 
     private record Preparation(String type, String label) { }
 
+    private record BriefingEntry(
+            String briefingId,
+            String sceneId,
+            long validFrom,
+            long validUntil,
+            String shortMessage,
+            String longMessage,
+            Set<String> recommendedItems
+    ) {
+        boolean activeAt(long now) {
+            return validFrom <= now && now < validUntil;
+        }
+
+        static BriefingEntry fromJson(JSONObject json) {
+            JSONArray rawItems = json.optJSONArray("recommendedItems");
+            Set<String> items = new HashSet<>();
+            if (rawItems != null) {
+                for (int index = 0; index < rawItems.length(); index++) {
+                    String item = rawItems.optString(index, "").trim();
+                    if (!item.isEmpty()) items.add(item);
+                }
+            }
+            return new BriefingEntry(
+                    Snapshot.text(json, "briefingId", ""),
+                    Snapshot.text(json, "sceneId", "UNAVAILABLE"),
+                    instant(json.optString("validFrom", "")),
+                    instant(json.optString("validUntil", "")),
+                    Snapshot.text(json, "shortMessage", "최신 날씨를 확인해 주세요."),
+                    Snapshot.text(json, "longMessage", "최신 날씨를 확인해 주세요."),
+                    items
+            );
+        }
+    }
+
     private static final class Snapshot {
+        final String briefingId;
+        final String sceneId;
+        final long validFrom;
+        final long validUntil;
+        final long nextBriefingBoundary;
+        final long dataFreshUntil;
+        final List<BriefingEntry> briefingTimeline;
         final String region;
         final String refreshTime;
         final String condition;
@@ -417,6 +494,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         final List<Preparation> preparations;
 
         Snapshot(
+                String briefingId,
+                String sceneId,
+                long validFrom,
+                long validUntil,
+                long nextBriefingBoundary,
+                long dataFreshUntil,
+                List<BriefingEntry> briefingTimeline,
                 String region,
                 String refreshTime,
                 String condition,
@@ -431,6 +515,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 String nextTemperature,
                 List<Preparation> preparations
         ) {
+            this.briefingId = briefingId;
+            this.sceneId = sceneId;
+            this.validFrom = validFrom;
+            this.validUntil = validUntil;
+            this.nextBriefingBoundary = nextBriefingBoundary;
+            this.dataFreshUntil = dataFreshUntil;
+            this.briefingTimeline = briefingTimeline;
             this.region = region;
             this.refreshTime = refreshTime;
             this.condition = condition;
@@ -447,6 +538,18 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         }
 
         static Snapshot fromJson(JSONObject json) {
+            JSONArray rawTimeline = json.optJSONArray("briefingTimeline");
+            List<BriefingEntry> timeline = new ArrayList<>();
+            if (rawTimeline != null) {
+                for (int index = 0; index < rawTimeline.length(); index++) {
+                    JSONObject item = rawTimeline.optJSONObject(index);
+                    if (item == null) continue;
+                    BriefingEntry entry = BriefingEntry.fromJson(item);
+                    if (entry.validFrom() > 0 && entry.validUntil() > entry.validFrom()) {
+                        timeline.add(entry);
+                    }
+                }
+            }
             JSONArray rawPreparations = json.optJSONArray("preparations");
             List<Preparation> preparations = new ArrayList<>();
             if (rawPreparations != null) {
@@ -460,6 +563,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 }
             }
             return new Snapshot(
+                    text(json, "briefingId", ""),
+                    text(json, "sceneId", "UNAVAILABLE"),
+                    instant(json.optString("validFrom", "")),
+                    instant(json.optString("validUntil", "")),
+                    instant(json.optString("nextBriefingBoundary", "")),
+                    instant(json.optString("dataFreshUntil", "")),
+                    timeline,
                     text(json, "region", "지역을 설정해주세요"),
                     text(json, "refreshTime", "앱에서 갱신"),
                     text(json, "condition", "unknown"),
@@ -476,6 +586,84 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             );
         }
 
+        Snapshot forTime(long now) {
+            BriefingEntry active = null;
+            for (BriefingEntry entry : briefingTimeline) {
+                if (entry.activeAt(now)) {
+                    active = entry;
+                    break;
+                }
+            }
+            if (briefingTimeline.isEmpty()) {
+                boolean valid = validUntil <= 0 || now < validUntil;
+                return valid ? this : withBriefing(
+                        "", "UNAVAILABLE", "최신 날씨를 확인해 주세요.",
+                        "최신 날씨를 확인해 주세요.", List.of()
+                );
+            }
+            if (active == null || dataFreshUntil > 0 && now >= dataFreshUntil) {
+                return withBriefing(
+                        "", "UNAVAILABLE", "최신 날씨를 확인해 주세요.",
+                        "최신 날씨를 확인해 주세요.", List.of()
+                );
+            }
+            BriefingEntry selected = active;
+            List<Preparation> matching = preparations.stream()
+                    .filter(item -> selected.recommendedItems().contains(item.type()))
+                    .toList();
+            return withBriefing(
+                    active.briefingId(),
+                    active.sceneId(),
+                    active.shortMessage(),
+                    active.longMessage(),
+                    matching
+            );
+        }
+
+        long nextBoundaryAfter(long now) {
+            long closest = Long.MAX_VALUE;
+            for (BriefingEntry entry : briefingTimeline) {
+                if (entry.validFrom() > now) closest = Math.min(closest, entry.validFrom());
+                if (entry.validUntil() > now) closest = Math.min(closest, entry.validUntil());
+            }
+            if (nextBriefingBoundary > now) {
+                closest = Math.min(closest, nextBriefingBoundary);
+            }
+            if (dataFreshUntil > now) closest = Math.min(closest, dataFreshUntil);
+            return closest == Long.MAX_VALUE ? 0 : closest;
+        }
+
+        private Snapshot withBriefing(
+                String briefingId,
+                String sceneId,
+                String shortMessage,
+                String brief,
+                List<Preparation> preparations
+        ) {
+            return new Snapshot(
+                    briefingId,
+                    sceneId,
+                    validFrom,
+                    validUntil,
+                    nextBriefingBoundary,
+                    dataFreshUntil,
+                    briefingTimeline,
+                    region,
+                    refreshTime,
+                    condition,
+                    currentTemperature,
+                    apparentTemperature,
+                    minimumTemperature,
+                    maximumTemperature,
+                    shortMessage,
+                    brief,
+                    nextTime,
+                    nextCondition,
+                    nextTemperature,
+                    preparations
+            );
+        }
+
         static Snapshot empty() {
             return fromJson(new JSONObject());
         }
@@ -483,6 +671,14 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         private static String text(JSONObject json, String key, String fallback) {
             String value = json.optString(key, fallback).trim();
             return value.isEmpty() ? fallback : value;
+        }
+    }
+
+    private static long instant(String value) {
+        try {
+            return Instant.parse(value).toEpochMilli();
+        } catch (DateTimeParseException ignored) {
+            return 0;
         }
     }
 }

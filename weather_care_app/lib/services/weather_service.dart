@@ -70,6 +70,7 @@ class WeatherService {
     Object? lastError;
     TodayWeatherResponse? latestToday;
     WeeklyWeatherResponse? latestWeekly;
+    final resolvedRegionName = regionName ?? await regionNameFuture;
     for (var attempt = 0; attempt <= serverRetryCount; attempt++) {
       try {
         final todayFuture = latestToday == null
@@ -78,6 +79,8 @@ class WeatherService {
                 nx: nx,
                 ny: ny,
                 coordinates: coordinates,
+                regionCode: regionCode,
+                regionName: resolvedRegionName,
               ).then((today) {
                 latestToday = today;
                 onToday?.call(today);
@@ -86,7 +89,6 @@ class WeatherService {
             : Future.value(latestToday!);
         final weeklyFuture = latestWeekly == null
             ? () async {
-                final resolvedRegionName = regionName ?? await regionNameFuture;
                 final weekly = await fetchWeeklyWeather(
                   installationId: installationId,
                   nx: nx,
@@ -132,6 +134,8 @@ class WeatherService {
     int nx = 60,
     int ny = 121,
     DeviceCoordinates? coordinates,
+    String? regionCode,
+    String? regionName,
   }) async {
     final data = await client.get(
       '/api/v1/weather/today',
@@ -144,6 +148,10 @@ class WeatherService {
           'latitude': '${coordinates.latitude}',
           'longitude': '${coordinates.longitude}',
         },
+        if (regionCode != null && regionCode.isNotEmpty)
+          'regionCode': regionCode,
+        if (regionName != null && regionName.trim().isNotEmpty)
+          'regionName': regionName.trim(),
       },
     );
     return TodayWeatherResponse.fromJson(data);
@@ -176,11 +184,20 @@ class WeatherService {
   Future<TodayWeatherResponse?> fetchMainWeather({
     int nx = 60,
     int ny = 121,
+    String? regionCode,
+    String? regionName,
   }) async {
     try {
       final data = await client.get(
         '/api/v1/weather/main',
-        query: {'nx': '$nx', 'ny': '$ny'},
+        query: {
+          'nx': '$nx',
+          'ny': '$ny',
+          if (regionCode != null && regionCode.isNotEmpty)
+            'regionCode': regionCode,
+          if (regionName != null && regionName.trim().isNotEmpty)
+            'regionName': regionName.trim(),
+        },
       );
       return TodayWeatherResponse.fromJson(data);
     } catch (error) {

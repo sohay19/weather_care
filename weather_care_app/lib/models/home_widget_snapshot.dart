@@ -13,9 +13,99 @@ class HomeWidgetPreparation {
   Map<String, dynamic> toJson() => {'type': type, 'label': label};
 }
 
-class HomeWidgetSnapshot {
-  static const schemaVersion = 1;
+class HomeWidgetBriefingEntry {
+  final String briefingId;
+  final String sceneId;
+  final String validFrom;
+  final String validUntil;
+  final String shortMessage;
+  final String mediumMessage;
+  final String longMessage;
+  final String? targetFrom;
+  final String? targetUntil;
+  final String? action;
+  final String? copyVariantKey;
+  final List<String> recommendedItems;
 
+  const HomeWidgetBriefingEntry({
+    required this.briefingId,
+    required this.sceneId,
+    required this.validFrom,
+    required this.validUntil,
+    required this.shortMessage,
+    required this.mediumMessage,
+    required this.longMessage,
+    this.targetFrom,
+    this.targetUntil,
+    this.action,
+    this.copyVariantKey,
+    this.recommendedItems = const [],
+  });
+
+  factory HomeWidgetBriefingEntry.fromTimeline(
+    BriefingTimelineEntry entry,
+  ) =>
+      HomeWidgetBriefingEntry(
+        briefingId: entry.briefingId,
+        sceneId: entry.sceneId,
+        validFrom: entry.validFrom,
+        validUntil: entry.validUntil,
+        shortMessage: entry.copy.short,
+        mediumMessage: entry.copy.medium,
+        longMessage: entry.copy.long,
+        targetFrom: entry.targetFrom,
+        targetUntil: entry.targetUntil,
+        action: entry.action,
+        copyVariantKey: entry.copyVariantKey,
+        recommendedItems: entry.recommendedItems,
+      );
+
+  factory HomeWidgetBriefingEntry.fromBriefing(
+    CanonicalBriefing briefing,
+  ) =>
+      HomeWidgetBriefingEntry(
+        briefingId: briefing.briefingId,
+        sceneId: briefing.sceneId,
+        validFrom: briefing.validFrom,
+        validUntil: briefing.validUntil,
+        shortMessage: briefing.copy.short,
+        mediumMessage: briefing.copy.medium,
+        longMessage: briefing.copy.long,
+        targetFrom: briefing.targetFrom,
+        targetUntil: briefing.targetUntil,
+        action: briefing.action,
+        copyVariantKey: briefing.copyVariantKey,
+        recommendedItems: briefing.recommendedItems,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'briefingId': briefingId,
+        'sceneId': sceneId,
+        'validFrom': validFrom,
+        'validUntil': validUntil,
+        'shortMessage': shortMessage,
+        'mediumMessage': mediumMessage,
+        'longMessage': longMessage,
+        if (targetFrom != null) 'targetFrom': targetFrom,
+        if (targetUntil != null) 'targetUntil': targetUntil,
+        if (action != null) 'action': action,
+        if (copyVariantKey != null) 'copyVariantKey': copyVariantKey,
+        'recommendedItems': recommendedItems,
+      };
+}
+
+class HomeWidgetSnapshot {
+  static const schemaVersion = 2;
+
+  final String generatedAt;
+  final String locationKey;
+  final String briefingId;
+  final String sceneId;
+  final String validFrom;
+  final String validUntil;
+  final String nextBriefingBoundary;
+  final String dataFreshUntil;
+  final List<HomeWidgetBriefingEntry> briefingTimeline;
   final String region;
   final String refreshTime;
   final String condition;
@@ -31,6 +121,15 @@ class HomeWidgetSnapshot {
   final List<HomeWidgetPreparation> preparations;
 
   const HomeWidgetSnapshot({
+    required this.generatedAt,
+    required this.locationKey,
+    required this.briefingId,
+    required this.sceneId,
+    required this.validFrom,
+    required this.validUntil,
+    required this.nextBriefingBoundary,
+    required this.dataFreshUntil,
+    required this.briefingTimeline,
     required this.region,
     required this.refreshTime,
     required this.condition,
@@ -56,8 +155,20 @@ class HomeWidgetSnapshot {
     final activeRecommendations = List<WeatherRecommendation>.from(
       today.recommendations.where((item) => item.recommended),
     )..sort((a, b) => b.priority.compareTo(a.priority));
+    final briefingTimeline = today.briefingTimeline
+        .map(HomeWidgetBriefingEntry.fromTimeline)
+        .toList();
+    if (briefingTimeline.isEmpty && today.briefing != null) {
+      briefingTimeline.add(
+        HomeWidgetBriefingEntry.fromBriefing(today.briefing!),
+      );
+    }
+    final activeBriefing = _activeBriefing(briefingTimeline, instant);
+    final intendedItems =
+        briefingTimeline.expand((entry) => entry.recommendedItems).toSet();
     final distinctPreparations = <RecommendationType>{};
     final preparations = activeRecommendations
+        .where((item) => intendedItems.contains(item.type.apiName))
         .where((item) => distinctPreparations.add(item.type))
         .take(3)
         .map(
@@ -67,10 +178,27 @@ class HomeWidgetSnapshot {
           ),
         )
         .toList(growable: false);
-    final brief = _singleSpaced(today.brief);
+    final fallbackBrief = _singleSpaced(today.brief);
+    final brief = _singleSpaced(
+      activeBriefing?.longMessage ??
+          (today.briefing == null ? fallbackBrief : ''),
+    );
     final next = today.nextForecast;
+    final validUntil = activeBriefing?.validUntil ?? '';
+    final dataFreshUntil = briefingTimeline.isEmpty
+        ? validUntil
+        : briefingTimeline.last.validUntil;
 
     return HomeWidgetSnapshot(
+      generatedAt: today.generatedAt ?? instant.toUtc().toIso8601String(),
+      locationKey: today.briefing?.locationKey ?? today.region.id,
+      briefingId: activeBriefing?.briefingId ?? '',
+      sceneId: activeBriefing?.sceneId ?? 'UNAVAILABLE',
+      validFrom: activeBriefing?.validFrom ?? '',
+      validUntil: validUntil,
+      nextBriefingBoundary: today.briefing?.nextBriefingBoundary ?? validUntil,
+      dataFreshUntil: dataFreshUntil,
+      briefingTimeline: briefingTimeline,
       region: compactWidgetRegionName(today.region.name),
       refreshTime: widgetRefreshTime(today.generatedAt, fallback: instant),
       condition: widgetWeatherCondition(today.current.sky),
@@ -80,10 +208,9 @@ class HomeWidgetSnapshot {
               today.current.temperature),
       minimumTemperature: _temperature(daily?.min),
       maximumTemperature: _temperature(daily?.max),
-      shortMessage: activeRecommendations.isNotEmpty
-          ? _preparationMessage(activeRecommendations.first.type)
-          : _shortMessage(brief),
-      brief: brief.isEmpty ? '외출 전에 시간별 예보를 확인하세요.' : brief,
+      shortMessage:
+          _singleSpaced(activeBriefing?.shortMessage ?? '최신 날씨를 확인해 주세요.'),
+      brief: brief.isEmpty ? '최신 날씨를 확인해 주세요.' : brief,
       nextTime: widgetForecastTime(next?.forecastAt ?? next?.issuedAt),
       nextCondition: widgetWeatherCondition(next?.sky ?? today.current.sky),
       nextTemperature: _temperature(next?.temperature),
@@ -93,6 +220,16 @@ class HomeWidgetSnapshot {
 
   Map<String, dynamic> toJson() => {
         'schemaVersion': schemaVersion,
+        'generatedAt': generatedAt,
+        'locationKey': locationKey,
+        'briefingId': briefingId,
+        'sceneId': sceneId,
+        'validFrom': validFrom,
+        'validUntil': validUntil,
+        'nextBriefingBoundary': nextBriefingBoundary,
+        'dataFreshUntil': dataFreshUntil,
+        'briefingTimeline':
+            briefingTimeline.map((item) => item.toJson()).toList(),
         'region': region,
         'refreshTime': refreshTime,
         'condition': condition,
@@ -198,33 +335,21 @@ String _temperature(double? value) {
   return '$number°';
 }
 
-String _shortMessage(String brief) {
-  if (brief.isEmpty) return '시간별 예보를 확인하세요';
-  final sentenceEnd = brief.indexOf(RegExp(r'[.!?。]'));
-  final sentence = sentenceEnd > 0 ? brief.substring(0, sentenceEnd) : brief;
-  return sentence.length <= 22 ? sentence : '${sentence.substring(0, 21)}…';
-}
-
-String _preparationMessage(RecommendationType type) {
-  return switch (type) {
-    RecommendationType.umbrella => '우산을 챙기세요',
-    RecommendationType.raincoat => '우비를 챙기세요',
-    RecommendationType.rainBoots => '장화를 챙기세요',
-    RecommendationType.parasol => '양산을 챙기세요',
-    RecommendationType.sunscreen => '선크림을 챙기세요',
-    RecommendationType.sunglasses => '선글라스를 챙기세요',
-    RecommendationType.water => '물을 챙기세요',
-    RecommendationType.portableFan => '휴대용 선풍기를 챙기세요',
-    RecommendationType.coolingItem => '쿨링제품을 챙기세요',
-    RecommendationType.outerwear => '두꺼운 겉옷을 챙기세요',
-    RecommendationType.scarf => '목도리를 챙기세요',
-    RecommendationType.handWarmer => '핫팩을 챙기세요',
-    RecommendationType.snowChains => '스노우체인을 챙기세요',
-    RecommendationType.powerBank => '보조배터리를 챙기세요',
-    RecommendationType.winterBoots => '방한부츠를 챙기세요',
-    RecommendationType.heavySnowCaution => '많은 눈에 대비하세요',
-    RecommendationType.mask => '마스크를 챙기세요',
-  };
+HomeWidgetBriefingEntry? _activeBriefing(
+  List<HomeWidgetBriefingEntry> entries,
+  DateTime now,
+) {
+  for (final entry in entries) {
+    final from = DateTime.tryParse(entry.validFrom);
+    final until = DateTime.tryParse(entry.validUntil);
+    if (from != null &&
+        until != null &&
+        !now.isBefore(from) &&
+        now.isBefore(until)) {
+      return entry;
+    }
+  }
+  return null;
 }
 
 String _singleSpaced(String value) =>

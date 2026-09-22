@@ -268,6 +268,13 @@ double? _optionalNumber(Object? value) =>
 String? _optionalText(Object? value) =>
     value is String && value.trim().isNotEmpty ? value.trim() : null;
 
+List<String> _stringList(Object? value) => value is List
+    ? value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false)
+    : const [];
+
 String? _amountRangeLabel(Object? raw, String fallbackUnit) {
   if (raw is! Map<String, dynamic>) return null;
   final type = raw['type']?.toString();
@@ -460,12 +467,184 @@ bool _validWeeklyRecommendation(Map<String, dynamic> json) {
   return true;
 }
 
+class BriefingCopy {
+  final String short;
+  final String medium;
+  final String long;
+  final String notificationTitle;
+  final String notificationBody;
+
+  const BriefingCopy({
+    required this.short,
+    required this.medium,
+    required this.long,
+    required this.notificationTitle,
+    required this.notificationBody,
+  });
+
+  factory BriefingCopy.fromJson(Map<String, dynamic> json) => BriefingCopy(
+        short: _optionalText(json['short']) ?? '',
+        medium: _optionalText(json['medium']) ?? '',
+        long: _optionalText(json['long']) ?? '',
+        notificationTitle: _optionalText(json['notificationTitle']) ?? '',
+        notificationBody: _optionalText(json['notificationBody']) ?? '',
+      );
+}
+
+class CanonicalBriefing {
+  final String briefingId;
+  final String locationKey;
+  final String sceneId;
+  final String? topic;
+  final String scope;
+  final String? severity;
+  final String? confidence;
+  final String? targetFrom;
+  final String? targetUntil;
+  final String validFrom;
+  final String validUntil;
+  final String? nextBriefingBoundary;
+  final String? dataRole;
+  final String? observedAt;
+  final String? forecastAt;
+  final String? issuedAt;
+  final Map<String, dynamic>? sourceLocation;
+  final List<String> qualityFlags;
+  final List<String> evidenceFields;
+  final String? headlineFact;
+  final String? supportingFact;
+  final String? action;
+  final List<String> recommendedItems;
+  final String? thermalSensation;
+  final double? perceivedTemperature;
+  final String? dominantFactor;
+  final String? copyVariantKey;
+  final BriefingCopy copy;
+
+  const CanonicalBriefing({
+    required this.briefingId,
+    required this.locationKey,
+    required this.sceneId,
+    this.topic,
+    required this.scope,
+    this.severity,
+    this.confidence,
+    this.targetFrom,
+    this.targetUntil,
+    required this.validFrom,
+    required this.validUntil,
+    this.nextBriefingBoundary,
+    this.dataRole,
+    this.observedAt,
+    this.forecastAt,
+    this.issuedAt,
+    this.sourceLocation,
+    this.qualityFlags = const [],
+    this.evidenceFields = const [],
+    this.headlineFact,
+    this.supportingFact,
+    this.action,
+    this.recommendedItems = const [],
+    this.thermalSensation,
+    this.perceivedTemperature,
+    this.dominantFactor,
+    this.copyVariantKey,
+    required this.copy,
+  });
+
+  factory CanonicalBriefing.fromJson(Map<String, dynamic> json) {
+    return CanonicalBriefing(
+      briefingId: _optionalText(json['briefingId']) ?? '',
+      locationKey: _optionalText(json['locationKey']) ?? '',
+      sceneId: _optionalText(json['sceneId']) ?? 'DEFAULT',
+      topic: _optionalText(json['topic']),
+      scope: _optionalText(json['scope']) ?? 'TODAY',
+      severity: _optionalText(json['severity']),
+      confidence: _optionalText(json['confidence']),
+      targetFrom: _optionalText(json['targetFrom']),
+      targetUntil: _optionalText(json['targetUntil']),
+      validFrom: _optionalText(json['validFrom']) ?? '',
+      validUntil: _optionalText(json['validUntil']) ?? '',
+      nextBriefingBoundary: _optionalText(json['nextBriefingBoundary']),
+      dataRole: _optionalText(json['dataRole']),
+      observedAt: _optionalText(json['observedAt']),
+      forecastAt: _optionalText(json['forecastAt']),
+      issuedAt: _optionalText(json['issuedAt']),
+      sourceLocation: json['sourceLocation'] is Map
+          ? Map<String, dynamic>.from(json['sourceLocation'] as Map)
+          : null,
+      qualityFlags: _stringList(json['qualityFlags']),
+      evidenceFields: _stringList(json['evidenceFields']),
+      headlineFact: _optionalText(json['headlineFact']),
+      supportingFact: _optionalText(json['supportingFact']),
+      action: _optionalText(json['action']),
+      recommendedItems: _stringList(json['recommendedItems']),
+      thermalSensation: _optionalText(json['thermalSensation']),
+      perceivedTemperature: _optionalNumber(json['perceivedTemperature']),
+      dominantFactor: _optionalText(json['dominantFactor']),
+      copyVariantKey: _optionalText(json['copyVariantKey']),
+      copy: BriefingCopy.fromJson(
+        json['copy'] is Map
+            ? Map<String, dynamic>.from(json['copy'] as Map)
+            : const {},
+      ),
+    );
+  }
+}
+
+class BriefingTimelineEntry {
+  final String briefingId;
+  final String sceneId;
+  final String validFrom;
+  final String validUntil;
+  final String? targetFrom;
+  final String? targetUntil;
+  final String? action;
+  final List<String> recommendedItems;
+  final String? copyVariantKey;
+  final BriefingCopy copy;
+
+  const BriefingTimelineEntry({
+    required this.briefingId,
+    required this.sceneId,
+    required this.validFrom,
+    required this.validUntil,
+    this.targetFrom,
+    this.targetUntil,
+    this.action,
+    this.recommendedItems = const [],
+    this.copyVariantKey,
+    required this.copy,
+  });
+
+  factory BriefingTimelineEntry.fromJson(Map<String, dynamic> json) {
+    return BriefingTimelineEntry(
+      briefingId: _optionalText(json['briefingId']) ?? '',
+      sceneId: _optionalText(json['sceneId']) ?? 'DEFAULT',
+      validFrom: _optionalText(json['validFrom']) ?? '',
+      validUntil: _optionalText(json['validUntil']) ?? '',
+      targetFrom: _optionalText(json['targetFrom']),
+      targetUntil: _optionalText(json['targetUntil']),
+      action: _optionalText(json['action']),
+      recommendedItems: _stringList(json['recommendedItems']),
+      copyVariantKey: _optionalText(json['copyVariantKey']),
+      copy: BriefingCopy.fromJson(
+        json['copy'] is Map
+            ? Map<String, dynamic>.from(json['copy'] as Map)
+            : const {},
+      ),
+    );
+  }
+}
+
 class TodayWeatherResponse {
   final String dataSource;
   final String? generatedAt;
   final WeatherRegion region;
   final String brief;
   final String? briefExpiresAt;
+  final CanonicalBriefing? briefing;
+  final List<BriefingTimelineEntry> briefingTimeline;
   final String? sunriseAt;
   final String? sunsetAt;
   final CurrentWeather current;
@@ -482,6 +661,8 @@ class TodayWeatherResponse {
     required this.region,
     required this.brief,
     this.briefExpiresAt,
+    this.briefing,
+    this.briefingTimeline = const [],
     this.sunriseAt,
     this.sunsetAt,
     required this.current,
@@ -499,6 +680,8 @@ class TodayWeatherResponse {
         region: WeatherRegion(nx: region.nx, ny: region.ny, name: name),
         brief: brief,
         briefExpiresAt: briefExpiresAt,
+        briefing: briefing,
+        briefingTimeline: briefingTimeline,
         sunriseAt: sunriseAt,
         sunsetAt: sunsetAt,
         current: current,
@@ -546,6 +729,16 @@ class TodayWeatherResponse {
         .map(HourlyWeatherItem.fromJson)
         .toList();
     final nextForecast = json['nextForecast'];
+    final briefing = json['briefing'];
+    final briefingTimeline =
+        (json['briefingTimeline'] as List<dynamic>? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(BriefingTimelineEntry.fromJson)
+            .where((entry) =>
+                entry.briefingId.isNotEmpty &&
+                entry.validFrom.isNotEmpty &&
+                entry.validUntil.isNotEmpty)
+            .toList(growable: false);
 
     return TodayWeatherResponse(
       dataSource: json['dataSource']?.toString() ?? '서버 데이터',
@@ -556,6 +749,10 @@ class TodayWeatherResponse {
       ),
       brief: json['brief']?.toString() ?? '외출 전에 시간별 예보를 확인하세요.',
       briefExpiresAt: json['briefExpiresAt']?.toString(),
+      briefing: briefing is Map
+          ? CanonicalBriefing.fromJson(Map<String, dynamic>.from(briefing))
+          : null,
+      briefingTimeline: briefingTimeline,
       sunriseAt: _optionalText(json['sunriseAt']),
       sunsetAt: _optionalText(json['sunsetAt']),
       current: CurrentWeather.fromJson(json),

@@ -93,6 +93,8 @@ class _Weather extends WeatherService {
   Future<TodayWeatherResponse?> fetchMainWeather({
     int nx = 60,
     int ny = 121,
+    String? regionCode,
+    String? regionName,
   }) async =>
       mainPreview;
 

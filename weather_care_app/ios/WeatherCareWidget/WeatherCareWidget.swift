@@ -30,13 +30,22 @@ struct WeatherCareProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (WeatherCareEntry) -> Void) {
-    completion(WeatherCareEntry(date: Date(), snapshot: WidgetSnapshot.load()))
+    let now = Date()
+    completion(WeatherCareEntry(date: now, snapshot: WidgetSnapshot.load().at(now)))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherCareEntry>) -> Void) {
     let now = Date()
-    let entry = WeatherCareEntry(date: now, snapshot: WidgetSnapshot.load())
-    completion(Timeline(entries: [entry], policy: .never))
+    let snapshot = WidgetSnapshot.load()
+    let dates = snapshot.timelineDates(after: now)
+    let entries = dates.map { date in
+      WeatherCareEntry(date: date, snapshot: snapshot.at(date))
+    }
+    let refresh = snapshot.nextRefresh(after: dates.last ?? now)
+    completion(Timeline(
+      entries: entries,
+      policy: refresh.map(TimelineReloadPolicy.after) ?? .atEnd
+    ))
   }
 }
 
@@ -45,7 +54,32 @@ struct WidgetPreparation: Codable, Hashable {
   let label: String
 }
 
+struct WidgetBriefingEntry: Codable {
+  let briefingId: String
+  let sceneId: String
+  let validFrom: String
+  let validUntil: String
+  let shortMessage: String
+  let mediumMessage: String
+  let longMessage: String
+  let recommendedItems: [String]
+
+  func active(at date: Date) -> Bool {
+    guard let from = widgetDate(validFrom), let until = widgetDate(validUntil) else {
+      return false
+    }
+    return from <= date && date < until
+  }
+}
+
 struct WidgetSnapshot: Codable {
+  let briefingId: String?
+  let sceneId: String?
+  let validFrom: String?
+  let validUntil: String?
+  let nextBriefingBoundary: String?
+  let dataFreshUntil: String?
+  let briefingTimeline: [WidgetBriefingEntry]?
   let region: String
   let refreshTime: String
   let condition: String
@@ -61,6 +95,13 @@ struct WidgetSnapshot: Codable {
   let preparations: [WidgetPreparation]
 
   static let placeholder = WidgetSnapshot(
+    briefingId: nil,
+    sceneId: nil,
+    validFrom: nil,
+    validUntil: nil,
+    nextBriefingBoundary: nil,
+    dataFreshUntil: nil,
+    briefingTimeline: nil,
     region: "시흥시 은행동",
     refreshTime: "오전 8:20 기준",
     condition: "partlyCloudy",
@@ -81,6 +122,13 @@ struct WidgetSnapshot: Codable {
   )
 
   static let empty = WidgetSnapshot(
+    briefingId: nil,
+    sceneId: nil,
+    validFrom: nil,
+    validUntil: nil,
+    nextBriefingBoundary: nil,
+    dataFreshUntil: nil,
+    briefingTimeline: nil,
     region: "지역을 설정해주세요",
     refreshTime: "앱에서 갱신",
     condition: "unknown",
@@ -107,6 +155,84 @@ struct WidgetSnapshot: Codable {
     }
     return snapshot
   }
+
+  func at(_ date: Date) -> WidgetSnapshot {
+    let freshUntil = dataFreshUntil.flatMap(widgetDate)
+    let active = briefingTimeline?.first { $0.active(at: date) }
+    let legacyValid = validUntil.flatMap(widgetDate).map { date < $0 } ?? true
+    guard freshUntil.map({ date < $0 }) ?? true,
+          active != nil || (briefingTimeline?.isEmpty ?? true) && legacyValid else {
+      return replacingBriefing(
+        id: nil,
+        scene: "UNAVAILABLE",
+        short: "최신 날씨를 확인해 주세요.",
+        long: "최신 날씨를 확인해 주세요.",
+        preparations: []
+      )
+    }
+    guard let active else { return self }
+    let intended = Set(active.recommendedItems)
+    return replacingBriefing(
+      id: active.briefingId,
+      scene: active.sceneId,
+      short: active.shortMessage,
+      long: active.longMessage,
+      preparations: preparations.filter { intended.contains($0.type) }
+    )
+  }
+
+  func timelineDates(after now: Date) -> [Date] {
+    var dates = [now]
+    for entry in briefingTimeline ?? [] {
+      if let from = widgetDate(entry.validFrom), from > now { dates.append(from) }
+      if let until = widgetDate(entry.validUntil), until > now { dates.append(until) }
+    }
+    return Array(Set(dates)).sorted()
+  }
+
+  func nextRefresh(after date: Date) -> Date? {
+    let boundaries = [nextBriefingBoundary, dataFreshUntil]
+      .compactMap { $0.flatMap(widgetDate) }
+      .filter { $0 > date }
+    return boundaries.min()
+  }
+
+  private func replacingBriefing(
+    id: String?,
+    scene: String?,
+    short: String,
+    long: String,
+    preparations: [WidgetPreparation]
+  ) -> WidgetSnapshot {
+    WidgetSnapshot(
+      briefingId: id,
+      sceneId: scene,
+      validFrom: validFrom,
+      validUntil: validUntil,
+      nextBriefingBoundary: nextBriefingBoundary,
+      dataFreshUntil: dataFreshUntil,
+      briefingTimeline: briefingTimeline,
+      region: region,
+      refreshTime: refreshTime,
+      condition: condition,
+      currentTemperature: currentTemperature,
+      apparentTemperature: apparentTemperature,
+      minimumTemperature: minimumTemperature,
+      maximumTemperature: maximumTemperature,
+      shortMessage: short,
+      brief: long,
+      nextTime: nextTime,
+      nextCondition: nextCondition,
+      nextTemperature: nextTemperature,
+      preparations: preparations
+    )
+  }
+}
+
+private func widgetDate(_ value: String) -> Date? {
+  let fractional = ISO8601DateFormatter()
+  fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+  return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
 }
 
 struct WeatherCareWidgetView: View {

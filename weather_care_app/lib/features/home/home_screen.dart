@@ -518,7 +518,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         var mismatchedToday = false;
         var fullTodayApplied = false;
         if (_today == null) {
-          unawaited(service.fetchMainWeather(nx: grid.nx, ny: grid.ny).then(
+          unawaited(service
+              .fetchMainWeather(
+            nx: grid.nx,
+            ny: grid.ny,
+            regionCode: regionCode,
+            regionName: regionName,
+          )
+              .then(
             (preview) {
               if (preview != null && !fullTodayApplied) {
                 _applyServerMainPreview(revision, grid, preview);
@@ -646,6 +653,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _settings.locationMode == 'GPS' && _location.canUseLocalAnalysis
                 ? _coordinates
                 : null,
+        regionCode:
+            _settings.locationMode == 'GPS' ? null : _manualRegion?.code,
+        regionName: _settings.locationMode == 'GPS'
+            ? _gpsRegionName
+            : _manualRegion?.fullName,
       );
       if (!_applyServerToday(revision, grid, today)) {
         if (mounted && revision == _locationRevision) _rejectUnexpectedGrid();

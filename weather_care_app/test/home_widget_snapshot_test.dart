@@ -9,6 +9,13 @@ void main() {
   test('위젯 자료는 시안 형식과 준비물 최대 3개를 유지한다', () {
     final snapshot = HomeWidgetSnapshot.fromWeather(
       today: _today(
+        briefing: _briefing(
+          sceneId: 'RAIN',
+          short: '비 소식, 우산 챙기세요.',
+          medium: '오후 3시부터 비가 올 수 있어요. 우산을 챙기세요.',
+          long: '오후 3시~5시 비 가능성이 높아요. 외출한다면 우산을 챙기는 게 좋아요.',
+          recommendedItems: const ['UMBRELLA'],
+        ),
         recommendations: [
           _recommendation(RecommendationType.mask, 2),
           _recommendation(RecommendationType.outerwear, 5),
@@ -38,18 +45,22 @@ void main() {
     expect(snapshot.apparentTemperature, '16.8°');
     expect(snapshot.minimumTemperature, '12°');
     expect(snapshot.maximumTemperature, '20°');
-    expect(snapshot.shortMessage, '두꺼운 겉옷을 챙기세요');
+    expect(snapshot.sceneId, 'RAIN');
+    expect(snapshot.shortMessage, '비 소식, 우산 챙기세요.');
+    expect(snapshot.brief, contains('비 가능성'));
     expect(snapshot.nextTime, '오전 9시');
     expect(snapshot.nextTemperature, '19°');
     expect(
       snapshot.preparations.map((item) => item.label),
-      ['두꺼운 겉옷', '우산', '마스크'],
+      ['우산'],
     );
-    expect(snapshot.preparations, hasLength(3));
+    expect(snapshot.preparations, hasLength(1));
 
     final encoded = jsonDecode(snapshot.encode()) as Map<String, dynamic>;
     expect(encoded['schemaVersion'], HomeWidgetSnapshot.schemaVersion);
-    expect((encoded['preparations'] as List), hasLength(3));
+    expect(encoded['locationKey'], '57/124');
+    expect(encoded['briefingId'], '57/124:20260919:RAIN');
+    expect((encoded['preparations'] as List), hasLength(1));
   });
 
   test('갱신 시각은 한국시간 오전과 오후로 표시한다', () {
@@ -95,38 +106,63 @@ void main() {
     expect(compactWidgetRegionName('시흥시 은행동'), '시흥시 은행동');
   });
 
-  test('짧은 브리핑은 준비물 이름이 아닌 행동 문장으로 표시한다', () {
-    const expected = {
-      RecommendationType.umbrella: '우산을 챙기세요',
-      RecommendationType.raincoat: '우비를 챙기세요',
-      RecommendationType.rainBoots: '장화를 챙기세요',
-      RecommendationType.parasol: '양산을 챙기세요',
-      RecommendationType.sunscreen: '선크림을 챙기세요',
-      RecommendationType.sunglasses: '선글라스를 챙기세요',
-      RecommendationType.water: '물을 챙기세요',
-      RecommendationType.portableFan: '휴대용 선풍기를 챙기세요',
-      RecommendationType.coolingItem: '쿨링제품을 챙기세요',
-      RecommendationType.outerwear: '두꺼운 겉옷을 챙기세요',
-      RecommendationType.scarf: '목도리를 챙기세요',
-      RecommendationType.handWarmer: '핫팩을 챙기세요',
-      RecommendationType.snowChains: '스노우체인을 챙기세요',
-      RecommendationType.powerBank: '보조배터리를 챙기세요',
-      RecommendationType.winterBoots: '방한부츠를 챙기세요',
-      RecommendationType.heavySnowCaution: '많은 눈에 대비하세요',
-      RecommendationType.mask: '마스크를 챙기세요',
-    };
+  test('짧은 브리핑은 긴 문장을 자른 값이 아니다', () {
+    final briefing = _briefing(
+      sceneId: 'RAIN',
+      short: '비 소식, 우산 챙기세요.',
+      medium: '오후에 비가 와요. 우산을 챙기세요.',
+      long: '이 문장은 스물한 글자보다 훨씬 길지만 그대로 전달되는 긴 브리핑입니다.',
+      recommendedItems: const ['UMBRELLA'],
+    );
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: _today(
+        briefing: briefing,
+        recommendations: [_recommendation(RecommendationType.umbrella, 1)],
+      ),
+      now: DateTime.parse('2026-09-18T23:30:00Z'),
+    );
 
-    for (final entry in expected.entries) {
-      final snapshot = HomeWidgetSnapshot.fromWeather(
-        today: _today(recommendations: [_recommendation(entry.key, 1)]),
-        now: DateTime.parse('2026-09-18T23:30:00Z'),
-      );
-      expect(snapshot.shortMessage, entry.value);
-    }
+    expect(snapshot.shortMessage, briefing.copy.short);
+    expect(snapshot.brief, briefing.copy.long);
+    expect(snapshot.shortMessage, isNot(briefing.copy.long.substring(0, 21)));
+  });
+
+  test('일몰 후에는 저장된 timeline에서 저녁 scene을 선택한다', () {
+    final uv = _timelineEntry(
+      sceneId: 'UV',
+      from: '2026-09-19T09:30:00Z',
+      until: '2026-09-19T09:47:00Z',
+      short: '자외선이 강해요. 햇볕을 피하세요.',
+    );
+    final evening = _timelineEntry(
+      sceneId: 'THERMAL_COMFORTABLE',
+      from: '2026-09-19T09:47:00Z',
+      until: '2026-09-19T15:00:00Z',
+      short: '선선하고 편안한 날씨예요.',
+    );
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: _today(
+        briefing: _briefing(
+          sceneId: 'UV',
+          short: uv.copy.short,
+          medium: uv.copy.medium,
+          long: uv.copy.long,
+        ),
+        briefingTimeline: [uv, evening],
+        recommendations: const [],
+      ),
+      now: DateTime.parse('2026-09-19T09:48:00Z'),
+    );
+
+    expect(snapshot.sceneId, 'THERMAL_COMFORTABLE');
+    expect(snapshot.shortMessage, '선선하고 편안한 날씨예요.');
+    expect(snapshot.shortMessage, isNot(contains('자외선')));
   });
 }
 
 TodayWeatherResponse _today({
+  CanonicalBriefing? briefing,
+  List<BriefingTimelineEntry> briefingTimeline = const [],
   required List<WeatherRecommendation> recommendations,
 }) {
   return TodayWeatherResponse(
@@ -138,6 +174,8 @@ TodayWeatherResponse _today({
       name: '경기도 시흥시 은행동',
     ),
     brief: '오전에는 선선하고 오후에는 포근해요. 얇은 겉옷을 챙기면 좋아요.',
+    briefing: briefing,
+    briefingTimeline: briefingTimeline,
     current: const CurrentWeather(
       temperature: 18,
       apparentTemperature: 17.5,
@@ -156,6 +194,52 @@ TodayWeatherResponse _today({
     hourly: const [],
   );
 }
+
+CanonicalBriefing _briefing({
+  required String sceneId,
+  required String short,
+  required String medium,
+  required String long,
+  List<String> recommendedItems = const [],
+}) =>
+    CanonicalBriefing(
+      briefingId: '57/124:20260919:$sceneId',
+      locationKey: '57/124',
+      sceneId: sceneId,
+      scope: 'TODAY',
+      validFrom: '2026-09-18T23:00:00Z',
+      validUntil: '2026-09-19T15:00:00Z',
+      nextBriefingBoundary: '2026-09-19T15:00:00Z',
+      action: sceneId == 'RAIN' ? 'TAKE_UMBRELLA' : null,
+      recommendedItems: recommendedItems,
+      copy: BriefingCopy(
+        short: short,
+        medium: medium,
+        long: long,
+        notificationTitle: '오늘 날씨 안내',
+        notificationBody: medium,
+      ),
+    );
+
+BriefingTimelineEntry _timelineEntry({
+  required String sceneId,
+  required String from,
+  required String until,
+  required String short,
+}) =>
+    BriefingTimelineEntry(
+      briefingId: '57/124:20260919:$sceneId',
+      sceneId: sceneId,
+      validFrom: from,
+      validUntil: until,
+      copy: BriefingCopy(
+        short: short,
+        medium: short,
+        long: short,
+        notificationTitle: '오늘 날씨 안내',
+        notificationBody: short,
+      ),
+    );
 
 WeatherRecommendation _recommendation(RecommendationType type, int priority) {
   return WeatherRecommendation(

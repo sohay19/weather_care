@@ -805,8 +805,10 @@ class _TopWeatherCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           WeatherBriefText(
-            text: today.brief,
-            expiresAt: today.briefExpiresAt,
+            text: today.briefing?.copy.medium ?? today.brief,
+            expiresAt:
+                today.briefing?.nextBriefingBoundary ?? today.briefExpiresAt,
+            timeline: today.briefingTimeline,
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               color: WeatherCareTheme.textPrimary,

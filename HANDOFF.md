@@ -8050,3 +8050,10 @@
 - 서버는 현재 강수가 `DRY`이거나 반경 3km 안에 활성 도로 통제가 없을 때 `DATA_STATUS`를 생성하지 않는다. 기상청 강수 분석과 레이더가 불일치하는 경우는 계속 표시한다.
 - 앱은 배포 전 서버 응답이나 이미 받은 응답에 남아 있는 정상 강수 없음·활성 도로 통제 없음 상태도 방어적으로 숨긴다.
 - 검증: 서버 `weatherApi.test.ts` 31개와 Flutter `detail_evidence_test.dart` 16개가 통과했다. 전체 앱 빌드는 사용자가 진행 중이므로 실행하지 않았다.
+
+### 운영 서버 재배포
+
+- 사용자 커밋 `9a42e33`의 서버 소스를 SHA-256 `22a808a80ae797e7c2205c7eadc4123d7bbcc39ef7766a536b70237766790463` 아카이브로 만들어 미니 PC `soha-01`에 배포했다.
+- SQLite 온라인 백업은 `/var/backups/weather-care/weather-care-20260922T082052Z.sqlite`, 기존 소스 백업은 `/var/backups/weather-care/source-before-9a42e33-20260922-171933.tar.gz`, 즉시 롤백 디렉터리는 `/opt/weather-care/weather_care_server.previous-before-9a42e33-20260922-171933`이다.
+- 응답 필터만 바뀐 배포인데 선수집이 전국 18개 묶음 전체 갱신으로 진입해, 빠른 배포 요청에 따라 첫 묶음 완료 후 중단하고 기존 정상 캐시를 유지한 채 API·스케줄러를 의존성 우회로 시작했다. 다음 정상 서비스 재시작 때 선수집은 다시 실행된다.
+- 최종적으로 `weather-care-api`·`weather-care-scheduler`·`cloudflared`가 모두 active이고 내부·공개 `/health`는 `ok`다. 운영 소스에서 정상-없음 메시지는 제거되고 강수 자료 불일치 `MISMATCH`만 남은 것을 확인했다.

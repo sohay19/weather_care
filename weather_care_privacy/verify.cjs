@@ -47,19 +47,44 @@ const naverMapStub = `
       element.dataset.zoomControl = String(options.zoomControl);
       element.dataset.zoomControlStyle = String(options.zoomControlOptions?.style);
       element.dataset.zoomControlPosition = String(options.zoomControlOptions?.position);
+      element.dataset.mapTypeControl = String(options.mapTypeControl);
+      element.dataset.mapTypeControlPosition = String(options.mapTypeControlOptions?.position);
       element.classList.add('naver-map-test-stub');
     }
     setCenter(center) { this.center = center; }
     setZoom(zoom) { this.zoom = zoom; }
     getZoom() { return this.zoom; }
   }
+  class ZoomControl {
+    constructor(options) {
+      this.options = options;
+      this.element = document.createElement('div');
+    }
+    setMap(map) {
+      map.element.dataset.zoomControl = 'true';
+      map.element.dataset.zoomControlStyle = String(this.options?.style);
+      map.element.dataset.zoomControlPosition = String(this.options?.position);
+      map.element.append(this.element);
+    }
+    getElement() { return this.element; }
+  }
   window.naver = {
     maps: {
       Map: NaverMap,
+      ZoomControl,
       LatLng,
       MapTypeId: { NORMAL: 'normal' },
-      Position: { TOP_RIGHT: 'top-right', RIGHT_CENTER: 'right-center' },
+      Position: {
+        TOP_RIGHT: 'top-right',
+        RIGHT_TOP: 'right-top',
+        RIGHT_CENTER: 'right-center',
+      },
       ZoomControlStyle: { LARGE: 'large' },
+      Event: {
+        once(target, name, listener) {
+          queueMicrotask(listener);
+        },
+      },
     },
   };
   setTimeout(() => window.initNaverWeatherMap(), 0);
@@ -176,6 +201,18 @@ async function verifyMapPage(browser, port, width) {
     document.querySelector('#grid-map')?.dataset.gridCount === '1633');
   assert.equal(await page.locator('#grid-map').getAttribute('data-ready'), 'true');
   assert.equal(await page.locator('#grid-map').getAttribute('data-grid-count'), '1633');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-map-type-control'), 'true');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-map-type-control-position'), 'right-top');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control'), 'true');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control-style'), 'large');
+  assert.equal(await page.locator('#grid-map').getAttribute('data-zoom-control-position'), 'right-top');
+  assert.equal(await page.locator('.weather-map-zoom-control').count(), 1);
+  assert.equal(await page.locator('.weather-map-zoom-control').evaluate(
+    (element) => getComputedStyle(element).float,
+  ), 'right');
+  assert.equal(await page.locator('.weather-map-zoom-control').evaluate(
+    (element) => getComputedStyle(element).clear,
+  ), 'both');
   assert.equal(await page.locator('.stats').count(), 0);
   assert.equal(await page.locator('#map-status').isHidden(), true);
   assert.equal(await page.locator('.coordinate-note p').count(), 2);

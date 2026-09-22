@@ -235,14 +235,26 @@
       maxZoom: 18,
       mapTypeId: naver.maps.MapTypeId?.NORMAL ?? 'normal',
       mapTypeControl: !selectionMode,
-      zoomControl: true,
-      zoomControlOptions: selectionMode ? {
+      mapTypeControlOptions: {
+        position: naver.maps.Position.RIGHT_TOP,
+      },
+      zoomControl: selectionMode,
+      zoomControlOptions: {
         style: naver.maps.ZoomControlStyle.LARGE,
         position: naver.maps.Position.RIGHT_CENTER,
-      } : {
-        position: naver.maps.Position.TOP_RIGHT,
       },
     });
+
+    if (!selectionMode) {
+      naver.maps.Event.once(map, 'init', () => {
+        const zoomControl = new naver.maps.ZoomControl({
+          style: naver.maps.ZoomControlStyle.LARGE,
+          position: naver.maps.Position.RIGHT_TOP,
+        });
+        zoomControl.setMap(map);
+        zoomControl.getElement().classList.add('weather-map-zoom-control');
+      });
+    }
 
     map.data.setStyle((feature) => ({
       fillColor: colors[feature.getProperty('level')],

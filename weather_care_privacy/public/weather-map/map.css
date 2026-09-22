@@ -275,6 +275,10 @@ main {
   border-radius: 11px;
   overflow: hidden;
 }
+#grid-map .weather-map-zoom-control {
+  float: right;
+  clear: both;
+}
 #grid-map:focus-visible {
   outline: 3px solid var(--yellow);
   outline-offset: 3px;

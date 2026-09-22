@@ -98,7 +98,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         Snapshot snapshot = stored.forTime(now);
 
         bindHeader(context, views, snapshot, size);
-        bindTemperature(context, views, snapshot, size);
+        bindTemperature(context, views, snapshot, size, minWidth);
         bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
 
@@ -183,9 +183,10 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             Context context,
             RemoteViews views,
             Snapshot snapshot,
-            WidgetSize size
+            WidgetSize size,
+            int minWidth
     ) {
-        float temperatureSize = size == WidgetSize.MEDIUM ? 34 : 38;
+        TemperatureSizing sizing = temperatureSizing(context, snapshot, size, minWidth);
         setTextBitmap(
                 views,
                 R.id.widget_current_temperature,
@@ -193,9 +194,9 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                         context,
                         snapshot.currentTemperature,
                         R.font.suite_heavy,
-                        temperatureSize,
+                        sizing.textSizeDp,
                         TEXT_PRIMARY,
-                        100
+                        sizing.currentWidthDp
                 ),
                 snapshot.currentTemperature
         );
@@ -234,22 +235,108 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                             context,
                             snapshot.apparentTemperature,
                             R.font.suite_heavy,
-                            temperatureSize,
+                            sizing.textSizeDp,
                             TEXT_PRIMARY,
-                            100
+                            sizing.apparentWidthDp
                     ),
                     snapshot.apparentTemperature
             );
         }
-        int iconSizeDp = size == WidgetSize.SMALL ? 64 : size == WidgetSize.MEDIUM ? 58 : 72;
         views.setImageViewBitmap(
                 R.id.widget_weather_icon,
-                WidgetIconRenderer.weather(context, snapshot.condition, iconSizeDp, false)
+                WidgetIconRenderer.weather(context, snapshot.condition, sizing.iconSizeDp, false)
         );
         views.setContentDescription(
                 R.id.widget_weather_icon,
                 WidgetIconRenderer.weatherDescription(snapshot.condition)
         );
+    }
+
+    private static TemperatureSizing temperatureSizing(
+            Context context,
+            Snapshot snapshot,
+            WidgetSize size,
+            int minWidth
+    ) {
+        // 각 레이아웃의 루트 좌우 패딩과 온도 행에서 아이콘 외에 고정으로 쓰는 간격이다.
+        int horizontalPadding = size == WidgetSize.SMALL ? 28
+                : size == WidgetSize.MEDIUM ? 32 : 36;
+        int fixedRowWidth = size == WidgetSize.SMALL ? 10
+                : size == WidgetSize.MEDIUM ? 45 : 51;
+        int iconSize = size == WidgetSize.SMALL ? 64
+                : size == WidgetSize.MEDIUM ? 58 : 72;
+        float textSize = size == WidgetSize.MEDIUM ? 34 : 38;
+        int availableWidth = Math.max(1, minWidth - horizontalPadding);
+
+        while (temperatureRowWidth(context, snapshot, size, iconSize, textSize,
+                fixedRowWidth) > availableWidth
+                && (iconSize > 24 || textSize > 16)) {
+            if (iconSize > 24) iconSize--;
+            if (textSize > 16) textSize -= 0.5f;
+        }
+
+        int currentWidth = Math.max(1, (int) Math.ceil(
+                WidgetTextRenderer.lineWidthDp(
+                        context,
+                        snapshot.currentTemperature,
+                        R.font.suite_heavy,
+                        textSize
+                )
+        ));
+        int apparentWidth = size == WidgetSize.SMALL ? 1 : Math.max(1, (int) Math.ceil(
+                WidgetTextRenderer.lineWidthDp(
+                        context,
+                        snapshot.apparentTemperature,
+                        R.font.suite_heavy,
+                        textSize
+                )
+        ));
+        return new TemperatureSizing(textSize, iconSize, currentWidth, apparentWidth);
+    }
+
+    private static float temperatureRowWidth(
+            Context context,
+            Snapshot snapshot,
+            WidgetSize size,
+            int iconSize,
+            float textSize,
+            int fixedRowWidth
+    ) {
+        float currentWidth = WidgetTextRenderer.lineWidthDp(
+                context,
+                snapshot.currentTemperature,
+                R.font.suite_heavy,
+                textSize
+        );
+        if (size == WidgetSize.SMALL) {
+            return fixedRowWidth + iconSize + currentWidth;
+        }
+
+        float labelSize = size == WidgetSize.MEDIUM ? 10 : 11;
+        currentWidth = Math.max(
+                currentWidth,
+                WidgetTextRenderer.lineWidthDp(
+                        context,
+                        "현재",
+                        R.font.suite_regular,
+                        labelSize
+                )
+        );
+        float apparentWidth = Math.max(
+                WidgetTextRenderer.lineWidthDp(
+                        context,
+                        snapshot.apparentTemperature,
+                        R.font.suite_heavy,
+                        textSize
+                ),
+                WidgetTextRenderer.lineWidthDp(
+                        context,
+                        "체감",
+                        R.font.suite_regular,
+                        labelSize
+                )
+        );
+        return fixedRowWidth + iconSize + currentWidth + apparentWidth;
     }
 
     private static void bindLargeContent(
@@ -434,6 +521,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     }
 
     private enum WidgetSize { SMALL, MEDIUM, LARGE }
+
+    private record TemperatureSizing(
+            float textSizeDp,
+            int iconSizeDp,
+            int currentWidthDp,
+            int apparentWidthDp
+    ) { }
 
     private record Preparation(String type, String label) { }
 

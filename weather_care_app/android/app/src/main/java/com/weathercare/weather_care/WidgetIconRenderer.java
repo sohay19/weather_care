@@ -27,6 +27,7 @@ final class WidgetIconRenderer {
     static Bitmap weather(Context context, String condition, int sizeDp, boolean monochrome) {
         int pixels = pixels(context, sizeDp);
         Bitmap bitmap = Bitmap.createBitmap(pixels, pixels, Bitmap.Config.ARGB_8888);
+        bitmap.setDensity(context.getResources().getDisplayMetrics().densityDpi);
         Canvas canvas = new Canvas(bitmap);
         float size = pixels;
         Paint paint = fill();

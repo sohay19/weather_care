@@ -3,6 +3,7 @@ package com.codesoha.weathercare;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.text.Layout;
@@ -39,6 +40,17 @@ final class WidgetTextRenderer {
         Canvas canvas = new Canvas(bitmap);
         canvas.drawText(displayed.toString(), edge, edge - metrics.top, paint);
         return bitmap;
+    }
+
+    static float lineWidthDp(
+            Context context,
+            String text,
+            int fontResource,
+            float textSizeDp
+    ) {
+        TextPaint paint = textPaint(context, fontResource, textSizeDp, Color.TRANSPARENT);
+        float density = context.getResources().getDisplayMetrics().density;
+        return paint.measureText(text) / density + 2f;
     }
 
     static Bitmap paragraph(

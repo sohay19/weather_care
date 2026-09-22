@@ -175,6 +175,31 @@ void main() {
     expect(find.textContaining('예상 체감온도'), findsNothing);
   });
 
+  testWidgets('APIHub 격자 실황의 체감 계산 근거를 구분해 표시한다', (tester) async {
+    await _pumpCard(
+      tester,
+      const CurrentWeather(
+        temperature: 25.5,
+        observedAt: '2026-09-21T14:10:00+09:00',
+        dataRole: 'OBSERVATION',
+        provider: 'KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST',
+        perceivedTemperature: 26,
+        thermalSensation: 'WARM_COMFORTABLE',
+        humidity: 58,
+        windSpeed: 1.5,
+      ),
+    );
+
+    final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
+    await tester.ensureVisible(detailButton);
+    await tester.tap(detailButton);
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('기상청 10분 격자 실황의 기온·상대습도·풍속'),
+      findsOneWidget,
+    );
+  });
+
   test('예상기온 시각은 한국시간을 사용하고 없는 시각은 만들지 않는다', () {
     for (final timestamp in [
       '2026-09-10T15:00:00+09:00',

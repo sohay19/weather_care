@@ -35,7 +35,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
     final isObservation = current.dataRole == 'OBSERVATION';
     final currentSource = !isObservation
         ? '기상청 단기예보'
-        : current.provider?.contains('APIHUB_DFS') == true
+        : current.provider?.contains('KMA_APIHUB_GRID') == true ||
+                current.provider?.contains('APIHUB_DFS') == true
             ? '기상청 10분 격자 실황'
             : current.provider?.contains('AWS') == true
                 ? '기상청 AWS 관측'

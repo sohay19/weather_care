@@ -13,7 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_local_notifications: ^20.1.0
-  google_mobile_ads: ^7.0.0
+  google_mobile_ads: ^9.1.0
   in_app_purchase: ^3.3.1
   geocoding: ^5.0.0
   geolocator: 14.0.2

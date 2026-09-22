@@ -7896,3 +7896,13 @@
 - 15:00 정규 core 회차에서 활성 위치 4개임에도 ITS 사용계수가 `3 → 4`로 정확히 1만 증가했다. 증량 승인이 아직 반영되지 않아 운영 응답은 HTTP 401이고 공용 snapshot은 교체되지 않았지만, 다음 10분 회차에 전국 1회만 재시도한다. 승인 후 별도 배포나 캐시 삭제는 필요 없다.
 - `weather-care-relay.service`와 `weather-care-relay-log-prune.timer`는 stop/disable했고 Tailscale Funnel은 reset했다. 구성·소스는 롤백용으로 삭제하지 않았다. `weather-care-api`, `weather-care-scheduler`, `cloudflared`는 active이고 내부·공개 `/health`는 `ok`다.
 - 서버 검증은 TypeScript 검사, Worker 52파일·385개 테스트, Node 3파일·11개 테스트를 모두 통과했다. 운영 스케줄러의 `fcm_send_failed`는 이번 배포 전부터 10분 회차마다 반복된 별도 기존 문제로 남아 있다.
+
+## 2026-09-22 예보 구역 정책 안내 반영·ITS 중계 물리 삭제
+
+- 공개 `/weather-map`의 공유 범위를 최종 정책에 맞게 수정했다. 웹페이지와 앱 수동 지역 선택에서 같은 `nx/ny`가 공유하는 항목은 현재 날씨·초단기예보·단기예보이며, 중기예보·자외선·대기질·가시거리·특보·레이더·도로·일출일몰·브리핑·추천 등은 행정지역·관측소·좌표·설정에 따라 같은 격자에서도 달라질 수 있다고 명시했다.
+- 앱 WebView용 `/weather-map/select`에도 선택한 `nx/ny`가 현재 날씨·초단기예보·단기예보의 기준이라는 안내를 추가했다. 정적 페이지 회귀 검사에 신규 문구와 과거의 과도한 공유 문구가 다시 들어오지 않는 검사를 추가했고, 모바일·데스크톱·앱 선택 화면과 1,633개 격자 검사를 통과했다.
+- Cloudflare Pages `master`에 배포했다. 배포 URL은 `https://e30b4131.weather-care.pages.dev`이며 기본 운영 주소 `https://weather-care.pages.dev/weather-map`과 `/weather-map/select`에서 HTTP 200 및 신규 정책 문구를 확인했다.
+- 저장소의 `weather_care_relay` 소스·테스트·배포 파일 전체와 로컬 빌드 산출물·의존성을 삭제했다. 소스는 현재 작업 트리에서 삭제 상태이고 과거 Git 이력에는 남아 있다.
+- 미니 PC에서는 `/opt/weather-care-relay`, `/etc/weather-care-relay.env`, relay systemd 서비스·정리 타이머, 전용 journald 설정·17MB 전용 로그, `/home/ubuntu/weather-care-log-setup` 설치 사본을 삭제했다. relay 서비스와 타이머는 `not-found`, Tailscale Funnel은 `No serve config`이며 `weather-care-api`·`weather-care-scheduler`·`cloudflared`는 active, 내부 `/health`는 `ok`다. 삭제한 운영 환경파일과 전용 로그는 이 작업에서 별도 백업하지 않았다.
+- API 사용 한도는 사용자 요청대로 변경하지 않았다. `APIHUB_DAILY_CALL_LIMIT=18,000`, `APIHUB_DAILY_BYTE_LIMIT=4,500,000,000`, `ITS_MONTHLY_REQUEST_LIMIT=9,000`을 유지했고 `weather_care_server`에는 작업 diff가 없다.
+- 기존 작업 중이던 앱 광고 설정과 스토어 스크린샷 변경은 수정하지 않았다.

@@ -1,4 +1,0 @@
-*.sh text eol=lf
-logging/*.conf text eol=lf
-logging/*.service text eol=lf
-logging/*.timer text eol=lf

@@ -1070,7 +1070,7 @@ describe('today optional provider deadline', () => {
     ]);
   });
 
-  it('shows successful no-event results for current rain and road controls', () => {
+  it('hides successful no-event results for current rain and road controls', () => {
     expect(buildCurrentOptionalDataStatusMessages({
       coordinatesAvailable: true,
       precipitationRecord: {
@@ -1091,18 +1091,7 @@ describe('today optional provider deadline', () => {
         updatedAt: '2026-09-22T07:20:00Z',
         value: null,
       },
-    })).toEqual([
-      expect.objectContaining({
-        role: 'DATA_STATUS',
-        itemTitle: '현재 강수',
-        retryable: false,
-      }),
-      expect.objectContaining({
-        role: 'DATA_STATUS',
-        itemTitle: '도로 통제',
-        retryable: false,
-      }),
-    ]);
+    })).toEqual([]);
   });
 
 });

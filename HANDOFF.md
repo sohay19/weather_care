@@ -8043,3 +8043,10 @@
 - 고정 순서대로 API·스케줄러 중지, 소스 교체, 마이그레이션, 전국 선수집, API·스케줄러 시작을 수행했다. 마이그레이션과 선수집은 `Result=success`, `ExecMainStatus=0`이고 선수집은 전국 1,633개 격자·활성 지역 4개·활성 위치 2개, `requiredCaches=9996`, `collectedCaches=9996`, `missingCaches=0`으로 완료됐다.
 - `weather-care-api`·`weather-care-scheduler`·`cloudflared`는 모두 active이고 내부·공개 `/health`는 `ok`다. 공개 Today 실조회에서 실제기온 `29.1℃`, `kmaApparentTemperature=apparentTemperature=26.8℃`, 자체 `perceivedTemperature`·`thermalSensation` 필드 없음, 현재 강수 `DRY`, 현재 도로 통제 `null`과 두 항목의 명시적 정상 상태 문구를 확인했다. 현재 브리핑은 `HUMIDITY_LOW`, 준비물은 `WATER`다.
 - 원격 전달용 임시 아카이브는 삭제했다. 배포 직전 정규 core 회차에서 기존 `fcm_send_failed` 1건이 계속 확인됐으며 이번 변경과 무관한 기존 문제다. 앱 위젯 변경은 운영 서버 배포 대상이 아니므로 새 앱 빌드 배포 전까지 설치본에는 반영되지 않는다.
+
+## 2026-09-22 Detail 정상 상태 항목 숨김
+
+- Detail 탭은 실제 안내 사항, 자료 수신 실패, 자료 간 불일치만 표시하고 정상적으로 이상이 없다고 확인된 항목은 표시하지 않도록 변경했다.
+- 서버는 현재 강수가 `DRY`이거나 반경 3km 안에 활성 도로 통제가 없을 때 `DATA_STATUS`를 생성하지 않는다. 기상청 강수 분석과 레이더가 불일치하는 경우는 계속 표시한다.
+- 앱은 배포 전 서버 응답이나 이미 받은 응답에 남아 있는 정상 강수 없음·활성 도로 통제 없음 상태도 방어적으로 숨긴다.
+- 검증: 서버 `weatherApi.test.ts` 31개와 Flutter `detail_evidence_test.dart` 16개가 통과했다. 전체 앱 빌드는 사용자가 진행 중이므로 실행하지 않았다.

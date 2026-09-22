@@ -82,6 +82,29 @@ void main() {
         findsNothing);
   });
 
+  testWidgets('현재 이상이 없는 강수와 도로 통제는 표시하지 않는다', (tester) async {
+    await _pump(
+      tester,
+      statuses: const [
+        WeatherMessagePart(
+          role: WeatherMessageRole.dataStatus,
+          text: '기상청 관측분석자료와 레이더에서 현재 강수가 확인되지 않았어요',
+          itemTitle: '현재 강수',
+          retryable: false,
+        ),
+        WeatherMessagePart(
+          role: WeatherMessageRole.dataStatus,
+          text: '현재 위치 반경 3km 이내에 명시된 활성 도로 통제가 없어요',
+          itemTitle: '도로 통제',
+          retryable: false,
+        ),
+      ],
+    );
+
+    expect(find.byKey(const ValueKey('detail-data-status-현재 강수')), findsNothing);
+    expect(find.byKey(const ValueKey('detail-data-status-도로 통제')), findsNothing);
+  });
+
   testWidgets('재시도는 서버 저장 자료를 다시 받는 동작으로 안내한다', (tester) async {
     var retryCount = 0;
     await _pump(

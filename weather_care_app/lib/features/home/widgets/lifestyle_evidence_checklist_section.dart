@@ -46,7 +46,9 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
     final missingFocus = focusedTypes.isNotEmpty && focusedIndex < 0;
     final statuses = dataStatusMessages
         .where((part) =>
-            part.text.trim().isNotEmpty && !_isOffSeasonRoadIceStatus(part))
+            part.text.trim().isNotEmpty &&
+            !_isConfirmedNoEventStatus(part) &&
+            !_isOffSeasonRoadIceStatus(part))
         .toList(growable: false);
     final groupedStatuses = <String, List<WeatherMessagePart>>{};
     for (final part in statuses) {
@@ -401,6 +403,11 @@ String _dataStatusTitle(WeatherMessagePart part) {
 
 bool _isOffSeasonRoadIceStatus(WeatherMessagePart part) =>
     part.text.contains('블랙아이스') && part.text.contains('제공기간이 아닌');
+
+bool _isConfirmedNoEventStatus(WeatherMessagePart part) =>
+    !part.retryable &&
+    (part.text.contains('현재 강수가 확인되지 않았어요') ||
+        (part.text.contains('활성 도로 통제가') && part.text.contains('없어요')));
 
 class _EmptyLifestyleChecklist extends StatelessWidget {
   const _EmptyLifestyleChecklist();

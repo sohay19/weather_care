@@ -1443,28 +1443,12 @@ export function buildCurrentOptionalDataStatusMessages(input: {
   const precipitation = input.precipitationRecord?.status === 'AVAILABLE'
     ? input.precipitationRecord.value
     : undefined;
-  const roadControlAvailable = input.roadControlRecord?.status === 'AVAILABLE';
   return [
-    precipitation?.state === 'DRY'
+    precipitation?.state === 'MISMATCH'
       ? dataStatusMessage(
           '현재 강수',
-          '기상청 관측분석자료와 레이더에서 현재 강수가 확인되지 않았어요',
+          '기상청 관측분석자료와 레이더의 판단이 달라 현재 강수 여부를 확정하기 어려워요',
           '기상청 관측분석자료·기상청 레이더',
-          false,
-        )
-      : precipitation?.state === 'MISMATCH'
-        ? dataStatusMessage(
-            '현재 강수',
-            '기상청 관측분석자료와 레이더의 판단이 달라 현재 강수 여부를 확정하기 어려워요',
-            '기상청 관측분석자료·기상청 레이더',
-          )
-        : undefined,
-    roadControlAvailable && input.roadControlRecord?.value == null
-      ? dataStatusMessage(
-          '도로 통제',
-          '현재 위치 반경 3km 이내에 명시된 활성 도로 통제가 없어요',
-          '국가교통정보센터 돌발상황정보',
-          false,
         )
       : undefined,
   ].filter((message): message is WeatherMessagePart => message !== undefined);

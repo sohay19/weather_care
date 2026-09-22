@@ -61,6 +61,7 @@ import {
 import {
   collectedCacheKey,
   getCollectedCache,
+  saveCollectedCache,
   type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
 import type {
@@ -75,6 +76,11 @@ import {
   ultraShortApparentTemperature,
   type UltraShortObservation,
 } from '../providers/weather/kmaUltraShortObservationProvider';
+import {
+  hydrateMidTermForecast,
+  type MidTermCacheStatus,
+} from '../services/midTermForecastCache';
+import { resolveKmaMidTermLocation } from '../regions/kmaMidTermRegionCatalog';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -376,6 +382,8 @@ function sunTimesForRequest(
 
 router.get('/weekly', async (c) => {
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const adminCode = c.req.query('adminCode') ?? c.req.query('regionCode');
+  const requestedRegionName = c.req.query('regionName');
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
@@ -420,8 +428,72 @@ router.get('/weekly', async (c) => {
       uv,
       airQuality,
     } = collected.value;
+    const location = {
+      nx,
+      ny,
+      adminCode,
+      regionName: requestedRegionName,
+      sido: c.req.query('sido'),
+      sigungu: c.req.query('sigungu'),
+      eupMyeonDong: c.req.query('eupMyeonDong'),
+    };
+    const hasLocationIdentity = Boolean(
+      adminCode || requestedRegionName || location.sido ||
+      location.sigungu || location.eupMyeonDong,
+    );
+    const resolvedRegion = resolveKmaMidTermLocation(location);
+    const requiredMidTermDates = datesMissingUsableShortTermForecast(
+      forecast?.daily ?? [],
+      calendarWeek.dates,
+      today,
+    );
+    const cachedRegionMatches = !hasLocationIdentity || (
+      collected.value.midTermTaRegId === resolvedRegion?.temperatureRegionId &&
+      collected.value.midTermLandRegId === resolvedRegion?.landRegionId
+    );
+    let resolvedMidTermDays = cachedRegionMatches ? midTermDays : [];
+    let midTermIssuedAt = cachedRegionMatches
+      ? midTermDays[0]?.issuedAt
+      : undefined;
+    let midTermCacheStatus: MidTermCacheStatus = 'HIT';
+    if (hasLocationIdentity && requiredMidTermDates.length > 0 &&
+        (!cachedRegionMatches ||
+          !coversDates(midTermDays, requiredMidTermDates))) {
+      const hydrated = await hydrateMidTermForecast({
+        db: c.env.DB,
+        serviceKey: c.env.KMA_SERVICE_KEY,
+        apiHubKey: c.env.KMA_APIHUB_KEY,
+        location,
+        now,
+      });
+      midTermCacheStatus = hydrated.cacheStatus;
+      if (hydrated.days.length > 0) {
+        resolvedMidTermDays = hydrated.days;
+        midTermIssuedAt = hydrated.issuedAt;
+        await saveCollectedCache(c.env.DB, {
+          key: collectedCacheKey.weekly(nx, ny),
+          type: 'COLLECTED_WEEKLY',
+          value: {
+            ...collected.value,
+            midTermDays: hydrated.days,
+            midTermIssue: hydrated.issuedAt,
+            midTermTaRegId: hydrated.region.temperatureRegionId,
+            midTermLandRegId: hydrated.region.landRegionId,
+            collectedAt: now.toISOString(),
+          } satisfies CollectedWeeklyBundle,
+          nx,
+          ny,
+          updatedAt: now,
+        }).catch((error: unknown) => {
+          console.error(JSON.stringify({
+            event: 'weekly_mid_term_cache_save_failed',
+            error: safeErrorName(error),
+          }));
+        });
+      }
+    }
     const liveDays = enrichWeeklyForecastDays(
-      mergeWeeklyForecastDays(forecast?.daily ?? [], midTermDays),
+      mergeWeeklyForecastDays(forecast?.daily ?? [], resolvedMidTermDays),
       uv,
       airQuality,
     );
@@ -442,8 +514,21 @@ router.get('/weekly', async (c) => {
         });
     }
     return c.json({
-      dataSource: weeklyDataSource(forecast, midTermDays, observedDays),
+      dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
       regionId,
+      region: {
+        nx,
+        ny,
+        adminCode,
+        name: requestedRegionName ?? regionName(nx, ny, '선택 지역'),
+        midTermTaRegId: resolvedRegion?.temperatureRegionId,
+        midTermLandRegId: resolvedRegion?.landRegionId,
+      },
+      weeklyCoverage: {
+        shortTermUntil: shortTermCoverageUntil(forecast),
+        midTermIssuedAt,
+        midTermCacheStatus,
+      },
       days: displayedDays.map((day) => ({
         date: weekdayLabel(day.date),
         forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
@@ -462,6 +547,9 @@ router.get('/weekly', async (c) => {
           : undefined,
         airQualityForecast: day.airQualityForecast,
         forecastSource: day.forecastSource,
+        source: day.forecastSource === 'KMA_MID_TERM'
+          ? 'MID_TERM'
+          : 'SHORT_TERM',
         issuedAt: day.issuedAt,
         recordedAt: day.recordedAt,
         historical: day.historical === true,
@@ -482,6 +570,60 @@ router.get('/weekly', async (c) => {
     return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
+
+function datesMissingUsableShortTermForecast(
+  shortTermDays: DailyWeatherForecast[],
+  calendarDates: string[],
+  today: string,
+): string[] {
+  const usableDates = new Set(
+    shortTermDays.filter(isUsableWeeklyDay).map(({ date }) => calendarDate(date)),
+  );
+  return calendarDates.filter((date) => date >= today && !usableDates.has(date));
+}
+
+function coversDates(
+  days: DailyWeatherForecast[],
+  requiredDates: string[],
+): boolean {
+  const usableDates = new Set(
+    days.filter(isUsableWeeklyDay).map(({ date }) => calendarDate(date)),
+  );
+  return requiredDates.every((date) => usableDates.has(date));
+}
+
+function isUsableWeeklyDay(day: DailyWeatherForecast): boolean {
+  return day.minTemperature !== undefined &&
+    day.maxTemperature !== undefined &&
+    day.weatherDataComplete !== false &&
+    day.skyCondition !== '정보 없음';
+}
+
+function calendarDate(value: string): string {
+  return /^\d{8}$/.test(value)
+    ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+    : value.slice(0, 10);
+}
+
+function shortTermCoverageUntil(
+  forecast: WeatherForecast | undefined,
+): string | undefined {
+  const lastDailyDate = forecast?.daily
+    .map(({ date }) => calendarDate(date))
+    .sort()
+    .at(-1);
+  const lastHourly = forecast?.hourly
+    .map(({ forecastAt }) => forecastAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
+  const dailyUntil = lastDailyDate
+    ? `${lastDailyDate}T23:00:00+09:00`
+    : undefined;
+  if (!lastHourly) return dailyUntil;
+  if (!dailyUntil) return lastHourly;
+  return Date.parse(lastHourly) > Date.parse(dailyUntil) ? lastHourly : dailyUntil;
+}
 
 export function mergeWeeklyForecastDays(
   shortTerm: DailyWeatherForecast[],

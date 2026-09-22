@@ -27,6 +27,11 @@ export const collectedCacheKey = {
     `COLLECTED_HOURLY_OBSERVATION_${version}`,
   visibility: (nx: number, ny: number) =>
     `COLLECTED_VISIBILITY_${nx}_${ny}`,
+  midTermTemperature: (regionId: string, issueTime: string) =>
+    `COLLECTED_MID_TERM_TA_${regionId}_${issueTime}`,
+  midTermLand: (regionId: string, issueTime: string) =>
+    `COLLECTED_MID_TERM_LAND_${regionId}_${issueTime}`,
+  fetchLease: (sourceKey: string) => `COLLECTED_FETCH_LEASE_${sourceKey}`,
 };
 
 export interface CollectedSourceVersion {

@@ -16,6 +16,8 @@ export interface CollectedWeeklyBundle {
   uv?: UvForecast;
   airQuality: DailyAirQualityForecastAtDate[];
   midTermIssue?: string;
+  midTermTaRegId?: string;
+  midTermLandRegId?: string;
   uvIssue?: string;
   airQualityIssue?: string;
   collectedAt: string;

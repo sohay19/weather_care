@@ -5,6 +5,7 @@ import {
   latestMidTermIssueTimes,
 } from '../src/providers/weather/kmaMidTermProvider';
 import {
+  resolveKmaMidTermLocation,
   resolveKmaMidTermRegionIds,
 } from '../src/regions/kmaMidTermRegionCatalog';
 import {
@@ -93,6 +94,41 @@ describe('KmaMidTermProvider', () => {
 });
 
 describe('KMA mid-term region catalog', () => {
+  it('keeps Hangdong in Seoul even though grid 57/125 falls back to Bucheon', () => {
+    expect(resolveKmaMidTermRegionIds(undefined, undefined, 57, 125))
+      .toEqual({
+        temperatureRegionId: '11B20204',
+        landRegionId: '11B00000',
+      });
+
+    const resolved = resolveKmaMidTermLocation({
+      nx: 57,
+      ny: 125,
+      sido: '서울특별시',
+      sigungu: '구로구',
+      eupMyeonDong: '항동',
+      adminCode: '1153080000',
+    });
+    expect({
+      midTermTaRegId: resolved?.temperatureRegionId,
+      midTermLandRegId: resolved?.landRegionId,
+    }).toEqual({
+      midTermTaRegId: '11B10101',
+      midTermLandRegId: '11B00000',
+    });
+  });
+
+  it('prefers Hangdong administrative identity even without a region name', () => {
+    expect(resolveKmaMidTermLocation({
+      nx: 57,
+      ny: 125,
+      adminCode: '1153080000',
+    })).toEqual({
+      temperatureRegionId: '11B10101',
+      landRegionId: '11B00000',
+    });
+  });
+
   it('matches Siheung down to a dong and resolves official region codes', () => {
     expect(resolveKmaMidTermRegionIds(
       '시흥시 은행동',

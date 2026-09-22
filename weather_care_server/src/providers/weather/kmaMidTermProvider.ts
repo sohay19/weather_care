@@ -13,6 +13,7 @@ const PUBLICATION_DELAY_MS = 30 * 60 * 1000;
 const itemSchema = z.object({ regId: z.coerce.string() }).catchall(
   z.union([z.string(), z.number(), z.null()]),
 );
+export type KmaMidTermItem = z.infer<typeof itemSchema>;
 const responseSchema = z.object({
   response: z.object({
     header: z.object({
@@ -58,16 +59,14 @@ export class KmaMidTermProvider {
   }
 
   async getForecast(region: KmaMidTermRegionIds): Promise<DailyWeatherForecast[]> {
-    if (!this.serviceKey && !this.apiHubKey) {
-      throw new KmaMidTermProviderError('KMA mid-term key is not configured');
-    }
+    this.assertConfigured();
 
     let lastError: unknown;
     for (const issueTime of latestMidTermIssueTimes(this.now(), 3)) {
       try {
         const [temperature, land] = await Promise.all([
-          this.fetchItem('getMidTa', region.temperatureRegionId, issueTime),
-          this.fetchItem('getMidLandFcst', region.landRegionId, issueTime),
+          this.getTemperature(region.temperatureRegionId, issueTime),
+          this.getLandForecast(region.landRegionId, issueTime),
         ]);
         return buildMidTermDailyForecast(issueTime, temperature, land);
       } catch (error) {
@@ -82,11 +81,33 @@ export class KmaMidTermProvider {
     );
   }
 
+  getTemperature(
+    regionId: string,
+    issueTime: string,
+  ): Promise<KmaMidTermItem> {
+    this.assertConfigured();
+    return this.fetchItem('getMidTa', regionId, issueTime);
+  }
+
+  getLandForecast(
+    regionId: string,
+    issueTime: string,
+  ): Promise<KmaMidTermItem> {
+    this.assertConfigured();
+    return this.fetchItem('getMidLandFcst', regionId, issueTime);
+  }
+
+  private assertConfigured(): void {
+    if (!this.serviceKey && !this.apiHubKey) {
+      throw new KmaMidTermProviderError('KMA mid-term key is not configured');
+    }
+  }
+
   private async fetchItem(
     endpoint: 'getMidTa' | 'getMidLandFcst',
     regionId: string,
     issueTime: string,
-  ): Promise<z.infer<typeof itemSchema>> {
+  ): Promise<KmaMidTermItem> {
     const query = new URLSearchParams({
       ...(this.apiHubKey
         ? { authKey: this.apiHubKey }
@@ -163,8 +184,8 @@ export function latestMidTermIssueTimes(now: Date, limit: number): string[] {
 
 export function buildMidTermDailyForecast(
   issueTime: string,
-  temperature: z.infer<typeof itemSchema>,
-  land: z.infer<typeof itemSchema>,
+  temperature: KmaMidTermItem,
+  land: KmaMidTermItem,
 ): DailyWeatherForecast[] {
   if (!/^\d{12}$/.test(issueTime)) {
     throw new KmaMidTermProviderError('KMA mid-term issue time is invalid');

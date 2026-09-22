@@ -490,7 +490,7 @@ describe('weekly provider independence', () => {
         airQuality: [],
       });
       const response = await router.request(
-        '/weekly?nx=58&ny=124&regionName=%EC%8B%9C%ED%9D%A5%EC%8B%9C',
+        '/weekly?nx=58&ny=124',
         {},
         { DB: env.DB, KMA_SERVICE_KEY: 'short-key', KMA_APIHUB_KEY: 'hub-key' },
       );
@@ -521,7 +521,7 @@ describe('weekly provider independence', () => {
         airQuality: [],
       });
       const response = await router.request(
-        '/weekly?nx=58&ny=124&regionName=%EC%8B%9C%ED%9D%A5%EC%8B%9C',
+        '/weekly?nx=58&ny=124',
         {},
         { DB: env.DB, KMA_SERVICE_KEY: 'short-key', KMA_APIHUB_KEY: 'hub-key' },
       );
@@ -533,6 +533,161 @@ describe('weekly provider independence', () => {
     } finally {
       short.mockRestore();
       mid.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('/weekly Hangdong mid-term hydration', () => {
+  it('uses Seoul codes on the first request and reuses the persistent cache', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-21T10:00:00Z'));
+    const temperature: Record<string, string | number> = {
+      regId: '11B10101',
+    };
+    const land: Record<string, string | number> = {
+      regId: '11B00000',
+    };
+    for (let offset = 4; offset <= 10; offset += 1) {
+      temperature[`taMin${offset}`] = 10 + offset;
+      temperature[`taMax${offset}`] = 20 + offset;
+      if (offset <= 7) {
+        land[`wf${offset}Am`] = '맑음';
+        land[`wf${offset}Pm`] = '구름많음';
+        land[`rnSt${offset}Am`] = 10;
+        land[`rnSt${offset}Pm`] = 20;
+      } else {
+        land[`wf${offset}`] = '구름많음';
+        land[`rnSt${offset}`] = 20;
+      }
+    }
+    const getTemperature = vi.spyOn(
+      KmaMidTermProvider.prototype,
+      'getTemperature',
+    ).mockResolvedValue(temperature);
+    const getLandForecast = vi.spyOn(
+      KmaMidTermProvider.prototype,
+      'getLandForecast',
+    ).mockResolvedValue(land);
+    try {
+      const shortDays = ['20260921', '20260922', '20260923', '20260924', '20260925']
+        .map((date) => ({
+          ...day(25),
+          date,
+          weatherDataComplete: true,
+          minTemperatureSource: 'DAILY' as const,
+          maxTemperatureSource: 'DAILY' as const,
+          forecastSource: 'KMA_SHORT_TERM' as const,
+        }));
+      await seedCollectedWeekly(57, 125, {
+        forecast: {
+          current: snapshot(14),
+          hourly: [],
+          daily: shortDays,
+          baseDate: '20260921',
+          baseTime: '1700',
+          dataSource: '기상청 단기예보',
+        },
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [],
+      });
+      await env.DB.prepare(
+        `DELETE FROM weather_cache
+         WHERE cache_key LIKE 'COLLECTED_MID_TERM_%'
+            OR cache_key LIKE 'COLLECTED_FETCH_LEASE_%'`,
+      ).run();
+
+      const url = '/weekly?nx=57&ny=125' +
+        '&regionCode=1153080000' +
+        '&regionName=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C%20%EA%B5%AC%EB%A1%9C%EA%B5%AC%20%ED%95%AD%EB%8F%99';
+      const bindings = {
+        DB: env.DB,
+        KMA_SERVICE_KEY: 'test-key',
+        KMA_APIHUB_KEY: 'hub-key',
+      };
+      const first = await router.request(url, {}, bindings);
+      const firstData = await first.json<{
+        region: {
+          adminCode: string;
+          midTermTaRegId: string;
+          midTermLandRegId: string;
+        };
+        weeklyCoverage: {
+          shortTermUntil: string;
+          midTermCacheStatus: string;
+        };
+        days: Array<{
+          forecastDate: string;
+          min?: string;
+          max?: string;
+          weatherLabel: string;
+          source: string;
+        }>;
+      }>();
+
+      expect(first.status).toBe(200);
+      expect(firstData.region).toMatchObject({
+        adminCode: '1153080000',
+        midTermTaRegId: '11B10101',
+        midTermLandRegId: '11B00000',
+      });
+      expect(firstData.weeklyCoverage).toEqual(expect.objectContaining({
+        shortTermUntil: '2026-09-25T23:00:00+09:00',
+        midTermCacheStatus: 'MISS_REFRESHED',
+      }));
+      expect(firstData.days.find(({ forecastDate }) =>
+        forecastDate === '2026-09-26')).toMatchObject({
+          min: '15',
+          max: '25',
+          weatherLabel: '구름많음',
+          source: 'MID_TERM',
+        });
+      expect(getTemperature).toHaveBeenCalledTimes(1);
+      expect(getTemperature).toHaveBeenCalledWith('11B10101', '202609211800');
+      expect(getLandForecast).toHaveBeenCalledTimes(1);
+      expect(getLandForecast).toHaveBeenCalledWith('11B00000', '202609211800');
+
+      const second = await router.request(url, {}, bindings);
+      const secondData = await second.json<{
+        weeklyCoverage: { midTermCacheStatus: string };
+        days: Array<{ forecastDate: string; weatherLabel: string }>;
+      }>();
+      expect(second.status).toBe(200);
+      expect(secondData.weeklyCoverage.midTermCacheStatus).toBe('HIT');
+      expect(secondData.days.find(({ forecastDate }) =>
+        forecastDate === '2026-09-26')?.weatherLabel).toBe('구름많음');
+      expect(getTemperature).toHaveBeenCalledTimes(1);
+      expect(getLandForecast).toHaveBeenCalledTimes(1);
+
+      await seedCollectedWeekly(58, 125, {
+        forecast: {
+          current: snapshot(14),
+          hourly: [],
+          daily: shortDays,
+          baseDate: '20260921',
+          baseTime: '1700',
+          dataSource: '기상청 단기예보',
+        },
+        midTermDays: [],
+        observedDays: [],
+        airQuality: [],
+      });
+      const sharedRegionResponse = await router.request(
+        url.replace('nx=57', 'nx=58'),
+        {},
+        bindings,
+      );
+      const sharedRegionData = await sharedRegionResponse.json<{
+        weeklyCoverage: { midTermCacheStatus: string };
+      }>();
+      expect(sharedRegionResponse.status).toBe(200);
+      expect(sharedRegionData.weeklyCoverage.midTermCacheStatus).toBe('HIT');
+      expect(getTemperature).toHaveBeenCalledTimes(1);
+      expect(getLandForecast).toHaveBeenCalledTimes(1);
+    } finally {
+      getTemperature.mockRestore();
+      getLandForecast.mockRestore();
       vi.useRealTimers();
     }
   });

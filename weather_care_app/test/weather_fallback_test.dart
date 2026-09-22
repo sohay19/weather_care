@@ -59,8 +59,10 @@ void main() {
       ),
     );
     expect(result.hasWeather, isTrue);
-    expect(client.queries['/api/v1/weather/today'], containsPair('latitude', '37.2636'));
-    expect(client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
+    expect(client.queries['/api/v1/weather/today'],
+        containsPair('latitude', '37.2636'));
+    expect(
+        client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
     expect(
       client.queries['/api/v1/weather/today'],
       containsPair('recommendationCatalog', 'PREPARATION_15'),
@@ -68,6 +70,30 @@ void main() {
     expect(
       client.queries['/api/v1/weather/weekly'],
       containsPair('recommendationCatalog', 'PREPARATION_15'),
+    );
+  });
+
+  test('항동 주간 요청에 행정구역 코드와 전체 지역명을 함께 전달한다', () async {
+    final client = _RecordingApiClient();
+    final service = WeatherService(client);
+
+    await service.fetchWeeklyWeather(
+      installationId: 'device-hangdong',
+      nx: 57,
+      ny: 125,
+      regionCode: '1153080000',
+      regionName: '서울특별시 구로구 항동',
+    );
+
+    expect(client.queries['/api/v1/weather/weekly'], containsPair('nx', '57'));
+    expect(client.queries['/api/v1/weather/weekly'], containsPair('ny', '125'));
+    expect(
+      client.queries['/api/v1/weather/weekly'],
+      containsPair('regionCode', '1153080000'),
+    );
+    expect(
+      client.queries['/api/v1/weather/weekly'],
+      containsPair('regionName', '서울특별시 구로구 항동'),
     );
   });
 }
@@ -102,7 +128,8 @@ class _RetryingApiClient extends ApiClient {
       : super(baseUrl: 'https://server.example');
 
   @override
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? query}) async {
+  Future<Map<String, dynamic>> get(String path,
+      {Map<String, String>? query}) async {
     if (path.endsWith('/today')) {
       todayCalls++;
       if (todayCalls <= failuresBeforeSuccess) throw Exception('retry');
@@ -120,7 +147,8 @@ class _RecordingApiClient extends ApiClient {
   _RecordingApiClient() : super(baseUrl: 'https://server.example');
 
   @override
-  Future<Map<String, dynamic>> get(String path, {Map<String, String>? query}) async {
+  Future<Map<String, dynamic>> get(String path,
+      {Map<String, String>? query}) async {
     queries[path] = query ?? {};
     if (path.endsWith('/today')) return _todayJson;
     return {'days': <Map<String, dynamic>>[]};

@@ -5,6 +5,16 @@ export interface KmaMidTermRegionIds {
   landRegionId: string;
 }
 
+export interface KmaMidTermLocationContext {
+  nx: number;
+  ny: number;
+  adminCode?: string;
+  regionName?: string;
+  sido?: string;
+  sigungu?: string;
+  eupMyeonDong?: string;
+}
+
 interface TemperatureRegion {
   name: string;
   temperatureRegionId: string;
@@ -212,6 +222,30 @@ const DEFAULT_BY_ADMIN_PREFIX: Readonly<Record<string, string>> = {
   '51': '11D10301',
 };
 
+// These metropolitan administrative prefixes map to one mid-term temperature
+// region. They are therefore safe to prefer over a grid shared across an
+// administrative boundary. Province-wide defaults below remain fallbacks.
+const AUTHORITATIVE_ADMIN_PREFIXES = new Set([
+  '11', '26', '27', '28', '29', '30', '31', '36',
+]);
+
+export function resolveKmaMidTermLocation(
+  context: KmaMidTermLocationContext,
+): KmaMidTermRegionIds | undefined {
+  const combinedName = [
+    context.regionName,
+    context.sido,
+    context.sigungu,
+    context.eupMyeonDong,
+  ].filter((value): value is string => Boolean(value?.trim())).join(' ');
+  return resolveKmaMidTermRegionIds(
+    combinedName || undefined,
+    context.adminCode,
+    context.nx,
+    context.ny,
+  );
+}
+
 export function resolveKmaMidTermRegionIds(
   regionName: string | undefined,
   regionCode: string | undefined,
@@ -236,8 +270,13 @@ export function resolveKmaMidTermRegionIds(
       normalizeRegionName(right.name).length -
       normalizeRegionName(left.name).length,
   );
+  const administrativeRegionId = adminPrefix &&
+      AUTHORITATIVE_ADMIN_PREFIXES.has(adminPrefix)
+    ? DEFAULT_BY_ADMIN_PREFIX[adminPrefix]
+    : undefined;
   const temperatureRegionId =
     matches[0]?.temperatureRegionId ??
+    administrativeRegionId ??
     temperatureRegionIdForGrid(nx, ny) ??
     (adminPrefix ? DEFAULT_BY_ADMIN_PREFIX[adminPrefix] : undefined);
   if (!temperatureRegionId) return undefined;
@@ -245,6 +284,16 @@ export function resolveKmaMidTermRegionIds(
     temperatureRegionId,
     landRegionId: landRegionIdForTemperature(temperatureRegionId),
   };
+}
+
+export function supportedKmaMidTermRegionIds(): KmaMidTermRegionIds[] {
+  const temperatureRegionIds = new Set(
+    TEMPERATURE_REGIONS.map(({ temperatureRegionId }) => temperatureRegionId),
+  );
+  return [...temperatureRegionIds].sort().map((temperatureRegionId) => ({
+    temperatureRegionId,
+    landRegionId: landRegionIdForTemperature(temperatureRegionId),
+  }));
 }
 
 function disambiguateDuplicate(

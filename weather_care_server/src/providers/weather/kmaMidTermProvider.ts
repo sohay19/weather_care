@@ -66,7 +66,9 @@ export class KmaMidTermProvider {
       try {
         const [temperature, land] = await Promise.all([
           this.getTemperature(region.temperatureRegionId, issueTime),
-          this.getLandForecast(region.landRegionId, issueTime),
+          region.landRegionId
+            ? this.getLandForecast(region.landRegionId, issueTime)
+            : Promise.resolve(undefined),
         ]);
         return buildMidTermDailyForecast(issueTime, temperature, land);
       } catch (error) {
@@ -185,7 +187,7 @@ export function latestMidTermIssueTimes(now: Date, limit: number): string[] {
 export function buildMidTermDailyForecast(
   issueTime: string,
   temperature: KmaMidTermItem,
-  land: KmaMidTermItem,
+  land?: KmaMidTermItem,
 ): DailyWeatherForecast[] {
   if (!/^\d{12}$/.test(issueTime)) {
     throw new KmaMidTermProviderError('KMA mid-term issue time is invalid');
@@ -201,11 +203,11 @@ export function buildMidTermDailyForecast(
     const minTemperature = numeric(temperature[`taMin${offset}`]);
     const maxTemperature = numeric(temperature[`taMax${offset}`]);
     const weatherValues = offset <= 7
-      ? [textValue(land[`wf${offset}Am`]), textValue(land[`wf${offset}Pm`])]
-      : [textValue(land[`wf${offset}`])];
+      ? [textValue(land?.[`wf${offset}Am`]), textValue(land?.[`wf${offset}Pm`])]
+      : [textValue(land?.[`wf${offset}`])];
     const probabilityValues = offset <= 7
-      ? [numeric(land[`rnSt${offset}Am`]), numeric(land[`rnSt${offset}Pm`])]
-      : [numeric(land[`rnSt${offset}`])];
+      ? [numeric(land?.[`rnSt${offset}Am`]), numeric(land?.[`rnSt${offset}Pm`])]
+      : [numeric(land?.[`rnSt${offset}`])];
     const weather = weatherValues.filter((value): value is string => value !== undefined);
     const probabilities = probabilityValues.filter((value): value is number => value !== undefined);
     if (minTemperature === undefined && maxTemperature === undefined && weather.length === 0) {

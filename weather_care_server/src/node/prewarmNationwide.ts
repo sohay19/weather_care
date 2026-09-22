@@ -165,7 +165,9 @@ export function inspectOperationalPrewarm(
         temperatureRegionId,
         midTermIssue,
       ));
-      required.add(collectedCacheKey.midTermLand(landRegionId, midTermIssue));
+      if (landRegionId) {
+        required.add(collectedCacheKey.midTermLand(landRegionId, midTermIssue));
+      }
     }
   }
   for (const { nx, ny } of activeRegions) {

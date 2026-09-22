@@ -92,26 +92,28 @@ export async function hydrateResolvedMidTermForecast(input: {
             issueTime,
           ),
         }),
-        loadMidTermSource({
-          db: input.db,
-          key: collectedCacheKey.midTermLand(
-            input.region.landRegionId,
-            issueTime,
-          ),
-          type: 'COLLECTED_MID_TERM_LAND',
-          regionId: input.region.landRegionId,
-          issueTime,
-          now,
-          fetch: () => provider.getLandForecast(
-            input.region.landRegionId,
-            issueTime,
-          ),
-        }),
+        input.region.landRegionId
+          ? loadMidTermSource({
+              db: input.db,
+              key: collectedCacheKey.midTermLand(
+                input.region.landRegionId,
+                issueTime,
+              ),
+              type: 'COLLECTED_MID_TERM_LAND',
+              regionId: input.region.landRegionId,
+              issueTime,
+              now,
+              fetch: () => provider.getLandForecast(
+                input.region.landRegionId!,
+                issueTime,
+              ),
+            })
+          : Promise.resolve(undefined),
       ]);
       const days = buildMidTermDailyForecast(
         issueTime,
         temperature.item,
-        land.item,
+        land?.item,
       );
       if (days.length === 0) continue;
       return {
@@ -121,7 +123,7 @@ export async function hydrateResolvedMidTermForecast(input: {
         issuedAt: days[0]?.issuedAt,
         cacheStatus: issueIndex > 0
           ? 'STALE_FALLBACK'
-          : temperature.refreshed || land.refreshed
+          : temperature.refreshed || land?.refreshed
             ? 'MISS_REFRESHED'
             : 'HIT',
       };
@@ -237,5 +239,5 @@ async function waitForMidTermSource(
 }
 
 function emptyRegion(): KmaMidTermRegionIds {
-  return { temperatureRegionId: '', landRegionId: '' };
+  return { temperatureRegionId: '' };
 }

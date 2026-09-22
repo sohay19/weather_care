@@ -2,7 +2,7 @@ import { temperatureRegionIdForGrid } from './kmaMidTermGridCatalog';
 
 export interface KmaMidTermRegionIds {
   temperatureRegionId: string;
-  landRegionId: string;
+  landRegionId?: string;
 }
 
 export interface KmaMidTermLocationContext {
@@ -323,7 +323,7 @@ function disambiguateDuplicate(
 
 export function landRegionIdForTemperature(
   temperatureRegionId: string,
-): string {
+): string | undefined {
   if (temperatureRegionId.startsWith('11B') || temperatureRegionId.startsWith('11A')) {
     return '11B00000';
   }
@@ -331,7 +331,8 @@ export function landRegionIdForTemperature(
   if (temperatureRegionId.startsWith('11C2')) return '11C20000';
   if (temperatureRegionId.startsWith('11D1')) return '11D10000';
   if (temperatureRegionId.startsWith('11D2')) return '11D20000';
-  if (temperatureRegionId.startsWith('11E')) return '11E00000';
+  // 기상청 중기육상예보는 울릉도·독도를 제공 대상에서 제외한다.
+  if (temperatureRegionId.startsWith('11E')) return undefined;
   if (temperatureRegionId.startsWith('11F1') || temperatureRegionId.startsWith('21F1')) {
     return '11F10000';
   }

@@ -368,10 +368,12 @@ describe('Node 전국 선수집', () => {
         collectedCacheKey.midTermTemperature(temperatureRegionId, midTermIssue),
         temperatureRegionId,
       );
-      midTermKeys.set(
-        collectedCacheKey.midTermLand(landRegionId, midTermIssue),
-        landRegionId,
-      );
+      if (landRegionId) {
+        midTermKeys.set(
+          collectedCacheKey.midTermLand(landRegionId, midTermIssue),
+          landRegionId,
+        );
+      }
     }
     for (const [key, regionId] of midTermKeys) {
       await saveCollectedCache(env.DB, {

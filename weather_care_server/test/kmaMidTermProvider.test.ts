@@ -91,6 +91,40 @@ describe('KmaMidTermProvider', () => {
     expect(calls.every((url) => url.startsWith('https://apihub.kma.go.kr/'))).toBe(true);
     expect(calls.every((url) => url.includes('authKey=decoded+key'))).toBe(true);
   });
+
+  it('builds temperature-only days where no official land forecast exists', async () => {
+    const calls: string[] = [];
+    const provider = new KmaMidTermProvider({
+      apiHubKey: 'decoded key',
+      fetcher: async (input) => {
+        const url = new URL(input.toString());
+        calls.push(url.toString());
+        return new Response(JSON.stringify({
+          response: {
+            header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
+            body: { items: { item: [{
+              regId: '11E00102',
+              taMin4: 15,
+              taMax4: 20,
+            }] } },
+          },
+        }));
+      },
+      now: () => new Date('2026-09-15T01:00:00Z'),
+    });
+
+    const days = await provider.getForecast({
+      temperatureRegionId: '11E00102',
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toContain('/getMidTa?');
+    expect(days[0]).toMatchObject({
+      minTemperature: 15,
+      maxTemperature: 20,
+      weatherDataComplete: false,
+    });
+  });
 });
 
 describe('KMA mid-term region catalog', () => {
@@ -163,6 +197,11 @@ describe('KMA mid-term region catalog', () => {
         temperatureRegionId: '11D20401',
         landRegionId: '11D20000',
       });
+  });
+
+  it('does not invent a land forecast region for Dokdo', () => {
+    expect(resolveKmaMidTermRegionIds(undefined, undefined, 144, 123))
+      .toEqual({ temperatureRegionId: '11E00102' });
   });
 
   it('resolves every supported forecast grid', () => {

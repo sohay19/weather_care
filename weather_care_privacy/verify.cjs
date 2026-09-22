@@ -223,14 +223,22 @@ async function verifyMapPage(browser, port, width) {
   const text = await page.locator('body').innerText();
   assert.ok(text.includes("'날씨챙겨' 예보 구역 지도") &&
     text.includes('격자 별 공유/비공유 항목') &&
-    text.includes('공유 항목') &&
-    text.includes('비공유 항목') &&
+    text.includes('같은 격자에서 공유하는 항목') &&
+    text.includes('같은 격자에서도 달라질 수 있는 항목') &&
+    text.includes('현재 날씨: 기온·습도·바람·강수 등 격자 실황') &&
+    text.includes('초단기예보: 가까운 시간의 기온·하늘 상태·강수·바람') &&
+    text.includes('단기예보: 시간별 예보와 단기예보 범위의 주간 카드') &&
+    text.includes('단기예보 범위 뒤의 중기예보') &&
+    text.includes('선택한 행정지역의 중기예보 지역 코드 기준') &&
     text.includes('실시간 레이더 강수') &&
-    text.includes('자외선지수와 대기질') &&
+    text.includes('자외선지수·대기질·가시거리·기상특보') &&
+    text.includes('나머지는 지역·좌표·설정에 따라 달라질 수 있습니다') &&
     text.includes('격자 색상의 의미는?') &&
     text.includes('색상이 진할수록 같은 격자를 함께 사용하는 행정지역 항목이 많다는 것을 의미합니다') &&
-    text.includes('수동 지역 선택은 격자 중심 좌표를 사용합니다') &&
+    text.includes('현재 날씨·초단기예보·단기예보에는 선택한 nx·ny를 사용합니다') &&
     text.includes('네이버 지도를 확대하면'));
+  assert.equal(text.includes('사용자 설정이 같을 때의 준비물 추천과 타임라인'), false);
+  assert.equal(text.includes('시간별·주간 기온, 하늘 상태, 강수, 습도, 풍향·풍속'), false);
   assert.equal(text.includes('네이버 지도에 보이는 행정지역과 별개로'), false);
   assert.equal(text.includes('네이버 지도 위에 예보 격자 1,633개를 표시했습니다'), false);
   if (width === 1280) {
@@ -285,6 +293,7 @@ async function verifySelectorPage(browser, port, width) {
     text.includes('5–9개') &&
     text.includes('10개 이상') &&
     text.includes('날씨 위험도를 뜻하지 않습니다') &&
+    text.includes('선택한 nx·ny는 현재 날씨·초단기예보·단기예보의 기준입니다') &&
     text.includes('nx 28 · ny 8') &&
     text.includes('1개 표시명') &&
     text.includes('Main에 표시할 지역명을 골라주세요') &&

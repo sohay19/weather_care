@@ -77,6 +77,7 @@ describe('fast Main weather', () => {
       });
       const data = await response.json<{
         region: { nx: number; ny: number };
+        brief: string;
         current: WeatherSnapshot;
         nextForecast: WeatherSnapshot;
         hourly: WeatherSnapshot[];
@@ -92,11 +93,25 @@ describe('fast Main weather', () => {
         humidity: 60,
         windSpeed: 2,
         provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
-        providerField: 'T1H,REH,WSD;SKY=FORECAST',
+        providerField: 'T1H,REH,WSD,PTY,RN1;SKY=FORECAST',
       });
       expect(data.current.forecastAt).toBeUndefined();
       expect(data.current.apparentTemperatureSource)
         .toBe('APP_KMA_METHOD_FROM_OBSERVATION');
+      expect(data.current.kmaApparentTemperature)
+        .toBe(data.current.apparentTemperature);
+      expect(data.current).toMatchObject({
+        perceivedModelVersion: 'KR_PERCEIVED_V2_2026.1',
+        modelSource: 'KR_PT_V2_FROM_OBSERVATION',
+        perceivedConfidence: 'LOW',
+        sourceLocation: {
+          type: 'GRID', nx: 58, ny: 124, locationMatch: 'EXACT_GRID',
+        },
+      });
+      expect(data.current.perceivedTemperature).toEqual(expect.any(Number));
+      expect(data.current.thermalSensation).toEqual(expect.any(String));
+      expect(data.current.thermalBrief).toEqual(expect.any(String));
+      expect(data.brief).toBe(data.current.thermalBrief);
       expect(data.nextForecast).toMatchObject({
         forecastAt: '2026-08-20T18:00:00+09:00',
         temperature: 28,

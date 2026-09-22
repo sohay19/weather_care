@@ -119,6 +119,83 @@ export interface WeatherSnapshot {
     | 'APP_KMA_METHOD_FROM_OBSERVATION'
     | 'OFFICIAL_KMA_VALUE';
   apparentTemperatureFormulaVersion?: string;
+  /** 기상청 계절별 산식 결과. apparentTemperature는 구버전 호환 별칭이다. */
+  kmaApparentTemperature?: number;
+  /** 한국 생활환경을 반영한 사람 중심 열수지 기반 체감온도. */
+  perceivedTemperature?: number;
+  perceivedDifference?: number;
+  perceivedModelVersion?: string;
+  perceivedConfidence?: 'HIGH' | 'MEDIUM' | 'LOW';
+  modelSource?:
+    | 'KR_PT_V2_FROM_OBSERVATION'
+    | 'KR_PT_V2_FROM_FORECAST'
+    | 'KMA_FALLBACK_FROM_OBSERVATION'
+    | 'KMA_FALLBACK_FROM_FORECAST';
+  thermalSensation?:
+    | 'VERY_COLD'
+    | 'COLD'
+    | 'CHILLY'
+    | 'COOL'
+    | 'COOL_COMFORTABLE'
+    | 'COMFORTABLE'
+    | 'WARM_COMFORTABLE'
+    | 'WARM'
+    | 'SLIGHTLY_HOT'
+    | 'HOT'
+    | 'VERY_HOT'
+    | 'EXTREME_HOT';
+  thermalBrief?: string;
+  estimatedClothingClo?: number;
+  estimatedClothingLabel?:
+    | 'VERY_LIGHT'
+    | 'LIGHT'
+    | 'LIGHT_LAYER'
+    | 'JACKET'
+    | 'COAT'
+    | 'LIGHT_PADDING'
+    | 'WINTER_LAYER';
+  thermalSeason?: 'COLD' | 'COOL_TRANSITION' | 'MILD' | 'HOT';
+  recentMeanTemperature7d?: number;
+  temperatureTrend?: 'COLDER_THAN_RECENT' | 'STABLE' | 'WARMER_THAN_RECENT';
+  solarRadiation?: number;
+  meanRadiantTemperature?: number;
+  radiationLevel?: 'LOW' | 'MODERATE' | 'HIGH' | 'VERY_HIGH';
+  dominantFactors?: Array<
+    | 'TEMPERATURE'
+    | 'HUMIDITY'
+    | 'WIND'
+    | 'RADIATION'
+    | 'CLOTHING'
+    | 'PRECIPITATION'
+    | 'RECENT_TEMPERATURE'
+  >;
+  dataAgeMinutes?: number;
+  sourceLocation?: {
+    type: 'GRID' | 'STATION';
+    nx?: number;
+    ny?: number;
+    stationId?: string;
+    stationName?: string;
+    distanceKm?: number;
+    locationMatch: 'EXACT_GRID' | 'NEAREST_STATION';
+  };
+  fieldSources?: Partial<Record<
+    'temperature' | 'humidity' | 'windSpeed' | 'sky',
+    {
+      role: 'OBSERVATION' | 'FORECAST' | 'FORECAST_PROXY';
+      field: string;
+      observedAt?: string;
+      forecastAt?: string;
+    }
+  >>;
+  recentTemperatureSource?: {
+    stationId?: string;
+    stationName?: string;
+    distanceKm?: number;
+    coverageDays: number;
+    fromDate: string;
+    toDate: string;
+  };
   minTemperature?: number;
   maxTemperature?: number;
   humidity?: number;

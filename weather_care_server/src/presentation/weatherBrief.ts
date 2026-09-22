@@ -4,7 +4,7 @@ import { defaultRuleConfig } from '../config/ruleConfig';
 import { koreaDate, precipitationDecisionSnapshot, precipitationPeriod, periodLabel, koreanHour } from '../rules/precipitationWindows';
 import { snapshotTime } from '../rules/timeWindows';
 
-export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.7';
+export const WEATHER_BRIEF_CATALOG_VERSION = 'weather-brief-2026.09.8';
 const HOUR = 3_600_000;
 export type WeatherBriefScene =
   | 'WET_TRAVEL'
@@ -197,7 +197,8 @@ function messageFor(selection: SceneSelection, eventTime: string): string {
     case 'CLEAR_VIEW':
       return '날씨 조건만 보면 멀리 있는 건물까지 또렷하게 보일 만큼 시야가 좋아요';
     case 'DAILY_RHYTHM':
-      return '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요';
+      return snapshot.thermalBrief ??
+        '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요';
   }
 }
 

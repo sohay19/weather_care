@@ -25,6 +25,7 @@ export interface DailyWeatherForecast {
   recordedAt?: string;
   historical?: boolean;
   observationStationId?: string;
+  observationStationName?: string;
   observationDistanceKm?: number;
   minTemperature?: number;
   maxTemperature?: number;

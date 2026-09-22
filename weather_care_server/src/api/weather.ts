@@ -81,6 +81,10 @@ import {
   type MidTermCacheStatus,
 } from '../services/midTermForecastCache';
 import { resolveKmaMidTermLocation } from '../regions/kmaMidTermRegionCatalog';
+import {
+  enrichForecastWithPerceivedTemperature,
+  recentTemperatureContext,
+} from '../thermal/perceivedTemperature';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -141,23 +145,37 @@ router.get('/main', async (c) => {
       ultraShortRecord,
       generatedAt,
     );
+    const coordinates = kmaGridCoordinates(nx, ny);
+    const thermalForecast = enrichForecastWithPerceivedTemperature(
+      { ...forecast, current },
+      {
+        regionKey: `${nx}:${ny}`,
+        latitude: coordinates?.latitude,
+        longitude: coordinates?.longitude,
+        now: generatedAt,
+        recentTemperature: recentTemperatureContext(
+          weekly?.status === 'AVAILABLE' ? weekly.value.observedDays : [],
+        ),
+      },
+    );
     const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
-    const brief = buildWeatherBriefResult(forecast, {
+    const brief = buildWeatherBriefResult(thermalForecast, {
       regionKey: `${nx}:${ny}`,
       now: generatedAt,
     });
+    const thermalCurrent = thermalForecast.current;
     const response: TodayWeatherResponse = {
-      dataSource: current.dataRole === 'OBSERVATION'
+      dataSource: thermalCurrent.dataRole === 'OBSERVATION'
         ? `${forecast.dataSource} · 기상청 초단기실황 · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
       ...sunTimes,
-      current,
+      current: thermalCurrent,
       nextForecast:
         nextForecastSnapshot(
-          forecast.hourly,
+          thermalForecast.hourly,
           generatedAt,
           weekly?.status === 'AVAILABLE'
             ? weekly.value.airQuality
@@ -254,6 +272,22 @@ router.get('/today', async (c) => {
       ultraShortRecord,
       generatedAt,
     );
+    const thermalCoordinates = coordinates ?? kmaGridCoordinates(nx, ny);
+    const thermalForecast = enrichForecastWithPerceivedTemperature(
+      { ...forecast, current },
+      {
+        regionKey: `${nx}:${ny}`,
+        latitude: thermalCoordinates?.latitude,
+        longitude: thermalCoordinates?.longitude,
+        now: generatedAt,
+        recentTemperature: recentTemperatureContext(
+          weeklyRecord?.status === 'AVAILABLE'
+            ? weeklyRecord.value.observedDays
+            : [],
+        ),
+      },
+    );
+    const thermalCurrent = thermalForecast.current;
     const environmentalData = regionRecord.value.environmental;
     const precipitation = precipitationRecord?.value;
     const warningsResultValue = warningRecord?.value ?? {
@@ -277,7 +311,7 @@ router.get('/today', async (c) => {
         environmentalData.providerTimeouts?.airQuality ?? false,
       ...optionalTimeouts,
     });
-    const decisionHourly = forecast.hourly.slice(0, 24);
+    const decisionHourly = thermalForecast.hourly.slice(0, 24);
     const rules = runWeatherRuleEngineForHourly(decisionHourly);
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
     const recommendations = runRecommendationEngine(lifestyle, settings, {
@@ -306,7 +340,7 @@ router.get('/today', async (c) => {
     );
     const roadIceMessage = buildRoadIceMessage(roadIce, regionLabel);
     const roadControlMessage = buildRoadControlMessage(roadControl);
-    const brief = buildWeatherBriefResult(forecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
+    const brief = buildWeatherBriefResult(thermalForecast, { regionKey: `${nx}:${ny}`, now: generatedAt });
     const sunTimes = sunTimesForRequest(
       generatedAt,
       nx,
@@ -314,7 +348,7 @@ router.get('/today', async (c) => {
       coordinates,
     );
     const response: TodayWeatherResponse = {
-      dataSource: current.dataRole === 'OBSERVATION'
+      dataSource: thermalCurrent.dataRole === 'OBSERVATION'
         ? `${forecast.dataSource} · 기상청 초단기실황 · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
       region: { nx, ny, name: regionLabel },
@@ -322,12 +356,12 @@ router.get('/today', async (c) => {
       briefExpiresAt: brief.expiresAt,
       ...sunTimes,
       current: {
-        ...current,
+        ...thermalCurrent,
         activeWarnings: warnings,
       },
       nextForecast:
         nextForecastSnapshot(
-          forecast.hourly,
+          thermalForecast.hourly,
           generatedAt,
           weeklyRecord?.status === 'AVAILABLE'
             ? weeklyRecord.value.airQuality
@@ -336,7 +370,7 @@ router.get('/today', async (c) => {
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
-      hourly: forecast.hourly,
+      hourly: thermalForecast.hourly,
       recommendations,
       lifestyleMessages: [
         ...warningMessages,
@@ -350,7 +384,7 @@ router.get('/today', async (c) => {
         ...buildOptionalProviderTimeoutStatusMessages(optionalTimeouts),
       ],
       timeline: buildTimeline(
-        forecast.timelineHourly ?? forecast.hourly,
+        thermalForecast.timelineHourly ?? thermalForecast.hourly,
         settings,
         generatedAt.toISOString(),
         expandedPreparations,
@@ -804,8 +838,15 @@ export function currentFromUltraShortObservation(
     humidity: observation.humidity,
     windSpeed: observation.windSpeed,
     windDirection: undefined,
+    precipitationType: observation.rainDetected
+      ? forecast.precipitationType === 'SNOW' ||
+        forecast.precipitationType === 'RAIN_SNOW'
+        ? forecast.precipitationType
+        : 'RAIN'
+      : 'NONE',
+    precipitationAmount: observation.precipitationAmount,
     provider: 'KMA_ULTRA_SHORT_OBSERVATION+KMA_FORECAST',
-    providerField: 'T1H,REH,WSD;SKY=FORECAST',
+    providerField: 'T1H,REH,WSD,PTY,RN1;SKY=FORECAST',
     qualityFlags: [
       ...(forecast.qualityFlags ?? []),
       'SKY_FROM_FORECAST',

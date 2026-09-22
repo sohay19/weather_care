@@ -23,6 +23,21 @@ describe('KMA APIHub 10분 격자 실황', () => {
     expect(parsed.values[(target.ny - 1) * width + target.nx - 1]).toBe(23.4);
   });
 
+  it('차원 헤더 없이 줄바꿈된 운영 격자 원본도 읽는다', () => {
+    const values = Array<number>(width * height).fill(-99);
+    values[(target.ny - 1) * width + target.nx - 1] = 24.6;
+    const payload = Array.from(
+      { length: Math.ceil(values.length / 20) },
+      (_, index) => values.slice(index * 20, (index + 1) * 20).join(', '),
+    ).join('\n');
+
+    const parsed = parseKmaGridObservation(payload);
+
+    expect(parsed).toMatchObject({ width, height });
+    expect(parsed.values).toHaveLength(width * height);
+    expect(parsed.values[(target.ny - 1) * width + target.nx - 1]).toBe(24.6);
+  });
+
   it('격자 API의 little-endian float 바이너리도 읽는다', () => {
     const buffer = new ArrayBuffer(4 + width * height * 4);
     const view = new DataView(buffer);
@@ -160,6 +175,60 @@ describe('KMA AWS 매분 fallback', () => {
       '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
       '202609221115,400,180,2.4,22.8,0,0,-999',
     ].join('\n'))).toEqual([]);
+  });
+
+  it('미발간 월을 건너뛰고 중첩된 최신 지점목록을 읽는다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.includes('nph-aws2_min')) {
+        return new Response([
+          '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
+          '202609221115,401,90,1.2,24.1,0,0,66',
+        ].join('\n'));
+      }
+      if (url.searchParams.get('month') === '09') {
+        return Response.json({
+          response: {
+            header: { resultCode: '99', resultMsg: '발간되지 않은 기간입니다.' },
+          },
+        });
+      }
+      return Response.json({
+        response: {
+          header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
+          body: {
+            items: {
+              item: [{
+                stn_aws: {
+                  info: [{
+                    stn_id: 401,
+                    stn_ko: '항동인근',
+                    lat: '37.48',
+                    lon: '126.82',
+                  }],
+                },
+              }],
+            },
+          },
+        },
+      });
+    });
+    const provider = new KmaAwsMinuteObservationProvider({
+      serviceKey: 'test-key',
+      fetcher,
+      now: () => new Date('2026-09-22T11:18:00+09:00'),
+    });
+
+    const [observation] = await provider.getCurrentByLocations([
+      { latitude: 37.48, longitude: 126.82 },
+    ]);
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(observation?.sourceLocation).toMatchObject({
+      stationId: '401',
+      stationName: '항동인근',
+      locationMatch: 'NEAREST_STATION',
+    });
   });
 });
 

@@ -159,10 +159,7 @@ export class KmaAwsMinuteObservationProvider {
   }
 
   private async fetchStations(koreanClock: Date): Promise<AwsStation[]> {
-    for (const candidate of [
-      koreanClock,
-      new Date(koreanClock.getTime() - 35 * 24 * 60 * 60 * 1000),
-    ]) {
+    for (const candidate of stationPublicationMonths(koreanClock)) {
       const stations = await this.fetchStationMonth(candidate);
       if (stations.length > 0) return stations;
     }
@@ -282,13 +279,20 @@ export function parseKmaAwsStations(payload: string): AwsStation[] {
     };
   };
   const code = response.response?.header?.resultCode;
+  const message = response.response?.header?.resultMsg ?? '';
+  if (code === '99' && message.includes('발간되지 않은 기간')) return [];
   if (code !== '00' && code !== '0000') {
     throw new KmaAwsMinuteObservationProviderError(
       `KMA AWS station response failed: ${code ?? 'INVALID_RESPONSE'}`,
     );
   }
   const raw = response.response?.body?.items?.item;
-  const items = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const containers = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const items = containers.flatMap((value) => {
+    if (!value || typeof value !== 'object') return [];
+    const info = (value as { stn_aws?: { info?: unknown } }).stn_aws?.info;
+    return Array.isArray(info) ? info : [value];
+  });
   return items.flatMap((value) => {
     const item = value as Record<string, unknown>;
     const stationId = String(item.stn_id ?? item.stnId ?? '').trim();
@@ -299,6 +303,19 @@ export function parseKmaAwsStations(payload: string): AwsStation[] {
         Number.isFinite(latitude) && Number.isFinite(longitude)
       ? [{ stationId, stationName, latitude, longitude }]
       : [];
+  });
+}
+
+function stationPublicationMonths(koreanClock: Date): Date[] {
+  const firstDay = Date.UTC(
+    koreanClock.getUTCFullYear(),
+    koreanClock.getUTCMonth(),
+    1,
+  );
+  return Array.from({ length: 13 }, (_, monthsAgo) => {
+    const candidate = new Date(firstDay);
+    candidate.setUTCMonth(candidate.getUTCMonth() - monthsAgo);
+    return candidate;
   });
 }
 

@@ -172,9 +172,16 @@ export function parseKmaGridObservation(payload: string): ParsedGrid {
       dimensions[0] > 0 && dimensions[1] > 0;
   });
   if (dimensionIndex < 0) {
-    throw new KmaGridObservationProviderError(
-      'KMA grid observation response has no grid dimensions',
-    );
+    const values = lines
+      .filter((line) => !line.trim().startsWith('#'))
+      .flatMap(numericTokens);
+    const expected = GRID_WIDTH * GRID_HEIGHT;
+    if (values.length !== expected) {
+      throw new KmaGridObservationProviderError(
+        `KMA grid observation value count is invalid: ${values.length}/${expected}`,
+      );
+    }
+    return { width: GRID_WIDTH, height: GRID_HEIGHT, values };
   }
   const [width, height] = numericTokens(lines[dimensionIndex]);
   if (width !== GRID_WIDTH || height !== GRID_HEIGHT) {

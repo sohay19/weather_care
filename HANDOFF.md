@@ -8034,3 +8034,12 @@
 - Android 중간 위젯 폭 기준을 220dp에서 150dp로 바로잡았다. Pixel Launcher 3열 약 169dp 위젯이 더 이상 소형으로 오분류되지 않고, 중간 레이아웃에서 `shortMessage` 짧은 브리핑을 표시한다.
 - Main 브리핑은 기존처럼 서버 timeline의 현재 활성 구간을 사용하며 최대 1분 간격·정확한 경계에서 다시 평가한다. Main과 위젯의 준비물도 같은 현재 구간을 사용하도록 맞췄다. 서버 날씨 자체 수집은 10분 단위지만 앱 데이터 재조회는 앱 시작·당겨서 새로고침·매 정각·GPS 모드 복귀 시다.
 - 검증: 서버 TypeScript 검사, Worker 51파일 352개 + Node 3파일 11개 전체 테스트, Flutter 3.47.4 정적 분석과 전체 454개 테스트, Android Debug Java 컴파일, `git diff --check`를 통과했다. 앱·서버 운영 배포는 수행하지 않았다.
+
+## 2026-09-22 기상청 체감·현재 브리핑 통합 운영 배포
+
+- 현재 작업 트리 전체를 `7ee7f53 fix: 기상청 체감과 현재 브리핑 기준 통합`으로 커밋했다. 자체 체감 필드 제거, Detail 현재 강수·도로 통제 상태, GPS 캐시 키 안정화, Main·위젯 현재 시각 브리핑/준비물 통합과 관련 앱·문서·테스트를 모두 포함한다.
+- 커밋의 `weather_care_server`만 SHA-256 `1c11a07aafc6fccd6bd2c061c2aa18827943031a51d431191fff9f0b50b31b10` 아카이브로 만들어 운영 미니 PC `soha-01`에 배포했다. 운영 환경파일과 `/var/lib/weather-care/weather-care-release.sqlite` 경로는 변경하지 않았다.
+- 배포 전 SQLite 온라인 백업은 `/var/backups/weather-care/weather-care-20260922T080025Z.sqlite`, 소스 압축 백업은 `/var/backups/weather-care/source-before-7ee7f53-20260922-170024.tar.gz`, 즉시 롤백 디렉터리는 `/opt/weather-care/weather_care_server.previous-before-7ee7f53-20260922-170024`에 보관했다.
+- 고정 순서대로 API·스케줄러 중지, 소스 교체, 마이그레이션, 전국 선수집, API·스케줄러 시작을 수행했다. 마이그레이션과 선수집은 `Result=success`, `ExecMainStatus=0`이고 선수집은 전국 1,633개 격자·활성 지역 4개·활성 위치 2개, `requiredCaches=9996`, `collectedCaches=9996`, `missingCaches=0`으로 완료됐다.
+- `weather-care-api`·`weather-care-scheduler`·`cloudflared`는 모두 active이고 내부·공개 `/health`는 `ok`다. 공개 Today 실조회에서 실제기온 `29.1℃`, `kmaApparentTemperature=apparentTemperature=26.8℃`, 자체 `perceivedTemperature`·`thermalSensation` 필드 없음, 현재 강수 `DRY`, 현재 도로 통제 `null`과 두 항목의 명시적 정상 상태 문구를 확인했다. 현재 브리핑은 `HUMIDITY_LOW`, 준비물은 `WATER`다.
+- 원격 전달용 임시 아카이브는 삭제했다. 배포 직전 정규 core 회차에서 기존 `fcm_send_failed` 1건이 계속 확인됐으며 이번 변경과 무관한 기존 문제다. 앱 위젯 변경은 운영 서버 배포 대상이 아니므로 새 앱 빌드 배포 전까지 설치본에는 반영되지 않는다.

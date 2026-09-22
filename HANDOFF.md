@@ -7811,3 +7811,13 @@
 - 원본은 `docs/전달원본/알림_위젯_앱_통합_브리핑_정책_v2.md`에 그대로 보관했고, 실제 적용 계약은 `docs/알림_위젯_앱_통합_브리핑_정책_v2_구현.md`에 정리했다.
 - 커밋은 `4a7f1af feat(서버): 통합 브리핑 intent와 알림 연결`, `e476c72 feat(앱): 브리핑 timeline을 화면과 위젯에 적용`, `1610851 docs: 통합 브리핑 정책 v2 보관`으로 분리했다.
 - 서버 TypeScript 검사, Worker 51파일·381개와 Node 3파일·11개 테스트, Flutter analyze와 전체 450개 테스트, Android debug APK 빌드를 통과했다. Windows 환경이라 iOS Xcode 빌드는 수행하지 못했으며 운영 배포도 수행하지 않았다.
+
+## 2026-09-22 통합 브리핑 서버 미니 PC 재배포
+
+- 통합 브리핑·항동 중기예보가 포함된 최신 서버를 미니 PC `soha-01`에 배포했다. 운영 환경파일과 `/var/lib/weather-care/weather-care-release.sqlite` 경로는 변경하지 않았고, 배포 전 SQLite 온라인 백업과 소스 백업을 만들었다.
+- 첫 선수집은 존재하지 않는 중기육상 코드 `11E00000`을 필수 캐시로 요구해 `requiredCaches=8372`, `collectedCaches=8371`, `missingCaches=1`로 실패했다. 새 API를 열지 않고 즉시 직전 소스와 systemd 구성을 복원했으며 API·스케줄러·Tunnel과 내부 health를 정상화했다.
+- 기상청 공식 중기예보 계약상 울릉도·독도는 중기육상예보 대상에서 제외되고 중기기온만 제공된다. 해당 지역에 다른 육상 구역을 임의 적용하지 않고 기온만 수집하도록 수정했으며, 배포 차단 수정은 `20ff192 fix(중기예보): 미지원 울릉도 육상코드 제외`로 커밋했다.
+- 수정본 서버 타입 검사와 Worker 51파일·383개, Node 3파일·11개 전체 테스트가 통과했다. 두 번째 운영 선수집은 중기구역 `176/176`, 전체 `requiredCaches=8371`, `collectedCaches=8371`, `missingCaches=0`으로 1차 시도에 성공했다.
+- 최종적으로 `weather-care-api`·`weather-care-scheduler`·`cloudflared`가 모두 active이고 내부·공개 `/health`가 HTTP 200 `ok`다. 공개 항동 `57/125 + 1153080000 + 서울특별시 구로구 항동` WEEK는 `11B10101 / 11B00000`, 캐시 `HIT`, 7일 카드와 빈 카드 0개를 확인했다. Main·Today는 동일 `THERMAL_HOT` 장면과 각각 12개 브리핑 timeline을 반환한다.
+- 배포 아카이브 SHA-256은 `dc7fff48a40811e01419c3d8a2839e75b0b7d49d6d5d1655bf3707b606ffbe3f`다. 직전 소스는 `/opt/weather-care/weather_care_server.previous-before-20ff192-20260922-134003`, 압축 백업은 `/var/backups/weather-care/source-before-20ff192-20260922-134003.tar.gz`에 보관했다.
+- 운영 키에는 APIHub 격자 실황·AWS fallback 403과 도로통제 401이 남아 있다. 기존 캐시로 전체 선수집은 완결됐지만 30분 신선도 정책에 따라 현재 Main·Today 기온은 `CURRENT_OBSERVATION_UNAVAILABLE`로 비어 있다. 최신 현재 기온을 다시 표시하려면 해당 APIHub 자료의 활용 승인과 ITS 인증을 별도로 갱신해야 한다.

@@ -7839,6 +7839,52 @@
 - ITS relay는 Cloudflare Worker의 9443 직접 연결 제약을 우회하려고 만든 구성이라 미니 PC Node 운영에는 네트워크 중계로서 필요 없다. 사용자가 ITS 월 한도를 10,000회로 증량 요청했으므로 `전국 돌발정보 10분마다 1회 직접 조회 → SQLite 공용 snapshot → 모든 위치 로컬 필터`, 31일 최대 4,464회와 내부 월 9,000회 하드스톱으로 구현하고 relay와 Funnel을 stop/disable하는 방향으로 결정했다. 이미 소진된 이번 달은 ITS 측 초기화·증량 승인 전에는 401이 계속될 수 있다.
 - 이번 점검에서는 코드·운영 환경·서비스 상태를 변경하지 않았다.
 
+## 2026-09-22 Android/iOS Debug 광고 제거 테스트 절차 점검
+
+- 현재 앱의 광고 제거 상품은 Android/iOS 공통 비소모성 상품 `ad_free_lifetime`이며 앱 식별자는 두 플랫폼 모두 `com.codesoha.weathercare`이다.
+- Debug 빌드는 네이티브 광고와 앱 오프닝 광고에 Google 데모 광고 단위를 사용하고 UMP를 자동 우회하므로, 구매 전 광고 노출과 구매 직후 광고 제거를 운영 AdMob 승인 상태와 무관하게 검증할 수 있다.
+- Android는 Play Console 라이선스 테스터 계정과 Play Store가 설치된 기기/에뮬레이터를 사용하면 `flutter run`으로 설치한 Debug 빌드에서도 테스트 결제가 가능하다. 결제창에서 테스트 구매 표시와 테스트 결제 수단을 반드시 확인해야 한다.
+- iOS는 Xcode 개발 서명 빌드를 실기기에서 실행하고 App Store Connect의 Sandbox Apple Account로 결제한다. TestFlight 테스터 등록과 Sandbox 계정 등록은 서로 다른 역할이며, Debug 결제에는 Sandbox 계정이 필요하다.
+- 성공 구매 직후 설정의 구매 완료 상태, Today/Main/Week 네이티브 광고 제거, 앱 오프닝 광고 중단, 앱 재시작 후 유지, 앱 데이터 초기화 후 구매 복원을 필수 확인 항목으로 정리했다.
+- 반복 테스트 시 스토어 구매 이력과 앱의 로컬 보안 저장소 상태를 함께 초기화해야 한다. Android는 Play Console 주문 관리의 환불·권한 취소와 앱 데이터 삭제를, iOS는 Sandbox 구매 이력 지우기와 앱 Keychain 소유 플래그 초기화를 함께 고려해야 한다.
+- 이번 작업은 설명을 위한 읽기 전용 점검이며 앱 코드는 변경하지 않았다.
+
+## 2026-09-22 Android 12 지원 설정 확인
+
+- 앱의 Android 설정은 `minSdkVersion 27`, `compileSdk 36`, `targetSdk 36`이므로 Android 12(API 31)와 Android 12L(API 32)은 지원 범위에 포함된다.
+- Android 12에서 필수인 런처 Activity의 `android:exported="true"`가 선언되어 있고, 앱 위젯 Receiver는 `android:exported="false"`로 명시되어 있다.
+- 최근 기록된 실기동 검증은 API 35/37 중심이므로 설정상 지원과 별개로 Android 12 전용 API 31 에뮬레이터 회귀 실행은 아직 명시적으로 기록되어 있지 않다.
+- 이번 작업은 설정 확인만 수행했으며 앱 코드는 변경하지 않았다.
+
+## 2026-09-22 Play 내부 테스트 Release 실행 즉시 종료 진단
+
+- Play 내부 테스트에서 설치한 `com.codesoha.weathercare` 버전 `1.0.0 (26092102)`를 연결된 Galaxy S10+ Android 12(API 31)에서 읽기 전용으로 점검했다. 설치자는 `com.android.vending`이고 Play가 만든 arm64/ko/xxhdpi 분할 APK가 정상 설치되어 있어 설치 실패나 ABI 누락 문제는 아니다.
+- 앱을 직접 재실행해 로그를 수집한 결과 Flutter 엔진과 `main()` 진입 전에 `androidx.startup.InitializationProvider`가 `androidx.work.impl.WorkDatabase` 생성에 실패하며 매번 `FATAL EXCEPTION: main`으로 종료된다.
+- Gradle `dependencyInsight`로 경로를 확정했다. `google_mobile_ads 7.0.0`이 `play-services-ads 24.9.0`을 사용하고, 이 SDK가 `androidx.work:work-runtime 2.7.0`과 `androidx.room:room-runtime 2.2.5`를 전이 의존성으로 가져온다. 앱 자체는 WorkManager를 직접 사용하지 않는다.
+- Release 산출물에는 R8 난독화가 적용되어 있고 크래시 스택도 R8 처리된 코드다. Android 공식 Room 릴리스 기록에는 생성된 DB 구현의 기본 생성자가 제거되어 Reflection 초기화가 실패하는 문제에 대한 ProGuard 수정이 Room 2.7 계열에 명시되어 있다. 현재 포함된 Room 2.2.5와 AGP/R8 9.1 조합이 Release에서 WorkDatabase 초기화를 깨뜨린 것이 직접 원인으로 판단된다.
+- 따라서 Android 12 미지원, 광고 제거 결제, Play App Signing 또는 Flutter 화면 코드 문제가 아니다. 해결 방향은 최신 안정 WorkManager로 전이 버전을 올려 최신 Room을 함께 사용하고 Release 축소 빌드로 실기기 재검증하는 것이며, 임시로는 정확한 Room 생성자 keep rule을 적용할 수 있다.
+- 이번 작업은 원인 진단만 수행했으며 앱 코드, 단말 앱 데이터, Play Console 배포 상태는 변경하지 않았다.
+
+### WorkManager 유입 경로 재확인
+
+- 앱 코드와 `pubspec.yaml`에는 WorkManager 직접 의존성이 없다. `pubspec.yaml`의 `google_mobile_ads ^9.1.0`이 Android에서 `play-services-ads 25.4.0`을 사용하고, 그 안의 `play-services-ads-api`가 `androidx.work:work-runtime 2.7.0`을 전이 의존성으로 포함한다.
+- 앱 모듈 `android/app/build.gradle`의 `play-services-ads 24.5.0` 직접 선언은 더 높은 플러그인 요청 버전 25.4.0으로 해석되므로 WorkManager 유입을 막지 못한다.
+- `gradlew app:dependencyInsight --dependency androidx.work:work-runtime --configuration releaseRuntimeClasspath`로 위 경로를 재확인했다. WorkManager는 개발자가 작성한 Dart/Java 코드가 아니라 Gradle이 광고 SDK와 함께 AAB에 자동 포함한 네이티브 라이브러리다.
+
+### google_mobile_ads 9.1.0 내부 테스트 재검증
+
+- 사용자가 `google_mobile_ads ^9.1.0`으로 올려 다시 게시한 Play 내부 테스트 설치본 `1.0.0 (26092201)`을 연결된 Galaxy S10+ Android 12(API 31)에서 직접 실행했다. 설치자는 `com.android.vending`, 설치 시각은 2026-09-22 14:56:39로 새 버전 반영을 확인했다.
+- 로그를 비우고 앱을 강제 종료한 뒤 런처로 재실행해 5초간 확인했으나 프로세스가 남지 않았고, `androidx.startup.InitializationProvider`의 `Failed to create an instance of androidx.work.impl.WorkDatabase`가 동일하게 재현됐다. 새 R8 map ID는 `90f946...b979`로 이전 AAB와 다른 새 Release 산출물임도 확인했다.
+- 현재 lock/package config는 `google_mobile_ads 9.1.0`이며 플러그인이 `play-services-ads 25.4.0`을 사용한다. 그러나 Gradle 해석 결과 이 버전도 여전히 `androidx.work:work-runtime 2.7.0`을 전이 의존성으로 가져오므로 광고 플러그인 업그레이드만으로 원인이 제거되지 않았다.
+- 다음 해결은 앱 모듈에서 WorkManager 안정 버전을 명시적으로 상향해 실제 Release dependency graph에서 2.7.0이 사라졌는지 확인한 뒤, Release APK 실기기 검증을 통과하고 새 versionCode AAB를 올리는 순서가 필요하다. 이번 작업은 검증만 수행했고 코드·앱 데이터·Play 배포 상태는 변경하지 않았다.
+
+## 2026-09-22 ITS 돌발상황정보 상세 활용목적 문구 정리
+
+- 국가교통정보센터 돌발상황정보 Open API 활용신청의 상세 목적 입력란에 사용할 문구를 현재 서비스 동작 기준으로 정리했다.
+- 날씨 생활정보 앱에서 사용자 위치 주변의 실제 도로 통제 여부를 확인해 출퇴근·외출 전 안전 안내에 활용하며, 사고·공사만으로 통제를 추정하지 않고 통제 차로·시작/종료 시각 등 공식 제공 정보만 안내한다는 범위를 반영했다.
+- 개인 위치정보를 외부에 제공하지 않고 서버에서 공용 돌발정보를 임시 저장한 뒤 위치 주변 자료를 필터링한다는 개인정보·호출 절감 원칙을 포함했다.
+- 이번 작업은 신청 문구 추천만 수행했으며 앱·서버 코드는 변경하지 않았다.
+
 ## 2026-09-22 APIHub 실황·ITS 전국 공용 캐시 배포
 
 - APIHub 격자 실황의 차원 헤더 없는 `149×253=37,697`개 운영 원본과, AWS 지점목록의 미발간 월·`items.item[0].stn_aws.info` 중첩 응답을 지원했다. 커밋은 `d8e0ab8 fix(관측): APIHub 운영 응답 형식 지원`이다.

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/app_settings.dart';
@@ -91,12 +92,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late AppSettings settings;
+  late final Future<String?> _appVersion;
 
   @override
   void initState() {
     super.initState();
     settings =
         widget.initialSettings ?? AppSettings.fallback('local-installation');
+    _appVersion = _loadAppVersion();
     widget.adRemoval?.addListener(_onAdRemovalChanged);
   }
 
@@ -197,11 +200,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onRefresh: widget.onRefresh ?? () async {},
       child: body,
     );
-    if (widget.embedded) return refreshableBody;
+    final content = Stack(
+      children: [
+        Positioned.fill(child: refreshableBody),
+        Positioned(
+          right: 16,
+          bottom: 8,
+          child: FutureBuilder<String?>(
+            future: _appVersion,
+            builder: (context, snapshot) {
+              final version = snapshot.data;
+              if (version == null) return const SizedBox.shrink();
+              return Text(
+                '버전 $version',
+                key: const ValueKey('settings-app-version'),
+                style: WeatherCareTheme.microTextStyle,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+    if (widget.embedded) return content;
     return Scaffold(
       appBar: AppBar(title: const Text('설정')),
-      body: refreshableBody,
+      body: content,
     );
+  }
+
+  Future<String?> _loadAppVersion() async {
+    try {
+      final version = (await PackageInfo.fromPlatform()).version.trim();
+      return version.isEmpty ? null : version;
+    } catch (_) {
+      return null;
+    }
   }
 
   void _updateSettings(AppSettings updated) {

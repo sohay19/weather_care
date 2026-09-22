@@ -19,11 +19,11 @@
 		A10000000000000000000002 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* WidgetKit.framework */; };
 		A10000000000000000000003 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* SwiftUI.framework */; };
 		A10000000000000000000004 /* WeatherCareWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* WeatherCareWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A10000000000000000000005 /* Fonts/SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */; };
-		A10000000000000000000006 /* Fonts/SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */; };
-		A10000000000000000000007 /* Fonts/SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */; };
-		A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */; };
-		A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */; };
+		A10000000000000000000005 /* SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* SUITE-Regular.ttf */; };
+		A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* SUITE-SemiBold.ttf */; };
+		A10000000000000000000007 /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SUITE-Bold.ttf */; };
+		A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* SUITE-ExtraBold.ttf */; };
+		A10000000000000000000009 /* SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* SUITE-Heavy.ttf */; };
 		A1000000000000000000000A /* Icons in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* Icons */; };
 		CF62BA7D305CE19600A72CCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */; };
 		CFDE0D51306124F2006508F1 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFDE0D50306124F2006508F1 /* StoreKit.framework */; };
@@ -101,11 +101,11 @@
 		A20000000000000000000004 /* WeatherCareWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WeatherCareWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000005 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A20000000000000000000006 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
-		A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
-		A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
-		A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
-		A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000007 /* SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000008 /* SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000009 /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000A /* SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000B /* SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Icons; sourceTree = "<group>"; };
 		A63F90F5FDDEFBACB5A29F7D /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -232,11 +232,11 @@
 				A20000000000000000000001 /* WeatherCareWidget.swift */,
 				A20000000000000000000002 /* Info.plist */,
 				A20000000000000000000003 /* WeatherCareWidget.entitlements */,
-				A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */,
-				A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */,
-				A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */,
-				A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */,
-				A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */,
+				A20000000000000000000007 /* SUITE-Regular.ttf */,
+				A20000000000000000000008 /* SUITE-SemiBold.ttf */,
+				A20000000000000000000009 /* SUITE-Bold.ttf */,
+				A2000000000000000000000A /* SUITE-ExtraBold.ttf */,
+				A2000000000000000000000B /* SUITE-Heavy.ttf */,
 				A2000000000000000000000C /* Icons */,
 			);
 			path = WeatherCareWidget;
@@ -383,11 +383,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000005 /* Fonts/SUITE-Regular.ttf in Resources */,
-				A10000000000000000000006 /* Fonts/SUITE-SemiBold.ttf in Resources */,
-				A10000000000000000000007 /* Fonts/SUITE-Bold.ttf in Resources */,
-				A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */,
-				A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */,
+				A10000000000000000000005 /* SUITE-Regular.ttf in Resources */,
+				A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */,
+				A10000000000000000000007 /* SUITE-Bold.ttf in Resources */,
+				A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */,
+				A10000000000000000000009 /* SUITE-Heavy.ttf in Resources */,
 				A1000000000000000000000A /* Icons in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -419,13 +419,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -440,13 +436,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -635,11 +627,9 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26092101;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 26092200;
+				DEVELOPMENT_TEAM = M7QY569K4A;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = "$(MARKETING_VERSION)";
 				FLUTTER_BUILD_NUMBER = "$(CURRENT_PROJECT_VERSION)";
@@ -655,7 +645,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = weather_care_dist;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -836,11 +825,9 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26092101;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 26092200;
+				DEVELOPMENT_TEAM = M7QY569K4A;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = "$(MARKETING_VERSION)";
 				FLUTTER_BUILD_NUMBER = "$(CURRENT_PROJECT_VERSION)";
@@ -856,7 +843,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = weather_care_dist;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -877,11 +863,9 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26092101;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 26092200;
+				DEVELOPMENT_TEAM = M7QY569K4A;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = "$(MARKETING_VERSION)";
 				FLUTTER_BUILD_NUMBER = "$(CURRENT_PROJECT_VERSION)";
@@ -897,7 +881,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = weather_care_dist;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -915,11 +898,9 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26092101;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 26092200;
+				DEVELOPMENT_TEAM = M7QY569K4A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "날씨챙겨";
@@ -933,10 +914,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = weathercare_widget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -950,11 +933,9 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26092101;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 26092200;
+				DEVELOPMENT_TEAM = M7QY569K4A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "날씨챙겨";
@@ -968,10 +949,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = weathercare_widget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -984,11 +967,9 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
-				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 26092101;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = M7QY569K4A;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 26092200;
+				DEVELOPMENT_TEAM = M7QY569K4A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "날씨챙겨";
@@ -1002,10 +983,12 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = weathercare_widget;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

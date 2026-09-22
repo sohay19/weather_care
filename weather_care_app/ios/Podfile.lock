@@ -65,11 +65,11 @@ PODS:
   - geolocator_apple (1.2.0):
     - Flutter
     - FlutterMacOS
-  - Google-Mobile-Ads-SDK (12.14.0):
+  - Google-Mobile-Ads-SDK (13.3.0):
     - GoogleUserMessagingPlatform (>= 1.1)
-  - google_mobile_ads (7.0.0):
+  - google_mobile_ads (9.0.0):
     - Flutter
-    - Google-Mobile-Ads-SDK (~> 12.14.0)
+    - Google-Mobile-Ads-SDK (~> 13.3.0)
     - webview_flutter_wkwebview
   - GoogleAdsOnDeviceConversion (3.6.1):
     - GoogleUtilities/Environment (~> 8.1)
@@ -233,8 +233,8 @@ SPEC CHECKSUMS:
   flutter_secure_storage_darwin: 557817588b80e60213cbecb573c45c76b788018d
   geocoding_darwin: 6b25f60c5c0855c2061f097ca17c937a827b8a76
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
-  Google-Mobile-Ads-SDK: 4534fd2dfcd3f705c5485a6633c5188d03d4eed2
-  google_mobile_ads: 2ba32ffef4a026aa94f526774a40a14ca9662adf
+  Google-Mobile-Ads-SDK: 7692126a35ed859f20635af281c50a2162be8bea
+  google_mobile_ads: e0c300fcd472c3fa5a00d6cca8b0c65bbbb15faf
   GoogleAdsOnDeviceConversion: e3b71da24ff4cf01cf520756ac1c2b93c07b86ff
   GoogleAppMeasurement: d70df385587c4175fc0836c11e413d5cbcaa3c7b
   GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539

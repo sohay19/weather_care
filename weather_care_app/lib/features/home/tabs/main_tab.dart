@@ -192,7 +192,7 @@ class _TodaySection extends StatelessWidget {
           temperatureLabel: '현재 기온',
           temperature: current.temperature,
           apparentLabel: '현재 체감온도',
-          apparentTemperature: current.apparentTemperature,
+          apparentTemperature: current.displayedPerceivedTemperature,
         ),
         const SizedBox(height: 13),
         Padding(
@@ -205,8 +205,8 @@ class _TodaySection extends StatelessWidget {
                 child: Text(
                   _weatherSummaryMessage(
                     sky: current.sky,
-                    temperature: current.temperature,
-                    apparentTemperature: current.apparentTemperature,
+                    thermalBrief: current.thermalBrief,
+                    topLevelBrief: today.brief,
                   ),
                   style: feelingStyle,
                 ),
@@ -513,7 +513,7 @@ class _TodayFutureSection extends StatelessWidget {
             temperatureLabel: '예상 기온',
             temperature: nextForecast.temperature,
             apparentLabel: '예상 체감온도',
-            apparentTemperature: nextForecast.apparentTemperature,
+            apparentTemperature: nextForecast.displayedPerceivedTemperature,
           ),
           const SizedBox(height: 13),
           Container(
@@ -784,7 +784,7 @@ class _TopWeatherCard extends StatelessWidget {
     final current = today.current;
     final missing = <String>[
       if (current.temperature == null) '현재 기온',
-      if (current.apparentTemperature == null) '현재 체감온도',
+      if (current.displayedPerceivedTemperature == null) '현재 체감온도',
       if (current.sky == null) '하늘 상태',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',
@@ -1218,56 +1218,15 @@ String _weatherExpression(String? sky) {
 
 String _weatherSummaryMessage({
   required String? sky,
-  required double? temperature,
-  required double? apparentTemperature,
+  required String? thermalBrief,
+  required String topLevelBrief,
 }) {
-  final weatherExpression = _weatherExpression(sky);
-  if (apparentTemperature == null) {
-    return '$weatherExpression 체감 정보는 계산조건이 맞을 때 표시해요.';
+  final serverBrief = thermalBrief?.trim();
+  if (serverBrief != null &&
+      serverBrief.isNotEmpty &&
+      serverBrief != topLevelBrief.trim()) {
+    return serverBrief;
   }
-
-  final displayedApparentTemperature =
-      double.parse(apparentTemperature.toStringAsFixed(1));
-
-  final comparison = temperature == null
-      ? null
-      : _apparentTemperatureComparison(
-          temperature: double.parse(temperature.toStringAsFixed(1)),
-          apparentTemperature: displayedApparentTemperature,
-        );
-  final feeling =
-      switch (_apparentTemperatureLabel(displayedApparentTemperature)) {
-    '위험한 더위' => '위험할 만큼 매우 덥게',
-    '더위 경계' => '매우 덥게',
-    '더위 주의' => '더위가 강하게',
-    '더움' => '꽤 덥게',
-    '조금 더움' => '조금 덥게',
-    '선선한 편' => '선선하게',
-    '쌀쌀한 편' => '쌀쌀하게',
-    _ => '춥게',
-  };
-  return '$weatherExpression '
-      '${comparison == null ? '' : '$comparison, '}'
-      '체감 상 $feeling 느껴질 수 있어요.';
-}
-
-String _apparentTemperatureComparison({
-  required double temperature,
-  required double apparentTemperature,
-}) {
-  final difference = apparentTemperature - temperature;
-  if (difference.abs() < 0.05) return '실제 기온과 비슷하지만';
-  return '실제 기온보다 ${difference.abs().toStringAsFixed(1)}℃ '
-      '${difference > 0 ? '높지만' : '낮지만'}';
-}
-
-String _apparentTemperatureLabel(double temperature) {
-  if (temperature >= 38) return '위험한 더위';
-  if (temperature >= 35) return '더위 경계';
-  if (temperature >= 33) return '더위 주의';
-  if (temperature >= 28) return '더움';
-  if (temperature >= 20) return '조금 더움';
-  if (temperature >= 10) return '선선한 편';
-  if (temperature >= 0) return '쌀쌀한 편';
-  return '추운 날씨';
+  if (serverBrief == topLevelBrief.trim()) return _weatherExpression(sky);
+  return '${_weatherExpression(sky)} 체감 설명을 준비하고 있어요.';
 }

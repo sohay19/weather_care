@@ -33,6 +33,20 @@ void main() {
     expect(item.pm10, 0);
   });
 
+  test('시간별 사람 중심 체감온도와 서버 감각 판정을 읽는다', () {
+    final item = HourlyWeatherItem.fromJson({
+      'forecastAt': '2026-09-22T15:00:00+09:00',
+      'apparentTemperature': 27.2,
+      'perceivedTemperature': 25.3,
+      'thermalSensation': 'WARM_COMFORTABLE',
+    });
+
+    expect(item.apparentTemperature, 27.2);
+    expect(item.perceivedTemperature, 25.3);
+    expect(item.displayedPerceivedTemperature, 25.3);
+    expect(item.thermalSensation, 'WARM_COMFORTABLE');
+  });
+
   test('잘못된 숫자와 빈 하늘 상태를 표시 가능한 값으로 바꾸지 않는다', () {
     final item = HourlyWeatherItem.fromJson({
       'temperature': 'unknown',

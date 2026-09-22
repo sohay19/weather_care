@@ -27,7 +27,7 @@ class HourlyForecastSection extends StatelessWidget {
           (item) =>
               item.time == '--' ||
               item.temperature == null ||
-              item.apparentTemperature == null ||
+              item.displayedPerceivedTemperature == null ||
               item.precipitationProbability == null ||
               item.windSpeed == null ||
               item.skyCondition == null,
@@ -188,9 +188,9 @@ class _HourlyRow extends StatelessWidget {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          item.apparentTemperature == null
+                          item.displayedPerceivedTemperature == null
                               ? '예상 체감 자료 없음'
-                              : '예상 체감 ${item.apparentTemperature!.toStringAsFixed(0)}℃',
+                              : '예상 체감 ${item.displayedPerceivedTemperature!.toStringAsFixed(0)}℃',
                           style: const TextStyle(
                             color: WeatherCareTheme.textSecondary,
                             fontSize: 12,

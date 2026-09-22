@@ -33,11 +33,18 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
   Widget build(BuildContext context) {
     final current = widget.current;
     final isObservation = current.dataRole == 'OBSERVATION';
-    final currentSource = isObservation ? '기상청 초단기실황' : '기상청 단기예보';
+    final currentSource = !isObservation
+        ? '기상청 단기예보'
+        : current.provider?.contains('APIHUB_DFS') == true
+            ? '기상청 10분 격자 실황'
+            : current.provider?.contains('AWS') == true
+                ? '기상청 AWS 관측'
+                : '기상청 초단기실황';
+    final perceivedTemperature = current.displayedPerceivedTemperature;
     final missing = <String>[
       if (current.temperature == null) '현재 기온',
       if (current.sky == null) '하늘 상태',
-      if (current.apparentTemperature == null) '체감온도',
+      if (perceivedTemperature == null) '체감온도',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null && current.windDirection == null) '바람',
       if (current.visibilityMeters == null) '가시거리',
@@ -49,13 +56,17 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
       _WeatherMetric(
         icon: Icons.device_thermostat_rounded,
         label: '체감',
-        value: current.apparentTemperature == null
+        value: perceivedTemperature == null
             ? '자료 없음'
-            : '${current.apparentTemperature!.toStringAsFixed(1)}℃',
-        levelTitle: _apparentTemperatureLevel(current.apparentTemperature),
-        detailBody: current.apparentTemperature == null
+            : '${perceivedTemperature.toStringAsFixed(1)}℃',
+        levelTitle: _thermalSensationLevel(current.thermalSensation),
+        detailBody: perceivedTemperature == null
             ? '기온·습도·풍속 입력자료가 모두 갖춰지지 않았거나 체감온도 계산조건에 맞지 않아 값을 만들지 않았어요.\n빠진 값을 0으로 바꿔 계산하지 않아요.'
-            : '$currentSource의 기온·상대습도·풍속을 이용해 계산한 ${isObservation ? '' : '예상 '}체감온도는 ${current.apparentTemperature!.toStringAsFixed(1)}℃예요.\n햇빛, 옷차림, 활동량, 건물 주변 바람에 따라 실제로 느끼는 정도는 달라질 수 있어요.',
+            : _perceivedTemperatureDetail(
+                current,
+                currentSource,
+                isObservation,
+              ),
       ),
       _WeatherMetric(
         icon: Icons.water_drop_outlined,
@@ -338,19 +349,46 @@ String? _koreaObservationClock(String? timestamp) {
       '${korea.minute.toString().padLeft(2, '0')}분 관측';
 }
 
-String _apparentTemperatureLevel(double? value) {
-  if (value == null) return '체감온도 수준을 확인하기 어려워요';
-  final level = switch (value) {
-    >= 38 => '위험한 더위',
-    >= 35 => '더위 경계',
-    >= 33 => '더위 주의',
-    >= 28 => '더운',
-    >= 20 => '조금 더운',
-    >= 10 => '선선한',
-    >= 0 => '쌀쌀한',
-    _ => '추운',
+String _thermalSensationLevel(String? sensation) {
+  final level = switch (sensation) {
+    'VERY_COLD' => '매우 춥고 매서운',
+    'COLD' => '추운',
+    'CHILLY' => '꽤 쌀쌀한',
+    'COOL' => '서늘한',
+    'COOL_COMFORTABLE' => '선선하고 쾌적한',
+    'COMFORTABLE' => '쾌적한',
+    'WARM_COMFORTABLE' => '따뜻하고 쾌적한',
+    'WARM' => '따뜻함이 뚜렷한',
+    'SLIGHTLY_HOT' => '조금 더운',
+    'HOT' => '더운',
+    'VERY_HOT' => '매우 더운',
+    'EXTREME_HOT' => '극심하게 더운',
+    _ => null,
   };
-  return '체감온도는 $level 수준이에요';
+  return level == null ? '체감온도 수준을 확인하기 어려워요' : '사람 중심 체감은 $level 수준이에요';
+}
+
+String _perceivedTemperatureDetail(
+  CurrentWeather current,
+  String currentSource,
+  bool isObservation,
+) {
+  final perceived = current.displayedPerceivedTemperature!;
+  final parts = <String>[
+    '$currentSource의 기온·상대습도·풍속과 햇볕·옷차림 추정치를 함께 반영한 '
+        '${isObservation ? '' : '예상 '}체감온도는 ${perceived.toStringAsFixed(1)}℃예요.',
+  ];
+  final difference = current.perceivedDifference;
+  if (difference != null && difference.abs() >= 0.6) {
+    parts.add(
+      '실제 기온보다 ${difference.abs().toStringAsFixed(1)}℃ '
+      '${difference > 0 ? '높게' : '낮게'} 계산됐어요.',
+    );
+  }
+  if (current.perceivedConfidence == 'LOW') {
+    parts.add('일부 환경자료가 없어 기온과 바람·습도를 중심으로 계산했어요.');
+  }
+  return parts.join('\n');
 }
 
 String _humidityLevel(double? value) {

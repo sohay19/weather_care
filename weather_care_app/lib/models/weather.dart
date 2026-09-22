@@ -33,6 +33,22 @@ class CurrentWeather {
   final String? issuedAt;
   final double? apparentTemperature;
   final String? apparentTemperatureSource;
+  final double? kmaApparentTemperature;
+  final double? perceivedTemperature;
+  final double? perceivedDifference;
+  final String? perceivedModelVersion;
+  final String? perceivedConfidence;
+  final String? modelSource;
+  final String? thermalSensation;
+  final String? thermalBrief;
+  final double? estimatedClothingClo;
+  final String? estimatedClothingLabel;
+  final String? thermalSeason;
+  final double? recentMeanTemperature7d;
+  final String? temperatureTrend;
+  final double? meanRadiantTemperature;
+  final String? radiationLevel;
+  final List<String> dominantFactors;
   final double? humidity;
   final double? windSpeed;
   final double? windDirection;
@@ -57,6 +73,22 @@ class CurrentWeather {
     this.issuedAt,
     this.apparentTemperature,
     this.apparentTemperatureSource,
+    this.kmaApparentTemperature,
+    this.perceivedTemperature,
+    this.perceivedDifference,
+    this.perceivedModelVersion,
+    this.perceivedConfidence,
+    this.modelSource,
+    this.thermalSensation,
+    this.thermalBrief,
+    this.estimatedClothingClo,
+    this.estimatedClothingLabel,
+    this.thermalSeason,
+    this.recentMeanTemperature7d,
+    this.temperatureTrend,
+    this.meanRadiantTemperature,
+    this.radiationLevel,
+    this.dominantFactors = const [],
     this.humidity,
     this.windSpeed,
     this.windDirection,
@@ -84,6 +116,25 @@ class CurrentWeather {
       issuedAt: c['issuedAt']?.toString(),
       apparentTemperature: (c['apparentTemperature'] as num?)?.toDouble(),
       apparentTemperatureSource: c['apparentTemperatureSource']?.toString(),
+      kmaApparentTemperature: (c['kmaApparentTemperature'] as num?)?.toDouble(),
+      perceivedTemperature: (c['perceivedTemperature'] as num?)?.toDouble(),
+      perceivedDifference: (c['perceivedDifference'] as num?)?.toDouble(),
+      perceivedModelVersion: _optionalText(c['perceivedModelVersion']),
+      perceivedConfidence: _optionalText(c['perceivedConfidence']),
+      modelSource: _optionalText(c['modelSource']),
+      thermalSensation: _optionalText(c['thermalSensation']),
+      thermalBrief: _optionalText(c['thermalBrief']),
+      estimatedClothingClo: (c['estimatedClothingClo'] as num?)?.toDouble(),
+      estimatedClothingLabel: _optionalText(c['estimatedClothingLabel']),
+      thermalSeason: _optionalText(c['thermalSeason']),
+      recentMeanTemperature7d:
+          (c['recentMeanTemperature7d'] as num?)?.toDouble(),
+      temperatureTrend: _optionalText(c['temperatureTrend']),
+      meanRadiantTemperature: (c['meanRadiantTemperature'] as num?)?.toDouble(),
+      radiationLevel: _optionalText(c['radiationLevel']),
+      dominantFactors: (c['dominantFactors'] as List<dynamic>? ?? const [])
+          .map((value) => value.toString())
+          .toList(growable: false),
       humidity: (c['humidity'] as num?)?.toDouble(),
       windSpeed: (c['windSpeed'] as num?)?.toDouble(),
       windDirection: (c['windDirection'] as num?)?.toDouble(),
@@ -101,6 +152,9 @@ class CurrentWeather {
       airQualityObservedAt: _optionalText(c['airQualityObservedAt']),
     );
   }
+
+  double? get displayedPerceivedTemperature =>
+      perceivedTemperature ?? apparentTemperature;
 }
 
 class HourlyWeatherItem {
@@ -110,6 +164,8 @@ class HourlyWeatherItem {
   final String? forecastDate;
   final double? temperature;
   final double? apparentTemperature;
+  final double? perceivedTemperature;
+  final String? thermalSensation;
   final double? precipitationProbability;
   final double? precipitationAmount;
   final String? precipitationAmountLabel;
@@ -130,6 +186,8 @@ class HourlyWeatherItem {
     this.forecastDate,
     required this.temperature,
     this.apparentTemperature,
+    this.perceivedTemperature,
+    this.thermalSensation,
     required this.precipitationProbability,
     required this.precipitationAmount,
     this.precipitationAmountLabel,
@@ -168,6 +226,8 @@ class HourlyWeatherItem {
       forecastDate: json['forecastDate']?.toString() ?? parsedDate,
       temperature: _optionalNumber(json['temperature']),
       apparentTemperature: _optionalNumber(json['apparentTemperature']),
+      perceivedTemperature: _optionalNumber(json['perceivedTemperature']),
+      thermalSensation: _optionalText(json['thermalSensation']),
       precipitationProbability:
           _optionalNumber(json['precipitationProbability']),
       precipitationAmount: _optionalNumber(json['precipitationAmount']),
@@ -197,6 +257,9 @@ class HourlyWeatherItem {
       skyCondition: _optionalText(json['skyCondition']),
     );
   }
+
+  double? get displayedPerceivedTemperature =>
+      perceivedTemperature ?? apparentTemperature;
 }
 
 double? _optionalNumber(Object? value) =>

@@ -76,7 +76,8 @@ class HomeWidgetSnapshot {
       condition: widgetWeatherCondition(today.current.sky),
       currentTemperature: _temperature(today.current.temperature),
       apparentTemperature: _temperature(
-          today.current.apparentTemperature ?? today.current.temperature),
+          today.current.displayedPerceivedTemperature ??
+              today.current.temperature),
       minimumTemperature: _temperature(daily?.min),
       maximumTemperature: _temperature(daily?.max),
       shortMessage: activeRecommendations.isNotEmpty

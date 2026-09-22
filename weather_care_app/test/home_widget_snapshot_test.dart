@@ -35,7 +35,7 @@ void main() {
     expect(snapshot.refreshTime, '오전 8:20 기준');
     expect(snapshot.condition, 'drizzle');
     expect(snapshot.currentTemperature, '18°');
-    expect(snapshot.apparentTemperature, '17.5°');
+    expect(snapshot.apparentTemperature, '16.8°');
     expect(snapshot.minimumTemperature, '12°');
     expect(snapshot.maximumTemperature, '20°');
     expect(snapshot.shortMessage, '두꺼운 겉옷을 챙기세요');
@@ -141,6 +141,8 @@ TodayWeatherResponse _today({
     current: const CurrentWeather(
       temperature: 18,
       apparentTemperature: 17.5,
+      perceivedTemperature: 16.8,
+      thermalSensation: 'COOL_COMFORTABLE',
       sky: '빗방울',
     ),
     nextForecast: const CurrentWeather(

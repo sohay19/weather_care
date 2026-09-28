@@ -631,32 +631,46 @@ def compose_widget_showcase(
 
     board_top = spec["screen_y"]
     available_height = canvas_height - board_top - round(canvas_height * 0.045)
-    board_width = min(round(canvas_width * 0.86), round(available_height / 1.03))
-    board_height = round(board_width * 1.03)
+    board_width = round(canvas_width * 0.86)
+    board_height = available_height
     board = Image.new("RGBA", (board_width, board_height), "#DDEBF5")
     board_draw = ImageDraw.Draw(board)
     board_draw.ellipse((-round(board_width * 0.08), round(board_height * 0.74), round(board_width * 0.23), round(board_height * 1.03)), fill="#D3E5F2")
     board_draw.ellipse((round(board_width * 0.75), -round(board_height * 0.07), round(board_width * 1.05), round(board_height * 0.20)), fill="#E9F3F9")
 
-    margin = round(board_width * 0.055)
-    gap = round(board_width * 0.035)
-    inner_width = board_width - margin * 2
     family_points = widget_points(platform)
-    medium_ratio = family_points["medium"][0] / family_points["medium"][1]
-    small_side = round((inner_width - gap) / (1 + medium_ratio))
-    medium_width = inner_width - small_side - gap
-    medium_height = round(medium_width / medium_ratio)
-    top = margin
-    large_width = medium_width
-    large_height = round(large_width * family_points["large"][1] / family_points["large"][0])
-    large_top = top + max(small_side, medium_height) + gap
-    large_left = round((board_width - large_width) / 2)
-
-    cards = [
-        (draw_widget_card((small_side, small_side), "small", platform), margin, top, "small"),
-        (draw_widget_card((medium_width, medium_height), "medium", platform), margin + small_side + gap, top, "medium"),
-        (draw_widget_card((large_width, large_height), "large", platform), large_left, large_top, "large"),
-    ]
+    horizontal_margin = round(board_width * 0.055)
+    vertical_margin = round(board_height * 0.035)
+    gap = round(board_height * 0.018)
+    inner_width = board_width - horizontal_margin * 2
+    inner_height = board_height - vertical_margin * 2
+    families = ("small", "medium", "large")
+    scale = min(
+        inner_width / max(family_points[family][0] for family in families),
+        (inner_height - gap * 2) / sum(family_points[family][1] for family in families),
+    )
+    card_sizes = {
+        family: (
+            round(family_points[family][0] * scale),
+            round(family_points[family][1] * scale),
+        )
+        for family in families
+    }
+    stack_height = sum(card_sizes[family][1] for family in families) + gap * 2
+    card_top = vertical_margin + (inner_height - stack_height) // 2
+    cards = []
+    for family in families:
+        card_width, card_height = card_sizes[family]
+        card_left = (board_width - card_width) // 2
+        cards.append(
+            (
+                draw_widget_card((card_width, card_height), family, platform),
+                card_left,
+                card_top,
+                family,
+            )
+        )
+        card_top += card_height + gap
     shadow = Image.new("RGBA", board.size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow)
     for card, x, y, family in cards:

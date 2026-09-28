@@ -8158,3 +8158,10 @@
 - 현재 Android·iOS 네이티브 위젯은 Flutter 앱이 저장한 스냅샷을 읽어 다시 그리는 구조이므로, 버튼만 추가해서는 서버의 최신 날씨를 받을 수 없다. 앱을 열지 않는 실제 갱신에는 위치·설치 식별 정보 저장, 네이티브 네트워크 요청, 응답을 위젯 스냅샷으로 변환하는 공통 계약이 추가로 필요하다.
 - Android는 위젯 버튼의 브로드캐스트 `PendingIntent`에서 `WorkManager` 작업을 예약해 백그라운드로 갱신할 수 있다. iOS는 17 이상에서 `Button(intent:)`와 `AppIntent`로 앱을 열지 않고 갱신할 수 있지만, 현재 최소 지원 버전인 iOS 15.6~16에는 대화형 위젯 버튼이 없어 조건부로 버튼을 숨기거나 앱을 여는 링크만 제공해야 한다. 이번 작업에서는 새로고침 기능을 구현하지 않았다.
 - Flutter 3.47.4 기준 `flutter analyze` 이슈 없음, `native_startup_defaults_test.dart` 4개 테스트 및 `git diff --check` 통과를 확인했다. 네 규격 위젯 PNG의 해상도·RGB 모드와 두 ZIP의 CRC 무결성도 확인했다. Windows 환경이라 WidgetKit 타깃 빌드와 iOS 실기기 검증은 수행하지 못했다.
+
+## 2026-09-28 스토어 위젯 스크린샷 세로 배열
+
+- Android 휴대전화·태블릿과 iPhone·iPad의 `06-widget.png`를 작은·중간·큰 위젯이 위에서 아래로 하나씩 나열되는 구성으로 다시 만들었다.
+- iOS·iPad 위젯은 제품에 적용된 시스템 여백 75%와 추가 여백을 사용하고, Android 위젯은 실제 XML의 family별 바깥 여백을 적용했다. 네이티브 placeholder 데이터와 family 비율은 유지했다.
+- 최종 캔버스는 기존 스토어 스크린샷과 동일하게 Android 1080×1920, iPhone 1320×2868, Android 태블릿 1440×2560, iPad 2064×2752로 유지했다. 세로형 보드가 남는 높이를 사용하도록 생성기를 수정했다.
+- 네 플랫폼의 미리보기와 `weather-care-store-screenshots.zip`, `weather-care-store-assets.zip`을 다시 생성했다. 네 결과물을 시각 확인했고 24개 PNG의 해상도·RGB 모드, 두 ZIP의 CRC 무결성, `git diff --check`를 통과했다.

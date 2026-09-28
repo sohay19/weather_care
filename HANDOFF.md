@@ -8072,6 +8072,15 @@
 - 설정 화면의 위치 확인 버튼을 `위치 권한 허용하고 확인`에서 기능 중심 표현인 `현재 위치 확인`으로 변경했다.
 - Flutter 3.47.4 기준 `flutter analyze` 이슈 없음, `flutter test test/home_location_test.dart` 38개 테스트 통과, `git diff --check` 통과를 확인했다.
 
+## 2026-09-28 운영 푸시 알림 상태 진단
+
+- 운영 미니 PC를 읽기 전용으로 점검했다. `weather-care-api`, `weather-care-scheduler`, `cloudflared`는 모두 active이고 스케줄러는 2026-09-22 재시작 뒤 재시작 횟수 0으로 실행 중이다. FCM 환경변수 3종도 값 존재 여부 기준으로 모두 설정돼 있다.
+- 운영 DB에는 FCM 토큰이 등록되고 알림이 활성화된 연령정책 적격 설치가 22개 있다. 그러나 `notification_history`의 마지막 성공 기록은 2026-09-17 09:40:14 KST이며, 2026-09-22 이후 성공 기록은 0개다.
+- 스케줄러 로그에는 2026-09-22부터 현재까지 `fcm_send_failed`가 계속 발생한다. 2026-09-28 13:41:01 KST 회차에서도 실패했고, 같은 날 오전에는 10분 core 회차마다 반복됐다. 스케줄러는 발송 실패를 작업 전체 실패로 올리지 않으므로 core job 완료와 서비스 active만으로 푸시 정상 여부를 판단할 수 없다.
+- 비밀값을 출력하지 않고 실행 중인 스케줄러 프로세스의 실제 FCM 환경으로 OAuth만 진단했다. PEM은 시작·끝 표식과 줄바꿈이 정상이고 JWT 서명도 성공했지만 Google OAuth가 HTTP 400 `invalid_grant`, `Invalid grant: account not found`를 반환했다. 현재 FCM 서비스 계정이 삭제됐거나 더 이상 유효하지 않은 것이 직접 원인이다.
+- 앱의 권한 요청, 토큰 등록·갱신, 전경/백그라운드/종료 수신, 알림 선택 이동과 서버 FCM HTTP v1 발송 코드는 구현돼 있고 과거 Android 운영 종단 성공 기록도 있다. 다만 현재 운영 자격증명 오류가 모든 플랫폼의 실제 발송 전에 발생하므로 지금은 Android·iOS 모두 푸시가 정상 발송되지 않는다.
+- 이번 작업은 코드·운영 환경·DB·서비스를 변경하지 않았고 사용자 기기로 시험 푸시도 보내지 않았다. 정상화하려면 Firebase 프로젝트의 유효한 서비스 계정 키로 운영 `FCM_CLIENT_EMAIL`과 `FCM_PRIVATE_KEY`를 교체하고 스케줄러 재시작 후 OAuth 성공, FCM 성공 이력, 실제 기기 수신을 순서대로 검증해야 한다.
+
 ## 2026-09-28 iOS 위젯 여백·온도 행 자동 크기 조절
 
 - iOS 작은·중간·큰 위젯의 시스템 기본 content margin을 기기와 위젯 표시 환경에서 읽은 뒤 상하좌우 모두 기존 값의 30%만 적용하도록 변경했다. iOS 17 이상은 `widgetContentMargins`와 `contentMarginsDisabled()`를 사용하고, iOS 15.6~16은 기존 safe area inset을 같은 비율로 적용한다.
@@ -8079,3 +8088,73 @@
 - 작은·중간·큰 위젯의 현재 날씨 행을 공통 `AdaptiveTemperatureRow`로 통합했다. 사용 가능한 실제 폭과 SUITE 폰트로 측정한 현재·체감온도 문자열 폭을 기준으로 날씨 아이콘, 온도 폰트, 라벨, 간격, 구분선을 같은 비율로 연속 축소해 온도 문자열이 잘리지 않도록 했다.
 - 회귀 방지를 위해 iOS 위젯의 30% 여백 상수, 시스템 margin 처리, 세 위젯의 자동 온도 행 사용 여부를 확인하는 소스 검증 테스트를 추가했다.
 - Flutter 3.47.4 `flutter analyze` 이슈 없음, `home_widget_snapshot_test.dart`와 `native_startup_defaults_test.dart` 전체 12개 테스트 및 `git diff --check` 통과를 확인했다. 현재 Windows 환경에는 Xcode가 없어 WidgetKit 타깃 빌드와 iOS 실기기 시각 검증은 수행하지 못했다.
+
+## 2026-09-28 운영 FCM 서비스 계정 확인 경로 안내
+
+- 실행 중인 운영 스케줄러 환경에서 비밀값 없이 FCM 식별값만 다시 확인했다. 프로젝트는 `weather-care-2aaa8`, 서비스 계정은 `firebase-adminsdk-xxxxx@weather-care-2aaa8.iam.gserviceaccount.com`이다.
+- Google Cloud Console의 IAM 및 관리자 → 서비스 계정에서 프로젝트 `weather-care-2aaa8`을 선택하고 위 이메일의 존재 여부와 사용 설정 상태를 확인하도록 안내했다. 현재 OAuth 응답이 `invalid_grant: account not found`이므로 목록에 없거나 삭제된 계정일 가능성이 높다.
+- Firebase Console에서는 프로젝트 설정 → 서비스 계정 → Firebase Admin SDK의 `새 비공개 키 생성`으로 유효한 JSON 키를 만들 수 있다. Google Cloud에서 직접 만들 경우 서비스 계정의 키 탭 → 키 추가 → 새 키 만들기 → JSON 경로를 사용한다. FCM 발송 계정에는 Firebase Cloud Messaging API Admin 권한이 필요하다.
+- 다운로드한 JSON의 `client_email`과 `private_key`를 운영 환경의 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`에 반영해야 하며 JSON 원문이나 개인키는 채팅·저장소에 붙이지 않는다. 이번 작업에서는 콘솔·운영 설정을 변경하거나 새 키를 생성하지 않았다.
+
+## 2026-09-28 Google Cloud 서비스 계정 화면 대조
+
+- 사용자가 제공한 Google Cloud `weather-care` 프로젝트 서비스 계정 화면에서 현재 사용 설정된 Firebase Admin SDK 계정이 `firebase-adminsdk-fbsvc@weather-care-2aaa8.iam.gserviceaccount.com`임을 확인했다. 키 생성일은 2026-09-01로 표시된다.
+- 운영 스케줄러의 `FCM_CLIENT_EMAIL`은 삭제된 것으로 보이는 `firebase-adminsdk-xxxxx@weather-care-2aaa8.iam.gserviceaccount.com`을 가리키므로 콘솔의 현행 계정과 불일치한다. Google OAuth의 `account not found`와 정확히 부합한다.
+- 이메일만 바꾸면 기존 개인키와 계정이 맞지 않아 인증되지 않는다. 현행 `fbsvc` 계정에서 발급한 JSON의 `client_email`과 `private_key`를 한 쌍으로 운영 환경에 교체해야 한다. 기존 키의 개인키는 콘솔에서 다시 내려받을 수 없으므로 2026-09-01 JSON 원본이 없다면 새 JSON 키를 생성해야 한다.
+- 이번 확인에서는 콘솔·키·운영 환경을 변경하지 않았다.
+
+## 2026-09-28 기존 FCM 개인키 운영 교체 절차 안내
+
+- 사용자가 현행 `firebase-adminsdk-fbsvc` 서비스 계정의 기존 개인키를 보유하고 있다고 알려 새 키 생성 없이 교체하는 절차를 안내했다.
+- JSON 키 기준으로 같은 파일의 `client_email`과 `private_key`를 한 쌍으로 `/etc/weather-care/weather-care.env`의 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`에 반영해야 한다. `project_id`는 `weather-care-2aaa8`, `client_email`은 `firebase-adminsdk-fbsvc@weather-care-2aaa8.iam.gserviceaccount.com`인지 먼저 확인한다.
+- `private_key`는 JSON 원문에 표시되는 `\\n` 이스케이프를 유지한 한 줄 값으로 저장하고 JSON 따옴표·쉼표는 포함하지 않는다. `FCM_PROJECT_ID`와 다른 운영 비밀값은 변경하지 않는다.
+- 환경파일을 먼저 `/var/backups/weather-care`에 권한을 제한해 백업하고, 교체 뒤 FCM 자격증명을 사용하는 API와 스케줄러를 재시작한다. 이후 서비스 active, OAuth 성공, FCM 실패 로그 소멸, 발송 성공 이력, 실제 기기 수신을 순서대로 확인한다. 이번 안내 단계에서는 실제 키·운영 환경·서비스를 변경하지 않았다.
+
+## 2026-09-28 FCM 자격증명 교체 후 검증
+
+- 사용자 교체 뒤 운영 서버를 읽기 전용으로 확인했다. API·스케줄러·Tunnel은 모두 active이고 API와 스케줄러는 2026-09-28 14:02:46 KST에 새 프로세스로 재시작됐다. 스케줄러는 `firebase-adminsdk-fbsvc@weather-care-2aaa8.iam.gserviceaccount.com`을 실제 환경으로 로드했다.
+- 새 `FCM_PRIVATE_KEY`에는 PEM 시작·끝 문자열과 충분한 길이는 있지만 실제 줄바꿈도 `\\n` 이스케이프도 없어 정규화 뒤 한 줄로 남는다. 끝 표식 뒤에도 불필요한 문자가 있고 Node RSA 서명이 실패한다. 따라서 OAuth와 FCM 발송 단계까지 진행할 수 없으며 현재 상태로는 푸시가 정상 발송되지 않는다.
+- 재시작 직전 13:51 KST core 회차까지 기존 `fcm_send_failed`가 확인됐다. 재시작 뒤 첫 core 회차 전이라 새 실패 로그가 아직 없는 것뿐이며, JWT 서명 실패 진단으로 자격증명 형식 오류는 확정됐다.
+- JSON 원문을 수동 복사하지 말고 로컬 JSON 파일 경로를 받아 `private_key`의 줄바꿈을 리터럴 `\\n`으로 자동 변환해 환경파일에 반영하는 방식이 안전하다. 이번 검증에서는 운영 환경·서비스·DB를 추가 변경하거나 시험 푸시를 보내지 않았다.
+
+## 2026-09-28 스토어 위젯 스크린샷 추가
+
+- Android 휴대전화, iPhone, Android 태블릿, iPad 스토어 이미지 세트에 `06-widget.png`를 추가해 각 규격을 6장으로 확장했다. 한 장 안에 작은·중간·큰 홈 화면 위젯을 함께 배치하고 현재 날씨, 기온·체감온도, 준비물, 다음 시간 예보를 보여준다.
+- 실제 iOS 위젯의 색상과 SUITE 폰트, 저장소 준비물 아이콘을 기준으로 스토어용 위젯 쇼케이스를 생성하도록 `store/generate_store_screenshots.py`를 확장했다. 네 플랫폼 미리보기 이미지도 6장 구성으로 다시 생성했다.
+- `screenshots/README.md`, `스토어_등록정보.md`, `날씨챙겨_스토어_등록정보.docx`의 스크린샷 수, 권장 노출 순서, 위젯 대체 텍스트를 갱신하고 두 스토어 ZIP에도 네 규격의 위젯 이미지를 포함했다.
+- 검증: 생성 스크립트와 문서 빌드 스크립트 Python 컴파일, 네 규격별 PNG 6장의 해상도·RGB 모드, ZIP 무결성과 위젯 파일 4개 포함 여부, `git diff --check`를 확인했다. DOCX는 Microsoft Word 비표시 렌더링과 Poppler로 13페이지 전체를 시각 점검해 잘림·겹침·한글 누락이 없음을 확인했다.
+
+## 2026-09-28 운영 FCM 자격증명 복구 및 실제 정규 발송 검증
+
+- 사용자가 지정한 기존 JSON은 실제로 `D:\iCloudDrive\SOHA\00_개인\00_Cetificate\weather-care-2aaa8-firebase-adminsdk-fbsvc-10c83ac167.json`에 있었다. 로컬에서 프로젝트 `weather-care-2aaa8`, 계정 `firebase-adminsdk-fbsvc@weather-care-2aaa8.iam.gserviceaccount.com`, PEM 29줄, RSA 서명을 확인했고 운영 서버의 임시 보안 경로에서 Google OAuth HTTP 200까지 사전 검증했다.
+- `/etc/weather-care/weather-care.env`를 `/var/backups/weather-care/weather-care.env-before-fcm-20260928T050838Z`에 root 전용 0600으로 백업한 뒤 JSON의 `client_email`과 `private_key`만 원자적으로 교체했다. systemd EnvironmentFile은 백슬래시 한 개를 제거하므로 파일에는 줄바꿈마다 `\\\\n`을 저장해야 프로세스가 `\\n`을 받는다. 최초 자동 치환의 이스케이프 축약을 발견해 추가 백업 두 개를 만든 뒤 치환 함수로 실제 이중 백슬래시 28개를 보존하도록 교정했다.
+- 최종 실행 프로세스는 서비스 계정 이메일, 리터럴 `\\n` 28개, PEM 29줄과 시작·끝 표식을 정상 로드했다. RSA/JWT 서명과 Google OAuth가 HTTP 200으로 성공했고 `weather-care-api`, `weather-care-scheduler`, `cloudflared`는 모두 active, 재시작 뒤 스케줄러 작업 실패는 0건이다.
+- 2026-09-28 14:20 KST 자연 정규 core 회차에서 Android 대상 `ROAD_CONTROL_4d642458_PARTIAL` 1건이 FCM 성공으로 수락되어 `notification_history`에 새 성공 이력이 기록됐다. 임의 시험 발송이나 수동 작업 실행이 아니라 기존 운영 스케줄의 실제 발송이다.
+- 같은 회차의 과거 토큰 9개는 FCM HTTP 404로 응답했고 코드의 기존 정책에 따라 자동으로 제거됐다. 등록 토큰은 22개에서 13개로 정리됐으며 남은 13개는 Android, iOS 설치 1개는 현재 FCM 토큰이 없다. 따라서 서버→FCM 발송 경로는 복구됐지만 iOS 수신과 성공 Android 기기의 실제 알림 UI 표시는 별도 기기 확인이 필요하다.
+- 서버로 전송했던 임시 JSON은 `shred -u`로 삭제했고 로컬 원본은 변경하지 않았다. 운영 DB는 정규 스케줄러의 성공 이력 기록과 만료 토큰 자동 정리 외에 수동 변경하지 않았다.
+
+## 2026-09-28 스토어 위젯 이미지 실제 레이아웃 정합화
+
+- 최초 스토어 위젯 이미지는 홍보용으로 임의 재구성해 실제 위젯과 family 비율, 날씨 상태, 문구와 준비물 구성이 달랐다. 이를 폐기하고 네이티브 구현을 직접 기준으로 다시 생성했다.
+- Apple HIG에 따라 iPhone은 작은 `158:158`, 중간 `338:158`, 큰 `338:354`, 13형 iPad용은 작은 `170:170`, 중간 `378.5:170`, 큰 `378.5:378.5` Canvas 비율과 시스템 모서리 비율을 적용했다. `WeatherCareWidget.swift` placeholder의 `시흥시 은행동`, `오전 8:20 기준`, 현재·체감 `18°`, 최저 `12°`, 최고 `20°`, 실제 브리핑과 준비물 3개를 그대로 반영했다.
+- 작은·중간·큰 위젯의 실제 SwiftUI 계층에 맞춰 헤더, 자동 크기 온도 행, 정보 패널, 큰 위젯의 2줄 브리핑·준비물·다음 시간 예보를 배치했다. 날씨 아이콘도 임의 비 아이콘 대신 네이티브 `partlyCloudy`의 노란 해와 흰 구름 및 흑백 다음 예보 아이콘으로 교체했다.
+- Android·iPhone·Android 태블릿·iPad의 `06-widget.png`, 전체 미리보기와 두 배포 ZIP을 다시 생성했다. 생성기 컴파일, 위젯 family별 독립 렌더링, 네 규격별 6장 해상도·RGB 모드, ZIP 무결성, `git diff --check`를 통과했다.
+
+## 2026-09-28 iOS 위젯 여백 2배 비교 시안
+
+- 현재 iOS 위젯의 시스템 기본 여백 30%와 이를 2배로 늘린 60%를 작은·중간·큰 family에서 나란히 비교하는 검토용 시안을 생성했다. 추가 바깥 여백도 작은·중간 0.6→1.2pt, 큰 0.9→1.8pt로 함께 2배 적용했다.
+- 시안은 실제 네이티브 위젯 레이아웃과 placeholder 데이터를 사용했고 제품 코드, 기존 스토어 이미지와 배포 ZIP은 변경하지 않았다.
+- 비교 파일은 현재 작업의 전용 시각화 디렉터리에만 만들었으며, 2배 적용 시 가장자리 여유가 늘면서 작은 위젯의 헤더·최저최고 패널과 중간·큰 위젯의 양끝 콘텐츠가 안쪽으로 이동하는 모습을 확인할 수 있다.
+
+## 2026-09-28 iOS 위젯 여백 2.5배 비교 시안
+
+- 현재 시스템 기본 여백 30%와 2.5배인 75%를 작은·중간·큰 위젯에서 나란히 비교하는 검토용 이미지를 추가했다. 추가 바깥 여백도 작은·중간 0.6→1.5pt, 큰 0.9→2.25pt로 같은 비율만큼 확대했다.
+- 실제 네이티브 위젯 레이아웃과 placeholder 데이터를 사용했으며 제품 코드, 스토어 이미지, 배포 ZIP은 변경하지 않았다.
+
+## 2026-09-28 iOS 위젯 여백 2.5배 실제 적용 및 새로고침 검토
+
+- iOS 작은·중간·큰 위젯의 바깥 여백 비율을 `0.3`에서 `0.75`로 변경해 직전 제품값의 정확히 2.5배로 적용했다. 시스템 기본 content margin은 75%를 사용하고, 추가 바깥 여백은 작은·중간 1.5pt, 큰 2.25pt가 된다.
+- 스토어 위젯 생성기의 iPhone·iPad 여백도 같은 값으로 맞춘 뒤 네 규격의 `06-widget.png`, 미리보기와 두 배포 ZIP을 다시 생성했다. iPhone과 iPad 결과를 시각 확인했고 작은·중간·큰 위젯 모두 텍스트 잘림이 없다.
+- 현재 Android·iOS 네이티브 위젯은 Flutter 앱이 저장한 스냅샷을 읽어 다시 그리는 구조이므로, 버튼만 추가해서는 서버의 최신 날씨를 받을 수 없다. 앱을 열지 않는 실제 갱신에는 위치·설치 식별 정보 저장, 네이티브 네트워크 요청, 응답을 위젯 스냅샷으로 변환하는 공통 계약이 추가로 필요하다.
+- Android는 위젯 버튼의 브로드캐스트 `PendingIntent`에서 `WorkManager` 작업을 예약해 백그라운드로 갱신할 수 있다. iOS는 17 이상에서 `Button(intent:)`와 `AppIntent`로 앱을 열지 않고 갱신할 수 있지만, 현재 최소 지원 버전인 iOS 15.6~16에는 대화형 위젯 버튼이 없어 조건부로 버튼을 숨기거나 앱을 여는 링크만 제공해야 한다. 이번 작업에서는 새로고침 기능을 구현하지 않았다.
+- Flutter 3.47.4 기준 `flutter analyze` 이슈 없음, `native_startup_defaults_test.dart` 4개 테스트 및 `git diff --check` 통과를 확인했다. 네 규격 위젯 PNG의 해상도·RGB 모드와 두 ZIP의 CRC 무결성도 확인했다. Windows 환경이라 WidgetKit 타깃 빌드와 iOS 실기기 검증은 수행하지 못했다.

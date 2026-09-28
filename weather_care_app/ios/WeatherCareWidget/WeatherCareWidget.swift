@@ -10,7 +10,7 @@ private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
 private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
 private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
-private let widgetOuterMarginRatio: CGFloat = 0.3
+private let widgetOuterMarginRatio: CGFloat = 0.75
 
 private enum SuiteFont {
   static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }

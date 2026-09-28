@@ -16,13 +16,15 @@ BACKGROUND = "#4C77A4"
 HEADLINE_COLOR = "#FFFFFF"
 LABEL_COLOR = "#FFD06A"
 
-SCREENS = [
+APP_SCREENS = [
     ("01-main", "main.png", "MAIN", "오늘 챙길 것만\n한눈에"),
     ("02-today", "today.png", "TODAY", "시간대별 날씨를\n하루 흐름으로"),
     ("03-detail", "detail.png", "DETAIL", "판단 근거까지\n자세히"),
     ("04-week", "week.png", "WEEK", "일주일 계획을\n미리 가볍게"),
     ("05-setting", "setting.png", "SETTING", "내 위치와 알림을\n내 생활에 맞게"),
 ]
+WIDGET_SCREEN = ("06-widget", "WIDGET", "홈 화면에서도\n날씨를 바로 확인")
+SCREEN_STEMS = [stem for stem, *_ in APP_SCREENS] + [WIDGET_SCREEN[0]]
 
 FORMATS = {
     "android": {
@@ -160,8 +162,546 @@ def compose(source_path: Path, destination: Path, label: str, headline: str, spe
     canvas.convert("RGB").save(destination, format="PNG", optimize=True)
 
 
+def fitted_font(name: str, text: str, max_size: int, max_width: int, min_size: int = 8) -> ImageFont.FreeTypeFont:
+    for size in range(max_size, min_size - 1, -1):
+        candidate = font(name, size)
+        box = candidate.getbbox(text)
+        if box[2] - box[0] <= max_width:
+            return candidate
+    return font(name, min_size)
+
+
+IOS_WIDGET_POINTS = {
+    "small": (158, 158),
+    "medium": (338, 158),
+    "large": (338, 354),
+}
+IPAD_WIDGET_POINTS = {
+    "small": (170, 170),
+    "medium": (378.5, 170),
+    "large": (378.5, 378.5),
+}
+WIDGET_DATA = {
+    "region": "시흥시 은행동",
+    "refresh": "오전 8:20 기준",
+    "current": "18°",
+    "apparent": "18°",
+    "minimum": "12°",
+    "maximum": "20°",
+    "short": "두꺼운 겉옷을 챙기세요",
+    "brief": "오전에는 선선하고 오후에는 포근해요. 얇은 겉옷을 챙기면 좋아요.",
+    "next_time": "오전 9시",
+    "next_temperature": "19°",
+}
+WIDGET_INK = "#25374E"
+WIDGET_SECONDARY = "#60758A"
+WIDGET_SURFACE = "#EAF4FB"
+WIDGET_PANEL = "#F9FCFE"
+
+
+def text_size(draw: ImageDraw.ImageDraw, text: str, text_font: ImageFont.FreeTypeFont) -> tuple[int, int]:
+    box = draw.textbbox((0, 0), text, font=text_font)
+    return box[2] - box[0], box[3] - box[1]
+
+
+def draw_text_top(
+    draw: ImageDraw.ImageDraw,
+    position: tuple[float, float],
+    text: str,
+    text_font: ImageFont.FreeTypeFont,
+    fill: str,
+) -> None:
+    box = draw.textbbox((0, 0), text, font=text_font)
+    draw.text((position[0] - box[0], position[1] - box[1]), text, font=text_font, fill=fill)
+
+
+def draw_text_centered(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[float, float, float, float],
+    text: str,
+    text_font: ImageFont.FreeTypeFont,
+    fill: str,
+) -> None:
+    text_width, text_height = text_size(draw, text, text_font)
+    draw_text_top(
+        draw,
+        ((box[0] + box[2] - text_width) / 2, (box[1] + box[3] - text_height) / 2),
+        text,
+        text_font,
+        fill,
+    )
+
+
+def draw_weather_icon(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[int, int, int, int],
+    condition: str = "partlyCloudy",
+    monochrome: bool = False,
+) -> None:
+    left, top, right, bottom = box
+    side = min(right - left, bottom - top)
+    origin_x = left + ((right - left) - side) / 2
+    origin_y = top + ((bottom - top) - side) / 2
+    sun_color = WIDGET_INK if monochrome else "#F6B737"
+    cloud_color = WIDGET_INK if monochrome else "#F9FCFF"
+
+    def point(x: float, y: float) -> tuple[float, float]:
+        return origin_x + side * x, origin_y + side * y
+
+    def sun(center: tuple[float, float], radius: float) -> None:
+        directions = ((0, -1), (.707, -.707), (1, 0), (.707, .707), (0, 1), (-.707, .707), (-1, 0), (-.707, -.707))
+        for dx, dy in directions:
+            draw.line(
+                (
+                    center[0] + dx * radius * 1.35,
+                    center[1] + dy * radius * 1.35,
+                    center[0] + dx * radius * 1.72,
+                    center[1] + dy * radius * 1.72,
+                ),
+                fill=sun_color,
+                width=max(1, round(radius * 0.12)),
+            )
+        draw.ellipse(
+            (center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius),
+            fill=sun_color,
+        )
+
+    if condition == "clear":
+        sun(point(.5, .5), side * .23)
+        return
+
+    sun(point(.63, .33), side * .17)
+    center_x, center_y = point(.48, .49)
+    cloud_width = side * .76
+    cloud_height = side * .39
+    cloud_left = center_x - cloud_width / 2
+    cloud_top = center_y - cloud_height / 2
+    draw.rounded_rectangle(
+        (
+            cloud_left,
+            cloud_top + cloud_height * .42,
+            cloud_left + cloud_width,
+            cloud_top + cloud_height,
+        ),
+        radius=round(cloud_height * .28),
+        fill=cloud_color,
+    )
+    for center_ratio, radius_ratio in (((.31, .48), .29), ((.53, .32), .38), ((.75, .53), .25)):
+        cx = cloud_left + cloud_width * center_ratio[0]
+        cy = cloud_top + cloud_height * center_ratio[1]
+        radius = cloud_height * radius_ratio
+        draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=cloud_color)
+
+
+def paste_preparation_icon(
+    image: Image.Image,
+    asset_name: str | None,
+    box: tuple[int, int, int, int],
+) -> None:
+    left, top, right, bottom = box
+    side = min(right - left, bottom - top)
+    draw = ImageDraw.Draw(image)
+    draw.ellipse((left, top, left + side, top + side), fill="#E2EFF8")
+    if asset_name:
+        asset_path = ROOT.parent / "assets" / "icons" / asset_name
+        with Image.open(asset_path) as source:
+            icon = source.convert("RGBA")
+            icon.thumbnail((round(side * .68), round(side * .68)), Image.Resampling.LANCZOS)
+        image.alpha_composite(
+            icon,
+            (round(left + (side - icon.width) / 2), round(top + (side - icon.height) / 2)),
+        )
+        return
+
+    stroke = max(1, round(side * .045))
+    icon_left = left + side * .25
+    icon_top = top + side * .32
+    icon_right = left + side * .75
+    icon_bottom = top + side * .68
+    draw.rounded_rectangle(
+        (icon_left, icon_top, icon_right, icon_bottom),
+        radius=round(side * .09),
+        outline=WIDGET_INK,
+        width=stroke,
+    )
+    draw.arc((left + side * .08, top + side * .34, left + side * .34, top + side * .70), 95, 265, fill=WIDGET_INK, width=stroke)
+    draw.arc((left + side * .66, top + side * .34, left + side * .92, top + side * .70), -85, 85, fill=WIDGET_INK, width=stroke)
+    for ratio in (.45, .56):
+        draw.line((left + side * .32, top + side * ratio, left + side * .68, top + side * ratio), fill=WIDGET_INK, width=stroke)
+
+
+def widget_panel(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], radius: int) -> None:
+    draw.rounded_rectangle(box, radius=radius, fill=WIDGET_PANEL)
+
+
+def draw_min_max_row(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[int, int, int, int],
+    point_size: float,
+    scale: float,
+) -> None:
+    parts = (
+        ("최저 ", "SUITE-Regular.ttf"),
+        (WIDGET_DATA["minimum"], "SUITE-ExtraBold.ttf"),
+        ("   최고 ", "SUITE-Regular.ttf"),
+        (WIDGET_DATA["maximum"], "SUITE-ExtraBold.ttf"),
+    )
+    fonts = [font(name, max(8, round(point_size * scale))) for _, name in parts]
+    widths = [text_size(draw, text, text_font)[0] for (text, _), text_font in zip(parts, fonts)]
+    heights = [text_size(draw, text, text_font)[1] for (text, _), text_font in zip(parts, fonts)]
+    cursor_x = (box[0] + box[2] - sum(widths)) / 2
+    center_y = (box[1] + box[3]) / 2
+    for (text, _), text_font, part_width, part_height in zip(parts, fonts, widths, heights):
+        draw_text_top(draw, (cursor_x, center_y - part_height / 2), text, text_font, "#475A70")
+        cursor_x += part_width
+
+
+def draw_temperature_row(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[int, int, int, int],
+    scale: float,
+    icon_size: float,
+    temperature_size: float,
+    label_size: float,
+    spacing: float,
+    divider_height: float,
+    apparent: bool,
+) -> None:
+    icon_pixels = round(icon_size * scale)
+    spacing_pixels = round(spacing * scale)
+    value_font = font("SUITE-Heavy.ttf", max(10, round(temperature_size * scale)))
+    label_font = font("SUITE-Regular.ttf", max(8, round(label_size * scale))) if apparent else None
+    current_width, current_height = text_size(draw, WIDGET_DATA["current"], value_font)
+    if apparent and label_font:
+        label_width, label_height = text_size(draw, "현재", label_font)
+        current_width = max(current_width, label_width)
+        apparent_value_width, apparent_value_height = text_size(draw, WIDGET_DATA["apparent"], value_font)
+        apparent_label_width, _ = text_size(draw, "체감", label_font)
+        apparent_width = max(apparent_value_width, apparent_label_width)
+        divider_pixels = max(1, round(scale))
+        total_width = icon_pixels + current_width + apparent_width + spacing_pixels * 3 + divider_pixels
+    else:
+        total_width = icon_pixels + spacing_pixels + current_width
+    left = (box[0] + box[2] - total_width) / 2
+    center_y = (box[1] + box[3]) / 2
+    icon_top = round(center_y - icon_pixels / 2)
+    draw_weather_icon(draw, (round(left), icon_top, round(left) + icon_pixels, icon_top + icon_pixels))
+    cursor_x = left + icon_pixels + spacing_pixels
+
+    if not apparent or not label_font:
+        draw_text_top(draw, (cursor_x, center_y - current_height / 2), WIDGET_DATA["current"], value_font, WIDGET_INK)
+        return
+
+    label_height = text_size(draw, "현재", label_font)[1]
+    value_height = text_size(draw, WIDGET_DATA["current"], value_font)[1]
+    column_height = label_height + value_height - scale
+    column_top = center_y - column_height / 2
+    current_label_width = text_size(draw, "현재", label_font)[0]
+    draw_text_top(draw, (cursor_x + (current_width - current_label_width) / 2, column_top), "현재", label_font, WIDGET_SECONDARY)
+    actual_current_width = text_size(draw, WIDGET_DATA["current"], value_font)[0]
+    draw_text_top(
+        draw,
+        (cursor_x + (current_width - actual_current_width) / 2, column_top + label_height - scale),
+        WIDGET_DATA["current"],
+        value_font,
+        WIDGET_INK,
+    )
+    cursor_x += current_width + spacing_pixels
+    divider_pixels = max(1, round(scale))
+    divider_top = center_y - divider_height * scale / 2
+    draw.rectangle(
+        (round(cursor_x), round(divider_top), round(cursor_x) + divider_pixels - 1, round(divider_top + divider_height * scale)),
+        fill="#ABC3D6",
+    )
+    cursor_x += divider_pixels + spacing_pixels
+    apparent_label_width = text_size(draw, "체감", label_font)[0]
+    draw_text_top(draw, (cursor_x + (apparent_width - apparent_label_width) / 2, column_top), "체감", label_font, WIDGET_SECONDARY)
+    actual_apparent_width = text_size(draw, WIDGET_DATA["apparent"], value_font)[0]
+    draw_text_top(
+        draw,
+        (cursor_x + (apparent_width - actual_apparent_width) / 2, column_top + label_height - scale),
+        WIDGET_DATA["apparent"],
+        value_font,
+        WIDGET_INK,
+    )
+
+
+def widget_margins(family: str, platform: str) -> tuple[float, float, float, float]:
+    if platform in {"ios", "ipad"}:
+        margin = 14.25 if family == "large" else 13.5
+        return margin, margin, margin, margin
+    if family == "small":
+        return 14, 12, 14, 10
+    if family == "medium":
+        return 16, 11, 16, 10
+    return 18, 14, 18, 12
+
+
+def widget_points(platform: str) -> dict[str, tuple[float, float]]:
+    return IPAD_WIDGET_POINTS if platform == "ipad" else IOS_WIDGET_POINTS
+
+
+def draw_widget_card(size: tuple[int, int], family: str, platform: str) -> Image.Image:
+    width, height = size
+    logical_width, logical_height = widget_points(platform)[family]
+    scale = min(width / logical_width, height / logical_height)
+    card = Image.new("RGBA", size, WIDGET_SURFACE)
+    draw = ImageDraw.Draw(card)
+    leading, top, trailing, bottom = widget_margins(family, platform)
+    left = round(leading * scale)
+    right = width - round(trailing * scale)
+    top_px = round(top * scale)
+    bottom_px = height - round(bottom * scale)
+
+    region_size = {"small": 12, "medium": 13, "large": 14}[family]
+    time_size = {"small": 9, "medium": 10, "large": 11}[family]
+    region_font = font("SUITE-ExtraBold.ttf", max(8, round(region_size * scale)))
+    time_font = font("SUITE-Regular.ttf", max(8, round(time_size * scale)))
+    region = WIDGET_DATA["region"]
+    refresh = WIDGET_DATA["refresh"]
+    region_width_limit = {"small": 78, "medium": 210, "large": 220}[family] * scale
+    refresh_width_limit = {"small": 78, "medium": 90, "large": 100}[family] * scale
+    region_font = fitted_font("SUITE-ExtraBold.ttf", region, region_font.size, round(region_width_limit), max(8, round(region_font.size * .72)))
+    time_font = fitted_font("SUITE-Regular.ttf", refresh, time_font.size, round(refresh_width_limit), max(8, round(time_font.size * .72)))
+    region_width, region_height = text_size(draw, region, region_font)
+    refresh_width, refresh_height = text_size(draw, refresh, time_font)
+    header_height = max(region_height, refresh_height)
+    draw_text_top(draw, (left, top_px + (header_height - region_height) / 2), region, region_font, WIDGET_INK)
+    draw_text_top(draw, (right - refresh_width, top_px + (header_height - refresh_height) / 2), refresh, time_font, WIDGET_SECONDARY)
+    header_bottom = top_px + header_height
+
+    panel_height = round((27 if family != "medium" else 28) * scale)
+    panel_top = bottom_px - panel_height
+    widget_panel(draw, (left, panel_top, right, bottom_px), max(4, round(10 * scale)))
+
+    if family == "small":
+        draw_temperature_row(
+            draw,
+            (left, header_bottom + round(4 * scale), right, panel_top - round(4 * scale)),
+            scale,
+            64,
+            38,
+            0,
+            8,
+            0,
+            False,
+        )
+        draw_min_max_row(draw, (left, panel_top, right, bottom_px), 13, scale)
+        return card
+
+    if family == "medium":
+        draw_temperature_row(
+            draw,
+            (left, header_bottom + round(3 * scale), right, panel_top - round(3 * scale)),
+            scale,
+            58,
+            34,
+            10,
+            12,
+            36,
+            True,
+        )
+        message_font = font("SUITE-ExtraBold.ttf", max(8, round(13 * scale)))
+        message = WIDGET_DATA["short"]
+        message_font = fitted_font("SUITE-ExtraBold.ttf", message, message_font.size, round((right - left) * .54), max(8, round(message_font.size * .8)))
+        message_width, message_height = text_size(draw, message, message_font)
+        draw_text_top(draw, (left + round(12 * scale), panel_top + (panel_height - message_height) / 2), message, message_font, WIDGET_INK)
+        minmax_left = left + round(12 * scale) + message_width + round(8 * scale)
+        draw_min_max_row(draw, (minmax_left, panel_top, right - round(12 * scale), bottom_px), 12, scale)
+        return card
+
+    next_height = round(32 * scale)
+    next_top = panel_top - round(5 * scale) - next_height
+    content_top = header_bottom + round(5 * scale)
+    content_bottom = next_top - round(5 * scale)
+    prep_height = round(48 * scale)
+    brief_font = font("SUITE-ExtraBold.ttf", max(8, round(14 * scale)))
+    brief_lines = ["오전에는 선선하고 오후에는 포근해요.", "얇은 겉옷을 챙기면 좋아요."]
+    brief_line_height = max(text_size(draw, line, brief_font)[1] for line in brief_lines)
+    brief_height = brief_line_height * len(brief_lines) + round(2 * scale)
+    group_height = round(72 * scale) + round(20 * scale) + brief_height + round(20 * scale) + prep_height
+    group_top = content_top + max(0, (content_bottom - content_top - group_height) / 2)
+    temperature_bottom = group_top + round(72 * scale)
+    draw_temperature_row(
+        draw,
+        (left, round(group_top), right, round(temperature_bottom)),
+        scale,
+        72,
+        38,
+        11,
+        12,
+        40,
+        True,
+    )
+
+    brief_top = temperature_bottom + round(20 * scale)
+    brief_left = left + round(18 * scale)
+    for index, line in enumerate(brief_lines):
+        line_font = fitted_font(
+            "SUITE-ExtraBold.ttf",
+            line,
+            brief_font.size,
+            right - brief_left - round(18 * scale),
+            max(8, round(brief_font.size * .8)),
+        )
+        draw_text_top(draw, (brief_left, brief_top + index * (brief_line_height + round(2 * scale))), line, line_font, WIDGET_INK)
+
+    prep_top = round(brief_top + brief_height + 20 * scale)
+    prep_gap = round(6 * scale)
+    prep_width = (right - left - prep_gap * 2) / 3
+    preparations = (
+        ("prep_umbrella.png", "우산"),
+        ("prep_outerwear.png", "두꺼운 겉옷"),
+        (None, "마스크"),
+    )
+    for index, (asset, label) in enumerate(preparations):
+        prep_left = round(left + index * (prep_width + prep_gap))
+        prep_right = round(prep_left + prep_width)
+        widget_panel(draw, (prep_left, prep_top, prep_right, prep_top + prep_height), max(4, round(10 * scale)))
+        icon_side = round(36 * scale)
+        icon_left = prep_left + round(10 * scale)
+        icon_top = prep_top + (prep_height - icon_side) // 2
+        paste_preparation_icon(card, asset, (icon_left, icon_top, icon_left + icon_side, icon_top + icon_side))
+        label_left = icon_left + icon_side + round(4 * scale)
+        label_font = fitted_font(
+            "SUITE-ExtraBold.ttf",
+            label,
+            max(8, round(12 * scale)),
+            max(1, prep_right - round(8 * scale) - label_left),
+            max(8, round(9.6 * scale)),
+        )
+        _, label_height = text_size(draw, label, label_font)
+        draw_text_top(draw, (label_left, prep_top + (prep_height - label_height) / 2), label, label_font, WIDGET_INK)
+
+    title_font = font("SUITE-ExtraBold.ttf", max(8, round(12 * scale)))
+    time_font = font("SUITE-Regular.ttf", max(8, round(12 * scale)))
+    next_temp_font = font("SUITE-Heavy.ttf", max(8, round(17 * scale)))
+    next_center_y = next_top + next_height / 2
+    title = "다음 시간 예보"
+    title_width, title_height = text_size(draw, title, title_font)
+    draw_text_top(draw, (left + round(12 * scale), next_center_y - title_height / 2), title, title_font, WIDGET_INK)
+    icon_side = round(32 * scale)
+    icon_right = right - round(10 * scale)
+    icon_left = icon_right - icon_side
+    draw_weather_icon(
+        draw,
+        (icon_left, round(next_center_y - icon_side / 2), icon_right, round(next_center_y + icon_side / 2)),
+        condition="clear",
+        monochrome=True,
+    )
+    next_temperature = WIDGET_DATA["next_temperature"]
+    next_temp_width, next_temp_height = text_size(draw, next_temperature, next_temp_font)
+    next_temp_left = icon_left - round(3 * scale) - next_temp_width
+    draw_text_top(draw, (next_temp_left, next_center_y - next_temp_height / 2), next_temperature, next_temp_font, WIDGET_INK)
+    next_time = WIDGET_DATA["next_time"]
+    next_time_width, next_time_height = text_size(draw, next_time, time_font)
+    time_area_left = left + round(12 * scale) + title_width + round(10 * scale)
+    time_area_right = next_temp_left - round(8 * scale)
+    draw_text_top(draw, ((time_area_left + time_area_right - next_time_width) / 2, next_center_y - next_time_height / 2), next_time, time_font, WIDGET_INK)
+    draw_min_max_row(draw, (left, panel_top, right, bottom_px), 13, scale)
+    return card
+
+
+def compose_widget_showcase(
+    destination: Path,
+    label: str,
+    headline: str,
+    spec: dict,
+    platform: str,
+) -> None:
+    canvas_width, canvas_height = spec["size"]
+    canvas = Image.new("RGB", (canvas_width, canvas_height), BACKGROUND)
+    draw = ImageDraw.Draw(canvas)
+
+    label_font = font("SUITE-Bold.ttf", spec["label_size"])
+    headline_font = font("SUITE-Heavy.ttf", spec["headline_size"])
+    label_box = draw.textbbox((0, 0), label, font=label_font)
+    draw.text(((canvas_width - (label_box[2] - label_box[0])) / 2, spec["label_y"]), label, font=label_font, fill=LABEL_COLOR)
+    headline_box = draw.multiline_textbbox(
+        (0, 0), headline, font=headline_font, spacing=spec["headline_spacing"], align="center"
+    )
+    draw.multiline_text(
+        ((canvas_width - (headline_box[2] - headline_box[0])) / 2, spec["headline_y"]),
+        headline,
+        font=headline_font,
+        fill=HEADLINE_COLOR,
+        spacing=spec["headline_spacing"],
+        align="center",
+    )
+
+    board_top = spec["screen_y"]
+    available_height = canvas_height - board_top - round(canvas_height * 0.045)
+    board_width = min(round(canvas_width * 0.86), round(available_height / 1.03))
+    board_height = round(board_width * 1.03)
+    board = Image.new("RGBA", (board_width, board_height), "#DDEBF5")
+    board_draw = ImageDraw.Draw(board)
+    board_draw.ellipse((-round(board_width * 0.08), round(board_height * 0.74), round(board_width * 0.23), round(board_height * 1.03)), fill="#D3E5F2")
+    board_draw.ellipse((round(board_width * 0.75), -round(board_height * 0.07), round(board_width * 1.05), round(board_height * 0.20)), fill="#E9F3F9")
+
+    margin = round(board_width * 0.055)
+    gap = round(board_width * 0.035)
+    inner_width = board_width - margin * 2
+    family_points = widget_points(platform)
+    medium_ratio = family_points["medium"][0] / family_points["medium"][1]
+    small_side = round((inner_width - gap) / (1 + medium_ratio))
+    medium_width = inner_width - small_side - gap
+    medium_height = round(medium_width / medium_ratio)
+    top = margin
+    large_width = medium_width
+    large_height = round(large_width * family_points["large"][1] / family_points["large"][0])
+    large_top = top + max(small_side, medium_height) + gap
+    large_left = round((board_width - large_width) / 2)
+
+    cards = [
+        (draw_widget_card((small_side, small_side), "small", platform), margin, top, "small"),
+        (draw_widget_card((medium_width, medium_height), "medium", platform), margin + small_side + gap, top, "medium"),
+        (draw_widget_card((large_width, large_height), "large", platform), large_left, large_top, "large"),
+    ]
+    shadow = Image.new("RGBA", board.size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(shadow)
+    for card, x, y, family in cards:
+        corner_points = 22 if platform in {"ios", "ipad"} else 24
+        radius = max(12, round(card.height * corner_points / family_points[family][1]))
+        shadow_draw.rounded_rectangle(
+            (x, y + round(board_width * 0.012), x + card.width, y + card.height + round(board_width * 0.012)),
+            radius=radius,
+            fill=(35, 60, 78, 70),
+        )
+    shadow = shadow.filter(ImageFilter.GaussianBlur(round(board_width * 0.018)))
+    board = Image.alpha_composite(board, shadow)
+    for card, x, y, family in cards:
+        corner_points = 22 if platform in {"ios", "ipad"} else 24
+        mask = Image.new("L", card.size, 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            (0, 0, card.width - 1, card.height - 1),
+            radius=max(12, round(card.height * corner_points / family_points[family][1])),
+            fill=255,
+        )
+        board.paste(card, (x, y), mask)
+
+    board_x = (canvas_width - board_width) // 2
+    shadow_canvas = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow_canvas).rounded_rectangle(
+        (board_x, board_top + spec["shadow_offset"], board_x + board_width, board_top + board_height + spec["shadow_offset"]),
+        radius=spec["radius"],
+        fill=(20, 40, 55, 88),
+    )
+    shadow_canvas = shadow_canvas.filter(ImageFilter.GaussianBlur(spec["shadow_blur"]))
+    canvas = Image.alpha_composite(canvas.convert("RGBA"), shadow_canvas)
+    board_mask = Image.new("L", board.size, 0)
+    ImageDraw.Draw(board_mask).rounded_rectangle(
+        (0, 0, board.width - 1, board.height - 1),
+        radius=spec["radius"],
+        fill=255,
+    )
+    canvas.paste(board, (board_x, board_top), board_mask)
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    canvas.convert("RGB").save(destination, format="PNG", optimize=True)
+
+
 def contact_sheet(platform: str) -> None:
-    source_paths = [OUTPUT_DIR / platform / f"{stem}.png" for stem, *_ in SCREENS]
+    source_paths = [OUTPUT_DIR / platform / f"{stem}.png" for stem in SCREEN_STEMS]
     with Image.open(source_paths[0]) as first:
         thumb_height = 820
         thumb_width = round(first.width * thumb_height / first.height)
@@ -252,7 +792,7 @@ def create_google_play_app_icon() -> None:
 
 def main() -> None:
     for platform, spec in FORMATS.items():
-        for stem, source_name, label, headline in SCREENS:
+        for stem, source_name, label, headline in APP_SCREENS:
             compose(
                 SOURCE_DIR / source_name,
                 OUTPUT_DIR / platform / f"{stem}.png",
@@ -260,9 +800,16 @@ def main() -> None:
                 headline,
                 spec,
             )
+        compose_widget_showcase(
+            OUTPUT_DIR / platform / f"{WIDGET_SCREEN[0]}.png",
+            WIDGET_SCREEN[1],
+            WIDGET_SCREEN[2],
+            spec,
+            platform,
+        )
         contact_sheet(platform)
     for platform, spec in TABLET_FORMATS.items():
-        for stem, source_name, label, headline in SCREENS:
+        for stem, source_name, label, headline in APP_SCREENS:
             compose(
                 TABLET_SOURCE_DIR / source_name,
                 OUTPUT_DIR / platform / f"{stem}.png",
@@ -270,6 +817,13 @@ def main() -> None:
                 headline,
                 spec,
             )
+        compose_widget_showcase(
+            OUTPUT_DIR / platform / f"{WIDGET_SCREEN[0]}.png",
+            WIDGET_SCREEN[1],
+            WIDGET_SCREEN[2],
+            spec,
+            platform,
+        )
         contact_sheet(platform)
     create_google_play_feature_graphic()
     create_google_play_app_icon()

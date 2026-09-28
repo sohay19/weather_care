@@ -8071,3 +8071,11 @@
 - 안내 본문의 `확인을 누르면`도 버튼과 일치하도록 `계속을 누르면`으로 변경했다.
 - 설정 화면의 위치 확인 버튼을 `위치 권한 허용하고 확인`에서 기능 중심 표현인 `현재 위치 확인`으로 변경했다.
 - Flutter 3.47.4 기준 `flutter analyze` 이슈 없음, `flutter test test/home_location_test.dart` 38개 테스트 통과, `git diff --check` 통과를 확인했다.
+
+## 2026-09-28 iOS 위젯 여백·온도 행 자동 크기 조절
+
+- iOS 작은·중간·큰 위젯의 시스템 기본 content margin을 기기와 위젯 표시 환경에서 읽은 뒤 상하좌우 모두 기존 값의 30%만 적용하도록 변경했다. iOS 17 이상은 `widgetContentMargins`와 `contentMarginsDisabled()`를 사용하고, iOS 15.6~16은 기존 safe area inset을 같은 비율로 적용한다.
+- 각 위젯이 추가로 사용하던 바깥 여백도 작은·중간 2pt에서 0.6pt, 큰 3pt에서 0.9pt로 동일하게 30% 축소했다. 카드·준비물 등 내부 구성 요소의 자체 여백은 변경하지 않았다.
+- 작은·중간·큰 위젯의 현재 날씨 행을 공통 `AdaptiveTemperatureRow`로 통합했다. 사용 가능한 실제 폭과 SUITE 폰트로 측정한 현재·체감온도 문자열 폭을 기준으로 날씨 아이콘, 온도 폰트, 라벨, 간격, 구분선을 같은 비율로 연속 축소해 온도 문자열이 잘리지 않도록 했다.
+- 회귀 방지를 위해 iOS 위젯의 30% 여백 상수, 시스템 margin 처리, 세 위젯의 자동 온도 행 사용 여부를 확인하는 소스 검증 테스트를 추가했다.
+- Flutter 3.47.4 `flutter analyze` 이슈 없음, `home_widget_snapshot_test.dart`와 `native_startup_defaults_test.dart` 전체 12개 테스트 및 `git diff --check` 통과를 확인했다. 현재 Windows 환경에는 Xcode가 없어 WidgetKit 타깃 빌드와 iOS 실기기 시각 검증은 수행하지 못했다.

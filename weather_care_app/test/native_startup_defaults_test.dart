@@ -81,4 +81,22 @@ void main() {
     );
     expect(provider, contains('json.optJSONArray("preparationCatalog")'));
   });
+
+  test('iOS widgets reduce outer margins and fit the temperature row', () {
+    final widget = File(
+      'ios/WeatherCareWidget/WeatherCareWidget.swift',
+    ).readAsStringSync();
+
+    expect(widget, contains('widgetOuterMarginRatio: CGFloat = 0.3'));
+    expect(widget, contains('@Environment(\\.widgetContentMargins)'));
+    expect(widget, contains('.contentMarginsDisabled()'));
+    expect(
+      RegExp(r'AdaptiveTemperatureRow\(').allMatches(widget).length,
+      3,
+    );
+    expect(
+      widget,
+      contains('fittedScale(availableWidth: geometry.size.width)'),
+    );
+  });
 }

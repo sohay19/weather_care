@@ -10,6 +10,7 @@ private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
 private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
 private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
+private let widgetOuterMarginRatio: CGFloat = 0.3
 
 private enum SuiteFont {
   static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
@@ -257,6 +258,7 @@ struct WeatherCareWidgetView: View {
         LargeWeatherWidget(snapshot: entry.snapshot)
       }
     }
+    .reducedWidgetContentMargins()
     .widgetURL(URL(string: "weathercare://home"))
     .weatherWidgetBackground()
   }
@@ -299,21 +301,101 @@ private struct MinMaxRow: View {
   }
 }
 
+private struct AdaptiveTemperatureRow: View {
+  let condition: String
+  let currentTemperature: String
+  let apparentTemperature: String?
+  let iconSize: CGFloat
+  let temperatureSize: CGFloat
+  let labelSize: CGFloat
+  let spacing: CGFloat
+  let dividerHeight: CGFloat
+
+  var body: some View {
+    GeometryReader { geometry in
+      let scale = fittedScale(availableWidth: geometry.size.width)
+
+      HStack(spacing: spacing * scale) {
+        WeatherIconView(condition: condition)
+          .frame(width: iconSize * scale, height: iconSize * scale)
+
+        if let apparentTemperature {
+          temperatureColumn(label: "현재", value: currentTemperature, scale: scale)
+          Divider()
+            .frame(width: 1, height: dividerHeight * scale)
+            .overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
+          temperatureColumn(label: "체감", value: apparentTemperature, scale: scale)
+        } else {
+          temperatureText(currentTemperature, scale: scale)
+        }
+      }
+      .foregroundStyle(ink)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
+    .frame(height: iconSize)
+  }
+
+  private func fittedScale(availableWidth: CGFloat) -> CGFloat {
+    guard availableWidth > 2 else { return 0.1 }
+    return min(1, max(0.1, (availableWidth - 2) / idealWidth))
+  }
+
+  private var idealWidth: CGFloat {
+    let currentWidth = temperatureColumnWidth(label: "현재", value: currentTemperature)
+    guard let apparentTemperature else {
+      return iconSize + spacing + currentWidth
+    }
+    let apparentWidth = temperatureColumnWidth(label: "체감", value: apparentTemperature)
+    return iconSize + currentWidth + apparentWidth + (spacing * 3) + 1
+  }
+
+  private func temperatureColumnWidth(label: String, value: String) -> CGFloat {
+    let valueWidth = measuredSuiteTextWidth(value, fontName: "SUITE-Heavy", size: temperatureSize)
+    guard apparentTemperature != nil else { return valueWidth }
+    let labelWidth = measuredSuiteTextWidth(label, fontName: "SUITE-Regular", size: labelSize)
+    return max(valueWidth, labelWidth)
+  }
+
+  private func temperatureColumn(label: String, value: String, scale: CGFloat) -> some View {
+    VStack(spacing: -1 * scale) {
+      Text(label)
+        .font(SuiteFont.regular(labelSize * scale))
+        .foregroundStyle(secondaryInk)
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
+      temperatureText(value, scale: scale)
+    }
+  }
+
+  private func temperatureText(_ value: String, scale: CGFloat) -> some View {
+    Text(value)
+      .font(SuiteFont.heavy(temperatureSize * scale))
+      .lineLimit(1)
+      .fixedSize(horizontal: true, vertical: false)
+  }
+}
+
+private func measuredSuiteTextWidth(_ value: String, fontName: String, size: CGFloat) -> CGFloat {
+  let font = UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: .heavy)
+  return ceil((value as NSString).size(withAttributes: [.font: font]).width)
+}
+
 private struct SmallWeatherWidget: View {
   let snapshot: WidgetSnapshot
 
   var body: some View {
     VStack(spacing: 4) {
       WidgetHeader(snapshot: snapshot, regionSize: 12, timeSize: 9)
-      HStack(spacing: 8) {
-        WeatherIconView(condition: snapshot.condition)
-          .frame(width: 64, height: 64)
-        Text(snapshot.currentTemperature)
-          .font(SuiteFont.heavy(38))
-          .foregroundStyle(ink)
-          .lineLimit(1)
-          .minimumScaleFactor(0.62)
-      }
+      AdaptiveTemperatureRow(
+        condition: snapshot.condition,
+        currentTemperature: snapshot.currentTemperature,
+        apparentTemperature: nil,
+        iconSize: 64,
+        temperatureSize: 38,
+        labelSize: 0,
+        spacing: 8,
+        dividerHeight: 0
+      )
       .frame(maxWidth: .infinity, alignment: .center)
       .frame(maxHeight: .infinity)
       MinMaxRow(snapshot: snapshot, size: 13)
@@ -322,8 +404,8 @@ private struct SmallWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 2)
-    .padding(.vertical, 2)
+    .padding(.horizontal, 2 * widgetOuterMarginRatio)
+    .padding(.vertical, 2 * widgetOuterMarginRatio)
   }
 }
 
@@ -333,26 +415,16 @@ private struct MediumWeatherWidget: View {
   var body: some View {
     VStack(spacing: 3) {
       WidgetHeader(snapshot: snapshot, regionSize: 13, timeSize: 10)
-      HStack(spacing: 12) {
-        WeatherIconView(condition: snapshot.condition)
-          .frame(width: 58, height: 58)
-        VStack(spacing: -1) {
-          Text("현재")
-            .font(SuiteFont.regular(10))
-            .foregroundStyle(secondaryInk)
-          Text(snapshot.currentTemperature)
-            .font(SuiteFont.heavy(34))
-        }
-        Divider().frame(height: 36).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
-        VStack(spacing: -1) {
-          Text("체감")
-            .font(SuiteFont.regular(10))
-            .foregroundStyle(secondaryInk)
-          Text(snapshot.apparentTemperature)
-            .font(SuiteFont.heavy(34))
-        }
-      }
-      .foregroundStyle(ink)
+      AdaptiveTemperatureRow(
+        condition: snapshot.condition,
+        currentTemperature: snapshot.currentTemperature,
+        apparentTemperature: snapshot.apparentTemperature,
+        iconSize: 58,
+        temperatureSize: 34,
+        labelSize: 10,
+        spacing: 12,
+        dividerHeight: 36
+      )
       .frame(maxWidth: .infinity, alignment: .center)
       .frame(maxHeight: .infinity)
       HStack(spacing: 8) {
@@ -367,8 +439,8 @@ private struct MediumWeatherWidget: View {
       .padding(.vertical, 6)
       .widgetInfoPanel()
     }
-    .padding(.horizontal, 2)
-    .padding(.vertical, 2)
+    .padding(.horizontal, 2 * widgetOuterMarginRatio)
+    .padding(.vertical, 2 * widgetOuterMarginRatio)
   }
 }
 
@@ -379,26 +451,16 @@ private struct LargeWeatherWidget: View {
     VStack(spacing: 5) {
       WidgetHeader(snapshot: snapshot, regionSize: 14, timeSize: 11)
       VStack(spacing: 20) {
-        HStack(spacing: 12) {
-          WeatherIconView(condition: snapshot.condition)
-            .frame(width: 72, height: 72)
-          VStack(spacing: -1) {
-            Text("현재")
-              .font(SuiteFont.regular(11))
-              .foregroundStyle(secondaryInk)
-            Text(snapshot.currentTemperature)
-              .font(SuiteFont.heavy(38))
-          }
-          Divider().frame(height: 40).overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
-          VStack(spacing: -1) {
-            Text("체감")
-              .font(SuiteFont.regular(11))
-              .foregroundStyle(secondaryInk)
-            Text(snapshot.apparentTemperature)
-              .font(SuiteFont.heavy(38))
-          }
-        }
-        .foregroundStyle(ink)
+        AdaptiveTemperatureRow(
+          condition: snapshot.condition,
+          currentTemperature: snapshot.currentTemperature,
+          apparentTemperature: snapshot.apparentTemperature,
+          iconSize: 72,
+          temperatureSize: 38,
+          labelSize: 11,
+          spacing: 12,
+          dividerHeight: 40
+        )
         .frame(maxWidth: .infinity, alignment: .center)
         Text(snapshot.brief)
           .font(SuiteFont.extraBold(14))
@@ -454,8 +516,8 @@ private struct LargeWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 3)
-    .padding(.vertical, 3)
+    .padding(.horizontal, 3 * widgetOuterMarginRatio)
+    .padding(.vertical, 3 * widgetOuterMarginRatio)
   }
 }
 
@@ -974,6 +1036,15 @@ private func weatherDescription(_ condition: String) -> String {
 }
 
 private extension View {
+  @ViewBuilder
+  func reducedWidgetContentMargins() -> some View {
+    if #available(iOSApplicationExtension 17.0, *) {
+      modifier(ReducedWidgetContentMargins())
+    } else {
+      modifier(LegacyReducedWidgetContentMargins())
+    }
+  }
+
   func widgetInfoPanel() -> some View {
     background(Color.white.opacity(0.72))
       .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -989,6 +1060,40 @@ private extension View {
   }
 }
 
+@available(iOSApplicationExtension 17.0, *)
+private struct ReducedWidgetContentMargins: ViewModifier {
+  @Environment(\.widgetContentMargins) private var margins
+
+  func body(content: Content) -> some View {
+    content.padding(
+      EdgeInsets(
+        top: margins.top * widgetOuterMarginRatio,
+        leading: margins.leading * widgetOuterMarginRatio,
+        bottom: margins.bottom * widgetOuterMarginRatio,
+        trailing: margins.trailing * widgetOuterMarginRatio
+      )
+    )
+  }
+}
+
+private struct LegacyReducedWidgetContentMargins: ViewModifier {
+  func body(content: Content) -> some View {
+    GeometryReader { geometry in
+      content
+        .padding(
+          EdgeInsets(
+            top: geometry.safeAreaInsets.top * widgetOuterMarginRatio,
+            leading: geometry.safeAreaInsets.leading * widgetOuterMarginRatio,
+            bottom: geometry.safeAreaInsets.bottom * widgetOuterMarginRatio,
+            trailing: geometry.safeAreaInsets.trailing * widgetOuterMarginRatio
+          )
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    .ignoresSafeArea()
+  }
+}
+
 @main
 struct WeatherCareWidget: Widget {
   var body: some WidgetConfiguration {
@@ -998,5 +1103,6 @@ struct WeatherCareWidget: Widget {
     .configurationDisplayName("날씨챙겨")
     .description("현재 날씨와 외출 준비물을 한눈에 확인합니다.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    .contentMarginsDisabled()
   }
 }

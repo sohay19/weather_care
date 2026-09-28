@@ -491,7 +491,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                           label: Text(widget.location.state ==
                                       LocationState.denied ||
                                   widget.location.state == LocationState.idle
-                              ? '위치 권한 허용하고 확인'
+                              ? '현재 위치 확인'
                               : '위치 다시 확인'),
                         ),
                         if (widget.location.measuredAt != null) ...[

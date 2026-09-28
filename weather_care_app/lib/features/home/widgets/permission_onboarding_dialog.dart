@@ -29,7 +29,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
             ),
             SizedBox(height: 18),
             Text(
-              '확인을 누르면 운영체제 권한 창이 차례대로 표시돼요.\n권한을 허용하지 않아도 Setting에서 지역을 직접 선택할 수 있어요.',
+              '계속을 누르면 운영체제 권한 창이 차례대로 표시돼요.\n권한을 허용하지 않아도 Setting에서 지역을 직접 선택할 수 있어요.',
               style: TextStyle(
                 color: WeatherCareTheme.textSecondary,
                 fontSize: 12,
@@ -42,7 +42,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
           FilledButton(
             key: const ValueKey('permission-onboarding-confirm'),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('확인하고 권한 요청'),
+            child: const Text('계속'),
           ),
         ],
       ),

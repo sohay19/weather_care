@@ -82,16 +82,19 @@ void main() {
     expect(provider, contains('json.optJSONArray("preparationCatalog")'));
   });
 
-  test('iOS widgets use family margins and fit the temperature row', () {
+  test('iOS widgets share vertical margins and fit the temperature row', () {
     final widget = File(
       'ios/WeatherCareWidget/WeatherCareWidget.swift',
     ).readAsStringSync();
 
-    expect(widget, contains('widgetOuterMarginRatio: CGFloat = 0.75'));
+    expect(widget, contains('widgetHorizontalMarginRatio: CGFloat = 0.75'));
     expect(
       widget,
-      contains('smallWidgetVerticalMarginRatio: CGFloat = 0.45'),
+      contains('widgetVerticalMarginRatio: CGFloat = 0.36'),
     );
+    expect(widget, isNot(contains('smallWidgetVerticalMarginRatio')));
+    expect(widget, isNot(contains('.padding(.vertical, 2 * widget')));
+    expect(widget, isNot(contains('.padding(.vertical, 3 * widget')));
     expect(widget, contains('@Environment(\\.widgetContentMargins)'));
     expect(widget, contains('.contentMarginsDisabled()'));
     expect(

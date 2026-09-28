@@ -13,8 +13,8 @@ private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
 private let refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)
 private let refreshButtonLoadingSurface = Color(red: 214 / 255, green: 232 / 255, blue: 245 / 255)
-private let widgetOuterMarginRatio: CGFloat = 0.75
-private let smallWidgetVerticalMarginRatio: CGFloat = 0.45
+private let widgetHorizontalMarginRatio: CGFloat = 0.75
+private let widgetVerticalMarginRatio: CGFloat = 0.36
 
 private enum SuiteFont {
   static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
@@ -472,7 +472,7 @@ private struct SmallWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 2 * widgetOuterMarginRatio)
+    .padding(.horizontal, 2 * widgetHorizontalMarginRatio)
   }
 }
 
@@ -506,8 +506,7 @@ private struct MediumWeatherWidget: View {
       .padding(.vertical, 6)
       .widgetInfoPanel()
     }
-    .padding(.horizontal, 2 * widgetOuterMarginRatio)
-    .padding(.vertical, 2 * widgetOuterMarginRatio)
+    .padding(.horizontal, 2 * widgetHorizontalMarginRatio)
   }
 }
 
@@ -583,8 +582,7 @@ private struct LargeWeatherWidget: View {
         .padding(.vertical, 6)
         .widgetInfoPanel()
     }
-    .padding(.horizontal, 3 * widgetOuterMarginRatio)
-    .padding(.vertical, 3 * widgetOuterMarginRatio)
+    .padding(.horizontal, 3 * widgetHorizontalMarginRatio)
   }
 }
 
@@ -1130,38 +1128,29 @@ private extension View {
 @available(iOSApplicationExtension 17.0, *)
 private struct ReducedWidgetContentMargins: ViewModifier {
   @Environment(\.widgetContentMargins) private var margins
-  @Environment(\.widgetFamily) private var family
 
   func body(content: Content) -> some View {
-    let verticalRatio = family == .systemSmall
-      ? smallWidgetVerticalMarginRatio
-      : widgetOuterMarginRatio
     content.padding(
       EdgeInsets(
-        top: margins.top * verticalRatio,
-        leading: margins.leading * widgetOuterMarginRatio,
-        bottom: margins.bottom * verticalRatio,
-        trailing: margins.trailing * widgetOuterMarginRatio
+        top: margins.top * widgetVerticalMarginRatio,
+        leading: margins.leading * widgetHorizontalMarginRatio,
+        bottom: margins.bottom * widgetVerticalMarginRatio,
+        trailing: margins.trailing * widgetHorizontalMarginRatio
       )
     )
   }
 }
 
 private struct LegacyReducedWidgetContentMargins: ViewModifier {
-  @Environment(\.widgetFamily) private var family
-
   func body(content: Content) -> some View {
     GeometryReader { geometry in
-      let verticalRatio = family == .systemSmall
-        ? smallWidgetVerticalMarginRatio
-        : widgetOuterMarginRatio
       content
         .padding(
           EdgeInsets(
-            top: geometry.safeAreaInsets.top * verticalRatio,
-            leading: geometry.safeAreaInsets.leading * widgetOuterMarginRatio,
-            bottom: geometry.safeAreaInsets.bottom * verticalRatio,
-            trailing: geometry.safeAreaInsets.trailing * widgetOuterMarginRatio
+            top: geometry.safeAreaInsets.top * widgetVerticalMarginRatio,
+            leading: geometry.safeAreaInsets.leading * widgetHorizontalMarginRatio,
+            bottom: geometry.safeAreaInsets.bottom * widgetVerticalMarginRatio,
+            trailing: geometry.safeAreaInsets.trailing * widgetHorizontalMarginRatio
           )
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)

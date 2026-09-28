@@ -8202,3 +8202,17 @@
 - Android 가로 2열 위젯은 세로 칸 수와 관계없이 폭 150dp 미만의 `SMALL` family로 먼저 분류한다. 기존 Pixel Launcher 측정 기준상 동작은 같지만 향후 높이·크기 분기 변경에서도 2열 위젯이 중간·큰 레이아웃으로 바뀌지 않도록 회귀 테스트로 고정했다.
 - Android 작은 위젯 헤더를 iOS 작은 위젯처럼 왼쪽의 지역명·기준 시각 세로 묶음과 오른쪽 상단 새로고침 버튼으로 변경했다. 중간·큰 위젯 헤더는 기존 한 줄 배치를 유지했다.
 - Flutter 3.47.4 `flutter analyze`, 위젯 관련 테스트 13개, Android `compileDebugJavaWithJavac`, `git diff --check`를 통과했다.
+
+## 2026-09-28 iOS 위젯 여백·새로고침 탭 분리
+
+- iOS 작은·중간·큰 위젯의 시스템 상하 content margin을 모두 36%에서 45%로 변경했다. 좌우 75%와 내부 패널 여백은 유지했다.
+- iOS 17 이상에서는 위젯 본문의 앱 실행 `Link`와 새로고침 `Button(intent:)`을 형제 컨트롤로 분리했다. 헤더에는 같은 크기의 투명 자리만 예약하고 실제 버튼을 최상단에 배치해, 버튼 탭이 위젯 전체 `weathercare://home` 링크로 전달되어 앱을 실행하지 않도록 했다.
+- iOS 15.6~16은 대화형 버튼이 없으므로 기존 `widgetURL` 기반 전체 탭 동작을 유지한다. App Intent의 `openAppWhenRun = false`도 그대로 유지한다.
+- Flutter 3.47.4 `flutter analyze`, 위젯 관련 테스트 13개, `git diff --check`를 통과했다. Windows 환경이라 Xcode 빌드와 iOS 실기기 탭 검증은 수행하지 못했다.
+
+## 2026-09-28 Android 2열 위젯 분류 실기기 보정
+
+- Pixel Launcher 4열 홈 화면의 실제 2열 위젯이 약 179dp로 측정되어 기존 150dp 중간 위젯 기준을 넘는 문제를 확인했다. 중간 위젯 시작 폭을 200dp로 올려 해당 2열 위젯을 작은 레이아웃으로 분류했다.
+- 폭 200dp 미만이면 세로 크기와 관계없이 먼저 `SMALL`을 반환하므로 2×2뿐 아니라 2×3·2×4도 작은 위젯으로 처리한다.
+- 최신 debug APK를 에뮬레이터에 재설치한 뒤 471px/420dpi(약 179dp) 위젯을 확인했다. 지역명 아래 기준 시각이 표시되고 중형 전용 체감온도·짧은 문구가 제거되어 작은 레이아웃 적용을 확인했다.
+- Flutter 3.47.4 `flutter analyze`, 위젯 관련 테스트 13개와 Android `assembleDebug`, `git diff --check`를 통과했다.

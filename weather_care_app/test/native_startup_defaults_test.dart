@@ -73,7 +73,7 @@ void main() {
       'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java',
     ).readAsStringSync();
 
-    expect(provider, contains('MEDIUM_MIN_WIDTH_DP = 150'));
+    expect(provider, contains('MEDIUM_MIN_WIDTH_DP = 200'));
     expect(
       RegExp(r'WidgetSize\.MEDIUM[\s\S]*?snapshot\.shortMessage')
           .hasMatch(provider),
@@ -122,7 +122,7 @@ void main() {
     expect(widget, contains('widgetHorizontalMarginRatio: CGFloat = 0.75'));
     expect(
       widget,
-      contains('widgetVerticalMarginRatio: CGFloat = 0.36'),
+      contains('widgetVerticalMarginRatio: CGFloat = 0.45'),
     );
     expect(widget, isNot(contains('smallWidgetVerticalMarginRatio')));
     expect(widget, isNot(contains('.padding(.vertical, 2 * widget')));
@@ -156,6 +156,12 @@ void main() {
     );
     expect(widget, contains('.invalidatableContent()'));
     expect(widget, contains('redactionReasons.contains(.invalidated)'));
+    expect(widget, contains('Link(destination: weatherCareHomeURL)'));
+    expect(widget, contains('widgetContent.widgetURL(weatherCareHomeURL)'));
+    expect(
+      widget,
+      contains('WidgetRefreshButtonPlaceholder(leadingPadding: 8)'),
+    );
   });
 
   test('Android and iOS expose manual widget refresh on supported systems', () {

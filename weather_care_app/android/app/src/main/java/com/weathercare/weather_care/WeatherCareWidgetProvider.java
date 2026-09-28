@@ -38,8 +38,8 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     static final String REFRESH_IN_PROGRESS_KEY = "refresh_in_progress";
     private static final int BRIEFING_ALARM_REQUEST = 1702;
     private static final int REFRESH_REQUEST = 1703;
-    // Pixel Launcher 3열(약 169dp)부터 중간 위젯이다.
-    private static final int MEDIUM_MIN_WIDTH_DP = 150;
+    // Pixel Launcher 4열 구성의 2열 위젯(약 179dp)을 작은 위젯에 포함한다.
+    private static final int MEDIUM_MIN_WIDTH_DP = 200;
     private static final int TEXT_PRIMARY = Color.rgb(37, 55, 78);
     private static final int TEXT_SECONDARY = Color.rgb(96, 117, 138);
     private static final int TEXT_MIN_MAX = Color.rgb(66, 90, 114);

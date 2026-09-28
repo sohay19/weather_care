@@ -7,6 +7,7 @@ import WidgetKit
 private let widgetKind = "WeatherCareWidget"
 private let appGroup = "group.com.codesoha.weathercare"
 private let snapshotKey = "snapshot"
+private let weatherCareHomeURL = URL(string: "weathercare://home")!
 private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
 private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
 private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
@@ -14,7 +15,7 @@ private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 24
 private let refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)
 private let refreshButtonLoadingSurface = Color(red: 214 / 255, green: 232 / 255, blue: 245 / 255)
 private let widgetHorizontalMarginRatio: CGFloat = 0.75
-private let widgetVerticalMarginRatio: CGFloat = 0.36
+private let widgetVerticalMarginRatio: CGFloat = 0.45
 
 private enum SuiteFont {
   static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
@@ -252,6 +253,30 @@ struct WeatherCareWidgetView: View {
   let entry: WeatherCareEntry
 
   var body: some View {
+    interactiveContent
+      .reducedWidgetContentMargins()
+      .weatherWidgetBackground()
+  }
+
+  @ViewBuilder
+  private var interactiveContent: some View {
+    if #available(iOSApplicationExtension 17.0, *) {
+      ZStack(alignment: .topTrailing) {
+        Link(destination: weatherCareHomeURL) {
+          widgetContent
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        WidgetRefreshButton()
+      }
+    } else {
+      widgetContent.widgetURL(weatherCareHomeURL)
+    }
+  }
+
+  @ViewBuilder
+  private var widgetContent: some View {
     Group {
       switch family {
       case .systemSmall:
@@ -262,9 +287,6 @@ struct WeatherCareWidgetView: View {
         LargeWeatherWidget(snapshot: entry.snapshot)
       }
     }
-    .reducedWidgetContentMargins()
-    .widgetURL(URL(string: "weathercare://home"))
-    .weatherWidgetBackground()
   }
 }
 
@@ -285,7 +307,7 @@ private struct WidgetHeader: View {
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
-      WidgetRefreshButton(leadingPadding: 8)
+      WidgetRefreshButtonPlaceholder(leadingPadding: 8)
     }
     .foregroundStyle(ink)
   }
@@ -308,15 +330,13 @@ private struct SmallWidgetHeader: View {
           .fixedSize(horizontal: true, vertical: false)
       }
       Spacer(minLength: 2)
-      WidgetRefreshButton(leadingPadding: 8)
+      WidgetRefreshButtonPlaceholder(leadingPadding: 8)
     }
     .foregroundStyle(ink)
   }
 }
 
 private struct WidgetRefreshButton: View {
-  let leadingPadding: CGFloat
-
   @ViewBuilder
   var body: some View {
     if #available(iOS 17.0, *), weatherWidgetRefreshAvailable() {
@@ -326,8 +346,20 @@ private struct WidgetRefreshButton: View {
       }
       .buttonStyle(.plain)
       .frame(width: 24, height: 24)
-      .padding(.leading, leadingPadding)
       .accessibilityLabel("날씨 새로고침")
+    }
+  }
+}
+
+private struct WidgetRefreshButtonPlaceholder: View {
+  let leadingPadding: CGFloat
+
+  @ViewBuilder
+  var body: some View {
+    if #available(iOS 17.0, *), weatherWidgetRefreshAvailable() {
+      Color.clear
+        .frame(width: 24, height: 24)
+        .padding(.leading, leadingPadding)
     }
   }
 }

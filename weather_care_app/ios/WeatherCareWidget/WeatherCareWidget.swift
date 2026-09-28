@@ -1,4 +1,5 @@
 import Foundation
+import AppIntents
 import SwiftUI
 import UIKit
 import WidgetKit
@@ -270,7 +271,7 @@ private struct WidgetHeader: View {
   let timeSize: CGFloat
 
   var body: some View {
-    HStack(spacing: 6) {
+    HStack(spacing: 0) {
       Text(snapshot.region)
         .font(SuiteFont.extraBold(regionSize))
         .lineLimit(1)
@@ -280,7 +281,24 @@ private struct WidgetHeader: View {
         .font(SuiteFont.regular(timeSize))
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
-        .minimumScaleFactor(0.72)
+        .fixedSize(horizontal: true, vertical: false)
+      if #available(iOS 17.0, *) {
+        if weatherWidgetRefreshAvailable() {
+          Button(intent: RefreshWeatherWidgetIntent()) {
+            ZStack {
+              Circle().fill(preparationCircle)
+              Image(systemName: "arrow.clockwise")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(secondaryInk)
+            }
+            .frame(width: 22, height: 22)
+          }
+          .buttonStyle(.plain)
+          .frame(width: 24, height: 24)
+          .padding(.leading, 8)
+          .accessibilityLabel("날씨 새로고침")
+        }
+      }
     }
     .foregroundStyle(ink)
   }

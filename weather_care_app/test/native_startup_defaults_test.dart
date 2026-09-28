@@ -82,7 +82,8 @@ void main() {
     expect(provider, contains('json.optJSONArray("preparationCatalog")'));
   });
 
-  test('iOS widgets use 75 percent outer margins and fit the temperature row', () {
+  test('iOS widgets use 75 percent outer margins and fit the temperature row',
+      () {
     final widget = File(
       'ios/WeatherCareWidget/WeatherCareWidget.swift',
     ).readAsStringSync();
@@ -97,6 +98,40 @@ void main() {
     expect(
       widget,
       contains('fittedScale(availableWidth: geometry.size.width)'),
+    );
+  });
+
+  test('Android and iOS expose manual widget refresh on supported systems', () {
+    final provider = File(
+      'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java',
+    ).readAsStringSync();
+    final iosWidget = File(
+      'ios/WeatherCareWidget/WeatherCareWidget.swift',
+    ).readAsStringSync();
+    final iosIntent = File(
+      'ios/WeatherCareWidget/WidgetRefreshIntent.swift',
+    ).readAsStringSync();
+    final xcodeProject =
+        File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();
+
+    expect(provider, contains('ACTION_REFRESH'));
+    expect(provider, contains('WeatherCareWidgetRefreshWorker.class'));
+    for (final family in ['small', 'medium', 'large']) {
+      final layout = File(
+        'android/app/src/main/res/layout/weather_widget_$family.xml',
+      ).readAsStringSync();
+      expect(layout, contains('@+id/widget_refresh_button'));
+    }
+    expect(iosWidget, contains('if #available(iOS 17.0, *)'));
+    expect(
+        iosWidget, contains('.fixedSize(horizontal: true, vertical: false)'));
+    expect(iosIntent, contains('struct RefreshWeatherWidgetIntent: AppIntent'));
+    expect(iosIntent, contains('static var openAppWhenRun = false'));
+    expect(
+      RegExp(r'WidgetRefreshIntent\.swift in Sources')
+          .allMatches(xcodeProject)
+          .length,
+      greaterThanOrEqualTo(4),
     );
   });
 }

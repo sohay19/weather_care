@@ -77,6 +77,7 @@ import {
   ultraShortApparentTemperature,
   type UltraShortObservation,
 } from '../providers/weather/kmaUltraShortObservationProvider';
+import { buildHomeWidgetSnapshot } from '../presentation/homeWidgetSnapshot';
 import {
   hydrateMidTermForecast,
   type MidTermCacheStatus,
@@ -223,6 +224,7 @@ router.get('/today', async (c) => {
       c.env.DB,
       c.req.query('installationId'),
       c.req.header('Authorization'),
+      c.req.query('widgetSettings'),
       ),
       coordinates
         ? getCollectedCache<CurrentPrecipitationObservation>(
@@ -440,6 +442,7 @@ router.get('/weekly', async (c) => {
         c.env.DB,
         c.req.query('installationId'),
         c.req.header('Authorization'),
+        c.req.query('widgetSettings'),
       ),
       c.env.DB
         ? getWeeklyForecastRecords(
@@ -607,6 +610,31 @@ router.get('/weekly', async (c) => {
     console.error(JSON.stringify({ event: 'weekly_weather_cache_failed', error: safeErrorName(error) }));
     return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
+});
+
+router.get('/widget', async (c) => {
+  const query = new URL(c.req.url).searchParams;
+  query.set('includeExtras', 'true');
+  query.set('recommendationCatalog', 'PREPARATION_15');
+  const suffix = `?${query.toString()}`;
+  const headers = new Headers();
+  const authorization = c.req.header('Authorization');
+  if (authorization) headers.set('Authorization', authorization);
+  const [todayResponse, weeklyResponse] = await Promise.all([
+    router.request(`/today${suffix}`, { headers }, c.env),
+    router.request(`/weekly${suffix}`, { headers }, c.env),
+  ]);
+  if (!todayResponse.ok || !weeklyResponse.ok) {
+    return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
+  }
+  const today = await todayResponse.json<TodayWeatherResponse>();
+  const weekly = await weeklyResponse.json<{ days?: {
+    forecastDate?: string;
+    historical?: boolean;
+    min?: string | number;
+    max?: string | number;
+  }[] }>();
+  return c.json(buildHomeWidgetSnapshot(today, weekly));
 });
 
 function datesMissingUsableShortTermForecast(
@@ -1331,11 +1359,35 @@ async function settingsForRequest(
   db: D1Database,
   installationId: string | undefined,
   authorization?: string,
+  widgetSettings?: string,
 ): Promise<NotificationSettings> {
+  let settings: NotificationSettings;
   if (!installationId || !authorization || !await installationOwnerHash(db, installationId, authorization)) {
-    return defaultNotificationSettings('anonymous');
+    settings = defaultNotificationSettings('anonymous');
+  } else {
+    settings = await getNotificationSettings(db, installationId);
   }
-  return getNotificationSettings(db, installationId);
+  return withWidgetSettings(settings, widgetSettings);
+}
+
+export function withWidgetSettings(
+  settings: NotificationSettings,
+  encoded?: string,
+): NotificationSettings {
+  const match = /^u([01])p([01])s([01])o([01])m([01])w([01])c([01])$/.exec(
+    encoded ?? '',
+  );
+  if (!match) return settings;
+  return {
+    ...settings,
+    umbrellaEnabled: match[1] === '1',
+    parasolEnabled: match[2] === '1',
+    heavySnowEnabled: match[3] === '1',
+    outerwearEnabled: match[4] === '1',
+    maskEnabled: match[5] === '1',
+    waterEnabled: match[6] === '1',
+    sunscreenEnabled: match[7] === '1',
+  };
 }
 
 function weekdayLabel(kmaDate: string): string {

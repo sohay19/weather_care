@@ -31,6 +31,15 @@
             android:text="오전 8:20 기준"
             android:textColor="#60758A"
             android:textSize="6sp" />
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/weather_widget_refresh_background"
+            android:contentDescription="날씨 새로고침"
+            android:padding="4dp"
+            android:src="@drawable/ic_widget_refresh" />
     </LinearLayout>
 
     <LinearLayout

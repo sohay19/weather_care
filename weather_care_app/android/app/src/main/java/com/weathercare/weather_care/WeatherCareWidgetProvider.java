@@ -14,6 +14,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import androidx.work.Constraints;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -27,7 +33,10 @@ import java.time.format.DateTimeParseException;
 public class WeatherCareWidgetProvider extends AppWidgetProvider {
     private static final String ACTION_BRIEFING_BOUNDARY =
             "com.codesoha.weathercare.BRIEFING_BOUNDARY";
+    private static final String ACTION_REFRESH =
+            "com.codesoha.weathercare.REFRESH_WIDGET";
     private static final int BRIEFING_ALARM_REQUEST = 1702;
+    private static final int REFRESH_REQUEST = 1703;
     // Pixel Launcher 3열(약 169dp)부터 중간 위젯이다.
     private static final int MEDIUM_MIN_WIDTH_DP = 150;
     private static final int TEXT_PRIMARY = Color.rgb(37, 55, 78);
@@ -40,6 +49,10 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     public void onReceive(Context context, Intent intent) {
         if (ACTION_BRIEFING_BOUNDARY.equals(intent.getAction())) {
             updateAll(context);
+            return;
+        }
+        if (ACTION_REFRESH.equals(intent.getAction())) {
+            enqueueRefresh(context);
             return;
         }
         super.onReceive(context, intent);
@@ -102,6 +115,15 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         bindTemperature(context, views, snapshot, size, minWidth);
         bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
+        if (hasRefreshUrl(context)) {
+            views.setViewVisibility(R.id.widget_refresh_button, View.VISIBLE);
+            views.setOnClickPendingIntent(
+                    R.id.widget_refresh_button,
+                    refreshIntent(context)
+            );
+        } else {
+            views.setViewVisibility(R.id.widget_refresh_button, View.GONE);
+        }
 
         if (size == WidgetSize.MEDIUM) {
             setTextBitmap(
@@ -124,6 +146,40 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
 
         manager.updateAppWidget(appWidgetId, views);
         scheduleBriefingBoundary(context, stored.nextBoundaryAfter(now));
+    }
+
+    private static PendingIntent refreshIntent(Context context) {
+        Intent intent = new Intent(context, WeatherCareWidgetProvider.class)
+                .setAction(ACTION_REFRESH)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        return PendingIntent.getBroadcast(
+                context,
+                REFRESH_REQUEST,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+    }
+
+    private static boolean hasRefreshUrl(Context context) {
+        String url = context.getSharedPreferences(
+                MainActivity.WIDGET_PREFERENCES,
+                Context.MODE_PRIVATE
+        ).getString(MainActivity.REFRESH_URL_KEY, null);
+        return url != null && !url.isBlank();
+    }
+
+    private static void enqueueRefresh(Context context) {
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(
+                WeatherCareWidgetRefreshWorker.class
+        ).setConstraints(constraints).build();
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                "weather-care-widget-refresh",
+                ExistingWorkPolicy.REPLACE,
+                request
+        );
     }
 
     private static void scheduleBriefingBoundary(Context context, long boundary) {

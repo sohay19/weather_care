@@ -25,6 +25,8 @@
 		A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */; };
 		A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */; };
 		A1000000000000000000000A /* Icons in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* Icons */; };
+		B10000000000000000000001 /* WidgetRefreshIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* WidgetRefreshIntent.swift */; };
+		B10000000000000000000002 /* WidgetRefreshIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* WidgetRefreshIntent.swift */; };
 		CF62BA7D305CE19600A72CCA /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */; };
 		CFDE0D51306124F2006508F1 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFDE0D50306124F2006508F1 /* StoreKit.framework */; };
 		DBDCE0F8A9E5218C4A5AC6E1 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 716353AA5D5210FF1760CC0E /* Pods_RunnerTests.framework */; };
@@ -107,6 +109,7 @@
 		A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
 		A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Icons; sourceTree = "<group>"; };
+		B20000000000000000000001 /* WidgetRefreshIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshIntent.swift; sourceTree = "<group>"; };
 		A63F90F5FDDEFBACB5A29F7D /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		CF62BA7C305CE19600A72CCA /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		CFDE0D50306124F2006508F1 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -230,6 +233,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* WeatherCareWidget.swift */,
+				B20000000000000000000001 /* WidgetRefreshIntent.swift */,
 				A20000000000000000000002 /* Info.plist */,
 				A20000000000000000000003 /* WeatherCareWidget.entitlements */,
 				A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */,
@@ -527,6 +531,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B10000000000000000000002 /* WidgetRefreshIntent.swift in Sources */,
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 			);
@@ -537,6 +542,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* WeatherCareWidget.swift in Sources */,
+				B10000000000000000000001 /* WidgetRefreshIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

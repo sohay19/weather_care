@@ -34,6 +34,17 @@
             android:adjustViewBounds="true"
             android:contentDescription="오전 8:20 기준"
             android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_refresh_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/weather_widget_refresh_background"
+            android:clickable="true"
+            android:contentDescription="날씨 새로고침"
+            android:padding="5.5dp"
+            android:src="@drawable/ic_widget_refresh" />
     </LinearLayout>
 
     <LinearLayout

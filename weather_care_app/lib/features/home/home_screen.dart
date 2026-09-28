@@ -132,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _comparisonLoading = false;
   bool _homeReadyReported = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
+  String? _widgetServerUrl;
   Timer? _weatherHourTimer;
   String? _lastCompletedWeatherHour;
 
@@ -144,8 +145,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       today: today,
       weekly: _weekly,
     );
-    unawaited(widget.homeWidgetService.publish(snapshot));
+    unawaited(widget.homeWidgetService.publish(
+      snapshot,
+      refreshUrl: _homeWidgetRefreshUrl(),
+    ));
   }
+
+  String? _homeWidgetRefreshUrl() {
+    final baseUrl = _widgetServerUrl;
+    final grid = _weatherGrid;
+    if (baseUrl == null || grid == null) return null;
+    final coordinates = _settings.locationMode == 'GPS' &&
+            _location.canUseLocalAnalysis &&
+            _serverDataAccess?.paused == false
+        ? _coordinates
+        : null;
+    final regionCode =
+        _settings.locationMode == 'GPS' ? null : _manualRegion?.code;
+    final regionName = _settings.locationMode == 'GPS'
+        ? _gpsRegionName
+        : _manualRegion?.fullName;
+    return Uri.parse(baseUrl)
+        .resolve('/api/v1/weather/widget')
+        .replace(queryParameters: {
+      'nx': '${grid.nx}',
+      'ny': '${grid.ny}',
+      'widgetSettings': _homeWidgetSettingsKey(),
+      if (coordinates != null) ...{
+        'latitude': '${coordinates.latitude}',
+        'longitude': '${coordinates.longitude}',
+      },
+      if (regionCode != null && regionCode.isNotEmpty) 'regionCode': regionCode,
+      if (regionName != null && regionName.trim().isNotEmpty)
+        'regionName': regionName.trim(),
+    }).toString();
+  }
+
+  String _homeWidgetSettingsKey() => 'u${_settings.umbrellaEnabled ? 1 : 0}'
+      'p${_settings.parasolEnabled ? 1 : 0}'
+      's${_settings.heavySnowEnabled ? 1 : 0}'
+      'o${_settings.outerwearEnabled ? 1 : 0}'
+      'm${_settings.maskEnabled ? 1 : 0}'
+      'w${_settings.waterEnabled ? 1 : 0}'
+      'c${_settings.sunscreenEnabled ? 1 : 0}';
 
   void _clearHomeWidget() => unawaited(widget.homeWidgetService.clear());
 
@@ -204,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // GPS/legacy grids remain usable; the picker offers an explicit retry.
     }
     if (!mounted) return;
+    _widgetServerUrl = config.serverUrl;
     _settings = savedSettings;
     final access = widget.serverDataAccess ??
         ServerDataAccess(

@@ -32,15 +32,15 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
+        WeatherCareWidgetProvider.setRefreshInProgress(context, true);
         SharedPreferences preferences = context.getSharedPreferences(
                 MainActivity.WIDGET_PREFERENCES,
                 Context.MODE_PRIVATE
         );
         String rawUrl = preferences.getString(MainActivity.REFRESH_URL_KEY, null);
-        if (!isAllowedUrl(rawUrl)) return Result.failure();
-
         HttpURLConnection connection = null;
         try {
+            if (!isAllowedUrl(rawUrl)) return Result.failure();
             connection = (HttpURLConnection) new URL(rawUrl).openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept", "application/json");
@@ -60,12 +60,12 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                 return Result.failure();
             }
             preferences.edit().putString(MainActivity.SNAPSHOT_KEY, body).apply();
-            WeatherCareWidgetProvider.updateAll(context);
             return Result.success();
         } catch (Exception ignored) {
             return getRunAttemptCount() < 2 ? Result.retry() : Result.failure();
         } finally {
             if (connection != null) connection.disconnect();
+            WeatherCareWidgetProvider.setRefreshInProgress(context, false);
         }
     }
 

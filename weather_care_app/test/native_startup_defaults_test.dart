@@ -82,6 +82,38 @@ void main() {
     expect(provider, contains('json.optJSONArray("preparationCatalog")'));
   });
 
+  test('Android 2-column widget always matches the iOS small header', () {
+    final provider = File(
+      'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java',
+    ).readAsStringSync();
+    final smallLayout = File(
+      'android/app/src/main/res/layout/weather_widget_small.xml',
+    ).readAsStringSync();
+
+    expect(
+      provider,
+      contains(
+        'if (minWidth < MEDIUM_MIN_WIDTH_DP) return WidgetSize.SMALL;',
+      ),
+    );
+    expect(
+      RegExp(
+        r'if \(minWidth < MEDIUM_MIN_WIDTH_DP\) return WidgetSize\.SMALL;\s*return minHeight >= LARGE_MIN_HEIGHT_DP',
+      ).hasMatch(provider),
+      isTrue,
+    );
+    expect(
+      RegExp(
+        r'<LinearLayout[\s\S]*?android:layout_weight="1"[\s\S]*?widget_region[\s\S]*?widget_refresh_time[\s\S]*?</LinearLayout>[\s\S]*?widget_refresh_button',
+      ).hasMatch(smallLayout),
+      isTrue,
+    );
+    expect(
+      smallLayout.indexOf('widget_region'),
+      lessThan(smallLayout.indexOf('widget_refresh_time')),
+    );
+  });
+
   test('iOS widgets share vertical margins and fit the temperature row', () {
     final widget = File(
       'ios/WeatherCareWidget/WeatherCareWidget.swift',
@@ -136,11 +168,39 @@ void main() {
     final iosIntent = File(
       'ios/WeatherCareWidget/WidgetRefreshIntent.swift',
     ).readAsStringSync();
+    final androidWorker = File(
+      'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetRefreshWorker.java',
+    ).readAsStringSync();
+    final androidRefreshBackground = File(
+      'android/app/src/main/res/drawable/weather_widget_refresh_background.xml',
+    ).readAsStringSync();
+    final androidLoadingBackground = File(
+      'android/app/src/main/res/drawable/weather_widget_refresh_background_loading.xml',
+    ).readAsStringSync();
+    final androidRefreshIcon = File(
+      'android/app/src/main/res/drawable/ic_widget_refresh.xml',
+    ).readAsStringSync();
+    final androidLoadingIcon = File(
+      'android/app/src/main/res/drawable/ic_widget_refresh_loading.xml',
+    ).readAsStringSync();
     final xcodeProject =
         File('ios/Runner.xcodeproj/project.pbxproj').readAsStringSync();
 
     expect(provider, contains('ACTION_REFRESH'));
     expect(provider, contains('WeatherCareWidgetRefreshWorker.class'));
+    expect(provider, contains('REFRESH_IN_PROGRESS_KEY'));
+    expect(provider, contains('weather_widget_refresh_background_loading'));
+    expect(provider, contains('ic_widget_refresh_loading'));
+    expect(
+      RegExp(r'setRefreshInProgress\(context, true\)[\s\S]*finally')
+          .hasMatch(androidWorker),
+      isTrue,
+    );
+    expect(androidWorker, contains('setRefreshInProgress(context, false)'));
+    expect(androidRefreshBackground, contains('#476F98'));
+    expect(androidLoadingBackground, contains('#D6E8F5'));
+    expect(androidRefreshIcon, contains('#FFFFFF'));
+    expect(androidLoadingIcon, contains('#476F98'));
     for (final family in ['small', 'medium', 'large']) {
       final layout = File(
         'android/app/src/main/res/layout/weather_widget_$family.xml',

@@ -35,6 +35,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             "com.codesoha.weathercare.BRIEFING_BOUNDARY";
     private static final String ACTION_REFRESH =
             "com.codesoha.weathercare.REFRESH_WIDGET";
+    static final String REFRESH_IN_PROGRESS_KEY = "refresh_in_progress";
     private static final int BRIEFING_ALARM_REQUEST = 1702;
     private static final int REFRESH_REQUEST = 1703;
     // Pixel Launcher 3열(약 169dp)부터 중간 위젯이다.
@@ -94,13 +95,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         Bundle options = manager.getAppWidgetOptions(appWidgetId);
         int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110);
         int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
-        // 2열은 작은, 3열 이상은 2행에서 중간·3행 이상에서 큰 위젯으로 표시한다.
-        WidgetSize size = minHeight >= LARGE_MIN_HEIGHT_DP
-                && minWidth >= MEDIUM_MIN_WIDTH_DP
-                ? WidgetSize.LARGE
-                : minWidth >= MEDIUM_MIN_WIDTH_DP
-                        ? WidgetSize.MEDIUM
-                        : WidgetSize.SMALL;
+        WidgetSize size = widgetSizeFor(minWidth, minHeight);
         int layout = switch (size) {
             case SMALL -> R.layout.weather_widget_small;
             case MEDIUM -> R.layout.weather_widget_medium;
@@ -115,6 +110,19 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         bindTemperature(context, views, snapshot, size, minWidth);
         bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
+        boolean refreshing = isRefreshInProgress(context);
+        views.setInt(
+                R.id.widget_refresh_button,
+                "setBackgroundResource",
+                refreshing
+                        ? R.drawable.weather_widget_refresh_background_loading
+                        : R.drawable.weather_widget_refresh_background
+        );
+        views.setImageViewResource(
+                R.id.widget_refresh_button,
+                refreshing ? R.drawable.ic_widget_refresh_loading : R.drawable.ic_widget_refresh
+        );
+        views.setBoolean(R.id.widget_refresh_button, "setEnabled", !refreshing);
         if (hasRefreshUrl(context)) {
             views.setViewVisibility(R.id.widget_refresh_button, View.VISIBLE);
             views.setOnClickPendingIntent(
@@ -148,6 +156,12 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         scheduleBriefingBoundary(context, stored.nextBoundaryAfter(now));
     }
 
+    private static WidgetSize widgetSizeFor(int minWidth, int minHeight) {
+        // Android 가로 2열은 높이와 관계없이 iOS systemSmall처럼 처리한다.
+        if (minWidth < MEDIUM_MIN_WIDTH_DP) return WidgetSize.SMALL;
+        return minHeight >= LARGE_MIN_HEIGHT_DP ? WidgetSize.LARGE : WidgetSize.MEDIUM;
+    }
+
     private static PendingIntent refreshIntent(Context context) {
         Intent intent = new Intent(context, WeatherCareWidgetProvider.class)
                 .setAction(ACTION_REFRESH)
@@ -166,6 +180,21 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 Context.MODE_PRIVATE
         ).getString(MainActivity.REFRESH_URL_KEY, null);
         return url != null && !url.isBlank();
+    }
+
+    private static boolean isRefreshInProgress(Context context) {
+        return context.getSharedPreferences(
+                MainActivity.WIDGET_PREFERENCES,
+                Context.MODE_PRIVATE
+        ).getBoolean(REFRESH_IN_PROGRESS_KEY, false);
+    }
+
+    static void setRefreshInProgress(Context context, boolean refreshing) {
+        context.getSharedPreferences(
+                MainActivity.WIDGET_PREFERENCES,
+                Context.MODE_PRIVATE
+        ).edit().putBoolean(REFRESH_IN_PROGRESS_KEY, refreshing).apply();
+        updateAll(context);
     }
 
     private static void enqueueRefresh(Context context) {

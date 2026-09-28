@@ -82,13 +82,16 @@ void main() {
     expect(provider, contains('json.optJSONArray("preparationCatalog")'));
   });
 
-  test('iOS widgets use 75 percent outer margins and fit the temperature row',
-      () {
+  test('iOS widgets use family margins and fit the temperature row', () {
     final widget = File(
       'ios/WeatherCareWidget/WeatherCareWidget.swift',
     ).readAsStringSync();
 
     expect(widget, contains('widgetOuterMarginRatio: CGFloat = 0.75'));
+    expect(
+      widget,
+      contains('smallWidgetVerticalMarginRatio: CGFloat = 0.45'),
+    );
     expect(widget, contains('@Environment(\\.widgetContentMargins)'));
     expect(widget, contains('.contentMarginsDisabled()'));
     expect(
@@ -99,6 +102,25 @@ void main() {
       widget,
       contains('fittedScale(availableWidth: geometry.size.width)'),
     );
+    expect(widget, contains('SmallWidgetHeader(snapshot: snapshot)'));
+    expect(
+      widget,
+      contains(
+        'refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)',
+      ),
+    );
+    expect(
+      widget,
+      contains(
+        'refreshButtonLoadingSurface = Color(red: 214 / 255, green: 232 / 255, blue: 245 / 255)',
+      ),
+    );
+    expect(
+      widget,
+      contains('isRefreshing ? refreshButtonLoadingSurface'),
+    );
+    expect(widget, contains('.invalidatableContent()'));
+    expect(widget, contains('redactionReasons.contains(.invalidated)'));
   });
 
   test('Android and iOS expose manual widget refresh on supported systems', () {

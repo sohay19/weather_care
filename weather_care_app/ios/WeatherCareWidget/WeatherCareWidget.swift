@@ -11,7 +11,10 @@ private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
 private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
 private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
+private let refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)
+private let refreshButtonLoadingSurface = Color(red: 214 / 255, green: 232 / 255, blue: 245 / 255)
 private let widgetOuterMarginRatio: CGFloat = 0.75
+private let smallWidgetVerticalMarginRatio: CGFloat = 0.45
 
 private enum SuiteFont {
   static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
@@ -282,25 +285,72 @@ private struct WidgetHeader: View {
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
-      if #available(iOS 17.0, *) {
-        if weatherWidgetRefreshAvailable() {
-          Button(intent: RefreshWeatherWidgetIntent()) {
-            ZStack {
-              Circle().fill(preparationCircle)
-              Image(systemName: "arrow.clockwise")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(secondaryInk)
-            }
-            .frame(width: 22, height: 22)
-          }
-          .buttonStyle(.plain)
-          .frame(width: 24, height: 24)
-          .padding(.leading, 8)
-          .accessibilityLabel("날씨 새로고침")
-        }
-      }
+      WidgetRefreshButton(leadingPadding: 8)
     }
     .foregroundStyle(ink)
+  }
+}
+
+private struct SmallWidgetHeader: View {
+  let snapshot: WidgetSnapshot
+
+  var body: some View {
+    HStack(alignment: .top, spacing: 0) {
+      VStack(alignment: .leading, spacing: 1) {
+        Text(snapshot.region)
+          .font(SuiteFont.extraBold(12))
+          .lineLimit(1)
+          .minimumScaleFactor(0.72)
+        Text(snapshot.refreshTime)
+          .font(SuiteFont.regular(9))
+          .foregroundStyle(secondaryInk)
+          .lineLimit(1)
+          .fixedSize(horizontal: true, vertical: false)
+      }
+      Spacer(minLength: 2)
+      WidgetRefreshButton(leadingPadding: 8)
+    }
+    .foregroundStyle(ink)
+  }
+}
+
+private struct WidgetRefreshButton: View {
+  let leadingPadding: CGFloat
+
+  @ViewBuilder
+  var body: some View {
+    if #available(iOS 17.0, *), weatherWidgetRefreshAvailable() {
+      Button(intent: RefreshWeatherWidgetIntent()) {
+        WidgetRefreshButtonLabel()
+          .invalidatableContent()
+      }
+      .buttonStyle(.plain)
+      .frame(width: 24, height: 24)
+      .padding(.leading, leadingPadding)
+      .accessibilityLabel("날씨 새로고침")
+    }
+  }
+}
+
+@available(iOSApplicationExtension 17.0, *)
+private struct WidgetRefreshButtonLabel: View {
+  @Environment(\.redactionReasons) private var redactionReasons
+
+  private var isRefreshing: Bool {
+    redactionReasons.contains(.invalidated)
+  }
+
+  var body: some View {
+    ZStack {
+      Circle().fill(
+        isRefreshing ? refreshButtonLoadingSurface : refreshButtonSurface
+      )
+      Image(systemName: "arrow.clockwise")
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(isRefreshing ? refreshButtonSurface : Color.white)
+    }
+    .frame(width: 22, height: 22)
+    .unredacted()
   }
 }
 
@@ -403,7 +453,7 @@ private struct SmallWeatherWidget: View {
 
   var body: some View {
     VStack(spacing: 4) {
-      WidgetHeader(snapshot: snapshot, regionSize: 12, timeSize: 9)
+      SmallWidgetHeader(snapshot: snapshot)
       AdaptiveTemperatureRow(
         condition: snapshot.condition,
         currentTemperature: snapshot.currentTemperature,
@@ -423,7 +473,6 @@ private struct SmallWeatherWidget: View {
         .widgetInfoPanel()
     }
     .padding(.horizontal, 2 * widgetOuterMarginRatio)
-    .padding(.vertical, 2 * widgetOuterMarginRatio)
   }
 }
 
@@ -1081,13 +1130,17 @@ private extension View {
 @available(iOSApplicationExtension 17.0, *)
 private struct ReducedWidgetContentMargins: ViewModifier {
   @Environment(\.widgetContentMargins) private var margins
+  @Environment(\.widgetFamily) private var family
 
   func body(content: Content) -> some View {
+    let verticalRatio = family == .systemSmall
+      ? smallWidgetVerticalMarginRatio
+      : widgetOuterMarginRatio
     content.padding(
       EdgeInsets(
-        top: margins.top * widgetOuterMarginRatio,
+        top: margins.top * verticalRatio,
         leading: margins.leading * widgetOuterMarginRatio,
-        bottom: margins.bottom * widgetOuterMarginRatio,
+        bottom: margins.bottom * verticalRatio,
         trailing: margins.trailing * widgetOuterMarginRatio
       )
     )
@@ -1095,14 +1148,19 @@ private struct ReducedWidgetContentMargins: ViewModifier {
 }
 
 private struct LegacyReducedWidgetContentMargins: ViewModifier {
+  @Environment(\.widgetFamily) private var family
+
   func body(content: Content) -> some View {
     GeometryReader { geometry in
+      let verticalRatio = family == .systemSmall
+        ? smallWidgetVerticalMarginRatio
+        : widgetOuterMarginRatio
       content
         .padding(
           EdgeInsets(
-            top: geometry.safeAreaInsets.top * widgetOuterMarginRatio,
+            top: geometry.safeAreaInsets.top * verticalRatio,
             leading: geometry.safeAreaInsets.leading * widgetOuterMarginRatio,
-            bottom: geometry.safeAreaInsets.bottom * widgetOuterMarginRatio,
+            bottom: geometry.safeAreaInsets.bottom * verticalRatio,
             trailing: geometry.safeAreaInsets.trailing * widgetOuterMarginRatio
           )
         )

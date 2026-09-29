@@ -6,7 +6,7 @@ describe('home widget snapshot', () => {
   it('새로고침 응답을 앱과 동일한 위젯 형식으로 만든다', () => {
     const now = new Date('2026-09-27T23:20:00.000Z');
     const today = {
-      region: { nx: 58, ny: 124, name: '경기도 시흥시 은행동' },
+      region: { nx: 58, ny: 124, name: '현재 위치' },
       generatedAt: now.toISOString(),
       current: {
         observedAt: now.toISOString(),
@@ -62,7 +62,7 @@ describe('home widget snapshot', () => {
         max: '20',
         historical: false,
       }],
-    }, now);
+    }, now, '경기도 시흥시 은행동');
 
     expect(snapshot).toMatchObject({
       schemaVersion: 3,

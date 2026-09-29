@@ -38,6 +38,7 @@ export function buildHomeWidgetSnapshot(
   today: TodayWeatherResponse,
   weekly: WeeklyWidgetResponse,
   now = new Date(),
+  requestedRegionName?: string,
 ) {
   const timeline = widgetTimeline(today);
   const active = timeline.find((entry) => activeAt(entry, now));
@@ -74,7 +75,7 @@ export function buildHomeWidgetSnapshot(
       ? validUntil
       : timeline[timeline.length - 1].validUntil,
     briefingTimeline: timeline,
-    region: compactRegionName(today.region.name),
+    region: compactRegionName(requestedRegionName ?? today.region.name),
     refreshTime: refreshTime(today.generatedAt, now),
     condition: weatherCondition(today.current.skyCondition),
     currentTemperature: temperature(today.current.temperature),

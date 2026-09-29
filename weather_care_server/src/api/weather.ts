@@ -634,7 +634,12 @@ router.get('/widget', async (c) => {
     min?: string | number;
     max?: string | number;
   }[] }>();
-  return c.json(buildHomeWidgetSnapshot(today, weekly));
+  return c.json(buildHomeWidgetSnapshot(
+    today,
+    weekly,
+    new Date(),
+    query.get('regionName') ?? undefined,
+  ));
 });
 
 function datesMissingUsableShortTermForecast(

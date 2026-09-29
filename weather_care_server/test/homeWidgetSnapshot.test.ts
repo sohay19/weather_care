@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { TodayWeatherResponse } from '../src/types';
 import { buildHomeWidgetSnapshot } from '../src/presentation/homeWidgetSnapshot';
+import { midTermRegionNameForGrid } from '../src/regions/kmaMidTermRegionCatalog';
 
 describe('home widget snapshot', () => {
+  it('GPS 표시명이 없으면 예보 격자의 대표 지역명을 사용한다', () => {
+    expect(midTermRegionNameForGrid(57, 124)).toBe('시흥');
+  });
+
   it('새로고침 응답을 앱과 동일한 위젯 형식으로 만든다', () => {
     const now = new Date('2026-09-27T23:20:00.000Z');
     const today = {

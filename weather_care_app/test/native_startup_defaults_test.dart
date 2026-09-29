@@ -177,6 +177,11 @@ void main() {
     final androidWorker = File(
       'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetRefreshWorker.java',
     ).readAsStringSync();
+    final androidActivity = File(
+      'android/app/src/main/java/com/weathercare/weather_care/MainActivity.java',
+    ).readAsStringSync();
+    final iosAppDelegate =
+        File('ios/Runner/AppDelegate.swift').readAsStringSync();
     final androidRefreshBackground = File(
       'android/app/src/main/res/drawable/weather_widget_refresh_background.xml',
     ).readAsStringSync();
@@ -203,6 +208,15 @@ void main() {
       isTrue,
     );
     expect(androidWorker, contains('setRefreshInProgress(context, false)'));
+    expect(
+      androidWorker,
+      contains('MainActivity.preserveSpecificWidgetRegion('),
+    );
+    expect(
+      androidActivity,
+      contains('static String preserveSpecificWidgetRegion('),
+    );
+    expect(androidActivity, contains('!"현재 위치".equals(value)'));
     expect(androidRefreshBackground, contains('#476F98'));
     expect(androidLoadingBackground, contains('#D6E8F5'));
     expect(androidRefreshIcon, contains('#FFFFFF'));
@@ -218,6 +232,14 @@ void main() {
         iosWidget, contains('.fixedSize(horizontal: true, vertical: false)'));
     expect(iosIntent, contains('struct RefreshWeatherWidgetIntent: AppIntent'));
     expect(iosIntent, contains('static var openAppWhenRun = false'));
+    expect(
+      iosIntent,
+      contains('weatherWidgetSnapshotPreservingSpecificRegion('),
+    );
+    expect(
+      iosAppDelegate,
+      contains('weatherWidgetSnapshotPreservingSpecificRegion('),
+    );
     expect(
       RegExp(r'WidgetRefreshIntent\.swift in Sources')
           .allMatches(xcodeProject)

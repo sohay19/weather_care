@@ -43,7 +43,11 @@ import WidgetKit
             ))
             return
           }
-          defaults.set(snapshot, forKey: widgetSnapshotKey)
+          let storedSnapshot = weatherWidgetSnapshotPreservingSpecificRegion(
+            snapshot,
+            previous: defaults.string(forKey: widgetSnapshotKey)
+          )
+          defaults.set(storedSnapshot, forKey: widgetSnapshotKey)
           if let refreshURL = values?["refreshUrl"] as? String,
              !refreshURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             defaults.set(refreshURL, forKey: widgetRefreshURLKey)

@@ -54,6 +54,10 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                         : Result.failure();
             }
             String body = readResponse(connection.getInputStream());
+            body = MainActivity.preserveSpecificWidgetRegion(
+                    body,
+                    preferences.getString(MainActivity.SNAPSHOT_KEY, null)
+            );
             JSONObject snapshot = new JSONObject(body);
             if (snapshot.optInt("schemaVersion", 0) != 3 ||
                     !snapshot.has("region") || !snapshot.has("refreshTime")) {

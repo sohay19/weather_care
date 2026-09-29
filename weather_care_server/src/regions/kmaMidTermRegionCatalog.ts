@@ -296,6 +296,16 @@ export function supportedKmaMidTermRegionIds(): KmaMidTermRegionIds[] {
   }));
 }
 
+export function midTermRegionNameForGrid(
+  nx: number,
+  ny: number,
+): string | undefined {
+  const temperatureRegionId = temperatureRegionIdForGrid(nx, ny);
+  return TEMPERATURE_REGIONS.find(
+    (region) => region.temperatureRegionId === temperatureRegionId,
+  )?.name;
+}
+
 function disambiguateDuplicate(
   matches: TemperatureRegion[],
   adminPrefix: string | undefined,

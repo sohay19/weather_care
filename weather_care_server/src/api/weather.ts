@@ -82,7 +82,10 @@ import {
   hydrateMidTermForecast,
   type MidTermCacheStatus,
 } from '../services/midTermForecastCache';
-import { resolveKmaMidTermLocation } from '../regions/kmaMidTermRegionCatalog';
+import {
+  midTermRegionNameForGrid,
+  resolveKmaMidTermLocation,
+} from '../regions/kmaMidTermRegionCatalog';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', async (c, next) => {
@@ -634,11 +637,15 @@ router.get('/widget', async (c) => {
     min?: string | number;
     max?: string | number;
   }[] }>();
+  const requestedRegionName = query.get('regionName')?.trim();
   return c.json(buildHomeWidgetSnapshot(
     today,
     weekly,
     new Date(),
-    query.get('regionName') ?? undefined,
+    requestedRegionName || midTermRegionNameForGrid(
+      today.region.nx,
+      today.region.ny,
+    ),
   ));
 });
 

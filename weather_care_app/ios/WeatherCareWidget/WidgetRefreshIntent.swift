@@ -53,9 +53,51 @@ private func refreshWeatherWidget() async {
     object["schemaVersion"] as? Int == 3,
     object["region"] is String,
     object["refreshTime"] is String,
-    let snapshot = String(data: data, encoding: .utf8)
+    let rawSnapshot = String(data: data, encoding: .utf8)
   else { return }
 
+  let snapshot = weatherWidgetSnapshotPreservingSpecificRegion(
+    rawSnapshot,
+    previous: defaults.string(forKey: refreshWidgetSnapshotKey)
+  )
   defaults.set(snapshot, forKey: refreshWidgetSnapshotKey)
   WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
+}
+
+func weatherWidgetSnapshotPreservingSpecificRegion(
+  _ incoming: String,
+  previous: String?
+) -> String {
+  guard
+    let previous,
+    let incomingData = incoming.data(using: .utf8),
+    let previousData = previous.data(using: .utf8),
+    var next = (try? JSONSerialization.jsonObject(with: incomingData)) as? [String: Any],
+    let stored = (try? JSONSerialization.jsonObject(with: previousData)) as? [String: Any],
+    let nextRegion = (next["region"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+    let storedRegion = (stored["region"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+    let nextLocation = weatherWidgetLocationScope(next["locationKey"] as? String),
+    let storedLocation = weatherWidgetLocationScope(stored["locationKey"] as? String),
+    !weatherWidgetRegionIsSpecific(nextRegion),
+    weatherWidgetRegionIsSpecific(storedRegion),
+    nextLocation == storedLocation
+  else { return incoming }
+
+  next["region"] = storedRegion
+  guard
+    let merged = try? JSONSerialization.data(withJSONObject: next),
+    let snapshot = String(data: merged, encoding: .utf8)
+  else { return incoming }
+  return snapshot
+}
+
+private func weatherWidgetRegionIsSpecific(_ value: String?) -> Bool {
+  guard let value, !value.isEmpty else { return false }
+  return !["현재 위치", "선택 지역", "지역을 설정해주세요"].contains(value)
+}
+
+private func weatherWidgetLocationScope(_ value: String?) -> String? {
+  guard let key = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+        !key.isEmpty else { return nil }
+  return key.components(separatedBy: ":name:").first
 }

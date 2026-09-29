@@ -1113,7 +1113,6 @@ def create_google_play_app_icon() -> None:
 
 
 def main() -> None:
-    create_ios_push_source(IOS_PUSH_SOURCE, (1080, 2400), tablet=False)
     create_ios_push_source(IPAD_PUSH_SOURCE, (1440, 2560), tablet=True)
     for platform, spec in FORMATS.items():
         for stem, source_name, label, headline in APP_SCREENS:

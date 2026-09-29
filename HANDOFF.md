@@ -8313,3 +8313,10 @@
 
 - 로컬의 iOS 위젯 새로고침 원인 진단 기록과 원격의 스토어 스크린샷 구성 갱신 기록이 `HANDOFF.md` 끝부분에서 충돌한 상태를 해결했다.
 - 양쪽 기록과 원격 스토어 결과물을 모두 유지했으며, 작업 중이던 Flutter·Xcode 파일의 비스테이징 변경은 병합 커밋에 포함하지 않았다.
+
+## 2026-09-29 iOS Store 실제 알림 센터 캡처 적용
+
+- iPhone 16 Pro Max iOS 18.6 시뮬레이터에 `오늘 준비할 내용`, `현재 강수 안내`, `미세먼지가 나빠요`, `낮 자외선이 강해요` 알림 4건을 실제 APNs 시뮬레이션으로 전달하고, 시스템 알림 센터에서 목록을 펼친 화면을 1320×2868 원본으로 캡처했다.
+- 기존 Pillow 기반 iPhone 알림 화면 합성 호출을 제거하고 실제 캡처 원본 `store/screenshots/source/push-notification-ios.png`을 사용하도록 변경했다. iPad 알림 원본 생성 방식은 유지했다.
+- iOS 8번째 Store 결과물과 iOS 미리보기, `weather-care-store-screenshots.zip`, `weather-care-store-assets.zip`을 다시 생성했다. 캡처를 위해 임시로 추가했던 시뮬레이터 권한 처리와 UI 테스트 코드는 모두 제거했다.
+- 네 플랫폼별 RGB PNG 8장의 규격, 생성기 문법, 두 ZIP의 CRC와 iOS 8번 결과물 포함 여부, `git diff --check`를 통과했다.

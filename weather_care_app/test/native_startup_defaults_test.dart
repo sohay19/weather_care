@@ -217,6 +217,7 @@ void main() {
       contains('static String preserveSpecificWidgetRegion('),
     );
     expect(androidActivity, contains('!"현재 위치".equals(value)'));
+    expect(androidActivity, contains('stored.startsWith(next)'));
     expect(androidRefreshBackground, contains('#476F98'));
     expect(androidLoadingBackground, contains('#D6E8F5'));
     expect(androidRefreshIcon, contains('#FFFFFF'));
@@ -240,6 +241,7 @@ void main() {
       iosAppDelegate,
       contains('weatherWidgetSnapshotPreservingSpecificRegion('),
     );
+    expect(iosIntent, contains('stored.hasPrefix(incoming)'));
     expect(
       RegExp(r'WidgetRefreshIntent\.swift in Sources')
           .allMatches(xcodeProject)

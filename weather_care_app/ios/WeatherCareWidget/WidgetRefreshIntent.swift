@@ -78,8 +78,7 @@ func weatherWidgetSnapshotPreservingSpecificRegion(
     let storedRegion = (stored["region"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
     let nextLocation = weatherWidgetLocationScope(next["locationKey"] as? String),
     let storedLocation = weatherWidgetLocationScope(stored["locationKey"] as? String),
-    !weatherWidgetRegionIsSpecific(nextRegion),
-    weatherWidgetRegionIsSpecific(storedRegion),
+    weatherWidgetShouldPreserveRegion(nextRegion, stored: storedRegion),
     nextLocation == storedLocation
   else { return incoming }
 
@@ -94,6 +93,15 @@ func weatherWidgetSnapshotPreservingSpecificRegion(
 private func weatherWidgetRegionIsSpecific(_ value: String?) -> Bool {
   guard let value, !value.isEmpty else { return false }
   return !["현재 위치", "선택 지역", "지역을 설정해주세요"].contains(value)
+}
+
+private func weatherWidgetShouldPreserveRegion(
+  _ incoming: String?,
+  stored: String?
+) -> Bool {
+  guard let stored, weatherWidgetRegionIsSpecific(stored) else { return false }
+  guard let incoming, weatherWidgetRegionIsSpecific(incoming) else { return true }
+  return stored.count > incoming.count && stored.hasPrefix(incoming)
 }
 
 private func weatherWidgetLocationScope(_ value: String?) -> String? {

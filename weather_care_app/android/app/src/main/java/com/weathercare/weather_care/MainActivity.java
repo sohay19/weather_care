@@ -79,8 +79,7 @@ public class MainActivity extends FlutterActivity {
             JSONObject stored = new JSONObject(previous);
             String nextRegion = next.optString("region", "").trim();
             String storedRegion = stored.optString("region", "").trim();
-            if (isSpecificWidgetRegion(nextRegion) ||
-                    !isSpecificWidgetRegion(storedRegion) ||
+            if (!shouldPreserveWidgetRegion(nextRegion, storedRegion) ||
                     !sameWidgetLocation(next, stored)) {
                 return incoming;
             }
@@ -96,6 +95,12 @@ public class MainActivity extends FlutterActivity {
                 !"현재 위치".equals(value) &&
                 !"선택 지역".equals(value) &&
                 !"지역을 설정해주세요".equals(value);
+    }
+
+    private static boolean shouldPreserveWidgetRegion(String next, String stored) {
+        if (!isSpecificWidgetRegion(stored)) return false;
+        return !isSpecificWidgetRegion(next) ||
+                (stored.length() > next.length() && stored.startsWith(next));
     }
 
     private static boolean sameWidgetLocation(JSONObject left, JSONObject right) {

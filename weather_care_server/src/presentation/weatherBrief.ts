@@ -31,6 +31,8 @@ export interface WeatherBriefContext {
   sunsetAt?: string;
   /** 알림 설정에서 허용된 준비물로 action scene을 제한한다. */
   allowedRecommendedItems?: RecommendationType[];
+  /** 추천 엔진이 현재 강도에서 노출하도록 결정한 준비물이다. */
+  severityRecommendedItems?: RecommendationType[];
   /** 새 앱의 확장 준비물 카탈로그를 브리핑과 함께 사용한다. */
   expandedPreparations?: boolean;
 }
@@ -175,9 +177,13 @@ function buildIntentAt(
     selection.scene,
     context.expandedPreparations ?? false,
   );
-  const recommendedItems = context.allowedRecommendedItems === undefined
+  const severityItems = context.severityRecommendedItems === undefined
     ? meaning.recommendedItems
     : meaning.recommendedItems.filter((item) =>
+        context.severityRecommendedItems?.includes(item));
+  const recommendedItems = context.allowedRecommendedItems === undefined
+    ? severityItems
+    : severityItems.filter((item) =>
         context.allowedRecommendedItems?.includes(item));
   return {
     eventTime,

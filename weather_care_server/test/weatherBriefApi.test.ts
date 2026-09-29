@@ -104,4 +104,49 @@ describe('Today brief display deadline', () => {
     else expect(data.brief).not.toContain('자외선');
     await waitOnExecutionContext(ctx);
   });
+
+  it('확장 위젯 응답은 UV 7에서 선크림만 제공한다', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-10T13:10:00+09:00'));
+    const hourly = [13, 14].map((hour) => ({
+      observedAt: `2026-09-10T${hour}:00:00+09:00`,
+      forecastAt: `2026-09-10T${hour}:00:00+09:00`,
+      validTo: `2026-09-10T${hour}:59:59+09:00`,
+      uvIndex: 7,
+      temperature: 25,
+      apparentTemperature: 25,
+    } satisfies WeatherSnapshot));
+    const forecast = {
+      current: hourly[0],
+      hourly,
+      daily: [],
+      baseDate: '20260910',
+      baseTime: '1100',
+      dataSource: '기상청',
+    };
+    await seedCollectedRegion(60, 121, forecast);
+    vi.spyOn(environmental, 'loadEnvironmentalData').mockResolvedValue({ sources: {
+      uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNAVAILABLE' },
+      airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' },
+    } });
+    vi.spyOn(environmental, 'enrichForecastWithEnvironmentalData')
+      .mockImplementation((input) => input);
+    const ctx = createExecutionContext();
+    const response = await router.request(
+      '/today?nx=60&ny=121&recommendationCatalog=PREPARATION_15',
+      {},
+      { DB: env.DB },
+      ctx,
+    );
+    const data = await response.json<{
+      briefing: CanonicalBriefingIntent;
+      recommendations: Array<{ type: string }>;
+    }>();
+
+    expect(response.status).toBe(200);
+    expect(data.recommendations.map((item) => item.type)).toEqual(['SUNSCREEN']);
+    expect(data.briefing.sceneId).toBe('UV');
+    expect(data.briefing.recommendedItems).toEqual(['SUNSCREEN']);
+    await waitOnExecutionContext(ctx);
+  });
 });

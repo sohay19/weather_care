@@ -235,16 +235,28 @@ describe('Canonical Briefing Intent v2', () => {
     ]), {
       expandedPreparations: true,
       allowedRecommendedItems: ['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS'],
+      severityRecommendedItems: ['UMBRELLA', 'RAINCOAT'],
     });
 
     expect(result.intent.recommendedItems).toEqual([
       'UMBRELLA',
       'RAINCOAT',
-      'RAIN_BOOTS',
     ]);
     expect(result.timeline[0].recommendedItems).toEqual(
       result.intent.recommendedItems,
     );
+  });
+
+  it('UV 7 브리핑은 추천 엔진이 고른 선크림만 제공한다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(15, { uvIndex: 7 }),
+    ]), {
+      expandedPreparations: true,
+      severityRecommendedItems: ['SUNSCREEN'],
+    });
+
+    expect(result.intent.recommendedItems).toEqual(['SUNSCREEN']);
+    expect(result.timeline[0].recommendedItems).toEqual(['SUNSCREEN']);
   });
 
   it('꺼 둔 준비물을 요구하는 scene과 문구를 선택하지 않는다', () => {

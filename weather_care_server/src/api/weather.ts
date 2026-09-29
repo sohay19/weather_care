@@ -346,6 +346,9 @@ router.get('/today', async (c) => {
       regionKey: locationKey,
       now: generatedAt,
       allowedRecommendedItems: enabledRecommendationTypes(settings),
+      severityRecommendedItems: recommendations
+        .filter((item) => item.recommended)
+        .map((item) => item.type),
       expandedPreparations,
       ...sunTimes,
     });

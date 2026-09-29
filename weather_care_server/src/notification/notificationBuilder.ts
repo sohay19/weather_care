@@ -33,6 +33,9 @@ export function buildNotification(
         ...briefContext,
         now,
         allowedRecommendedItems: normal.map((item) => item.type),
+        severityRecommendedItems: normal
+          .filter((item) => item.recommended)
+          .map((item) => item.type),
       }).intent
     : undefined;
   const briefingMatchesPreferences = briefing !== undefined && (

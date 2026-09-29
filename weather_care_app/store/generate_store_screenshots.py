@@ -20,11 +20,21 @@ APP_SCREENS = [
     ("01-main", "main.png", "MAIN", "오늘 챙길 것만\n한눈에"),
     ("02-today", "today.png", "TODAY", "시간대별 날씨를\n하루 흐름으로"),
     ("03-detail", "detail.png", "DETAIL", "판단 근거까지\n자세히"),
-    ("04-week", "week.png", "WEEK", "일주일 계획을\n미리 가볍게"),
     ("05-setting", "setting.png", "SETTING", "내 위치와 알림을\n내 생활에 맞게"),
+    ("06-week", "week.png", "WEEK", "일주일 계획을\n미리 가볍게"),
+    ("07-notification", "notification.png", "NOTIFICATION", "원하는 알림만\n필요한 시간에"),
+    ("08-push-notification", "push-notification.png", "PUSH ALERT", "필요한 날씨를\n알림으로 바로"),
 ]
-WIDGET_SCREEN = ("06-widget", "WIDGET", "홈 화면에서도\n날씨를 바로 확인")
-SCREEN_STEMS = [stem for stem, *_ in APP_SCREENS] + [WIDGET_SCREEN[0]]
+WIDGET_SCREEN = ("04-widget", "WIDGET", "홈 화면에서도\n날씨를 바로 확인")
+SCREEN_STEMS = sorted([stem for stem, *_ in APP_SCREENS] + [WIDGET_SCREEN[0]])
+IOS_PUSH_SOURCE = SOURCE_DIR / "push-notification-ios.png"
+IPAD_PUSH_SOURCE = TABLET_SOURCE_DIR / "push-notification-ios.png"
+PUSH_NOTIFICATIONS = [
+    ("낮 자외선이 강해요", "낮 동안 자외선이 높을 것으로 보여요.\n외출한다면 선크림이나 양산을 챙기세요."),
+    ("미세먼지가 나빠요", "외출한다면 보건용 마스크를 챙기고\n오래 머무르지 마세요."),
+    ("현재 강수 안내", "비가 내리고 있을 수 있어요.\n지금 외출한다면 우산을 챙기세요."),
+    ("오늘 준비할 내용", "아침에는 선선하고 낮에는 따뜻해요.\n얇은 겉옷을 챙기세요."),
+]
 
 FORMATS = {
     "android": {
@@ -160,6 +170,304 @@ def compose(source_path: Path, destination: Path, label: str, headline: str, spe
 
     destination.parent.mkdir(parents=True, exist_ok=True)
     canvas.convert("RGB").save(destination, format="PNG", optimize=True)
+
+
+def create_ios_push_source(destination: Path, size: tuple[int, int], tablet: bool) -> None:
+    width, height = size
+    canvas = Image.new("RGBA", size, "#667C9F")
+    draw = ImageDraw.Draw(canvas)
+
+    for y in range(height):
+        ratio = y / max(1, height - 1)
+        color = (
+            round(29 + 42 * ratio),
+            round(48 + 46 * ratio),
+            round(83 + 55 * ratio),
+            255,
+        )
+        draw.line((0, y, width, y), fill=color)
+
+    wallpaper = Image.new("RGBA", size, (0, 0, 0, 0))
+    wallpaper_draw = ImageDraw.Draw(wallpaper)
+    wallpaper_draw.ellipse(
+        (-round(width * 0.45), round(height * 0.03), round(width * 0.77), round(height * 0.54)),
+        fill=(82, 166, 224, 188),
+    )
+    wallpaper_draw.ellipse(
+        (round(width * 0.40), round(height * 0.08), round(width * 1.30), round(height * 0.50)),
+        fill=(175, 111, 192, 132),
+    )
+    wallpaper_draw.ellipse(
+        (-round(width * 0.34), round(height * 0.50), round(width * 0.65), round(height * 1.02)),
+        fill=(21, 68, 118, 178),
+    )
+    wallpaper_draw.ellipse(
+        (round(width * 0.44), round(height * 0.58), round(width * 1.30), round(height * 1.08)),
+        fill=(27, 36, 75, 190),
+    )
+    wallpaper = wallpaper.filter(ImageFilter.GaussianBlur(round(width * 0.16)))
+    canvas = Image.alpha_composite(canvas, wallpaper)
+    shade = Image.new("RGBA", size, (0, 0, 0, 0))
+    shade_draw = ImageDraw.Draw(shade)
+    for y in range(height):
+        alpha = round(8 + 72 * (y / max(1, height - 1)))
+        shade_draw.line((0, y, width, y), fill=(4, 10, 26, alpha))
+    canvas = Image.alpha_composite(canvas, shade)
+    draw = ImageDraw.Draw(canvas)
+
+    if not tablet:
+        island_width = round(width * 0.30)
+        island_height = round(width * 0.080)
+        island_x = (width - island_width) // 2
+        draw.rounded_rectangle(
+            (island_x, round(height * 0.012), island_x + island_width, round(height * 0.012) + island_height),
+            radius=island_height // 2,
+            fill="#050507",
+        )
+
+    status_y = round(height * 0.027)
+    signal_x = round(width * 0.805)
+    bar_width = max(3, round(width * 0.006))
+    bar_gap = round(width * 0.004)
+    for index, bar_height in enumerate((0.010, 0.015, 0.020, 0.025)):
+        x = signal_x + index * (bar_width + bar_gap)
+        draw.rounded_rectangle(
+            (x, status_y + round(height * (0.025 - bar_height)), x + bar_width, status_y + round(height * 0.025)),
+            radius=bar_width // 2,
+            fill="#FFFFFF",
+        )
+
+    wifi_x = round(width * 0.875)
+    wifi_y = status_y + round(width * 0.019)
+    for inset in (0, round(width * 0.011)):
+        draw.arc(
+            (wifi_x - round(width * 0.030) + inset, wifi_y - round(width * 0.025) + inset,
+             wifi_x + round(width * 0.030) - inset, wifi_y + round(width * 0.025) - inset),
+            start=205,
+            end=335,
+            fill="#FFFFFF",
+            width=max(3, round(width * 0.005)),
+        )
+    draw.ellipse(
+        (wifi_x - round(width * 0.004), wifi_y + round(width * 0.010),
+         wifi_x + round(width * 0.004), wifi_y + round(width * 0.018)),
+        fill="#FFFFFF",
+    )
+
+    battery_x = round(width * 0.918)
+    battery_y = status_y + round(width * 0.002)
+    battery_w = round(width * 0.064)
+    battery_h = round(width * 0.030)
+    draw.rounded_rectangle(
+        (battery_x, battery_y, battery_x + battery_w, battery_y + battery_h),
+        radius=round(width * 0.009),
+        outline="#FFFFFF",
+        width=max(2, round(width * 0.003)),
+    )
+    draw.rounded_rectangle(
+        (battery_x + round(width * 0.005), battery_y + round(width * 0.005),
+         battery_x + battery_w - round(width * 0.008), battery_y + battery_h - round(width * 0.005)),
+        radius=round(width * 0.005),
+        fill="#FFFFFF",
+    )
+    draw.rounded_rectangle(
+        (battery_x + battery_w + round(width * 0.004), battery_y + round(width * 0.009),
+         battery_x + battery_w + round(width * 0.008), battery_y + battery_h - round(width * 0.009)),
+        radius=round(width * 0.002),
+        fill="#FFFFFF",
+    )
+
+    lock_center_x = width // 2
+    lock_y = round(height * (0.075 if tablet else 0.073))
+    lock_w = round(width * 0.025)
+    lock_h = round(width * 0.020)
+    draw.arc(
+        (lock_center_x - lock_w // 2, lock_y - lock_h,
+         lock_center_x + lock_w // 2, lock_y + lock_h),
+        start=180,
+        end=360,
+        fill="#FFFFFF",
+        width=max(3, round(width * 0.004)),
+    )
+    draw.rounded_rectangle(
+        (lock_center_x - round(lock_w * 0.62), lock_y,
+         lock_center_x + round(lock_w * 0.62), lock_y + round(lock_h * 0.90)),
+        radius=round(width * 0.004),
+        fill="#FFFFFF",
+    )
+
+    date_font = font("SUITE-Medium.ttf", round(width * (0.037 if tablet else 0.043)))
+    time_font = font("SUITE-Light.ttf", round(width * (0.15 if tablet else 0.205)))
+    date_text = "9월 29일 화요일"
+    date_width, _ = text_size(draw, date_text, date_font)
+    time_width, _ = text_size(draw, "1:49", time_font)
+    date_y = round(height * (0.115 if tablet else 0.115))
+    time_y = round(height * (0.150 if tablet else 0.150))
+    draw_text_top(draw, ((width - date_width) / 2, date_y), date_text, date_font, "#FFFFFF")
+    draw_text_top(draw, ((width - time_width) / 2, time_y), "1:49", time_font, "#FFFFFF")
+
+    card_width = round(width * (0.82 if tablet else 0.94))
+    card_height = round(height * (0.110 if tablet else 0.108))
+    card_x = (width - card_width) // 2
+    card_y = round(height * (0.350 if tablet else 0.382))
+    card_gap = round(width * (0.011 if tablet else 0.012))
+    card_radius = round(width * (0.035 if tablet else 0.044))
+    icon_size = round(width * (0.044 if tablet else 0.054))
+    with Image.open(ROOT / "appIcon.png") as source:
+        icon = source.convert("RGBA").resize((icon_size, icon_size), Image.Resampling.LANCZOS)
+    icon_mask = Image.new("L", icon.size, 0)
+    ImageDraw.Draw(icon_mask).rounded_rectangle(
+        (0, 0, icon_size - 1, icon_size - 1),
+        radius=round(icon_size * 0.22),
+        fill=255,
+    )
+    header_font = font("SUITE-SemiBold.ttf", round(width * (0.023 if tablet else 0.030)))
+    meta_font = font("SUITE-Regular.ttf", round(width * (0.021 if tablet else 0.027)))
+    title_font = font("SUITE-SemiBold.ttf", round(width * (0.026 if tablet else 0.034)))
+    body_font = font("SUITE-Regular.ttf", round(width * (0.021 if tablet else 0.028)))
+    app_width, _ = text_size(draw, "날씨챙겨", header_font)
+    frosted_wallpaper = canvas.filter(ImageFilter.GaussianBlur(round(width * 0.022)))
+
+    for index, (title, body) in enumerate(PUSH_NOTIFICATIONS):
+        current_y = card_y + index * (card_height + card_gap)
+        shadow = Image.new("RGBA", size, (0, 0, 0, 0))
+        ImageDraw.Draw(shadow).rounded_rectangle(
+            (
+                card_x,
+                current_y + round(width * 0.008),
+                card_x + card_width,
+                current_y + card_height + round(width * 0.008),
+            ),
+            radius=card_radius,
+            fill=(6, 12, 28, 92),
+        )
+        canvas = Image.alpha_composite(
+            canvas,
+            shadow.filter(ImageFilter.GaussianBlur(round(width * 0.018))),
+        )
+        card_mask = Image.new("L", size, 0)
+        ImageDraw.Draw(card_mask).rounded_rectangle(
+            (card_x, current_y, card_x + card_width, current_y + card_height),
+            radius=card_radius,
+            fill=255,
+        )
+        canvas.paste(frosted_wallpaper, (0, 0), card_mask)
+        panel = Image.new("RGBA", size, (0, 0, 0, 0))
+        panel_draw = ImageDraw.Draw(panel)
+        panel_draw.rounded_rectangle(
+            (card_x, current_y, card_x + card_width, current_y + card_height),
+            radius=card_radius,
+            fill=(235, 239, 246, 202),
+            outline=(255, 255, 255, 112),
+            width=max(2, round(width * 0.002)),
+        )
+        canvas = Image.alpha_composite(canvas, panel)
+
+        icon_x = card_x + round(width * (0.020 if tablet else 0.021))
+        icon_y = current_y + round(width * (0.017 if tablet else 0.019))
+        canvas.paste(icon, (icon_x, icon_y), icon_mask)
+        draw = ImageDraw.Draw(canvas)
+        header_x = icon_x + icon_size + round(width * 0.012)
+        header_y = icon_y + round(icon_size * 0.06)
+        draw_text_top(draw, (header_x, header_y), "날씨챙겨", header_font, "#11151C")
+        draw_text_top(
+            draw,
+            (header_x + app_width + round(width * 0.014), header_y),
+            "지금",
+            meta_font,
+            "#59616D",
+        )
+        text_x = icon_x
+        draw_text_top(
+            draw,
+            (text_x, current_y + round(card_height * 0.36)),
+            title,
+            title_font,
+            "#11151C",
+        )
+        draw.multiline_text(
+            (text_x, current_y + round(card_height * 0.59)),
+            body,
+            font=body_font,
+            fill="#252B34",
+            spacing=round(width * 0.006),
+        )
+
+    if not tablet:
+        control_y = round(height * 0.944)
+        control_radius = round(width * 0.058)
+        for control_x in (round(width * 0.12), round(width * 0.88)):
+            draw.ellipse(
+                (control_x - control_radius, control_y - control_radius,
+                 control_x + control_radius, control_y + control_radius),
+                fill=(12, 18, 30, 158),
+                outline=(255, 255, 255, 42),
+                width=max(2, round(width * 0.002)),
+            )
+
+        flashlight_x = round(width * 0.12)
+        flash_top = control_y - round(width * 0.024)
+        draw.rounded_rectangle(
+            (flashlight_x - round(width * 0.013), flash_top,
+             flashlight_x + round(width * 0.013), flash_top + round(width * 0.018)),
+            radius=round(width * 0.004),
+            fill="#FFFFFF",
+        )
+        draw.polygon(
+            ((flashlight_x - round(width * 0.018), flash_top + round(width * 0.018)),
+             (flashlight_x + round(width * 0.018), flash_top + round(width * 0.018)),
+             (flashlight_x + round(width * 0.011), flash_top + round(width * 0.030)),
+             (flashlight_x - round(width * 0.011), flash_top + round(width * 0.030))),
+            fill="#FFFFFF",
+        )
+        draw.rounded_rectangle(
+            (flashlight_x - round(width * 0.010), flash_top + round(width * 0.030),
+             flashlight_x + round(width * 0.010), flash_top + round(width * 0.048)),
+            radius=round(width * 0.005),
+            fill="#FFFFFF",
+        )
+
+        camera_x = round(width * 0.88)
+        camera_y = control_y
+        camera_w = round(width * 0.046)
+        camera_h = round(width * 0.034)
+        draw.rounded_rectangle(
+            (camera_x - camera_w // 2, camera_y - camera_h // 2,
+             camera_x + camera_w // 2, camera_y + camera_h // 2),
+            radius=round(width * 0.007),
+            outline="#FFFFFF",
+            width=max(3, round(width * 0.004)),
+        )
+        draw.rounded_rectangle(
+            (camera_x - round(width * 0.012), camera_y - camera_h // 2 - round(width * 0.007),
+             camera_x + round(width * 0.012), camera_y - camera_h // 2 + round(width * 0.002)),
+            radius=round(width * 0.004),
+            fill="#FFFFFF",
+        )
+        draw.ellipse(
+            (camera_x - round(width * 0.010), camera_y - round(width * 0.010),
+             camera_x + round(width * 0.010), camera_y + round(width * 0.010)),
+            outline="#FFFFFF",
+            width=max(3, round(width * 0.004)),
+        )
+        home_y = round(height * 0.988)
+        draw.rounded_rectangle(
+            (round(width * 0.37), home_y, round(width * 0.63), home_y + round(width * 0.012)),
+            radius=round(width * 0.006),
+            fill=(255, 255, 255, 218),
+        )
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    canvas.convert("RGB").save(destination, format="PNG", optimize=True)
+
+
+def app_source_path(platform: str, source_name: str, tablet: bool) -> Path:
+    if source_name == "push-notification.png":
+        if platform == "ios":
+            return IOS_PUSH_SOURCE
+        if platform == "ipad":
+            return IPAD_PUSH_SOURCE
+    return (TABLET_SOURCE_DIR if tablet else SOURCE_DIR) / source_name
 
 
 def fitted_font(name: str, text: str, max_size: int, max_width: int, min_size: int = 8) -> ImageFont.FreeTypeFont:
@@ -805,10 +1113,12 @@ def create_google_play_app_icon() -> None:
 
 
 def main() -> None:
+    create_ios_push_source(IOS_PUSH_SOURCE, (1080, 2400), tablet=False)
+    create_ios_push_source(IPAD_PUSH_SOURCE, (1440, 2560), tablet=True)
     for platform, spec in FORMATS.items():
         for stem, source_name, label, headline in APP_SCREENS:
             compose(
-                SOURCE_DIR / source_name,
+                app_source_path(platform, source_name, tablet=False),
                 OUTPUT_DIR / platform / f"{stem}.png",
                 label,
                 headline,
@@ -825,7 +1135,7 @@ def main() -> None:
     for platform, spec in TABLET_FORMATS.items():
         for stem, source_name, label, headline in APP_SCREENS:
             compose(
-                TABLET_SOURCE_DIR / source_name,
+                app_source_path(platform, source_name, tablet=True),
                 OUTPUT_DIR / platform / f"{stem}.png",
                 label,
                 headline,

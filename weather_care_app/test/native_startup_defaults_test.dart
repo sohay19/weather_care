@@ -122,7 +122,17 @@ void main() {
     expect(widget, contains('widgetHorizontalMarginRatio: CGFloat = 0.75'));
     expect(
       widget,
-      contains('widgetVerticalMarginRatio: CGFloat = 0.45'),
+      contains('widgetTopMarginRatio: CGFloat = 0.25'),
+    );
+    expect(widget, contains('widgetBottomMarginRatio: CGFloat = 0.65'));
+    expect(widget, isNot(contains('widgetVerticalMarginRatio')));
+    expect(
+      RegExp(r'top: .*widgetTopMarginRatio').allMatches(widget).length,
+      2,
+    );
+    expect(
+      RegExp(r'bottom: .*widgetBottomMarginRatio').allMatches(widget).length,
+      2,
     );
     expect(widget, isNot(contains('smallWidgetVerticalMarginRatio')));
     expect(widget, isNot(contains('.padding(.vertical, 2 * widget')));
@@ -137,7 +147,18 @@ void main() {
       widget,
       contains('fittedScale(availableWidth: geometry.size.width)'),
     );
+    expect(
+      RegExp(r'\n      WidgetHeader\(snapshot: snapshot')
+          .allMatches(widget)
+          .length,
+      2,
+    );
     expect(widget, contains('SmallWidgetHeader(snapshot: snapshot)'));
+    expect(widget, contains('.padding(.top, 13)'));
+    expect(
+      widget,
+      isNot(contains('WidgetRefreshButton()\n        .padding(.leading, 8)')),
+    );
     expect(
       widget,
       contains(
@@ -148,15 +169,14 @@ void main() {
     expect(widget, contains('widgetContent.widgetURL(weatherCareHomeURL)'));
     expect(widget, contains('Button(intent: RefreshWeatherWidgetIntent())'));
     expect(widget, contains('Image(systemName: "arrow.clockwise")'));
-    expect(
-      widget,
-      contains('.frame(width: 30, height: 30)'),
-    );
-    expect(widget, contains('.background(refreshButtonSurface, in: Circle())'));
+    expect(widget, contains('.font(.system(size: 8.8, weight: .semibold))'));
+    expect(widget, contains('refreshButtonHitSurface = RadialGradient('));
+    expect(widget, contains('endRadius: 22'));
     expect(widget, contains('.frame(width: 44, height: 44)'));
-    expect(widget, contains('.background(Color.white.opacity(0.001))'));
+    expect(widget, contains('.background(refreshButtonHitSurface, in: Circle())'));
     expect(widget, contains('.contentShape(.interaction, Rectangle())'));
     expect(widget, contains('.accessibilityLabel("날씨 새로고침")'));
+    expect(widget, contains('.padding(.trailing, -11)'));
     expect(widget, isNot(contains('weatherWidgetRefreshAvailable()')));
     expect(widget, isNot(contains('WidgetRefreshButtonPlaceholder')));
   });

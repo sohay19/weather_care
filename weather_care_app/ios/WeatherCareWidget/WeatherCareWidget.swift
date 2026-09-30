@@ -13,8 +13,20 @@ private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 25
 private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
 private let refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)
+private let refreshButtonHitSurface = RadialGradient(
+  stops: [
+    .init(color: refreshButtonSurface, location: 0),
+    .init(color: refreshButtonSurface, location: 0.499),
+    .init(color: surface, location: 0.5),
+    .init(color: surface, location: 1),
+  ],
+  center: .center,
+  startRadius: 0,
+  endRadius: 22
+)
 private let widgetHorizontalMarginRatio: CGFloat = 0.75
-private let widgetVerticalMarginRatio: CGFloat = 0.45
+private let widgetTopMarginRatio: CGFloat = 0.25
+private let widgetBottomMarginRatio: CGFloat = 0.65
 
 private enum SuiteFont {
   static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
@@ -295,7 +307,6 @@ private struct WidgetHeader: View {
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
       WidgetRefreshButton()
-        .padding(.leading, 8)
     }
     .foregroundStyle(ink)
   }
@@ -317,9 +328,9 @@ private struct SmallWidgetHeader: View {
           .lineLimit(1)
           .fixedSize(horizontal: true, vertical: false)
       }
+      .padding(.top, 13)
       Spacer(minLength: 2)
       WidgetRefreshButton()
-        .padding(.leading, 8)
     }
     .foregroundStyle(ink)
   }
@@ -331,16 +342,15 @@ private struct WidgetRefreshButton: View {
     if #available(iOS 17.0, *) {
       Button(intent: RefreshWeatherWidgetIntent()) {
         Image(systemName: "arrow.clockwise")
-          .font(.system(size: 12, weight: .semibold))
+          .font(.system(size: 8.8, weight: .semibold))
           .foregroundStyle(Color.white)
-          .frame(width: 30, height: 30)
-          .background(refreshButtonSurface, in: Circle())
           .frame(width: 44, height: 44)
-          .background(Color.white.opacity(0.001))
+          .background(refreshButtonHitSurface, in: Circle())
           .contentShape(.interaction, Rectangle())
       }
       .buttonStyle(.plain)
       .accessibilityLabel("날씨 새로고침")
+      .padding(.trailing, -11)
     }
   }
 }
@@ -1123,9 +1133,9 @@ private struct ReducedWidgetContentMargins: ViewModifier {
   func body(content: Content) -> some View {
     content.padding(
       EdgeInsets(
-        top: margins.top * widgetVerticalMarginRatio,
+        top: margins.top * widgetTopMarginRatio,
         leading: margins.leading * widgetHorizontalMarginRatio,
-        bottom: margins.bottom * widgetVerticalMarginRatio,
+        bottom: margins.bottom * widgetBottomMarginRatio,
         trailing: margins.trailing * widgetHorizontalMarginRatio
       )
     )
@@ -1138,9 +1148,9 @@ private struct LegacyReducedWidgetContentMargins: ViewModifier {
       content
         .padding(
           EdgeInsets(
-            top: geometry.safeAreaInsets.top * widgetVerticalMarginRatio,
+            top: geometry.safeAreaInsets.top * widgetTopMarginRatio,
             leading: geometry.safeAreaInsets.leading * widgetHorizontalMarginRatio,
-            bottom: geometry.safeAreaInsets.bottom * widgetVerticalMarginRatio,
+            bottom: geometry.safeAreaInsets.bottom * widgetBottomMarginRatio,
             trailing: geometry.safeAreaInsets.trailing * widgetHorizontalMarginRatio
           )
         )

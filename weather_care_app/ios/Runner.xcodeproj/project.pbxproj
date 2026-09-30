@@ -913,8 +913,8 @@
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26092201;
 				DEVELOPMENT_TEAM = M7QY569K4A;
+				CURRENT_PROJECT_VERSION = 26093000;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "날씨챙겨";

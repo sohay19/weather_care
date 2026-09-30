@@ -13,7 +13,6 @@ private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 25
 private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
 private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
 private let refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)
-private let refreshButtonLoadingSurface = Color(red: 214 / 255, green: 232 / 255, blue: 245 / 255)
 private let widgetHorizontalMarginRatio: CGFloat = 0.75
 private let widgetVerticalMarginRatio: CGFloat = 0.45
 
@@ -260,19 +259,7 @@ struct WeatherCareWidgetView: View {
 
   @ViewBuilder
   private var interactiveContent: some View {
-    if #available(iOSApplicationExtension 17.0, *) {
-      ZStack(alignment: .topTrailing) {
-        Link(destination: weatherCareHomeURL) {
-          widgetContent
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        WidgetRefreshButton()
-      }
-    } else {
-      widgetContent.widgetURL(weatherCareHomeURL)
-    }
+    widgetContent.widgetURL(weatherCareHomeURL)
   }
 
   @ViewBuilder
@@ -307,7 +294,8 @@ private struct WidgetHeader: View {
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
-      WidgetRefreshButtonPlaceholder(leadingPadding: 8)
+      WidgetRefreshButton()
+        .padding(.leading, 8)
     }
     .foregroundStyle(ink)
   }
@@ -330,7 +318,8 @@ private struct SmallWidgetHeader: View {
           .fixedSize(horizontal: true, vertical: false)
       }
       Spacer(minLength: 2)
-      WidgetRefreshButtonPlaceholder(leadingPadding: 8)
+      WidgetRefreshButton()
+        .padding(.leading, 8)
     }
     .foregroundStyle(ink)
   }
@@ -339,50 +328,20 @@ private struct SmallWidgetHeader: View {
 private struct WidgetRefreshButton: View {
   @ViewBuilder
   var body: some View {
-    if #available(iOS 17.0, *), weatherWidgetRefreshAvailable() {
+    if #available(iOS 17.0, *) {
       Button(intent: RefreshWeatherWidgetIntent()) {
-        WidgetRefreshButtonLabel()
-          .invalidatableContent()
+        Image(systemName: "arrow.clockwise")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(Color.white)
+          .frame(width: 30, height: 30)
+          .background(refreshButtonSurface, in: Circle())
+          .frame(width: 44, height: 44)
+          .background(Color.white.opacity(0.001))
+          .contentShape(.interaction, Rectangle())
       }
       .buttonStyle(.plain)
-      .frame(width: 24, height: 24)
       .accessibilityLabel("날씨 새로고침")
     }
-  }
-}
-
-private struct WidgetRefreshButtonPlaceholder: View {
-  let leadingPadding: CGFloat
-
-  @ViewBuilder
-  var body: some View {
-    if #available(iOS 17.0, *), weatherWidgetRefreshAvailable() {
-      Color.clear
-        .frame(width: 24, height: 24)
-        .padding(.leading, leadingPadding)
-    }
-  }
-}
-
-@available(iOSApplicationExtension 17.0, *)
-private struct WidgetRefreshButtonLabel: View {
-  @Environment(\.redactionReasons) private var redactionReasons
-
-  private var isRefreshing: Bool {
-    redactionReasons.contains(.invalidated)
-  }
-
-  var body: some View {
-    ZStack {
-      Circle().fill(
-        isRefreshing ? refreshButtonLoadingSurface : refreshButtonSurface
-      )
-      Image(systemName: "arrow.clockwise")
-        .font(.system(size: 11, weight: .semibold))
-        .foregroundStyle(isRefreshing ? refreshButtonSurface : Color.white)
-    }
-    .frame(width: 22, height: 22)
-    .unredacted()
   }
 }
 

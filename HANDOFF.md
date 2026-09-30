@@ -8314,9 +8314,37 @@
 - 로컬의 iOS 위젯 새로고침 원인 진단 기록과 원격의 스토어 스크린샷 구성 갱신 기록이 `HANDOFF.md` 끝부분에서 충돌한 상태를 해결했다.
 - 양쪽 기록과 원격 스토어 결과물을 모두 유지했으며, 작업 중이던 Flutter·Xcode 파일의 비스테이징 변경은 병합 커밋에 포함하지 않았다.
 
+## 2026-09-29 iOS 위젯 새로고침 터치 영역 보정
+
+- iOS 17 이상 위젯에서 전체 화면 `Link`가 작은 새로고침 버튼 주변 탭을 가로채 앱을 실행하던 구조를 제거했다. 위젯 본문 앱 실행은 루트 `widgetURL(weatherCareHomeURL)`로 유지하고, 새로고침은 별도 App Intent 버튼으로 처리한다.
+- 새로고침 아이콘의 보이는 `22×22pt` 원형은 유지하면서 버튼 터치 영역을 Apple 권장 최소 크기인 `44×44pt`로 확장하고 `contentShape(Rectangle())`를 적용했다. iOS 15.6~16의 비대화형 위젯 동작은 변경하지 않았다.
+- 네이티브 소스 회귀 테스트에 전체 화면 `Link` 제거와 `44×44pt` 터치 영역 검증을 추가했다.
+- Flutter 3.47.4로 `native_startup_defaults_test.dart`의 6개 테스트를 통과했고, `WeatherCareWidget` iOS 시뮬레이터 타깃 Debug 빌드와 `git diff --check`를 통과했다. `flutter analyze`는 기존 `pubspec.yaml`의 존재하지 않는 `config/` asset 경고 1건만 보고했다.
+- 사용자 작업을 방해하지 않기 위해 실기기 설치 및 직접 탭 검증은 수행하지 않았다.
+
 ## 2026-09-29 iOS Store 실제 알림 센터 캡처 적용
 
 - iPhone 16 Pro Max iOS 18.6 시뮬레이터에 `오늘 준비할 내용`, `현재 강수 안내`, `미세먼지가 나빠요`, `낮 자외선이 강해요` 알림 4건을 실제 APNs 시뮬레이션으로 전달하고, 시스템 알림 센터에서 목록을 펼친 화면을 1320×2868 원본으로 캡처했다.
 - 기존 Pillow 기반 iPhone 알림 화면 합성 호출을 제거하고 실제 캡처 원본 `store/screenshots/source/push-notification-ios.png`을 사용하도록 변경했다. iPad 알림 원본 생성 방식은 유지했다.
 - iOS 8번째 Store 결과물과 iOS 미리보기, `weather-care-store-screenshots.zip`, `weather-care-store-assets.zip`을 다시 생성했다. 캡처를 위해 임시로 추가했던 시뮬레이터 권한 처리와 UI 테스트 코드는 모두 제거했다.
 - 네 플랫폼별 RGB PNG 8장의 규격, 생성기 문법, 두 ZIP의 CRC와 iOS 8번 결과물 포함 여부, `git diff --check`를 통과했다.
+
+## 2026-09-29 iOS 위젯 새로고침 버튼 구조 재보정
+
+- 첫 보정의 오버레이형 커스텀 버튼은 `44×44pt` 프레임을 주어도 iOS 26에서 커스텀 이미지 라벨의 빈 영역 탭이 액션으로 확정되지 않을 수 있는 경로가 남았다. Apple 공식 예제 구조에 맞춰 버튼을 위젯 전체 위의 오버레이가 아니라 작은·중간·큰 위젯 헤더의 실제 자식 컨트롤로 옮겼다.
+- 버튼 라벨을 의미 있는 SwiftUI `Label`로 변경하고, 아이콘 전용 표시·최소 `44×44pt` 프레임·`contentShape(.interaction, Rectangle())`를 적용했다. 앱 열기는 루트 `widgetURL` 한 개만 사용하며 App Intent의 `openAppWhenRun = false`는 유지한다.
+- Flutter 3.47.4 네이티브 소스 테스트 6개와 iOS 시뮬레이터 `WeatherCareWidget` Debug 빌드가 통과했다. 서명된 기기용 Debug 앱도 빌드해 연결된 iPhone 16 Pro에 기존 앱 데이터를 유지하는 업데이트 방식으로 설치했다.
+- 전체 앱 빌드 중 Flutter가 자동 변경한 최소 iOS 버전·프로젝트 직렬화 변경은 작업 범위에 포함하지 않고 복원했으며, 기존 자동 서명 설정 변경은 보존했다. 별도 화면을 띄우지 않아 설치 후 실기기 직접 탭 확인은 사용자 확인이 필요하다.
+
+## 2026-09-29 iOS 위젯 새로고침 시뮬레이터 실동작 보정
+
+- iPhone 17 Pro iOS 26.4.1 시뮬레이터 홈 화면에 실제 위젯을 배치하고 XCUITest로 탭했다. 기존 `Label` 기반 커스텀 라벨은 버튼 중앙을 눌러도 `weathercare://home`으로 앱이 실행되는 현상을 재현했다.
+- 새로고침 버튼을 WidgetKit 공식 예제와 같은 직접적인 `Button(intent:)` + `Image` 구조로 단순화하고, 보이는 원형 자체를 `44×44pt`로 만들었다. 새로고침 URL 저장 여부와 무관하게 iOS 17 이상에서는 항상 App Intent 버튼을 아카이브하도록 조건도 제거했다.
+- 수정 후 버튼 중앙 탭과 `44×44pt` 영역의 좌상단 10% 지점 탭이 모두 앱을 열지 않은 채 통과했다. 각 탭 뒤 App Group 스냅샷의 기준 시각이 `BEFORE-TAP`에서 실제 서버 응답인 `오후 6:38 기준`, `오후 6:40 기준`으로 바뀌어 App Intent 실행·네트워크 요청·타임라인 데이터 저장까지 확인했다.
+- Flutter 네이티브 소스 테스트 6개와 iOS 시뮬레이터용 전체 Runner Debug 빌드, `git diff --check`를 통과했다. 빌드에는 기존 `pubspec.yaml`의 존재하지 않는 `config/` asset 경고와 외부 플러그인 deprecation 경고가 남아 있다.
+
+## 2026-09-30 iOS 위젯 새로고침 버튼 축소
+
+- 새로고침 버튼의 보이는 원형을 `44×44pt`에서 `30×30pt`로, 아이콘을 12pt로 줄였다. 바깥 레이아웃과 상호작용 영역은 `44×44pt`로 유지해 작은 모양 때문에 누르기 어려워지지 않도록 했다.
+- iPhone 17 Pro iOS 26.4.1 시뮬레이터에서 XCUITest로 보이는 30pt 원의 좌상단 바깥 5pt 지점을 직접 눌렀다. 앱이 열리지 않은 채 홈 화면을 유지했고, App Group 스냅샷 기준 시각이 `BEFORE-TAP`에서 `오전 9:07 기준`으로 바뀌어 새로고침 동작을 확인했다.
+- 테스트 후 홈 화면 캡처에서 축소된 원형 버튼의 크기와 헤더 배치를 확인했다. Flutter 네이티브 소스 테스트 6개와 iOS 시뮬레이터용 전체 Runner Debug 빌드, `git diff --check`를 통과했다.

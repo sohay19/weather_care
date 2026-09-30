@@ -144,24 +144,21 @@ void main() {
         'refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)',
       ),
     );
-    expect(
-      widget,
-      contains(
-        'refreshButtonLoadingSurface = Color(red: 214 / 255, green: 232 / 255, blue: 245 / 255)',
-      ),
-    );
-    expect(
-      widget,
-      contains('isRefreshing ? refreshButtonLoadingSurface'),
-    );
-    expect(widget, contains('.invalidatableContent()'));
-    expect(widget, contains('redactionReasons.contains(.invalidated)'));
-    expect(widget, contains('Link(destination: weatherCareHomeURL)'));
+    expect(widget, isNot(contains('Link(destination: weatherCareHomeURL)')));
     expect(widget, contains('widgetContent.widgetURL(weatherCareHomeURL)'));
+    expect(widget, contains('Button(intent: RefreshWeatherWidgetIntent())'));
+    expect(widget, contains('Image(systemName: "arrow.clockwise")'));
     expect(
       widget,
-      contains('WidgetRefreshButtonPlaceholder(leadingPadding: 8)'),
+      contains('.frame(width: 30, height: 30)'),
     );
+    expect(widget, contains('.background(refreshButtonSurface, in: Circle())'));
+    expect(widget, contains('.frame(width: 44, height: 44)'));
+    expect(widget, contains('.background(Color.white.opacity(0.001))'));
+    expect(widget, contains('.contentShape(.interaction, Rectangle())'));
+    expect(widget, contains('.accessibilityLabel("날씨 새로고침")'));
+    expect(widget, isNot(contains('weatherWidgetRefreshAvailable()')));
+    expect(widget, isNot(contains('WidgetRefreshButtonPlaceholder')));
   });
 
   test('Android and iOS expose manual widget refresh on supported systems', () {

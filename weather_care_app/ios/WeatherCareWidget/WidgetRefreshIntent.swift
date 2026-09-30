@@ -7,15 +7,6 @@ private let refreshWidgetGroup = "group.com.codesoha.weathercare"
 private let refreshWidgetSnapshotKey = "snapshot"
 private let refreshWidgetURLKey = "refresh_url"
 
-func weatherWidgetRefreshAvailable() -> Bool {
-  guard let defaults = UserDefaults(suiteName: refreshWidgetGroup) else {
-    return false
-  }
-  return !(defaults.string(forKey: refreshWidgetURLKey) ?? "")
-    .trimmingCharacters(in: .whitespacesAndNewlines)
-    .isEmpty
-}
-
 @available(iOS 17.0, *)
 struct RefreshWeatherWidgetIntent: AppIntent {
   static var title: LocalizedStringResource = "날씨 새로고침"

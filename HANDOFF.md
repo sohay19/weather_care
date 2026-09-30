@@ -8376,3 +8376,10 @@
 - 위치·기준시간 묶음에 상단 13pt 정렬 보정을 적용해 위치 텍스트의 높이는 중형·대형 공통 헤더와 동일하게 유지했다. 새로고침 버튼의 맨 우측 정렬과 44pt 터치 영역도 유지했다.
 - iPhone 17 Pro iOS 26.4.1 시뮬레이터 캡처로 2줄 배치와 수직 정렬을 확인했다. 버튼 우측 영역 탭 뒤에도 앱이 열리지 않았고 기준 시각이 `오전 10:46 기준`으로 갱신됐다.
 - Flutter 네이티브 소스 테스트 6개와 iOS 시뮬레이터용 전체 Runner Debug 빌드, XCUITest 1개, `git diff --check`를 통과했다.
+
+## 2026-09-30 최신 위젯 Store 스크린샷 반영
+
+- Store 위젯 생성기를 최신 네이티브 UI에 맞췄다. iOS·iPad는 보이는 22pt 새로고침 버튼, 44pt 헤더 영역, 소형의 위치 아래 기준시간, 상단 25%·하단 65% 여백을 재현했다.
+- Android·Android 태블릿 위젯에도 실제 XML과 같은 24dp 새로고침 버튼과 크기별 헤더 배치를 반영했다.
+- 네 플랫폼의 `04-widget.png`와 미리보기 4장을 다시 생성하고 직접 확인했다. 나머지 Store 화면은 변경되지 않았다.
+- `weather-care-store-screenshots.zip`과 `weather-care-store-assets.zip`을 최신 결과와 생성기로 다시 구성했다. 플랫폼별 RGB PNG 8장의 규격과 두 ZIP의 CRC 무결성, `git diff --check`를 확인했다.

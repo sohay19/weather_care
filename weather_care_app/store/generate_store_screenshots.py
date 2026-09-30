@@ -505,6 +505,7 @@ WIDGET_INK = "#25374E"
 WIDGET_SECONDARY = "#60758A"
 WIDGET_SURFACE = "#EAF4FB"
 WIDGET_PANEL = "#F9FCFE"
+WIDGET_REFRESH = "#476F98"
 
 
 def text_size(draw: ImageDraw.ImageDraw, text: str, text_font: ImageFont.FreeTypeFont) -> tuple[int, int]:
@@ -642,6 +643,39 @@ def widget_panel(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], radi
     draw.rounded_rectangle(box, radius=radius, fill=WIDGET_PANEL)
 
 
+def draw_refresh_button(
+    draw: ImageDraw.ImageDraw,
+    box: tuple[int, int, int, int],
+) -> None:
+    left, top, right, bottom = box
+    diameter = min(right - left, bottom - top)
+    draw.ellipse(box, fill=WIDGET_REFRESH)
+    stroke = max(1, round(diameter * 0.08))
+    center_x = (left + right) / 2
+    center_y = (top + bottom) / 2
+    radius = diameter * 0.2
+    draw.arc(
+        (
+            round(center_x - radius),
+            round(center_y - radius),
+            round(center_x + radius),
+            round(center_y + radius),
+        ),
+        start=-70,
+        end=250,
+        fill="#FFFFFF",
+        width=stroke,
+    )
+    draw.polygon(
+        (
+            (round(center_x + diameter * 0.23), round(center_y - diameter * 0.23)),
+            (round(center_x + diameter * 0.24), round(center_y - diameter * 0.04)),
+            (round(center_x + diameter * 0.06), round(center_y - diameter * 0.11)),
+        ),
+        fill="#FFFFFF",
+    )
+
+
 def draw_min_max_row(
     draw: ImageDraw.ImageDraw,
     box: tuple[int, int, int, int],
@@ -736,8 +770,9 @@ def draw_temperature_row(
 
 def widget_margins(family: str, platform: str) -> tuple[float, float, float, float]:
     if platform in {"ios", "ipad"}:
-        margin = 14.25 if family == "large" else 13.5
-        return margin, margin, margin, margin
+        horizontal = 14.25 if family == "large" else 13.5
+        default_vertical = horizontal / 0.45
+        return horizontal, default_vertical * 0.25, horizontal, default_vertical * 0.65
     if family == "small":
         return 14, 12, 14, 10
     if family == "medium":
@@ -773,9 +808,58 @@ def draw_widget_card(size: tuple[int, int], family: str, platform: str) -> Image
     time_font = fitted_font("SUITE-Regular.ttf", refresh, time_font.size, round(refresh_width_limit), max(8, round(time_font.size * .72)))
     region_width, region_height = text_size(draw, region, region_font)
     refresh_width, refresh_height = text_size(draw, refresh, time_font)
-    header_height = max(region_height, refresh_height)
-    draw_text_top(draw, (left, top_px + (header_height - region_height) / 2), region, region_font, WIDGET_INK)
-    draw_text_top(draw, (right - refresh_width, top_px + (header_height - refresh_height) / 2), refresh, time_font, WIDGET_SECONDARY)
+    apple_widget = platform in {"ios", "ipad"}
+    button_points = 22 if apple_widget else 24
+    button_size = round(button_points * scale)
+    button_left = right - button_size
+
+    if family == "small":
+        if apple_widget:
+            header_height = round(44 * scale)
+            text_top = top_px + round(13 * scale)
+            button_top = top_px + round(11 * scale)
+        else:
+            text_stack_height = region_height + round(scale) + refresh_height
+            header_height = max(button_size, text_stack_height)
+            text_top = top_px
+            button_top = top_px
+        draw_text_top(draw, (left, text_top), region, region_font, WIDGET_INK)
+        draw_text_top(
+            draw,
+            (left, text_top + region_height + round(scale)),
+            refresh,
+            time_font,
+            WIDGET_SECONDARY,
+        )
+    else:
+        header_points = 44 if apple_widget else 24
+        header_height = round(header_points * scale)
+        header_center = top_px + header_height / 2
+        button_top = round(header_center - button_size / 2)
+        refresh_right = (
+            right - round(33 * scale)
+            if apple_widget
+            else button_left - round(8 * scale)
+        )
+        draw_text_top(
+            draw,
+            (left, header_center - region_height / 2),
+            region,
+            region_font,
+            WIDGET_INK,
+        )
+        draw_text_top(
+            draw,
+            (refresh_right - refresh_width, header_center - refresh_height / 2),
+            refresh,
+            time_font,
+            WIDGET_SECONDARY,
+        )
+
+    draw_refresh_button(
+        draw,
+        (button_left, button_top, right, button_top + button_size),
+    )
     header_bottom = top_px + header_height
 
     panel_height = round((27 if family != "medium" else 28) * scale)

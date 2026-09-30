@@ -8383,3 +8383,27 @@
 - Android·Android 태블릿 위젯에도 실제 XML과 같은 24dp 새로고침 버튼과 크기별 헤더 배치를 반영했다.
 - 네 플랫폼의 `04-widget.png`와 미리보기 4장을 다시 생성하고 직접 확인했다. 나머지 Store 화면은 변경되지 않았다.
 - `weather-care-store-screenshots.zip`과 `weather-care-store-assets.zip`을 최신 결과와 생성기로 다시 구성했다. 플랫폼별 RGB PNG 8장의 규격과 두 ZIP의 CRC 무결성, `git diff --check`를 확인했다.
+
+## 2026-09-30 Google Play 그래픽 이미지 갱신
+
+- `store/google-play/feature-graphic.png`을 현재 앱의 Main 브리핑 카드 캡처로 다시 만들었다. 캡처의 날짜·시각 영역을 제외해 시간에 따라 낡아 보이는 요소를 없앴다.
+- 문구를 `날씨에 맞춰 오늘을 챙겨요`와 `예보부터 준비물·알림까지`로 바꾸고, 핵심 문구와 실제 UI가 중앙에 오도록 생성 코드를 조정했다.
+- 그래픽 대체 텍스트를 스토어 등록정보 Markdown·DOCX와 스크린샷 README에 동일하게 반영했다. 두 배포 ZIP의 관련 항목도 최신 파일로 갱신했다.
+- Google Play 공식 규격인 1024×500 RGB PNG·알파 없음, ZIP 2개의 CRC와 포함 파일 일치, `git diff --check`를 확인했다. DOCX는 13쪽을 비표시 Word 렌더로 검토했다. 내장 DOCX 렌더러는 이 환경에 LibreOffice가 없어 실행되지 않았다.
+- 이미지 생성 모듈을 불러오면서 생긴 `store/__pycache__` 제거 명령은 자동 정책에서 차단되었다. 향후 Git 작업에 섞이지 않도록 앱 `.gitignore`에 Python 캐시 제외 규칙을 추가했다.
+- Play Console 업로드는 수행하지 않았다.
+
+## 2026-09-30 스토어 등록정보 위젯 기능 반영
+
+- `weather_care_app/store/스토어_등록정보.md`의 Google Play 간단 설명, App Store 부제·프로모션 텍스트, 공통 상세 설명, 주요 기능 및 첫 출시 안내에 홈 화면 위젯을 추가했다.
+- 실제 Android·iOS 위젯 크기별 표시를 확인해 작은 위젯의 현재 날씨·기온과 큰 위젯의 준비물·다음 시간 예보를 과장 없이 설명했다. Google Play 검색 핵심어에도 `날씨위젯`을 추가했다.
+- 스토어 이미지 표의 플랫폼별 장수를 현재 8장으로, 노출 순서와 스크린샷 대체 텍스트를 현재 결과물에 맞게 정정했다.
+- DOCX를 Markdown 원본에서 다시 생성했다. 짧은 설명 41/80자, 부제 19/30자, 프로모션 텍스트 88/170자, 상세 설명 1,035/4,000자를 확인했다. 비표시 Word 렌더 13쪽을 검토했고 잘림·겹침·한글 깨짐이 없었다. 내장 DOCX 렌더러는 이 환경에 LibreOffice가 없어 사용할 수 없었다.
+- 스토어 콘솔에는 직접 입력하거나 게시하지 않았다.
+
+## 2026-09-30 Google Play 데이터 삭제 URL DNS 오류 진단
+
+- Google 지적 문구의 원인 후보를 공개 DNS와 HTTPS로 확인했다. 이전 Pages 주소 `weather-care-privacy.pages.dev`는 로컬 DNS 및 Google 공개 DNS(8.8.8.8)에서 이름이 존재하지 않고, HTTPS도 이름 해석 실패로 열리지 않는다. 2026-09-21 통합 후 기존 Pages 프로젝트를 삭제한 기록과 일치한다.
+- 현재 운영 주소 `https://weather-care.pages.dev/data-deletion`은 DNS가 해석되고 HTTPS GET/HEAD 모두 HTTP 200이다. 페이지에는 앱·개발자명, 삭제 범위, 앱 내 삭제 절차, 앱이 없어도 이용할 수 있는 이메일 요청 경로가 있다. `X-Robots-Tag: noindex`는 없다.
+- 저장소의 스토어 등록정보와 앱/페이지 링크는 이미 현재 주소를 사용하므로 코드·배포 변경은 하지 않았다. Play Console의 실제 입력값은 확인하지 못했다. 콘솔의 데이터 보안 선언에 이전 주소가 남았다면 현재 운영 주소로 교체하고 저장·제출해야 한다. 개인정보처리방침 URL도 이전 주소라면 `https://weather-care.pages.dev/`로 갱신한다.
+- Google Play 공식 도움말은 데이터 삭제용 웹 링크가 오류 없이 열리고, 삭제 요청 방법을 쉽게 찾을 수 있으며, 앱 또는 개발자 이름을 표시해야 한다고 안내한다: https://support.google.com/googleplay/android-developer/answer/13327111 .

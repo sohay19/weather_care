@@ -1137,28 +1137,28 @@ def create_google_play_feature_graphic() -> None:
     draw.ellipse((42, 438, 116, 512), fill="#8CC2FF")
 
     app_name_font = font("SUITE-Bold.ttf", 30)
-    headline_font = font("SUITE-Heavy.ttf", 58)
+    headline_font = font("SUITE-Heavy.ttf", 56)
     supporting_font = font("SUITE-Medium.ttf", 23)
 
-    draw.text((102, 106), "날씨챙겨", font=app_name_font, fill=LABEL_COLOR)
+    draw.text((120, 106), "날씨챙겨", font=app_name_font, fill=LABEL_COLOR)
     draw.multiline_text(
-        (98, 154),
-        "오늘 필요한 날씨,\n미리 챙겨요",
+        (116, 154),
+        "날씨에 맞춰\n오늘을 챙겨요",
         font=headline_font,
         fill=HEADLINE_COLOR,
         spacing=-2,
     )
     draw.text(
-        (102, 335),
-        "생활에 필요한 날씨만 한눈에",
+        (120, 335),
+        "예보부터 준비물·알림까지",
         font=supporting_font,
         fill="#E6F0F7",
     )
 
     with Image.open(SOURCE_DIR / "main.png") as source:
-        # 기기 프레임 대신 실제 Main 화면의 위치·브리핑 영역만 사용한다.
-        crop = source.crop((34, 76, 1046, 1180)).convert("RGB")
-        crop.thumbnail((390, 430), Image.Resampling.LANCZOS)
+        # 날짜·시각이 보이지 않는 실제 Main 브리핑 카드를 사용한다.
+        crop = source.crop((34, 344, 1046, 1270)).convert("RGB")
+        crop.thumbnail((350, 390), Image.Resampling.LANCZOS)
 
     mask = Image.new("L", crop.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle(
@@ -1169,7 +1169,7 @@ def create_google_play_feature_graphic() -> None:
     ui_card = Image.new("RGBA", crop.size, (255, 255, 255, 0))
     ui_card.paste(crop, (0, 0), mask)
 
-    card_x = 574
+    card_x = 560
     card_y = (height - ui_card.height) // 2
     shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     ImageDraw.Draw(shadow).rounded_rectangle(

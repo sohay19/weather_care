@@ -8598,3 +8598,10 @@
 - 기기 날짜가 하루 느린 시간별·주간 화면과 두 응답 사이 날짜가 바뀐 위젯 최저·최고를 회귀 테스트로 확인했다. Flutter 3.47.4 전체 485개, 서버 Worker 365개·Node 11개 테스트, Flutter 정적 분석, TypeScript 타입 검사, `git diff --check`가 통과했다.
 - 운영 서버 배포는 수행하지 않았다. 주간 응답만 성공하고 Today가 실패한 경우에도 기기 시계 차이를 보정하려면 서버의 새 `generatedAt` 응답을 운영에 반영해야 한다. 작업 시작 전에 존재하던 HANDOFF 변경, Android 서명 설정, `output/`은 이번 커밋 범위에서 제외한다.
 - Android x86_64 Profile APK를 빌드해 에뮬레이터에 `adb install -r -d`로 설치했다. 저장된 서명 설정의 버전 코드가 기존 설치본보다 낮아 다운그레이드 허용 옵션이 필요했다. 앱 데이터와 최초 설치 시각은 유지됐고 최종 갱신 시각은 14:42:03이다. 앱 UI는 띄우지 않았다.
+
+## 2026-10-01 주간 응답 시각 운영 서버 배포
+
+- 사용자 요청으로 커밋 `45e14d0`의 `/weekly` `generatedAt` 응답 변경을 미니 PC `soha-01` 운영 Node API에 배포했다. 배포 전 운영 서버의 추적 소스 193개 파일은 해당 커밋 직전 소스와 일치했다. 서버 TypeScript 타입 검사와 `weatherApi.test.ts` 34개 테스트를 다시 통과했다.
+- 배포 전 SQLite 온라인 백업은 `/var/backups/weather-care/weather-care-before-45e14d0-20261001T055120Z.sqlite`, 소스 압축 백업은 `/var/backups/weather-care/source-before-45e14d0-20261001T055120Z.tar.gz`, 즉시 롤백 파일은 `/var/backups/weather-care/weather.ts-before-45e14d0-20261001T055120Z`이다. 백업은 `weather-care` 소유·0600이고 SQLite `quick_check`가 통과했다. 운영 환경파일과 DB 원본은 변경하지 않았다.
+- 기존 캐시를 유지하며 API 서비스만 의존성 재실행 없이 재시작했고 스케줄러·선수집은 재시작하지 않았다. 배포한 `src/api/weather.ts` SHA-256은 CRLF 기준 `6a49a611d6397d03f5dee7c1448c02514131e1db3ea8d8aa9c173dc7ba54f5f3`이다.
+- 내부·공개 `/health`와 공개 `/main`, `/today`, `/weekly`, `/widget`이 HTTP 200이다. 공개 `/weekly?nx=57&ny=124`는 7일 자료와 `generatedAt`을 반환한다. API·스케줄러·Cloudflare Tunnel은 모두 active이며 재시작 이후 API·스케줄러의 error 등급 journal 항목은 0개다.

@@ -8487,8 +8487,33 @@
 - 설정 > 지역 선택 > 위치 다시 확인은 최근 위치 캐시를 건너뛰고 GPS를 새로 측정한다. 갱신 중인 날씨 조회가 있으면 위치 재확인을 이어서 실행한다. 열린 지역 선택 화면도 새 위치 상태와 지역명을 즉시 반영하도록 연결했다.
 - Flutter 위치·홈·설정 대상 테스트 61개 통과, `flutter analyze --no-pub` 이슈 없음. Windows 환경이므로 iOS 위젯 Xcode 컴파일과 iPhone 실동작은 확인하지 못했다.
 
+## 2026-10-01 기상청 적용 범위 밖 예상 체감온도 계산
+
+- 사용자는 체감온도를 기온·계절 조건 때문에 비우지 말고 계산하도록 요청했다. 예보의 기상청 계절별 공식 산식은 적용 범위에서 유지하고, 범위 밖에서 기온·습도·풍속이 모두 유효하면 호주 기상청 Steadman 비복사 산식으로 추정값을 계산하도록 했다.
+- 10월 1일 10시 예보 기온 19℃·습도 25%·풍속 3.5m/s 사례는 예상 체감온도 14.4℃로 계산된다. Steadman 값은 `apparentTemperature`에 제공하며 `kmaApparentTemperature`는 비우고 새 출처·산식 버전을 기록한다. 앱 Main에는 추정값임을 설명한다.
+- 근거: https://data.kma.go.kr/climate/windChill/selectWindChillChart.do , https://www.bom.gov.au/info/thermal_stress/ . 프로젝트의 체감온도 기준 문서와 서버 README를 수정했다. 기존 관측 체감온도 계산 경로와 실제 운영 배포는 이번 변경 범위에서 건드리지 않았다.
+- 검증: 서버 Worker 테스트 362개와 추가 API 회귀 테스트 1개(해당 파일 32개), TypeScript 타입 검사, Flutter Main 위젯 테스트 4개, Flutter analyze 통과. 예보 입력이 결측이면 거짓값을 만들지 않고 기존처럼 자료 없음으로 둔다. 처음 `flutter` 명령은 PATH의 오래된 3.35.6을 사용해 실패했으며, 프로젝트 Flutter 3.47.4 지정 후 통과했다.
+
+## 2026-10-01 현재·미래 체감온도 계산 방식 통일
+
+- 사용자 지적에 따라 10월에 현재 체감온도가 표시되는 이유를 재확인했다. 기존 초단기·시간별 관측 경로는 기상청 산식 적용 조건 밖에서 계산하지 않고 기온을 그대로 체감온도로 반환했으며, 미래 예보는 결측으로 반환했다. 앞 항목의 '관측 경로는 건드리지 않았다'는 이 변경으로 더 이상 현재 상태가 아니다.
+- 관측과 예보가 같은 `calculateApparentTemperatureForConditions`를 사용하게 했다. 기상청 공식 적용 범위에서는 기존 계절별 산식을 사용하고, 범위 밖에서 기온·습도·풍속이 모두 있으면 Steadman 비복사 산식으로 계산한다. 실황·어제 비교의 시간별 ASOS 경로도 같은 기준으로 바꿨다.
+- 관측 Steadman 값은 `apparentTemperature`에만 넣고 `APP_STEADMAN_FROM_OBSERVATION` 출처와 산식 버전을 남긴다. Main 현재 카드와 상세 날씨의 설명도 공식 기상청 값과 추정값을 구분한다. 10월 1일 19℃·습도 25%·풍속 3.5m/s는 현재·미래 모두 14.4℃다.
+- 검증: 서버 Worker 테스트 364개, Node 테스트 11개, TypeScript 타입 검사, Flutter 대상 위젯 테스트 23개, Flutter analyze 통과. 운영 배포·실기기 검증은 하지 않았다. 공유 작업 트리의 다른 진행 중 변경은 유지했다.
+
 ## 2026-10-01 위젯 지역명 표시와 당겨서 새로고침 GPS 갱신
 
 - iOS 작은 위젯 제보 화면에서 지역명이 `서울 구로구...`로 잘렸다. Android와 iOS 위젯 상단의 지역명과 갱신 시각을 세로로 배치하고, 새로고침 버튼 왼쪽 영역에서 지역명이 여러 줄로 표시되도록 바꿨다. Android는 실제 위젯 너비로 지역명 비트맵 폭을 정하고, 작은 위젯은 최대 3줄·그 외는 최대 2줄로 그린다. Android 위젯 선택 화면 미리보기도 같은 배치로 맞췄다.
 - 앱 Today·Detail·Main·Week 및 Setting 탭에서 아래로 당겨 새로고침하면 최근 위치 캐시를 건너뛰고 GPS 현재 위치를 다시 측정하도록 연결했다. GPS 모드가 아닐 때는 기존 수동 선택 지역을 사용한다.
 - 검증: Flutter 위치·네이티브 기본값 대상 테스트 44개 통과, `flutter analyze --no-pub` 이슈 없음, Android Debug APK 빌드 성공, `git diff --check` 통과. Windows라 iOS WidgetKit 빌드와 실기기 화면 확인은 수행하지 못했다.
+
+## 2026-10-01 체감온도·날씨 접속 로그 운영 서버 배포
+
+- 미니 PC `soha-01`의 운영 Node API에 예상·현재 체감온도 계산과 앞선 컨텍스트의 날씨 접속 로그 변경을 함께 배포했다. 기존 예보 캐시에 같은 발표 시각의 자료가 남아도 API가 기온·습도·풍속으로 범위 밖 체감온도를 계산하도록 보완했다. 앱 바이너리는 이번에 배포하지 않았다.
+- 공유 작업 트리의 다른 진행 중 변경을 배제한 별도 작업 트리 `C:\Users\idp20\.codex\worktrees\apparent-temp-deploy\weather_care`에서 `131eca9 fix(체감온도): 관측과 예보의 범위 밖 체감온도 계산`, `989e7a3 feat(운영): 날씨 접속 로그와 체감온도 보정 통합`을 커밋했다. 최종 서버 아카이브 SHA-256은 `BAAD9B8CFB2099669002D7E7A96CC79EE6D5C0259D62B106BAC3255EE862AF5F`다.
+- 배포 전 SQLite 온라인 백업은 `/var/backups/weather-care/weather-care-20261001T013715Z.sqlite`, 소스 압축 백업은 `/var/backups/weather-care/source-before-989e7a3-20261001T0137Z.tar.gz`, 즉시 롤백 디렉터리는 `/opt/weather-care/weather_care_server.previous-before-989e7a3-20261001T0137Z`다. 운영 환경파일과 DB 경로는 유지했다.
+- 앞선 컨텍스트의 `/tmp/weather-care-access-20261001/deploy.sh`가 계속 실행 중임을 확인했다. 그 스크립트는 롤백 후에도 `deployed` 상태를 기록했지만 실제 운영 소스는 원래 파일이었으므로, 최종 배포에 접속 로그 변경을 포함했다.
+- 마이그레이션과 전국 선수집이 모두 성공했고, 필수 캐시 `10002/10002`, 누락 0개다. API·스케줄러·Cloudflare Tunnel은 active이고 내부·공개 `/health`, 공개 Main은 HTTP 200이다. Main `57/124`는 현재 `18.5℃ → 체감 14.0℃` (`APP_STEADMAN_FROM_OBSERVATION`), 다음 예보 `20.0℃ → 체감 15.3℃` (`APP_STEADMAN_FROM_FORECAST`)를 반환하며 두 값 모두 기상청 전용 필드는 비어 있다. 접속 로그와 응답의 `X-Request-Id`도 확인했다.
+- 최종 배포본 검증은 TypeScript 타입 검사, Worker 54파일·365개 테스트, Node 3파일·11개 테스트, `git diff --check`를 통과했다. 공유 작업 트리에도 캐시 보정 코드와 회귀 테스트를 동기화했다.
+- 배포 후 첫 10:40 KST 정규 `core` 수집 회차가 `node_scheduled_job_completed`로 끝났고, API·스케줄러·터널은 계속 active였다.
+- 배포한 서버 코드, 체감온도 앱 안내와 기준 문서는 메인 브랜치의 `6af7a04 feat(날씨): 체감온도 보정과 요청 추적 반영`으로 커밋했다. 병행 중인 앱 로딩·오류 상태 수정과 Android 서명 설정은 해당 커밋에 포함하지 않았다.

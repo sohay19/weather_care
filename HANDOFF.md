@@ -8714,6 +8714,13 @@
 - GPS 모드의 포그라운드 복귀 새로고침에도 새 위치 측정을 요청한다. 수동 지역 모드는 기존처럼 GPS를 읽지 않는다. 위치 테스트 대역이 저장된 위치와 새 측정값을 구분하도록 하고, 복귀 후 다른 좌표가 날씨 요청과 알림 지역 등록에 전달되는 회귀 테스트를 추가했다.
 - 프로젝트 Flutter 3.47.4에서 `home_location_test.dart` 42개와 `flutter analyze --no-pub`, `git diff --check`가 통과했다. 앱 소스와 테스트는 커밋 `8d18cf7`(`fix(위치): 앱 복귀 시 GPS 새로 측정`)에 포함했다. Windows 환경이라 iOS 기기에서 직접 복귀 동작을 확인하지는 못했다. 작업 전부터 있던 다른 HANDOFF 변경, Android 서명 설정, `output/`은 유지했다.
 
+## 2026-10-01 Play Console 위치 전경 서비스 선언 안내
+
+- 사용자 제공 Play Console 화면의 `FOREGROUND_SERVICE_LOCATION` 선언을 검토했다. 현재 선택된 '사용자가 시작하는 위치 공유'는 실제 앱 동작과 맞지 않는다.
+- Android GPS 모드에서 홈 위젯 새로고침 버튼을 누르면 `WeatherCareWidgetRefreshService`가 위치 유형 전경 서비스로 현재 좌표를 한 번 확인하고 해당 지역의 위젯 날씨를 조회한 뒤 종료한다. 수동 지역 모드는 WorkManager로 갱신한다. 매니페스트에는 `ACCESS_BACKGROUND_LOCATION`이 없다.
+- Play Console에서 위치 유형의 '기타'에 실제 사용 사례를 설명하고, GPS 위젯 버튼·일시적 알림·지역 날씨 갱신을 보여 주는 심사용 영상 링크를 제출하도록 안내한다. Google Play의 전경 서비스·백그라운드 위치 정책 심사를 통과한다고 보장할 수 없으며, 거절되면 위치 전경 서비스를 제거하고 앱을 열어 위치를 갱신하는 방식이 대안이다.
+- 이번 작업은 조사와 안내만 수행했다. 앱 코드·운영 설정은 변경하지 않았다.
+
 ## 2026-10-01 iOS 위젯 위치 권한·스토어 공개 점검
 
 - Android 위치 포그라운드 서비스 선언과 별도로 iOS 위젯은 WidgetKit AppIntent에서 사용자가 새로고침 버튼을 누르면 현재 위치를 한 번 확인한다. iOS에는 같은 전경 서비스 권한이나 진행 알림 선언이 필요하지 않다.
@@ -8755,3 +8762,26 @@
 - 스토어 등록정보의 권한 설명과 기존 네이티브 설정 테스트를 새 동작에 맞췄다. Flutter 3.47.4의 `flutter analyze --no-pub`, 네이티브 설정 테스트 6개, iOS 시뮬레이터 빌드, Info.plist 검사, `git diff --check`가 통과했다. 빌드된 위젯 Info.plist에도 `NSWidgetWantsLocation`이 없음을 확인했다.
 - 첫 실행 권한 위젯 테스트는 이 환경에서 Flutter의 `ink_sparkle.frag` 디코딩 오류가 발생해 기본 실행은 실패했다. 테스트 화면의 터치 효과만 일시적으로 비활성화한 뒤 동일 테스트가 통과했고, 임시 변경은 원복했다. 빌드 과정에서 Flutter가 자동 변경한 iOS 프로젝트 파일 3개도 원복했다. 시뮬레이터에 앱을 설치하거나 위젯 추가 UI를 조작하지 않았다.
 - 기존 `SpringBoard`의 `SBHRippleSimulation` 충돌과 위젯 확장의 XPC 종료는 별도 관측 사항이며 이번 권한 변경으로 해결되는지는 시뮬레이터에서 재검증해야 한다.
+
+## 2026-10-01 Play Console GPS 위젯 시연 영상
+
+- 사용자 요청에 따라 Android 17 `Medium_Phone` 헤드리스 에뮬레이터에서 위치 권한 허용, GPS 모드 확정, 홈 위젯 새로고침, 위치 유형 포그라운드 서비스 알림, 지역 날씨 갱신을 촬영했다. `createdesktop` 명령이 없어 보이지 않는 에뮬레이터 화면을 ADB로 기록했다.
+- 서울(37.5665, 126.9780)과 부산(35.1796, 129.0756) 모의 GPS 위치를 주입했다. 위젯이 서울 중구에서 부산 연제구 연산동으로 바뀌는 것을 확인했다. 알림에는 `날씨챙겨 위젯 새로고침`과 `현재 위치의 날씨를 확인하고 있어요`가 표시됐다.
+- 실제 에뮬레이터 화면 녹화와 화면 캡처를 편집한 46.5초 세로 MP4는 `output/play_console_video/날씨챙겨_GPS_위젯_새로고침_시연.mp4`다. 첫 화면에 에뮬레이터·모의 위치 사용을 표기했다. 최종 영상에서 권한 안내, GPS 선택 상태, 위젯 로딩, 전경 서비스 알림, 부산 갱신 결과를 프레임으로 확인했다. 앱 코드는 변경하지 않았고 Play Console 업로드도 하지 않았다.
+
+## 2026-10-01 Play Console 시연 영상 비노출 URL 게시
+
+- 사용자의 요청으로 46.5초 GPS 위젯 시연 MP4를 기존 Direct Upload Cloudflare Pages `weather-care`의 `public/review/2eda0bf8895bd4e0b677db4575339a8f/gps-widget-demo.mp4`에 추가했다. 홈페이지와 사이트 메뉴에는 링크를 넣지 않았고, 해당 파일에 `X-Robots-Tag: noindex, nofollow, noarchive` 및 `Referrer-Policy: no-referrer`를 적용했다. 링크를 아는 사람은 인증 없이 열 수 있으므로 비노출 링크이지 접근 제한 링크는 아니다.
+- `npm run verify`가 개인정보·삭제 안내·두 지도 화면과 1,633개 격자 검증을 통과했다. Pages 운영 `master` 배포 주소는 `https://ee2a5f1a.weather-care.pages.dev`이며 고정 링크는 `https://weather-care.pages.dev/review/2eda0bf8895bd4e0b677db4575339a8f/gps-widget-demo.mp4`다.
+- 운영 링크는 HTTP 200, `Content-Type: video/mp4`, 검색 제외 헤더를 반환한다. 다운로드 SHA-256이 원본과 같고, 기존 홈페이지·지도·선택 지도 본문 해시도 배포 전후 일치했다. 홈페이지에 토큰 노출이 없고 `/review/` 목록 경로는 404다.
+- 파일과 헤더만 커밋 `5ac05c6`(`chore(심사): GPS 위젯 시연 영상 추가`)으로 원격 `master`에 푸시했다. 기존 미커밋 HANDOFF 변경과 로컬 `output/play_console_video/` 촬영 자료는 커밋 범위에서 제외했다.
+
+## 2026-10-01 HANDOFF 충돌 해결 및 원격 갱신
+
+- 원격 `master`의 2개 커밋을 fast-forward로 가져왔다. `HANDOFF.md`에 겹쳐 추가된 iOS 위젯 조사·권한 변경 기록과 로컬 Play Console 영상 기록을 모두 보존해 충돌을 해결했다.
+- 기존 로컬 영상 원본 `output/play_console_video/`는 유지했다.
+
+## 2026-10-01 HANDOFF 커밋 및 output 정리 점검
+
+- 이전 HANDOFF 충돌 해결 내용과 누락됐던 Play Console 기록을 커밋 대상으로 확인했다.
+- `output/play_console_video/`에는 완성본 MP4 1개와 제작 중간 파일 148개(약 46.9MB)가 있다. 중간 파일 삭제 명령은 자동 정책 검토에서 차단돼 정리하지 못했다. 완성본 MP4와 추적 중인 `output/` 신청 문서 2개는 그대로 유지했다.

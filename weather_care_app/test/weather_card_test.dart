@@ -101,6 +101,12 @@ void main() {
     expect(zero.pm25, 0);
   });
 
+  testWidgets('관측·예보 시각이 없으면 시 한 글자만 표시하지 않는다', (tester) async {
+    await _pumpCard(tester, const CurrentWeather(temperature: 22));
+    expect(find.text('시각 자료 없음'), findsOneWidget);
+    expect(find.text('시'), findsNothing);
+  });
+
   test('현재 날씨의 초단기실황 역할과 관측 시각을 보존한다', () {
     final current = CurrentWeather.fromJson({
       'current': {

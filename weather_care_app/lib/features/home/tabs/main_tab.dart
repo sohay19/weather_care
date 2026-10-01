@@ -124,7 +124,6 @@ class MainTab extends StatelessWidget {
                     SizedBox(height: compact ? 12 : 16),
                     _TodayFutureSection(
                       today: today,
-                      current: today.current,
                       mood: mood,
                     ),
                     SizedBox(height: compact ? 12 : 16),
@@ -479,12 +478,10 @@ class _YesterdayComparisonSection extends StatelessWidget {
 
 class _TodayFutureSection extends StatelessWidget {
   final TodayWeatherResponse today;
-  final CurrentWeather current;
   final String mood;
 
   const _TodayFutureSection({
     required this.today,
-    required this.current,
     required this.mood,
   });
 
@@ -502,7 +499,9 @@ class _TodayFutureSection extends StatelessWidget {
               subject: '미래 예상 날씨',
             );
     }
-    final nextForecast = today.nextForecast ?? current;
+    final nextForecast =
+        today.nextForecast ?? const CurrentWeather(temperature: null);
+    final forecastTime = forecastTemperatureLabel(nextForecast.forecastAt);
     final forecastAirQuality = nextForecast.pm25ForecastGrade;
     final airQualityState = forecastAirQuality == null
         ? _airQualityState(nextForecast.pm10, nextForecast.pm25)
@@ -536,7 +535,9 @@ class _TodayFutureSection extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            '${forecastTemperatureLabel(nextForecast.forecastAt)}의 기온과 체감온도를 예상해요',
+            forecastTime == '시'
+                ? '예보 시각 ${phase.missingText()}'
+                : '$forecastTime의 기온과 체감온도를 예상해요',
             style: TextStyle(
               color: WeatherCareTheme.textSecondary,
               fontSize: 11,

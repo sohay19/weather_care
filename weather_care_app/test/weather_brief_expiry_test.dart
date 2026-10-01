@@ -205,17 +205,21 @@ void main() {
 
     await tester.pumpWidget(screen(WeatherDataPhase.loading));
     expect(
-      tester.widget<Text>(find.byKey(const ValueKey('main-weather-brief'))).data,
+      tester
+          .widget<Text>(find.byKey(const ValueKey('main-weather-brief')))
+          .data,
       '불러오는 중',
     );
     await tester.pumpWidget(screen(WeatherDataPhase.ready));
     expect(
-      tester.widget<Text>(find.byKey(const ValueKey('main-weather-brief'))).data,
+      tester
+          .widget<Text>(find.byKey(const ValueKey('main-weather-brief')))
+          .data,
       '최신 날씨를 확인해 주세요.',
     );
   });
 
-  testWidgets('Main 실제 화면은 지난 행동만 숨기고 공식 예보 시각은 바꾸지 않는다', (tester) async {
+  testWidgets('Main은 현재 시각을 누락된 다음 시간 예보에 재사용하지 않는다', (tester) async {
     tester.view.physicalSize = const Size(360, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -238,7 +242,16 @@ void main() {
     ))));
     expect(find.text(action), findsNothing);
     expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
-    expect(find.textContaining('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
+    expect(find.text('예보 시각 자료 없음'), findsOneWidget);
+    final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
+    expect(
+      find.descendant(of: futureCard, matching: find.text('28.0℃')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: futureCard, matching: find.text('자료 없음')),
+      findsNWidgets(2),
+    );
     expect(tester.takeException(), isNull);
   });
 }

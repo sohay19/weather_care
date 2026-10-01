@@ -865,7 +865,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _mainDetailsLoading = true;
       _statusMessage = 'Main 핵심 날씨를 먼저 표시했어요.\n상세 자료를 계속 불러오고 있어요.';
     });
-    _publishHomeWidget();
     return true;
   }
 

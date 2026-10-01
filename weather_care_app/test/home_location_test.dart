@@ -10,11 +10,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/home_screen.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/models/app_settings.dart';
+import 'package:weather_care/models/home_widget_snapshot.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/app_settings_repository.dart';
 import 'package:weather_care/services/current_location_service.dart';
 import 'package:weather_care/services/gps_region_name_service.dart';
+import 'package:weather_care/services/home_widget_service.dart';
 import 'package:weather_care/services/kma_grid.dart';
 import 'package:weather_care/services/notification_registration_service.dart';
 import 'package:weather_care/services/settings_sync_service.dart';
@@ -138,6 +140,19 @@ class _Weather extends WeatherService {
   }
 }
 
+class _WidgetService extends HomeWidgetService {
+  final published = <HomeWidgetSnapshot>[];
+
+  @override
+  Future<void> publish(
+    HomeWidgetSnapshot snapshot, {
+    String? refreshUrl,
+    bool gpsEnabled = false,
+  }) async {
+    published.add(snapshot);
+  }
+}
+
 class _Sync extends SettingsSyncService {
   final calls = <AppSettings>[];
   bool fail = false;
@@ -228,6 +243,7 @@ void main() {
   Future<void> start(WidgetTester tester,
       {bool settle = true,
       ServerDataAccess? access,
+      HomeWidgetService? widgetService,
       int initialIndex = 4,
       VoidCallback? onHomeReady,
       DateTime Function()? now}) async {
@@ -238,6 +254,7 @@ void main() {
             locationService: location,
             gpsRegionNameService: gpsRegionName,
             weatherService: weather,
+            homeWidgetService: widgetService ?? const HomeWidgetService(),
             settingsSync: sync,
             regionCatalog: catalog,
             onHomeReady: onHomeReady,
@@ -508,12 +525,15 @@ void main() {
   });
 
   testWidgets('경량 자료가 먼저 오면 전체 Today 전에 Main 핵심 카드를 표시한다', (tester) async {
+    final widgetService = _WidgetService();
     weather.mainPreview = _weather(60, 127).today;
     weather.pending = Completer<WeatherLoadResult>();
 
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester,
+        settle: false, initialIndex: 2, widgetService: widgetService);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
+    expect(widgetService.published, isEmpty);
     await tester.dragUntilVisible(
       find.text('Check List를 불러오고 있어요'),
       find.byKey(const ValueKey('main-tab')),
@@ -532,6 +552,7 @@ void main() {
     weather.pending!.complete(_weather(60, 127));
     await tester.pumpAndSettle();
     expect(find.text('Check List를 불러오고 있어요'), findsNothing);
+    expect(widgetService.published, isNotEmpty);
   });
 
   testWidgets('실제 삭제 콜백 후 복귀·새로고침·설정 변경으로 서버에 다시 등록하지 않는다', (tester) async {

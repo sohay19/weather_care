@@ -150,6 +150,8 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               )
             : metric)
         .toList(growable: false);
+    final timeLabel =
+        forecastTemperatureLabel(current.observedAt ?? current.forecastAt);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -158,7 +160,9 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${forecastTemperatureLabel(current.observedAt ?? current.forecastAt)}${isObservation ? ' 실황' : ''}',
+            timeLabel == '시'
+                ? widget.dataPhase.missingText('시각 자료 없음')
+                : '$timeLabel${isObservation ? ' 실황' : ''}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: WeatherCareTheme.textSecondary,
                   fontWeight: FontWeight.w700,

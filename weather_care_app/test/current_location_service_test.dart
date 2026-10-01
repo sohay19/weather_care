@@ -119,6 +119,20 @@ void main() {
     expect(platform.cachedReads, 1);
     expect(platform.reads, 0);
   });
+  test('위치 다시 확인은 최근 캐시가 있어도 현재 위치를 새로 측정한다', () async {
+    platform.lastKnownPosition = _position(
+      latitude: 37.43,
+      longitude: 126.80,
+      timestamp: _now.subtract(const Duration(seconds: 30)),
+    );
+    platform.position = _position(latitude: 35.18, longitude: 129.07);
+
+    final result = await service.locate(forceRefresh: true);
+
+    expect(result.coordinates?.latitude, 35.18);
+    expect(platform.cachedReads, 0);
+    expect(platform.reads, 1);
+  });
   test('오래된 마지막 위치는 버리고 현재 위치를 측정한다', () async {
     platform.lastKnownPosition = _position(
       timestamp: _now.subtract(const Duration(minutes: 3)),

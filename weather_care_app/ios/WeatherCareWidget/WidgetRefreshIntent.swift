@@ -61,6 +61,7 @@ private func refreshWeatherWidget() async {
       previous: defaults.string(forKey: refreshWidgetSnapshotKey)
     )
   defaults.set(snapshot, forKey: refreshWidgetSnapshotKey)
+  if gpsEnabled { defaults.set(url.absoluteString, forKey: refreshWidgetURLKey) }
   WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
 }
 
@@ -90,7 +91,10 @@ private func widgetRefreshURL(_ savedURL: URL, gpsEnabled: Bool) async -> URL? {
   }
   items.append(URLQueryItem(name: "nx", value: String(grid.nx)))
   items.append(URLQueryItem(name: "ny", value: String(grid.ny)))
-  if let name = await widgetRegionName(for: location) {
+  let resolvedName = await widgetRegionName(for: location)
+  if let name = widgetPreferredRegionName(
+    resolvedName, savedURL: savedURL, location: location, grid: grid
+  ) {
     items.append(URLQueryItem(name: "regionName", value: name))
   }
   let precise = await MainActor.run {
@@ -111,32 +115,41 @@ private func widgetRefreshURL(_ savedURL: URL, gpsEnabled: Bool) async -> URL? {
 private final class WidgetLocationReader: NSObject, CLLocationManagerDelegate {
   private let manager = CLLocationManager()
   private var continuation: CheckedContinuation<CLLocation?, Never>?
+  private var bestLocation: CLLocation?
 
   func locate() async -> CLLocation? {
     guard CLLocationManager.locationServicesEnabled(),
           manager.isAuthorizedForWidgetUpdates else { return nil }
     manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
     manager.delegate = self
+    bestLocation = nil
     return await withCheckedContinuation { continuation in
       self.continuation = continuation
       manager.startUpdatingLocation()
       DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
-        self?.finish(nil)
+        guard let self else { return }
+        self.finish(self.bestLocation)
       }
     }
   }
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-    guard let location = locations.last(where: {
-      $0.horizontalAccuracy > 0 &&
-        Date().timeIntervalSince($0.timestamp) < 120 &&
-        Date().timeIntervalSince($0.timestamp) > -60
-    }) else { return }
-    finish(location)
+    for location in locations where location.horizontalAccuracy > 0 &&
+      Date().timeIntervalSince(location.timestamp) < 120 &&
+      Date().timeIntervalSince(location.timestamp) > -60 {
+      if bestLocation == nil || location.horizontalAccuracy < bestLocation!.horizontalAccuracy {
+        bestLocation = location
+      }
+      if manager.accuracyAuthorization == .reducedAccuracy ||
+          location.horizontalAccuracy <= 100 {
+        finish(bestLocation)
+        return
+      }
+    }
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-    finish(nil)
+    finish(bestLocation)
   }
 
   private func finish(_ location: CLLocation?) {
@@ -175,9 +188,17 @@ private func widgetRegionName(for location: CLLocation) async -> String? {
   let geocoder = CLGeocoder()
   guard let placemarks = try? await geocoder.reverseGeocodeLocation(
     location, preferredLocale: Locale(identifier: "ko_KR")
-  ), let placemark = placemarks.first,
-     placemark.isoCountryCode == "KR" else { return nil }
+  ) else { return nil }
+  var firstName: String?
+  for placemark in placemarks where placemark.isoCountryCode == "KR" {
+    guard let name = widgetDisplayRegionName(for: placemark) else { continue }
+    if firstName == nil { firstName = name }
+    if widgetNeighborhood(from: name) != nil { return name }
+  }
+  return firstName
+}
 
+private func widgetDisplayRegionName(for placemark: CLPlacemark) -> String? {
   let topLevel = placemark.administrativeArea?.trimmingCharacters(in: .whitespacesAndNewlines)
   let metropolitan: [String: String] = [
     "서울특별시": "서울", "부산광역시": "부산", "대구광역시": "대구",
@@ -191,8 +212,43 @@ private func widgetRegionName(for location: CLLocation) async -> String? {
           !name.isEmpty, name != topLevel, !parts.contains(name) else { continue }
     parts.append(name)
   }
+  if !parts.contains(where: { widgetNeighborhood(from: $0) != nil }) {
+    for candidate in [placemark.name, placemark.thoroughfare] {
+      if let neighborhood = widgetNeighborhood(from: candidate), !parts.contains(neighborhood) {
+        parts.append(neighborhood)
+        break
+      }
+    }
+  }
   if parts.isEmpty, let topLevel, !topLevel.isEmpty { parts.append(topLevel) }
   return parts.isEmpty ? nil : parts.joined(separator: " ")
+}
+
+private func widgetNeighborhood(from value: String?) -> String? {
+  guard let value else { return nil }
+  return value.split(whereSeparator: { $0.isWhitespace || ",()".contains($0) })
+    .map(String.init)
+    .first(where: { $0.hasSuffix("동") || $0.hasSuffix("읍") || $0.hasSuffix("면") })
+}
+
+private func widgetPreferredRegionName(
+  _ resolved: String?, savedURL: URL, location: CLLocation, grid: (nx: Int, ny: Int)
+) -> String? {
+  guard let items = URLComponents(url: savedURL, resolvingAgainstBaseURL: false)?.queryItems,
+        let stored = items.first(where: { $0.name == "regionName" })?.value,
+        weatherWidgetRegionIsSpecific(stored),
+        items.first(where: { $0.name == "nx" })?.value == String(grid.nx),
+        items.first(where: { $0.name == "ny" })?.value == String(grid.ny),
+        let latitude = Double(items.first(where: { $0.name == "latitude" })?.value ?? ""),
+        let longitude = Double(items.first(where: { $0.name == "longitude" })?.value ?? ""),
+        latitude.isFinite, longitude.isFinite,
+        CLLocationCoordinate2DIsValid(CLLocationCoordinate2D(latitude: latitude, longitude: longitude)),
+        location.distance(from: CLLocation(latitude: latitude, longitude: longitude)) <= 500
+  else { return resolved }
+  if let resolved, !resolved.isEmpty, !stored.hasPrefix(resolved + " ") {
+    return resolved
+  }
+  return stored
 }
 
 func weatherWidgetSnapshotPreservingSpecificRegion(

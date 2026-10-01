@@ -96,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _refreshAgain = false;
   bool _notifyRefreshFailure = false;
   bool _requestPermission = false;
+  bool _forceLocationRefresh = false;
   bool _locationPermissionPrompted = false;
   bool _initialized = false;
   bool _leftApp = false;
@@ -377,17 +378,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _refresh(
       {bool requestPermission = false,
       bool supersede = false,
-      bool notifyFailure = false}) {
+      bool notifyFailure = false,
+      bool forceLocationRefresh = false}) {
     if (_service == null) return Future<void>.value();
     _notifyRefreshFailure |= notifyFailure;
     if (_refreshFuture != null) {
       if (supersede || notifyFailure) {
         _refreshAgain = true;
         _requestPermission |= requestPermission;
+        _forceLocationRefresh |= forceLocationRefresh;
       }
       return _refreshFuture!;
     }
     _requestPermission |= requestPermission;
+    _forceLocationRefresh |= forceLocationRefresh;
     final future = Future<void>.microtask(_refreshLoop);
     _refreshFuture = future;
     return future;
@@ -400,9 +404,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _refreshAgain = false;
         final revision = _locationRevision;
         final ask = _requestPermission;
+        final forceLocationRefresh = _forceLocationRefresh;
         final notifyFailure = _notifyRefreshFailure;
         Future<String?>? gpsRegionNameFuture;
         _requestPermission = false;
+        _forceLocationRefresh = false;
         _notifyRefreshFailure = false;
         if (_settings.locationMode == 'GPS') {
           setState(() {
@@ -412,7 +418,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _statusMessage = _location.message;
             }
           });
-          var result = await _locationService.locate(requestPermission: ask);
+          var result = await _locationService.locate(
+            requestPermission: ask,
+            forceRefresh: forceLocationRefresh,
+          );
           if (!mounted) return;
           if (revision != _locationRevision) continue;
           if (ask) _locationPermissionPrompted = true;
@@ -420,7 +429,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               !_locationPermissionPrompted &&
               result.state == LocationState.denied) {
             _locationPermissionPrompted = true;
-            result = await _locationService.locate(requestPermission: true);
+            result = await _locationService.locate(
+              requestPermission: true,
+              forceRefresh: forceLocationRefresh,
+            );
             if (!mounted) return;
             if (revision != _locationRevision) continue;
           }
@@ -910,7 +922,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           onSettingsChanged: _handleSettingsChanged,
           location: _location,
           regionName: _today?.region.name,
-          onLocate: () => _refresh(requestPermission: true),
+          onLocate: () => _refresh(
+            requestPermission: true,
+            supersede: true,
+            forceLocationRefresh: true,
+          ),
           onOpenLocationSettings: _openDeviceLocationSettings,
           loadRegionCatalog: _loadRegionCatalog,
           manualRegionName: _manualRegion?.fullName,

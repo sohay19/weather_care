@@ -61,7 +61,10 @@ class CurrentLocationService {
 
   GeolocatorPlatform get _platform => platform ?? GeolocatorPlatform.instance;
 
-  Future<LocationResult> locate({bool requestPermission = false}) async {
+  Future<LocationResult> locate({
+    bool requestPermission = false,
+    bool forceRefresh = false,
+  }) async {
     try {
       if (!await _platform.isLocationServiceEnabled()) {
         return const LocationResult(LocationState.serviceDisabled);
@@ -77,14 +80,16 @@ class CurrentLocationService {
           permission != LocationPermission.always) {
         return const LocationResult(LocationState.denied);
       }
-      try {
-        final lastKnown = await _platform.getLastKnownPosition();
-        if (lastKnown != null) {
-          final cachedResult = await _resultFromPosition(lastKnown);
-          if (cachedResult.hasLocation) return cachedResult;
+      if (!forceRefresh) {
+        try {
+          final lastKnown = await _platform.getLastKnownPosition();
+          if (lastKnown != null) {
+            final cachedResult = await _resultFromPosition(lastKnown);
+            if (cachedResult.hasLocation) return cachedResult;
+          }
+        } catch (_) {
+          // A missing platform cache must not prevent a fresh location request.
         }
-      } catch (_) {
-        // A missing platform cache must not prevent a fresh location request.
       }
       final position = await _platform.getCurrentPosition(
         locationSettings: const LocationSettings(

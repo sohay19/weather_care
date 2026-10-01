@@ -46,10 +46,15 @@ class _Location extends CurrentLocationService {
   LocationResult result =
       const LocationResult(LocationState.ready, coordinates: _seoul);
   final requests = <bool>[];
+  final freshRequests = <bool>[];
   Completer<LocationResult>? pending;
   @override
-  Future<LocationResult> locate({bool requestPermission = false}) async {
+  Future<LocationResult> locate({
+    bool requestPermission = false,
+    bool forceRefresh = false,
+  }) async {
     requests.add(requestPermission);
+    freshRequests.add(forceRefresh);
     return pending == null ? result : await pending!.future;
   }
 }
@@ -733,6 +738,23 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(location.requests, [false, false, false]);
+  });
+  testWidgets('지역 선택의 위치 다시 확인은 새 위치를 읽고 열린 화면을 갱신한다', (tester) async {
+    gpsRegionName.result = '서울 강남구 역삼동';
+    await start(tester);
+    await tester.tap(find.byKey(const ValueKey('location-settings-menu')));
+    await tester.pumpAndSettle();
+    expect(find.text('서울 강남구 역삼동 기준으로 지역 예보를 안내해요'), findsOneWidget);
+
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _busan);
+    gpsRegionName.result = '부산 해운대구 우동';
+    await tester.tap(find.byKey(const ValueKey('location-refresh')));
+    await tester.pumpAndSettle();
+
+    expect(location.freshRequests.last, isTrue);
+    expect(weather.calls.last.coordinates, _busan);
+    expect(find.text('부산 해운대구 우동 기준으로 지역 예보를 안내해요'), findsOneWidget);
   });
   testWidgets('대략적 위치는 날씨와 알림 양쪽에 정밀 좌표를 보내지 않는다', (tester) async {
     location.result =

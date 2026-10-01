@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -24,6 +25,7 @@ import 'ads_privacy_control.dart';
 import '../../services/server_data_access.dart';
 
 const _weatherMapUrl = 'https://weather-care.pages.dev/weather-map';
+typedef _LocationDisplay = ({LocationResult location, String? regionName});
 
 String? _forecastGridLabel(String? gridId) {
   final match = RegExp(r'^(\d{1,3})_(\d{1,3})$').firstMatch(gridId ?? '');
@@ -93,12 +95,17 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late AppSettings settings;
   late final Future<String?> _appVersion;
+  late final ValueNotifier<_LocationDisplay> _locationDisplay;
 
   @override
   void initState() {
     super.initState();
     settings =
         widget.initialSettings ?? AppSettings.fallback('local-installation');
+    _locationDisplay = ValueNotifier((
+      location: widget.location,
+      regionName: widget.regionName,
+    ));
     _appVersion = _loadAppVersion();
     widget.adRemoval?.addListener(_onAdRemovalChanged);
   }
@@ -109,6 +116,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final updated = widget.initialSettings;
     if (updated != null && updated != oldWidget.initialSettings) {
       settings = updated;
+    }
+    if (widget.location != oldWidget.location ||
+        widget.regionName != oldWidget.regionName) {
+      _locationDisplay.value = (
+        location: widget.location,
+        regionName: widget.regionName,
+      );
     }
     if (oldWidget.adRemoval != widget.adRemoval) {
       oldWidget.adRemoval?.removeListener(_onAdRemovalChanged);
@@ -123,6 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     widget.adRemoval?.removeListener(_onAdRemovalChanged);
+    _locationDisplay.dispose();
     super.dispose();
   }
 
@@ -260,8 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.of(context).push<void>(MaterialPageRoute(
       builder: (_) => _LocationSettingsScreen(
         initialSettings: settings,
-        location: widget.location,
-        regionName: widget.regionName,
+        locationDisplay: _locationDisplay,
         manualRegionName: widget.manualRegionName,
         onLocate: widget.onLocate,
         onOpenLocationSettings: widget.onOpenLocationSettings,
@@ -321,8 +335,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 class _LocationSettingsScreen extends StatefulWidget {
   final AppSettings initialSettings;
-  final LocationResult location;
-  final String? regionName;
+  final ValueListenable<_LocationDisplay> locationDisplay;
   final String? manualRegionName;
   final Future<void> Function()? onLocate;
   final Future<void> Function()? onOpenLocationSettings;
@@ -334,8 +347,7 @@ class _LocationSettingsScreen extends StatefulWidget {
 
   const _LocationSettingsScreen({
     required this.initialSettings,
-    required this.location,
-    required this.regionName,
+    required this.locationDisplay,
     required this.manualRegionName,
     required this.onLocate,
     required this.onOpenLocationSettings,
@@ -362,6 +374,19 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
     super.initState();
     settings = widget.initialSettings;
     _manualRegionName = widget.manualRegionName;
+    widget.locationDisplay.addListener(_onLocationChanged);
+  }
+
+  void _onLocationChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.locationDisplay.removeListener(_onLocationChanged);
+    super.dispose();
   }
 
   void _update(AppSettings updated) {
@@ -413,6 +438,8 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final location = widget.locationDisplay.value.location;
+    final regionName = widget.locationDisplay.value.regionName;
     return _SettingsDetailScaffold(
         title: '지역 선택',
         child: Column(
@@ -422,8 +449,8 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
               icon: Icons.map_outlined,
               title: '지역 설정 방법',
               subtitle: settings.locationMode == 'GPS'
-                  ? widget.location.hasLocation
-                      ? '${widget.regionName ?? '확인한 위치'} 기준으로 지역 예보를 안내해요'
+                  ? location.hasLocation
+                      ? '${regionName ?? '확인한 위치'} 기준으로 지역 예보를 안내해요'
                       : '현재 위치 확인이 필요해요'
                   : settings.currentRegionId == null
                       ? '선택된 지역이 없어요'
@@ -476,27 +503,25 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                       const SizedBox(height: 6),
                       Padding(
                         padding: EdgeInsets.only(left: 10),
-                        child: Text(widget.location.message,
+                        child: Text(location.message,
                             key: const ValueKey('location-status')),
                       ),
                       const SizedBox(height: 20),
                       Wrap(spacing: 8, runSpacing: 4, children: [
                         FilledButton.tonalIcon(
                           key: const ValueKey('location-refresh'),
-                          onPressed:
-                              widget.location.state == LocationState.checking
-                                  ? null
-                                  : widget.onLocate,
+                          onPressed: location.state == LocationState.checking
+                              ? null
+                              : widget.onLocate,
                           icon: const Icon(Icons.my_location_rounded),
-                          label: Text(widget.location.state ==
-                                      LocationState.denied ||
-                                  widget.location.state == LocationState.idle
+                          label: Text(location.state == LocationState.denied ||
+                                  location.state == LocationState.idle
                               ? '현재 위치 확인'
                               : '위치 다시 확인'),
                         ),
-                        if (widget.location.measuredAt != null) ...[
+                        if (location.measuredAt != null) ...[
                           const SizedBox(height: 6),
-                          Text(_locationTimeLabel(widget.location.measuredAt!),
+                          Text(_locationTimeLabel(location.measuredAt!),
                               style: Theme.of(context).textTheme.bodySmall),
                         ],
                         if ({
@@ -504,13 +529,12 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                           LocationState.denied,
                           LocationState.deniedForever,
                           LocationState.approximate,
-                        }.contains(widget.location.state))
+                        }.contains(location.state))
                           TextButton(
                             key: const ValueKey('location-settings'),
                             onPressed: widget.onOpenLocationSettings,
                             child: Text(
-                              widget.location.state ==
-                                      LocationState.serviceDisabled
+                              location.state == LocationState.serviceDisabled
                                   ? '기기 위치 설정 열기'
                                   : '앱 권한 설정 열기',
                             ),

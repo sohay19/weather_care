@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ? WeatherDataPhase.loading
       : _todayRequestFailed
           ? WeatherDataPhase.failed
-          : _mainDetailsLoading || _todayRefreshing
+          : _mainDetailsLoading || _todayRefreshing || _refreshFuture != null
               ? WeatherDataPhase.loading
               : WeatherDataPhase.ready;
 
@@ -155,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ? WeatherDataPhase.loading
       : _weeklyRequestFailed
           ? WeatherDataPhase.failed
-          : _weeklyLoading
+          : _weeklyLoading || _refreshFuture != null
               ? WeatherDataPhase.loading
               : WeatherDataPhase.ready;
 
@@ -539,6 +539,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       } while (mounted && _refreshAgain);
     } finally {
       _refreshFuture = null;
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -841,7 +844,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               : today;
       _loadMode = WeatherLoadMode.server;
       _mainDetailsLoading = false;
-      _todayRefreshing = false;
       _todayRequestFailed = false;
       _statusMessage = 'Main 날씨를 먼저 표시했어요.\n주간 자료는 계속 불러오고 있어요.';
     });

@@ -72,13 +72,14 @@ class _GpsRegionName extends GpsRegionNameService {
   }
 }
 
-WeatherLoadResult _weather(int nx, int ny, {String? regionName}) =>
+WeatherLoadResult _weather(int nx, int ny,
+        {String? regionName, String brief = '지역별 예보'}) =>
     WeatherLoadResult(
       today: TodayWeatherResponse.fromJson({
         'dataSource': 'test',
         'region': {'nx': nx, 'ny': ny, 'name': regionName ?? '검증 지역 $nx/$ny'},
         'current': {'temperature': 20},
-        'brief': '지역별 예보',
+        'brief': brief,
       }),
       weekly: WeeklyWeatherResponse.fromJson({'days': []}),
       mode: WeatherLoadMode.server,
@@ -308,6 +309,25 @@ void main() {
 
     weather.pending!.complete(_weather(60, 127));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('오늘 자료가 먼저 와도 전체 새로고침 중에는 기본 브리핑을 표시하지 않는다', (tester) async {
+    weather.pending = Completer<WeatherLoadResult>();
+    weather.emitTodayWhilePending = true;
+    weather.response = _weather(60, 127, brief: '최신 날씨를 확인해 주세요.');
+    final comparison = Completer<ComparisonResponse>();
+    weather.comparisonPending = comparison;
+
+    await start(tester, settle: false, initialIndex: 2);
+
+    final brief = find.byKey(const ValueKey('main-weather-brief'));
+    expect(tester.widget<Text>(brief).data, '불러오는 중');
+    weather.pending!.complete(_weather(60, 127, brief: '오늘은 맑아요.'));
+    await tester.pump();
+    expect(tester.widget<Text>(brief).data, '불러오는 중');
+    comparison.complete(const ComparisonResponse.unavailable());
+    await tester.pumpAndSettle();
+    expect(tester.widget<Text>(brief).data, '오늘은 맑아요.');
   });
 
   testWidgets('핵심 날씨만 도착한 동안 빈 항목은 불러오는 중으로 표시한다', (tester) async {

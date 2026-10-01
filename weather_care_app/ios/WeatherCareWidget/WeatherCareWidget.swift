@@ -98,8 +98,8 @@ struct WidgetSnapshot: Codable {
   let nextBriefingBoundary: String?
   let dataFreshUntil: String?
   let briefingTimeline: [WidgetBriefingEntry]?
-  let region: String
-  var refreshTime: String
+  var region: String
+  let refreshTime: String
   let condition: String
   let currentTemperature: String
   let apparentTemperature: String
@@ -170,7 +170,7 @@ struct WidgetSnapshot: Codable {
     var snapshot = defaults.string(forKey: snapshotKey)
       .flatMap { $0.data(using: .utf8) }
       .flatMap { try? JSONDecoder().decode(WidgetSnapshot.self, from: $0) } ?? .empty
-    snapshot.refreshTime = defaults.string(forKey: refreshStatusKey) ?? snapshot.refreshTime
+    snapshot.region = defaults.string(forKey: refreshStatusKey) ?? snapshot.region
     return snapshot
   }
 

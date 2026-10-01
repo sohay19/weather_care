@@ -284,12 +284,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         int regionWidth = Math.max(1, minWidth - horizontalPadding - 32);
         float refreshSize = size == WidgetSize.SMALL ? 9 : size == WidgetSize.MEDIUM ? 10 : 11;
         int refreshWidth = size == WidgetSize.SMALL ? 78 : size == WidgetSize.MEDIUM ? 90 : 100;
+        String displayRegion = refreshStatus == null ? snapshot.region : refreshStatus;
         setTextBitmap(
                 views,
                 R.id.widget_region,
                 WidgetTextRenderer.paragraph(
                         context,
-                        snapshot.region,
+                        displayRegion,
                         R.font.suite_extra_bold,
                         regionSize,
                         TEXT_PRIMARY,
@@ -298,20 +299,20 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                         1,
                         0
                 ),
-                snapshot.region
+                displayRegion
         );
         setTextBitmap(
                 views,
                 R.id.widget_refresh_time,
                 WidgetTextRenderer.line(
                         context,
-                        refreshStatus == null ? snapshot.refreshTime : refreshStatus,
+                        snapshot.refreshTime,
                         R.font.suite_regular,
                         refreshSize,
                         TEXT_SECONDARY,
                         refreshWidth
                 ),
-                refreshStatus == null ? snapshot.refreshTime : refreshStatus
+                snapshot.refreshTime
         );
     }
 

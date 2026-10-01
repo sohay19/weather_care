@@ -38,38 +38,50 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                 Context.MODE_PRIVATE
         );
         String rawUrl = preferences.getString(MainActivity.REFRESH_URL_KEY, null);
-        HttpURLConnection connection = null;
         try {
-            if (!isAllowedUrl(rawUrl)) return Result.failure();
-            connection = (HttpURLConnection) new URL(rawUrl).openConnection();
+            int status = refresh(context, rawUrl, true);
+            if (status >= 200 && status < 300) return Result.success();
+            return status >= 500 && getRunAttemptCount() < 2
+                    ? Result.retry()
+                    : Result.failure();
+        } catch (Exception ignored) {
+            return getRunAttemptCount() < 2 ? Result.retry() : Result.failure();
+        } finally {
+            WeatherCareWidgetProvider.setRefreshInProgress(context, false);
+        }
+    }
+
+    static int refresh(Context context, String rawUrl, boolean preserveRegion) throws Exception {
+        if (!isAllowedUrl(rawUrl)) throw new IOException("Invalid widget refresh URL");
+        HttpURLConnection connection = (HttpURLConnection) new URL(rawUrl).openConnection();
+        try {
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept", "application/json");
             connection.setConnectTimeout(10_000);
             connection.setReadTimeout(20_000);
             connection.setUseCaches(false);
             int status = connection.getResponseCode();
-            if (status < 200 || status >= 300) {
-                return status >= 500 && getRunAttemptCount() < 2
-                        ? Result.retry()
-                        : Result.failure();
-            }
+            if (status < 200 || status >= 300) return status;
             String body = readResponse(connection.getInputStream());
-            body = MainActivity.preserveSpecificWidgetRegion(
-                    body,
-                    preferences.getString(MainActivity.SNAPSHOT_KEY, null)
+            SharedPreferences preferences = context.getSharedPreferences(
+                    MainActivity.WIDGET_PREFERENCES,
+                    Context.MODE_PRIVATE
             );
+            if (preserveRegion) {
+                body = MainActivity.preserveSpecificWidgetRegion(
+                        body,
+                        preferences.getString(MainActivity.SNAPSHOT_KEY, null)
+                );
+            }
             JSONObject snapshot = new JSONObject(body);
             if (snapshot.optInt("schemaVersion", 0) != 3 ||
                     !snapshot.has("region") || !snapshot.has("refreshTime")) {
-                return Result.failure();
+                throw new IOException("Invalid widget snapshot");
             }
             preferences.edit().putString(MainActivity.SNAPSHOT_KEY, body).apply();
-            return Result.success();
-        } catch (Exception ignored) {
-            return getRunAttemptCount() < 2 ? Result.retry() : Result.failure();
+            return status;
         } finally {
-            if (connection != null) connection.disconnect();
-            WeatherCareWidgetProvider.setRefreshInProgress(context, false);
+            connection.disconnect();
         }
     }
 

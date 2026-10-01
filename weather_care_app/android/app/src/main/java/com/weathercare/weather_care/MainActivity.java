@@ -16,6 +16,7 @@ public class MainActivity extends FlutterActivity {
     static final String WIDGET_PREFERENCES = "weather_care_widget";
     static final String SNAPSHOT_KEY = "snapshot";
     static final String REFRESH_URL_KEY = "refresh_url";
+    static final String GPS_ENABLED_KEY = "gps_enabled";
 
     @Override
     public void configureFlutterEngine(FlutterEngine flutterEngine) {
@@ -31,13 +32,16 @@ public class MainActivity extends FlutterActivity {
             if ("save".equals(call.method)) {
                 String snapshot = null;
                 String refreshUrl = null;
+                boolean gpsEnabled = false;
                 if (call.arguments instanceof String) {
                     snapshot = (String) call.arguments;
                 } else if (call.arguments instanceof Map<?, ?> values) {
                     Object rawSnapshot = values.get("snapshot");
                     Object rawRefreshUrl = values.get("refreshUrl");
+                    Object rawGpsEnabled = values.get("gpsEnabled");
                     if (rawSnapshot instanceof String) snapshot = (String) rawSnapshot;
                     if (rawRefreshUrl instanceof String) refreshUrl = (String) rawRefreshUrl;
+                    if (rawGpsEnabled instanceof Boolean) gpsEnabled = (Boolean) rawGpsEnabled;
                 }
                 if (snapshot == null) {
                     result.error("INVALID_WIDGET_DATA", "위젯 자료가 비어 있습니다.", null);
@@ -48,7 +52,8 @@ public class MainActivity extends FlutterActivity {
                         preferences.getString(SNAPSHOT_KEY, null)
                 );
                 SharedPreferences.Editor editor = preferences.edit()
-                        .putString(SNAPSHOT_KEY, snapshot);
+                        .putString(SNAPSHOT_KEY, snapshot)
+                        .putBoolean(GPS_ENABLED_KEY, gpsEnabled);
                 if (refreshUrl == null || refreshUrl.isBlank()) {
                     editor.remove(REFRESH_URL_KEY);
                 } else {
@@ -63,6 +68,7 @@ public class MainActivity extends FlutterActivity {
                 preferences.edit()
                         .remove(SNAPSHOT_KEY)
                         .remove(REFRESH_URL_KEY)
+                        .remove(GPS_ENABLED_KEY)
                         .apply();
                 WeatherCareWidgetProvider.updateAll(this);
                 result.success(null);

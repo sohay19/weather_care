@@ -12,12 +12,14 @@ class HomeWidgetService {
   Future<void> publish(
     HomeWidgetSnapshot snapshot, {
     String? refreshUrl,
+    bool gpsEnabled = false,
   }) async {
     if (!_isSupportedPlatform) return;
     try {
       await _channel.invokeMethod<void>('save', {
         'snapshot': snapshot.encode(),
         if (refreshUrl != null) 'refreshUrl': refreshUrl,
+        'gpsEnabled': gpsEnabled,
       });
     } on MissingPluginException {
       // Widget extensions are not available in unit/widget test hosts.

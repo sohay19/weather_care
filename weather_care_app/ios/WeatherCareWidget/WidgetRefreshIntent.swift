@@ -1,4 +1,5 @@
 import AppIntents
+import CoreLocation
 import Foundation
 import WidgetKit
 
@@ -6,6 +7,7 @@ private let refreshWidgetKind = "WeatherCareWidget"
 private let refreshWidgetGroup = "group.com.codesoha.weathercare"
 private let refreshWidgetSnapshotKey = "snapshot"
 private let refreshWidgetURLKey = "refresh_url"
+private let refreshWidgetGPSEnabledKey = "gps_enabled"
 
 @available(iOS 17.0, *)
 struct RefreshWeatherWidgetIntent: AppIntent {
@@ -24,10 +26,15 @@ private func refreshWeatherWidget() async {
   guard
     let defaults = UserDefaults(suiteName: refreshWidgetGroup),
     let rawURL = defaults.string(forKey: refreshWidgetURLKey),
-    let url = URL(string: rawURL),
-    ["https", "http"].contains(url.scheme?.lowercased() ?? ""),
-    url.host != nil
+    let savedURL = URL(string: rawURL)
   else { return }
+  let gpsEnabled = defaults.bool(forKey: refreshWidgetGPSEnabledKey)
+  guard let url = await widgetRefreshURL(savedURL, gpsEnabled: gpsEnabled) else {
+    if gpsEnabled { showWidgetLocationUnavailable(defaults) }
+    return
+  }
+  guard ["https", "http"].contains(url.scheme?.lowercased() ?? ""),
+        url.host != nil else { return }
 
   var request = URLRequest(
     url: url,
@@ -47,12 +54,145 @@ private func refreshWeatherWidget() async {
     let rawSnapshot = String(data: data, encoding: .utf8)
   else { return }
 
-  let snapshot = weatherWidgetSnapshotPreservingSpecificRegion(
-    rawSnapshot,
-    previous: defaults.string(forKey: refreshWidgetSnapshotKey)
-  )
+  let snapshot = gpsEnabled
+    ? rawSnapshot
+    : weatherWidgetSnapshotPreservingSpecificRegion(
+      rawSnapshot,
+      previous: defaults.string(forKey: refreshWidgetSnapshotKey)
+    )
   defaults.set(snapshot, forKey: refreshWidgetSnapshotKey)
   WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
+}
+
+private func showWidgetLocationUnavailable(_ defaults: UserDefaults) {
+  guard let raw = defaults.string(forKey: refreshWidgetSnapshotKey),
+        let data = raw.data(using: .utf8),
+        var snapshot = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+  else { return }
+  snapshot["refreshTime"] = "위치 확인 필요"
+  guard let updated = try? JSONSerialization.data(withJSONObject: snapshot),
+        let text = String(data: updated, encoding: .utf8) else { return }
+  defaults.set(text, forKey: refreshWidgetSnapshotKey)
+  WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
+}
+
+@available(iOS 17.0, *)
+private func widgetRefreshURL(_ savedURL: URL, gpsEnabled: Bool) async -> URL? {
+  guard gpsEnabled else { return savedURL }
+  let locationReader = await WidgetLocationReader()
+  guard let location = await locationReader.locate(),
+        let grid = widgetGrid(for: location.coordinate),
+        var components = URLComponents(url: savedURL, resolvingAgainstBaseURL: false)
+  else { return nil }
+
+  var items = (components.queryItems ?? []).filter {
+    !["nx", "ny", "latitude", "longitude", "regionCode", "regionName"].contains($0.name)
+  }
+  items.append(URLQueryItem(name: "nx", value: String(grid.nx)))
+  items.append(URLQueryItem(name: "ny", value: String(grid.ny)))
+  if let name = await widgetRegionName(for: location) {
+    items.append(URLQueryItem(name: "regionName", value: name))
+  }
+  let precise = await MainActor.run {
+    CLLocationManager().accuracyAuthorization == .fullAccuracy
+  }
+  if precise,
+     location.horizontalAccuracy > 0,
+     location.horizontalAccuracy <= 500 {
+    items.append(URLQueryItem(name: "latitude", value: String(location.coordinate.latitude)))
+    items.append(URLQueryItem(name: "longitude", value: String(location.coordinate.longitude)))
+  }
+  components.queryItems = items
+  return components.url
+}
+
+@available(iOS 17.0, *)
+@MainActor
+private final class WidgetLocationReader: NSObject, CLLocationManagerDelegate {
+  private let manager = CLLocationManager()
+  private var continuation: CheckedContinuation<CLLocation?, Never>?
+
+  func locate() async -> CLLocation? {
+    guard CLLocationManager.locationServicesEnabled(),
+          manager.isAuthorizedForWidgetUpdates else { return nil }
+    manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+    manager.delegate = self
+    return await withCheckedContinuation { continuation in
+      self.continuation = continuation
+      manager.startUpdatingLocation()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+        self?.finish(nil)
+      }
+    }
+  }
+
+  func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    guard let location = locations.last(where: {
+      $0.horizontalAccuracy > 0 &&
+        Date().timeIntervalSince($0.timestamp) < 120 &&
+        Date().timeIntervalSince($0.timestamp) > -60
+    }) else { return }
+    finish(location)
+  }
+
+  func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    finish(nil)
+  }
+
+  private func finish(_ location: CLLocation?) {
+    guard let continuation else { return }
+    self.continuation = nil
+    manager.stopUpdatingLocation()
+    continuation.resume(returning: location)
+  }
+}
+
+private func widgetGrid(for coordinate: CLLocationCoordinate2D) -> (nx: Int, ny: Int)? {
+  let latitude = coordinate.latitude
+  let longitude = coordinate.longitude
+  guard (30...44).contains(latitude), (120...134).contains(longitude) else { return nil }
+  let radians = Double.pi / 180
+  let radius = 6371.00877 / 5.0
+  let first = 30.0 * radians
+  let second = 60.0 * radians
+  let originLatitude = 38.0 * radians
+  let originLongitude = 126.0 * radians
+  let cone = log(cos(first) / cos(second)) /
+    log(tan(.pi * 0.25 + second * 0.5) / tan(.pi * 0.25 + first * 0.5))
+  let scale = pow(tan(.pi * 0.25 + first * 0.5), cone) * cos(first) / cone
+  let originRadius = radius * scale / pow(tan(.pi * 0.25 + originLatitude * 0.5), cone)
+  let targetRadius = radius * scale / pow(tan(.pi * 0.25 + latitude * radians * 0.5), cone)
+  var angle = longitude * radians - originLongitude
+  if angle > Double.pi { angle -= 2 * Double.pi }
+  if angle < -Double.pi { angle += 2 * Double.pi }
+  angle *= cone
+  let nx = Int(floor(targetRadius * sin(angle) + 43.0 + 0.5))
+  let ny = Int(floor(originRadius - targetRadius * cos(angle) + 136.0 + 0.5))
+  return (1...149).contains(nx) && (1...253).contains(ny) ? (nx, ny) : nil
+}
+
+private func widgetRegionName(for location: CLLocation) async -> String? {
+  let geocoder = CLGeocoder()
+  guard let placemarks = try? await geocoder.reverseGeocodeLocation(
+    location, preferredLocale: Locale(identifier: "ko_KR")
+  ), let placemark = placemarks.first,
+     placemark.isoCountryCode == "KR" else { return nil }
+
+  let topLevel = placemark.administrativeArea?.trimmingCharacters(in: .whitespacesAndNewlines)
+  let metropolitan: [String: String] = [
+    "서울특별시": "서울", "부산광역시": "부산", "대구광역시": "대구",
+    "인천광역시": "인천", "광주광역시": "광주", "대전광역시": "대전",
+    "울산광역시": "울산", "세종특별자치시": "세종시",
+  ]
+  var parts: [String] = []
+  if let topLevel, let shortName = metropolitan[topLevel] { parts.append(shortName) }
+  for candidate in [placemark.locality, placemark.subAdministrativeArea, placemark.subLocality] {
+    guard let name = candidate?.trimmingCharacters(in: .whitespacesAndNewlines),
+          !name.isEmpty, name != topLevel, !parts.contains(name) else { continue }
+    parts.append(name)
+  }
+  if parts.isEmpty, let topLevel, !topLevel.isEmpty { parts.append(topLevel) }
+  return parts.isEmpty ? nil : parts.joined(separator: " ")
 }
 
 func weatherWidgetSnapshotPreservingSpecificRegion(

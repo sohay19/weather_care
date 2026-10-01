@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <!-- Mobile Ads uses these identifiers for ad delivery, measurement, and
          fraud prevention. -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
@@ -69,6 +71,10 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/weather_care_widget_info" />
         </receiver>
+        <service
+            android:name=".WeatherCareWidgetRefreshService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

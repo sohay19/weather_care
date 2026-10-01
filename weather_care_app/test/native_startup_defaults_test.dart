@@ -191,8 +191,17 @@ void main() {
     final iosIntent = File(
       'ios/WeatherCareWidget/WidgetRefreshIntent.swift',
     ).readAsStringSync();
+    final iosWidgetPlist = File(
+      'ios/WeatherCareWidget/Info.plist',
+    ).readAsStringSync();
     final androidWorker = File(
       'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetRefreshWorker.java',
+    ).readAsStringSync();
+    final androidService = File(
+      'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetRefreshService.java',
+    ).readAsStringSync();
+    final androidManifest = File(
+      'android/app/src/main/AndroidManifest.xml',
     ).readAsStringSync();
     final androidActivity = File(
       'android/app/src/main/java/com/weathercare/weather_care/MainActivity.java',
@@ -216,6 +225,12 @@ void main() {
 
     expect(provider, contains('ACTION_REFRESH'));
     expect(provider, contains('WeatherCareWidgetRefreshWorker.class'));
+    expect(provider, contains('startForegroundService('));
+    expect(androidManifest, contains('android:foregroundServiceType="location"'));
+    expect(androidManifest, contains('android.permission.FOREGROUND_SERVICE_LOCATION'));
+    expect(androidActivity, contains('GPS_ENABLED_KEY'));
+    expect(androidService, contains('WeatherCareWidgetRefreshWorker.refresh(this, url, false)'));
+    expect(androidService, contains('location.getElapsedRealtimeNanos()'));
     expect(provider, contains('REFRESH_IN_PROGRESS_KEY'));
     expect(provider, contains('weather_widget_refresh_background_loading'));
     expect(provider, contains('ic_widget_refresh_loading'));
@@ -250,6 +265,10 @@ void main() {
         iosWidget, contains('.fixedSize(horizontal: true, vertical: false)'));
     expect(iosIntent, contains('struct RefreshWeatherWidgetIntent: AppIntent'));
     expect(iosIntent, contains('static var openAppWhenRun = false'));
+    expect(iosWidgetPlist, contains('<key>NSWidgetWantsLocation</key>'));
+    expect(iosIntent, contains('isAuthorizedForWidgetUpdates'));
+    expect(iosIntent, contains('widgetGrid(for: location.coordinate)'));
+    expect(iosAppDelegate, contains('values?["gpsEnabled"]'));
     expect(
       iosIntent,
       contains('weatherWidgetSnapshotPreservingSpecificRegion('),

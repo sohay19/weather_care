@@ -148,6 +148,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     unawaited(widget.homeWidgetService.publish(
       snapshot,
       refreshUrl: _homeWidgetRefreshUrl(),
+      gpsEnabled: _settings.locationMode == 'GPS',
     ));
   }
 

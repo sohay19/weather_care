@@ -1,5 +1,6 @@
 package com.codesoha.weathercare;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -8,6 +9,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -53,7 +55,24 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             return;
         }
         if (ACTION_REFRESH.equals(intent.getAction())) {
-            enqueueRefresh(context);
+            if (gpsEnabled(context)) {
+                if (context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED &&
+                        context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                                != PackageManager.PERMISSION_GRANTED) {
+                    showLocationUnavailable(context);
+                    return;
+                }
+                try {
+                    context.startForegroundService(new Intent(
+                            context, WeatherCareWidgetRefreshService.class
+                    ));
+                } catch (RuntimeException ignored) {
+                    showLocationUnavailable(context);
+                }
+            } else {
+                enqueueRefresh(context);
+            }
             return;
         }
         super.onReceive(context, intent);
@@ -180,6 +199,31 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 Context.MODE_PRIVATE
         ).getString(MainActivity.REFRESH_URL_KEY, null);
         return url != null && !url.isBlank();
+    }
+
+    private static boolean gpsEnabled(Context context) {
+        return context.getSharedPreferences(
+                MainActivity.WIDGET_PREFERENCES,
+                Context.MODE_PRIVATE
+        ).getBoolean(MainActivity.GPS_ENABLED_KEY, false);
+    }
+
+    static void showLocationUnavailable(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(
+                MainActivity.WIDGET_PREFERENCES,
+                Context.MODE_PRIVATE
+        );
+        try {
+            JSONObject snapshot = new JSONObject(
+                    preferences.getString(MainActivity.SNAPSHOT_KEY, "{}")
+            );
+            if (!snapshot.has("region")) return;
+            snapshot.put("refreshTime", "위치 확인 필요");
+            preferences.edit().putString(MainActivity.SNAPSHOT_KEY, snapshot.toString()).apply();
+            updateAll(context);
+        } catch (Exception ignored) {
+            // The app will publish a fresh snapshot when it next opens.
+        }
     }
 
     private static boolean isRefreshInProgress(Context context) {

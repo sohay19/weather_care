@@ -10,6 +10,7 @@ import WidgetKit
   private let homeWidgetSnapshotKey = "snapshot"
   private let homeWidgetRefreshURLKey = "refresh_url"
   private let adRemovalChannel = "com.codesoha.weathercare/ad-removal"
+  private let homeWidgetGPSEnabledKey = "gps_enabled"
 
   override func application(
     _ application: UIApplication,
@@ -59,6 +60,7 @@ import WidgetKit
       let widgetGroup = homeWidgetGroup
       let widgetSnapshotKey = homeWidgetSnapshotKey
       let widgetRefreshURLKey = homeWidgetRefreshURLKey
+      let widgetGPSEnabledKey = homeWidgetGPSEnabledKey
       let channel = FlutterMethodChannel(
         name: homeWidgetChannel,
         binaryMessenger: controller.binaryMessenger
@@ -95,11 +97,13 @@ import WidgetKit
           } else {
             defaults.removeObject(forKey: widgetRefreshURLKey)
           }
+          defaults.set(values?["gpsEnabled"] as? Bool ?? false, forKey: widgetGPSEnabledKey)
           WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
           result(nil)
         case "clear":
           defaults.removeObject(forKey: widgetSnapshotKey)
           defaults.removeObject(forKey: widgetRefreshURLKey)
+          defaults.removeObject(forKey: widgetGPSEnabledKey)
           WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
           result(nil)
         default:

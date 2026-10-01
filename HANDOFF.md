@@ -8721,3 +8721,37 @@
 - 사용하지 않는 `NSLocationAlwaysAndWhenInUseUsageDescription`을 Runner Info.plist에서 제거하고, Geolocator의 Always 권한 분기를 제외하는 `BYPASS_PERMISSION_LOCATION_ALWAYS=1`을 Podfile에 설정했다.
 - 스토어 등록정보 문서에 iOS 위젯 권한 방식, App Store Connect 앱 개인정보 보호의 위치 자료 확인, 앱 심사 메모의 검증 절차를 추가했다. 실제 App Store Connect 항목은 변경하지 않았다.
 - Runner·위젯 Info.plist XML 파싱과 `git diff --check`를 통과했다. Windows 환경이어서 iOS 빌드·실기 위치 권한 동작은 확인하지 못했다. 기존 HANDOFF 변경과 `output/play_console_video/`는 유지했다.
+
+## 2026-10-01 iOS 시뮬레이터 위젯 추가 오류 원인 조사
+
+- 부팅 중인 iPhone 17 Pro(iOS 26.4) 시뮬레이터의 16:00 전후 로그를 확인했다. `LOCATION UPDATE FAILURE`는 위젯이 아니라 호스트 앱 `Runner`의 geolocator에서 발생했다. `locationd`는 `client not currently authorized for location`을 기록했고 `kCLErrorDomain Code=1`을 반환했다.
+- 앱의 GPS 조회 실패 시 `_weatherGrid == null` 경로는 홈 위젯 스냅샷을 지운다. 현재 시뮬레이터의 App Group `snapshot`·`refresh_url`·`gps_enabled` 값은 비어 있다. 따라서 위치 권한을 허용하고 앱에서 날씨 조회를 완료하거나 수동 지역을 선택하기 전에는 위젯에 실제 날씨가 표시되지 않는다.
+- `WeatherCareWidget` 확장은 15:52 및 16:00에 `LIBXPC/XPC_EXIT_REASON_FAULT`로 종료되었다. 16:00 진단 보고서의 종료 스택은 Apple `libxpc`·`BaseBoard`·`BoardServices`의 XPC 연결 처리이며 앱 Swift 프레임은 없다. `chronod`는 위젯을 등록하고 초기 타임라인 재로드에 성공했지만 이후 `Encountered missing entry`도 기록했다. 시뮬레이터 시스템 연결 오류 가능성이 높으나 로그만으로 정확한 유발 조건은 확정할 수 없다.
+- 제보된 RBS `Specified target process ... does not exist`와 WebContent 연결 중단은 이미 종료된 보조 프로세스 관련 로그다. Flutter 디버그 연결 종료 메시지는 앱이 백그라운드에 오래 있어 디버그 세션이 끊겼다는 뜻이다. 코드·시뮬레이터 권한 설정은 변경하지 않았다.
+
+## 2026-10-01 iOS 위젯 선택 화면 공백 재확인
+
+- 사용자가 현재 앱에서 위치와 날씨가 정상 표시된다고 정정했다. 16:39 App Group 저장소에는 `schemaVersion=3`, `서울 구로동`, `21.7°`의 최신 `snapshot`과 `refresh_url`, `gps_enabled=true`가 있었다. 앞선 16:00 위치 거부는 현재 위젯 추가 실패의 주원인이 아니다.
+- 현재 iPhone 17 Pro 시뮬레이터의 위젯 추가 화면을 `simctl io screenshot`으로 읽기 전용 확인했다. `Search Widgets` 아래 전체 목록이 비어 있어 날씨챙겨만 누락된 상태가 아니다. 잠시 후 다시 찍어도 동일했다.
+- `chronod`는 날씨챙겨 위젯 확장을 발견하고 `WidgetRenderer`에 전달했다. 반면 위젯 갤러리 진입 시 `SpringBoard`는 `ATXDefaultWidgetManager Code=2 "No suggestions file found"`, 기본 위젯 스택 0개를 기록했다. 같은 시각 시뮬레이터 위젯 확장에는 새 `LIBXPC/XPC_EXIT_REASON_FAULT`(16:39:04)가 있었고 종료 스택은 Apple XPC/BoardServices 내부였다.
+- 결론: 현재 추가 불가 현상은 앱 위치·위젯 데이터 미발행이 아니라 iOS 26.4 시뮬레이터의 위젯 갤러리/확장 실행 계층 문제로 좁혀진다. 갤러리 공백의 정확한 시스템 내부 원인은 로그만으로 확정하지 못했다. 코드와 실행 중인 시뮬레이터 상태는 변경하지 않았다.
+
+## 2026-10-01 iOS 26.4 시뮬레이터 재부팅
+
+- 사용자 요청으로 기존 iPhone 17 Pro 시뮬레이터 `BA9D6513-092A-4E44-A0BB-2E0FF9E5508E`를 `simctl shutdown` 후 `simctl boot`·`bootstatus -b`로 재부팅했다. 부팅은 약 19초 만에 완료됐다.
+- `com.codesoha.weathercare` 설치와 App Group 스냅샷(`서울 구로동`, `21.7°`, `gps_enabled=true`, 새로고침 URL)은 유지됐다. 홈 화면의 Apple 지도·캘린더 위젯이 표시되는 것도 읽기 전용 스크린샷으로 확인했다.
+- 재부팅 후 `chronod`는 날씨챙겨 위젯 확장을 다시 발견했으나 16:46:35에 확장이 같은 `LIBXPC/XPC_EXIT_REASON_FAULT`로 재종료했다. 종료 스택은 이전과 같은 Apple XPC/BoardServices 경로다. 위젯 갤러리는 재부팅 후 홈 화면으로 돌아가 있어 현재 목록 표시 여부를 화면상 확인하지 못했다. 앱 코드는 변경하지 않았다.
+
+## 2026-10-01 위젯 추가 시 SpringBoard 종료 보고서 확인
+
+- 사용자가 첨부한 17:03:38 SpringBoard 전체 충돌 보고서를 읽었다. `EXC_BAD_ACCESS (SIGSEGV)`, 주소 `0xfffffffffffffff8`, 종료 스택 최상단은 Apple `SpringBoardHome`의 `-[SBHRippleSimulation clear]` → `createRippleAtGridCoordinate:strength:`다. 앱/위젯 코드 프레임은 없다.
+- 시뮬레이터 로그에서 17:03:36에 날씨챙겨 위젯 디스크립터로 작은·중간·큰 미리보기가 생성되고 `Presenting add widget detail sheet`가 기록된 뒤 약 2초 후 SpringBoard가 종료됐다. 위젯은 iOS에 등록돼 있고 App Group 날씨 스냅샷도 17:00에 갱신됐다. 현재 직접적인 추가 실패는 SpringBoard 홈 화면 처리 중 충돌로 판단한다.
+- 이전 16:42 SpringBoard 종료 보고서도 같은 `SBHRippleSimulation` 스택이다. 별도로 위젯 확장의 `LIBXPC/XPC_EXIT_REASON_FAULT`도 재부팅 뒤 지속한다. SpringBoard 충돌과 확장 XPC 오류의 상호 인과관계는 증명되지 않았다. 코드와 시뮬레이터 설정은 변경하지 않았다.
+
+## 2026-10-01 iOS 위젯 별도 위치 권한 요청 제거
+
+- Apple WidgetKit 문서에 따르면 `NSWidgetWantsLocation`이 설정된 위젯을 추가할 때 iOS가 앱 위치 권한의 위젯 확장 여부를 별도로 묻는다. 이 시스템 요청을 앱 첫 실행 권한 안내 직후로 옮기는 API는 없다.
+- 첫 실행 `PermissionOnboardingDialog` 확인 뒤 알림·위치 권한을 차례로 요청하는 앱 흐름은 이미 있었다. 안내 문구에 위젯 표시 용도를 추가했다. 위젯 확장의 `NSWidgetWantsLocation`과 직접 Core Location 조회를 제거하고, 앱이 App Group에 저장한 마지막 지역의 새로고침 URL로 날씨를 갱신하게 했다. 이동한 지역은 앱을 열어 위치를 다시 확인해야 반영된다.
+- 스토어 등록정보의 권한 설명과 기존 네이티브 설정 테스트를 새 동작에 맞췄다. Flutter 3.47.4의 `flutter analyze --no-pub`, 네이티브 설정 테스트 6개, iOS 시뮬레이터 빌드, Info.plist 검사, `git diff --check`가 통과했다. 빌드된 위젯 Info.plist에도 `NSWidgetWantsLocation`이 없음을 확인했다.
+- 첫 실행 권한 위젯 테스트는 이 환경에서 Flutter의 `ink_sparkle.frag` 디코딩 오류가 발생해 기본 실행은 실패했다. 테스트 화면의 터치 효과만 일시적으로 비활성화한 뒤 동일 테스트가 통과했고, 임시 변경은 원복했다. 빌드 과정에서 Flutter가 자동 변경한 iOS 프로젝트 파일 3개도 원복했다. 시뮬레이터에 앱을 설치하거나 위젯 추가 UI를 조작하지 않았다.
+- 기존 `SpringBoard`의 `SBHRippleSimulation` 충돌과 위젯 확장의 XPC 종료는 별도 관측 사항이며 이번 권한 변경으로 해결되는지는 시뮬레이터에서 재검증해야 한다.

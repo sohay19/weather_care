@@ -265,9 +265,9 @@ void main() {
         iosWidget, contains('.fixedSize(horizontal: true, vertical: false)'));
     expect(iosIntent, contains('struct RefreshWeatherWidgetIntent: AppIntent'));
     expect(iosIntent, contains('static var openAppWhenRun = false'));
-    expect(iosWidgetPlist, contains('<key>NSWidgetWantsLocation</key>'));
-    expect(iosIntent, contains('isAuthorizedForWidgetUpdates'));
-    expect(iosIntent, contains('widgetGrid(for: location.coordinate)'));
+    expect(iosWidgetPlist, isNot(contains('<key>NSWidgetWantsLocation</key>')));
+    expect(iosIntent, isNot(contains('CoreLocation')));
+    expect(iosIntent, contains('url: savedURL'));
     expect(iosAppDelegate, contains('values?["gpsEnabled"]'));
     expect(
       iosIntent,

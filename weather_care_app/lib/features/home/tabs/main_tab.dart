@@ -961,7 +961,11 @@ class _TemperatureValue extends StatelessWidget {
   Widget build(BuildContext context) {
     final phase = WeatherDataPhaseScope.of(context);
     return Text(
-      value == null ? phase.missingText() : '${value!.toStringAsFixed(1)}℃',
+      value == null
+          ? phase == WeatherDataPhase.loading
+              ? '--°'
+              : phase.missingText()
+          : '${value!.toStringAsFixed(1)}℃',
       style: const TextStyle(
         color: WeatherCareTheme.primaryDeep,
         fontSize: 16,

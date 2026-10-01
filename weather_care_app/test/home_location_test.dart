@@ -330,6 +330,71 @@ void main() {
     expect(tester.widget<Text>(brief).data, '오늘은 맑아요.');
   });
 
+  testWidgets('부분 응답이 먼저 와도 Main·Today·Week의 날씨 값은 완료 후 표시한다', (tester) async {
+    final widgetService = _WidgetService();
+    final result = WeatherLoadResult(
+      today: TodayWeatherResponse.fromJson({
+        'region': {'nx': 60, 'ny': 127, 'name': '검증 지역'},
+        'brief': '맑고 포근해요.',
+        'current': {
+          'temperature': 23,
+          'apparentTemperature': 21,
+          'skyCondition': '맑음',
+        },
+        'nextForecast': {
+          'temperature': 25,
+          'forecastAt': '2026-10-01T14:00:00+09:00',
+        },
+      }),
+      weekly: WeeklyWeatherResponse.fromJson({
+        'days': [
+          {
+            'date': '목',
+            'forecastDate': '2026-10-01',
+            'min': 15,
+            'max': 35,
+          },
+        ],
+      }),
+      mode: WeatherLoadMode.server,
+      message: '운영 서버 연결',
+    );
+    weather.response = result;
+    weather.pending = Completer<WeatherLoadResult>();
+    weather.emitTodayWhilePending = true;
+
+    await start(tester,
+        settle: false,
+        initialIndex: 2,
+        widgetService: widgetService,
+        now: () => DateTime(2026, 10, 1, 13));
+
+    expect(find.text('23.0℃'), findsNothing);
+    expect(find.text('21.0℃'), findsNothing);
+    expect(find.text('--°'), findsWidgets);
+    expect(widgetService.published, isEmpty);
+    await tester.tap(find.text('Today'));
+    await tester.pump();
+    expect(find.text('23.0℃'), findsNothing);
+    expect(find.text('--°'), findsWidgets);
+
+    weather.pendingWeeklyCallback?.call(result.weekly!);
+    await tester.pump();
+    expect(widgetService.published, isEmpty);
+    await tester.tap(find.text('Week'));
+    await tester.pump();
+    expect(find.text('35℃'), findsNothing);
+
+    weather.pending!.complete(result);
+    await tester.pumpAndSettle();
+    expect(find.text('35℃'), findsWidgets);
+    expect(widgetService.published, hasLength(1));
+    await tester.tap(find.text('Main'));
+    await tester.pump();
+    expect(find.text('23.0℃'), findsOneWidget);
+    expect(find.text('21.0℃'), findsOneWidget);
+  });
+
   testWidgets('핵심 날씨만 도착한 동안 빈 항목은 불러오는 중으로 표시한다', (tester) async {
     weather.mainPreview = _weather(60, 127).today;
     weather.pending = Completer<WeatherLoadResult>();

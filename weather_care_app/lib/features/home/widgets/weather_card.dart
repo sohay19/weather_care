@@ -144,7 +144,10 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             ? _WeatherMetric(
                 icon: metric.icon,
                 label: metric.label,
-                value: widget.dataPhase.missingText(),
+                value: widget.dataPhase == WeatherDataPhase.loading &&
+                        metric.label == '체감'
+                    ? '--°'
+                    : widget.dataPhase.missingText(),
                 levelTitle: widget.dataPhase.explanation,
                 detailBody: widget.dataPhase.explanation,
               )
@@ -175,7 +178,9 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               Expanded(
                 child: Text(
                   current.temperature == null
-                      ? widget.dataPhase.missingText()
+                      ? widget.dataPhase == WeatherDataPhase.loading
+                          ? '--°'
+                          : widget.dataPhase.missingText()
                       : '${current.temperature!.toStringAsFixed(1)}℃',
                   style: TextStyle(
                     color: WeatherCareTheme.textPrimary,

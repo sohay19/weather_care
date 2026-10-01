@@ -162,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _publishHomeWidget() {
     final today = _today;
     if (today == null ||
+        _refreshFuture != null ||
         _mainDetailsLoading ||
         _todayRefreshing ||
         _weeklyLoading ||
@@ -541,6 +542,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _refreshFuture = null;
       if (mounted) {
         setState(() {});
+        _publishHomeWidget();
       }
     }
   }
@@ -718,9 +720,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _todayRefreshing = false;
           _weeklyLoading = false;
         });
-        if (_weeklyRequestFailed && !_todayRequestFailed) {
-          _publishHomeWidget();
-        }
       }
     }
   }
@@ -959,10 +958,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   String get _dateLabel => weatherRefreshLabel(_today?.generatedAt);
 
+  TodayWeatherResponse _loadingToday(TodayWeatherResponse today) =>
+      TodayWeatherResponse(
+        dataSource: today.dataSource,
+        region: today.region,
+        brief: '',
+        current: const CurrentWeather(temperature: null),
+        recommendations: const [],
+        lifestyleMessages: const [],
+        timeline: const [],
+        hourly: const [],
+      );
+
   @override
   Widget build(BuildContext context) {
     final today = _today;
     final weekly = _weekly;
+    final todayPhase = _todayPhase;
+    final weeklyPhase = _weeklyPhase;
+    final visibleToday = today != null && todayPhase == WeatherDataPhase.loading
+        ? _loadingToday(today)
+        : today;
+    final visibleWeekly =
+        weekly != null && weeklyPhase == WeatherDataPhase.loading
+            ? const WeeklyWeatherResponse(days: [])
+            : weekly;
     final serverFeaturesAvailable = _loadMode == WeatherLoadMode.server;
     final homeReady =
         today != null || (_initialized && !_loading && _loadMode != null);
@@ -1018,8 +1038,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               today == null
                   ? _statusView('today-tab')
                   : TodayTab(
-                      today: today,
-                      dataPhase: _todayPhase,
+                      today: visibleToday!,
+                      dataPhase: todayPhase,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       retrying: _todayRetrying,
@@ -1034,8 +1054,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               today == null
                   ? _statusView('detail-tab')
                   : DetailTab(
-                      today: today,
-                      dataPhase: _todayPhase,
+                      today: visibleToday!,
+                      dataPhase: todayPhase,
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _refreshFromTab,
@@ -1049,14 +1069,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               today == null
                   ? _statusView('main-tab')
                   : MainTab(
-                      today: today,
-                      dataPhase: _todayPhase,
+                      today: visibleToday!,
+                      dataPhase: todayPhase,
                       dateLabel: _dateLabel,
-                      mood: _mood,
+                      mood: todayPhase == WeatherDataPhase.loading
+                          ? 'clear'
+                          : _mood,
                       serverFeaturesAvailable: serverFeaturesAvailable,
-                      detailsLoading: _mainDetailsLoading,
+                      detailsLoading: todayPhase == WeatherDataPhase.loading,
                       yesterdayComparison: _yesterdayComparison,
-                      comparisonLoading: _comparisonLoading,
+                      comparisonLoading: _comparisonLoading ||
+                          todayPhase == WeatherDataPhase.loading,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       onRetryComparison: _retryYesterdayComparison,
@@ -1084,8 +1107,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           : null,
                     )
                   : WeekTab(
-                      weekly: weekly,
-                      dataPhase: _weeklyPhase,
+                      weekly: visibleWeekly!,
+                      dataPhase: weeklyPhase,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryWeeklyData,

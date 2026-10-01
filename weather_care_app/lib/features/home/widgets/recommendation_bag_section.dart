@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+import '../../../models/briefing_time.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../services/preparation_checklist_repository.dart';
@@ -122,13 +123,26 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
           break;
         }
       }
+      if (intended == null) {
+        final first = widget.briefingTimeline.first;
+        final from = DateTime.tryParse(first.validFrom);
+        final until = DateTime.tryParse(first.validUntil);
+        if (from != null &&
+            until != null &&
+            from.isBefore(until) &&
+            briefingStartsWithinClockSkew(from, now)) {
+          intended = first.recommendedItems;
+          description = first.copy.medium;
+        }
+      }
       intended ??= const [];
     } else if (widget.briefing != null) {
       final from = DateTime.tryParse(widget.briefing!.validFrom);
       final until = DateTime.tryParse(widget.briefing!.validUntil);
       final active = from != null &&
           until != null &&
-          !now.isBefore(from) &&
+          from.isBefore(until) &&
+          (!now.isBefore(from) || briefingStartsWithinClockSkew(from, now)) &&
           now.isBefore(until);
       intended = active ? widget.briefing!.recommendedItems : const [];
       description = widget.briefing!.copy.medium;

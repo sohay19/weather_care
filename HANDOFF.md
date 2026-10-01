@@ -8575,3 +8575,11 @@
 - 전체 새로고침 중에도 Main 현재·다음 기온, Check List, 어제 비교, Today 시간별 예보, Week 주간 예보가 이미 도착한 값이나 이전 값을 표시할 수 있었다. 로딩 단계에서는 화면용 빈 자료를 전달하고 Main·Today 기온과 체감온도는 `--°`로 표시한다. 완료 후 실제 자료를 함께 표시한다.
 - 이전 브리핑 로딩 수정으로 `_todayRefreshing`이 전체 새로고침이 끝날 때까지 유지되면서 정상 완료 시 홈 위젯 발행이 건너뛰어질 수 있었다. 새로고침 전체가 끝난 뒤 GPS 지역명까지 적용된 스냅샷을 발행하도록 변경했다.
 - 부분 Today·Weekly 응답과 최종 완료 순서를 회귀 테스트로 검증했다. Flutter 3.47.4 관련 테스트 116개, `flutter analyze --no-pub`, `git diff --check`를 통과했다. iOS 기기 빌드는 이 Windows 환경에서 수행하지 않았다.
+
+## 2026-10-01 Android 첫 브리핑 공백 및 위젯 시계 차이 보정
+
+- 사용자 제공 Android 녹화에서 `불러오는 중` 이후 실제 기온이 표시되는 동안 Main 브리핑이 잠시 `최신 날씨를 확인해 주세요.`로, Check List가 빈 상태로 보였다가 실제 내용으로 바뀌는 현상을 확인했다.
+- 운영 API 응답의 Date 헤더를 기기 시간과 비교해 서버 시계가 약 1.4~2.1초 앞선 것을 확인했다. 서버 브리핑 timeline의 첫 시작 시각이 기기에는 잠시 미래라서 두 영역과 위젯이 활성 브리핑을 찾지 못한 것이 원인이다.
+- 첫 timeline 항목의 시작 시각이 기기보다 10초 이내로 앞서는 경우에만 해당 항목을 즉시 표시하도록 Main 브리핑, Check List, Flutter 위젯 스냅샷, Android/iOS 홈 위젯을 보정했다. 일반적인 미래 항목과 만료 항목의 판정은 유지한다.
+- Flutter 3.47.4 대상 회귀 테스트 39개, 네이티브 소스 테스트 6개, `flutter analyze --no-pub`, Android `compileDebugJavaWithJavac` 및 `testDebugUnitTest`, `git diff --check`를 통과했다. Windows 환경이라 iOS WidgetKit 빌드와 실제 화면 재촬영은 수행하지 않았다.
+- Flutter 3.47.4 Debug APK를 빌드했다. 에뮬레이터 저장 공간 부족으로 범용 APK 설치는 실패했으나 x86_64 전용 APK(약 94MB) 설치는 성공했다. `firstInstallTime`은 유지되고 `lastUpdateTime`은 14:07:41로 갱신됐다. 앱 화면을 띄워 재촬영하지는 않았다.

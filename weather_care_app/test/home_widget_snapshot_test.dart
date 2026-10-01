@@ -218,6 +218,26 @@ void main() {
     final encoded = jsonDecode(snapshot.encode()) as Map<String, dynamic>;
     expect((encoded['preparationCatalog'] as List), hasLength(3));
   });
+
+  test('서버 시계가 2초 빠른 위젯 스냅샷에도 첫 브리핑을 넣는다', () {
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: _today(
+        briefingTimeline: [
+          _timelineEntry(
+            sceneId: 'UV',
+            from: '2026-09-18T23:30:02Z',
+            until: '2026-09-19T00:00:00Z',
+            short: '선크림을 챙기세요.',
+            recommendedItems: const ['SUNSCREEN'],
+          ),
+        ],
+        recommendations: const [],
+      ),
+      now: DateTime.parse('2026-09-18T23:30:00Z'),
+    );
+    expect(snapshot.shortMessage, '선크림을 챙기세요.');
+    expect(snapshot.preparations.map((item) => item.type), ['SUNSCREEN']);
+  });
 }
 
 TodayWeatherResponse _today({

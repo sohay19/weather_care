@@ -838,6 +838,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     break;
                 }
             }
+            if (active == null && !briefingTimeline.isEmpty()) {
+                BriefingEntry first = briefingTimeline.get(0);
+                if (first.validFrom() > now && first.validFrom() - now <= 10_000
+                        && now < first.validUntil()) {
+                    active = first;
+                }
+            }
             if (briefingTimeline.isEmpty()) {
                 boolean valid = validUntil <= 0 || now < validUntil;
                 return valid ? this : withBriefing(

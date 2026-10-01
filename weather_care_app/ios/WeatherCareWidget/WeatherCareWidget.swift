@@ -205,7 +205,14 @@ struct WidgetSnapshot: Codable {
 
   func at(_ date: Date) -> WidgetSnapshot {
     let freshUntil = dataFreshUntil.flatMap(widgetDate)
-    let active = briefingTimeline?.first { $0.active(at: date) }
+    let first = briefingTimeline?.first
+    let nearStart = first.flatMap { entry -> WidgetBriefingEntry? in
+      guard let from = widgetDate(entry.validFrom), from > date,
+            from.timeIntervalSince(date) <= 10,
+            let until = widgetDate(entry.validUntil), from < until else { return nil }
+      return entry
+    }
+    let active = briefingTimeline?.first { $0.active(at: date) } ?? nearStart
     let legacyValid = validUntil.flatMap(widgetDate).map { date < $0 } ?? true
     guard freshUntil.map({ date < $0 }) ?? true,
           active != nil || (briefingTimeline?.isEmpty ?? true) && legacyValid else {

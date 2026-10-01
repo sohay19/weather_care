@@ -205,6 +205,39 @@ void main() {
     expect(find.byKey(const ValueKey('bag-item-umbrella')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('서버 시계가 2초 빠르더라도 첫 준비물을 바로 표시한다', (tester) async {
+    final now = DateTime.parse('2026-09-10T12:00:00+09:00');
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RecommendationBagSection(
+          regionName: '서울',
+          recommendations: const [],
+          now: () => now,
+          briefingTimeline: const [
+            BriefingTimelineEntry(
+              briefingId: 'uv',
+              sceneId: 'UV',
+              validFrom: '2026-09-10T03:00:02Z',
+              validUntil: '2026-09-10T04:00:00Z',
+              recommendedItems: ['SUNSCREEN'],
+              copy: BriefingCopy(
+                short: '자외선 안내',
+                medium: '선크림을 챙기세요.',
+                long: '선크림을 챙기세요.',
+                notificationTitle: '자외선 안내',
+                notificationBody: '선크림을 챙기세요.',
+              ),
+            ),
+          ],
+          onDetail: (_) {},
+        ),
+      ),
+    ));
+    expect(find.byKey(const ValueKey('bag-item-sunscreen')), findsOneWidget);
+    expect(find.text('지금은 특별히 챙길 준비물이 없어요.'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 
 Widget bag({

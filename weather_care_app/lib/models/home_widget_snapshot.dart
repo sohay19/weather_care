@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../utils/korea_date.dart';
+import 'briefing_time.dart';
 import 'recommendation.dart';
 import 'weather.dart';
 
@@ -361,6 +362,18 @@ HomeWidgetBriefingEntry? _activeBriefing(
         !now.isBefore(from) &&
         now.isBefore(until)) {
       return entry;
+    }
+  }
+  if (entries.isNotEmpty) {
+    final first = entries.first;
+    final from = DateTime.tryParse(first.validFrom);
+    final until = DateTime.tryParse(first.validUntil);
+    if (from != null &&
+        until != null &&
+        from.isBefore(until) &&
+        briefingStartsWithinClockSkew(from, now) &&
+        now.isBefore(until)) {
+      return first;
     }
   }
   return null;

@@ -242,6 +242,27 @@ void main() {
     expect(snapshot.preparations.map((item) => item.type), ['SUNSCREEN']);
     expect(snapshot.toJson()['receivedAt'], receivedAt.toIso8601String());
   });
+
+  test('오늘과 주간 응답 사이에 날짜가 바뀌면 주간 응답의 오늘 최저·최고를 쓴다', () {
+    final receivedAt = DateTime.parse('2026-10-01T10:00:00Z');
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: _today(
+        generatedAt: '2026-10-01T14:59:00Z',
+        receivedAt: receivedAt,
+        recommendations: const [],
+      ),
+      weekly: WeeklyWeatherResponse.fromJson({
+        'generatedAt': '2026-10-01T15:01:00Z',
+        'days': [
+          {'forecastDate': '2026-10-01', 'min': 11, 'max': 21},
+          {'forecastDate': '2026-10-02', 'min': 12, 'max': 22},
+        ],
+      }, receivedAt: receivedAt),
+      now: receivedAt,
+    );
+    expect(snapshot.minimumTemperature, '12°');
+    expect(snapshot.maximumTemperature, '22°');
+  });
 }
 
 TodayWeatherResponse _today({

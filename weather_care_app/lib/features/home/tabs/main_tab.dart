@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/briefing_time.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
@@ -307,6 +308,7 @@ class _TodaySection extends StatelessWidget {
                   today.sunriseAt,
                   today.sunsetAt,
                   today.generatedAt,
+                  today.receivedAt,
                 ),
               ),
             ],
@@ -1240,10 +1242,15 @@ _MetricState _sunState(
   String? sunriseAt,
   String? sunsetAt,
   String? generatedAt,
+  DateTime? receivedAt,
 ) {
   final sunrise = _parseTimestamp(sunriseAt);
   final sunset = _parseTimestamp(sunsetAt);
-  final now = _parseTimestamp(generatedAt) ?? DateTime.now().toUtc();
+  final now = responseNow(
+    DateTime.now(),
+    generatedAt: generatedAt,
+    receivedAt: receivedAt,
+  ).toUtc();
   if (sunrise == null || sunset == null) return _unavailableMetric;
   if (now.isBefore(sunrise)) {
     return const _MetricState('해 뜨기 전', WeatherCareTheme.textSecondary);

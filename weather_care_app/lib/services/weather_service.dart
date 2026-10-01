@@ -178,7 +178,7 @@ class WeatherService {
           'regionName': regionName.trim(),
       },
     );
-    return WeeklyWeatherResponse.fromJson(data);
+    return WeeklyWeatherResponse.fromJson(data, receivedAt: DateTime.now());
   }
 
   Future<TodayWeatherResponse?> fetchMainWeather({

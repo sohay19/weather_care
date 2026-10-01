@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/briefing_time.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
@@ -10,6 +11,9 @@ import 'weather_condition_icon.dart';
 
 class HourlyForecastSection extends StatelessWidget {
   final List<HourlyWeatherItem> items;
+  final String? generatedAt;
+  final DateTime? receivedAt;
+  final DateTime? now;
   final WeatherDataPhase dataPhase;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
@@ -17,6 +21,9 @@ class HourlyForecastSection extends StatelessWidget {
   const HourlyForecastSection({
     super.key,
     required this.items,
+    this.generatedAt,
+    this.receivedAt,
+    this.now,
     this.dataPhase = WeatherDataPhase.ready,
     this.onRetryMissingData,
     this.retrying = false,
@@ -24,7 +31,12 @@ class HourlyForecastSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleItems = _todayHourlyItems(items);
+    final today = dateInKorea(responseNow(
+      now ?? DateTime.now(),
+      generatedAt: generatedAt,
+      receivedAt: receivedAt,
+    ));
+    final visibleItems = _todayHourlyItems(items, today);
     final hasMissingData = visibleItems.isEmpty ||
         visibleItems.any(
           (item) =>
@@ -87,8 +99,8 @@ class HourlyForecastSection extends StatelessWidget {
                 item: visibleItems[index],
                 dataPhase: dataPhase,
                 showPoint: visibleItems[index].forecastDate == null ||
-                    visibleItems[index].forecastDate ==
-                        dateInKorea(DateTime.now()),
+                    visibleItems[index].forecastDate == today,
+                today: today,
               ),
               if (index < visibleItems.length - 1) const SizedBox(height: 9),
             ],
@@ -111,16 +123,13 @@ class HourlyForecastSection extends StatelessWidget {
   }
 }
 
-List<HourlyWeatherItem> _todayHourlyItems(List<HourlyWeatherItem> items) {
+List<HourlyWeatherItem> _todayHourlyItems(
+    List<HourlyWeatherItem> items, String today) {
   final hasForecastDates = items.any((item) => item.forecastDate != null);
   if (!hasForecastDates) {
     return items.take(24).toList(growable: false);
   }
 
-  final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
-  final today = '${nowInKorea.year.toString().padLeft(4, '0')}-'
-      '${nowInKorea.month.toString().padLeft(2, '0')}-'
-      '${nowInKorea.day.toString().padLeft(2, '0')}';
   return items
       .where((item) =>
           item.forecastDate == today ||
@@ -133,19 +142,21 @@ class _HourlyRow extends StatelessWidget {
   final HourlyWeatherItem item;
   final WeatherDataPhase dataPhase;
   final bool showPoint;
+  final String today;
 
   const _HourlyRow({
     super.key,
     required this.item,
     required this.dataPhase,
     this.showPoint = true,
+    required this.today,
   });
 
   @override
   Widget build(BuildContext context) {
     final period = item.precipitationPeriod;
-    final showPrecipitation = !item.precipitationPeriodProvided ||
-        period?.date == dateInKorea(DateTime.now());
+    final showPrecipitation =
+        !item.precipitationPeriodProvided || period?.date == today;
     final rainAmount = item.precipitationAmountLabel ??
         (item.precipitationAmount == null
             ? null

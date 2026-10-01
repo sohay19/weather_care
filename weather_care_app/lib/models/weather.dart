@@ -717,16 +717,24 @@ class TodayWeatherResponse {
 
 class WeeklyWeatherResponse {
   final List<WeeklyForecastItem> days;
+  final String? generatedAt;
+  final DateTime? receivedAt;
 
-  const WeeklyWeatherResponse({required this.days});
+  const WeeklyWeatherResponse(
+      {required this.days, this.generatedAt, this.receivedAt});
 
-  factory WeeklyWeatherResponse.fromJson(Map<String, dynamic> json) {
+  factory WeeklyWeatherResponse.fromJson(Map<String, dynamic> json,
+      {DateTime? receivedAt}) {
     final raw = json['days'];
     final days = (raw is List ? raw : const [])
         .whereType<Map<String, dynamic>>()
         .map(WeeklyForecastItem.fromJson)
         .toList();
-    return WeeklyWeatherResponse(days: days);
+    return WeeklyWeatherResponse(
+      days: days,
+      generatedAt: _optionalText(json['generatedAt']),
+      receivedAt: receivedAt,
+    );
   }
 }
 

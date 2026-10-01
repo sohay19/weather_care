@@ -39,6 +39,27 @@ void main() {
     expect(weekly.days.last.forecastDate, isNull);
   });
 
+  testWidgets('기기 날짜가 하루 느려도 주간 응답의 오늘을 선택한다', (tester) async {
+    final receivedAt = DateTime.parse('2026-10-01T10:00:00Z');
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WeekTab(
+          weekly: WeeklyWeatherResponse(
+            days: [_day('2026-10-01'), _day('2026-10-02')],
+            generatedAt: '2026-10-02T02:00:00Z',
+            receivedAt: receivedAt,
+          ),
+          serverFeaturesAvailable: true,
+          onRefresh: () async {},
+          now: () => receivedAt,
+        ),
+      ),
+    ));
+    expect(find.byKey(const ValueKey('week-today-2026-10-02')), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-past-2026-10-01')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('잘못된 날짜·요일·시각을 날짜로 추정하거나 보정하지 않는다', () {
     for (final value in [
       null,

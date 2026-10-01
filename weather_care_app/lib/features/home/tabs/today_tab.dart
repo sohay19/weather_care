@@ -64,6 +64,8 @@ class TodayTab extends StatelessWidget {
             ],
             HourlyForecastSection(
               items: today.hourly,
+              generatedAt: today.generatedAt,
+              receivedAt: today.receivedAt,
               dataPhase: dataPhase,
               onRetryMissingData: onRetryData,
               retrying: retrying,

@@ -412,10 +412,13 @@ describe('weekly calendar date contract', () => {
       });
       const response = await router.request('/weekly?nx=60&ny=121&installationId=test', { headers: testAuthHeaders }, { DB: env.DB, KMA_SERVICE_KEY: 'test-key' });
       expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({ days: [{
-        weatherDataComplete: false, minTemperatureSource: 'HOURLY', maxTemperatureSource: 'DAILY',
-        recommendations: expected.map(({ type, recommended }) => ({ type, recommended })),
-      }] });
+      expect(await response.json()).toMatchObject({
+        generatedAt: '2026-08-20T01:00:00.000Z',
+        days: [{
+          weatherDataComplete: false, minTemperatureSource: 'HOURLY', maxTemperatureSource: 'DAILY',
+          recommendations: expected.map(({ type, recommended }) => ({ type, recommended })),
+        }],
+      });
       const expandedResponse = await router.request(
         '/weekly?nx=60&ny=121&installationId=test&recommendationCatalog=PREPARATION_15',
         { headers: testAuthHeaders },

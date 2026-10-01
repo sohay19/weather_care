@@ -117,6 +117,26 @@ void main() {
     expect(find.text('강수량 1mm 미만'), findsNothing);
   });
 
+  testWidgets('기기 날짜가 하루 느려도 응답 시각의 오늘 예보를 표시한다', (tester) async {
+    final receivedAt = DateTime.parse('2026-10-01T10:00:00Z');
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: HourlyForecastSection(
+          items: [
+            HourlyWeatherItem.fromJson(_slot('2026-10-01', 15)),
+            HourlyWeatherItem.fromJson(_slot('2026-10-02', 15)),
+          ],
+          generatedAt: '2026-10-02T02:00:00Z',
+          receivedAt: receivedAt,
+          now: receivedAt,
+        ),
+      ),
+    ));
+    expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-1')), findsNothing);
+    expect(find.text('14~15시 강수 예보'), findsOneWidget);
+  });
+
   testWidgets('구간을 모르는 새 응답은 강수 코드값을 mm로 노출하지 않는다', (tester) async {
     await _pump(tester, [
       {..._slot(dateInKorea(DateTime.now()), 15), 'precipitationPeriod': null}

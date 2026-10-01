@@ -68,7 +68,7 @@ class _WeatherBriefTextState extends State<WeatherBriefText>
 
   void _check() {
     _timer?.cancel();
-    final now = briefingNow(
+    final now = responseNow(
       (widget.now ?? DateTime.now)(),
       generatedAt: widget.generatedAt,
       receivedAt: widget.receivedAt,

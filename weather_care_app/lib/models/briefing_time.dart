@@ -1,5 +1,5 @@
 /// 응답을 받은 시점부터 서버가 기록한 생성 시각을 기준으로 경과 시간을 계산한다.
-DateTime briefingNow(
+DateTime responseNow(
   DateTime localNow, {
   String? generatedAt,
   DateTime? receivedAt,

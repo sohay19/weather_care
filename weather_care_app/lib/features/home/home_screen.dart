@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import '../../models/app_settings.dart';
+import '../../models/briefing_time.dart';
 import '../../models/lifestyle_message.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
@@ -141,7 +142,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Timer? _weatherHourTimer;
   String? _lastCompletedWeatherHour;
 
-  DateTime _now() => (widget.now ?? DateTime.now)();
+  DateTime _now() {
+    final today = _today;
+    final weekly = _weekly;
+    return responseNow(
+      (widget.now ?? DateTime.now)(),
+      generatedAt: today?.generatedAt ?? weekly?.generatedAt,
+      receivedAt: today?.receivedAt ?? weekly?.receivedAt,
+    );
+  }
 
   WeatherDataPhase get _todayPhase => _todayRetrying
       ? WeatherDataPhase.loading
@@ -846,6 +855,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _todayRequestFailed = false;
       _statusMessage = 'Main 날씨를 먼저 표시했어요.\n주간 자료는 계속 불러오고 있어요.';
     });
+    _scheduleWeatherHourRefresh();
     _publishHomeWidget();
     return true;
   }
@@ -875,6 +885,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _mainDetailsLoading = true;
       _statusMessage = 'Main 핵심 날씨를 먼저 표시했어요.\n상세 자료를 계속 불러오고 있어요.';
     });
+    _scheduleWeatherHourRefresh();
     return true;
   }
 
@@ -901,6 +912,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _statusMessage = '운영 서버 연결';
       _weeklyRequestFailed = false;
     });
+    _scheduleWeatherHourRefresh();
     _publishHomeWidget();
   }
 
@@ -934,6 +946,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _weeklyRequestFailed = result.weekly == null;
       _statusMessage = result.message;
     });
+    _scheduleWeatherHourRefresh();
     if (_today == null) {
       _clearHomeWidget();
     } else {
@@ -1114,6 +1127,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRetryData: _retryWeeklyData,
                       retrying: _weeklyRetrying,
                       now: widget.now,
+                      fallbackGeneratedAt: today?.generatedAt,
+                      fallbackReceivedAt: today?.receivedAt,
                       advertisement: _weekAdvertisementActivated &&
                               !(widget.adRemoval?.isOwned ?? false)
                           ? ConsentAwareNativeAdCard(

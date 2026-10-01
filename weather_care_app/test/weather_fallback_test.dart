@@ -84,6 +84,17 @@ void main() {
     expect(today.withRegionName('서울').receivedAt, today.receivedAt);
   });
 
+  test('주간 응답도 서버 시각과 수신 시각을 함께 저장한다', () async {
+    final before = DateTime.now();
+    final weekly = await WeatherService(_RecordingApiClient())
+        .fetchWeeklyWeather(installationId: 'test');
+    final after = DateTime.now();
+    expect(weekly.generatedAt, '2026-10-02T02:00:00Z');
+    expect(weekly.receivedAt, isNotNull);
+    expect(weekly.receivedAt!.isBefore(before), isFalse);
+    expect(weekly.receivedAt!.isAfter(after), isFalse);
+  });
+
   test('항동 Today·Week 요청에 행정구역 코드와 전체 지역명을 함께 전달한다', () async {
     final client = _RecordingApiClient();
     final service = WeatherService(client);
@@ -172,7 +183,10 @@ class _RecordingApiClient extends ApiClient {
       {Map<String, String>? query}) async {
     queries[path] = query ?? {};
     if (path.endsWith('/today')) return _todayJson;
-    return {'days': <Map<String, dynamic>>[]};
+    return {
+      'generatedAt': '2026-10-02T02:00:00Z',
+      'days': <Map<String, dynamic>>[],
+    };
   }
 }
 

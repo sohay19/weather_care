@@ -156,12 +156,17 @@ class HomeWidgetSnapshot {
     DateTime? now,
   }) {
     final localNow = now ?? DateTime.now();
-    final instant = briefingNow(
+    final instant = responseNow(
       localNow,
       generatedAt: today.generatedAt,
       receivedAt: today.receivedAt,
     );
-    final daily = _todayForecast(weekly?.days ?? const [], instant);
+    final weeklyInstant = responseNow(
+      localNow,
+      generatedAt: weekly?.generatedAt ?? today.generatedAt,
+      receivedAt: weekly?.receivedAt ?? today.receivedAt,
+    );
+    final daily = _todayForecast(weekly?.days ?? const [], weeklyInstant);
     final fallbackRecommendations = List<WeatherRecommendation>.from(
       today.recommendations.where((item) => item.recommended),
     )..sort((a, b) => b.priority.compareTo(a.priority));

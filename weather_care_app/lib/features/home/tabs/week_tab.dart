@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../models/briefing_time.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/recommendation_theme.dart';
@@ -24,6 +25,8 @@ class WeekTab extends StatefulWidget {
   final Future<void> Function()? onRetryData;
   final bool retrying;
   final DateTime Function()? now;
+  final String? fallbackGeneratedAt;
+  final DateTime? fallbackReceivedAt;
   final Widget? advertisement;
 
   const WeekTab({
@@ -35,6 +38,8 @@ class WeekTab extends StatefulWidget {
     this.onRetryData,
     this.retrying = false,
     this.now,
+    this.fallbackGeneratedAt,
+    this.fallbackReceivedAt,
     this.advertisement,
   });
 
@@ -45,7 +50,11 @@ class WeekTab extends StatefulWidget {
 class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
   Timer? _midnightTimer;
 
-  DateTime _now() => (widget.now ?? DateTime.now)();
+  DateTime _now() => responseNow(
+        (widget.now ?? DateTime.now)(),
+        generatedAt: widget.weekly.generatedAt ?? widget.fallbackGeneratedAt,
+        receivedAt: widget.weekly.receivedAt ?? widget.fallbackReceivedAt,
+      );
 
   @override
   void initState() {

@@ -50,7 +50,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   bool _saving = false;
   bool _loadFailed = false;
 
-  DateTime get _now => briefingNow(
+  DateTime get _now => responseNow(
         (widget.now ?? DateTime.now)(),
         generatedAt: widget.generatedAt,
         receivedAt: widget.receivedAt,

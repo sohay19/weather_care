@@ -578,6 +578,7 @@ router.get('/weekly', async (c) => {
     }
     const response = {
       dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
+      generatedAt: now.toISOString(),
       regionId,
       region: {
         nx,

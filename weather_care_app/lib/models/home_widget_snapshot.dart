@@ -211,7 +211,7 @@ class HomeWidgetSnapshot {
           _singleSpaced(activeBriefing?.shortMessage ?? '최신 날씨를 확인해 주세요.'),
       brief: brief.isEmpty ? '최신 날씨를 확인해 주세요.' : brief,
       nextTime: widgetForecastTime(next?.forecastAt ?? next?.issuedAt),
-      nextCondition: widgetWeatherCondition(next?.sky ?? today.current.sky),
+      nextCondition: widgetWeatherCondition(next?.sky),
       nextTemperature: _temperature(next?.temperature),
       preparations: preparations,
       preparationCatalog: preparationCatalog,
@@ -337,9 +337,6 @@ WeeklyForecastItem? _todayForecast(
   final today = dateInKorea(now);
   for (final day in days) {
     if (!day.historical && day.forecastDate == today) return day;
-  }
-  for (final day in days) {
-    if (!day.historical && (day.min != null || day.max != null)) return day;
   }
   return null;
 }

@@ -91,6 +91,7 @@ class _Weather extends WeatherService {
   Completer<WeatherLoadResult>? pending;
   Completer<ComparisonResponse>? comparisonPending;
   bool emitTodayWhilePending = false;
+  void Function(WeeklyWeatherResponse)? pendingWeeklyCallback;
   TodayWeatherResponse? mainPreview;
   ComparisonResponse comparison = const ComparisonResponse.unavailable();
   String? regionName;
@@ -131,6 +132,7 @@ class _Weather extends WeatherService {
     calls.add((nx: nx, ny: ny, coordinates: coordinates));
     final result = response ?? _weather(nx, ny, regionName: regionName);
     if (pending != null) {
+      pendingWeeklyCallback = onWeekly;
       if (emitTodayWhilePending) onToday?.call(result.today!);
       return await pending!.future;
     }
@@ -533,6 +535,10 @@ void main() {
         settle: false, initialIndex: 2, widgetService: widgetService);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
+    expect(widgetService.published, isEmpty);
+    expect(weather.pendingWeeklyCallback, isNotNull);
+    weather.pendingWeeklyCallback?.call(_weather(60, 127).weekly!);
+    await tester.pump();
     expect(widgetService.published, isEmpty);
     await tester.dragUntilVisible(
       find.text('Check List를 불러오고 있어요'),

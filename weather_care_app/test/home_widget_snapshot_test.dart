@@ -106,6 +106,33 @@ void main() {
     expect(compactWidgetRegionName('시흥시 은행동'), '시흥시 은행동');
   });
 
+  test('다음 예보와 오늘 최고·최저가 없으면 현재 날씨와 다른 날짜로 채우지 않는다', () {
+    final snapshot = HomeWidgetSnapshot.fromWeather(
+      today: _today(
+        recommendations: const [],
+        nextForecast: null,
+      ),
+      weekly: WeeklyWeatherResponse.fromJson({
+        'days': [
+          {
+            'date': '일',
+            'forecastDate': '2026-09-20',
+            'min': 8,
+            'max': 25,
+            'recommendations': <Object?>[],
+          },
+        ],
+      }),
+      now: DateTime.parse('2026-09-19T03:00:00Z'),
+    );
+
+    expect(snapshot.nextTime, '예보 준비 중');
+    expect(snapshot.nextCondition, 'unknown');
+    expect(snapshot.nextTemperature, '--°');
+    expect(snapshot.minimumTemperature, '--°');
+    expect(snapshot.maximumTemperature, '--°');
+  });
+
   test('짧은 브리핑은 긴 문장을 자른 값이 아니다', () {
     final briefing = _briefing(
       sceneId: 'RAIN',
@@ -197,6 +224,11 @@ TodayWeatherResponse _today({
   CanonicalBriefing? briefing,
   List<BriefingTimelineEntry> briefingTimeline = const [],
   required List<WeatherRecommendation> recommendations,
+  CurrentWeather? nextForecast = const CurrentWeather(
+    temperature: 19,
+    forecastAt: '2026-09-19T00:00:00Z',
+    sky: '맑음',
+  ),
 }) {
   return TodayWeatherResponse(
     dataSource: '서버 데이터',
@@ -214,11 +246,7 @@ TodayWeatherResponse _today({
       apparentTemperature: 17.5,
       sky: '빗방울',
     ),
-    nextForecast: const CurrentWeather(
-      temperature: 19,
-      forecastAt: '2026-09-19T00:00:00Z',
-      sky: '맑음',
-    ),
+    nextForecast: nextForecast,
     recommendations: recommendations,
     lifestyleMessages: const [],
     timeline: const [],

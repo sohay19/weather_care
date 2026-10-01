@@ -161,10 +161,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _publishHomeWidget() {
     final today = _today;
-    if (today == null) return;
+    if (today == null ||
+        _mainDetailsLoading ||
+        _todayRefreshing ||
+        _weeklyLoading ||
+        _todayRequestFailed) {
+      return;
+    }
     final snapshot = HomeWidgetSnapshot.fromWeather(
       today: today,
-      weekly: _weekly,
+      weekly: _weeklyRequestFailed ? null : _weekly,
     );
     unawaited(widget.homeWidgetService.publish(
       snapshot,
@@ -709,6 +715,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _todayRefreshing = false;
           _weeklyLoading = false;
         });
+        if (_weeklyRequestFailed && !_todayRequestFailed) {
+          _publishHomeWidget();
+        }
       }
     }
   }

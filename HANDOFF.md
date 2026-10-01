@@ -8605,3 +8605,16 @@
 - 배포 전 SQLite 온라인 백업은 `/var/backups/weather-care/weather-care-before-45e14d0-20261001T055120Z.sqlite`, 소스 압축 백업은 `/var/backups/weather-care/source-before-45e14d0-20261001T055120Z.tar.gz`, 즉시 롤백 파일은 `/var/backups/weather-care/weather.ts-before-45e14d0-20261001T055120Z`이다. 백업은 `weather-care` 소유·0600이고 SQLite `quick_check`가 통과했다. 운영 환경파일과 DB 원본은 변경하지 않았다.
 - 기존 캐시를 유지하며 API 서비스만 의존성 재실행 없이 재시작했고 스케줄러·선수집은 재시작하지 않았다. 배포한 `src/api/weather.ts` SHA-256은 CRLF 기준 `6a49a611d6397d03f5dee7c1448c02514131e1db3ea8d8aa9c173dc7ba54f5f3`이다.
 - 내부·공개 `/health`와 공개 `/main`, `/today`, `/weekly`, `/widget`이 HTTP 200이다. 공개 `/weekly?nx=57&ny=124`는 7일 자료와 `generatedAt`을 반환한다. API·스케줄러·Cloudflare Tunnel은 모두 active이며 재시작 이후 API·스케줄러의 error 등급 journal 항목은 0개다.
+
+## 2026-10-01 대기질 간헐 누락 원인 조사
+
+- 사용자가 15:00 KST에 시흥시 은행동의 다른 날씨 값은 보이고 대기질만 `정보 없음`인 화면을 제보했다. 운영 API는 전체 Today 요청을 HTTP 200으로 처리했고, 14:50 수집본(`COLLECTED_ENVIRONMENTAL_57_124`)의 대기질 상태는 `UNAVAILABLE`였다. 15:00 수집본에는 소사본동 측정소의 13:00 관측값(PM10 40, PM2.5 0)이 들어왔고 이후 API에서도 표시됐다.
+- 14:50 수집 로그에서 에어코리아 요청 `TimeoutError`가 발생했다. 가장 가까운 대야동 측정소의 캐시는 9월 29일자로 유효기간 밖이었다. 두 번째 소사본동의 캐시는 13:00 관측값을 갖고 있었으나, `loadAirQuality`는 대야동 요청에 공통 6초 제한 시간이 소진되면 `signal.aborted`에서 반복을 끝내므로 다음 측정소의 캐시도 확인하지 않는다. 15:00 수집 시 대야동은 `NO_USABLE_DATA`로 빠르게 실패했고 소사본동 자료를 채택했다.
+- 최근 3시간 운영 스케줄러 로그에도 에어코리아 시간 초과가 반복됐다. 대기질은 별도 측정소 API 및 서버 선수집 캐시에 의존하며 현재 앱 새로고침은 누락된 대기질을 직접 재조회하지 않는다. 이번 턴은 원인 조사만 수행했고 코드와 운영 설정은 변경하지 않았다.
+
+## 2026-10-01 대기질 시간 초과 시 인접 측정소 캐시 대체
+
+- 14:50 대야동 측정소 호출의 6초 시간 초과는 운영 로그로 확인했으나, 응답 지연이 에어코리아 원 서버인지 중간 네트워크인지는 현재 로그만으로 특정할 수 없다. 대야동의 이전 관측은 허용 시간을 넘었고 소사본동의 13:00 관측은 유효했다.
+- `loadAirQuality`에서 공통 요청 신호가 중단된 뒤에도 가까운 나머지 측정소의 캐시를 순서대로 검사한다. 측정소 이름, 관측 시각 4시간 이내, 캐시 3시간 이내 조건을 통과한 값만 `CACHED`/`STALE`로 반환하며 외부 API를 추가 호출하지 않는다. 같은 시흥 격자 사례를 재현한 회귀 테스트를 추가했다.
+- 서버 Worker 테스트 366개와 Node 테스트 11개, TypeScript 타입 검사, `git diff --check`를 통과했다. 소스와 테스트만 커밋 `b91c304`(`fix(대기질): 측정소 시간 초과 시 주변 캐시 사용`)에 포함했고 기존 다른 미커밋 파일은 제외했다.
+- 미니 PC 운영 소스 원본은 `/var/backups/weather-care/environmentalDataService-before-b91c304-20261001T0615Z.ts`에 보관했다. 새 소스 SHA-256은 `ed369a3c6a127a183281b43864e8ea5ad5bffebe152faada6677242396a8cd13`이며 운영 파일과 일치한다. 스케줄러 재시작이 systemd `Requires`에 따라 전국 선수집을 다시 시작해 잠시 기동 대기했다. 중복 선수집 서비스를 멈추고 API와 스케줄러를 각각 기동했다. 두 서비스와 터널은 active, 공개 헬스 체크는 HTTP 200이며 시흥 Today 대기질 값도 응답한다. 스케줄러 내부의 시작 단계 전국 캐시 점검은 06:24:27 UTC에 `missingCaches=0`으로 완료됐고 `node_scheduler_started`를 확인했다.

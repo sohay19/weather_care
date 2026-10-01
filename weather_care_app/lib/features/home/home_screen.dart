@@ -386,7 +386,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _lastCompletedWeatherHour != koreaHourKey(_now());
       if (_initialized &&
           (_settings.locationMode == 'GPS' || crossedWeatherHour)) {
-        unawaited(_refresh(supersede: true));
+        unawaited(_refresh(
+            supersede: true,
+            forceLocationRefresh: _settings.locationMode == 'GPS'));
       }
     }
   }

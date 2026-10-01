@@ -47,6 +47,7 @@ class _DeletionApi extends ApiClient {
 class _Location extends CurrentLocationService {
   LocationResult result =
       const LocationResult(LocationState.ready, coordinates: _seoul);
+  LocationResult? cachedResult;
   final requests = <bool>[];
   final freshRequests = <bool>[];
   Completer<LocationResult>? pending;
@@ -57,7 +58,9 @@ class _Location extends CurrentLocationService {
   }) async {
     requests.add(requestPermission);
     freshRequests.add(forceRefresh);
-    return pending == null ? result : await pending!.future;
+    return pending == null
+        ? (!forceRefresh ? cachedResult ?? result : result)
+        : await pending!.future;
   }
 }
 
@@ -917,11 +920,17 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(location.requests, [false, false]);
+    location.cachedResult =
+        const LocationResult(LocationState.ready, coordinates: _busan);
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _seoul);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(location.requests, [false, false, false]);
-    expect(location.freshRequests, [false, true, false]);
+    expect(location.freshRequests, [false, true, true]);
+    expect(weather.calls.last.coordinates, _seoul);
+    expect(registration.calls.last.coordinates, _seoul);
   });
   testWidgets('지역 선택의 위치 다시 확인은 새 위치를 읽고 열린 화면을 갱신한다', (tester) async {
     gpsRegionName.result = '서울 강남구 역삼동';

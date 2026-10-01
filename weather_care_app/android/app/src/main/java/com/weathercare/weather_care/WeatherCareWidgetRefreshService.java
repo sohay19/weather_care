@@ -85,9 +85,11 @@ public final class WeatherCareWidgetRefreshService extends Service {
                 int status = WeatherCareWidgetRefreshWorker.refresh(this, url, false);
                 if (status >= 200 && status < 300) {
                     preferences.edit().putString(MainActivity.REFRESH_URL_KEY, url).apply();
+                } else {
+                    WeatherCareWidgetProvider.setRefreshStatus(this, "서버 연결 실패");
                 }
             } catch (Exception ignored) {
-                // Keep the last weather snapshot when the server is unavailable.
+                WeatherCareWidgetProvider.setRefreshStatus(this, "서버 연결 실패");
             } finally {
                 WeatherCareWidgetProvider.setRefreshInProgress(this, false);
                 stopSelf();

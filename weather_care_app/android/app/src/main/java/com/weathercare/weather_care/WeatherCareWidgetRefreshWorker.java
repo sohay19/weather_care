@@ -41,10 +41,12 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
         try {
             int status = refresh(context, rawUrl, true);
             if (status >= 200 && status < 300) return Result.success();
+            WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
             return status >= 500 && getRunAttemptCount() < 2
                     ? Result.retry()
                     : Result.failure();
         } catch (Exception ignored) {
+            WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
             return getRunAttemptCount() < 2 ? Result.retry() : Result.failure();
         } finally {
             WeatherCareWidgetProvider.setRefreshInProgress(context, false);
@@ -78,7 +80,10 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                     !snapshot.has("region") || !snapshot.has("refreshTime")) {
                 throw new IOException("Invalid widget snapshot");
             }
-            preferences.edit().putString(MainActivity.SNAPSHOT_KEY, body).apply();
+            preferences.edit()
+                    .putString(MainActivity.SNAPSHOT_KEY, body)
+                    .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
+                    .apply();
             return status;
         } finally {
             connection.disconnect();

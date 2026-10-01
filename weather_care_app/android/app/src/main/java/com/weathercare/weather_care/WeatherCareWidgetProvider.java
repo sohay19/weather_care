@@ -16,9 +16,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
-import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
@@ -38,6 +36,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     private static final String ACTION_REFRESH =
             "com.codesoha.weathercare.REFRESH_WIDGET";
     static final String REFRESH_IN_PROGRESS_KEY = "refresh_in_progress";
+    static final String REFRESH_STATUS_KEY = "refresh_status";
     private static final int BRIEFING_ALARM_REQUEST = 1702;
     private static final int REFRESH_REQUEST = 1703;
     // Pixel Launcher 4열 구성의 2열 위젯(약 179dp)을 작은 위젯에 포함한다.
@@ -124,8 +123,12 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         Snapshot stored = readSnapshot(context);
         long now = System.currentTimeMillis();
         Snapshot snapshot = stored.forTime(now);
+        String refreshStatus = context.getSharedPreferences(
+                MainActivity.WIDGET_PREFERENCES,
+                Context.MODE_PRIVATE
+        ).getString(REFRESH_STATUS_KEY, null);
 
-        bindHeader(context, views, snapshot, size, minWidth);
+        bindHeader(context, views, snapshot, size, minWidth, refreshStatus);
         bindTemperature(context, views, snapshot, size, minWidth);
         bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
@@ -209,21 +212,18 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     }
 
     static void showLocationUnavailable(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(
+        setRefreshStatus(context, "위치 확인 필요");
+    }
+
+    static void setRefreshStatus(Context context, String status) {
+        SharedPreferences.Editor editor = context.getSharedPreferences(
                 MainActivity.WIDGET_PREFERENCES,
                 Context.MODE_PRIVATE
-        );
-        try {
-            JSONObject snapshot = new JSONObject(
-                    preferences.getString(MainActivity.SNAPSHOT_KEY, "{}")
-            );
-            if (!snapshot.has("region")) return;
-            snapshot.put("refreshTime", "위치 확인 필요");
-            preferences.edit().putString(MainActivity.SNAPSHOT_KEY, snapshot.toString()).apply();
-            updateAll(context);
-        } catch (Exception ignored) {
-            // The app will publish a fresh snapshot when it next opens.
-        }
+        ).edit();
+        if (status == null) editor.remove(REFRESH_STATUS_KEY);
+        else editor.putString(REFRESH_STATUS_KEY, status);
+        editor.apply();
+        updateAll(context);
     }
 
     private static boolean isRefreshInProgress(Context context) {
@@ -234,20 +234,19 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     }
 
     static void setRefreshInProgress(Context context, boolean refreshing) {
-        context.getSharedPreferences(
+        SharedPreferences.Editor editor = context.getSharedPreferences(
                 MainActivity.WIDGET_PREFERENCES,
                 Context.MODE_PRIVATE
-        ).edit().putBoolean(REFRESH_IN_PROGRESS_KEY, refreshing).apply();
+        ).edit().putBoolean(REFRESH_IN_PROGRESS_KEY, refreshing);
+        if (refreshing) editor.putString(REFRESH_STATUS_KEY, "불러오는 중");
+        editor.apply();
         updateAll(context);
     }
 
     private static void enqueueRefresh(Context context) {
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build();
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(
                 WeatherCareWidgetRefreshWorker.class
-        ).setConstraints(constraints).build();
+        ).build();
         WorkManager.getInstance(context).enqueueUniqueWork(
                 "weather-care-widget-refresh",
                 ExistingWorkPolicy.REPLACE,
@@ -276,7 +275,8 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             RemoteViews views,
             Snapshot snapshot,
             WidgetSize size,
-            int minWidth
+            int minWidth,
+            String refreshStatus
     ) {
         float regionSize = size == WidgetSize.SMALL ? 12 : size == WidgetSize.MEDIUM ? 13 : 14;
         int horizontalPadding = size == WidgetSize.SMALL ? 28
@@ -305,13 +305,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 R.id.widget_refresh_time,
                 WidgetTextRenderer.line(
                         context,
-                        snapshot.refreshTime,
+                        refreshStatus == null ? snapshot.refreshTime : refreshStatus,
                         R.font.suite_regular,
                         refreshSize,
                         TEXT_SECONDARY,
                         refreshWidth
                 ),
-                snapshot.refreshTime
+                refreshStatus == null ? snapshot.refreshTime : refreshStatus
         );
     }
 

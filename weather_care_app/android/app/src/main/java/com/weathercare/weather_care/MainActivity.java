@@ -53,6 +53,7 @@ public class MainActivity extends FlutterActivity {
                 );
                 SharedPreferences.Editor editor = preferences.edit()
                         .putString(SNAPSHOT_KEY, snapshot)
+                        .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
                         .putBoolean(GPS_ENABLED_KEY, gpsEnabled);
                 if (refreshUrl == null || refreshUrl.isBlank()) {
                     editor.remove(REFRESH_URL_KEY);
@@ -69,6 +70,7 @@ public class MainActivity extends FlutterActivity {
                         .remove(SNAPSHOT_KEY)
                         .remove(REFRESH_URL_KEY)
                         .remove(GPS_ENABLED_KEY)
+                        .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
                         .apply();
                 WeatherCareWidgetProvider.updateAll(this);
                 result.success(null);

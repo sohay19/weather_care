@@ -7,6 +7,7 @@ import WidgetKit
 private let widgetKind = "WeatherCareWidget"
 private let appGroup = "group.com.codesoha.weathercare"
 private let snapshotKey = "snapshot"
+private let refreshStatusKey = "refresh_status"
 private let weatherCareHomeURL = URL(string: "weathercare://home")!
 private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
 private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
@@ -98,7 +99,7 @@ struct WidgetSnapshot: Codable {
   let dataFreshUntil: String?
   let briefingTimeline: [WidgetBriefingEntry]?
   let region: String
-  let refreshTime: String
+  var refreshTime: String
   let condition: String
   let currentTemperature: String
   let apparentTemperature: String
@@ -165,14 +166,11 @@ struct WidgetSnapshot: Codable {
   )
 
   static func load() -> WidgetSnapshot {
-    guard
-      let defaults = UserDefaults(suiteName: appGroup),
-      let raw = defaults.string(forKey: snapshotKey),
-      let data = raw.data(using: .utf8),
-      let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
-    else {
-      return .empty
-    }
+    guard let defaults = UserDefaults(suiteName: appGroup) else { return .empty }
+    var snapshot = defaults.string(forKey: snapshotKey)
+      .flatMap { $0.data(using: .utf8) }
+      .flatMap { try? JSONDecoder().decode(WidgetSnapshot.self, from: $0) } ?? .empty
+    snapshot.refreshTime = defaults.string(forKey: refreshStatusKey) ?? snapshot.refreshTime
     return snapshot
   }
 

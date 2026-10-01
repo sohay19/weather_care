@@ -6,6 +6,7 @@ import WidgetKit
 private let refreshWidgetKind = "WeatherCareWidget"
 private let refreshWidgetGroup = "group.com.codesoha.weathercare"
 private let refreshWidgetSnapshotKey = "snapshot"
+private let refreshWidgetStatusKey = "refresh_status"
 private let refreshWidgetURLKey = "refresh_url"
 private let refreshWidgetGPSEnabledKey = "gps_enabled"
 
@@ -28,13 +29,17 @@ private func refreshWeatherWidget() async {
     let rawURL = defaults.string(forKey: refreshWidgetURLKey),
     let savedURL = URL(string: rawURL)
   else { return }
+  showWidgetRefreshStatus(defaults, "불러오는 중")
   let gpsEnabled = defaults.bool(forKey: refreshWidgetGPSEnabledKey)
   guard let url = await widgetRefreshURL(savedURL, gpsEnabled: gpsEnabled) else {
     if gpsEnabled { showWidgetLocationUnavailable(defaults) }
     return
   }
   guard ["https", "http"].contains(url.scheme?.lowercased() ?? ""),
-        url.host != nil else { return }
+        url.host != nil else {
+    showWidgetRefreshStatus(defaults, "서버 연결 실패")
+    return
+  }
 
   var request = URLRequest(
     url: url,
@@ -52,7 +57,10 @@ private func refreshWeatherWidget() async {
     object["region"] is String,
     object["refreshTime"] is String,
     let rawSnapshot = String(data: data, encoding: .utf8)
-  else { return }
+  else {
+    showWidgetRefreshStatus(defaults, "서버 연결 실패")
+    return
+  }
 
   let snapshot = gpsEnabled
     ? rawSnapshot
@@ -61,19 +69,17 @@ private func refreshWeatherWidget() async {
       previous: defaults.string(forKey: refreshWidgetSnapshotKey)
     )
   defaults.set(snapshot, forKey: refreshWidgetSnapshotKey)
+  defaults.removeObject(forKey: refreshWidgetStatusKey)
   if gpsEnabled { defaults.set(url.absoluteString, forKey: refreshWidgetURLKey) }
   WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
 }
 
 private func showWidgetLocationUnavailable(_ defaults: UserDefaults) {
-  guard let raw = defaults.string(forKey: refreshWidgetSnapshotKey),
-        let data = raw.data(using: .utf8),
-        var snapshot = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
-  else { return }
-  snapshot["refreshTime"] = "위치 확인 필요"
-  guard let updated = try? JSONSerialization.data(withJSONObject: snapshot),
-        let text = String(data: updated, encoding: .utf8) else { return }
-  defaults.set(text, forKey: refreshWidgetSnapshotKey)
+  showWidgetRefreshStatus(defaults, "위치 확인 필요")
+}
+
+private func showWidgetRefreshStatus(_ defaults: UserDefaults, _ status: String) {
+  defaults.set(status, forKey: refreshWidgetStatusKey)
   WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
 }
 

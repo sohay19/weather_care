@@ -99,6 +99,7 @@ class HomeWidgetSnapshot {
   static const schemaVersion = 3;
 
   final String generatedAt;
+  final String? receivedAt;
   final String locationKey;
   final String briefingId;
   final String sceneId;
@@ -124,6 +125,7 @@ class HomeWidgetSnapshot {
 
   const HomeWidgetSnapshot({
     required this.generatedAt,
+    this.receivedAt,
     required this.locationKey,
     required this.briefingId,
     required this.sceneId,
@@ -153,7 +155,12 @@ class HomeWidgetSnapshot {
     WeeklyWeatherResponse? weekly,
     DateTime? now,
   }) {
-    final instant = now ?? DateTime.now();
+    final localNow = now ?? DateTime.now();
+    final instant = briefingNow(
+      localNow,
+      generatedAt: today.generatedAt,
+      receivedAt: today.receivedAt,
+    );
     final daily = _todayForecast(weekly?.days ?? const [], instant);
     final fallbackRecommendations = List<WeatherRecommendation>.from(
       today.recommendations.where((item) => item.recommended),
@@ -191,6 +198,7 @@ class HomeWidgetSnapshot {
 
     return HomeWidgetSnapshot(
       generatedAt: today.generatedAt ?? instant.toUtc().toIso8601String(),
+      receivedAt: today.receivedAt?.toUtc().toIso8601String(),
       locationKey: today.briefing?.locationKey ?? today.region.id,
       briefingId: activeBriefing?.briefingId ?? '',
       sceneId: activeBriefing?.sceneId ?? 'UNAVAILABLE',
@@ -222,6 +230,7 @@ class HomeWidgetSnapshot {
   Map<String, dynamic> toJson() => {
         'schemaVersion': schemaVersion,
         'generatedAt': generatedAt,
+        if (receivedAt != null) 'receivedAt': receivedAt,
         'locationKey': locationKey,
         'briefingId': briefingId,
         'sceneId': sceneId,
@@ -362,18 +371,6 @@ HomeWidgetBriefingEntry? _activeBriefing(
         !now.isBefore(from) &&
         now.isBefore(until)) {
       return entry;
-    }
-  }
-  if (entries.isNotEmpty) {
-    final first = entries.first;
-    final from = DateTime.tryParse(first.validFrom);
-    final until = DateTime.tryParse(first.validUntil);
-    if (from != null &&
-        until != null &&
-        from.isBefore(until) &&
-        briefingStartsWithinClockSkew(from, now) &&
-        now.isBefore(until)) {
-      return first;
     }
   }
   return null;

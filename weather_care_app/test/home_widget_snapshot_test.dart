@@ -219,28 +219,34 @@ void main() {
     expect((encoded['preparationCatalog'] as List), hasLength(3));
   });
 
-  test('서버 시계가 2초 빠른 위젯 스냅샷에도 첫 브리핑을 넣는다', () {
+  test('기기 시계가 3시간 느려도 수신한 위젯 스냅샷에 현재 브리핑을 넣는다', () {
+    final receivedAt = DateTime.parse('2026-09-18T23:30:00Z');
     final snapshot = HomeWidgetSnapshot.fromWeather(
       today: _today(
+        generatedAt: '2026-09-19T02:30:00Z',
+        receivedAt: receivedAt,
         briefingTimeline: [
           _timelineEntry(
             sceneId: 'UV',
-            from: '2026-09-18T23:30:02Z',
-            until: '2026-09-19T00:00:00Z',
+            from: '2026-09-19T02:30:00Z',
+            until: '2026-09-19T03:00:00Z',
             short: '선크림을 챙기세요.',
             recommendedItems: const ['SUNSCREEN'],
           ),
         ],
         recommendations: const [],
       ),
-      now: DateTime.parse('2026-09-18T23:30:00Z'),
+      now: receivedAt,
     );
     expect(snapshot.shortMessage, '선크림을 챙기세요.');
     expect(snapshot.preparations.map((item) => item.type), ['SUNSCREEN']);
+    expect(snapshot.toJson()['receivedAt'], receivedAt.toIso8601String());
   });
 }
 
 TodayWeatherResponse _today({
+  String generatedAt = '2026-09-18T23:20:00Z',
+  DateTime? receivedAt,
   CanonicalBriefing? briefing,
   List<BriefingTimelineEntry> briefingTimeline = const [],
   required List<WeatherRecommendation> recommendations,
@@ -252,7 +258,8 @@ TodayWeatherResponse _today({
 }) {
   return TodayWeatherResponse(
     dataSource: '서버 데이터',
-    generatedAt: '2026-09-18T23:20:00Z',
+    generatedAt: generatedAt,
+    receivedAt: receivedAt,
     region: const WeatherRegion(
       nx: 57,
       ny: 124,

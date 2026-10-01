@@ -206,7 +206,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('서버 시계가 2초 빠르더라도 첫 준비물을 바로 표시한다', (tester) async {
+  testWidgets('기기 시계가 서버보다 5시간 느려도 응답 후 준비물을 바로 표시한다', (tester) async {
     final now = DateTime.parse('2026-09-10T12:00:00+09:00');
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -214,12 +214,14 @@ void main() {
           regionName: '서울',
           recommendations: const [],
           now: () => now,
+          generatedAt: '2026-09-10T08:00:00Z',
+          receivedAt: now,
           briefingTimeline: const [
             BriefingTimelineEntry(
               briefingId: 'uv',
               sceneId: 'UV',
-              validFrom: '2026-09-10T03:00:02Z',
-              validUntil: '2026-09-10T04:00:00Z',
+              validFrom: '2026-09-10T08:00:00Z',
+              validUntil: '2026-09-10T09:00:00Z',
               recommendedItems: ['SUNSCREEN'],
               copy: BriefingCopy(
                 short: '자외선 안내',
@@ -238,10 +240,27 @@ void main() {
     expect(find.text('지금은 특별히 챙길 준비물이 없어요.'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('기기와 서버의 날짜가 다르면 서버 날짜로 체크를 저장한다', (tester) async {
+    final deviceNow = DateTime.parse('2026-09-10T23:30:00+09:00');
+    await tester.pumpWidget(bag(
+      now: () => deviceNow,
+      generatedAt: '2026-09-10T15:30:00Z',
+      receivedAt: deviceNow,
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bag-item-umbrella')));
+    await tester.pumpAndSettle();
+    expect(await repository.load('2026-09-11'), {RecommendationType.umbrella});
+    expect(await repository.load('2026-09-10'), isEmpty);
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 
 Widget bag({
   required DateTime Function() now,
+  String? generatedAt,
+  DateTime? receivedAt,
   PreparationChecklistRepository repository =
       const PreparationChecklistRepository(),
   bool visible = true,
@@ -253,6 +272,8 @@ Widget bag({
       child: RecommendationBagSection(
         regionName: region,
         now: now,
+        generatedAt: generatedAt,
+        receivedAt: receivedAt,
         checklistRepository: repository,
         recommendations: [
           if (visible)

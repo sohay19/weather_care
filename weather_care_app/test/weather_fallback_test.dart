@@ -73,6 +73,17 @@ void main() {
     );
   });
 
+  test('오늘 응답의 수신 시각을 저장하고 지역명 변경 뒤에도 유지한다', () async {
+    final before = DateTime.now();
+    final today = await WeatherService(_RecordingApiClient())
+        .fetchTodayWeather(installationId: 'test');
+    final after = DateTime.now();
+    expect(today.receivedAt, isNotNull);
+    expect(today.receivedAt!.isBefore(before), isFalse);
+    expect(today.receivedAt!.isAfter(after), isFalse);
+    expect(today.withRegionName('서울').receivedAt, today.receivedAt);
+  });
+
   test('항동 Today·Week 요청에 행정구역 코드와 전체 지역명을 함께 전달한다', () async {
     final client = _RecordingApiClient();
     final service = WeatherService(client);

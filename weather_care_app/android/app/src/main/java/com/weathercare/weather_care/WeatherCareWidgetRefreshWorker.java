@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 public final class WeatherCareWidgetRefreshWorker extends Worker {
     private static final int MAX_RESPONSE_CHARS = 512 * 1024;
@@ -80,8 +81,9 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                     !snapshot.has("region") || !snapshot.has("refreshTime")) {
                 throw new IOException("Invalid widget snapshot");
             }
+            snapshot.put("receivedAt", Instant.now().toString());
             preferences.edit()
-                    .putString(MainActivity.SNAPSHOT_KEY, body)
+                    .putString(MainActivity.SNAPSHOT_KEY, snapshot.toString())
                     .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
                     .apply();
             return status;

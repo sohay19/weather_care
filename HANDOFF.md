@@ -8583,3 +8583,10 @@
 - 첫 timeline 항목의 시작 시각이 기기보다 10초 이내로 앞서는 경우에만 해당 항목을 즉시 표시하도록 Main 브리핑, Check List, Flutter 위젯 스냅샷, Android/iOS 홈 위젯을 보정했다. 일반적인 미래 항목과 만료 항목의 판정은 유지한다.
 - Flutter 3.47.4 대상 회귀 테스트 39개, 네이티브 소스 테스트 6개, `flutter analyze --no-pub`, Android `compileDebugJavaWithJavac` 및 `testDebugUnitTest`, `git diff --check`를 통과했다. Windows 환경이라 iOS WidgetKit 빌드와 실제 화면 재촬영은 수행하지 않았다.
 - Flutter 3.47.4 Debug APK를 빌드했다. 에뮬레이터 저장 공간 부족으로 범용 APK 설치는 실패했으나 x86_64 전용 APK(약 94MB) 설치는 성공했다. `firstInstallTime`은 유지되고 `lastUpdateTime`은 14:07:41로 갱신됐다. 앱 화면을 띄워 재촬영하지는 않았다.
+
+## 2026-10-01 브리핑의 서버·기기 시계 차이 처리 개선
+
+- 사용자 지적대로 이전 10초 허용값은 시계 차이가 더 큰 기기에 재발할 수 있었다. 오늘 날씨 응답을 받는 순간 기기 수신 시각을 기록하고, 서버 `generatedAt`과 수신 후 경과 시간으로 브리핑 현재 시각을 계산하도록 변경했다. 새 응답의 첫 브리핑은 로딩 완료와 함께 보이고 이후 장면·만료 경계도 같은 기준을 사용한다.
+- Main 브리핑, Check List의 추천·한국 날짜, Flutter 홈 위젯 스냅샷에 적용했다. Android/iOS 홈 위젯 직접 새로고침도 JSON에 수신 시각을 넣어 기기 시계 차이에 맞춰 브리핑·다음 경계를 해석한다. 기존 고정 10초 허용 분기는 제거했다.
+- 서버보다 3~5시간 빠르거나 느린 기기의 첫 표시, 다음 장면 전환, 위젯 스냅샷과 Check List 날짜를 테스트했다. Flutter 관련 테스트 54개와 Home·Main 테스트 67개, 정적 분석, Android Java 컴파일·단위 테스트를 통과했다. 다음 시간 예보의 기존 화면 테스트는 실제 다음 예보를 fixture에 넣어 현재 동작과 일치시켰다.
+- Android x86_64 Debug APK는 빌드됐지만 에뮬레이터 저장 공간 부족으로 설치되지 않았다. 48.6MB Profile APK를 빌드해 기존 앱 데이터를 유지하며 설치했고, `lastUpdateTime`은 14:27:09로 갱신됐다. iOS 빌드와 앱 화면 재촬영은 Windows 환경에서 수행하지 않았다.

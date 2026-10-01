@@ -710,6 +710,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         final long validUntil;
         final long nextBriefingBoundary;
         final long dataFreshUntil;
+        final long clockOffset;
         final List<BriefingEntry> briefingTimeline;
         final String region;
         final String refreshTime;
@@ -732,6 +733,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 long validUntil,
                 long nextBriefingBoundary,
                 long dataFreshUntil,
+                long clockOffset,
                 List<BriefingEntry> briefingTimeline,
                 String region,
                 String refreshTime,
@@ -753,6 +755,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             this.validUntil = validUntil;
             this.nextBriefingBoundary = nextBriefingBoundary;
             this.dataFreshUntil = dataFreshUntil;
+            this.clockOffset = clockOffset;
             this.briefingTimeline = briefingTimeline;
             this.region = region;
             this.refreshTime = refreshTime;
@@ -804,6 +807,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     instant(json.optString("validUntil", "")),
                     instant(json.optString("nextBriefingBoundary", "")),
                     instant(json.optString("dataFreshUntil", "")),
+                    clockOffset(json),
                     timeline,
                     text(json, "region", "지역을 설정해주세요"),
                     text(json, "refreshTime", "앱에서 갱신"),
@@ -823,7 +827,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
 
         Snapshot forLoading() {
             return new Snapshot(
-                    "", "UNAVAILABLE", 0, 0, 0, 0, List.of(),
+                    "", "UNAVAILABLE", 0, 0, 0, 0, clockOffset, List.of(),
                     region, refreshTime, "unknown",
                     "--°", "--°", "--°", "--°",
                     "--", "--", "--", "unknown", "--°", List.of()
@@ -831,28 +835,22 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         }
 
         Snapshot forTime(long now) {
+            long serverNow = now + clockOffset;
             BriefingEntry active = null;
             for (BriefingEntry entry : briefingTimeline) {
-                if (entry.activeAt(now)) {
+                if (entry.activeAt(serverNow)) {
                     active = entry;
                     break;
                 }
             }
-            if (active == null && !briefingTimeline.isEmpty()) {
-                BriefingEntry first = briefingTimeline.get(0);
-                if (first.validFrom() > now && first.validFrom() - now <= 10_000
-                        && now < first.validUntil()) {
-                    active = first;
-                }
-            }
             if (briefingTimeline.isEmpty()) {
-                boolean valid = validUntil <= 0 || now < validUntil;
+                boolean valid = validUntil <= 0 || serverNow < validUntil;
                 return valid ? this : withBriefing(
                         "", "UNAVAILABLE", "최신 날씨를 확인해 주세요.",
                         "최신 날씨를 확인해 주세요.", List.of()
                 );
             }
-            if (active == null || dataFreshUntil > 0 && now >= dataFreshUntil) {
+            if (active == null || dataFreshUntil > 0 && serverNow >= dataFreshUntil) {
                 return withBriefing(
                         "", "UNAVAILABLE", "최신 날씨를 확인해 주세요.",
                         "최신 날씨를 확인해 주세요.", List.of()
@@ -876,16 +874,17 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         }
 
         long nextBoundaryAfter(long now) {
+            long serverNow = now + clockOffset;
             long closest = Long.MAX_VALUE;
             for (BriefingEntry entry : briefingTimeline) {
-                if (entry.validFrom() > now) closest = Math.min(closest, entry.validFrom());
-                if (entry.validUntil() > now) closest = Math.min(closest, entry.validUntil());
+                if (entry.validFrom() > serverNow) closest = Math.min(closest, entry.validFrom());
+                if (entry.validUntil() > serverNow) closest = Math.min(closest, entry.validUntil());
             }
-            if (nextBriefingBoundary > now) {
+            if (nextBriefingBoundary > serverNow) {
                 closest = Math.min(closest, nextBriefingBoundary);
             }
-            if (dataFreshUntil > now) closest = Math.min(closest, dataFreshUntil);
-            return closest == Long.MAX_VALUE ? 0 : closest;
+            if (dataFreshUntil > serverNow) closest = Math.min(closest, dataFreshUntil);
+            return closest == Long.MAX_VALUE ? 0 : closest - clockOffset;
         }
 
         private Snapshot withBriefing(
@@ -902,6 +901,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     validUntil,
                     nextBriefingBoundary,
                     dataFreshUntil,
+                    clockOffset,
                     briefingTimeline,
                     region,
                     refreshTime,
@@ -921,6 +921,12 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
 
         static Snapshot empty() {
             return fromJson(new JSONObject());
+        }
+
+        private static long clockOffset(JSONObject json) {
+            long generatedAt = instant(json.optString("generatedAt", ""));
+            long receivedAt = instant(json.optString("receivedAt", ""));
+            return generatedAt > 0 && receivedAt > 0 ? generatedAt - receivedAt : 0;
         }
 
         private static String text(JSONObject json, String key, String fallback) {

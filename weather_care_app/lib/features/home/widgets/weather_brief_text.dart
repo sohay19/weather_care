@@ -15,6 +15,8 @@ class WeatherBriefText extends StatefulWidget {
   final String text;
   final String? expiresAt;
   final List<BriefingTimelineEntry> timeline;
+  final String? generatedAt;
+  final DateTime? receivedAt;
   final TextStyle? style;
   final DateTime Function()? now;
 
@@ -23,6 +25,8 @@ class WeatherBriefText extends StatefulWidget {
     required this.text,
     this.expiresAt,
     this.timeline = const [],
+    this.generatedAt,
+    this.receivedAt,
     this.style,
     this.now,
   });
@@ -64,7 +68,11 @@ class _WeatherBriefTextState extends State<WeatherBriefText>
 
   void _check() {
     _timer?.cancel();
-    final now = (widget.now ?? DateTime.now)();
+    final now = briefingNow(
+      (widget.now ?? DateTime.now)(),
+      generatedAt: widget.generatedAt,
+      receivedAt: widget.receivedAt,
+    );
     if (widget.timeline.isNotEmpty) {
       final valid = <({
         BriefingTimelineEntry entry,
@@ -88,11 +96,6 @@ class _WeatherBriefTextState extends State<WeatherBriefText>
           active = value;
           break;
         }
-      }
-      if (active == null &&
-          valid.isNotEmpty &&
-          briefingStartsWithinClockSkew(valid.first.from, now)) {
-        active = valid.first;
       }
       _invalid = valid.isEmpty;
       _expired = active == null;

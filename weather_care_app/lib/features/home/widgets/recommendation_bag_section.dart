@@ -15,6 +15,8 @@ class RecommendationBagSection extends StatefulWidget {
   final List<WeatherRecommendation> recommendations;
   final CanonicalBriefing? briefing;
   final List<BriefingTimelineEntry> briefingTimeline;
+  final String? generatedAt;
+  final DateTime? receivedAt;
   final ValueChanged<RecommendationType> onDetail;
   final PreparationChecklistRepository checklistRepository;
   final DateTime Function()? now;
@@ -25,6 +27,8 @@ class RecommendationBagSection extends StatefulWidget {
     required this.recommendations,
     this.briefing,
     this.briefingTimeline = const [],
+    this.generatedAt,
+    this.receivedAt,
     required this.onDetail,
     this.checklistRepository = const PreparationChecklistRepository(),
     this.now,
@@ -46,7 +50,11 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   bool _saving = false;
   bool _loadFailed = false;
 
-  DateTime get _now => (widget.now ?? DateTime.now)();
+  DateTime get _now => briefingNow(
+        (widget.now ?? DateTime.now)(),
+        generatedAt: widget.generatedAt,
+        receivedAt: widget.receivedAt,
+      );
 
   @override
   void initState() {
@@ -123,18 +131,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
           break;
         }
       }
-      if (intended == null) {
-        final first = widget.briefingTimeline.first;
-        final from = DateTime.tryParse(first.validFrom);
-        final until = DateTime.tryParse(first.validUntil);
-        if (from != null &&
-            until != null &&
-            from.isBefore(until) &&
-            briefingStartsWithinClockSkew(from, now)) {
-          intended = first.recommendedItems;
-          description = first.copy.medium;
-        }
-      }
       intended ??= const [];
     } else if (widget.briefing != null) {
       final from = DateTime.tryParse(widget.briefing!.validFrom);
@@ -142,7 +138,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
       final active = from != null &&
           until != null &&
           from.isBefore(until) &&
-          (!now.isBefore(from) || briefingStartsWithinClockSkew(from, now)) &&
+          !now.isBefore(from) &&
           now.isBefore(until);
       intended = active ? widget.briefing!.recommendedItems : const [];
       description = widget.briefing!.copy.medium;

@@ -154,7 +154,7 @@ class WeatherService {
           'regionName': regionName.trim(),
       },
     );
-    return TodayWeatherResponse.fromJson(data);
+    return TodayWeatherResponse.fromJson(data, receivedAt: DateTime.now());
   }
 
   Future<WeeklyWeatherResponse> fetchWeeklyWeather({
@@ -199,7 +199,7 @@ class WeatherService {
             'regionName': regionName.trim(),
         },
       );
-      return TodayWeatherResponse.fromJson(data);
+      return TodayWeatherResponse.fromJson(data, receivedAt: DateTime.now());
     } catch (error) {
       log('Fast Main weather unavailable (${error.runtimeType})');
       return null;

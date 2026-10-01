@@ -580,6 +580,7 @@ class BriefingTimelineEntry {
 class TodayWeatherResponse {
   final String dataSource;
   final String? generatedAt;
+  final DateTime? receivedAt;
   final WeatherRegion region;
   final String brief;
   final String? briefExpiresAt;
@@ -598,6 +599,7 @@ class TodayWeatherResponse {
   const TodayWeatherResponse({
     required this.dataSource,
     this.generatedAt,
+    this.receivedAt,
     required this.region,
     required this.brief,
     this.briefExpiresAt,
@@ -617,6 +619,7 @@ class TodayWeatherResponse {
   TodayWeatherResponse withRegionName(String name) => TodayWeatherResponse(
         dataSource: dataSource,
         generatedAt: generatedAt,
+        receivedAt: receivedAt,
         region: WeatherRegion(nx: region.nx, ny: region.ny, name: name),
         brief: brief,
         briefExpiresAt: briefExpiresAt,
@@ -633,7 +636,8 @@ class TodayWeatherResponse {
         hourly: hourly,
       );
 
-  factory TodayWeatherResponse.fromJson(Map<String, dynamic> json) {
+  factory TodayWeatherResponse.fromJson(Map<String, dynamic> json,
+      {DateTime? receivedAt}) {
     final recs = (json['recommendations'] as List<dynamic>? ?? [])
         .whereType<Map<String, dynamic>>()
         .map((e) => WeatherRecommendation.fromJson(e))
@@ -683,6 +687,7 @@ class TodayWeatherResponse {
     return TodayWeatherResponse(
       dataSource: json['dataSource']?.toString() ?? '서버 데이터',
       generatedAt: _optionalText(json['generatedAt']),
+      receivedAt: receivedAt,
       region: WeatherRegion.fromJson(
         json['region'] as Map<String, dynamic>? ??
             {'name': '수원', 'nx': 60, 'ny': 121},

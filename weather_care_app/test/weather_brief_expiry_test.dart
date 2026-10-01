@@ -136,35 +136,59 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('서버 시계가 2초 빠른 응답은 브리핑을 즉시 표시한다', (tester) async {
-    const entry = BriefingTimelineEntry(
-      briefingId: 'uv',
-      sceneId: 'UV',
-      validFrom: '2026-09-10T06:00:01Z',
-      validUntil: '2026-09-10T07:00:00Z',
-      copy: BriefingCopy(
-        short: '자외선 안내',
-        medium: '양산을 챙기세요.',
-        long: '양산을 챙기세요.',
-        notificationTitle: '자외선 안내',
-        notificationBody: '양산을 챙기세요.',
+  testWidgets('응답을 받으면 기기 시계가 3시간 느려도 즉시 표시하고 다음 장면으로 전환한다', (tester) async {
+    final receivedAt = now;
+    const timeline = [
+      BriefingTimelineEntry(
+        briefingId: 'uv',
+        sceneId: 'UV',
+        validFrom: '2026-09-10T08:59:59Z',
+        validUntil: '2026-09-10T09:00:00Z',
+        copy: BriefingCopy(
+          short: '자외선 안내',
+          medium: '양산을 챙기세요.',
+          long: '양산을 챙기세요.',
+          notificationTitle: '자외선 안내',
+          notificationBody: '양산을 챙기세요.',
+        ),
       ),
-    );
+      BriefingTimelineEntry(
+        briefingId: 'evening',
+        sceneId: 'THERMAL_COMFORTABLE',
+        validFrom: '2026-09-10T09:00:00Z',
+        validUntil: '2026-09-10T10:00:00Z',
+        copy: BriefingCopy(
+          short: '저녁 안내',
+          medium: '선선한 저녁이에요.',
+          long: '선선한 저녁이에요.',
+          notificationTitle: '저녁 안내',
+          notificationBody: '선선한 저녁이에요.',
+        ),
+      ),
+    ];
     await tester.pumpWidget(MaterialApp(
       home: WeatherBriefText(
-          text: action, timeline: const [entry], now: () => now),
+        text: action,
+        timeline: timeline,
+        generatedAt: '2026-09-10T08:59:59Z',
+        receivedAt: receivedAt,
+        now: () => now,
+      ),
     ));
     expect(find.text('양산을 챙기세요.'), findsOneWidget);
     expect(find.text('최신 날씨를 확인해 주세요.'), findsNothing);
+    now = now.add(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('선선한 저녁이에요.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('시작까지 10초가 넘는 브리핑은 미리 표시하지 않는다', (tester) async {
+  testWidgets('수신 시각 정보가 없는 미래 브리핑은 미리 표시하지 않는다', (tester) async {
     const entry = BriefingTimelineEntry(
       briefingId: 'uv',
       sceneId: 'UV',
-      validFrom: '2026-09-10T06:00:10Z',
-      validUntil: '2026-09-10T07:00:00Z',
+      validFrom: '2026-09-10T07:00:00Z',
+      validUntil: '2026-09-10T08:00:00Z',
       copy: BriefingCopy(
         short: '자외선 안내',
         medium: '양산을 챙기세요.',
@@ -178,6 +202,34 @@ void main() {
           text: action, timeline: const [entry], now: () => now),
     ));
     expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('기기 시계가 서버보다 3시간 빨라도 새 응답을 만료로 보지 않는다', (tester) async {
+    final receivedAt = now;
+    const entry = BriefingTimelineEntry(
+      briefingId: 'uv',
+      sceneId: 'UV',
+      validFrom: '2026-09-10T02:59:59Z',
+      validUntil: '2026-09-10T03:30:00Z',
+      copy: BriefingCopy(
+        short: '자외선 안내',
+        medium: '양산을 챙기세요.',
+        long: '양산을 챙기세요.',
+        notificationTitle: '자외선 안내',
+        notificationBody: '양산을 챙기세요.',
+      ),
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: WeatherBriefText(
+        text: action,
+        timeline: const [entry],
+        generatedAt: '2026-09-10T02:59:59Z',
+        receivedAt: receivedAt,
+        now: () => now,
+      ),
+    ));
+    expect(find.text('양산을 챙기세요.'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 

@@ -91,6 +91,8 @@ struct WidgetBriefingEntry: Codable {
 }
 
 struct WidgetSnapshot: Codable {
+  let generatedAt: String?
+  let receivedAt: String?
   let briefingId: String?
   let sceneId: String?
   let validFrom: String?
@@ -114,6 +116,8 @@ struct WidgetSnapshot: Codable {
   let preparationCatalog: [WidgetPreparation]?
 
   static let placeholder = WidgetSnapshot(
+    generatedAt: nil,
+    receivedAt: nil,
     briefingId: nil,
     sceneId: nil,
     validFrom: nil,
@@ -142,6 +146,8 @@ struct WidgetSnapshot: Codable {
   )
 
   static let empty = WidgetSnapshot(
+    generatedAt: nil,
+    receivedAt: nil,
     briefingId: nil,
     sceneId: nil,
     validFrom: nil,
@@ -179,6 +185,8 @@ struct WidgetSnapshot: Codable {
 
   private func forLoading() -> WidgetSnapshot {
     WidgetSnapshot(
+      generatedAt: generatedAt,
+      receivedAt: receivedAt,
       briefingId: nil,
       sceneId: nil,
       validFrom: nil,
@@ -204,17 +212,11 @@ struct WidgetSnapshot: Codable {
   }
 
   func at(_ date: Date) -> WidgetSnapshot {
+    let serverDate = date.addingTimeInterval(clockOffset)
     let freshUntil = dataFreshUntil.flatMap(widgetDate)
-    let first = briefingTimeline?.first
-    let nearStart = first.flatMap { entry -> WidgetBriefingEntry? in
-      guard let from = widgetDate(entry.validFrom), from > date,
-            from.timeIntervalSince(date) <= 10,
-            let until = widgetDate(entry.validUntil), from < until else { return nil }
-      return entry
-    }
-    let active = briefingTimeline?.first { $0.active(at: date) } ?? nearStart
-    let legacyValid = validUntil.flatMap(widgetDate).map { date < $0 } ?? true
-    guard freshUntil.map({ date < $0 }) ?? true,
+    let active = briefingTimeline?.first { $0.active(at: serverDate) }
+    let legacyValid = validUntil.flatMap(widgetDate).map { serverDate < $0 } ?? true
+    guard freshUntil.map({ serverDate < $0 }) ?? true,
           active != nil || (briefingTimeline?.isEmpty ?? true) && legacyValid else {
       return replacingBriefing(
         id: nil,
@@ -241,8 +243,12 @@ struct WidgetSnapshot: Codable {
   func timelineDates(after now: Date) -> [Date] {
     var dates = [now]
     for entry in briefingTimeline ?? [] {
-      if let from = widgetDate(entry.validFrom), from > now { dates.append(from) }
-      if let until = widgetDate(entry.validUntil), until > now { dates.append(until) }
+      if let from = widgetDate(entry.validFrom)?.addingTimeInterval(-clockOffset), from > now {
+        dates.append(from)
+      }
+      if let until = widgetDate(entry.validUntil)?.addingTimeInterval(-clockOffset), until > now {
+        dates.append(until)
+      }
     }
     return Array(Set(dates)).sorted()
   }
@@ -250,8 +256,16 @@ struct WidgetSnapshot: Codable {
   func nextRefresh(after date: Date) -> Date? {
     let boundaries = [nextBriefingBoundary, dataFreshUntil]
       .compactMap { $0.flatMap(widgetDate) }
+      .map { $0.addingTimeInterval(-clockOffset) }
       .filter { $0 > date }
     return boundaries.min()
+  }
+
+  private var clockOffset: TimeInterval {
+    guard let generatedAt, let receivedAt,
+          let server = widgetDate(generatedAt),
+          let local = widgetDate(receivedAt) else { return 0 }
+    return server.timeIntervalSince(local)
   }
 
   private func replacingBriefing(
@@ -262,6 +276,8 @@ struct WidgetSnapshot: Codable {
     preparations: [WidgetPreparation]
   ) -> WidgetSnapshot {
     WidgetSnapshot(
+      generatedAt: generatedAt,
+      receivedAt: receivedAt,
       briefingId: id,
       sceneId: scene,
       validFrom: validFrom,

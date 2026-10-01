@@ -106,6 +106,8 @@ class MainTab extends StatelessWidget {
                         recommendations: today.recommendations,
                         briefing: today.briefing,
                         briefingTimeline: today.briefingTimeline,
+                        generatedAt: today.generatedAt,
+                        receivedAt: today.receivedAt,
                         onDetail: onDetail,
                       )
                     else
@@ -855,6 +857,8 @@ class _TopWeatherCard extends StatelessWidget {
             expiresAt:
                 today.briefing?.nextBriefingBoundary ?? today.briefExpiresAt,
             timeline: today.briefingTimeline,
+            generatedAt: today.generatedAt,
+            receivedAt: today.receivedAt,
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
               color: WeatherCareTheme.textPrimary,

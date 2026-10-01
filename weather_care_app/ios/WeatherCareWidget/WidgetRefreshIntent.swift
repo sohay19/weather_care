@@ -52,12 +52,20 @@ private func refreshWeatherWidget() async {
     let http = response as? HTTPURLResponse,
     (200..<300).contains(http.statusCode),
     data.count <= 512 * 1024,
-    let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+    var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
     object["schemaVersion"] as? Int == 3,
     object["region"] is String,
-    object["refreshTime"] is String,
-    let rawSnapshot = String(data: data, encoding: .utf8)
+    object["refreshTime"] is String
   else {
+    showWidgetRefreshStatus(defaults, "서버 연결 실패")
+    return
+  }
+
+  let formatter = ISO8601DateFormatter()
+  formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+  object["receivedAt"] = formatter.string(from: Date())
+  guard let stamped = try? JSONSerialization.data(withJSONObject: object),
+        let rawSnapshot = String(data: stamped, encoding: .utf8) else {
     showWidgetRefreshStatus(defaults, "서버 연결 실패")
     return
   }

@@ -8618,3 +8618,9 @@
 - `loadAirQuality`에서 공통 요청 신호가 중단된 뒤에도 가까운 나머지 측정소의 캐시를 순서대로 검사한다. 측정소 이름, 관측 시각 4시간 이내, 캐시 3시간 이내 조건을 통과한 값만 `CACHED`/`STALE`로 반환하며 외부 API를 추가 호출하지 않는다. 같은 시흥 격자 사례를 재현한 회귀 테스트를 추가했다.
 - 서버 Worker 테스트 366개와 Node 테스트 11개, TypeScript 타입 검사, `git diff --check`를 통과했다. 소스와 테스트만 커밋 `b91c304`(`fix(대기질): 측정소 시간 초과 시 주변 캐시 사용`)에 포함했고 기존 다른 미커밋 파일은 제외했다.
 - 미니 PC 운영 소스 원본은 `/var/backups/weather-care/environmentalDataService-before-b91c304-20261001T0615Z.ts`에 보관했다. 새 소스 SHA-256은 `ed369a3c6a127a183281b43864e8ea5ad5bffebe152faada6677242396a8cd13`이며 운영 파일과 일치한다. 스케줄러 재시작이 systemd `Requires`에 따라 전국 선수집을 다시 시작해 잠시 기동 대기했다. 중복 선수집 서비스를 멈추고 API와 스케줄러를 각각 기동했다. 두 서비스와 터널은 active, 공개 헬스 체크는 HTTP 200이며 시흥 Today 대기질 값도 응답한다. 스케줄러 내부의 시작 단계 전국 캐시 점검은 06:24:27 UTC에 `missingCaches=0`으로 완료됐고 `node_scheduler_started`를 확인했다.
+
+## 2026-10-01 포그라운드 복귀 시 GPS 새 측정
+
+- 사용자는 스크롤 새로고침에서는 새 위치가 반영되지만 백그라운드에서 돌아오면 반영되지 않는다고 제보했다. 스크롤 경로는 `forceLocationRefresh: true`인데 앱 수명주기 `resumed` 경로는 해당 값을 전달하지 않아 최근 2분 이내의 OS 마지막 위치를 그대로 사용할 수 있었다.
+- GPS 모드의 포그라운드 복귀 새로고침에도 새 위치 측정을 요청한다. 수동 지역 모드는 기존처럼 GPS를 읽지 않는다. 위치 테스트 대역이 저장된 위치와 새 측정값을 구분하도록 하고, 복귀 후 다른 좌표가 날씨 요청과 알림 지역 등록에 전달되는 회귀 테스트를 추가했다.
+- 프로젝트 Flutter 3.47.4에서 `home_location_test.dart` 42개와 `flutter analyze --no-pub`, `git diff --check`가 통과했다. 앱 소스와 테스트는 커밋 `8d18cf7`(`fix(위치): 앱 복귀 시 GPS 새로 측정`)에 포함했다. Windows 환경이라 iOS 기기에서 직접 복귀 동작을 확인하지는 못했다. 작업 전부터 있던 다른 HANDOFF 변경, Android 서명 설정, `output/`은 유지했다.

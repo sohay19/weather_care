@@ -8713,3 +8713,11 @@
 - 사용자는 스크롤 새로고침에서는 새 위치가 반영되지만 백그라운드에서 돌아오면 반영되지 않는다고 제보했다. 스크롤 경로는 `forceLocationRefresh: true`인데 앱 수명주기 `resumed` 경로는 해당 값을 전달하지 않아 최근 2분 이내의 OS 마지막 위치를 그대로 사용할 수 있었다.
 - GPS 모드의 포그라운드 복귀 새로고침에도 새 위치 측정을 요청한다. 수동 지역 모드는 기존처럼 GPS를 읽지 않는다. 위치 테스트 대역이 저장된 위치와 새 측정값을 구분하도록 하고, 복귀 후 다른 좌표가 날씨 요청과 알림 지역 등록에 전달되는 회귀 테스트를 추가했다.
 - 프로젝트 Flutter 3.47.4에서 `home_location_test.dart` 42개와 `flutter analyze --no-pub`, `git diff --check`가 통과했다. 앱 소스와 테스트는 커밋 `8d18cf7`(`fix(위치): 앱 복귀 시 GPS 새로 측정`)에 포함했다. Windows 환경이라 iOS 기기에서 직접 복귀 동작을 확인하지는 못했다. 작업 전부터 있던 다른 HANDOFF 변경, Android 서명 설정, `output/`은 유지했다.
+
+## 2026-10-01 iOS 위젯 위치 권한·스토어 공개 점검
+
+- Android 위치 포그라운드 서비스 선언과 별도로 iOS 위젯은 WidgetKit AppIntent에서 사용자가 새로고침 버튼을 누르면 현재 위치를 한 번 확인한다. iOS에는 같은 전경 서비스 권한이나 진행 알림 선언이 필요하지 않다.
+- Apple 공식 WidgetKit 문서에 따라 필요한 `NSWidgetWantsLocation`(위젯 확장)과 `NSLocationWhenInUseUsageDescription`(호스트 앱)은 이미 설정되어 있음을 확인했다. `UIBackgroundModes`에 `location`은 없다.
+- 사용하지 않는 `NSLocationAlwaysAndWhenInUseUsageDescription`을 Runner Info.plist에서 제거하고, Geolocator의 Always 권한 분기를 제외하는 `BYPASS_PERMISSION_LOCATION_ALWAYS=1`을 Podfile에 설정했다.
+- 스토어 등록정보 문서에 iOS 위젯 권한 방식, App Store Connect 앱 개인정보 보호의 위치 자료 확인, 앱 심사 메모의 검증 절차를 추가했다. 실제 App Store Connect 항목은 변경하지 않았다.
+- Runner·위젯 Info.plist XML 파싱과 `git diff --check`를 통과했다. Windows 환경이어서 iOS 빌드·실기 위치 권한 동작은 확인하지 못했다. 기존 HANDOFF 변경과 `output/play_console_video/`는 유지했다.

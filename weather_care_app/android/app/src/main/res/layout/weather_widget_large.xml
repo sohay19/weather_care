@@ -14,25 +14,32 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:gravity="top"
         android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/widget_region"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:contentDescription="시흥시 은행동"
-            android:scaleType="fitStart" />
+            android:gravity="start"
+            android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/widget_refresh_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:adjustViewBounds="true"
-            android:contentDescription="오전 8:20 기준"
-            android:scaleType="fitCenter" />
+            <ImageView
+                android:id="@+id/widget_region"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="시흥시 은행동"
+                android:scaleType="fitStart" />
+
+            <ImageView
+                android:id="@+id/widget_refresh_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:adjustViewBounds="true"
+                android:contentDescription="오전 8:20 기준"
+                android:scaleType="fitStart" />
+        </LinearLayout>
 
         <ImageView
             android:id="@+id/widget_refresh_button"

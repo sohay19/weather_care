@@ -372,7 +372,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _refreshFromTab() {
     unawaited(_readNotificationPermission());
-    return _refresh(notifyFailure: true);
+    return _refresh(notifyFailure: true, forceLocationRefresh: true);
+  }
+
+  Future<void> _refreshFromSettings() {
+    unawaited(_readNotificationPermission());
+    return _refresh(supersede: true, forceLocationRefresh: true);
   }
 
   Future<void> _refresh(
@@ -917,7 +922,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         absorbing: !_initialized,
         child: SettingsScreen(
           embedded: true,
-          onRefresh: _loadData,
+          onRefresh: _refreshFromSettings,
           initialSettings: _settings,
           onSettingsChanged: _handleSettingsChanged,
           location: _location,

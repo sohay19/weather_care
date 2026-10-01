@@ -367,6 +367,7 @@ void main() {
 
       expect(weather.calls.length, weatherCalls + 1);
       expect(weather.comparisonCalls.length, comparisonCalls + 1);
+      expect(location.freshRequests.last, isTrue);
       expect(completed, isFalse);
 
       pending.complete(const ComparisonResponse.unavailable());
@@ -738,6 +739,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(location.requests, [false, false, false]);
+    expect(location.freshRequests, [false, true, false]);
   });
   testWidgets('지역 선택의 위치 다시 확인은 새 위치를 읽고 열린 화면을 갱신한다', (tester) async {
     gpsRegionName.result = '서울 강남구 역삼동';

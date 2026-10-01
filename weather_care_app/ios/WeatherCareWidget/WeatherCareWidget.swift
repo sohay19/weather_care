@@ -295,17 +295,20 @@ private struct WidgetHeader: View {
   let timeSize: CGFloat
 
   var body: some View {
-    HStack(spacing: 0) {
-      Text(snapshot.region)
-        .font(SuiteFont.extraBold(regionSize))
-        .lineLimit(1)
-        .minimumScaleFactor(0.72)
-      Spacer(minLength: 2)
-      Text(snapshot.refreshTime)
-        .font(SuiteFont.regular(timeSize))
-        .foregroundStyle(secondaryInk)
-        .lineLimit(1)
-        .fixedSize(horizontal: true, vertical: false)
+    HStack(alignment: .top, spacing: 2) {
+      VStack(alignment: .leading, spacing: 1) {
+        Text(snapshot.region)
+          .font(SuiteFont.extraBold(regionSize))
+          .lineLimit(2)
+          .minimumScaleFactor(0.72)
+          .fixedSize(horizontal: false, vertical: true)
+        Text(snapshot.refreshTime)
+          .font(SuiteFont.regular(timeSize))
+          .foregroundStyle(secondaryInk)
+          .lineLimit(1)
+          .fixedSize(horizontal: true, vertical: false)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
       WidgetRefreshButton()
     }
     .foregroundStyle(ink)
@@ -320,8 +323,9 @@ private struct SmallWidgetHeader: View {
       VStack(alignment: .leading, spacing: 1) {
         Text(snapshot.region)
           .font(SuiteFont.extraBold(12))
-          .lineLimit(1)
+          .lineLimit(3)
           .minimumScaleFactor(0.72)
+          .fixedSize(horizontal: false, vertical: true)
         Text(snapshot.refreshTime)
           .font(SuiteFont.regular(9))
           .foregroundStyle(secondaryInk)
@@ -329,7 +333,7 @@ private struct SmallWidgetHeader: View {
           .fixedSize(horizontal: true, vertical: false)
       }
       .padding(.top, 13)
-      Spacer(minLength: 2)
+      .frame(maxWidth: .infinity, alignment: .leading)
       WidgetRefreshButton()
     }
     .foregroundStyle(ink)

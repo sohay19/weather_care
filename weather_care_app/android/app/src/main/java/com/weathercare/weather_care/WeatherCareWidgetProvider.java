@@ -125,7 +125,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         long now = System.currentTimeMillis();
         Snapshot snapshot = stored.forTime(now);
 
-        bindHeader(context, views, snapshot, size);
+        bindHeader(context, views, snapshot, size, minWidth);
         bindTemperature(context, views, snapshot, size, minWidth);
         bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
@@ -275,22 +275,28 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             Context context,
             RemoteViews views,
             Snapshot snapshot,
-            WidgetSize size
+            WidgetSize size,
+            int minWidth
     ) {
         float regionSize = size == WidgetSize.SMALL ? 12 : size == WidgetSize.MEDIUM ? 13 : 14;
-        int regionWidth = size == WidgetSize.SMALL ? 78 : size == WidgetSize.MEDIUM ? 210 : 220;
+        int horizontalPadding = size == WidgetSize.SMALL ? 28
+                : size == WidgetSize.MEDIUM ? 32 : 36;
+        int regionWidth = Math.max(1, minWidth - horizontalPadding - 32);
         float refreshSize = size == WidgetSize.SMALL ? 9 : size == WidgetSize.MEDIUM ? 10 : 11;
         int refreshWidth = size == WidgetSize.SMALL ? 78 : size == WidgetSize.MEDIUM ? 90 : 100;
         setTextBitmap(
                 views,
                 R.id.widget_region,
-                WidgetTextRenderer.line(
+                WidgetTextRenderer.paragraph(
                         context,
                         snapshot.region,
                         R.font.suite_extra_bold,
                         regionSize,
                         TEXT_PRIMARY,
-                        regionWidth
+                        regionWidth,
+                        size == WidgetSize.SMALL ? 3 : 2,
+                        1,
+                        0
                 ),
                 snapshot.region
         );

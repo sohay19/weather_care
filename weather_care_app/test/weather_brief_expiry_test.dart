@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
+import 'package:weather_care/features/home/weather_data_phase.dart';
 import 'package:weather_care/features/home/weather_labels.dart';
 import 'package:weather_care/features/home/widgets/weather_brief_text.dart';
 import 'package:weather_care/models/weather.dart';
@@ -178,6 +179,39 @@ void main() {
     expect(
       weatherRefreshLabel('2026-09-18T00:05:00Z'),
       '9월 18일 오전 9시 05분 기준',
+    );
+  });
+
+  testWidgets('Main 브리핑은 새로고침 중 만료 안내 대신 로딩을 표시한다', (tester) async {
+    final today = TodayWeatherResponse.fromJson({
+      'brief': action,
+      'briefExpiresAt': '2000-01-01T00:00:00Z',
+      'current': {'temperature': 28},
+      'region': {'nx': 60, 'ny': 121, 'name': '수원'},
+    });
+    Widget screen(WeatherDataPhase phase) => MaterialApp(
+          home: Scaffold(
+            body: MainTab(
+              today: today,
+              dataPhase: phase,
+              dateLabel: '9월 10일',
+              mood: 'sunny',
+              serverFeaturesAvailable: true,
+              onRefresh: () async {},
+              onDetail: (_) {},
+            ),
+          ),
+        );
+
+    await tester.pumpWidget(screen(WeatherDataPhase.loading));
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('main-weather-brief'))).data,
+      '불러오는 중',
+    );
+    await tester.pumpWidget(screen(WeatherDataPhase.ready));
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('main-weather-brief'))).data,
+      '최신 날씨를 확인해 주세요.',
     );
   });
 

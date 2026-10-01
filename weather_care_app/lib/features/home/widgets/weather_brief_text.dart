@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../models/weather.dart';
+import '../weather_data_phase.dart';
 
 const _todayOnlyFallback = '오늘은 특별한 예보가 없으나, 외출 전에 시간별 예보를 확인해보세요';
 const _legacyTodayOnlyFallback = '오늘은 외출 전에 시간별 예보를 확인하세요';
@@ -138,11 +139,14 @@ class _WeatherBriefTextState extends State<WeatherBriefText>
 
   @override
   Widget build(BuildContext context) {
+    final phase = WeatherDataPhaseScope.of(context);
     final mentionsAnotherDay =
         ['내일', '모레', '글피', '다음 날'].any(widget.text.contains);
     final usesLegacyFallback = widget.text.trim() == _legacyTodayOnlyFallback;
     return Text(
-      _expired
+      phase == WeatherDataPhase.loading
+          ? phase.missingText()
+          : _expired
           ? '${_invalid ? '안내 시간을 확인하기 어려워요.' : '최신 날씨를 확인해 주세요.'}${_invalid ? ' 화면을 아래로 당겨 다시 확인하세요.' : ''}'
           : _timelineText != null && _timelineText!.isNotEmpty
               ? _timelineText!

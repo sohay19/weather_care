@@ -122,17 +122,18 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), layout);
         Snapshot stored = readSnapshot(context);
         long now = System.currentTimeMillis();
-        Snapshot snapshot = stored.forTime(now);
+        boolean refreshing = isRefreshInProgress(context);
         String refreshStatus = context.getSharedPreferences(
                 MainActivity.WIDGET_PREFERENCES,
                 Context.MODE_PRIVATE
         ).getString(REFRESH_STATUS_KEY, null);
+        Snapshot snapshot = "불러오는 중".equals(refreshStatus)
+                ? stored.forLoading() : stored.forTime(now);
 
         bindHeader(context, views, snapshot, size, minWidth, refreshStatus);
         bindTemperature(context, views, snapshot, size, minWidth);
         bindMinMax(context, views, snapshot, size);
         views.setOnClickPendingIntent(R.id.widget_root, launchAppIntent(context));
-        boolean refreshing = isRefreshInProgress(context);
         views.setInt(
                 R.id.widget_refresh_button,
                 "setBackgroundResource",
@@ -817,6 +818,15 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     text(json, "nextCondition", "unknown"),
                     text(json, "nextTemperature", "--°"),
                     preparations
+            );
+        }
+
+        Snapshot forLoading() {
+            return new Snapshot(
+                    "", "UNAVAILABLE", 0, 0, 0, 0, List.of(),
+                    region, refreshTime, "unknown",
+                    "--°", "--°", "--°", "--°",
+                    "--", "--", "--", "unknown", "--°", List.of()
             );
         }
 

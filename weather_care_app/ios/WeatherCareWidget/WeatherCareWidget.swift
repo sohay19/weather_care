@@ -170,8 +170,37 @@ struct WidgetSnapshot: Codable {
     var snapshot = defaults.string(forKey: snapshotKey)
       .flatMap { $0.data(using: .utf8) }
       .flatMap { try? JSONDecoder().decode(WidgetSnapshot.self, from: $0) } ?? .empty
-    snapshot.region = defaults.string(forKey: refreshStatusKey) ?? snapshot.region
+    if let status = defaults.string(forKey: refreshStatusKey) {
+      if status == "불러오는 중" { snapshot = snapshot.forLoading() }
+      snapshot.region = status
+    }
     return snapshot
+  }
+
+  private func forLoading() -> WidgetSnapshot {
+    WidgetSnapshot(
+      briefingId: nil,
+      sceneId: nil,
+      validFrom: nil,
+      validUntil: nil,
+      nextBriefingBoundary: nil,
+      dataFreshUntil: nil,
+      briefingTimeline: nil,
+      region: region,
+      refreshTime: refreshTime,
+      condition: "unknown",
+      currentTemperature: "--°",
+      apparentTemperature: "--°",
+      minimumTemperature: "--°",
+      maximumTemperature: "--°",
+      shortMessage: "--",
+      brief: "--",
+      nextTime: "--",
+      nextCondition: "unknown",
+      nextTemperature: "--°",
+      preparations: [],
+      preparationCatalog: nil
+    )
   }
 
   func at(_ date: Date) -> WidgetSnapshot {

@@ -5,6 +5,7 @@ import router, {
   buildTimeline,
   currentFromUltraShortObservation,
   enrichWeeklyForecastDays,
+  forecastForCurrentHour,
   isFreshMainSnapshot,
   mergeWeeklyForecastDays,
   nextForecastSnapshot,
@@ -250,6 +251,27 @@ describe('fast Main weather', () => {
     );
     expect(unavailable.temperature).toBeUndefined();
     expect(unavailable.qualityFlags).toContain('CURRENT_OBSERVATION_UNAVAILABLE');
+  });
+
+  it('calculates the same estimated apparent temperature for mild October observations', () => {
+    const observation = {
+      observedAt: '2026-10-01T09:40:00+09:00',
+      rainDetected: false,
+      temperature: 19,
+      humidity: 25,
+      windSpeed: 3.5,
+      provider: 'KMA_APIHUB_GRID_OBSERVATION' as const,
+    };
+    const current = currentFromUltraShortObservation(
+      snapshot(10),
+      { status: 'AVAILABLE', updatedAt: observation.observedAt, value: observation },
+      new Date('2026-10-01T09:49:00+09:00'),
+    );
+
+    expect(current.apparentTemperature).toBe(14.4);
+    expect(current.kmaApparentTemperature).toBeUndefined();
+    expect(current.apparentTemperatureSource)
+      .toBe('APP_STEADMAN_FROM_OBSERVATION');
   });
 
   it('selects the earliest forecast strictly after the current time', () => {
@@ -784,6 +806,49 @@ describe('weekly recommendation inputs', () => {
 });
 
 describe('today timeline', () => {
+  it('fills a cached October forecast calculated before the formula update', () => {
+    const cached = snapshot(10, {
+      observedAt: '2026-10-01T10:00:00+09:00',
+      forecastAt: '2026-10-01T10:00:00+09:00',
+      temperature: 19,
+      humidity: 25,
+      windSpeed: 3.5,
+      apparentTemperature: undefined,
+    });
+    const forecast = forecastForCurrentHour({
+      current: cached,
+      hourly: [cached],
+      daily: [],
+      baseDate: '20261001',
+      baseTime: '0800',
+      dataSource: '기상청 단기예보',
+    }, new Date('2026-10-01T09:49:00+09:00'));
+
+    expect(forecast.current.apparentTemperature).toBe(14.4);
+    expect(forecast.current.kmaApparentTemperature).toBeUndefined();
+    expect(forecast.current.apparentTemperatureSource)
+      .toBe('APP_STEADMAN_FROM_FORECAST');
+  });
+
+  it('keeps an estimated forecast separate from the KMA apparent-temperature field', () => {
+    const estimated = snapshot(10, {
+      apparentTemperature: 14.4,
+      kmaApparentTemperature: undefined,
+      apparentTemperatureSource: 'APP_STEADMAN_FROM_FORECAST',
+    });
+    const forecast = forecastForCurrentHour({
+      current: estimated,
+      hourly: [estimated],
+      daily: [],
+      baseDate: '20260820',
+      baseTime: '0800',
+      dataSource: '기상청 단기예보',
+    }, new Date('2026-08-20T00:49:00Z'));
+
+    expect(forecast.current.apparentTemperature).toBe(14.4);
+    expect(forecast.current.kmaApparentTemperature).toBeUndefined();
+  });
+
   it('uses retained early hours while keeping the detail forecast current-first', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T09:30:00+09:00'));

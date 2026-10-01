@@ -9,9 +9,11 @@ import { runScheduledJobs } from './cron/jobs';
 import { safeErrorName } from './observability/providerErrorDiagnostics';
 import { recoveryActive, recoveryResponse } from './recovery/maintenance';
 import { legacyOriginEnabled, proxyToLegacyOrigin } from './migration/legacyOriginProxy';
+import { weatherAccessLog, type WeatherAccessEnv } from './observability/weatherAccessLog';
 
-export const app = new Hono<{ Bindings: ServerEnv }>();
+export const app = new Hono<WeatherAccessEnv>();
 
+app.use('/api/v1/weather/*', weatherAccessLog);
 app.use('*', async (c, next) => {
   if (recoveryActive(c.env.RECOVERY_MODE)) return recoveryResponse();
   await next();

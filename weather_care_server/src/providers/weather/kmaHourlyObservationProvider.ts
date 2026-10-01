@@ -2,7 +2,7 @@ import {
   kmaApiHubErrorReason,
   kmaApiHubErrorStatus,
 } from '../kmaApiHubResponse';
-import { calculateKmaApparentTemperature } from './kmaWeatherProvider';
+import { calculateApparentTemperatureForConditions } from './kmaWeatherProvider';
 import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const HOURLY_OBSERVATION_URL =
@@ -369,23 +369,12 @@ function apparentTemperature(
   station: KmaHourlyStationObservation,
   observedAt: string,
 ): number | undefined {
-  const month = Number(observedAt.slice(5, 7));
-  if (month >= 5 && month <= 9 && station.humidity === undefined) {
-    return undefined;
-  }
-  if (
-    (month >= 10 || month <= 4) &&
-    station.temperature! <= 10 &&
-    (station.windSpeed === undefined || station.windSpeed < 1.3)
-  ) {
-    return station.temperature;
-  }
-  return calculateKmaApparentTemperature(
-    station.temperature!,
+  return calculateApparentTemperatureForConditions(
+    station.temperature,
     station.humidity,
     station.windSpeed,
     observedAt,
-  );
+  ).value;
 }
 
 export function buildHourlyComparisons(

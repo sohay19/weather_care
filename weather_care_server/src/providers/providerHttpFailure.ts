@@ -35,13 +35,11 @@ function normalizedFailureDetail(
   body: string,
   status: number,
 ): string | undefined {
-  if (
-    status === 429 ||
-    /quota|rate\s*limit|limit(?:ed)?\s+exceed|일일\s*최대\s*호출|호출\s*용량\s*제한/i.test(
-      body,
-    )
-  ) {
+  if (/quota|일일\s*최대\s*호출|호출\s*용량\s*제한/i.test(body)) {
     return 'quota exceeded';
+  }
+  if (status === 429 || /rate\s*limit|limit(?:ed)?\s+exceed/i.test(body)) {
+    return 'rate limited';
   }
   if (
     status === 401 ||

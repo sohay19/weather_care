@@ -48,6 +48,10 @@ import { buildRoadIceMessage } from '../presentation/roadIceMessage';
 import { isRoadIceSeason } from '../providers/road/kmaRoadIceProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
+import {
+  todayWeatherAccessFields,
+  type WeatherAccessEnv,
+} from '../observability/weatherAccessLog';
 import { defaultRuleConfig } from '../config/ruleConfig';
 import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySnapshot,
   withoutPrecipitation } from '../rules/precipitationWindows';
@@ -72,9 +76,10 @@ import type {
 } from '../collection/collectionTypes';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
+import { calculateApparentTemperatureForConditions } from '../providers/weather/kmaWeatherProvider';
 import { calculateSunTimes } from '../presentation/sunTimes';
 import {
-  ultraShortApparentTemperature,
+  ultraShortApparentTemperatureDetails,
   type UltraShortObservation,
 } from '../providers/weather/kmaUltraShortObservationProvider';
 import { buildHomeWidgetSnapshot } from '../presentation/homeWidgetSnapshot';
@@ -87,7 +92,7 @@ import {
   resolveKmaMidTermLocation,
 } from '../regions/kmaMidTermRegionCatalog';
 
-const router = new Hono<{ Bindings: ServerEnv }>();
+const router = new Hono<WeatherAccessEnv>();
 router.use('*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
   await next();
@@ -141,6 +146,7 @@ router.get('/main', async (c) => {
       ),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
+      c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
     const forecast = enrichForecastWithVisibility(
@@ -190,9 +196,13 @@ router.get('/main', async (c) => {
       generatedAt: generatedAt.toISOString(),
     };
 
+    c.set('weatherAccessFields', todayWeatherAccessFields(
+      response, collected.updatedAt, collected.value.forecast,
+    ));
     return c.json(response);
   } catch (error) {
     console.error(JSON.stringify({ event: 'main_weather_cache_failed', error: safeErrorName(error) }));
+    c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_UNAVAILABLE' });
     return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
@@ -265,6 +275,7 @@ router.get('/today', async (c) => {
       ),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
+      c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
     const forecast = enrichForecastWithVisibility(
@@ -407,9 +418,13 @@ router.get('/today', async (c) => {
       generatedAt: generatedAt.toISOString(),
     };
 
+    c.set('weatherAccessFields', todayWeatherAccessFields(
+      response, regionRecord.updatedAt, regionRecord.value.forecast,
+    ));
     return c.json(response);
   } catch (error) {
     console.error(JSON.stringify({ event: 'today_weather_cache_failed', error: safeErrorName(error) }));
+    c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_UNAVAILABLE' });
     return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
@@ -466,6 +481,7 @@ router.get('/weekly', async (c) => {
         : Promise.resolve([] as DailyWeatherForecast[]),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
+      c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
     const {
@@ -560,7 +576,7 @@ router.get('/weekly', async (c) => {
           }));
         });
     }
-    return c.json({
+    const response = {
       dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
       regionId,
       region: {
@@ -611,9 +627,16 @@ router.get('/weekly', async (c) => {
               expandedPreparations,
             ).filter((item) => item.recommended).slice(0, 3),
       })),
+    };
+    c.set('weatherAccessFields', {
+      cacheUpdatedAt: collected.updatedAt,
+      weeklyDaysCount: response.days.length,
+      weeklyCompleteDaysCount: response.days.filter((day) => day.weatherDataComplete).length,
     });
+    return c.json(response);
   } catch (error) {
     console.error(JSON.stringify({ event: 'weekly_weather_cache_failed', error: safeErrorName(error) }));
+    c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_UNAVAILABLE' });
     return c.json({ error: 'WEATHER_CACHE_UNAVAILABLE' }, 503);
   }
 });
@@ -881,7 +904,7 @@ export function currentFromUltraShortObservation(
   }
 
   const observation = record.value;
-  const apparentTemperature = ultraShortApparentTemperature(observation);
+  const apparent = ultraShortApparentTemperatureDetails(observation);
   const awsFallback = observation.provider === 'KMA_AWS_OBSERVATION';
   const precipitationType = precipitationTypeFromObservation(
     observation,
@@ -895,14 +918,18 @@ export function currentFromUltraShortObservation(
     issuedAt: undefined,
     fetchedAt: record.updatedAt,
     temperature: observation.temperature,
-    apparentTemperature,
-    kmaApparentTemperature: apparentTemperature,
-    apparentTemperatureSource: apparentTemperature === undefined
-      ? undefined
-      : 'APP_KMA_METHOD_FROM_OBSERVATION',
-    apparentTemperatureFormulaVersion: apparentTemperature === undefined
-      ? undefined
-      : 'KMA_APPARENT_TEMPERATURE_2026.1',
+    apparentTemperature: apparent.value,
+    kmaApparentTemperature: apparent.kmaValue,
+    apparentTemperatureSource: apparent.method === 'KMA'
+      ? 'APP_KMA_METHOD_FROM_OBSERVATION'
+      : apparent.method === 'STEADMAN'
+        ? 'APP_STEADMAN_FROM_OBSERVATION'
+        : undefined,
+    apparentTemperatureFormulaVersion: apparent.method === 'KMA'
+      ? 'KMA_APPARENT_TEMPERATURE_2026.1'
+      : apparent.method === 'STEADMAN'
+        ? 'STEADMAN_AT_NO_RADIATION_1994.1'
+        : undefined,
     humidity: observation.humidity,
     windSpeed: observation.windSpeed,
     windDirection: observation.windDirection,
@@ -993,12 +1020,12 @@ export function forecastForCurrentHour(
       const forecastAt = Date.parse(snapshot.forecastAt ?? snapshot.observedAt);
       return Number.isFinite(forecastAt) && forecastAt >= hourStart.getTime();
     })
-    .map(withKmaApparentTemperature);
+    .map(withApparentTemperature);
   const timelineHourly = forecast.timelineHourly?.map(
-    withKmaApparentTemperature,
+    withApparentTemperature,
   );
   const first = hourly[0];
-  if (!first) return { ...forecast, hourly: [], timelineHourly };
+  if (!first) return { ...forecast, current: withApparentTemperature(forecast.current), hourly: [], timelineHourly };
 
   return {
     ...forecast,
@@ -1022,12 +1049,28 @@ export function forecastForCurrentHour(
   };
 }
 
-function withKmaApparentTemperature(
+function withApparentTemperature(
   snapshot: WeatherSnapshot,
 ): WeatherSnapshot {
+  if (snapshot.apparentTemperature === undefined) {
+    const apparent = calculateApparentTemperatureForConditions(
+      snapshot.temperature,
+      snapshot.humidity,
+      snapshot.windSpeed,
+      snapshot.forecastAt ?? snapshot.observedAt,
+    );
+    if (apparent.method !== 'STEADMAN') return snapshot;
+    return {
+      ...snapshot,
+      apparentTemperature: apparent.value,
+      apparentTemperatureSource: 'APP_STEADMAN_FROM_FORECAST',
+      apparentTemperatureFormulaVersion: 'STEADMAN_AT_NO_RADIATION_1994.1',
+    };
+  }
   if (
     snapshot.kmaApparentTemperature !== undefined ||
-    snapshot.apparentTemperature === undefined
+    snapshot.apparentTemperatureSource === 'APP_STEADMAN_FROM_FORECAST' ||
+    snapshot.apparentTemperatureSource === 'APP_STEADMAN_FROM_OBSERVATION'
   ) {
     return snapshot;
   }

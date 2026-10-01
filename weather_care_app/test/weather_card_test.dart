@@ -180,6 +180,30 @@ void main() {
     );
   });
 
+  testWidgets('Steadman 관측값은 기상청 공식값 대신 추정값으로 설명한다', (tester) async {
+    await _pumpCard(
+      tester,
+      const CurrentWeather(
+        temperature: 19,
+        observedAt: '2026-10-01T09:40:00+09:00',
+        dataRole: 'OBSERVATION',
+        provider: 'KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST',
+        apparentTemperature: 14.4,
+        apparentTemperatureSource: 'APP_STEADMAN_FROM_OBSERVATION',
+        humidity: 25,
+        windSpeed: 3.5,
+      ),
+    );
+
+    final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
+    await tester.ensureVisible(detailButton);
+    await tester.tap(detailButton);
+    await tester.pumpAndSettle();
+    expect(find.text('기온·습도·바람으로 계산한 추정 체감온도예요'), findsOneWidget);
+    expect(find.textContaining('예상 추정 체감온도'), findsNothing);
+    expect(find.textContaining('햇볕의 영향은 포함하지 않아요.'), findsOneWidget);
+  });
+
   test('예상기온 시각은 한국시간을 사용하고 없는 시각은 만들지 않는다', () {
     for (final timestamp in [
       '2026-09-10T15:00:00+09:00',

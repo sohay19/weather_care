@@ -143,6 +143,25 @@ sudo systemctl enable --now weather-care-scheduler.service
 journalctl -u weather-care-scheduler.service -f
 ```
 
+### 날씨 API 요청 추적
+
+`/api/v1/weather/main`, `/today`, `/weekly` 요청은 API journal에 `weather_access`
+JSON 한 줄씩 기록됩니다. `requestId`는 응답의 `X-Request-Id`와 같고,
+`deviceTag`는 유효한 형식의 기기 인증 토큰에서 만든 비가역 태그입니다.
+같은 기기의 세 경로를 연결할 수 있지만 인증 토큰이 없는 요청은 `null`입니다.
+`nx`·`ny`는 앱이 보낸 예보 격자이며 `coordinatesProvided`는 좌표 매개변수의
+존재만 나타냅니다. 정확한 GPS 좌표, 설치 ID, 인증 토큰, 전체 응답은 기록하지
+않습니다. `fields`에는 캐시 갱신 시각과 주요 날씨 값의 존재 여부만 남깁니다.
+503 응답은 `fields.errorCode`로 캐시 미준비와 조회 실패를 구분합니다.
+
+```bash
+journalctl -u weather-care-api.service --since '2026-10-01 09:00:00' \
+  --until '2026-10-01 10:00:00' -o cat --no-pager | grep '"event":"weather_access"'
+```
+
+요청이 API에 도착하지 않은 네트워크 장애는 이 로그에 남지 않습니다. 서버가
+UTC로 운영되므로 KST 사건 시각에서 9시간을 빼서 조회합니다.
+
 운영 systemd는 `weather-care-prewarm.service`를 API와 스케줄러가 시작될 때마다
 호출하는 필수 선행 서비스로 사용합니다. 성공 후에는 종료되는 일회성 장벽이며,
 스케줄러 단독 실행에도 같은 선수집이 내장되어 있습니다. 이 단계에서

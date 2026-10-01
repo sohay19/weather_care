@@ -89,6 +89,48 @@ void main() {
     expect(find.text(removedHint), findsNothing);
   });
 
+  testWidgets('기상청 적용 범위 밖 예상 체감온도를 추정값으로 표시한다', (tester) async {
+    const today = TodayWeatherResponse(
+      dataSource: 'test',
+      region: WeatherRegion(nx: 57, ny: 124, name: '시흥시'),
+      brief: '맑아요',
+      current: CurrentWeather(temperature: 19),
+      nextForecast: CurrentWeather(
+        temperature: 19,
+        apparentTemperature: 14.4,
+        apparentTemperatureSource: 'APP_STEADMAN_FROM_FORECAST',
+        forecastAt: '2026-10-01T10:00:00+09:00',
+      ),
+      recommendations: [],
+      lifestyleMessages: [],
+      timeline: [],
+      hourly: [],
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: MainTab(
+          today: today,
+          dateLabel: '10월 1일',
+          mood: 'clear',
+          serverFeaturesAvailable: true,
+          yesterdayComparison: const ComparisonResponse.unavailable(),
+          onRefresh: () async {},
+          onDetail: (_) {},
+        ),
+      ),
+    ));
+
+    final card = find.byKey(const ValueKey('main-future-weather-card'));
+    await tester.dragUntilVisible(
+      card,
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -300),
+    );
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: card, matching: find.text('14.4℃')), findsOneWidget);
+    expect(find.text('기온·습도·바람으로 계산한 추정 체감온도예요.'), findsOneWidget);
+  });
+
   testWidgets('Main 카드를 날씨, Check List, 어제 비교, 예상 순서로 표시한다', (tester) async {
     tester.view.physicalSize = const Size(400, 1800);
     tester.view.devicePixelRatio = 1;

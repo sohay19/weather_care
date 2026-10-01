@@ -396,7 +396,7 @@ function snapshotFromSlot(
     (snowfallAmountRange?.min ?? 0) > 0
     ? true : precipitationCode === undefined ? undefined : false;
   const forecastAt = kmaSlotToIso(slotKey);
-  const calculatedApparentTemperature = temperature === undefined ? undefined : apparentTemperature(
+  const apparent = calculateApparentTemperatureForConditions(
     temperature,
     humidity,
     windSpeed,
@@ -417,16 +417,20 @@ function snapshotFromSlot(
     issuedAt: kmaBaseToIso(base),
     fetchedAt: fetchedAt.toISOString(),
     temperature,
-    apparentTemperature: calculatedApparentTemperature,
-    kmaApparentTemperature: calculatedApparentTemperature,
+    apparentTemperature: apparent.value,
+    kmaApparentTemperature: apparent.kmaValue,
     apparentTemperatureSource:
-      calculatedApparentTemperature === undefined
-        ? undefined
-        : 'APP_KMA_METHOD_FROM_FORECAST',
+      apparent.method === 'KMA'
+        ? 'APP_KMA_METHOD_FROM_FORECAST'
+        : apparent.method === 'STEADMAN'
+          ? 'APP_STEADMAN_FROM_FORECAST'
+          : undefined,
     apparentTemperatureFormulaVersion:
-      calculatedApparentTemperature === undefined
-        ? undefined
-        : 'KMA_APPARENT_TEMPERATURE_2026.1',
+      apparent.method === 'KMA'
+        ? 'KMA_APPARENT_TEMPERATURE_2026.1'
+        : apparent.method === 'STEADMAN'
+          ? 'STEADMAN_AT_NO_RADIATION_1994.1'
+          : undefined,
     humidity,
     windSpeed,
     windDirection: numericValue(categories.get('VEC')),
@@ -788,12 +792,13 @@ export function calculateKmaApparentTemperature(
   return roundOne(temperature);
 }
 
-function apparentTemperature(
-  temperature: number,
+export function calculateApparentTemperatureForConditions(
+  temperature: number | undefined,
   humidity?: number,
   windSpeed?: number,
   forecastAt?: string,
-): number | undefined {
+): { value?: number; kmaValue?: number; method?: 'KMA' | 'STEADMAN' } {
+  if (temperature === undefined) return {};
   const month = forecastAt === undefined
     ? undefined
     : Number(forecastAt.slice(5, 7));
@@ -808,13 +813,29 @@ function apparentTemperature(
     temperature <= 10 &&
     windSpeed !== undefined &&
     windSpeed >= 1.3;
-  if (!summerInputsAvailable && !winterInputsAvailable) return undefined;
-  return calculateKmaApparentTemperature(
-    temperature,
-    humidity,
-    windSpeed,
-    forecastAt,
+  if (summerInputsAvailable || winterInputsAvailable) {
+    const value = calculateKmaApparentTemperature(
+      temperature, humidity, windSpeed, forecastAt,
+    );
+    return { value, kmaValue: value, method: 'KMA' };
+  }
+  if (humidity === undefined || windSpeed === undefined) return {};
+  const value = calculateSteadmanApparentTemperature(
+    temperature, humidity, windSpeed,
   );
+  return value === undefined ? {} : { value, method: 'STEADMAN' };
+}
+
+function calculateSteadmanApparentTemperature(
+  temperature: number,
+  humidity: number,
+  windSpeed: number,
+): number | undefined {
+  // https://www.bom.gov.au/info/thermal_stress/ (non-radiation estimate)
+  if (humidity < 0 || humidity > 100 || windSpeed < 0) return undefined;
+  const vaporPressure = humidity / 100 * 6.105 *
+    Math.exp(17.27 * temperature / (237.7 + temperature));
+  return roundOne(temperature + 0.33 * vaporPressure - 0.70 * windSpeed - 4);
 }
 
 function roundOne(value: number): number {

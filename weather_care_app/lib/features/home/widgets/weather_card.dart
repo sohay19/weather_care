@@ -42,6 +42,9 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
                 ? '기상청 AWS 관측'
                 : '기상청 초단기실황';
     final apparentTemperature = current.displayedApparentTemperature;
+    final estimatedApparentTemperature = current.apparentTemperatureSource ==
+            'APP_STEADMAN_FROM_FORECAST' ||
+        current.apparentTemperatureSource == 'APP_STEADMAN_FROM_OBSERVATION';
     final missing = <String>[
       if (current.temperature == null) '현재 기온',
       if (current.sky == null) '하늘 상태',
@@ -60,10 +63,12 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
         value: apparentTemperature == null
             ? '자료 없음'
             : '${apparentTemperature.toStringAsFixed(1)}℃',
-        levelTitle: '기상청 방식으로 계산한 체감온도예요',
+        levelTitle: estimatedApparentTemperature
+            ? '기온·습도·바람으로 계산한 추정 체감온도예요'
+            : '기상청 방식으로 계산한 체감온도예요',
         detailBody: apparentTemperature == null
-            ? '기온·습도·풍속 입력자료가 모두 갖춰지지 않았거나 체감온도 계산조건에 맞지 않아 값을 만들지 않았어요.\n빠진 값을 0으로 바꿔 계산하지 않아요.'
-            : _kmaApparentTemperatureDetail(
+            ? '체감온도 계산에 필요한 기온·습도·풍속 자료가 부족해요.\n빠진 값을 0으로 바꿔 계산하지 않아요.'
+            : _apparentTemperatureDetail(
                 current,
                 currentSource,
                 isObservation,
@@ -350,16 +355,23 @@ String? _koreaObservationClock(String? timestamp) {
       '${korea.minute.toString().padLeft(2, '0')}분 관측';
 }
 
-String _kmaApparentTemperatureDetail(
+String _apparentTemperatureDetail(
   CurrentWeather current,
   String currentSource,
   bool isObservation,
 ) {
   final apparent = current.displayedApparentTemperature!;
+  final estimated =
+      current.apparentTemperatureSource == 'APP_STEADMAN_FROM_FORECAST' ||
+          current.apparentTemperatureSource == 'APP_STEADMAN_FROM_OBSERVATION';
   final parts = <String>[
-    '$currentSource의 기온과 상대습도(5~9월) 또는 기온과 풍속(10~4월)을 '
-        '기상청 산식에 적용한 ${isObservation ? '' : '예상 '}체감온도는 '
-        '${apparent.toStringAsFixed(1)}℃예요.',
+    estimated
+        ? '$currentSource의 기온·습도·바람으로 계산한 '
+            '${isObservation ? '' : '예상 '}추정 체감온도는 '
+            '${apparent.toStringAsFixed(1)}℃예요. 햇볕의 영향은 포함하지 않아요.'
+        : '$currentSource의 기온과 상대습도(5~9월) 또는 기온과 풍속(10~4월)을 '
+            '기상청 산식에 적용한 ${isObservation ? '' : '예상 '}체감온도는 '
+            '${apparent.toStringAsFixed(1)}℃예요.',
   ];
   final temperature = current.temperature;
   if (temperature != null && (apparent - temperature).abs() >= 0.6) {

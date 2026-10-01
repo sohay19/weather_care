@@ -141,7 +141,7 @@ Cron은 10분마다 전국 격자 한 묶음의 단기예보와 활성 설치의
 
 `environmentalSources.uv` / `environmentalSources.airQuality`은 각각 `AVAILABLE`, `CACHED`, `STALE`, `UNAVAILABLE`, `UNSUPPORTED_REGION` 상태를 제공합니다. D1 캐시는 자외선 2시간, 대기질 30분을 신선 기준으로 사용하고, 새 조회 실패 시 자외선 최대 8시간·대기질 최대 3시간의 이전 값만 `STALE`로 허용합니다. 환경 Provider가 실패해도 단기예보가 정상이면 Today API는 200을 유지합니다.
 
-`current.apparentTemperature`와 `hourly[].apparentTemperature`는 [기상청 공식 체감온도 산식](https://data.kma.go.kr/climate/windChill/selectWindChillChart.do)을 사용합니다. 5~9월은 기온·상대습도·Stull 습구온도 기반 여름 산식, 10~익년 4월은 기온 10℃ 이하·풍속 1.3m/s 이상일 때 겨울 풍속냉각 산식을 적용합니다. 앱의 표현 경계와 연구 근거는 [`docs/체감온도_표현_기준.md`](../docs/체감온도_표현_기준.md)에 있습니다.
+현재 관측과 미래 예보의 `apparentTemperature`는 적용 조건을 충족할 때 [기상청 공식 체감온도 산식](https://data.kma.go.kr/climate/windChill/selectWindChillChart.do)을 사용합니다. 5~9월은 기온·상대습도·Stull 습구온도 기반 여름 산식, 10~익년 4월은 기온 10℃ 이하·풍속 1.3m/s 이상일 때 겨울 풍속냉각 산식을 적용합니다. 이 조건 밖에 있고 같은 시각의 기온·습도·풍속이 모두 있으면 [호주 기상청의 Steadman 비복사 산식](https://www.bom.gov.au/info/thermal_stress/)으로 추정 체감온도를 계산합니다. 이때 `apparentTemperatureSource`는 관측 또는 예보 Steadman 출처를 기록하며 `kmaApparentTemperature`는 비워 기상청 공식 적용 범위의 값과 구분합니다. 입력값이 빠졌으면 숫자를 만들지 않습니다. 앱의 표현 경계와 연구 근거는 [`docs/체감온도_표현_기준.md`](../docs/체감온도_표현_기준.md)에 있습니다.
 
 현재 환경 지역 카탈로그는 앱에서 사용하는 수원 `60:121`(자외선 `4111000000`, 인계동 측정소)와 검증용 서울 `60:127`(자외선 `1100000000`, 종로구 측정소)를 지원합니다. 지역 선택 기능을 확장할 때 행정코드와 측정소를 카탈로그에 함께 등록해야 합니다.
 

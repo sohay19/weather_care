@@ -1,4 +1,4 @@
-import { calculateKmaApparentTemperature } from './kmaWeatherProvider';
+import { calculateApparentTemperatureForConditions } from './kmaWeatherProvider';
 
 const ULTRA_SHORT_OBSERVATION_URL =
   'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
@@ -114,12 +114,13 @@ export class KmaUltraShortObservationProvider {
 export function ultraShortApparentTemperature(
   observation: UltraShortObservation,
 ): number | undefined {
-  if (observation.temperature === undefined) return undefined;
-  const month = Number(observation.observedAt.slice(5, 7));
-  if (month >= 5 && month <= 9 && observation.humidity === undefined) {
-    return undefined;
-  }
-  return calculateKmaApparentTemperature(
+  return ultraShortApparentTemperatureDetails(observation).value;
+}
+
+export function ultraShortApparentTemperatureDetails(
+  observation: UltraShortObservation,
+) {
+  return calculateApparentTemperatureForConditions(
     observation.temperature,
     observation.humidity,
     observation.windSpeed,

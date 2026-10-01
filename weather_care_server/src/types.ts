@@ -194,6 +194,8 @@ export interface WeatherSnapshot {
   apparentTemperature?: number;
   apparentTemperatureSource?:
     | 'APP_KMA_METHOD_FROM_FORECAST'
+    | 'APP_STEADMAN_FROM_FORECAST'
+    | 'APP_STEADMAN_FROM_OBSERVATION'
     | 'APP_KMA_METHOD_FROM_OBSERVATION'
     | 'OFFICIAL_KMA_VALUE';
   apparentTemperatureFormulaVersion?: string;

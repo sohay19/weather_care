@@ -15,4 +15,10 @@ describe('provider HTTP failure handling', () => {
     ).resolves.toBe('KMA request failed with status 403: quota exceeded');
     expect(response.bodyUsed).toBe(true);
   });
+
+  it('does not call a bare 429 a daily quota exhaustion', async () => {
+    const response = new Response('Too many requests', { status: 429 });
+    await expect(providerHttpFailureMessage(response, 'KMA request'))
+      .resolves.toBe('KMA request failed with status 429: rate limited');
+  });
 });

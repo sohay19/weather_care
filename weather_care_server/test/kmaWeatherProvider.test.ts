@@ -166,6 +166,25 @@ describe('KmaWeatherProvider', () => {
     ).toBe(18);
   });
 
+  it('calculates a separate apparent-temperature estimate outside KMA conditions', () => {
+    const octoberBase = { baseDate: '20261001', baseTime: '0800' };
+    const forecast = buildForecastFromItems(
+      slot('20261001', '1000', {
+        TMP: '19', REH: '25', WSD: '3.5', PTY: '0', SKY: '1',
+      }),
+      new Date('2026-10-01T00:49:00Z'),
+      octoberBase,
+    );
+
+    expect(forecast.current.temperature).toBe(19);
+    expect(forecast.current.apparentTemperature).toBe(14.4);
+    expect(forecast.current.kmaApparentTemperature).toBeUndefined();
+    expect(forecast.current.apparentTemperatureSource)
+      .toBe('APP_STEADMAN_FROM_FORECAST');
+    expect(forecast.current.apparentTemperatureFormulaVersion)
+      .toBe('STEADMAN_AT_NO_RADIATION_1994.1');
+  });
+
   it('builds current, hourly and daily weather from forecast items', () => {
     const items = [
       ...slot('20260820', '1000', {

@@ -513,16 +513,16 @@ function copyVariants(
     case 'THERMAL_HOT':
       return [copy(
         '덥게 느껴져요. 물을 챙기세요.',
-        '기상청 방식 체감온도가 높아요. 물을 자주 마셔주세요.',
-        '기상청 방식 체감온도가 높아요. 오래 활동한다면 물을 자주 마셔주세요.',
+        '계산한 체감온도가 높아요. 물을 자주 마셔주세요.',
+        '계산한 체감온도가 높아요. 오래 활동한다면 물을 자주 마셔주세요.',
         '덥게 느껴지는 날씨예요',
         '덥게 느껴질 수 있어요. 오래 활동한다면 물을 자주 마셔주세요.',
       )];
     case 'THERMAL_COLD':
       return [copy(
         '쌀쌀하게 느껴져요. 겉옷을 챙기세요.',
-        '기상청 방식 체감온도가 낮아요. 겉옷을 챙기세요.',
-        '기상청 방식 체감온도가 낮아요. 외출한다면 겉옷을 챙기는 게 좋아요.',
+        '계산한 체감온도가 낮아요. 겉옷을 챙기세요.',
+        '계산한 체감온도가 낮아요. 외출한다면 겉옷을 챙기는 게 좋아요.',
         '쌀쌀하게 느껴지는 날씨예요',
         '쌀쌀하게 느껴질 수 있어요. 외출한다면 겉옷을 챙기세요.',
       )];
@@ -635,9 +635,9 @@ function sceneMeaning(
     case 'AIR_QUALITY': return meaning('대기질', 'MODERATE', ['PM10', 'PM25'], '좋지 않은 대기질', 'TAKE_MASK', ['MASK']);
     case 'OZONE': return meaning('오존', 'MODERATE', ['O3'], '높은 오존', 'LIMIT_OUTDOOR_ACTIVITY', []);
     case 'VISIBILITY': return meaning('가시거리', 'HIGH', ['VS'], '낮은 가시거리', 'DRIVE_CAREFULLY', []);
-    case 'THERMAL_HOT': return meaning('체감온도', 'MODERATE', ['apparentTemperature', 'temperature'], '높은 기상청 체감온도', 'HYDRATE', expandedPreparations ? ['WATER', 'PORTABLE_FAN', 'COOLING_ITEM'] : ['WATER']);
-    case 'THERMAL_COLD': return meaning('체감온도', 'MODERATE', ['apparentTemperature', 'temperature'], '낮은 기상청 체감온도', 'TAKE_OUTERWEAR', expandedPreparations ? ['OUTERWEAR', 'SCARF', 'HAND_WARMER'] : ['OUTERWEAR']);
-    case 'THERMAL_COMFORTABLE': return meaning('체감온도', 'INFO', ['apparentTemperature'], '쾌적한 기상청 체감온도', undefined, []);
+    case 'THERMAL_HOT': return meaning('체감온도', 'MODERATE', ['apparentTemperature', 'temperature'], '높은 계산 체감온도', 'HYDRATE', expandedPreparations ? ['WATER', 'PORTABLE_FAN', 'COOLING_ITEM'] : ['WATER']);
+    case 'THERMAL_COLD': return meaning('체감온도', 'MODERATE', ['apparentTemperature', 'temperature'], '낮은 계산 체감온도', 'TAKE_OUTERWEAR', expandedPreparations ? ['OUTERWEAR', 'SCARF', 'HAND_WARMER'] : ['OUTERWEAR']);
+    case 'THERMAL_COMFORTABLE': return meaning('체감온도', 'INFO', ['apparentTemperature'], '쾌적한 계산 체감온도', undefined, []);
     case 'WIND': return meaning('바람', 'MODERATE', ['WSD'], '강한 바람', 'SECURE_BELONGINGS', []);
     case 'HUMIDITY_HIGH': return meaning('습도', 'INFO', ['REH'], '높은 습도', undefined, []);
     case 'HUMIDITY_LOW': return meaning('습도', 'INFO', ['REH'], '낮은 습도', 'HYDRATE', ['WATER']);

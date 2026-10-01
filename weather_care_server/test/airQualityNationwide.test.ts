@@ -103,6 +103,44 @@ describe('nationwide air-quality resolution', () => {
     expect(bundle.sources.airQuality.state).toBe('AVAILABLE');
   });
 
+  it('uses a nearby station cache after the closest station request times out', async () => {
+    const collectionTime = new Date('2026-10-01T05:50:00Z');
+    await saveEnvironmentalCache(env.DB, {
+      cacheKey: 'AIR_STATIONS_V1', cacheType: 'AIR_STATIONS', nx: 0, ny: 0,
+      value: { fetchedAt: collectionTime.toISOString(), stations: [
+        { stationName: '대야동', latitude: 37.443, longitude: 126.788 },
+        { stationName: '소사본동', latitude: 37.48, longitude: 126.8 },
+      ] }, updatedAt: collectionTime.toISOString(),
+    });
+    await saveEnvironmentalCache(env.DB, {
+      cacheKey: 'AIR_STATION_V1_소사본동', cacheType: 'AIR_QUALITY', nx: 57, ny: 124,
+      value: { stationName: '소사본동', observedAt: '2026-10-01T13:00:00+09:00',
+        pm10: 40, pm25: 0, provider: 'AIRKOREA' },
+      updatedAt: '2026-10-01T04:50:00Z',
+    });
+    const fetcher = vi.fn<typeof fetch>((input, init) => {
+      if (!String(input).includes('getMsrstnAcctoRltmMesureDnsty')) {
+        return Promise.resolve(new Response('failure', { status: 503 }));
+      }
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(init.signal?.reason), { once: true });
+      });
+    });
+    vi.stubGlobal('fetch', fetcher);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await loadEnvironmentalData(
+      { ...env, KMA_SERVICE_KEY: 'test-key' }, undefined,
+      { nx: 57, ny: 124, now: collectionTime, providerTimeoutMs: 7_500 },
+    );
+
+    expect(result.airQuality).toMatchObject({ stationName: '소사본동', pm10: 40, pm25: 0 });
+    expect(result.sources.airQuality.state).toBe('CACHED');
+    expect(result.providerTimeouts?.airQuality).toBe(false);
+    expect(fetcher.mock.calls.filter(([input]) =>
+      String(input).includes('getMsrstnAcctoRltmMesureDnsty'))).toHaveLength(1);
+  }, 10_000);
+
   it('rejects failed station catalog responses instead of marking the region unsupported', async () => {
     const fetcher = vi.fn<typeof fetch>(async () => new Response('failure', { status: 503 }));
     vi.stubGlobal('fetch', fetcher);

@@ -202,7 +202,30 @@ async function loadAirQuality(
 
   try {
     for (const station of nearestAirStations(catalog.value, target.latitude, target.longitude)) {
-      if (signal.aborted) break;
+      if (signal.aborted) {
+        if (!env.DB) break;
+        try {
+          const cached = await getEnvironmentalCache<AirQualitySnapshot>(
+            env.DB, `AIR_STATION_V1_${station.stationName}`,
+          );
+          if (cached && cached.value.stationName === station.stationName &&
+              isRecentAirObservation(cached.value.observedAt, now) &&
+              ageMs(cached.updatedAt, now) <= AIR_MAX_STALE_MS) {
+            return {
+              value: cached.value,
+              source: availableSource(
+                'AIRKOREA',
+                ageMs(cached.updatedAt, now) <= AIR_FRESH_MS ? 'CACHED' : 'STALE',
+                cached.value.observedAt,
+                cached.updatedAt,
+              ),
+            };
+          }
+        } catch (error) {
+          logEnvironmentalError('cache_read_failed', 'AIRKOREA', error);
+        }
+        continue;
+      }
       const observation = await resolveEnvironmentalValue<AirQualitySnapshot>({
         db: env.DB, cacheKey: `AIR_STATION_V1_${station.stationName}`,
         cacheType: 'AIR_QUALITY', nx, ny, provider: 'AIRKOREA',

@@ -5,9 +5,11 @@ import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
 import '../../../services/notification_destination.dart';
 import '../../../theme/weather_theme.dart';
+import '../weather_data_phase.dart';
 import '../widgets/lifestyle_evidence_checklist_section.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
+import '../widgets/weather_data_notice.dart';
 
 enum DetailFocusSource {
   notification,
@@ -16,6 +18,7 @@ enum DetailFocusSource {
 
 class DetailTab extends StatefulWidget {
   final TodayWeatherResponse today;
+  final WeatherDataPhase dataPhase;
   final List<WeatherRecommendation> recommendations;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
@@ -29,6 +32,7 @@ class DetailTab extends StatefulWidget {
   const DetailTab({
     super.key,
     required this.today,
+    this.dataPhase = WeatherDataPhase.ready,
     required this.recommendations,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
@@ -115,7 +119,13 @@ class _DetailTabState extends State<DetailTab> {
               icon: Icons.query_stats_rounded,
             ),
             const SizedBox(height: 18),
-            if (widget.serverFeaturesAvailable)
+            if (widget.dataPhase != WeatherDataPhase.ready) ...[
+              WeatherDataNotice(phase: widget.dataPhase, subject: '상세 날씨'),
+              const SizedBox(height: 16),
+            ],
+            if (widget.dataPhase == WeatherDataPhase.loading)
+              const Center(child: CircularProgressIndicator())
+            else if (widget.serverFeaturesAvailable)
               LifestyleEvidenceChecklistSection(
                 key: _evidenceSectionKey,
                 messages: widget.today.lifestyleMessages,

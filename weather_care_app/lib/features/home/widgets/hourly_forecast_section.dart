@@ -3,18 +3,21 @@ import 'package:flutter/material.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
+import '../weather_data_phase.dart';
 import 'home_section_header.dart';
 import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
 class HourlyForecastSection extends StatelessWidget {
   final List<HourlyWeatherItem> items;
+  final WeatherDataPhase dataPhase;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
 
   const HourlyForecastSection({
     super.key,
     required this.items,
+    this.dataPhase = WeatherDataPhase.ready,
     this.onRetryMissingData,
     this.retrying = false,
   });
@@ -65,9 +68,13 @@ class HourlyForecastSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(17),
               ),
               child: Text(
-                items.isEmpty
-                    ? '시간별 예보 자료가 없어 표시하기 어려워요.'
-                    : '오늘 표시할 시간별 예보가 없어요.',
+                dataPhase == WeatherDataPhase.loading
+                    ? '시간별 예보를 불러오고 있어요.'
+                    : dataPhase == WeatherDataPhase.failed
+                        ? '서버에서 시간별 예보를 불러오지 못했어요.'
+                        : items.isEmpty
+                            ? '시간별 예보 자료가 없어 표시하기 어려워요.'
+                            : '오늘 표시할 시간별 예보가 없어요.',
                 style: const TextStyle(
                   color: WeatherCareTheme.textSecondary,
                 ),
@@ -78,16 +85,21 @@ class HourlyForecastSection extends StatelessWidget {
               _HourlyRow(
                 key: ValueKey('today-hourly-$index'),
                 item: visibleItems[index],
+                dataPhase: dataPhase,
                 showPoint: visibleItems[index].forecastDate == null ||
                     visibleItems[index].forecastDate ==
                         dateInKorea(DateTime.now()),
               ),
               if (index < visibleItems.length - 1) const SizedBox(height: 9),
             ],
-          if (hasMissingData && onRetryMissingData != null) ...[
+          if (hasMissingData &&
+              dataPhase != WeatherDataPhase.loading &&
+              onRetryMissingData != null) ...[
             const SizedBox(height: 12),
             MissingDataRetry(
-              message: '받지 못한 시간별 예보 항목이 있어요.',
+              message: dataPhase == WeatherDataPhase.failed
+                  ? '서버에서 시간별 예보 항목을 불러오지 못했어요.'
+                  : '받지 못한 시간별 예보 항목이 있어요.',
               retryKey: 'today-hourly-data-retry',
               onRetry: onRetryMissingData!,
               retrying: retrying,
@@ -119,9 +131,15 @@ List<HourlyWeatherItem> _todayHourlyItems(List<HourlyWeatherItem> items) {
 
 class _HourlyRow extends StatelessWidget {
   final HourlyWeatherItem item;
+  final WeatherDataPhase dataPhase;
   final bool showPoint;
 
-  const _HourlyRow({super.key, required this.item, this.showPoint = true});
+  const _HourlyRow({
+    super.key,
+    required this.item,
+    required this.dataPhase,
+    this.showPoint = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +167,7 @@ class _HourlyRow extends StatelessWidget {
     final hour = int.tryParse(item.time);
     final timeLabel = hour != null && hour >= 0 && hour < 24
         ? '${hour.toString().padLeft(2, '0')}시'
-        : '시각 자료 없음';
+        : '시각 ${dataPhase.missingText()}';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -182,14 +200,14 @@ class _HourlyRow extends StatelessWidget {
                       children: [
                         Text(
                           item.temperature == null
-                              ? '예상 기온 자료 없음'
+                              ? '예상 기온 ${dataPhase.missingText()}'
                               : '예상 기온 ${item.temperature!.toStringAsFixed(0)}℃',
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         const SizedBox(width: 10),
                         Text(
                           item.displayedApparentTemperature == null
-                              ? '예상 체감 자료 없음'
+                              ? '예상 체감 ${dataPhase.missingText()}'
                               : '예상 체감 ${item.displayedApparentTemperature!.toStringAsFixed(0)}℃',
                           style: const TextStyle(
                             color: WeatherCareTheme.textSecondary,
@@ -215,7 +233,7 @@ class _HourlyRow extends StatelessWidget {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      item.skyCondition ?? '날씨 자료 없음',
+                      item.skyCondition ?? '날씨 ${dataPhase.missingText()}',
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -261,7 +279,8 @@ class _HourlyRow extends StatelessWidget {
                 color: WeatherCareTheme.primaryDeep,
               ),
             ),
-            if (period != null) Text(item.skyCondition ?? '날씨 자료 없음'),
+            if (period != null)
+              Text(item.skyCondition ?? '날씨 ${dataPhase.missingText()}'),
             const SizedBox(height: 8),
           ],
           if (item.precipitationPeriodProvided && period == null)
@@ -295,7 +314,7 @@ class _HourlyRow extends StatelessWidget {
           if (missing.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              '자료 없음: ${missing.join(' · ')}',
+              '${dataPhase.missingText()}: ${missing.join(' · ')}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: WeatherCareTheme.textSecondary,
                   ),

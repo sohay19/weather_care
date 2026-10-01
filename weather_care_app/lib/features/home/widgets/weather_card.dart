@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
+import '../weather_data_phase.dart';
 import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
 class WeatherInfoCard extends StatefulWidget {
   final CurrentWeather current;
+  final WeatherDataPhase dataPhase;
   final String? sunriseAt;
   final String? sunsetAt;
   final Future<void> Function()? onRetryMissingData;
@@ -16,6 +18,7 @@ class WeatherInfoCard extends StatefulWidget {
   const WeatherInfoCard({
     super.key,
     required this.current,
+    this.dataPhase = WeatherDataPhase.ready,
     this.sunriseAt,
     this.sunsetAt,
     this.onRetryMissingData,
@@ -135,6 +138,18 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             : '요청 지역의 대표 좌표와 한국 날짜를 기준으로 계산한 시각이에요.\n지형과 건물 때문에 실제로 해가 보이는 시각은 달라질 수 있어요.',
       ),
     ];
+    final displayMetrics = metrics
+        .map((metric) => metric.value == '자료 없음' &&
+                widget.dataPhase != WeatherDataPhase.ready
+            ? _WeatherMetric(
+                icon: metric.icon,
+                label: metric.label,
+                value: widget.dataPhase.missingText(),
+                levelTitle: widget.dataPhase.explanation,
+                detailBody: widget.dataPhase.explanation,
+              )
+            : metric)
+        .toList(growable: false);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -156,7 +171,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               Expanded(
                 child: Text(
                   current.temperature == null
-                      ? '자료 없음'
+                      ? widget.dataPhase.missingText()
                       : '${current.temperature!.toStringAsFixed(1)}℃',
                   style: TextStyle(
                     color: WeatherCareTheme.textPrimary,
@@ -170,7 +185,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               const SizedBox(width: 12),
               Flexible(
                 child: Text(
-                  current.sky ?? '하늘 상태 자료 없음',
+                  current.sky ?? widget.dataPhase.missingText('하늘 상태 자료 없음'),
                   textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: WeatherCareTheme.textSecondary,
@@ -195,27 +210,34 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
             ),
             child: Column(
               children: [
-                for (var index = 0; index < metrics.length; index++) ...[
+                for (var index = 0; index < displayMetrics.length; index++) ...[
                   _MetricView(
-                    metric: metrics[index],
-                    expanded: _expandedMetrics.contains(metrics[index].label),
+                    metric: displayMetrics[index],
+                    expanded:
+                        _expandedMetrics.contains(displayMetrics[index].label),
                     onTap: () {
                       setState(() {
-                        if (!_expandedMetrics.remove(metrics[index].label)) {
-                          _expandedMetrics.add(metrics[index].label);
+                        if (!_expandedMetrics
+                            .remove(displayMetrics[index].label)) {
+                          _expandedMetrics.add(displayMetrics[index].label);
                         }
                       });
                     },
                   ),
-                  if (index < metrics.length - 1) const SizedBox(height: 8),
+                  if (index < displayMetrics.length - 1)
+                    const SizedBox(height: 8),
                 ],
               ],
             ),
           ),
-          if (missing.isNotEmpty && widget.onRetryMissingData != null) ...[
+          if (missing.isNotEmpty &&
+              widget.dataPhase != WeatherDataPhase.loading &&
+              widget.onRetryMissingData != null) ...[
             const SizedBox(height: 12),
             MissingDataRetry(
-              message: '받지 못한 현재 날씨: ${missing.join(' · ')}',
+              message: widget.dataPhase == WeatherDataPhase.failed
+                  ? '서버에서 현재 날씨를 불러오지 못했어요: ${missing.join(' · ')}'
+                  : '받지 못한 현재 날씨: ${missing.join(' · ')}',
               retryKey: 'today-current-data-retry',
               onRetry: widget.onRetryMissingData!,
               retrying: widget.retrying,

@@ -32,6 +32,7 @@ import '../../utils/korea_date.dart';
 import '../settings/settings_screen.dart';
 import '../ads/consent_aware_native_ad_card.dart';
 import 'weather_labels.dart';
+import 'weather_data_phase.dart';
 import 'tabs/detail_tab.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
@@ -126,10 +127,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   DetailFocusSource _detailFocusSource = DetailFocusSource.notification;
   int _detailFocusRequestId = 0;
   bool _loading = false;
+  bool _todayRefreshing = false;
   bool _weeklyLoading = false;
   bool _todayRetrying = false;
   bool _weeklyRetrying = false;
   bool _mainDetailsLoading = false;
+  bool _todayRequestFailed = false;
+  bool _weeklyRequestFailed = false;
   bool _comparisonLoading = false;
   bool _homeReadyReported = false;
   String _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
@@ -138,6 +142,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _lastCompletedWeatherHour;
 
   DateTime _now() => (widget.now ?? DateTime.now)();
+
+  WeatherDataPhase get _todayPhase => _todayRetrying
+      ? WeatherDataPhase.loading
+      : _todayRequestFailed
+          ? WeatherDataPhase.failed
+          : _mainDetailsLoading || _todayRefreshing
+              ? WeatherDataPhase.loading
+              : WeatherDataPhase.ready;
+
+  WeatherDataPhase get _weeklyPhase => _weeklyRetrying
+      ? WeatherDataPhase.loading
+      : _weeklyRequestFailed
+          ? WeatherDataPhase.failed
+          : _weeklyLoading
+              ? WeatherDataPhase.loading
+              : WeatherDataPhase.ready;
 
   void _publishHomeWidget() {
     final today = _today;
@@ -562,10 +582,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final hadWeatherBeforeRefresh = _today != null || _weekly != null;
     _loading = true;
+    _todayRefreshing = true;
     _weeklyLoading = true;
     setState(() {
       _yesterdayComparison = null;
       _comparisonLoading = true;
+      _todayRequestFailed = false;
+      _weeklyRequestFailed = false;
       if (_today == null) {
         _loadMode = null;
         _statusMessage = '운영 서버 연결 상태를 확인하고 있습니다.';
@@ -633,6 +656,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           }
           if (serverResult.weekly == null) {
             setState(() {
+              _weeklyRequestFailed = true;
               _statusMessage = 'Main 날씨는 표시했지만 주간 자료를 받지 못했어요.\n다시 확인해주세요.';
             });
             if (notifyFailure) {
@@ -667,7 +691,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
 
         if (canKeepExistingWeather) {
-          setState(() => _statusMessage = serverResult.message);
+          setState(() {
+            _todayRequestFailed = true;
+            _weeklyRequestFailed = serverResult.weekly == null;
+            _statusMessage = serverResult.message;
+          });
           return;
         }
 
@@ -676,7 +704,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     } finally {
       _loading = false;
-      if (mounted) setState(() => _weeklyLoading = false);
+      if (mounted) {
+        setState(() {
+          _todayRefreshing = false;
+          _weeklyLoading = false;
+        });
+      }
     }
   }
 
@@ -725,7 +758,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     } catch (_) {
       if (mounted && revision == _locationRevision) {
-        setState(() => _statusMessage = '오늘 자료를 다시 받지 못했어요.');
+        setState(() {
+          _todayRequestFailed = true;
+          _statusMessage = '오늘 자료를 다시 받지 못했어요.';
+        });
       }
     } finally {
       if (mounted && revision == _locationRevision) {
@@ -754,7 +790,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _applyServerWeekly(revision, weekly);
     } catch (_) {
       if (mounted && revision == _locationRevision) {
-        setState(() => _statusMessage = '주간 자료를 다시 받지 못했어요.');
+        setState(() {
+          _weeklyRequestFailed = true;
+          _statusMessage = '주간 자료를 다시 받지 못했어요.';
+        });
       }
     } finally {
       if (mounted && revision == _locationRevision) {
@@ -793,6 +832,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               : today;
       _loadMode = WeatherLoadMode.server;
       _mainDetailsLoading = false;
+      _todayRefreshing = false;
+      _todayRequestFailed = false;
       _statusMessage = 'Main 날씨를 먼저 표시했어요.\n주간 자료는 계속 불러오고 있어요.';
     });
     _publishHomeWidget();
@@ -849,6 +890,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _weeklyLoading = false;
       _loadMode = WeatherLoadMode.server;
       _statusMessage = '운영 서버 연결';
+      _weeklyRequestFailed = false;
     });
     _publishHomeWidget();
   }
@@ -879,6 +921,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _weekly = result.weekly;
       _mainDetailsLoading = false;
       _loadMode = result.mode;
+      _todayRequestFailed = result.today == null;
+      _weeklyRequestFailed = result.weekly == null;
       _statusMessage = result.message;
     });
     if (_today == null) {
@@ -965,6 +1009,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? _statusView('today-tab')
                   : TodayTab(
                       today: today,
+                      dataPhase: _todayPhase,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       retrying: _todayRetrying,
@@ -980,6 +1025,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? _statusView('detail-tab')
                   : DetailTab(
                       today: today,
+                      dataPhase: _todayPhase,
                       recommendations: _priorityRecommendations,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _refreshFromTab,
@@ -994,6 +1040,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? _statusView('main-tab')
                   : MainTab(
                       today: today,
+                      dataPhase: _todayPhase,
                       dateLabel: _dateLabel,
                       mood: _mood,
                       serverFeaturesAvailable: serverFeaturesAvailable,
@@ -1016,14 +1063,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               weekly == null
                   ? _statusView(
                       'week-tab',
-                      loading: _weeklyLoading || _loadMode == null,
-                      title: _weeklyLoading ? '주간 자료를 불러오고 있어요' : null,
-                      message: _weeklyLoading
+                      loading: _weeklyLoading ||
+                          _weeklyRetrying ||
+                          _loadMode == null,
+                      title: _weeklyLoading || _weeklyRetrying
+                          ? '주간 자료를 불러오고 있어요'
+                          : null,
+                      message: _weeklyLoading || _weeklyRetrying
                           ? '주간 예보와 지난 날짜 자료가 도착하면 화면을 바로 업데이트해요.'
                           : null,
                     )
                   : WeekTab(
                       weekly: weekly,
+                      dataPhase: _weeklyPhase,
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryWeeklyData,
@@ -1125,10 +1177,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     String? message,
   }) {
     final missingLocation = _loadMode != null && _weatherGrid == null;
+    final isLoading = loading ?? (_loadMode == null || _loading);
+    final failed = !isLoading && !missingLocation;
     return WeatherStatusView(
       viewKey: viewKey,
-      loading: loading ?? (_loadMode == null || _loading),
-      offline: _loadMode == WeatherLoadMode.unavailable,
+      loading: isLoading,
+      offline: failed,
       title: missingLocation ? '기준 위치를 확인해주세요' : title,
       message: message ?? _statusMessage,
       onRetry: _loadData,

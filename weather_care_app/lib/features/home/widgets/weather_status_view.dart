@@ -73,7 +73,12 @@ class WeatherStatusView extends StatelessWidget {
                         ),
                       const SizedBox(height: 18),
                       Text(
-                        title ?? (loading ? '날씨 정보를 확인하고 있어요' : '날씨 정보 미지원'),
+                        title ??
+                            (loading
+                                ? '날씨 정보를 불러오고 있어요'
+                                : offline
+                                    ? '서버에서 날씨를 불러오지 못했어요'
+                                    : '날씨 정보 미지원'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),

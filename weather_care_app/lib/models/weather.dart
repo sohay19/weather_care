@@ -727,6 +727,7 @@ class WeeklyWeatherResponse {
 
 class ComparisonResponse {
   final bool comparisonAvailable;
+  final bool requestFailed;
   final String? targetDate;
 
   /// 오직 비교 카드의 '다음 시간 예보' 값이다.
@@ -739,6 +740,7 @@ class ComparisonResponse {
 
   const ComparisonResponse({
     required this.comparisonAvailable,
+    this.requestFailed = false,
     this.targetDate,
     this.current,
     this.comparison,
@@ -747,6 +749,15 @@ class ComparisonResponse {
 
   const ComparisonResponse.unavailable()
       : comparisonAvailable = false,
+        requestFailed = false,
+        targetDate = null,
+        current = null,
+        comparison = null,
+        basis = null;
+
+  const ComparisonResponse.failed()
+      : comparisonAvailable = false,
+        requestFailed = true,
         targetDate = null,
         current = null,
         comparison = null,

@@ -7,6 +7,8 @@ import '../../../models/weather.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
+import '../weather_data_phase.dart';
+import '../widgets/weather_data_notice.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/missing_data_retry.dart';
 import '../widgets/preparation_icon.dart';
@@ -16,6 +18,7 @@ import '../widgets/week_precipitation.dart';
 
 class WeekTab extends StatefulWidget {
   final WeeklyWeatherResponse weekly;
+  final WeatherDataPhase dataPhase;
   final bool serverFeaturesAvailable;
   final Future<void> Function() onRefresh;
   final Future<void> Function()? onRetryData;
@@ -26,6 +29,7 @@ class WeekTab extends StatefulWidget {
   const WeekTab({
     super.key,
     required this.weekly,
+    this.dataPhase = WeatherDataPhase.ready,
     required this.serverFeaturesAvailable,
     required this.onRefresh,
     this.onRetryData,
@@ -107,13 +111,20 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               icon: Icons.calendar_month_outlined,
             ),
             const SizedBox(height: 18),
+            if (widget.dataPhase != WeatherDataPhase.ready) ...[
+              WeatherDataNotice(phase: widget.dataPhase, subject: '주간 날씨'),
+              const SizedBox(height: 16),
+            ],
             if (calendarForecasts.isNotEmpty)
               _WeekSummary(
                 days: calendarForecasts,
+                dataPhase: widget.dataPhase,
                 serverFeaturesAvailable: widget.serverFeaturesAvailable,
               )
             else
-              const Text('자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'),
+              Text(widget.dataPhase == WeatherDataPhase.ready
+                  ? '자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'
+                  : widget.dataPhase.explanation),
             if (widget.advertisement != null) ...[
               const SizedBox(height: 18),
               widget.advertisement!,
@@ -122,6 +133,7 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
             for (var index = 0; index < calendarDays.length; index++) ...[
               _WeekDayCard(
                 calendarDay: calendarDays[index],
+                dataPhase: widget.dataPhase,
                 isToday: dateInKorea(calendarDays[index].date) == today,
                 isPast: calendarDays[index].date.isBefore(
                       parseForecastDate(today)!,
@@ -142,10 +154,12 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
 
 class _WeekSummary extends StatelessWidget {
   final List<WeeklyForecastItem> days;
+  final WeatherDataPhase dataPhase;
   final bool serverFeaturesAvailable;
 
   const _WeekSummary({
     required this.days,
+    required this.dataPhase,
     required this.serverFeaturesAvailable,
   });
 
@@ -187,6 +201,7 @@ class _WeekSummary extends StatelessWidget {
                   ),
                   label: '예상 강수일',
                   metric: summary.precipitation,
+                  dataPhase: dataPhase,
                 ),
               ),
               const SizedBox(width: 8),
@@ -200,6 +215,7 @@ class _WeekSummary extends StatelessWidget {
                   ),
                   label: '예상 주중 최고기온',
                   metric: summary.maximum,
+                  dataPhase: dataPhase,
                 ),
               ),
               const SizedBox(width: 8),
@@ -213,6 +229,7 @@ class _WeekSummary extends StatelessWidget {
                   ),
                   label: '예상 준비물',
                   metric: summary.preparations,
+                  dataPhase: dataPhase,
                 ),
               ),
             ],
@@ -232,12 +249,14 @@ class _SummaryMetric extends StatelessWidget {
   final Widget icon;
   final String label;
   final WeekSummaryMetric metric;
+  final WeatherDataPhase dataPhase;
 
   const _SummaryMetric({
     super.key,
     required this.icon,
     required this.label,
     required this.metric,
+    required this.dataPhase,
   });
 
   @override
@@ -261,7 +280,7 @@ class _SummaryMetric extends StatelessWidget {
           const SizedBox(height: 7),
           icon,
           const SizedBox(height: 5),
-          Text(metric.value,
+          Text(metric.value.replaceAll('자료 없음', dataPhase.missingText()),
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
@@ -273,6 +292,7 @@ class _SummaryMetric extends StatelessWidget {
 
 class _WeekDayCard extends StatelessWidget {
   final WeekCalendarDay calendarDay;
+  final WeatherDataPhase dataPhase;
   final bool isToday;
   final bool isPast;
   final DateTime today;
@@ -282,6 +302,7 @@ class _WeekDayCard extends StatelessWidget {
 
   const _WeekDayCard({
     required this.calendarDay,
+    required this.dataPhase,
     required this.isToday,
     required this.isPast,
     required this.today,
@@ -296,6 +317,7 @@ class _WeekDayCard extends StatelessWidget {
     if (day == null) {
       return _UnavailableWeekDayCard(
         date: calendarDay.date,
+        dataPhase: dataPhase,
         isToday: isToday,
         today: today,
         onRetry: onRetry,
@@ -432,7 +454,7 @@ class _WeekDayCard extends StatelessWidget {
             const SizedBox(width: 11),
             Expanded(
               child: Text(
-                weatherLabel ?? '날씨 자료 없음',
+                weatherLabel ?? dataPhase.missingText('날씨 자료 없음'),
                 style: TextStyle(
                   color: isPast ? WeatherCareTheme.textSecondary : null,
                   fontWeight: FontWeight.w800,
@@ -441,32 +463,32 @@ class _WeekDayCard extends StatelessWidget {
             ),
           ]),
           if (weatherLabel != null && day.weatherDataComplete == false)
-            Text('일부 시간대 날씨 자료 없음', style: WeatherCareTheme.microTextStyle),
-          if (minimumTemperature != null || maximumTemperature != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                if (minimumTemperature != null)
-                  Expanded(
-                    child: _WeekTemperaturePeriod(
-                      label: '최저',
-                      value: weekDegrees(minimumTemperature),
-                      isPast: isPast,
-                    ),
-                  ),
-                if (minimumTemperature != null && maximumTemperature != null)
-                  const SizedBox(width: 8),
-                if (maximumTemperature != null)
-                  Expanded(
-                    child: _WeekTemperaturePeriod(
-                      label: '최고',
-                      value: weekDegrees(maximumTemperature),
-                      isPast: isPast,
-                    ),
-                  ),
-              ],
-            ),
-          ],
+            Text('일부 시간대 날씨 ${dataPhase.missingText()}',
+                style: WeatherCareTheme.microTextStyle),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _WeekTemperaturePeriod(
+                  label: '최저',
+                  value: minimumTemperature == null
+                      ? dataPhase.missingText()
+                      : weekDegrees(minimumTemperature),
+                  isPast: isPast,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _WeekTemperaturePeriod(
+                  label: '최고',
+                  value: maximumTemperature == null
+                      ? dataPhase.missingText()
+                      : weekDegrees(maximumTemperature),
+                  isPast: isPast,
+                ),
+              ),
+            ],
+          ),
           if (day.minTemperatureSource == 'HOURLY' ||
               day.maxTemperatureSource == 'HOURLY')
             Text('시간별 최저·최고는 받은 시간대만 비교한 값이에요.',
@@ -555,7 +577,7 @@ class _WeekDayCard extends StatelessWidget {
                           ? '지난 날은 준비물 추천 대상이 아니에요'
                           : day.recommendationsAvailable
                               ? '표시할 준비물 추천 없음'
-                              : '준비물 추천 자료 없음',
+                              : '준비물 추천 ${dataPhase.missingText()}',
                   style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
                 )
               else
@@ -601,10 +623,14 @@ class _WeekDayCard extends StatelessWidget {
                     style: WeatherCareTheme.microTextStyle),
             ],
           ),
-          if (missing.isNotEmpty && onRetry != null) ...[
+          if (missing.isNotEmpty &&
+              dataPhase != WeatherDataPhase.loading &&
+              onRetry != null) ...[
             const SizedBox(height: 10),
             MissingDataRetry(
-              message: '받지 못한 항목: ${missing.join(' · ')}',
+              message: dataPhase == WeatherDataPhase.failed
+                  ? '서버에서 불러오지 못한 항목: ${missing.join(' · ')}'
+                  : '받지 못한 항목: ${missing.join(' · ')}',
               retryKey: 'week-day-retry-${day.forecastDate}',
               onRetry: onRetry!,
               retrying: retrying,
@@ -647,11 +673,17 @@ class _WeekTemperaturePeriod extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: isPast ? WeatherCareTheme.textSecondary : null,
-              fontWeight: FontWeight.w900,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: isPast ? WeatherCareTheme.textSecondary : null,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
         ],
@@ -730,6 +762,7 @@ String _decimal(double value) => value == value.roundToDouble()
 
 class _UnavailableWeekDayCard extends StatelessWidget {
   final DateTime date;
+  final WeatherDataPhase dataPhase;
   final bool isToday;
   final DateTime today;
   final Future<void> Function()? onRetry;
@@ -737,6 +770,7 @@ class _UnavailableWeekDayCard extends StatelessWidget {
 
   const _UnavailableWeekDayCard({
     required this.date,
+    required this.dataPhase,
     required this.isToday,
     required this.today,
     this.onRetry,
@@ -747,13 +781,15 @@ class _UnavailableWeekDayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final daysAhead = date.difference(today).inDays;
     final isPast = date.isBefore(today);
-    final message = isToday
-        ? '지금 날씨 자료를 받지 못했어요.'
-        : date.isBefore(today)
-            ? '인근 관측소의 실제 일관측과 저장된 예보가 모두 없어요.'
-            : daysAhead >= 4
-                ? '단기·중기예보를 모두 받지 못해 표시할 자료가 없어요.'
-                : '예보 범위 안이지만 아직 날씨 자료를 받지 못했어요.';
+    final message = dataPhase != WeatherDataPhase.ready
+        ? dataPhase.explanation
+        : isToday
+            ? '지금 날씨 자료를 받지 못했어요.'
+            : date.isBefore(today)
+                ? '인근 관측소의 실제 일관측과 저장된 예보가 모두 없어요.'
+                : daysAhead >= 4
+                    ? '단기·중기예보를 모두 받지 못해 표시할 자료가 없어요.'
+                    : '예보 범위 안이지만 아직 날씨 자료를 받지 못했어요.';
     final card = Container(
       key: ValueKey('week-unavailable-${dateInKorea(date)}'),
       width: double.infinity,
@@ -835,10 +871,13 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(message, style: Theme.of(context).textTheme.bodySmall),
-                if (onRetry != null) ...[
+                if (dataPhase != WeatherDataPhase.loading &&
+                    onRetry != null) ...[
                   const SizedBox(height: 10),
                   MissingDataRetry(
-                    message: '받지 못한 항목: 이 날짜의 날씨',
+                    message: dataPhase == WeatherDataPhase.failed
+                        ? '서버에서 이 날짜의 날씨를 불러오지 못했어요.'
+                        : '받지 못한 항목: 이 날짜의 날씨',
                     retryKey: 'week-unavailable-retry-${dateInKorea(date)}',
                     onRetry: onRetry!,
                     retrying: retrying,

@@ -291,6 +291,50 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('핵심 날씨만 도착한 동안 빈 항목은 불러오는 중으로 표시한다', (tester) async {
+    weather.mainPreview = _weather(60, 127).today;
+    weather.pending = Completer<WeatherLoadResult>();
+
+    await start(tester, settle: false, initialIndex: 2);
+
+    expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
+    expect(find.text('불러오는 중'), findsWidgets);
+    await tester.dragUntilVisible(
+      find.text('미래 예상 날씨를 불러오고 있어요'),
+      find.byKey(const ValueKey('main-tab')),
+      const Offset(0, -200),
+    );
+    expect(find.text('미래 예상 날씨를 불러오고 있어요'), findsOneWidget);
+
+    weather.pending!.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+
+    expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsNothing);
+    expect(find.text('불러오는 중'), findsNothing);
+    expect(find.text('자료 없음'), findsWidgets);
+  });
+
+  testWidgets('자료 대기 중 Today·Detail·Week도 로딩 문구를 표시한다', (tester) async {
+    weather.mainPreview = _weather(60, 127).today;
+    weather.pending = Completer<WeatherLoadResult>();
+    await start(tester, settle: false, initialIndex: 0);
+
+    expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
+    expect(find.text('불러오는 중'), findsWidgets);
+    expect(find.text('시간별 예보를 불러오고 있어요.'), findsOneWidget);
+
+    await tester.tap(find.text('Detail'));
+    await tester.pump();
+    expect(find.text('상세 날씨 자료를 불러오고 있어요.'), findsOneWidget);
+
+    await tester.tap(find.text('Week'));
+    await tester.pump();
+    expect(find.text('주간 자료를 불러오고 있어요'), findsOneWidget);
+
+    weather.pending!.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('Main 콘텐츠가 준비된 뒤 홈 준비 완료를 한 번만 알린다', (tester) async {
     var readyCount = 0;
     weather.pending = Completer<WeatherLoadResult>();
@@ -339,6 +383,32 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
     expect(originalRegion, findsOneWidget);
+    expect(
+      find.text('오늘 날씨 자료를 서버에서 불러오지 못했어요. 이전 자료가 표시될 수 있어요.'),
+      findsOneWidget,
+    );
+    expect(find.text('서버 연결 실패'), findsWidgets);
+
+    await tester.tap(find.text('Today'));
+    await tester.pump();
+    expect(
+      find.text('오늘 날씨 자료를 서버에서 불러오지 못했어요. 이전 자료가 표시될 수 있어요.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Detail'));
+    await tester.pump();
+    expect(
+      find.text('상세 날씨 자료를 서버에서 불러오지 못했어요. 이전 자료가 표시될 수 있어요.'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Week'));
+    await tester.pump();
+    expect(
+      find.text('주간 날씨 자료를 서버에서 불러오지 못했어요. 이전 자료가 표시될 수 있어요.'),
+      findsOneWidget,
+    );
   });
 
   for (final tab in <({int index, String key})>[

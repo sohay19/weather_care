@@ -218,7 +218,7 @@ class WeatherService {
       );
       return ComparisonResponse.fromJson(data);
     } catch (_) {
-      return const ComparisonResponse.unavailable();
+      return const ComparisonResponse.failed();
     }
   }
 

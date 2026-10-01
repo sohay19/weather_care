@@ -4,7 +4,9 @@ import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
+import '../weather_data_phase.dart';
 import '../widgets/missing_data_retry.dart';
+import '../widgets/weather_data_notice.dart';
 import '../widgets/recommendation_bag_section.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
@@ -14,6 +16,7 @@ import '../widgets/weather_brief_text.dart';
 
 class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
+  final WeatherDataPhase dataPhase;
   final String dateLabel;
   final String mood;
   final bool serverFeaturesAvailable;
@@ -31,6 +34,7 @@ class MainTab extends StatelessWidget {
   const MainTab({
     super.key,
     required this.today,
+    this.dataPhase = WeatherDataPhase.ready,
     required this.dateLabel,
     required this.mood,
     required this.serverFeaturesAvailable,
@@ -47,7 +51,12 @@ class MainTab extends StatelessWidget {
   }) : assert(metricColumns == 2 || metricColumns == 3);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => WeatherDataPhaseScope(
+        phase: dataPhase,
+        child: _content(),
+      );
+
+  Widget _content() {
     return RefreshIndicator(
       color: WeatherCareTheme.primary,
       onRefresh: onRefresh,
@@ -73,6 +82,10 @@ class MainTab extends StatelessWidget {
                       subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                     ),
                     SizedBox(height: compact ? 20 : 24),
+                    if (dataPhase != WeatherDataPhase.ready) ...[
+                      WeatherDataNotice(phase: dataPhase, subject: '오늘 날씨'),
+                      SizedBox(height: compact ? 12 : 16),
+                    ],
                     _TopWeatherCard(
                       today: today,
                       mood: mood,
@@ -160,6 +173,7 @@ class _TodaySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final phase = WeatherDataPhaseScope.of(context);
     final feelingStyle = TextStyle(
       color: WeatherCareTheme.textPrimary,
       fontSize: 13,
@@ -213,9 +227,9 @@ class _TodaySection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  _weatherSummaryMessage(
-                    sky: current.sky,
-                  ),
+                  current.sky == null && phase != WeatherDataPhase.ready
+                      ? phase.explanation
+                      : _weatherSummaryMessage(sky: current.sky),
                   style: feelingStyle,
                 ),
               ),
@@ -411,9 +425,11 @@ class _YesterdayComparisonSection extends StatelessWidget {
           ] else if (!available) ...[
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    '받지 못한 자료: 어제와 같은 시각의 관측값',
+                    comparison?.requestFailed == true
+                        ? '서버에서 어제 비교 자료를 불러오지 못했어요.'
+                        : '받지 못한 자료: 어제와 같은 시각의 관측값',
                   ),
                 ),
                 if (onRetry != null)
@@ -474,6 +490,18 @@ class _TodayFutureSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final phase = WeatherDataPhaseScope.of(context);
+    if (today.nextForecast == null && phase != WeatherDataPhase.ready) {
+      return phase == WeatherDataPhase.loading
+          ? const _ProgressiveLoadingCard(
+              icon: Icons.schedule_rounded,
+              title: '미래 예상 날씨를 불러오고 있어요',
+            )
+          : const WeatherDataNotice(
+              phase: WeatherDataPhase.failed,
+              subject: '미래 예상 날씨',
+            );
+    }
     final nextForecast = today.nextForecast ?? current;
     final forecastAirQuality = nextForecast.pm25ForecastGrade;
     final airQualityState = forecastAirQuality == null
@@ -797,6 +825,7 @@ class _TopWeatherCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final phase = WeatherDataPhaseScope.of(context);
     final current = today.current;
     final missing = <String>[
       if (current.temperature == null) '현재 기온',
@@ -840,10 +869,14 @@ class _TopWeatherCard extends StatelessWidget {
             current: current,
             metricColumns: metricColumns,
           ),
-          if (missing.isNotEmpty && onRetry != null) ...[
+          if (missing.isNotEmpty &&
+              phase != WeatherDataPhase.loading &&
+              onRetry != null) ...[
             SizedBox(height: compact ? 8 : 10),
             MissingDataRetry(
-              message: '받지 못한 날씨 자료: ${missing.join(' · ')}',
+              message: phase == WeatherDataPhase.failed
+                  ? '서버에서 날씨 자료를 불러오지 못했어요: ${missing.join(' · ')}'
+                  : '받지 못한 날씨 자료: ${missing.join(' · ')}',
               retryKey: 'main-current-data-retry',
               onRetry: onRetry!,
               retrying: retrying,
@@ -925,8 +958,9 @@ class _TemperatureValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final phase = WeatherDataPhaseScope.of(context);
     return Text(
-      value == null ? '자료 없음' : '${value!.toStringAsFixed(1)}℃',
+      value == null ? phase.missingText() : '${value!.toStringAsFixed(1)}℃',
       style: const TextStyle(
         color: WeatherCareTheme.primaryDeep,
         fontSize: 16,
@@ -952,9 +986,13 @@ class _TopMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final phase = WeatherDataPhaseScope.of(context);
+    final missing = state == _unavailableMetric;
+    final displayValue = missing ? phase.missingText('정보 없음') : value;
+    final displayState = missing ? displayValue : state.label;
     return Expanded(
       child: Semantics(
-        label: '$label $value, ${state.label}',
+        label: '$label $displayValue, $displayState',
         excludeSemantics: true,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -975,7 +1013,7 @@ class _TopMetric extends StatelessWidget {
                 Icon(icon, size: 13, color: state.color),
                 const SizedBox(width: 3),
                 Text(
-                  value,
+                  displayValue,
                   maxLines: 1,
                   style: TextStyle(
                     color: state.color,

@@ -26,6 +26,10 @@
   Content-Security-Policy: default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Referrer-Policy: no-referrer
 
+/review/2eda0bf8895bd4e0b677db4575339a8f/gps-widget-demo.mp4
+  X-Robots-Tag: noindex, nofollow, noarchive
+  Referrer-Policy: no-referrer
+
 /weather-map/*
   Content-Security-Policy: default-src 'self'; script-src 'self' https://oapi.map.naver.com https://nrbe.pstatic.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://*.pstatic.net https://*.naver.net; connect-src 'self' https://*.pstatic.net https://*.naver.net https://*.navercorp.com; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Referrer-Policy: strict-origin-when-cross-origin

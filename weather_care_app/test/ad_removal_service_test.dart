@@ -34,6 +34,41 @@ void main() {
     expect(service.storeAvailable, isTrue);
   });
 
+  test('스토어에서 삭제된 구매는 시작할 때 광고 제거 권한을 해제한다', () async {
+    ownership.owned = true;
+    gateway.activePurchase = false;
+
+    await service.initialize();
+    await pumpEventQueue();
+
+    expect(service.isOwned, isFalse);
+    expect(ownership.owned, isFalse);
+  });
+
+  test('스토어 상태를 확인하지 못하면 기존 구매 권한을 유지한다', () async {
+    ownership.owned = true;
+    gateway.failOwnershipCheck = true;
+
+    await service.initialize();
+    await pumpEventQueue();
+
+    expect(service.isOwned, isTrue);
+    expect(ownership.writes, 0);
+  });
+
+  test('구매내역 없이 복원하면 저장된 광고 제거 권한을 해제한다', () async {
+    ownership.owned = true;
+    await service.initialize();
+    await pumpEventQueue();
+    gateway.activePurchase = false;
+
+    await service.restore();
+
+    expect(service.isOwned, isFalse);
+    expect(ownership.owned, isFalse);
+    expect(service.message, '복원할 광고 제거 구매 내역을 찾지 못했어요.');
+  });
+
   test('비소모성 상품 구매 완료 후 권한을 저장하고 구매를 완료 처리한다', () async {
     await service.initialize();
     await pumpEventQueue();

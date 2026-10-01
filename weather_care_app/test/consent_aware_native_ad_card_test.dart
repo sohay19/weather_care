@@ -116,6 +116,15 @@ void main() {
     expect(adRemoval.isOwned, isTrue);
     expect(find.byKey(const ValueKey('week-native-ad-card')), findsNothing);
     expect(loaded.disposeCount, 1);
+
+    purchaseGateway.activePurchase = false;
+    await adRemoval.refreshOwnership();
+    await tester.pump();
+    await tester.pump();
+
+    expect(adRemoval.isOwned, isFalse);
+    expect(loader.requests, hasLength(2));
+    expect(find.byKey(const ValueKey('week-native-ad-card')), findsOneWidget);
   });
 
   testWidgets('일반 재빌드로 동일한 광고를 다시 요청하지 않는다', (tester) async {

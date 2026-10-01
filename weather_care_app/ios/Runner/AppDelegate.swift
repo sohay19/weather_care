@@ -1,4 +1,5 @@
 import Flutter
+import StoreKit
 import UIKit
 import WidgetKit
 
@@ -8,6 +9,7 @@ import WidgetKit
   private let homeWidgetGroup = "group.com.codesoha.weathercare"
   private let homeWidgetSnapshotKey = "snapshot"
   private let homeWidgetRefreshURLKey = "refresh_url"
+  private let adRemovalChannel = "com.codesoha.weathercare/ad-removal"
 
   override func application(
     _ application: UIApplication,
@@ -15,6 +17,45 @@ import WidgetKit
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
     if let controller = window?.rootViewController as? FlutterViewController {
+      let purchaseChannel = FlutterMethodChannel(
+        name: adRemovalChannel,
+        binaryMessenger: controller.binaryMessenger
+      )
+      purchaseChannel.setMethodCallHandler { call, result in
+        guard call.method == "hasActivePurchase",
+              let productID = call.arguments as? String,
+              !productID.isEmpty else {
+          result(FlutterMethodNotImplemented)
+          return
+        }
+        if #available(iOS 15.0, *) {
+          Task { @MainActor in
+            for await entitlement in Transaction.currentEntitlements {
+              switch entitlement {
+              case .verified(let transaction) where transaction.productID == productID:
+                result(true)
+                return
+              case .unverified(let transaction, _) where transaction.productID == productID:
+                result(FlutterError(
+                  code: "PURCHASE_UNVERIFIED",
+                  message: "구매 상태를 확인하지 못했습니다.",
+                  details: nil
+                ))
+                return
+              default:
+                break
+              }
+            }
+            result(false)
+          }
+        } else {
+          result(FlutterError(
+            code: "STOREKIT_UNAVAILABLE",
+            message: "구매 상태 확인을 지원하지 않는 iOS 버전입니다.",
+            details: nil
+          ))
+        }
+      }
       let widgetGroup = homeWidgetGroup
       let widgetSnapshotKey = homeWidgetSnapshotKey
       let widgetRefreshURLKey = homeWidgetRefreshURLKey

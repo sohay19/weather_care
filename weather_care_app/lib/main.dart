@@ -25,6 +25,9 @@ final _notificationNavigation = NotificationNavigationService(
 );
 final _foregroundNotifications = ForegroundNotificationService();
 final _appOpenAds = AppOpenAdController();
+AppLifecycleListener? _adRemovalLifecycle;
+bool _wasAdRemovalOwned = false;
+bool _adRemovalListenerAttached = false;
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -46,6 +49,16 @@ Future<void> main() async {
 
 Future<Widget> _initializeApp() async {
   await AdRemovalService.instance.initialize();
+  _wasAdRemovalOwned = AdRemovalService.instance.isOwned;
+  if (!_adRemovalListenerAttached) {
+    AdRemovalService.instance.addListener(_onAdRemovalChanged);
+    _adRemovalListenerAttached = true;
+  }
+  _adRemovalLifecycle ??= AppLifecycleListener(onResume: () {
+    if (AdRemovalService.instance.isOwned) {
+      unawaited(AdRemovalService.instance.refreshOwnership());
+    }
+  });
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -86,10 +99,18 @@ Future<Widget> _initializeApp() async {
 
 void _startAdsAfterAppFrame() {
   if (kDebugMode) debugPrint('광고 시작 예약');
-  unawaited(_startAds());
+  unawaited(_startAds(showOnInitialLoad: true));
 }
 
-Future<void> _startAds() async {
+void _onAdRemovalChanged() {
+  final owned = AdRemovalService.instance.isOwned;
+  if (_wasAdRemovalOwned && !owned) {
+    unawaited(_startAds(showOnInitialLoad: false));
+  }
+  _wasAdRemovalOwned = owned;
+}
+
+Future<void> _startAds({required bool showOnInitialLoad}) async {
   if (AdRemovalService.instance.isOwned) return;
   final nativeAdsEnabled = NativeAdPlacement.values.any(
     (placement) =>
@@ -108,11 +129,11 @@ Future<void> _startAds() async {
 
   if (appOpenAdEnabled) {
     try {
-      final shouldShow =
+      final shouldShow = showOnInitialLoad &&
           await const AppOpenLaunchStore().recordLaunchAndShouldShow();
       if (kDebugMode) debugPrint('앱 오프닝 광고 대상: $shouldShow');
-      if (shouldShow) {
-        await _appOpenAds.start(showOnInitialLoad: true);
+      if (shouldShow || !showOnInitialLoad) {
+        await _appOpenAds.start(showOnInitialLoad: shouldShow);
         if (kDebugMode) debugPrint('앱 오프닝 광고 시작 완료');
       }
     } catch (error) {

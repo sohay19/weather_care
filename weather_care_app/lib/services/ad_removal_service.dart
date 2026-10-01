@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 
 const adRemovalProductId = String.fromEnvironment(
   'AD_REMOVAL_PRODUCT_ID',
@@ -23,10 +25,15 @@ abstract interface class AdRemovalPurchaseGateway {
   Future<void> restorePurchases();
 
   Future<void> completePurchase(PurchaseDetails purchase);
+
+  Future<bool?> hasActivePurchase(String productId);
 }
 
 class StoreAdRemovalPurchaseGateway implements AdRemovalPurchaseGateway {
   const StoreAdRemovalPurchaseGateway();
+
+  static const _iosOwnershipChannel =
+      MethodChannel('com.codesoha.weathercare/ad-removal');
 
   InAppPurchase get _store => InAppPurchase.instance;
 
@@ -52,6 +59,33 @@ class StoreAdRemovalPurchaseGateway implements AdRemovalPurchaseGateway {
   @override
   Future<void> completePurchase(PurchaseDetails purchase) =>
       _store.completePurchase(purchase);
+
+  @override
+  Future<bool?> hasActivePurchase(String productId) async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final owned = await _iosOwnershipChannel.invokeMethod<bool>(
+        'hasActivePurchase',
+        productId,
+      );
+      if (owned == null) throw StateError('스토어 구매 상태가 비어 있습니다.');
+      return owned;
+    }
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final response = await _store
+          .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>()
+          .queryPastPurchases();
+      if (response.error != null) throw response.error!;
+      return response.pastPurchases.any(
+        (purchase) =>
+            purchase.productID == productId &&
+            (purchase.status == PurchaseStatus.purchased ||
+                purchase.status == PurchaseStatus.restored) &&
+            (purchase.verificationData.serverVerificationData.isNotEmpty ||
+                purchase.verificationData.localVerificationData.isNotEmpty),
+      );
+    }
+    return null;
+  }
 }
 
 abstract interface class AdRemovalOwnershipStore {
@@ -113,6 +147,8 @@ class AdRemovalService extends ChangeNotifier {
   bool _storeLoading = false;
   bool _storeAvailable = false;
   bool _owned = false;
+  bool _checkingOwnership = false;
+  int _ownershipRevision = 0;
   AdRemovalAction _action = AdRemovalAction.none;
   String? _message;
 
@@ -140,8 +176,26 @@ class AdRemovalService extends ChangeNotifier {
       _owned = false;
     }
     _initialized = true;
+    if (_owned) await refreshOwnership();
     notifyListeners();
     unawaited(refreshStore());
+  }
+
+  Future<void> refreshOwnership() async {
+    if (!_initialized || _checkingOwnership || busy) return;
+    _checkingOwnership = true;
+    final revision = _ownershipRevision;
+    try {
+      final active = await _gateway.hasActivePurchase(productId);
+      if (active != null && revision == _ownershipRevision) {
+        await _setOwned(active);
+        notifyListeners();
+      }
+    } catch (_) {
+      // Keep the last known state when the store cannot confirm ownership.
+    } finally {
+      _checkingOwnership = false;
+    }
   }
 
   Future<void> refreshStore() async {
@@ -236,7 +290,12 @@ class AdRemovalService extends ChangeNotifier {
     notifyListeners();
     try {
       await _gateway.restorePurchases();
-      if (_action == AdRemovalAction.restoring) {
+      final active = await _gateway.hasActivePurchase(productId);
+      if (active != null) {
+        await _setOwned(active);
+        _action = AdRemovalAction.none;
+        _message = active ? '구매 내역이 적용됐어요.' : '복원할 광고 제거 구매 내역을 찾지 못했어요.';
+      } else if (_action == AdRemovalAction.restoring) {
         _action = AdRemovalAction.none;
         _message = _owned ? '구매 내역이 적용됐어요.' : '복원할 광고 제거 구매 내역을 찾지 못했어요.';
       }
@@ -262,7 +321,7 @@ class AdRemovalService extends ChangeNotifier {
           try {
             final verified = await _verifyPurchase(purchase);
             if (verified) {
-              await _setOwned();
+              await _setOwned(true);
               _message = purchase.status == PurchaseStatus.restored
                   ? '구매 내역이 복원됐어요.'
                   : '광고 제거 구매가 적용됐어요.';
@@ -295,10 +354,11 @@ class AdRemovalService extends ChangeNotifier {
     }
   }
 
-  Future<void> _setOwned() async {
-    if (_owned) return;
-    await _ownershipStore.write(true);
-    _owned = true;
+  Future<void> _setOwned(bool owned) async {
+    if (_owned == owned) return;
+    await _ownershipStore.write(owned);
+    _owned = owned;
+    _ownershipRevision += 1;
   }
 
   void _handlePurchaseStreamError(Object _) {

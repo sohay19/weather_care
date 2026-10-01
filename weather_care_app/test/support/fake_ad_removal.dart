@@ -11,6 +11,8 @@ class FakeAdRemovalPurchaseGateway implements AdRemovalPurchaseGateway {
   ProductDetails? product = fakeAdRemovalProduct();
   int purchaseCalls = 0;
   int restoreCalls = 0;
+  bool? activePurchase;
+  bool failOwnershipCheck = false;
   final List<PurchaseDetails> completedPurchases = [];
 
   @override
@@ -46,6 +48,12 @@ class FakeAdRemovalPurchaseGateway implements AdRemovalPurchaseGateway {
   @override
   Future<void> completePurchase(PurchaseDetails purchase) async {
     completedPurchases.add(purchase);
+  }
+
+  @override
+  Future<bool?> hasActivePurchase(String productId) async {
+    if (failOwnershipCheck) throw StateError('스토어에 연결할 수 없습니다.');
+    return activePurchase;
   }
 
   void emit(PurchaseDetails purchase) => _purchases.add([purchase]);

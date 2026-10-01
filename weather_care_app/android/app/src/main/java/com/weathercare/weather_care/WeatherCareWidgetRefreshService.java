@@ -34,11 +34,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class WeatherCareWidgetRefreshService extends Service {
     private static final String CHANNEL_ID = "weather_care_widget_refresh";
     private static final int NOTIFICATION_ID = 1704;
     private static final long LOCATION_TIMEOUT_SECONDS = 8;
+    private static final Pattern NEIGHBORHOOD = Pattern.compile(
+            "(?<![가-힣0-9])([가-힣0-9]+(?:동|읍|면))(?![가-힣0-9])"
+    );
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private boolean running;
 
@@ -77,7 +82,10 @@ public final class WeatherCareWidgetRefreshService extends Service {
                     WeatherCareWidgetProvider.showLocationUnavailable(this);
                     return;
                 }
-                WeatherCareWidgetRefreshWorker.refresh(this, url, false);
+                int status = WeatherCareWidgetRefreshWorker.refresh(this, url, false);
+                if (status >= 200 && status < 300) {
+                    preferences.edit().putString(MainActivity.REFRESH_URL_KEY, url).apply();
+                }
             } catch (Exception ignored) {
                 // Keep the last weather snapshot when the server is unavailable.
             } finally {
@@ -140,7 +148,7 @@ public final class WeatherCareWidgetRefreshService extends Service {
                 if (previous == null || location.getAccuracy() < previous.getAccuracy()) {
                     best.set(location);
                 }
-                if (!fine || location.getAccuracy() <= 500) ready.countDown();
+                if (!fine || location.getAccuracy() <= 100) ready.countDown();
             }
 
             @Override
@@ -212,7 +220,13 @@ public final class WeatherCareWidgetRefreshService extends Service {
         }
         builder.appendQueryParameter("nx", String.valueOf(grid[0]));
         builder.appendQueryParameter("ny", String.valueOf(grid[1]));
-        String regionName = regionName(location);
+        String regionName = preferDetailedName(
+                regionName(location),
+                saved.getQueryParameter("regionName"),
+                previousDistanceMeters(saved, location),
+                String.valueOf(grid[0]).equals(saved.getQueryParameter("nx")) &&
+                        String.valueOf(grid[1]).equals(saved.getQueryParameter("ny"))
+        );
         if (regionName != null) builder.appendQueryParameter("regionName", regionName);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED &&
@@ -228,11 +242,26 @@ public final class WeatherCareWidgetRefreshService extends Service {
         if (!Geocoder.isPresent()) return null;
         try {
             List<Address> addresses = new Geocoder(this, Locale.KOREA).getFromLocation(
-                    location.getLatitude(), location.getLongitude(), 1
+                    location.getLatitude(), location.getLongitude(), 5
             );
             if (addresses == null || addresses.isEmpty()) return null;
-            Address address = addresses.get(0);
-            if (!"KR".equalsIgnoreCase(address.getCountryCode())) return null;
+            String firstName = null;
+            for (Address address : addresses) {
+                if (!"KR".equalsIgnoreCase(address.getCountryCode())) continue;
+                String name = displayName(address);
+                if (name == null) continue;
+                if (firstName == null) firstName = name;
+                if (isNeighborhood(name)) return name;
+            }
+            return firstName;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    @Nullable
+    private static String displayName(Address address) {
+        try {
             String topLevel = address.getAdminArea();
             Set<String> parts = new LinkedHashSet<>();
             String shortTopLevel = switch (topLevel == null ? "" : topLevel) {
@@ -253,12 +282,66 @@ public final class WeatherCareWidgetRefreshService extends Service {
                 if (value == null || value.isBlank() || value.equals(topLevel)) continue;
                 parts.add(value.trim());
             }
+            if (parts.stream().noneMatch(WeatherCareWidgetRefreshService::isNeighborhood) &&
+                    address.getMaxAddressLineIndex() >= 0) {
+                String neighborhood = neighborhoodInAddressLine(address.getAddressLine(0));
+                if (neighborhood != null) parts.add(neighborhood);
+            }
+            if (parts.stream().noneMatch(WeatherCareWidgetRefreshService::isNeighborhood)) {
+                String neighborhood = neighborhoodInAddressLine(address.getFeatureName());
+                if (neighborhood != null) parts.add(neighborhood);
+            }
             if (parts.isEmpty() && topLevel != null && !topLevel.isBlank()) {
                 parts.add(topLevel.trim());
             }
             return parts.isEmpty() ? null : String.join(" ", parts);
         } catch (Exception ignored) {
             return null;
+        }
+    }
+
+    private static boolean isNeighborhood(String value) {
+        return value.endsWith("동") || value.endsWith("읍") || value.endsWith("면");
+    }
+
+    @Nullable
+    static String neighborhoodInAddressLine(String line) {
+        if (line == null) return null;
+        Matcher matcher = NEIGHBORHOOD.matcher(line);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    @Nullable
+    static String preferDetailedName(
+            String resolved, String stored, double distanceMeters, boolean sameGrid
+    ) {
+        if (stored == null || stored.isBlank() ||
+                Set.of("현재 위치", "선택 지역", "지역을 설정해주세요").contains(stored) ||
+                !sameGrid || !Double.isFinite(distanceMeters) || distanceMeters > 500) {
+            return resolved;
+        }
+        if (resolved == null || resolved.isBlank() || stored.startsWith(resolved + " ")) {
+            return stored;
+        }
+        return resolved;
+    }
+
+    private static double previousDistanceMeters(Uri saved, Location current) {
+        try {
+            double latitude = Double.parseDouble(saved.getQueryParameter("latitude"));
+            double longitude = Double.parseDouble(saved.getQueryParameter("longitude"));
+            if (!Double.isFinite(latitude) || !Double.isFinite(longitude)) {
+                return Double.POSITIVE_INFINITY;
+            }
+            double latDelta = Math.toRadians(current.getLatitude() - latitude);
+            double lonDelta = Math.toRadians(current.getLongitude() - longitude);
+            double a = Math.pow(Math.sin(latDelta / 2), 2) +
+                    Math.cos(Math.toRadians(latitude)) *
+                            Math.cos(Math.toRadians(current.getLatitude())) *
+                            Math.pow(Math.sin(lonDelta / 2), 2);
+            return 2 * 6371008.77 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        } catch (Exception ignored) {
+            return Double.POSITIVE_INFINITY;
         }
     }
 

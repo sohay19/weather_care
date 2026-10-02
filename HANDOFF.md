@@ -8901,7 +8901,7 @@
 
 - [x] Windows PC에서 Tailscale 연결 상태와 `100.105.212.26` 장치의 온라인 상태를 확인한다. 집 LAN에 있다면 `Test-NetConnection 192.168.0.67 -Port 22`, Tailscale 경로는 `Test-NetConnection 100.105.212.26 -Port 22`로 각각 점검한다. SSH가 열리면 `ssh ubuntu@100.105.212.26` 또는 확인된 LAN 주소로 접속한다. 연결이 계속 시간 초과되면 서버 콘솔에서 현재 IP, `sshd` 실행 상태, 방화벽·Tailscale 접근 정책을 확인한다. 인증키·비밀번호는 로그나 HANDOFF에 기록하지 않는다.
 - [ ] 접속 후 `weather-care-scheduler`의 사용자 제보 시각 전후 journal에서 `node_scheduled_job_skipped_overlap`, `weather_collection_failed`, `grid_observation_required_variable_failed`, `current_observation_budget_denied`, `current_observation_freshness_breached`를 확인해 실제 결측 원인을 특정한다. 운영 SQLite `api_usage_daily`에서 한국 날짜별 `GRID_OBSERVATION_FAST_RETRY`, `GRID_OBSERVATION_10_MINUTES`, `AWS_CURRENT_FALLBACK`과 전체 APIHub 예약량을 읽기 전용으로 집계한다. APIHub 포털의 계정 실제 호출·용량과 비교한다. 내부 예약에는 중기예보 APIHub 호출이 빠져 있다는 점을 반영한다.
-- [ ] 이번 서버 수정은 아직 운영 미배포다. Windows에서 최신 원격 커밋을 받은 뒤 충돌·배포 대상 파일을 확인하고, 운영 DB·기존 소스를 백업한 다음 서버를 배포한다. 배포 후 API·스케줄러·공개 `/health`를 확인하고, 10분 정규 회차와 2분 재시도 회차의 저장·결측·예산 로그 및 구로동 `58/125`의 `/main`·`/today` 관측시각을 검증한다. 사용자 앱의 첫 안내 `계속` 전 위치 팝업 회귀도 새 앱 빌드에서 확인한다.
+- [x] 서버 수정 커밋을 운영 미니 PC에 배포했다. 운영 DB·기존 소스를 백업하고 API·스케줄러·공개 `/health`를 확인했다. 사용자는 10분 정규 회차·2분 재시도 회차·구로동 `58/125` 응답 검증을 생략하도록 지시했고, 앱의 첫 안내 전 위치 팝업 검증은 직접 완료했다고 알렸다.
 
 ## 2026-10-02 Windows 인계 기록 커밋과 원격 반영
 
@@ -8929,6 +8929,13 @@
 
 - 격자 관측 요청에 변수명·요청 발표시각과 `WAIT_HEADERS`/`READ_BODY` 단계별 실패 로그를 추가했다. AWS 대체 요청은 매분 관측(`AWS_MINUTE`)과 관측소 목록(`AWS_STATION`)을 구분하고 목록 조회 월, 단계, 응답을 받은 경우 HTTP 상태, 경과 시간과 설정된 시간 제한을 기록한다. 공통 이벤트는 `weather_provider_request_failed`이며 URL·인증키·원본 오류 메시지는 기록하지 않는다. 본문 읽기가 `AbortError`로 끝나더라도 시간 제한 신호가 원인이면 `TIMEOUT`으로 분류한다.
 - 검증: 서버 `npm run typecheck`, 관측 제공자 테스트 16개, Node 테스트 13개, `git diff --check` 통과. 운영에 배포하거나 운영 서비스·DB를 변경하지 않았다. 향후 로그로 실패한 요청과 단계는 확인할 수 있지만, 헤더 대기 시간 초과만으로 기상청 서버 지연과 중간 네트워크 장애를 확정 구분할 수는 없다.
+
+## 2026-10-02 관측 수집·시간 초과 진단 운영 배포
+
+- 서버·인계 변경을 `defcd5b fix(관측): 시간 초과 요청 단계 기록`으로 커밋했다. 운영 배포본에는 앞서 원격 반영된 현재 관측 우선 수집·2분 재시도·APIHub 예약량 제한과 이번 요청 단계 로그가 포함된다. 배포 직전 TypeScript 검사, Worker 54파일·376개 테스트, Node 5파일·13개 테스트가 통과했다.
+- 운영 미니 PC의 기존 추적 소스를 기준 커밋 `45e14d0`과 대조했다. 줄바꿈을 정규화한 결과 소스 차이는 이미 현재 커밋에 포함된 대기질 수정 파일 1개뿐이었고, 서버의 테스트 파일 1개는 이전 버전이었다. 그 외 추가 운영 소스 파일은 없었다. 새 아카이브의 196개 추적 파일은 `defcd5b`와 일치한다. 전달 아카이브 SHA-256은 `0c7f6ec5df564f8d26ccfa7ea66d92c941f58552072d357c978755fe83cdaf4a`다.
+- 배포 전 SQLite 온라인 백업 `/var/backups/weather-care/weather-care-before-defcd5b-20261002T051939Z.sqlite`는 `PRAGMA quick_check=ok`, 소스 백업 `/var/backups/weather-care/source-before-defcd5b-20261002T051939Z.tar.gz`는 압축 무결성 확인을 통과했다. 즉시 롤백 디렉터리는 `/opt/weather-care/weather_care_server.previous-before-defcd5b-20261002T051939Z`다. 기존 운영 환경파일·DB 원본은 변경하지 않았다.
+- 새 소스로 전환한 뒤 마이그레이션과 필수 선수집이 성공했고 API·스케줄러·Cloudflare Tunnel이 모두 active다. 내부와 공개 `/health`는 각각 HTTP 200 `ok`다. 요청에 따라 배포 후 10분·2분 수집 회차와 구로동 `58/125` 응답은 검사하지 않았다. 앱 권한 팝업 검증은 사용자 완료 진술로 기록하며 이번 배포 작업에서 앱을 실행하지 않았다.
 ## 2026-10-02 iOS GPS 새로고침 경로 수정
 
 - 사용자가 위젯의 별도 위치 허용 창을 수용하고 위젯에서 직접 GPS를 확인하는 방식을 선택했다. iOS 위젯 확장의 `NSWidgetWantsLocation`과 Core Location 조회를 복구했다. 위젯 새로고침 시 측정 시작 이후의 좌표로 격자·정밀 좌표·지역명을 다시 구성하고, 위치를 받지 못하면 저장된 예전 지역으로 날씨를 새로 조회하지 않고 `위치 확인 필요`를 표시한다. iOS가 위젯 추가 시 별도 허용 창을 표시하는 점을 앱 안내와 스토어 등록정보에 반영했다.

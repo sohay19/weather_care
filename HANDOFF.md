@@ -8899,7 +8899,7 @@
 
 ## Windows에서 이어서 할 일: 운영 접속·관측 수집 검증
 
-- [ ] Windows PC에서 Tailscale 연결 상태와 `100.105.212.26` 장치의 온라인 상태를 확인한다. 집 LAN에 있다면 `Test-NetConnection 192.168.0.67 -Port 22`, Tailscale 경로는 `Test-NetConnection 100.105.212.26 -Port 22`로 각각 점검한다. SSH가 열리면 `ssh ubuntu@100.105.212.26` 또는 확인된 LAN 주소로 접속한다. 연결이 계속 시간 초과되면 서버 콘솔에서 현재 IP, `sshd` 실행 상태, 방화벽·Tailscale 접근 정책을 확인한다. 인증키·비밀번호는 로그나 HANDOFF에 기록하지 않는다.
+- [x] Windows PC에서 Tailscale 연결 상태와 `100.105.212.26` 장치의 온라인 상태를 확인한다. 집 LAN에 있다면 `Test-NetConnection 192.168.0.67 -Port 22`, Tailscale 경로는 `Test-NetConnection 100.105.212.26 -Port 22`로 각각 점검한다. SSH가 열리면 `ssh ubuntu@100.105.212.26` 또는 확인된 LAN 주소로 접속한다. 연결이 계속 시간 초과되면 서버 콘솔에서 현재 IP, `sshd` 실행 상태, 방화벽·Tailscale 접근 정책을 확인한다. 인증키·비밀번호는 로그나 HANDOFF에 기록하지 않는다.
 - [ ] 접속 후 `weather-care-scheduler`의 사용자 제보 시각 전후 journal에서 `node_scheduled_job_skipped_overlap`, `weather_collection_failed`, `grid_observation_required_variable_failed`, `current_observation_budget_denied`, `current_observation_freshness_breached`를 확인해 실제 결측 원인을 특정한다. 운영 SQLite `api_usage_daily`에서 한국 날짜별 `GRID_OBSERVATION_FAST_RETRY`, `GRID_OBSERVATION_10_MINUTES`, `AWS_CURRENT_FALLBACK`과 전체 APIHub 예약량을 읽기 전용으로 집계한다. APIHub 포털의 계정 실제 호출·용량과 비교한다. 내부 예약에는 중기예보 APIHub 호출이 빠져 있다는 점을 반영한다.
 - [ ] 이번 서버 수정은 아직 운영 미배포다. Windows에서 최신 원격 커밋을 받은 뒤 충돌·배포 대상 파일을 확인하고, 운영 DB·기존 소스를 백업한 다음 서버를 배포한다. 배포 후 API·스케줄러·공개 `/health`를 확인하고, 10분 정규 회차와 2분 재시도 회차의 저장·결측·예산 로그 및 구로동 `58/125`의 `/main`·`/today` 관측시각을 검증한다. 사용자 앱의 첫 안내 `계속` 전 위치 팝업 회귀도 새 앱 빌드에서 확인한다.
 
@@ -8907,3 +8907,25 @@
 
 - 앱 권한 수정 `ec9ab3c`, 서버 수집·예산 수정 `8ec3a59`, Windows 인계 `f0f47b7`을 각각 로컬 커밋했다. 저장된 `origin/master`의 `c294487`과 `HANDOFF.md`가 충돌해 양쪽 기록을 모두 남긴 뒤 병합 커밋 `41ebacf`를 만들었다. 기존 iOS `Podfile.lock`·`project.pbxproj`의 미커밋 변경은 포함하지 않았다.
 - HTTPS 원격의 GitHub 암호/토큰이 Mac 키체인에 없고 등록된 SSH 키도 GitHub에서 거부돼 CLI `git fetch`·`git push`는 인증 단계에서 실패했다. 이후 사용자가 GitHub 플러그인을 연결했다. 연결된 계정의 원격 `master`가 `c294487`임을 재확인한 뒤 변경된 20개 파일의 blob SHA와 전체 tree SHA를 로컬 최종 커밋과 일치하도록 검증했다. 원격 커밋 `e18b3a5`를 만들고 `master`를 **강제 갱신 없이** 이동했다. Windows에서는 이제 `git pull origin master`로 해당 코드와 인계 기록을 받을 수 있다.
+
+## 2026-10-02 Windows 핸드오프 확인
+
+- Windows 작업 폴더의 `master`는 `19762ad`이며 추적 중인 `weather_care/master`와 일치한다. 작업 트리에 기존 변경 사항은 없었다. 따라서 위 `git pull origin master` 단계는 현재 폴더에서 완료된 상태다.
+- 다음 작업은 운영 서버 SSH 접속 확인, 결측 시각 전후 스케줄러 로그·APIHub 사용량 확인, 운영 DB·소스 백업 후 미배포 서버 수정 배포, API·앱 권한 동작 검증 순서다. 이번 확인에서는 코드·운영 환경을 변경하지 않았다.
+
+## 2026-10-02 Windows 운영 접속·결측 로그 확인
+
+- Windows Tailscale은 실행 중이며 `100.105.212.26:22` TCP와 `ubuntu@soha-01` SSH 접속이 성공했다. 저장소 기록과 일치하는 로컬 전용 키를 지정해 인증했으며 키 내용은 출력하지 않았다. LAN `192.168.0.67:22`는 응답하지 않았다. 운영 `weather-care-scheduler`와 `weather-care-api`는 모두 active였다.
+- 제보 시각 11:55 KST 직전의 11:40, 11:50 정규 회차에서 각각 격자 관측(`grid_observation`) 조회가 `TimeoutError`로 실패하고 AWS 대체 조회도 `TimeoutError`로 실패했다. 두 회차의 `core` 작업 자체는 완료됐으며 조사 구간 11:20~12:20 KST에 작업 중복 건너뜀·내부 예산 차단 로그는 없었다. 12:00 회차는 완료됐고 공개 API는 12:01에 11:50 관측값으로 회복됐다는 앞선 확인과 일치한다. 따라서 연속 조회 시간 초과가 제보 시점 결측의 직접 원인이다. 시간 초과가 기상청 제공처·경로·서버 중 어디에서 시작됐는지는 현재 로그만으로 특정할 수 없다.
+- 운영 SQLite `api_usage_daily` 읽기 전용 집계: 2026-10-01 KST APIHub 내부 예약 합계 5,112회·2,274,634,892바이트, 2026-10-02 조회 시점(약 13:05 KST) 2,755회·1,226,470,462바이트. 10월 2일 `GRID_OBSERVATION_10_MINUTES`는 474회·474,000,000바이트, `AWS_CURRENT_FALLBACK`은 24회·24,000,000바이트, `GRID_OBSERVATION_FAST_RETRY` 행은 없었다. 내부 한도 18,000회·4.5GB에는 미달한다. 현 캐시는 구로동 `58/125`의 12:50 KST 격자 관측으로 갱신돼 있다.
+- APIHub 포털은 이번 브라우저 세션에서 로그아웃 상태라 계정의 실제 사용량을 읽지 못했다. 내부 예약에는 중기예보 APIHub 호출이 빠져 있어 포털 수치와 직접 같지 않다. 포털 계정 사용량 비교는 2번 작업의 미완료 항목이다. 이번 작업에서 배포·코드·운영 DB·서비스는 변경하지 않았다.
+
+## 2026-10-02 수정 소스의 시간 초과 진단 범위 확인
+
+- 미배포 수정 소스에서 격자 관측은 `grid_observation_required_variable_failed`/`grid_observation_optional_variable_failed`에 변수명(T1H·REH·WSD 등)과 실패 유형을, 이어지는 `weather_collection_failed`에 `LATEST`/`PREVIOUS` 슬롯과 목표 관측시각을 기록한다. 따라서 배포 후 새로 발생한 격자 조회 실패는 어느 변수·발표 구간인지 구분할 수 있다.
+- AWS 대체 조회는 매분 관측과 관측소 목록을 병렬 호출하지만 현재 실패 로그는 `aws_current_fallback`과 오류 유형만 기록한다. 어느 AWS 요청 단계인지, 요청 송신·응답 본문 수신 중 어느 단계인지, 기상청 제공처와 네트워크 경로 중 어디가 원인인지는 현재 코드만으로 특정할 수 없다. 기존 11:40·11:50 KST 기록도 수정 전 로그이므로 변수별로 소급 분석할 수 없다. 이번 확인에서 코드·운영 환경은 변경하지 않았다.
+
+## 2026-10-02 관측 요청 시간 초과 지점 로깅 추가
+
+- 격자 관측 요청에 변수명·요청 발표시각과 `WAIT_HEADERS`/`READ_BODY` 단계별 실패 로그를 추가했다. AWS 대체 요청은 매분 관측(`AWS_MINUTE`)과 관측소 목록(`AWS_STATION`)을 구분하고 목록 조회 월, 단계, 응답을 받은 경우 HTTP 상태, 경과 시간과 설정된 시간 제한을 기록한다. 공통 이벤트는 `weather_provider_request_failed`이며 URL·인증키·원본 오류 메시지는 기록하지 않는다. 본문 읽기가 `AbortError`로 끝나더라도 시간 제한 신호가 원인이면 `TIMEOUT`으로 분류한다.
+- 검증: 서버 `npm run typecheck`, 관측 제공자 테스트 16개, Node 테스트 13개, `git diff --check` 통과. 운영에 배포하거나 운영 서비스·DB를 변경하지 않았다. 향후 로그로 실패한 요청과 단계는 확인할 수 있지만, 헤더 대기 시간 초과만으로 기상청 서버 지연과 중간 네트워크 장애를 확정 구분할 수는 없다.

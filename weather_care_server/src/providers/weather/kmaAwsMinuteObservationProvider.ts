@@ -3,6 +3,7 @@ import {
   kmaApiHubErrorStatus,
 } from '../kmaApiHubResponse';
 import { providerHttpFailureMessage } from '../providerHttpFailure';
+import { logProviderRequestFailure } from '../../observability/providerRequestDiagnostics';
 import type { UltraShortObservation } from './kmaUltraShortObservationProvider';
 
 const AWS_MINUTE_URL =
@@ -144,12 +145,37 @@ export class KmaAwsMinuteObservationProvider {
       help: '0',
       authKey: this.serviceKey,
     });
-    const response = await this.fetcher(`${AWS_MINUTE_URL}?${query}`, {
-      headers: { Accept: 'text/plain' },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      cf: { cacheEverything: true, cacheTtl: 120 },
-    });
-    const payload = await response.text();
+    const startedAt = Date.now();
+    const signal = AbortSignal.timeout(this.timeoutMs);
+    const context = {
+      endpoint: 'AWS_MINUTE' as const,
+      from: start,
+      to: end,
+      timeoutMs: this.timeoutMs,
+    };
+    let response: Response;
+    try {
+      response = await this.fetcher(`${AWS_MINUTE_URL}?${query}`, {
+        headers: { Accept: 'text/plain' },
+        signal,
+        cf: { cacheEverything: true, cacheTtl: 120 },
+      });
+    } catch (error) {
+      logProviderRequestFailure(error, signal, {
+        ...context, phase: 'WAIT_HEADERS', elapsedMs: Date.now() - startedAt,
+      });
+      throw error;
+    }
+    let payload: string;
+    try {
+      payload = await response.text();
+    } catch (error) {
+      logProviderRequestFailure(error, signal, {
+        ...context, phase: 'READ_BODY', elapsedMs: Date.now() - startedAt,
+        httpStatus: response.status,
+      });
+      throw error;
+    }
     if (!response.ok) {
       throw new KmaAwsMinuteObservationProviderError(
         await providerHttpFailureMessage(response, 'KMA AWS minute request', payload),
@@ -177,12 +203,36 @@ export class KmaAwsMinuteObservationProvider {
       month: String(koreanClock.getUTCMonth() + 1).padStart(2, '0'),
       authKey: this.serviceKey,
     });
-    const response = await this.fetcher(`${AWS_STATION_URL}?${query}`, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      cf: { cacheEverything: true, cacheTtl: 86_400 },
-    });
-    const payload = await response.text();
+    const startedAt = Date.now();
+    const signal = AbortSignal.timeout(this.timeoutMs);
+    const context = {
+      endpoint: 'AWS_STATION' as const,
+      month: `${koreanClock.getUTCFullYear()}-${String(koreanClock.getUTCMonth() + 1).padStart(2, '0')}`,
+      timeoutMs: this.timeoutMs,
+    };
+    let response: Response;
+    try {
+      response = await this.fetcher(`${AWS_STATION_URL}?${query}`, {
+        headers: { Accept: 'application/json' },
+        signal,
+        cf: { cacheEverything: true, cacheTtl: 86_400 },
+      });
+    } catch (error) {
+      logProviderRequestFailure(error, signal, {
+        ...context, phase: 'WAIT_HEADERS', elapsedMs: Date.now() - startedAt,
+      });
+      throw error;
+    }
+    let payload: string;
+    try {
+      payload = await response.text();
+    } catch (error) {
+      logProviderRequestFailure(error, signal, {
+        ...context, phase: 'READ_BODY', elapsedMs: Date.now() - startedAt,
+        httpStatus: response.status,
+      });
+      throw error;
+    }
     if (!response.ok) {
       throw new KmaAwsMinuteObservationProviderError(
         await providerHttpFailureMessage(response, 'KMA AWS station request', payload),

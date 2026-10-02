@@ -4,6 +4,7 @@ import {
 } from '../kmaApiHubResponse';
 import { providerHttpFailureMessage } from '../providerHttpFailure';
 import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
+import { logProviderRequestFailure } from '../../observability/providerRequestDiagnostics';
 import type { UltraShortObservation } from './kmaUltraShortObservationProvider';
 
 const GRID_OBSERVATION_URL =
@@ -160,12 +161,37 @@ export class KmaGridObservationProvider {
       vars: variable,
       authKey: this.serviceKey,
     });
-    const response = await this.fetcher(`${GRID_OBSERVATION_URL}?${query}`, {
-      headers: { Accept: 'application/octet-stream, text/plain' },
-      signal: AbortSignal.timeout(this.timeoutMs),
-      cf: { cacheEverything: true, cacheTtl: 60 },
-    });
-    const payload = await response.arrayBuffer();
+    const startedAt = Date.now();
+    const signal = AbortSignal.timeout(this.timeoutMs);
+    const context = {
+      endpoint: 'GRID_OBSERVATION' as const,
+      variable,
+      targetTime: compactTime,
+      timeoutMs: this.timeoutMs,
+    };
+    let response: Response;
+    try {
+      response = await this.fetcher(`${GRID_OBSERVATION_URL}?${query}`, {
+        headers: { Accept: 'application/octet-stream, text/plain' },
+        signal,
+        cf: { cacheEverything: true, cacheTtl: 60 },
+      });
+    } catch (error) {
+      logProviderRequestFailure(error, signal, {
+        ...context, phase: 'WAIT_HEADERS', elapsedMs: Date.now() - startedAt,
+      });
+      throw error;
+    }
+    let payload: ArrayBuffer;
+    try {
+      payload = await response.arrayBuffer();
+    } catch (error) {
+      logProviderRequestFailure(error, signal, {
+        ...context, phase: 'READ_BODY', elapsedMs: Date.now() - startedAt,
+        httpStatus: response.status,
+      });
+      throw error;
+    }
     if (!response.ok) {
       throw new KmaGridObservationProviderError(
         await providerHttpFailureMessage(

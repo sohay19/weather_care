@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { logProviderRequestFailure } from '../src/observability/providerRequestDiagnostics';
 import {
   KmaGridObservationProvider,
   latestGridObservationTime,
@@ -161,6 +162,66 @@ describe('KMA APIHub 10분 격자 실황', () => {
     warning.mockRestore();
   });
 
+  it('필수 변수의 헤더 대기 시간 초과 위치와 발표시각을 남긴다', async () => {
+    const error = Object.assign(new Error('request timed out'), { name: 'TimeoutError' });
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const variable = new URL(String(input)).searchParams.get('vars');
+      if (variable === 'T1H') throw error;
+      return new Response(gridPayload(target, 1));
+    });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(new KmaGridObservationProvider({
+        serviceKey: 'test-key', fetcher,
+      }).getAt([target], new Date('2026-09-22T11:20:00Z'), {
+        requiredOnly: true,
+      })).rejects.toThrow('request timed out');
+
+      const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+      expect(events).toContainEqual(expect.objectContaining({
+        event: 'weather_provider_request_failed',
+        endpoint: 'GRID_OBSERVATION',
+        phase: 'WAIT_HEADERS',
+        variable: 'T1H',
+        targetTime: '202609221120',
+        failureReason: 'TIMEOUT',
+      }));
+      expect(log.mock.calls.join('')).not.toContain('test-key');
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it('격자 응답 본문을 읽다 시간 초과되면 단계를 구분한다', async () => {
+    const error = Object.assign(new Error('body timed out'), { name: 'TimeoutError' });
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const variable = new URL(String(input)).searchParams.get('vars');
+      const response = new Response(gridPayload(target, 1));
+      if (variable === 'REH') vi.spyOn(response, 'arrayBuffer').mockRejectedValue(error);
+      return response;
+    });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(new KmaGridObservationProvider({
+        serviceKey: 'test-key', fetcher,
+      }).getAt([target], new Date('2026-09-22T11:20:00Z'), {
+        requiredOnly: true,
+      })).rejects.toThrow('body timed out');
+
+      const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+      expect(events).toContainEqual(expect.objectContaining({
+        event: 'weather_provider_request_failed',
+        endpoint: 'GRID_OBSERVATION',
+        phase: 'READ_BODY',
+        variable: 'REH',
+        httpStatus: 200,
+        failureReason: 'TIMEOUT',
+      }));
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it('10분 발표 지연을 고려해 직전 10분 시각을 선택한다', () => {
     expect(latestGridObservationTime(
       new Date('2026-09-22T02:37:40Z'),
@@ -284,6 +345,92 @@ describe('KMA AWS 매분 fallback', () => {
       locationMatch: 'NEAREST_STATION',
     });
   });
+
+  it('AWS 매분 관측 요청의 헤더 대기 시간 초과를 구분한다', async () => {
+    const error = Object.assign(new Error('request timed out'), { name: 'TimeoutError' });
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      if (new URL(String(input)).pathname.includes('nph-aws2_min')) throw error;
+      return Response.json({});
+    });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(new KmaAwsMinuteObservationProvider({
+        serviceKey: 'test-key', fetcher,
+        now: () => new Date('2026-09-22T11:18:00+09:00'),
+      }).getCurrentByLocations([{ latitude: 37.48, longitude: 126.82 }]))
+        .rejects.toThrow('request timed out');
+
+      const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+      expect(events).toContainEqual(expect.objectContaining({
+        event: 'weather_provider_request_failed',
+        endpoint: 'AWS_MINUTE',
+        phase: 'WAIT_HEADERS',
+        failureReason: 'TIMEOUT',
+      }));
+      expect(log.mock.calls.join('')).not.toContain('test-key');
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it('AWS 관측소 목록 응답 본문 시간 초과를 구분한다', async () => {
+    const error = Object.assign(new Error('body timed out'), { name: 'TimeoutError' });
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      if (new URL(String(input)).pathname.includes('nph-aws2_min')) {
+        return new Response([
+          '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
+          '202609221115,401,90,1.2,24.1,0,0,66',
+        ].join('\n'));
+      }
+      const response = Response.json({});
+      vi.spyOn(response, 'text').mockRejectedValue(error);
+      return response;
+    });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(new KmaAwsMinuteObservationProvider({
+        serviceKey: 'test-key', fetcher,
+        now: () => new Date('2026-09-22T11:18:00+09:00'),
+      }).getCurrentByLocations([{ latitude: 37.48, longitude: 126.82 }]))
+        .rejects.toThrow('body timed out');
+
+      const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
+      expect(events).toContainEqual(expect.objectContaining({
+        event: 'weather_provider_request_failed',
+        endpoint: 'AWS_STATION',
+        phase: 'READ_BODY',
+        month: '2026-09',
+        httpStatus: 200,
+        failureReason: 'TIMEOUT',
+      }));
+    } finally {
+      log.mockRestore();
+    }
+  });
+});
+
+it('시간 제한 신호로 본문이 중단되면 AbortError도 TIMEOUT으로 기록한다', () => {
+  const controller = new AbortController();
+  controller.abort(new DOMException('timed out', 'TimeoutError'));
+  const caught = new DOMException('body aborted', 'AbortError');
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    logProviderRequestFailure(caught, controller.signal, {
+      endpoint: 'AWS_MINUTE', phase: 'READ_BODY',
+      timeoutMs: 15_000, elapsedMs: 15_000,
+    });
+
+    expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({
+      event: 'weather_provider_request_failed',
+      endpoint: 'AWS_MINUTE',
+      phase: 'READ_BODY',
+      error: 'TimeoutError',
+      caughtError: 'AbortError',
+      failureReason: 'TIMEOUT',
+    });
+  } finally {
+    log.mockRestore();
+  }
 });
 
 function gridPayload(point: { nx: number; ny: number }, value: number): string {

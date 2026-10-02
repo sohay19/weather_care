@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 class DeviceCoordinates {
@@ -84,19 +85,23 @@ class CurrentLocationService {
         try {
           final lastKnown = await _platform.getLastKnownPosition();
           if (lastKnown != null) {
-            final cachedResult = await _resultFromPosition(lastKnown);
+            final cachedResult =
+                await _resultFromPosition(lastKnown, validateAge: true);
             if (cachedResult.hasLocation) return cachedResult;
           }
         } catch (_) {
           // A missing platform cache must not prevent a fresh location request.
         }
       }
-      final position = await _platform.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
+      final position =
+          forceRefresh && !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
+              ? await _iosPositionAfterRequest()
+              : await _platform.getCurrentPosition(
+                  locationSettings: const LocationSettings(
+                    accuracy: LocationAccuracy.high,
+                    timeLimit: Duration(seconds: 8),
+                  ),
+                );
       return await _resultFromPosition(position);
     } on TimeoutException {
       return const LocationResult(LocationState.timedOut);
@@ -109,7 +114,22 @@ class CurrentLocationService {
     }
   }
 
-  Future<LocationResult> _resultFromPosition(Position position) async {
+  Future<Position> _iosPositionAfterRequest() async {
+    final iterator = StreamIterator(_platform.getPositionStream(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    ));
+    try {
+      if (!await iterator.moveNext().timeout(const Duration(seconds: 12))) {
+        throw TimeoutException('위치 응답을 받지 못했습니다.');
+      }
+      return iterator.current;
+    } finally {
+      await iterator.cancel();
+    }
+  }
+
+  Future<LocationResult> _resultFromPosition(Position position,
+      {bool validateAge = false}) async {
     if (!position.latitude.isFinite || !position.longitude.isFinite) {
       return const LocationResult(LocationState.unavailable);
     }
@@ -120,11 +140,14 @@ class CurrentLocationService {
         position.longitude > 134) {
       return const LocationResult(LocationState.outsideServiceArea);
     }
-    final age = (now?.call() ?? DateTime.now())
-        .toUtc()
-        .difference(position.timestamp.toUtc());
-    if (age > const Duration(minutes: 2) || age < const Duration(minutes: -1)) {
-      return const LocationResult(LocationState.unavailable);
+    if (validateAge) {
+      final age = (now?.call() ?? DateTime.now())
+          .toUtc()
+          .difference(position.timestamp.toUtc());
+      if (age > const Duration(minutes: 2) ||
+          age < const Duration(minutes: -1)) {
+        return const LocationResult(LocationState.unavailable);
+      }
     }
     LocationAccuracyStatus accuracy;
     try {

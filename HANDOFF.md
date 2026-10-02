@@ -8903,7 +8903,7 @@
 - [ ] 접속 후 `weather-care-scheduler`의 사용자 제보 시각 전후 journal에서 `node_scheduled_job_skipped_overlap`, `weather_collection_failed`, `grid_observation_required_variable_failed`, `current_observation_budget_denied`, `current_observation_freshness_breached`를 확인해 실제 결측 원인을 특정한다. 운영 SQLite `api_usage_daily`에서 한국 날짜별 `GRID_OBSERVATION_FAST_RETRY`, `GRID_OBSERVATION_10_MINUTES`, `AWS_CURRENT_FALLBACK`과 전체 APIHub 예약량을 읽기 전용으로 집계한다. APIHub 포털의 계정 실제 호출·용량과 비교한다. 내부 예약에는 중기예보 APIHub 호출이 빠져 있다는 점을 반영한다.
 - [ ] 이번 서버 수정은 아직 운영 미배포다. Windows에서 최신 원격 커밋을 받은 뒤 충돌·배포 대상 파일을 확인하고, 운영 DB·기존 소스를 백업한 다음 서버를 배포한다. 배포 후 API·스케줄러·공개 `/health`를 확인하고, 10분 정규 회차와 2분 재시도 회차의 저장·결측·예산 로그 및 구로동 `58/125`의 `/main`·`/today` 관측시각을 검증한다. 사용자 앱의 첫 안내 `계속` 전 위치 팝업 회귀도 새 앱 빌드에서 확인한다.
 
-## 2026-10-02 Windows 인계 기록 커밋과 푸시 인증 대기
+## 2026-10-02 Windows 인계 기록 커밋과 원격 반영
 
 - 앱 권한 수정 `ec9ab3c`, 서버 수집·예산 수정 `8ec3a59`, Windows 인계 `f0f47b7`을 각각 로컬 커밋했다. 저장된 `origin/master`의 `c294487`과 `HANDOFF.md`가 충돌해 양쪽 기록을 모두 남긴 뒤 병합 커밋 `41ebacf`를 만들었다. 기존 iOS `Podfile.lock`·`project.pbxproj`의 미커밋 변경은 포함하지 않았다.
-- HTTPS 원격의 GitHub 암호/토큰이 Mac 키체인에 없고 등록된 SSH 키도 GitHub에서 거부돼 `git fetch`·`git push`가 인증 단계에서 실패했다. GitHub 연결 플러그인을 제안했지만 아직 설치·연결되지는 않았다. **이 커밋들은 아직 원격에 없으므로 Windows에서 `git pull`만 해서는 받을 수 없다.** Mac에서 GitHub 인증이나 플러그인 연결을 완료한 뒤 최신 원격을 다시 받아 충돌 여부를 확인하고 일반 `git push origin master`를 해야 한다. 강제 푸시는 하지 않는다.
+- HTTPS 원격의 GitHub 암호/토큰이 Mac 키체인에 없고 등록된 SSH 키도 GitHub에서 거부돼 CLI `git fetch`·`git push`는 인증 단계에서 실패했다. 이후 사용자가 GitHub 플러그인을 연결했다. 연결된 계정의 원격 `master`가 `c294487`임을 재확인한 뒤 변경된 20개 파일의 blob SHA와 전체 tree SHA를 로컬 최종 커밋과 일치하도록 검증했다. 원격 커밋 `e18b3a5`를 만들고 `master`를 **강제 갱신 없이** 이동했다. Windows에서는 이제 `git pull origin master`로 해당 코드와 인계 기록을 받을 수 있다.

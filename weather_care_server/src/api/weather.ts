@@ -43,6 +43,12 @@ import {
   getNotificationSettings,
 } from '../database/notificationSettingsRepository';
 import { buildCurrentPrecipitationMessage } from '../presentation/currentPrecipitationMessage';
+import { nationwidePrecipitationAtPoint } from '../providers/precipitation/precipitationObservationProvider';
+import { getNationwidePrecipitation } from '../database/nationwidePrecipitationRepository';
+import {
+  nearestRoadControl,
+  type RoadControlSnapshotItem,
+} from '../providers/traffic/itsRoadControlProvider';
 import { buildActiveWarningMessages } from '../presentation/officialWarningMessages';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
 import { isRoadIceSeason } from '../providers/road/kmaRoadIceProvider';
@@ -64,6 +70,7 @@ import {
   saveWeeklyForecastRecords,
 } from '../database/weeklyForecastRepository';
 import {
+  cacheRecordIsFresh,
   collectedCacheKey,
   getCollectedCache,
   saveCollectedCache,
@@ -226,9 +233,10 @@ router.get('/today', async (c) => {
     const generatedAt = new Date();
     const roadIceInSeason = isRoadIceSeason(generatedAt);
     const region = regionMetadataForGrid(nx, ny);
-    const [regionRecord, settings, precipitationRecord, warningRecord,
-      roadIceRecord, roadControlRecord, weeklyRecord,
-      visibilityRecord, ultraShortRecord] = await Promise.all([
+    const [regionRecord, settings, precisePrecipitationRecord, warningRecord,
+      roadIceRecord, preciseRoadControlRecord, weeklyRecord,
+      visibilityRecord, ultraShortRecord, nationwidePrecipitation,
+      roadControlSnapshotRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
         c.env.DB,
         `COLLECTED_REGION_${nx}_${ny}`,
@@ -273,6 +281,15 @@ router.get('/today', async (c) => {
         c.env.DB,
         collectedCacheKey.ultraShortObservation(nx, ny),
       ),
+      coordinates
+        ? getNationwidePrecipitation(c.env.DB, generatedAt)
+        : Promise.resolve(null),
+      coordinates
+        ? getCollectedCache<RoadControlSnapshotItem[]>(
+            c.env.DB,
+            collectedCacheKey.roadControlSnapshot,
+          )
+        : Promise.resolve(null),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
@@ -290,6 +307,39 @@ router.get('/today', async (c) => {
     );
     const responseForecast = { ...forecast, current };
     const environmentalData = regionRecord.value.environmental;
+    let nationwidePrecipitationValue: CurrentPrecipitationObservation | undefined;
+    if (coordinates && nationwidePrecipitation) {
+      try {
+        nationwidePrecipitationValue = nationwidePrecipitationAtPoint(
+          nationwidePrecipitation,
+          coordinates.latitude,
+          coordinates.longitude,
+        );
+      } catch {
+        // A point outside the observed area may still have a location cache.
+      }
+    }
+    const precipitationRecord: CollectedCacheRecord<CurrentPrecipitationObservation> | null =
+      nationwidePrecipitationValue
+        ? {
+            value: nationwidePrecipitationValue,
+            status: 'AVAILABLE',
+            updatedAt: generatedAt.toISOString(),
+          }
+        : precisePrecipitationRecord;
+    const roadControlRecord: CollectedCacheRecord<OfficialRoadControl | null> | null =
+      coordinates && roadControlSnapshotRecord?.status === 'AVAILABLE' &&
+      cacheRecordIsFresh(roadControlSnapshotRecord, 30 * 60 * 1000, generatedAt)
+        ? {
+            value: nearestRoadControl(
+              roadControlSnapshotRecord.value.filter((item) =>
+                !item.endsAt || Date.parse(item.endsAt) > generatedAt.getTime()),
+              coordinates,
+            ) ?? null,
+            status: 'AVAILABLE',
+            updatedAt: roadControlSnapshotRecord.updatedAt,
+          }
+        : preciseRoadControlRecord;
     const precipitation = precipitationRecord?.status === 'AVAILABLE'
       ? precipitationRecord.value
       : undefined;

@@ -26,7 +26,14 @@ import {
   latestGridObservationTime,
 } from '../providers/weather/kmaGridObservationProvider';
 import { KmaAwsMinuteObservationProvider } from '../providers/weather/kmaAwsMinuteObservationProvider';
-import { KmaPrecipitationObservationProvider } from '../providers/precipitation/precipitationObservationProvider';
+import {
+  KmaPrecipitationObservationProvider,
+  nationwidePrecipitationAtPoint,
+} from '../providers/precipitation/precipitationObservationProvider';
+import {
+  getNationwidePrecipitation,
+  saveNationwidePrecipitation,
+} from '../database/nationwidePrecipitationRepository';
 import {
   KmaWarningProvider,
   type KmaWarningRegionMatch,
@@ -105,6 +112,7 @@ import {
 const ENVIRONMENTAL_MAX_AGE_MS = 60 * 60 * 1000;
 const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
 const RADAR_BYTES = 13_281_414;
+const NATIONWIDE_ANALYSIS_BYTES = 16_793_608;
 const ANALYSIS_VALIDATION_LIMIT = 40;
 const ITS_MONTHLY_REQUEST_LIMIT = 9_000;
 const FAST_OBSERVATION_DAILY_BYTE_LIMIT = 1_000_000_000;
@@ -861,7 +869,12 @@ async function collectCurrentPrecipitation(
   now: Date,
   forceSourceRefresh = false,
 ): Promise<void> {
-  if (!env.KMA_APIHUB_KEY || locations.length === 0) return;
+  if (!env.KMA_APIHUB_KEY) return;
+  if (env.NATIONWIDE_PRECOLLECT_ENABLED === 'true' &&
+      await collectNationwidePrecipitation(env, locations, now, forceSourceRefresh)) {
+    return;
+  }
+  if (locations.length === 0) return;
   const ultraByGrid = new Map<string, UltraShortObservation>();
   for (const region of distinctRegions(targets)) {
     const key = collectedCacheKey.ultraShortObservation(region.nx, region.ny);
@@ -924,6 +937,69 @@ async function collectCurrentPrecipitation(
   }
 }
 
+async function collectNationwidePrecipitation(
+  env: ServerEnv,
+  locations: Array<{ latitude: number; longitude: number }>,
+  now: Date,
+  forceSourceRefresh: boolean,
+): Promise<boolean> {
+  // Winter road-ice archives share the same daily APIHub byte allowance.
+  if (!forceSourceRefresh && isRoadIceSeason(now) &&
+      now.getUTCMinutes() % 30 < 15 &&
+      await getNationwidePrecipitation(env.DB, now) !== null) return true;
+  const sourceVersion = latestRadarProductVersion(
+    new Date(now.getTime() - 5 * 60 * 1000),
+  );
+  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
+    env.DB,
+    'NATIONWIDE_PRECIPITATION_15_MINUTES',
+    sourceVersion,
+  )) return await getNationwidePrecipitation(env.DB, now) !== null;
+  if (!await reserveApiHubBudget(
+    env.DB,
+    'NATIONWIDE_ANALYSIS_AND_RADAR',
+    2,
+    NATIONWIDE_ANALYSIS_BYTES + RADAR_BYTES,
+    now,
+  )) return false;
+  try {
+    const snapshot = await new KmaPrecipitationObservationProvider({
+      serviceKey: env.KMA_APIHUB_KEY!,
+      now: () => now,
+      timeoutMs: 45_000,
+      attempts: 1,
+    }).getNationwideSnapshot(new Date(compactIssueToIso(sourceVersion)));
+    await saveNationwidePrecipitation(env.DB, snapshot, now);
+    for (const location of locations) {
+      try {
+        const value = nationwidePrecipitationAtPoint(
+          snapshot,
+          location.latitude,
+          location.longitude,
+        );
+        await saveCollectedCache(env.DB, {
+          key: collectedCacheKey.precipitation(location.latitude, location.longitude),
+          type: 'COLLECTED_PRECIPITATION',
+          value,
+          updatedAt: now,
+        });
+      } catch (error) {
+        logCollectionFailure('precipitation_location', error);
+      }
+    }
+    await saveCollectedSourceVersion(
+      env.DB,
+      'NATIONWIDE_PRECIPITATION_15_MINUTES',
+      sourceVersion,
+      now,
+    );
+    return true;
+  } catch (error) {
+    logCollectionFailure('nationwide_precipitation', error);
+    return false;
+  }
+}
+
 async function collectRoadIce(
   env: ServerEnv,
   locations: Array<{ latitude: number; longitude: number }>,
@@ -976,7 +1052,7 @@ async function collectRoadControls(
   forceSourceRefresh = false,
 ): Promise<void> {
   const provider = itsRoadControlProviderFromEnvironment(env);
-  if (!provider || locations.length === 0) return;
+  if (!provider) return;
   const sourceVersion = pollingWindowVersion(now, 10);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,

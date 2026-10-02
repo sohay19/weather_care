@@ -11,6 +11,8 @@ import { mapWithConcurrency } from '../../utils/concurrencyLimiter';
 
 const ANALYSIS_POINT_URL =
   'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-sfc_obs_nc_pt_api';
+const ANALYSIS_NATIONWIDE_URL =
+  'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-sfc_obs_nc_api';
 const RADAR_COMPOSITE_URL =
   'https://apihub.kma.go.kr/api/typ01/cgi-bin/url/nph-rdr_cmp1_api';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -31,6 +33,12 @@ const RADAR_GRID = {
 export interface RadarGridPoint {
   x: number;
   y: number;
+}
+
+export interface NationwidePrecipitationSnapshot {
+  observedAt: string;
+  analysis: ArrayBuffer;
+  radar: ArrayBuffer;
 }
 
 interface KmaPrecipitationObservationProviderOptions {
@@ -87,6 +95,40 @@ export class KmaPrecipitationObservationProvider {
     this.timeoutMs = options.timeoutMs ?? 10_000;
     this.observationDelayMinutes = options.observationDelayMinutes ?? 10;
     this.attempts = options.attempts ?? 4;
+  }
+
+  async getNationwideSnapshot(target: Date): Promise<NationwidePrecipitationSnapshot> {
+    if (!this.serviceKey) {
+      throw new KmaPrecipitationObservationProviderError(
+        'KMA APIHub service key is not configured',
+      );
+    }
+    const query = new URLSearchParams({
+      tm: compactKst(target),
+      obs: 'rn_ox',
+      disp: 'B',
+      authKey: this.serviceKey,
+    });
+    const [analysisResponse, radar] = await Promise.all([
+      this.fetcher(`${ANALYSIS_NATIONWIDE_URL}?${query}`, {
+        headers: { Accept: 'application/octet-stream' },
+        signal: AbortSignal.timeout(this.timeoutMs),
+      }),
+      this.fetchRadarComposite(target),
+    ]);
+    if (!analysisResponse.ok) {
+      throw new KmaPrecipitationObservationProviderError(
+        await providerHttpFailureMessage(analysisResponse, 'KMA nationwide analysis request'),
+      );
+    }
+    const analysis = await analysisResponse.arrayBuffer();
+    validateNationwideGrid(analysis, 2049, 2049, 4, 'analysis');
+    validateNationwideGrid(radar, RADAR_GRID.nx, RADAR_GRID.ny, 2, 'radar');
+    return {
+      observedAt: compactKstToIso(compactKst(target)),
+      analysis,
+      radar,
+    };
   }
 
   async getCurrentByLocation(
@@ -424,6 +466,84 @@ export function radarGridPoint(
     );
   }
   return { x, y };
+}
+
+export function analysisGridPoint(
+  latitude: number,
+  longitude: number,
+): RadarGridPoint {
+  validateLocation(latitude, longitude);
+  const radians = Math.PI / 180;
+  const first = 30 * radians;
+  const second = 60 * radians;
+  const cone = Math.log(Math.cos(first) / Math.cos(second)) /
+    Math.log(Math.tan(Math.PI / 4 + second / 2) /
+      Math.tan(Math.PI / 4 + first / 2));
+  const scale = Math.pow(Math.tan(Math.PI / 4 + first / 2), cone) *
+    Math.cos(first) / cone;
+  const scaledRadius = 6371.00877 / 0.5;
+  const originRadius = scaledRadius * scale /
+    Math.pow(Math.tan(Math.PI / 4 + 38 * radians / 2), cone);
+  const radius = scaledRadius * scale /
+    Math.pow(Math.tan(Math.PI / 4 + latitude * radians / 2), cone);
+  const theta = cone * (longitude - 126) * radians;
+  const x = Math.round(880 + radius * Math.sin(theta));
+  const y = Math.round(1540 + originRadius - radius * Math.cos(theta));
+  if (x < 0 || x >= 2049 || y < 0 || y >= 2049) {
+    throw new KmaPrecipitationObservationProviderError(
+      'Location is outside the KMA analysis grid',
+    );
+  }
+  return { x, y };
+}
+
+export function nationwidePrecipitationAtPoint(
+  snapshot: NationwidePrecipitationSnapshot,
+  latitude: number,
+  longitude: number,
+): CurrentPrecipitationObservation {
+  const point = analysisGridPoint(latitude, longitude);
+  validateNationwideGrid(snapshot.analysis, 2049, 2049, 4, 'analysis');
+  const analysisValue = new DataView(snapshot.analysis).getFloat32(
+    4 + (point.y * 2049 + point.x) * 4,
+    true,
+  );
+  if (analysisValue !== 0 && analysisValue !== 1) {
+    throw new KmaPrecipitationObservationProviderError(
+      'KMA analysis point has no valid rain observation',
+      analysisValue < 0 ? 'ANALYSIS_MISSING_VALUE' : 'ANALYSIS_NON_BINARY_VALUE',
+    );
+  }
+  const radar = radarRainAtPoint(snapshot.radar, radarGridPoint(latitude, longitude));
+  const analysisRainDetected = analysisValue === 1;
+  return {
+    observedAt: snapshot.observedAt,
+    latitude,
+    longitude,
+    analysisRainDetected,
+    radarRainDetected: radar.rainDetected,
+    state: consensusState(analysisRainDetected, radar.rainDetected),
+    radarDbz: radar.dbz,
+    provider: 'KMA_ANALYSIS_RADAR',
+  };
+}
+
+function validateNationwideGrid(
+  payload: ArrayBuffer,
+  expectedNx: number,
+  expectedNy: number,
+  bytesPerCell: number,
+  name: string,
+): void {
+  if (payload.byteLength < 4) {
+    throw new KmaPrecipitationObservationProviderError(`KMA ${name} grid is too short`);
+  }
+  const view = new DataView(payload);
+  if (view.getUint16(0, true) !== expectedNx ||
+      view.getUint16(2, true) !== expectedNy ||
+      payload.byteLength !== 4 + expectedNx * expectedNy * bytesPerCell) {
+    throw new KmaPrecipitationObservationProviderError(`KMA ${name} grid is invalid`);
+  }
 }
 
 export function radarRainAtPoint(

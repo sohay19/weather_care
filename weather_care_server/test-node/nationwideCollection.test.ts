@@ -9,6 +9,7 @@ import {
   getCollectedCache,
   saveCollectedCache,
 } from '../src/database/collectedWeatherRepository';
+import { NATIONWIDE_PRECIPITATION_CACHE_KEY } from '../src/database/nationwidePrecipitationRepository';
 import { nodeServerEnv } from '../src/node/runtime';
 import { runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
 import { KmaDailyObservationProvider } from '../src/providers/weather/kmaDailyObservationProvider';
@@ -362,6 +363,18 @@ describe('Node 전국 선수집', () => {
         ny: key.includes('60_121') ? 121 : undefined,
       });
     }
+    await saveCollectedCache(env.DB, {
+      key: NATIONWIDE_PRECIPITATION_CACHE_KEY,
+      type: NATIONWIDE_PRECIPITATION_CACHE_KEY,
+      value: { analysisChunks: 1, radarChunks: 1 },
+      updatedAt: new Date('2026-09-21T05:00:00Z'),
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.roadControlSnapshot,
+      type: 'COLLECTED_ROAD_CONTROL_SNAPSHOT',
+      value: [],
+      updatedAt: new Date('2026-09-21T05:00:00Z'),
+    });
     const midTermIssue = latestMidTermIssueTimes(
       new Date('2026-09-21T05:00:00Z'),
       1,
@@ -446,8 +459,8 @@ describe('Node 전국 선수집', () => {
       new Date('2026-09-21T05:00:00Z'),
       grid,
     )).toMatchObject({
-      requiredCaches: 16 + midTermKeys.size,
-      collectedCaches: 16 + midTermKeys.size,
+      requiredCaches: 18 + midTermKeys.size,
+      collectedCaches: 18 + midTermKeys.size,
       missingCaches: 0,
     });
   });

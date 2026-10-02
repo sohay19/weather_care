@@ -7,6 +7,7 @@ import {
   locationCacheKey,
   saveCollectedCache,
 } from '../database/collectedWeatherRepository';
+import { NATIONWIDE_PRECIPITATION_CACHE_KEY } from '../database/nationwidePrecipitationRepository';
 import { isRoadIceSeason } from '../providers/road/kmaRoadIceProvider';
 import {
   NATIONWIDE_FORECAST_GRIDS,
@@ -128,17 +129,18 @@ export function inspectOperationalPrewarm(
   grids: readonly ForecastGrid[] = NATIONWIDE_FORECAST_GRIDS,
 ): OperationalPrewarmSummary {
   const cacheRows = runtime.database.sqlite.prepare(
-    `SELECT cache_key AS cacheKey, payload, status
+    `SELECT cache_key AS cacheKey, payload, status, updated_at AS updatedAt
        FROM weather_cache`,
   ).all() as Array<{
     cacheKey: string;
     payload: string;
     status: string;
+    updatedAt: string;
   }>;
   const requiredObservationDates = recentCompletedKoreanDates(now, 7);
   const available = new Set(
     cacheRows
-      .filter((row) => cacheRowHasUsablePayload(row, requiredObservationDates))
+      .filter((row) => cacheRowHasUsablePayload(row, requiredObservationDates, now))
       .map(({ cacheKey }) => cacheKey),
   );
   const activeTargets = runtime.database.sqlite.prepare(
@@ -149,6 +151,8 @@ export function inspectOperationalPrewarm(
   const activeRegions = distinctGridTargets(activeTargets);
   const activeLocations = distinctLocationTargets(activeTargets);
   const required = new Set<string>();
+  required.add(NATIONWIDE_PRECIPITATION_CACHE_KEY);
+  required.add(collectedCacheKey.roadControlSnapshot);
 
   for (const { nx, ny } of grids) {
     required.add(collectedCacheKey.forecast(nx, ny));
@@ -199,10 +203,22 @@ function cacheRowHasUsablePayload(row: {
   cacheKey: string;
   payload: string;
   status: string;
-}, requiredObservationDates: readonly string[]): boolean {
+  updatedAt: string;
+}, requiredObservationDates: readonly string[], now: Date): boolean {
   if (row.status !== 'AVAILABLE' || row.payload.trim().length === 0) return false;
   try {
     const value: unknown = JSON.parse(row.payload);
+    if (row.cacheKey === collectedCacheKey.roadControlSnapshot) {
+      return Array.isArray(value) &&
+        Date.parse(row.updatedAt) > now.getTime() - 30 * 60 * 1000;
+    }
+    if (row.cacheKey === NATIONWIDE_PRECIPITATION_CACHE_KEY) {
+      const manifest = value as { analysisChunks?: unknown; radarChunks?: unknown };
+      return Number.isInteger(manifest?.analysisChunks) &&
+        Number.isInteger(manifest?.radarChunks) &&
+        Number(manifest.analysisChunks) > 0 && Number(manifest.radarChunks) > 0 &&
+        Date.parse(row.updatedAt) > now.getTime() - 40 * 60 * 1000;
+    }
     if (value === null) {
       return row.cacheKey.startsWith('COLLECTED_ROAD_CONTROL_') ||
         row.cacheKey.startsWith('COLLECTED_ROAD_ICE_');

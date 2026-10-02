@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   KmaWarningProvider,
+  nearestWarningRegion,
   parseActiveWarnings,
   parseWarningRegionStations,
 } from '../src/providers/warnings/kmaWarningProvider';
@@ -161,5 +162,18 @@ L1010000 경기도 L1011900 수원 202609010900 202609011000 C 2 3
     expect(match.distanceMeters).toBeLessThan(10_000);
     const requestUrl = new URL(fetcher.mock.calls[0][0].toString());
     expect(requestUrl.pathname).toContain('wrn_reg_aws2.php');
+  });
+
+  it('전국 측정소 목록에서 같은 예보 격자의 서로 다른 GPS 특보 지역을 구분한다', () => {
+    const stations = [
+      { stationId: '1', stationName: '서쪽', regionId: 'L1000001',
+        regionName: '서쪽', latitude: 37.487, longitude: 126.890 },
+      { stationId: '2', stationName: '동쪽', regionId: 'L1000002',
+        regionName: '동쪽', latitude: 37.487, longitude: 126.900 },
+    ];
+    expect(nearestWarningRegion(stations, 37.487652, 126.893405).regionId)
+      .toBe('L1000001');
+    expect(nearestWarningRegion(stations, 37.4868, 126.8982).regionId)
+      .toBe('L1000002');
   });
 });

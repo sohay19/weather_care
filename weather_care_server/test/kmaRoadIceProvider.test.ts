@@ -4,6 +4,7 @@ import {
   KmaRoadIceProvider,
   ROAD_ICE_ROAD_NUMBERS,
   parseRoadIceArchive,
+  nearestRoadIceRisk,
 } from '../src/providers/road/kmaRoadIceProvider';
 
 describe('KMA road ice provider', () => {
@@ -99,6 +100,24 @@ describe('KMA road ice provider', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(risks).toHaveLength(2);
     expect(risks[0]).toMatchObject({ roadNumber: '050', level: 2 });
+  });
+
+  it('설치 등록과 관계없이 전국 위험 구간을 저장해 임의 좌표에서 판정한다', async () => {
+    const fetcher = vi.fn(async () => new Response(roadIceArchive(), {
+      headers: { 'Content-Type': 'application/zip' },
+    }));
+    const provider = new KmaRoadIceProvider({
+      serviceKey: 'test-key', fetcher,
+      now: () => new Date('2026-01-15T01:00:00Z'),
+    });
+
+    const segments = await provider.getRiskSegments(['050']);
+
+    expect(segments).toHaveLength(2);
+    expect(nearestRoadIceRisk(segments, 37.2636, 127.0286))
+      .toMatchObject({ linkId: 'risk-link', level: 2 });
+    expect(nearestRoadIceRisk(segments, 36, 126)).toBeUndefined();
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 });
 

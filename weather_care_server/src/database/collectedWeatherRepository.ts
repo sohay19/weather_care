@@ -8,10 +8,14 @@ export const collectedCacheKey = {
   forecast: (nx: number, ny: number) => `COLLECTED_FORECAST_${nx}_${ny}`,
   environmental: (nx: number, ny: number) =>
     `COLLECTED_ENVIRONMENTAL_${nx}_${ny}`,
+  nationwideAir: 'COLLECTED_NATIONWIDE_AIR',
+  nationwideAirForecast: 'COLLECTED_NATIONWIDE_AIR_FORECAST',
   weekly: (nx: number, ny: number) => `COLLECTED_WEEKLY_${nx}_${ny}`,
   comparison: (nx: number, ny: number) =>
     `COLLECTED_COMPARISON_${nx}_${ny}`,
   warning: (nx: number, ny: number) => `COLLECTED_WARNING_${nx}_${ny}`,
+  warningStations: 'COLLECTED_WARNING_STATIONS',
+  warningSnapshot: 'COLLECTED_WARNING_SNAPSHOT',
   warningRegion: (nx: number, ny: number) =>
     `COLLECTED_WARNING_REGION_${nx}_${ny}`,
   precipitation: (latitude: number, longitude: number) =>
@@ -20,6 +24,7 @@ export const collectedCacheKey = {
     `COLLECTED_ULTRA_SHORT_${nx}_${ny}`,
   roadIce: (latitude: number, longitude: number) =>
     `COLLECTED_ROAD_ICE_${locationCacheKey(latitude, longitude)}`,
+  roadIceSnapshot: 'COLLECTED_ROAD_ICE_SNAPSHOT',
   roadControl: (latitude: number, longitude: number) =>
     `COLLECTED_ROAD_CONTROL_${locationCacheKey(latitude, longitude)}`,
   roadControlSnapshot: 'COLLECTED_ROAD_CONTROL_SNAPSHOT',

@@ -50,8 +50,17 @@ import {
   type RoadControlSnapshotItem,
 } from '../providers/traffic/itsRoadControlProvider';
 import { buildActiveWarningMessages } from '../presentation/officialWarningMessages';
+import {
+  nearestWarningRegion,
+  type KmaWarningRegionStation,
+  type OfficialWeatherWarning,
+} from '../providers/warnings/kmaWarningProvider';
 import { buildRoadIceMessage } from '../presentation/roadIceMessage';
-import { isRoadIceSeason } from '../providers/road/kmaRoadIceProvider';
+import {
+  isRoadIceSeason,
+  nearestRoadIceRisk,
+  type RoadIceSegment,
+} from '../providers/road/kmaRoadIceProvider';
 import { buildRoadControlMessage } from '../presentation/roadControlMessage';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import {
@@ -234,7 +243,8 @@ router.get('/today', async (c) => {
     const roadIceInSeason = isRoadIceSeason(generatedAt);
     const region = regionMetadataForGrid(nx, ny);
     const [regionRecord, settings, precisePrecipitationRecord, warningRecord,
-      roadIceRecord, preciseRoadControlRecord, weeklyRecord,
+      warningSnapshotRecord,
+      roadIceRecord, roadIceSnapshotRecord, preciseRoadControlRecord, weeklyRecord,
       visibilityRecord, ultraShortRecord, nationwidePrecipitation,
       roadControlSnapshotRecord] = await Promise.all([
       getCollectedCache<CollectedRegionBundle>(
@@ -258,9 +268,20 @@ router.get('/today', async (c) => {
         collectedCacheKey.warning(nx, ny),
       ),
       coordinates
+        ? getCollectedCache<{
+            stations: KmaWarningRegionStation[];
+            warnings: OfficialWeatherWarning[];
+          }>(c.env.DB, collectedCacheKey.warningSnapshot)
+        : Promise.resolve(null),
+      coordinates
         ? getCollectedCache<RoadIceRisk | null>(
             c.env.DB,
             collectedCacheKey.roadIce(coordinates.latitude, coordinates.longitude),
+          )
+        : Promise.resolve(null),
+      coordinates && roadIceInSeason
+        ? getCollectedCache<RoadIceSegment[]>(
+            c.env.DB, collectedCacheKey.roadIceSnapshot,
           )
         : Promise.resolve(null),
       coordinates
@@ -343,22 +364,48 @@ router.get('/today', async (c) => {
     const precipitation = precipitationRecord?.status === 'AVAILABLE'
       ? precipitationRecord.value
       : undefined;
-    const warningsResultValue = warningRecord?.value ?? {
-      warnings: [],
-      regionName: region?.name,
-    };
-    const roadIce = roadIceRecord?.value ?? undefined;
+    const warningSnapshotAvailable = coordinates &&
+      warningSnapshotRecord?.status === 'AVAILABLE' &&
+      warningSnapshotRecord.value.stations.length > 0 &&
+      cacheRecordIsFresh(warningSnapshotRecord, 45 * 60 * 1000, generatedAt);
+    const warningMatch = warningSnapshotAvailable
+      ? nearestWarningRegion(
+          warningSnapshotRecord.value.stations,
+          coordinates.latitude,
+          coordinates.longitude,
+        )
+      : undefined;
+    const gridWarningAvailable = warningRecord?.status === 'AVAILABLE' &&
+      cacheRecordIsFresh(warningRecord, 45 * 60 * 1000, generatedAt);
+    const warningsResultValue = warningMatch
+      ? {
+          warnings: warningSnapshotRecord!.value.warnings.filter((warning) =>
+            warning.regionId === warningMatch.regionId),
+          regionName: warningMatch.regionName,
+        }
+      : gridWarningAvailable ? warningRecord.value : {
+          warnings: [], regionName: region?.name,
+        };
+    const roadIceSnapshotAvailable = roadIceSnapshotRecord?.status === 'AVAILABLE' &&
+      cacheRecordIsFresh(roadIceSnapshotRecord, 45 * 60 * 1000, generatedAt);
+    const roadIce = coordinates && roadIceSnapshotAvailable
+      ? nearestRoadIceRisk(
+          roadIceSnapshotRecord.value,
+          coordinates.latitude,
+          coordinates.longitude,
+        )
+      : roadIceRecord?.value ?? undefined;
     const roadControl = roadControlRecord?.status === 'AVAILABLE'
       ? roadControlRecord.value ?? undefined
       : undefined;
     const optionalTimeouts: OptionalProviderTimeouts = {
       precipitation:
         coordinates !== undefined && precipitationRecord?.status !== 'AVAILABLE',
-      warning: warningRecord === null,
+      warning: !warningMatch && !gridWarningAvailable,
       roadIce:
         roadIceInSeason &&
         coordinates !== undefined &&
-        roadIceRecord === null,
+        !roadIceSnapshotAvailable && roadIceRecord === null,
       roadControl:
         coordinates !== undefined && roadControlRecord?.status !== 'AVAILABLE',
     };

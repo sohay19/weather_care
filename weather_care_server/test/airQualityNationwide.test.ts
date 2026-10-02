@@ -4,6 +4,7 @@ import {
   AirKoreaAirQualityProvider, nearestAirStations,
 } from '../src/providers/air/airKoreaAirQualityProvider';
 import { loadEnvironmentalData } from '../src/providers/environmental/environmentalDataService';
+import { nearestNationwideAirQuality } from '../src/providers/environmental/environmentalDataService';
 import { regionMetadataForGrid } from '../src/regions/regionCatalog';
 import { saveEnvironmentalCache } from '../src/database/environmentalCacheRepository';
 
@@ -53,6 +54,31 @@ beforeEach(async () => {
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('nationwide air-quality resolution', () => {
+  it('시도별 묶음 관측을 받아 미등록 좌표에서 가까운 측정소를 고른다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input));
+      expect(url.pathname).toContain('getCtprvnRltmMesureDnsty');
+      expect(url.searchParams.get('sidoName')).toBe('서울');
+      return response([{
+        stationName: '서울 테스트', dataTime: '2026-09-10 18:00',
+        pm10Value: '31', pm25Value: '12', o3Value: '0.028',
+      }]);
+    });
+    const provider = new AirKoreaAirQualityProvider({
+      serviceKey: 'test-key', fetcher, now: () => now,
+    });
+    const observations = await provider.getProvinceMeasurements('서울');
+    const selected = nearestNationwideAirQuality({
+      catalog: { fetchedAt: now.toISOString(), stations: [
+        { stationName: '서울 테스트', latitude: 37.58, longitude: 126.99 },
+      ] },
+      observations, collectedAt: now.toISOString(),
+    }, 37.487652, 126.893405, now);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(selected).toMatchObject({ stationName: '서울 테스트', pm10: 31, pm25: 12 });
+  });
+
   it.each([
     [100, 76, '부산 테스트'], [52, 38, '제주 테스트'],
     [127, 127, '울릉 테스트'], [21, 132, '백령 테스트'],

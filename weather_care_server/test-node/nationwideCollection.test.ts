@@ -337,7 +337,9 @@ describe('Node 전국 선수집', () => {
       collectedCacheKey.forecast(61, 121),
       'CURRENT_61_121',
       'COLLECTED_REGION_61_121',
+      collectedCacheKey.environmental(61, 121),
       collectedCacheKey.weekly(61, 121),
+      collectedCacheKey.warning(61, 121),
       collectedCacheKey.visibility(61, 121),
     ];
     for (const key of requiredCaches) {
@@ -358,7 +360,9 @@ describe('Node 전국 선수집', () => {
                   '20260920',
                 ].map((date) => ({ date, weatherDataComplete: true })),
               }
-            : { ready: true },
+            : key.startsWith('COLLECTED_ENVIRONMENTAL_')
+              ? { sources: { uv: { state: 'AVAILABLE' }, airQuality: { state: 'AVAILABLE' } } }
+              : { ready: true },
         nx: key.includes('60_121') ? 60 : undefined,
         ny: key.includes('60_121') ? 121 : undefined,
       });
@@ -373,6 +377,28 @@ describe('Node 전국 선수집', () => {
       key: collectedCacheKey.roadControlSnapshot,
       type: 'COLLECTED_ROAD_CONTROL_SNAPSHOT',
       value: [],
+      updatedAt: new Date('2026-09-21T05:00:00Z'),
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.nationwideAir,
+      type: 'COLLECTED_NATIONWIDE_AIR',
+      value: { catalog: { stations: [{ stationName: '테스트' }] },
+        observations: [{ stationName: '테스트' }], collectedAt: nowIso() },
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.nationwideAirForecast,
+      type: 'COLLECTED_NATIONWIDE_AIR_FORECAST',
+      value: { issue: '202609211100', areas: { 서울: [] } },
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.warningStations,
+      type: 'COLLECTED_WARNING_STATIONS',
+      value: [{ regionId: 'L1234567', latitude: 37, longitude: 127 }],
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.warningSnapshot,
+      type: 'COLLECTED_WARNING_SNAPSHOT',
+      value: { stations: [{ regionId: 'L1234567', latitude: 37, longitude: 127 }], warnings: [] },
       updatedAt: new Date('2026-09-21T05:00:00Z'),
     });
     const midTermIssue = latestMidTermIssueTimes(
@@ -459,8 +485,8 @@ describe('Node 전국 선수집', () => {
       new Date('2026-09-21T05:00:00Z'),
       grid,
     )).toMatchObject({
-      requiredCaches: 18 + midTermKeys.size,
-      collectedCaches: 18 + midTermKeys.size,
+      requiredCaches: 24 + midTermKeys.size,
+      collectedCaches: 24 + midTermKeys.size,
       missingCaches: 0,
     });
   });

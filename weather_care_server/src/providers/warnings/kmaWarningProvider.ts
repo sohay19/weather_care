@@ -46,7 +46,7 @@ export interface KmaWarningRegionMatch {
   distanceMeters: number;
 }
 
-interface KmaWarningRegionStation {
+export interface KmaWarningRegionStation {
   regionId: string;
   regionName: string;
   stationId: string;
@@ -166,6 +166,15 @@ export class KmaWarningProvider {
     }
     if (locations.length === 0) return [];
 
+    const stations = await this.getRegionStations();
+    return locations.map(({ latitude, longitude }) =>
+      nearestWarningRegion(stations, latitude, longitude));
+  }
+
+  async getRegionStations(): Promise<KmaWarningRegionStation[]> {
+    if (!this.serviceKey) {
+      throw new KmaWarningProviderError('KMA APIHub service key is not configured');
+    }
     const query = new URLSearchParams({
       tm: '',
       disp: '0',
@@ -186,34 +195,44 @@ export class KmaWarningProvider {
       );
     }
 
-    const stations = parseWarningRegionStations(await response.text());
-    return locations.map(({ latitude, longitude }) => {
-      const nearest = stations
-        .map((station) => ({
-          station,
-          distanceMeters: haversineMeters(
-            latitude,
-            longitude,
-            station.latitude,
-            station.longitude,
-          ),
-        }))
-        .sort((left, right) => left.distanceMeters - right.distanceMeters)[0];
-      if (!nearest) {
-        throw new KmaWarningProviderError(
-          'KMA warning region mapping response has no usable stations',
-          'WARNING_REGION_MAPPING_INVALID',
-        );
-      }
-      return {
-        regionId: nearest.station.regionId,
-        regionName: nearest.station.regionName,
-        stationId: nearest.station.stationId,
-        stationName: nearest.station.stationName,
-        distanceMeters: Math.round(nearest.distanceMeters),
-      };
-    });
+    return parseWarningRegionStations(await response.text());
   }
+}
+
+export function nearestWarningRegion(
+  stations: readonly KmaWarningRegionStation[],
+  latitude: number,
+  longitude: number,
+): KmaWarningRegionMatch {
+  if (!isKoreanCoordinate(latitude, longitude)) {
+    throw new KmaWarningProviderError(
+      'KMA warning location is outside the valid Korean coordinate range',
+    );
+  }
+  let nearest: KmaWarningRegionStation | undefined;
+  let distanceMeters = Number.POSITIVE_INFINITY;
+  for (const station of stations) {
+    const distance = haversineMeters(
+      latitude, longitude, station.latitude, station.longitude,
+    );
+    if (distance < distanceMeters) {
+      nearest = station;
+      distanceMeters = distance;
+    }
+  }
+  if (!nearest) {
+    throw new KmaWarningProviderError(
+      'KMA warning region mapping response has no usable stations',
+      'WARNING_REGION_MAPPING_INVALID',
+    );
+  }
+  return {
+    regionId: nearest.regionId,
+    regionName: nearest.regionName,
+    stationId: nearest.stationId,
+    stationName: nearest.stationName,
+    distanceMeters: Math.round(distanceMeters),
+  };
 }
 
 const WARNING_NAMES: Record<KmaWarningTypeCode, string> = {

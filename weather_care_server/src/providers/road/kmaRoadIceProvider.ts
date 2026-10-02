@@ -32,7 +32,7 @@ interface KmaRoadIceProviderOptions {
   maxDistanceMeters?: number;
 }
 
-interface RoadIceSegment {
+export interface RoadIceSegment {
   producedAt: string;
   roadNumber: string;
   linkId: string;
@@ -93,7 +93,7 @@ export class KmaRoadIceProvider {
       2,
       (roadNumber) => this.fetchRoadSegments(roadNumber),
     );
-    return nearestRisk(
+    return nearestRoadIceRisk(
       segmentGroups.flat(),
       latitude,
       longitude,
@@ -122,12 +122,25 @@ export class KmaRoadIceProvider {
       (roadNumber) => this.fetchRoadSegments(roadNumber),
     );
     const segments = segmentGroups.flat();
-    return locations.map((location) => nearestRisk(
+    return locations.map((location) => nearestRoadIceRisk(
       segments,
       location.latitude,
       location.longitude,
       this.maxDistanceMeters,
     ));
+  }
+
+  async getRiskSegments(
+    roadNumbers: readonly string[] = ROAD_ICE_ROAD_NUMBERS,
+  ): Promise<RoadIceSegment[]> {
+    if (!this.serviceKey) {
+      throw new KmaRoadIceProviderError('KMA APIHub service key is not configured');
+    }
+    if (!isRoadIceSeason(this.now()) || roadNumbers.length === 0) return [];
+    const groups = await mapWithConcurrency(
+      roadNumbers, 2, (roadNumber) => this.fetchRoadSegments(roadNumber),
+    );
+    return groups.flat().filter((segment) => segment.level > 0);
   }
 
   private async fetchRoadSegments(
@@ -156,11 +169,11 @@ export class KmaRoadIceProvider {
   }
 }
 
-function nearestRisk(
+export function nearestRoadIceRisk(
   segments: readonly RoadIceSegment[],
   latitude: number,
   longitude: number,
-  maxDistanceMeters: number,
+  maxDistanceMeters = DEFAULT_MAX_DISTANCE_METERS,
 ): RoadIceRisk | undefined {
   const candidates = segments
       .filter((segment) => segment.level > 0)

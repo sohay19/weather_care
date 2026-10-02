@@ -23,7 +23,7 @@
 
 ## 서버 프로젝트
 - 프로젝트 경로: /weather_care_server
-- Cloudflare Workers + TypeScript + Hono + D1
+- 미니 PC Node.js + TypeScript + Hono + SQLite 운영 서버 (Cloudflare Tunnel로 공개)
 - 개발명세서: docs/날씨챙겨_서버_개발명세.docx
 
 ## Project Overview

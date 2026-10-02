@@ -1,7 +1,9 @@
 # 날씨챙겨 Server
 
-TypeScript + Hono 서버입니다. 현재 운영은 Cloudflare Workers + D1이며, 같은 API와
-중앙 수집 로직을 가정용 미니 PC의 Node.js + SQLite에서도 실행할 수 있습니다.
+TypeScript + Hono 서버입니다. 현재 운영 원본은 미니 PC의 Node.js + SQLite입니다.
+공개 주소 `https://weather-api.codesoha.com`은 Cloudflare Tunnel로 이 서버에 연결됩니다.
+소스에 남은 `D1Database` 타입과 `cf` 요청 옵션은 이전 구현과 호환되는 코드이며,
+현재 운영 데이터베이스나 수집기가 Cloudflare Workers/D1에서 실행된다는 뜻은 아닙니다.
 
 날씨·환경 원본 데이터는 공공데이터포털의 다음 서비스를 사용합니다.
 
@@ -31,14 +33,9 @@ TypeScript + Hono 서버입니다. 현재 운영은 Cloudflare Workers + D1이�
 
 ## 실행
 
-먼저 공공데이터포털에서 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보를 각각 활용신청한 뒤 발급받은 일반 인증키를
-로컬 Secret 파일에 저장합니다. `.dev.vars`는 Git에서 제외되어 있습니다.
-
-```bash
-cp .dev.vars.example .dev.vars
-```
-
-`.dev.vars`의 `KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
+먼저 공공데이터포털에서 단기예보, 생활기상지수, 에어코리아 대기오염정보를
+각각 활용신청하고 발급받은 키를 저장소 밖의 환경 파일에 보관합니다.
+`KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
 `client_email`, `private_key`를 각각 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`로
 교체합니다. 현재 위치의 500m 강수 판정과 실제 발효 특보 조회에는 기상청
 API허브에서 중기예보·지상·AWS 일통계·고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
@@ -51,19 +48,9 @@ Open API 활용신청을 하고 발급받은 키를 운영 미니 PC의 `ITS_API
 Firebase 프로젝트 ID는 공개 설정값
 `weather-care-2aaa8`로 고정되어 있습니다.
 
-```bash
-cd weather_care_server
-npm install
-npm run db:migrate
-npm run dev -- --ip 0.0.0.0 --port 8787
-```
+### 운영 서버: 미니 PC Node.js + SQLite
 
-`db:migrate`는 로컬 D1에 `weather_cache`를 포함한 필수 테이블을 생성합니다.
-Android 에뮬레이터는 호스트의 이 서버를 `http://10.0.2.2:8787`로 접근합니다.
-
-### 미니 PC Node.js + SQLite
-
-Node.js 22 이상에서 기존 D1 마이그레이션과 Hono 앱을 그대로 사용합니다. 운영
+Node.js 22 이상에서 SQLite 마이그레이션과 Hono 앱을 사용합니다. 운영
 환경변수는 저장소 밖에서 주입하며 기본 DB 경로는 `./data/weather-care.sqlite`, API
 바인딩은 `127.0.0.1:8787`입니다.
 
@@ -74,44 +61,46 @@ npm run node:db:migrate
 npm run node:server
 ```
 
-별도 프로세스에서 `npm run node:scheduler`를 실행하면 Worker Cron과 같은 시각에
-중앙 수집·알림을 수행합니다. Worker Cron과 동시에 켜면 외부 API 사용량이 중복되므로
-전환 전에는 실행하지 않습니다. D1 스냅샷 가져오기, systemd, 백업, Cloudflare
-Tunnel과 최종 전환 순서는 [`ops/mini-pc/README.md`](ops/mini-pc/README.md)에 있습니다.
-전환기에 Worker Secret `LEGACY_ORIGIN_URL`을 설정하면 기존 `workers.dev`를 사용하는
-앱 요청은 새 HTTPS 원본으로 전달되고 Worker Cron은 실행되지 않습니다.
+별도 프로세스에서 `npm run node:scheduler`를 실행하면 중앙 수집·알림을 수행합니다.
+운영은 `weather-care-api.service`, `weather-care-scheduler.service`,
+`cloudflared.service`로 실행하며 설정과 SQLite 파일은 저장소 밖에 둡니다.
+`ops/mini-pc/README.md`의 이전 절차는 과거 전환 이력이며 현재 배포 절차가 아닙니다.
 
 Node 중앙 수집기는 기본적으로 앱이 지원하는 전국 1,633개 예보 격자를 18개 묶음으로
 나눠 10분마다 한 묶음씩 갱신합니다. 따라서 정상 운영 중에는 모든 격자의 기본 예보가
 3시간 안에 순환 갱신됩니다.
 
 운영 스케줄러는 시작할 때 보충 수집과 정각 core 수집을 하나의 선수집으로
-실행합니다. 전국 1,633개의 기본·현재·주간 예보와 ASOS 가시거리, 최근 7일
-일관측을 채우고, 활성 설치 지역의 환경·특보·초단기실황·레이더·도로 자료도
-같은 회차에서 호출합니다. 필수 캐시와 최근 7일 일관측을 전수 검증해 키 누락·빈
+실행합니다. 전국 1,633개의 기본·현재·주간 예보, 자외선·대기질·특보와
+ASOS 가시거리, 최근 7일 일관측을 채웁니다. 전국 강수·도로 통제 원본을
+좌표 등록 없이 저장하고, 도로살얼음 원본은 제공 계절에 전국 수집합니다.
+필수 캐시와 최근 7일 일관측을 전수 검증해 키 누락·빈
 payload·손상 JSON·`UNAVAILABLE`이 있으면 최대 3회 재시도하고, 그래도 빈 항목이
 있으면 성공으로 처리하지 않고 정규 스케줄러를 시작하지 않습니다.
 `npm run node:prewarm`은 같은 선수집·검증을 수동으로 다시 실행할 때 사용합니다.
+
+| 자료 | 미니 PC 중앙 수집 | 새 GPS 좌표 조회 |
+| --- | --- | --- |
+| 기온·예보·시정 | 전국 1,633개 격자 | 해당 예보 격자 캐시 |
+| 자외선 | 전국 공식 행정코드, 약 6시간 간격 | 해당 격자 행정코드 캐시 |
+| 현재 대기질 | 에어코리아 전국 17개 시도, 약 2시간 간격 | 해당 예보 격자에 가까운 공식 측정소 관측 |
+| 대기질 예보 | 전국 예보 통보 원본을 발표 시각별 공통 조회 | 해당 예보 권역 값 |
+| 발효 특보 | 전국 지역표와 특보 현황, 30분 간격 | GPS에서 가장 가까운 특보 지역 |
+| 현재 강수·도로 통제 | 전국 원본, 각각 15~30분·10분 간격 | GPS 지점에서 계산 |
+| 도로살얼음 | 제공 계절에 전국 지원 도로, 30분 간격 | GPS 3km 이내 위험 구간 |
+
+위 수집 범위는 앱이 지원하는 국내 위치에 적용됩니다. 제공처가 관측값을
+발표하지 않았거나 요청·사용량 제한으로 수집이 실패하면 값을 임의로 만들지 않고
+자료 상태를 표시합니다. 도로살얼음은 지원 고속도로와 제공 계절 밖에서는
+표시 대상 자체가 아닙니다.
 
 정규 core 작업은 10분마다 가시거리 수집 완료 여부를 다시 확인합니다. 정각 작업이
 중복으로 건너뛰거나 외부 요청이 실패해도 10분 뒤에 재시도하며, 일관측 보충도
 오전 2시 정각 한 번에만 의존하지 않고 2시대 core 작업에서 누락을 다시 확인합니다.
 
-운영 Worker에는 키를 소스나 `wrangler.toml`에 넣지 않고 다음 명령의 대화형
-입력으로 등록합니다.
-
-```bash
-npx wrangler secret put KMA_SERVICE_KEY
-npx wrangler secret put KMA_APIHUB_KEY
-npx wrangler secret put ITS_API_KEY
-npx wrangler secret put FCM_CLIENT_EMAIL
-npx wrangler secret put FCM_PRIVATE_KEY
-npx wrangler d1 migrations apply weather_care_db --remote
-npm run deploy
-```
-
-현재 운영 원본은 미니 PC이므로 Worker의 `ITS_API_KEY`는 비상 전환 시에만
-사용합니다. 이전 Tailscale ITS 중계 서비스는 운영 경로에서 사용하지 않습니다.
+운영 비밀값은 미니 PC의 `/etc/weather-care/weather-care.env`에서 주입합니다.
+SQLite 파일은 `/var/lib/weather-care/weather-care-release.sqlite`에 있습니다.
+이전 Tailscale ITS 중계 서비스는 운영 경로에서 사용하지 않습니다.
 
 ## 핵심 구조
 
@@ -119,7 +108,7 @@ npm run deploy
 - `src/lifestyle/*`: RuleFact -> LifestyleInsight + 생활 문구 카탈로그
 - `src/recommendations/*`: Insight + 사용자 설정 -> Recommendation + 준비물 문구 카탈로그
 - `src/notification/*`: 추천 결과 생성·중복 방지·FCM HTTP v1 전송
-- `src/database/*`: D1 저장/조회 함수
+- `src/database/*`: SQLite 저장/조회 함수 (`D1Database` 호환 타입 사용)
 - `src/providers/weather/kmaWeatherProvider.ts`: 기상청 응답 검증·정규화
 - `src/providers/weather/kmaMidTermProvider.ts`: 06시 중기 기온·육상예보(4~10일) 검증·정규화
 - `src/providers/weather/kmaDailyObservationProvider.ts`: 인근 지상·AWS 관측소의 지난 날 일 최저·최고기온·강수·적설 정규화
@@ -139,13 +128,13 @@ Cron은 10분마다 전국 격자 한 묶음의 단기예보와 활성 설치의
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 
-`environmentalSources.uv` / `environmentalSources.airQuality`은 각각 `AVAILABLE`, `CACHED`, `STALE`, `UNAVAILABLE`, `UNSUPPORTED_REGION` 상태를 제공합니다. D1 캐시는 자외선 2시간, 대기질 30분을 신선 기준으로 사용하고, 새 조회 실패 시 자외선 최대 8시간·대기질 최대 3시간의 이전 값만 `STALE`로 허용합니다. 환경 Provider가 실패해도 단기예보가 정상이면 Today API는 200을 유지합니다.
+`environmentalSources.uv` / `environmentalSources.airQuality`은 각각 `AVAILABLE`, `CACHED`, `STALE`, `UNAVAILABLE`, `UNSUPPORTED_REGION` 상태를 제공합니다. 전국 자외선은 지원 격자를 6시간 간격으로 갱신하고, 에어코리아 시도별 관측은 2시간 간격으로 공통 조회합니다. 외부 제공처가 값을 주지 않으면 상태를 `UNAVAILABLE`로 표시하며 값을 만들지 않습니다.
 
 현재 관측과 미래 예보의 `apparentTemperature`는 적용 조건을 충족할 때 [기상청 공식 체감온도 산식](https://data.kma.go.kr/climate/windChill/selectWindChillChart.do)을 사용합니다. 5~9월은 기온·상대습도·Stull 습구온도 기반 여름 산식, 10~익년 4월은 기온 10℃ 이하·풍속 1.3m/s 이상일 때 겨울 풍속냉각 산식을 적용합니다. 이 조건 밖에 있고 같은 시각의 기온·습도·풍속이 모두 있으면 [호주 기상청의 Steadman 비복사 산식](https://www.bom.gov.au/info/thermal_stress/)으로 추정 체감온도를 계산합니다. 이때 `apparentTemperatureSource`는 관측 또는 예보 Steadman 출처를 기록하며 `kmaApparentTemperature`는 비워 기상청 공식 적용 범위의 값과 구분합니다. 입력값이 빠졌으면 숫자를 만들지 않습니다. 앱의 표현 경계와 연구 근거는 [`docs/체감온도_표현_기준.md`](../docs/체감온도_표현_기준.md)에 있습니다.
 
-현재 환경 지역 카탈로그는 앱에서 사용하는 수원 `60:121`(자외선 `4111000000`, 인계동 측정소)와 검증용 서울 `60:127`(자외선 `1100000000`, 종로구 측정소)를 지원합니다. 지역 선택 기능을 확장할 때 행정코드와 측정소를 카탈로그에 함께 등록해야 합니다.
+자외선은 전국 공식 격자·행정코드 표를 사용하고, 대기질은 전국 측정소 위치와 시도별 묶음 관측에서 가까운 유효 측정소를 선택합니다. 특보는 전국 지역 측정소와 발효 자료를 저장한 뒤 요청 GPS 좌표에서 지역을 결정합니다.
 
-`/weather/weekly`는 지역 단기예보를 우선하고, 공식 일 최저·최고가 없는 겹침 날짜와 이후 빈 날짜를 중기 기온·육상예보로 보충합니다. 단기와 중기 Provider는 독립 처리해 한쪽이 실패해도 나머지 자료를 반환합니다. 지난 날짜는 예보격자 대표점에 가장 가까운 기상청 지상·AWS 관측소의 실제 일통계를 우선 반환하고, 관측 미수신 시에만 D1에 남은 `저장된 예보`를 보조로 사용합니다. 두 예보와 관측·저장 기록이 모두 없으면 날씨를 추정하지 않고 결측 상태를 반환합니다.
+`/weather/weekly`는 지역 단기예보를 우선하고, 공식 일 최저·최고가 없는 겹침 날짜와 이후 빈 날짜를 중기 기온·육상예보로 보충합니다. 단기와 중기 Provider는 독립 처리해 한쪽이 실패해도 나머지 자료를 반환합니다. 지난 날짜는 예보격자 대표점에 가장 가까운 기상청 지상·AWS 관측소의 실제 일통계를 우선 반환하고, 관측 미수신 시에만 SQLite에 남은 `저장된 예보`를 보조로 사용합니다. 두 예보와 관측·저장 기록이 모두 없으면 날씨를 추정하지 않고 결측 상태를 반환합니다.
 
 `/weather/today`의 현재 강수는 관측분석과 500m 레이더 일치를 선택 자료로 병합합니다. 레이더 합성장의 초기 로드가 공통 3.5초 제한을 넘어 정상 결과도 `null`로 반환되던 경로는 강수 전용 8초 대기로 분리했습니다. 전체 API 응답은 앱의 20초 제한 안에서 유지합니다.
 

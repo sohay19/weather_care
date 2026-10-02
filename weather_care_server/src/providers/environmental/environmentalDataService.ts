@@ -46,6 +46,26 @@ interface EnvironmentalLoadOptions {
   ny?: number;
   coordinates?: { latitude: number; longitude: number };
   providerTimeoutMs?: number;
+  uvFreshMs?: number;
+  nationwideAir?: NationwideAirQualitySnapshot | null;
+}
+
+export interface NationwideAirQualitySnapshot {
+  catalog: AirStationCatalog;
+  observations: AirQualitySnapshot[];
+  collectedAt: string;
+}
+
+export function nearestNationwideAirQuality(
+  snapshot: NationwideAirQualitySnapshot,
+  latitude: number,
+  longitude: number,
+  now = new Date(),
+): AirQualitySnapshot | undefined {
+  const observations = new Map(snapshot.observations.map((item) => [item.stationName, item]));
+  return nearestAirStations(snapshot.catalog, latitude, longitude)
+    .map((station) => observations.get(station.stationName))
+    .find((item) => item && isRecentAirObservation(item.observedAt, now));
 }
 
 interface ResolveOptions<T> {
@@ -90,7 +110,7 @@ export async function loadEnvironmentalData(
           nx,
           ny,
           provider: 'KMA_LIVING_INDEX_V5',
-          freshMs: UV_FRESH_MS,
+          freshMs: options.uvFreshMs ?? UV_FRESH_MS,
           maxStaleMs: UV_MAX_STALE_MS,
           observedAt: (value) => value.issuedAt,
           load: () =>
@@ -104,7 +124,22 @@ export async function loadEnvironmentalData(
       : Promise.resolve<ResolvedValue<UvForecast>>({
           source: unsupportedSource('KMA_LIVING_INDEX_V5'),
         });
-  const airQualityPromise =
+  const airQualityPromise = options.nationwideAir !== undefined
+    ? Promise.resolve<ResolvedValue<AirQualitySnapshot>>((() => {
+        const coordinates = options.coordinates ??
+          (nx !== undefined && ny !== undefined ? kmaGridCoordinates(nx, ny) : undefined);
+        const value = coordinates && options.nationwideAir
+          ? nearestNationwideAirQuality(
+              options.nationwideAir, coordinates.latitude, coordinates.longitude, now,
+            )
+          : undefined;
+        return value && options.nationwideAir
+          ? { value, source: availableSource(
+              'AIRKOREA', 'CACHED', value.observedAt, options.nationwideAir.collectedAt,
+            ) }
+          : { source: unavailableSource('AIRKOREA') };
+      })())
+    :
     nx !== undefined && ny !== undefined && kmaGridCoordinates(nx, ny)
       ? loadAirQuality(
           env,

@@ -7,9 +7,15 @@ import {
 
 const AIRKOREA_URL =
   'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty';
+const AIRKOREA_PROVINCE_URL =
+  'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty';
 const AIRKOREA_STATION_URL =
   'https://apis.data.go.kr/B552584/MsrstnInfoInqireSvc/getMsrstnList';
 export const NEARBY_STATION_ATTEMPTS = 5;
+export const AIRKOREA_PROVINCES = Object.freeze([
+  '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
+  '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주',
+]);
 const STATION_PAGE_SIZE = 1000;
 const MAX_STATION_PAGES = 10;
 
@@ -235,6 +241,58 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     throw new AirKoreaAirQualityProviderError(
       'AirKorea returned no usable measurements',
     );
+  }
+
+  async getProvinceMeasurements(province: string): Promise<AirQualitySnapshot[]> {
+    this.requireServiceKey();
+    if (!AIRKOREA_PROVINCES.includes(province)) {
+      throw new AirKoreaAirQualityProviderError('Unsupported AirKorea province');
+    }
+    const query = new URLSearchParams({
+      serviceKey: this.serviceKey,
+      returnType: 'json',
+      numOfRows: '1000',
+      pageNo: '1',
+      sidoName: province,
+      ver: '1.3',
+    });
+    const response = await this.fetcher(`${AIRKOREA_PROVINCE_URL}?${query}`, {
+      headers: { Accept: 'application/json' },
+      signal: this.requestSignal(),
+    });
+    const payload = await boundedJson(response);
+    const parsed = airResponseSchema.safeParse(payload);
+    if (!parsed.success || !response.ok) {
+      throw new AirKoreaAirQualityProviderError('AirKorea province response is invalid');
+    }
+    const { header, body } = parsed.data.response;
+    if (header.resultCode !== '00' || !body) {
+      throw new AirKoreaAirQualityProviderError(
+        `AirKorea province returned ${header.resultCode}: ${header.resultMsg}`,
+      );
+    }
+    const items = Array.isArray(body.items) ? body.items : [body.items];
+    const observations = items.flatMap((item) => {
+      const stationName = item.stationName?.trim();
+      const observedAt = airKoreaTimeToIso(item.dataTime);
+      if (!stationName || !observedAt || !isRecentAirObservation(observedAt, this.now())) return [];
+      const pm10 = numericValue(item.pm10Value);
+      const pm25 = numericValue(item.pm25Value);
+      const ozone = numericValue(item.o3Value);
+      if (pm10 === undefined && pm25 === undefined && ozone === undefined) return [];
+      return [{
+        observedAt, stationName, pm10, pm25,
+        airQualityGrade: worstGrade([item.pm10Grade1h ?? item.pm10Grade,
+          item.pm25Grade1h ?? item.pm25Grade]),
+        ozone, ozoneGrade: gradeLabel(item.o3Grade), provider: 'AIRKOREA' as const,
+      }];
+    });
+    if (observations.length === 0) {
+      throw new AirKoreaAirQualityProviderError(
+        `AirKorea province returned no usable measurements: ${province}`,
+      );
+    }
+    return observations;
   }
 
   async getStationCatalog(): Promise<AirStationCatalog> {

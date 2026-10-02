@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   AirKoreaForecastProvider,
+  AIRKOREA_FORECAST_AREAS,
   airKoreaForecastArea,
+  airKoreaForecastAreaForGrid,
 } from '../src/providers/air/airKoreaForecastProvider';
 
 describe('AirKoreaForecastProvider', () => {
@@ -63,6 +65,30 @@ describe('AirKoreaForecastProvider', () => {
     expect(airKoreaForecastArea('강원특별자치도 강릉시', 92, 131)).toBe('영동');
     expect(airKoreaForecastArea('전라남도 순천시', 70, 70)).toBe('전남');
     expect(airKoreaForecastArea(undefined, 60, 127)).toBe('서울');
+    expect(airKoreaForecastAreaForGrid(60, 127)).toBe('서울');
+    expect(airKoreaForecastAreaForGrid(100, 76)).toBe('부산');
+  });
+
+  it('전국 예보 지역을 네 번의 공통 원본 호출로 채운다', async () => {
+    const grades = AIRKOREA_FORECAST_AREAS.map((area) => `${area}: 보통`).join(',');
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input));
+      return url.pathname.endsWith('getMinuDustWeekFrcstDspth')
+        ? jsonResponse([{ frcstOneDt: '2026-09-18', frcstOneCn: grades }])
+        : jsonResponse([{
+            dataTime: '2026-09-15 11시 발표',
+            informCode: url.searchParams.get('InformCode'),
+            informData: '2026-09-15', informGrade: grades,
+          }]);
+    });
+    const provider = new AirKoreaForecastProvider({ serviceKey: 'test', fetcher });
+
+    const forecasts = await provider.getForecastsByAreas();
+
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(Object.keys(forecasts)).toHaveLength(AIRKOREA_FORECAST_AREAS.length);
+    expect(forecasts['서울']?.[0]).toMatchObject({ date: '20260915', pm25Grade: '보통' });
+    expect(forecasts['부산']?.[0]).toMatchObject({ date: '20260915', pm10Grade: '보통' });
   });
 });
 

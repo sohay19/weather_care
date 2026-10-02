@@ -5,7 +5,7 @@
 ## 프로젝트 구성
 
 - `weather_care_app`: Flutter 모바일 앱
-- `weather_care_server`: Cloudflare Workers + TypeScript + Hono + D1 서버
+- `weather_care_server`: 미니 PC에서 실행하는 Node.js + TypeScript + Hono + SQLite 서버 (Cloudflare Tunnel로 공개)
 - `docs`: 앱/서버 개발명세서
 
 ## 앱과 서버의 역할 구분

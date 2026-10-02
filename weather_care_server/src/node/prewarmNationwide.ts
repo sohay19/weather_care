@@ -153,12 +153,19 @@ export function inspectOperationalPrewarm(
   const required = new Set<string>();
   required.add(NATIONWIDE_PRECIPITATION_CACHE_KEY);
   required.add(collectedCacheKey.roadControlSnapshot);
+  required.add(collectedCacheKey.nationwideAir);
+  required.add(collectedCacheKey.nationwideAirForecast);
+  required.add(collectedCacheKey.warningStations);
+  required.add(collectedCacheKey.warningSnapshot);
+  if (isRoadIceSeason(now)) required.add(collectedCacheKey.roadIceSnapshot);
 
   for (const { nx, ny } of grids) {
     required.add(collectedCacheKey.forecast(nx, ny));
     required.add(`CURRENT_${nx}_${ny}`);
     required.add(`COLLECTED_REGION_${nx}_${ny}`);
+    required.add(collectedCacheKey.environmental(nx, ny));
     required.add(collectedCacheKey.weekly(nx, ny));
+    required.add(collectedCacheKey.warning(nx, ny));
     required.add(collectedCacheKey.visibility(nx, ny));
     required.add(collectedCacheKey.ultraShortObservation(nx, ny));
   }
@@ -211,6 +218,34 @@ function cacheRowHasUsablePayload(row: {
     if (row.cacheKey === collectedCacheKey.roadControlSnapshot) {
       return Array.isArray(value) &&
         Date.parse(row.updatedAt) > now.getTime() - 30 * 60 * 1000;
+    }
+    if (row.cacheKey === collectedCacheKey.roadIceSnapshot) {
+      return Array.isArray(value) &&
+        Date.parse(row.updatedAt) > now.getTime() - 45 * 60 * 1000;
+    }
+    if (row.cacheKey === collectedCacheKey.warningStations) {
+      return Array.isArray(value) && value.length > 0;
+    }
+    if (row.cacheKey === collectedCacheKey.warningSnapshot) {
+      const snapshot = value as { stations?: unknown; warnings?: unknown };
+      return Array.isArray(snapshot?.stations) && snapshot.stations.length > 0 &&
+        Array.isArray(snapshot?.warnings) &&
+        Date.parse(row.updatedAt) > now.getTime() - 45 * 60 * 1000;
+    }
+    if (row.cacheKey === collectedCacheKey.nationwideAir) {
+      const snapshot = value as { catalog?: { stations?: unknown }; observations?: unknown };
+      return Array.isArray(snapshot?.catalog?.stations) &&
+        Array.isArray(snapshot?.observations) &&
+        snapshot.catalog.stations.length > 0 && snapshot.observations.length > 0;
+    }
+    if (row.cacheKey === collectedCacheKey.nationwideAirForecast) {
+      const snapshot = value as { issue?: unknown; areas?: unknown };
+      return typeof snapshot?.issue === 'string' &&
+        snapshot.areas !== null && typeof snapshot.areas === 'object';
+    }
+    if (row.cacheKey.startsWith('COLLECTED_ENVIRONMENTAL_')) {
+      const bundle = value as { sources?: { uv?: unknown; airQuality?: unknown } };
+      return !!bundle?.sources?.uv && !!bundle.sources.airQuality;
     }
     if (row.cacheKey === NATIONWIDE_PRECIPITATION_CACHE_KEY) {
       const manifest = value as { analysisChunks?: unknown; radarChunks?: unknown };

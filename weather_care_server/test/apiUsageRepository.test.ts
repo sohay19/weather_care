@@ -69,4 +69,31 @@ describe('API usage repository', () => {
       new Date('2026-09-30T15:00:00Z'),
     )).toBe(true);
   });
+
+  it('limits fast observation retries without consuming the allowance for other sources', async () => {
+    const now = new Date('2026-10-02T03:00:00Z');
+    expect(await reserveApiHubBudget(
+      env.DB, 'GRID_OBSERVATION_FAST_RETRY', 3, 999_000_000, now,
+      { providerDailyByteLimit: 1_000_000_000, dailyByteLimit: 3_500_000_000 },
+    )).toBe(true);
+    expect(await reserveApiHubBudget(
+      env.DB, 'GRID_OBSERVATION_FAST_RETRY', 3, 3_000_000, now,
+      { providerDailyByteLimit: 1_000_000_000, dailyByteLimit: 3_500_000_000 },
+    )).toBe(false);
+    expect(await reserveApiHubBudget(
+      env.DB, 'WARNING', 1, 256_000, now,
+    )).toBe(true);
+  });
+
+  it('stops fast retries before the shared allowance is exhausted', async () => {
+    const now = new Date('2026-10-02T03:00:00Z');
+    expect(await reserveApiHubBudget(env.DB, 'OTHER', 1, 3_499_000_000, now))
+      .toBe(true);
+    expect(await reserveApiHubBudget(
+      env.DB, 'GRID_OBSERVATION_FAST_RETRY', 3, 3_000_000, now,
+      { providerDailyByteLimit: 1_000_000_000, dailyByteLimit: 3_500_000_000 },
+    )).toBe(false);
+    expect(await reserveApiHubBudget(env.DB, 'WARNING', 1, 256_000, now))
+      .toBe(true);
+  });
 });

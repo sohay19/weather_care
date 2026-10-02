@@ -274,6 +274,26 @@ describe('fast Main weather', () => {
       .toBe('APP_STEADMAN_FROM_OBSERVATION');
   });
 
+  it('강수 실황만 결측이면 기온은 쓰되 비 여부는 예보를 유지한다', () => {
+    const observation = {
+      observedAt: '2026-10-01T09:40:00+09:00',
+      rainDetected: false,
+      temperature: 19,
+      humidity: 25,
+      windSpeed: 3.5,
+      provider: 'KMA_APIHUB_GRID_OBSERVATION' as const,
+      qualityFlags: ['PRECIPITATION_TYPE_UNAVAILABLE'],
+    };
+    const current = currentFromUltraShortObservation(
+      snapshot(10, { precipitationType: 'RAIN' }),
+      { status: 'AVAILABLE', updatedAt: observation.observedAt, value: observation },
+      new Date('2026-10-01T09:49:00+09:00'),
+    );
+
+    expect(current.temperature).toBe(19);
+    expect(current.precipitationType).toBe('RAIN');
+  });
+
   it('selects the earliest forecast strictly after the current time', () => {
     expect(nextForecastSnapshot(
       [snapshot(12), snapshot(11), snapshot(10)],

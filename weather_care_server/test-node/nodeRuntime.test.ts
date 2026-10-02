@@ -15,9 +15,9 @@ describe('미니 PC Node 런타임', () => {
     expect((await limiter.limit({ key: 'client' })).success).toBe(true);
   });
 
-  it('Worker와 같은 10분·15분·30분 실행 분을 유지한다', () => {
+  it('Worker와 같은 2분·10분·15분·30분 실행 분을 유지한다', () => {
     expect(dueScheduledJobs(new Date('2026-09-17T00:00:00Z'))).toEqual(['core']);
-    expect(dueScheduledJobs(new Date('2026-09-17T00:02:00Z'))).toEqual(['radar']);
+    expect(dueScheduledJobs(new Date('2026-09-17T00:02:00Z'))).toEqual(['observation', 'radar']);
     expect(dueScheduledJobs(new Date('2026-09-17T00:07:00Z'))).toEqual(['road-ice']);
     expect(dueScheduledJobs(new Date('2026-09-17T00:17:00Z'))).toEqual(['radar']);
     expect(dueScheduledJobs(new Date('2026-09-17T00:37:00Z'))).toEqual(['road-ice']);

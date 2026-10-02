@@ -20,6 +20,7 @@ import {
 } from '../providers/weather/kmaUltraShortObservationProvider';
 import {
   GRID_OBSERVATION_VARIABLES,
+  REQUIRED_GRID_OBSERVATION_VARIABLES,
   gridObservationKoreanIso,
   KmaGridObservationProvider,
   latestGridObservationTime,
@@ -106,6 +107,7 @@ const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
 const RADAR_BYTES = 13_281_414;
 const ANALYSIS_VALIDATION_LIMIT = 40;
 const ITS_MONTHLY_REQUEST_LIMIT = 9_000;
+const FAST_OBSERVATION_DAILY_BYTE_LIMIT = 1_000_000_000;
 
 export interface WeatherCollectionOptions {
   now?: Date;
@@ -184,10 +186,12 @@ export async function runWeatherCollectionJob(
   }
 
   if (options.collectCore !== false) {
+    if (collectActiveDetails) {
+      await collectUltraShortObservations(env, allForecastTargets, now, activeRegions);
+    }
     await collectRegionForecasts(env, regions, activeRegionKeys, now);
     if (collectActiveDetails) {
       await collectWarnings(env, activeRegions, now, forceSourceRefresh);
-      await collectUltraShortObservations(env, allForecastTargets, now);
       await collectRoadControls(env, locations, now, forceSourceRefresh);
       if (options.collectHourlyObservations !== true) {
         await collectCurrentVisibility(
@@ -214,6 +218,15 @@ export async function runWeatherCollectionJob(
   if (options.collectRoadIce === true) {
     await collectRoadIce(env, locations, now, forceSourceRefresh);
   }
+}
+
+export async function runCurrentObservationCollectionJob(
+  env: ServerEnv,
+  now = new Date(),
+): Promise<void> {
+  if (!env.DB) return;
+  const activeRegions = distinctRegions(await loadActiveCollectionTargets(env.DB));
+  await collectUltraShortObservations(env, activeRegions, now, activeRegions, true);
 }
 
 export async function collectSupportedMidTermForecasts(
@@ -651,60 +664,124 @@ async function collectWarnings(
 
 async function collectUltraShortObservations(
   env: ServerEnv,
-  regions: CollectionTarget[],
+  regions: readonly CollectionTarget[],
   now: Date,
+  activeRegions: readonly CollectionTarget[] = [],
+  fastRetry = false,
 ): Promise<void> {
-  if (!env.KMA_APIHUB_KEY || regions.length === 0) return;
-  const targetClock = latestGridObservationTime(now);
+  if (!env.KMA_APIHUB_KEY || regions.length === 0) {
+    console.warn(JSON.stringify({
+      event: 'current_observation_collection_skipped',
+      reason: !env.KMA_APIHUB_KEY ? 'APIHUB_KEY_MISSING' : 'NO_REGIONS',
+    }));
+    return;
+  }
+  // 발표가 빠른 회차는 현재 10분 구간에서 먼저 받고, 미발표면 직전 구간을 쓴다.
+  const targetClock = new Date(
+    latestGridObservationTime(now).getTime() + 10 * 60 * 1000,
+  );
   const expectedObservedAt = gridObservationKoreanIso(targetClock);
+  const activeKeys = new Set(activeRegions.map(({ nx, ny }) => `${nx}:${ny}`));
+  const cached = new Map<string, CollectedCacheRecord<UltraShortObservation> | null>();
   const pending: CollectionTarget[] = [];
   for (const region of regions) {
     const record = await getCollectedCache<UltraShortObservation>(
       env.DB,
       collectedCacheKey.ultraShortObservation(region.nx, region.ny),
     );
+    cached.set(`${region.nx}:${region.ny}`, record);
     if (record?.status !== 'AVAILABLE' ||
         record.value.observedAt < expectedObservedAt) {
       pending.push(region);
     }
   }
-  if (pending.length === 0) return;
-
   const observations = new Map<string, UltraShortObservation>();
-  if (await reserveApiHubBudget(
-    env.DB,
-    'GRID_OBSERVATION_10_MINUTES',
-    GRID_OBSERVATION_VARIABLES.length,
-    6_000_000,
-    now,
-  )) {
+  let stored = 0;
+  let latestGridCount = 0;
+  let previousGridCount = 0;
+  let awsCount = 0;
+  const gridProvider = new KmaGridObservationProvider({
+    serviceKey: env.KMA_APIHUB_KEY,
+  });
+  const fetchGrid = async (
+    targets: CollectionTarget[],
+    clock: Date,
+    slot: 'LATEST' | 'PREVIOUS',
+  ): Promise<void> => {
+    if (targets.length === 0) return;
+    const variableCount = fastRetry
+      ? REQUIRED_GRID_OBSERVATION_VARIABLES.length
+      : GRID_OBSERVATION_VARIABLES.length;
+    const reserved = await reserveApiHubBudget(
+      env.DB,
+      fastRetry ? 'GRID_OBSERVATION_FAST_RETRY' : 'GRID_OBSERVATION_10_MINUTES',
+      variableCount,
+      variableCount * 1_000_000,
+      now,
+      fastRetry ? {
+        providerDailyByteLimit: FAST_OBSERVATION_DAILY_BYTE_LIMIT,
+        dailyByteLimit: 3_500_000_000,
+      } : undefined,
+    );
+    if (!reserved) {
+      console.warn(JSON.stringify({
+        event: 'current_observation_budget_denied',
+        source: 'GRID',
+        slot,
+      }));
+      return;
+    }
     try {
-      const exact = await new KmaGridObservationProvider({
-        serviceKey: env.KMA_APIHUB_KEY,
-      }).getAt(pending, targetClock);
+      const exact = await gridProvider.getAt(targets, clock, {
+        requiredOnly: fastRetry,
+      });
+      if (slot === 'LATEST') latestGridCount = exact.size;
+      else previousGridCount = exact.size;
       for (const [key, value] of exact) observations.set(key, value);
     } catch (error) {
-      logCollectionFailure('grid_observation', error);
+      logCollectionFailure('grid_observation', error, {
+        slot,
+        targetObservedAt: gridObservationKoreanIso(clock),
+      });
     }
-  }
+  };
+  await fetchGrid(pending, targetClock, 'LATEST');
 
-  const missing = pending.filter(
+  const previousClock = new Date(targetClock.getTime() - 10 * 60 * 1000);
+  const previousObservedAt = gridObservationKoreanIso(previousClock);
+  const previousPending = pending.filter(({ nx, ny }) => {
+    const key = `${nx}:${ny}`;
+    const record = cached.get(key);
+    return !observations.has(key) &&
+      (record?.status !== 'AVAILABLE' ||
+        record.value.observedAt < previousObservedAt);
+  });
+  await fetchGrid(previousPending, previousClock, 'PREVIOUS');
+
+  const missingGrid = pending.filter(
     (region) => !observations.has(`${region.nx}:${region.ny}`),
   );
-  const fallbackTargets = missing.flatMap((region) => {
+  const fallbackTargets = (fastRetry ? [] : missingGrid).flatMap((region) => {
     const coordinates = region.latitude !== undefined &&
         region.longitude !== undefined
       ? { latitude: region.latitude, longitude: region.longitude }
       : kmaGridCoordinates(region.nx, region.ny);
     return coordinates ? [{ region, coordinates }] : [];
   });
-  if (fallbackTargets.length > 0 && await reserveApiHubBudget(
+  const awsReserved = fallbackTargets.length > 0 && await reserveApiHubBudget(
     env.DB,
     'AWS_CURRENT_FALLBACK',
-    3,
+    14,
     3_000_000,
     now,
-  )) {
+  );
+  if (fallbackTargets.length > 0 && !awsReserved) {
+    console.warn(JSON.stringify({
+      event: 'current_observation_budget_denied',
+      source: 'AWS_FALLBACK',
+    }));
+  }
+  if (awsReserved) {
     try {
       const fallback = await new KmaAwsMinuteObservationProvider({
         serviceKey: env.KMA_APIHUB_KEY,
@@ -712,6 +789,7 @@ async function collectUltraShortObservations(
       }).getCurrentByLocations(fallbackTargets.map(({ coordinates }) => coordinates));
       fallback.forEach((value, index) => {
         if (!value) return;
+        awsCount += 1;
         const region = fallbackTargets[index].region;
         observations.set(`${region.nx}:${region.ny}`, value);
       });
@@ -721,8 +799,12 @@ async function collectUltraShortObservations(
   }
 
   await Promise.all(pending.flatMap((region) => {
-    const value = observations.get(`${region.nx}:${region.ny}`);
-    if (!value) return [];
+    const key = `${region.nx}:${region.ny}`;
+    const value = observations.get(key);
+    if (!value || (cached.get(key)?.value.observedAt ?? '') >= value.observedAt) {
+      return [];
+    }
+    stored += 1;
     return [saveCollectedCache(env.DB, {
       key: collectedCacheKey.ultraShortObservation(region.nx, region.ny),
       type: 'COLLECTED_ULTRA_SHORT',
@@ -732,6 +814,44 @@ async function collectUltraShortObservations(
       updatedAt: now,
     })];
   }));
+  const missing = pending.filter(({ nx, ny }) =>
+    !observations.has(`${nx}:${ny}`));
+  const expiredActive = pending.filter(({ nx, ny }) => {
+    const key = `${nx}:${ny}`;
+    if (!activeKeys.has(key)) return false;
+    const cachedAt = cached.get(key)?.value.observedAt;
+    const fetchedAt = observations.get(key)?.observedAt;
+    const newestAt = Math.max(
+      cachedAt ? Date.parse(cachedAt) : -Infinity,
+      fetchedAt ? Date.parse(fetchedAt) : -Infinity,
+    );
+    return !Number.isFinite(newestAt) ||
+      now.getTime() - newestAt > 30 * 60 * 1000;
+  });
+  console.log(JSON.stringify({
+    event: 'current_observation_collection_completed',
+    targetObservedAt: expectedObservedAt,
+    regions: regions.length,
+    pending: pending.length,
+    latestGridCount,
+    awsCount,
+    previousGridCount,
+    stored,
+    missing: missing.length,
+    activeMissing: missing.filter(({ nx, ny }) =>
+      activeKeys.has(`${nx}:${ny}`)).slice(0, 50)
+      .map(({ nx, ny }) => `${nx}:${ny}`),
+    missingSample: missing.slice(0, 10).map(({ nx, ny }) => `${nx}:${ny}`),
+  }));
+  if (expiredActive.length > 0) {
+    console.error(JSON.stringify({
+      event: 'current_observation_freshness_breached',
+      targetObservedAt: expectedObservedAt,
+      count: expiredActive.length,
+      grids: expiredActive.slice(0, 50)
+        .map(({ nx, ny }) => `${nx}:${ny}`),
+    }));
+  }
 }
 
 async function collectCurrentPrecipitation(
@@ -759,7 +879,10 @@ async function collectCurrentPrecipitation(
   const inputs = locations.flatMap((location) => {
     const target = targetByLocation.get(locationCacheKey(location.latitude, location.longitude));
     const reference = target && ultraByGrid.get(`${target.nx}_${target.ny}`);
-    return reference ? [{ ...location, referenceRainDetected: reference.rainDetected,
+    return reference ? [{ ...location,
+      referenceRainDetected: reference.qualityFlags?.includes(
+        'PRECIPITATION_TYPE_UNAVAILABLE',
+      ) ? undefined : reference.rainDetected,
       referenceObservedAt: reference.observedAt }] : [];
   });
   if (inputs.length === 0) return;

@@ -12,6 +12,10 @@ export async function reserveApiHubBudget(
   requestCount: number,
   responseBytes: number,
   now = new Date(),
+  options: {
+    providerDailyByteLimit?: number;
+    dailyByteLimit?: number;
+  } = {},
 ): Promise<boolean> {
   if (requestCount <= 0 && responseBytes <= 0) return true;
   const usageDate = koreanDate(now);
@@ -23,8 +27,17 @@ export async function reserveApiHubBudget(
   ).bind(usageDate).first<ApiUsageDaily>();
   if (
     Number(total?.requestCount ?? 0) + requestCount > APIHUB_DAILY_CALL_LIMIT ||
-    Number(total?.responseBytes ?? 0) + responseBytes > APIHUB_DAILY_BYTE_LIMIT
+    Number(total?.responseBytes ?? 0) + responseBytes >
+      (options.dailyByteLimit ?? APIHUB_DAILY_BYTE_LIMIT)
   ) return false;
+  if (options.providerDailyByteLimit !== undefined) {
+    const providerUsage = await db.prepare(
+      `SELECT COALESCE(SUM(response_bytes), 0) AS responseBytes
+       FROM api_usage_daily WHERE usage_date = ? AND provider = ?`,
+    ).bind(usageDate, provider).first<{ responseBytes: number }>();
+    if (Number(providerUsage?.responseBytes ?? 0) + responseBytes >
+        options.providerDailyByteLimit) return false;
+  }
 
   await db.prepare(
     `INSERT INTO api_usage_daily

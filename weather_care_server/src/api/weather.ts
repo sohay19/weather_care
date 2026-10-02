@@ -982,6 +982,9 @@ function precipitationTypeFromObservation(
   observation: UltraShortObservation,
   forecastType: WeatherSnapshot['precipitationType'],
 ): WeatherSnapshot['precipitationType'] {
+  if (observation.qualityFlags?.includes('PRECIPITATION_TYPE_UNAVAILABLE')) {
+    return forecastType;
+  }
   if (!observation.rainDetected) return 'NONE';
   switch (observation.precipitationTypeCode) {
     case 2:

@@ -107,6 +107,60 @@ describe('KMA APIHub 10분 격자 실황', () => {
     expect(observations.has('57:125')).toBe(false);
   });
 
+  it('빠른 재시도에서는 기온·습도·풍속만 조회한다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const variable = new URL(String(input)).searchParams.get('vars')!;
+      const values: Record<string, number> = { T1H: 23.4, REH: 61, WSD: 2.6 };
+      return new Response(gridPayload(target, values[variable]));
+    });
+    const provider = new KmaGridObservationProvider({
+      serviceKey: 'test-key', fetcher,
+    });
+
+    const observations = await provider.getAt(
+      [target], new Date('2026-09-22T11:20:00Z'), { requiredOnly: true },
+    );
+
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher.mock.calls.map(([input]) =>
+      new URL(String(input)).searchParams.get('vars')))
+      .toEqual(['T1H', 'REH', 'WSD']);
+    expect(observations.get('57:125')).toMatchObject({
+      temperature: 23.4,
+      humidity: 61,
+      windSpeed: 2.6,
+      qualityFlags: ['PRECIPITATION_TYPE_UNAVAILABLE'],
+    });
+  });
+
+  it('선택 요소 조회가 실패해도 기온·습도·풍속 관측을 유지한다', async () => {
+    const values = new Map([
+      ['T1H', 23.4], ['REH', 61], ['WSD', 2.6],
+      ['PTY', 0], ['RN1', 0],
+    ]);
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const variable = new URL(String(input)).searchParams.get('vars')!;
+      if (variable === 'VEC') throw new TypeError('network unavailable');
+      return new Response(gridPayload(target, values.get(variable) ?? -999));
+    });
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const observations = await new KmaGridObservationProvider({
+      serviceKey: 'test-key', fetcher,
+    }).getAt([target], new Date('2026-09-22T11:20:00Z'));
+
+    expect(observations.get('57:125')).toMatchObject({
+      temperature: 23.4,
+      humidity: 61,
+      windSpeed: 2.6,
+      windDirection: undefined,
+    });
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining(
+      'grid_observation_optional_variable_failed',
+    ));
+    warning.mockRestore();
+  });
+
   it('10분 발표 지연을 고려해 직전 10분 시각을 선택한다', () => {
     expect(latestGridObservationTime(
       new Date('2026-09-22T02:37:40Z'),

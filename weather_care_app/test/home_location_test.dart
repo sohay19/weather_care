@@ -287,8 +287,11 @@ void main() {
     expect(notificationPermission.requests, isEmpty);
     expect(location.requests, isEmpty);
 
-    await tester
-        .tap(find.byKey(const ValueKey('permission-onboarding-confirm')));
+    tester
+        .widget<FilledButton>(
+          find.byKey(const ValueKey('permission-onboarding-confirm')),
+        )
+        .onPressed!();
     await tester.pumpAndSettle();
 
     expect(notificationPermission.requests, [true]);
@@ -297,6 +300,28 @@ void main() {
     expect(preferences.getBool(PermissionOnboardingStore.storageKey), isTrue);
     expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
         findsNothing);
+  });
+
+  testWidgets('첫 안내에서 계속을 누르기 전에는 재개·새로고침에도 위치 권한을 요청하지 않는다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    location.result = const LocationResult(LocationState.denied);
+
+    await start(tester, settle: false, initialIndex: 2);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
+        findsOneWidget);
+    expect(location.requests, isNot(contains(true)));
+
+    tester
+        .widget<FilledButton>(
+          find.byKey(const ValueKey('permission-onboarding-confirm')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+    expect(location.requests, contains(true));
   });
 
   testWidgets('오늘 자료가 먼저 오면 주간 조회를 기다리지 않고 Main을 표시한다', (tester) async {
@@ -750,7 +775,7 @@ void main() {
     expect(screen(tester).notificationPermission,
         NotificationPermissionState.authorized);
     expect(registration.calls, isEmpty);
-    expect(location.requests, [false, true]);
+    expect(location.requests, [false]);
   });
 
   testWidgets('권한 조회 대기 중 복귀하면 이전 상태를 다시 확인한다', (tester) async {
@@ -795,7 +820,7 @@ void main() {
   testWidgets('권한 거부 시 지역 대체 없이 대기하다 명시적 확인으로 복구한다', (tester) async {
     location.result = const LocationResult(LocationState.denied);
     await start(tester);
-    expect(location.requests, [false, true]);
+    expect(location.requests, [false]);
     expect(weather.calls, isEmpty);
     expect(registration.calls, isEmpty);
     await tester.tap(find.text('Main'));
@@ -812,7 +837,7 @@ void main() {
     await tester.pumpAndSettle();
     final grid = KmaGrid.fromCoordinates(
         latitude: _seoul.latitude, longitude: _seoul.longitude);
-    expect(location.requests, [false, true, true]);
+    expect(location.requests, [false, true]);
     expect(
         (weather.calls.single.nx, weather.calls.single.ny), (grid.nx, grid.ny));
     expect(registration.calls.single.coordinates, _seoul);

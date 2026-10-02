@@ -3,6 +3,7 @@ import {
   kmaApiHubErrorStatus,
 } from '../kmaApiHubResponse';
 import { providerHttpFailureMessage } from '../providerHttpFailure';
+import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
 import type { UltraShortObservation } from './kmaUltraShortObservationProvider';
 
 const GRID_OBSERVATION_URL =
@@ -11,9 +12,11 @@ const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const GRID_WIDTH = 149;
 const GRID_HEIGHT = 253;
 
+export const REQUIRED_GRID_OBSERVATION_VARIABLES = ['T1H', 'REH', 'WSD'] as const;
 export const GRID_OBSERVATION_VARIABLES = [
-  'T1H', 'REH', 'WSD', 'VEC', 'PTY', 'RN1',
+  ...REQUIRED_GRID_OBSERVATION_VARIABLES, 'VEC', 'PTY', 'RN1',
 ] as const;
+const REQUIRED_GRID_VARIABLES = new Set<string>(REQUIRED_GRID_OBSERVATION_VARIABLES);
 
 type GridObservationVariable = typeof GRID_OBSERVATION_VARIABLES[number];
 
@@ -55,6 +58,7 @@ export class KmaGridObservationProvider {
   async getAt(
     grids: readonly KmaObservationGridPoint[],
     koreanClock: Date,
+    options: { requiredOnly?: boolean } = {},
   ): Promise<Map<string, UltraShortObservation>> {
     if (!this.serviceKey) {
       throw new KmaGridObservationProviderError(
@@ -65,12 +69,35 @@ export class KmaGridObservationProvider {
     if (grids.length === 0) return new Map();
 
     const compactTime = formatCompactKoreanTime(koreanClock);
-    const fields = await Promise.all(
-      GRID_OBSERVATION_VARIABLES.map(async (variable) => [
+    const variables = options.requiredOnly
+      ? REQUIRED_GRID_OBSERVATION_VARIABLES
+      : GRID_OBSERVATION_VARIABLES;
+    const results = await Promise.allSettled(
+      variables.map(async (variable) => [
         variable,
         await this.fetchVariable(variable, compactTime),
       ] as const),
     );
+    const fields: Array<readonly [GridObservationVariable, ParsedGrid]> = [];
+    for (const [index, result] of results.entries()) {
+      const variable = variables[index];
+      if (result.status === 'fulfilled') {
+        fields.push(result.value);
+      } else if (REQUIRED_GRID_VARIABLES.has(variable)) {
+        console.error(JSON.stringify({
+          event: 'grid_observation_required_variable_failed',
+          variable,
+          ...providerErrorDiagnostic(result.reason),
+        }));
+        throw result.reason;
+      } else {
+        console.warn(JSON.stringify({
+          event: 'grid_observation_optional_variable_failed',
+          variable,
+          ...providerErrorDiagnostic(result.reason),
+        }));
+      }
+    }
     const valuesByField = new Map(fields);
     const observedAt = compactKoreanTimeToIso(compactTime);
     const observations = new Map<string, UltraShortObservation>();
@@ -86,9 +113,12 @@ export class KmaGridObservationProvider {
         !validWindSpeed(windSpeed)
       ) continue;
 
-      const precipitationTypeCode = valueAt(valuesByField.get('PTY')!, grid);
-      const precipitationAmount = valueAt(valuesByField.get('RN1')!, grid);
-      const windDirection = valueAt(valuesByField.get('VEC')!, grid);
+      const precipitationTypeCode = valuesByField.has('PTY')
+        ? valueAt(valuesByField.get('PTY')!, grid) : undefined;
+      const precipitationAmount = valuesByField.has('RN1')
+        ? valueAt(valuesByField.get('RN1')!, grid) : undefined;
+      const windDirection = valuesByField.has('VEC')
+        ? valueAt(valuesByField.get('VEC')!, grid) : undefined;
       observations.set(gridKey(grid), {
         observedAt,
         rainDetected:
@@ -107,6 +137,9 @@ export class KmaGridObservationProvider {
           ? windDirection
           : undefined,
         provider: 'KMA_APIHUB_GRID_OBSERVATION',
+        ...(validPrecipitationType(precipitationTypeCode) ? {} : {
+          qualityFlags: ['PRECIPITATION_TYPE_UNAVAILABLE'],
+        }),
         sourceLocation: {
           type: 'GRID',
           nx: grid.nx,
@@ -130,7 +163,7 @@ export class KmaGridObservationProvider {
     const response = await this.fetcher(`${GRID_OBSERVATION_URL}?${query}`, {
       headers: { Accept: 'application/octet-stream, text/plain' },
       signal: AbortSignal.timeout(this.timeoutMs),
-      cf: { cacheEverything: true, cacheTtl: 600 },
+      cf: { cacheEverything: true, cacheTtl: 60 },
     });
     const payload = await response.arrayBuffer();
     if (!response.ok) {

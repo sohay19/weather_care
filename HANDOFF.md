@@ -8714,13 +8714,6 @@
 - GPS 모드의 포그라운드 복귀 새로고침에도 새 위치 측정을 요청한다. 수동 지역 모드는 기존처럼 GPS를 읽지 않는다. 위치 테스트 대역이 저장된 위치와 새 측정값을 구분하도록 하고, 복귀 후 다른 좌표가 날씨 요청과 알림 지역 등록에 전달되는 회귀 테스트를 추가했다.
 - 프로젝트 Flutter 3.47.4에서 `home_location_test.dart` 42개와 `flutter analyze --no-pub`, `git diff --check`가 통과했다. 앱 소스와 테스트는 커밋 `8d18cf7`(`fix(위치): 앱 복귀 시 GPS 새로 측정`)에 포함했다. Windows 환경이라 iOS 기기에서 직접 복귀 동작을 확인하지는 못했다. 작업 전부터 있던 다른 HANDOFF 변경, Android 서명 설정, `output/`은 유지했다.
 
-## 2026-10-01 Play Console 위치 전경 서비스 선언 안내
-
-- 사용자 제공 Play Console 화면의 `FOREGROUND_SERVICE_LOCATION` 선언을 검토했다. 현재 선택된 '사용자가 시작하는 위치 공유'는 실제 앱 동작과 맞지 않는다.
-- Android GPS 모드에서 홈 위젯 새로고침 버튼을 누르면 `WeatherCareWidgetRefreshService`가 위치 유형 전경 서비스로 현재 좌표를 한 번 확인하고 해당 지역의 위젯 날씨를 조회한 뒤 종료한다. 수동 지역 모드는 WorkManager로 갱신한다. 매니페스트에는 `ACCESS_BACKGROUND_LOCATION`이 없다.
-- Play Console에서 위치 유형의 '기타'에 실제 사용 사례를 설명하고, GPS 위젯 버튼·일시적 알림·지역 날씨 갱신을 보여 주는 심사용 영상 링크를 제출하도록 안내한다. Google Play의 전경 서비스·백그라운드 위치 정책 심사를 통과한다고 보장할 수 없으며, 거절되면 위치 전경 서비스를 제거하고 앱을 열어 위치를 갱신하는 방식이 대안이다.
-- 이번 작업은 조사와 안내만 수행했다. 앱 코드·운영 설정은 변경하지 않았다.
-
 ## 2026-10-01 iOS 위젯 위치 권한·스토어 공개 점검
 
 - Android 위치 포그라운드 서비스 선언과 별도로 iOS 위젯은 WidgetKit AppIntent에서 사용자가 새로고침 버튼을 누르면 현재 위치를 한 번 확인한다. iOS에는 같은 전경 서비스 권한이나 진행 알림 선언이 필요하지 않다.
@@ -8785,3 +8778,132 @@
 
 - 이전 HANDOFF 충돌 해결 내용과 누락됐던 Play Console 기록을 커밋 대상으로 확인했다.
 - `output/play_console_video/`에는 완성본 MP4 1개와 제작 중간 파일 148개(약 46.9MB)가 있다. 중간 파일 삭제 명령은 자동 정책 검토에서 차단돼 정리하지 못했다. 완성본 MP4와 추적 중인 `output/` 신청 문서 2개는 그대로 유지했다.
+
+## 2026-10-01 위젯 위치 허용 창 재현 제보 확인
+
+- 사용자가 앱 삭제·재설치 후 앱의 모든 권한을 허용하고 홈 화면으로 이동하자 “Allow widgets from ‘날씨챙겨’ to use your location?” 창이 나온 사진을 제공했다. 이전의 “`NSWidgetWantsLocation` 제거로 창이 사라진다”는 판단은 실제 관측과 맞지 않는다.
+- 현재 설치된 `Runner.app/PlugIns/WeatherCareWidget.appex/Info.plist`와 빌드 산출물 모두 `NSWidgetWantsLocation`이 없다. 설치된 위젯 실행 파일에도 삭제된 직접 Core Location 조회 식별자가 없고, 소스의 위젯 확장에도 `CLLocationManager` 사용이 없다.
+- 시뮬레이터 `locationd` 로그에서 17:21:37 앱 제거와 `chronod`의 위젯 설명자 삭제, 17:21:59 위젯 재등록, 17:22:43 앱 위치 권한 허용을 확인했다. 17:22:53 홈 화면 전환 직후 시스템이 같은 앱에 `requestType=12` 사용자 알림을 다시 만들었다. 17:22:42에는 약 19분 동안 미완료였던 같은 유형의 이전 권한 요청을 시스템이 정리했다. 이 재표시가 이전 요청의 잔류 때문인지 iOS 26.4의 일반 동작인지는 현재 시뮬레이터 로그만으로 구분할 수 없다.
+- 위젯은 앱이 저장한 위치의 URL만 사용하므로 별도 위젯 위치 허용을 거부해도 저장 지역의 날씨 조회 경로에는 영향이 없어야 한다. 시뮬레이터 UI를 조작하거나 앱·권한 상태를 변경하지 않았다. 새 시뮬레이터에서 재현되는지 확인하면 캐시 여부를 구분할 수 있다. 스토어 등록정보의 단정적인 권한 설명을 실제 동작에 맞게 고쳤다.
+
+## 2026-10-01 시뮬레이터 위젯 직접 추가 및 실데이터 표시 확인
+
+- XCUITest 임시 실행기(`/tmp/weathercare-widget-uitest`)로 시뮬레이터의 홈 화면 편집, 위젯 검색, 상세 화면의 실제 `위젯 추가` 버튼을 조작했다. 기존 iOS 26.4.1 iPhone 17 Pro에서는 추가 직후 SpringBoard가 `SBHRippleSimulation clear`에서 `EXC_BAD_ACCESS`로 종료됐다. 새 iOS 18.6 iPhone 16 Pro에서도 같은 충돌이 났으며 `ReduceMotionEnabled=1` 설정과 재부팅 후에도 재현됐다. 이 두 런타임에서 앱 코드가 아닌 SpringBoard 배치 애니메이션이 추가를 막는다.
+- 새 iOS 17.5 iPhone 15 Pro 시뮬레이터 `CF94B201-DD87-4831-A3F9-15FB9B313773`에서는 날씨챙겨 위젯이 홈 화면에 정상 추가됐다. 앱 첫 권한 안내의 `계속`을 눌러 App Group 스냅샷이 `서울 구로동`, `19.9°`로 발행됐고 위젯 화면도 같은 값으로 갱신됐다. 위젯 존재 XCUITest가 통과했으며 최종 화면은 `/tmp/weathercare-widget-success-clean.png`에 저장했다. 이 시뮬레이터는 부팅 상태로 유지하고 테스트 실행기 앱은 제거했다.
+- 첫 실행 안내창의 `PopScope(canPop: false)`가 `Navigator.pop(true)` 흐름을 방해하는 것으로 관측되어 제거했다. 바깥 탭으로 닫히지 않게 하는 `barrierDismissible: false`는 `HomeScreen`에 유지된다. Flutter 3.47.4로 iOS 시뮬레이터 Debug 빌드와 `flutter analyze --no-pub`, `git diff --check`를 통과했다. 빌드가 자동 수정한 `AppFrameworkInfo.plist`만 원복했고 작업 시작 전에 있던 `Podfile.lock`·`project.pbxproj` 변경은 보존했다.
+- 실패 확인용으로 만든 iOS 26.4.1·18.6 임시 기기는 삭제했다. 사용자의 기존 iOS 26.4.1 기기 `BA9D6513-092A-4E44-A0BB-2E0FF9E5508E`는 보존했으며 그 기기의 SpringBoard 충돌은 해결되지 않았다.
+
+## 2026-10-02 위젯 위치 권한 요청 시점 확인
+
+- 위젯 확장에는 `NSWidgetWantsLocation`과 직접 위치 권한 요청 코드가 없다. 첫 실행 앱에서 권한 안내 `계속` 확인 뒤 알림 권한을 요청하고, GPS 모드이면 날씨 새로고침 과정에서 사용 중 위치 권한을 요청한다.
+- 사용자가 제보한 별도의 위젯 위치 허용 창은 앱 위치 권한 허용 뒤 홈 화면으로 나갈 때 iOS 26.4 시뮬레이터에서 관측됐다. 앱 코드가 그 창의 표시 시점을 지정하지 않는다.
+
+## 2026-10-02 위젯 별도 위치 허용 창의 요청 시점 재검토
+
+- 사용자는 위젯 전용 위치 허용도 앱의 첫 권한 안내 `계속` 직후 함께 요청하길 원했다. Apple의 WidgetKit 문서는 위치를 직접 사용하는 위젯의 확장 허용 창을 위젯 추가 시 iOS가 표시한다고 명시한다. 앱에서 그 시스템 창만 미리 호출하는 공개 API는 확인되지 않았다. `NSWidgetWantsLocation`을 다시 넣으면 위젯 추가 단계의 별도 창이 돌아오므로 현재 구조를 유지한다.
+- 현재 위젯 확장의 `Info.plist`에는 `NSWidgetWantsLocation`이 없고, 위젯은 앱이 App Group에 저장한 지역·새로고침 URL을 사용한다. 사용 중 위치 권한은 첫 안내 `계속` 뒤 앱이 요청한다. 더 강한 항상 위치 권한으로 위젯 승인을 우회하는 변경은 하지 않았다.
+- 새 iOS 26.4 시뮬레이터에 현 빌드를 설치해 자동 조작했으나 XCUITest의 `계속` 탭이 안내 화면을 진행시키지 못해 최초 설치 상태의 위젯 별도 창 재현 여부는 결론내리지 못했다. 임시 기기는 삭제했고 기존·성공 검증용 시뮬레이터는 보존했다. 앱 코드는 변경하지 않았다.
+
+## 2026-10-02 iOS 26.4.1 iPhone 17 Pro 위젯 추가 충돌 재검증
+
+- 기존 iPhone 17 Pro `BA9D6513-092A-4E44-A0BB-2E0FF9E5508E`를 다른 기기와 분리해 부팅한 뒤 날씨챙겨 위젯을 추가했다. 09:05:21 SpringBoard가 `EXC_BAD_ACCESS`(`0xfffffffffffffff8`)로 종료됐고, 최상단 프레임은 Apple `SBHRippleSimulation clear` → `createRippleAtGridCoordinate:strength:`였다. 앱은 설치 상태와 App Group 데이터를 유지했다.
+- 별도 iOS 26.4.1 iPhone 17 Pro `F1352FB4-E4CA-49A3-AB65-EB067C5ACFF4`에서 Apple 캘린더 위젯을 추가했을 때도 09:16:53에 동일한 SpringBoard 충돌이 발생했다. 테스트 실행기는 추가 버튼 탭 자체를 성공으로 보고했으나, 직후 충돌 보고서와 홈 화면 복귀가 확인돼 실제 추가 성공으로 판단하지 않는다. 같은 별도 기기에 현재 날씨챙겨 빌드를 설치한 뒤 추가해도 09:18:51에 동일하게 충돌했다. 따라서 날씨챙겨 권한·데이터에만 국한된 실패가 아니다.
+- Simulator의 `FramebufferServerGPUPolicy=lowPower`와 `GraphicsQualityOverride=1`을 각각 설정해 별도 기기를 재부팅하고 날씨챙겨 위젯 추가를 반복했으나 09:22:15와 09:27:01에 동일한 충돌이 재현됐다. 두 설정 키는 원래 값(미설정)으로 복원했다. 원래 기기는 종료 상태로 보존하고, 작업 시작 시 부팅되어 있던 iOS 17.5 성공 검증 기기는 다시 부팅했다. 저장소의 앱 코드는 변경하지 않았다.
+- Apple 개발자 포럼에도 시스템 위젯까지 추가할 수 없고 같은 `SBHRippleSimulation` 스택으로 종료된다는 [독립 보고](https://developer.apple.com/forums/topics/app-and-system-services/app-and-system-services-widgets-and-live-activities?open-dropdown=true&sortBy=replies&sortOrder=asc)가 있다. Xcode 26.4.1의 해당 시뮬레이터 런타임/호스트 조합에서 발생하는 시스템 측 문제로 판단하지만 Apple의 공식 버그 판정 또는 수정 버전은 확인하지 못했다. 현재 확인된 정상 추가 환경은 iOS 17.5 iPhone 15 Pro 시뮬레이터다.
+
+## 2026-10-02 현재 부팅된 시뮬레이터가 Xcode 실행 대상에 표시되지 않는 현상
+
+- 작업 시작 시 부팅된 기기는 iOS 26.4.1 iPhone 16 Pro `50911301-A331-4A9F-9001-A3D38F868DC2`였다. `simctl list devices booted`와 `xcodebuild -showdestinations -workspace Runner.xcworkspace -scheme Runner` 모두 이 기기를 인식했다. Xcode 26.4.1의 AppleScript 실행 대상 목록에는 같은 UUID가 없었고, Xcode를 종료 후 다시 열어도 목록은 그대로였다. `Runner.xcworkspace`의 `Runner` 스킴과 Runner/Widget/Tests 타깃은 정상 로드됐다. 따라서 기기나 iOS 런타임의 부재가 아니라 Xcode GUI의 실행 대상 표시/필터 상태에 국한된다. 특정 표시 옵션 값은 직접 확인하지 못했다.
+- 현재 기기에는 앱이 설치돼 있지 않아, 기존 Debug 시뮬레이터 빌드(버전 `26100100`)를 `simctl install`로 설치하고 `simctl launch`로 실행했다. 스크린샷 `/tmp/weathercare-current-sim-running.png`에서 앱의 첫 권한 안내가 표시됨을 확인했다. Xcode 디버거 연결은 하지 않았다.
+- Xcode 창에서 `Product > Destination > Show All Run Destinations` 또는 `Manage Run Destinations`에서 해당 기기의 표시를 `Always`로 변경하는 경로를 안내한다. 앱 코드는 변경하지 않았고 기존 `Podfile.lock`·`project.pbxproj` 변경은 보존했다.
+
+## 2026-10-02 특정 iOS 버전의 Xcode 시뮬레이터 실행 대상 확인
+
+- 현재 설치된 iOS 시뮬레이터 런타임은 17.5, 18.6, 26.4이며 각각 사용 가능 상태다. 현재 부팅된 기기는 없다.
+- Xcode 26.4.1에서 `Runner.xcworkspace`의 `Runner` 스킴 실행 대상 조회 결과는 비어 있고, `Any iOS Device`에 `iOS 26.4 is not installed. Please download and install the platform from Xcode > Settings > Components.`가 표시된다. 특정 iOS 26.4 시뮬레이터 UUID를 직접 지정해도 동일하다.
+- `xcode-select` 경로, `xcodebuild -showsdks`의 iOS/iOS Simulator 26.4 SDK, `simctl`의 iOS 26.4 런타임, `xcdevice`의 iPhone 16 Pro 26.4 기기는 각각 확인됐다. 프로젝트 deployment target 변경(15.0)은 기존 사용자 변경으로 보존했다. 플랫폼 지원 구성요소의 Xcode 등록/활성화 상태는 확인하지 못했으므로 단정하지 않는다.
+- Apple 공식 문서 기준 Xcode > Settings > Components의 iOS Platform Support를 확인하고 필요 시 설치/활성화한 뒤, Runner 스킴의 실행 대상 메뉴에서 원하는 iOS 버전 기기를 고르는 방법을 안내한다. 코드/시뮬레이터 설정은 변경하지 않았다.
+
+## 2026-10-02 Xcode의 iOS 26.4.1 다운로드 표시 원인 정정
+
+- 사용자는 Xcode에서 26.4가 없다는 표시의 `Get`을 누르면 26.4.1이 다운로드된다고 알렸다.
+- `xcodebuild -showsdks -json`의 iOS/iOS Simulator SDK `productVersion`은 `26.4.1`, 빌드 `23E252`이고, `simctl runtime match list -j`의 iPhone SDK 대상 `chosenRuntimeBuild`도 `23E252`다. 반면 현재 설치된 iOS 26.4 시뮬레이터 런타임은 빌드 `23E244`다.
+- 따라서 Xcode가 받으려는 26.4.1은 현재 설치된 26.4 런타임과 다른 빌드다. 앞서 플랫폼 지원 자체가 빠진 것으로 해석한 것은 부정확했다. 다운로드 완료 후 `simctl list runtimes`와 `xcodebuild -showdestinations`로 실행 대상 복구 여부를 확인할 수 있다. 코드/시뮬레이터 설정은 변경하지 않았다.
+
+## 2026-10-02 Xcode 실행 대상으로 iOS 26.4 iPhone 16 Pro 노출
+
+- 사용자가 원하는 대상은 설치된 iOS 26.4 iPhone 16 Pro `50911301-A331-4A9F-9001-A3D38F868DC2`다.
+- `simctl runtime match set iphoneos26.4 23E244`로 현재 Xcode 26.4.1 SDK의 우선 런타임 빌드를 설치된 iOS 26.4 빌드로 지정했다. 원래 기본 선택은 `23E252`였고 사용자 재정의는 없었다. 이 변경 후 `xcodebuild -showdestinations`에 iOS 17.5/18.6/26.4 기기와 목표 UUID가 다시 표시됐다.
+- 목표 기기를 부팅했고 `bootstatus`가 완료됐다. Xcode 앱의 스크립팅 대상 목록은 기본 기기 16개만 표시해, `DVTDeviceVisibilityPreferences`에서 목표 UUID를 항상 표시로 설정하고 Xcode를 백그라운드에서 다시 열었다. 앱 스크립팅 대상 목록이 17개가 되며 목표 `iPhone 16 Pro`가 포함됐다.
+- `xcodebuild -showBuildSettings`에 목표 UUID를 지정한 결과 iOS Simulator 빌드 설정 조회가 성공했다. Xcode AppleScript의 `active run destination` 설정 명령은 오류 없이 끝나지만 다시 읽으면 `missing value`라 상단 실행 대상의 최종 선택 상태는 확인되지 않았다. `createdesktop` 명령이 없어 Xcode UI에서 최종 클릭을 조작하지 않았다.
+- 앱 코드는 변경하지 않았다. iOS 26.4.1 런타임 설치 후 기본 우선 선택으로 되돌리려면 `xcrun simctl runtime match set iphoneos26.4 --default`를 사용한다.
+
+## 2026-10-02 iOS 26.4 런타임 제거 및 iOS 26.3.1 적용
+
+- 사용자 요청에 따라 iOS 26.3.1 시뮬레이터 런타임을 설치하고 iOS 26.4 런타임을 제거했다. `xcodebuild -downloadPlatform iOS -buildVersion 26.3.1`은 해당 버전이 없다고 했으나, Intel 호스트에 맞춰 `-architectureVariant universal`을 추가하자 Apple 공식 런타임 빌드 `23D8133`(약 10.47GB)이 다운로드·설치됐다.
+- 새 `iPhone 16 Pro iOS 26.3.1` 시뮬레이터 `86D0493D-0C34-4986-8A21-F8756759474D`를 생성했다. 첫 부팅과 첫 재부팅에서 `PreferencesMigrator`가 30초 watchdog으로 종료되어 데이터 마이그레이션이 실패했다. 이 빈 신규 기기를 종료·초기화한 뒤 다시 부팅하자 `bootstatus`가 Finished로 완료됐고 `com.apple.migration.plist`의 `success=true`, `buildVersion=23D8133`을 확인했다. 이후 재부팅도 정상 완료했다.
+- `simctl runtime verify`의 별도 재검사는 `-67054 a sealed resource is missing or invalid`로 실패했으나, 런타임 목록의 Signature State는 Verified이고 초기화 후 부팅 및 Xcode 실행 대상 조회는 정상이다. 이 검증 오류의 원인은 확정하지 못했다.
+- Xcode 26.4.1이 기본으로 기대하는 iOS 런타임 빌드 `23E252` 대신 설치된 `23D8133`을 사용하도록 `xcrun simctl runtime match set iphoneos26.4 23D8133`으로 지정했다. 기본값에서는 Xcode 실행 대상 목록이 비었지만, 이 설정 후 새 기기 UUID로 `xcodebuild -showdestinations`와 `-showBuildSettings`가 성공했다.
+- iOS 26.4 런타임 `E2B66035-7FC7-4496-A24D-FF36620170B2`를 `simctl runtime delete`로 제거했다. 최종 `simctl runtime list`에는 iOS 26.3.1만 있고 26.4는 없다. 기존 26.4 기기의 데이터는 삭제하지 않아 런타임 부재로 사용할 수 없는 상태이며, 새 26.3.1 기기는 Booted 상태다.
+- Xcode의 `DVTDeviceVisibilityPreferences`에서 새 기기를 항상 표시하도록 설정하고 Xcode를 백그라운드에서 다시 열었다. Xcode 앱의 실행 대상 목록과 명령행 목록 모두 새 UUID를 포함한다. AppleScript의 `active run destination` 설정 후 조회가 `missing value`여서 툴바 최종 선택 상태는 확인되지 않았다. `createdesktop` 명령이 없어 UI 클릭은 하지 않았다.
+- 앱 코드는 변경하지 않았고 기존 `Podfile.lock`·`project.pbxproj` 변경을 보존했다. `git diff --check` 통과.
+- 런타임의 실제 앱 실행 확인을 위해 기존 Debug 빌드 `Runner.app`(버전 `26100100`)를 새 기기에 설치·실행했다. `simctl launch`가 PID `82363`을 반환했고 프로세스 실행 상태와 앱 설치 정보를 확인했다. 새 빌드나 위젯 UI 테스트는 수행하지 않았다.
+
+## 2026-10-02 Xcode에서 시뮬레이터 직접 생성 안내
+
+- 사용자에게 Xcode Device Hub에서 iPhone 16 Pro 시뮬레이터를 직접 생성하고 Runner 실행 대상으로 선택하는 절차를 Apple 공식 문서 기준으로 안내했다.
+- 현재 iOS 26.3.1 런타임과 동일 모델 시뮬레이터가 이미 설치되어 있으므로 새 기기를 만들지 않고 기존 기기를 선택해도 된다. 앱 코드는 변경하지 않았다.
+
+## 2026-10-02 Xcode 26.4.1 시뮬레이터 메뉴 정정
+
+- 앞서 안내한 `Device Hub` 경로는 설치된 Xcode 26.4.1과 맞지 않았다. 설치 경로에는 `Simulator.app`이 있고 `DeviceHub.app`은 없다.
+- Apple의 시뮬레이터 추가 문서에 따라 Xcode 26.4.1에서는 `Window > Devices and Simulators > Simulators > +` 경로로 안내를 정정했다. 코드는 변경하지 않았다.
+
+## 2026-10-02 구로동 현재 날씨 일부 결측 진단
+
+- 사용자 화면(11:55 KST)은 구로동의 현재 기온·체감온도·습도·바람만 비고 자외선·대기질·가시거리·일출·일몰은 표시된다. 구로동 격자 `58/125`의 공개 `/api/v1/weather/main`을 11:57 KST에 읽기 전용 조회해 HTTP 200을 확인했다.
+- 응답의 `current.temperature`, `apparentTemperature`, `humidity`, `windSpeed`는 모두 누락됐고 `qualityFlags`에 `CURRENT_OBSERVATION_UNAVAILABLE`, `dataRole`에는 `FORECAST`가 있었다. `uvIndex=5`, `visibilityMeters=42340`, `pm10=46`, `pm25=17`은 제공됐다. 따라서 앱 전체 네트워크·위치 권한 문제가 아니라 서버가 최신 현재 관측을 제공하지 않은 상태다.
+- 서버 `currentFromUltraShortObservation`은 관측 캐시가 `AVAILABLE`이고 기온이 있으며 관측시각이 30분 이내여야 현재값을 채택한다. 아니면 기온·체감·습도·바람을 의도적으로 비운다. 공개 응답만으로 캐시 부재·지연·제공자 실패 중 어느 이유인지 확정할 수 없다. 원격 운영 DB 조회는 현재 환경의 SSH 호스트 `soha-01`을 확인할 수 없어 수행하지 못했다. 코드·운영 설정은 변경하지 않았다.
+
+## 2026-10-02 구로동 관측 결측 후 회복 확인
+
+- 12:01 KST에 공개 `/api/v1/weather/today?nx=58&ny=125`를 재조회하니 `current.dataRole=OBSERVATION`, `observedAt=11:50 KST`, `provider=KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST`, 기온 19.5℃·습도 26%·풍속 3.1m/s로 회복됐다. 11:57에는 같은 격자의 `/main`이 `CURRENT_OBSERVATION_UNAVAILABLE`이었다.
+- 서버는 `*/10 * * * *` 정기 작업에서 현재 관측을 수집하고, API 응답에서는 30분이 넘은 현재 관측을 결측 처리한다. 따라서 스크린샷 시점에는 최신 관측 캐시가 아직 반영되지 않아 네 항목이 함께 비었고, 12:00 작업 뒤 회복됐다고 판단한다. 11:30~11:50 수집이 왜 늦었는지 정확한 제공자 오류/작업 상태는 운영 로그 없이는 확정할 수 없다.
+- 현재 Mac의 SSH 설정에는 `soha-01` 별칭이 없고 알려진 LAN 주소 `192.168.0.67:22`는 연결되지 않아 운영 로그/DB를 읽지 못했다. 앱·서버 코드와 운영 설정은 변경하지 않았다.
+
+## 2026-10-02 현재 관측 수집·발표 주기 설명
+
+- 기상청 API허브 공식 자료는 동네예보 격자 실황이 2024-03-04 이후 10분 간격으로 발표된다고 안내한다. 이 제품은 AWS 관측을 격자별로 정리한 값이다.
+- 서버는 `*/10 * * * *` 스케줄에서 10분 단위 현재 관측 격자를 요청한다. 수집 목표시각은 스케줄 시각에서 10분을 뺀 뒤 10분 단위로 내리며, 격자 실황 실패 시 AWS 최근접 관측으로 대체를 시도한다. `/main`과 `/today`는 요청 시 기상청을 직접 조회하지 않고 저장된 캐시만 읽는다. 30분 초과 관측은 현재 수치로 반환하지 않는다.
+- 11:57 구로동 응답은 결측, 12:01 응답은 11:50 격자 실황으로 회복되어 관측소의 발표 주기가 1시간처럼 길어서 생긴 상황은 아니다. 11:30~11:50 사이에 최신 관측이 캐시에 없었던 것은 확인됐지만 APIHub 발표 지연·요청 실패·작업 지연·예산 차단 중 어느 요인인지는 운영 수집 로그와 캐시 이력이 없어 확정할 수 없다. 코드·설정은 변경하지 않았다.
+
+## 2026-10-02 10분 수집과 30분 결측의 관계 정정
+
+- 사용자 지적대로 10분 스케줄은 성공한 저장을 뜻하지 않는다. Node 스케줄러는 앞선 `core` 작업이 실행 중이면 해당 10분 회차를 `node_scheduled_job_skipped_overlap`으로 건너뛴다. `runWeatherCollectionJob`은 예보·특보 수집을 기다린 뒤 현재 관측을 수집한다.
+- 각 회차는 10분 전 관측을 목표로 한다. 따라서 11:40 회차는 11:30, 11:50 회차는 11:40 관측을 시도할 수 있다. 11:57 공개 응답이 결측이었다면 두 시각 중 어느 하나도 그때까지 유효하게 저장되지 않았다는 뜻이다. 12:01에는 11:50 관측이 제공됐다. 앞선 답변의 단순한 '다음 수집 대기' 설명은 불충분했으며, 정상적인 10분 갱신이 계속 성공했다면 결측이 나와서는 안 된다.
+- 격자 관측은 여섯 요소를 `Promise.all`로 조회하므로 한 요소 오류에도 격자 조회가 실패할 수 있다. AWS 대체 조회도 값을 못 주면 해당 지역 캐시를 쓰지 않는다. 이와 작업 중복 건너뜀·선행 수집 지연 중 실제로 무엇이 11:40/11:50 회차에 발생했는지는 운영 스케줄러 로그가 없어 확정할 수 없다. 코드·운영 설정은 변경하지 않았다.
+
+## 2026-10-02 현재 관측 재시도·실패 로그와 위치 권한 요청 시점 수정
+
+- 서버 현재 관측을 예보·특보보다 먼저 수집하고, 전국 10분 작업과 별개로 활성 설치 지역을 2분마다 다시 조회하도록 Node/Worker 일정을 추가했다. 매 회차 현재 10분 구간, 직전 구간, AWS 순서로 시도하며 결과가 비면 다음 회차에 재시도한다. APIHub 격자 캐시 TTL은 60초로 줄였다.
+- 격자 실황의 기온·습도·풍속은 필수로 유지하되 선택 항목(VEC·PTY·RN1) 실패만으로 전체 실황을 버리지 않는다. 강수형태를 모르면 예보의 강수 정보를 유지한다. 요청 실패의 제공처·변수·시각, 예산 차단, 저장/결측 개수, 활성 지역 30분 신선도 초과를 구조화 로그에 기록한다. 제공처 장애·API 한도·네트워크 단절 시 30분 이내 관측값을 절대 보장할 수는 없다.
+- 앱 `HomeScreen`에서 위치 권한 거부 결과를 받았다는 이유만으로 `requestPermission: true`를 다시 호출하던 자동 분기를 제거했다. 첫 안내의 `계속`을 누른 뒤에만 초기 위치 권한을 요청한다. 복귀·새로고침 중 안내창이 열려 있어도 요청하지 않는 회귀 테스트를 추가했다.
+- 검증: 서버 TypeScript 검사, Worker 54파일·368개, Node 5파일·13개, Flutter 3.47.4 정적 분석과 홈 위치 테스트 43개, `git diff --check` 통과. Flutter 셰이더 자산 오류는 `flutter clean` 후 재검증 시 사라졌다. 운영 미니 PC는 이 환경에서 SSH 연결이 되지 않아 배포하지 않았고, 실제 제공처·운영 스케줄러 동작은 아직 확인하지 못했다. 기존 iOS `Podfile.lock`·`project.pbxproj` 변경은 보존했다.
+
+## 2026-10-02 현재 관측 재시도의 APIHub 한도·운영 로그 경로 점검
+
+- APIHub 공식 일반회원 한도는 하루 20,000회·5GB, 서버 내부 예약 상한은 18,000회·4.5GB다. 종전 2분 빠른 재시도에서 격자 6변수를 매번 조회하면 추가 예약량이 최대 `576회 × 6MB = 3.456GB/일`이며, 과거 운영일 내부 예약량 2.263GB와 합쳐 4.5GB를 넘을 수 있었다. 같은 발표 구간 재시도여도 캐시 TTL 60초보다 2분 간격이 길어 매번 외부 조회할 수 있다.
+- 빠른 재시도는 핵심 3변수(T1H·REH·WSD)만 조회하고 AWS fallback은 정규 10분 작업에만 남겼다. 빠른 재시도 자체를 내부 예약 기준 1GB/일로 제한하고 전체 예약량 3.5GB 이후에는 중단해 다른 작업에 최소 1GB를 남긴다. 정규 10분 작업은 기존 4.5GB 전체 상한까지 계속 시도한다. AWS 지점목록 최대 13개월 탐색과 분 관측 1회를 고려해 정규 fallback 예약 호출 수를 3회에서 최대 14회로 교정했다. APIHub 중기예보 호출은 아직 내부 예약 집계에서 빠져 있으므로 포털 실제 사용량과 완전한 일치를 보장하지 않는다.
+- Mac SSH 설정에 `soha-01` 별칭이 없어 `ssh soha-01`은 호스트 이름 해석 단계에서 실패했다. Mac은 `192.168.0.47/24`이지만 `192.168.0.67:22` TCP·SSH는 시간 초과, ICMP도 무응답이었다. 이전 Tailscale 주소 `100.105.212.26:22`도 시간 초과이며 이 Mac에는 Tailscale CLI/앱이 없고 100.x 경로가 일반 공유기로 향한다. 공개 `https://weather-api.codesoha.com/health`는 HTTP 200 `ok`여서 API 서비스 전체 중단으로 단정할 수 없고, SSH 차단·sshd 정지·주소/네트워크 정책 중 정확한 원인은 서버 쪽 확인이 필요하다. 인증 실패가 아니라 연결 전 단계의 실패다.
+- 검증: 서버 TypeScript 검사, Worker 54파일·371개와 Node 5파일·13개 테스트, `git diff --check` 통과. 운영 서버에는 배포하지 않았으며 실제 APIHub 계정 사용량과 신규 재시도 소비량은 아직 측정하지 못했다.
+
+## Windows에서 이어서 할 일: 운영 접속·관측 수집 검증
+
+- [ ] Windows PC에서 Tailscale 연결 상태와 `100.105.212.26` 장치의 온라인 상태를 확인한다. 집 LAN에 있다면 `Test-NetConnection 192.168.0.67 -Port 22`, Tailscale 경로는 `Test-NetConnection 100.105.212.26 -Port 22`로 각각 점검한다. SSH가 열리면 `ssh ubuntu@100.105.212.26` 또는 확인된 LAN 주소로 접속한다. 연결이 계속 시간 초과되면 서버 콘솔에서 현재 IP, `sshd` 실행 상태, 방화벽·Tailscale 접근 정책을 확인한다. 인증키·비밀번호는 로그나 HANDOFF에 기록하지 않는다.
+- [ ] 접속 후 `weather-care-scheduler`의 사용자 제보 시각 전후 journal에서 `node_scheduled_job_skipped_overlap`, `weather_collection_failed`, `grid_observation_required_variable_failed`, `current_observation_budget_denied`, `current_observation_freshness_breached`를 확인해 실제 결측 원인을 특정한다. 운영 SQLite `api_usage_daily`에서 한국 날짜별 `GRID_OBSERVATION_FAST_RETRY`, `GRID_OBSERVATION_10_MINUTES`, `AWS_CURRENT_FALLBACK`과 전체 APIHub 예약량을 읽기 전용으로 집계한다. APIHub 포털의 계정 실제 호출·용량과 비교한다. 내부 예약에는 중기예보 APIHub 호출이 빠져 있다는 점을 반영한다.
+- [ ] 이번 서버 수정은 아직 운영 미배포다. Windows에서 최신 원격 커밋을 받은 뒤 충돌·배포 대상 파일을 확인하고, 운영 DB·기존 소스를 백업한 다음 서버를 배포한다. 배포 후 API·스케줄러·공개 `/health`를 확인하고, 10분 정규 회차와 2분 재시도 회차의 저장·결측·예산 로그 및 구로동 `58/125`의 `/main`·`/today` 관측시각을 검증한다. 사용자 앱의 첫 안내 `계속` 전 위치 팝업 회귀도 새 앱 빌드에서 확인한다.
+
+## 2026-10-02 Windows 인계 기록 커밋과 푸시 인증 대기
+
+- 앱 권한 수정 `ec9ab3c`, 서버 수집·예산 수정 `8ec3a59`, Windows 인계 `f0f47b7`을 각각 로컬 커밋했다. 저장된 `origin/master`의 `c294487`과 `HANDOFF.md`가 충돌해 양쪽 기록을 모두 남긴 뒤 병합 커밋 `41ebacf`를 만들었다. 기존 iOS `Podfile.lock`·`project.pbxproj`의 미커밋 변경은 포함하지 않았다.
+- HTTPS 원격의 GitHub 암호/토큰이 Mac 키체인에 없고 등록된 SSH 키도 GitHub에서 거부돼 `git fetch`·`git push`가 인증 단계에서 실패했다. GitHub 연결 플러그인을 제안했지만 아직 설치·연결되지는 않았다. **이 커밋들은 아직 원격에 없으므로 Windows에서 `git pull`만 해서는 받을 수 없다.** Mac에서 GitHub 인증이나 플러그인 연결을 완료한 뒤 최신 원격을 다시 받아 충돌 여부를 확인하고 일반 `git push origin master`를 해야 한다. 강제 푸시는 하지 않는다.

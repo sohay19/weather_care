@@ -99,7 +99,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _notifyRefreshFailure = false;
   bool _requestPermission = false;
   bool _forceLocationRefresh = false;
-  bool _locationPermissionPrompted = false;
   bool _initialized = false;
   bool _leftApp = false;
   bool _registrationInitialized = false;
@@ -461,24 +460,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _statusMessage = _location.message;
             }
           });
-          var result = await _locationService.locate(
+          final result = await _locationService.locate(
             requestPermission: ask,
             forceRefresh: forceLocationRefresh,
           );
           if (!mounted) return;
           if (revision != _locationRevision) continue;
-          if (ask) _locationPermissionPrompted = true;
-          if (!ask &&
-              !_locationPermissionPrompted &&
-              result.state == LocationState.denied) {
-            _locationPermissionPrompted = true;
-            result = await _locationService.locate(
-              requestPermission: true,
-              forceRefresh: forceLocationRefresh,
-            );
-            if (!mounted) return;
-            if (revision != _locationRevision) continue;
-          }
           setState(() {
             _location = result;
             _coordinates = result.coordinates;

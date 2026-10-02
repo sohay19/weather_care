@@ -1,5 +1,6 @@
 import {
   CORE_COLLECTION_CRON,
+  CURRENT_OBSERVATION_CRON,
   RADAR_COLLECTION_CRON,
   ROAD_ICE_COLLECTION_CRON,
   runScheduledJobs,
@@ -11,6 +12,7 @@ import type { ScheduledJobName } from './schedule';
 
 const cronByJob: Record<ScheduledJobName, string> = {
   core: CORE_COLLECTION_CRON,
+  observation: CURRENT_OBSERVATION_CRON,
   radar: RADAR_COLLECTION_CRON,
   'road-ice': ROAD_ICE_COLLECTION_CRON,
 };

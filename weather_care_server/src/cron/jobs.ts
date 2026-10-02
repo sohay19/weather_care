@@ -2,11 +2,15 @@ import { runRecommendationNotificationJob } from '../notification/notificationSc
 import { ServerEnv } from '../types';
 import { clearExpiredEnrollmentData } from '../security/installationAccess';
 import { runDataRetentionJob } from '../database/dataRetention';
-import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
+import {
+  runCurrentObservationCollectionJob,
+  runWeatherCollectionJob,
+} from '../collection/weatherCollectionJob';
 
 export const RADAR_COLLECTION_CRON = '2-59/15 * * * *';
 export const ROAD_ICE_COLLECTION_CRON = '7-59/30 * * * *';
 export const CORE_COLLECTION_CRON = '*/10 * * * *';
+export const CURRENT_OBSERVATION_CRON = '*/2 * * * *';
 
 export async function runForecastRefreshJob(env: ServerEnv): Promise<void> {
   if (!env.DB) return;
@@ -33,6 +37,12 @@ export async function runScheduledJobs(
       collectCore: false,
       collectRadar: true,
     });
+    return;
+  }
+  if (cron === CURRENT_OBSERVATION_CRON) {
+    if (now.getUTCMinutes() % 10 !== 0) {
+      await runCurrentObservationCollectionJob(env, now);
+    }
     return;
   }
   await runWeatherCollectionJob(env, {

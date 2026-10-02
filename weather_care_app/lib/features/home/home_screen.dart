@@ -375,7 +375,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.hidden) {
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.inactive) {
       _leftApp = true;
     }
     if (state == AppLifecycleState.resumed && _leftApp) {
@@ -460,10 +461,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               _statusMessage = _location.message;
             }
           });
-          final result = await _locationService.locate(
+          var result = await _locationService.locate(
             requestPermission: ask,
             forceRefresh: forceLocationRefresh,
           );
+          if (_today == null && result.state == LocationState.timedOut) {
+            result = await _locationService.locate(forceRefresh: true);
+          }
           if (!mounted) return;
           if (revision != _locationRevision) continue;
           setState(() {
@@ -1222,7 +1226,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       offline: failed,
       title: missingLocation ? '기준 위치를 확인해주세요' : title,
       message: message ?? _statusMessage,
-      onRetry: _loadData,
+      onRetry: _refreshFromTab,
       primaryActionLabel: missingLocation && _settings.locationMode == 'GPS'
           ? switch (_location.state) {
               LocationState.deniedForever => '앱 위치 권한 설정 열기',
@@ -1244,7 +1248,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _location.state == LocationState.serviceDisabled) {
       return _openDeviceLocationSettings();
     }
-    return _refresh(requestPermission: true);
+    return _refresh(requestPermission: true, forceLocationRefresh: true);
   }
 
   void _openManualRegionMenu() {
@@ -1301,7 +1305,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (locationChanged) {
       _clearHomeWidget();
       unawaited(_refresh(
-          requestPermission: updated.locationMode == 'GPS', supersede: true));
+          requestPermission: updated.locationMode == 'GPS',
+          supersede: true,
+          forceLocationRefresh: updated.locationMode == 'GPS'));
     }
     return _saveSettings(updated, refreshWeather: !locationChanged);
   }

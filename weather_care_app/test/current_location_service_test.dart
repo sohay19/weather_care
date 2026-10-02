@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:weather_care/services/current_location_service.dart';
@@ -38,6 +39,8 @@ class _Platform extends GeolocatorPlatform {
   int requests = 0;
   int reads = 0;
   int cachedReads = 0;
+  int streamReads = 0;
+  final positions = StreamController<Position>.broadcast(sync: true);
   LocationSettings? settings;
 
   @override
@@ -65,6 +68,13 @@ class _Platform extends GeolocatorPlatform {
   }) async {
     cachedReads++;
     return lastKnownPosition;
+  }
+
+  @override
+  Stream<Position> getPositionStream({LocationSettings? locationSettings}) {
+    streamReads++;
+    settings = locationSettings;
+    return positions.stream;
   }
 
   @override
@@ -133,6 +143,42 @@ void main() {
     expect(platform.cachedReads, 0);
     expect(platform.reads, 1);
   });
+  test('iOS 강제 새로고침은 요청 뒤 첫 위치 응답을 사용한다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    addTearDown(platform.positions.close);
+    final future = service.locate(forceRefresh: true);
+    await Future<void>.delayed(Duration.zero);
+    platform.positions.add(_position(
+      latitude: 37.43,
+      longitude: 126.80,
+      timestamp: _now.subtract(const Duration(seconds: 3)),
+    ));
+    platform.positions.add(_position(latitude: 35.18, longitude: 129.07));
+
+    final result = await future;
+    expect(result.coordinates?.latitude, 37.43);
+    expect(result.measuredAt, _now.subtract(const Duration(seconds: 3)));
+    expect(platform.streamReads, 1);
+    expect(platform.reads, 0);
+    expect(platform.positions.hasListener, isFalse);
+  });
+  test('iOS 새로고침은 응답의 측정시각이 오래돼도 좌표를 사용한다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    addTearDown(platform.positions.close);
+    final future = service.locate(forceRefresh: true);
+    await Future<void>.delayed(Duration.zero);
+    platform.positions.add(_position(
+      latitude: 35.18,
+      longitude: 129.07,
+      timestamp: _now.subtract(const Duration(minutes: 3)),
+    ));
+
+    final result = await future;
+    expect(result.coordinates?.latitude, 35.18);
+    expect(platform.positions.hasListener, isFalse);
+  });
   test('오래된 마지막 위치는 버리고 현재 위치를 측정한다', () async {
     platform.lastKnownPosition = _position(
       timestamp: _now.subtract(const Duration(minutes: 3)),
@@ -189,13 +235,26 @@ void main() {
     expect(result.state, LocationState.ready);
     expect(result.canUseLocalAnalysis, isTrue);
   });
-  test('오래되거나 미래인 위치는 현재 위치로 사용하지 않는다', () async {
+  test('오래되거나 미래인 마지막 위치는 버리고 새 요청의 응답을 사용한다', () async {
+    for (final timestamp in [
+      _now.subtract(const Duration(minutes: 3)),
+      _now.add(const Duration(minutes: 2))
+    ]) {
+      platform.lastKnownPosition = _position(timestamp: timestamp);
+      platform.position = _position(latitude: 35.18, longitude: 129.07);
+      final result = await service.locate();
+      expect(result.coordinates?.latitude, 35.18);
+    }
+  });
+  test('새 위치 요청의 응답은 측정시각이 오래되거나 미래여도 사용한다', () async {
     for (final timestamp in [
       _now.subtract(const Duration(minutes: 3)),
       _now.add(const Duration(minutes: 2))
     ]) {
       platform.position = _position(timestamp: timestamp);
-      expect((await service.locate()).state, LocationState.unavailable);
+      final result = await service.locate(forceRefresh: true);
+      expect(result.state, LocationState.ready);
+      expect(result.measuredAt, timestamp);
     }
   });
   test('잘못된 좌표와 서비스 범위 밖 좌표를 구분한다', () async {

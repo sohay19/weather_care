@@ -21,7 +21,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.SystemClock;
 
 import androidx.annotation.Nullable;
 
@@ -139,13 +138,12 @@ public final class WeatherCareWidgetRefreshService extends Service {
         if (!fine && !coarse) return null;
         LocationManager manager = getSystemService(LocationManager.class);
         if (manager == null) return null;
-        long startedAt = SystemClock.elapsedRealtimeNanos();
         AtomicReference<Location> best = new AtomicReference<>();
         CountDownLatch ready = new CountDownLatch(1);
         LocationListener listener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                if (!usable(location, startedAt)) return;
+                if (!usable(location)) return;
                 Location previous = best.get();
                 if (previous == null || location.getAccuracy() < previous.getAccuracy()) {
                     best.set(location);
@@ -193,17 +191,12 @@ public final class WeatherCareWidgetRefreshService extends Service {
         }
     }
 
-    private static boolean usable(Location location, long startedAt) {
-        long age = SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos();
+    private static boolean usable(Location location) {
         return location.hasAccuracy() && location.getAccuracy() > 0 &&
                 Double.isFinite(location.getLatitude()) &&
                 Double.isFinite(location.getLongitude()) &&
                 location.getLatitude() >= 30 && location.getLatitude() <= 44 &&
-                location.getLongitude() >= 120 && location.getLongitude() <= 134 &&
-                age >= -TimeUnit.MINUTES.toNanos(1) &&
-                age <= TimeUnit.MINUTES.toNanos(2) &&
-                location.getElapsedRealtimeNanos() >=
-                        startedAt - TimeUnit.SECONDS.toNanos(10);
+                location.getLongitude() >= 120 && location.getLongitude() <= 134;
     }
 
     @Nullable

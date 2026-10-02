@@ -48,6 +48,7 @@ class _Location extends CurrentLocationService {
   LocationResult result =
       const LocationResult(LocationState.ready, coordinates: _seoul);
   LocationResult? cachedResult;
+  final queuedResults = <LocationResult>[];
   final requests = <bool>[];
   final freshRequests = <bool>[];
   Completer<LocationResult>? pending;
@@ -58,9 +59,9 @@ class _Location extends CurrentLocationService {
   }) async {
     requests.add(requestPermission);
     freshRequests.add(forceRefresh);
-    return pending == null
-        ? (!forceRefresh ? cachedResult ?? result : result)
-        : await pending!.future;
+    if (pending != null) return await pending!.future;
+    if (queuedResults.isNotEmpty) return queuedResults.removeAt(0);
+    return !forceRefresh ? cachedResult ?? result : result;
   }
 }
 
@@ -300,6 +301,40 @@ void main() {
     expect(preferences.getBool(PermissionOnboardingStore.storageKey), isTrue);
     expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
         findsNothing);
+  });
+
+  testWidgets('첫 권한 요청 후 위치 시간 초과는 팝업 없이 한 번 더 측정한다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    location.queuedResults.addAll([
+      const LocationResult(LocationState.timedOut),
+      const LocationResult(LocationState.ready, coordinates: _seoul),
+    ]);
+    await start(tester, settle: false, initialIndex: 2);
+
+    tester
+        .widget<FilledButton>(
+          find.byKey(const ValueKey('permission-onboarding-confirm')),
+        )
+        .onPressed!();
+    await tester.pumpAndSettle();
+
+    expect(location.requests, [true, false]);
+    expect(location.freshRequests, [false, true]);
+    expect(weather.calls.single.coordinates, _seoul);
+    expect(find.text('기준 위치를 확인해주세요'), findsNothing);
+  });
+
+  testWidgets('권한이 이미 있는 앱 첫 화면도 위치 시간 초과 시 재측정한다', (tester) async {
+    location.queuedResults.addAll([
+      const LocationResult(LocationState.timedOut),
+      const LocationResult(LocationState.ready, coordinates: _seoul),
+    ]);
+
+    await start(tester, initialIndex: 2);
+
+    expect(location.requests, [false, false]);
+    expect(location.freshRequests, [false, true]);
+    expect(weather.calls.single.coordinates, _seoul);
   });
 
   testWidgets('첫 안내에서 계속을 누르기 전에는 재개·새로고침에도 위치 권한을 요청하지 않는다', (tester) async {
@@ -831,6 +866,8 @@ void main() {
         find.byKey(const ValueKey('location-primary-action')), findsOneWidget);
     expect(
         find.byKey(const ValueKey('manual-location-action')), findsOneWidget);
+    location.cachedResult =
+        const LocationResult(LocationState.ready, coordinates: _busan);
     location.result =
         const LocationResult(LocationState.ready, coordinates: _seoul);
     await tester.tap(find.byKey(const ValueKey('location-primary-action')));
@@ -838,12 +875,29 @@ void main() {
     final grid = KmaGrid.fromCoordinates(
         latitude: _seoul.latitude, longitude: _seoul.longitude);
     expect(location.requests, [false, true]);
+    expect(location.freshRequests.last, isTrue);
     expect(
         (weather.calls.single.nx, weather.calls.single.ny), (grid.nx, grid.ny));
     expect(registration.calls.single.coordinates, _seoul);
     await tester.tap(find.text('Setting'));
     await tester.pumpAndSettle();
     expect(screen(tester).location.state, LocationState.ready);
+  });
+  testWidgets('날씨가 비어 있는 화면을 당겨도 GPS를 다시 측정한다', (tester) async {
+    location.result = const LocationResult(LocationState.timedOut);
+    await start(tester, initialIndex: 2);
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _busan);
+
+    final indicator = tester.widget<RefreshIndicator>(find.ancestor(
+      of: find.byKey(const ValueKey('main-tab')),
+      matching: find.byType(RefreshIndicator),
+    ));
+    await indicator.onRefresh();
+    await tester.pumpAndSettle();
+
+    expect(location.freshRequests.last, isTrue);
+    expect(weather.calls.last.coordinates, _busan);
   });
   testWidgets('위치를 확인하지 못하면 수동 지역 메뉴로 이동할 수 있다', (tester) async {
     location.result = const LocationResult(LocationState.denied);
@@ -944,7 +998,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(location.requests, [false, false]);
+    expect(location.requests, [false, false, false]);
     location.cachedResult =
         const LocationResult(LocationState.ready, coordinates: _busan);
     location.result =
@@ -952,8 +1006,8 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
-    expect(location.requests, [false, false, false]);
-    expect(location.freshRequests, [false, true, true]);
+    expect(location.requests, [false, false, false, false]);
+    expect(location.freshRequests, [false, true, true, true]);
     expect(weather.calls.last.coordinates, _seoul);
     expect(registration.calls.last.coordinates, _seoul);
   });
@@ -1099,10 +1153,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(screen(tester).regionName, selected.fullName);
     settings = screen(tester).initialSettings!;
+    location.cachedResult =
+        const LocationResult(LocationState.ready, coordinates: _busan);
     await screen(tester)
         .onSettingsChanged!(settings.copyWith(locationMode: 'GPS'));
     await tester.pumpAndSettle();
     expect(screen(tester).initialSettings!.manualRegionKey, selected.key);
+    expect(location.freshRequests.last, isTrue);
     expect(weather.calls.last.coordinates, _seoul);
     settings = screen(tester).initialSettings!;
     await screen(tester)

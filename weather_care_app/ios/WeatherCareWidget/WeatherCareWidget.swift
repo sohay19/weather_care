@@ -359,6 +359,7 @@ private struct WidgetHeader: View {
           .fixedSize(horizontal: true, vertical: false)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+      .widgetInvalidatableContent()
       WidgetRefreshButton()
     }
     .foregroundStyle(ink)
@@ -384,9 +385,21 @@ private struct SmallWidgetHeader: View {
       }
       .padding(.top, 13)
       .frame(maxWidth: .infinity, alignment: .leading)
+      .widgetInvalidatableContent()
       WidgetRefreshButton()
     }
     .foregroundStyle(ink)
+  }
+}
+
+private extension View {
+  @ViewBuilder
+  func widgetInvalidatableContent() -> some View {
+    if #available(iOS 17.0, *) {
+      invalidatableContent()
+    } else {
+      self
+    }
   }
 }
 

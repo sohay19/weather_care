@@ -230,7 +230,7 @@ void main() {
     expect(androidManifest, contains('android.permission.FOREGROUND_SERVICE_LOCATION'));
     expect(androidActivity, contains('GPS_ENABLED_KEY'));
     expect(androidService, contains('WeatherCareWidgetRefreshWorker.refresh(this, url, false)'));
-    expect(androidService, contains('location.getElapsedRealtimeNanos()'));
+    expect(androidService, isNot(contains('getElapsedRealtimeNanos()')));
     expect(provider, contains('REFRESH_IN_PROGRESS_KEY'));
     expect(provider, contains('weather_widget_refresh_background_loading'));
     expect(provider, contains('ic_widget_refresh_loading'));
@@ -265,9 +265,12 @@ void main() {
         iosWidget, contains('.fixedSize(horizontal: true, vertical: false)'));
     expect(iosIntent, contains('struct RefreshWeatherWidgetIntent: AppIntent'));
     expect(iosIntent, contains('static var openAppWhenRun = false'));
-    expect(iosWidgetPlist, isNot(contains('<key>NSWidgetWantsLocation</key>')));
-    expect(iosIntent, isNot(contains('CoreLocation')));
-    expect(iosIntent, contains('url: savedURL'));
+    expect(iosWidgetPlist, contains('<key>NSWidgetWantsLocation</key>'));
+    expect(iosIntent, contains('CoreLocation'));
+    expect(iosIntent, contains('manager.isAuthorizedForWidgetUpdates'));
+    expect(iosIntent, contains('locationManagerDidChangeAuthorization'));
+    expect(iosIntent, isNot(contains('locationServicesEnabled()')));
+    expect(iosIntent, contains('url: url'));
     expect(iosAppDelegate, contains('values?["gpsEnabled"]'));
     expect(
       iosIntent,

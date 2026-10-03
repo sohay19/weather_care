@@ -20,6 +20,7 @@ import { UvForecast } from '../uv/uvProvider';
 import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
 import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
 import { kmaGridCoordinates } from '../../regions/kmaGridCoordinates';
+import { collectedCacheKey, getCollectedCache } from '../../database/collectedWeatherRepository';
 
 const UV_FRESH_MS = 3 * 60 * 60 * 1000;
 const UV_MAX_STALE_MS = 8 * 60 * 60 * 1000;
@@ -63,9 +64,94 @@ export function nearestNationwideAirQuality(
   now = new Date(),
 ): AirQualitySnapshot | undefined {
   const observations = new Map(snapshot.observations.map((item) => [item.stationName, item]));
-  return nearestAirStations(snapshot.catalog, latitude, longitude)
+  const nearby = nearestAirStations(snapshot.catalog, latitude, longitude)
     .map((station) => observations.get(station.stationName))
-    .find((item) => item && isRecentAirObservation(item.observedAt, now));
+    .filter((item): item is AirQualitySnapshot =>
+      !!item && isRecentAirObservation(item.observedAt, now));
+  return nearby.find((item) =>
+    [item.pm10, item.pm25, item.ozone].every((value) => Number.isFinite(value))) ?? nearby[0];
+}
+
+// 요청 중에는 제공처를 호출하지 않고, 수집된 원본의 실제 시각을 기준으로 판정한다.
+export function currentEnvironmentalData(
+  bundle: EnvironmentalDataBundle,
+  now = new Date(),
+  nationwideAir?: NationwideAirQualitySnapshot,
+  coordinates?: { latitude: number; longitude: number },
+): EnvironmentalDataBundle {
+  const result: EnvironmentalDataBundle = { ...bundle, sources: { ...bundle.sources } };
+  if (nationwideAir && coordinates &&
+      ageMs(nationwideAir.collectedAt, now) <= AIR_MAX_STALE_MS) {
+    const observation = nearestNationwideAirQuality(
+      nationwideAir, coordinates.latitude, coordinates.longitude, now,
+    );
+    if (observation) {
+      result.airQuality = observation;
+      result.sources.airQuality = availableSource(
+        'AIRKOREA', 'CACHED', observation.observedAt, nationwideAir.collectedAt,
+      );
+    }
+  }
+  for (const type of ['uv', 'airQuality'] as const) {
+    const source = result.sources[type];
+    const value = result[type];
+    if (source.state === 'UNSUPPORTED_REGION') {
+      if (type === 'uv') result.uv = undefined;
+      else result.airQuality = undefined;
+      continue;
+    }
+    const observedAt = type === 'uv' ? result.uv?.issuedAt : result.airQuality?.observedAt;
+    const maxAge = type === 'uv' ? UV_MAX_STALE_MS : AIR_MAX_STALE_MS;
+    if (!value || !observedAt || !Number.isFinite(Date.parse(observedAt)) ||
+        !source.cachedAt || ageMs(source.cachedAt, now) > maxAge ||
+        (type === 'uv' ? ageMs(observedAt, now) > UV_MAX_STALE_MS
+          : !isRecentAirObservation(observedAt, now)) ||
+        source.state === 'UNAVAILABLE') {
+      if (type === 'uv') result.uv = undefined;
+      else result.airQuality = undefined;
+      result.sources[type] = unavailableSource(source.provider);
+    } else if (ageMs(source.cachedAt, now) > (type === 'uv' ? UV_FRESH_MS : AIR_FRESH_MS) ||
+               (type === 'airQuality' && ageMs(observedAt, now) > 2 * AIR_FRESH_MS)) {
+      result.sources[type] = { ...source, state: 'STALE', observedAt };
+    }
+  }
+  return result;
+}
+
+export function environmentalDataIssues(
+  bundle: EnvironmentalDataBundle,
+  now = new Date(),
+): string[] {
+  const current = currentEnvironmentalData(bundle, now);
+  const issues: string[] = [];
+  if (!current.uv || uvForTime(current.uv, now.toISOString()) === undefined) issues.push('UV');
+  for (const [name, value] of [
+    ['PM10', current.airQuality?.pm10], ['PM25', current.airQuality?.pm25],
+    ['O3', current.airQuality?.ozone],
+  ] as const) {
+    if (!Number.isFinite(value)) issues.push(name);
+  }
+  return issues;
+}
+
+export async function readCollectedEnvironmentalData(
+  db: D1Database | undefined,
+  nx: number,
+  ny: number,
+  fallback: EnvironmentalDataBundle,
+  now = new Date(),
+  coordinates = kmaGridCoordinates(nx, ny),
+): Promise<EnvironmentalDataBundle> {
+  const [environmental, nationwide] = await Promise.all([
+    getCollectedCache<EnvironmentalDataBundle>(db, collectedCacheKey.environmental(nx, ny)),
+    getCollectedCache<NationwideAirQualitySnapshot>(db, collectedCacheKey.nationwideAir),
+  ]);
+  return currentEnvironmentalData(
+    environmental?.status === 'AVAILABLE' ? environmental.value : fallback,
+    now,
+    nationwide?.status === 'AVAILABLE' ? nationwide.value : undefined,
+    coordinates,
+  );
 }
 
 interface ResolveOptions<T> {
@@ -418,8 +504,10 @@ function enrichSnapshot(
   bundle: EnvironmentalDataBundle,
   includeAvailabilityFlags: boolean,
 ): WeatherSnapshot {
-  const providers = [snapshot.provider];
-  const providerFields = [snapshot.providerField];
+  const providers = snapshot.provider?.split('+').filter((provider) =>
+    provider !== 'KMA_LIVING_INDEX_V5' && provider !== 'AIRKOREA') ?? [];
+  const providerFields = snapshot.providerField?.split(',').filter((field) =>
+    !['UV_INDEX', 'PM10', 'PM25', 'O3'].includes(field)) ?? [];
   if (uvIndex !== undefined) {
     providers.push('KMA_LIVING_INDEX_V5');
     providerFields.push('UV_INDEX');
@@ -428,7 +516,8 @@ function enrichSnapshot(
     providers.push('AIRKOREA');
     providerFields.push('PM10,PM25,O3');
   }
-  const qualityFlags = [...(snapshot.qualityFlags ?? [])];
+  const qualityFlags = (snapshot.qualityFlags ?? []).filter((flag) =>
+    !/^(UV_|AIR_QUALITY_|STALE_UV$|STALE_AIR_QUALITY$)/.test(flag));
   if (includeAvailabilityFlags && uvIndex === undefined) {
     qualityFlags.push(`UV_${bundle.sources.uv.state}`);
   }
@@ -443,16 +532,13 @@ function enrichSnapshot(
   return {
     ...snapshot,
     uvIndex,
-    pm10: airQuality?.pm10 ?? snapshot.pm10,
-    pm25: airQuality?.pm25 ?? snapshot.pm25,
-    airQualityStationName:
-      airQuality?.stationName ?? snapshot.airQualityStationName,
-    airQualityObservedAt:
-      airQuality?.observedAt ?? snapshot.airQualityObservedAt,
-    airQualityGrade:
-      airQuality?.airQualityGrade ?? snapshot.airQualityGrade,
-    ozone: airQuality?.ozone ?? snapshot.ozone,
-    ozoneGrade: airQuality?.ozoneGrade ?? snapshot.ozoneGrade,
+    pm10: airQuality?.pm10,
+    pm25: airQuality?.pm25,
+    airQualityStationName: airQuality?.stationName,
+    airQualityObservedAt: airQuality?.observedAt,
+    airQualityGrade: airQuality?.airQualityGrade,
+    ozone: airQuality?.ozone,
+    ozoneGrade: airQuality?.ozoneGrade,
     provider: unique(providers).join('+'),
     providerField: unique(providerFields).join(','),
     qualityFlags: unique(qualityFlags),
@@ -482,7 +568,8 @@ function dataSourceLabel(
   base: string,
   bundle: EnvironmentalDataBundle,
 ): string {
-  const sources = [base];
+  const sources = base.split(' · ').filter((source) =>
+    source !== '기상청 생활기상지수' && source !== '에어코리아');
   if (bundle.uv) sources.push('기상청 생활기상지수');
   if (bundle.airQuality) sources.push('에어코리아');
   return unique(sources).join(' · ');

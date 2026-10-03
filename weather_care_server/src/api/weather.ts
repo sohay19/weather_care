@@ -1,4 +1,8 @@
 import { Hono } from 'hono';
+import {
+  enrichForecastWithEnvironmentalData,
+  readCollectedEnvironmentalData,
+} from '../providers/environmental/environmentalDataService';
 import { installationOwnerHash } from '../security/installationAccess';
 import {
   NotificationSettings,
@@ -72,6 +76,7 @@ import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySn
   withoutPrecipitation } from '../rules/precipitationWindows';
 import type { UvForecast } from '../providers/uv/uvProvider';
 import type { DailyAirQualityForecastAtDate } from '../providers/air/airKoreaForecastProvider';
+import { readCollectedAirForecast } from '../providers/air/airKoreaForecastProvider';
 import {
   currentKoreanCalendarWeek,
   getWeeklyForecastRecords,
@@ -165,8 +170,13 @@ router.get('/main', async (c) => {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
+    const environmentalData = await readCollectedEnvironmentalData(
+      c.env.DB, nx, ny, collected.value.environmental, generatedAt,
+    );
     const forecast = enrichForecastWithVisibility(
-      forecastForCurrentHour(collected.value.forecast, generatedAt),
+      enrichForecastWithEnvironmentalData(
+        forecastForCurrentHour(collected.value.forecast, generatedAt), environmentalData,
+      ),
       visibilityRecord?.value,
       generatedAt,
     );
@@ -176,6 +186,9 @@ router.get('/main', async (c) => {
       generatedAt,
     );
     const responseForecast = { ...forecast, current };
+    const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
+      weekly?.status === 'AVAILABLE' ? weekly.value.airQuality : [], generatedAt,
+      c.req.query('adminCode') ?? c.req.query('regionCode'), c.req.query('regionName'));
     const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
     const brief = buildWeatherBriefResult(responseForecast, {
       regionKey: locationKey,
@@ -197,16 +210,14 @@ router.get('/main', async (c) => {
         nextForecastSnapshot(
           responseForecast.hourly,
           generatedAt,
-          weekly?.status === 'AVAILABLE'
-            ? weekly.value.airQuality
-            : undefined,
+          airForecast,
         ) ?? forecast.current,
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
       dataStatusMessages: [],
       timeline: [],
-      environmentalSources: collected.value.environmental.sources,
+      environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
       generatedAt: generatedAt.toISOString(),
@@ -316,8 +327,13 @@ router.get('/today', async (c) => {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
+    const environmentalData = await readCollectedEnvironmentalData(
+      c.env.DB, nx, ny, regionRecord.value.environmental, generatedAt, coordinates,
+    );
     const forecast = enrichForecastWithVisibility(
-      forecastForCurrentHour(regionRecord.value.forecast, generatedAt),
+      enrichForecastWithEnvironmentalData(
+        forecastForCurrentHour(regionRecord.value.forecast, generatedAt), environmentalData,
+      ),
       visibilityRecord?.value,
       generatedAt,
     );
@@ -327,7 +343,9 @@ router.get('/today', async (c) => {
       generatedAt,
     );
     const responseForecast = { ...forecast, current };
-    const environmentalData = regionRecord.value.environmental;
+    const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
+      weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,
+      c.req.query('adminCode') ?? c.req.query('regionCode'), c.req.query('regionName'));
     let nationwidePrecipitationValue: CurrentPrecipitationObservation | undefined;
     if (coordinates && nationwidePrecipitation) {
       try {
@@ -478,9 +496,7 @@ router.get('/today', async (c) => {
         nextForecastSnapshot(
           responseForecast.hourly,
           generatedAt,
-          weeklyRecord?.status === 'AVAILABLE'
-            ? weeklyRecord.value.airQuality
-            : undefined,
+          airForecast,
         ) ?? forecast.current,
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
@@ -586,8 +602,11 @@ router.get('/weekly', async (c) => {
       midTermDays,
       observedDays,
       uv,
-      airQuality,
+      airQuality: cachedAirQuality,
     } = collected.value;
+    const airQuality = await readCollectedAirForecast(
+      c.env.DB, nx, ny, cachedAirQuality, now, adminCode, requestedRegionName,
+    );
     const location = {
       nx,
       ny,

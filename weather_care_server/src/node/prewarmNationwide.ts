@@ -10,6 +10,12 @@ import {
 import { NATIONWIDE_PRECIPITATION_CACHE_KEY } from '../database/nationwidePrecipitationRepository';
 import { isRoadIceSeason } from '../providers/road/kmaRoadIceProvider';
 import {
+  currentEnvironmentalData, environmentalDataIssues,
+  type EnvironmentalDataBundle, type NationwideAirQualitySnapshot,
+} from '../providers/environmental/environmentalDataService';
+import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
+import { nationwideAirForecastIsUsable, type NationwideAirForecast } from '../providers/air/airKoreaForecastProvider';
+import {
   NATIONWIDE_FORECAST_GRIDS,
   NATIONWIDE_FORECAST_GRID_SHARD_COUNT,
 } from '../regions/nationwideForecastGridCatalog';
@@ -44,6 +50,7 @@ export interface OperationalPrewarmSummary {
   collectedCaches: number;
   missingCaches: number;
   missingSample: string[];
+  environmentalMissingSample: Array<{ cacheKey: string; sources: string[] }>;
 }
 
 export async function prewarmNationwideInRuntime(
@@ -73,6 +80,7 @@ export async function prewarmNationwideInRuntime(
         collectCore: true,
         collectActiveDetails: false,
         nationwideShardIndex: shardIndex,
+        forceSourceRefresh: attempt > 1,
       });
       console.log(JSON.stringify({
         event: 'nationwide_prewarm_shard_completed',
@@ -138,9 +146,13 @@ export function inspectOperationalPrewarm(
     updatedAt: string;
   }>;
   const requiredObservationDates = recentCompletedKoreanDates(now, 7);
+  const airRow = cacheRows.find((row) => row.cacheKey === collectedCacheKey.nationwideAir &&
+    row.status === 'AVAILABLE');
+  let nationwideAir: NationwideAirQualitySnapshot | undefined;
+  try { nationwideAir = airRow ? JSON.parse(airRow.payload) : undefined; } catch { /* 손상된 원본은 사용하지 않는다. */ }
   const available = new Set(
     cacheRows
-      .filter((row) => cacheRowHasUsablePayload(row, requiredObservationDates, now))
+      .filter((row) => cacheRowHasUsablePayload(row, requiredObservationDates, now, nationwideAir))
       .map(({ cacheKey }) => cacheKey),
   );
   const activeTargets = runtime.database.sqlite.prepare(
@@ -203,6 +215,19 @@ export function inspectOperationalPrewarm(
     collectedCaches: required.size - missing.length,
     missingCaches: missing.length,
     missingSample: missing.slice(0, 20),
+    environmentalMissingSample: missing.filter((key) => key.startsWith('COLLECTED_ENVIRONMENTAL_'))
+      .slice(0, 20).map((cacheKey) => {
+        const row = cacheRows.find((candidate) => candidate.cacheKey === cacheKey);
+        if (!row || row.status !== 'AVAILABLE') {
+          return { cacheKey, sources: ['UV', 'PM10', 'PM25', 'O3'] };
+        }
+        try {
+          const [, , nx, ny] = cacheKey.split('_');
+          const bundle = currentEnvironmentalData(JSON.parse(row.payload), now,
+            nationwideAir, kmaGridCoordinates(Number(nx), Number(ny)));
+          return { cacheKey, sources: environmentalDataIssues(bundle, now) };
+        } catch { return { cacheKey, sources: ['UV', 'PM10', 'PM25', 'O3'] }; }
+      }),
   };
 }
 
@@ -211,7 +236,8 @@ function cacheRowHasUsablePayload(row: {
   payload: string;
   status: string;
   updatedAt: string;
-}, requiredObservationDates: readonly string[], now: Date): boolean {
+}, requiredObservationDates: readonly string[], now: Date,
+  nationwideAir?: NationwideAirQualitySnapshot): boolean {
   if (row.status !== 'AVAILABLE' || row.payload.trim().length === 0) return false;
   try {
     const value: unknown = JSON.parse(row.payload);
@@ -233,19 +259,20 @@ function cacheRowHasUsablePayload(row: {
         Date.parse(row.updatedAt) > now.getTime() - 45 * 60 * 1000;
     }
     if (row.cacheKey === collectedCacheKey.nationwideAir) {
-      const snapshot = value as { catalog?: { stations?: unknown }; observations?: unknown };
+      const snapshot = value as NationwideAirQualitySnapshot;
       return Array.isArray(snapshot?.catalog?.stations) &&
         Array.isArray(snapshot?.observations) &&
-        snapshot.catalog.stations.length > 0 && snapshot.observations.length > 0;
+        snapshot.catalog.stations.length > 0 && snapshot.observations.length > 0 &&
+        Date.parse(snapshot.collectedAt) > now.getTime() - 3 * 60 * 60 * 1000;
     }
     if (row.cacheKey === collectedCacheKey.nationwideAirForecast) {
-      const snapshot = value as { issue?: unknown; areas?: unknown };
-      return typeof snapshot?.issue === 'string' &&
-        snapshot.areas !== null && typeof snapshot.areas === 'object';
+      return nationwideAirForecastIsUsable(value as NationwideAirForecast, now);
     }
     if (row.cacheKey.startsWith('COLLECTED_ENVIRONMENTAL_')) {
-      const bundle = value as { sources?: { uv?: unknown; airQuality?: unknown } };
-      return !!bundle?.sources?.uv && !!bundle.sources.airQuality;
+      const [, , nx, ny] = row.cacheKey.split('_');
+      const bundle = currentEnvironmentalData(value as EnvironmentalDataBundle, now,
+        nationwideAir, kmaGridCoordinates(Number(nx), Number(ny)));
+      return environmentalDataIssues(bundle, now).length === 0;
     }
     if (row.cacheKey === NATIONWIDE_PRECIPITATION_CACHE_KEY) {
       const manifest = value as { analysisChunks?: unknown; radarChunks?: unknown };

@@ -11,6 +11,7 @@ import {
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import {
   enrichForecastWithEnvironmentalData,
+  currentEnvironmentalData,
   loadEnvironmentalData,
   type EnvironmentalDataBundle,
   type NationwideAirQualitySnapshot,
@@ -69,7 +70,9 @@ import { KmaUvProvider, latestUvPublicationTimes } from '../providers/uv/kmaUvPr
 import {
   AirKoreaForecastProvider,
   airKoreaForecastAreaForGrid,
+  nationwideAirForecastIsUsable,
   type DailyAirQualityForecastAtDate,
+  type NationwideAirForecast,
 } from '../providers/air/airKoreaForecastProvider';
 import {
   resolveKmaMidTermRegionIds,
@@ -206,17 +209,19 @@ export async function runWeatherCollectionJob(
   }
 
   if (options.collectCore !== false) {
+    const forceNationwideSources = forceSourceRefresh &&
+      (options.nationwideShardIndex === undefined || options.nationwideShardIndex === 0);
     const nationwideAir = precollectNationwide
-      ? await collectNationwideAirQuality(env, now)
+      ? await collectNationwideAirQuality(env, now, forceNationwideSources)
       : undefined;
     const nationwideAirForecast = precollectNationwide
-      ? await collectNationwideAirForecast(env, now)
+      ? await collectNationwideAirForecast(env, now, forceNationwideSources)
       : undefined;
     if (collectActiveDetails) {
       await collectUltraShortObservations(env, allForecastTargets, now, activeRegions);
     }
     await collectRegionForecasts(
-      env, regions, activeRegionKeys, now, nationwideAir, nationwideAirForecast,
+      env, regions, activeRegionKeys, now, nationwideAir, nationwideAirForecast, forceSourceRefresh,
     );
     if (collectActiveDetails) {
       await collectWarnings(env, allForecastTargets, now, forceSourceRefresh);
@@ -320,10 +325,12 @@ async function loadActiveCollectionTargets(db: D1Database): Promise<CollectionTa
 async function collectNationwideAirQuality(
   env: ServerEnv,
   now: Date,
+  forceRefresh = false,
 ): Promise<NationwideAirQualitySnapshot | null> {
   const key = collectedCacheKey.nationwideAir;
   const cached = await getCollectedCache<NationwideAirQualitySnapshot>(env.DB, key);
-  if (cacheRecordIsFresh(cached, 2 * 60 * 60 * 1000, now)) return cached!.value;
+  if (!forceRefresh && cached?.status === 'AVAILABLE' &&
+      cacheRecordIsFresh(cached, 60 * 60 * 1000, now)) return cached.value;
   try {
     const provider = new AirKoreaAirQualityProvider({
       serviceKey: env.KMA_SERVICE_KEY, now: () => now, timeoutMs: 10_000,
@@ -342,25 +349,22 @@ async function collectNationwideAirQuality(
     return snapshot;
   } catch (error) {
     logCollectionFailure('nationwide_air', error);
-    return cacheRecordIsFresh(cached, 3 * 60 * 60 * 1000, now)
+    return cached?.status === 'AVAILABLE' && cacheRecordIsFresh(cached, 3 * 60 * 60 * 1000, now)
       ? cached!.value
       : null;
   }
 }
 
-interface NationwideAirForecast {
-  issue: string;
-  areas: Record<string, DailyAirQualityForecastAtDate[]>;
-}
-
 async function collectNationwideAirForecast(
   env: ServerEnv,
   now: Date,
+  forceRefresh = false,
 ): Promise<NationwideAirForecast | null> {
   const key = collectedCacheKey.nationwideAirForecast;
   const cached = await getCollectedCache<NationwideAirForecast>(env.DB, key);
   const issue = latestAirKoreaForecastIssue(now);
-  if (cached?.value.issue === issue) return cached.value;
+  if (!forceRefresh && cached?.status === 'AVAILABLE' &&
+      nationwideAirForecastIsUsable(cached.value, now)) return cached.value;
   try {
     const areas = await new AirKoreaForecastProvider({
       serviceKey: env.KMA_SERVICE_KEY, now: () => now,
@@ -387,6 +391,7 @@ async function collectRegionForecasts(
   now: Date,
   nationwideAir?: NationwideAirQualitySnapshot | null,
   nationwideAirForecast?: NationwideAirForecast | null,
+  forceRefresh = false,
 ): Promise<void> {
   await mapWithConcurrency(regions, nationwideAir === undefined ? 2 : 6, async ({ nx, ny }) => {
     try {
@@ -422,7 +427,7 @@ async function collectRegionForecasts(
         env.DB,
         collectedCacheKey.environmental(nx, ny),
       );
-      if (shouldRefreshEnvironmentalRecord(environmentalRecord, now)) {
+      if (forceRefresh || shouldRefreshEnvironmentalRecord(environmentalRecord, now)) {
         const environmental = await loadEnvironmentalData(
           env,
           regionMetadataForGrid(nx, ny),
@@ -445,7 +450,10 @@ async function collectRegionForecasts(
       }
 
       if (forecastRecord) {
-        const environmental = environmentalRecord?.value ?? nationwideBaseEnvironmentalData();
+        const environmental = currentEnvironmentalData(
+          environmentalRecord?.value ?? nationwideBaseEnvironmentalData(),
+          now, nationwideAir ?? undefined, kmaGridCoordinates(nx, ny),
+        );
         const bundle: CollectedRegionBundle = {
           forecast: enrichForecastWithEnvironmentalData(
             forecastRecord.value,

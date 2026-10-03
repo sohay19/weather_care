@@ -4,6 +4,7 @@ import {
   AIRKOREA_FORECAST_AREAS,
   airKoreaForecastArea,
   airKoreaForecastAreaForGrid,
+  airKoreaForecastAreaForAdminCode,
 } from '../src/providers/air/airKoreaForecastProvider';
 
 describe('AirKoreaForecastProvider', () => {
@@ -81,7 +82,8 @@ describe('AirKoreaForecastProvider', () => {
             informData: '2026-09-15', informGrade: grades,
           }]);
     });
-    const provider = new AirKoreaForecastProvider({ serviceKey: 'test', fetcher });
+    const provider = new AirKoreaForecastProvider({ serviceKey: 'test', fetcher,
+      now: () => new Date('2026-09-15T03:00:00Z') });
 
     const forecasts = await provider.getForecastsByAreas();
 
@@ -89,6 +91,20 @@ describe('AirKoreaForecastProvider', () => {
     expect(Object.keys(forecasts)).toHaveLength(AIRKOREA_FORECAST_AREAS.length);
     expect(forecasts['서울']?.[0]).toMatchObject({ date: '20260915', pm25Grade: '보통' });
     expect(forecasts['부산']?.[0]).toMatchObject({ date: '20260915', pm10Grade: '보통' });
+    const delayed = new AirKoreaForecastProvider({ serviceKey: 'test', fetcher,
+      now: () => new Date('2026-09-15T09:00:00Z') });
+    await expect(delayed.getForecastsByAreas()).rejects.toThrow('publication is incomplete');
+  });
+
+  it.each([
+    ['김포시', 55, 128, '4157000000', '경기북부'], ['구리시', 62, 127, '4131000000', '경기북부'],
+    ['남양주시', 64, 128, '4136000000', '경기북부'], ['고양시 일산동구', 56, 129, '4128500000', '경기북부'],
+    ['양평군', 69, 125, '4183000000', '경기남부'], ['태백시', 95, 119, '5119000000', '영동'],
+    ['평창군', 84, 123, '5176000000', '영서'], ['정선군', 89, 123, '5177000000', '영서'],
+    ['광주광역시', 58, 74, '1230000000', '광주'], ['전라남도 목포시', 50, 67, '1211000000', '전남'],
+  ])('공식 행정코드로 %s의 예보 권역을 구분한다', (name, nx, ny, code, area) => {
+    expect(airKoreaForecastAreaForAdminCode(code as string)).toBe(area);
+    expect(airKoreaForecastArea(name as string, nx as number, ny as number)).toBe(area);
   });
 });
 

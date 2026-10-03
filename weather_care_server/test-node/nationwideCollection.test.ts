@@ -30,6 +30,8 @@ import { latestMidTermIssueTimes } from '../src/providers/weather/kmaMidTermProv
 import { nationwideForecastGridShard } from '../src/regions/nationwideForecastGridCatalog';
 import { kmaGridCoordinates } from '../src/regions/kmaGridCoordinates';
 import { supportedKmaMidTermRegionIds } from '../src/regions/kmaMidTermRegionCatalog';
+import { AIRKOREA_FORECAST_AREAS } from '../src/providers/air/airKoreaForecastProvider';
+import { latestAirKoreaForecastIssue } from '../src/collection/sourcePublicationSchedule';
 
 describe('Node 전국 선수집', () => {
   const cleanup: Array<() => void> = [];
@@ -361,7 +363,18 @@ describe('Node 전국 선수집', () => {
                 ].map((date) => ({ date, weatherDataComplete: true })),
               }
             : key.startsWith('COLLECTED_ENVIRONMENTAL_')
-              ? { sources: { uv: { state: 'AVAILABLE' }, airQuality: { state: 'AVAILABLE' } } }
+              ? {
+                  uv: { areaNo: '4111000000', issuedAt: '2026-09-21T09:00:00+09:00',
+                    points: [{ forecastAt: '2026-09-21T12:00:00+09:00', uvIndex: 4 }] },
+                  airQuality: { stationName: '테스트', observedAt: '2026-09-21T14:00:00+09:00',
+                    pm10: 10, pm25: 5, ozone: 0.02 },
+                  sources: {
+                    uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'AVAILABLE',
+                      cachedAt: '2026-09-21T05:00:00Z' },
+                    airQuality: { provider: 'AIRKOREA', state: 'AVAILABLE',
+                      cachedAt: '2026-09-21T05:00:00Z' },
+                  },
+                }
               : { ready: true },
         nx: key.includes('60_121') ? 60 : undefined,
         ny: key.includes('60_121') ? 121 : undefined,
@@ -382,13 +395,16 @@ describe('Node 전국 선수집', () => {
     await saveCollectedCache(env.DB, {
       key: collectedCacheKey.nationwideAir,
       type: 'COLLECTED_NATIONWIDE_AIR',
-      value: { catalog: { stations: [{ stationName: '테스트' }] },
-        observations: [{ stationName: '테스트' }], collectedAt: nowIso() },
+      value: { catalog: { stations: [{ stationName: '테스트', latitude: 37.2636, longitude: 127.0286 }] },
+        observations: [{ stationName: '테스트', observedAt: '2026-09-21T14:00:00+09:00',
+          pm10: 10, pm25: 5, ozone: 0.02 }], collectedAt: '2026-09-21T05:00:00Z' },
     });
     await saveCollectedCache(env.DB, {
       key: collectedCacheKey.nationwideAirForecast,
       type: 'COLLECTED_NATIONWIDE_AIR_FORECAST',
-      value: { issue: '202609211100', areas: { 서울: [] } },
+      value: { issue: latestAirKoreaForecastIssue(new Date('2026-09-21T05:00:00Z')),
+        areas: Object.fromEntries(AIRKOREA_FORECAST_AREAS.map((area) =>
+          [area, [{ date: '20260921', pm10Grade: '좋음', pm25Grade: '좋음' }]])) },
     });
     await saveCollectedCache(env.DB, {
       key: collectedCacheKey.warningStations,
@@ -489,6 +505,14 @@ describe('Node 전국 선수집', () => {
       collectedCaches: 24 + midTermKeys.size,
       missingCaches: 0,
     });
+    const environmental = await getCollectedCache<{ sources: { uv: { state: string } } }>(
+      env.DB, collectedCacheKey.environmental(61, 121));
+    environmental!.value.sources.uv.state = 'UNAVAILABLE';
+    await saveCollectedCache(env.DB, { key: collectedCacheKey.environmental(61, 121),
+      type: 'COLLECTED_ENVIRONMENTAL', value: environmental!.value });
+    expect(inspectOperationalPrewarm(runtime, new Date('2026-09-21T05:00:00Z'), grid))
+      .toMatchObject({ missingCaches: 1,
+        environmentalMissingSample: [{ cacheKey: collectedCacheKey.environmental(61, 121), sources: ['UV'] }] });
   });
 });
 

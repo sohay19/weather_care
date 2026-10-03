@@ -175,26 +175,17 @@ export function nearestRoadIceRisk(
   longitude: number,
   maxDistanceMeters = DEFAULT_MAX_DISTANCE_METERS,
 ): RoadIceRisk | undefined {
-  const candidates = segments
-      .filter((segment) => segment.level > 0)
-      .map((segment) => ({
-        segment,
-        distanceMeters: distanceToSegmentMeters(
-          latitude,
-          longitude,
-          segment.fromLatitude,
-          segment.fromLongitude,
-          segment.toLatitude,
-          segment.toLongitude,
-        ),
-      }))
-      .filter((item) => item.distanceMeters <= maxDistanceMeters)
-      .sort(
-        (left, right) =>
-          right.segment.level - left.segment.level ||
-          left.distanceMeters - right.distanceMeters,
-      );
-  const selected = candidates[0];
+  let selected: { segment: RoadIceSegment; distanceMeters: number } | undefined;
+  for (const segment of segments) {
+    if (segment.level === 0) continue;
+    const distanceMeters = distanceToSegmentMeters(latitude, longitude,
+      segment.fromLatitude, segment.fromLongitude, segment.toLatitude, segment.toLongitude);
+    if (distanceMeters > maxDistanceMeters) continue;
+    if (!selected || segment.level > selected.segment.level ||
+        (segment.level === selected.segment.level && distanceMeters < selected.distanceMeters)) {
+      selected = { segment, distanceMeters };
+    }
+  }
   if (!selected) return undefined;
 
   const segment = selected.segment;

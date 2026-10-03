@@ -11,6 +11,10 @@ import {
 } from '../src/database/nationwidePrecipitationRepository';
 import { nodeServerEnv } from '../src/node/runtime';
 import { runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
+import type { TodayWeatherResponse } from '../src/types';
+import type { EnvironmentalDataBundle } from '../src/providers/environmental/environmentalDataService';
+import { latestAirKoreaForecastIssue } from '../src/collection/sourcePublicationSchedule';
+import { KmaRoadIceProvider } from '../src/providers/road/kmaRoadIceProvider';
 import {
   analysisGridPoint,
   nationwidePrecipitationAtPoint,
@@ -182,5 +186,99 @@ describe('전국 정밀 강수 선수집', () => {
     expect(body.currentRoadControl).toBeUndefined();
     expect(body.dataStatusMessages.map((message) => message.text).join(' '))
       .not.toMatch(/현재 강수|도로 통제/);
+  });
+
+  it('설치 0건의 새 GPS 좌표에 최신 환경·특보·겨울철 도로 자료를 캐시만으로 반환한다', async () => {
+    const winter = new Date('2026-12-01T06:30:00Z');
+    vi.useFakeTimers();
+    vi.setSystemTime(winter);
+    const db = database();
+    const env = nodeServerEnv(db, {});
+    const fetcher = vi.fn(() => { throw new Error('요청 중 외부 조회 금지'); });
+    vi.stubGlobal('fetch', fetcher);
+    const current = {
+      observedAt: '2026-12-01T15:00:00+09:00', forecastAt: '2026-12-01T15:00:00+09:00',
+      temperature: 2, humidity: 60, windSpeed: 2, pm10: 900,
+      precipitationType: 'NONE', precipitationProbability: 0, skyCondition: '맑음',
+    };
+    const unavailable = { sources: {
+      uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNAVAILABLE' },
+      airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' },
+    } };
+    const save = async (key: string, value: unknown) => saveCollectedCache(env.DB,
+      { key, type: 'TEST', value, updatedAt: winter });
+    await save('COLLECTED_REGION_58_125', {
+      forecast: { current, hourly: [current], daily: [], dataSource: '기상청 단기예보' },
+      environmental: unavailable,
+    });
+    const environmental: EnvironmentalDataBundle = {
+      uv: { areaNo: '1153000000', issuedAt: '2026-12-01T15:00:00+09:00',
+        provider: 'KMA_LIVING_INDEX_V5', points: [{ forecastAt: '2026-12-01T15:00:00+09:00', uvIndex: 2 }] },
+      sources: {
+        uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'AVAILABLE', cachedAt: winter.toISOString() },
+        airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' },
+      },
+    };
+    await save(collectedCacheKey.environmental(58, 125), environmental);
+    await save(collectedCacheKey.nationwideAir, {
+      catalog: { fetchedAt: winter.toISOString(), stations: [{ stationName: '구로', latitude, longitude }] },
+      collectedAt: winter.toISOString(), observations: [{ stationName: '구로',
+        observedAt: '2026-12-01T15:00:00+09:00', pm10: 30, pm25: 12, ozone: 0.03, provider: 'AIRKOREA' }],
+    });
+    await save(collectedCacheKey.nationwideAirForecast, {
+      issue: latestAirKoreaForecastIssue(winter),
+      areas: { 서울: [{ date: '20261201', pm25Grade: '좋음' }] },
+    });
+    await save(collectedCacheKey.ultraShortObservation(58, 125), {
+      observedAt: '2026-12-01T15:20:00+09:00', temperature: 2, humidity: 60, windSpeed: 2,
+      provider: 'KMA_APIHUB_GRID_OBSERVATION',
+    });
+    await save(collectedCacheKey.visibility(58, 125), {
+      observedAt: '2026-12-01T15:00:00+09:00', stationId: '108', distanceKm: 12,
+      visibilityMeters: 15_000, provider: 'KMA_ASOS',
+    });
+    await save(collectedCacheKey.warningSnapshot, {
+      stations: [{ regionId: 'L1110000', regionName: '서울', stationId: '108', stationName: '서울', latitude, longitude }],
+      warnings: [{ regionId: 'L1110000', regionName: '서울', typeCode: 'C', type: '한파',
+        levelCode: '2', level: '주의보', commandCode: '1', announcedAt: winter.toISOString(),
+        validFrom: winter.toISOString(), provider: '기상청 특보현황' }],
+    });
+    const roadIce = vi.spyOn(KmaRoadIceProvider.prototype, 'getRiskSegments').mockResolvedValue([{
+      producedAt: winter.toISOString(), roadNumber: '001', linkId: 'test-ice', level: 2 as const,
+      sourceType: 'ANALYSIS', fromLatitude: latitude, fromLongitude: longitude,
+      toLatitude: latitude + 0.01, toLongitude: longitude,
+    }]);
+    await runWeatherCollectionJob(nodeServerEnv(db, { KMA_APIHUB_KEY: 'test-key' }), {
+      now: winter, collectCore: false, collectRoadIce: true,
+    });
+    expect(roadIce).toHaveBeenCalledOnce();
+    await save(collectedCacheKey.roadControlSnapshot, [{
+      eventKey: 'test-control', startedAt: winter.toISOString(), controlKind: 'FULL',
+      eventType: '공사', message: '전면 통제', latitude, longitude,
+      provider: '국가교통정보센터 돌발상황정보',
+    }]);
+    await saveNationwidePrecipitation(env.DB,
+      { ...snapshot(false), observedAt: '2026-12-01T15:15:00+09:00' }, winter);
+
+    for (const location of [
+      { latitude, longitude }, { latitude: latitude + 0.001, longitude: longitude - 0.001 },
+    ]) {
+      const response = await app.fetch(new Request(
+        `http://localhost/api/v1/weather/today?nx=58&ny=125&latitude=${location.latitude}&longitude=${location.longitude}`,
+      ), env);
+      const body = await response.json() as TodayWeatherResponse;
+      expect(response.status).toBe(200);
+      expect(body.current).toMatchObject({ temperature: 2, uvIndex: 2,
+        pm10: 30, pm25: 12, ozone: 0.03, visibilityMeters: 15_000 });
+      expect(body.current.activeWarnings?.[0]?.type).toBe('한파');
+      expect(body.currentPrecipitation?.state).toBe('DRY');
+      expect(body.currentRoadIce?.level).toBe(2);
+      expect(body.currentRoadControl?.controlKind).toBe('FULL');
+      expect(body.dataStatusMessages).toEqual([]);
+    }
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(db.sqlite.prepare('SELECT COUNT(*) AS count FROM installations').get()).toEqual({ count: 0 });
+    expect(db.sqlite.prepare("SELECT COUNT(*) AS count FROM weather_cache WHERE cache_type = 'COLLECTED_PRECIPITATION'").get())
+      .toEqual({ count: 0 });
   });
 });

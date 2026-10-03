@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import type { DailyAirQualityForecast } from '../weather/weatherProvider';
-import { UV_AREA_GRID_ROWS, uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
-import { kmaGridCoordinates } from '../../regions/kmaGridCoordinates';
+import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
+import { collectedCacheKey, getCollectedCache } from '../../database/collectedWeatherRepository';
+import { latestAirKoreaForecastIssue } from '../../collection/sourcePublicationSchedule';
 
 const AIRKOREA_FORECAST_URL =
   'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMinuDustFrcstDspth';
@@ -66,6 +67,7 @@ interface AirKoreaForecastProviderOptions {
   fetcher?: typeof fetch;
   now?: () => Date;
   timeoutMs?: number;
+  requiredShortIssue?: string;
 }
 
 export class AirKoreaForecastProviderError extends Error {
@@ -80,12 +82,14 @@ export class AirKoreaForecastProvider {
   private readonly fetcher: typeof fetch;
   private readonly now: () => Date;
   private readonly timeoutMs: number;
+  private readonly requiredShortIssue?: string;
 
   constructor(options: AirKoreaForecastProviderOptions) {
     this.serviceKey = normalizeServiceKey(options.serviceKey);
     this.fetcher = options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.now = options.now ?? (() => new Date());
     this.timeoutMs = options.timeoutMs ?? 6_000;
+    this.requiredShortIssue = options.requiredShortIssue;
   }
 
   async getForecast(
@@ -139,9 +143,15 @@ export class AirKoreaForecastProvider {
       fetcher: sharedFetcher,
       now: this.now,
       timeoutMs: this.timeoutMs,
+      requiredShortIssue: latestAirKoreaForecastIssue(this.now()),
     });
     const entries = await Promise.all(AIRKOREA_FORECAST_AREAS.map(async (area) =>
       [area, await shared.getForecast(area, 0, 0)] as const));
+    const today = koreanDate(this.now()).replaceAll('-', '');
+    if (entries.some(([, days]) => !days.some((day) => day.date === today &&
+        day.pm10Grade && day.pm25Grade))) {
+      throw new AirKoreaForecastProviderError('AirKorea nationwide forecast publication is incomplete');
+    }
     return Object.fromEntries(entries);
   }
 
@@ -182,6 +192,9 @@ export class AirKoreaForecastProvider {
       if (!grade) continue;
       const issueKey = `${date}:${item.informCode}`;
       const issue = sortableIssueTime(item.dataTime);
+      const compactIssue = issue.replace(/[-T]/g, '') + '00';
+      if (this.requiredShortIssue &&
+          (!/^\d{12}$/.test(compactIssue) || compactIssue < this.requiredShortIssue)) continue;
       const previousIssue = issueByDateCode.get(issueKey);
       if (previousIssue !== undefined && previousIssue >= issue) continue;
       const current = byDate.get(date) ?? { date };
@@ -271,7 +284,7 @@ export function airKoreaForecastArea(
   const name = regionName?.replaceAll(' ', '') ?? '';
   if (AIRKOREA_FORECAST_AREAS.includes(name)) return name;
   if (name.includes('경기') || /(수원|시흥|안산|화성|평택|성남|용인|안양|광명|과천|부천|군포|의왕|오산|안성|이천|여주|광주시|하남|고양|파주|의정부|양주|동두천|포천|연천|가평|남양주|구리|양평|김포)/.test(name)) {
-    return /(고양|파주|의정부|양주|동두천|포천|연천|가평)/.test(name)
+    return /(고양|파주|의정부|양주|동두천|포천|연천|가평|김포|구리|남양주)/.test(name)
       ? '경기북부'
       : '경기남부';
   }
@@ -279,7 +292,7 @@ export function airKoreaForecastArea(
     '서울', '인천', '대전', '세종', '광주', '부산', '대구', '울산', '제주',
   ].find((area) => name.includes(area));
   if (direct) return direct;
-  if (name.includes('강원') || /(강릉|동해|삼척|속초|고성|양양|태백)/.test(name)) {
+  if (name.includes('강원') || /(강릉|동해|삼척|속초|고성|양양|태백|양구|인제|홍천|평창|정선|철원|화천|춘천|횡성|원주|영월)/.test(name)) {
     return /(강릉|동해|삼척|속초|고성|양양|태백)/.test(name) ? '영동' : '영서';
   }
   const provinceAreas: ReadonlyArray<readonly [RegExp, string]> = [
@@ -292,40 +305,67 @@ export function airKoreaForecastArea(
   }
   if (nx === 60 && ny === 121) return '경기남부';
   if (nx === 60 && ny === 127) return '서울';
-  return undefined;
+  return airKoreaForecastAreaForGrid(nx, ny);
 }
 
 export function airKoreaForecastAreaForGrid(nx: number, ny: number): string | undefined {
-  let prefix = uvAreaNoForGrid(nx, ny)?.slice(0, 2);
+  return airKoreaForecastAreaForAdminCode(uvAreaNoForGrid(nx, ny));
+}
+
+export function airKoreaForecastAreaForAdminCode(adminCode: string | undefined): string | undefined {
+  if (!adminCode || !/^\d{10}$/.test(adminCode)) return undefined;
+  const prefix = adminCode.slice(0, 2);
   if (prefix === '12') {
-    let nearest: (typeof UV_AREA_GRID_ROWS)[number] | undefined;
-    let distanceSquared = Number.POSITIVE_INFINITY;
-    for (const row of UV_AREA_GRID_ROWS) {
-      if (row[2].startsWith('12')) continue;
-      const distance = (row[0] - nx) ** 2 + (row[1] - ny) ** 2;
-      if (distance < distanceSquared) {
-        nearest = row;
-        distanceSquared = distance;
-      }
-    }
-    prefix = nearest?.[2].slice(0, 2);
+    // 기상청 2026-07 행정코드의 통합 지역도 에어코리아의 기존 예보 권역에 대응한다.
+    return ['1221', '1224', '1227', '1230', '1233'].includes(adminCode.slice(0, 4))
+      ? '광주' : '전남';
   }
   const areaByPrefix: Record<string, string> = {
     '11': '서울', '26': '부산', '27': '대구', '28': '인천',
-    '30': '대전', '31': '울산', '36': '세종', '43': '충북',
-    '44': '충남', '47': '경북', '48': '경남', '50': '제주',
+    '29': '광주', '30': '대전', '31': '울산', '36': '세종', '43': '충북',
+    '44': '충남', '46': '전남', '47': '경북', '48': '경남', '50': '제주',
     '52': '전북',
   };
   if (prefix && areaByPrefix[prefix]) return areaByPrefix[prefix];
   if (prefix === '41') {
-    return (kmaGridCoordinates(nx, ny)?.latitude ?? 37) >= 37.65
+    // 에어코리아 FAQ(2026-01-27)의 11개 경기북부 시군. 위도 경계로 나누지 않는다.
+    // https://airkorea.or.kr/web/board/5/1171/?pMENU_NO=144
+    return ['4128', '4148', '4115', '4163', '4125', '4165',
+      '4180', '4182', '4157', '4131', '4136'].includes(adminCode.slice(0, 4))
       ? '경기북부' : '경기남부';
   }
   if (prefix === '51') {
-    return (kmaGridCoordinates(nx, ny)?.longitude ?? 128) >= 128.3
-      ? '영동' : '영서';
+    return ['5115', '5117', '5119', '5121', '5123', '5182', '5183']
+      .includes(adminCode.slice(0, 4)) ? '영동' : '영서';
   }
   return undefined;
+}
+
+export interface NationwideAirForecast {
+  issue: string;
+  areas: Record<string, DailyAirQualityForecastAtDate[]>;
+}
+
+export function nationwideAirForecastIsUsable(snapshot: NationwideAirForecast, now: Date): boolean {
+  const today = koreanDate(now).replaceAll('-', '');
+  return snapshot?.issue === latestAirKoreaForecastIssue(now) &&
+    AIRKOREA_FORECAST_AREAS.every((area) => Array.isArray(snapshot.areas?.[area]) &&
+      snapshot.areas[area].some((day) => day.date === today && day.pm10Grade && day.pm25Grade));
+}
+
+export async function readCollectedAirForecast(
+  db: D1Database | undefined,
+  nx: number,
+  ny: number,
+  fallback: DailyAirQualityForecastAtDate[],
+  now = new Date(),
+  adminCode?: string,
+  regionName?: string,
+): Promise<DailyAirQualityForecastAtDate[]> {
+  const record = await getCollectedCache<NationwideAirForecast>(db, collectedCacheKey.nationwideAirForecast);
+  const area = airKoreaForecastAreaForAdminCode(adminCode) ?? airKoreaForecastArea(regionName, nx, ny);
+  return record?.status === 'AVAILABLE' && record.value.issue === latestAirKoreaForecastIssue(now) && area
+    ? record.value.areas[area] ?? fallback : fallback;
 }
 
 function gradeForArea(content: string, area: string): string | undefined {

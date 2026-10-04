@@ -9057,3 +9057,35 @@
 - SQLite 통합 테스트는 설치 0건·좌표별 정밀 캐시 0건에서 두 새 GPS 좌표의 자외선·대기질·현재 기온·시정·특보·강수·도로 통제·겨울철 도로살얼음을 외부 요청 없이 반환하는지 검증한다. 겨울철 전국 도로살얼음 수집도 설치 0건에서 실행되는지 확인했다. 환경 만료·부분 결측·신선한 원본 재병합·좌표 변경·공식 예보 권역·이전 발표 거부 검증을 추가했다.
 - 최종 검증: TypeScript `tsc --noEmit`, Node 6파일·17개 테스트, 전체 서버 54파일·395개 테스트, `git diff --check` 통과. `test:worker`는 기존 테스트 런타임 명칭이며 Workers 운영 배포를 뜻하지 않는다. 이번 PC에는 Node/npm이 PATH에 없어 번들 Node 24.19.0과 npm 11.5.1로 잠금 파일의 의존성을 설치했다. 일반 `npm ci`의 네이티브 빌드가 로컬 Python 부재로 실패했으나 `npm ci --ignore-scripts` 후 패키지에 포함된 SQLite 바이너리로 Node 통합 테스트가 정상 실행됐다. 의존성 잠금 파일은 수정하지 않았고 설치 중 생성된 pnpm 안내 파일은 제거했다.
 - 운영 배포 대기: 이 PC에서 `soha-01` 별칭과 기존 SSH 설정·키를 찾지 못했다. 기존 Tailscale `100.105.212.26:22`는 연결 시간 초과, LAN `192.168.0.67:22`는 SSH 응답은 있으나 호스트키 검증에 실패했다. 호스트키 검증을 우회하거나 새 키를 자동 등록하지 않았다. 접속 가능한 주소와 기존 설정 위치를 사용자에게 비동기로 요청했다. 접속이 확보되면 SQLite 온라인 백업·소스 백업, 전국 실자료 선수집과 사용량 검사 후 배포한다. 이전에 생략 지시한 배포 후 10분·2분 회차·구로동 `58/125` 재검증 및 완료된 4번 검증은 반복하지 않는다. 현재 운영에는 이 변경이 아직 반영되지 않았다. 별도 iOS FCM 토큰 대기·설치 등록 문제도 이번 서버 작업 범위에서 수정하지 않았다.
+
+
+## 2026-10-04 iOS 심사 실행 크래시 원인 조사
+
+- 사용자 제공 심사 메시지의 확정 사유는 Guideline 2.1(a) App Completeness 위반이다. Apple은 1.0.0(26100300)을 iPad Pro 11-inch(M4)·iPhone 17 Pro Max, iPadOS/iOS 27.0에서 실행할 때 크래시가 발생해 심사를 진행하지 못했다고 보고했다. 메시지만으로 충돌 함수나 SDK는 특정할 수 없다.
+- 로컬 `/Users/noah/Library/Developer/Xcode/Archives/2026-10-03/Runner 10-3-26, 09.48.xcarchive`에서 버전·빌드 번호 일치와 App Store 업로드 성공 기록을 확인했다. Flutter.framework는 Release이며 엔진 리비전은 현재 로컬 Flutter 3.47.5와 일치한다. 제출 앱에 iPhone·iPad 지원, 위치 이용 설명, AdMob 앱 ID가 포함돼 있고 검사한 Mach-O의 번들 내 @rpath 의존성 누락은 발견하지 못했다. 이는 실제 실행 성공을 입증하지 않는다.
+- Runner·Flutter 바이너리와 해당 dSYM UUID가 각각 일치한다. App.framework dSYM도 존재한다. 프로젝트·Downloads·macOS DiagnosticReports에서 해당 앱의 심사 크래시 로그(.ips/.crash)는 발견하지 못해 로그 심볼리케이션과 실제 충돌 원인 확정은 수행하지 못했다. Apple 첨부 원본 로그를 받은 뒤 Exception/Termination Reason, 충돌 스레드, Binary Images UUID를 대조해야 한다.
+- 현 시작 코드는 첫 Flutter 화면 후 결제·Firebase·알림 서비스를 초기화하고 Dart 초기화 예외를 시작 오류 화면으로 처리한다. 네이티브 플러그인 등록 및 OS의 프로세스 종료 원인은 별도 로그로 확인해야 한다. iOS 27 실기/TestFlight 재현 검증, 빌드·업로드, 앱 코드 수정, 커밋은 수행하지 않았다.
+
+
+## 2026-10-04 Xcode iOS 27 실행 크래시 원인 확정
+
+- 사용자가 방금 실행한 Xcode 디버거를 직접 읽었다. iPad Air 11-inch(M4), iOS 27.0 시뮬레이터에서 Runner(PID 18837)의 Thread 1이 `___UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption_block_invoke`의 `brk #0`에서 EXC_BREAKPOINT로 중단돼 있었다. 콘솔 원문은 `Application failed to launch: UIScene life cycle is required for apps built with this SDK.`다. 이번 로컬 충돌의 원인은 최신 SDK 앱의 UIScene 생명주기 미적용으로 확정했다.
+- 소스 Info.plist, 현재 시뮬레이터 설치본, 제출한 1.0.0(26100300) 아카이브 모두 `UIApplicationSceneManifest`가 없다. 현재 실행본은 iphonesimulator27.0, 제출본은 iphoneos27.0 SDK다. 제출본에도 같은 실행 차단 조건이 있으므로 심사 실행 크래시를 설명하는 강한 근거다. Apple 첨부 로그와 스택을 직접 대조한 것은 아니다.
+- 현재 AppDelegate는 플러그인 등록과 위젯·결제 MethodChannel 생성을 didFinishLaunchingWithOptions에서 수행한다. Flutter 공식 UIScene 이관 가이드에 따라 Scene Manifest를 추가하고 FlutterImplicitEngineDelegate의 didInitializeImplicitFlutterEngine으로 플러그인·채널 초기화를 이동해야 한다. 커스텀 AppDelegate는 Flutter 자동 이관 대상이 아니므로 SDK 갱신만으로 전환되지 않는다. 공식 문서: https://docs.flutter.dev/release/breaking-changes/uiscenedelegate
+- 이번 요청은 크래시 확인이므로 앱 코드는 수정하지 않았고 디버거도 계속 실행하거나 중단하지 않았다. 사용자/Xcode가 이미 변경한 project.pbxproj의 Automatic 서명 설정은 보존했다. 수정 후 iOS 27 iPhone·iPad 실행과 위젯/결제 채널·알림 실행을 검증하고 새 Release 빌드를 제출해야 한다.
+
+
+## 2026-10-04 iOS 27 UIScene 실행 크래시 수정
+
+- `ios/Runner/Info.plist`에 UIApplicationSceneManifest를 추가하고 FlutterSceneDelegate·Main scene storyboard를 지정했다. 중복된 기존 UIMainStoryboardFile은 제거했다. 다중 scene은 활성화하지 않았다. 별도 SceneDelegate 소스나 Xcode 타깃 파일 추가 없이 Flutter의 기본 scene delegate를 사용했다.
+- AppDelegate에 FlutterImplicitEngineDelegate를 적용하고 GeneratedPluginRegistrant·결제·위젯 MethodChannel 초기화를 didInitializeImplicitFlutterEngine으로 이동했다. messenger는 engineBridge.applicationRegistrar에서 가져온다. 기존 위젯 저장·갱신·삭제와 구매 권한 확인 처리 내용은 유지했다. 사용자/Xcode가 변경한 project.pbxproj Automatic 서명 설정은 그대로 보존했다.
+- Xcode 27의 Debug iOS Simulator 앱·위젯 빌드와 iOS 27 SDK의 arm64 Release 앱·위젯 빌드가 모두 성공했다. Release는 CODE_SIGNING_ALLOWED=NO로 컴파일만 검증했으며 서명된 Archive·App Store 업로드는 만들지 않았다. 두 빌드의 실제 Info.plist에서 Scene Manifest를 확인했다.
+- 기존 iPad Air 11-inch(M4)/iPadOS 27 시뮬레이터에서 수정본을 설치해 첫 권한 안내 화면까지 표시되는 것을 Device Hub로 직접 확인했다. 임시 iPhone 17 Pro Max/iOS 27 시뮬레이터도 새 설치 후 main isolate Resume, Flutter 실행 및 앱 초기화 이후 광고 준비 로그를 확인했다. 이전 UIScene 실행 차단 크래시는 발생하지 않았다. 별도 기기 권한을 허용하거나 실제 구매·위젯 갱신·푸시를 테스트하지 않았다.
+- 실행 중인 iPad 앱의 Dart VM에서 기존 StoreAdRemovalPurchaseGateway.hasActivePurchase를 호출해 native 결제 상태 채널이 false로 정상 완료하는 것을 확인했다. 위젯 채널 직접 호출은 VM의 정적 getter/표현식 평가 제약으로 검증을 마치지 못했으며 실제 위젯 저장·갱신 성공으로 보고하지 않는다. 검증을 위한 앱 API나 소스는 추가하지 않았다.
+- startup/native_startup_defaults/home_widget_snapshot/ad_removal_service 기존 테스트 26개, `dart analyze lib test`와 git diff --check가 통과했다. `flutter analyze --no-pub`는 SDK 분석 서버의 LSP JSON 파싱 오류로 실패해 동일 SDK의 Dart CLI 분석으로 검증했다. 누락된 기존 config/ 자산 경고는 앱의 서버 URL 기본값·catch 경로가 처리하며 이번 크래시 수정에 포함하지 않았다.
+- 임시 iPhone 시뮬레이터는 종료·삭제했고 기존 iPad는 수정본을 실행해 둔다. 커밋·업로드·심사 재제출은 하지 않았다. 다음 단계는 iOS 27 실기/TestFlight에서 첫 실행·위젯·결제·알림 복귀를 확인하고 26100300보다 높은 빌드 번호로 새 Archive를 제출하는 것이다.
+
+
+## 2026-10-04 UIScene 수정 커밋 승인
+
+- 사용자가 현재 대화에서 커밋을 승인했다. UIScene 크래시 수정 AppDelegate.swift·Info.plist와 이번 조사·검증 HANDOFF 기록을 로컬 커밋에 포함한다. 기존 사용자/Xcode의 Runner.xcodeproj/project.pbxproj 서명 설정 변경은 포함하지 않는다. 원격 푸시와 App Store 업로드는 수행하지 않는다.

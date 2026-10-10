@@ -17,6 +17,7 @@ const KMA_DATA_SOURCE = '기상청 단기예보';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const PUBLICATION_DELAY_MS = 15 * 60 * 1000;
 const PUBLICATION_HOURS = [2, 5, 8, 11, 14, 17, 20, 23];
+const MAX_FORECAST_ROWS = 6000;
 
 const forecastItemSchema = z.object({
   baseDate: z.coerce.string(),
@@ -37,6 +38,8 @@ const forecastResponseSchema = z.object({
     }),
     body: z
       .object({
+        totalCount: z.coerce.number().optional(),
+        numOfRows: z.coerce.number().optional(),
         items: z.object({
           item: z.array(forecastItemSchema),
         }),
@@ -150,10 +153,15 @@ export class KmaWeatherProvider implements WeatherProvider {
     nx: number,
     ny: number,
   ): Promise<KmaForecastItem[]> {
+    const items: KmaForecastItem[] = [];
+    const seen = new Set<string>();
+    let pageSize = MAX_FORECAST_ROWS;
+    // 일부 회차는 1,000행을 넘는다. 전체 응답을 요청하고 서버가 페이지를 나누면 끝까지 확인한다.
+    for (let page = 1; page <= 6; page++) {
     const query = new URLSearchParams({
       serviceKey: this.serviceKey,
-      pageNo: '1',
-      numOfRows: '1000',
+      pageNo: String(page),
+      numOfRows: String(pageSize),
       dataType: 'JSON',
       base_date: base.baseDate,
       base_time: base.baseTime,
@@ -180,15 +188,38 @@ export class KmaWeatherProvider implements WeatherProvider {
     const { header, body } = parsed.data.response;
     if (header.resultCode !== '00') {
       const noData = header.resultCode === '03' || /NO_DATA/i.test(header.resultMsg);
+      const reason = ['20', '21', '30', '31', '32'].includes(header.resultCode) ? 'authorization rejected'
+        : header.resultCode === '22' ? 'quota exceeded' : 'upstream rejected';
       throw new KmaWeatherProviderError(
-        `KMA returned ${header.resultCode}: ${header.resultMsg}`,
+        `KMA returned ${header.resultCode}: ${noData ? 'no data' : reason}`,
         noData,
       );
     }
     if (!body || body.items.item.length === 0) {
       throw new KmaWeatherProviderError('KMA returned no forecast items', true);
     }
-    return body.items.item;
+    if (body.items.item.some((item) => item.nx !== nx || item.ny !== ny || item.baseDate !== base.baseDate || item.baseTime.padStart(4, '0') !== base.baseTime)) {
+      throw new KmaWeatherProviderError('KMA response grid or issue is invalid');
+    }
+    for (const item of body.items.item) {
+      const key = `${item.fcstDate}:${item.fcstTime}:${item.category}`;
+      if (seen.has(key)) throw new KmaWeatherProviderError('KMA forecast pagination repeats rows');
+      seen.add(key);
+    }
+    items.push(...body.items.item);
+    if (items.length > MAX_FORECAST_ROWS) throw new KmaWeatherProviderError('KMA forecast row limit exceeded');
+    const total = body.totalCount;
+    if (total === undefined || items.length === total) return normalizePointForecastItems(items);
+    if (!Number.isSafeInteger(total) || total <= items.length || total > MAX_FORECAST_ROWS) {
+      throw new KmaWeatherProviderError('KMA forecast total count is invalid');
+    }
+    const size = body.numOfRows ?? body.items.item.length;
+    if (!Number.isSafeInteger(size) || size < 1 || size > MAX_FORECAST_ROWS || size !== body.items.item.length || page > 1 && size !== pageSize) {
+      throw new KmaWeatherProviderError('KMA forecast page size is invalid');
+    }
+    pageSize = size;
+    }
+    throw new KmaWeatherProviderError('KMA forecast pagination is incomplete');
   }
 }
 
@@ -290,6 +321,18 @@ function mergeForecastItems(
     );
   }
   return [...merged.values()];
+}
+
+function normalizePointForecastItems(items: KmaForecastItem[]): KmaForecastItem[] {
+  return items.map((item) => {
+    // 마지막 연장일의 풍속·강수량·적설 값은 정성 코드다.
+    const end = new Date(Date.UTC(Number(item.baseDate.slice(0,4)), Number(item.baseDate.slice(4,6))-1,
+      Number(item.baseDate.slice(6,8))));
+    end.setUTCHours(Number(item.baseTime.slice(0,2)) < 17 ? 72 : 96, 0, 0, 0);
+    const valid = Date.parse(kmaSlotToIso(item.fcstDate + item.fcstTime.padStart(4,'0'))) + KST_OFFSET_MS;
+    return valid > end.getTime() && ['WSD','PCP','SNO'].includes(item.category)
+      ? { ...item, category: `${item.category}_QUALITATIVE` } : item;
+  });
 }
 
 export function buildForecastFromItems(
@@ -453,6 +496,9 @@ function snapshotFromSlot(
       precipitationAmount: categories.get('PCP') ?? '',
       snowfallAmount: categories.get('SNO') ?? '',
       precipitationType: categories.get('PTY') ?? '',
+      precipitationQualitative: categories.get('PCP_QUALITATIVE'),
+      snowfallQualitative: categories.get('SNO_QUALITATIVE'),
+      windQualitative: categories.get('WSD_QUALITATIVE'),
     },
     qualityFlags,
   };

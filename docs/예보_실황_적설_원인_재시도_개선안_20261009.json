@@ -1,0 +1,1443 @@
+{
+  "causes": {
+    "checkedAt": "2026-10-09T06:22:34.370589+00:00",
+    "observations": [
+      {
+        "target": "202610091050",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "REH",
+            "targetTime": "202610091050",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T02:00:34+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091050",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T02:02:04+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091050",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T02:08:04+00:00"
+        }
+      },
+      {
+        "target": "202610091110",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "REH",
+            "targetTime": "202610091110",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30002,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T02:20:35+00:00"
+          },
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "WSD",
+            "targetTime": "202610091110",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30002,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T02:20:35+00:00"
+          },
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "VEC",
+            "targetTime": "202610091110",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30002,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T02:20:35+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091110",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T02:22:04+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091110",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T02:28:05+00:00"
+        }
+      },
+      {
+        "target": "202610091200",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "WSD",
+            "targetTime": "202610091200",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T03:10:42+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 9,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091200",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T03:12:11+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091200",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T03:28:12+00:00"
+        }
+      },
+      {
+        "target": "202610091210",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "REH",
+            "targetTime": "202610091210",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30002,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T03:20:42+00:00"
+          },
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "RN1",
+            "targetTime": "202610091210",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30002,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T03:20:42+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 9,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091210",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T03:22:12+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091210",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T03:38:12+00:00"
+        }
+      },
+      {
+        "target": "202610091220",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "T1H",
+            "targetTime": "202610091220",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T03:30:42+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091220",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T03:32:12+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091220",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T03:38:12+00:00"
+        }
+      },
+      {
+        "target": "202610091250",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "REH",
+            "targetTime": "202610091250",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T04:00:44+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091250",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T04:02:13+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091250",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T04:08:14+00:00"
+        }
+      },
+      {
+        "target": "202610091320",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "REH",
+            "targetTime": "202610091320",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T04:30:30+00:00"
+          },
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "WSD",
+            "targetTime": "202610091320",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T04:30:30+00:00"
+          },
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "VEC",
+            "targetTime": "202610091320",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T04:30:30+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091320",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T04:32:00+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091320",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T04:38:00+00:00"
+        }
+      },
+      {
+        "target": "202610091340",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "T1H",
+            "targetTime": "202610091340",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30000,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T04:50:30+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091340",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T04:52:00+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091340",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T04:58:01+00:00"
+        }
+      },
+      {
+        "target": "202610091400",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "REH",
+            "targetTime": "202610091400",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T05:10:32+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091400",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T05:12:01+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091400",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T05:18:02+00:00"
+        }
+      },
+      {
+        "target": "202610091430",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "weather_provider_request_failed",
+            "variable": "T1H",
+            "targetTime": "202610091430",
+            "phase": "WAIT_HEADERS",
+            "elapsedMs": 30001,
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T05:40:31+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "firstBlocked": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091430",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 1,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T05:42:01+00:00"
+        },
+        "lastFailure": {
+          "event": "weather_provider_request_failed",
+          "variable": "T1H",
+          "targetTime": "202610091430",
+          "phase": "WAIT_HEADERS",
+          "elapsedMs": 0,
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T05:48:14+00:00"
+        }
+      }
+    ],
+    "forecast": [
+      {
+        "issue": "2026100914",
+        "valid": "2026101005",
+        "variable": "SKY",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "national_forecast_field_failed",
+            "issue": "2026100914",
+            "valid": "2026101005",
+            "variable": "SKY",
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T05:20:56+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "lastFailure": {
+          "event": "national_forecast_field_failed",
+          "issue": "2026100914",
+          "valid": "2026101005",
+          "variable": "SKY",
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T06:20:35+00:00"
+        }
+      },
+      {
+        "issue": "2026100914",
+        "valid": "2026101013",
+        "variable": "SKY",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "national_forecast_field_failed",
+            "issue": "2026100914",
+            "valid": "2026101013",
+            "variable": "SKY",
+            "error": "TypeError",
+            "failureReason": "NETWORK_ERROR",
+            "networkCode": "UND_ERR_SOCKET",
+            "loggedAt": "2026-10-09T05:20:38+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "lastFailure": {
+          "event": "national_forecast_field_failed",
+          "issue": "2026100914",
+          "valid": "2026101013",
+          "variable": "SKY",
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T06:20:35+00:00"
+        }
+      },
+      {
+        "issue": "2026100914",
+        "valid": "2026101013",
+        "variable": "TMP",
+        "nowCached": false,
+        "initialFailures": [
+          {
+            "event": "national_forecast_field_failed",
+            "issue": "2026100914",
+            "valid": "2026101013",
+            "variable": "TMP",
+            "error": "TimeoutError",
+            "failureReason": "TIMEOUT",
+            "loggedAt": "2026-10-09T05:21:08+00:00"
+          }
+        ],
+        "budgetBlockedAttempts": 4,
+        "lastFailure": {
+          "event": "national_forecast_field_failed",
+          "issue": "2026100914",
+          "valid": "2026101013",
+          "variable": "TMP",
+          "error": "Error",
+          "failureReason": "BUDGET_EXHAUSTED",
+          "loggedAt": "2026-10-09T06:20:35+00:00"
+        }
+      }
+    ],
+    "apihubDiagnostics": [
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T09:00:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29997,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:10:37+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "APIHUB_RETRY",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:11:11+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "APIHUB_RETRY",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:11:11+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T09:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29995,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:20:45+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T09:30:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:40:31+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "APIHUB_RETRY",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:41:04+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "APIHUB_RETRY",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T00:41:04+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T10:00:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29997,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T01:10:32+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "APIHUB_RETRY",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T01:40:47+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "APIHUB_RETRY",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T01:40:47+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T10:50:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:00:34+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "WARNING",
+        "sourceVersion": "2026-10-09T02:00:00.000Z",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 10447,
+        "signalAborted": false,
+        "error": "TypeError",
+        "failureReason": "TIMEOUT",
+        "networkCode": "UND_ERR_CONNECT_TIMEOUT",
+        "loggedAt": "2026-10-09T02:00:45+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "ASOS_VISIBILITY",
+        "metric": "VS",
+        "sourceVersion": "2026-10-09T10:00:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 512000,
+        "elapsedMs": 10489,
+        "signalAborted": false,
+        "error": "TypeError",
+        "failureReason": "TIMEOUT",
+        "networkCode": "UND_ERR_CONNECT_TIMEOUT",
+        "loggedAt": "2026-10-09T02:01:02+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T11:00:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29997,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:10:39+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T11:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:20:35+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T11:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:20:35+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T11:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:20:35+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:15+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:15+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:16+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:16+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29996,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:45+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:46+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:46+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:21:50+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:22:15+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30017,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:22:16+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29994,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:22:17+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:22:21+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_HISTORY",
+        "sourceVersion": "2026-10-08T11:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 1,
+        "signalAborted": false,
+        "error": "TypeError",
+        "failureReason": "NETWORK_ERROR",
+        "networkCode": "UND_ERR_SOCKET",
+        "loggedAt": "2026-10-09T02:30:08+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "WARNING",
+        "sourceVersion": "2026-10-09T02:30:00.000Z",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:30:44+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T11:40:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29997,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T02:50:41+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T12:00:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T03:10:42+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T12:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T03:20:42+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T12:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T03:20:42+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T12:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T03:30:42+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T12:40:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T03:50:43+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T12:50:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:00:44+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "WARNING",
+        "sourceVersion": "2026-10-09T04:00:00.000Z",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:01:14+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_HISTORY",
+        "sourceVersion": "2026-10-08T13:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:20:45+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T13:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:30:30+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T13:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:30:30+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T13:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:30:30+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "WARNING",
+        "sourceVersion": "2026-10-09T04:30:00.000Z",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29996,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:31:00+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+        "sourceVersion": "202610091330",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 30075022,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:47:30+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+        "sourceVersion": "202610091330",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 30075022,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:47:30+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T13:40:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29999,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T04:50:30+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T14:00:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:10:32+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+        "sourceVersion": "202610091400",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 30075022,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:17:32+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 4,
+        "signalAborted": false,
+        "error": "TypeError",
+        "failureReason": "NETWORK_ERROR",
+        "networkCode": "UND_ERR_SOCKET",
+        "loggedAt": "2026-10-09T05:20:38+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:20:56+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29982,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:21:08+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T14:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29998,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:30:34+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_HISTORY",
+        "sourceVersion": "2026-10-08T14:20:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30000,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:31:04+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T14:30:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 30001,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:40:31+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T14:40:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29997,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T05:50:44+00:00"
+      },
+      {
+        "event": "apihub_request_failed",
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "sourceVersion": "2026-10-09T15:10:00+09:00",
+        "phase": "RESPONSE_HEADERS",
+        "receivedBytes": 0,
+        "reservedBytes": 1000000,
+        "elapsedMs": 29996,
+        "signalAborted": true,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "loggedAt": "2026-10-09T06:20:31+00:00"
+      }
+    ]
+  },
+  "snow": {
+    "checkedAt": "2026-10-09T06:24:36.112Z",
+    "metric": "sd_day_max",
+    "results": [
+      {
+        "name": "current",
+        "start": "20261008",
+        "end": "20261008",
+        "status": 200,
+        "elapsedMs": 177,
+        "nonCommentRows": 0,
+        "rawValueCounts": {},
+        "rawSamples": [],
+        "parserRows": 0,
+        "parserValidRows": 0,
+        "positiveRows": 0,
+        "dates": [],
+        "maximum": null,
+        "columnHeaderPresent": null,
+        "decodedTextUtf8Bytes": 729,
+        "responseBytes": 633
+      },
+      {
+        "name": "winter2026",
+        "start": "20260201",
+        "end": "20260207",
+        "status": 200,
+        "elapsedMs": 70,
+        "nonCommentRows": 30,
+        "rawValueCounts": {
+          "0.3": 3,
+          "0.4": 4,
+          "0.1": 2,
+          "0.5": 1,
+          "0.0": 1,
+          "8.4": 1,
+          "6.2": 1,
+          "2.6": 1,
+          "7.5": 1,
+          "4.2": 1,
+          "2.8": 1,
+          "3.9": 1,
+          "0.8": 1,
+          "1.7": 2,
+          "2.3": 1,
+          "3.3": 1,
+          "0.7": 1,
+          "13.9": 1,
+          "31.5": 1,
+          "4.0": 1,
+          "8.0": 1,
+          "0.6": 1,
+          "1.3": 1
+        },
+        "rawSamples": [
+          [
+            "20260201",
+            "93",
+            "127.75443000",
+            "37.94738000",
+            "95.78",
+            "0.3"
+          ],
+          [
+            "20260201",
+            "102",
+            "124.71237000",
+            "37.97396000",
+            "36.00",
+            "0.4"
+          ],
+          [
+            "20260201",
+            "115",
+            "130.89863000",
+            "37.48129000",
+            "221.14",
+            "0.3"
+          ]
+        ],
+        "parserRows": 30,
+        "parserValidRows": 30,
+        "positiveRows": 29,
+        "dates": [
+          "2026-02-01",
+          "2026-02-02",
+          "2026-02-06",
+          "2026-02-07"
+        ],
+        "maximum": 31.5,
+        "columnHeaderPresent": null,
+        "decodedTextUtf8Bytes": 2569,
+        "responseBytes": 2278
+      },
+      {
+        "name": "winter2025",
+        "start": "20250201",
+        "end": "20250207",
+        "elapsedMs": 30002,
+        "error": "TimeoutError",
+        "failureReason": "TIMEOUT",
+        "reservedBytes": 512000,
+        "receivedBytes": 0,
+        "columnHeaderPresent": null
+      }
+    ]
+  },
+  "snowAllStationsAuthorization": {
+    "checkedAt": "2026-10-09T06:29:57.013Z",
+    "query": {
+      "sd": "day",
+      "tm": "20261008",
+      "tm_st": "20261008",
+      "stn": "0",
+      "snow": "2"
+    },
+    "status": 403,
+    "responseBytes": 149,
+    "nonCommentRows": 6,
+    "samples": [
+      "{",
+      "  \"result\" : {",
+      "    \"status\" : 403,",
+      "    \"message\" : \"��⑹�泥�� ��� API ����. ��⑹�泥� � �ㅼ ����� 二쇱���.\""
+    ],
+    "header": []
+  },
+  "preflight": {
+    "checkedAt": "2026-10-09T06:28:14.080488+00:00",
+    "release": "/opt/weather-care/releases/20261009-nearby-observation-v2/weather_care_server",
+    "serviceKeyConfigured": true,
+    "landGrids": 2848,
+    "observationLatest": "2026-10-09T06:10:00.000Z",
+    "dailyUsage": [
+      {
+        "provider": "APIHUB_RETRY",
+        "calls": 718,
+        "bytes": 99546807
+      },
+      {
+        "provider": "ASOS_VISIBILITY",
+        "calls": 16,
+        "bytes": 1606035
+      },
+      {
+        "provider": "AWS_DAILY",
+        "calls": 7,
+        "bytes": 1373081
+      },
+      {
+        "provider": "DATA_GO_POINT_FORECAST",
+        "calls": 604,
+        "bytes": 70541344
+      },
+      {
+        "provider": "GRID_OBSERVATION_10_MINUTES",
+        "calls": 518,
+        "bytes": 216314026
+      },
+      {
+        "provider": "GRID_OBSERVATION_FAST_RETRY",
+        "calls": 25,
+        "bytes": 9849831
+      },
+      {
+        "provider": "GRID_OBSERVATION_HISTORY",
+        "calls": 247,
+        "bytes": 92204795
+      },
+      {
+        "provider": "ITS_ROAD_CONTROL",
+        "calls": 93,
+        "bytes": 0
+      },
+      {
+        "provider": "MID_TERM",
+        "calls": 186,
+        "bytes": 138834
+      },
+      {
+        "provider": "NATIONAL_SHORT_FORECAST",
+        "calls": 2578,
+        "bytes": 898774925
+      },
+      {
+        "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+        "calls": 72,
+        "bytes": 1195976492
+      },
+      {
+        "provider": "WARNING",
+        "calls": 37,
+        "bytes": 5092250
+      }
+    ],
+    "disk": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        96G   25G   72G  26% /\n/dev/sda1        96G   25G   72G  26% /\n"
+  },
+  "diagnosticAccounting": {
+    "calls": 4,
+    "successResponseBytes": 2911,
+    "failedTimeoutReservedBytes": 512000,
+    "authorizationResponseBytes": 149,
+    "ledgerIncreaseBytes": 515060,
+    "runtimeWeatherCachesModified": false
+  }
+}

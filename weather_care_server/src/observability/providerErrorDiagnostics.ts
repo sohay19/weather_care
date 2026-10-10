@@ -2,6 +2,7 @@ export type ProviderFailureReason =
   | 'NOT_CONFIGURED'
   | 'AUTHORIZATION_FAILED'
   | 'QUOTA_EXCEEDED'
+  | 'BUDGET_EXHAUSTED'
   | 'RATE_LIMITED'
   | 'UPSTREAM_CLIENT_ERROR'
   | 'UPSTREAM_SERVER_ERROR'
@@ -42,6 +43,7 @@ export interface ProviderErrorDiagnostic {
   httpStatus?: number;
   operation?: ProviderOperation;
   detail?: ProviderFailureDetail;
+  networkCode?: string;
 }
 
 export function providerErrorDiagnostic(
@@ -52,14 +54,32 @@ export function providerErrorDiagnostic(
   const httpStatus = statusFromMessage(message);
   const operation = operationFromMessage(message);
   const detail = failureDetailFromError(error);
+  const networkCode = networkCodeFromError(error);
 
   return {
     error: errorName,
-    failureReason: failureReason(errorName, message, httpStatus),
+    failureReason: networkCode ? (/TIMEDOUT|TIMEOUT/.test(networkCode) ? 'TIMEOUT' : 'NETWORK_ERROR')
+      : failureReason(errorName, message, httpStatus),
     ...(httpStatus === undefined ? {} : { httpStatus }),
     ...(operation === undefined ? {} : { operation }),
     ...(detail === undefined ? {} : { detail }),
+    ...(networkCode === undefined ? {} : { networkCode }),
   };
+}
+
+// 오류 원문·URL·임의 code를 기록하지 않고 알려진 연결 오류 코드만 남긴다.
+function networkCodeFromError(error: unknown): string | undefined {
+  const allowed = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND',
+    'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'UND_ERR_CONNECT_TIMEOUT',
+    'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT', 'UND_ERR_SOCKET',
+    'ERR_TLS_CERT_ALTNAME_INVALID', 'CERT_HAS_EXPIRED']);
+  let current = error;
+  for (let depth = 0; depth < 3 && current !== null && typeof current === 'object'; depth++) {
+    const value = current as { code?: unknown; cause?: unknown };
+    if (typeof value.code === 'string' && allowed.has(value.code)) return value.code;
+    current = value.cause;
+  }
+  return undefined;
 }
 
 // Error.name is mutable and may itself contain a URL, token, or user input.
@@ -70,7 +90,7 @@ export function safeErrorName(error: unknown): string {
     'ItsRoadControlProviderError', 'KmaRoadIceProviderError', 'KmaWarningProviderError',
     'KmaPrecipitationObservationProviderError', 'KmaUvProviderError', 'KmaWeatherProviderError',
     'AirKoreaAirQualityProviderError', 'KmaDailyObservationProviderError',
-    'KmaHourlyObservationProviderError', 'KmaMidTermProviderError'];
+    'KmaHourlyObservationProviderError', 'KmaMidTermProviderError', 'KmaGridObservationProviderError'];
   return allowed.includes(error.name) ? error.name : 'Error';
 }
 
@@ -88,6 +108,7 @@ function failureReason(
   if (errorName === 'TypeError') return 'NETWORK_ERROR';
   if (/\bnetwork\b/i.test(message)) return 'NETWORK_ERROR';
   if (/not configured/i.test(message)) return 'NOT_CONFIGURED';
+  if (/(?:APIHUB|MID_TERM)_BUDGET_EXHAUSTED/.test(message)) return 'BUDGET_EXHAUSTED';
   if (/quota\s+exceeded|일일\s*최대\s*호출|호출\s*용량\s*제한/i.test(message)) {
     return 'QUOTA_EXCEEDED';
   }

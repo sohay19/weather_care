@@ -1,0 +1,4271 @@
+{
+  "checkedAt": "2026-10-09T02:46:19.147282+00:00",
+  "observedAt": "2026-10-09T02:30:00.000Z",
+  "basis": "Great-circle distance between cell centers; not user GPS; no fallback applied",
+  "grids": [],
+  "modes": {
+    "core3": {
+      "required": [
+        "T1H",
+        "REH",
+        "WSD"
+      ],
+      "validSourceCells": 4444,
+      "targetsWithCandidate": 302,
+      "within10Km": 220,
+      "within15Km": 260,
+      "within20Km": 280,
+      "minKm": 5.061686932596122,
+      "maxKm": 51.420489183616446,
+      "results": [
+        {
+          "nx": 48,
+          "ny": 29,
+          "sourceNx": 48,
+          "sourceNy": 30,
+          "distanceKm": 5.061686932596122
+        },
+        {
+          "nx": 55,
+          "ny": 32,
+          "sourceNx": 54,
+          "sourceNy": 32,
+          "distanceKm": 5.063681241071201
+        },
+        {
+          "nx": 47,
+          "ny": 36,
+          "sourceNx": 47,
+          "sourceNy": 35,
+          "distanceKm": 5.06651959667551
+        },
+        {
+          "nx": 53,
+          "ny": 39,
+          "sourceNx": 53,
+          "sourceNy": 38,
+          "distanceKm": 5.068877857833542
+        },
+        {
+          "nx": 60,
+          "ny": 39,
+          "sourceNx": 60,
+          "sourceNy": 38,
+          "distanceKm": 5.068826877055187
+        },
+        {
+          "nx": 61,
+          "ny": 39,
+          "sourceNx": 61,
+          "sourceNy": 38,
+          "distanceKm": 5.068817435254178
+        },
+        {
+          "nx": 49,
+          "ny": 46,
+          "sourceNx": 49,
+          "sourceNy": 47,
+          "distanceKm": 5.075132039189031
+        },
+        {
+          "nx": 50,
+          "ny": 47,
+          "sourceNx": 49,
+          "sourceNy": 47,
+          "distanceKm": 5.0755148249617426
+        },
+        {
+          "nx": 55,
+          "ny": 47,
+          "sourceNx": 55,
+          "sourceNy": 51,
+          "distanceKm": 20.308069626089836
+        },
+        {
+          "nx": 50,
+          "ny": 48,
+          "sourceNx": 49,
+          "sourceNy": 48,
+          "distanceKm": 5.0762816040285275
+        },
+        {
+          "nx": 60,
+          "ny": 48,
+          "sourceNx": 60,
+          "sourceNy": 52,
+          "distanceKm": 20.31096456097475
+        },
+        {
+          "nx": 47,
+          "ny": 49,
+          "sourceNx": 48,
+          "sourceNy": 48,
+          "distanceKm": 7.1794951386477885
+        },
+        {
+          "nx": 48,
+          "ny": 49,
+          "sourceNx": 48,
+          "sourceNy": 48,
+          "distanceKm": 5.076668477224366
+        },
+        {
+          "nx": 49,
+          "ny": 49,
+          "sourceNx": 49,
+          "sourceNy": 48,
+          "distanceKm": 5.076665587099676
+        },
+        {
+          "nx": 50,
+          "ny": 49,
+          "sourceNx": 49,
+          "sourceNy": 48,
+          "distanceKm": 7.179486965866716
+        },
+        {
+          "nx": 60,
+          "ny": 49,
+          "sourceNx": 60,
+          "sourceNy": 52,
+          "distanceKm": 15.23436545485728
+        },
+        {
+          "nx": 66,
+          "ny": 49,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 7.180376844668513
+        },
+        {
+          "nx": 67,
+          "ny": 49,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.077286956044072
+        },
+        {
+          "nx": 66,
+          "ny": 50,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.07767392781297
+        },
+        {
+          "nx": 68,
+          "ny": 50,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.077661361004628
+        },
+        {
+          "nx": 72,
+          "ny": 50,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 25.38817008153589
+        },
+        {
+          "nx": 26,
+          "ny": 51,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 5.078506411628187
+        },
+        {
+          "nx": 52,
+          "ny": 51,
+          "sourceNx": 52,
+          "sourceNy": 52,
+          "distanceKm": 5.078934800571631
+        },
+        {
+          "nx": 53,
+          "ny": 51,
+          "sourceNx": 53,
+          "sourceNy": 52,
+          "distanceKm": 5.078929848772654
+        },
+        {
+          "nx": 54,
+          "ny": 51,
+          "sourceNx": 55,
+          "sourceNy": 51,
+          "distanceKm": 5.078542952384668
+        },
+        {
+          "nx": 67,
+          "ny": 51,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.078047654600599
+        },
+        {
+          "nx": 72,
+          "ny": 51,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 25.892892452124396
+        },
+        {
+          "nx": 26,
+          "ny": 52,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 7.182627947141602
+        },
+        {
+          "nx": 27,
+          "ny": 52,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 5.0788891885260075
+        },
+        {
+          "nx": 42,
+          "ny": 52,
+          "sourceNx": 42,
+          "sourceNy": 54,
+          "distanceKm": 10.160174018327739
+        },
+        {
+          "nx": 56,
+          "ny": 52,
+          "sourceNx": 55,
+          "sourceNy": 52,
+          "distanceKm": 5.079293202921724
+        },
+        {
+          "nx": 57,
+          "ny": 52,
+          "sourceNx": 58,
+          "sourceNy": 52,
+          "distanceKm": 5.0792791474331525
+        },
+        {
+          "nx": 70,
+          "ny": 52,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 18.31045720005402
+        },
+        {
+          "nx": 71,
+          "ny": 52,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 22.71129611827003
+        },
+        {
+          "nx": 33,
+          "ny": 53,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 32.1242411758445
+        },
+        {
+          "nx": 34,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 35.9242375281111
+        },
+        {
+          "nx": 39,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 11.360256341607437
+        },
+        {
+          "nx": 40,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 7.184858088325411
+        },
+        {
+          "nx": 41,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 5.080462485753958
+        },
+        {
+          "nx": 51,
+          "ny": 53,
+          "sourceNx": 52,
+          "sourceNy": 53,
+          "distanceKm": 5.080068924310792
+        },
+        {
+          "nx": 62,
+          "ny": 53,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 10.160006995192951
+        },
+        {
+          "nx": 63,
+          "ny": 53,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 15.239995884817622
+        },
+        {
+          "nx": 64,
+          "ny": 53,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 16.06786133110165
+        },
+        {
+          "nx": 67,
+          "ny": 53,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 15.236414699786566
+        },
+        {
+          "nx": 68,
+          "ny": 53,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 16.0605712227681
+        },
+        {
+          "nx": 33,
+          "ny": 54,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 29.63679614100763
+        },
+        {
+          "nx": 34,
+          "ny": 54,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 32.54497593080335
+        },
+        {
+          "nx": 40,
+          "ny": 54,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 5.0808372656394445
+        },
+        {
+          "nx": 49,
+          "ny": 54,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 11.361910086408109
+        },
+        {
+          "nx": 50,
+          "ny": 54,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 7.185900348460436
+        },
+        {
+          "nx": 51,
+          "ny": 54,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 5.081196887535125
+        },
+        {
+          "nx": 52,
+          "ny": 54,
+          "sourceNx": 52,
+          "sourceNy": 53,
+          "distanceKm": 5.080442529152324
+        },
+        {
+          "nx": 55,
+          "ny": 54,
+          "sourceNx": 55,
+          "sourceNy": 53,
+          "distanceKm": 5.080426199932445
+        },
+        {
+          "nx": 58,
+          "ny": 54,
+          "sourceNx": 58,
+          "sourceNy": 53,
+          "distanceKm": 5.080405203772374
+        },
+        {
+          "nx": 60,
+          "ny": 54,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 5.08038861306666
+        },
+        {
+          "nx": 61,
+          "ny": 54,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 7.184748120207372
+        },
+        {
+          "nx": 62,
+          "ny": 54,
+          "sourceNx": 62,
+          "sourceNy": 56,
+          "distanceKm": 10.162987788368127
+        },
+        {
+          "nx": 63,
+          "ny": 54,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 10.162967650310406
+        },
+        {
+          "nx": 64,
+          "ny": 54,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 11.362531499939607
+        },
+        {
+          "nx": 65,
+          "ny": 54,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 14.372576421315175
+        },
+        {
+          "nx": 66,
+          "ny": 54,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 15.24547046882752
+        },
+        {
+          "nx": 69,
+          "ny": 54,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 20.954245228014152
+        },
+        {
+          "nx": 70,
+          "ny": 54,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 20.328576353072844
+        },
+        {
+          "nx": 71,
+          "ny": 54,
+          "sourceNx": 71,
+          "sourceNy": 58,
+          "distanceKm": 20.32851969198865
+        },
+        {
+          "nx": 41,
+          "ny": 55,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 5.081212394821217
+        },
+        {
+          "nx": 42,
+          "ny": 55,
+          "sourceNx": 42,
+          "sourceNy": 54,
+          "distanceKm": 5.081213170166434
+        },
+        {
+          "nx": 49,
+          "ny": 55,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 10.163149525688713
+        },
+        {
+          "nx": 50,
+          "ny": 55,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 5.081572969895434
+        },
+        {
+          "nx": 59,
+          "ny": 55,
+          "sourceNx": 59,
+          "sourceNy": 54,
+          "distanceKm": 5.081147258189341
+        },
+        {
+          "nx": 61,
+          "ny": 55,
+          "sourceNx": 61,
+          "sourceNy": 56,
+          "distanceKm": 5.081877214075786
+        },
+        {
+          "nx": 62,
+          "ny": 55,
+          "sourceNx": 62,
+          "sourceNy": 56,
+          "distanceKm": 5.081867675106946
+        },
+        {
+          "nx": 63,
+          "ny": 55,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 5.081857620154483
+        },
+        {
+          "nx": 64,
+          "ny": 55,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 7.186824544693028
+        },
+        {
+          "nx": 65,
+          "ny": 55,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 11.363355209242592
+        },
+        {
+          "nx": 66,
+          "ny": 55,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 10.164393793172776
+        },
+        {
+          "nx": 67,
+          "ny": 55,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 11.364124278649328
+        },
+        {
+          "nx": 68,
+          "ny": 55,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 14.37458899891306
+        },
+        {
+          "nx": 69,
+          "ny": 55,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 16.07235208764184
+        },
+        {
+          "nx": 71,
+          "ny": 55,
+          "sourceNx": 71,
+          "sourceNy": 58,
+          "distanceKm": 15.24750896183647
+        },
+        {
+          "nx": 41,
+          "ny": 56,
+          "sourceNx": 42,
+          "sourceNy": 56,
+          "distanceKm": 5.082332906231309
+        },
+        {
+          "nx": 46,
+          "ny": 56,
+          "sourceNx": 46,
+          "sourceNy": 55,
+          "distanceKm": 5.081958410348104
+        },
+        {
+          "nx": 47,
+          "ny": 56,
+          "sourceNx": 47,
+          "sourceNy": 57,
+          "distanceKm": 5.08270131053272
+        },
+        {
+          "nx": 48,
+          "ny": 56,
+          "sourceNx": 48,
+          "sourceNy": 57,
+          "distanceKm": 5.082698997484068
+        },
+        {
+          "nx": 64,
+          "ny": 56,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 5.082225306531831
+        },
+        {
+          "nx": 65,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 7.1878468655074705
+        },
+        {
+          "nx": 66,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 5.082569434434429
+        },
+        {
+          "nx": 67,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 7.187830130582225
+        },
+        {
+          "nx": 68,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 11.36494348698658
+        },
+        {
+          "nx": 77,
+          "ny": 56,
+          "sourceNx": 76,
+          "sourceNy": 58,
+          "distanceKm": 11.365460065247905
+        },
+        {
+          "nx": 30,
+          "ny": 57,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 10.167547966122424
+        },
+        {
+          "nx": 31,
+          "ny": 57,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 11.367671454185096
+        },
+        {
+          "nx": 41,
+          "ny": 57,
+          "sourceNx": 42,
+          "sourceNy": 57,
+          "distanceKm": 5.083076295137273
+        },
+        {
+          "nx": 65,
+          "ny": 57,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 5.082946917754518
+        },
+        {
+          "nx": 70,
+          "ny": 57,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 5.083260612720674
+        },
+        {
+          "nx": 30,
+          "ny": 58,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 5.084143776929275
+        },
+        {
+          "nx": 31,
+          "ny": 58,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 7.1900696565068785
+        },
+        {
+          "nx": 43,
+          "ny": 58,
+          "sourceNx": 43,
+          "sourceNy": 57,
+          "distanceKm": 5.08344750302597
+        },
+        {
+          "nx": 67,
+          "ny": 58,
+          "sourceNx": 66,
+          "sourceNy": 58,
+          "distanceKm": 5.083676281248328
+        },
+        {
+          "nx": 69,
+          "ny": 58,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 5.08363787108589
+        },
+        {
+          "nx": 77,
+          "ny": 58,
+          "sourceNx": 76,
+          "sourceNy": 58,
+          "distanceKm": 5.083530292463079
+        },
+        {
+          "nx": 43,
+          "ny": 59,
+          "sourceNx": 44,
+          "sourceNy": 59,
+          "distanceKm": 5.084555737515546
+        },
+        {
+          "nx": 68,
+          "ny": 59,
+          "sourceNx": 69,
+          "sourceNy": 59,
+          "distanceKm": 5.0843898172012585
+        },
+        {
+          "nx": 37,
+          "ny": 60,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 18.337900350678673
+        },
+        {
+          "nx": 43,
+          "ny": 60,
+          "sourceNx": 44,
+          "sourceNy": 60,
+          "distanceKm": 5.085291271869233
+        },
+        {
+          "nx": 81,
+          "ny": 60,
+          "sourceNx": 83,
+          "sourceNy": 63,
+          "distanceKm": 18.33784476947921
+        },
+        {
+          "nx": 88,
+          "ny": 60,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 16.08291319398735
+        },
+        {
+          "nx": 41,
+          "ny": 61,
+          "sourceNx": 41,
+          "sourceNy": 62,
+          "distanceKm": 5.086388616232706
+        },
+        {
+          "nx": 71,
+          "ny": 61,
+          "sourceNx": 70,
+          "sourceNy": 61,
+          "distanceKm": 5.0858323012610835
+        },
+        {
+          "nx": 72,
+          "ny": 61,
+          "sourceNx": 73,
+          "sourceNy": 61,
+          "distanceKm": 5.085803354339553
+        },
+        {
+          "nx": 76,
+          "ny": 61,
+          "sourceNx": 76,
+          "sourceNy": 60,
+          "distanceKm": 5.08538119010301
+        },
+        {
+          "nx": 87,
+          "ny": 61,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 14.386062657916076
+        },
+        {
+          "nx": 92,
+          "ny": 61,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 18.33849151343849
+        },
+        {
+          "nx": 39,
+          "ny": 62,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 5.086751426218449
+        },
+        {
+          "nx": 76,
+          "ny": 62,
+          "sourceNx": 75,
+          "sourceNy": 62,
+          "distanceKm": 5.0864871762479575
+        },
+        {
+          "nx": 82,
+          "ny": 62,
+          "sourceNx": 83,
+          "sourceNy": 63,
+          "distanceKm": 7.1937142547256885
+        },
+        {
+          "nx": 85,
+          "ny": 62,
+          "sourceNx": 85,
+          "sourceNy": 63,
+          "distanceKm": 5.086672596881848
+        },
+        {
+          "nx": 87,
+          "ny": 62,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 11.373997792878681
+        },
+        {
+          "nx": 89,
+          "ny": 62,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 5.086583504291949
+        },
+        {
+          "nx": 92,
+          "ny": 62,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 16.085076320446014
+        },
+        {
+          "nx": 34,
+          "ny": 63,
+          "sourceNx": 33,
+          "sourceNy": 63,
+          "distanceKm": 5.087459408009464
+        },
+        {
+          "nx": 39,
+          "ny": 63,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 7.194267697812867
+        },
+        {
+          "nx": 40,
+          "ny": 63,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 5.087116320753827
+        },
+        {
+          "nx": 79,
+          "ny": 63,
+          "sourceNx": 80,
+          "sourceNy": 64,
+          "distanceKm": 7.194824404508899
+        },
+        {
+          "nx": 81,
+          "ny": 63,
+          "sourceNx": 80,
+          "sourceNy": 64,
+          "distanceKm": 7.194797997051058
+        },
+        {
+          "nx": 86,
+          "ny": 63,
+          "sourceNx": 85,
+          "sourceNy": 63,
+          "distanceKm": 5.087026151032134
+        },
+        {
+          "nx": 90,
+          "ny": 63,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 5.086936173245794
+        },
+        {
+          "nx": 40,
+          "ny": 64,
+          "sourceNx": 41,
+          "sourceNy": 63,
+          "distanceKm": 7.19529703425338
+        },
+        {
+          "nx": 41,
+          "ny": 64,
+          "sourceNx": 41,
+          "sourceNy": 63,
+          "distanceKm": 5.087843917274735
+        },
+        {
+          "nx": 78,
+          "ny": 64,
+          "sourceNx": 78,
+          "sourceNy": 65,
+          "distanceKm": 5.088260796571543
+        },
+        {
+          "nx": 82,
+          "ny": 64,
+          "sourceNx": 83,
+          "sourceNy": 64,
+          "distanceKm": 5.087814475552668
+        },
+        {
+          "nx": 86,
+          "ny": 64,
+          "sourceNx": 85,
+          "sourceNy": 64,
+          "distanceKm": 5.087752500845858
+        },
+        {
+          "nx": 87,
+          "ny": 64,
+          "sourceNx": 87,
+          "sourceNy": 65,
+          "distanceKm": 5.088081957100351
+        },
+        {
+          "nx": 28,
+          "ny": 65,
+          "sourceNx": 28,
+          "sourceNy": 64,
+          "distanceKm": 5.0885121080521
+        },
+        {
+          "nx": 29,
+          "ny": 65,
+          "sourceNx": 29,
+          "sourceNy": 64,
+          "distanceKm": 5.0885193922280045
+        },
+        {
+          "nx": 32,
+          "ny": 65,
+          "sourceNx": 32,
+          "sourceNy": 64,
+          "distanceKm": 5.088538229615092
+        },
+        {
+          "nx": 34,
+          "ny": 65,
+          "sourceNx": 33,
+          "sourceNy": 65,
+          "distanceKm": 5.088906927172984
+        },
+        {
+          "nx": 86,
+          "ny": 65,
+          "sourceNx": 87,
+          "sourceNy": 65,
+          "distanceKm": 5.088454609418395
+        },
+        {
+          "nx": 88,
+          "ny": 65,
+          "sourceNx": 89,
+          "sourceNy": 65,
+          "distanceKm": 5.088409884299648
+        },
+        {
+          "nx": 91,
+          "ny": 65,
+          "sourceNx": 90,
+          "sourceNy": 65,
+          "distanceKm": 5.088363140322202
+        },
+        {
+          "nx": 33,
+          "ny": 66,
+          "sourceNx": 33,
+          "sourceNy": 65,
+          "distanceKm": 5.089264629712884
+        },
+        {
+          "nx": 39,
+          "ny": 66,
+          "sourceNx": 41,
+          "sourceNy": 66,
+          "distanceKm": 10.179293925973363
+        },
+        {
+          "nx": 83,
+          "ny": 66,
+          "sourceNx": 83,
+          "sourceNy": 65,
+          "distanceKm": 5.088888730035364
+        },
+        {
+          "nx": 42,
+          "ny": 67,
+          "sourceNx": 42,
+          "sourceNy": 66,
+          "distanceKm": 5.090007825731927
+        },
+        {
+          "nx": 43,
+          "ny": 67,
+          "sourceNx": 43,
+          "sourceNy": 66,
+          "distanceKm": 5.090008075361464
+        },
+        {
+          "nx": 42,
+          "ny": 68,
+          "sourceNx": 43,
+          "sourceNy": 68,
+          "distanceKm": 5.091080741258433
+        },
+        {
+          "nx": 96,
+          "ny": 69,
+          "sourceNx": 94,
+          "sourceNy": 72,
+          "distanceKm": 18.360138908626897
+        },
+        {
+          "nx": 42,
+          "ny": 70,
+          "sourceNx": 43,
+          "sourceNy": 69,
+          "distanceKm": 7.201383775797711
+        },
+        {
+          "nx": 96,
+          "ny": 70,
+          "sourceNx": 94,
+          "sourceNy": 72,
+          "distanceKm": 14.403880570299258
+        },
+        {
+          "nx": 42,
+          "ny": 71,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 7.203381942962844
+        },
+        {
+          "nx": 43,
+          "ny": 71,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 5.093560305414252
+        },
+        {
+          "nx": 94,
+          "ny": 71,
+          "sourceNx": 94,
+          "sourceNy": 72,
+          "distanceKm": 5.092919921102259
+        },
+        {
+          "nx": 96,
+          "ny": 71,
+          "sourceNx": 96,
+          "sourceNy": 73,
+          "distanceKm": 10.186441859250376
+        },
+        {
+          "nx": 97,
+          "ny": 71,
+          "sourceNx": 97,
+          "sourceNy": 73,
+          "distanceKm": 10.186389163575132
+        },
+        {
+          "nx": 41,
+          "ny": 72,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 10.187823273669073
+        },
+        {
+          "nx": 42,
+          "ny": 72,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 5.093911894425832
+        },
+        {
+          "nx": 96,
+          "ny": 72,
+          "sourceNx": 96,
+          "sourceNy": 73,
+          "distanceKm": 5.093573226593086
+        },
+        {
+          "nx": 41,
+          "ny": 73,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 10.189225527240477
+        },
+        {
+          "nx": 42,
+          "ny": 73,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 5.0946130203560935
+        },
+        {
+          "nx": 41,
+          "ny": 74,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 11.392681853292302
+        },
+        {
+          "nx": 44,
+          "ny": 74,
+          "sourceNx": 44,
+          "sourceNy": 73,
+          "distanceKm": 5.094962311160154
+        },
+        {
+          "nx": 41,
+          "ny": 75,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 14.411715198649475
+        },
+        {
+          "nx": 44,
+          "ny": 76,
+          "sourceNx": 45,
+          "sourceNy": 76,
+          "distanceKm": 5.096699865748687
+        },
+        {
+          "nx": 47,
+          "ny": 77,
+          "sourceNx": 46,
+          "sourceNy": 77,
+          "distanceKm": 5.0973878663083685
+        },
+        {
+          "nx": 48,
+          "ny": 77,
+          "sourceNx": 48,
+          "sourceNy": 76,
+          "distanceKm": 5.097039815724686
+        },
+        {
+          "nx": 48,
+          "ny": 78,
+          "sourceNx": 49,
+          "sourceNy": 77,
+          "distanceKm": 7.2092755317459
+        },
+        {
+          "nx": 43,
+          "ny": 79,
+          "sourceNx": 43,
+          "sourceNy": 78,
+          "distanceKm": 5.098421322646666
+        },
+        {
+          "nx": 45,
+          "ny": 79,
+          "sourceNx": 44,
+          "sourceNy": 79,
+          "distanceKm": 5.098763053438144
+        },
+        {
+          "nx": 46,
+          "ny": 79,
+          "sourceNx": 46,
+          "sourceNy": 77,
+          "distanceKm": 10.19615192576476
+        },
+        {
+          "nx": 49,
+          "ny": 83,
+          "sourceNx": 48,
+          "sourceNy": 83,
+          "distanceKm": 5.101469604578693
+        },
+        {
+          "nx": 51,
+          "ny": 83,
+          "sourceNx": 51,
+          "sourceNy": 82,
+          "distanceKm": 5.101124709559929
+        },
+        {
+          "nx": 47,
+          "ny": 84,
+          "sourceNx": 47,
+          "sourceNy": 83,
+          "distanceKm": 5.1018090036449335
+        },
+        {
+          "nx": 50,
+          "ny": 84,
+          "sourceNx": 51,
+          "sourceNy": 84,
+          "distanceKm": 5.102135020628696
+        },
+        {
+          "nx": 48,
+          "ny": 85,
+          "sourceNx": 48,
+          "sourceNy": 84,
+          "distanceKm": 5.102477071670617
+        },
+        {
+          "nx": 51,
+          "ny": 86,
+          "sourceNx": 51,
+          "sourceNy": 85,
+          "distanceKm": 5.103135390086211
+        },
+        {
+          "nx": 52,
+          "ny": 87,
+          "sourceNx": 52,
+          "sourceNy": 86,
+          "distanceKm": 5.103796205827168
+        },
+        {
+          "nx": 53,
+          "ny": 87,
+          "sourceNx": 53,
+          "sourceNy": 86,
+          "distanceKm": 5.103791755527658
+        },
+        {
+          "nx": 49,
+          "ny": 88,
+          "sourceNx": 50,
+          "sourceNy": 88,
+          "distanceKm": 5.104797440309454
+        },
+        {
+          "nx": 52,
+          "ny": 88,
+          "sourceNx": 51,
+          "sourceNy": 88,
+          "distanceKm": 5.1047904496610395
+        },
+        {
+          "nx": 53,
+          "ny": 88,
+          "sourceNx": 54,
+          "sourceNy": 88,
+          "distanceKm": 5.1047815944729535
+        },
+        {
+          "nx": 54,
+          "ny": 89,
+          "sourceNx": 54,
+          "sourceNy": 88,
+          "distanceKm": 5.105108357045463
+        },
+        {
+          "nx": 44,
+          "ny": 90,
+          "sourceNx": 45,
+          "sourceNy": 85,
+          "distanceKm": 26.02781217255353
+        },
+        {
+          "nx": 46,
+          "ny": 90,
+          "sourceNx": 49,
+          "sourceNy": 89,
+          "distanceKm": 16.145919888697566
+        },
+        {
+          "nx": 49,
+          "ny": 90,
+          "sourceNx": 49,
+          "sourceNy": 89,
+          "distanceKm": 5.105784732780122
+        },
+        {
+          "nx": 50,
+          "ny": 90,
+          "sourceNx": 50,
+          "sourceNy": 89,
+          "distanceKm": 5.105781719166222
+        },
+        {
+          "nx": 52,
+          "ny": 90,
+          "sourceNx": 52,
+          "sourceNy": 89,
+          "distanceKm": 5.105774300831146
+        },
+        {
+          "nx": 53,
+          "ny": 90,
+          "sourceNx": 54,
+          "sourceNy": 90,
+          "distanceKm": 5.106094917772706
+        },
+        {
+          "nx": 47,
+          "ny": 92,
+          "sourceNx": 49,
+          "sourceNy": 89,
+          "distanceKm": 18.411531753812685
+        },
+        {
+          "nx": 47,
+          "ny": 93,
+          "sourceNx": 51,
+          "sourceNy": 94,
+          "distanceKm": 21.06240448281286
+        },
+        {
+          "nx": 52,
+          "ny": 94,
+          "sourceNx": 52,
+          "sourceNy": 93,
+          "distanceKm": 5.108373505190694
+        },
+        {
+          "nx": 53,
+          "ny": 94,
+          "sourceNx": 53,
+          "sourceNy": 93,
+          "distanceKm": 5.108369161755169
+        },
+        {
+          "nx": 42,
+          "ny": 95,
+          "sourceNx": 43,
+          "sourceNy": 95,
+          "distanceKm": 5.109355345500625
+        },
+        {
+          "nx": 51,
+          "ny": 95,
+          "sourceNx": 51,
+          "sourceNy": 94,
+          "distanceKm": 5.109020323398937
+        },
+        {
+          "nx": 104,
+          "ny": 96,
+          "sourceNx": 105,
+          "sourceNy": 96,
+          "distanceKm": 5.1091352562901315
+        },
+        {
+          "nx": 42,
+          "ny": 98,
+          "sourceNx": 43,
+          "sourceNy": 97,
+          "distanceKm": 7.227970495801981
+        },
+        {
+          "nx": 43,
+          "ny": 98,
+          "sourceNx": 43,
+          "sourceNy": 97,
+          "distanceKm": 5.110947030103741
+        },
+        {
+          "nx": 47,
+          "ny": 98,
+          "sourceNx": 48,
+          "sourceNy": 98,
+          "distanceKm": 5.111258844676614
+        },
+        {
+          "nx": 49,
+          "ny": 98,
+          "sourceNx": 48,
+          "sourceNy": 98,
+          "distanceKm": 5.1112565956320966
+        },
+        {
+          "nx": 50,
+          "ny": 98,
+          "sourceNx": 52,
+          "sourceNy": 98,
+          "distanceKm": 10.22249787775379
+        },
+        {
+          "nx": 46,
+          "ny": 99,
+          "sourceNx": 45,
+          "sourceNy": 98,
+          "distanceKm": 7.228862178136446
+        },
+        {
+          "nx": 47,
+          "ny": 99,
+          "sourceNx": 48,
+          "sourceNy": 99,
+          "distanceKm": 5.1118893411994355
+        },
+        {
+          "nx": 49,
+          "ny": 99,
+          "sourceNx": 48,
+          "sourceNy": 99,
+          "distanceKm": 5.111887100395348
+        },
+        {
+          "nx": 51,
+          "ny": 99,
+          "sourceNx": 52,
+          "sourceNy": 99,
+          "distanceKm": 5.111877688691469
+        },
+        {
+          "nx": 48,
+          "ny": 100,
+          "sourceNx": 48,
+          "sourceNy": 99,
+          "distanceKm": 5.112202396796387
+        },
+        {
+          "nx": 47,
+          "ny": 102,
+          "sourceNx": 49,
+          "sourceNy": 102,
+          "distanceKm": 10.227526213607485
+        },
+        {
+          "nx": 48,
+          "ny": 102,
+          "sourceNx": 49,
+          "sourceNy": 102,
+          "distanceKm": 5.113762008257057
+        },
+        {
+          "nx": 47,
+          "ny": 103,
+          "sourceNx": 49,
+          "sourceNy": 103,
+          "distanceKm": 10.22876504937925
+        },
+        {
+          "nx": 48,
+          "ny": 103,
+          "sourceNx": 49,
+          "sourceNy": 103,
+          "distanceKm": 5.114381430227517
+        },
+        {
+          "nx": 46,
+          "ny": 104,
+          "sourceNx": 48,
+          "sourceNy": 105,
+          "distanceKm": 11.438177083017921
+        },
+        {
+          "nx": 46,
+          "ny": 105,
+          "sourceNx": 48,
+          "sourceNy": 105,
+          "distanceKm": 10.231229979827592
+        },
+        {
+          "nx": 47,
+          "ny": 105,
+          "sourceNx": 48,
+          "sourceNy": 105,
+          "distanceKm": 5.11561412275159
+        },
+        {
+          "nx": 35,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 51.420489183616446
+        },
+        {
+          "nx": 36,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 46.332157959636085
+        },
+        {
+          "nx": 38,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 36.17934798635418
+        },
+        {
+          "nx": 44,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 7.235871036268592
+        },
+        {
+          "nx": 45,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 5.116533117320307
+        },
+        {
+          "nx": 46,
+          "ny": 106,
+          "sourceNx": 46,
+          "sourceNy": 107,
+          "distanceKm": 5.1165320282429905
+        },
+        {
+          "nx": 47,
+          "ny": 106,
+          "sourceNx": 48,
+          "sourceNy": 106,
+          "distanceKm": 5.116225186962532
+        },
+        {
+          "nx": 38,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 35.81785452373472
+        },
+        {
+          "nx": 39,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 30.701021440655534
+        },
+        {
+          "nx": 40,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 25.584186510436336
+        },
+        {
+          "nx": 41,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 20.467350185882186
+        },
+        {
+          "nx": 43,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 10.233675164915388
+        },
+        {
+          "nx": 44,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 5.116837374061682
+        },
+        {
+          "nx": 47,
+          "ny": 107,
+          "sourceNx": 48,
+          "sourceNy": 107,
+          "distanceKm": 5.11683346095305
+        },
+        {
+          "nx": 42,
+          "ny": 108,
+          "sourceNx": 45,
+          "sourceNy": 108,
+          "distanceKm": 15.352329312052575
+        },
+        {
+          "nx": 44,
+          "ny": 108,
+          "sourceNx": 45,
+          "sourceNy": 108,
+          "distanceKm": 5.117442839058154
+        },
+        {
+          "nx": 39,
+          "ny": 113,
+          "sourceNx": 42,
+          "sourceNy": 116,
+          "distanceKm": 21.727869484333677
+        },
+        {
+          "nx": 40,
+          "ny": 113,
+          "sourceNx": 43,
+          "sourceNy": 115,
+          "distanceKm": 18.464086228405137
+        },
+        {
+          "nx": 46,
+          "ny": 113,
+          "sourceNx": 46,
+          "sourceNy": 112,
+          "distanceKm": 5.120131231088765
+        },
+        {
+          "nx": 39,
+          "ny": 114,
+          "sourceNx": 42,
+          "sourceNy": 116,
+          "distanceKm": 18.46619535583754
+        },
+        {
+          "nx": 40,
+          "ny": 114,
+          "sourceNx": 42,
+          "sourceNy": 116,
+          "distanceKm": 14.486077085737454
+        },
+        {
+          "nx": 44,
+          "ny": 115,
+          "sourceNx": 43,
+          "sourceNy": 115,
+          "distanceKm": 5.121602992057263
+        },
+        {
+          "nx": 49,
+          "ny": 115,
+          "sourceNx": 49,
+          "sourceNy": 114,
+          "distanceKm": 5.121302800681365
+        },
+        {
+          "nx": 54,
+          "ny": 115,
+          "sourceNx": 54,
+          "sourceNy": 114,
+          "distanceKm": 5.1212848650067135
+        },
+        {
+          "nx": 55,
+          "ny": 115,
+          "sourceNx": 55,
+          "sourceNy": 114,
+          "distanceKm": 5.12128001143976
+        },
+        {
+          "nx": 53,
+          "ny": 116,
+          "sourceNx": 53,
+          "sourceNy": 115,
+          "distanceKm": 5.1218737796742095
+        },
+        {
+          "nx": 55,
+          "ny": 116,
+          "sourceNx": 56,
+          "sourceNy": 116,
+          "distanceKm": 5.122153263160774
+        },
+        {
+          "nx": 43,
+          "ny": 117,
+          "sourceNx": 43,
+          "sourceNy": 116,
+          "distanceKm": 5.122476366105622
+        },
+        {
+          "nx": 45,
+          "ny": 117,
+          "sourceNx": 45,
+          "sourceNy": 116,
+          "distanceKm": 5.122475529101939
+        },
+        {
+          "nx": 48,
+          "ny": 117,
+          "sourceNx": 48,
+          "sourceNy": 118,
+          "distanceKm": 5.123049902232091
+        },
+        {
+          "nx": 50,
+          "ny": 117,
+          "sourceNx": 50,
+          "sourceNy": 116,
+          "distanceKm": 5.122466112435518
+        },
+        {
+          "nx": 51,
+          "ny": 117,
+          "sourceNx": 51,
+          "sourceNy": 116,
+          "distanceKm": 5.122462973407814
+        },
+        {
+          "nx": 52,
+          "ny": 117,
+          "sourceNx": 52,
+          "sourceNy": 116,
+          "distanceKm": 5.122459415753098
+        },
+        {
+          "nx": 54,
+          "ny": 117,
+          "sourceNx": 55,
+          "sourceNy": 117,
+          "distanceKm": 5.122738571645919
+        },
+        {
+          "nx": 41,
+          "ny": 118,
+          "sourceNx": 42,
+          "sourceNy": 118,
+          "distanceKm": 5.123343053519193
+        },
+        {
+          "nx": 44,
+          "ny": 118,
+          "sourceNx": 44,
+          "sourceNy": 117,
+          "distanceKm": 5.123054903474236
+        },
+        {
+          "nx": 49,
+          "ny": 118,
+          "sourceNx": 48,
+          "sourceNy": 118,
+          "distanceKm": 5.123337230913354
+        },
+        {
+          "nx": 50,
+          "ny": 118,
+          "sourceNx": 51,
+          "sourceNy": 119,
+          "distanceKm": 7.24589195206502
+        },
+        {
+          "nx": 53,
+          "ny": 118,
+          "sourceNx": 54,
+          "sourceNy": 118,
+          "distanceKm": 5.123320593535379
+        },
+        {
+          "nx": 44,
+          "ny": 119,
+          "sourceNx": 45,
+          "sourceNy": 119,
+          "distanceKm": 5.123917553977111
+        },
+        {
+          "nx": 47,
+          "ny": 119,
+          "sourceNx": 47,
+          "sourceNy": 118,
+          "distanceKm": 5.123627706636721
+        },
+        {
+          "nx": 49,
+          "ny": 119,
+          "sourceNx": 49,
+          "sourceNy": 120,
+          "distanceKm": 5.124196668471143
+        },
+        {
+          "nx": 50,
+          "ny": 119,
+          "sourceNx": 51,
+          "sourceNy": 119,
+          "distanceKm": 5.123906371629435
+        },
+        {
+          "nx": 44,
+          "ny": 120,
+          "sourceNx": 45,
+          "sourceNy": 120,
+          "distanceKm": 5.124489218389239
+        },
+        {
+          "nx": 46,
+          "ny": 120,
+          "sourceNx": 46,
+          "sourceNy": 119,
+          "distanceKm": 5.1242022477597615
+        },
+        {
+          "nx": 50,
+          "ny": 120,
+          "sourceNx": 51,
+          "sourceNy": 120,
+          "distanceKm": 5.124478083365347
+        },
+        {
+          "nx": 44,
+          "ny": 121,
+          "sourceNx": 45,
+          "sourceNy": 120,
+          "distanceKm": 7.247524707354019
+        },
+        {
+          "nx": 45,
+          "ny": 121,
+          "sourceNx": 45,
+          "sourceNy": 120,
+          "distanceKm": 5.12477352730549
+        },
+        {
+          "nx": 47,
+          "ny": 121,
+          "sourceNx": 48,
+          "sourceNy": 120,
+          "distanceKm": 7.247519468972277
+        },
+        {
+          "nx": 48,
+          "ny": 121,
+          "sourceNx": 48,
+          "sourceNy": 120,
+          "distanceKm": 5.124769206340176
+        },
+        {
+          "nx": 51,
+          "ny": 121,
+          "sourceNx": 51,
+          "sourceNy": 120,
+          "distanceKm": 5.124761181324832
+        },
+        {
+          "nx": 52,
+          "ny": 121,
+          "sourceNx": 52,
+          "sourceNy": 120,
+          "distanceKm": 5.12475768308706
+        },
+        {
+          "nx": 48,
+          "ny": 122,
+          "sourceNx": 48,
+          "sourceNy": 120,
+          "distanceKm": 10.250105836241701
+        },
+        {
+          "nx": 51,
+          "ny": 122,
+          "sourceNx": 50,
+          "sourceNy": 122,
+          "distanceKm": 5.125612985117035
+        },
+        {
+          "nx": 52,
+          "ny": 122,
+          "sourceNx": 53,
+          "sourceNy": 121,
+          "distanceKm": 7.2483016369042845
+        },
+        {
+          "nx": 53,
+          "ny": 122,
+          "sourceNx": 53,
+          "sourceNy": 121,
+          "distanceKm": 5.125321262755458
+        },
+        {
+          "nx": 53,
+          "ny": 123,
+          "sourceNx": 54,
+          "sourceNy": 123,
+          "distanceKm": 5.1261651749632735
+        },
+        {
+          "nx": 47,
+          "ny": 126,
+          "sourceNx": 49,
+          "sourceNy": 126,
+          "distanceKm": 10.255709648311031
+        },
+        {
+          "nx": 48,
+          "ny": 126,
+          "sourceNx": 49,
+          "sourceNy": 126,
+          "distanceKm": 5.127853827157784
+        },
+        {
+          "nx": 98,
+          "ny": 126,
+          "sourceNx": 98,
+          "sourceNy": 125,
+          "distanceKm": 5.126972375284652
+        },
+        {
+          "nx": 43,
+          "ny": 127,
+          "sourceNx": 45,
+          "sourceNy": 129,
+          "distanceKm": 14.506888824650465
+        },
+        {
+          "nx": 37,
+          "ny": 128,
+          "sourceNx": 38,
+          "sourceNy": 128,
+          "distanceKm": 5.128954441719851
+        },
+        {
+          "nx": 43,
+          "ny": 128,
+          "sourceNx": 45,
+          "sourceNy": 129,
+          "distanceKm": 11.469314641171044
+        },
+        {
+          "nx": 48,
+          "ny": 128,
+          "sourceNx": 49,
+          "sourceNy": 128,
+          "distanceKm": 5.128954441719851
+        },
+        {
+          "nx": 37,
+          "ny": 129,
+          "sourceNx": 38,
+          "sourceNy": 129,
+          "distanceKm": 5.129500449650739
+        },
+        {
+          "nx": 43,
+          "ny": 129,
+          "sourceNx": 45,
+          "sourceNy": 129,
+          "distanceKm": 10.25901238033839
+        },
+        {
+          "nx": 46,
+          "ny": 131,
+          "sourceNx": 47,
+          "sourceNy": 131,
+          "distanceKm": 5.130587384511525
+        },
+        {
+          "nx": 51,
+          "ny": 132,
+          "sourceNx": 51,
+          "sourceNy": 131,
+          "distanceKm": 5.130846187254562
+        },
+        {
+          "nx": 54,
+          "ny": 132,
+          "sourceNx": 54,
+          "sourceNy": 131,
+          "distanceKm": 5.130835017324854
+        },
+        {
+          "nx": 20,
+          "ny": 133,
+          "sourceNx": 20,
+          "sourceNy": 132,
+          "distanceKm": 5.131291430143656
+        },
+        {
+          "nx": 54,
+          "ny": 133,
+          "sourceNx": 55,
+          "sourceNy": 133,
+          "distanceKm": 5.131635889083897
+        },
+        {
+          "nx": 20,
+          "ny": 134,
+          "sourceNx": 21,
+          "sourceNy": 134,
+          "distanceKm": 5.132095133289346
+        },
+        {
+          "nx": 54,
+          "ny": 134,
+          "sourceNx": 55,
+          "sourceNy": 134,
+          "distanceKm": 5.132167600988698
+        },
+        {
+          "nx": 19,
+          "ny": 135,
+          "sourceNx": 20,
+          "sourceNy": 135,
+          "distanceKm": 5.13261542496557
+        },
+        {
+          "nx": 22,
+          "ny": 135,
+          "sourceNx": 21,
+          "sourceNy": 135,
+          "distanceKm": 5.132632787077161
+        },
+        {
+          "nx": 54,
+          "ny": 135,
+          "sourceNx": 55,
+          "sourceNy": 135,
+          "distanceKm": 5.132696424947565
+        },
+        {
+          "nx": 19,
+          "ny": 136,
+          "sourceNx": 20,
+          "sourceNy": 136,
+          "distanceKm": 5.133141742686931
+        },
+        {
+          "nx": 55,
+          "ny": 136,
+          "sourceNx": 55,
+          "sourceNy": 135,
+          "distanceKm": 5.132957390715116
+        },
+        {
+          "nx": 89,
+          "ny": 139,
+          "sourceNx": 89,
+          "sourceNy": 138,
+          "distanceKm": 5.134147698064178
+        },
+        {
+          "nx": 62,
+          "ny": 143,
+          "sourceNx": 62,
+          "sourceNy": 142,
+          "distanceKm": 5.136527578010891
+        },
+        {
+          "nx": 87,
+          "ny": 143,
+          "sourceNx": 87,
+          "sourceNy": 142,
+          "distanceKm": 5.136234325460813
+        },
+        {
+          "nx": 66,
+          "ny": 144,
+          "sourceNx": 66,
+          "sourceNy": 143,
+          "distanceKm": 5.137000846770321
+        },
+        {
+          "nx": 70,
+          "ny": 144,
+          "sourceNx": 70,
+          "sourceNy": 143,
+          "distanceKm": 5.1369638313202515
+        },
+        {
+          "nx": 72,
+          "ny": 144,
+          "sourceNx": 72,
+          "sourceNy": 143,
+          "distanceKm": 5.136943096641876
+        },
+        {
+          "nx": 73,
+          "ny": 144,
+          "sourceNx": 73,
+          "sourceNy": 143,
+          "distanceKm": 5.136932172171609
+        },
+        {
+          "nx": 79,
+          "ny": 144,
+          "sourceNx": 79,
+          "sourceNy": 143,
+          "distanceKm": 5.136858817533148
+        },
+        {
+          "nx": 80,
+          "ny": 145,
+          "sourceNx": 80,
+          "sourceNy": 144,
+          "distanceKm": 5.137347666428384
+        },
+        {
+          "nx": 81,
+          "ny": 146,
+          "sourceNx": 81,
+          "sourceNy": 145,
+          "distanceKm": 5.137833362826048
+        },
+        {
+          "nx": 82,
+          "ny": 148,
+          "sourceNx": 82,
+          "sourceNy": 147,
+          "distanceKm": 5.1388096575710405
+        },
+        {
+          "nx": 82,
+          "ny": 149,
+          "sourceNx": 83,
+          "sourceNy": 149,
+          "distanceKm": 5.1395378161491845
+        },
+        {
+          "nx": 82,
+          "ny": 150,
+          "sourceNx": 83,
+          "sourceNy": 149,
+          "distanceKm": 7.26874839537122
+        },
+        {
+          "nx": 83,
+          "ny": 150,
+          "sourceNx": 83,
+          "sourceNy": 149,
+          "distanceKm": 5.139774159659852
+        }
+      ]
+    },
+    "all6": {
+      "required": [
+        "T1H",
+        "REH",
+        "WSD",
+        "VEC",
+        "PTY",
+        "RN1"
+      ],
+      "validSourceCells": 4444,
+      "targetsWithCandidate": 302,
+      "within10Km": 220,
+      "within15Km": 260,
+      "within20Km": 280,
+      "minKm": 5.061686932596122,
+      "maxKm": 51.420489183616446,
+      "results": [
+        {
+          "nx": 48,
+          "ny": 29,
+          "sourceNx": 48,
+          "sourceNy": 30,
+          "distanceKm": 5.061686932596122
+        },
+        {
+          "nx": 55,
+          "ny": 32,
+          "sourceNx": 54,
+          "sourceNy": 32,
+          "distanceKm": 5.063681241071201
+        },
+        {
+          "nx": 47,
+          "ny": 36,
+          "sourceNx": 47,
+          "sourceNy": 35,
+          "distanceKm": 5.06651959667551
+        },
+        {
+          "nx": 53,
+          "ny": 39,
+          "sourceNx": 53,
+          "sourceNy": 38,
+          "distanceKm": 5.068877857833542
+        },
+        {
+          "nx": 60,
+          "ny": 39,
+          "sourceNx": 60,
+          "sourceNy": 38,
+          "distanceKm": 5.068826877055187
+        },
+        {
+          "nx": 61,
+          "ny": 39,
+          "sourceNx": 61,
+          "sourceNy": 38,
+          "distanceKm": 5.068817435254178
+        },
+        {
+          "nx": 49,
+          "ny": 46,
+          "sourceNx": 49,
+          "sourceNy": 47,
+          "distanceKm": 5.075132039189031
+        },
+        {
+          "nx": 50,
+          "ny": 47,
+          "sourceNx": 49,
+          "sourceNy": 47,
+          "distanceKm": 5.0755148249617426
+        },
+        {
+          "nx": 55,
+          "ny": 47,
+          "sourceNx": 55,
+          "sourceNy": 51,
+          "distanceKm": 20.308069626089836
+        },
+        {
+          "nx": 50,
+          "ny": 48,
+          "sourceNx": 49,
+          "sourceNy": 48,
+          "distanceKm": 5.0762816040285275
+        },
+        {
+          "nx": 60,
+          "ny": 48,
+          "sourceNx": 60,
+          "sourceNy": 52,
+          "distanceKm": 20.31096456097475
+        },
+        {
+          "nx": 47,
+          "ny": 49,
+          "sourceNx": 48,
+          "sourceNy": 48,
+          "distanceKm": 7.1794951386477885
+        },
+        {
+          "nx": 48,
+          "ny": 49,
+          "sourceNx": 48,
+          "sourceNy": 48,
+          "distanceKm": 5.076668477224366
+        },
+        {
+          "nx": 49,
+          "ny": 49,
+          "sourceNx": 49,
+          "sourceNy": 48,
+          "distanceKm": 5.076665587099676
+        },
+        {
+          "nx": 50,
+          "ny": 49,
+          "sourceNx": 49,
+          "sourceNy": 48,
+          "distanceKm": 7.179486965866716
+        },
+        {
+          "nx": 60,
+          "ny": 49,
+          "sourceNx": 60,
+          "sourceNy": 52,
+          "distanceKm": 15.23436545485728
+        },
+        {
+          "nx": 66,
+          "ny": 49,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 7.180376844668513
+        },
+        {
+          "nx": 67,
+          "ny": 49,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.077286956044072
+        },
+        {
+          "nx": 66,
+          "ny": 50,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.07767392781297
+        },
+        {
+          "nx": 68,
+          "ny": 50,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.077661361004628
+        },
+        {
+          "nx": 72,
+          "ny": 50,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 25.38817008153589
+        },
+        {
+          "nx": 26,
+          "ny": 51,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 5.078506411628187
+        },
+        {
+          "nx": 52,
+          "ny": 51,
+          "sourceNx": 52,
+          "sourceNy": 52,
+          "distanceKm": 5.078934800571631
+        },
+        {
+          "nx": 53,
+          "ny": 51,
+          "sourceNx": 53,
+          "sourceNy": 52,
+          "distanceKm": 5.078929848772654
+        },
+        {
+          "nx": 54,
+          "ny": 51,
+          "sourceNx": 55,
+          "sourceNy": 51,
+          "distanceKm": 5.078542952384668
+        },
+        {
+          "nx": 67,
+          "ny": 51,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 5.078047654600599
+        },
+        {
+          "nx": 72,
+          "ny": 51,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 25.892892452124396
+        },
+        {
+          "nx": 26,
+          "ny": 52,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 7.182627947141602
+        },
+        {
+          "nx": 27,
+          "ny": 52,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 5.0788891885260075
+        },
+        {
+          "nx": 42,
+          "ny": 52,
+          "sourceNx": 42,
+          "sourceNy": 54,
+          "distanceKm": 10.160174018327739
+        },
+        {
+          "nx": 56,
+          "ny": 52,
+          "sourceNx": 55,
+          "sourceNy": 52,
+          "distanceKm": 5.079293202921724
+        },
+        {
+          "nx": 57,
+          "ny": 52,
+          "sourceNx": 58,
+          "sourceNy": 52,
+          "distanceKm": 5.0792791474331525
+        },
+        {
+          "nx": 70,
+          "ny": 52,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 18.31045720005402
+        },
+        {
+          "nx": 71,
+          "ny": 52,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 22.71129611827003
+        },
+        {
+          "nx": 33,
+          "ny": 53,
+          "sourceNx": 27,
+          "sourceNy": 51,
+          "distanceKm": 32.1242411758445
+        },
+        {
+          "nx": 34,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 35.9242375281111
+        },
+        {
+          "nx": 39,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 11.360256341607437
+        },
+        {
+          "nx": 40,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 7.184858088325411
+        },
+        {
+          "nx": 41,
+          "ny": 53,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 5.080462485753958
+        },
+        {
+          "nx": 51,
+          "ny": 53,
+          "sourceNx": 52,
+          "sourceNy": 53,
+          "distanceKm": 5.080068924310792
+        },
+        {
+          "nx": 62,
+          "ny": 53,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 10.160006995192951
+        },
+        {
+          "nx": 63,
+          "ny": 53,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 15.239995884817622
+        },
+        {
+          "nx": 64,
+          "ny": 53,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 16.06786133110165
+        },
+        {
+          "nx": 67,
+          "ny": 53,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 15.236414699786566
+        },
+        {
+          "nx": 68,
+          "ny": 53,
+          "sourceNx": 67,
+          "sourceNy": 50,
+          "distanceKm": 16.0605712227681
+        },
+        {
+          "nx": 33,
+          "ny": 54,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 29.63679614100763
+        },
+        {
+          "nx": 34,
+          "ny": 54,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 32.54497593080335
+        },
+        {
+          "nx": 40,
+          "ny": 54,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 5.0808372656394445
+        },
+        {
+          "nx": 49,
+          "ny": 54,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 11.361910086408109
+        },
+        {
+          "nx": 50,
+          "ny": 54,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 7.185900348460436
+        },
+        {
+          "nx": 51,
+          "ny": 54,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 5.081196887535125
+        },
+        {
+          "nx": 52,
+          "ny": 54,
+          "sourceNx": 52,
+          "sourceNy": 53,
+          "distanceKm": 5.080442529152324
+        },
+        {
+          "nx": 55,
+          "ny": 54,
+          "sourceNx": 55,
+          "sourceNy": 53,
+          "distanceKm": 5.080426199932445
+        },
+        {
+          "nx": 58,
+          "ny": 54,
+          "sourceNx": 58,
+          "sourceNy": 53,
+          "distanceKm": 5.080405203772374
+        },
+        {
+          "nx": 60,
+          "ny": 54,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 5.08038861306666
+        },
+        {
+          "nx": 61,
+          "ny": 54,
+          "sourceNx": 60,
+          "sourceNy": 53,
+          "distanceKm": 7.184748120207372
+        },
+        {
+          "nx": 62,
+          "ny": 54,
+          "sourceNx": 62,
+          "sourceNy": 56,
+          "distanceKm": 10.162987788368127
+        },
+        {
+          "nx": 63,
+          "ny": 54,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 10.162967650310406
+        },
+        {
+          "nx": 64,
+          "ny": 54,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 11.362531499939607
+        },
+        {
+          "nx": 65,
+          "ny": 54,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 14.372576421315175
+        },
+        {
+          "nx": 66,
+          "ny": 54,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 15.24547046882752
+        },
+        {
+          "nx": 69,
+          "ny": 54,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 20.954245228014152
+        },
+        {
+          "nx": 70,
+          "ny": 54,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 20.328576353072844
+        },
+        {
+          "nx": 71,
+          "ny": 54,
+          "sourceNx": 71,
+          "sourceNy": 58,
+          "distanceKm": 20.32851969198865
+        },
+        {
+          "nx": 41,
+          "ny": 55,
+          "sourceNx": 41,
+          "sourceNy": 54,
+          "distanceKm": 5.081212394821217
+        },
+        {
+          "nx": 42,
+          "ny": 55,
+          "sourceNx": 42,
+          "sourceNy": 54,
+          "distanceKm": 5.081213170166434
+        },
+        {
+          "nx": 49,
+          "ny": 55,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 10.163149525688713
+        },
+        {
+          "nx": 50,
+          "ny": 55,
+          "sourceNx": 51,
+          "sourceNy": 55,
+          "distanceKm": 5.081572969895434
+        },
+        {
+          "nx": 59,
+          "ny": 55,
+          "sourceNx": 59,
+          "sourceNy": 54,
+          "distanceKm": 5.081147258189341
+        },
+        {
+          "nx": 61,
+          "ny": 55,
+          "sourceNx": 61,
+          "sourceNy": 56,
+          "distanceKm": 5.081877214075786
+        },
+        {
+          "nx": 62,
+          "ny": 55,
+          "sourceNx": 62,
+          "sourceNy": 56,
+          "distanceKm": 5.081867675106946
+        },
+        {
+          "nx": 63,
+          "ny": 55,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 5.081857620154483
+        },
+        {
+          "nx": 64,
+          "ny": 55,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 7.186824544693028
+        },
+        {
+          "nx": 65,
+          "ny": 55,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 11.363355209242592
+        },
+        {
+          "nx": 66,
+          "ny": 55,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 10.164393793172776
+        },
+        {
+          "nx": 67,
+          "ny": 55,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 11.364124278649328
+        },
+        {
+          "nx": 68,
+          "ny": 55,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 14.37458899891306
+        },
+        {
+          "nx": 69,
+          "ny": 55,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 16.07235208764184
+        },
+        {
+          "nx": 71,
+          "ny": 55,
+          "sourceNx": 71,
+          "sourceNy": 58,
+          "distanceKm": 15.24750896183647
+        },
+        {
+          "nx": 41,
+          "ny": 56,
+          "sourceNx": 42,
+          "sourceNy": 56,
+          "distanceKm": 5.082332906231309
+        },
+        {
+          "nx": 46,
+          "ny": 56,
+          "sourceNx": 46,
+          "sourceNy": 55,
+          "distanceKm": 5.081958410348104
+        },
+        {
+          "nx": 47,
+          "ny": 56,
+          "sourceNx": 47,
+          "sourceNy": 57,
+          "distanceKm": 5.08270131053272
+        },
+        {
+          "nx": 48,
+          "ny": 56,
+          "sourceNx": 48,
+          "sourceNy": 57,
+          "distanceKm": 5.082698997484068
+        },
+        {
+          "nx": 64,
+          "ny": 56,
+          "sourceNx": 63,
+          "sourceNy": 56,
+          "distanceKm": 5.082225306531831
+        },
+        {
+          "nx": 65,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 7.1878468655074705
+        },
+        {
+          "nx": 66,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 5.082569434434429
+        },
+        {
+          "nx": 67,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 7.187830130582225
+        },
+        {
+          "nx": 68,
+          "ny": 56,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 11.36494348698658
+        },
+        {
+          "nx": 77,
+          "ny": 56,
+          "sourceNx": 76,
+          "sourceNy": 58,
+          "distanceKm": 11.365460065247905
+        },
+        {
+          "nx": 30,
+          "ny": 57,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 10.167547966122424
+        },
+        {
+          "nx": 31,
+          "ny": 57,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 11.367671454185096
+        },
+        {
+          "nx": 41,
+          "ny": 57,
+          "sourceNx": 42,
+          "sourceNy": 57,
+          "distanceKm": 5.083076295137273
+        },
+        {
+          "nx": 65,
+          "ny": 57,
+          "sourceNx": 66,
+          "sourceNy": 57,
+          "distanceKm": 5.082946917754518
+        },
+        {
+          "nx": 70,
+          "ny": 57,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 5.083260612720674
+        },
+        {
+          "nx": 30,
+          "ny": 58,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 5.084143776929275
+        },
+        {
+          "nx": 31,
+          "ny": 58,
+          "sourceNx": 30,
+          "sourceNy": 59,
+          "distanceKm": 7.1900696565068785
+        },
+        {
+          "nx": 43,
+          "ny": 58,
+          "sourceNx": 43,
+          "sourceNy": 57,
+          "distanceKm": 5.08344750302597
+        },
+        {
+          "nx": 67,
+          "ny": 58,
+          "sourceNx": 66,
+          "sourceNy": 58,
+          "distanceKm": 5.083676281248328
+        },
+        {
+          "nx": 69,
+          "ny": 58,
+          "sourceNx": 70,
+          "sourceNy": 58,
+          "distanceKm": 5.08363787108589
+        },
+        {
+          "nx": 77,
+          "ny": 58,
+          "sourceNx": 76,
+          "sourceNy": 58,
+          "distanceKm": 5.083530292463079
+        },
+        {
+          "nx": 43,
+          "ny": 59,
+          "sourceNx": 44,
+          "sourceNy": 59,
+          "distanceKm": 5.084555737515546
+        },
+        {
+          "nx": 68,
+          "ny": 59,
+          "sourceNx": 69,
+          "sourceNy": 59,
+          "distanceKm": 5.0843898172012585
+        },
+        {
+          "nx": 37,
+          "ny": 60,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 18.337900350678673
+        },
+        {
+          "nx": 43,
+          "ny": 60,
+          "sourceNx": 44,
+          "sourceNy": 60,
+          "distanceKm": 5.085291271869233
+        },
+        {
+          "nx": 81,
+          "ny": 60,
+          "sourceNx": 83,
+          "sourceNy": 63,
+          "distanceKm": 18.33784476947921
+        },
+        {
+          "nx": 88,
+          "ny": 60,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 16.08291319398735
+        },
+        {
+          "nx": 41,
+          "ny": 61,
+          "sourceNx": 41,
+          "sourceNy": 62,
+          "distanceKm": 5.086388616232706
+        },
+        {
+          "nx": 71,
+          "ny": 61,
+          "sourceNx": 70,
+          "sourceNy": 61,
+          "distanceKm": 5.0858323012610835
+        },
+        {
+          "nx": 72,
+          "ny": 61,
+          "sourceNx": 73,
+          "sourceNy": 61,
+          "distanceKm": 5.085803354339553
+        },
+        {
+          "nx": 76,
+          "ny": 61,
+          "sourceNx": 76,
+          "sourceNy": 60,
+          "distanceKm": 5.08538119010301
+        },
+        {
+          "nx": 87,
+          "ny": 61,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 14.386062657916076
+        },
+        {
+          "nx": 92,
+          "ny": 61,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 18.33849151343849
+        },
+        {
+          "nx": 39,
+          "ny": 62,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 5.086751426218449
+        },
+        {
+          "nx": 76,
+          "ny": 62,
+          "sourceNx": 75,
+          "sourceNy": 62,
+          "distanceKm": 5.0864871762479575
+        },
+        {
+          "nx": 82,
+          "ny": 62,
+          "sourceNx": 83,
+          "sourceNy": 63,
+          "distanceKm": 7.1937142547256885
+        },
+        {
+          "nx": 85,
+          "ny": 62,
+          "sourceNx": 85,
+          "sourceNy": 63,
+          "distanceKm": 5.086672596881848
+        },
+        {
+          "nx": 87,
+          "ny": 62,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 11.373997792878681
+        },
+        {
+          "nx": 89,
+          "ny": 62,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 5.086583504291949
+        },
+        {
+          "nx": 92,
+          "ny": 62,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 16.085076320446014
+        },
+        {
+          "nx": 34,
+          "ny": 63,
+          "sourceNx": 33,
+          "sourceNy": 63,
+          "distanceKm": 5.087459408009464
+        },
+        {
+          "nx": 39,
+          "ny": 63,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 7.194267697812867
+        },
+        {
+          "nx": 40,
+          "ny": 63,
+          "sourceNx": 40,
+          "sourceNy": 62,
+          "distanceKm": 5.087116320753827
+        },
+        {
+          "nx": 79,
+          "ny": 63,
+          "sourceNx": 80,
+          "sourceNy": 64,
+          "distanceKm": 7.194824404508899
+        },
+        {
+          "nx": 81,
+          "ny": 63,
+          "sourceNx": 80,
+          "sourceNy": 64,
+          "distanceKm": 7.194797997051058
+        },
+        {
+          "nx": 86,
+          "ny": 63,
+          "sourceNx": 85,
+          "sourceNy": 63,
+          "distanceKm": 5.087026151032134
+        },
+        {
+          "nx": 90,
+          "ny": 63,
+          "sourceNx": 89,
+          "sourceNy": 63,
+          "distanceKm": 5.086936173245794
+        },
+        {
+          "nx": 40,
+          "ny": 64,
+          "sourceNx": 41,
+          "sourceNy": 63,
+          "distanceKm": 7.19529703425338
+        },
+        {
+          "nx": 41,
+          "ny": 64,
+          "sourceNx": 41,
+          "sourceNy": 63,
+          "distanceKm": 5.087843917274735
+        },
+        {
+          "nx": 78,
+          "ny": 64,
+          "sourceNx": 78,
+          "sourceNy": 65,
+          "distanceKm": 5.088260796571543
+        },
+        {
+          "nx": 82,
+          "ny": 64,
+          "sourceNx": 83,
+          "sourceNy": 64,
+          "distanceKm": 5.087814475552668
+        },
+        {
+          "nx": 86,
+          "ny": 64,
+          "sourceNx": 85,
+          "sourceNy": 64,
+          "distanceKm": 5.087752500845858
+        },
+        {
+          "nx": 87,
+          "ny": 64,
+          "sourceNx": 87,
+          "sourceNy": 65,
+          "distanceKm": 5.088081957100351
+        },
+        {
+          "nx": 28,
+          "ny": 65,
+          "sourceNx": 28,
+          "sourceNy": 64,
+          "distanceKm": 5.0885121080521
+        },
+        {
+          "nx": 29,
+          "ny": 65,
+          "sourceNx": 29,
+          "sourceNy": 64,
+          "distanceKm": 5.0885193922280045
+        },
+        {
+          "nx": 32,
+          "ny": 65,
+          "sourceNx": 32,
+          "sourceNy": 64,
+          "distanceKm": 5.088538229615092
+        },
+        {
+          "nx": 34,
+          "ny": 65,
+          "sourceNx": 33,
+          "sourceNy": 65,
+          "distanceKm": 5.088906927172984
+        },
+        {
+          "nx": 86,
+          "ny": 65,
+          "sourceNx": 87,
+          "sourceNy": 65,
+          "distanceKm": 5.088454609418395
+        },
+        {
+          "nx": 88,
+          "ny": 65,
+          "sourceNx": 89,
+          "sourceNy": 65,
+          "distanceKm": 5.088409884299648
+        },
+        {
+          "nx": 91,
+          "ny": 65,
+          "sourceNx": 90,
+          "sourceNy": 65,
+          "distanceKm": 5.088363140322202
+        },
+        {
+          "nx": 33,
+          "ny": 66,
+          "sourceNx": 33,
+          "sourceNy": 65,
+          "distanceKm": 5.089264629712884
+        },
+        {
+          "nx": 39,
+          "ny": 66,
+          "sourceNx": 41,
+          "sourceNy": 66,
+          "distanceKm": 10.179293925973363
+        },
+        {
+          "nx": 83,
+          "ny": 66,
+          "sourceNx": 83,
+          "sourceNy": 65,
+          "distanceKm": 5.088888730035364
+        },
+        {
+          "nx": 42,
+          "ny": 67,
+          "sourceNx": 42,
+          "sourceNy": 66,
+          "distanceKm": 5.090007825731927
+        },
+        {
+          "nx": 43,
+          "ny": 67,
+          "sourceNx": 43,
+          "sourceNy": 66,
+          "distanceKm": 5.090008075361464
+        },
+        {
+          "nx": 42,
+          "ny": 68,
+          "sourceNx": 43,
+          "sourceNy": 68,
+          "distanceKm": 5.091080741258433
+        },
+        {
+          "nx": 96,
+          "ny": 69,
+          "sourceNx": 94,
+          "sourceNy": 72,
+          "distanceKm": 18.360138908626897
+        },
+        {
+          "nx": 42,
+          "ny": 70,
+          "sourceNx": 43,
+          "sourceNy": 69,
+          "distanceKm": 7.201383775797711
+        },
+        {
+          "nx": 96,
+          "ny": 70,
+          "sourceNx": 94,
+          "sourceNy": 72,
+          "distanceKm": 14.403880570299258
+        },
+        {
+          "nx": 42,
+          "ny": 71,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 7.203381942962844
+        },
+        {
+          "nx": 43,
+          "ny": 71,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 5.093560305414252
+        },
+        {
+          "nx": 94,
+          "ny": 71,
+          "sourceNx": 94,
+          "sourceNy": 72,
+          "distanceKm": 5.092919921102259
+        },
+        {
+          "nx": 96,
+          "ny": 71,
+          "sourceNx": 96,
+          "sourceNy": 73,
+          "distanceKm": 10.186441859250376
+        },
+        {
+          "nx": 97,
+          "ny": 71,
+          "sourceNx": 97,
+          "sourceNy": 73,
+          "distanceKm": 10.186389163575132
+        },
+        {
+          "nx": 41,
+          "ny": 72,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 10.187823273669073
+        },
+        {
+          "nx": 42,
+          "ny": 72,
+          "sourceNx": 43,
+          "sourceNy": 72,
+          "distanceKm": 5.093911894425832
+        },
+        {
+          "nx": 96,
+          "ny": 72,
+          "sourceNx": 96,
+          "sourceNy": 73,
+          "distanceKm": 5.093573226593086
+        },
+        {
+          "nx": 41,
+          "ny": 73,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 10.189225527240477
+        },
+        {
+          "nx": 42,
+          "ny": 73,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 5.0946130203560935
+        },
+        {
+          "nx": 41,
+          "ny": 74,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 11.392681853292302
+        },
+        {
+          "nx": 44,
+          "ny": 74,
+          "sourceNx": 44,
+          "sourceNy": 73,
+          "distanceKm": 5.094962311160154
+        },
+        {
+          "nx": 41,
+          "ny": 75,
+          "sourceNx": 43,
+          "sourceNy": 73,
+          "distanceKm": 14.411715198649475
+        },
+        {
+          "nx": 44,
+          "ny": 76,
+          "sourceNx": 45,
+          "sourceNy": 76,
+          "distanceKm": 5.096699865748687
+        },
+        {
+          "nx": 47,
+          "ny": 77,
+          "sourceNx": 46,
+          "sourceNy": 77,
+          "distanceKm": 5.0973878663083685
+        },
+        {
+          "nx": 48,
+          "ny": 77,
+          "sourceNx": 48,
+          "sourceNy": 76,
+          "distanceKm": 5.097039815724686
+        },
+        {
+          "nx": 48,
+          "ny": 78,
+          "sourceNx": 49,
+          "sourceNy": 77,
+          "distanceKm": 7.2092755317459
+        },
+        {
+          "nx": 43,
+          "ny": 79,
+          "sourceNx": 43,
+          "sourceNy": 78,
+          "distanceKm": 5.098421322646666
+        },
+        {
+          "nx": 45,
+          "ny": 79,
+          "sourceNx": 44,
+          "sourceNy": 79,
+          "distanceKm": 5.098763053438144
+        },
+        {
+          "nx": 46,
+          "ny": 79,
+          "sourceNx": 46,
+          "sourceNy": 77,
+          "distanceKm": 10.19615192576476
+        },
+        {
+          "nx": 49,
+          "ny": 83,
+          "sourceNx": 48,
+          "sourceNy": 83,
+          "distanceKm": 5.101469604578693
+        },
+        {
+          "nx": 51,
+          "ny": 83,
+          "sourceNx": 51,
+          "sourceNy": 82,
+          "distanceKm": 5.101124709559929
+        },
+        {
+          "nx": 47,
+          "ny": 84,
+          "sourceNx": 47,
+          "sourceNy": 83,
+          "distanceKm": 5.1018090036449335
+        },
+        {
+          "nx": 50,
+          "ny": 84,
+          "sourceNx": 51,
+          "sourceNy": 84,
+          "distanceKm": 5.102135020628696
+        },
+        {
+          "nx": 48,
+          "ny": 85,
+          "sourceNx": 48,
+          "sourceNy": 84,
+          "distanceKm": 5.102477071670617
+        },
+        {
+          "nx": 51,
+          "ny": 86,
+          "sourceNx": 51,
+          "sourceNy": 85,
+          "distanceKm": 5.103135390086211
+        },
+        {
+          "nx": 52,
+          "ny": 87,
+          "sourceNx": 52,
+          "sourceNy": 86,
+          "distanceKm": 5.103796205827168
+        },
+        {
+          "nx": 53,
+          "ny": 87,
+          "sourceNx": 53,
+          "sourceNy": 86,
+          "distanceKm": 5.103791755527658
+        },
+        {
+          "nx": 49,
+          "ny": 88,
+          "sourceNx": 50,
+          "sourceNy": 88,
+          "distanceKm": 5.104797440309454
+        },
+        {
+          "nx": 52,
+          "ny": 88,
+          "sourceNx": 51,
+          "sourceNy": 88,
+          "distanceKm": 5.1047904496610395
+        },
+        {
+          "nx": 53,
+          "ny": 88,
+          "sourceNx": 54,
+          "sourceNy": 88,
+          "distanceKm": 5.1047815944729535
+        },
+        {
+          "nx": 54,
+          "ny": 89,
+          "sourceNx": 54,
+          "sourceNy": 88,
+          "distanceKm": 5.105108357045463
+        },
+        {
+          "nx": 44,
+          "ny": 90,
+          "sourceNx": 45,
+          "sourceNy": 85,
+          "distanceKm": 26.02781217255353
+        },
+        {
+          "nx": 46,
+          "ny": 90,
+          "sourceNx": 49,
+          "sourceNy": 89,
+          "distanceKm": 16.145919888697566
+        },
+        {
+          "nx": 49,
+          "ny": 90,
+          "sourceNx": 49,
+          "sourceNy": 89,
+          "distanceKm": 5.105784732780122
+        },
+        {
+          "nx": 50,
+          "ny": 90,
+          "sourceNx": 50,
+          "sourceNy": 89,
+          "distanceKm": 5.105781719166222
+        },
+        {
+          "nx": 52,
+          "ny": 90,
+          "sourceNx": 52,
+          "sourceNy": 89,
+          "distanceKm": 5.105774300831146
+        },
+        {
+          "nx": 53,
+          "ny": 90,
+          "sourceNx": 54,
+          "sourceNy": 90,
+          "distanceKm": 5.106094917772706
+        },
+        {
+          "nx": 47,
+          "ny": 92,
+          "sourceNx": 49,
+          "sourceNy": 89,
+          "distanceKm": 18.411531753812685
+        },
+        {
+          "nx": 47,
+          "ny": 93,
+          "sourceNx": 51,
+          "sourceNy": 94,
+          "distanceKm": 21.06240448281286
+        },
+        {
+          "nx": 52,
+          "ny": 94,
+          "sourceNx": 52,
+          "sourceNy": 93,
+          "distanceKm": 5.108373505190694
+        },
+        {
+          "nx": 53,
+          "ny": 94,
+          "sourceNx": 53,
+          "sourceNy": 93,
+          "distanceKm": 5.108369161755169
+        },
+        {
+          "nx": 42,
+          "ny": 95,
+          "sourceNx": 43,
+          "sourceNy": 95,
+          "distanceKm": 5.109355345500625
+        },
+        {
+          "nx": 51,
+          "ny": 95,
+          "sourceNx": 51,
+          "sourceNy": 94,
+          "distanceKm": 5.109020323398937
+        },
+        {
+          "nx": 104,
+          "ny": 96,
+          "sourceNx": 105,
+          "sourceNy": 96,
+          "distanceKm": 5.1091352562901315
+        },
+        {
+          "nx": 42,
+          "ny": 98,
+          "sourceNx": 43,
+          "sourceNy": 97,
+          "distanceKm": 7.227970495801981
+        },
+        {
+          "nx": 43,
+          "ny": 98,
+          "sourceNx": 43,
+          "sourceNy": 97,
+          "distanceKm": 5.110947030103741
+        },
+        {
+          "nx": 47,
+          "ny": 98,
+          "sourceNx": 48,
+          "sourceNy": 98,
+          "distanceKm": 5.111258844676614
+        },
+        {
+          "nx": 49,
+          "ny": 98,
+          "sourceNx": 48,
+          "sourceNy": 98,
+          "distanceKm": 5.1112565956320966
+        },
+        {
+          "nx": 50,
+          "ny": 98,
+          "sourceNx": 52,
+          "sourceNy": 98,
+          "distanceKm": 10.22249787775379
+        },
+        {
+          "nx": 46,
+          "ny": 99,
+          "sourceNx": 45,
+          "sourceNy": 98,
+          "distanceKm": 7.228862178136446
+        },
+        {
+          "nx": 47,
+          "ny": 99,
+          "sourceNx": 48,
+          "sourceNy": 99,
+          "distanceKm": 5.1118893411994355
+        },
+        {
+          "nx": 49,
+          "ny": 99,
+          "sourceNx": 48,
+          "sourceNy": 99,
+          "distanceKm": 5.111887100395348
+        },
+        {
+          "nx": 51,
+          "ny": 99,
+          "sourceNx": 52,
+          "sourceNy": 99,
+          "distanceKm": 5.111877688691469
+        },
+        {
+          "nx": 48,
+          "ny": 100,
+          "sourceNx": 48,
+          "sourceNy": 99,
+          "distanceKm": 5.112202396796387
+        },
+        {
+          "nx": 47,
+          "ny": 102,
+          "sourceNx": 49,
+          "sourceNy": 102,
+          "distanceKm": 10.227526213607485
+        },
+        {
+          "nx": 48,
+          "ny": 102,
+          "sourceNx": 49,
+          "sourceNy": 102,
+          "distanceKm": 5.113762008257057
+        },
+        {
+          "nx": 47,
+          "ny": 103,
+          "sourceNx": 49,
+          "sourceNy": 103,
+          "distanceKm": 10.22876504937925
+        },
+        {
+          "nx": 48,
+          "ny": 103,
+          "sourceNx": 49,
+          "sourceNy": 103,
+          "distanceKm": 5.114381430227517
+        },
+        {
+          "nx": 46,
+          "ny": 104,
+          "sourceNx": 48,
+          "sourceNy": 105,
+          "distanceKm": 11.438177083017921
+        },
+        {
+          "nx": 46,
+          "ny": 105,
+          "sourceNx": 48,
+          "sourceNy": 105,
+          "distanceKm": 10.231229979827592
+        },
+        {
+          "nx": 47,
+          "ny": 105,
+          "sourceNx": 48,
+          "sourceNy": 105,
+          "distanceKm": 5.11561412275159
+        },
+        {
+          "nx": 35,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 51.420489183616446
+        },
+        {
+          "nx": 36,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 46.332157959636085
+        },
+        {
+          "nx": 38,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 36.17934798635418
+        },
+        {
+          "nx": 44,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 7.235871036268592
+        },
+        {
+          "nx": 45,
+          "ny": 106,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 5.116533117320307
+        },
+        {
+          "nx": 46,
+          "ny": 106,
+          "sourceNx": 46,
+          "sourceNy": 107,
+          "distanceKm": 5.1165320282429905
+        },
+        {
+          "nx": 47,
+          "ny": 106,
+          "sourceNx": 48,
+          "sourceNy": 106,
+          "distanceKm": 5.116225186962532
+        },
+        {
+          "nx": 38,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 35.81785452373472
+        },
+        {
+          "nx": 39,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 30.701021440655534
+        },
+        {
+          "nx": 40,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 25.584186510436336
+        },
+        {
+          "nx": 41,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 20.467350185882186
+        },
+        {
+          "nx": 43,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 10.233675164915388
+        },
+        {
+          "nx": 44,
+          "ny": 107,
+          "sourceNx": 45,
+          "sourceNy": 107,
+          "distanceKm": 5.116837374061682
+        },
+        {
+          "nx": 47,
+          "ny": 107,
+          "sourceNx": 48,
+          "sourceNy": 107,
+          "distanceKm": 5.11683346095305
+        },
+        {
+          "nx": 42,
+          "ny": 108,
+          "sourceNx": 45,
+          "sourceNy": 108,
+          "distanceKm": 15.352329312052575
+        },
+        {
+          "nx": 44,
+          "ny": 108,
+          "sourceNx": 45,
+          "sourceNy": 108,
+          "distanceKm": 5.117442839058154
+        },
+        {
+          "nx": 39,
+          "ny": 113,
+          "sourceNx": 42,
+          "sourceNy": 116,
+          "distanceKm": 21.727869484333677
+        },
+        {
+          "nx": 40,
+          "ny": 113,
+          "sourceNx": 43,
+          "sourceNy": 115,
+          "distanceKm": 18.464086228405137
+        },
+        {
+          "nx": 46,
+          "ny": 113,
+          "sourceNx": 46,
+          "sourceNy": 112,
+          "distanceKm": 5.120131231088765
+        },
+        {
+          "nx": 39,
+          "ny": 114,
+          "sourceNx": 42,
+          "sourceNy": 116,
+          "distanceKm": 18.46619535583754
+        },
+        {
+          "nx": 40,
+          "ny": 114,
+          "sourceNx": 42,
+          "sourceNy": 116,
+          "distanceKm": 14.486077085737454
+        },
+        {
+          "nx": 44,
+          "ny": 115,
+          "sourceNx": 43,
+          "sourceNy": 115,
+          "distanceKm": 5.121602992057263
+        },
+        {
+          "nx": 49,
+          "ny": 115,
+          "sourceNx": 49,
+          "sourceNy": 114,
+          "distanceKm": 5.121302800681365
+        },
+        {
+          "nx": 54,
+          "ny": 115,
+          "sourceNx": 54,
+          "sourceNy": 114,
+          "distanceKm": 5.1212848650067135
+        },
+        {
+          "nx": 55,
+          "ny": 115,
+          "sourceNx": 55,
+          "sourceNy": 114,
+          "distanceKm": 5.12128001143976
+        },
+        {
+          "nx": 53,
+          "ny": 116,
+          "sourceNx": 53,
+          "sourceNy": 115,
+          "distanceKm": 5.1218737796742095
+        },
+        {
+          "nx": 55,
+          "ny": 116,
+          "sourceNx": 56,
+          "sourceNy": 116,
+          "distanceKm": 5.122153263160774
+        },
+        {
+          "nx": 43,
+          "ny": 117,
+          "sourceNx": 43,
+          "sourceNy": 116,
+          "distanceKm": 5.122476366105622
+        },
+        {
+          "nx": 45,
+          "ny": 117,
+          "sourceNx": 45,
+          "sourceNy": 116,
+          "distanceKm": 5.122475529101939
+        },
+        {
+          "nx": 48,
+          "ny": 117,
+          "sourceNx": 48,
+          "sourceNy": 118,
+          "distanceKm": 5.123049902232091
+        },
+        {
+          "nx": 50,
+          "ny": 117,
+          "sourceNx": 50,
+          "sourceNy": 116,
+          "distanceKm": 5.122466112435518
+        },
+        {
+          "nx": 51,
+          "ny": 117,
+          "sourceNx": 51,
+          "sourceNy": 116,
+          "distanceKm": 5.122462973407814
+        },
+        {
+          "nx": 52,
+          "ny": 117,
+          "sourceNx": 52,
+          "sourceNy": 116,
+          "distanceKm": 5.122459415753098
+        },
+        {
+          "nx": 54,
+          "ny": 117,
+          "sourceNx": 55,
+          "sourceNy": 117,
+          "distanceKm": 5.122738571645919
+        },
+        {
+          "nx": 41,
+          "ny": 118,
+          "sourceNx": 42,
+          "sourceNy": 118,
+          "distanceKm": 5.123343053519193
+        },
+        {
+          "nx": 44,
+          "ny": 118,
+          "sourceNx": 44,
+          "sourceNy": 117,
+          "distanceKm": 5.123054903474236
+        },
+        {
+          "nx": 49,
+          "ny": 118,
+          "sourceNx": 48,
+          "sourceNy": 118,
+          "distanceKm": 5.123337230913354
+        },
+        {
+          "nx": 50,
+          "ny": 118,
+          "sourceNx": 51,
+          "sourceNy": 119,
+          "distanceKm": 7.24589195206502
+        },
+        {
+          "nx": 53,
+          "ny": 118,
+          "sourceNx": 54,
+          "sourceNy": 118,
+          "distanceKm": 5.123320593535379
+        },
+        {
+          "nx": 44,
+          "ny": 119,
+          "sourceNx": 45,
+          "sourceNy": 119,
+          "distanceKm": 5.123917553977111
+        },
+        {
+          "nx": 47,
+          "ny": 119,
+          "sourceNx": 47,
+          "sourceNy": 118,
+          "distanceKm": 5.123627706636721
+        },
+        {
+          "nx": 49,
+          "ny": 119,
+          "sourceNx": 49,
+          "sourceNy": 120,
+          "distanceKm": 5.124196668471143
+        },
+        {
+          "nx": 50,
+          "ny": 119,
+          "sourceNx": 51,
+          "sourceNy": 119,
+          "distanceKm": 5.123906371629435
+        },
+        {
+          "nx": 44,
+          "ny": 120,
+          "sourceNx": 45,
+          "sourceNy": 120,
+          "distanceKm": 5.124489218389239
+        },
+        {
+          "nx": 46,
+          "ny": 120,
+          "sourceNx": 46,
+          "sourceNy": 119,
+          "distanceKm": 5.1242022477597615
+        },
+        {
+          "nx": 50,
+          "ny": 120,
+          "sourceNx": 51,
+          "sourceNy": 120,
+          "distanceKm": 5.124478083365347
+        },
+        {
+          "nx": 44,
+          "ny": 121,
+          "sourceNx": 45,
+          "sourceNy": 120,
+          "distanceKm": 7.247524707354019
+        },
+        {
+          "nx": 45,
+          "ny": 121,
+          "sourceNx": 45,
+          "sourceNy": 120,
+          "distanceKm": 5.12477352730549
+        },
+        {
+          "nx": 47,
+          "ny": 121,
+          "sourceNx": 48,
+          "sourceNy": 120,
+          "distanceKm": 7.247519468972277
+        },
+        {
+          "nx": 48,
+          "ny": 121,
+          "sourceNx": 48,
+          "sourceNy": 120,
+          "distanceKm": 5.124769206340176
+        },
+        {
+          "nx": 51,
+          "ny": 121,
+          "sourceNx": 51,
+          "sourceNy": 120,
+          "distanceKm": 5.124761181324832
+        },
+        {
+          "nx": 52,
+          "ny": 121,
+          "sourceNx": 52,
+          "sourceNy": 120,
+          "distanceKm": 5.12475768308706
+        },
+        {
+          "nx": 48,
+          "ny": 122,
+          "sourceNx": 48,
+          "sourceNy": 120,
+          "distanceKm": 10.250105836241701
+        },
+        {
+          "nx": 51,
+          "ny": 122,
+          "sourceNx": 50,
+          "sourceNy": 122,
+          "distanceKm": 5.125612985117035
+        },
+        {
+          "nx": 52,
+          "ny": 122,
+          "sourceNx": 53,
+          "sourceNy": 121,
+          "distanceKm": 7.2483016369042845
+        },
+        {
+          "nx": 53,
+          "ny": 122,
+          "sourceNx": 53,
+          "sourceNy": 121,
+          "distanceKm": 5.125321262755458
+        },
+        {
+          "nx": 53,
+          "ny": 123,
+          "sourceNx": 54,
+          "sourceNy": 123,
+          "distanceKm": 5.1261651749632735
+        },
+        {
+          "nx": 47,
+          "ny": 126,
+          "sourceNx": 49,
+          "sourceNy": 126,
+          "distanceKm": 10.255709648311031
+        },
+        {
+          "nx": 48,
+          "ny": 126,
+          "sourceNx": 49,
+          "sourceNy": 126,
+          "distanceKm": 5.127853827157784
+        },
+        {
+          "nx": 98,
+          "ny": 126,
+          "sourceNx": 98,
+          "sourceNy": 125,
+          "distanceKm": 5.126972375284652
+        },
+        {
+          "nx": 43,
+          "ny": 127,
+          "sourceNx": 45,
+          "sourceNy": 129,
+          "distanceKm": 14.506888824650465
+        },
+        {
+          "nx": 37,
+          "ny": 128,
+          "sourceNx": 38,
+          "sourceNy": 128,
+          "distanceKm": 5.128954441719851
+        },
+        {
+          "nx": 43,
+          "ny": 128,
+          "sourceNx": 45,
+          "sourceNy": 129,
+          "distanceKm": 11.469314641171044
+        },
+        {
+          "nx": 48,
+          "ny": 128,
+          "sourceNx": 49,
+          "sourceNy": 128,
+          "distanceKm": 5.128954441719851
+        },
+        {
+          "nx": 37,
+          "ny": 129,
+          "sourceNx": 38,
+          "sourceNy": 129,
+          "distanceKm": 5.129500449650739
+        },
+        {
+          "nx": 43,
+          "ny": 129,
+          "sourceNx": 45,
+          "sourceNy": 129,
+          "distanceKm": 10.25901238033839
+        },
+        {
+          "nx": 46,
+          "ny": 131,
+          "sourceNx": 47,
+          "sourceNy": 131,
+          "distanceKm": 5.130587384511525
+        },
+        {
+          "nx": 51,
+          "ny": 132,
+          "sourceNx": 51,
+          "sourceNy": 131,
+          "distanceKm": 5.130846187254562
+        },
+        {
+          "nx": 54,
+          "ny": 132,
+          "sourceNx": 54,
+          "sourceNy": 131,
+          "distanceKm": 5.130835017324854
+        },
+        {
+          "nx": 20,
+          "ny": 133,
+          "sourceNx": 20,
+          "sourceNy": 132,
+          "distanceKm": 5.131291430143656
+        },
+        {
+          "nx": 54,
+          "ny": 133,
+          "sourceNx": 55,
+          "sourceNy": 133,
+          "distanceKm": 5.131635889083897
+        },
+        {
+          "nx": 20,
+          "ny": 134,
+          "sourceNx": 21,
+          "sourceNy": 134,
+          "distanceKm": 5.132095133289346
+        },
+        {
+          "nx": 54,
+          "ny": 134,
+          "sourceNx": 55,
+          "sourceNy": 134,
+          "distanceKm": 5.132167600988698
+        },
+        {
+          "nx": 19,
+          "ny": 135,
+          "sourceNx": 20,
+          "sourceNy": 135,
+          "distanceKm": 5.13261542496557
+        },
+        {
+          "nx": 22,
+          "ny": 135,
+          "sourceNx": 21,
+          "sourceNy": 135,
+          "distanceKm": 5.132632787077161
+        },
+        {
+          "nx": 54,
+          "ny": 135,
+          "sourceNx": 55,
+          "sourceNy": 135,
+          "distanceKm": 5.132696424947565
+        },
+        {
+          "nx": 19,
+          "ny": 136,
+          "sourceNx": 20,
+          "sourceNy": 136,
+          "distanceKm": 5.133141742686931
+        },
+        {
+          "nx": 55,
+          "ny": 136,
+          "sourceNx": 55,
+          "sourceNy": 135,
+          "distanceKm": 5.132957390715116
+        },
+        {
+          "nx": 89,
+          "ny": 139,
+          "sourceNx": 89,
+          "sourceNy": 138,
+          "distanceKm": 5.134147698064178
+        },
+        {
+          "nx": 62,
+          "ny": 143,
+          "sourceNx": 62,
+          "sourceNy": 142,
+          "distanceKm": 5.136527578010891
+        },
+        {
+          "nx": 87,
+          "ny": 143,
+          "sourceNx": 87,
+          "sourceNy": 142,
+          "distanceKm": 5.136234325460813
+        },
+        {
+          "nx": 66,
+          "ny": 144,
+          "sourceNx": 66,
+          "sourceNy": 143,
+          "distanceKm": 5.137000846770321
+        },
+        {
+          "nx": 70,
+          "ny": 144,
+          "sourceNx": 70,
+          "sourceNy": 143,
+          "distanceKm": 5.1369638313202515
+        },
+        {
+          "nx": 72,
+          "ny": 144,
+          "sourceNx": 72,
+          "sourceNy": 143,
+          "distanceKm": 5.136943096641876
+        },
+        {
+          "nx": 73,
+          "ny": 144,
+          "sourceNx": 73,
+          "sourceNy": 143,
+          "distanceKm": 5.136932172171609
+        },
+        {
+          "nx": 79,
+          "ny": 144,
+          "sourceNx": 79,
+          "sourceNy": 143,
+          "distanceKm": 5.136858817533148
+        },
+        {
+          "nx": 80,
+          "ny": 145,
+          "sourceNx": 80,
+          "sourceNy": 144,
+          "distanceKm": 5.137347666428384
+        },
+        {
+          "nx": 81,
+          "ny": 146,
+          "sourceNx": 81,
+          "sourceNy": 145,
+          "distanceKm": 5.137833362826048
+        },
+        {
+          "nx": 82,
+          "ny": 148,
+          "sourceNx": 82,
+          "sourceNy": 147,
+          "distanceKm": 5.1388096575710405
+        },
+        {
+          "nx": 82,
+          "ny": 149,
+          "sourceNx": 83,
+          "sourceNy": 149,
+          "distanceKm": 5.1395378161491845
+        },
+        {
+          "nx": 82,
+          "ny": 150,
+          "sourceNx": 83,
+          "sourceNy": 149,
+          "distanceKm": 7.26874839537122
+        },
+        {
+          "nx": 83,
+          "ny": 150,
+          "sourceNx": 83,
+          "sourceNy": 149,
+          "distanceKm": 5.139774159659852
+        }
+      ]
+    }
+  }
+}

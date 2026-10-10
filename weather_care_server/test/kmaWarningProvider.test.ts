@@ -6,10 +6,71 @@ import {
   parseWarningRegionStations,
 } from '../src/providers/warnings/kmaWarningProvider';
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
+import eucKrFixture from './fixtures/kmaWarningEucKr.json';
 
 const NOW = new Date('2026-09-01T01:30:00Z');
 
 describe('KMA warning provider', () => {
+  it.each([eucKrFixture.contentType, undefined])(
+    '실제 EUC-KR 특보의 한글 값과 빈 해제예고 열을 읽는다 (%s)',
+    async (contentType) => {
+      const fetcher = vi.fn(async () => new Response(
+        Uint8Array.from(atob(eucKrFixture.statusBase64), (character) => character.charCodeAt(0)),
+        { headers: contentType ? { 'content-type': contentType } : undefined },
+      ));
+      const provider = new KmaWarningProvider({
+        serviceKey: 'test-key', fetcher,
+        now: () => new Date('2026-10-03T14:00:00Z'),
+      });
+      expect(await provider.getActiveForRegions([
+        'L1100200', 'L1100300', 'L1100400', 'L1011900',
+      ])).toEqual([
+        expect.objectContaining({ regionName: '서울동북권', typeCode: 'D', levelCode: '2', commandCode: '1' }),
+        expect.objectContaining({ regionName: '서울서남권', type: '건조', level: '주의보' }),
+        expect.objectContaining({ regionName: '서울서북권', type: '건조', level: '주의보' }),
+      ]);
+    },
+  );
+
+  it('실제 EUC-KR 관측소 매핑에서 대표지점번호와 종결자를 이름에서 제외한다', async () => {
+    const provider = new KmaWarningProvider({
+      serviceKey: 'test-key',
+      fetcher: vi.fn(async () => new Response(
+        Uint8Array.from(atob(eucKrFixture.mappingBase64), (character) => character.charCodeAt(0)),
+        { headers: { 'content-type': eucKrFixture.contentType } },
+      )),
+    });
+    expect(await provider.getRegionStations()).toEqual([
+      expect.objectContaining({ stationId: '42', stationName: '군산오식도', regionName: '군산(옥도면 제외)' }),
+      expect.objectContaining({ stationId: '43', stationName: '솔라시도', regionName: '해남북부' }),
+      expect.objectContaining({ stationId: '44', stationName: '삼호', regionName: '영암군' }),
+    ]);
+  });
+
+  it('한글 대치·연장·변경은 유지하고 해제·예비·미래 발효는 활성 특보에서 제외한다', () => {
+    const row = (level: string, command: string, effective = '202609011000') =>
+      `L1010000,경기도,L1011900,수원,202609010900,${effective},폭풍해일,${level},${command},202609011200,=`;
+    const payload = [
+      row('주의보', '대치'), row('경보', '연장'), row('주의', '변경'),
+      row('주의', '해제'), row('주의', '대치해제'), row('주의', '변경해제'),
+      row('예비', '발표'), row('예비특보', '발표'), row('주의', '발표', '202609011100'),
+    ].join('\n');
+    expect(parseActiveWarnings(payload, ['L1011900'], NOW)).toEqual([
+      expect.objectContaining({ typeCode: 'O', levelCode: '2', commandCode: '2' }),
+      expect.objectContaining({ typeCode: 'O', levelCode: '3', commandCode: '5' }),
+      expect.objectContaining({ typeCode: 'O', levelCode: '2', commandCode: '6' }),
+    ]);
+  });
+
+  it('선택 지역의 알 수 없는 한글 코드나 열은 특보 없음으로 처리하지 않는다', () => {
+    for (const fields of ['건조,주의,알수없음', '알수없음,주의,발표', '건조,알수없음,발표', '건조,주의,발표,알수없음']) {
+      expect(() => parseActiveWarnings(
+        `L1010000,경기도,L1011900,수원,202609010900,202609011000,${fields},=`,
+        ['L1011900'], NOW,
+      )).toThrow('selected region row has an unknown format');
+    }
+  });
+
   it('keeps only effective advisory and warning rows for the selected region', () => {
     const payload = `
 # REG_UP REG_UP_KO REG_ID REG_KO TM_FC TM_EF WRN LVL CMD

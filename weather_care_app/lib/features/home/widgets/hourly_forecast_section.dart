@@ -172,7 +172,7 @@ class _HourlyRow extends StatelessWidget {
     final missing = [
       if (showPrecipitation && item.precipitationProbability == null) '강수확률',
       if (showPrecipitation && rainAmount == null) '강수량',
-      if (showPrecipitation && snowAmount == null) '쌓일 눈',
+      if (showPrecipitation && snowAmount == null) '예상 신적설',
       if (showPoint && item.windSpeed == null) '풍속',
     ];
     final hour = int.tryParse(item.time);
@@ -317,7 +317,7 @@ class _HourlyRow extends StatelessWidget {
                 _MetricChip(
                   icon: Icons.ac_unit_rounded,
                   label: _hasPositiveAmount(snowAmount, 'cm')
-                      ? '쌓일 눈 $snowAmount'
+                      ? '예상 신적설 $snowAmount'
                       : '눈이 예보됐어요',
                 ),
             ],
@@ -341,7 +341,7 @@ String _amountNumber(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);
 
-// 명시된 무강수·무적설은 반복 노출하지 않되, 미만·범위 예보는 보존한다.
+// 명시된 무강수·신적설 없음은 반복 노출하지 않되, 미만·범위 예보는 보존한다.
 bool _hasPositiveAmount(String? label, String unit) =>
     label != null && label != '0$unit' && label != '0.0$unit';
 

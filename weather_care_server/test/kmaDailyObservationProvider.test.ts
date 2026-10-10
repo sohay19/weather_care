@@ -61,7 +61,7 @@ describe('KMA daily observation provider', () => {
     })]);
   });
 
-  it('uses nearby precipitation data and treats a successful empty snow result as zero', async () => {
+  it('uses nearby precipitation data and keeps an empty snow result unavailable', async () => {
     const provider = new KmaDailyObservationProvider({
       serviceKey: 'test-key',
       fetcher: async (input) => {
@@ -86,10 +86,10 @@ describe('KMA daily observation provider', () => {
       '2026-09-14',
     )).resolves.toEqual([expect.objectContaining({
       weatherDataComplete: true,
-      skyCondition: '강수 관측 없음',
+      skyCondition: '하늘 상태 관측 없음',
       precipitationAmount: 0,
       snowfallAmount: 0,
-      snowfallDataAvailable: true,
+      snowfallDataAvailable: false,
     })]);
   });
 });

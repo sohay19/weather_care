@@ -1,0 +1,4280 @@
+{
+  "observedAt": "2026-10-09T00:20:00.000Z",
+  "missingLandGrids": 302,
+  "rawTriples": [
+    {
+      "T1H": -99,
+      "REH": -99,
+      "WSD": -99,
+      "count": 283
+    },
+    {
+      "T1H": -999,
+      "REH": -999,
+      "WSD": -999,
+      "count": 19
+    }
+  ],
+  "historySampleCount": 116,
+  "historyFrom": "2026-10-07T14:50:00.000Z",
+  "historyTo": "2026-10-09T00:20:00.000Z",
+  "everValidInSavedHistory": 0,
+  "grids": [
+    {
+      "nx": 48,
+      "ny": 29,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.27164940249583,
+        "latitude": 33.092167916147396
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0031323540405826,
+      "intersectedAreas": [
+        "제주특별자치도 서귀포시 대정읍"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 32,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.65327640090047,
+        "latitude": 33.22690911234366
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008564766118702138,
+      "intersectedAreas": [
+        "제주특별자치도 서귀포시 남원읍"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 36,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.21835694669494,
+        "latitude": 33.41110377685505
+      },
+      "centerOnLand": false,
+      "landFraction": 0.07388206502204431,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 한림읍"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 39,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.54700401478827,
+        "latitude": 33.54653080030531
+      },
+      "centerOnLand": false,
+      "landFraction": 0.026705404969296125,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 화북동",
+        "제주특별자치도 제주시 삼양동",
+        "제주특별자치도 제주시 건입동"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 39,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.92987948573038,
+        "latitude": 33.54358776928222
+      },
+      "centerOnLand": false,
+      "landFraction": 0.016211985597496113,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 구좌읍",
+        "제주특별자치도 제주시 우도면"
+      ]
+    },
+    {
+      "nx": 61,
+      "ny": 39,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.98457291867628,
+        "latitude": 33.543042781023665
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001852894004280044,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 우도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 46,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.32978272821681,
+        "latitude": 33.86682124870231
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00022576775858132157,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 47,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.38501001535697,
+        "latitude": 33.91225875544873
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00018799929705083982,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 47,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.66000730759146,
+        "latitude": 33.910769456294275
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00646747812036856,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 48,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.38527466338732,
+        "latitude": 33.95790680005692
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0036317557341601697,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 48,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.93563167416032,
+        "latitude": 33.95414128375623
+      },
+      "centerOnLand": false,
+      "landFraction": 0.06731599892683439,
+      "intersectedAreas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22030953262488,
+        "latitude": 34.004079941105154
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0008035257836615757,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.27538652488212,
+        "latitude": 34.003938609796165
+      },
+      "centerOnLand": false,
+      "landFraction": 0.009341508633046254,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.33046325654328,
+        "latitude": 34.00376587202756
+      },
+      "centerOnLand": false,
+      "landFraction": 0.044884665893318354,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.38553967549242,
+        "latitude": 34.00356172809808
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005417446634710815,
+      "intersectedAreas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.93627520196162,
+        "latitude": 33.9997930545132
+      },
+      "centerOnLand": false,
+      "landFraction": 0.10187865312659175,
+      "intersectedAreas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.26667733354157,
+        "latitude": 33.99602464162625
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0001632688672832519,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 49,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.32174046551124,
+        "latitude": 33.99528669129219
+      },
+      "centerOnLand": false,
+      "landFraction": 0.06170664228829617,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 50,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.26754908819706,
+        "latitude": 34.04168011082968
+      },
+      "centerOnLand": false,
+      "landFraction": 0.14999133436994896,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 50,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.37774986362206,
+        "latitude": 34.04017155503744
+      },
+      "centerOnLand": false,
+      "landFraction": 0.026817376344070838,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 50,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.59813533830308,
+        "latitude": 34.03677745720664
+      },
+      "centerOnLand": false,
+      "landFraction": 0.016253573769579605,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 26,
+      "ny": 51,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.06243508318717,
+        "latitude": 34.09111714609344
+      },
+      "centerOnLand": false,
+      "landFraction": 0.003860370014345974,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 51,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.49637422430307,
+        "latitude": 34.09438879369576
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00016401377590272826,
+      "intersectedAreas": [
+        "전라남도 완도군 보길면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 51,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.55152525866548,
+        "latitude": 34.09408993311986
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0005882232498024179,
+      "intersectedAreas": [
+        "전라남도 완도군 보길면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 51,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.60667576971605,
+        "latitude": 34.093759615442615
+      },
+      "centerOnLand": false,
+      "landFraction": 0.063333756119103,
+      "intersectedAreas": [
+        "전라남도 완도군 소안면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 51,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.32356099189245,
+        "latitude": 34.08660322399244
+      },
+      "centerOnLand": false,
+      "landFraction": 1.2929887309378326e-05,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 51,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.59923585831656,
+        "latitude": 34.08243564877728
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0026537782009137378,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 26,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.06178889247195,
+        "latitude": 34.136789420354056
+      },
+      "centerOnLand": false,
+      "landFraction": 0.004859565212159989,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 27,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.11697316675334,
+        "latitude": 34.13730890182771
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014262364243960435,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94480859419525,
+        "latitude": 34.141323243783084
+      },
+      "centerOnLand": true,
+      "landFraction": 0.026686308995577498,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 56,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.71746918659856,
+        "latitude": 34.13867846762439
+      },
+      "centerOnLand": false,
+      "landFraction": 0.000820902702669591,
+      "intersectedAreas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 57,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.77265582037114,
+        "latitude": 34.13825342628107
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0063915224351268314,
+      "intersectedAreas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.48999618437813,
+        "latitude": 34.12986347371256
+      },
+      "centerOnLand": false,
+      "landFraction": 0.004003425666359953,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 52,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.54516777329934,
+        "latitude": 34.128997792252804
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0005947203201610719,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 33,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.44771392435321,
+        "latitude": 34.18544625557481
+      },
+      "centerOnLand": false,
+      "landFraction": 0.010666890694404236,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.50294103423275,
+        "latitude": 34.18574561742002
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012452992035067669,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.77908262686678,
+        "latitude": 34.18676976247804
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0001391942753055717,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.83431178621565,
+        "latitude": 34.18688005617014
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01691996776554232,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.8895411032223,
+        "latitude": 34.186958837515355
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0038840243678202706,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.44183138294673,
+        "latitude": 34.18601346888528
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005300352687602118,
+      "intersectedAreas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.04930011433126,
+        "latitude": 34.18133413553073
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012499086174256295,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 63,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.10451960572284,
+        "latitude": 34.18071970744343
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0021201705988494793,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.15973804645344,
+        "latitude": 34.180073777689074
+      },
+      "centerOnLand": false,
+      "landFraction": 0.004994366143425216,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.32538653981095,
+        "latitude": 34.17794698989328
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0028066390877096764,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 53,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.38060025306189,
+        "latitude": 34.17717506521316
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01350730331821141,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 33,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.44733272818402,
+        "latitude": 34.23113457814007
+      },
+      "centerOnLand": false,
+      "landFraction": 0.014732937020474967,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.50259795457718,
+        "latitude": 34.231434190909106
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0005758773042044712,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.83419742241031,
+        "latitude": 34.2325695805502
+      },
+      "centerOnLand": false,
+      "landFraction": 0.045452177930742785,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.33160373332451,
+        "latitude": 34.23214380666478
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014969172505712813,
+      "intersectedAreas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.38687022352482,
+        "latitude": 34.2319388056092
+      },
+      "centerOnLand": false,
+      "landFraction": 0.007506314400376363,
+      "intersectedAreas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.44213634510875,
+        "latitude": 34.23170226688718
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012292638305398368,
+      "intersectedAreas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.49740204542282,
+        "latitude": 34.231434190909106
+      },
+      "centerOnLand": false,
+      "landFraction": 0.007169098344118703,
+      "intersectedAreas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.66319609224921,
+        "latitude": 34.23044074436286
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0005505413487996561,
+      "intersectedAreas": [
+        "전라남도 완도군 소안면"
+      ]
+    },
+    {
+      "nx": 58,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.82898445238774,
+        "latitude": 34.22916348253684
+      },
+      "centerOnLand": false,
+      "landFraction": 1.3832366218955574e-05,
+      "intersectedAreas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.93950616473882,
+        "latitude": 34.228154309162626
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00024008990053363106,
+      "intersectedAreas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 61,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.99476570471501,
+        "latitude": 34.22760242537231
+      },
+      "centerOnLand": false,
+      "landFraction": 0.035188905871627915,
+      "intersectedAreas": [
+        "전라남도 완도군 생일면"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.0500242970688,
+        "latitude": 34.22701901143802
+      },
+      "centerOnLand": false,
+      "landFraction": 6.218213033216576e-05,
+      "intersectedAreas": [
+        "전라남도 완도군 생일면"
+      ]
+    },
+    {
+      "nx": 63,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.10528188918978,
+        "latitude": 34.22640406837176
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00013219125973861151,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.1605384284732,
+        "latitude": 34.22575759724013
+      },
+      "centerOnLand": false,
+      "landFraction": 0.049000784506070365,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.2157938623204,
+        "latitude": 34.22507959916451
+      },
+      "centerOnLand": false,
+      "landFraction": 0.13449624456732737,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면",
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.27104813813898,
+        "latitude": 34.224370075320785
+      },
+      "centerOnLand": false,
+      "landFraction": 0.20538546685840386,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 69,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.43680349160017,
+        "latitude": 34.222052361760596
+      },
+      "centerOnLand": false,
+      "landFraction": 0.019747362882038814,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.49205260951726,
+        "latitude": 34.22121674769719
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0010055572645243345,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 54,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.54730030654903,
+        "latitude": 34.22034961456514
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0002602053723447575,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88938851246196,
+        "latitude": 34.2783447623647
+      },
+      "centerOnLand": false,
+      "landFraction": 0.019383569781482566,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94469422984544,
+        "latitude": 34.278392110499574
+      },
+      "centerOnLand": false,
+      "landFraction": 0.017938857614324417,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.33183277395612,
+        "latitude": 34.2778397181501
+      },
+      "centerOnLand": false,
+      "landFraction": 0.003568465417059533,
+      "intersectedAreas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.38713743593893,
+        "latitude": 34.27763454527354
+      },
+      "centerOnLand": false,
+      "landFraction": 9.93142364849468e-05,
+      "intersectedAreas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 59,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.88485644071955,
+        "latitude": 34.27436766574971
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012050891323117284,
+      "intersectedAreas": [
+        "전라남도 완도군 신지면"
+      ]
+    },
+    {
+      "nx": 61,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.9954527322786,
+        "latitude": 34.27329453062677
+      },
+      "centerOnLand": false,
+      "landFraction": 0.024673331966349292,
+      "intersectedAreas": [
+        "전라남도 완도군 생일면"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.05074948004012,
+        "latitude": 34.27271062773759
+      },
+      "centerOnLand": false,
+      "landFraction": 3.834121848657885e-07,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 63,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.10604522549527,
+        "latitude": 34.272095169296264
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00022308981124128491,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.16133991593027,
+        "latitude": 34.27144815637106
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0032774230068223103,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.21663349863749,
+        "latitude": 34.270769590084896
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0001499267999197392,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.27192592091556,
+        "latitude": 34.27005947161543
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03491625128565958,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.32721713006981,
+        "latitude": 34.269317802195104
+      },
+      "centerOnLand": false,
+      "landFraction": 0.05277054912988717,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.38250707341244,
+        "latitude": 34.26854458311104
+      },
+      "centerOnLand": false,
+      "landFraction": 0.10106954767196862,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 69,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.43779569826296,
+        "latitude": 34.2677398157051
+      },
+      "centerOnLand": false,
+      "landFraction": 0.019708962993879267,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 55,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.54836878180355,
+        "latitude": 34.266035641568514
+      },
+      "centerOnLand": false,
+      "landFraction": 0.027869421998272484,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88931205887802,
+        "latitude": 34.324047817390465
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001124206247268202,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.1660317794818,
+        "latitude": 34.32396883778667
+      },
+      "centerOnLand": false,
+      "landFraction": 0.007392811895532515,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면",
+        "전라남도 진도군 임회면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22137545920106,
+        "latitude": 34.32385826653345
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00039672438111095187,
+      "intersectedAreas": [
+        "전라남도 진도군 임회면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.27671892740098,
+        "latitude": 34.32371610382283
+      },
+      "centerOnLand": false,
+      "landFraction": 0.015892236763529292,
+      "intersectedAreas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.16214251111619,
+        "latitude": 34.31714543165095
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0008615535564830367,
+      "intersectedAreas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.21747429538482,
+        "latitude": 34.31646629671722
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0008046897050937049,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.27280491681717,
+        "latitude": 34.31575558316466
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003943908559283272,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.32813432260926,
+        "latitude": 34.31501329222753
+      },
+      "centerOnLand": false,
+      "landFraction": 0.016420246196873226,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면",
+        "전라남도 고흥군 도양읍"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.38346245996416,
+        "latitude": 34.31423942519481
+      },
+      "centerOnLand": false,
+      "landFraction": 0.04023610437681542,
+      "intersectedAreas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 77,
+      "ny": 56,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.88134990881895,
+        "latitude": 34.3058539374064
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00015550559999513082,
+      "intersectedAreas": [
+        "전라남도 여수시 남면"
+      ]
+    },
+    {
+      "nx": 30,
+      "ny": 57,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.28004969011766,
+        "latitude": 34.367149118873634
+      },
+      "centerOnLand": false,
+      "landFraction": 0.04086829650883278,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 31,
+      "ny": 57,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.33542783390003,
+        "latitude": 34.36754433065867
+      },
+      "centerOnLand": false,
+      "landFraction": 0.010166581890978419,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 57,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88923549953309,
+        "latitude": 34.36975756954852
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003659695889956438,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 57,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.21831625496955,
+        "latitude": 34.36216969559728
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0022105834196435702,
+      "intersectedAreas": [
+        "전라남도 고흥군 도양읍"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 57,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.49514791125848,
+        "latitude": 34.35829712492731
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00042817522449728116,
+      "intersectedAreas": [
+        "전라남도 고흥군 봉래면"
+      ]
+    },
+    {
+      "nx": 30,
+      "ny": 58,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.27955140486216,
+        "latitude": 34.41286335887763
+      },
+      "centerOnLand": false,
+      "landFraction": 0.062299350835336206,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 31,
+      "ny": 58,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.334967872775,
+        "latitude": 34.41325890183186
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0009856862227619952,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 58,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 34.41553728505356
+      },
+      "centerOnLand": false,
+      "landFraction": 0.021091447405093125,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 58,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.3299725156363,
+        "latitude": 34.40642432273005
+      },
+      "centerOnLand": false,
+      "landFraction": 3.3038369557074075e-06,
+      "intersectedAreas": [
+        "전라남도 고흥군 도화면"
+      ]
+    },
+    {
+      "nx": 69,
+      "ny": 58,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.44078055663346,
+        "latitude": 34.40484236620615
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003042910488561556,
+      "intersectedAreas": [
+        "전라남도 고흥군 봉래면"
+      ]
+    },
+    {
+      "nx": 77,
+      "ny": 58,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.88395329342957,
+        "latitude": 34.397249613071494
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0023627010243660127,
+      "intersectedAreas": [
+        "전라남도 여수시 남면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 59,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 34.46126041399837
+      },
+      "centerOnLand": false,
+      "landFraction": 0.010332318379996019,
+      "intersectedAreas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 59,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.38633655796541,
+        "latitude": 34.45136400230037
+      },
+      "centerOnLand": false,
+      "landFraction": 0.006580267399555697,
+      "intersectedAreas": [
+        "전라남도 고흥군 봉래면"
+      ]
+    },
+    {
+      "nx": 37,
+      "ny": 60,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.66701726047508,
+        "latitude": 34.50641960988368
+      },
+      "centerOnLand": false,
+      "landFraction": 0.004900367652124901,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 60,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 34.506990169540835
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0002973378122384103,
+      "intersectedAreas": [
+        "전라남도 신안군 신의면"
+      ]
+    },
+    {
+      "nx": 81,
+      "ny": 60,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.10841539892397,
+        "latitude": 34.48410906273863
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0004918831034626646,
+      "intersectedAreas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 88,
+      "ny": 60,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.49657559201228,
+        "latitude": 34.474905449211796
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00011976630539630135,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 61,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88892820014233,
+        "latitude": 34.552663079164674
+      },
+      "centerOnLand": false,
+      "landFraction": 0.017188521529678133,
+      "intersectedAreas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 61,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.55481074706606,
+        "latitude": 34.540291947023
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00013038980915809436,
+      "intersectedAreas": [
+        "전라남도 고흥군 동일면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 61,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.61032498850074,
+        "latitude": 34.53938801261035
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014931479416063508,
+      "intersectedAreas": [
+        "전라남도 여수시 화정면"
+      ]
+    },
+    {
+      "nx": 76,
+      "ny": 61,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.83236593834367,
+        "latitude": 34.53545527913426
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0019083005356666295,
+      "intersectedAreas": [
+        "전라남도 여수시 남면"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 61,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.4428229854616,
+        "latitude": 34.52202586055029
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01924206521260885,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 92,
+      "ny": 61,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.72021384943804,
+        "latitude": 34.51465456123953
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0013996466224267389,
+      "intersectedAreas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.77770264572253,
+        "latitude": 34.59821545814524
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0013658757506917428,
+      "intersectedAreas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 76,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.83363728332533,
+        "latitude": 34.581183749705524
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0007133788494748919,
+      "intersectedAreas": [
+        "전라남도 여수시 돌산읍"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.16687564188248,
+        "latitude": 34.574328121042804
+      },
+      "centerOnLand": false,
+      "landFraction": 0.02791839504075264,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 85,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.33346739150187,
+        "latitude": 34.5704722079969
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01332302927960089,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.44451742156875,
+        "latitude": 34.567743084257415
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008584732770512735,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 89,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.55555804545003,
+        "latitude": 34.564887170538924
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0009003904632522043,
+      "intersectedAreas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 92,
+      "ny": 62,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.72210041318817,
+        "latitude": 34.560365612513365
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002245501328212642,
+      "intersectedAreas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.49948879272337,
+        "latitude": 34.64293197975658
+      },
+      "centerOnLand": false,
+      "landFraction": 0.015593062088675403,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.77754824952787,
+        "latitude": 34.643964739023694
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014739958493099469,
+      "intersectedAreas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.83316099935224,
+        "latitude": 34.644075960416714
+      },
+      "centerOnLand": false,
+      "landFraction": 0.052520929247499494,
+      "intersectedAreas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 79,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.00165383474672,
+        "latitude": 34.62363091755815
+      },
+      "centerOnLand": false,
+      "landFraction": 4.919318203115391e-05,
+      "intersectedAreas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 81,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.1128065721304,
+        "latitude": 34.62128030744557
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0001914455249215461,
+      "intersectedAreas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 86,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.39065184947134,
+        "latitude": 34.61484841161316
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002246904134312266,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 90,
+      "ny": 63,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.6128869364348,
+        "latitude": 34.60913180647731
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0002864182252338219,
+      "intersectedAreas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 64,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.83304504084967,
+        "latitude": 34.689831866332966
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0022500560867532125,
+      "intersectedAreas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 64,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88869660428732,
+        "latitude": 34.689911376869304
+      },
+      "centerOnLand": false,
+      "landFraction": 0.014927071396444521,
+      "intersectedAreas": [
+        "전라남도 신안군 도초면",
+        "전라남도 신안군 비금면"
+      ]
+    },
+    {
+      "nx": 78,
+      "ny": 64,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.94742660107444,
+        "latitude": 34.670498338069464
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001211842019177972,
+      "intersectedAreas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 64,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.1698862744702,
+        "latitude": 34.665793185183176
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0013884595789098767,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 86,
+      "ny": 64,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.39231244634504,
+        "latitude": 34.660579840253696
+      },
+      "centerOnLand": false,
+      "landFraction": 0.026812115261618818,
+      "intersectedAreas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 64,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.44791335333633,
+        "latitude": 34.659197115752534
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005682027286082721,
+      "intersectedAreas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 28,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.16467369841915,
+        "latitude": 34.73215665891315
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0016056382216758035,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 29,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.22035847309398,
+        "latitude": 34.73261817887401
+      },
+      "centerOnLand": false,
+      "landFraction": 0.017497272860075148,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 32,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.38741710676354,
+        "latitude": 34.733811783049596
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00492729814185604,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.49879258201778,
+        "latitude": 34.7344483826001
+      },
+      "centerOnLand": false,
+      "landFraction": 0.011856732940871988,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 86,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.39397535110518,
+        "latitude": 34.70631775826512
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012085827937977,
+      "intersectedAreas": [
+        "경상남도 통영시 산양읍"
+      ]
+    },
+    {
+      "nx": 88,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.50525200022207,
+        "latitude": 34.70351821678989
+      },
+      "centerOnLand": false,
+      "landFraction": 5.684920472370481e-05,
+      "intersectedAreas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 91,
+      "ny": 65,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.67214869114315,
+        "latitude": 34.699080601098125
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0013901306548922791,
+      "intersectedAreas": [
+        "경상남도 거제시 남부면"
+      ]
+    },
+    {
+      "nx": 33,
+      "ny": 66,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.44271698728163,
+        "latitude": 34.77991368253211
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012391176541894854,
+      "intersectedAreas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 66,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.77708377143341,
+        "latitude": 34.781251677984905
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002323328870702719,
+      "intersectedAreas": [
+        "전라남도 신안군 비금면"
+      ]
+    },
+    {
+      "nx": 83,
+      "ny": 66,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.22859239229655,
+        "latitude": 34.75602641793047
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0007706013515569228,
+      "intersectedAreas": [
+        "경상남도 통영시 사량면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 67,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94423199325419,
+        "latitude": 34.82726607520241
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01900443017232577,
+      "intersectedAreas": [
+        "전라남도 신안군 비금면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 67,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 34.827282017326475
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005927137319253558,
+      "intersectedAreas": [
+        "전라남도 신안군 비금면",
+        "전라남도 신안군 자은면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 68,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94419312452528,
+        "latitude": 34.87304797816024
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00892991176197669,
+      "intersectedAreas": [
+        "전라남도 신안군 자은면"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 69,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.9584807659743,
+        "latitude": 34.874014179326096
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00016529139985666964,
+      "intersectedAreas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 70,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94411522429813,
+        "latitude": 34.96463099946964
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0009810123700204753,
+      "intersectedAreas": [
+        "전라남도 신안군 자은면"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 70,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.960543741916,
+        "latitude": 34.91977136622436
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0005770007131612787,
+      "intersectedAreas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 71,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94407619257254,
+        "latitude": 35.01043207001875
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001485517905255877,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 71,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 35.01044806560563
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003085194470002956,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 94,
+      "ny": 71,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.85090931692295,
+        "latitude": 34.96885934368792
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0035978792466373226,
+      "intersectedAreas": [
+        "부산광역시 강서구 가덕도동"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 71,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.96260959561573,
+        "latitude": 34.96553488948849
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002183332775241402,
+      "intersectedAreas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 97,
+      "ny": 71,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 129.01845543635562,
+        "latitude": 34.963824792198864
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0015618150268053594,
+      "intersectedAreas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 72,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88807426724819,
+        "latitude": 35.05619145500098
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0009806033711628548,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 72,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94403710628683,
+        "latitude": 35.0562394819081
+      },
+      "centerOnLand": false,
+      "landFraction": 0.029960328289938023,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 72,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.9646783330964,
+        "latitude": 35.0113047251397
+      },
+      "centerOnLand": false,
+      "landFraction": 0.007067456331265368,
+      "intersectedAreas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 73,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88799598544234,
+        "latitude": 35.10200514404243
+      },
+      "centerOnLand": false,
+      "landFraction": 5.938865426770956e-05,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 73,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.9439979653265,
+        "latitude": 35.102053211155045
+      },
+      "centerOnLand": false,
+      "landFraction": 0.011661411011824644,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 74,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88791759405801,
+        "latitude": 35.14782512639519
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03185721638303027,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 74,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05604123042323,
+        "latitude": 35.14787323374435
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0017873498665982662,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 75,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88783909286495,
+        "latitude": 35.19365137801145
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0089986254748215,
+      "intersectedAreas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 76,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05611978675171,
+        "latitude": 35.23953206272642
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0009201725529274224,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 77,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22463603773083,
+        "latitude": 35.285129680123624
+      },
+      "centerOnLand": false,
+      "landFraction": 0.006177040053660935,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 77,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28079463277963,
+        "latitude": 35.284984996151465
+      },
+      "centerOnLand": false,
+      "landFraction": 2.5808005968829337e-05,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 78,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28099171076022,
+        "latitude": 35.3308296284209
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005145300432653606,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 79,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 35.37708300702616
+      },
+      "centerOnLand": false,
+      "landFraction": 0.04439455605282543,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 79,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.11247601462205,
+        "latitude": 35.3770185950184
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0016644814444080086,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 79,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.16871388322103,
+        "latitude": 35.37693808011516
+      },
+      "centerOnLand": false,
+      "landFraction": 1.8208557978013856e-05,
+      "intersectedAreas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 83,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.33837690236194,
+        "latitude": 35.5599671679152
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0019910669897242094,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 83,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.45116711421328,
+        "latitude": 35.55951477935921
+      },
+      "centerOnLand": false,
+      "landFraction": 0.004366138637553068,
+      "intersectedAreas": [
+        "전북특별자치도 고창군 심원면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 84,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22574434656617,
+        "latitude": 35.60617173016803
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01168683061028532,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 84,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.39505044769484,
+        "latitude": 35.6056381091641
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0021650899244149194,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 85,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28237904079917,
+        "latitude": 35.65191352707468
+      },
+      "centerOnLand": false,
+      "landFraction": 0.031318479386453685,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 86,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.45212243170904,
+        "latitude": 35.69717516362958
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0026956645147597253,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 87,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.508995552923,
+        "latitude": 35.742798363220295
+      },
+      "centerOnLand": false,
+      "landFraction": 0.04776521036958112,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 변산면",
+        "전북특별자치도 김제시 진봉면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 87,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.56554882747653,
+        "latitude": 35.74249036055067
+      },
+      "centerOnLand": false,
+      "landFraction": 0.06274957064008621,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 하서면",
+        "전북특별자치도 부안군 계화면",
+        "전북특별자치도 부안군 변산면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 88,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.33957275395217,
+        "latitude": 35.789432965192276
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0005297946139392043,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 88,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.50935531389217,
+        "latitude": 35.788702868192644
+      },
+      "centerOnLand": false,
+      "landFraction": 0.040806758292272476,
+      "intersectedAreas": [
+        "전북특별자치도 김제시 진봉면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 88,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.56594855809516,
+        "latitude": 35.78839460792936
+      },
+      "centerOnLand": false,
+      "landFraction": 0.13401240909419498,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 계화면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 89,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.62298155790151,
+        "latitude": 35.83396379186451
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0613642101434139,
+      "intersectedAreas": [
+        "전북특별자치도 부안군 계화면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 90,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05667590871435,
+        "latitude": 35.8818297674688
+      },
+      "centerOnLand": false,
+      "landFraction": 0.003253958266690098,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 90,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.17002749897907,
+        "latitude": 35.8816997532121
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0010951145602006431,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 90,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.34005346461717,
+        "latitude": 35.88126095736729
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001061584433503297,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 90,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.39672818074257,
+        "latitude": 35.881049686543854
+      },
+      "centerOnLand": false,
+      "landFraction": 0.004437263127552241,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 90,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.51007636365632,
+        "latitude": 35.880529638747625
+      },
+      "centerOnLand": false,
+      "landFraction": 0.038876988783718334,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면",
+        "전북특별자치도 군산시 소룡동"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 90,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.56674971688437,
+        "latitude": 35.88022086269786
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014557963974662475,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 소룡동"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 92,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.227024452578,
+        "latitude": 35.97343804594656
+      },
+      "centerOnLand": false,
+      "landFraction": 0.016091235720659732,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 93,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22718548734345,
+        "latitude": 36.01937283184676
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0030185570245644705,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 94,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.51152460485224,
+        "latitude": 36.06425353421802
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00031583879062171364,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 94,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.56835885840788,
+        "latitude": 36.0639437241928
+      },
+      "centerOnLand": false,
+      "landFraction": 0.021154434696066853,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면",
+        "충청남도 서천군 마서면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 95,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94312279570343,
+        "latitude": 36.11150459447044
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012658351044007438,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 95,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.45501281299839,
+        "latitude": 36.11047645317728
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00015180763653548855,
+      "intersectedAreas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 104,
+      "ny": 96,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 129.4698027522678,
+        "latitude": 36.09672985714171
+      },
+      "centerOnLand": false,
+      "landFraction": 0.003502371951324363,
+      "intersectedAreas": [
+        "경상북도 포항시 북구 흥해읍"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 98,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94300133054546,
+        "latitude": 36.249378769802824
+      },
+      "centerOnLand": false,
+      "landFraction": 0.029430754204626573,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 98,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 36.24939513062043
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014447099091935032,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 98,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22799410015152,
+        "latitude": 36.249133358122535
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0006672162790371187,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 98,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.34198999490631,
+        "latitude": 36.24880614425161
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00019795757070002978,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 98,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.3989874512811,
+        "latitude": 36.24859345627908
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0010056246812537753,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 99,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.17111758806946,
+        "latitude": 36.29521723045946
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008253352510899417,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 99,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.228156513939,
+        "latitude": 36.29510260942463
+      },
+      "centerOnLand": false,
+      "landFraction": 0.036675934887684176,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 99,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.34223361311678,
+        "latitude": 36.29477512206924
+      },
+      "centerOnLand": false,
+      "landFraction": 0.024505294012646152,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 99,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.45630932297605,
+        "latitude": 36.29431664304592
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0002985157731799424,
+      "intersectedAreas": [
+        "충청남도 보령시 대천5동"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 100,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28539851400352,
+        "latitude": 36.34093002544171
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0017504957071772112,
+      "intersectedAreas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 102,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.2286451466353,
+        "latitude": 36.43304420833442
+      },
+      "centerOnLand": false,
+      "landFraction": 0.019597385118748097,
+      "intersectedAreas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 102,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28580599632527,
+        "latitude": 36.4328964690037
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01711917613271946,
+      "intersectedAreas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 103,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.2288084896353,
+        "latitude": 36.47903593991116
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0010188000334725366,
+      "intersectedAreas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 103,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28601017413808,
+        "latitude": 36.47888807712871
+      },
+      "centerOnLand": false,
+      "landFraction": 5.3837499341585875e-05,
+      "intersectedAreas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 104,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.17172925443407,
+        "latitude": 36.52514832993496
+      },
+      "centerOnLand": false,
+      "landFraction": 0.011877925132880282,
+      "intersectedAreas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 105,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.17185211282354,
+        "latitude": 36.57115124805173
+      },
+      "centerOnLand": false,
+      "landFraction": 0.02208859406610768,
+      "intersectedAreas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 105,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22913587678391,
+        "latitude": 36.571036051129774
+      },
+      "centerOnLand": false,
+      "landFraction": 0.014860296599157993,
+      "intersectedAreas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 35,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.54140391700942,
+        "latitude": 36.61625380550909
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008155793744470802,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 36,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.59872739902741,
+        "latitude": 36.616500859041324
+      },
+      "centerOnLand": false,
+      "landFraction": 0.011827873370686234,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 38,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.7133755383131,
+        "latitude": 36.6168961469971
+      },
+      "centerOnLand": false,
+      "landFraction": 0.010557680475906769,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05732512739644,
+        "latitude": 36.617291437788836
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0015653763744976625,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.11465019602772,
+        "latitude": 36.617242026284785
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0007909620044239176,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.17197514712909,
+        "latitude": 36.617159673876486
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0024196348711783377,
+      "intersectedAreas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 106,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22929992193647,
+        "latitude": 36.61704438071166
+      },
+      "centerOnLand": false,
+      "landFraction": 0.036404809901574305,
+      "intersectedAreas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 38,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.71317018899886,
+        "latitude": 36.66290983529761
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005669112608888931,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.77053579785377,
+        "latitude": 36.6630581928489
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0030821233122302295,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.8279016422712,
+        "latitude": 36.66317358233156
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0032887379375064786,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88526766336182,
+        "latitude": 36.66325600353854
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005503846189327442,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 36.66332194059288
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0026164258366455206,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05736619776486,
+        "latitude": 36.663305456321886
+      },
+      "centerOnLand": false,
+      "landFraction": 0.09519441808111088,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 107,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.22946420214623,
+        "latitude": 36.6630581928489
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00018309477047950557,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 108,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.94259267297511,
+        "latitude": 36.70932493246156
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008236524161612229,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 108,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05740732702489,
+        "latitude": 36.70932493246156
+      },
+      "centerOnLand": false,
+      "landFraction": 0.007860143872615438,
+      "intersectedAreas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 113,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.76954515198005,
+        "latitude": 36.939254790972875
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002127024715645046,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 113,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.8271586551848,
+        "latitude": 36.93937075994186
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003272380546721398,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 113,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.1728413448152,
+        "latitude": 36.93937075994186
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005783196541369327,
+      "intersectedAreas": [
+        "충청남도 태안군 원북면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 114,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.76937921213222,
+        "latitude": 36.985306276149984
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0017916746333454419,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 114,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.82703419984756,
+        "latitude": 36.98542234196398
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008027161783668654,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 115,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05769689150372,
+        "latitude": 37.03161196256187
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003970765125464233,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 115,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.34617925198742,
+        "latitude": 37.03103114993653
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00668048504265534,
+      "intersectedAreas": [
+        "충청남도 서산시 대산읍"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 115,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.63465262552761,
+        "latitude": 37.029620630439894
+      },
+      "centerOnLand": false,
+      "landFraction": 0.019243969230037683,
+      "intersectedAreas": [
+        "충청남도 당진시 석문면"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 115,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.69234556285011,
+        "latitude": 37.029238966656294
+      },
+      "centerOnLand": false,
+      "landFraction": 2.9081431595950193e-05,
+      "intersectedAreas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 116,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.57737505768085,
+        "latitude": 37.07602996583892
+      },
+      "centerOnLand": false,
+      "landFraction": 0.010010353533560204,
+      "intersectedAreas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 116,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.6928447855991,
+        "latitude": 37.075299214465915
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0062224652747786945,
+      "intersectedAreas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 37.12375827370208
+      },
+      "centerOnLand": false,
+      "landFraction": 0.022431154752692233,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.11556026287074,
+        "latitude": 37.12369178388998
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0009577866329353725,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28889960411048,
+        "latitude": 37.123342713690455
+      },
+      "centerOnLand": false,
+      "landFraction": 0.018007335880431997,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.40445776087215,
+        "latitude": 37.122943779022485
+      },
+      "centerOnLand": false,
+      "landFraction": 0.06783652253382293,
+      "intersectedAreas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.4622362375239,
+        "latitude": 37.122694446319095
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00441606169250732,
+      "intersectedAreas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.52001423280184,
+        "latitude": 37.12241187061664
+      },
+      "centerOnLand": false,
+      "landFraction": 0.01603996078023353,
+      "intersectedAreas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 117,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.63556853859117,
+        "latitude": 37.121746992316915
+      },
+      "centerOnLand": false,
+      "landFraction": 0.050870061653841336,
+      "intersectedAreas": [
+        "경기도 화성시 서신면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 118,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.88435628684311,
+        "latitude": 37.16976440645915
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00023625419175436692,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 118,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05782188673152,
+        "latitude": 37.16981431544584
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002815092811663798,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 118,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.34692920969557,
+        "latitude": 37.16923204674183
+      },
+      "centerOnLand": false,
+      "landFraction": 0.014790852439093595,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면",
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 118,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.40474983002473,
+        "latitude": 37.16901577707294
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001536073975027297,
+      "intersectedAreas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 118,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.57820891710217,
+        "latitude": 37.16816734270676
+      },
+      "centerOnLand": false,
+      "landFraction": 7.695568863719234e-05,
+      "intersectedAreas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 119,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05786367224601,
+        "latitude": 37.21589215895976
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001682404712630916,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 119,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.23145408461663,
+        "latitude": 37.21564240613978
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00014735841729303427,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 119,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.34717991820335,
+        "latitude": 37.215309404136974
+      },
+      "centerOnLand": false,
+      "landFraction": 0.006488194274744546,
+      "intersectedAreas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 119,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.40504232129953,
+        "latitude": 37.21509295391207
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008467870686936397,
+      "intersectedAreas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 120,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05790551819754,
+        "latitude": 37.26197515629393
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0113212505107241,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 120,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.17371631232027,
+        "latitude": 37.26184184344875
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0007963446457970681,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 120,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.40533523561236,
+        "latitude": 37.26117528404983
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03914847339277783,
+      "intersectedAreas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 121,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.05794742471733,
+        "latitude": 37.30806328192739
+      },
+      "centerOnLand": false,
+      "landFraction": 0.017344216493201867,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 121,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.11589478873486,
+        "latitude": 37.30801324783984
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00018232942628974207,
+      "intersectedAreas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 121,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.23178909187376,
+        "latitude": 37.30781311194275
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0003613335930482982,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 121,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28973590959902,
+        "latitude": 37.30766301049582
+      },
+      "centerOnLand": false,
+      "landFraction": 0.015357445970769833,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 121,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.46357429905316,
+        "latitude": 37.307012575605754
+      },
+      "centerOnLand": false,
+      "landFraction": 0.006497301616424475,
+      "intersectedAreas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 121,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.52151953865851,
+        "latitude": 37.306729055101876
+      },
+      "centerOnLand": false,
+      "landFraction": 0.008247660400394584,
+      "intersectedAreas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 122,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.28994574305761,
+        "latitude": 37.353755904753335
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0008533116663532215,
+      "intersectedAreas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 122,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.46391002572442,
+        "latitude": 37.353104926923024
+      },
+      "centerOnLand": false,
+      "landFraction": 0.012246823313885723,
+      "intersectedAreas": [
+        "인천광역시 중구 용유동"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 122,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.5218972277985,
+        "latitude": 37.35282116975646
+      },
+      "centerOnLand": false,
+      "landFraction": 0.003946752690947675,
+      "intersectedAreas": [
+        "인천광역시 중구 용유동"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 122,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.57988388243271,
+        "latitude": 37.35250403111859
+      },
+      "centerOnLand": false,
+      "landFraction": 0.10832766460061737,
+      "intersectedAreas": [
+        "인천광역시 연수구 송도1동"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 123,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.58030414110885,
+        "latitude": 37.398600957354134
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03547820850285009,
+      "intersectedAreas": [
+        "인천광역시 연수구 송도4동",
+        "인천광역시 연수구 송도5동"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 126,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.23263086820393,
+        "latitude": 37.53832872339086
+      },
+      "centerOnLand": false,
+      "landFraction": 0.003672254747031513,
+      "intersectedAreas": [
+        "인천광역시 옹진군 북도면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 126,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.29078812503383,
+        "latitude": 37.538177994483824
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03739049754641809,
+      "intersectedAreas": [
+        "인천광역시 옹진군 북도면"
+      ]
+    },
+    {
+      "nx": 98,
+      "ny": 126,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 129.19698350353687,
+        "latitude": 37.48795791332345
+      },
+      "centerOnLand": false,
+      "landFraction": 0.005857218451739292,
+      "intersectedAreas": [
+        "강원특별자치도 삼척시 교동"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 127,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 37.58471505861192
+      },
+      "centerOnLand": false,
+      "landFraction": 0.001679112709001102,
+      "intersectedAreas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 37,
+      "ny": 128,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.65054729287387,
+        "latitude": 37.63023445632106
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0004949581600747969,
+      "intersectedAreas": [
+        "인천광역시 옹진군 연평면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 128,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 37.63083837910037
+      },
+      "centerOnLand": false,
+      "landFraction": 0.006355616369851284,
+      "intersectedAreas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 128,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.29121115421907,
+        "latitude": 37.63041898758164
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0014582417534284187,
+      "intersectedAreas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 37,
+      "ny": 129,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 125.65029292257522,
+        "latitude": 37.67636219588114
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0021870293916074336,
+      "intersectedAreas": [
+        "인천광역시 옹진군 연평면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 129,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.0,
+        "latitude": 37.676966622600254
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0007387726072277419,
+      "intersectedAreas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 131,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.1751093027819,
+        "latitude": 37.769086415821945
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0002980527020376125,
+      "intersectedAreas": [
+        "인천광역시 강화군 교동면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 132,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.4672942323851,
+        "latitude": 37.81430340927414
+      },
+      "centerOnLand": false,
+      "landFraction": 0.26363113427937473,
+      "intersectedAreas": [
+        "인천광역시 강화군 송해면",
+        "인천광역시 강화군 양사면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 132,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.64252307284343,
+        "latitude": 37.813344024568416
+      },
+      "centerOnLand": false,
+      "landFraction": 0.060274302672174096,
+      "intersectedAreas": [
+        "경기도 파주시 탄현면",
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 20,
+      "ny": 133,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 124.65565935445663,
+        "latitude": 37.85261758526097
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0021144101816681234,
+      "intersectedAreas": [
+        "인천광역시 옹진군 대청면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 133,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.64299212371341,
+        "latitude": 37.85949000268162
+      },
+      "centerOnLand": false,
+      "landFraction": 0.031891001760752984,
+      "intersectedAreas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 20,
+      "ny": 134,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 124.65467739247146,
+        "latitude": 37.89876262290565
+      },
+      "centerOnLand": false,
+      "landFraction": 0.002075121257836317,
+      "intersectedAreas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 134,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.64346185989639,
+        "latitude": 37.90564077314114
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03077570332232864,
+      "intersectedAreas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 19,
+      "ny": 135,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 124.59517071276741,
+        "latitude": 37.94411948056027
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03885881051385082,
+      "intersectedAreas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 22,
+      "ny": 135,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 124.77074481288668,
+        "latitude": 37.94639711008445
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00832662017257894,
+      "intersectedAreas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 135,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.64393228289535,
+        "latitude": 37.95179630998592
+      },
+      "centerOnLand": false,
+      "landFraction": 0.031981575878875276,
+      "intersectedAreas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 19,
+      "ny": 136,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 124.59414308361443,
+        "latitude": 37.99027335460883
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03753028897284182,
+      "intersectedAreas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 136,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 126.7029826360728,
+        "latitude": 37.99756817844935
+      },
+      "centerOnLand": false,
+      "landFraction": 0.0013752276818464581,
+      "intersectedAreas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 89,
+      "ny": 139,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.69974051338448,
+        "latitude": 38.102701166836034
+      },
+      "centerOnLand": false,
+      "landFraction": 0.007057008675824632,
+      "intersectedAreas": [
+        "강원특별자치도 양양군 손양면"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 143,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.11874168262565,
+        "latitude": 38.317132523468835
+      },
+      "centerOnLand": false,
+      "landFraction": 0.15975351861990136,
+      "intersectedAreas": [
+        "강원특별자치도 철원군 철원읍"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 143,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.59003509450426,
+        "latitude": 38.29038763140686
+      },
+      "centerOnLand": false,
+      "landFraction": 0.00010674862751834805,
+      "intersectedAreas": [
+        "강원특별자치도 고성군 토성면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 144,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.35522169956312,
+        "latitude": 38.36047060277982
+      },
+      "centerOnLand": false,
+      "landFraction": 3.839138472759978e-05,
+      "intersectedAreas": [
+        "강원특별자치도 철원군 근북면"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 144,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.59085500213313,
+        "latitude": 38.357071053458945
+      },
+      "centerOnLand": false,
+      "landFraction": 0.02893059756043246,
+      "intersectedAreas": [
+        "강원특별자치도 철원군 원남면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 144,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.70866157515165,
+        "latitude": 38.35516739690845
+      },
+      "centerOnLand": false,
+      "landFraction": 0.04572019059438407,
+      "intersectedAreas": [
+        "강원특별자치도 철원군 원동면"
+      ]
+    },
+    {
+      "nx": 73,
+      "ny": 144,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 127.76756211921236,
+        "latitude": 38.354164604124335
+      },
+      "centerOnLand": false,
+      "landFraction": 0.16695737860298426,
+      "intersectedAreas": [
+        "강원특별자치도 철원군 원동면"
+      ]
+    },
+    {
+      "nx": 79,
+      "ny": 144,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.12092297987948,
+        "latitude": 38.34743446442247
+      },
+      "centerOnLand": false,
+      "landFraction": 0.18948288858554957,
+      "intersectedAreas": [
+        "강원특별자치도 양구군 해안면",
+        "강원특별자치도 인제군 서화면"
+      ]
+    },
+    {
+      "nx": 80,
+      "ny": 145,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.18141342554205,
+        "latitude": 38.3923779784944
+      },
+      "centerOnLand": false,
+      "landFraction": 0.03482061425646951,
+      "intersectedAreas": [
+        "강원특별자치도 인제군 서화면"
+      ]
+    },
+    {
+      "nx": 81,
+      "ny": 146,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.24199054296415,
+        "latitude": 38.43728987258995
+      },
+      "centerOnLand": false,
+      "landFraction": 0.07054663129453295,
+      "intersectedAreas": [
+        "강원특별자치도 고성군 수동면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 148,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.3043531658062,
+        "latitude": 38.52836527445845
+      },
+      "centerOnLand": false,
+      "landFraction": 0.3710291968847852,
+      "intersectedAreas": [
+        "강원특별자치도 고성군 수동면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 149,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.3060543900646,
+        "latitude": 38.574564897604766
+      },
+      "centerOnLand": false,
+      "landFraction": 0.381923145167065,
+      "intersectedAreas": [
+        "강원특별자치도 고성군 수동면",
+        "강원특별자치도 고성군 현내면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 150,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.30775812739282,
+        "latitude": 38.620768878266055
+      },
+      "centerOnLand": false,
+      "landFraction": 0.014982173074506522,
+      "intersectedAreas": [
+        "강원특별자치도 고성군 수동면",
+        "강원특별자치도 고성군 현내면"
+      ]
+    },
+    {
+      "nx": 83,
+      "ny": 150,
+      "everValid": false,
+      "gridCenter": {
+        "longitude": 128.36689737858168,
+        "latitude": 38.61941971303217
+      },
+      "centerOnLand": false,
+      "landFraction": 0.13424481527729845,
+      "intersectedAreas": [
+        "강원특별자치도 고성군 현내면"
+      ]
+    }
+  ],
+  "classification": {
+    "centerOnLand": 1,
+    "centerOutsideLand": 301,
+    "landBelow10Percent": 288,
+    "landBelow50Percent": 302,
+    "landMin": 3.834121848657885e-07,
+    "landMax": 0.381923145167065
+  }
+}

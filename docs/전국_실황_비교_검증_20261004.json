@@ -1,0 +1,117 @@
+{
+  "todayAudit": {
+    "observedAt": "2026-10-04T13:00:00+09:00",
+    "gridCount": 37697,
+    "fields": {
+      "T1H": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "REH": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "WSD": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "VEC": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "PTY": {
+        "storedCells": 37697,
+        "validCells": 9295,
+        "sourceMissingCells": 28402,
+        "fileAvailable": true
+      },
+      "RN1": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      }
+    },
+    "coreValidCells": 4444
+  },
+  "yesterdayAudit": {
+    "observedAt": "2026-10-03T13:00:00+09:00",
+    "gridCount": 37697,
+    "fields": {
+      "T1H": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "REH": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "WSD": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "VEC": {
+        "storedCells": 0,
+        "validCells": 0,
+        "fileAvailable": false
+      },
+      "PTY": {
+        "storedCells": 0,
+        "validCells": 0,
+        "fileAvailable": false
+      },
+      "RN1": {
+        "storedCells": 0,
+        "validCells": 0,
+        "fileAvailable": false
+      }
+    },
+    "coreValidCells": 4444
+  },
+  "roundtripLostCells": 0,
+  "allGridObservationPairs": 4444,
+  "representativeCoreValid": 1633,
+  "representativeSourceMissing": [],
+  "reproducedRequestAt": "2026-10-04T04:14:00.000Z",
+  "sampleGrid": {
+    "nx": 60,
+    "ny": 121
+  },
+  "mainCore": {
+    "temperature": 24.4,
+    "apparentTemperature": 22.4
+  },
+  "comparisonResponse": {
+    "comparisonAvailable": true,
+    "current": {
+      "temperature": 24.4,
+      "apparentTemperature": 22.4
+    },
+    "comparison": {
+      "temperature": 21.2,
+      "apparentTemperature": 18
+    },
+    "targetDate": "2026-10-03",
+    "basis": {
+      "provider": "KMA_APIHUB_GRID_OBSERVATION",
+      "dataRole": "OBSERVATION_VS_OBSERVATION",
+      "gridX": 60,
+      "gridY": 121
+    }
+  },
+  "networkCallsByComparisonRoute": 0
+}

@@ -14,5 +14,6 @@ AND name NOT IN ('_cf_KV', '_cf_METADATA', 'd1_migrations', 'installations', 'no
 'notification_history', 'installation_warning_state', 'installation_credentials',
 'installation_activity', 'installation_ownership_challenges', 'legacy_installation_ownership',
 'active_regions', 'weather_cache', 'daily_weather_snapshots', 'weekly_forecast_records',
-'api_usage_daily');
+'api_usage_daily', 'grid_observation_snapshots', 'nationwide_forecast_fields',
+'administrative_boundary_dataset', 'administrative_boundary_features', 'administrative_boundary_grid_regions');
 PRAGMA foreign_key_check;

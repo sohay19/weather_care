@@ -103,7 +103,7 @@ interface AirKoreaAirQualityProviderOptions {
 }
 
 export class AirKoreaAirQualityProviderError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly retryAfterMs?: number, readonly resultCode?: string) {
     super(message);
     this.name = 'AirKoreaAirQualityProviderError';
   }
@@ -261,6 +261,11 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
       signal: this.requestSignal(),
     });
     const payload = await boundedJson(response);
+    const portalError = portalErrorSchema.safeParse(payload);
+    if (portalError.success) {
+      const code = portalError.data.OpenAPI_ServiceResponse.cmmMsgHeader.returnReasonCode;
+      throw new AirKoreaAirQualityProviderError(`AirKorea province returned ${code}: portal error`,undefined,code);
+    }
     const parsed = airResponseSchema.safeParse(payload);
     if (!parsed.success || !response.ok) {
       throw new AirKoreaAirQualityProviderError('AirKorea province response is invalid');
@@ -268,8 +273,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     const { header, body } = parsed.data.response;
     if (header.resultCode !== '00' || !body) {
       throw new AirKoreaAirQualityProviderError(
-        `AirKorea province returned ${header.resultCode}: ${header.resultMsg}`,
-      );
+        `AirKorea province returned ${header.resultCode}: ${header.resultMsg}`, undefined, header.resultCode);
     }
     const items = Array.isArray(body.items) ? body.items : [body.items];
     const observations = items.flatMap((item) => {
@@ -339,7 +343,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     if (portalError.success) {
       const header = portalError.data.OpenAPI_ServiceResponse.cmmMsgHeader;
       throw new AirKoreaAirQualityProviderError(
-        `AirKorea station authorization failed ${header.returnReasonCode}: ${header.errMsg}`,
+        `AirKorea station authorization failed ${header.returnReasonCode}: ${header.errMsg}`, undefined, header.returnReasonCode,
       );
     }
     if (!response.ok) {
@@ -356,7 +360,7 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
     const { header, body } = parsed.data.response;
     if (header.resultCode !== '00') {
       throw new AirKoreaAirQualityProviderError(
-        `AirKorea station service returned ${header.resultCode}: ${header.resultMsg}`,
+        `AirKorea station service returned ${header.resultCode}: ${header.resultMsg}`, undefined, header.resultCode,
       );
     }
     if (!body) {
@@ -384,7 +388,10 @@ export class AirKoreaAirQualityProvider implements AirQualityProvider {
 async function boundedJson(response: Response): Promise<unknown> {
   if (!response.ok) {
     await response.body?.cancel();
-    throw new AirKoreaAirQualityProviderError(`AirKorea request failed with status ${response.status}`);
+    const value = response.headers.get('Retry-After');
+    const retryAfterMs = value ? (/^\d+$/.test(value) ? Number(value)*1000 : Date.parse(value)-Date.now()) : undefined;
+    throw new AirKoreaAirQualityProviderError(`AirKorea request failed with status ${response.status}`,
+      Number.isFinite(retryAfterMs) ? Math.max(0,retryAfterMs!) : undefined);
   }
   const reader = response.body?.getReader();
   if (!reader) throw new AirKoreaAirQualityProviderError('AirKorea returned no body');

@@ -14,6 +14,7 @@
     "db:push": "wrangler d1 execute weather_care_db --file=./migrations/0001_init.sql --local",
     "node:db:migrate": "tsx src/node/migrate.ts",
     "node:db:import": "tsx src/node/importD1.ts",
+    "node:boundaries:import": "tsx src/node/importAdministrativeBoundaries.ts",
     "node:server": "tsx src/node/server.ts",
     "node:scheduler": "tsx src/node/scheduler.ts",
     "node:job": "tsx src/node/runJob.ts",

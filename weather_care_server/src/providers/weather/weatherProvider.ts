@@ -35,6 +35,8 @@ export interface DailyWeatherForecast {
   maximumWindSpeed?: number;
   maximumUvIndex?: number;
   snowfallDataAvailable?: boolean;
+  observationAvailability?: Partial<Record<'minTemperature' | 'maxTemperature' | 'precipitationAmount' | 'snowfallAmount',
+    'AVAILABLE' | 'NO_RECORD' | 'UNAVAILABLE'>>;
   airQualityForecast?: DailyAirQualityForecast;
   /** Completeness of the received slots, not a guarantee of 24-hour coverage. */
   weatherDataComplete?: boolean;
@@ -43,6 +45,7 @@ export interface DailyWeatherForecast {
   precipitationProbability: number;
   precipitationAmount: number;
   snowProbability: number;
+  /** Forecast new snowfall; KMA_OBSERVATION uses daily maximum new snow depth (sd_day_max). Never current total snow depth. */
   snowfallAmount: number;
 }
 

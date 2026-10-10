@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,25 @@ import 'package:weather_care/services/current_location_service.dart';
 import 'package:weather_care/services/weather_service.dart';
 
 void main() {
+  test('메인 미리보기는 지명이 지연돼도 정밀 GPS로 바로 조회한다', () async {
+    final client = _RecordingApiClient();
+    final name = Completer<String?>();
+    final pending = WeatherService(client).fetchMainWeather(
+      nx: 57,
+      ny: 124,
+      regionNameFuture: name.future,
+      coordinates:
+          const DeviceCoordinates(latitude: 37.434, longitude: 126.803),
+    );
+    await pending;
+    expect(
+        client.queries['/api/v1/weather/main'], isNot(contains('regionName')));
+    expect(client.queries['/api/v1/weather/main'],
+        containsPair('latitude', '37.434'));
+    expect(client.queries['/api/v1/weather/main'],
+        containsPair('longitude', '126.803'));
+    name.completeError(StateError('GEOCODER_FAILED'));
+  });
   test('별도 설정이 없으면 미니 PC 운영 서버를 사용한다', () async {
     final config = await AppConfig.load(bundle: _JsonAssetBundle({}));
     expect(config.serverUrl, 'https://weather-api.codesoha.com');
@@ -41,11 +61,20 @@ void main() {
       client,
       serverRetryWait: (duration) async => waits.add(duration),
     );
-    final result = await service.fetchServerWeather(installationId: 'test');
+    final result = await service.fetchServerWeather(
+      installationId: 'test',
+      coordinates:
+          const DeviceCoordinates(latitude: 37.697249, longitude: 127.660949),
+    );
     expect(result.mode, WeatherLoadMode.server);
     expect(client.todayCalls, 4);
     expect(client.weeklyCalls, 4);
     expect(waits, List.filled(3, const Duration(seconds: 5)));
+    expect(client.requestQueries, hasLength(8));
+    for (final query in client.requestQueries) {
+      expect(query, containsPair('latitude', '37.697249'));
+      expect(query, containsPair('longitude', '127.660949'));
+    }
   });
 
   test('GPS 좌표와 준비물 카탈로그를 서버 요청에 전달한다', () async {
@@ -61,8 +90,10 @@ void main() {
     expect(result.hasWeather, isTrue);
     expect(client.queries['/api/v1/weather/today'],
         containsPair('latitude', '37.2636'));
-    expect(
-        client.queries['/api/v1/weather/weekly'], isNot(contains('latitude')));
+    expect(client.queries['/api/v1/weather/weekly'],
+        containsPair('latitude', '37.2636'));
+    expect(client.queries['/api/v1/weather/weekly'],
+        containsPair('longitude', '127.0286'));
     expect(
       client.queries['/api/v1/weather/today'],
       containsPair('recommendationCatalog', 'PREPARATION_15'),
@@ -71,6 +102,44 @@ void main() {
       client.queries['/api/v1/weather/weekly'],
       containsPair('recommendationCatalog', 'PREPARATION_15'),
     );
+  });
+
+  test('지명 조회가 끝나지 않아도 오늘·주간에 같은 여행지 GPS를 전달한다', () async {
+    final client = _RecordingApiClient();
+    final name = Completer<String?>();
+    final result = await WeatherService(client).fetchServerWeather(
+      installationId: 'gps-travel',
+      nx: 71,
+      ny: 130,
+      coordinates: const DeviceCoordinates(
+        latitude: 37.697249,
+        longitude: 127.660949,
+      ),
+      regionNameFuture: name.future,
+    );
+    expect(result.hasWeather, isTrue);
+    for (final route in ['today', 'weekly']) {
+      final query = client.queries['/api/v1/weather/$route'];
+      expect(query, containsPair('nx', '71'));
+      expect(query, containsPair('ny', '130'));
+      expect(query, containsPair('latitude', '37.697249'));
+      expect(query, containsPair('longitude', '127.660949'));
+      expect(query, isNot(contains('regionName')));
+    }
+    name.complete(null);
+  });
+
+  test('좌표 없는 지명 조회가 실패해도 서버 날씨 요청을 계속한다', () async {
+    final client = _RecordingApiClient();
+    final result = await WeatherService(client).fetchServerWeather(
+      installationId: 'name-failed',
+      regionNameFuture: Future<String?>.error(StateError('GEOCODER_FAILED')),
+    );
+    expect(result.hasWeather, isTrue);
+    for (final query in client.queries.values) {
+      expect(query, isNot(contains('latitude')));
+      expect(query, isNot(contains('longitude')));
+    }
   });
 
   test('오늘 응답의 수신 시각을 저장하고 지역명 변경 뒤에도 유지한다', () async {
@@ -155,6 +224,7 @@ class _RetryingApiClient extends ApiClient {
   final int failuresBeforeSuccess;
   int todayCalls = 0;
   int weeklyCalls = 0;
+  final requestQueries = <Map<String, String>>[];
 
   _RetryingApiClient({required this.failuresBeforeSuccess})
       : super(baseUrl: 'https://server.example');
@@ -162,6 +232,7 @@ class _RetryingApiClient extends ApiClient {
   @override
   Future<Map<String, dynamic>> get(String path,
       {Map<String, String>? query}) async {
+    requestQueries.add(Map.of(query ?? {}));
     if (path.endsWith('/today')) {
       todayCalls++;
       if (todayCalls <= failuresBeforeSuccess) throw Exception('retry');

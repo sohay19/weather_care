@@ -70,7 +70,11 @@ class WeatherService {
     Object? lastError;
     TodayWeatherResponse? latestToday;
     WeeklyWeatherResponse? latestWeekly;
-    final resolvedRegionName = regionName ?? await regionNameFuture;
+    final resolvedRegionName = await _requestRegionName(
+      regionName,
+      regionNameFuture,
+      coordinates,
+    );
     for (var attempt = 0; attempt <= serverRetryCount; attempt++) {
       try {
         final todayFuture = latestToday == null
@@ -93,6 +97,7 @@ class WeatherService {
                   installationId: installationId,
                   nx: nx,
                   ny: ny,
+                  coordinates: coordinates,
                   regionCode: regionCode,
                   regionName: resolvedRegionName,
                 );
@@ -161,6 +166,7 @@ class WeatherService {
     required String installationId,
     int nx = 60,
     int ny = 121,
+    DeviceCoordinates? coordinates,
     String? regionCode,
     String? regionName,
   }) async {
@@ -172,6 +178,10 @@ class WeatherService {
         'installationId': installationId,
         'includeExtras': 'true',
         'recommendationCatalog': 'PREPARATION_15',
+        if (coordinates != null) ...{
+          'latitude': '${coordinates.latitude}',
+          'longitude': '${coordinates.longitude}',
+        },
         if (regionCode != null && regionCode.isNotEmpty)
           'regionCode': regionCode,
         if (regionName != null && regionName.trim().isNotEmpty)
@@ -186,8 +196,15 @@ class WeatherService {
     int ny = 121,
     String? regionCode,
     String? regionName,
+    DeviceCoordinates? coordinates,
+    Future<String?>? regionNameFuture,
   }) async {
     try {
+      final resolvedRegionName = await _requestRegionName(
+        regionName,
+        regionNameFuture,
+        coordinates,
+      );
       final data = await client.get(
         '/api/v1/weather/main',
         query: {
@@ -195,8 +212,13 @@ class WeatherService {
           'ny': '$ny',
           if (regionCode != null && regionCode.isNotEmpty)
             'regionCode': regionCode,
-          if (regionName != null && regionName.trim().isNotEmpty)
-            'regionName': regionName.trim(),
+          if (resolvedRegionName != null &&
+              resolvedRegionName.trim().isNotEmpty)
+            'regionName': resolvedRegionName.trim(),
+          if (coordinates != null) ...{
+            'latitude': '${coordinates.latitude}',
+            'longitude': '${coordinates.longitude}',
+          },
         },
       );
       return TodayWeatherResponse.fromJson(data, receivedAt: DateTime.now());
@@ -236,6 +258,23 @@ class WeatherService {
     } catch (_) {
       return const ComparisonResponse.unavailable();
     }
+  }
+}
+
+// 실제 GPS가 있으면 서버 경계로 연결하므로 지명 조회의 지연·실패를 기다리지 않는다.
+Future<String?> _requestRegionName(
+  String? name,
+  Future<String?>? pending,
+  DeviceCoordinates? coordinates,
+) async {
+  if (name != null || coordinates != null) {
+    pending?.ignore();
+    return name;
+  }
+  try {
+    return await pending;
+  } catch (_) {
+    return null;
   }
 }
 

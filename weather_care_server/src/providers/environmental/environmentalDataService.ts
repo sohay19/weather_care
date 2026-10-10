@@ -21,6 +21,8 @@ import { providerErrorDiagnostic } from '../../observability/providerErrorDiagno
 import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
 import { kmaGridCoordinates } from '../../regions/kmaGridCoordinates';
 import { collectedCacheKey, getCollectedCache } from '../../database/collectedWeatherRepository';
+import { administrativeAreaForLocation, type NationwideLocation } from '../../regions/nationwideLocation';
+import { resolveSavedLocation } from '../../regions/resolvedLocation';
 
 const UV_FRESH_MS = 3 * 60 * 60 * 1000;
 const UV_MAX_STALE_MS = 8 * 60 * 60 * 1000;
@@ -67,7 +69,8 @@ export function nearestNationwideAirQuality(
   const nearby = nearestAirStations(snapshot.catalog, latitude, longitude)
     .map((station) => observations.get(station.stationName))
     .filter((item): item is AirQualitySnapshot =>
-      !!item && isRecentAirObservation(item.observedAt, now));
+      !!item && isRecentAirObservation(item.observedAt, now) &&
+      now.getTime()-Date.parse(item.observedAt) >= 0 && now.getTime()-Date.parse(item.observedAt) <= AIR_MAX_STALE_MS);
   return nearby.find((item) =>
     [item.pm10, item.pm25, item.ozone].every((value) => Number.isFinite(value))) ?? nearby[0];
 }
@@ -109,7 +112,7 @@ export function currentEnvironmentalData(
         source.state === 'UNAVAILABLE') {
       if (type === 'uv') result.uv = undefined;
       else result.airQuality = undefined;
-      result.sources[type] = unavailableSource(source.provider);
+      result.sources[type] = unavailableSource(source.provider, source.reason);
     } else if (ageMs(source.cachedAt, now) > (type === 'uv' ? UV_FRESH_MS : AIR_FRESH_MS) ||
                (type === 'airQuality' && ageMs(observedAt, now) > 2 * AIR_FRESH_MS)) {
       result.sources[type] = { ...source, state: 'STALE', observedAt };
@@ -141,13 +144,33 @@ export async function readCollectedEnvironmentalData(
   fallback: EnvironmentalDataBundle,
   now = new Date(),
   coordinates = kmaGridCoordinates(nx, ny),
+  location: NationwideLocation = { nx, ny },
 ): Promise<EnvironmentalDataBundle> {
-  const [environmental, nationwide] = await Promise.all([
+  location = await resolveSavedLocation(db, location, now);
+  const [environmental, nationwide, nationwideUv] = await Promise.all([
     getCollectedCache<EnvironmentalDataBundle>(db, collectedCacheKey.environmental(nx, ny)),
     getCollectedCache<NationwideAirQualitySnapshot>(db, collectedCacheKey.nationwideAir),
+    getCollectedCache<{ forecasts: Record<string, UvForecast> }>(db, 'COLLECTED_NATIONWIDE_UV'),
   ]);
+  let base = environmental?.status === 'AVAILABLE' ? environmental.value : fallback;
+  const area = administrativeAreaForLocation(location);
+  if (base.uv && ((area && base.uv.areaNo !== area[0]) || (!area && location.boundaryChecked))) {
+    base = { ...base, uv: undefined, sources: { ...base.sources, uv: unavailableSource('KMA_LIVING_INDEX_V5') } };
+  }
+  if (nationwideUv?.status === 'AVAILABLE') {
+    const uv = area ? nationwideUv.value.forecasts[area[0]] : undefined;
+    base = { ...base, uv, sources: { ...base.sources,
+      uv: uv ? availableSource('KMA_LIVING_INDEX_V5', 'CACHED', uv.issuedAt, nationwideUv.updatedAt)
+        : unavailableSource('KMA_LIVING_INDEX_V5', area ? 'UPSTREAM_AREA_MISSING'
+          : location.boundaryChecked && !location.coordinates ? 'LOCATION_COORDINATES_REQUIRED' : 'LOCATION_UNRESOLVED') } };
+    if (!area) console.warn(JSON.stringify({ event: 'weather_location_unresolved',
+      hasRegionName: Boolean(location.regionName), hasAdminCode: Boolean(location.adminCode),
+      hasCoordinates: Boolean(location.coordinates),
+      reason: location.boundaryChecked && !location.coordinates ? 'LOCATION_COORDINATES_REQUIRED'
+        : location.regionName || location.adminCode ? 'IDENTITY_NOT_MATCHED' : 'IDENTITY_MISSING' }));
+  }
   return currentEnvironmentalData(
-    environmental?.status === 'AVAILABLE' ? environmental.value : fallback,
+    base,
     now,
     nationwide?.status === 'AVAILABLE' ? nationwide.value : undefined,
     coordinates,
@@ -592,11 +615,11 @@ function unsupportedSource(provider: string): EnvironmentalSourceStatus {
   };
 }
 
-function unavailableSource(provider: string): EnvironmentalSourceStatus {
+function unavailableSource(provider: string, reason: EnvironmentalSourceStatus['reason'] = 'PROVIDER_UNAVAILABLE'): EnvironmentalSourceStatus {
   return {
     provider,
     state: 'UNAVAILABLE',
-    reason: 'PROVIDER_UNAVAILABLE',
+    reason,
   };
 }
 

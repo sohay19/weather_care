@@ -10,7 +10,7 @@ import {
 import { getApiHubUsage } from '../src/database/apiUsageRepository';
 import { nodeServerEnv } from '../src/node/runtime';
 import { runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
-import { KmaAwsMinuteObservationProvider } from '../src/providers/weather/kmaAwsMinuteObservationProvider';
+import { observationSnapshot } from './gridObservationFixture';
 import { KmaGridObservationProvider } from '../src/providers/weather/kmaGridObservationProvider';
 import type { UltraShortObservation } from '../src/providers/weather/kmaUltraShortObservationProvider';
 
@@ -22,7 +22,7 @@ describe('현재 관측 재시도', () => {
     while (cleanup.length > 0) cleanup.pop()?.();
   });
 
-  it('격자와 AWS가 비어도 다음 회차에 같은 관측 시각을 다시 요청한다', async () => {
+  it('격자 실패 후 다음 2분 회차에 재시도하고 어제 원본을 한 번 보충한다', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'weather-care-current-retry-'));
     const database = new SqliteD1Database(join(directory, 'weather-care.sqlite'));
     cleanup.push(() => {
@@ -45,19 +45,19 @@ describe('현재 관측 재시도', () => {
       NATIONWIDE_PRECOLLECT_ENABLED: 'false',
     });
     const observation: UltraShortObservation = {
-      observedAt: '2026-10-02T11:50:00+09:00',
+      observedAt: '2026-10-02T11:40:00+09:00',
       provider: 'KMA_APIHUB_GRID_OBSERVATION',
       rainDetected: false,
       temperature: 19.5,
       humidity: 26,
       windSpeed: 3.1,
     };
-    const grid = vi.spyOn(KmaGridObservationProvider.prototype, 'getAt')
-      .mockResolvedValueOnce(new Map())
-      .mockResolvedValueOnce(new Map())
-      .mockResolvedValueOnce(new Map([['58:125', observation]]));
-    const aws = vi.spyOn(KmaAwsMinuteObservationProvider.prototype, 'getCurrentByLocations')
-      .mockResolvedValue([undefined]);
+    const grid = vi.spyOn(KmaGridObservationProvider.prototype, 'getSnapshot')
+      .mockRejectedValueOnce(new Error('HTTP 504'))
+      .mockRejectedValueOnce(new Error('FILE_UNAVAILABLE'))
+      .mockResolvedValueOnce(observationSnapshot(observation.observedAt, 19.5, 26, 3.1))
+      .mockResolvedValueOnce(observationSnapshot('2026-10-01T11:40:00+09:00'));
+    const fetcher = vi.spyOn(globalThis, 'fetch');
     const logs: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((message) => logs.push(message));
 
@@ -70,18 +70,19 @@ describe('현재 관측 재시도', () => {
       env.DB, collectedCacheKey.ultraShortObservation(58, 125),
     );
     expect(cached?.value).toMatchObject(observation);
-    expect(grid).toHaveBeenCalledTimes(3);
-    expect(grid.mock.calls.map(([, clock]) => clock.toISOString()))
+    expect(grid).toHaveBeenCalledTimes(4);
+    expect(grid.mock.calls.map(([clock]) => clock.toISOString()))
       .toEqual([
-        '2026-10-02T11:50:00.000Z',
         '2026-10-02T11:40:00.000Z',
-        '2026-10-02T11:50:00.000Z',
+        '2026-10-02T11:30:00.000Z',
+        '2026-10-02T11:40:00.000Z',
+        '2026-10-01T11:40:00.000Z',
       ]);
-    expect(grid.mock.calls.every(([, , options]) => options?.requiredOnly === true))
+    expect(grid.mock.calls.every(([, options]) => options?.requiredOnly === true))
       .toBe(true);
-    expect(aws).not.toHaveBeenCalled();
+    expect(fetcher).not.toHaveBeenCalled();
     await expect(getApiHubUsage(env.DB, new Date('2026-10-02T02:58:00Z')))
-      .resolves.toEqual({ requestCount: 9, responseBytes: 9_000_000 });
+      .resolves.toEqual({ requestCount: 0, responseBytes: 0 });
     expect(logs.some((line) => line.includes('"missing":1'))).toBe(true);
     expect(logs.some((line) => line.includes('"stored":1'))).toBe(true);
   });

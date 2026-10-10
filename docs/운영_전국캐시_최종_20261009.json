@@ -1,0 +1,517 @@
+{
+  "checkedAt": "2026-10-09T00:22:06.334Z",
+  "summary": {
+    "totalGrids": 37697,
+    "observationSourceMissingGrids": 33253,
+    "activeRegions": 8,
+    "activeLocations": 5,
+    "requiredCaches": 197,
+    "collectedCaches": 197,
+    "missingCaches": 0,
+    "missingSample": [],
+    "environmentalMissingSample": []
+  },
+  "forecast": {
+    "fields": 2123,
+    "planned": 900,
+    "missing": 8,
+    "missingRequests": [
+      {
+        "issue": "2026100905",
+        "valid": "2026101203",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101206",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101209",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101212",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101215",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101218",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101221",
+        "variable": "VEC"
+      },
+      {
+        "issue": "2026100905",
+        "valid": "2026101300",
+        "variable": "VEC"
+      }
+    ],
+    "variables": [
+      "TMP",
+      "REH",
+      "WSD",
+      "VEC",
+      "SKY",
+      "PTY",
+      "POP",
+      "PCP",
+      "SNO"
+    ],
+    "latestIssue": "2026100908",
+    "decoded": [
+      {
+        "name": "travel",
+        "hours": 25,
+        "last": "2026-10-10T00:00:00+09:00",
+        "days": [
+          "20261009",
+          "20261010",
+          "20261011",
+          "20261012",
+          "20261013"
+        ],
+        "withoutWindDirection": []
+      },
+      {
+        "name": "bank",
+        "hours": 25,
+        "last": "2026-10-10T00:00:00+09:00",
+        "days": [
+          "20261009",
+          "20261010",
+          "20261011",
+          "20261012",
+          "20261013"
+        ],
+        "withoutWindDirection": []
+      }
+    ],
+    "extendedSlot": [
+      {
+        "name": "travel",
+        "verification": "stored forecast decoded for future validity time; not a future observation",
+        "at": "2026-10-12T03:00:00+09:00",
+        "temperature": 14,
+        "humidity": 95,
+        "qualityFlags": [
+          "MISSING_PCP",
+          "MISSING_SNO",
+          "WIND_DIRECTION_UNAVAILABLE"
+        ]
+      },
+      {
+        "name": "bank",
+        "verification": "stored forecast decoded for future validity time; not a future observation",
+        "at": "2026-10-12T03:00:00+09:00",
+        "temperature": 18,
+        "humidity": 90,
+        "qualityFlags": [
+          "MISSING_PCP",
+          "MISSING_SNO",
+          "WIND_DIRECTION_UNAVAILABLE"
+        ]
+      }
+    ]
+  },
+  "target": "2026-10-09T00:10:00.000Z",
+  "observations": [
+    {
+      "observedAt": "2026-10-09T00:10:00.000Z",
+      "valid": true,
+      "fields": {
+        "T1H": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "REH": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "WSD": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "VEC": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "RN1": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "PTY": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        }
+      },
+      "usableTemperatureGrids": 4444
+    },
+    {
+      "observedAt": "2026-10-09T00:00:00.000Z",
+      "valid": true,
+      "fields": {
+        "T1H": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "REH": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "WSD": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "PTY": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "RN1": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "VEC": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        }
+      },
+      "usableTemperatureGrids": 4444
+    },
+    {
+      "observedAt": "2026-10-08T23:50:00.000Z",
+      "valid": true,
+      "fields": {
+        "T1H": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "REH": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "WSD": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "VEC": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "PTY": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        },
+        "RN1": {
+          "cells": 37697,
+          "width": 149,
+          "height": 253
+        }
+      },
+      "usableTemperatureGrids": 4444
+    }
+  ],
+  "caches": [
+    {
+      "key": "COLLECTED_NATIONWIDE_DAILY",
+      "present": true,
+      "status": "AVAILABLE",
+      "updatedAt": "2026-10-08T15:00:00.000Z",
+      "stationCount": 5159,
+      "completedDates": [
+        "2026-10-02",
+        "2026-10-03",
+        "2026-10-04",
+        "2026-10-05",
+        "2026-10-06",
+        "2026-10-07",
+        "2026-10-08"
+      ]
+    },
+    {
+      "key": "COLLECTED_NATIONWIDE_VISIBILITY",
+      "present": true,
+      "status": "AVAILABLE",
+      "updatedAt": "2026-10-09T00:00:00.000Z",
+      "stationCount": 96
+    },
+    {
+      "key": "COLLECTED_NATIONWIDE_UV",
+      "present": true,
+      "status": "AVAILABLE",
+      "updatedAt": "2026-10-08T21:30:00.000Z",
+      "areas": 3851
+    },
+    {
+      "key": "COLLECTED_NATIONWIDE_AIR",
+      "present": true,
+      "status": "AVAILABLE",
+      "updatedAt": "2026-10-08T23:40:00.000Z"
+    },
+    {
+      "key": "COLLECTED_NATIONWIDE_AIR_FORECAST",
+      "present": true,
+      "status": "AVAILABLE",
+      "updatedAt": "2026-10-08T20:30:00.000Z"
+    }
+  ],
+  "usage": [
+    {
+      "provider": "APIHUB_RETRY",
+      "calls": 603,
+      "bytes": 87085906
+    },
+    {
+      "provider": "ASOS_VISIBILITY",
+      "calls": 10,
+      "bytes": 1067335
+    },
+    {
+      "provider": "AWS_DAILY",
+      "calls": 4,
+      "bytes": 858170
+    },
+    {
+      "provider": "GRID_OBSERVATION_10_MINUTES",
+      "calls": 317,
+      "bytes": 132563160
+    },
+    {
+      "provider": "GRID_OBSERVATION_FAST_RETRY",
+      "calls": 25,
+      "bytes": 9849831
+    },
+    {
+      "provider": "GRID_OBSERVATION_HISTORY",
+      "calls": 171,
+      "bytes": 64290114
+    },
+    {
+      "provider": "MID_TERM",
+      "calls": 186,
+      "bytes": 138834
+    },
+    {
+      "provider": "NATIONAL_SHORT_FORECAST",
+      "calls": 2139,
+      "bytes": 739064997
+    },
+    {
+      "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+      "calls": 46,
+      "bytes": 761644770
+    },
+    {
+      "provider": "WARNING",
+      "calls": 20,
+      "bytes": 1023332
+    }
+  ],
+  "httpVerification": {
+    "checkedAt": "2026-10-09T00:22:09.661605+00:00",
+    "deployment": "20261009-national-cache",
+    "sourceDirectory": "/opt/weather-care/releases/20261009-national-cache/weather_care_server",
+    "http": [
+      {
+        "origin": "http://127.0.0.1:8787",
+        "target": "health",
+        "route": "health",
+        "status": 200,
+        "healthy": true
+      },
+      {
+        "origin": "http://127.0.0.1:8787",
+        "target": "travel",
+        "route": "api/v1/weather/main",
+        "status": 200,
+        "region": {
+          "nx": 71,
+          "ny": 130,
+          "name": "강원특별자치도 홍천군 서면"
+        },
+        "error": null,
+        "temperature": 8.9,
+        "dataRole": "OBSERVATION"
+      },
+      {
+        "origin": "http://127.0.0.1:8787",
+        "target": "travel",
+        "route": "api/v1/weather/today",
+        "status": 200,
+        "region": {
+          "nx": 71,
+          "ny": 130,
+          "name": "강원특별자치도 홍천군 서면"
+        },
+        "error": null,
+        "temperature": 8.9,
+        "dataRole": "OBSERVATION"
+      },
+      {
+        "origin": "http://127.0.0.1:8787",
+        "target": "travel",
+        "route": "api/v1/weather/weekly",
+        "status": 200,
+        "region": {
+          "nx": 71,
+          "ny": 130,
+          "adminCode": "5172037000",
+          "name": "강원특별자치도 홍천군 서면",
+          "midTermTaRegId": "11D10302",
+          "midTermLandRegId": "11D10000"
+        },
+        "error": null,
+        "temperature": null,
+        "dataRole": null
+      },
+      {
+        "origin": "http://127.0.0.1:8787",
+        "target": "bank",
+        "route": "api/v1/weather/main",
+        "status": 200,
+        "region": {
+          "nx": 57,
+          "ny": 124,
+          "name": "경기도 시흥시 은행동"
+        },
+        "error": null,
+        "temperature": 17.9,
+        "dataRole": "OBSERVATION"
+      },
+      {
+        "origin": "https://weather-api.codesoha.com",
+        "target": "health",
+        "route": "health",
+        "status": 200,
+        "healthy": true
+      },
+      {
+        "origin": "https://weather-api.codesoha.com",
+        "target": "travel",
+        "route": "api/v1/weather/main",
+        "status": 200,
+        "region": {
+          "nx": 71,
+          "ny": 130,
+          "name": "강원특별자치도 홍천군 서면"
+        },
+        "error": null,
+        "temperature": 8.9,
+        "dataRole": "OBSERVATION"
+      },
+      {
+        "origin": "https://weather-api.codesoha.com",
+        "target": "travel",
+        "route": "api/v1/weather/today",
+        "status": 200,
+        "region": {
+          "nx": 71,
+          "ny": 130,
+          "name": "강원특별자치도 홍천군 서면"
+        },
+        "error": null,
+        "temperature": 8.9,
+        "dataRole": "OBSERVATION"
+      },
+      {
+        "origin": "https://weather-api.codesoha.com",
+        "target": "travel",
+        "route": "api/v1/weather/weekly",
+        "status": 200,
+        "region": {
+          "nx": 71,
+          "ny": 130,
+          "adminCode": "5172037000",
+          "name": "강원특별자치도 홍천군 서면",
+          "midTermTaRegId": "11D10302",
+          "midTermLandRegId": "11D10000"
+        },
+        "error": null,
+        "temperature": null,
+        "dataRole": null
+      },
+      {
+        "origin": "https://weather-api.codesoha.com",
+        "target": "bank",
+        "route": "api/v1/weather/main",
+        "status": 200,
+        "region": {
+          "nx": 57,
+          "ny": 124,
+          "name": "경기도 시흥시 은행동"
+        },
+        "error": null,
+        "temperature": 17.9,
+        "dataRole": "OBSERVATION"
+      }
+    ],
+    "migrations": 14,
+    "boundary": {
+      "version": "2f79b2c54983df7fb69a4ba3d9c78fccfa806c4817684b731c55d75bfef2c5f4",
+      "imported_at": "2026-10-08T08:28:39.778Z"
+    },
+    "boundaryCounts": [
+      {
+        "precision": "DONG",
+        "count": 3545
+      },
+      {
+        "precision": "PARENT",
+        "count": 14
+      }
+    ],
+    "wholeGridReferences": 2848,
+    "forecastFields": 2123,
+    "observationSnapshots": 114,
+    "apiHubUsage": {
+      "calls": 3521,
+      "bytes": 1797586449
+    },
+    "services": [
+      "Result=success",
+      "ExecMainStatus=0",
+      "Id=weather-care-api.service",
+      "ActiveState=active",
+      "SubState=running",
+      "",
+      "Result=success",
+      "ExecMainStatus=0",
+      "Id=weather-care-scheduler.service",
+      "ActiveState=active",
+      "SubState=running",
+      "",
+      "Result=success",
+      "ExecMainStatus=0",
+      "Id=cloudflared.service",
+      "ActiveState=active",
+      "SubState=running"
+    ]
+  }
+}

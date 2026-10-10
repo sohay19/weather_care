@@ -1,0 +1,3661 @@
+{
+  "observedAt": "2026-10-09T00:20:00.000Z",
+  "basis": "nearest same-time core-valid observation cell; cell-center distance only, not actual user GPS; no runtime fallback applied",
+  "count": 302,
+  "validSourceCells": 4444,
+  "distanceSummary": {
+    "minKm": 5.048551004722544,
+    "medianKm": 5.1214950498205,
+    "maxKm": 51.53720243112832,
+    "within5Km": 0,
+    "within10Km": 220,
+    "within15Km": 260,
+    "within20Km": 280
+  },
+  "grids": [
+    {
+      "nx": 48,
+      "ny": 29,
+      "nearest": {
+        "nx": 48,
+        "ny": 30
+      },
+      "distanceKmFromCellCenter": 5.048551004722544,
+      "areas": [
+        "제주특별자치도 서귀포시 대정읍"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 32,
+      "nearest": {
+        "nx": 55,
+        "ny": 33
+      },
+      "distanceKmFromCellCenter": 5.05104949195083,
+      "areas": [
+        "제주특별자치도 서귀포시 남원읍"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 36,
+      "nearest": {
+        "nx": 47,
+        "ny": 35
+      },
+      "distanceKmFromCellCenter": 5.053593533278325,
+      "areas": [
+        "제주특별자치도 제주시 한림읍"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 39,
+      "nearest": {
+        "nx": 53,
+        "ny": 38
+      },
+      "distanceKmFromCellCenter": 5.056057315690222,
+      "areas": [
+        "제주특별자치도 제주시 화북동",
+        "제주특별자치도 제주시 삼양동",
+        "제주특별자치도 제주시 건입동"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 39,
+      "nearest": {
+        "nx": 60,
+        "ny": 38
+      },
+      "distanceKmFromCellCenter": 5.056006150844647,
+      "areas": [
+        "제주특별자치도 제주시 구좌읍",
+        "제주특별자치도 제주시 우도면"
+      ]
+    },
+    {
+      "nx": 61,
+      "ny": 39,
+      "nearest": {
+        "nx": 61,
+        "ny": 38
+      },
+      "distanceKmFromCellCenter": 5.055996674977631,
+      "areas": [
+        "제주특별자치도 제주시 우도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 46,
+      "nearest": {
+        "nx": 49,
+        "ny": 47
+      },
+      "distanceKmFromCellCenter": 5.062595329899283,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 47,
+      "nearest": {
+        "nx": 49,
+        "ny": 47
+      },
+      "distanceKmFromCellCenter": 5.086495559545246,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 47,
+      "nearest": {
+        "nx": 55,
+        "ny": 51
+      },
+      "distanceKmFromCellCenter": 20.258279662818566,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 48,
+      "nearest": {
+        "nx": 49,
+        "ny": 48
+      },
+      "distanceKmFromCellCenter": 5.087276590687503,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 48,
+      "nearest": {
+        "nx": 60,
+        "ny": 52
+      },
+      "distanceKmFromCellCenter": 20.261317133878062,
+      "areas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 49,
+      "nearest": {
+        "nx": 48,
+        "ny": 48
+      },
+      "distanceKmFromCellCenter": 7.178377269670407,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 49,
+      "nearest": {
+        "nx": 48,
+        "ny": 48
+      },
+      "distanceKmFromCellCenter": 5.064203209774795,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 49,
+      "nearest": {
+        "nx": 49,
+        "ny": 48
+      },
+      "distanceKmFromCellCenter": 5.0642003067404655,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 49,
+      "nearest": {
+        "nx": 49,
+        "ny": 48
+      },
+      "distanceKmFromCellCenter": 7.178619863340457,
+      "areas": [
+        "제주특별자치도 제주시 추자면"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 49,
+      "nearest": {
+        "nx": 60,
+        "ny": 52
+      },
+      "distanceKmFromCellCenter": 15.197183604885396,
+      "areas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 49,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 7.179926666902507,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 49,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 5.0648568185748175,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 50,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 5.088689289116731,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 50,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 5.0886759549013885,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 50,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 25.443234760426556,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 26,
+      "ny": 51,
+      "nearest": {
+        "nx": 27,
+        "ny": 51
+      },
+      "distanceKmFromCellCenter": 5.089540524079816,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 51,
+      "nearest": {
+        "nx": 52,
+        "ny": 52
+      },
+      "distanceKmFromCellCenter": 5.066576968411075,
+      "areas": [
+        "전라남도 완도군 보길면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 51,
+      "nearest": {
+        "nx": 53,
+        "ny": 52
+      },
+      "distanceKmFromCellCenter": 5.066571993179505,
+      "areas": [
+        "전라남도 완도군 보길면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 51,
+      "nearest": {
+        "nx": 54,
+        "ny": 52
+      },
+      "distanceKmFromCellCenter": 5.066566494140474,
+      "areas": [
+        "전라남도 완도군 소안면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 51,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 5.065653340992497,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 51,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 25.94533858087918,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 26,
+      "ny": 52,
+      "nearest": {
+        "nx": 27,
+        "ny": 51
+      },
+      "distanceKmFromCellCenter": 7.182092144004765,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 27,
+      "ny": 52,
+      "nearest": {
+        "nx": 27,
+        "ny": 51
+      },
+      "distanceKmFromCellCenter": 5.0665311406441855,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 52,
+      "nearest": {
+        "nx": 42,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 10.135566391247647,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 56,
+      "ny": 52,
+      "nearest": {
+        "nx": 55,
+        "ny": 52
+      },
+      "distanceKmFromCellCenter": 5.090343455326424,
+      "areas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 57,
+      "ny": 52,
+      "nearest": {
+        "nx": 57,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 5.067338026001228,
+      "areas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 52,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 18.325663174089435,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 52,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 22.741216385851814,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 33,
+      "ny": 53,
+      "nearest": {
+        "nx": 27,
+        "ny": 51
+      },
+      "distanceKmFromCellCenter": 32.17857108370717,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 53,
+      "nearest": {
+        "nx": 41,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 35.99906887223555,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 53,
+      "nearest": {
+        "nx": 41,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 11.374504620670963,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 53,
+      "nearest": {
+        "nx": 41,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 7.183963265838803,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 53,
+      "nearest": {
+        "nx": 41,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 5.06817665755502,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 53,
+      "nearest": {
+        "nx": 52,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 5.091134814697057,
+      "areas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 53,
+      "nearest": {
+        "nx": 60,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 10.18213070121843,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 63,
+      "ny": 53,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 15.206576590853325,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 53,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 16.03588801825368,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 53,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 15.199339421638836,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 53,
+      "nearest": {
+        "nx": 67,
+        "ny": 50
+      },
+      "distanceKmFromCellCenter": 16.029654615507646,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 33,
+      "ny": 54,
+      "nearest": {
+        "nx": 30,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 29.60275501337158,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 54,
+      "nearest": {
+        "nx": 30,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 32.526392969488725,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 54,
+      "nearest": {
+        "nx": 41,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 5.0919185153472455,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 54,
+      "nearest": {
+        "nx": 51,
+        "ny": 55
+      },
+      "distanceKmFromCellCenter": 11.376486742407174,
+      "areas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 54,
+      "nearest": {
+        "nx": 51,
+        "ny": 55
+      },
+      "distanceKmFromCellCenter": 7.185268366807369,
+      "areas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 54,
+      "nearest": {
+        "nx": 51,
+        "ny": 55
+      },
+      "distanceKmFromCellCenter": 5.068947007405808,
+      "areas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 54,
+      "nearest": {
+        "nx": 52,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 5.06815660291769,
+      "areas": [
+        "전라남도 완도군 노화읍"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 54,
+      "nearest": {
+        "nx": 55,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 5.068140193511753,
+      "areas": [
+        "전라남도 완도군 소안면"
+      ]
+    },
+    {
+      "nx": 58,
+      "ny": 54,
+      "nearest": {
+        "nx": 58,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 5.068119094285281,
+      "areas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 60,
+      "ny": 54,
+      "nearest": {
+        "nx": 60,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 5.068102422165387,
+      "areas": [
+        "전라남도 완도군 청산면"
+      ]
+    },
+    {
+      "nx": 61,
+      "ny": 54,
+      "nearest": {
+        "nx": 60,
+        "ny": 53
+      },
+      "distanceKmFromCellCenter": 7.184305486188234,
+      "areas": [
+        "전라남도 완도군 생일면"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 54,
+      "nearest": {
+        "nx": 62,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 10.138523326327945,
+      "areas": [
+        "전라남도 완도군 생일면"
+      ]
+    },
+    {
+      "nx": 63,
+      "ny": 54,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 10.138503086767717,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 54,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 11.345036307836045,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 54,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 14.370039749264087,
+      "areas": [
+        "전라남도 여수시 삼산면",
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 54,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 15.208827260860089,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 69,
+      "ny": 54,
+      "nearest": {
+        "nx": 70,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 20.910449468714308,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 54,
+      "nearest": {
+        "nx": 70,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 20.27978993687451,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 54,
+      "nearest": {
+        "nx": 71,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 20.279732985544413,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 55,
+      "nearest": {
+        "nx": 41,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 5.068962592281051,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 55,
+      "nearest": {
+        "nx": 42,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 5.0689633715050855,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 55,
+      "nearest": {
+        "nx": 49,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 10.140256198121628,
+      "areas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 55,
+      "nearest": {
+        "nx": 51,
+        "ny": 55
+      },
+      "distanceKmFromCellCenter": 5.0926677269715075,
+      "areas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 59,
+      "ny": 55,
+      "nearest": {
+        "nx": 59,
+        "ny": 54
+      },
+      "distanceKmFromCellCenter": 5.068897129902661,
+      "areas": [
+        "전라남도 완도군 신지면"
+      ]
+    },
+    {
+      "nx": 61,
+      "ny": 55,
+      "nearest": {
+        "nx": 61,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 5.069663064479019,
+      "areas": [
+        "전라남도 완도군 생일면"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 55,
+      "nearest": {
+        "nx": 62,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 5.069653476986252,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 63,
+      "ny": 55,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 5.06964337089423,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 55,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 7.185585706114118,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 55,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 11.347966537570372,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 55,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 10.140001066016954,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 55,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 11.346612334853182,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 55,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 14.371983772836312,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 69,
+      "ny": 55,
+      "nearest": {
+        "nx": 70,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 16.042029815569364,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 55,
+      "nearest": {
+        "nx": 71,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 15.210973065138845,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 56,
+      "nearest": {
+        "nx": 42,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 5.093442847535559,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 56,
+      "nearest": {
+        "nx": 46,
+        "ny": 55
+      },
+      "distanceKmFromCellCenter": 5.069744674151889,
+      "areas": [
+        "전라남도 진도군 조도면",
+        "전라남도 진도군 임회면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 56,
+      "nearest": {
+        "nx": 47,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 5.0705236849290936,
+      "areas": [
+        "전라남도 진도군 임회면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 56,
+      "nearest": {
+        "nx": 48,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 5.070521359882092,
+      "areas": [
+        "전라남도 진도군 의신면"
+      ]
+    },
+    {
+      "nx": 64,
+      "ny": 56,
+      "nearest": {
+        "nx": 63,
+        "ny": 56
+      },
+      "distanceKmFromCellCenter": 5.093328536003567,
+      "areas": [
+        "전라남도 완도군 금일읍"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 56,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 7.187622092124526,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 56,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 5.070391125639963,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 56,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 7.186557075766492,
+      "areas": [
+        "전라남도 여수시 삼산면",
+        "전라남도 고흥군 도양읍"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 56,
+      "nearest": {
+        "nx": 66,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 11.378696091620123,
+      "areas": [
+        "전라남도 여수시 삼산면"
+      ]
+    },
+    {
+      "nx": 77,
+      "ny": 56,
+      "nearest": {
+        "nx": 76,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 11.34772541975758,
+      "areas": [
+        "전라남도 여수시 남면"
+      ]
+    },
+    {
+      "nx": 30,
+      "ny": 57,
+      "nearest": {
+        "nx": 30,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 10.14330084506383,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 31,
+      "ny": 57,
+      "nearest": {
+        "nx": 30,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 11.35134399405886,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 57,
+      "nearest": {
+        "nx": 42,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 5.094200562029012,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 65,
+      "ny": 57,
+      "nearest": {
+        "nx": 65,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 5.071181345643708,
+      "areas": [
+        "전라남도 고흥군 도양읍"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 57,
+      "nearest": {
+        "nx": 70,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 5.071118190491078,
+      "areas": [
+        "전라남도 고흥군 봉래면"
+      ]
+    },
+    {
+      "nx": 30,
+      "ny": 58,
+      "nearest": {
+        "nx": 30,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 5.07203832166968,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 31,
+      "ny": 58,
+      "nearest": {
+        "nx": 30,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 7.18969268685074,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 58,
+      "nearest": {
+        "nx": 43,
+        "ny": 57
+      },
+      "distanceKmFromCellCenter": 5.071306065826989,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 67,
+      "ny": 58,
+      "nearest": {
+        "nx": 67,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 5.071933718607373,
+      "areas": [
+        "전라남도 고흥군 도화면"
+      ]
+    },
+    {
+      "nx": 69,
+      "ny": 58,
+      "nearest": {
+        "nx": 69,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 5.071908011341844,
+      "areas": [
+        "전라남도 고흥군 봉래면"
+      ]
+    },
+    {
+      "nx": 77,
+      "ny": 58,
+      "nearest": {
+        "nx": 76,
+        "ny": 58
+      },
+      "distanceKmFromCellCenter": 5.094650886177053,
+      "areas": [
+        "전라남도 여수시 남면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 59,
+      "nearest": {
+        "nx": 44,
+        "ny": 59
+      },
+      "distanceKmFromCellCenter": 5.095708711184777,
+      "areas": [
+        "전라남도 진도군 조도면"
+      ]
+    },
+    {
+      "nx": 68,
+      "ny": 59,
+      "nearest": {
+        "nx": 68,
+        "ny": 60
+      },
+      "distanceKmFromCellCenter": 5.072694672277494,
+      "areas": [
+        "전라남도 고흥군 봉래면"
+      ]
+    },
+    {
+      "nx": 37,
+      "ny": 60,
+      "nearest": {
+        "nx": 40,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 18.35228162551545,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 60,
+      "nearest": {
+        "nx": 43,
+        "ny": 61
+      },
+      "distanceKmFromCellCenter": 5.0736253789791,
+      "areas": [
+        "전라남도 신안군 신의면"
+      ]
+    },
+    {
+      "nx": 81,
+      "ny": 60,
+      "nearest": {
+        "nx": 83,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 18.322410332081144,
+      "areas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 88,
+      "ny": 60,
+      "nearest": {
+        "nx": 89,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 16.05369624817539,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 61,
+      "nearest": {
+        "nx": 41,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 5.074392308478708,
+      "areas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 71,
+      "ny": 61,
+      "nearest": {
+        "nx": 71,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 5.074193505059378,
+      "areas": [
+        "전라남도 고흥군 동일면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 61,
+      "nearest": {
+        "nx": 72,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 5.074178971148312,
+      "areas": [
+        "전라남도 여수시 화정면"
+      ]
+    },
+    {
+      "nx": 76,
+      "ny": 61,
+      "nearest": {
+        "nx": 76,
+        "ny": 60
+      },
+      "distanceKmFromCellCenter": 5.073346998999088,
+      "areas": [
+        "전라남도 여수시 남면"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 61,
+      "nearest": {
+        "nx": 85,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 14.383118248035322,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 92,
+      "ny": 61,
+      "nearest": {
+        "nx": 89,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 18.35055616480915,
+      "areas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 62,
+      "nearest": {
+        "nx": 40,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 5.097947276028749,
+      "areas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 76,
+      "ny": 62,
+      "nearest": {
+        "nx": 75,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 5.097666195092764,
+      "areas": [
+        "전라남도 여수시 돌산읍"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 62,
+      "nearest": {
+        "nx": 83,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 7.19407654440957,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 85,
+      "ny": 62,
+      "nearest": {
+        "nx": 85,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 5.074710140141393,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 62,
+      "nearest": {
+        "nx": 85,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 11.38751883386671,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 89,
+      "ny": 62,
+      "nearest": {
+        "nx": 89,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 5.0746205397436155,
+      "areas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 92,
+      "ny": 62,
+      "nearest": {
+        "nx": 89,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 16.111643208110575,
+      "areas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 63,
+      "nearest": {
+        "nx": 33,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 5.0986683708282445,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 63,
+      "nearest": {
+        "nx": 40,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 7.193830747278853,
+      "areas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 63,
+      "nearest": {
+        "nx": 40,
+        "ny": 62
+      },
+      "distanceKmFromCellCenter": 5.075156405454695,
+      "areas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 79,
+      "ny": 63,
+      "nearest": {
+        "nx": 80,
+        "ny": 64
+      },
+      "distanceKmFromCellCenter": 7.195157007568182,
+      "areas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 81,
+      "ny": 63,
+      "nearest": {
+        "nx": 80,
+        "ny": 64
+      },
+      "distanceKmFromCellCenter": 7.193447410412155,
+      "areas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 86,
+      "ny": 63,
+      "nearest": {
+        "nx": 85,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 5.098207434235004,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 90,
+      "ny": 63,
+      "nearest": {
+        "nx": 89,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 5.098111716077571,
+      "areas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 64,
+      "nearest": {
+        "nx": 41,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 7.194873297867644,
+      "areas": [
+        "전라남도 신안군 도초면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 64,
+      "nearest": {
+        "nx": 41,
+        "ny": 63
+      },
+      "distanceKmFromCellCenter": 5.075920455074314,
+      "areas": [
+        "전라남도 신안군 도초면",
+        "전라남도 신안군 비금면"
+      ]
+    },
+    {
+      "nx": 78,
+      "ny": 64,
+      "nearest": {
+        "nx": 78,
+        "ny": 65
+      },
+      "distanceKmFromCellCenter": 5.0763720076462135,
+      "areas": [
+        "경상남도 남해군 상주면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 64,
+      "nearest": {
+        "nx": 82,
+        "ny": 65
+      },
+      "distanceKmFromCellCenter": 5.076297130245728,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 86,
+      "ny": 64,
+      "nearest": {
+        "nx": 85,
+        "ny": 64
+      },
+      "distanceKmFromCellCenter": 5.0989481434459805,
+      "areas": [
+        "경상남도 통영시 욕지면"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 64,
+      "nearest": {
+        "nx": 87,
+        "ny": 65
+      },
+      "distanceKmFromCellCenter": 5.076192112812793,
+      "areas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 28,
+      "ny": 65,
+      "nearest": {
+        "nx": 28,
+        "ny": 64
+      },
+      "distanceKmFromCellCenter": 5.076624807927459,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 29,
+      "ny": 65,
+      "nearest": {
+        "nx": 29,
+        "ny": 64
+      },
+      "distanceKmFromCellCenter": 5.07663213535482,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 32,
+      "ny": 65,
+      "nearest": {
+        "nx": 32,
+        "ny": 64
+      },
+      "distanceKmFromCellCenter": 5.076651084625206,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 34,
+      "ny": 65,
+      "nearest": {
+        "nx": 33,
+        "ny": 65
+      },
+      "distanceKmFromCellCenter": 5.10014465376663,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 86,
+      "ny": 65,
+      "nearest": {
+        "nx": 86,
+        "ny": 66
+      },
+      "distanceKmFromCellCenter": 5.0769730598540335,
+      "areas": [
+        "경상남도 통영시 산양읍"
+      ]
+    },
+    {
+      "nx": 88,
+      "ny": 65,
+      "nearest": {
+        "nx": 88,
+        "ny": 66
+      },
+      "distanceKmFromCellCenter": 5.076928640311484,
+      "areas": [
+        "경상남도 통영시 한산면"
+      ]
+    },
+    {
+      "nx": 91,
+      "ny": 65,
+      "nearest": {
+        "nx": 91,
+        "ny": 66
+      },
+      "distanceKmFromCellCenter": 5.0768582091460885,
+      "areas": [
+        "경상남도 거제시 남부면"
+      ]
+    },
+    {
+      "nx": 33,
+      "ny": 66,
+      "nearest": {
+        "nx": 33,
+        "ny": 65
+      },
+      "distanceKmFromCellCenter": 5.0774140517719255,
+      "areas": [
+        "전라남도 신안군 흑산면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 66,
+      "nearest": {
+        "nx": 41,
+        "ny": 66
+      },
+      "distanceKmFromCellCenter": 10.201800785334902,
+      "areas": [
+        "전라남도 신안군 비금면"
+      ]
+    },
+    {
+      "nx": 83,
+      "ny": 66,
+      "nearest": {
+        "nx": 83,
+        "ny": 65
+      },
+      "distanceKmFromCellCenter": 5.0770358899867505,
+      "areas": [
+        "경상남도 통영시 사량면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 67,
+      "nearest": {
+        "nx": 42,
+        "ny": 66
+      },
+      "distanceKmFromCellCenter": 5.078193980875433,
+      "areas": [
+        "전라남도 신안군 비금면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 67,
+      "nearest": {
+        "nx": 43,
+        "ny": 66
+      },
+      "distanceKmFromCellCenter": 5.078194232035783,
+      "areas": [
+        "전라남도 신안군 비금면",
+        "전라남도 신안군 자은면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 68,
+      "nearest": {
+        "nx": 43,
+        "ny": 68
+      },
+      "distanceKmFromCellCenter": 5.102363125604347,
+      "areas": [
+        "전라남도 신안군 자은면"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 69,
+      "nearest": {
+        "nx": 94,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 18.34077427032349,
+      "areas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 70,
+      "nearest": {
+        "nx": 43,
+        "ny": 69
+      },
+      "distanceKmFromCellCenter": 7.201130795384673,
+      "areas": [
+        "전라남도 신안군 자은면"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 70,
+      "nearest": {
+        "nx": 94,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 14.401032858128493,
+      "areas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 71,
+      "nearest": {
+        "nx": 43,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 7.203178622046072,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 71,
+      "nearest": {
+        "nx": 43,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 5.081930059114813,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 94,
+      "ny": 71,
+      "nearest": {
+        "nx": 94,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 5.081285447620838,
+      "areas": [
+        "부산광역시 강서구 가덕도동"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 71,
+      "nearest": {
+        "nx": 96,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 10.163209037740444,
+      "areas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 97,
+      "ny": 71,
+      "nearest": {
+        "nx": 97,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 10.163155993905077,
+      "areas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 72,
+      "nearest": {
+        "nx": 43,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 10.210503420896142,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 72,
+      "nearest": {
+        "nx": 43,
+        "ny": 72
+      },
+      "distanceKmFromCellCenter": 5.105251983751569,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 96,
+      "ny": 72,
+      "nearest": {
+        "nx": 96,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 5.081975215065281,
+      "areas": [
+        "부산광역시 사하구 다대1동"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 73,
+      "nearest": {
+        "nx": 43,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 10.211934561895761,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 73,
+      "nearest": {
+        "nx": 43,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 5.1059675534089575,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 74,
+      "nearest": {
+        "nx": 43,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 11.407885194741262,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 74,
+      "nearest": {
+        "nx": 44,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 5.083405816613998,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 75,
+      "nearest": {
+        "nx": 43,
+        "ny": 73
+      },
+      "distanceKmFromCellCenter": 14.411557873501982,
+      "areas": [
+        "전라남도 신안군 임자면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 76,
+      "nearest": {
+        "nx": 45,
+        "ny": 76
+      },
+      "distanceKmFromCellCenter": 5.10809773841712,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 77,
+      "nearest": {
+        "nx": 46,
+        "ny": 77
+      },
+      "distanceKmFromCellCenter": 5.108800046941981,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 77,
+      "nearest": {
+        "nx": 48,
+        "ny": 76
+      },
+      "distanceKmFromCellCenter": 5.085594243065333,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 78,
+      "nearest": {
+        "nx": 49,
+        "ny": 77
+      },
+      "distanceKmFromCellCenter": 7.209176530677066,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 79,
+      "nearest": {
+        "nx": 43,
+        "ny": 78
+      },
+      "distanceKmFromCellCenter": 5.087049989436661,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 79,
+      "nearest": {
+        "nx": 44,
+        "ny": 79
+      },
+      "distanceKmFromCellCenter": 5.11020435839969,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 79,
+      "nearest": {
+        "nx": 46,
+        "ny": 77
+      },
+      "distanceKmFromCellCenter": 10.173372107607872,
+      "areas": [
+        "전라남도 영광군 낙월면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 83,
+      "nearest": {
+        "nx": 49,
+        "ny": 84
+      },
+      "distanceKmFromCellCenter": 5.090619124701549,
+      "areas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 83,
+      "nearest": {
+        "nx": 51,
+        "ny": 82
+      },
+      "distanceKmFromCellCenter": 5.089902173934068,
+      "areas": [
+        "전북특별자치도 고창군 심원면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 84,
+      "nearest": {
+        "nx": 47,
+        "ny": 83
+      },
+      "distanceKmFromCellCenter": 5.090623893777122,
+      "areas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 84,
+      "nearest": {
+        "nx": 51,
+        "ny": 84
+      },
+      "distanceKmFromCellCenter": 5.11364795859587,
+      "areas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 85,
+      "nearest": {
+        "nx": 48,
+        "ny": 84
+      },
+      "distanceKmFromCellCenter": 5.0913293246769555,
+      "areas": [
+        "전북특별자치도 부안군 위도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 86,
+      "nearest": {
+        "nx": 51,
+        "ny": 85
+      },
+      "distanceKmFromCellCenter": 5.092024991116653,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 87,
+      "nearest": {
+        "nx": 52,
+        "ny": 86
+      },
+      "distanceKmFromCellCenter": 5.092723238473971,
+      "areas": [
+        "전북특별자치도 부안군 변산면",
+        "전북특별자치도 김제시 진봉면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 87,
+      "nearest": {
+        "nx": 53,
+        "ny": 86
+      },
+      "distanceKmFromCellCenter": 5.092718751499888,
+      "areas": [
+        "전북특별자치도 부안군 하서면",
+        "전북특별자치도 부안군 계화면",
+        "전북특별자치도 부안군 변산면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 88,
+      "nearest": {
+        "nx": 49,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 5.094130307297669,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 88,
+      "nearest": {
+        "nx": 52,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 5.094119750642773,
+      "areas": [
+        "전북특별자치도 김제시 진봉면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 88,
+      "nearest": {
+        "nx": 54,
+        "ny": 88
+      },
+      "distanceKmFromCellCenter": 5.116351769567676,
+      "areas": [
+        "전북특별자치도 부안군 계화면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 89,
+      "nearest": {
+        "nx": 54,
+        "ny": 88
+      },
+      "distanceKmFromCellCenter": 5.094110366474912,
+      "areas": [
+        "전북특별자치도 부안군 계화면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 90,
+      "nearest": {
+        "nx": 45,
+        "ny": 85
+      },
+      "distanceKmFromCellCenter": 25.9759377336097,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 90,
+      "nearest": {
+        "nx": 49,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 16.175327675068754,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 90,
+      "nearest": {
+        "nx": 49,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 5.094824501734831,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 90,
+      "nearest": {
+        "nx": 50,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 5.094821462248542,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 90,
+      "nearest": {
+        "nx": 52,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 5.094813980231978,
+      "areas": [
+        "전북특별자치도 군산시 옥도면",
+        "전북특별자치도 군산시 소룡동"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 90,
+      "nearest": {
+        "nx": 53,
+        "ny": 91
+      },
+      "distanceKmFromCellCenter": 5.09550109282421,
+      "areas": [
+        "전북특별자치도 군산시 소룡동"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 92,
+      "nearest": {
+        "nx": 49,
+        "ny": 89
+      },
+      "distanceKmFromCellCenter": 18.39691774271606,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 93,
+      "nearest": {
+        "nx": 51,
+        "ny": 94
+      },
+      "distanceKmFromCellCenter": 21.105193503854355,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 94,
+      "nearest": {
+        "nx": 52,
+        "ny": 93
+      },
+      "distanceKmFromCellCenter": 5.097563968174017,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 94,
+      "nearest": {
+        "nx": 53,
+        "ny": 93
+      },
+      "distanceKmFromCellCenter": 5.097559585421685,
+      "areas": [
+        "전북특별자치도 군산시 옥도면",
+        "충청남도 서천군 마서면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 95,
+      "nearest": {
+        "nx": 43,
+        "ny": 95
+      },
+      "distanceKmFromCellCenter": 5.121029269585688,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 95,
+      "nearest": {
+        "nx": 51,
+        "ny": 94
+      },
+      "distanceKmFromCellCenter": 5.09824862173013,
+      "areas": [
+        "전북특별자치도 군산시 옥도면"
+      ]
+    },
+    {
+      "nx": 104,
+      "ny": 96,
+      "nearest": {
+        "nx": 105,
+        "ny": 96
+      },
+      "distanceKmFromCellCenter": 5.120761472281119,
+      "areas": [
+        "경상북도 포항시 북구 흥해읍"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 98,
+      "nearest": {
+        "nx": 43,
+        "ny": 97
+      },
+      "distanceKmFromCellCenter": 7.228743271713904,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 98,
+      "nearest": {
+        "nx": 43,
+        "ny": 97
+      },
+      "distanceKmFromCellCenter": 5.100289113365736,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 98,
+      "nearest": {
+        "nx": 48,
+        "ny": 98
+      },
+      "distanceKmFromCellCenter": 5.122976213154532,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 98,
+      "nearest": {
+        "nx": 48,
+        "ny": 98
+      },
+      "distanceKmFromCellCenter": 5.122973799101571,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 98,
+      "nearest": {
+        "nx": 50,
+        "ny": 100
+      },
+      "distanceKmFromCellCenter": 10.20256280974334,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 99,
+      "nearest": {
+        "nx": 45,
+        "ny": 98
+      },
+      "distanceKmFromCellCenter": 7.229717007380553,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 99,
+      "nearest": {
+        "nx": 48,
+        "ny": 99
+      },
+      "distanceKmFromCellCenter": 5.123621311633676,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 99,
+      "nearest": {
+        "nx": 49,
+        "ny": 100
+      },
+      "distanceKmFromCellCenter": 5.101617912513926,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 99,
+      "nearest": {
+        "nx": 51,
+        "ny": 100
+      },
+      "distanceKmFromCellCenter": 5.101611588337702,
+      "areas": [
+        "충청남도 보령시 대천5동"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 100,
+      "nearest": {
+        "nx": 48,
+        "ny": 99
+      },
+      "distanceKmFromCellCenter": 5.101620396946709,
+      "areas": [
+        "충청남도 보령시 오천면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 102,
+      "nearest": {
+        "nx": 49,
+        "ny": 102
+      },
+      "distanceKmFromCellCenter": 10.25107766404471,
+      "areas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 102,
+      "nearest": {
+        "nx": 49,
+        "ny": 102
+      },
+      "distanceKmFromCellCenter": 5.12553765032092,
+      "areas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 103,
+      "nearest": {
+        "nx": 49,
+        "ny": 103
+      },
+      "distanceKmFromCellCenter": 10.252345744741818,
+      "areas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 103,
+      "nearest": {
+        "nx": 49,
+        "ny": 103
+      },
+      "distanceKmFromCellCenter": 5.126171694707345,
+      "areas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 104,
+      "nearest": {
+        "nx": 48,
+        "ny": 105
+      },
+      "distanceKmFromCellCenter": 11.454791356299868,
+      "areas": [
+        "충청남도 태안군 안면읍"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 105,
+      "nearest": {
+        "nx": 46,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 10.21178651155875,
+      "areas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 105,
+      "nearest": {
+        "nx": 48,
+        "ny": 105
+      },
+      "distanceKmFromCellCenter": 5.1274338126176255,
+      "areas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 35,
+      "ny": 106,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 51.53720243112832,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 36,
+      "ny": 106,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 46.43686958674098,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 38,
+      "ny": 106,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 36.25990894398087,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 106,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 7.237001523012346,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 106,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 5.106218329247059,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 106,
+      "nearest": {
+        "nx": 46,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 5.106217228532528,
+      "areas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 106,
+      "nearest": {
+        "nx": 48,
+        "ny": 106
+      },
+      "distanceKmFromCellCenter": 5.128059514073402,
+      "areas": [
+        "충청남도 태안군 남면"
+      ]
+    },
+    {
+      "nx": 38,
+      "ny": 107,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 35.90079898298852,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 107,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 30.772116912151684,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 107,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 25.643432866791464,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 107,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 20.514747331997572,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 107,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 10.257373734425467,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 107,
+      "nearest": {
+        "nx": 45,
+        "ny": 107
+      },
+      "distanceKmFromCellCenter": 5.128686641785506,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 107,
+      "nearest": {
+        "nx": 47,
+        "ny": 108
+      },
+      "distanceKmFromCellCenter": 5.106860886090966,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 42,
+      "ny": 108,
+      "nearest": {
+        "nx": 45,
+        "ny": 108
+      },
+      "distanceKmFromCellCenter": 15.387921125873767,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 108,
+      "nearest": {
+        "nx": 45,
+        "ny": 108
+      },
+      "distanceKmFromCellCenter": 5.1293067536916395,
+      "areas": [
+        "충청남도 태안군 근흥면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 113,
+      "nearest": {
+        "nx": 42,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 21.731892542779498,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 113,
+      "nearest": {
+        "nx": 42,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 18.453359622142024,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 113,
+      "nearest": {
+        "nx": 46,
+        "ny": 112
+      },
+      "distanceKmFromCellCenter": 5.110046965238899,
+      "areas": [
+        "충청남도 태안군 원북면"
+      ]
+    },
+    {
+      "nx": 39,
+      "ny": 114,
+      "nearest": {
+        "nx": 42,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 18.484889643953018,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 40,
+      "ny": 114,
+      "nearest": {
+        "nx": 42,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 14.488819235643087,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 115,
+      "nearest": {
+        "nx": 44,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 5.111926123570929,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 115,
+      "nearest": {
+        "nx": 49,
+        "ny": 114
+      },
+      "distanceKmFromCellCenter": 5.111295620635923,
+      "areas": [
+        "충청남도 서산시 대산읍"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 115,
+      "nearest": {
+        "nx": 54,
+        "ny": 114
+      },
+      "distanceKmFromCellCenter": 5.111277473728686,
+      "areas": [
+        "충청남도 당진시 석문면"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 115,
+      "nearest": {
+        "nx": 55,
+        "ny": 114
+      },
+      "distanceKmFromCellCenter": 5.111272563011678,
+      "areas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 116,
+      "nearest": {
+        "nx": 53,
+        "ny": 115
+      },
+      "distanceKmFromCellCenter": 5.111905072287065,
+      "areas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 116,
+      "nearest": {
+        "nx": 55,
+        "ny": 117
+      },
+      "distanceKmFromCellCenter": 5.112516081795635,
+      "areas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 117,
+      "nearest": {
+        "nx": 43,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 5.112546580716258,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 117,
+      "nearest": {
+        "nx": 45,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 5.112545733610988,
+      "areas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 117,
+      "nearest": {
+        "nx": 48,
+        "ny": 118
+      },
+      "distanceKmFromCellCenter": 5.113158762359298,
+      "areas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 117,
+      "nearest": {
+        "nx": 50,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 5.112536203326849,
+      "areas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 117,
+      "nearest": {
+        "nx": 51,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 5.112533026431098,
+      "areas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 117,
+      "nearest": {
+        "nx": 52,
+        "ny": 116
+      },
+      "distanceKmFromCellCenter": 5.112529425856532,
+      "areas": [
+        "경기도 화성시 우정읍"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 117,
+      "nearest": {
+        "nx": 54,
+        "ny": 118
+      },
+      "distanceKmFromCellCenter": 5.113138511347748,
+      "areas": [
+        "경기도 화성시 서신면"
+      ]
+    },
+    {
+      "nx": 41,
+      "ny": 118,
+      "nearest": {
+        "nx": 42,
+        "ny": 118
+      },
+      "distanceKmFromCellCenter": 5.135353681852253,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 118,
+      "nearest": {
+        "nx": 44,
+        "ny": 117
+      },
+      "distanceKmFromCellCenter": 5.113163824673102,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 118,
+      "nearest": {
+        "nx": 48,
+        "ny": 118
+      },
+      "distanceKmFromCellCenter": 5.135347391875176,
+      "areas": [
+        "인천광역시 옹진군 자월면",
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 118,
+      "nearest": {
+        "nx": 51,
+        "ny": 119
+      },
+      "distanceKmFromCellCenter": 7.247606623810043,
+      "areas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 118,
+      "nearest": {
+        "nx": 53,
+        "ny": 119
+      },
+      "distanceKmFromCellCenter": 5.113757688346726,
+      "areas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 119,
+      "nearest": {
+        "nx": 45,
+        "ny": 119
+      },
+      "distanceKmFromCellCenter": 5.135942876672694,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 119,
+      "nearest": {
+        "nx": 47,
+        "ny": 118
+      },
+      "distanceKmFromCellCenter": 5.11377533595641,
+      "areas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 49,
+      "ny": 119,
+      "nearest": {
+        "nx": 49,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.114383029707722,
+      "areas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 119,
+      "nearest": {
+        "nx": 51,
+        "ny": 119
+      },
+      "distanceKmFromCellCenter": 5.135930792472085,
+      "areas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 120,
+      "nearest": {
+        "nx": 45,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.136529239361163,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 120,
+      "nearest": {
+        "nx": 46,
+        "ny": 119
+      },
+      "distanceKmFromCellCenter": 5.114388678757127,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 50,
+      "ny": 120,
+      "nearest": {
+        "nx": 51,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.1365172019868535,
+      "areas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 44,
+      "ny": 121,
+      "nearest": {
+        "nx": 45,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 7.249114639861032,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 45,
+      "ny": 121,
+      "nearest": {
+        "nx": 45,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.11499879218691,
+      "areas": [
+        "인천광역시 옹진군 덕적면"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 121,
+      "nearest": {
+        "nx": 48,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 7.249042176091139,
+      "areas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 121,
+      "nearest": {
+        "nx": 48,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.114994416545555,
+      "areas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 121,
+      "nearest": {
+        "nx": 51,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.11498628999686,
+      "areas": [
+        "인천광역시 옹진군 영흥면"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 121,
+      "nearest": {
+        "nx": 52,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 5.114982747501571,
+      "areas": [
+        "경기도 안산시 단원구 대부동"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 122,
+      "nearest": {
+        "nx": 48,
+        "ny": 120
+      },
+      "distanceKmFromCellCenter": 10.230595114160922,
+      "areas": [
+        "인천광역시 옹진군 자월면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 122,
+      "nearest": {
+        "nx": 51,
+        "ny": 123
+      },
+      "distanceKmFromCellCenter": 5.116196111404837,
+      "areas": [
+        "인천광역시 중구 용유동"
+      ]
+    },
+    {
+      "nx": 52,
+      "ny": 122,
+      "nearest": {
+        "nx": 53,
+        "ny": 121
+      },
+      "distanceKmFromCellCenter": 7.249749670202596,
+      "areas": [
+        "인천광역시 중구 용유동"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 122,
+      "nearest": {
+        "nx": 53,
+        "ny": 121
+      },
+      "distanceKmFromCellCenter": 5.115585133746308,
+      "areas": [
+        "인천광역시 연수구 송도1동"
+      ]
+    },
+    {
+      "nx": 53,
+      "ny": 123,
+      "nearest": {
+        "nx": 53,
+        "ny": 124
+      },
+      "distanceKmFromCellCenter": 5.116789398023781,
+      "areas": [
+        "인천광역시 연수구 송도4동",
+        "인천광역시 연수구 송도5동"
+      ]
+    },
+    {
+      "nx": 47,
+      "ny": 126,
+      "nearest": {
+        "nx": 47,
+        "ny": 128
+      },
+      "distanceKmFromCellCenter": 10.237772848467921,
+      "areas": [
+        "인천광역시 옹진군 북도면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 126,
+      "nearest": {
+        "nx": 49,
+        "ny": 126
+      },
+      "distanceKmFromCellCenter": 5.1399816467004475,
+      "areas": [
+        "인천광역시 옹진군 북도면"
+      ]
+    },
+    {
+      "nx": 98,
+      "ny": 126,
+      "nearest": {
+        "nx": 98,
+        "ny": 125
+      },
+      "distanceKmFromCellCenter": 5.117384159751412,
+      "areas": [
+        "강원특별자치도 삼척시 교동"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 127,
+      "nearest": {
+        "nx": 45,
+        "ny": 129
+      },
+      "distanceKmFromCellCenter": 14.510749140600721,
+      "areas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 37,
+      "ny": 128,
+      "nearest": {
+        "nx": 38,
+        "ny": 128
+      },
+      "distanceKmFromCellCenter": 5.141111711631346,
+      "areas": [
+        "인천광역시 옹진군 연평면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 128,
+      "nearest": {
+        "nx": 45,
+        "ny": 129
+      },
+      "distanceKmFromCellCenter": 11.486888764378122,
+      "areas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 48,
+      "ny": 128,
+      "nearest": {
+        "nx": 48,
+        "ny": 129
+      },
+      "distanceKmFromCellCenter": 5.119765837439311,
+      "areas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 37,
+      "ny": 129,
+      "nearest": {
+        "nx": 38,
+        "ny": 129
+      },
+      "distanceKmFromCellCenter": 5.141672449730477,
+      "areas": [
+        "인천광역시 옹진군 연평면"
+      ]
+    },
+    {
+      "nx": 43,
+      "ny": 129,
+      "nearest": {
+        "nx": 45,
+        "ny": 129
+      },
+      "distanceKmFromCellCenter": 10.283357355173866,
+      "areas": [
+        "인천광역시 강화군 서도면"
+      ]
+    },
+    {
+      "nx": 46,
+      "ny": 131,
+      "nearest": {
+        "nx": 47,
+        "ny": 131
+      },
+      "distanceKmFromCellCenter": 5.142789157101536,
+      "areas": [
+        "인천광역시 강화군 교동면"
+      ]
+    },
+    {
+      "nx": 51,
+      "ny": 132,
+      "nearest": {
+        "nx": 51,
+        "ny": 131
+      },
+      "distanceKmFromCellCenter": 5.1215007151218455,
+      "areas": [
+        "인천광역시 강화군 송해면",
+        "인천광역시 강화군 양사면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 132,
+      "nearest": {
+        "nx": 54,
+        "ny": 131
+      },
+      "distanceKmFromCellCenter": 5.121489384519155,
+      "areas": [
+        "경기도 파주시 탄현면",
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 20,
+      "ny": 133,
+      "nearest": {
+        "nx": 20,
+        "ny": 132
+      },
+      "distanceKmFromCellCenter": 5.121983890658952,
+      "areas": [
+        "인천광역시 옹진군 대청면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 133,
+      "nearest": {
+        "nx": 55,
+        "ny": 133
+      },
+      "distanceKmFromCellCenter": 5.143865125182334,
+      "areas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 20,
+      "ny": 134,
+      "nearest": {
+        "nx": 20,
+        "ny": 135
+      },
+      "distanceKmFromCellCenter": 5.123126626874673,
+      "areas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 134,
+      "nearest": {
+        "nx": 55,
+        "ny": 134
+      },
+      "distanceKmFromCellCenter": 5.144411581827526,
+      "areas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 19,
+      "ny": 135,
+      "nearest": {
+        "nx": 20,
+        "ny": 135
+      },
+      "distanceKmFromCellCenter": 5.144867079731082,
+      "areas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 22,
+      "ny": 135,
+      "nearest": {
+        "nx": 21,
+        "ny": 135
+      },
+      "distanceKmFromCellCenter": 5.144885957566809,
+      "areas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 54,
+      "ny": 135,
+      "nearest": {
+        "nx": 55,
+        "ny": 135
+      },
+      "distanceKmFromCellCenter": 5.144955153411973,
+      "areas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 19,
+      "ny": 136,
+      "nearest": {
+        "nx": 20,
+        "ny": 136
+      },
+      "distanceKmFromCellCenter": 5.145408144279571,
+      "areas": [
+        "인천광역시 옹진군 백령면"
+      ]
+    },
+    {
+      "nx": 55,
+      "ny": 136,
+      "nearest": {
+        "nx": 55,
+        "ny": 135
+      },
+      "distanceKmFromCellCenter": 5.123768903148342,
+      "areas": [
+        "경기도 파주시 장단면"
+      ]
+    },
+    {
+      "nx": 89,
+      "ny": 139,
+      "nearest": {
+        "nx": 89,
+        "ny": 138
+      },
+      "distanceKmFromCellCenter": 5.125071663309921,
+      "areas": [
+        "강원특별자치도 양양군 손양면"
+      ]
+    },
+    {
+      "nx": 62,
+      "ny": 143,
+      "nearest": {
+        "nx": 62,
+        "ny": 142
+      },
+      "distanceKmFromCellCenter": 5.127614865773185,
+      "areas": [
+        "강원특별자치도 철원군 철원읍"
+      ]
+    },
+    {
+      "nx": 87,
+      "ny": 143,
+      "nearest": {
+        "nx": 87,
+        "ny": 142
+      },
+      "distanceKmFromCellCenter": 5.127316845834178,
+      "areas": [
+        "강원특별자치도 고성군 토성면"
+      ]
+    },
+    {
+      "nx": 66,
+      "ny": 144,
+      "nearest": {
+        "nx": 66,
+        "ny": 143
+      },
+      "distanceKmFromCellCenter": 5.1281272421676904,
+      "areas": [
+        "강원특별자치도 철원군 근북면"
+      ]
+    },
+    {
+      "nx": 70,
+      "ny": 144,
+      "nearest": {
+        "nx": 70,
+        "ny": 143
+      },
+      "distanceKmFromCellCenter": 5.128089616850872,
+      "areas": [
+        "강원특별자치도 철원군 원남면"
+      ]
+    },
+    {
+      "nx": 72,
+      "ny": 144,
+      "nearest": {
+        "nx": 72,
+        "ny": 143
+      },
+      "distanceKmFromCellCenter": 5.128068540748963,
+      "areas": [
+        "강원특별자치도 철원군 원동면"
+      ]
+    },
+    {
+      "nx": 73,
+      "ny": 144,
+      "nearest": {
+        "nx": 73,
+        "ny": 143
+      },
+      "distanceKmFromCellCenter": 5.128057436449498,
+      "areas": [
+        "강원특별자치도 철원군 원동면"
+      ]
+    },
+    {
+      "nx": 79,
+      "ny": 144,
+      "nearest": {
+        "nx": 79,
+        "ny": 143
+      },
+      "distanceKmFromCellCenter": 5.127982875358329,
+      "areas": [
+        "강원특별자치도 양구군 해안면",
+        "강원특별자치도 인제군 서화면"
+      ]
+    },
+    {
+      "nx": 80,
+      "ny": 145,
+      "nearest": {
+        "nx": 80,
+        "ny": 144
+      },
+      "distanceKmFromCellCenter": 5.12851113544583,
+      "areas": [
+        "강원특별자치도 인제군 서화면"
+      ]
+    },
+    {
+      "nx": 81,
+      "ny": 146,
+      "nearest": {
+        "nx": 81,
+        "ny": 145
+      },
+      "distanceKmFromCellCenter": 5.129036266830589,
+      "areas": [
+        "강원특별자치도 고성군 수동면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 148,
+      "nearest": {
+        "nx": 82,
+        "ny": 147
+      },
+      "distanceKmFromCellCenter": 5.130091748351596,
+      "areas": [
+        "강원특별자치도 고성군 수동면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 149,
+      "nearest": {
+        "nx": 83,
+        "ny": 149
+      },
+      "distanceKmFromCellCenter": 5.151979060556956,
+      "areas": [
+        "강원특별자치도 고성군 수동면",
+        "강원특별자치도 고성군 현내면"
+      ]
+    },
+    {
+      "nx": 82,
+      "ny": 150,
+      "nearest": {
+        "nx": 83,
+        "ny": 149
+      },
+      "distanceKmFromCellCenter": 7.2705866258729985,
+      "areas": [
+        "강원특별자치도 고성군 수동면",
+        "강원특별자치도 고성군 현내면"
+      ]
+    },
+    {
+      "nx": 83,
+      "ny": 150,
+      "nearest": {
+        "nx": 83,
+        "ny": 149
+      },
+      "distanceKmFromCellCenter": 5.131135553851101,
+      "areas": [
+        "강원특별자치도 고성군 현내면"
+      ]
+    }
+  ]
+}

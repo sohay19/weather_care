@@ -1,0 +1,161 @@
+{
+  "audit": {
+    "observedAt": "2026-10-04T13:00:00+09:00",
+    "gridCount": 37697,
+    "fields": {
+      "T1H": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "REH": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "WSD": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "VEC": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      },
+      "PTY": {
+        "storedCells": 37697,
+        "validCells": 9295,
+        "sourceMissingCells": 28402,
+        "fileAvailable": true
+      },
+      "RN1": {
+        "storedCells": 37697,
+        "validCells": 4444,
+        "sourceMissingCells": 33253,
+        "fileAvailable": true
+      }
+    },
+    "coreValidCells": 4444
+  },
+  "operationalCacheCounts": [
+    [
+      "AIR_QUALITY",
+      34,
+      24
+    ],
+    [
+      "COLLECTED_COMPARISON",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_ENVIRONMENTAL",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_FORECAST",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_REGION",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_ULTRA_SHORT",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_VISIBILITY",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_WARNING",
+      1633,
+      1633
+    ],
+    [
+      "COLLECTED_WARNING_REGION",
+      6,
+      6
+    ],
+    [
+      "COLLECTED_WEEKLY",
+      1633,
+      1633
+    ],
+    [
+      "CURRENT",
+      1633,
+      1633
+    ],
+    [
+      "UV",
+      1633,
+      1633
+    ]
+  ],
+  "firstAttempts": {
+    "T1H": {
+      "status": 200,
+      "elapsedMs": 366,
+      "bytes": 341297
+    },
+    "REH": {
+      "status": 200,
+      "elapsedMs": 269,
+      "bytes": 341297
+    },
+    "WSD": {
+      "error": "TimeoutError",
+      "httpStatus": null,
+      "elapsedMs": 30121
+    },
+    "VEC": {
+      "error": "TimeoutError",
+      "httpStatus": null,
+      "elapsedMs": 30121
+    },
+    "PTY": {
+      "error": "TimeoutError",
+      "httpStatus": null,
+      "elapsedMs": 30120
+    },
+    "RN1": {
+      "error": "TimeoutError",
+      "httpStatus": null,
+      "elapsedMs": 30115
+    }
+  },
+  "retryAttempts": {
+    "WSD": {
+      "status": 200,
+      "elapsedMs": 232,
+      "bytes": 341297
+    },
+    "VEC": {
+      "status": 200,
+      "elapsedMs": 243,
+      "bytes": 341297
+    },
+    "PTY": {
+      "status": 200,
+      "elapsedMs": 751,
+      "bytes": 341297
+    },
+    "RN1": {
+      "status": 200,
+      "elapsedMs": 616,
+      "bytes": 341297
+    }
+  }
+}

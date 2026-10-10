@@ -285,10 +285,48 @@ void main() {
     expect(find.text('27℃'), findsNWidgets(2));
     expect(find.text('평균 습도 63%'), findsOneWidget);
     expect(find.text('최대 풍속 4.2m/s'), findsOneWidget);
-    expect(find.text('예상 강설 0cm'), findsOneWidget);
+    expect(find.text('예상 신적설 0cm'), findsOneWidget);
     expect(find.text('자외선 최고 7'), findsOneWidget);
     expect(find.text('미세먼지 보통 · 초미세먼지 낮음 · 신뢰도 높음'), findsOneWidget);
     expect(find.textContaining('오존'), findsNothing);
+  });
+
+  for (final source in ['historical', 'KMA_OBSERVATION']) {
+    testWidgets('과거 적설은 $source 근거로 최심신적설을 표시한다', (tester) async {
+      final day = WeeklyForecastItem.fromJson({
+        'forecastDate': '2026-10-09',
+        'min': 10,
+        'max': 20,
+        'historical': source == 'historical',
+        if (source == 'KMA_OBSERVATION') 'forecastSource': source,
+        'snowfallAmount': 1.2,
+        'recommendations': [],
+      });
+      await _pump(tester, [day],
+          now: () => DateTime.parse('2026-10-10T01:00:00Z'));
+      await tester.scrollUntilVisible(find.text('최심신적설 1.2cm'), 200);
+      expect(find.text('최심신적설 1.2cm'), findsOneWidget);
+      expect(find.textContaining('예상 신적설'), findsNothing);
+      expect(find.text('적설량 1.2cm'), findsNothing);
+    });
+  }
+
+  testWidgets('과거 신적설 미확보는 0cm로 바꾸지 않는다', (tester) async {
+    await _pump(
+        tester,
+        [
+          WeeklyForecastItem.fromJson({
+            'forecastDate': '2026-10-09',
+            'historical': true,
+            'min': 10,
+            'max': 20,
+            'observationAvailability': {'snowfallAmount': 'NO_RECORD'},
+            'recommendations': [],
+          })
+        ],
+        now: () => DateTime.parse('2026-10-10T01:00:00Z'));
+    expect(find.textContaining('최심신적설'), findsNothing);
+    expect(find.textContaining('예상 신적설'), findsNothing);
   });
 
   testWidgets('자정에는 자료를 다시 받지 않아도 오늘 배지가 바뀐다', (tester) async {

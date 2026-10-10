@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
-import '../weather_labels.dart';
 import '../weather_data_phase.dart';
 import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
@@ -153,25 +152,12 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               )
             : metric)
         .toList(growable: false);
-    final timeLabel =
-        forecastTemperatureLabel(current.observedAt ?? current.forecastAt);
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            timeLabel == '시'
-                ? widget.dataPhase.missingText('시각 자료 없음')
-                : '$timeLabel${isObservation ? ' 실황' : ''}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: WeatherCareTheme.textSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -353,7 +339,7 @@ String _visibilityDetail(CurrentWeather current) {
     source.add('관측소 $station');
   }
   if (current.visibilityStationDistanceKm case final distance?) {
-    source.add('대표 지점에서 ${distance.toStringAsFixed(1)}km');
+    source.add('요청 위치에서 관측소까지 ${distance.toStringAsFixed(1)}km');
   }
   final observed = _koreaObservationClock(current.visibilityObservedAt);
   if (observed != null) source.add(observed);

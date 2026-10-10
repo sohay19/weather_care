@@ -101,9 +101,9 @@ void main() {
     expect(zero.pm25, 0);
   });
 
-  testWidgets('관측·예보 시각이 없으면 시 한 글자만 표시하지 않는다', (tester) async {
+  testWidgets('현재 카드에는 별도 시각 문구를 표시하지 않는다', (tester) async {
     await _pumpCard(tester, const CurrentWeather(temperature: 22));
-    expect(find.text('시각 자료 없음'), findsOneWidget);
+    expect(find.text('시각 자료 없음'), findsNothing);
     expect(find.text('시'), findsNothing);
   });
 
@@ -136,7 +136,7 @@ void main() {
     expect(current.kmaApparentTemperature, 25.1);
   });
 
-  testWidgets('초단기실황 현재 날씨는 관측 시각과 실황 계산 근거를 표시한다', (tester) async {
+  testWidgets('초단기실황 현재 날씨는 상세에 실황 계산 근거를 표시한다', (tester) async {
     await _pumpCard(
       tester,
       const CurrentWeather(
@@ -150,7 +150,7 @@ void main() {
       ),
     );
 
-    expect(find.text('오후 2시 실황'), findsOneWidget);
+    expect(find.text('오후 2시 실황'), findsNothing);
     final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
     await tester.ensureVisible(detailButton);
     await tester.tap(detailButton);
@@ -371,7 +371,7 @@ void main() {
         sunriseAt: '2026-09-20T21:17:00Z',
         sunsetAt: '2026-09-21T09:28:00Z',
       );
-      expect(find.text('오후 3시'), findsOneWidget);
+      expect(find.text('오후 3시'), findsNothing);
       expect(find.text('29.0℃'), findsOneWidget);
       expect(find.text('32.7℃'), findsOneWidget);
       expect(find.text('남서 2.8m/s'), findsOneWidget);

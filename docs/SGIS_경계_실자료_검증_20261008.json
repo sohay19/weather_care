@@ -1,0 +1,2844 @@
+{
+  "source": {
+    "type": "manifest",
+    "format": 1,
+    "builderRevision": 1,
+    "version": "2f79b2c54983df7fb69a4ba3d9c78fccfa806c4817684b731c55d75bfef2c5f4",
+    "sourceDate": "2025-06-30",
+    "source": "통계청 SGIS 센서스용 행정구역경계(2025년 2분기)·행정구역 코드집",
+    "sources": [
+      "https://sgis.mods.go.kr/view/pss/dataProvdIntrcn",
+      "https://isel.seo.incheon.kr/open_content/main/open_info/boundary/faq.jsp",
+      "https://www.hscity.go.kr/office/intro.jsp"
+    ],
+    "sourceSha256": {
+      "boundaries": "e9eaa6facb3ed5292c8d76eee7f4c4a834646a09f3164d6b0013cb392d712efb",
+      "codebook": "e95f43f59c9f159ae103fae86d239f81c05ded17441885e420aca022ae07ca0c",
+      "catalog": "e1d4b10ee0e4ecbab8a00b698e0844fd16bb06095ef2ec431895aa323da0ce64"
+    },
+    "catalogSha256": "e1d4b10ee0e4ecbab8a00b698e0844fd16bb06095ef2ec431895aa323da0ce64",
+    "featureCount": 3559,
+    "gridCount": 2848,
+    "precisionCounts": {
+      "DONG": 3545,
+      "PARENT": 14,
+      "UNMAPPED": 0
+    },
+    "codebookDiscrepancies": [
+      {
+        "sgisCode": "37580351",
+        "sourceName": "경상북도 성주군 금수강산면"
+      }
+    ]
+  },
+  "artifactSha256": "89dc2c52baba5215bfd59234b757fda55a0297ee6e0077f8c4b2066e25f37815",
+  "imported": {
+    "version": "2f79b2c54983df7fb69a4ba3d9c78fccfa806c4817684b731c55d75bfef2c5f4",
+    "features": 3559,
+    "grids": 2848,
+    "precisionCounts": {
+      "DONG": 3545,
+      "PARENT": 14,
+      "UNMAPPED": 0
+    }
+  },
+  "results": {
+    "features": 3559,
+    "landSamples": 4368,
+    "centers": {
+      "DONG": 409,
+      "PARENT": 1,
+      "OUTSIDE": 15,
+      "UNMAPPED": 0
+    },
+    "gridReferences": 2848
+  },
+  "centers": [
+    {
+      "nx": 73,
+      "ny": 134,
+      "precision": "DONG",
+      "code": "5111031000"
+    },
+    {
+      "nx": 92,
+      "ny": 131,
+      "precision": "DONG",
+      "code": "5115033000"
+    },
+    {
+      "nx": 92,
+      "ny": 132,
+      "precision": "DONG",
+      "code": "5115066500"
+    },
+    {
+      "nx": 93,
+      "ny": 132,
+      "precision": "DONG",
+      "code": "5115059000"
+    },
+    {
+      "nx": 97,
+      "ny": 127,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 96,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "5117054000"
+    },
+    {
+      "nx": 97,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "5117052000"
+    },
+    {
+      "nx": 98,
+      "ny": 125,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 87,
+      "ny": 141,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 87,
+      "ny": 140,
+      "precision": "DONG",
+      "code": "5183035000"
+    },
+    {
+      "nx": 88,
+      "ny": 138,
+      "precision": "DONG",
+      "code": "5183032000"
+    },
+    {
+      "nx": 82,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "5175036000"
+    },
+    {
+      "nx": 76,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "5113066000"
+    },
+    {
+      "nx": 77,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "5113067500"
+    },
+    {
+      "nx": 92,
+      "ny": 120,
+      "precision": "DONG",
+      "code": "5177025300"
+    },
+    {
+      "nx": 64,
+      "ny": 141,
+      "precision": "DONG",
+      "code": "5178025900"
+    },
+    {
+      "nx": 72,
+      "ny": 134,
+      "precision": "DONG",
+      "code": "5111057000"
+    },
+    {
+      "nx": 73,
+      "ny": 133,
+      "precision": "DONG",
+      "code": "5111065000"
+    },
+    {
+      "nx": 95,
+      "ny": 119,
+      "precision": "DONG",
+      "code": "5119052500"
+    },
+    {
+      "nx": 95,
+      "ny": 117,
+      "precision": "DONG",
+      "code": "4792039000"
+    },
+    {
+      "nx": 75,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "5172038000"
+    },
+    {
+      "nx": 60,
+      "ny": 120,
+      "precision": "DONG",
+      "code": "4111355000"
+    },
+    {
+      "nx": 69,
+      "ny": 133,
+      "precision": "DONG",
+      "code": "4182025000"
+    },
+    {
+      "nx": 66,
+      "ny": 132,
+      "precision": "DONG",
+      "code": "4182034500"
+    },
+    {
+      "nx": 57,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4128161000"
+    },
+    {
+      "nx": 59,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "4163034000"
+    },
+    {
+      "nx": 58,
+      "ny": 129,
+      "precision": "DONG",
+      "code": "4128152000"
+    },
+    {
+      "nx": 58,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "4128167000"
+    },
+    {
+      "nx": 57,
+      "ny": 129,
+      "precision": "DONG",
+      "code": "4128551000"
+    },
+    {
+      "nx": 58,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4128153000"
+    },
+    {
+      "nx": 59,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "1138053000"
+    },
+    {
+      "nx": 56,
+      "ny": 129,
+      "precision": "DONG",
+      "code": "4128756000"
+    },
+    {
+      "nx": 57,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "4128560000"
+    },
+    {
+      "nx": 56,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4157025300"
+    },
+    {
+      "nx": 55,
+      "ny": 129,
+      "precision": "DONG",
+      "code": "4128758000"
+    },
+    {
+      "nx": 56,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "4148055000"
+    },
+    {
+      "nx": 60,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4129051000"
+    },
+    {
+      "nx": 60,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4143056000"
+    },
+    {
+      "nx": 58,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "4121059000"
+    },
+    {
+      "nx": 58,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4121065000"
+    },
+    {
+      "nx": 58,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4139057000"
+    },
+    {
+      "nx": 65,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4161025300"
+    },
+    {
+      "nx": 64,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4161056000"
+    },
+    {
+      "nx": 64,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4161055000"
+    },
+    {
+      "nx": 63,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4161061000"
+    },
+    {
+      "nx": 64,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4161058000"
+    },
+    {
+      "nx": 62,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "4131054100"
+    },
+    {
+      "nx": 62,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4131051000"
+    },
+    {
+      "nx": 63,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "4131059000"
+    },
+    {
+      "nx": 63,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4136054500"
+    },
+    {
+      "nx": 59,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4141058000"
+    },
+    {
+      "nx": 59,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4127160000"
+    },
+    {
+      "nx": 55,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4157051500"
+    },
+    {
+      "nx": 56,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "2824571000"
+    },
+    {
+      "nx": 54,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4157025600"
+    },
+    {
+      "nx": 55,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "2829053000"
+    },
+    {
+      "nx": 64,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "4136025000"
+    },
+    {
+      "nx": 62,
+      "ny": 129,
+      "precision": "DONG",
+      "code": "4136057000"
+    },
+    {
+      "nx": 64,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "4136025000"
+    },
+    {
+      "nx": 61,
+      "ny": 134,
+      "precision": "DONG",
+      "code": "4125052000"
+    },
+    {
+      "nx": 57,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "4119257000"
+    },
+    {
+      "nx": 56,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "4119267000"
+    },
+    {
+      "nx": 57,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "4119655000"
+    },
+    {
+      "nx": 56,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "2824564000"
+    },
+    {
+      "nx": 62,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4113565700"
+    },
+    {
+      "nx": 62,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4113566200"
+    },
+    {
+      "nx": 63,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4113558000"
+    },
+    {
+      "nx": 63,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4113358000"
+    },
+    {
+      "nx": 62,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4113164000"
+    },
+    {
+      "nx": 63,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "4145058500"
+    },
+    {
+      "nx": 61,
+      "ny": 120,
+      "precision": "DONG",
+      "code": "4111753000"
+    },
+    {
+      "nx": 59,
+      "ny": 120,
+      "precision": "DONG",
+      "code": "4159331000"
+    },
+    {
+      "nx": 60,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4111157100"
+    },
+    {
+      "nx": 61,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4111760000"
+    },
+    {
+      "nx": 62,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4146359000"
+    },
+    {
+      "nx": 62,
+      "ny": 120,
+      "precision": "DONG",
+      "code": "4146351700"
+    },
+    {
+      "nx": 57,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4139063000"
+    },
+    {
+      "nx": 57,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4139051000"
+    },
+    {
+      "nx": 57,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4127360000"
+    },
+    {
+      "nx": 56,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4139058900"
+    },
+    {
+      "nx": 56,
+      "ny": 123,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 57,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4127357000"
+    },
+    {
+      "nx": 58,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4127151500"
+    },
+    {
+      "nx": 58,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4127161000"
+    },
+    {
+      "nx": 65,
+      "ny": 115,
+      "precision": "DONG",
+      "code": "4155053000"
+    },
+    {
+      "nx": 63,
+      "ny": 114,
+      "precision": "DONG",
+      "code": "4155025000"
+    },
+    {
+      "nx": 59,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "4117151000"
+    },
+    {
+      "nx": 60,
+      "ny": 122,
+      "precision": "DONG",
+      "code": "4143051000"
+    },
+    {
+      "nx": 61,
+      "ny": 131,
+      "precision": "DONG",
+      "code": "4163051000"
+    },
+    {
+      "nx": 60,
+      "ny": 132,
+      "precision": "DONG",
+      "code": "4163033000"
+    },
+    {
+      "nx": 62,
+      "ny": 132,
+      "precision": "DONG",
+      "code": "4163052000"
+    },
+    {
+      "nx": 61,
+      "ny": 133,
+      "precision": "DONG",
+      "code": "4163031000"
+    },
+    {
+      "nx": 69,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "4183025000"
+    },
+    {
+      "nx": 71,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4167034500"
+    },
+    {
+      "nx": 60,
+      "ny": 137,
+      "precision": "DONG",
+      "code": "4180034000"
+    },
+    {
+      "nx": 62,
+      "ny": 118,
+      "precision": "DONG",
+      "code": "4159758000"
+    },
+    {
+      "nx": 61,
+      "ny": 118,
+      "precision": "DONG",
+      "code": "4137053000"
+    },
+    {
+      "nx": 62,
+      "ny": 117,
+      "precision": "DONG",
+      "code": "4122031000"
+    },
+    {
+      "nx": 61,
+      "ny": 117,
+      "precision": "DONG",
+      "code": "4122032000"
+    },
+    {
+      "nx": 63,
+      "ny": 120,
+      "precision": "DONG",
+      "code": "4146357500"
+    },
+    {
+      "nx": 64,
+      "ny": 119,
+      "precision": "DONG",
+      "code": "4146125600"
+    },
+    {
+      "nx": 64,
+      "ny": 120,
+      "precision": "PARENT",
+      "code": "4146100000"
+    },
+    {
+      "nx": 61,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "4115054500"
+    },
+    {
+      "nx": 62,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "4115063000"
+    },
+    {
+      "nx": 68,
+      "ny": 121,
+      "precision": "DONG",
+      "code": "4150051500"
+    },
+    {
+      "nx": 71,
+      "ny": 117,
+      "precision": "DONG",
+      "code": "4150025000"
+    },
+    {
+      "nx": 56,
+      "ny": 131,
+      "precision": "DONG",
+      "code": "4148053000"
+    },
+    {
+      "nx": 55,
+      "ny": 130,
+      "precision": "DONG",
+      "code": "4148059000"
+    },
+    {
+      "nx": 57,
+      "ny": 132,
+      "precision": "DONG",
+      "code": "4148025300"
+    },
+    {
+      "nx": 62,
+      "ny": 114,
+      "precision": "DONG",
+      "code": "4122060000"
+    },
+    {
+      "nx": 61,
+      "ny": 115,
+      "precision": "DONG",
+      "code": "4122066000"
+    },
+    {
+      "nx": 62,
+      "ny": 115,
+      "precision": "DONG",
+      "code": "4122053500"
+    },
+    {
+      "nx": 61,
+      "ny": 116,
+      "precision": "DONG",
+      "code": "4122033000"
+    },
+    {
+      "nx": 59,
+      "ny": 114,
+      "precision": "DONG",
+      "code": "4122025300"
+    },
+    {
+      "nx": 64,
+      "ny": 134,
+      "precision": "DONG",
+      "code": "4165031000"
+    },
+    {
+      "nx": 63,
+      "ny": 133,
+      "precision": "DONG",
+      "code": "4165052000"
+    },
+    {
+      "nx": 64,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "4145051000"
+    },
+    {
+      "nx": 63,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "4145060000"
+    },
+    {
+      "nx": 62,
+      "ny": 119,
+      "precision": "DONG",
+      "code": "4159755000"
+    },
+    {
+      "nx": 61,
+      "ny": 119,
+      "precision": "DONG",
+      "code": "4159553000"
+    },
+    {
+      "nx": 56,
+      "ny": 119,
+      "precision": "DONG",
+      "code": "4159132000"
+    },
+    {
+      "nx": 57,
+      "ny": 116,
+      "precision": "DONG",
+      "code": "4159135000"
+    },
+    {
+      "nx": 91,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4812154000"
+    },
+    {
+      "nx": 90,
+      "ny": 69,
+      "precision": "DONG",
+      "code": "4831058000"
+    },
+    {
+      "nx": 92,
+      "ny": 69,
+      "precision": "DONG",
+      "code": "4831053000"
+    },
+    {
+      "nx": 91,
+      "ny": 69,
+      "precision": "DONG",
+      "code": "4831055000"
+    },
+    {
+      "nx": 91,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "4831039000"
+    },
+    {
+      "nx": 77,
+      "ny": 86,
+      "precision": "DONG",
+      "code": "4888025000"
+    },
+    {
+      "nx": 85,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "4882039000"
+    },
+    {
+      "nx": 81,
+      "ny": 70,
+      "precision": "DONG",
+      "code": "4824057000"
+    },
+    {
+      "nx": 95,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4825059000"
+    },
+    {
+      "nx": 94,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4825054000"
+    },
+    {
+      "nx": 93,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "4825061000"
+    },
+    {
+      "nx": 77,
+      "ny": 69,
+      "precision": "DONG",
+      "code": "4884038000"
+    },
+    {
+      "nx": 92,
+      "ny": 82,
+      "precision": "DONG",
+      "code": "4827054000"
+    },
+    {
+      "nx": 80,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "4824059500"
+    },
+    {
+      "nx": 80,
+      "ny": 70,
+      "precision": "DONG",
+      "code": "4824051000"
+    },
+    {
+      "nx": 76,
+      "ny": 80,
+      "precision": "DONG",
+      "code": "4886034000"
+    },
+    {
+      "nx": 78,
+      "ny": 78,
+      "precision": "DONG",
+      "code": "4886037000"
+    },
+    {
+      "nx": 97,
+      "ny": 79,
+      "precision": "DONG",
+      "code": "4833051000"
+    },
+    {
+      "nx": 99,
+      "ny": 80,
+      "precision": "DONG",
+      "code": "4833057000"
+    },
+    {
+      "nx": 99,
+      "ny": 81,
+      "precision": "DONG",
+      "code": "4833055000"
+    },
+    {
+      "nx": 83,
+      "ny": 78,
+      "precision": "DONG",
+      "code": "4872025000"
+    },
+    {
+      "nx": 84,
+      "ny": 81,
+      "precision": "DONG",
+      "code": "4872042000"
+    },
+    {
+      "nx": 82,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4817040000"
+    },
+    {
+      "nx": 81,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "4817075000"
+    },
+    {
+      "nx": 81,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "4817041000"
+    },
+    {
+      "nx": 80,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "4817051500"
+    },
+    {
+      "nx": 84,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "4817036000"
+    },
+    {
+      "nx": 80,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "4817069500"
+    },
+    {
+      "nx": 77,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "4885041000"
+    },
+    {
+      "nx": 87,
+      "ny": 85,
+      "precision": "DONG",
+      "code": "4874032000"
+    },
+    {
+      "nx": 88,
+      "ny": 81,
+      "precision": "DONG",
+      "code": "4874038000"
+    },
+    {
+      "nx": 89,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "4812563000"
+    },
+    {
+      "nx": 89,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "4812552000"
+    },
+    {
+      "nx": 89,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4812760000"
+    },
+    {
+      "nx": 91,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "4812356000"
+    },
+    {
+      "nx": 90,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4812153000"
+    },
+    {
+      "nx": 91,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "4812957000"
+    },
+    {
+      "nx": 87,
+      "ny": 68,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 86,
+      "ny": 68,
+      "precision": "DONG",
+      "code": "4822051000"
+    },
+    {
+      "nx": 76,
+      "ny": 72,
+      "precision": "DONG",
+      "code": "4885038000"
+    },
+    {
+      "nx": 75,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "4885033000"
+    },
+    {
+      "nx": 86,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "4873025000"
+    },
+    {
+      "nx": 74,
+      "ny": 82,
+      "precision": "DONG",
+      "code": "4887025000"
+    },
+    {
+      "nx": 83,
+      "ny": 83,
+      "precision": "DONG",
+      "code": "4889036000"
+    },
+    {
+      "nx": 87,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4717025000"
+    },
+    {
+      "nx": 91,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "2726069000"
+    },
+    {
+      "nx": 91,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "4729037000"
+    },
+    {
+      "nx": 93,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "4729035000"
+    },
+    {
+      "nx": 92,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "4729025600"
+    },
+    {
+      "nx": 93,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "4729025300"
+    },
+    {
+      "nx": 100,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "4713061500"
+    },
+    {
+      "nx": 100,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "4713060500"
+    },
+    {
+      "nx": 84,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4719053500"
+    },
+    {
+      "nx": 85,
+      "ny": 95,
+      "precision": "DONG",
+      "code": "4719070000"
+    },
+    {
+      "nx": 85,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4719069000"
+    },
+    {
+      "nx": 84,
+      "ny": 95,
+      "precision": "DONG",
+      "code": "4785025300"
+    },
+    {
+      "nx": 86,
+      "ny": 95,
+      "precision": "DONG",
+      "code": "4719067000"
+    },
+    {
+      "nx": 80,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4715057500"
+    },
+    {
+      "nx": 80,
+      "ny": 94,
+      "precision": "DONG",
+      "code": "4715040000"
+    },
+    {
+      "nx": 79,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4715037000"
+    },
+    {
+      "nx": 81,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4715031000"
+    },
+    {
+      "nx": 81,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4728061000"
+    },
+    {
+      "nx": 82,
+      "ny": 107,
+      "precision": "DONG",
+      "code": "4728034000"
+    },
+    {
+      "nx": 82,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4728032000"
+    },
+    {
+      "nx": 90,
+      "ny": 113,
+      "precision": "DONG",
+      "code": "4792025000"
+    },
+    {
+      "nx": 81,
+      "ny": 102,
+      "precision": "DONG",
+      "code": "4725056000"
+    },
+    {
+      "nx": 77,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "4725038000"
+    },
+    {
+      "nx": 81,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "4784034000"
+    },
+    {
+      "nx": 91,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4717052000"
+    },
+    {
+      "nx": 91,
+      "ny": 105,
+      "precision": "DONG",
+      "code": "4717069000"
+    },
+    {
+      "nx": 90,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4717066000"
+    },
+    {
+      "nx": 103,
+      "ny": 105,
+      "precision": "DONG",
+      "code": "4777035000"
+    },
+    {
+      "nx": 89,
+      "ny": 111,
+      "precision": "DONG",
+      "code": "4721059000"
+    },
+    {
+      "nx": 87,
+      "ny": 112,
+      "precision": "DONG",
+      "code": "4721036000"
+    },
+    {
+      "nx": 95,
+      "ny": 93,
+      "precision": "DONG",
+      "code": "4723051000"
+    },
+    {
+      "nx": 102,
+      "ny": 115,
+      "precision": "DONG",
+      "code": "4793033000"
+    },
+    {
+      "nx": 85,
+      "ny": 93,
+      "precision": "DONG",
+      "code": "4785037000"
+    },
+    {
+      "nx": 85,
+      "ny": 94,
+      "precision": "DONG",
+      "code": "4785036000"
+    },
+    {
+      "nx": 102,
+      "ny": 94,
+      "precision": "DONG",
+      "code": "4711152500"
+    },
+    {
+      "nx": 103,
+      "ny": 94,
+      "precision": "DONG",
+      "code": "4711156000"
+    },
+    {
+      "nx": 102,
+      "ny": 95,
+      "precision": "DONG",
+      "code": "4711368000"
+    },
+    {
+      "nx": 89,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "2720051500"
+    },
+    {
+      "nx": 88,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "2772025000"
+    },
+    {
+      "nx": 88,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "2729055000"
+    },
+    {
+      "nx": 88,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "2729062800"
+    },
+    {
+      "nx": 87,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "2729058500"
+    },
+    {
+      "nx": 87,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "2771025000"
+    },
+    {
+      "nx": 89,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "2771031000"
+    },
+    {
+      "nx": 90,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "2714068500"
+    },
+    {
+      "nx": 89,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "2723063000"
+    },
+    {
+      "nx": 91,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "2714075500"
+    },
+    {
+      "nx": 88,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "2717061000"
+    },
+    {
+      "nx": 88,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "2723077000"
+    },
+    {
+      "nx": 90,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "2726068000"
+    },
+    {
+      "nx": 90,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "2726066100"
+    },
+    {
+      "nx": 67,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "3017054000"
+    },
+    {
+      "nx": 68,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "3014053500"
+    },
+    {
+      "nx": 68,
+      "ny": 101,
+      "precision": "DONG",
+      "code": "3023052500"
+    },
+    {
+      "nx": 68,
+      "ny": 102,
+      "precision": "DONG",
+      "code": "3023057000"
+    },
+    {
+      "nx": 68,
+      "ny": 103,
+      "precision": "DONG",
+      "code": "4311232000"
+    },
+    {
+      "nx": 69,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "3011072500"
+    },
+    {
+      "nx": 67,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "3017053500"
+    },
+    {
+      "nx": 66,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "3020052000"
+    },
+    {
+      "nx": 67,
+      "ny": 101,
+      "precision": "DONG",
+      "code": "3020055000"
+    },
+    {
+      "nx": 66,
+      "ny": 101,
+      "precision": "DONG",
+      "code": "3020054800"
+    },
+    {
+      "nx": 66,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "3020052600"
+    },
+    {
+      "nx": 68,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "3014074000"
+    },
+    {
+      "nx": 98,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "2647065000"
+    },
+    {
+      "nx": 96,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "2644052000"
+    },
+    {
+      "nx": 95,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "2644053000"
+    },
+    {
+      "nx": 94,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "2644056000"
+    },
+    {
+      "nx": 95,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "2644053500"
+    },
+    {
+      "nx": 98,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "2641060000"
+    },
+    {
+      "nx": 97,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "2632054100"
+    },
+    {
+      "nx": 98,
+      "ny": 78,
+      "precision": "DONG",
+      "code": "2641066500"
+    },
+    {
+      "nx": 98,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "2629068000"
+    },
+    {
+      "nx": 98,
+      "ny": 74,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 99,
+      "ny": 74,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 97,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "2611056000"
+    },
+    {
+      "nx": 97,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "2623072000"
+    },
+    {
+      "nx": 97,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "2623055000"
+    },
+    {
+      "nx": 96,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "2653064500"
+    },
+    {
+      "nx": 96,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "2638056100"
+    },
+    {
+      "nx": 96,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "2638060100"
+    },
+    {
+      "nx": 99,
+      "ny": 75,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 99,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "2635066000"
+    },
+    {
+      "nx": 98,
+      "ny": 73,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 99,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "2635062000"
+    },
+    {
+      "nx": 100,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "2635056000"
+    },
+    {
+      "nx": 60,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "1111061500"
+    },
+    {
+      "nx": 61,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "1168056500"
+    },
+    {
+      "nx": 61,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "1168065500"
+    },
+    {
+      "nx": 62,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "1168075000"
+    },
+    {
+      "nx": 62,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "1171052000"
+    },
+    {
+      "nx": 61,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "1130560800"
+    },
+    {
+      "nx": 60,
+      "ny": 128,
+      "precision": "DONG",
+      "code": "1129065000"
+    },
+    {
+      "nx": 58,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "1147055000"
+    },
+    {
+      "nx": 57,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "1150064100"
+    },
+    {
+      "nx": 59,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "1162069500"
+    },
+    {
+      "nx": 60,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "1165062100"
+    },
+    {
+      "nx": 59,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "4117159000"
+    },
+    {
+      "nx": 61,
+      "ny": 129,
+      "precision": "DONG",
+      "code": "1135063000"
+    },
+    {
+      "nx": 61,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "1123056000"
+    },
+    {
+      "nx": 59,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "1141068500"
+    },
+    {
+      "nx": 60,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "1117065000"
+    },
+    {
+      "nx": 59,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "1156054000"
+    },
+    {
+      "nx": 66,
+      "ny": 103,
+      "precision": "DONG",
+      "code": "3611034000"
+    },
+    {
+      "nx": 65,
+      "ny": 104,
+      "precision": "DONG",
+      "code": "3611052000"
+    },
+    {
+      "nx": 65,
+      "ny": 103,
+      "precision": "DONG",
+      "code": "3611051800"
+    },
+    {
+      "nx": 63,
+      "ny": 108,
+      "precision": "DONG",
+      "code": "3611039000"
+    },
+    {
+      "nx": 66,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4311325000"
+    },
+    {
+      "nx": 102,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "3111058500"
+    },
+    {
+      "nx": 102,
+      "ny": 83,
+      "precision": "DONG",
+      "code": "3114064000"
+    },
+    {
+      "nx": 101,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "3114058500"
+    },
+    {
+      "nx": 104,
+      "ny": 83,
+      "precision": "DONG",
+      "code": "3117052000"
+    },
+    {
+      "nx": 104,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "3117060000"
+    },
+    {
+      "nx": 103,
+      "ny": 85,
+      "precision": "DONG",
+      "code": "3120057000"
+    },
+    {
+      "nx": 102,
+      "ny": 86,
+      "precision": "DONG",
+      "code": "3120053000"
+    },
+    {
+      "nx": 98,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "3171026500"
+    },
+    {
+      "nx": 102,
+      "ny": 85,
+      "precision": "DONG",
+      "code": "3111063000"
+    },
+    {
+      "nx": 55,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "2817770000"
+    },
+    {
+      "nx": 51,
+      "ny": 131,
+      "precision": "DONG",
+      "code": "2871039000"
+    },
+    {
+      "nx": 54,
+      "ny": 127,
+      "precision": "DONG",
+      "code": "2829055000"
+    },
+    {
+      "nx": 55,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "2824560100"
+    },
+    {
+      "nx": 56,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "2820065000"
+    },
+    {
+      "nx": 55,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "2820071000"
+    },
+    {
+      "nx": 54,
+      "ny": 124,
+      "precision": "DONG",
+      "code": "2817757000"
+    },
+    {
+      "nx": 54,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "2812562000"
+    },
+    {
+      "nx": 55,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "2827561000"
+    },
+    {
+      "nx": 54,
+      "ny": 126,
+      "precision": "DONG",
+      "code": "2827553700"
+    },
+    {
+      "nx": 54,
+      "ny": 123,
+      "precision": "DONG",
+      "code": "2818583000"
+    },
+    {
+      "nx": 53,
+      "ny": 125,
+      "precision": "DONG",
+      "code": "2815553000"
+    },
+    {
+      "nx": 51,
+      "ny": 67,
+      "precision": "DONG",
+      "code": "1281025600"
+    },
+    {
+      "nx": 64,
+      "ny": 61,
+      "precision": "DONG",
+      "code": "1274032000"
+    },
+    {
+      "nx": 66,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "1272025000"
+    },
+    {
+      "nx": 57,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "1233056500"
+    },
+    {
+      "nx": 57,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "1233066000"
+    },
+    {
+      "nx": 58,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "1284032000"
+    },
+    {
+      "nx": 58,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1233070000"
+    },
+    {
+      "nx": 57,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1233064000"
+    },
+    {
+      "nx": 73,
+      "ny": 70,
+      "precision": "DONG",
+      "code": "1219051500"
+    },
+    {
+      "nx": 74,
+      "ny": 70,
+      "precision": "DONG",
+      "code": "1219055000"
+    },
+    {
+      "nx": 74,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "1219035000"
+    },
+    {
+      "nx": 69,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1273025000"
+    },
+    {
+      "nx": 69,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "1273035000"
+    },
+    {
+      "nx": 70,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1273031000"
+    },
+    {
+      "nx": 56,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "1217051000"
+    },
+    {
+      "nx": 57,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "1217062000"
+    },
+    {
+      "nx": 56,
+      "ny": 72,
+      "precision": "DONG",
+      "code": "1217055000"
+    },
+    {
+      "nx": 59,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "1227071000"
+    },
+    {
+      "nx": 58,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "1227073000"
+    },
+    {
+      "nx": 59,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "1227064000"
+    },
+    {
+      "nx": 61,
+      "ny": 78,
+      "precision": "DONG",
+      "code": "1271025000"
+    },
+    {
+      "nx": 60,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "1271031000"
+    },
+    {
+      "nx": 60,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "1230068500"
+    },
+    {
+      "nx": 60,
+      "ny": 73,
+      "precision": "DONG",
+      "code": "1221074000"
+    },
+    {
+      "nx": 50,
+      "ny": 67,
+      "precision": "DONG",
+      "code": "1211055400"
+    },
+    {
+      "nx": 50,
+      "ny": 66,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 51,
+      "ny": 66,
+      "precision": "DONG",
+      "code": "1280025300"
+    },
+    {
+      "nx": 52,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "1282034000"
+    },
+    {
+      "nx": 50,
+      "ny": 71,
+      "precision": "DONG",
+      "code": "1281035000"
+    },
+    {
+      "nx": 62,
+      "ny": 66,
+      "precision": "DONG",
+      "code": "1275031000"
+    },
+    {
+      "nx": 61,
+      "ny": 65,
+      "precision": "DONG",
+      "code": "1277033000"
+    },
+    {
+      "nx": 59,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1230067300"
+    },
+    {
+      "nx": 59,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "1230069500"
+    },
+    {
+      "nx": 60,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1230068500"
+    },
+    {
+      "nx": 58,
+      "ny": 74,
+      "precision": "DONG",
+      "code": "1224074500"
+    },
+    {
+      "nx": 70,
+      "ny": 70,
+      "precision": "DONG",
+      "code": "1215057000"
+    },
+    {
+      "nx": 73,
+      "ny": 66,
+      "precision": "DONG",
+      "code": "1213078000"
+    },
+    {
+      "nx": 74,
+      "ny": 66,
+      "precision": "DONG",
+      "code": "1213076500"
+    },
+    {
+      "nx": 74,
+      "ny": 65,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 51,
+      "ny": 79,
+      "precision": "DONG",
+      "code": "1283037000"
+    },
+    {
+      "nx": 53,
+      "ny": 53,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 57,
+      "ny": 77,
+      "precision": "DONG",
+      "code": "1284025000"
+    },
+    {
+      "nx": 55,
+      "ny": 76,
+      "precision": "DONG",
+      "code": "1284034000"
+    },
+    {
+      "nx": 46,
+      "ny": 58,
+      "precision": "DONG",
+      "code": "1286035000"
+    },
+    {
+      "nx": 54,
+      "ny": 75,
+      "precision": "DONG",
+      "code": "1282038000"
+    },
+    {
+      "nx": 63,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "5211352500"
+    },
+    {
+      "nx": 56,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "5213065000"
+    },
+    {
+      "nx": 57,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "5213036000"
+    },
+    {
+      "nx": 55,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "5213071000"
+    },
+    {
+      "nx": 58,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "5213033000"
+    },
+    {
+      "nx": 56,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "5213031000"
+    },
+    {
+      "nx": 59,
+      "ny": 88,
+      "precision": "DONG",
+      "code": "5221052000"
+    },
+    {
+      "nx": 68,
+      "ny": 80,
+      "precision": "DONG",
+      "code": "5219054000"
+    },
+    {
+      "nx": 67,
+      "ny": 80,
+      "precision": "DONG",
+      "code": "5219056000"
+    },
+    {
+      "nx": 67,
+      "ny": 82,
+      "precision": "DONG",
+      "code": "5275035500"
+    },
+    {
+      "nx": 67,
+      "ny": 79,
+      "precision": "DONG",
+      "code": "5219033000"
+    },
+    {
+      "nx": 56,
+      "ny": 87,
+      "precision": "DONG",
+      "code": "5280025000"
+    },
+    {
+      "nx": 55,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "5280041000"
+    },
+    {
+      "nx": 55,
+      "ny": 86,
+      "precision": "DONG",
+      "code": "5280039000"
+    },
+    {
+      "nx": 63,
+      "ny": 79,
+      "precision": "DONG",
+      "code": "5277025000"
+    },
+    {
+      "nx": 63,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "5211364100"
+    },
+    {
+      "nx": 60,
+      "ny": 91,
+      "precision": "DONG",
+      "code": "5214057000"
+    },
+    {
+      "nx": 62,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "5214041000"
+    },
+    {
+      "nx": 60,
+      "ny": 92,
+      "precision": "DONG",
+      "code": "5214065600"
+    },
+    {
+      "nx": 61,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4423025000"
+    },
+    {
+      "nx": 60,
+      "ny": 93,
+      "precision": "DONG",
+      "code": "5214043000"
+    },
+    {
+      "nx": 60,
+      "ny": 95,
+      "precision": "DONG",
+      "code": "5214036000"
+    },
+    {
+      "nx": 64,
+      "ny": 82,
+      "precision": "DONG",
+      "code": "5275040000"
+    },
+    {
+      "nx": 66,
+      "ny": 86,
+      "precision": "DONG",
+      "code": "5272036000"
+    },
+    {
+      "nx": 67,
+      "ny": 83,
+      "precision": "DONG",
+      "code": "5219039000"
+    },
+    {
+      "nx": 62,
+      "ny": 90,
+      "precision": "DONG",
+      "code": "5211366500"
+    },
+    {
+      "nx": 64,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "5211361200"
+    },
+    {
+      "nx": 62,
+      "ny": 89,
+      "precision": "DONG",
+      "code": "5211367000"
+    },
+    {
+      "nx": 63,
+      "ny": 88,
+      "precision": "DONG",
+      "code": "5211169200"
+    },
+    {
+      "nx": 58,
+      "ny": 83,
+      "precision": "DONG",
+      "code": "5218056500"
+    },
+    {
+      "nx": 59,
+      "ny": 86,
+      "precision": "DONG",
+      "code": "5218025000"
+    },
+    {
+      "nx": 58,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "5218058000"
+    },
+    {
+      "nx": 61,
+      "ny": 84,
+      "precision": "DONG",
+      "code": "5218044000"
+    },
+    {
+      "nx": 60,
+      "ny": 85,
+      "precision": "DONG",
+      "code": "5218041000"
+    },
+    {
+      "nx": 52,
+      "ny": 38,
+      "precision": "DONG",
+      "code": "5011069000"
+    },
+    {
+      "nx": 52,
+      "ny": 33,
+      "precision": "DONG",
+      "code": "5013060000"
+    },
+    {
+      "nx": 52,
+      "ny": 32,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 53,
+      "ny": 33,
+      "precision": "DONG",
+      "code": "5013058000"
+    },
+    {
+      "nx": 53,
+      "ny": 32,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 54,
+      "ny": 33,
+      "precision": "DONG",
+      "code": "5013056000"
+    },
+    {
+      "nx": 53,
+      "ny": 38,
+      "precision": "DONG",
+      "code": "5011052000"
+    },
+    {
+      "nx": 54,
+      "ny": 38,
+      "precision": "DONG",
+      "code": "5011062000"
+    },
+    {
+      "nx": 51,
+      "ny": 38,
+      "precision": "OUTSIDE"
+    },
+    {
+      "nx": 65,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "3020052000"
+    },
+    {
+      "nx": 63,
+      "ny": 102,
+      "precision": "DONG",
+      "code": "4415056000"
+    },
+    {
+      "nx": 63,
+      "ny": 103,
+      "precision": "DONG",
+      "code": "4415057000"
+    },
+    {
+      "nx": 70,
+      "ny": 94,
+      "precision": "DONG",
+      "code": "4471033000"
+    },
+    {
+      "nx": 62,
+      "ny": 97,
+      "precision": "DONG",
+      "code": "4423052000"
+    },
+    {
+      "nx": 63,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "4423034000"
+    },
+    {
+      "nx": 62,
+      "ny": 96,
+      "precision": "DONG",
+      "code": "4423042000"
+    },
+    {
+      "nx": 54,
+      "ny": 112,
+      "precision": "DONG",
+      "code": "4427051000"
+    },
+    {
+      "nx": 54,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "4418054500"
+    },
+    {
+      "nx": 53,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "4418056500"
+    },
+    {
+      "nx": 53,
+      "ny": 102,
+      "precision": "DONG",
+      "code": "4418034000"
+    },
+    {
+      "nx": 59,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "4476025000"
+    },
+    {
+      "nx": 57,
+      "ny": 97,
+      "precision": "DONG",
+      "code": "4476038000"
+    },
+    {
+      "nx": 61,
+      "ny": 98,
+      "precision": "DONG",
+      "code": "4476045000"
+    },
+    {
+      "nx": 56,
+      "ny": 97,
+      "precision": "DONG",
+      "code": "4476037000"
+    },
+    {
+      "nx": 51,
+      "ny": 110,
+      "precision": "DONG",
+      "code": "4421052500"
+    },
+    {
+      "nx": 51,
+      "ny": 109,
+      "precision": "DONG",
+      "code": "4421055000"
+    },
+    {
+      "nx": 51,
+      "ny": 111,
+      "precision": "DONG",
+      "code": "4421034000"
+    },
+    {
+      "nx": 55,
+      "ny": 94,
+      "precision": "DONG",
+      "code": "4477031000"
+    },
+    {
+      "nx": 60,
+      "ny": 110,
+      "precision": "DONG",
+      "code": "4420060000"
+    },
+    {
+      "nx": 62,
+      "ny": 110,
+      "precision": "DONG",
+      "code": "4420025300"
+    },
+    {
+      "nx": 61,
+      "ny": 109,
+      "precision": "DONG",
+      "code": "4420025300"
+    },
+    {
+      "nx": 61,
+      "ny": 110,
+      "precision": "DONG",
+      "code": "4420025000"
+    },
+    {
+      "nx": 63,
+      "ny": 110,
+      "precision": "DONG",
+      "code": "4413156000"
+    },
+    {
+      "nx": 65,
+      "ny": 109,
+      "precision": "DONG",
+      "code": "4413135000"
+    },
+    {
+      "nx": 63,
+      "ny": 111,
+      "precision": "DONG",
+      "code": "4413358000"
+    },
+    {
+      "nx": 57,
+      "ny": 103,
+      "precision": "DONG",
+      "code": "4479039000"
+    },
+    {
+      "nx": 53,
+      "ny": 104,
+      "precision": "DONG",
+      "code": "4480035000"
+    },
+    {
+      "nx": 69,
+      "ny": 107,
+      "precision": "DONG",
+      "code": "4311451000"
+    },
+    {
+      "nx": 84,
+      "ny": 115,
+      "precision": "DONG",
+      "code": "4380025000"
+    },
+    {
+      "nx": 73,
+      "ny": 103,
+      "precision": "DONG",
+      "code": "4372025000"
+    },
+    {
+      "nx": 71,
+      "ny": 99,
+      "precision": "DONG",
+      "code": "4373025000"
+    },
+    {
+      "nx": 72,
+      "ny": 101,
+      "precision": "DONG",
+      "code": "4373033000"
+    },
+    {
+      "nx": 74,
+      "ny": 100,
+      "precision": "DONG",
+      "code": "4373035000"
+    },
+    {
+      "nx": 81,
+      "ny": 118,
+      "precision": "DONG",
+      "code": "4315056000"
+    },
+    {
+      "nx": 81,
+      "ny": 113,
+      "precision": "DONG",
+      "code": "4315033000"
+    },
+    {
+      "nx": 71,
+      "ny": 110,
+      "precision": "DONG",
+      "code": "4374525000"
+    },
+    {
+      "nx": 69,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4311256000"
+    },
+    {
+      "nx": 68,
+      "ny": 107,
+      "precision": "DONG",
+      "code": "4311377000"
+    },
+    {
+      "nx": 68,
+      "ny": 106,
+      "precision": "DONG",
+      "code": "4311376000"
+    },
+    {
+      "nx": 70,
+      "ny": 109,
+      "precision": "DONG",
+      "code": "4311431000"
+    },
+    {
+      "nx": 76,
+      "ny": 114,
+      "precision": "DONG",
+      "code": "4313060500"
+    },
+    {
+      "nx": 77,
+      "ny": 114,
+      "precision": "DONG",
+      "code": "4313053500"
+    }
+  ],
+  "landSampleGrids": 425,
+  "ambiguousGridWholeCellReferences": 286,
+  "upperOnlyBoundaries": [
+    {
+      "sgisCode": "11060810",
+      "kmaCode": "1123000000",
+      "precision": "PARENT",
+      "sourceName": "서울특별시 동대문구 용신동",
+      "sample": {
+        "longitude": 127.03412754496773,
+        "latitude": 37.576273024083875
+      }
+    },
+    {
+      "sgisCode": "23010630",
+      "kmaCode": "2815500000",
+      "precision": "PARENT",
+      "sourceName": "인천광역시 중구 용유동",
+      "sample": {
+        "longitude": 126.39478101930551,
+        "latitude": 37.45677725127599
+      }
+    },
+    {
+      "sgisCode": "23010640",
+      "kmaCode": "2815500000",
+      "precision": "PARENT",
+      "sourceName": "인천광역시 중구 운서동",
+      "sample": {
+        "longitude": 126.4592258808802,
+        "latitude": 37.46824041246356
+      }
+    },
+    {
+      "sgisCode": "23080880",
+      "kmaCode": "2829000000",
+      "precision": "PARENT",
+      "sourceName": "인천광역시 서구 아라동",
+      "sample": {
+        "longitude": 126.71337799479993,
+        "latitude": 37.591350343317785
+      }
+    },
+    {
+      "sgisCode": "31041580",
+      "kmaCode": "4117100000",
+      "precision": "PARENT",
+      "sourceName": "경기도 안양시 만안구 안양8동",
+      "sample": {
+        "longitude": 126.92955259347143,
+        "latitude": 37.38077455266592
+      }
+    },
+    {
+      "sgisCode": "31041590",
+      "kmaCode": "4117100000",
+      "precision": "PARENT",
+      "sourceName": "경기도 안양시 만안구 안양9동",
+      "sample": {
+        "longitude": 126.90548561514856,
+        "latitude": 37.37701295642945
+      }
+    },
+    {
+      "sgisCode": "31041630",
+      "kmaCode": "4117100000",
+      "precision": "PARENT",
+      "sourceName": "경기도 안양시 만안구 박달1동",
+      "sample": {
+        "longitude": 126.90932187659675,
+        "latitude": 37.40432120277413
+      }
+    },
+    {
+      "sgisCode": "31041640",
+      "kmaCode": "4117100000",
+      "precision": "PARENT",
+      "sourceName": "경기도 안양시 만안구 박달2동",
+      "sample": {
+        "longitude": 126.89132844986585,
+        "latitude": 37.39664676909779
+      }
+    },
+    {
+      "sgisCode": "31191360",
+      "kmaCode": "4146100000",
+      "precision": "PARENT",
+      "sourceName": "경기도 용인시 처인구 양지면",
+      "sample": {
+        "longitude": 127.28725502986887,
+        "latitude": 37.244181366215784
+      }
+    },
+    {
+      "sgisCode": "31191530",
+      "kmaCode": "4146100000",
+      "precision": "PARENT",
+      "sourceName": "경기도 용인시 처인구 유림동",
+      "sample": {
+        "longitude": 127.21582904354864,
+        "latitude": 37.252216192855656
+      }
+    },
+    {
+      "sgisCode": "33570340",
+      "kmaCode": "4377000000",
+      "precision": "PARENT",
+      "sourceName": "충청북도 음성군 대소면",
+      "sample": {
+        "longitude": 127.49618598149712,
+        "latitude": 36.96158413658241
+      }
+    },
+    {
+      "sgisCode": "37020510",
+      "kmaCode": "4713000000",
+      "precision": "PARENT",
+      "sourceName": "경상북도 경주시 중부동",
+      "sample": {
+        "longitude": 129.21060183621984,
+        "latitude": 35.84409254768308
+      }
+    },
+    {
+      "sgisCode": "38113660",
+      "kmaCode": "4812500000",
+      "precision": "PARENT",
+      "sourceName": "경상남도 창원시 마산합포구 반월중앙동",
+      "sample": {
+        "longitude": 128.5657011398612,
+        "latitude": 35.194466242892844
+      }
+    },
+    {
+      "sgisCode": "39020110",
+      "kmaCode": "5013000000",
+      "precision": "PARENT",
+      "sourceName": "제주특별자치도 서귀포시 대정읍",
+      "sample": {
+        "longitude": 126.24630612835165,
+        "latitude": 33.24831817088943
+      }
+    }
+  ],
+  "requests": [
+    {
+      "point": "여행지",
+      "route": "main",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "name": "강원특별자치도 홍천군 서면"
+      },
+      "uvIndex": 4,
+      "valid": true
+    },
+    {
+      "point": "여행지",
+      "route": "today",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "name": "강원특별자치도 홍천군 서면"
+      },
+      "uvIndex": 4,
+      "valid": true
+    },
+    {
+      "point": "여행지",
+      "route": "weekly",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "adminCode": "5172037000",
+        "name": "강원특별자치도 홍천군 서면",
+        "midTermTaRegId": "11D10302",
+        "midTermLandRegId": "11D10000"
+      },
+      "valid": true
+    },
+    {
+      "point": "은행동",
+      "route": "main",
+      "status": 200,
+      "region": {
+        "nx": 57,
+        "ny": 124,
+        "name": "경기도 시흥시 은행동"
+      },
+      "uvIndex": 4,
+      "valid": true
+    },
+    {
+      "point": "은행동",
+      "route": "today",
+      "status": 200,
+      "region": {
+        "nx": 57,
+        "ny": 124,
+        "name": "경기도 시흥시 은행동"
+      },
+      "uvIndex": 4,
+      "valid": true
+    },
+    {
+      "point": "은행동",
+      "route": "weekly",
+      "status": 200,
+      "region": {
+        "nx": 57,
+        "ny": 124,
+        "adminCode": "4139054000",
+        "name": "경기도 시흥시 은행동",
+        "midTermTaRegId": "11B20202",
+        "midTermLandRegId": "11B00000"
+      },
+      "valid": true
+    }
+  ],
+  "externalCalls": 0,
+  "failures": [],
+  "representativeCacheRows": {
+    "n": 0
+  },
+  "existingUvOriginalCheck": {
+    "issue": "2026100412",
+    "rows": 3851,
+    "mappedDistinctCodes": 3554,
+    "missingCodes": [],
+    "additionalHttpCalls": 0
+  },
+  "productionReadOnlyCheck": {
+    "nationalSourceDeployed": false,
+    "boundarySourceDeployed": false,
+    "nationalTables": [],
+    "travelCacheRows": 0,
+    "regionalCacheRows": 1633,
+    "writes": 0
+  },
+  "tests": {
+    "typeScript": "PASS",
+    "workerFiles": 54,
+    "workerTests": 414,
+    "nodeFiles": 9,
+    "nodeTests": 57,
+    "total": 471
+  },
+  "apiHubAdditionalCalls": 0
+}

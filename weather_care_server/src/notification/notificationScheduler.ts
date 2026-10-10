@@ -1,3 +1,10 @@
+import { readNationwideRegion } from '../services/nationwideWeatherCache';
+import { getNationwidePrecipitation } from '../database/nationwidePrecipitationRepository';
+import { nationwidePrecipitationAtPoint } from '../providers/precipitation/precipitationObservationProvider';
+import { nearestWarningRegion, type KmaWarningRegionStation } from '../providers/warnings/kmaWarningProvider';
+import { nearestRoadIceRisk, type RoadIceSegment } from '../providers/road/kmaRoadIceProvider';
+import { nearestRoadControl, type RoadControlSnapshotItem } from '../providers/traffic/itsRoadControlProvider';
+import { cacheRecordIsFresh } from '../database/collectedWeatherRepository';
 import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { WeatherForecast } from '../providers/weather/weatherProvider';
 import {
@@ -10,7 +17,6 @@ import { runRecommendationEngine } from '../recommendations/recommendationEngine
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
 import {
   CurrentPrecipitationObservation,
-  CurrentVisibilityObservation,
   NotificationSettings,
   OfficialRoadControl,
   RoadIceRisk,
@@ -36,8 +42,6 @@ import {
   collectedCacheKey,
   getCollectedCache,
 } from '../database/collectedWeatherRepository';
-import type { CollectedRegionBundle, CollectedWarningBundle } from '../collection/collectionTypes';
-import { enrichForecastWithVisibility } from '../providers/weather/visibility';
 import { calculateSunTimes } from '../presentation/sunTimes';
 
 interface NotificationInstallationRow {
@@ -199,7 +203,7 @@ export async function runRecommendationNotificationJob(
       roadControlByLocation,
       dependencies.roadControlLoader ?? defaultRoadControlLoader,
     );
-    const regionKey = `${row.nx}:${row.ny}`;
+    const regionKey = `${row.nx}:${row.ny}:${row.latitude}:${row.longitude}`;
     let forecastPromise = forecastByRegion.get(regionKey);
     if (!forecastPromise) {
       forecastPromise = loadForecast(
@@ -378,24 +382,9 @@ async function defaultForecastLoader(
   ny: number,
   coordinates?: { latitude: number; longitude: number },
 ): Promise<WeatherForecast> {
-  const [cached, visibility] = await Promise.all([
-    getCollectedCache<CollectedRegionBundle>(
-      env.DB,
-      `COLLECTED_REGION_${nx}_${ny}`,
-    ),
-    getCollectedCache<CurrentVisibilityObservation>(
-      env.DB,
-      collectedCacheKey.visibility(nx, ny),
-    ),
-  ]);
-  if (!cached || cached.status !== 'AVAILABLE') {
-    throw new Error('COLLECTED_FORECAST_NOT_READY');
-  }
-  return enrichForecastWithVisibility(
-    cached.value.forecast,
-    visibility?.value,
-    new Date(),
-  );
+  const cached = await readNationwideRegion(env.DB, { nx, ny, coordinates }, new Date());
+  if (!cached) throw new Error('COLLECTED_FORECAST_NOT_READY');
+  return cached.value.forecast;
 }
 
 async function defaultSender(
@@ -417,6 +406,8 @@ async function defaultPrecipitationLoader(
   latitude: number,
   longitude: number,
 ): Promise<CurrentPrecipitationObservation> {
+  const snapshot = await getNationwidePrecipitation(env.DB, new Date());
+  if (snapshot) return nationwidePrecipitationAtPoint(snapshot, latitude, longitude);
   const cached = await getCollectedCache<CurrentPrecipitationObservation>(
     env.DB,
     collectedCacheKey.precipitation(latitude, longitude),
@@ -431,19 +422,10 @@ async function defaultWarningLoader(
   env: ServerEnv,
   regionIds: readonly string[],
 ): Promise<OfficialWeatherWarning[]> {
-  const result = await env.DB.prepare(
-    `SELECT payload FROM weather_cache
-     WHERE cache_type = 'COLLECTED_WARNING' AND status = 'AVAILABLE'`,
-  ).all<{ payload: string }>();
+  const snapshot = await getCollectedCache<{ warnings: OfficialWeatherWarning[] }>(env.DB, collectedCacheKey.warningSnapshot);
+  if (!snapshot || !cacheRecordIsFresh(snapshot, 45 * 60_000)) throw new Error('COLLECTED_WARNING_SNAPSHOT_NOT_READY');
   const requested = new Set(regionIds);
-  return result.results.flatMap((row) => {
-    try {
-      const bundle = JSON.parse(row.payload) as CollectedWarningBundle;
-      return bundle.warnings.filter((warning) => requested.has(warning.regionId));
-    } catch {
-      return [];
-    }
-  });
+  return snapshot.value.warnings.filter((warning) => requested.has(warning.regionId));
 }
 
 async function defaultWarningRegionResolver(
@@ -453,6 +435,8 @@ async function defaultWarningRegionResolver(
   nx: number,
   ny: number,
 ): Promise<KmaWarningRegionMatch> {
+  const stations = await getCollectedCache<KmaWarningRegionStation[]>(env.DB, collectedCacheKey.warningStations);
+  if (stations?.status === 'AVAILABLE') return nearestWarningRegion(stations.value, _latitude, _longitude);
   const cached = await getCollectedCache<KmaWarningRegionMatch>(
     env.DB,
     collectedCacheKey.warningRegion(nx, ny),
@@ -467,6 +451,8 @@ async function defaultRoadIceLoader(
   longitude: number,
   roadNumbers: readonly string[],
 ): Promise<RoadIceRisk | undefined> {
+  const snapshot = await getCollectedCache<RoadIceSegment[]>(env.DB, collectedCacheKey.roadIceSnapshot);
+  if (snapshot?.status === 'AVAILABLE' && cacheRecordIsFresh(snapshot, 45 * 60_000)) return nearestRoadIceRisk(snapshot.value, latitude, longitude);
   const cached = await getCollectedCache<RoadIceRisk | null>(
     env.DB,
     collectedCacheKey.roadIce(latitude, longitude),
@@ -479,6 +465,8 @@ async function defaultRoadControlLoader(
   latitude: number,
   longitude: number,
 ): Promise<OfficialRoadControl | undefined> {
+  const snapshot = await getCollectedCache<RoadControlSnapshotItem[]>(env.DB, collectedCacheKey.roadControlSnapshot);
+  if (snapshot?.status === 'AVAILABLE' && cacheRecordIsFresh(snapshot, 30 * 60_000)) return nearestRoadControl(snapshot.value, { latitude, longitude });
   const cached = await getCollectedCache<OfficialRoadControl | null>(
     env.DB,
     collectedCacheKey.roadControl(latitude, longitude),

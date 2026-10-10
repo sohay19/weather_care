@@ -1,0 +1,401 @@
+{
+  "checkedAt": "2026-10-04T07:42:47.414Z",
+  "scope": "로컬 코드로 저장된 공개 원본·운영 캐시를 대조. 운영 배포 결과 아님.",
+  "region": {
+    "catalogRows": 3849,
+    "unmatchedCount": 0,
+    "unmatched": [],
+    "inputCases": [
+      {
+        "title": "은행동 정상",
+        "regionName": "시흥시 은행동",
+        "nx": 57,
+        "ny": 124,
+        "result": [
+          "4139054000",
+          "경기도 시흥시 은행동",
+          57,
+          124
+        ]
+      },
+      {
+        "title": "세종 전체이름",
+        "regionName": "세종특별자치시",
+        "nx": 66,
+        "ny": 103,
+        "result": [
+          "3600000000",
+          "세종특별자치시",
+          66,
+          103
+        ]
+      },
+      {
+        "title": "앱 세종시 이름",
+        "regionName": "세종시 금남면",
+        "nx": 65,
+        "ny": 103,
+        "result": [
+          "3611034000",
+          "세종특별자치시 세종특별자치시 금남면",
+          65,
+          103
+        ]
+      },
+      {
+        "title": "공식 금남면 전체",
+        "regionName": "세종특별자치시 세종특별자치시 금남면",
+        "nx": 65,
+        "ny": 103,
+        "result": [
+          "3611034000",
+          "세종특별자치시 세종특별자치시 금남면",
+          65,
+          103
+        ]
+      },
+      {
+        "title": "구 광주광역시",
+        "regionName": "광주 북구",
+        "nx": 59,
+        "ny": 75,
+        "result": [
+          "1230000000",
+          "전남광주통합특별시 북구",
+          59,
+          75
+        ]
+      },
+      {
+        "title": "구 전남 전체이름",
+        "regionName": "전라남도 여수시",
+        "nx": 73,
+        "ny": 66,
+        "result": [
+          "1213000000",
+          "전남광주통합특별시 여수시",
+          73,
+          66
+        ]
+      },
+      {
+        "title": "여수시 축약",
+        "regionName": "여수시",
+        "nx": 73,
+        "ny": 66,
+        "result": [
+          "1213000000",
+          "전남광주통합특별시 여수시",
+          73,
+          66
+        ]
+      },
+      {
+        "title": "운서1동",
+        "regionName": "인천 영종구 운서1동",
+        "nx": 49,
+        "ny": 130,
+        "result": [
+          "2815554000",
+          "인천광역시 영종구 운서1동",
+          51,
+          125
+        ]
+      },
+      {
+        "title": "운서2동",
+        "regionName": "인천 영종구 운서2동",
+        "nx": 49,
+        "ny": 130,
+        "result": [
+          "2815500000",
+          "인천광역시 영종구",
+          53,
+          125
+        ]
+      },
+      {
+        "title": "구 운서동",
+        "regionName": "인천 중구 운서동",
+        "nx": 49,
+        "ny": 130,
+        "result": [
+          "2815500000",
+          "인천광역시 영종구",
+          53,
+          125
+        ]
+      },
+      {
+        "title": "서울 법정동",
+        "regionName": "서울 강남구 역삼동",
+        "nx": 61,
+        "ny": 126,
+        "result": [
+          "1168000000",
+          "서울특별시 강남구",
+          61,
+          126
+        ]
+      },
+      {
+        "title": "지역명 없는 은행동",
+        "nx": 57,
+        "ny": 124
+      }
+    ],
+    "namelessGridUnresolved": 425,
+    "namelessNote": "425는 기존1632개목록격자중 지역명·코드·저장메타가 모두 없을 때의 수. 행정경계가 없어 임의의 동에 배정하지 않음.",
+    "namelessClassification": {
+      "unresolvedGrids": 425,
+      "multipleLeafGrids": 418,
+      "upperOnlyGrids": [
+        {
+          "nx": 69,
+          "ny": 133,
+          "areas": [
+            {
+              "code": "4182000000",
+              "name": "경기도 가평군"
+            }
+          ]
+        },
+        {
+          "nx": 87,
+          "ny": 106,
+          "areas": [
+            {
+              "code": "4700000000",
+              "name": "경상북도"
+            }
+          ]
+        },
+        {
+          "nx": 90,
+          "ny": 113,
+          "areas": [
+            {
+              "code": "4792000000",
+              "name": "경상북도 봉화군"
+            }
+          ]
+        },
+        {
+          "nx": 88,
+          "ny": 99,
+          "areas": [
+            {
+              "code": "2772000000",
+              "name": "대구광역시 군위군"
+            }
+          ]
+        },
+        {
+          "nx": 69,
+          "ny": 75,
+          "areas": [
+            {
+              "code": "1273000000",
+              "name": "전남광주통합특별시 구례군"
+            }
+          ]
+        },
+        {
+          "nx": 52,
+          "ny": 33,
+          "areas": [
+            {
+              "code": "5013000000",
+              "name": "제주특별자치도 서귀포시"
+            }
+          ]
+        },
+        {
+          "nx": 57,
+          "ny": 103,
+          "areas": [
+            {
+              "code": "4479000000",
+              "name": "충청남도 청양군"
+            }
+          ]
+        }
+      ],
+      "bankCandidates": [
+        {
+          "code": "4139062100",
+          "name": "경기도 시흥시 과림동"
+        },
+        {
+          "code": "4139051000",
+          "name": "경기도 시흥시 대야동"
+        },
+        {
+          "code": "4139052000",
+          "name": "경기도 시흥시 신천동"
+        },
+        {
+          "code": "4139054000",
+          "name": "경기도 시흥시 은행동"
+        }
+      ],
+      "ieodoGridIncluded": false,
+      "scope": "지역 목록의 중심 격자를 분류한 것. 격자 전체의 육지/바다 면적 또는 임의 GPS의 행정경계 포함 판정 아님."
+    },
+    "resolutionProposal": {
+      "implementationStatus": "DESIGN_ONLY",
+      "candidateHierarchyCounts": {
+        "sharedCityOrDistrict": 286,
+        "sharedProvinceOnly": 108,
+        "upperOnly": 7,
+        "noSharedParent": 24
+      },
+      "method": "최신 공식 행정경계의 좌표 포함 판정, 제공처 코드 대조표, 좌표 해시와 경계 버전을 보존한 캐시",
+      "externalApiHubCallsPerRequest": 0,
+      "warning": "후보 중심점들의 공통 계층이며 격자 전체나 정확한 GPS의 행정구역 확정은 아니다. 좌표 없는 메인 요청의 상세 구역 판정은 불가능하다."
+    },
+    "boundaryImplementationCheck": {
+      "status": "BLOCKED_MISSING_CURRENT_BOUNDARY_DATA",
+      "implemented": false,
+      "real425GridValidationComplete": false,
+      "searchedPaths": [
+        "weather_care",
+        "C:/Users/SOHA/Downloads",
+        "C:/Users/SOHA/Documents",
+        "C:/Users/SOHA/Desktop"
+      ],
+      "availableBoundaryFiles": 0,
+      "requiredInput": "최신 전국 행정동 경계 원본 ZIP 또는 SHP/DBF/SHX/PRJ 및 코드집의 로컬 경로. 2026년 개편 반영 여부 확인 필요.",
+      "providerSetup": "공식 경계 제공처의 로그인·자료 신청/승인이 필요하며 현재 접근 권한이나 신청 자료 파일이 없다.",
+      "runtimeChanges": false
+    }
+  },
+  "visibility": {
+    "checkedAt": "2026-10-04T07:07:15.285075+00:00",
+    "checkedAreaRows": 3849,
+    "beforeDistanceRejected": 36,
+    "afterInvalid": 0,
+    "invalid": [],
+    "timeout": {
+      "checkedAt": "2026-10-04T07:26:57.086695+00:00",
+      "metric": "VS",
+      "target": "202610041400",
+      "maximumSeconds": 90,
+      "curlExitCode": 0,
+      "timing": {
+        "httpStatus": 504,
+        "dnsSeconds": 0.00458,
+        "connectSeconds": 0.010367,
+        "tlsSeconds": 0.028053,
+        "firstByteSeconds": 30.05672,
+        "totalSeconds": 30.056743,
+        "receivedBytes": 0,
+        "remoteAddress": "203.247.91.39"
+      },
+      "bodyType": "EMPTY",
+      "bodyBytes": 0
+    },
+    "maximumAgeHours": 3,
+    "olderDataProposal": "3시간이하는현재관측,3~6시간은지난관측으로시각·지연표시,6시간초과는현재지표제외. 제안만작성하며 현재3시간기준을유지.",
+    "failureLogAudit": {
+      "checkedAt": "2026-10-04T08:02:03.684868+00:00",
+      "journalFirstAt": "2026-09-27T08:02:04.446749+00:00",
+      "journalLastAt": "2026-10-04T08:00:28.970989+00:00",
+      "windowDays": 7,
+      "failureCount": 23,
+      "timeoutCount": 10,
+      "unknownCount": 13,
+      "last24h": {
+        "failureCount": 6,
+        "timeoutCount": 2,
+        "unknownCount": 4
+      },
+      "extendedTimeout504Confirmed": 1,
+      "scope": "시정 수집 실패 로그. 재시도 포함. 전체 호출 수/실패율/90초 연장으로 해결 불가 비율은 미집계. 추가 제공처 호출 없음."
+    },
+    "publicationDelayReview": {
+      "runtimeSelectionBufferMinutes": 90,
+      "runtimeVisibilityTimeoutMs": 30000,
+      "extendedProbeTarget": "2026-10-04T14:00:00+09:00",
+      "extendedProbeCheckedAt": "2026-10-04T16:26:57.086695+09:00",
+      "extendedProbeObservedAgeMinutes": 146.95,
+      "extendedProbeHttpStatus": 504,
+      "policyCandidate": {
+        "status": "DESIGN_ONLY",
+        "selectionBufferMinutes": 100,
+        "firstAttemptMinute": 40,
+        "retryMinutes": [
+          50,
+          0
+        ],
+        "maxRetriesPerIssue": 2,
+        "essentialCallsPerDay": 24,
+        "worstRetryCallsPerDay": 48,
+        "worstTotalCallsPerDay": 72,
+        "worstRetryBytesWith128kSample": 6144000
+      },
+      "failureTargetHistoryAvailable": false,
+      "failureRateComparisonAvailable": false
+    },
+    "delayedFailureReconstruction": {
+      "windowStart": "2026-09-27T17:02:03+09:00",
+      "windowEnd": "2026-10-04T17:02:03+09:00",
+      "failureCount": 23,
+      "pairedScheduledFailures": 22,
+      "ninetyMinuteFailures": 20,
+      "ninetyMinuteReasons": {
+        "TIMEOUT": 10,
+        "UNKNOWN": 10
+      },
+      "hundredMinuteRetryFailures": 2,
+      "hundredMinuteReasons": {
+        "UNKNOWN": 2
+      },
+      "distinctReconstructedIssues": 20,
+      "unmatchedStartupFailure": {
+        "at": "2026-09-29T12:11:04.040128+09:00",
+        "failureReason": "UNKNOWN",
+        "subsequentPrewarmFinishedAt": "2026-09-29T12:11:15.433940+09:00"
+      },
+      "historicalSelectionRuleCheckedCommits": [
+        "1755837",
+        "6af7a04"
+      ],
+      "evidenceLevel": "현재90분선택식·같은프로세스의core완료예정시각로그로재구성. 요청회차·HTTP시작시각의직접기록아님.",
+      "examples": [
+        {
+          "target": "2026-09-28T00:00:00+09:00",
+          "failedScheduledAt": [
+            "2026-09-28T01:30:00+09:00",
+            "2026-09-28T01:40:00+09:00"
+          ]
+        },
+        {
+          "target": "2026-10-04T03:00:00+09:00",
+          "failedScheduledAt": [
+            "2026-10-04T04:30:00+09:00",
+            "2026-10-04T04:40:00+09:00"
+          ]
+        }
+      ],
+      "coreCompletionCountNotHttpDenominator": 1004,
+      "httpFailureRate": null,
+      "actualVsOnlyFailureCount": null,
+      "manual146Minute504ProbeSeparateFromOperationalCounts": 1
+    }
+  },
+  "sgisBoundarySupplement20261008": {
+    "status": "LOCAL_IMPLEMENTED_PRODUCTION_NOT_DEPLOYED",
+    "report": "SGIS_경계_실자료_검증_20261008.json",
+    "boundaries": 3559,
+    "mappedDong": 3545,
+    "mappedParent": 14,
+    "unmapped": 0,
+    "landSampleGrids": 425,
+    "landSamples": 4368,
+    "landSampleFailures": 0,
+    "wholeCellParentReferences": 286,
+    "coordinatesRequiredGrids": 139,
+    "apiHubAdditionalCalls": 0
+  }
+}

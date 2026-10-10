@@ -15,6 +15,9 @@ import {
   type KmaMidTermLocationContext,
   type KmaMidTermRegionIds,
 } from '../regions/kmaMidTermRegionCatalog';
+import { reserveMidTermRequest } from '../database/apiUsageRepository';
+import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
+import { administrativeAreaForLocation, type NationwideLocation } from '../regions/nationwideLocation';
 
 export type MidTermCacheStatus =
   | 'HIT'
@@ -31,6 +34,7 @@ export interface MidTermForecastHydration {
 }
 
 interface MidTermSourceRecord {
+  provider?: 'KMA_DATA_GO_KR';
   regionId: string;
   issueTime: string;
   item: KmaMidTermItem;
@@ -43,11 +47,30 @@ interface SourceLoadResult {
 
 const FETCH_LEASE_MAX_AGE_MS = 15_000;
 const FETCH_LEASE_WAIT_MS = 7_000;
+export const MID_TERM_DAILY_CALL_LIMIT = 9000;
+
+export async function readCachedMidTermForecast(input: {
+  db?: D1Database; location: NationwideLocation; now: Date;
+}): Promise<MidTermForecastHydration> {
+  const area = administrativeAreaForLocation(input.location);
+  const region = resolveKmaMidTermLocation({ ...input.location,
+    nx: -1, ny: -1, adminCode: input.location.adminCode ?? area?.[0], regionName: area?.[1] ?? input.location.regionName });
+  if (!region || !input.db) return { days: [], region: region ?? emptyRegion(), cacheStatus: 'UNAVAILABLE' };
+  for (const issueTime of latestMidTermIssueTimes(input.now, 3)) {
+    const [temperature, land] = await Promise.all([
+      getCollectedCache<MidTermSourceRecord>(input.db, collectedCacheKey.midTermTemperature(region.temperatureRegionId, issueTime)),
+      region.landRegionId ? getCollectedCache<MidTermSourceRecord>(input.db, collectedCacheKey.midTermLand(region.landRegionId, issueTime)) : null,
+    ]);
+    if (temperature?.status !== 'AVAILABLE' || (region.landRegionId && land?.status !== 'AVAILABLE')) continue;
+    const days = buildMidTermDailyForecast(issueTime, temperature.value.item, land?.value.item);
+    if (days.length) return { days, region, issueTime, issuedAt: days[0].issuedAt, cacheStatus: 'HIT' };
+  }
+  return { days: [], region, cacheStatus: 'UNAVAILABLE' };
+}
 
 export async function hydrateMidTermForecast(input: {
   db: D1Database;
   serviceKey?: string;
-  apiHubKey?: string;
   location: KmaMidTermLocationContext;
   now?: Date;
 }): Promise<MidTermForecastHydration> {
@@ -61,15 +84,15 @@ export async function hydrateMidTermForecast(input: {
 export async function hydrateResolvedMidTermForecast(input: {
   db: D1Database;
   serviceKey?: string;
-  apiHubKey?: string;
   region: KmaMidTermRegionIds;
   now?: Date;
 }): Promise<MidTermForecastHydration> {
   const now = input.now ?? new Date();
   const provider = new KmaMidTermProvider({
     serviceKey: input.serviceKey,
-    apiHubKey: input.apiHubKey,
     now: () => now,
+    timeoutMs: 30_000,
+    fetcher: midTermPortalFetch(input.db),
   });
   const issueTimes = latestMidTermIssueTimes(now, 3);
 
@@ -127,7 +150,11 @@ export async function hydrateResolvedMidTermForecast(input: {
             ? 'MISS_REFRESHED'
             : 'HIT',
       };
-    } catch {
+    } catch (error) {
+      const diagnostic = providerErrorDiagnostic(error);
+      console.error(JSON.stringify({ event: 'mid_term_source_failed', provider: 'KMA_DATA_GO_KR', issueTime,
+        regionId: input.region.temperatureRegionId, ...diagnostic }));
+      if (['NOT_CONFIGURED', 'AUTHORIZATION_FAILED', 'QUOTA_EXCEEDED', 'RATE_LIMITED', 'BUDGET_EXHAUSTED'].includes(diagnostic.failureReason)) throw error;
       // The newest publication can legitimately be delayed. Try earlier
       // publications and expose that fallback in the response metadata.
     }
@@ -145,7 +172,7 @@ async function loadMidTermSource(input: {
   fetch: () => Promise<KmaMidTermItem>;
 }): Promise<SourceLoadResult> {
   const cached = await getCollectedCache<MidTermSourceRecord>(input.db, input.key);
-  if (cached?.status === 'AVAILABLE') {
+  if (cached?.status === 'AVAILABLE' && cached.value.provider === 'KMA_DATA_GO_KR') {
     return { item: cached.value.item, refreshed: false };
   }
 
@@ -168,7 +195,7 @@ async function loadMidTermSource(input: {
       input.db,
       input.key,
     );
-    if (afterLease?.status === 'AVAILABLE') {
+    if (afterLease?.status === 'AVAILABLE' && afterLease.value.provider === 'KMA_DATA_GO_KR') {
       return { item: afterLease.value.item, refreshed: false };
     }
     const item = await input.fetch();
@@ -176,6 +203,7 @@ async function loadMidTermSource(input: {
       key: input.key,
       type: input.type,
       value: {
+        provider: 'KMA_DATA_GO_KR',
         regionId: input.regionId,
         issueTime: input.issueTime,
         item,
@@ -232,7 +260,7 @@ async function waitForMidTermSource(
   while (Date.now() - startedAt < FETCH_LEASE_WAIT_MS) {
     await new Promise((resolve) => setTimeout(resolve, waitMs));
     const cached = await getCollectedCache<MidTermSourceRecord>(db, key);
-    if (cached?.status === 'AVAILABLE') return cached.value;
+    if (cached?.status === 'AVAILABLE' && cached.value.provider === 'KMA_DATA_GO_KR') return cached.value;
     waitMs = Math.min(500, waitMs * 2);
   }
   return undefined;
@@ -240,4 +268,20 @@ async function waitForMidTermSource(
 
 function emptyRegion(): KmaMidTermRegionIds {
   return { temperatureRegionId: '' };
+}
+
+function midTermPortalFetch(db: D1Database): typeof fetch {
+  return async (input, init) => {
+    if (!await reserveMidTermRequest(db, MID_TERM_DAILY_CALL_LIMIT, new Date())) throw new Error('MID_TERM_BUDGET_EXHAUSTED');
+    const url = new URL(String(input));
+    const started = performance.now();
+    const response = await globalThis.fetch(input, init);
+    const body = await response.arrayBuffer();
+    if (body.byteLength > 32_768) throw new Error('KMA mid-term response size is invalid');
+    console.log(JSON.stringify({ event: 'mid_term_portal_response', provider: 'KMA_DATA_GO_KR',
+      endpoint: url.pathname.split('/').pop(), regionId: url.searchParams.get('regId'), issueTime: url.searchParams.get('tmFc'),
+      httpStatus: response.status, responseBytes: body.byteLength, elapsedMs: Math.round(performance.now() - started) }));
+    return new Response(response.status === 204 || response.status === 304 ? null : body,
+      { status: response.status, statusText: response.statusText, headers: response.headers });
+  };
 }

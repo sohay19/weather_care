@@ -1,0 +1,363 @@
+{
+  "checkedAt": "2026-10-09T00:38:00.973774+00:00",
+  "manual": [
+    {
+      "issue": "2026100905",
+      "valid": "2026101200",
+      "variable": "VEC",
+      "status": 200,
+      "responseBytes": 341297,
+      "dnsSeconds": 0.018156,
+      "tcpSeconds": 0.023663,
+      "tlsSeconds": 0.041851,
+      "firstByteSeconds": 0.149163,
+      "totalSeconds": 0.174051,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "checkedAt": "2026-10-09T00:35:25.022Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "dnsSeconds": 0.017712,
+      "tcpSeconds": 0.023745,
+      "tlsSeconds": 0.040895,
+      "firstByteSeconds": 0.281909,
+      "totalSeconds": 0.281927,
+      "outcome": "EMPTY",
+      "checkedAt": "2026-10-09T00:35:25.323Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "TMP",
+      "status": 0,
+      "responseBytes": 0,
+      "dnsSeconds": 0.003673,
+      "tcpSeconds": 0.009192,
+      "tlsSeconds": 0.026056,
+      "firstByteSeconds": 0,
+      "totalSeconds": 30.002762,
+      "outcome": "TIMEOUT",
+      "checkedAt": "2026-10-09T00:35:55.334Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "WSD",
+      "status": 200,
+      "responseBytes": 341297,
+      "dnsSeconds": 0.023851,
+      "tcpSeconds": 0.029501,
+      "tlsSeconds": 0.046528,
+      "firstByteSeconds": 0.147073,
+      "totalSeconds": 0.178314,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "checkedAt": "2026-10-09T00:35:55.532Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "UUU",
+      "status": 200,
+      "responseBytes": 341297,
+      "dnsSeconds": 0.017486,
+      "tcpSeconds": 0.023076,
+      "tlsSeconds": 0.040048,
+      "firstByteSeconds": 0.152392,
+      "totalSeconds": 0.177129,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "checkedAt": "2026-10-09T00:35:55.732Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "VVV",
+      "status": 0,
+      "responseBytes": 0,
+      "dnsSeconds": 0.003864,
+      "tcpSeconds": 0.010048,
+      "tlsSeconds": 0.026924,
+      "firstByteSeconds": 0,
+      "totalSeconds": 30.002562,
+      "outcome": "TIMEOUT",
+      "checkedAt": "2026-10-09T00:36:25.743Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100908",
+      "valid": "2026101203",
+      "variable": "VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "dnsSeconds": 0.021922,
+      "tcpSeconds": 0.05599,
+      "tlsSeconds": 0.087154,
+      "firstByteSeconds": 0.177855,
+      "totalSeconds": 0.177892,
+      "outcome": "EMPTY",
+      "checkedAt": "2026-10-09T00:36:25.931Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100817",
+      "valid": "2026101203",
+      "variable": "VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "dnsSeconds": 0.003967,
+      "tcpSeconds": 0.018807,
+      "tlsSeconds": 0.049913,
+      "firstByteSeconds": 0.141802,
+      "totalSeconds": 0.141821,
+      "outcome": "EMPTY",
+      "checkedAt": "2026-10-09T00:36:26.081Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "TMP",
+      "status": 200,
+      "responseBytes": 341297,
+      "dnsSeconds": 0.027951,
+      "tcpSeconds": 0.033342,
+      "tlsSeconds": 0.050702,
+      "firstByteSeconds": 0.166229,
+      "totalSeconds": 0.581858,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "checkedAt": "2026-10-09T00:37:10.441Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal",
+      "sampleValues": {
+        "grid71_130": 14,
+        "grid57_124": 18
+      },
+      "remoteIp": "203.247.91.39",
+      "httpVersion": "1.1"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "UUU",
+      "status": 200,
+      "responseBytes": 341297,
+      "dnsSeconds": 0.003813,
+      "tcpSeconds": 0.009351,
+      "tlsSeconds": 0.027404,
+      "firstByteSeconds": 1.858213,
+      "totalSeconds": 1.880316,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "checkedAt": "2026-10-09T00:37:12.350Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal",
+      "sampleValues": {
+        "grid71_130": -1,
+        "grid57_124": -1.9
+      },
+      "remoteIp": "203.247.91.39",
+      "httpVersion": "1.1"
+    },
+    {
+      "issue": "2026100905",
+      "valid": "2026101203",
+      "variable": "VVV",
+      "status": 200,
+      "responseBytes": 341297,
+      "dnsSeconds": 0.004326,
+      "tcpSeconds": 0.009857,
+      "tlsSeconds": 0.027782,
+      "firstByteSeconds": 0.20166,
+      "totalSeconds": 0.227841,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "checkedAt": "2026-10-09T00:37:12.601Z",
+      "provenance": "systemd-run --pipe output captured in this task; pipe output is not retained in unit journal",
+      "sampleValues": {
+        "grid71_130": -0.3,
+        "grid57_124": 0
+      },
+      "remoteIp": "203.247.91.39",
+      "httpVersion": "1.1"
+    }
+  ],
+  "schedulerIssue05EightVecFailures": {
+    "count": 24,
+    "reasons": {
+      "UNKNOWN": 14,
+      "TIMEOUT": 2,
+      "NO_USABLE_DATA": 8
+    },
+    "byTarget": {
+      "2026101203": {
+        "UNKNOWN": 2,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101206": {
+        "UNKNOWN": 2,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101209": {
+        "UNKNOWN": 2,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101212": {
+        "UNKNOWN": 2,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101215": {
+        "UNKNOWN": 1,
+        "TIMEOUT": 1,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101218": {
+        "UNKNOWN": 2,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101221": {
+        "UNKNOWN": 1,
+        "TIMEOUT": 1,
+        "NO_USABLE_DATA": 1
+      },
+      "2026101300": {
+        "UNKNOWN": 2,
+        "NO_USABLE_DATA": 1
+      }
+    },
+    "from": "2026-10-09T00:00:17.687408+00:00",
+    "to": "2026-10-09T00:30:16.816313+00:00",
+    "note": "UNKNOWN/INVALID_RESPONSE precede empty-body classification; not all are independently confirmed empty responses"
+  },
+  "usage": [
+    {
+      "provider": "APIHUB_RETRY",
+      "calls": 622,
+      "bytes": 91133688
+    },
+    {
+      "provider": "ASOS_VISIBILITY",
+      "calls": 10,
+      "bytes": 1067335
+    },
+    {
+      "provider": "AWS_DAILY",
+      "calls": 4,
+      "bytes": 858170
+    },
+    {
+      "provider": "GRID_OBSERVATION_10_MINUTES",
+      "calls": 323,
+      "bytes": 134610942
+    },
+    {
+      "provider": "GRID_OBSERVATION_FAST_RETRY",
+      "calls": 25,
+      "bytes": 9849831
+    },
+    {
+      "provider": "GRID_OBSERVATION_HISTORY",
+      "calls": 174,
+      "bytes": 65314005
+    },
+    {
+      "provider": "MID_TERM",
+      "calls": 186,
+      "bytes": 138834
+    },
+    {
+      "provider": "NATIONAL_SHORT_FORECAST",
+      "calls": 2139,
+      "bytes": 739064997
+    },
+    {
+      "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+      "calls": 46,
+      "bytes": 761644770
+    },
+    {
+      "provider": "WARNING",
+      "calls": 21,
+      "bytes": 1024560
+    }
+  ],
+  "sourceMissing": {
+    "observedAt": "2026-10-09T00:20:00.000Z",
+    "landGrids": 4728,
+    "usableCoreLandGrids": 4426,
+    "missingLandGrids": 302,
+    "rawTriples": [
+      {
+        "T1H": -99,
+        "REH": -99,
+        "WSD": -99,
+        "count": 283
+      },
+      {
+        "T1H": -999,
+        "REH": -999,
+        "WSD": -999,
+        "count": 19
+      }
+    ],
+    "historySampleCount": 116,
+    "historyFrom": "2026-10-07T14:50:00.000Z",
+    "historyTo": "2026-10-09T00:20:00.000Z",
+    "everValidInSavedHistory": 0,
+    "centersOutsideLand": 301,
+    "centersOnLand": [
+      {
+        "nx": 42,
+        "ny": 52,
+        "everValid": false,
+        "gridCenter": {
+          "longitude": 125.94480859419525,
+          "latitude": 34.141323243783084
+        },
+        "centerOnLand": true,
+        "landFraction": 0.026686308995577498,
+        "intersectedAreas": [
+          "전라남도 진도군 조도면"
+        ]
+      }
+    ],
+    "landFractionBelow10Percent": 288,
+    "landFractionBelow50Percent": 302,
+    "forecastComparison": {
+      "issue": "2026100908",
+      "valid": "2026100910",
+      "forecastCoreUsable": 19,
+      "forecastCoreMissing": 283
+    },
+    "geometryVersion": "SGIS 2025Q2; 2026 boundary data awaiting download"
+  },
+  "diagnosticBudget": {
+    "calls": 11,
+    "accountedBytesIncludingFailedReservations": 4047782,
+    "retryBytesBefore": 87085906,
+    "retryBytesAfter": 91133688,
+    "dailyBootstrapRetryLimit": 100000000,
+    "budgetGuardUsed": true
+  },
+  "addressRequest": {
+    "requestGroup": 47933,
+    "criterionMonth": "2026-09",
+    "rows": 16,
+    "status": "처리중",
+    "etaDisplayed": false,
+    "officialAnswerDate": "2025-01-20",
+    "officialAnswerUrl": "https://eng.juso.go.kr/addrlink/qna/qnaDetail.do?noticeMgtSn=133740&noticeType=QNA",
+    "approvalToDownloadHours": 1,
+    "applicationToApprovalFixedDaysFound": false,
+    "note": "2025 electronic-map approval answer; not a confirmed SLA for current 2026 구역 구현 processing"
+  }
+}

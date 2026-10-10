@@ -53,3 +53,6 @@ export function scheduledNationwideForecastGridShard(now: Date): {
     grids: nationwideForecastGridShard(shardIndex),
   };
 }
+
+// 실제 전국 배열 전체. 행정동 대표 격자 목록과 무관하다.
+export const KMA_NATIVE_FORECAST_GRIDS: readonly ForecastGrid[] = Object.freeze(Array.from({ length: 149 * 253 }, (_, i) => ({ nx: i % 149 + 1, ny: Math.floor(i / 149) + 1 })));

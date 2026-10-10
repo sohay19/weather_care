@@ -749,7 +749,10 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day) => [
       if (day.maximumWindSpeed case final value?)
         _WeekData(Icons.air_rounded, '최대 풍속 ${_decimal(value)}m/s'),
       if (day.snowfallAmount case final value?)
-        _WeekData(Icons.ac_unit_rounded, '예상 강설 ${_decimal(value)}cm'),
+        _WeekData(
+          Icons.ac_unit_rounded,
+          '${day.historical || day.forecastSource == 'KMA_OBSERVATION' ? '최심신적설' : '예상 신적설'} ${_decimal(value)}cm',
+        ),
       if (day.maximumUvIndex case final value?)
         _WeekData(Icons.wb_sunny_outlined, '자외선 최고 ${_decimal(value)}'),
     ];

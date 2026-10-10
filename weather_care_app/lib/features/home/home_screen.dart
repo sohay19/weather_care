@@ -621,6 +621,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ny: grid.ny,
             regionCode: regionCode,
             regionName: regionName,
+            coordinates: coordinates,
+            regionNameFuture: gpsRegionNameFuture,
           )
               .then(
             (preview) {
@@ -794,6 +796,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         installationId: _settings.installationId,
         nx: grid.nx,
         ny: grid.ny,
+        coordinates:
+            _settings.locationMode == 'GPS' && _location.canUseLocalAnalysis
+                ? _coordinates
+                : null,
         regionCode:
             _settings.locationMode == 'GPS' ? null : _manualRegion?.code,
         regionName: _settings.locationMode == 'GPS'

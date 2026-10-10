@@ -1,0 +1,401 @@
+{
+  "event": "forecast_point_crosscheck_summary",
+  "provider": "DATA_GO_KR",
+  "calls": 1,
+  "report": [
+    {
+      "nx": 71,
+      "ny": 130,
+      "status": 200,
+      "resultCode": "00",
+      "responseBytes": 140975,
+      "totalCount": 1052,
+      "returnedRows": 1052,
+      "lastReturnedValid": "2026101300",
+      "normalBoundary": [
+        {
+          "variable": "VEC",
+          "value": "84"
+        },
+        {
+          "variable": "WSD",
+          "value": "0.9"
+        }
+      ],
+      "extended": [
+        {
+          "valid": "2026101203",
+          "variable": "TMP",
+          "value": "14",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101203",
+          "variable": "UUU",
+          "value": "-1.2",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101203",
+          "variable": "VVV",
+          "value": "-0.6",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101203",
+          "variable": "VEC",
+          "value": "63",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101203",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101203",
+          "variable": "REH",
+          "value": "100",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101206",
+          "variable": "TMP",
+          "value": "13",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101206",
+          "variable": "UUU",
+          "value": "-1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101206",
+          "variable": "VVV",
+          "value": "-0.6",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101206",
+          "variable": "VEC",
+          "value": "60",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101206",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101206",
+          "variable": "REH",
+          "value": "95",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101209",
+          "variable": "TMP",
+          "value": "14",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101209",
+          "variable": "UUU",
+          "value": "-0.9",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101209",
+          "variable": "VVV",
+          "value": "-0.5",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101209",
+          "variable": "VEC",
+          "value": "61",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101209",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101209",
+          "variable": "REH",
+          "value": "95",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101212",
+          "variable": "TMP",
+          "value": "19",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101212",
+          "variable": "UUU",
+          "value": "-0.7",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101212",
+          "variable": "VVV",
+          "value": "-0.3",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101212",
+          "variable": "VEC",
+          "value": "66",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101212",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101212",
+          "variable": "REH",
+          "value": "80",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101215",
+          "variable": "TMP",
+          "value": "23",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101215",
+          "variable": "UUU",
+          "value": "-0.1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101215",
+          "variable": "VVV",
+          "value": "0",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101215",
+          "variable": "VEC",
+          "value": "108",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101215",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101215",
+          "variable": "REH",
+          "value": "80",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101218",
+          "variable": "TMP",
+          "value": "17",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101218",
+          "variable": "UUU",
+          "value": "0",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101218",
+          "variable": "VVV",
+          "value": "-0.1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101218",
+          "variable": "VEC",
+          "value": "27",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101218",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101218",
+          "variable": "REH",
+          "value": "90",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101221",
+          "variable": "TMP",
+          "value": "16",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101221",
+          "variable": "UUU",
+          "value": "-0.3",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101221",
+          "variable": "VVV",
+          "value": "-0.3",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101221",
+          "variable": "VEC",
+          "value": "51",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101221",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101221",
+          "variable": "REH",
+          "value": "95",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101300",
+          "variable": "TMP",
+          "value": "15",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101300",
+          "variable": "UUU",
+          "value": "-0.5",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101300",
+          "variable": "VVV",
+          "value": "0.1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101300",
+          "variable": "VEC",
+          "value": "106",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101300",
+          "variable": "WSD",
+          "value": "1",
+          "nx": 71,
+          "ny": 130
+        },
+        {
+          "valid": "2026101300",
+          "variable": "REH",
+          "value": "100",
+          "nx": 71,
+          "ny": 130
+        }
+      ],
+      "elapsedMs": 1251,
+      "checkedAt": "2026-10-09T00:54:28.062Z"
+    }
+  ],
+  "storedApiHubFields": [
+    {
+      "valid": "2026101203",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101206",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101209",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101212",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101215",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101218",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101221",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101300",
+      "variable": "WSD"
+    }
+  ]
+}

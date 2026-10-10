@@ -1,0 +1,678 @@
+{
+  "checkedAt": "2026-10-04T07:07:15.285075+00:00",
+  "scope": "운영의 기존 격자별 캐시를 행정지역 목록 좌표로 대조. 현재 모든 GPS에 대한 결과 아님.",
+  "visibility": {
+    "reasonCounts": {
+      "VALID": 3813,
+      "DISTANCE_OVER_30KM": 36
+    },
+    "bank": {
+      "code": "4139054000",
+      "name": "경기도 시흥시 은행동",
+      "nx": 57,
+      "ny": 124,
+      "station": "112",
+      "distanceKm": 17,
+      "ageHours": 2.1209125,
+      "reason": "VALID"
+    },
+    "distanceRejected": [
+      {
+        "code": "5182034000",
+        "name": "강원특별자치도 고성군 수동면",
+        "nx": 82,
+        "ny": 146,
+        "station": "90",
+        "distanceKm": 30.9,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5178036000",
+        "name": "강원특별자치도 철원군 원남면",
+        "nx": 71,
+        "ny": 143,
+        "station": "95",
+        "distanceKm": 35.1,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5178035000",
+        "name": "강원특별자치도 철원군 원동면",
+        "nx": 73,
+        "ny": 143,
+        "station": "93",
+        "distanceKm": 40.1,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5178037000",
+        "name": "강원특별자치도 철원군 임남면",
+        "nx": 75,
+        "ny": 143,
+        "station": "211",
+        "distanceKm": 36.9,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5176034000",
+        "name": "강원특별자치도 평창군 봉평면",
+        "nx": 84,
+        "ny": 128,
+        "station": "100",
+        "distanceKm": 30.3,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5172039000",
+        "name": "강원특별자치도 홍천군 내면",
+        "nx": 84,
+        "ny": 132,
+        "station": "100",
+        "distanceKm": 31,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5173033000",
+        "name": "강원특별자치도 횡성군 둔내면",
+        "nx": 81,
+        "ny": 126,
+        "station": "114",
+        "distanceKm": 30.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4182032500",
+        "name": "경기도 가평군 청평면",
+        "nx": 67,
+        "ny": 131,
+        "station": "202",
+        "distanceKm": 31.2,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4122025300",
+        "name": "경기도 평택시 안중읍",
+        "nx": 59,
+        "ny": 114,
+        "station": "119",
+        "distanceKm": 31.2,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4122025000",
+        "name": "경기도 평택시 팽성읍",
+        "nx": 61,
+        "ny": 114,
+        "station": "119",
+        "distanceKm": 31.2,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4122025600",
+        "name": "경기도 평택시 포승읍",
+        "nx": 58,
+        "ny": 114,
+        "station": "119",
+        "distanceKm": 32.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4122037000",
+        "name": "경기도 평택시 현덕면",
+        "nx": 59,
+        "ny": 114,
+        "station": "119",
+        "distanceKm": 31.2,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4784033000",
+        "name": "경상북도 성주군 수륜면",
+        "nx": 82,
+        "ny": 90,
+        "station": "279",
+        "distanceKm": 32,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4794033000",
+        "name": "경상북도 울릉군 독도",
+        "nx": 144,
+        "ny": 123,
+        "station": "115",
+        "distanceKm": 88.7,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "2872035000",
+        "name": "인천광역시 옹진군 덕적면",
+        "nx": 46,
+        "ny": 119,
+        "station": "112",
+        "distanceKm": 49.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "2872038000",
+        "name": "인천광역시 옹진군 연평면",
+        "nx": 38,
+        "ny": 129,
+        "station": "201",
+        "distanceKm": 65,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "2872037000",
+        "name": "인천광역시 옹진군 자월면",
+        "nx": 48,
+        "ny": 120,
+        "station": "112",
+        "distanceKm": 38.2,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1217036000",
+        "name": "전남광주통합특별시 나주시 다시면",
+        "nx": 54,
+        "ny": 71,
+        "station": "165",
+        "distanceKm": 30.1,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1217031000",
+        "name": "전남광주통합특별시 나주시 세지면",
+        "nx": 56,
+        "ny": 69,
+        "station": "259",
+        "distanceKm": 30.7,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1217032000",
+        "name": "전남광주통합특별시 나주시 왕곡면",
+        "nx": 55,
+        "ny": 70,
+        "station": "156",
+        "distanceKm": 30.9,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1287035000",
+        "name": "전남광주통합특별시 신안군 도초면",
+        "nx": 42,
+        "ny": 64,
+        "station": "268",
+        "distanceKm": 37.5,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1287034000",
+        "name": "전남광주통합특별시 신안군 비금면",
+        "nx": 42,
+        "ny": 65,
+        "station": "165",
+        "distanceKm": 40.9,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1287032000",
+        "name": "전남광주통합특별시 신안군 임자면",
+        "nx": 45,
+        "ny": 73,
+        "station": "252",
+        "distanceKm": 38.9,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1287033000",
+        "name": "전남광주통합특별시 신안군 자은면",
+        "nx": 44,
+        "ny": 68,
+        "station": "165",
+        "distanceKm": 30.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1287025000",
+        "name": "전남광주통합특별시 신안군 지도읍",
+        "nx": 47,
+        "ny": 72,
+        "station": "165",
+        "distanceKm": 30.2,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1213036000",
+        "name": "전남광주통합특별시 여수시 삼산면",
+        "nx": 67,
+        "ny": 50,
+        "station": "262",
+        "distanceKm": 64.3,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1283038000",
+        "name": "전남광주통합특별시 영광군 낙월면",
+        "nx": 45,
+        "ny": 75,
+        "station": "252",
+        "distanceKm": 34.7,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1285037000",
+        "name": "전남광주통합특별시 완도군 금당면",
+        "nx": 62,
+        "ny": 58,
+        "station": "262",
+        "distanceKm": 30.9,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "1285025300",
+        "name": "전남광주통합특별시 완도군 금일읍",
+        "nx": 62,
+        "ny": 57,
+        "station": "170",
+        "distanceKm": 32.3,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5213039000",
+        "name": "전북특별자치도 군산시 옥도면",
+        "nx": 43,
+        "ny": 95,
+        "station": "235",
+        "distanceKm": 55.5,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5273031000",
+        "name": "전북특별자치도 무주군 무풍면",
+        "nx": 76,
+        "ny": 92,
+        "station": "135",
+        "distanceKm": 31.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5280042000",
+        "name": "전북특별자치도 부안군 위도면",
+        "nx": 48,
+        "ny": 84,
+        "station": "252",
+        "distanceKm": 40,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5019000000",
+        "name": "제주특별자치도 이어도",
+        "nx": 28,
+        "ny": 8,
+        "station": "185",
+        "distanceKm": 157.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5019099000",
+        "name": "제주특별자치도 이어도 이어도",
+        "nx": 28,
+        "ny": 8,
+        "station": "185",
+        "distanceKm": 157.4,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "5011032000",
+        "name": "제주특별자치도 제주시 추자면",
+        "nx": 48,
+        "ny": 48,
+        "station": "184",
+        "distanceKm": 54.7,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      },
+      {
+        "code": "4377025300",
+        "name": "충청북도 음성군 금왕읍",
+        "nx": 71,
+        "ny": 114,
+        "station": "127",
+        "distanceKm": 30.1,
+        "ageHours": 2.1209125,
+        "reason": "DISTANCE_OVER_30KM"
+      }
+    ]
+  },
+  "region": {
+    "allNames": 3849,
+    "missingNames": [
+      {
+        "code": "3600000000",
+        "name": "세종특별자치시",
+        "nx": 66,
+        "ny": 103
+      }
+    ],
+    "namelessRowUnresolved": 2585,
+    "namelessUniqueGridUnresolved": 425,
+    "namelessExample": [
+      {
+        "code": "5100000000",
+        "name": "강원특별자치도",
+        "nx": 73,
+        "ny": 134
+      },
+      {
+        "code": "5115000000",
+        "name": "강원특별자치도 강릉시",
+        "nx": 92,
+        "ny": 131
+      },
+      {
+        "code": "5115066500",
+        "name": "강원특별자치도 강릉시 경포동",
+        "nx": 92,
+        "ny": 132
+      },
+      {
+        "code": "5115055000",
+        "name": "강원특별자치도 강릉시 교1동",
+        "nx": 92,
+        "ny": 132
+      },
+      {
+        "code": "5115056000",
+        "name": "강원특별자치도 강릉시 교2동",
+        "nx": 93,
+        "ny": 132
+      }
+    ],
+    "gridMultipleLeafExample": [
+      [
+        "92:132",
+        [
+          "강원특별자치도 강릉시 경포동",
+          "강원특별자치도 강릉시 교1동"
+        ]
+      ],
+      [
+        "93:132",
+        [
+          "강원특별자치도 강릉시 교2동",
+          "강원특별자치도 강릉시 성덕동",
+          "강원특별자치도 강릉시 송정동",
+          "강원특별자치도 강릉시 옥천동",
+          "강원특별자치도 강릉시 중앙동",
+          "강원특별자치도 강릉시 초당동",
+          "강원특별자치도 강릉시 포남1동",
+          "강원특별자치도 강릉시 포남2동"
+        ]
+      ],
+      [
+        "92:131",
+        [
+          "강원특별자치도 강릉시 구정면",
+          "강원특별자치도 강릉시 내곡동",
+          "강원특별자치도 강릉시 성산면",
+          "강원특별자치도 강릉시 홍제동"
+        ]
+      ],
+      [
+        "96:127",
+        [
+          "강원특별자치도 동해시 동호동",
+          "강원특별자치도 동해시 망상동",
+          "강원특별자치도 동해시 발한동",
+          "강원특별자치도 동해시 부곡동"
+        ]
+      ],
+      [
+        "97:127",
+        [
+          "강원특별자치도 동해시 묵호동",
+          "강원특별자치도 동해시 천곡동"
+        ]
+      ]
+    ],
+    "inputCases": [
+      {
+        "title": "은행동 정상",
+        "regionName": "시흥시 은행동",
+        "nx": 57,
+        "ny": 124,
+        "result": [
+          "4139054000",
+          "경기도 시흥시 은행동",
+          57,
+          124
+        ]
+      },
+      {
+        "title": "세종 전체이름",
+        "regionName": "세종특별자치시",
+        "nx": 66,
+        "ny": 103
+      },
+      {
+        "title": "앱 세종시 이름",
+        "regionName": "세종시 금남면",
+        "nx": 65,
+        "ny": 103
+      },
+      {
+        "title": "공식 금남면 전체",
+        "regionName": "세종특별자치시 세종특별자치시 금남면",
+        "nx": 65,
+        "ny": 103,
+        "result": [
+          "3611034000",
+          "세종특별자치시 세종특별자치시 금남면",
+          65,
+          103
+        ]
+      },
+      {
+        "title": "구 광주광역시",
+        "regionName": "광주 북구",
+        "nx": 59,
+        "ny": 75
+      },
+      {
+        "title": "구 전남 전체이름",
+        "regionName": "전라남도 여수시",
+        "nx": 73,
+        "ny": 66
+      },
+      {
+        "title": "여수시 축약",
+        "regionName": "여수시",
+        "nx": 73,
+        "ny": 66,
+        "result": [
+          "1213000000",
+          "전남광주통합특별시 여수시",
+          73,
+          66
+        ]
+      },
+      {
+        "title": "운서1동",
+        "regionName": "인천 영종구 운서1동",
+        "nx": 49,
+        "ny": 130,
+        "result": [
+          "2815554000",
+          "인천광역시 영종구 운서1동",
+          51,
+          125
+        ]
+      },
+      {
+        "title": "운서2동",
+        "regionName": "인천 영종구 운서2동",
+        "nx": 49,
+        "ny": 130,
+        "result": [
+          "2815500000",
+          "인천광역시 영종구",
+          53,
+          125
+        ]
+      },
+      {
+        "title": "구 운서동",
+        "regionName": "인천 중구 운서동",
+        "nx": 49,
+        "ny": 130,
+        "result": [
+          "2800000000",
+          "인천광역시",
+          55,
+          124
+        ]
+      },
+      {
+        "title": "서울 법정동",
+        "regionName": "서울 강남구 역삼동",
+        "nx": 61,
+        "ny": 126,
+        "result": [
+          "1168000000",
+          "서울특별시 강남구",
+          61,
+          126
+        ]
+      },
+      {
+        "title": "지역명 없는 은행동",
+        "nx": 57,
+        "ny": 124
+      }
+    ],
+    "rawCatalogConflict": {
+      "code": "2815555000",
+      "names": [
+        "용유동",
+        "운서2동"
+      ],
+      "normalCodeForUnseo1": "2815554000",
+      "unconfirmedUvCodes": [
+        "2815555000",
+        "2815556000"
+      ]
+    },
+    "geocoder": {
+      "timeoutSeconds": 4,
+      "errorsSwallowed": true,
+      "initialMainPreviewSendsResolvedGpsName": false,
+      "initialMainPreviewSendsPreciseGps": false,
+      "fullTodayAndWeeklyWaitForName": true
+    }
+  },
+  "visibilityLogs": {
+    "windowHours": 24,
+    "failures": 6,
+    "timeouts": 2,
+    "unknownErrors": 4,
+    "details": [
+      {
+        "at": "2026-10-03T19:31:34.424951+00:00",
+        "event": "weather_collection_failed"
+      },
+      {
+        "at": "2026-10-03T19:41:50.931217+00:00",
+        "event": "weather_collection_failed"
+      },
+      {
+        "at": "2026-10-03T21:31:27.488450+00:00",
+        "event": "weather_collection_failed"
+      },
+      {
+        "at": "2026-10-03T23:31:03.786162+00:00",
+        "event": "weather_collection_failed"
+      },
+      {
+        "at": "2026-10-04T00:31:24.251910+00:00",
+        "event": "weather_collection_failed"
+      },
+      {
+        "at": "2026-10-04T06:31:05.898511+00:00",
+        "event": "weather_collection_failed"
+      }
+    ]
+  },
+  "manualAsosProbe": {
+    "checkedAt": "2026-10-04T07:10:55.798227+00:00",
+    "requests": [
+      {
+        "metric": "VS",
+        "target": "202610041400",
+        "elapsedSeconds": 30.052,
+        "errorType": "TimeoutError",
+        "httpStatus": null
+      },
+      {
+        "metric": "TA",
+        "target": "202610041400",
+        "bytes": 5485,
+        "elapsedSeconds": 0.123,
+        "rows": 97
+      }
+    ],
+    "interpretation": "같은 서버/동일 회차 TA 성공 및 VS 시간초과. 기상청 내부 처리 대 특정 연결 네트워크 지연 구분은 미확정. VS만 정상·TA 결측 관측소 제외 조건은 코드에서 확인했으나 이번 VS 응답 미확보로 실제 발생 여부 미확정."
+  },
+  "unimplementedFields": [
+    {
+      "field": "pollenRisk",
+      "appReadsField": false,
+      "proposal": "공식 꽃가루 지수 종별·발표별·전국 행정구역 원본 보존, 생활 안내와 마스크 추천 근거 및 신규 꽃가루 지표 연결. 비제공 시즌은 별도 상태."
+    },
+    {
+      "field": "airStagnationIndex",
+      "appReadsField": false,
+      "proposal": "공식 생활기상지수 대기정체 항목 전국 원본 수집, 생활 안내·환기 참고에 연결. PM10/PM25 대기질 카드와 별도 지표."
+    },
+    {
+      "field": "freezeRisk",
+      "appReadsField": false,
+      "proposal": "수도관 동파 지수와 도로살얼음 의미부터 구분. 공식 동파가능지수는 2023-05-01 종료. 도로살얼음은 기존 공식 도로 자료와 메시지 경로에 연결, 수도관 동파는 검증된 자체 산출 설계 필요."
+    }
+  ],
+  "status": "진단과 구현 방안만 작성. 런타임 코드 수정·운영 배포 없음."
+}

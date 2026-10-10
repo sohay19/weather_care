@@ -1,3 +1,8 @@
+import { NATIONAL_UV_KEY, NATIONAL_VISIBILITY_KEY, NATIONAL_DAILY_KEY } from '../services/nationwideWeatherCache';
+import { NATIONAL_FORECAST_REQUIRED_VARIABLES } from '../providers/weather/kmaNationwideForecastProvider';
+import { currentGridObservationIsUsable, isValidGridObservationSnapshot } from '../database/gridObservationRepository';
+import { gridObservationKoreanIso, latestGridObservationTime, observationsFromGridSnapshot, type GridObservationSnapshot } from '../providers/weather/kmaGridObservationProvider';
+import type { UltraShortObservation } from '../providers/weather/kmaUltraShortObservationProvider';
 import { pathToFileURL } from 'node:url';
 import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
 import {
@@ -16,8 +21,7 @@ import {
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { nationwideAirForecastIsUsable, type NationwideAirForecast } from '../providers/air/airKoreaForecastProvider';
 import {
-  NATIONWIDE_FORECAST_GRIDS,
-  NATIONWIDE_FORECAST_GRID_SHARD_COUNT,
+  KMA_NATIVE_FORECAST_GRIDS,
 } from '../regions/nationwideForecastGridCatalog';
 import { previousKoreanDate } from '../collection/sourcePublicationSchedule';
 import { latestMidTermIssueTimes } from '../providers/weather/kmaMidTermProvider';
@@ -28,7 +32,7 @@ import {
   type NodeRuntime,
 } from './runtime';
 
-const PREWARM_ATTEMPTS = 3;
+const PREWARM_ATTEMPTS = 1;
 const RECENT_PREWARM_MAX_AGE_MS = 5 * 60 * 1000;
 const OPERATIONAL_PREWARM_KEY = 'COLLECTED_OPERATIONAL_PREWARM';
 
@@ -50,6 +54,7 @@ export interface OperationalPrewarmSummary {
   collectedCaches: number;
   missingCaches: number;
   missingSample: string[];
+  observationSourceMissingGrids: number;
   environmentalMissingSample: Array<{ cacheKey: string; sources: string[] }>;
 }
 
@@ -70,26 +75,6 @@ export async function prewarmNationwideInRuntime(
   }
 
   for (let attempt = 1; attempt <= PREWARM_ATTEMPTS; attempt += 1) {
-    for (
-      let shardIndex = 0;
-      shardIndex < NATIONWIDE_FORECAST_GRID_SHARD_COUNT;
-      shardIndex += 1
-    ) {
-      await runWeatherCollectionJob(runtime.env, {
-        now,
-        collectCore: true,
-        collectActiveDetails: false,
-        nationwideShardIndex: shardIndex,
-        forceSourceRefresh: attempt > 1,
-      });
-      console.log(JSON.stringify({
-        event: 'nationwide_prewarm_shard_completed',
-        attempt,
-        shardIndex,
-        shardCount: NATIONWIDE_FORECAST_GRID_SHARD_COUNT,
-      }));
-    }
-
     await runWeatherCollectionJob(runtime.env, {
       now,
       collectCore: true,
@@ -98,7 +83,7 @@ export async function prewarmNationwideInRuntime(
       dailyObservationLookbackDays: 7,
       collectRadar: true,
       collectRoadIce: true,
-      forceSourceRefresh: true,
+      forceSourceRefresh: false,
     });
 
     summary = inspectOperationalPrewarm(runtime, now);
@@ -119,7 +104,10 @@ export async function prewarmNationwideInRuntime(
     }
   }
 
-  throw new Error(`OPERATIONAL_PREWARM_INCOMPLETE:${summary.missingCaches}`);
+  // 일부 제공처 장애 때문에 수집 스케줄러까지 시작하지 못하면 영구적으로 복구할 수 없다.
+  // API는 준비된 원본만 반환하고, 미확보 원본은 후속 정규 수집에서 다시 확보한다.
+  console.warn(JSON.stringify({ event: 'operational_prewarm_partial', ...summary }));
+  return summary;
 }
 
 export async function prewarmNationwide(): Promise<OperationalPrewarmSummary> {
@@ -134,7 +122,7 @@ export async function prewarmNationwide(): Promise<OperationalPrewarmSummary> {
 export function inspectOperationalPrewarm(
   runtime: NodeRuntime,
   now = new Date(),
-  grids: readonly ForecastGrid[] = NATIONWIDE_FORECAST_GRIDS,
+  grids: readonly ForecastGrid[] = KMA_NATIVE_FORECAST_GRIDS,
 ): OperationalPrewarmSummary {
   const cacheRows = runtime.database.sqlite.prepare(
     `SELECT cache_key AS cacheKey, payload, status, updated_at AS updatedAt
@@ -155,6 +143,22 @@ export function inspectOperationalPrewarm(
       .filter((row) => cacheRowHasUsablePayload(row, requiredObservationDates, now, nationwideAir))
       .map(({ cacheKey }) => cacheKey),
   );
+  const nativeRows = runtime.database.sqlite.prepare(
+    'SELECT payload, observed_at AS observedAt FROM grid_observation_snapshots WHERE observed_at BETWEEN ? AND ? ORDER BY observed_at DESC',
+  ).all(new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
+    new Date(gridObservationKoreanIso(latestGridObservationTime(now))).toISOString()) as Array<{ payload: string; observedAt: string }>;
+  const nativeGrids = new Set<string>();
+  let hasNativeSnapshot = false;
+  for (const row of nativeRows) {
+    try {
+      const snapshot: GridObservationSnapshot = JSON.parse(row.payload);
+      if (!isValidGridObservationSnapshot(snapshot) || Date.parse(snapshot.observedAt) !== Date.parse(row.observedAt)) continue;
+      hasNativeSnapshot = true;
+      for (const key of observationsFromGridSnapshot(snapshot, grids).keys()) nativeGrids.add(key);
+    } catch { /* 손상된 원본은 준비 완료로 판정하지 않는다. */ }
+  }
+  const observationSourceMissingGrids = hasNativeSnapshot
+    ? grids.filter(({ nx, ny }) => !nativeGrids.has(`${nx}:${ny}`)).length : 0;
   const activeTargets = runtime.database.sqlite.prepare(
     `SELECT nx, ny, latitude, longitude
        FROM installations
@@ -163,6 +167,11 @@ export function inspectOperationalPrewarm(
   const activeRegions = distinctGridTargets(activeTargets);
   const activeLocations = distinctLocationTargets(activeTargets);
   const required = new Set<string>();
+  if (hasNativeSnapshot) {
+    // 원본의 공식 결측은 수집 실패가 아니다. 숫자 대신 별도 결측 개수로 보고한다.
+    required.add('GRID_OBSERVATION_SNAPSHOT');
+    available.add('GRID_OBSERVATION_SNAPSHOT');
+  }
   required.add(NATIONWIDE_PRECIPITATION_CACHE_KEY);
   required.add(collectedCacheKey.roadControlSnapshot);
   required.add(collectedCacheKey.nationwideAir);
@@ -171,16 +180,23 @@ export function inspectOperationalPrewarm(
   required.add(collectedCacheKey.warningSnapshot);
   if (isRoadIceSeason(now)) required.add(collectedCacheKey.roadIceSnapshot);
 
-  for (const { nx, ny } of grids) {
-    required.add(collectedCacheKey.forecast(nx, ny));
-    required.add(`CURRENT_${nx}_${ny}`);
-    required.add(`COLLECTED_REGION_${nx}_${ny}`);
-    required.add(collectedCacheKey.environmental(nx, ny));
-    required.add(collectedCacheKey.weekly(nx, ny));
-    required.add(collectedCacheKey.warning(nx, ny));
-    required.add(collectedCacheKey.visibility(nx, ny));
-    required.add(collectedCacheKey.ultraShortObservation(nx, ny));
-  }
+  required.add(NATIONAL_UV_KEY);
+  required.add(NATIONAL_VISIBILITY_KEY);
+  required.add(NATIONAL_DAILY_KEY);
+  required.add('NATIONAL_FORECAST_SOURCE');
+  const completeHours = runtime.database.sqlite.prepare(`SELECT COUNT(*) AS count FROM (
+    SELECT valid_time,issue_time FROM nationwide_forecast_fields
+    WHERE valid_time >= ? AND json_valid(payload)
+    AND json_extract(payload,'$.encoding')='F64LE_GZIP_BLOCK512'
+    AND json_extract(payload,'$.width')=149 AND json_extract(payload,'$.height')=253
+    AND json_array_length(payload,'$.blocks')=74
+    AND variable IN (${NATIONAL_FORECAST_REQUIRED_VARIABLES.map(() => '?').join(',')})
+    GROUP BY valid_time,issue_time HAVING COUNT(DISTINCT variable)=?)`).get(
+      new Date(now.getTime() + 9 * 3_600_000).toISOString().replace(/[-:T]/g, '').slice(0, 10),
+      ...NATIONAL_FORECAST_REQUIRED_VARIABLES, NATIONAL_FORECAST_REQUIRED_VARIABLES.length,
+    ) as { count: number };
+  if (completeHours.count >= 24) available.add('NATIONAL_FORECAST_SOURCE');
+  if (!hasNativeSnapshot) required.add('GRID_OBSERVATION_SNAPSHOT');
   const midTermIssue = latestMidTermIssueTimes(now, 1)[0];
   if (midTermIssue) {
     for (const { temperatureRegionId, landRegionId } of
@@ -194,21 +210,10 @@ export function inspectOperationalPrewarm(
       }
     }
   }
-  for (const { nx, ny } of activeRegions) {
-    required.add(collectedCacheKey.environmental(nx, ny));
-    required.add(collectedCacheKey.warning(nx, ny));
-  }
-  for (const { latitude, longitude } of activeLocations) {
-    required.add(collectedCacheKey.precipitation(latitude, longitude));
-    required.add(collectedCacheKey.roadControl(latitude, longitude));
-    if (isRoadIceSeason(now)) {
-      required.add(collectedCacheKey.roadIce(latitude, longitude));
-    }
-  }
-
   const missing = [...required].filter((key) => !available.has(key));
   return {
     totalGrids: grids.length,
+    observationSourceMissingGrids,
     activeRegions: activeRegions.length,
     activeLocations: activeLocations.length,
     requiredCaches: required.size,
@@ -241,6 +246,26 @@ function cacheRowHasUsablePayload(row: {
   if (row.status !== 'AVAILABLE' || row.payload.trim().length === 0) return false;
   try {
     const value: unknown = JSON.parse(row.payload);
+    if (row.cacheKey === NATIONAL_UV_KEY) {
+      const uv = value as { forecasts?: Record<string, { points?: unknown; issuedAt?: string }> };
+      return !!uv.forecasts && Object.keys(uv.forecasts).length > 0 &&
+        Object.values(uv.forecasts).every((f) => Array.isArray(f.points) && Number.isFinite(Date.parse(f.issuedAt ?? ''))) &&
+        cacheRecordIsFresh(row, 8 * 3_600_000, now);
+    }
+    if (row.cacheKey === NATIONAL_VISIBILITY_KEY) {
+      const snapshot = value as { stations?: unknown; observedAt?: string };
+      return Array.isArray(snapshot.stations) && snapshot.stations.length > 0 &&
+        Number.isFinite(Date.parse(snapshot.observedAt ?? '')) && cacheRecordIsFresh(row, 3 * 3_600_000, now);
+    }
+    if (row.cacheKey === NATIONAL_DAILY_KEY) {
+      const daily = value as { stations?: unknown; completedDates?: string[] };
+      return Array.isArray(daily.stations) && daily.stations.length > 0 &&
+        requiredObservationDates.every((date) => daily.completedDates?.some((completed) => completed.replaceAll('-', '') === date)) && cacheRecordIsFresh(row, 36 * 3_600_000, now);
+    }
+    if (row.cacheKey.startsWith('COLLECTED_ULTRA_SHORT_')) {
+      return currentGridObservationIsUsable({ value: value as UltraShortObservation,
+        status: 'AVAILABLE', updatedAt: row.updatedAt }, now);
+    }
     if (row.cacheKey === collectedCacheKey.roadControlSnapshot) {
       return Array.isArray(value) &&
         Date.parse(row.updatedAt) > now.getTime() - 30 * 60 * 1000;

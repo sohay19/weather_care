@@ -26,13 +26,13 @@ describe('SQLite D1 호환 계층', () => {
   it('기존 D1 마이그레이션을 순서대로 한 번만 적용한다', async () => {
     const database = temporaryDatabase();
 
-    expect(runSqliteMigrations(database)).toHaveLength(11);
+    expect(runSqliteMigrations(database)).toHaveLength(14);
     expect(runSqliteMigrations(database)).toEqual([]);
 
     const row = await asD1Database(database)
       .prepare('SELECT COUNT(*) AS count FROM d1_migrations')
       .first<{ count: number }>();
-    expect(row?.count).toBe(11);
+    expect(row?.count).toBe(14);
   });
 
   it('prepare, bind, first, all, run, batch 결과를 D1 형태로 반환한다', async () => {

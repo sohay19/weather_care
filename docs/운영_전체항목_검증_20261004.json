@@ -1,0 +1,159 @@
+{
+  "checkedAt": "2026-10-04T04:34:49.962405+00:00",
+  "perGridChecks": {
+    "COLLECTED_FORECAST": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_ENVIRONMENTAL": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {
+        "uv.CACHED": 752,
+        "airQuality.CACHED": 1633
+      },
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_REGION": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_WEEKLY": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {
+        "midTermDays": 1626
+      },
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_ULTRA_SHORT": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_COMPARISON": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_WARNING_REGION": {
+      "records": 6,
+      "available": 6,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 6,
+      "nativeGridRecordsAbsent": 37691
+    },
+    "COLLECTED_WARNING": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    },
+    "COLLECTED_VISIBILITY": {
+      "records": 1633,
+      "available": 1633,
+      "invalidPayload": 0,
+      "missingFields": {},
+      "details": {},
+      "gridCount": 1633,
+      "nativeGridRecordsAbsent": 36064
+    }
+  },
+  "sharedCacheTypes": [
+    [
+      "AIR_STATIONS",
+      1
+    ],
+    [
+      "COLLECTED_MID_TERM_LAND",
+      250
+    ],
+    [
+      "COLLECTED_MID_TERM_TA",
+      4402
+    ],
+    [
+      "COLLECTED_NATIONWIDE_AIR",
+      1
+    ],
+    [
+      "COLLECTED_NATIONWIDE_AIR_FORECAST",
+      1
+    ],
+    [
+      "COLLECTED_NATIONWIDE_PRECIPITATION",
+      1
+    ],
+    [
+      "COLLECTED_NATIONWIDE_PRECIPITATION_CHUNK",
+      3
+    ],
+    [
+      "COLLECTED_OPERATIONAL_PREWARM",
+      1
+    ],
+    [
+      "COLLECTED_PRECIPITATION",
+      5
+    ],
+    [
+      "COLLECTED_ROAD_CONTROL",
+      5
+    ],
+    [
+      "COLLECTED_ROAD_CONTROL_SNAPSHOT",
+      1
+    ],
+    [
+      "COLLECTED_SOURCE_VERSION",
+      8
+    ],
+    [
+      "COLLECTED_WARNING_MAPPING_REFRESH",
+      1
+    ],
+    [
+      "COLLECTED_WARNING_SNAPSHOT",
+      1
+    ],
+    [
+      "COLLECTED_WARNING_STATIONS",
+      1
+    ]
+  ],
+  "notes": [
+    "표의 cacheCount는 저장 구조 검사이며 GPS API 수치 가용성과 동일하지 않다.",
+    "CACHED는 정상 캐시 상태로서 누락 판정이 아니다.",
+    "중기예보는 공통 원본을 API에서 조합한다. weekly.midTermDays 빈 레코드를 최종 주간 응답 누락으로 단정하지 않는다.",
+    "nativeGridRecordsAbsent는 격자별 레코드가 없는 개수이며 원본이 지원하는 격자수와 다르다."
+  ]
+}

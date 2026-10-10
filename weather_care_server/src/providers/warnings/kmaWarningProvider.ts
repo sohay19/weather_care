@@ -138,7 +138,7 @@ export class KmaWarningProvider {
       );
     }
 
-    return parseActiveWarnings(await response.text(), regionIds, now);
+    return parseActiveWarnings(await readWarningResponse(response), regionIds, now);
   }
 
   async resolveRegionByLocation(
@@ -195,7 +195,7 @@ export class KmaWarningProvider {
       );
     }
 
-    return parseWarningRegionStations(await response.text());
+    return parseWarningRegionStations(await readWarningResponse(response));
   }
 }
 
@@ -250,6 +250,28 @@ const WARNING_NAMES: Record<KmaWarningTypeCode, string> = {
   F: '안개',
   K: '열대야',
 };
+
+// 기상청 특보 DB 코드표와 현황 응답의 한글 표기를 함께 지원한다.
+const WARNING_LEVEL_CODES: Record<string, string> = {
+  예비: '1', 예비특보: '1', 주의: '2', 주의보: '2', 경보: '3',
+};
+const WARNING_COMMAND_CODES: Record<string, string> = {
+  발표: '1', 대치: '2', 해제: '3', 대치해제: '4',
+  연장: '5', 변경: '6', 변경해제: '7',
+};
+
+async function readWarningResponse(response: Response): Promise<string> {
+  const payload = await response.arrayBuffer();
+  const charset = /charset\s*=\s*["']?([^\s;"']+)/i
+    .exec(response.headers.get('content-type') ?? '')?.[1];
+  if (charset) return new TextDecoder(charset, { fatal: true, ignoreBOM: false }).decode(payload);
+  try {
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(payload);
+  } catch {
+    // charset 없는 APIHub 응답도 EUC-KR로 제공될 수 있다.
+    return new TextDecoder('euc-kr', { fatal: true, ignoreBOM: false }).decode(payload);
+  }
+}
 
 export function parseActiveWarnings(
   payload: string,
@@ -382,19 +404,29 @@ function parseWarningRow(line: string): ParsedWarningRow | undefined {
   const trimmed = line.trim();
   if (!trimmed) return undefined;
 
-  const normalized = trimmed.replace(/\s*,\s*/g, ' ');
-  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+([A-Z])\s+([123])\s+([1-7])$/.exec(
+  // ED_TM(해제예고 시점)과 행 끝 '='는 특보의 활성 여부를 바꾸지 않는다.
+  const normalized = trimmed.replace(/\s*,\s*/g, ' ').replace(/\s*=\s*$/, '').trim();
+  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+\d{12})?$/.exec(
     normalized,
   );
   if (!match) return undefined;
+  const typeCode = isWarningTypeCode(match[7]) ? match[7]
+    : (Object.keys(WARNING_NAMES) as KmaWarningTypeCode[])
+      .find((code) => WARNING_NAMES[code] === match[7]) ??
+      (match[7] === '폭풍해일' ? 'O' : undefined);
+  const levelCode = WARNING_LEVEL_CODES[match[8]] ?? match[8];
+  const commandCode = WARNING_COMMAND_CODES[match[9]] ?? match[9];
+  if (!typeCode || !/^[123]$/.test(levelCode) || !/^[1-7]$/.test(commandCode)) {
+    return undefined;
+  }
   return {
     regionId: match[3],
     regionName: match[4],
     announcedAt: match[5],
     effectiveAt: match[6],
-    typeCode: match[7],
-    levelCode: match[8],
-    commandCode: match[9],
+    typeCode,
+    levelCode,
+    commandCode,
   };
 }
 
@@ -430,12 +462,14 @@ function parseWarningRegionStation(
     longitude: Number(tokens[coordinateIndex]),
     latitude: Number(tokens[coordinateIndex + 1]),
     regionId: tokens[warningRegionIndex],
-    regionName: tokens.slice(warningRegionIndex + 1).join(' '),
+    // WRN_KO 뒤의 SFC_STN_ID(대표지점번호)와 '='는 이름에 포함하지 않는다.
+    regionName: tokens.slice(warningRegionIndex + 1)
+      .filter((token) => token !== '=' && !/^\d+$/.test(token)).join(' '),
   };
 }
 
 function isWarningTypeCode(value: string): value is KmaWarningTypeCode {
-  return value in WARNING_NAMES;
+  return Object.hasOwn(WARNING_NAMES, value);
 }
 
 function compactKst(value: Date): string {

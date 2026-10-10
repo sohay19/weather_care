@@ -212,14 +212,6 @@ class _TodaySection extends StatelessWidget {
           apparentLabel: '현재 체감온도',
           apparentTemperature: current.displayedApparentTemperature,
         ),
-        if (current.apparentTemperatureSource ==
-            'APP_STEADMAN_FROM_OBSERVATION') ...[
-          const SizedBox(height: 6),
-          Text(
-            '기온·습도·바람으로 계산한 추정 체감온도예요.',
-            style: WeatherCareTheme.microTextStyle,
-          ),
-        ],
         const SizedBox(height: 13),
         Padding(
           padding: const EdgeInsets.only(left: 10, right: 10),

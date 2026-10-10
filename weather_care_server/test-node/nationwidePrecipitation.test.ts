@@ -234,7 +234,7 @@ describe('전국 정밀 강수 선수집', () => {
       provider: 'KMA_APIHUB_GRID_OBSERVATION',
     });
     await save(collectedCacheKey.visibility(58, 125), {
-      observedAt: '2026-12-01T15:00:00+09:00', stationId: '108', distanceKm: 12,
+      observedAt: '2026-12-01T14:00:00+09:00', stationId: '108', distanceKm: 12,
       visibilityMeters: 15_000, provider: 'KMA_ASOS',
     });
     await save(collectedCacheKey.warningSnapshot, {

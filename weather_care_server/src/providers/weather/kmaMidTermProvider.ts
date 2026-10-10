@@ -5,8 +5,6 @@ import { providerHttpFailureMessage } from '../providerHttpFailure';
 
 const KMA_PUBLIC_MID_TERM_URL =
   'https://apis.data.go.kr/1360000/MidFcstInfoService';
-const KMA_API_HUB_MID_TERM_URL =
-  'https://apihub.kma.go.kr/api/typ02/openApi/MidFcstInfoService';
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const PUBLICATION_DELAY_MS = 30 * 60 * 1000;
 
@@ -30,7 +28,6 @@ const responseSchema = z.object({
 
 interface KmaMidTermProviderOptions {
   serviceKey?: string;
-  apiHubKey?: string;
   fetcher?: typeof fetch;
   now?: () => Date;
   timeoutMs?: number;
@@ -45,14 +42,12 @@ export class KmaMidTermProviderError extends Error {
 
 export class KmaMidTermProvider {
   private readonly serviceKey: string;
-  private readonly apiHubKey: string;
   private readonly fetcher: typeof fetch;
   private readonly now: () => Date;
   private readonly timeoutMs: number;
 
   constructor(options: KmaMidTermProviderOptions) {
     this.serviceKey = normalizeServiceKey(options.serviceKey);
-    this.apiHubKey = normalizeServiceKey(options.apiHubKey);
     this.fetcher = options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
     this.now = options.now ?? (() => new Date());
     this.timeoutMs = options.timeoutMs ?? 6_000;
@@ -100,8 +95,8 @@ export class KmaMidTermProvider {
   }
 
   private assertConfigured(): void {
-    if (!this.serviceKey && !this.apiHubKey) {
-      throw new KmaMidTermProviderError('KMA mid-term key is not configured');
+    if (!this.serviceKey) {
+      throw new KmaMidTermProviderError('KMA mid-term service key is not configured');
     }
   }
 
@@ -111,19 +106,14 @@ export class KmaMidTermProvider {
     issueTime: string,
   ): Promise<KmaMidTermItem> {
     const query = new URLSearchParams({
-      ...(this.apiHubKey
-        ? { authKey: this.apiHubKey }
-        : { ServiceKey: this.serviceKey }),
+      ServiceKey: this.serviceKey,
       pageNo: '1',
       numOfRows: '10',
       dataType: 'JSON',
       regId: regionId,
       tmFc: issueTime,
     });
-    const baseUrl = this.apiHubKey
-      ? KMA_API_HUB_MID_TERM_URL
-      : KMA_PUBLIC_MID_TERM_URL;
-    const response = await this.fetcher(`${baseUrl}/${endpoint}?${query}`, {
+    const response = await this.fetcher(`${KMA_PUBLIC_MID_TERM_URL}/${endpoint}?${query}`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(this.timeoutMs),
       cf: { cacheEverything: true, cacheTtl: 21_600 },
@@ -151,6 +141,12 @@ export class KmaMidTermProvider {
     }
     const { header, body } = parsed.data.response;
     if (!['0', '00'].includes(header.resultCode)) {
+      if (['20', '30', '31'].includes(header.resultCode)) {
+        throw new KmaMidTermProviderError(`KMA mid-term authorization failed (${header.resultCode})`);
+      }
+      if (['22', '23'].includes(header.resultCode)) {
+        throw new KmaMidTermProviderError(`KMA mid-term quota exceeded (${header.resultCode})`);
+      }
       const retryable = header.resultCode === '03' || /NO_DATA|NODATA/i.test(header.resultMsg);
       throw new KmaMidTermProviderError(
         `KMA mid-term returned ${header.resultCode}: ${header.resultMsg}`,
@@ -159,7 +155,7 @@ export class KmaMidTermProvider {
     }
     if (!body) throw new KmaMidTermProviderError('KMA mid-term returned no body', true);
     const items = Array.isArray(body.items.item) ? body.items.item : [body.items.item];
-    const item = items.find((candidate) => candidate.regId === regionId) ?? items[0];
+    const item = items.find((candidate) => candidate.regId === regionId);
     if (!item) throw new KmaMidTermProviderError('KMA mid-term returned no item', true);
     return item;
   }

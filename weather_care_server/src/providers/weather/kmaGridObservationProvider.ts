@@ -19,7 +19,13 @@ export const GRID_OBSERVATION_VARIABLES = [
 ] as const;
 const REQUIRED_GRID_VARIABLES = new Set<string>(REQUIRED_GRID_OBSERVATION_VARIABLES);
 
-type GridObservationVariable = typeof GRID_OBSERVATION_VARIABLES[number];
+export type GridObservationVariable = typeof GRID_OBSERVATION_VARIABLES[number];
+
+export interface GridObservationSnapshot {
+  observedAt: string;
+  fields: Partial<Record<GridObservationVariable, ParsedGrid>>;
+  requestedVariables?: readonly GridObservationVariable[];
+}
 
 export interface KmaObservationGridPoint {
   nx: number;
@@ -32,7 +38,7 @@ interface ProviderOptions {
   timeoutMs?: number;
 }
 
-interface ParsedGrid {
+export interface ParsedGrid {
   width: number;
   height: number;
   values: number[];
@@ -53,7 +59,7 @@ export class KmaGridObservationProvider {
   constructor(options: ProviderOptions) {
     this.serviceKey = normalizeServiceKey(options.serviceKey);
     this.fetcher = options.fetcher ?? globalThis.fetch.bind(globalThis);
-    this.timeoutMs = options.timeoutMs ?? 15_000;
+    this.timeoutMs = options.timeoutMs ?? 30_000;
   }
 
   async getAt(
@@ -68,18 +74,58 @@ export class KmaGridObservationProvider {
     }
     for (const grid of grids) validateGrid(grid);
     if (grids.length === 0) return new Map();
+    return observationsFromGridSnapshot(await this.getSnapshot(koreanClock, options), grids);
+  }
+
+  async getSnapshot(
+    koreanClock: Date,
+    options: { requiredOnly?: boolean; seed?: GridObservationSnapshot;
+      onField?: (variable: GridObservationVariable, grid: ParsedGrid) => Promise<void> } = {},
+  ): Promise<GridObservationSnapshot> {
+    if (!this.serviceKey) {
+      throw new KmaGridObservationProviderError('KMA APIHub service key is not configured');
+    }
+    if (!Number.isFinite(koreanClock.getTime()) || koreanClock.getUTCMinutes() % 10 !== 0 ||
+        koreanClock.getUTCSeconds() !== 0 || koreanClock.getUTCMilliseconds() !== 0) {
+      throw new KmaGridObservationProviderError('KMA observation time is invalid');
+    }
 
     const compactTime = formatCompactKoreanTime(koreanClock);
+    const seed = options.seed && Date.parse(options.seed.observedAt) === Date.parse(compactKoreanTimeToIso(compactTime))
+      ? options.seed.fields : undefined;
     const variables = options.requiredOnly
       ? REQUIRED_GRID_OBSERVATION_VARIABLES
       : GRID_OBSERVATION_VARIABLES;
+    // 첫 파일 자체가 미제공이면 같은 회차의 나머지 요청을 보내지 않는다.
+    // 정상 기온 파일은 재사용하므로 준비 확인에 추가 호출이 들지 않는다.
+    let temperatureGrid: ParsedGrid;
+    try {
+      temperatureGrid = seed?.T1H ?? await this.fetchVariable('T1H', compactTime);
+      if (!temperatureGrid.values.some(validTemperature)) {
+        throw new KmaGridObservationProviderError(
+          'KMA grid observation has no usable temperature values',
+        );
+      }
+      if (!seed?.T1H) await options.onField?.('T1H', temperatureGrid);
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: 'grid_observation_required_variable_failed',
+        variable: 'T1H',
+        targetTime: compactTime,
+        ...providerErrorDiagnostic(error),
+      }));
+      throw error;
+    }
     const results = await Promise.allSettled(
-      variables.map(async (variable) => [
-        variable,
-        await this.fetchVariable(variable, compactTime),
-      ] as const),
+      variables.map(async (variable) => {
+        const grid = variable === 'T1H' ? temperatureGrid
+          : seed?.[variable] ?? await this.fetchVariable(variable, compactTime);
+        if (variable !== 'T1H' && !seed?.[variable]) await options.onField?.(variable, grid);
+        return [variable, grid] as const;
+      }),
     );
     const fields: Array<readonly [GridObservationVariable, ParsedGrid]> = [];
+    let requiredFailure: unknown;
     for (const [index, result] of results.entries()) {
       const variable = variables[index];
       if (result.status === 'fulfilled') {
@@ -88,68 +134,21 @@ export class KmaGridObservationProvider {
         console.error(JSON.stringify({
           event: 'grid_observation_required_variable_failed',
           variable,
+          targetTime: compactTime,
           ...providerErrorDiagnostic(result.reason),
         }));
-        throw result.reason;
+        requiredFailure ??= result.reason;
       } else {
         console.warn(JSON.stringify({
           event: 'grid_observation_optional_variable_failed',
           variable,
+          targetTime: compactTime,
           ...providerErrorDiagnostic(result.reason),
         }));
       }
     }
-    const valuesByField = new Map(fields);
-    const observedAt = compactKoreanTimeToIso(compactTime);
-    const observations = new Map<string, UltraShortObservation>();
-
-    for (const grid of grids) {
-      const temperature = valueAt(valuesByField.get('T1H')!, grid);
-      const humidity = valueAt(valuesByField.get('REH')!, grid);
-      const windSpeed = valueAt(valuesByField.get('WSD')!, grid);
-      // 핵심 체감 입력은 같은 발표시각·같은 격자 세 값이 모두 있을 때만 쓴다.
-      if (
-        !validTemperature(temperature) ||
-        !validHumidity(humidity) ||
-        !validWindSpeed(windSpeed)
-      ) continue;
-
-      const precipitationTypeCode = valuesByField.has('PTY')
-        ? valueAt(valuesByField.get('PTY')!, grid) : undefined;
-      const precipitationAmount = valuesByField.has('RN1')
-        ? valueAt(valuesByField.get('RN1')!, grid) : undefined;
-      const windDirection = valuesByField.has('VEC')
-        ? valueAt(valuesByField.get('VEC')!, grid) : undefined;
-      observations.set(gridKey(grid), {
-        observedAt,
-        rainDetected:
-          validPrecipitationType(precipitationTypeCode) &&
-          precipitationTypeCode! > 0,
-        precipitationAmount: validPrecipitationAmount(precipitationAmount)
-          ? precipitationAmount
-          : undefined,
-        precipitationTypeCode: validPrecipitationType(precipitationTypeCode)
-          ? precipitationTypeCode
-          : undefined,
-        temperature,
-        humidity,
-        windSpeed,
-        windDirection: validWindDirection(windDirection)
-          ? windDirection
-          : undefined,
-        provider: 'KMA_APIHUB_GRID_OBSERVATION',
-        ...(validPrecipitationType(precipitationTypeCode) ? {} : {
-          qualityFlags: ['PRECIPITATION_TYPE_UNAVAILABLE'],
-        }),
-        sourceLocation: {
-          type: 'GRID',
-          nx: grid.nx,
-          ny: grid.ny,
-          locationMatch: 'EXACT_GRID',
-        },
-      });
-    }
-    return observations;
+    if (requiredFailure) throw requiredFailure;
+    return { observedAt: compactKoreanTimeToIso(compactTime), fields: Object.fromEntries(fields), requestedVariables: variables };
   }
 
   private async fetchVariable(
@@ -205,6 +204,84 @@ export class KmaGridObservationProvider {
   }
 }
 
+export function observationsFromGridSnapshot(
+  snapshot: GridObservationSnapshot,
+  grids: readonly KmaObservationGridPoint[],
+): Map<string, UltraShortObservation> {
+  const valuesByField = new Map(Object.entries(snapshot.fields)) as Map<GridObservationVariable, ParsedGrid>;
+  const observedAt = snapshot.observedAt;
+  const observations = new Map<string, UltraShortObservation>();
+  if (!REQUIRED_GRID_OBSERVATION_VARIABLES.every((field) => valuesByField.has(field))) return observations;
+  for (const grid of grids) {
+    validateGrid(grid);
+    const temperature = valueAt(valuesByField.get('T1H')!, grid);
+    const humidity = valueAt(valuesByField.get('REH')!, grid);
+    const windSpeed = valueAt(valuesByField.get('WSD')!, grid);
+    // 핵심 체감 입력은 같은 발표시각·같은 격자 세 값이 모두 있을 때만 쓴다.
+    if (
+      !validTemperature(temperature) ||
+      !validHumidity(humidity) ||
+      !validWindSpeed(windSpeed)
+    ) continue;
+
+    const precipitationTypeCode = valuesByField.has('PTY')
+      ? valueAt(valuesByField.get('PTY')!, grid) : undefined;
+    const precipitationAmount = valuesByField.has('RN1')
+      ? valueAt(valuesByField.get('RN1')!, grid) : undefined;
+    const windDirection = valuesByField.has('VEC')
+      ? valueAt(valuesByField.get('VEC')!, grid) : undefined;
+    observations.set(gridKey(grid), {
+      observedAt,
+      rainDetected:
+        validPrecipitationType(precipitationTypeCode) &&
+        precipitationTypeCode! > 0,
+      precipitationAmount: validPrecipitationAmount(precipitationAmount)
+        ? precipitationAmount
+        : undefined,
+      precipitationTypeCode: validPrecipitationType(precipitationTypeCode)
+        ? precipitationTypeCode
+        : undefined,
+      temperature,
+      humidity,
+      windSpeed,
+      windDirection: validWindDirection(windDirection)
+        ? windDirection
+        : undefined,
+      provider: 'KMA_APIHUB_GRID_OBSERVATION',
+      ...(validPrecipitationType(precipitationTypeCode) ? {} : {
+        qualityFlags: ['PRECIPITATION_TYPE_UNAVAILABLE'],
+      }),
+      sourceLocation: {
+        type: 'GRID',
+        nx: grid.nx,
+        ny: grid.ny,
+        locationMatch: 'EXACT_GRID',
+      },
+    });
+  }
+  return observations;
+}
+
+export function auditGridObservationSnapshot(snapshot: GridObservationSnapshot) {
+  const validators = {
+    T1H: validTemperature, REH: validHumidity, WSD: validWindSpeed,
+    VEC: validWindDirection, PTY: validPrecipitationType, RN1: validPrecipitationAmount,
+  };
+  const fields = Object.fromEntries(GRID_OBSERVATION_VARIABLES.map((field) => {
+    const values = snapshot.fields[field]?.values;
+    const valid = values?.filter(validators[field]).length ?? 0;
+    return [field, { storedCells: values?.length ?? 0, validCells: valid,
+      sourceMissingCells: values ? GRID_WIDTH * GRID_HEIGHT - valid : undefined,
+      fileAvailable: !!values }];
+  }));
+  let coreValidCells = 0;
+  for (let index = 0; index < GRID_WIDTH * GRID_HEIGHT; index++) {
+    if (REQUIRED_GRID_OBSERVATION_VARIABLES.every((field) =>
+      validators[field](snapshot.fields[field]?.values[index]))) coreValidCells++;
+  }
+  return { observedAt: snapshot.observedAt, gridCount: GRID_WIDTH * GRID_HEIGHT, fields, coreValidCells };
+}
+
 export function parseKmaGridObservationPayload(payload: ArrayBuffer): ParsedGrid {
   const binary = parseBinaryGrid(payload);
   if (binary) return binary;
@@ -219,6 +296,11 @@ export function parseKmaGridObservation(payload: string): ParsedGrid {
       `KMA grid observation failed with status ${apiHubStatus}${
         reason ? `: ${reason}` : ''
       }`,
+    );
+  }
+  if (/^\s*#\s*dfs_file_read\s+error\s*\(-1\)\s*$/i.test(payload)) {
+    throw new KmaGridObservationProviderError(
+      'KMA grid observation file is not available',
     );
   }
   const lines = payload.split(/\r?\n/);
@@ -251,8 +333,7 @@ export function parseKmaGridObservation(payload: string): ParsedGrid {
   const expected = width * height;
   const values = lines.slice(dimensionIndex + 1)
     .filter((line) => !line.trim().startsWith('#'))
-    .flatMap(numericTokens)
-    .slice(0, expected);
+    .flatMap(numericTokens);
   if (values.length !== expected) {
     throw new KmaGridObservationProviderError(
       `KMA grid observation value count is invalid: ${values.length}/${expected}`,

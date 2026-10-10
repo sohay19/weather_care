@@ -18,6 +18,7 @@ import m8 from '../migrations/0008_data_retention.sql?raw';
 import m9 from '../migrations/0009_minimum_age_policy.sql?raw';
 import m10 from '../migrations/0010_weekly_forecast_records.sql?raw';
 import m11 from '../migrations/0011_central_weather_collection.sql?raw';
+import m12 from '../migrations/0012_grid_observation_history.sql?raw';
 import recoveryReset from '../ops/recovery-reset.sql?raw';
 import recoveryVerify from '../ops/recovery-verify.sql?raw';
 
@@ -57,8 +58,8 @@ async function seed(target: string, activeAt: string) {
 
 beforeEach(async () => {
   // This suite uses only an isolated local test binding, never production D1.
-  await env.DB.exec('DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots; DROP TABLE IF EXISTS weekly_forecast_records;');
-  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11]) await apply(sql);
+  await env.DB.exec('DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots; DROP TABLE IF EXISTS weekly_forecast_records; DROP TABLE IF EXISTS grid_observation_snapshots;');
+  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12]) await apply(sql);
 });
 afterEach(() => vi.restoreAllMocks());
 

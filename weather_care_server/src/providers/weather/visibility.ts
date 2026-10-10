@@ -1,10 +1,15 @@
 import type { CurrentVisibilityObservation } from '../../types';
 import type { WeatherForecast } from './weatherProvider';
 
-// ASOS hourly data is requested after a 90-minute publication buffer and
-// refreshed hourly, so a usable observation can be almost three hours old.
+// 직전 정시 자료를 사용하고, 수집 실패 시 3시간 이내의 이전 값을 보존한다.
 export const VISIBILITY_MAX_AGE_MS = 3 * 60 * 60 * 1000;
-export const VISIBILITY_MAX_DISTANCE_KM = 30;
+
+// APIHub 요청용 한국 시계: 13:00~13:59에는 12:00 회차를 선택한다.
+export function latestVisibilityKoreanHour(now: Date): Date {
+  const hour = new Date(now.getTime() + 9 * 3_600_000 - 3_600_000);
+  hour.setUTCMinutes(0, 0, 0);
+  return hour;
+}
 
 export function enrichForecastWithVisibility(
   forecast: WeatherForecast,
@@ -28,12 +33,14 @@ export function usableVisibilityObservation(
   observation: CurrentVisibilityObservation | undefined,
   now = new Date(),
 ): observation is CurrentVisibilityObservation {
-  if (!observation || observation.distanceKm > VISIBILITY_MAX_DISTANCE_KM) {
+  if (!observation || !Number.isFinite(observation.distanceKm) || observation.distanceKm < 0 ||
+      !Number.isFinite(observation.visibilityMeters) || observation.visibilityMeters < 0) {
     return false;
   }
   const observedAt = Date.parse(observation.observedAt);
   const age = now.getTime() - observedAt;
+  const latestAllowed = latestVisibilityKoreanHour(now).getTime() - 9 * 3_600_000;
   return (
-    Number.isFinite(observedAt) && age >= 0 && age <= VISIBILITY_MAX_AGE_MS
+    Number.isFinite(observedAt) && observedAt <= latestAllowed && age <= VISIBILITY_MAX_AGE_MS
   );
 }

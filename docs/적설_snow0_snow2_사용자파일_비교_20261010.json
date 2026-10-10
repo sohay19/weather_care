@@ -1,0 +1,258 @@
+{
+  "checkedAt": "2026-10-10T03:04:54.831Z",
+  "source": "사용자가 저장한 응답 파일 비교; 파일명 및 인증키 제외",
+  "summaries": [
+    {
+      "snow": 0,
+      "requestedTime": "202610101130",
+      "encoding": "utf-8",
+      "fileBytes": 61311,
+      "sha256": "69192a994c024f2727eac3ba2c3e8eb87450bc1aad454f0ea8e6e5afda8c92db",
+      "rowCount": 674,
+      "distinctStations": 674,
+      "observedTimes": [
+        "202610101100"
+      ],
+      "zeroCount": 664,
+      "positiveCount": 0,
+      "negativeCount": 10,
+      "negativeCounts": {
+        "-99.7": 10
+      },
+      "missingRows": [
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 305,
+          "stationName": "여서도",
+          "longitude": 126.92008972,
+          "latitude": 33.98622131,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 718,
+          "stationName": "상조도",
+          "longitude": 126.03646088,
+          "latitude": 34.3330307,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 745,
+          "stationName": "성전",
+          "longitude": 126.72554016,
+          "latitude": 34.68503952,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 766,
+          "stationName": "여수산단",
+          "longitude": 127.71495819,
+          "latitude": 34.8494606,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 772,
+          "stationName": "수유",
+          "longitude": 126.23963928,
+          "latitude": 34.5320816,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 773,
+          "stationName": "학산",
+          "longitude": 126.63600159,
+          "latitude": 34.70859909,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 777,
+          "stationName": "관산",
+          "longitude": 126.93462372,
+          "latitude": 34.55633163,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 778,
+          "stationName": "유치",
+          "longitude": 126.82180786,
+          "latitude": 34.79595184,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 784,
+          "stationName": "시종",
+          "longitude": 126.61260223,
+          "latitude": 34.8771019,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 785,
+          "stationName": "북일",
+          "longitude": 126.67630005,
+          "latitude": 34.46382904,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        }
+      ],
+      "malformedCount": 0,
+      "duplicateRowKeys": 0,
+      "stationKinds": {
+        "000-----": 575,
+        "618-----": 88,
+        "500-----": 4,
+        "608-----": 3,
+        "612-----": 4
+      }
+    },
+    {
+      "snow": 2,
+      "requestedTime": "202610101130",
+      "encoding": "utf-8",
+      "fileBytes": 61311,
+      "sha256": "69192a994c024f2727eac3ba2c3e8eb87450bc1aad454f0ea8e6e5afda8c92db",
+      "rowCount": 674,
+      "distinctStations": 674,
+      "observedTimes": [
+        "202610101100"
+      ],
+      "zeroCount": 664,
+      "positiveCount": 0,
+      "negativeCount": 10,
+      "negativeCounts": {
+        "-99.7": 10
+      },
+      "missingRows": [
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 305,
+          "stationName": "여서도",
+          "longitude": 126.92008972,
+          "latitude": 33.98622131,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 718,
+          "stationName": "상조도",
+          "longitude": 126.03646088,
+          "latitude": 34.3330307,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 745,
+          "stationName": "성전",
+          "longitude": 126.72554016,
+          "latitude": 34.68503952,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 766,
+          "stationName": "여수산단",
+          "longitude": 127.71495819,
+          "latitude": 34.8494606,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 772,
+          "stationName": "수유",
+          "longitude": 126.23963928,
+          "latitude": 34.5320816,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 773,
+          "stationName": "학산",
+          "longitude": 126.63600159,
+          "latitude": 34.70859909,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 777,
+          "stationName": "관산",
+          "longitude": 126.93462372,
+          "latitude": 34.55633163,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 778,
+          "stationName": "유치",
+          "longitude": 126.82180786,
+          "latitude": 34.79595184,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 784,
+          "stationName": "시종",
+          "longitude": 126.61260223,
+          "latitude": 34.8771019,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        },
+        {
+          "observedAtKst": "202610101100",
+          "stationId": 785,
+          "stationName": "북일",
+          "longitude": 126.67630005,
+          "latitude": 34.46382904,
+          "stationKind": "618-----",
+          "snowDepthCm": -99.7
+        }
+      ],
+      "malformedCount": 0,
+      "duplicateRowKeys": 0,
+      "stationKinds": {
+        "000-----": 575,
+        "618-----": 88,
+        "500-----": 4,
+        "608-----": 3,
+        "612-----": 4
+      }
+    }
+  ],
+  "comparison": {
+    "byteIdentical": true,
+    "decodedTextIdentical": true,
+    "parsedRowsSameOrder": true,
+    "commonRowKeys": 674,
+    "onlySnow0": [],
+    "onlySnow2": [],
+    "differingRows": []
+  },
+  "limitations": [
+    "이번 두 응답의 차이만 검증하며 다른 시각·API의 필터 동작까지 보장하지 않음",
+    "텍스트 파일만으로 실제 HTTP 상태·시간초과·응답 헤더는 검증하지 않음",
+    "음수 결측 코드를 0cm로 치환하지 않음"
+  ]
+}

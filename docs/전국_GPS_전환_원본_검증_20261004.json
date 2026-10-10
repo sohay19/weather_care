@@ -1,0 +1,230 @@
+{
+  "checkedAt": "2026-10-04T06:18:36.925Z",
+  "fields": [
+    {
+      "variable": "TMP",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 9295,
+      "officialMissing": 28402,
+      "roundTripMismatch": 0,
+      "storedBytes": 16980
+    },
+    {
+      "variable": "REH",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 9295,
+      "officialMissing": 28402,
+      "roundTripMismatch": 0,
+      "storedBytes": 14760
+    },
+    {
+      "variable": "WSD",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 30364,
+      "officialMissing": 7333,
+      "roundTripMismatch": 0,
+      "storedBytes": 65280
+    },
+    {
+      "variable": "VEC",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 30364,
+      "officialMissing": 7333,
+      "roundTripMismatch": 0,
+      "storedBytes": 99124
+    },
+    {
+      "variable": "SKY",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 30364,
+      "officialMissing": 7333,
+      "roundTripMismatch": 0,
+      "storedBytes": 10380
+    },
+    {
+      "variable": "PTY",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 30364,
+      "officialMissing": 7333,
+      "roundTripMismatch": 0,
+      "storedBytes": 7336
+    },
+    {
+      "variable": "POP",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 9295,
+      "officialMissing": 28402,
+      "roundTripMismatch": 0,
+      "storedBytes": 9016
+    },
+    {
+      "variable": "PCP",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 9295,
+      "officialMissing": 28402,
+      "roundTripMismatch": 0,
+      "storedBytes": 7320
+    },
+    {
+      "variable": "SNO",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 9295,
+      "officialMissing": 28402,
+      "roundTripMismatch": 0,
+      "storedBytes": 7012
+    },
+    {
+      "variable": "TMN",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 0,
+      "officialMissing": 37697,
+      "roundTripMismatch": 0,
+      "storedBytes": 7468
+    },
+    {
+      "variable": "TMX",
+      "sourceBytes": 341297,
+      "cells": 37697,
+      "officialValues": 9295,
+      "officialMissing": 28402,
+      "roundTripMismatch": 0,
+      "storedBytes": 16180
+    }
+  ],
+  "completeNineVariableCells": 9295,
+  "bank": {
+    "adminCode": "4139054000",
+    "name": "경기도 시흥시 은행동",
+    "nx": 57,
+    "ny": 124,
+    "current": {
+      "observedAt": "2026-10-04T06:00:00+09:00",
+      "dataRole": "FORECAST",
+      "forecastAt": "2026-10-04T06:00:00+09:00",
+      "validFrom": "2026-10-04T06:00:00+09:00",
+      "precipitationPeriod": {
+        "start": "2026-10-03T20:00:00.000Z",
+        "end": "2026-10-04T06:00:00+09:00"
+      },
+      "validTo": "2026-10-04T06:59:59+09:00",
+      "issuedAt": "2026-10-04T05:00:00+09:00",
+      "fetchedAt": "2026-10-03T21:15:00.000Z",
+      "temperature": 15,
+      "apparentTemperature": 13.7,
+      "apparentTemperatureSource": "APP_STEADMAN_FROM_FORECAST",
+      "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+      "humidity": 80,
+      "windSpeed": 2.6,
+      "windDirection": 120.6,
+      "precipitationType": "NONE",
+      "precipitationProbability": 20,
+      "precipitationAmount": 0,
+      "precipitationAmountRange": {
+        "type": "VALUE",
+        "min": 0,
+        "max": 0,
+        "unit": "MM",
+        "rawValue": "0"
+      },
+      "snowProbability": 0,
+      "snowExpected": false,
+      "snowfallAmount": 0,
+      "snowfallAmountRange": {
+        "type": "VALUE",
+        "min": 0,
+        "max": 0,
+        "unit": "CM",
+        "rawValue": "0"
+      },
+      "skyCondition": "구름 많음",
+      "provider": "KMA",
+      "providerField": "TMP,REH,WSD,VEC,POP,PTY,PCP,SNO,SKY",
+      "rawValue": {
+        "precipitationAmount": "0",
+        "snowfallAmount": "0",
+        "precipitationType": "0"
+      },
+      "qualityFlags": [],
+      "minTemperature": 15,
+      "maxTemperature": 24
+    }
+  },
+  "uv": {
+    "issue": "2026100412",
+    "regions": 3851,
+    "pages": [
+      {
+        "page": 1,
+        "bytes": 309164
+      },
+      {
+        "page": 2,
+        "bytes": 309164
+      },
+      {
+        "page": 3,
+        "bytes": 309164
+      },
+      {
+        "page": 4,
+        "bytes": 263123
+      }
+    ],
+    "bytes": 1190615,
+    "mappedAdministrativeCodes": 3849,
+    "missingCatalogCodes": [],
+    "ambiguousAppCode": "2815555000",
+    "resolution": "중복된 두 동을 제외하고 확인된 상위 영종구를 사용"
+  },
+  "note": "실제 제공처 원본의 전 셀과 SQLite 압축 저장 왕복 검사. 운영 서비스 변경/전국 배포 결과가 아님.",
+  "domesticAdministrativeCoordinateAudit": {
+    "checkedAt": "2026-10-04T07:04:39.675Z",
+    "scope": "행정지역 목록 좌표 대조. 임의의 모든 국내 GPS에 대한 검증은 아님.",
+    "areaRows": 3849,
+    "uniqueGrids": 1632,
+    "source": {
+      "currentObservedAt": "2026-10-04T13:00:00+09:00",
+      "forecastIssue": "2026-10-04T05:00:00+09:00",
+      "forecastValid": "2026-10-04T06:00:00+09:00"
+    },
+    "missingAreaRows": 0,
+    "missing": [],
+    "bank": {
+      "area": [
+        "4139054000",
+        "경기도 시흥시 은행동",
+        57,
+        124
+      ],
+      "current": {
+        "T1H": 23.2,
+        "REH": 45.5,
+        "WSD": 1.7,
+        "VEC": 152,
+        "PTY": 0,
+        "RN1": 0
+      },
+      "forecast": {
+        "TMP": 15,
+        "REH": 80,
+        "WSD": 2.6,
+        "VEC": 120.6,
+        "SKY": 3,
+        "PTY": 0,
+        "POP": 20,
+        "PCP": 0,
+        "SNO": 0
+      }
+    }
+  }
+}

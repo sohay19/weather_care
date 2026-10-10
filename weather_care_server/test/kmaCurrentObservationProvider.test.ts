@@ -1,21 +1,49 @@
 import { describe, expect, it, vi } from 'vitest';
-import { logProviderRequestFailure } from '../src/observability/providerRequestDiagnostics';
 import {
   KmaGridObservationProvider,
   latestGridObservationTime,
   parseKmaGridObservation,
   parseKmaGridObservationPayload,
 } from '../src/providers/weather/kmaGridObservationProvider';
-import {
-  KmaAwsMinuteObservationProvider,
-  parseKmaAwsMinuteRows,
-} from '../src/providers/weather/kmaAwsMinuteObservationProvider';
 
 const width = 149;
 const height = 253;
 const target = { nx: 57, ny: 125 };
 
 describe('KMA APIHub 10분 격자 실황', () => {
+  it('미제공 기온 파일은 나머지 변수 요청을 막는다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      new Response('# dfs_file_read error (-1)\n'));
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(new KmaGridObservationProvider({
+        serviceKey: 'test-key', fetcher,
+      }).getAt([target], new Date('2026-09-22T11:20:00Z')))
+        .rejects.toThrow('file is not available');
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.get('vars'))
+        .toBe('T1H');
+      expect(log.mock.calls.join('')).toContain('NO_USABLE_DATA');
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it('모든 격자가 결측인 기온 파일도 나머지 요청을 막는다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      new Response(gridPayload(target, -99)));
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(new KmaGridObservationProvider({
+        serviceKey: 'test-key', fetcher,
+      }).getAt([target], new Date('2026-09-22T11:20:00Z')))
+        .rejects.toThrow('no usable temperature');
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    } finally {
+      log.mockRestore();
+    }
+  });
+
   it('전국 격자 배열에서 정확한 nx/ny의 값을 읽는다', () => {
     const parsed = parseKmaGridObservation(gridPayload(target, 23.4));
 
@@ -222,6 +250,22 @@ describe('KMA APIHub 10분 격자 실황', () => {
     }
   });
 
+  it('같은 시각의 핵심 캐시를 재사용하고 빠진 선택3변수만 받는다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const variable = new URL(String(input)).searchParams.get('vars');
+      return new Response(gridPayload(target, variable === 'VEC' ? 180 : 0));
+    });
+    const fields = Object.fromEntries(Object.entries({ T1H: 23.4, REH: 61, WSD: 2.6 })
+      .map(([key, value]) => [key, parseKmaGridObservation(gridPayload(target, value))]));
+    const snapshot = await new KmaGridObservationProvider({ serviceKey: 'test', fetcher }).getSnapshot(
+      new Date('2026-09-22T11:20:00Z'), { seed: { observedAt: '2026-09-22T02:20:00Z', fields } },
+    );
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher.mock.calls.map(([input]) => new URL(String(input)).searchParams.get('vars')).sort())
+      .toEqual(['PTY', 'RN1', 'VEC']);
+    expect(snapshot.fields.T1H).toEqual(fields.T1H);
+  });
+
   it('10분 발표 지연을 고려해 직전 10분 시각을 선택한다', () => {
     expect(latestGridObservationTime(
       new Date('2026-09-22T02:37:40Z'),
@@ -229,214 +273,10 @@ describe('KMA APIHub 10분 격자 실황', () => {
   });
 });
 
-describe('KMA AWS 매분 fallback', () => {
-  it('한 행에서 기온·습도·바람을 함께 읽고 최근접 관측소를 고른다', async () => {
-    const fetcher = vi.fn<typeof fetch>(async (input) => {
-      const url = new URL(String(input));
-      if (url.pathname.includes('nph-aws2_min')) {
-        return new Response([
-          '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
-          '202609221115,400,180,2.4,22.8,0,0,58',
-          '202609221116,401,90,1.2,24.1,1,0.4,66',
-        ].join('\n'));
-      }
-      return Response.json({
-        response: {
-          header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
-          body: {
-            items: {
-              item: [
-                { stn_id: '400', stn_ko: '먼관측소', lat: 35, lon: 128 },
-                { stn_id: '401', stn_ko: '항동인근', lat: 37.48, lon: 126.82 },
-              ],
-            },
-          },
-        },
-      });
-    });
-    const provider = new KmaAwsMinuteObservationProvider({
-      serviceKey: 'test-key',
-      fetcher,
-      now: () => new Date('2026-09-22T11:18:00+09:00'),
-    });
-
-    const [observation] = await provider.getCurrentByLocations([
-      { latitude: 37.48, longitude: 126.82 },
-    ]);
-
-    expect(fetcher).toHaveBeenCalledTimes(2);
-    expect(observation).toMatchObject({
-      observedAt: '2026-09-22T11:16:00+09:00',
-      temperature: 24.1,
-      humidity: 66,
-      windSpeed: 1.2,
-      windDirection: 90,
-      rainDetected: true,
-      precipitationAmount: 0.4,
-      provider: 'KMA_AWS_OBSERVATION',
-      sourceLocation: {
-        type: 'STATION',
-        stationId: '401',
-        stationName: '항동인근',
-        distanceKm: 0,
-        locationMatch: 'NEAREST_STATION',
-      },
-      qualityFlags: ['LOCATION_FALLBACK'],
-    });
-  });
-
-  it('같은 AWS 행에 핵심 필드가 모두 없으면 계산 입력으로 쓰지 않는다', () => {
-    expect(parseKmaAwsMinuteRows([
-      '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
-      '202609221115,400,180,2.4,22.8,0,0,-999',
-    ].join('\n'))).toEqual([]);
-  });
-
-  it('미발간 월을 건너뛰고 중첩된 최신 지점목록을 읽는다', async () => {
-    const fetcher = vi.fn<typeof fetch>(async (input) => {
-      const url = new URL(String(input));
-      if (url.pathname.includes('nph-aws2_min')) {
-        return new Response([
-          '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
-          '202609221115,401,90,1.2,24.1,0,0,66',
-        ].join('\n'));
-      }
-      if (url.searchParams.get('month') === '09') {
-        return Response.json({
-          response: {
-            header: { resultCode: '99', resultMsg: '발간되지 않은 기간입니다.' },
-          },
-        });
-      }
-      return Response.json({
-        response: {
-          header: { resultCode: '00', resultMsg: 'NORMAL_SERVICE' },
-          body: {
-            items: {
-              item: [{
-                stn_aws: {
-                  info: [{
-                    stn_id: 401,
-                    stn_ko: '항동인근',
-                    lat: '37.48',
-                    lon: '126.82',
-                  }],
-                },
-              }],
-            },
-          },
-        },
-      });
-    });
-    const provider = new KmaAwsMinuteObservationProvider({
-      serviceKey: 'test-key',
-      fetcher,
-      now: () => new Date('2026-09-22T11:18:00+09:00'),
-    });
-
-    const [observation] = await provider.getCurrentByLocations([
-      { latitude: 37.48, longitude: 126.82 },
-    ]);
-
-    expect(fetcher).toHaveBeenCalledTimes(3);
-    expect(observation?.sourceLocation).toMatchObject({
-      stationId: '401',
-      stationName: '항동인근',
-      locationMatch: 'NEAREST_STATION',
-    });
-  });
-
-  it('AWS 매분 관측 요청의 헤더 대기 시간 초과를 구분한다', async () => {
-    const error = Object.assign(new Error('request timed out'), { name: 'TimeoutError' });
-    const fetcher = vi.fn<typeof fetch>(async (input) => {
-      if (new URL(String(input)).pathname.includes('nph-aws2_min')) throw error;
-      return Response.json({});
-    });
-    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      await expect(new KmaAwsMinuteObservationProvider({
-        serviceKey: 'test-key', fetcher,
-        now: () => new Date('2026-09-22T11:18:00+09:00'),
-      }).getCurrentByLocations([{ latitude: 37.48, longitude: 126.82 }]))
-        .rejects.toThrow('request timed out');
-
-      const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
-      expect(events).toContainEqual(expect.objectContaining({
-        event: 'weather_provider_request_failed',
-        endpoint: 'AWS_MINUTE',
-        phase: 'WAIT_HEADERS',
-        failureReason: 'TIMEOUT',
-      }));
-      expect(log.mock.calls.join('')).not.toContain('test-key');
-    } finally {
-      log.mockRestore();
-    }
-  });
-
-  it('AWS 관측소 목록 응답 본문 시간 초과를 구분한다', async () => {
-    const error = Object.assign(new Error('body timed out'), { name: 'TimeoutError' });
-    const fetcher = vi.fn<typeof fetch>(async (input) => {
-      if (new URL(String(input)).pathname.includes('nph-aws2_min')) {
-        return new Response([
-          '# TM,STN,WD1,WS1,TA,RE,RN-60m,HM',
-          '202609221115,401,90,1.2,24.1,0,0,66',
-        ].join('\n'));
-      }
-      const response = Response.json({});
-      vi.spyOn(response, 'text').mockRejectedValue(error);
-      return response;
-    });
-    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      await expect(new KmaAwsMinuteObservationProvider({
-        serviceKey: 'test-key', fetcher,
-        now: () => new Date('2026-09-22T11:18:00+09:00'),
-      }).getCurrentByLocations([{ latitude: 37.48, longitude: 126.82 }]))
-        .rejects.toThrow('body timed out');
-
-      const events = log.mock.calls.map(([line]) => JSON.parse(String(line)));
-      expect(events).toContainEqual(expect.objectContaining({
-        event: 'weather_provider_request_failed',
-        endpoint: 'AWS_STATION',
-        phase: 'READ_BODY',
-        month: '2026-09',
-        httpStatus: 200,
-        failureReason: 'TIMEOUT',
-      }));
-    } finally {
-      log.mockRestore();
-    }
-  });
-});
-
-it('시간 제한 신호로 본문이 중단되면 AbortError도 TIMEOUT으로 기록한다', () => {
-  const controller = new AbortController();
-  controller.abort(new DOMException('timed out', 'TimeoutError'));
-  const caught = new DOMException('body aborted', 'AbortError');
-  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
-  try {
-    logProviderRequestFailure(caught, controller.signal, {
-      endpoint: 'AWS_MINUTE', phase: 'READ_BODY',
-      timeoutMs: 15_000, elapsedMs: 15_000,
-    });
-
-    expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({
-      event: 'weather_provider_request_failed',
-      endpoint: 'AWS_MINUTE',
-      phase: 'READ_BODY',
-      error: 'TimeoutError',
-      caughtError: 'AbortError',
-      failureReason: 'TIMEOUT',
-    });
-  } finally {
-    log.mockRestore();
-  }
-});
 
 function gridPayload(point: { nx: number; ny: number }, value: number): string {
-  const values = Array<number>(width * height).fill(-999);
+  const values = Array<number>(width * height).fill(-99);
   values[(point.ny - 1) * width + point.nx - 1] = value;
-  const rows = Array.from({ length: height }, (_, row) =>
-    values.slice(row * width, (row + 1) * width).join(','));
-  return [`${width},${height}`, ...rows].join('\n');
+  return [`${width},${height}`, ...Array.from({ length: height }, (_, row) =>
+    values.slice(row * width, (row + 1) * width).join(','))].join('\n');
 }

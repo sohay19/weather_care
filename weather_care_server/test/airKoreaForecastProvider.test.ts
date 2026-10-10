@@ -66,8 +66,8 @@ describe('AirKoreaForecastProvider', () => {
     expect(airKoreaForecastArea('강원특별자치도 강릉시', 92, 131)).toBe('영동');
     expect(airKoreaForecastArea('전라남도 순천시', 70, 70)).toBe('전남');
     expect(airKoreaForecastArea(undefined, 60, 127)).toBe('서울');
-    expect(airKoreaForecastAreaForGrid(60, 127)).toBe('서울');
-    expect(airKoreaForecastAreaForGrid(100, 76)).toBe('부산');
+    expect(airKoreaForecastAreaForGrid(60, 127)).toBeUndefined();
+    expect(airKoreaForecastAreaForGrid(100, 76)).toBeUndefined();
   });
 
   it('전국 예보 지역을 네 번의 공통 원본 호출로 채운다', async () => {

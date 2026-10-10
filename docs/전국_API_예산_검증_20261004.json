@@ -1,0 +1,184 @@
+{
+  "limits": {
+    "officialDailyCalls": 20000,
+    "officialDailyBytes": 5000000000,
+    "internalDailyCalls": 18000,
+    "internalDailyBytes": 4500000000,
+    "retryDailyBytes": 400000000,
+    "bootstrapRetryDailyBytes": 100000000
+  },
+  "gridBytes": 341297,
+  "profiles": [
+    {
+      "season": "비겨울",
+      "forecast": {
+        "steady": 2815,
+        "coldMax": 3824
+      },
+      "sources": [
+        {
+          "name": "10분 실황 6변수×144회차",
+          "calls": 864,
+          "bytes": 294880608
+        },
+        {
+          "name": "특보 30분·구역 목록 하루 1회",
+          "calls": 49,
+          "bytes": 13288000
+        },
+        {
+          "name": "ASOS 시정 전용 1파일×24회",
+          "calls": 24,
+          "bytes": 3072000
+        },
+        {
+          "name": "AWS 독립 일 관측 4지표 (실황 대체 아님)",
+          "calls": 4,
+          "bytes": 2048000
+        },
+        {
+          "name": "중기예보 전국 176기온·10육상×하루2회",
+          "calls": 372,
+          "bytes": 3047424
+        },
+        {
+          "name": "전국 강수분석·레이더 2파일×30분",
+          "calls": 96,
+          "bytes": 1443601056
+        },
+        {
+          "name": "전국 단기예보: 가까운24h 3시간·먼기간 하루2회",
+          "calls": 2815,
+          "bytes": 960751055
+        }
+      ],
+      "essential": {
+        "calls": 4224,
+        "bytes": 2720688143
+      },
+      "retries": {
+        "calls": 423,
+        "bytes": 272068815
+      },
+      "total": {
+        "calls": 4647,
+        "bytes": 2992756958
+      },
+      "bootstrapExtra": {
+        "calls": 1629,
+        "bytes": 535695711
+      },
+      "bootstrapEssential": {
+        "calls": 5853,
+        "bytes": 3256383854
+      },
+      "bootstrapWithRetryByteCap": 3356383854,
+      "note": "초기 추가에는 이전 발표 예보·어제 동시각 432파일·과거 일 관측 7일 범위·이전 중기186파일·초기 강수분석/레이더2파일을 포함. 첫 24시간 재시도 100MB, 이후 400MB. 성공 응답 실수신량 정산, 실패·중단은 예약 상한 유지."
+    },
+    {
+      "season": "겨울(11월15일~3월15일)",
+      "forecast": {
+        "steady": 2356,
+        "coldMax": 3365
+      },
+      "sources": [
+        {
+          "name": "10분 실황 6변수×144회차",
+          "calls": 864,
+          "bytes": 294880608
+        },
+        {
+          "name": "특보 30분·구역 목록 하루 1회",
+          "calls": 49,
+          "bytes": 13288000
+        },
+        {
+          "name": "ASOS 시정 전용 1파일×24회",
+          "calls": 24,
+          "bytes": 3072000
+        },
+        {
+          "name": "AWS 독립 일 관측 4지표 (실황 대체 아님)",
+          "calls": 4,
+          "bytes": 2048000
+        },
+        {
+          "name": "중기예보 전국 176기온·10육상×하루2회",
+          "calls": 372,
+          "bytes": 3047424
+        },
+        {
+          "name": "전국 강수분석·레이더 2파일×30분",
+          "calls": 96,
+          "bytes": 1443601056
+        },
+        {
+          "name": "겨울 도로살얼음 12파일×30분",
+          "calls": 576,
+          "bytes": 1209600000
+        },
+        {
+          "name": "전국 단기예보: 가까운24h 3시간·먼기간 하루1회",
+          "calls": 2356,
+          "bytes": 804095732
+        }
+      ],
+      "essential": {
+        "calls": 4341,
+        "bytes": 3773632820
+      },
+      "retries": {
+        "calls": 435,
+        "bytes": 377363282
+      },
+      "total": {
+        "calls": 4776,
+        "bytes": 4150996102
+      },
+      "bootstrapExtra": {
+        "calls": 1629,
+        "bytes": 535695711
+      },
+      "bootstrapEssential": {
+        "calls": 5970,
+        "bytes": 4309328531
+      },
+      "bootstrapWithRetryByteCap": 4409328531,
+      "note": "초기 추가에는 이전 발표 예보·어제 동시각 432파일·과거 일 관측 7일 범위·이전 중기186파일·초기 강수분석/레이더2파일을 포함. 첫 24시간 재시도 100MB, 이후 400MB. 성공 응답 실수신량 정산, 실패·중단은 예약 상한 유지."
+    }
+  ],
+  "otherProviders": {
+    "airKorea": {
+      "essential": 425,
+      "retries": 86,
+      "total": 511,
+      "limit": "운영계정 신청 전제로 문제없음",
+      "retryAssumption": "20% (실측 아님)"
+    },
+    "its": {
+      "essential": 144,
+      "retries": 29,
+      "total": 173,
+      "limit": "사용자 전제로 문제없음",
+      "retryAssumption": "20% (실측 아님)"
+    },
+    "kmaPortalUv": {
+      "essential": 32,
+      "retries": 7,
+      "total": 39,
+      "note": "3,851지역/1,000행=4페이지×8회차. APIHub 합계에 포함하지 않음. 운영계정 전제."
+    }
+  },
+  "excluded": {
+    "awsMinuteFallback": 0,
+    "separateReadinessRequest": 0,
+    "requestTriggeredWeatherFetch": 0,
+    "representativePointPrecipitationFallback": 0
+  },
+  "assumptions": [
+    "파일 341,297B는 2026-10-04 실측, 모든 발표의 최대 용량을 증명하지 않음.",
+    "그 외 크기는 보수적인 기존 설계 표본. 실제 용량 증가와 타임아웃 미정산은 내부 상한으로 차단됨.",
+    "동일 키의 수동 호출·다른 프로그램 호출은 실제 계정 한도에 포함되나 서버 내부 장부에는 자동 반영되지 않음.",
+    "전국 격자를 제거해 절약하지 않고 먼 기간의 갱신 주기와 큰 전국 원본의 주기를 조절함."
+  ]
+}

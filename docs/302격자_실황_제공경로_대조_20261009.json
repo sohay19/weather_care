@@ -1,0 +1,311 @@
+{
+  "pointBaseDate": "20261009",
+  "pointBaseTime": "1100",
+  "pointRawCounts": {
+    "T1H": {
+      "-999": 302
+    },
+    "REH": {
+      "-998": 302
+    },
+    "WSD": {
+      "-998.9": 302
+    },
+    "VEC": {
+      "-998": 302
+    },
+    "PTY": {
+      "0": 302
+    },
+    "RN1": {
+      "-998.9": 302
+    }
+  },
+  "httpSuccessWithExactCoordinatesAndTime": 302,
+  "nativeSnapshots": [
+    {
+      "observedAt": "2026-10-09T02:00:00.000Z",
+      "variables": {
+        "T1H": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 19.4
+        },
+        "REH": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 59.8
+        },
+        "WSD": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 1
+        },
+        "VEC": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 139
+        },
+        "PTY": {
+          "filePresent": true,
+          "valid302": 19,
+          "rawCounts": {
+            "-99": 283,
+            "0": 19
+          },
+          "control71_130": 0
+        },
+        "RN1": {
+          "filePresent": false
+        }
+      }
+    },
+    {
+      "observedAt": "2026-10-09T02:20:00.000Z",
+      "variables": {
+        "T1H": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 20.7
+        },
+        "REH": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 55.6
+        },
+        "WSD": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 1.5
+        },
+        "VEC": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 247
+        },
+        "PTY": {
+          "filePresent": true,
+          "valid302": 19,
+          "rawCounts": {
+            "-99": 283,
+            "0": 19
+          },
+          "control71_130": 0
+        },
+        "RN1": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 0
+        }
+      }
+    },
+    {
+      "observedAt": "2026-10-09T02:30:00.000Z",
+      "variables": {
+        "T1H": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 21.1
+        },
+        "REH": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 55.8
+        },
+        "WSD": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 1.2
+        },
+        "VEC": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 185
+        },
+        "PTY": {
+          "filePresent": true,
+          "valid302": 19,
+          "rawCounts": {
+            "-99": 283,
+            "0": 19
+          },
+          "control71_130": 0
+        },
+        "RN1": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 0
+        }
+      }
+    },
+    {
+      "observedAt": "2026-10-09T02:40:00.000Z",
+      "variables": {
+        "T1H": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 21.4
+        },
+        "REH": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 50.6
+        },
+        "WSD": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 1.6
+        },
+        "VEC": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 266
+        },
+        "PTY": {
+          "filePresent": false
+        },
+        "RN1": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 0
+        }
+      }
+    },
+    {
+      "observedAt": "2026-10-09T02:50:00.000Z",
+      "variables": {
+        "T1H": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 21.4
+        },
+        "REH": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 47.3
+        },
+        "WSD": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 1.7
+        },
+        "VEC": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 239
+        },
+        "PTY": {
+          "filePresent": true,
+          "valid302": 19,
+          "rawCounts": {
+            "-99": 283,
+            "0": 19
+          },
+          "control71_130": 0
+        },
+        "RN1": {
+          "filePresent": true,
+          "valid302": 0,
+          "rawCounts": {
+            "-99": 283,
+            "-999": 19
+          },
+          "control71_130": 0
+        }
+      }
+    }
+  ],
+  "precipitationTypeNote": "Code 0 alone does not establish no precipitation when all five companion measurements are missing."
+}

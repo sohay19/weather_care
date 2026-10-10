@@ -1,0 +1,180 @@
+{
+  "checkedAt": "2026-10-09T00:18:28.432843+00:00",
+  "deployment": "20261009-national-cache",
+  "sourceDirectory": "/opt/weather-care/releases/20261009-national-cache/weather_care_server",
+  "http": [
+    {
+      "origin": "http://127.0.0.1:8787",
+      "target": "health",
+      "route": "health",
+      "status": 200,
+      "healthy": true
+    },
+    {
+      "origin": "http://127.0.0.1:8787",
+      "target": "travel",
+      "route": "api/v1/weather/main",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "name": "강원특별자치도 홍천군 서면"
+      },
+      "error": null,
+      "temperature": 8.7,
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "origin": "http://127.0.0.1:8787",
+      "target": "travel",
+      "route": "api/v1/weather/today",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "name": "강원특별자치도 홍천군 서면"
+      },
+      "error": null,
+      "temperature": 8.7,
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "origin": "http://127.0.0.1:8787",
+      "target": "travel",
+      "route": "api/v1/weather/weekly",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "adminCode": "5172037000",
+        "name": "강원특별자치도 홍천군 서면",
+        "midTermTaRegId": "11D10302",
+        "midTermLandRegId": "11D10000"
+      },
+      "error": null,
+      "temperature": null,
+      "dataRole": null
+    },
+    {
+      "origin": "http://127.0.0.1:8787",
+      "target": "bank",
+      "route": "api/v1/weather/main",
+      "status": 200,
+      "region": {
+        "nx": 57,
+        "ny": 124,
+        "name": "경기도 시흥시 은행동"
+      },
+      "error": null,
+      "temperature": 17.6,
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "origin": "https://weather-api.codesoha.com",
+      "target": "health",
+      "route": "health",
+      "status": 200,
+      "healthy": true
+    },
+    {
+      "origin": "https://weather-api.codesoha.com",
+      "target": "travel",
+      "route": "api/v1/weather/main",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "name": "강원특별자치도 홍천군 서면"
+      },
+      "error": null,
+      "temperature": 8.7,
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "origin": "https://weather-api.codesoha.com",
+      "target": "travel",
+      "route": "api/v1/weather/today",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "name": "강원특별자치도 홍천군 서면"
+      },
+      "error": null,
+      "temperature": 8.7,
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "origin": "https://weather-api.codesoha.com",
+      "target": "travel",
+      "route": "api/v1/weather/weekly",
+      "status": 200,
+      "region": {
+        "nx": 71,
+        "ny": 130,
+        "adminCode": "5172037000",
+        "name": "강원특별자치도 홍천군 서면",
+        "midTermTaRegId": "11D10302",
+        "midTermLandRegId": "11D10000"
+      },
+      "error": null,
+      "temperature": null,
+      "dataRole": null
+    },
+    {
+      "origin": "https://weather-api.codesoha.com",
+      "target": "bank",
+      "route": "api/v1/weather/main",
+      "status": 200,
+      "region": {
+        "nx": 57,
+        "ny": 124,
+        "name": "경기도 시흥시 은행동"
+      },
+      "error": null,
+      "temperature": 17.6,
+      "dataRole": "OBSERVATION"
+    }
+  ],
+  "migrations": 14,
+  "boundary": {
+    "version": "2f79b2c54983df7fb69a4ba3d9c78fccfa806c4817684b731c55d75bfef2c5f4",
+    "imported_at": "2026-10-08T08:28:39.778Z"
+  },
+  "boundaryCounts": [
+    {
+      "precision": "DONG",
+      "count": 3545
+    },
+    {
+      "precision": "PARENT",
+      "count": 14
+    }
+  ],
+  "wholeGridReferences": 2848,
+  "forecastFields": 2123,
+  "observationSnapshots": 112,
+  "apiHubUsage": {
+    "calls": 3503,
+    "bytes": 1790514776
+  },
+  "services": [
+    "Result=success",
+    "ExecMainStatus=0",
+    "Id=weather-care-api.service",
+    "ActiveState=active",
+    "SubState=running",
+    "",
+    "Result=success",
+    "ExecMainStatus=0",
+    "Id=weather-care-scheduler.service",
+    "ActiveState=active",
+    "SubState=running",
+    "",
+    "Result=success",
+    "ExecMainStatus=0",
+    "Id=cloudflared.service",
+    "ActiveState=active",
+    "SubState=running"
+  ]
+}

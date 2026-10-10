@@ -121,6 +121,7 @@ class HourlyWeatherItem {
   final double? precipitationAmount;
   final String? precipitationAmountLabel;
   final bool? snowExpected;
+  // 단기예보 SNO의 해당 1시간 신적설. 현재 지면의 총 적설이 아니다.
   final double? snowfallAmount;
   final String? snowfallAmountLabel;
   final double? windSpeed;
@@ -271,6 +272,7 @@ class WeeklyForecastItem {
   final double? averageHumidity;
   final double? maximumWindSpeed;
   final double? maximumUvIndex;
+  // 예보는 신적설, KMA_OBSERVATION은 일 최심신적설. 현재 총 적설이 아니다.
   final double? snowfallAmount;
   final WeeklyAirQualityForecast? airQualityForecast;
   final String? forecastSource;

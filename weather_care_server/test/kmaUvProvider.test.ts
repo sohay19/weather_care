@@ -83,3 +83,36 @@ function uvResponse(item: Record<string, string>): Response {
     },
   });
 }
+
+
+describe('전국 자외선 원본', () => {
+  it('빈 areaNo로 전체 페이지를 수집하며 빈 수치를 0으로 만들지 않는다', async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input));
+      expect(url.searchParams.has('areaNo')).toBe(true);
+      expect(url.searchParams.get('areaNo')).toBe('');
+      expect(url.searchParams.get('numOfRows')).toBe('1000');
+      const page = Number(url.searchParams.get('pageNo'));
+      const items = Array.from({ length: page === 1 ? 1000 : 1 }, (_, i) => ({
+        areaNo: String(1100000000 + (page - 1) * 1000 + i), date: '2026082109', h0: '', h3: ' ', h6: '-', h9: '0',
+      }));
+      return Response.json({ response: { header: { resultCode: '00', resultMsg: 'OK' },
+        body: { totalCount: 1001, items: { item: items } } } });
+    });
+    const source = await new KmaUvProvider({ serviceKey: 'synthetic', fetcher,
+      now: () => new Date('2026-08-21T11:10:00+09:00') }).getNationwide();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(Object.keys(source)).toHaveLength(1001);
+    expect(source['1100000000'].points).toEqual([{ forecastAt: '2026-08-21T18:00:00+09:00', uvIndex: 0 }]);
+  });
+
+  it.each(['duplicate', 'wrong-time', 'incomplete'])('잘못된 %s 원본을 게시하지 않는다', async (failure) => {
+    const item = { areaNo: '1100000000', date: failure === 'wrong-time' ? '2026082106' : '2026082109', h0: '2' };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ response: {
+      header: { resultCode: '00', resultMsg: 'OK' }, body: { totalCount: 2,
+        items: { item: failure === 'duplicate' ? [item, item] : [item] } },
+    } }));
+    await expect(new KmaUvProvider({ serviceKey: 'synthetic', fetcher,
+      now: () => new Date('2026-08-21T11:10:00+09:00') }).getNationwide()).rejects.toThrow();
+  });
+});

@@ -1,3 +1,4 @@
+import { saveCollectedCache } from '../src/database/collectedWeatherRepository';
 import { describe, expect, it, vi } from 'vitest';
 import router, {
   buildCurrentOptionalDataStatusMessages,
@@ -161,7 +162,7 @@ describe('fast Main weather', () => {
         temperature: 25.5,
         humidity: 58,
         windSpeed: 1.5,
-        provider: 'KMA_ULTRA_SHORT_OBSERVATION',
+        provider: 'KMA_APIHUB_GRID_OBSERVATION',
       });
 
       const response = await router.request(
@@ -207,7 +208,7 @@ describe('fast Main weather', () => {
         temperature: 30,
         humidity: 40,
         windSpeed: 3,
-        provider: 'KMA_ULTRA_SHORT_OBSERVATION',
+        provider: 'KMA_APIHUB_GRID_OBSERVATION',
       });
 
       const response = await router.request('/main?nx=59&ny=126', {}, {
@@ -265,7 +266,7 @@ describe('fast Main weather', () => {
     const current = currentFromUltraShortObservation(
       snapshot(10),
       { status: 'AVAILABLE', updatedAt: observation.observedAt, value: observation },
-      new Date('2026-10-01T09:49:00+09:00'),
+      new Date('2026-10-01T09:54:00+09:00'),
     );
 
     expect(current.apparentTemperature).toBe(14.4);
@@ -287,7 +288,7 @@ describe('fast Main weather', () => {
     const current = currentFromUltraShortObservation(
       snapshot(10, { precipitationType: 'RAIN' }),
       { status: 'AVAILABLE', updatedAt: observation.observedAt, value: observation },
-      new Date('2026-10-01T09:49:00+09:00'),
+      new Date('2026-10-01T09:54:00+09:00'),
     );
 
     expect(current.temperature).toBe(19);
@@ -698,6 +699,10 @@ describe('/weekly Hangdong mid-term hydration', () => {
             OR cache_key LIKE 'COLLECTED_FETCH_LEASE_%'`,
       ).run();
 
+      for (const [type, regionId, item] of [['TA', '11B10101', temperature], ['LAND', '11B00000', land]] as const) {
+        await saveCollectedCache(env.DB, { key: `COLLECTED_MID_TERM_${type}_${regionId}_202609211800`,
+          type: `COLLECTED_MID_TERM_${type}`, value: { regionId, issueTime: '202609211800', item } });
+      }
       const url = '/weekly?nx=57&ny=125' +
         '&regionCode=1153080000' +
         '&regionName=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C%20%EA%B5%AC%EB%A1%9C%EA%B5%AC%20%ED%95%AD%EB%8F%99';
@@ -734,7 +739,7 @@ describe('/weekly Hangdong mid-term hydration', () => {
       });
       expect(firstData.weeklyCoverage).toEqual(expect.objectContaining({
         shortTermUntil: '2026-09-25T23:00:00+09:00',
-        midTermCacheStatus: 'MISS_REFRESHED',
+        midTermCacheStatus: 'HIT',
       }));
       expect(firstData.days.find(({ forecastDate }) =>
         forecastDate === '2026-09-26')).toMatchObject({
@@ -743,10 +748,8 @@ describe('/weekly Hangdong mid-term hydration', () => {
           weatherLabel: '구름많음',
           source: 'MID_TERM',
         });
-      expect(getTemperature).toHaveBeenCalledTimes(1);
-      expect(getTemperature).toHaveBeenCalledWith('11B10101', '202609211800');
-      expect(getLandForecast).toHaveBeenCalledTimes(1);
-      expect(getLandForecast).toHaveBeenCalledWith('11B00000', '202609211800');
+      expect(getTemperature).not.toHaveBeenCalled();
+      expect(getLandForecast).not.toHaveBeenCalled();
 
       const second = await router.request(url, {}, bindings);
       const secondData = await second.json<{
@@ -757,8 +760,8 @@ describe('/weekly Hangdong mid-term hydration', () => {
       expect(secondData.weeklyCoverage.midTermCacheStatus).toBe('HIT');
       expect(secondData.days.find(({ forecastDate }) =>
         forecastDate === '2026-09-26')?.weatherLabel).toBe('구름많음');
-      expect(getTemperature).toHaveBeenCalledTimes(1);
-      expect(getLandForecast).toHaveBeenCalledTimes(1);
+      expect(getTemperature).not.toHaveBeenCalled();
+      expect(getLandForecast).not.toHaveBeenCalled();
 
       await seedCollectedWeekly(58, 125, {
         forecast: {
@@ -783,8 +786,8 @@ describe('/weekly Hangdong mid-term hydration', () => {
       }>();
       expect(sharedRegionResponse.status).toBe(200);
       expect(sharedRegionData.weeklyCoverage.midTermCacheStatus).toBe('HIT');
-      expect(getTemperature).toHaveBeenCalledTimes(1);
-      expect(getLandForecast).toHaveBeenCalledTimes(1);
+      expect(getTemperature).not.toHaveBeenCalled();
+      expect(getLandForecast).not.toHaveBeenCalled();
     } finally {
       getTemperature.mockRestore();
       getLandForecast.mockRestore();
@@ -845,7 +848,7 @@ describe('today timeline', () => {
       baseDate: '20261001',
       baseTime: '0800',
       dataSource: '기상청 단기예보',
-    }, new Date('2026-10-01T09:49:00+09:00'));
+    }, new Date('2026-10-01T09:54:00+09:00'));
 
     expect(forecast.current.apparentTemperature).toBe(14.4);
     expect(forecast.current.kmaApparentTemperature).toBeUndefined();

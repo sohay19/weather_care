@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { DailyAirQualityForecast } from '../weather/weatherProvider';
-import { uvAreaNoForGrid } from '../../regions/kmaUvAreaGridCatalog';
+import { administrativeAreaForLocation } from '../../regions/nationwideLocation';
 import { collectedCacheKey, getCollectedCache } from '../../database/collectedWeatherRepository';
 import { latestAirKoreaForecastIssue } from '../../collection/sourcePublicationSchedule';
 
@@ -309,7 +309,7 @@ export function airKoreaForecastArea(
 }
 
 export function airKoreaForecastAreaForGrid(nx: number, ny: number): string | undefined {
-  return airKoreaForecastAreaForAdminCode(uvAreaNoForGrid(nx, ny));
+  return airKoreaForecastAreaForAdminCode(administrativeAreaForLocation({ nx, ny })?.[0]);
 }
 
 export function airKoreaForecastAreaForAdminCode(adminCode: string | undefined): string | undefined {

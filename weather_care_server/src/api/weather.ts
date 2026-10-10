@@ -1,17 +1,17 @@
+import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } from '../services/nationwideWeatherCache';
+import { readCachedMidTermForecast } from '../services/midTermForecastCache';
+import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
 import { Hono } from 'hono';
 import {
   enrichForecastWithEnvironmentalData,
-  readCollectedEnvironmentalData,
 } from '../providers/environmental/environmentalDataService';
 import { installationOwnerHash } from '../security/installationAccess';
 import {
   NotificationSettings,
-  CurrentVisibilityObservation,
   CurrentPrecipitationObservation,
   OfficialRoadControl,
   RoadIceRisk,
   Recommendation,
-  ServerEnv,
   TodayWeatherResponse,
   WeatherMessagePart,
   WeatherSnapshot,
@@ -91,11 +91,12 @@ import {
   type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
 import type {
-  CollectedRegionBundle,
   CollectedWarningBundle,
   CollectedWeeklyBundle,
 } from '../collection/collectionTypes';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
+import { administrativeAreaForLocation, type NationwideLocation } from '../regions/nationwideLocation';
+import { resolveSavedLocation } from '../regions/resolvedLocation';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
 import { calculateApparentTemperatureForConditions } from '../providers/weather/kmaWeatherProvider';
 import { calculateSunTimes } from '../presentation/sunTimes';
@@ -105,11 +106,9 @@ import {
 } from '../providers/weather/kmaUltraShortObservationProvider';
 import { buildHomeWidgetSnapshot } from '../presentation/homeWidgetSnapshot';
 import {
-  hydrateMidTermForecast,
   type MidTermCacheStatus,
 } from '../services/midTermForecastCache';
 import {
-  midTermRegionNameForGrid,
   resolveKmaMidTermLocation,
 } from '../regions/kmaMidTermRegionCatalog';
 
@@ -120,7 +119,6 @@ router.use('*', async (c, next) => {
 });
 const TODAY_OPTIONAL_PROVIDER_BUDGET_MS = 3_500;
 const CURRENT_OBSERVATION_DELAYED_AGE_MS = 20 * 60 * 1000;
-const CURRENT_OBSERVATION_MAX_AGE_MS = 30 * 60 * 1000;
 // A cold 13 MB radar composite regularly needs more than the shared 3.5 s
 // optional-source deadline. Keep it within the app's 20 s API timeout.
 const CURRENT_PRECIPITATION_PROVIDER_BUDGET_MS = 8_000;
@@ -138,7 +136,12 @@ interface OptionalProviderTimeouts {
 }
 
 router.get('/main', async (c) => {
+  const adminCode = c.req.query('adminCode') ?? c.req.query('regionCode');
+  const requestedRegionName = c.req.query('regionName');
   const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
+  const requestedCoordinates = coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude'));
+  const coordinates = requestedCoordinates ?? kmaGridCoordinates(nx, ny);
+  let location: NationwideLocation = { nx, ny, adminCode, regionName: requestedRegionName, coordinates: requestedCoordinates };
   const locationKey = briefingLocationKey(
     nx,
     ny,
@@ -148,31 +151,21 @@ router.get('/main', async (c) => {
 
   try {
     const generatedAt = new Date();
+    location = await resolveSavedLocation(c.env.DB, location, generatedAt);
     const [collected, weekly, visibilityRecord, ultraShortRecord] = await Promise.all([
-      getCollectedCache<CollectedRegionBundle>(
-        c.env.DB,
-        `COLLECTED_REGION_${nx}_${ny}`,
-      ),
+      readNationwideRegion(c.env.DB, location, generatedAt),
       getCollectedCache<CollectedWeeklyBundle>(
         c.env.DB,
         collectedCacheKey.weekly(nx, ny),
       ),
-      getCollectedCache<CurrentVisibilityObservation>(
-        c.env.DB,
-        collectedCacheKey.visibility(nx, ny),
-      ),
-      getCollectedCache<UltraShortObservation>(
-        c.env.DB,
-        collectedCacheKey.ultraShortObservation(nx, ny),
-      ),
+      readNationwideVisibility(c.env.DB, location, generatedAt).then((value) => value ? { value } : null),
+      readCurrentGridObservation(c.env.DB, nx, ny, generatedAt, requestedCoordinates),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-    const environmentalData = await readCollectedEnvironmentalData(
-      c.env.DB, nx, ny, collected.value.environmental, generatedAt,
-    );
+    const environmentalData = collected.value.environmental;
     const forecast = enrichForecastWithVisibility(
       enrichForecastWithEnvironmentalData(
         forecastForCurrentHour(collected.value.forecast, generatedAt), environmentalData,
@@ -188,8 +181,8 @@ router.get('/main', async (c) => {
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weekly?.status === 'AVAILABLE' ? weekly.value.airQuality : [], generatedAt,
-      c.req.query('adminCode') ?? c.req.query('regionCode'), c.req.query('regionName'));
-    const sunTimes = sunTimesForRequest(generatedAt, nx, ny);
+      location.adminCode, location.regionName);
+    const sunTimes = sunTimesForRequest(generatedAt, nx, ny, coordinates);
     const brief = buildWeatherBriefResult(responseForecast, {
       regionKey: locationKey,
       now: generatedAt,
@@ -199,7 +192,7 @@ router.get('/main', async (c) => {
       dataSource: current.dataRole === 'OBSERVATION'
         ? `${forecast.dataSource} · ${currentObservationSourceLabel(current)} · 서버 중앙 수집`
         : `${forecast.dataSource} · 서버 중앙 수집`,
-      region: { nx, ny, name: regionName(nx, ny, '선택 지역') },
+      region: { nx, ny, name: location.regionName ?? '현재 위치' },
       brief: brief.text,
       briefExpiresAt: brief.expiresAt,
       briefing: brief.intent,
@@ -245,12 +238,17 @@ router.get('/today', async (c) => {
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
-  const coordinates = coordinatesFromQuery(
+  const requestedCoordinates = coordinatesFromQuery(
     c.req.query('latitude'),
     c.req.query('longitude'),
   );
+  const coordinates = requestedCoordinates ?? kmaGridCoordinates(nx, ny);
+  const adminCode = c.req.query('adminCode') ?? c.req.query('regionCode');
+  const requestedRegionName = c.req.query('regionName');
+  let location: NationwideLocation = { nx, ny, adminCode, regionName: requestedRegionName, coordinates: requestedCoordinates };
   try {
     const generatedAt = new Date();
+    location = await resolveSavedLocation(c.env.DB, location, generatedAt);
     const roadIceInSeason = isRoadIceSeason(generatedAt);
     const region = regionMetadataForGrid(nx, ny);
     const [regionRecord, settings, precisePrecipitationRecord, warningRecord,
@@ -258,10 +256,7 @@ router.get('/today', async (c) => {
       roadIceRecord, roadIceSnapshotRecord, preciseRoadControlRecord, weeklyRecord,
       visibilityRecord, ultraShortRecord, nationwidePrecipitation,
       roadControlSnapshotRecord] = await Promise.all([
-      getCollectedCache<CollectedRegionBundle>(
-        c.env.DB,
-        `COLLECTED_REGION_${nx}_${ny}`,
-      ),
+      readNationwideRegion(c.env.DB, location, generatedAt),
       settingsForRequest(
       c.env.DB,
       c.req.query('installationId'),
@@ -305,14 +300,8 @@ router.get('/today', async (c) => {
         c.env.DB,
         collectedCacheKey.weekly(nx, ny),
       ),
-      getCollectedCache<CurrentVisibilityObservation>(
-        c.env.DB,
-        collectedCacheKey.visibility(nx, ny),
-      ),
-      getCollectedCache<UltraShortObservation>(
-        c.env.DB,
-        collectedCacheKey.ultraShortObservation(nx, ny),
-      ),
+      readNationwideVisibility(c.env.DB, location, generatedAt).then((value) => value ? { value } : null),
+      readCurrentGridObservation(c.env.DB, nx, ny, generatedAt, requestedCoordinates),
       coordinates
         ? getNationwidePrecipitation(c.env.DB, generatedAt)
         : Promise.resolve(null),
@@ -327,9 +316,7 @@ router.get('/today', async (c) => {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
       return c.json({ error: 'WEATHER_CACHE_NOT_READY' }, 503);
     }
-    const environmentalData = await readCollectedEnvironmentalData(
-      c.env.DB, nx, ny, regionRecord.value.environmental, generatedAt, coordinates,
-    );
+    const environmentalData = regionRecord.value.environmental;
     const forecast = enrichForecastWithVisibility(
       enrichForecastWithEnvironmentalData(
         forecastForCurrentHour(regionRecord.value.forecast, generatedAt), environmentalData,
@@ -345,7 +332,7 @@ router.get('/today', async (c) => {
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,
-      c.req.query('adminCode') ?? c.req.query('regionCode'), c.req.query('regionName'));
+      location.adminCode, location.regionName);
     let nationwidePrecipitationValue: CurrentPrecipitationObservation | undefined;
     if (coordinates && nationwidePrecipitation) {
       try {
@@ -439,11 +426,7 @@ router.get('/today', async (c) => {
     const recommendations = runRecommendationEngine(lifestyle, settings, {
       expandedPreparations,
     });
-    const regionLabel = regionName(
-      nx,
-      ny,
-      coordinates ? '현재 위치' : '선택 지역',
-    );
+    const regionLabel = administrativeAreaForLocation(location)?.[1] ?? '현재 위치';
 
     const forecastLifestyleMessages = buildLifestyleMessages(
       lifestyle,
@@ -567,11 +550,10 @@ router.get('/weekly', async (c) => {
     const regionId = `${nx}_${ny}`;
     const calendarWeek = currentKoreanCalendarWeek(now);
     const today = koreanCalendarDate(now);
+    const nationwideLocation = await resolveSavedLocation(c.env.DB, { nx, ny, adminCode, regionName: requestedRegionName,
+      coordinates: coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude')) }, now);
     const [collected, settings, savedDays] = await Promise.all([
-      getCollectedCache<CollectedWeeklyBundle>(
-        c.env.DB,
-        collectedCacheKey.weekly(nx, ny),
-      ),
+      readNationwideWeekly(c.env.DB, nationwideLocation, now),
       settingsForRequest(
         c.env.DB,
         c.req.query('installationId'),
@@ -605,22 +587,21 @@ router.get('/weekly', async (c) => {
       airQuality: cachedAirQuality,
     } = collected.value;
     const airQuality = await readCollectedAirForecast(
-      c.env.DB, nx, ny, cachedAirQuality, now, adminCode, requestedRegionName,
+      c.env.DB, nx, ny, cachedAirQuality, now, nationwideLocation.adminCode, nationwideLocation.regionName,
     );
     const location = {
-      nx,
-      ny,
-      adminCode,
-      regionName: requestedRegionName,
+      ...nationwideLocation,
       sido: c.req.query('sido'),
       sigungu: c.req.query('sigungu'),
       eupMyeonDong: c.req.query('eupMyeonDong'),
     };
     const hasLocationIdentity = Boolean(
-      adminCode || requestedRegionName || location.sido ||
+      location.adminCode || location.regionName || location.sido ||
       location.sigungu || location.eupMyeonDong,
     );
-    const resolvedRegion = resolveKmaMidTermLocation(location);
+    const area = administrativeAreaForLocation(location);
+    const resolvedRegion = resolveKmaMidTermLocation({ ...location, nx: -1, ny: -1,
+      adminCode: area?.[0] ?? adminCode, regionName: area?.[1] ?? requestedRegionName });
     const requiredMidTermDates = datesMissingUsableShortTermForecast(
       forecast?.daily ?? [],
       calendarWeek.dates,
@@ -638,13 +619,7 @@ router.get('/weekly', async (c) => {
     if (hasLocationIdentity && requiredMidTermDates.length > 0 &&
         (!cachedRegionMatches ||
           !coversDates(midTermDays, requiredMidTermDates))) {
-      const hydrated = await hydrateMidTermForecast({
-        db: c.env.DB,
-        serviceKey: c.env.KMA_SERVICE_KEY,
-        apiHubKey: c.env.KMA_APIHUB_KEY,
-        location,
-        now,
-      });
+      const hydrated = await readCachedMidTermForecast({ db: c.env.DB, location, now });
       midTermCacheStatus = hydrated.cacheStatus;
       if (hydrated.days.length > 0) {
         resolvedMidTermDays = hydrated.days;
@@ -699,8 +674,8 @@ router.get('/weekly', async (c) => {
       region: {
         nx,
         ny,
-        adminCode,
-        name: requestedRegionName ?? regionName(nx, ny, '선택 지역'),
+        adminCode: location.adminCode,
+        name: location.regionName ?? '현재 위치',
         midTermTaRegId: resolvedRegion?.temperatureRegionId,
         midTermLandRegId: resolvedRegion?.landRegionId,
       },
@@ -714,6 +689,7 @@ router.get('/weekly', async (c) => {
         forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
         weatherLabel: day.skyCondition,
         weatherDataComplete: day.weatherDataComplete,
+        observationAvailability: day.observationAvailability,
         precipitationDetail: day.precipitationDetail,
         min: formatTemperature(day.minTemperature),
         max: formatTemperature(day.maxTemperature),
@@ -785,10 +761,7 @@ router.get('/widget', async (c) => {
     today,
     weekly,
     new Date(),
-    requestedRegionName || midTermRegionNameForGrid(
-      today.region.nx,
-      today.region.ny,
-    ),
+    requestedRegionName || administrativeAreaForLocation({ nx: today.region.nx, ny: today.region.ny })?.[1] || '현재 위치',
   ));
 });
 
@@ -996,11 +969,7 @@ export function currentFromUltraShortObservation(
     ? Number.NaN
     : Date.parse(observedAt);
   const observationAge = now.getTime() - observedInstant;
-  const available = record?.status === 'AVAILABLE' &&
-    record.value.temperature !== undefined &&
-    Number.isFinite(observedInstant) &&
-    observationAge >= -5 * 60 * 1000 &&
-    observationAge <= CURRENT_OBSERVATION_MAX_AGE_MS;
+  const available = currentGridObservationIsUsable(record, now);
 
   if (!available || !record) {
     return {
@@ -1022,7 +991,6 @@ export function currentFromUltraShortObservation(
 
   const observation = record.value;
   const apparent = ultraShortApparentTemperatureDetails(observation);
-  const awsFallback = observation.provider === 'KMA_AWS_OBSERVATION';
   const precipitationType = precipitationTypeFromObservation(
     observation,
     forecast.precipitationType,
@@ -1053,28 +1021,24 @@ export function currentFromUltraShortObservation(
     precipitationType,
     precipitationAmount: observation.precipitationAmount,
     provider: `${observation.provider}+KMA_FORECAST`,
-    providerField: awsFallback
-      ? 'TA,HM,WS,WD,RN;SKY=FORECAST'
-      : observation.provider === 'KMA_APIHUB_GRID_OBSERVATION'
-        ? 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST'
-        : 'T1H,REH,WSD,PTY,RN1;SKY=FORECAST',
+    providerField: 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST',
     ...(observation.sourceLocation
       ? { sourceLocation: observation.sourceLocation }
       : {}),
     fieldSources: {
       temperature: {
         role: 'OBSERVATION',
-        field: awsFallback ? 'TA' : 'T1H',
+        field: 'T1H',
         observedAt: observation.observedAt,
       },
       humidity: {
         role: 'OBSERVATION',
-        field: awsFallback ? 'HM' : 'REH',
+        field: 'REH',
         observedAt: observation.observedAt,
       },
       windSpeed: {
         role: 'OBSERVATION',
-        field: awsFallback ? 'WS' : 'WSD',
+        field: 'WSD',
         observedAt: observation.observedAt,
       },
       sky: {
@@ -1120,9 +1084,6 @@ function precipitationTypeFromObservation(
 }
 
 function currentObservationSourceLabel(snapshot: WeatherSnapshot): string {
-  if (snapshot.provider?.includes('KMA_AWS_OBSERVATION')) {
-    return '기상청 최근접 AWS 관측';
-  }
   if (snapshot.provider?.includes('KMA_APIHUB_GRID_OBSERVATION')) {
     return '기상청 APIHub 10분 격자 실황';
   }

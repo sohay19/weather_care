@@ -1,4 +1,5 @@
 import { calculateApparentTemperatureForConditions } from './kmaWeatherProvider';
+import type { WeatherSnapshot } from '../../types';
 
 const ULTRA_SHORT_OBSERVATION_URL =
   'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst';
@@ -17,15 +18,7 @@ export interface UltraShortObservation {
     | 'KMA_APIHUB_GRID_OBSERVATION'
     | 'KMA_AWS_OBSERVATION'
     | 'KMA_ULTRA_SHORT_OBSERVATION';
-  sourceLocation?: {
-    type: 'GRID' | 'STATION';
-    nx?: number;
-    ny?: number;
-    stationId?: string;
-    stationName?: string;
-    distanceKm?: number;
-    locationMatch: 'EXACT_GRID' | 'NEAREST_STATION';
-  };
+  sourceLocation?: WeatherSnapshot['sourceLocation'];
   qualityFlags?: string[];
 }
 

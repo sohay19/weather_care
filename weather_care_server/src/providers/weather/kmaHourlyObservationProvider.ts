@@ -4,6 +4,7 @@ import {
 } from '../kmaApiHubResponse';
 import { calculateApparentTemperatureForConditions } from './kmaWeatherProvider';
 import { providerHttpFailureMessage } from '../providerHttpFailure';
+import { providerErrorDiagnostic } from '../../observability/providerErrorDiagnostics';
 
 const HOURLY_OBSERVATION_URL =
   'https://apihub.kma.go.kr/api/typ01/url/kma_sfctm5.php';
@@ -214,6 +215,25 @@ export class KmaHourlyObservationProvider {
           target,
           target,
         ).then((rows) => ({ metric: 'VS' as const, rows }))]);
+    if (options.includeVisibility === true) {
+      const failure = visibilityResults.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+      if (failure) throw failure.reason;
+      const result = visibilityResults[0];
+      const rows = result.status === 'fulfilled' ? result.value.rows : [];
+      const stations = new Map<string, KmaHourlyStationObservation>();
+      for (const row of rows) {
+        if (row.observedAt !== target || !validVisibility(row.value)) continue;
+        stations.set(row.stationId, { observedAt: row.observedAt, stationId: row.stationId,
+          longitude: row.longitude, latitude: row.latitude, visibilityMeters: row.value * 10 });
+      }
+      if (!stations.size) {
+        console.error(JSON.stringify({ event: 'asos_visibility_unavailable', target,
+          responseRows: rows.length, reason: 'NO_USABLE_VISIBILITY' }));
+        throw new KmaHourlyObservationProviderError('KMA hourly observation has no usable visibility values');
+      }
+      // 시정 전용 수집에서는 기온·습도·풍속의 유무가 관측소 후보를 줄이지 않는다.
+      return { observedAt: toKoreanIso(target), stations: [...stations.values()] };
+    }
     const metricResults: Array<PromiseSettledResult<{
       metric: HourlyMetric;
       rows: KmaHourlyObservationRow[];
@@ -291,22 +311,40 @@ export class KmaHourlyObservationProvider {
     const timeoutMs = metric === 'VS'
       ? Math.max(this.timeoutMs, VISIBILITY_TIMEOUT_MS)
       : this.timeoutMs;
-    const response = await this.fetcher(`${HOURLY_OBSERVATION_URL}?${query}`, {
-      headers: { Accept: 'text/plain' },
-      signal: AbortSignal.timeout(timeoutMs),
-      cf: { cacheEverything: true, cacheTtl: 300 },
-    });
-    const payload = await response.text();
-    if (!response.ok) {
-      throw new KmaHourlyObservationProviderError(
-        await providerHttpFailureMessage(
-          response,
-          'KMA hourly observation request',
-          payload,
-        ),
-      );
+    const started = performance.now();
+    let stage = 'RESPONSE_HEADERS';
+    let httpStatus: number | undefined;
+    let responseBytes = 0;
+    try {
+      const response = await this.fetcher(`${HOURLY_OBSERVATION_URL}?${query}`, {
+        headers: { Accept: 'text/plain' },
+        signal: AbortSignal.timeout(timeoutMs),
+        cf: { cacheEverything: true, cacheTtl: 300 },
+      });
+      httpStatus = response.status;
+      stage = 'RESPONSE_BODY';
+      const bytes = await response.arrayBuffer();
+      responseBytes = bytes.byteLength;
+      const encoding = /json|charset\s*=\s*utf-?8/i.test(response.headers.get('content-type') ?? '') ? 'utf-8' : 'euc-kr';
+      const payload = new TextDecoder(encoding).decode(bytes);
+      stage = 'HTTP_STATUS';
+      if (!response.ok) {
+        throw new KmaHourlyObservationProviderError(
+          await providerHttpFailureMessage(response, 'KMA hourly observation request', payload),
+        );
+      }
+      stage = 'PARSE_RESPONSE';
+      const rows = parseKmaHourlyObservationRows(payload);
+      console.log(JSON.stringify({ event: 'asos_hourly_metric_completed', metric,
+        target: start, end, httpStatus, responseBytes, rows: rows.length,
+        timeoutMs, elapsedMs: Math.round(performance.now() - started) }));
+      return rows;
+    } catch (error) {
+      console.error(JSON.stringify({ event: 'asos_hourly_metric_failed', metric,
+        target: start, end, stage, httpStatus, responseBytes, timeoutMs,
+        elapsedMs: Math.round(performance.now() - started), ...providerErrorDiagnostic(error) }));
+      throw error;
     }
-    return parseKmaHourlyObservationRows(payload);
   }
 }
 

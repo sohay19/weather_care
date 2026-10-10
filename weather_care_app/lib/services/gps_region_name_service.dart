@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
@@ -45,9 +46,16 @@ class PlatformGpsRegionNameService extends GpsRegionNameService {
           street: placemark.street,
         ));
       }
-      return preferNeighborhoodDisplayName(candidates);
-    } catch (_) {
-      // The platform geocoder is best-effort and may be unavailable or rate-limited.
+      final name = preferNeighborhoodDisplayName(candidates);
+      if (name == null) {
+        log('GPS administrative name unavailable: NO_KOREAN_ADMINISTRATIVE_NAME');
+      }
+      return name;
+    } on TimeoutException {
+      log('GPS administrative name unavailable: TIMEOUT (${timeout.inMilliseconds}ms)');
+    } catch (error) {
+      // 위치·주소·예외 원문은 로그에 남기지 않는다.
+      log('GPS administrative name unavailable: ${error.runtimeType}');
     }
     return null;
   }
@@ -88,7 +96,8 @@ String? koreanAdministrativeDisplayName({
   final result = <String>[];
   final topLevelLabel = _topLevelDisplayName(topLevel);
   if (topLevelLabel != null &&
-      (_isMetropolitanRegion(topLevel) || details.isEmpty)) {
+      (_isMetropolitanRegion(topLevel) || details.isEmpty) &&
+      !details.contains(topLevelLabel)) {
     result.add(topLevelLabel);
   }
   result.addAll(details);

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/home_screen.dart';
+import 'package:weather_care/features/home/tabs/week_tab.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/models/app_settings.dart';
 import 'package:weather_care/models/home_widget_snapshot.dart';
@@ -93,6 +94,7 @@ WeatherLoadResult _weather(int nx, int ny,
 class _Weather extends WeatherService {
   final calls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   final comparisonCalls = <({int nx, int ny})>[];
+  final weeklyCalls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   Completer<WeatherLoadResult>? pending;
   Completer<ComparisonResponse>? comparisonPending;
   bool emitTodayWhilePending = false;
@@ -108,8 +110,23 @@ class _Weather extends WeatherService {
     int ny = 121,
     String? regionCode,
     String? regionName,
+    DeviceCoordinates? coordinates,
+    Future<String?>? regionNameFuture,
   }) async =>
       mainPreview;
+
+  @override
+  Future<WeeklyWeatherResponse> fetchWeeklyWeather({
+    required String installationId,
+    int nx = 60,
+    int ny = 121,
+    DeviceCoordinates? coordinates,
+    String? regionCode,
+    String? regionName,
+  }) async {
+    weeklyCalls.add((nx: nx, ny: ny, coordinates: coordinates));
+    return _weather(nx, ny).weekly!;
+  }
 
   @override
   Future<ComparisonResponse> fetchYesterdayComparison({
@@ -277,6 +294,20 @@ void main() {
 
   SettingsScreen screen(WidgetTester tester) =>
       tester.widget<SettingsScreen>(find.byType(SettingsScreen));
+
+  testWidgets('주간 개별 재조회에도 현재 정밀 GPS와 격자를 전달한다', (tester) async {
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _seoul);
+    await start(tester, initialIndex: 3);
+    final original = weather.calls.single;
+    final week = tester.widget<WeekTab>(find.byType(WeekTab));
+    await week.onRetryData!();
+    await tester.pumpAndSettle();
+    expect(weather.weeklyCalls, hasLength(1));
+    expect(weather.weeklyCalls.single.nx, original.nx);
+    expect(weather.weeklyCalls.single.ny, original.ny);
+    expect(weather.weeklyCalls.single.coordinates, _seoul);
+  });
 
   testWidgets('첫 안내 확인 한 번으로 알림과 위치 권한을 차례대로 요청한다', (tester) async {
     SharedPreferences.setMockInitialValues({});

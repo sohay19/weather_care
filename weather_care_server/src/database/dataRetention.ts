@@ -33,11 +33,17 @@ export async function runDataRetentionJob(db: D1Database, now = new Date()) {
     db.prepare(`DELETE FROM notification_history WHERE rowid IN (
       SELECT rowid FROM notification_history WHERE ${historyExpirySql} <= julianday(?)
       ORDER BY ${historyExpirySql}, rowid LIMIT 1000)`).bind(timestamp),
+    db.prepare('DELETE FROM grid_observation_snapshots WHERE observed_at < ?')
+      .bind(new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString()),
+    db.prepare(`DELETE FROM weather_cache WHERE cache_type IN ('GRID_OBSERVATION_PARTIAL','GRID_OBSERVATION_RETRY')
+      AND julianday(json_extract(payload,'$.observedAt')) < julianday(?, '-3 days')`).bind(timestamp),
     db.prepare(`DELETE FROM api_usage_daily
       WHERE usage_date < date(?, '-31 days')`).bind(timestamp),
     db.prepare(`DELETE FROM weather_cache
-      WHERE cache_type IN ('COLLECTED_PRECIPITATION', 'COLLECTED_ROAD_ICE', 'COLLECTED_ROAD_CONTROL', 'COLLECTED_ROAD_CONTROL_SNAPSHOT', 'COLLECTED_HOURLY_OBSERVATION')
+      WHERE cache_type IN ('COLLECTED_PRECIPITATION', 'COLLECTED_ROAD_ICE', 'COLLECTED_ROAD_CONTROL', 'COLLECTED_ROAD_CONTROL_SNAPSHOT', 'COLLECTED_HOURLY_OBSERVATION', 'GRID_OBSERVATION_FETCH_LEASE', 'NATIONAL_SOURCE_LEASE', 'NATIONAL_APIHUB_ATTEMPT', 'POINT_FORECAST_TARGETS', 'POINT_FORECAST_ATTEMPT', 'COLLECTED_POINT_FORECAST')
         AND julianday(updated_at) < julianday(?, '-2 days')`).bind(timestamp),
+    db.prepare(`DELETE FROM weather_cache WHERE cache_type = 'COLLECTED_LOCATION_IDENTITY'
+      AND julianday(updated_at) < julianday(?, '-365 days')`).bind(timestamp),
   ]);
   return {
     installations: results[0].results[0].count,

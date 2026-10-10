@@ -72,6 +72,38 @@ export class KmaUvProvider implements UvProvider {
     this.timeoutMs = options.timeoutMs ?? 6_000;
   }
 
+  async getNationwide(): Promise<Record<string, UvForecast>> {
+    if (!this.serviceKey) throw new KmaUvProviderError('KMA living-index key is not configured');
+    const time = latestUvPublicationTimes(this.now(), 1)[0];
+    const forecasts: Record<string, UvForecast> = {};
+    let expectedTotal: number | undefined;
+    for (let page = 1; page <= (expectedTotal === undefined ? 1 : Math.ceil(expectedTotal / 1000)); page++) {
+      const query = new URLSearchParams({ ServiceKey: this.serviceKey, pageNo: String(page),
+        numOfRows: '1000', dataType: 'JSON', areaNo: '', time });
+      const response = await this.fetcher(`${KMA_UV_URL}?${query}`, { signal: AbortSignal.timeout(30_000) });
+      if (!response.ok) throw new KmaUvProviderError(`KMA nationwide UV HTTP ${response.status}`);
+      const payload: unknown = await response.json();
+      const parsed = uvResponseSchema.safeParse(payload);
+      const total = Number((payload as { response?: { body?: { totalCount?: unknown } } })?.response?.body?.totalCount);
+      if (!parsed.success || parsed.data.response.header.resultCode !== '00' || !parsed.data.response.body ||
+          !Number.isInteger(total) || total <= 0 || total > 10_000 || (expectedTotal !== undefined && expectedTotal !== total)) {
+        throw new KmaUvProviderError('KMA nationwide UV pagination is invalid');
+      }
+      expectedTotal = total;
+      const raw = parsed.data.response.body.items.item;
+      for (const item of Array.isArray(raw) ? raw : [raw]) {
+        if (!/^\d{10}$/.test(item.areaNo) || item.date !== time || item.areaNo in forecasts) {
+          throw new KmaUvProviderError('KMA nationwide UV area/time is invalid');
+        }
+        const issuedAt = kmaUvDateToIso(item.date);
+        forecasts[item.areaNo] = { areaNo: item.areaNo, issuedAt,
+          points: uvPointsFromItem(item, issuedAt), provider: 'KMA_LIVING_INDEX_V5' };
+      }
+    }
+    if (Object.keys(forecasts).length !== expectedTotal) throw new KmaUvProviderError('KMA nationwide UV pages are incomplete');
+    return forecasts;
+  }
+
   async getForecast(areaNo: string): Promise<UvForecast> {
     if (!this.serviceKey) {
       throw new KmaUvProviderError('KMA living-index key is not configured');
@@ -216,9 +248,9 @@ function kmaUvDateToIso(value: string): string {
 }
 
 function numericValue(value: unknown): number | undefined {
-  if (value === undefined || value === null || value === '-') return undefined;
+  if (value === undefined || value === null || (typeof value === 'string' && (!value.trim() || value === '-'))) return undefined;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 30 ? parsed : undefined;
 }
 
 function normalizeServiceKey(value: string): string {

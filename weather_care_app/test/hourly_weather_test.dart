@@ -91,7 +91,7 @@ void main() {
       '날씨 자료 없음',
       '예상 기온 자료 없음',
       '예상 체감 자료 없음',
-      '자료 없음: 강수확률 · 강수량 · 쌓일 눈 · 풍속',
+      '자료 없음: 강수확률 · 강수량 · 예상 신적설 · 풍속',
     ]) {
       expect(
           find.descendant(of: row, matching: find.text(text)), findsOneWidget);
@@ -129,7 +129,7 @@ void main() {
         findsNothing);
     expect(find.text('강수확률 0%'), findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
-    expect(find.text('쌓일 눈 0cm'), findsNothing);
+    expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(
       tester.getCenter(find.text('예상 기온 0℃')).dy,
       tester.getCenter(find.text('예상 체감 0℃')).dy,
@@ -156,7 +156,7 @@ void main() {
     expect(find.descendant(of: row, matching: find.textContaining('자료 없음')),
         findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
-    expect(find.text('쌓일 눈 0cm'), findsNothing);
+    expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(find.text('강수확률 20%'), findsOneWidget);
   });
 
@@ -170,8 +170,8 @@ void main() {
     expect(find.text('눈이 예보됐어요'), findsOneWidget);
     expect(find.text('강수확률 0%'), findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
-    expect(find.text('쌓일 눈 0cm'), findsNothing);
-    expect(find.text('자료 없음: 강수량 · 쌓일 눈 · 풍속'), findsOneWidget);
+    expect(find.text('예상 신적설 0cm'), findsNothing);
+    expect(find.text('자료 없음: 강수량 · 예상 신적설 · 풍속'), findsOneWidget);
   });
 
   for (final scale in [1.0, 2.0]) {
@@ -223,16 +223,16 @@ void main() {
       for (final text in [
         '강수확률 80%',
         '강수량 1mm 미만',
-        '쌓일 눈 0.5cm 미만',
+        '예상 신적설 0.5cm 미만',
         '초미세먼지 0㎍/㎥',
         '미세먼지 0㎍/㎥',
         '강수량 30~50mm',
-        '쌓일 눈 5cm 이상'
+        '예상 신적설 5cm 이상'
       ]) {
         expect(find.text(text), findsOneWidget);
       }
       expect(find.text('강수량 1mm'), findsNothing);
-      expect(find.text('쌓일 눈 0.5cm'), findsNothing);
+      expect(find.text('예상 신적설 0.5cm'), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }

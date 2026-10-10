@@ -77,7 +77,7 @@ describe('KmaMidTermProvider', () => {
       }));
     };
     const provider = new KmaMidTermProvider({
-      apiHubKey: 'decoded key',
+      serviceKey: 'decoded key',
       fetcher,
       now: () => new Date('2026-09-15T01:00:00Z'),
     });
@@ -88,14 +88,14 @@ describe('KmaMidTermProvider', () => {
     expect(days[0]).toMatchObject({ date: '20260919', minTemperature: 15 });
     expect(calls).toHaveLength(2);
     expect(calls.every((url) => url.includes('tmFc=202609150600'))).toBe(true);
-    expect(calls.every((url) => url.startsWith('https://apihub.kma.go.kr/'))).toBe(true);
-    expect(calls.every((url) => url.includes('authKey=decoded+key'))).toBe(true);
+    expect(calls.every((url) => url.startsWith('https://apis.data.go.kr/1360000/MidFcstInfoService/'))).toBe(true);
+    expect(calls.every((url) => url.includes('ServiceKey=decoded+key') && !url.includes('authKey='))).toBe(true);
   });
 
   it('builds temperature-only days where no official land forecast exists', async () => {
     const calls: string[] = [];
     const provider = new KmaMidTermProvider({
-      apiHubKey: 'decoded key',
+      serviceKey: 'decoded key',
       fetcher: async (input) => {
         const url = new URL(input.toString());
         calls.push(url.toString());

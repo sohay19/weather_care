@@ -5,6 +5,11 @@ TypeScript + Hono 서버입니다. 현재 운영 원본은 미니 PC의 Node.js 
 소스에 남은 `D1Database` 타입과 `cf` 요청 옵션은 이전 구현과 호환되는 코드이며,
 현재 운영 데이터베이스나 수집기가 Cloudflare Workers/D1에서 실행된다는 뜻은 아닙니다.
 
+2026-10-10 기준 전체 수정·운영 반영·미완료 항목은
+[`전체 수정사항 및 반영 상태`](../docs/전체_수정사항_및_반영상태_20261010.md)를 따릅니다.
+대표 1,633격자 의존은 전국 원본 캐시로 교체했습니다. 현재 적설 API는 승인·진단만
+완료했으며 정규 수집·앱 연결은 아직 남아 있습니다.
+
 날씨·환경 원본 데이터는 공공데이터포털의 다음 서비스를 사용합니다.
 
 - [기상청 단기예보 조회서비스](https://www.data.go.kr/data/15084084/openapi.do)
@@ -15,6 +20,13 @@ TypeScript + Hono 서버입니다. 현재 운영 원본은 미니 PC의 Node.js 
 - [국가교통정보센터 돌발상황정보](https://www.its.go.kr/opendata/opendataList?service=event)
 
 ## API
+
+중기예보는 `KMA_SERVICE_KEY`로 공공데이터포털 `getMidTa`·`getMidLandFcst`를 호출합니다.
+기온 176개·육상 10개 예보구역 원본을 06/18시 발표마다 공유 캐시로 수집하므로 정상 호출량은 하루 372회입니다.
+공개 개발계정 한도는 하루 10,000회이며 내부 안전한도는 별도 `DATA_GO_MID_TERM` 장부에서 하루 9,000회로 관리합니다.
+운영계정은 자동승인 대상이고 활용사례 등록 후 증량을 신청할 수 있습니다. 현재 정상 호출량만으로 증량은 필요하지 않습니다.
+이용 기간·실제 승인 한도·운영계정 상태는 포털 활용신청 화면에서 확인해야 합니다.
+기존 APIHub 캐시는 전환 후 첫 수집에서 포털 응답으로 갱신하며 인증·한도 오류 시 해당 수집을 중단합니다.
 
 - `GET /api/v1/weather/main?nx=60&ny=121`
 - `GET /api/v1/weather/today?nx=60&ny=121&recommendationCatalog=PREPARATION_15`
@@ -33,12 +45,12 @@ TypeScript + Hono 서버입니다. 현재 운영 원본은 미니 PC의 Node.js 
 
 ## 실행
 
-먼저 공공데이터포털에서 단기예보, 생활기상지수, 에어코리아 대기오염정보를
+먼저 공공데이터포털에서 단기예보, 중기예보, 생활기상지수, 에어코리아 대기오염정보·측정소정보를
 각각 활용신청하고 발급받은 키를 저장소 밖의 환경 파일에 보관합니다.
 `KMA_SERVICE_KEY`와 Firebase 서비스 계정 JSON의
 `client_email`, `private_key`를 각각 `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY`로
 교체합니다. 현재 위치의 500m 강수 판정과 실제 발효 특보 조회에는 기상청
-API허브에서 중기예보·지상·AWS 일통계·고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
+API허브에서 지상·AWS 일통계·고해상도 격자자료·레이더·기상특보·도로위험기상정보 API 활용신청 후 발급된
 `KMA_APIHUB_KEY`도 필요합니다.
 현재 시행 중인 도로 통제를 조회하려면 국가교통정보센터에서 돌발상황정보
 Open API 활용신청을 하고 발급받은 키를 운영 미니 PC의 `ITS_API_KEY`에 저장해야
@@ -111,7 +123,7 @@ SQLite 파일은 `/var/lib/weather-care/weather-care-release.sqlite`에 있습�
 - `src/database/*`: SQLite 저장/조회 함수 (`D1Database` 호환 타입 사용)
 - `src/providers/weather/kmaWeatherProvider.ts`: 기상청 응답 검증·정규화
 - `src/providers/weather/kmaMidTermProvider.ts`: 06시 중기 기온·육상예보(4~10일) 검증·정규화
-- `src/providers/weather/kmaDailyObservationProvider.ts`: 인근 지상·AWS 관측소의 지난 날 일 최저·최고기온·강수·적설 정규화
+- `src/providers/weather/kmaDailyObservationProvider.ts`: 인근 지상·AWS 관측소의 지난 날 일 최저·최고기온·강수·최심신적설 정규화(현재 총 적설과 구분)
 - `src/providers/uv/kmaUvProvider.ts`: 생활기상지수 V5 자외선 3시간 예측 정규화
 - `src/providers/air/airKoreaAirQualityProvider.ts`: 에어코리아 PM10·PM2.5·오존 실시간 관측 정규화
 - `src/providers/environmental/environmentalDataService.ts`: 환경 데이터 캐시·부분 실패·Today 병합
@@ -120,15 +132,27 @@ SQLite 파일은 `/var/lib/weather-care/weather-care-release.sqlite`에 있습�
 - `src/providers/road/kmaRoadIceProvider.ts`: 고속도로 1km 구간별 도로살얼음 공식 단계와 현재 위치 거리 판정
 - `src/providers/traffic/itsRoadControlProvider.ts`: 국가교통정보센터의 현재 돌발상황 중 위치 3km 안의 실제 차로·전면 통제 판정
 - `src/regions/regionCatalog.ts`: 격자별 자외선 행정코드·대기질 측정소·특보구역 매핑
-- `migrations/0001_init.sql`~`0011_central_weather_collection.sql`: 테이블 DDL, 사용자별 상태, 중앙 수집 캐시와 APIHub 일일 호출·용량 예산
+- `migrations/0001_init.sql`~`0014_administrative_boundaries.sql`: 테이블 DDL, 사용자별 상태, 중앙 수집 캐시·APIHub 예산, 격자 실황 이력·전국 예보·행정경계
 
 `/weather/main`, `/weather/today`, `/weather/weekly`, `/weather/comparison`은 외부 제공자를 호출하지 않고 중앙 수집 결과만 읽습니다. Node 운영 서버는 앱 지원 전국 격자를 미리 채우므로 최초 선수집이 끝난 뒤 지역 선택으로 외부 API 호출이나 `WEATHER_CACHE_NOT_READY`가 새로 발생하지 않습니다.
 
-Cron은 10분마다 전국 격자 한 묶음의 단기예보와 활성 설치의 환경·특보를 수집하고 알림을 평가합니다. 전국 500m 레이더는 `2,17,32,47분`에 한 번만 받아 모든 활성 좌표를 배치 판독하고, 공공데이터포털 초단기실황과 강수 판단이 다른 좌표만 APIHub 지점 관측분석으로 최대 40개까지 재검증합니다. 도로살얼음은 동절기 `7,37분`에 12개 노선을 한 번씩만 받아 모든 활성 좌표를 함께 판정합니다.
+정규 core 작업은 10분마다 전국 원본의 수집 완료 여부를 확인합니다. 설치가 없어도
+전국 37,697셀 실황·단기예보와 전국 환경·특보·일관측을 저장합니다. 실황은 직전
+10분 회차를 사용하고 AWS 분 관측 대체는 없습니다. 가까운 24시간 단기예보는
+3시간마다, 먼 기간은 비겨울 05·17시/겨울 17시 발표로 갱신합니다. 연장 구간의
+미제공 풍향 8파일은 제외하고 나머지 예보를 보존합니다. 전국 강수 분석·500m
+레이더는 30분마다, 도로살얼음은 제공 계절에만 12개 노선을 30분마다 수집합니다.
+GPS가 속한 원본 격자와 공식 행정구역·도로를 조회하며 지역별 사본을 만들지 않습니다.
 
 `/weather/today`는 기상청 단기예보와 자외선·대기질을 병합해 `current.uvIndex`, `current.pm10`, `current.pm25`, `current.ozone`을 반환합니다. 자외선 예측은 해당 시간의 `hourly[].uvIndex`에도 병합하고, 실시간 대기질 관측값은 미래를 의미하지 않으므로 `current`와 첫 시간 슬롯에만 적용합니다.
 
-`environmentalSources.uv` / `environmentalSources.airQuality`은 각각 `AVAILABLE`, `CACHED`, `STALE`, `UNAVAILABLE`, `UNSUPPORTED_REGION` 상태를 제공합니다. 전국 자외선은 지원 격자를 6시간 간격으로 갱신하고, 에어코리아 시도별 관측은 1시간 간격으로 공통 조회합니다. `/main`과 `/today`는 지역 예보에 포함된 이전 환경 값 대신 최신 환경 캐시와 전국 대기질 원본을 다시 병합합니다. 자외선은 저장·발표 후 최대 8시간, 대기질은 저장 후 최대 3시간·관측 후 최대 4시간까지만 사용합니다. 기간을 넘기면 이전 숫자를 제거하고 `UNAVAILABLE`로 표시합니다.
+`environmentalSources.uv` / `environmentalSources.airQuality`은 각각 `AVAILABLE`,
+`CACHED`, `STALE`, `UNAVAILABLE`, `UNSUPPORTED_REGION` 상태를 제공합니다.
+전국 자외선은 3시간 발표마다 모든 페이지를 저장하고, 에어코리아는 17시도별
+성공 자료를 1시간 재사용하며 실패한 시도만 재시도합니다. `/main`과 `/today`는
+전국 원본을 GPS 위치에 병합합니다. 자외선은 최대 8시간, 전국 대기질은 실제
+관측시각 기준 3시간 이내의 값만 사용합니다. 기간을 넘기면 이전 숫자를 제거합니다.
+지역 연결 미확인과 제공처 실패는 `environmentalSources`의 이유로 구분합니다.
 
 대기질 예보는 전국 공통 원본을 `/main`·`/today`·`/weekly`에서 직접 읽습니다.
 같은 예보 격자가 여러 행정 구역에 걸칠 수 있으므로 요청의 행정코드·지역명을
@@ -143,11 +167,13 @@ PM10·PM2.5·오존 관측값을 각각 확인합니다. 환경 결측은
 대기질 예보는 최신 발표 회차의 19개 권역에 오늘 PM10·PM2.5 예보가 있어야 완료로
 판정합니다. 제공처의 이전 발표를 현재 회차로 저장하지 않습니다.
 
-APIHub 일일 예약량의 설계 추정은 2026-10-01 운영 예약량에서 기존 레이더 예약을
-제외하고 전국 분석·레이더를 더하면 비동절기 약 3.887GB/일입니다. 동절기에는
-전국 분석·레이더를 30분 간격으로 줄이고 도로살얼음 12개 노선의 회당 최대 예약
-25.2MB를 포함하면 약 3.653GB/일이며 내부 한도는 4.5GB/일입니다. 이는 정상 회차의
-예약 추정으로, 추가 재시도·제공처 실제 전송량·계정 사용량은 운영에서 따로 확인해야 합니다.
+APIHub는 내부 18,000호출·4.5GB/일 상한을 적용하며 실제 HTTP마다 응답 크기를
+사전 예약하고 수신 후 정산합니다. 시간초과·불완전 전송의 예약은 보존합니다.
+재시도 총량은 최초 24시간 100MB, 이후 400MB이며 최신 핵심 실황·예보·선택 항목·
+과거 보충의 용도별 예산을 보호합니다. 공공데이터포털 지점예보·중기예보 장부는
+APIHub와 분리합니다. 상세 추정·한도·전제는
+[`전체 수정사항`](../docs/전체_수정사항_및_반영상태_20261010.md)와
+[`재시도 예산`](../docs/수집_재시도_적설_개선_운영배포_20261009.md)을 참고합니다.
 
 현재 관측과 미래 예보의 `apparentTemperature`는 적용 조건을 충족할 때 [기상청 공식 체감온도 산식](https://data.kma.go.kr/climate/windChill/selectWindChillChart.do)을 사용합니다. 5~9월은 기온·상대습도·Stull 습구온도 기반 여름 산식, 10~익년 4월은 기온 10℃ 이하·풍속 1.3m/s 이상일 때 겨울 풍속냉각 산식을 적용합니다. 이 조건 밖에 있고 같은 시각의 기온·습도·풍속이 모두 있으면 [호주 기상청의 Steadman 비복사 산식](https://www.bom.gov.au/info/thermal_stress/)으로 추정 체감온도를 계산합니다. 이때 `apparentTemperatureSource`는 관측 또는 예보 Steadman 출처를 기록하며 `kmaApparentTemperature`는 비워 기상청 공식 적용 범위의 값과 구분합니다. 입력값이 빠졌으면 숫자를 만들지 않습니다. 앱의 표현 경계와 연구 근거는 [`docs/체감온도_표현_기준.md`](../docs/체감온도_표현_기준.md)에 있습니다.
 

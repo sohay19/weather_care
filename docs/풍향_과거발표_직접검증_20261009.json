@@ -1,0 +1,554 @@
+{
+  "checkedAt": "2026-10-09T01:50:00.111Z",
+  "startedAt": "2026-10-09T01:49:52.719Z",
+  "dateFrom": "20260925",
+  "dateTo": "20261008",
+  "timeoutMs": 30000,
+  "diagnosticByteAllowance": 80000000,
+  "stopped": true,
+  "stopReason": "BUDGET_EXHAUSTED",
+  "usageBefore": [
+    {
+      "provider": "APIHUB_RETRY",
+      "calls": 681,
+      "bytes": 95816431
+    },
+    {
+      "provider": "ASOS_VISIBILITY",
+      "calls": 11,
+      "bytes": 1072719
+    },
+    {
+      "provider": "AWS_DAILY",
+      "calls": 4,
+      "bytes": 858170
+    },
+    {
+      "provider": "GRID_OBSERVATION_10_MINUTES",
+      "calls": 365,
+      "bytes": 150262822
+    },
+    {
+      "provider": "GRID_OBSERVATION_FAST_RETRY",
+      "calls": 25,
+      "bytes": 9849831
+    },
+    {
+      "provider": "GRID_OBSERVATION_HISTORY",
+      "calls": 195,
+      "bytes": 72481242
+    },
+    {
+      "provider": "MID_TERM",
+      "calls": 186,
+      "bytes": 138834
+    },
+    {
+      "provider": "NATIONAL_SHORT_FORECAST",
+      "calls": 2139,
+      "bytes": 739064997
+    },
+    {
+      "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+      "calls": 52,
+      "bytes": 851869836
+    },
+    {
+      "provider": "WARNING",
+      "calls": 23,
+      "bytes": 1027016
+    }
+  ],
+  "usageAfter": [
+    {
+      "provider": "APIHUB_RETRY",
+      "calls": 718,
+      "bytes": 99546807
+    },
+    {
+      "provider": "ASOS_VISIBILITY",
+      "calls": 11,
+      "bytes": 1072719
+    },
+    {
+      "provider": "AWS_DAILY",
+      "calls": 4,
+      "bytes": 858170
+    },
+    {
+      "provider": "GRID_OBSERVATION_10_MINUTES",
+      "calls": 365,
+      "bytes": 150262822
+    },
+    {
+      "provider": "GRID_OBSERVATION_FAST_RETRY",
+      "calls": 25,
+      "bytes": 9849831
+    },
+    {
+      "provider": "GRID_OBSERVATION_HISTORY",
+      "calls": 195,
+      "bytes": 72481242
+    },
+    {
+      "provider": "MID_TERM",
+      "calls": 186,
+      "bytes": 138834
+    },
+    {
+      "provider": "NATIONAL_SHORT_FORECAST",
+      "calls": 2139,
+      "bytes": 739064997
+    },
+    {
+      "provider": "NATIONWIDE_ANALYSIS_AND_RADAR",
+      "calls": 52,
+      "bytes": 851869836
+    },
+    {
+      "provider": "WARNING",
+      "calls": 23,
+      "bytes": 1027016
+    }
+  ],
+  "results": [
+    {
+      "issue": "2026100705",
+      "valid": "2026101000",
+      "variable": "VEC",
+      "role": "STANDARD_BOUNDARY",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 116.6,
+      "missing302": 0,
+      "elapsedMs": 397,
+      "checkedAt": "2026-10-09T01:49:53.123Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101003",
+      "variable": "WSD",
+      "role": "EXTENDED_CONTROL",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 1,
+      "missing302": 0,
+      "elapsedMs": 283,
+      "checkedAt": "2026-10-09T01:49:53.412Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101003",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 115,
+      "checkedAt": "2026-10-09T01:49:53.528Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101006",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 166,
+      "checkedAt": "2026-10-09T01:49:53.694Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101009",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 108,
+      "checkedAt": "2026-10-09T01:49:53.803Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101012",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 543,
+      "checkedAt": "2026-10-09T01:49:54.347Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101015",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 87,
+      "checkedAt": "2026-10-09T01:49:54.435Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101018",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 94,
+      "checkedAt": "2026-10-09T01:49:54.530Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101021",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 131,
+      "checkedAt": "2026-10-09T01:49:54.661Z"
+    },
+    {
+      "issue": "2026100705",
+      "valid": "2026101100",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 145,
+      "checkedAt": "2026-10-09T01:49:54.807Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101100",
+      "variable": "VEC",
+      "role": "STANDARD_BOUNDARY",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 90,
+      "missing302": 0,
+      "elapsedMs": 310,
+      "checkedAt": "2026-10-09T01:49:55.118Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101103",
+      "variable": "WSD",
+      "role": "EXTENDED_CONTROL",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 1,
+      "missing302": 0,
+      "elapsedMs": 221,
+      "checkedAt": "2026-10-09T01:49:55.340Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101103",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 160,
+      "checkedAt": "2026-10-09T01:49:55.501Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101106",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 338,
+      "checkedAt": "2026-10-09T01:49:55.840Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101109",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 403,
+      "checkedAt": "2026-10-09T01:49:56.243Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101112",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 119,
+      "checkedAt": "2026-10-09T01:49:56.363Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101115",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 124,
+      "checkedAt": "2026-10-09T01:49:56.487Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101118",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 92,
+      "checkedAt": "2026-10-09T01:49:56.580Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101121",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 160,
+      "checkedAt": "2026-10-09T01:49:56.741Z"
+    },
+    {
+      "issue": "2026100717",
+      "valid": "2026101200",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 119,
+      "checkedAt": "2026-10-09T01:49:56.860Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100400",
+      "variable": "VEC",
+      "role": "STANDARD_BOUNDARY",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 104,
+      "missing302": 0,
+      "elapsedMs": 557,
+      "checkedAt": "2026-10-09T01:49:57.418Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100403",
+      "variable": "WSD",
+      "role": "EXTENDED_CONTROL",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 1,
+      "missing302": 0,
+      "elapsedMs": 389,
+      "checkedAt": "2026-10-09T01:49:57.808Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100403",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 428,
+      "checkedAt": "2026-10-09T01:49:58.237Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100406",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 104,
+      "checkedAt": "2026-10-09T01:49:58.342Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100409",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 100,
+      "checkedAt": "2026-10-09T01:49:58.443Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100412",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 88,
+      "checkedAt": "2026-10-09T01:49:58.532Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100415",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 90,
+      "checkedAt": "2026-10-09T01:49:58.623Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100418",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 112,
+      "checkedAt": "2026-10-09T01:49:58.736Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100421",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 119,
+      "checkedAt": "2026-10-09T01:49:58.855Z"
+    },
+    {
+      "issue": "2026100105",
+      "valid": "2026100500",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 116,
+      "checkedAt": "2026-10-09T01:49:58.972Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100500",
+      "variable": "VEC",
+      "role": "STANDARD_BOUNDARY",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 189,
+      "missing302": 0,
+      "elapsedMs": 260,
+      "checkedAt": "2026-10-09T01:49:59.233Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100503",
+      "variable": "WSD",
+      "role": "EXTENDED_CONTROL",
+      "status": 200,
+      "responseBytes": 341297,
+      "outcome": "GRID",
+      "parsedCells": 37697,
+      "controlValue": 1,
+      "missing302": 0,
+      "elapsedMs": 206,
+      "checkedAt": "2026-10-09T01:49:59.440Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100503",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 95,
+      "checkedAt": "2026-10-09T01:49:59.535Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100506",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 108,
+      "checkedAt": "2026-10-09T01:49:59.644Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100509",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 288,
+      "checkedAt": "2026-10-09T01:49:59.933Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100512",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "status": 200,
+      "responseBytes": 0,
+      "outcome": "EMPTY",
+      "elapsedMs": 120,
+      "checkedAt": "2026-10-09T01:50:00.053Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100515",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC",
+      "outcome": "TRANSPORT_FAILED",
+      "elapsedMs": 56,
+      "checkedAt": "2026-10-09T01:50:00.110Z"
+    },
+    {
+      "issue": "2026100117",
+      "valid": "2026100515",
+      "variable": "VEC",
+      "role": "EXTENDED_VEC_RECHECK",
+      "outcome": "BUDGET_EXHAUSTED",
+      "elapsedMs": 0,
+      "checkedAt": "2026-10-09T01:50:00.111Z"
+    }
+  ]
+}

@@ -10,6 +10,9 @@ const DAILY_OBSERVATION_URL =
 const MAX_RANGE_DAYS = 7;
 
 type DailyMetric = 'ta_min' | 'ta_max' | 'rn_day' | 'sd_day_max';
+type Availability = 'AVAILABLE' | 'NO_RECORD' | 'UNAVAILABLE';
+const DAILY_METRICS = ['ta_min','ta_max','rn_day','sd_day_max'] as const;
+const METRIC_FIELDS = {ta_min:'minTemperature',ta_max:'maxTemperature',rn_day:'precipitationAmount',sd_day_max:'snowfallAmount'} as const;
 
 export interface KmaDailyObservationRow {
   date: string;
@@ -25,7 +28,7 @@ interface KmaDailyObservationProviderOptions {
   timeoutMs?: number;
 }
 
-interface StationDay {
+export interface StationDay {
   date: string;
   stationId: string;
   latitude: number;
@@ -52,7 +55,7 @@ export class KmaDailyObservationProvider {
     this.serviceKey = normalizeServiceKey(options.serviceKey);
     this.fetcher =
       options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
-    this.timeoutMs = options.timeoutMs ?? 6_000;
+    this.timeoutMs = options.timeoutMs ?? 30_000;
   }
 
   async getDailyByLocation(
@@ -85,13 +88,23 @@ export class KmaDailyObservationProvider {
     }
     if (locations.length === 0) return [];
 
+    const snapshot = await this.getNationwide(startDate, endDate);
+    return dailyObservationsAtLocations(snapshot, locations, startDate, endDate);
+  }
+
+  async getNationwide(startDate: string, endDate: string, seed?: NationwideDailySnapshot): Promise<NationwideDailySnapshot> {
+    validateDateRange(startDate, endDate);
+    if (!this.serviceKey) throw new KmaDailyObservationProviderError('KMA APIHub key is not configured');
     const metrics = await Promise.allSettled(
-      (['ta_min', 'ta_max', 'rn_day', 'sd_day_max'] as const).map(
-        async (metric) => ({
-          metric,
-          rows: await this.fetchMetric(metric, startDate, endDate),
-        }),
-      ),
+      DAILY_METRICS.map(async (metric) => {
+        const reused = seed && calendarDates(startDate,endDate).every(date =>
+          seed.metricAvailability?.[date]?.[metric] && seed.metricAvailability[date][metric] !== 'UNAVAILABLE');
+        const rows = reused ? seed.stations.filter(station => station.date >= startDate && station.date <= endDate &&
+          station[METRIC_FIELDS[metric]] !== undefined).map(station => ({ date:station.date,stationId:station.stationId,
+          latitude:station.latitude,longitude:station.longitude,value:station[METRIC_FIELDS[metric]]! }))
+          : await this.fetchMetric(metric, startDate, endDate);
+        return {metric,rows};
+      }),
     );
     const available = metrics.flatMap((result) =>
       result.status === 'fulfilled' ? [result.value] : [],
@@ -133,52 +146,25 @@ export class KmaDailyObservationProvider {
       }
     }
 
-    return locations.map(({ latitude, longitude }) => {
-      const days: DailyWeatherForecast[] = [];
-      for (const date of calendarDates(startDate, endDate)) {
-        const stationDays = [...byStationDay.values()].filter(
-          (station) => station.date === date,
-        );
-        const candidates = stationDays
-          .filter((station) =>
-            station.minTemperature !== undefined &&
-            station.maxTemperature !== undefined,
-          )
-          .map((station) => ({
-            station,
-            distanceKm:
-              distanceMetres(
-                latitude,
-                longitude,
-                station.latitude,
-                station.longitude,
-              ) / 1_000,
-          }))
-          .sort((left, right) => left.distanceKm - right.distanceKm);
-        const nearest = candidates[0];
-        const rain = nearestMetric(
-          stationDays,
-          latitude,
-          longitude,
-          (station) => station.precipitationAmount,
-        );
-        const snow = nearestMetric(
-          stationDays,
-          latitude,
-          longitude,
-          (station) => station.snowfallAmount,
-        );
-        if (nearest) {
-          days.push(toDailyForecast(
-            nearest.station,
-            nearest.distanceKm,
-            rain,
-            snow ?? (snowfallMetricAvailable ? 0 : undefined),
-          ));
-        }
-      }
-      return days;
-    });
+    const stations = [...byStationDay.values()];
+    if (!stations.length) throw new KmaDailyObservationProviderError('KMA daily observation has no usable station rows');
+    const metricAvailability = Object.fromEntries(calendarDates(startDate,endDate).map(date => [date,
+      Object.fromEntries(DAILY_METRICS.map(metric => {
+        const received = available.find(item => item.metric === metric);
+        const hasValue = stations.some(station => station.date === date && station[METRIC_FIELDS[metric]] !== undefined);
+        const state:Availability = !received ? 'UNAVAILABLE' : hasValue ? 'AVAILABLE' : 'NO_RECORD';
+        console.log(JSON.stringify({event:'daily_observation_metric_availability',date,metric,state,
+          validStationCount:stations.filter(station=>station.date===date && station[METRIC_FIELDS[metric]]!==undefined).length}));
+        return [metric,state];
+      }))]));
+    return { stations, snowfallMetricAvailable,metricAvailability,
+      completedDates: calendarDates(startDate,endDate).filter(date =>
+        ['ta_min','ta_max','rn_day'].every(metric => metricAvailability[date][metric] === 'AVAILABLE') &&
+        stations.some(station=>station.date===date && station.minTemperature!==undefined && station.maxTemperature!==undefined)),
+      settledDates: calendarDates(startDate,endDate).filter(date =>
+        DAILY_METRICS.every(metric => metricAvailability[date][metric] !== 'UNAVAILABLE') &&
+        ['ta_min','ta_max','rn_day'].every(metric => metricAvailability[date][metric] === 'AVAILABLE') &&
+        stations.some(station=>station.date===date && station.minTemperature!==undefined && station.maxTemperature!==undefined)) };
   }
 
   private async fetchMetric(
@@ -200,7 +186,10 @@ export class KmaDailyObservationProvider {
       signal: AbortSignal.timeout(this.timeoutMs),
       cf: { cacheEverything: true, cacheTtl: 86_400 },
     });
-    const payload = await response.text();
+    const bytes = await response.arrayBuffer();
+    const utf8 = new TextDecoder().decode(bytes);
+    const payload = /^\s*[\[{]/.test(utf8) || /json|utf-8/i.test(response.headers.get('Content-Type') ?? '')
+      ? utf8 : new TextDecoder('euc-kr').decode(bytes);
     if (!response.ok) {
       throw new KmaDailyObservationProviderError(
         await providerHttpFailureMessage(
@@ -262,6 +251,7 @@ function toDailyForecast(
   distanceKm: number,
   rain: number | undefined,
   snow: number | undefined,
+  availability: DailyWeatherForecast['observationAvailability'],
 ): DailyWeatherForecast {
   const hasRain = rain !== undefined && rain > 0;
   const hasSnow = snow !== undefined && snow > 0;
@@ -285,11 +275,11 @@ function toDailyForecast(
     minTemperatureSource: 'DAILY',
     maxTemperatureSource: 'DAILY',
     snowfallDataAvailable: snow !== undefined,
+    observationAvailability: availability,
     weatherDataComplete:
       station.minTemperature !== undefined &&
       station.maxTemperature !== undefined &&
-      rain !== undefined &&
-      snow !== undefined,
+      rain !== undefined,
     precipitationDetail: {
       kind: 'OBSERVATION',
       hours: [],
@@ -411,3 +401,57 @@ function normalizeServiceKey(value: string): string {
     return trimmed;
   }
 }
+
+export interface NationwideDailySnapshot { stations: StationDay[]; snowfallMetricAvailable: boolean; completedDates?: string[];
+  settledDates?: string[]; metricAvailability?: Record<string,Partial<Record<DailyMetric,Availability>>> }
+export function dailyObservationsAtLocations(snapshot: NationwideDailySnapshot, locations: readonly { latitude: number; longitude: number }[], startDate: string, endDate: string): DailyWeatherForecast[][] {
+  return locations.map(({ latitude, longitude }) => {
+      const days: DailyWeatherForecast[] = [];
+      for (const date of calendarDates(startDate, endDate)) {
+        const stationDays = snapshot.stations.filter(
+          (station) => station.date === date,
+        );
+        const candidates = stationDays
+          .filter((station) =>
+            station.minTemperature !== undefined &&
+            station.maxTemperature !== undefined,
+          )
+          .map((station) => ({
+            station,
+            distanceKm:
+              distanceMetres(
+                latitude,
+                longitude,
+                station.latitude,
+                station.longitude,
+              ) / 1_000,
+          }))
+          .sort((left, right) => left.distanceKm - right.distanceKm);
+        const nearest = candidates[0];
+        const rain = nearestMetric(
+          stationDays,
+          latitude,
+          longitude,
+          (station) => station.precipitationAmount,
+        );
+        // 눈이 기록된 먼 지점을 전국에 확대하지 않고 선택한 기온 관측소의 실측만 사용한다.
+        const snow = nearest?.station.snowfallAmount;
+        if (nearest) {
+          const state = (metric:DailyMetric,value:number|undefined):Availability => value !== undefined ? 'AVAILABLE'
+            : snapshot.metricAvailability?.[date]?.[metric] === 'UNAVAILABLE' ? 'UNAVAILABLE'
+            : snapshot.metricAvailability?.[date]?.[metric] || metric === 'sd_day_max' && snapshot.snowfallMetricAvailable
+              ? 'NO_RECORD' : 'UNAVAILABLE';
+          days.push(toDailyForecast(
+            nearest.station,
+            nearest.distanceKm,
+            rain,
+            snow,
+            { minTemperature:state('ta_min',nearest.station.minTemperature),
+              maxTemperature:state('ta_max',nearest.station.maxTemperature),
+              precipitationAmount:state('rn_day',rain),snowfallAmount:state('sd_day_max',snow) },
+          ));
+        }
+      }
+      return days;
+    });
+  }

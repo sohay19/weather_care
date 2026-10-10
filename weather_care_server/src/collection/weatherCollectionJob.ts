@@ -1,18 +1,14 @@
+import { collectNationwideAirQuality } from '../services/nationwideAirCache';
+import { collectNationwideForecast } from '../services/nationwideForecastCache';
+import { collectPointForecasts } from '../services/pointForecastCache';
+import { collectNationwideUv, NATIONAL_VISIBILITY_KEY, NATIONAL_DAILY_KEY } from '../services/nationwideWeatherCache';
+import { apiHubBudgetedFetch } from '../services/apiHubFetch';
 import type {
-  CurrentPrecipitationObservation,
   OfficialRoadControl,
   RoadIceRisk,
   ServerEnv,
 } from '../types';
 import {
-  KmaWeatherProvider,
-  latestBaseDateTimes,
-} from '../providers/weather/kmaWeatherProvider';
-import type { WeatherForecast } from '../providers/weather/weatherProvider';
-import {
-  enrichForecastWithEnvironmentalData,
-  currentEnvironmentalData,
-  loadEnvironmentalData,
   type EnvironmentalDataBundle,
   type NationwideAirQualitySnapshot,
 } from '../providers/environmental/environmentalDataService';
@@ -25,13 +21,10 @@ import {
   type UltraShortObservation,
 } from '../providers/weather/kmaUltraShortObservationProvider';
 import {
-  GRID_OBSERVATION_VARIABLES,
-  REQUIRED_GRID_OBSERVATION_VARIABLES,
+  observationsFromGridSnapshot,
   gridObservationKoreanIso,
-  KmaGridObservationProvider,
   latestGridObservationTime,
 } from '../providers/weather/kmaGridObservationProvider';
-import { KmaAwsMinuteObservationProvider } from '../providers/weather/kmaAwsMinuteObservationProvider';
 import {
   KmaPrecipitationObservationProvider,
   nationwidePrecipitationAtPoint,
@@ -48,7 +41,6 @@ import {
 import {
   isRoadIceSeason,
   KmaRoadIceProvider,
-  ROAD_ICE_ROAD_NUMBERS,
   nearestRoadIceRisk,
   type RoadIceSegment,
 } from '../providers/road/kmaRoadIceProvider';
@@ -59,52 +51,36 @@ import {
 } from '../providers/traffic/itsRoadControlProvider';
 import {
   KmaHourlyObservationProvider,
-  latestCompletedKoreanHour,
-  nearestVisibilityObservations,
 } from '../providers/weather/kmaHourlyObservationProvider';
+import { latestVisibilityKoreanHour } from '../providers/weather/visibility';
 import { KmaDailyObservationProvider } from '../providers/weather/kmaDailyObservationProvider';
 import {
   latestMidTermIssueTimes,
 } from '../providers/weather/kmaMidTermProvider';
-import { KmaUvProvider, latestUvPublicationTimes } from '../providers/uv/kmaUvProvider';
 import {
   AirKoreaForecastProvider,
-  airKoreaForecastAreaForGrid,
   nationwideAirForecastIsUsable,
-  type DailyAirQualityForecastAtDate,
   type NationwideAirForecast,
 } from '../providers/air/airKoreaForecastProvider';
 import {
-  resolveKmaMidTermRegionIds,
   supportedKmaMidTermRegionIds,
 } from '../regions/kmaMidTermRegionCatalog';
-import { uvAreaNoForGrid } from '../regions/kmaUvAreaGridCatalog';
-import { regionMetadataForGrid } from '../regions/regionCatalog';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
-import {
-  NATIONWIDE_FORECAST_GRIDS,
-  nationwideForecastGridShard,
-  scheduledNationwideForecastGridShard,
-} from '../regions/nationwideForecastGridCatalog';
 import { mapWithConcurrency } from '../utils/concurrencyLimiter';
 import {
   cacheRecordIsFresh,
   collectedSourceVersionIsCurrent,
   collectedCacheKey,
   getCollectedCache,
-  locationCacheKey,
   saveCollectedCache,
   saveCollectedSourceVersion,
   type CollectedCacheRecord,
 } from '../database/collectedWeatherRepository';
 import {
-  reserveApiHubBudget,
   reserveMonthlyRequestBudget,
 } from '../database/apiUsageRepository';
-import { saveCurrentWeather } from '../database/weatherCacheRepository';
-import {
-  currentKoreanCalendarWeek,
-} from '../database/weeklyForecastRepository';
+import { collectGridObservationSnapshot, backfillGridObservationHistory } from '../services/gridObservationCache';
+import { readCurrentGridObservation } from '../database/gridObservationRepository';
 import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
 import {
   compactIssueToIso,
@@ -114,13 +90,10 @@ import {
   previousKoreanDate,
 } from './sourcePublicationSchedule';
 import type {
-  CollectedRegionBundle,
   CollectedWarningBundle,
-  CollectedWeeklyBundle,
   CollectionTarget,
 } from './collectionTypes';
 import {
-  hydrateMidTermForecast,
   hydrateResolvedMidTermForecast,
 } from '../services/midTermForecastCache';
 
@@ -128,9 +101,7 @@ const ENVIRONMENTAL_MAX_AGE_MS = 60 * 60 * 1000;
 const ENVIRONMENTAL_RETRY_INTERVAL_MS = 10 * 60 * 1000;
 const RADAR_BYTES = 13_281_414;
 const NATIONWIDE_ANALYSIS_BYTES = 16_793_608;
-const ANALYSIS_VALIDATION_LIMIT = 40;
 const ITS_MONTHLY_REQUEST_LIMIT = 9_000;
-const FAST_OBSERVATION_DAILY_BYTE_LIMIT = 1_000_000_000;
 
 export interface WeatherCollectionOptions {
   now?: Date;
@@ -152,105 +123,28 @@ export async function runWeatherCollectionJob(
   const now = options.now ?? new Date();
   const targets = await loadActiveCollectionTargets(env.DB);
   const activeRegions = distinctRegions(targets);
-  const collectActiveDetails = options.collectActiveDetails !== false;
-  const forceSourceRefresh = options.forceSourceRefresh === true;
-  const precollectNationwide = env.NATIONWIDE_PRECOLLECT_ENABLED === 'true';
-  const nationwideShard = precollectNationwide
-    ? options.nationwideShardIndex === undefined
-      ? scheduledNationwideForecastGridShard(now)
-      : {
-          shardIndex: options.nationwideShardIndex,
-          grids: nationwideForecastGridShard(options.nationwideShardIndex),
-        }
-    : undefined;
-  const regions = distinctRegions([
-    ...(nationwideShard?.grids ?? []),
-    ...(collectActiveDetails ? activeRegions : []),
-  ]);
-  if (precollectNationwide && options.collectCore !== false &&
-      options.nationwideShardIndex === undefined) {
-    await collectSupportedMidTermForecasts(env, now);
-  }
-  if (regions.length === 0) return;
-  const locations = distinctLocations(targets);
-  const activeRegionKeys = new Set(
-    (collectActiveDetails ? activeRegions : [])
-      .map(({ nx, ny }) => `${nx}_${ny}`),
-  );
-  const allForecastTargets: CollectionTarget[] = precollectNationwide
-    ? [...NATIONWIDE_FORECAST_GRIDS]
-    : activeRegions;
-
-  console.log(JSON.stringify({
-    event: 'weather_collection_targets_loaded',
-    activeRegions: activeRegions.length,
-    nationwideShard: nationwideShard?.shardIndex,
-    nationwideRegions: nationwideShard?.grids.length ?? 0,
-    totalRegions: regions.length,
-  }));
-
-  if (options.dailyObservationLookbackDays !== undefined) {
-    await collectDailyObservations(env, allForecastTargets, now, {
-      candidateDates: recentCompletedKoreanDates(
-        now,
-        options.dailyObservationLookbackDays,
-      ),
-      ignoreSourceVersion: true,
-    });
-  }
-
-  if (options.collectHourlyObservations === true) {
-    await collectCurrentVisibility(
-      env,
-      allForecastTargets,
-      now,
-      forceSourceRefresh,
-    );
-  }
-
+  // 수집 단위는 전국 원본이다. 등록된 설치나 대표 격자 목록의 유무와 무관하다.
   if (options.collectCore !== false) {
-    const forceNationwideSources = forceSourceRefresh &&
-      (options.nationwideShardIndex === undefined || options.nationwideShardIndex === 0);
-    const nationwideAir = precollectNationwide
-      ? await collectNationwideAirQuality(env, now, forceNationwideSources)
-      : undefined;
-    const nationwideAirForecast = precollectNationwide
-      ? await collectNationwideAirForecast(env, now, forceNationwideSources)
-      : undefined;
-    if (collectActiveDetails) {
-      await collectUltraShortObservations(env, allForecastTargets, now, activeRegions);
-    }
-    await collectRegionForecasts(
-      env, regions, activeRegionKeys, now, nationwideAir, nationwideAirForecast, forceSourceRefresh,
-    );
-    if (collectActiveDetails) {
-      await collectWarnings(env, allForecastTargets, now, forceSourceRefresh);
-      await collectRoadControls(env, locations, now, forceSourceRefresh);
-      if (options.collectHourlyObservations !== true) {
-        await collectCurrentVisibility(
-          env,
-          allForecastTargets,
-          now,
-          forceSourceRefresh,
-        );
-      }
-      if (koreanHour(now) === 2) {
-        await collectDailyObservations(env, allForecastTargets, now);
-      }
-    }
+    await collectUltraShortObservations(env, activeRegions, now, activeRegions);
+    await backfillGridObservationHistory(env.DB, env.KMA_APIHUB_KEY, now);
+    await collectNationwideAirQuality(env, now);
+    await collectNationwideAirForecast(env, now);
+    try { await collectNationwideUv(env.DB, env.KMA_SERVICE_KEY, now); }
+    catch (error) { logCollectionFailure('national_uv', error); }
+    await collectSupportedMidTermForecasts(env, now);
+    await collectWarnings(env, [], now);
+    await collectRoadControls(env, [], now);
+    await collectCurrentVisibility(env, [], now);
+    await collectNationalDailyObservations(env, now, options.dailyObservationLookbackDays ?? 7);
+    await collectNationwideForecast(env.DB, env.KMA_APIHUB_KEY, now);
+    try { await collectPointForecasts(env.DB, env.KMA_SERVICE_KEY, now); }
+    catch (error) { logCollectionFailure('point_forecast', error); }
+  } else {
+    if (options.collectHourlyObservations) await collectCurrentVisibility(env, [], now);
+    if (options.dailyObservationLookbackDays !== undefined) await collectNationalDailyObservations(env, now, options.dailyObservationLookbackDays);
   }
-  if (options.collectRadar === true) {
-    await collectCurrentPrecipitation(
-      env,
-      targets,
-      locations,
-      now,
-      forceSourceRefresh,
-    );
-  }
-  if (options.collectRoadIce === true) {
-    await collectRoadIce(env, locations, now, forceSourceRefresh);
-  }
+  if (options.collectRadar) await collectNationwidePrecipitation(env, [], now, false);
+  if (options.collectRoadIce) await collectRoadIce(env, [], now, false);
 }
 
 export async function runCurrentObservationCollectionJob(
@@ -267,24 +161,33 @@ export async function collectSupportedMidTermForecasts(
   now = new Date(),
 ): Promise<void> {
   const expectedIssue = latestMidTermIssueTimes(now, 1)[0];
+  const sourceVersion = `DATA_GO_KR:${expectedIssue}`;
   if (!expectedIssue || await collectedSourceVersionIsCurrent(
     env.DB,
     'KMA_MID_TERM_SUPPORTED_REGIONS',
-    expectedIssue,
+    sourceVersion,
   )) return;
 
   const regions = supportedKmaMidTermRegionIds();
   let completed = 0;
+  let stopped = false;
   await mapWithConcurrency(regions, 4, async (region) => {
-    const hydrated = await hydrateResolvedMidTermForecast({
-      db: env.DB,
-      serviceKey: env.KMA_SERVICE_KEY,
-      apiHubKey: env.KMA_APIHUB_KEY,
-      region,
-      now,
-    });
-    if (hydrated.issueTime === expectedIssue && hydrated.days.length > 0) {
-      completed += 1;
+    if (stopped) return;
+    try {
+      const hydrated = await hydrateResolvedMidTermForecast({
+        db: env.DB,
+        serviceKey: env.KMA_SERVICE_KEY,
+        region,
+        now,
+      });
+      if (hydrated.issueTime === expectedIssue && hydrated.days.length > 0) {
+        completed += 1;
+      }
+    } catch (error) {
+      const diagnostic = providerErrorDiagnostic(error);
+      if (['NOT_CONFIGURED', 'AUTHORIZATION_FAILED', 'QUOTA_EXCEEDED', 'RATE_LIMITED', 'BUDGET_EXHAUSTED'].includes(diagnostic.failureReason)) stopped = true;
+      console.error(JSON.stringify({ event: 'mid_term_region_collection_failed',
+        regionId: region.temperatureRegionId, ...diagnostic }));
     }
   });
   console.log(JSON.stringify({
@@ -292,12 +195,14 @@ export async function collectSupportedMidTermForecasts(
     expectedIssue,
     completed,
     total: regions.length,
+    provider: 'KMA_DATA_GO_KR',
+    stopped,
   }));
   if (completed === regions.length) {
     await saveCollectedSourceVersion(
       env.DB,
       'KMA_MID_TERM_SUPPORTED_REGIONS',
-      expectedIssue,
+      sourceVersion,
       now,
     );
   }
@@ -320,39 +225,6 @@ async function loadActiveCollectionTargets(db: D1Database): Promise<CollectionTa
     latitude: row.latitude ?? undefined,
     longitude: row.longitude ?? undefined,
   }));
-}
-
-async function collectNationwideAirQuality(
-  env: ServerEnv,
-  now: Date,
-  forceRefresh = false,
-): Promise<NationwideAirQualitySnapshot | null> {
-  const key = collectedCacheKey.nationwideAir;
-  const cached = await getCollectedCache<NationwideAirQualitySnapshot>(env.DB, key);
-  if (!forceRefresh && cached?.status === 'AVAILABLE' &&
-      cacheRecordIsFresh(cached, 60 * 60 * 1000, now)) return cached.value;
-  try {
-    const provider = new AirKoreaAirQualityProvider({
-      serviceKey: env.KMA_SERVICE_KEY, now: () => now, timeoutMs: 10_000,
-    });
-    const catalog = await provider.getStationCatalog();
-    const provinces = await mapWithConcurrency(
-      AIRKOREA_PROVINCES, 3,
-      (province) => provider.getProvinceMeasurements(province),
-    );
-    const observations = provinces.flat();
-    if (observations.length === 0) throw new Error('AirKorea returned no national measurements');
-    const snapshot = { catalog, observations, collectedAt: now.toISOString() };
-    await saveCollectedCache(env.DB, {
-      key, type: 'COLLECTED_NATIONWIDE_AIR', value: snapshot, updatedAt: now,
-    });
-    return snapshot;
-  } catch (error) {
-    logCollectionFailure('nationwide_air', error);
-    return cached?.status === 'AVAILABLE' && cacheRecordIsFresh(cached, 3 * 60 * 60 * 1000, now)
-      ? cached!.value
-      : null;
-  }
 }
 
 async function collectNationwideAirForecast(
@@ -384,108 +256,6 @@ async function collectNationwideAirForecast(
   }
 }
 
-async function collectRegionForecasts(
-  env: ServerEnv,
-  regions: CollectionTarget[],
-  activeRegionKeys: ReadonlySet<string>,
-  now: Date,
-  nationwideAir?: NationwideAirQualitySnapshot | null,
-  nationwideAirForecast?: NationwideAirForecast | null,
-  forceRefresh = false,
-): Promise<void> {
-  await mapWithConcurrency(regions, nationwideAir === undefined ? 2 : 6, async ({ nx, ny }) => {
-    try {
-      const includeSupplemental = activeRegionKeys.has(`${nx}_${ny}`);
-      let forecastRecord = await getCollectedCache<WeatherForecast>(
-        env.DB,
-        collectedCacheKey.forecast(nx, ny),
-      );
-      const latestForecastIssue = latestBaseDateTimes(now, 1)[0];
-      if (!forecastRecord ||
-          forecastRecord.value.baseDate !== latestForecastIssue?.baseDate ||
-          forecastRecord.value.baseTime !== latestForecastIssue?.baseTime) {
-        const provider = new KmaWeatherProvider({
-          serviceKey: env.KMA_SERVICE_KEY,
-          now: () => now,
-        });
-        const value = includeSupplemental
-          ? await provider.getForecastByRegion(nx, ny)
-          : await provider.getLatestForecastByRegion(nx, ny);
-        await saveCollectedCache(env.DB, {
-          key: collectedCacheKey.forecast(nx, ny),
-          type: 'COLLECTED_FORECAST',
-          value,
-          nx,
-          ny,
-          updatedAt: now,
-        });
-        await saveCurrentWeather(env.DB, nx, ny, value.current);
-        forecastRecord = { value, status: 'AVAILABLE', updatedAt: now.toISOString() };
-      }
-
-      let environmentalRecord = await getCollectedCache<EnvironmentalDataBundle>(
-        env.DB,
-        collectedCacheKey.environmental(nx, ny),
-      );
-      if (forceRefresh || shouldRefreshEnvironmentalRecord(environmentalRecord, now)) {
-        const environmental = await loadEnvironmentalData(
-          env,
-          regionMetadataForGrid(nx, ny),
-          {
-            now, nx, ny, coordinates: kmaGridCoordinates(nx, ny),
-            providerTimeoutMs: 7_500,
-            uvFreshMs: includeSupplemental ? undefined : 6 * 60 * 60 * 1000,
-            nationwideAir,
-          },
-        );
-        await saveCollectedCache(env.DB, {
-          key: collectedCacheKey.environmental(nx, ny),
-          type: 'COLLECTED_ENVIRONMENTAL',
-          value: environmental,
-          nx,
-          ny,
-          updatedAt: now,
-        });
-        environmentalRecord = { value: environmental, status: 'AVAILABLE', updatedAt: now.toISOString() };
-      }
-
-      if (forecastRecord) {
-        const environmental = currentEnvironmentalData(
-          environmentalRecord?.value ?? nationwideBaseEnvironmentalData(),
-          now, nationwideAir ?? undefined, kmaGridCoordinates(nx, ny),
-        );
-        const bundle: CollectedRegionBundle = {
-          forecast: enrichForecastWithEnvironmentalData(
-            forecastRecord.value,
-            environmental,
-          ),
-          environmental,
-        };
-        await saveCollectedCache(env.DB, {
-          key: `COLLECTED_REGION_${nx}_${ny}`,
-          type: 'COLLECTED_REGION',
-          value: bundle,
-          nx,
-          ny,
-          updatedAt: now,
-        });
-      }
-      await collectWeekly(
-        env,
-        nx,
-        ny,
-        forecastRecord?.value,
-        now,
-        includeSupplemental,
-        environmentalRecord?.value,
-        nationwideAirForecast,
-      );
-    } catch (error) {
-      logCollectionFailure('region', error, { nx, ny });
-    }
-  });
-}
-
 export function shouldRefreshEnvironmentalRecord(
   record: CollectedCacheRecord<EnvironmentalDataBundle> | null,
   now = new Date(),
@@ -502,171 +272,6 @@ export function shouldRefreshEnvironmentalRecord(
   return now.getTime() - updatedAt >= maxAgeMs;
 }
 
-async function collectWeekly(
-  env: ServerEnv,
-  nx: number,
-  ny: number,
-  forecast: WeatherForecast | undefined,
-  now: Date,
-  includeSupplemental: boolean,
-  environmental?: EnvironmentalDataBundle,
-  nationwideAirForecast?: NationwideAirForecast | null,
-): Promise<void> {
-  const key = collectedCacheKey.weekly(nx, ny);
-  const cached = await getCollectedCache<CollectedWeeklyBundle>(env.DB, key);
-  const sameForecastIssue = cached?.value.forecast?.baseDate === forecast?.baseDate &&
-    cached?.value.forecast?.baseTime === forecast?.baseTime;
-  if (!includeSupplemental) {
-    if (sameForecastIssue &&
-        cached?.value.uvIssue === (environmental?.uv?.issuedAt ?? cached?.value.uvIssue) &&
-        cached?.value.airQualityIssue === (nationwideAirForecast?.issue ?? cached?.value.airQualityIssue)) {
-      return;
-    }
-    const area = airKoreaForecastAreaForGrid(nx, ny);
-    await saveCollectedCache(env.DB, {
-      key,
-      type: 'COLLECTED_WEEKLY',
-      value: {
-        forecast,
-        midTermDays: cached?.value.midTermDays ?? [],
-        observedDays: cached?.value.observedDays ?? [],
-        uv: environmental?.uv ?? cached?.value.uv,
-        airQuality: area
-          ? nationwideAirForecast?.areas[area] ?? cached?.value.airQuality ?? []
-          : cached?.value.airQuality ?? [],
-        midTermIssue: cached?.value.midTermIssue,
-        midTermTaRegId: cached?.value.midTermTaRegId,
-        midTermLandRegId: cached?.value.midTermLandRegId,
-        uvIssue: environmental?.uv?.issuedAt ?? cached?.value.uvIssue,
-        airQualityIssue: nationwideAirForecast?.issue ?? cached?.value.airQualityIssue,
-        collectedAt: now.toISOString(),
-      } satisfies CollectedWeeklyBundle,
-      nx,
-      ny,
-      updatedAt: now,
-    });
-    return;
-  }
-  const midRegion = resolveKmaMidTermRegionIds(undefined, undefined, nx, ny);
-  const uvAreaNo = uvAreaNoForGrid(nx, ny);
-  const midTermIssue = latestMidTermIssueTimes(now, 1)[0];
-  const uvIssue = latestUvPublicationTimes(now, 1)[0];
-  const expectedMidTermIssue = compactIssueToIso(midTermIssue);
-  const expectedUvIssue = compactIssueToIso(uvIssue);
-  const airQualityIssue = latestAirKoreaForecastIssue(now);
-  const needsMidTerm = cached?.value.midTermIssue !== expectedMidTermIssue ||
-    (midRegion !== undefined && (cached?.value.midTermDays.length ?? 0) === 0);
-  const needsUv = cached?.value.uvIssue !== expectedUvIssue;
-  const needsAirQuality = cached?.value.airQualityIssue !== airQualityIssue;
-  if (sameForecastIssue && !needsMidTerm && !needsUv && !needsAirQuality) return;
-
-  let midTermDays = cached?.value.midTermDays ?? [];
-  let resolvedMidTermIssue = cached?.value.midTermIssue;
-  let midTermTaRegId = cached?.value.midTermTaRegId;
-  let midTermLandRegId = cached?.value.midTermLandRegId;
-  if (needsMidTerm) {
-    if (!midRegion) {
-      resolvedMidTermIssue = expectedMidTermIssue;
-    } else {
-      try {
-        const hydrated = await hydrateMidTermForecast({
-          db: env.DB,
-          serviceKey: env.KMA_SERVICE_KEY,
-          apiHubKey: env.KMA_APIHUB_KEY,
-          location: { nx, ny },
-          now,
-        });
-        if (hydrated.days.length > 0) {
-          midTermDays = hydrated.days;
-          resolvedMidTermIssue = hydrated.issuedAt;
-          midTermTaRegId = hydrated.region.temperatureRegionId;
-          midTermLandRegId = hydrated.region.landRegionId;
-        }
-      } catch (error) {
-        logCollectionFailure('mid_term', error, { nx, ny });
-      }
-    }
-  }
-
-  let uv = cached?.value.uv;
-  let resolvedUvIssue = cached?.value.uvIssue;
-  if (needsUv) {
-    if (environmental?.uv) {
-      uv = environmental.uv;
-      resolvedUvIssue = uv.issuedAt;
-    } else if (!uvAreaNo) {
-      resolvedUvIssue = expectedUvIssue;
-    } else {
-      try {
-        uv = await new KmaUvProvider({
-          serviceKey: env.KMA_SERVICE_KEY,
-          now: () => now,
-        }).getForecast(uvAreaNo);
-        resolvedUvIssue = uv.issuedAt;
-      } catch (error) {
-        logCollectionFailure('weekly_uv', error, { nx, ny });
-      }
-    }
-  }
-
-  let airQuality = cached?.value.airQuality ?? [];
-  let resolvedAirQualityIssue = cached?.value.airQualityIssue;
-  if (needsAirQuality) {
-    try {
-      const area = airKoreaForecastAreaForGrid(nx, ny);
-      if (area && nationwideAirForecast?.areas[area]) {
-        airQuality = nationwideAirForecast.areas[area];
-        resolvedAirQualityIssue = nationwideAirForecast.issue;
-      } else {
-        airQuality = await new AirKoreaForecastProvider({
-          serviceKey: env.KMA_SERVICE_KEY,
-          now: () => now,
-        }).getForecast(undefined, nx, ny);
-        resolvedAirQualityIssue = airQualityIssue;
-      }
-    } catch (error) {
-      logCollectionFailure('air_quality_forecast', error, { nx, ny });
-    }
-  }
-  await saveCollectedCache(env.DB, {
-    key,
-    type: 'COLLECTED_WEEKLY',
-    value: {
-      forecast,
-      midTermDays,
-      observedDays: cached?.value.observedDays ?? [],
-      uv,
-      airQuality,
-      midTermIssue: resolvedMidTermIssue,
-      midTermTaRegId,
-      midTermLandRegId,
-      uvIssue: resolvedUvIssue,
-      airQualityIssue: resolvedAirQualityIssue,
-      collectedAt: now.toISOString(),
-    } satisfies CollectedWeeklyBundle,
-    nx,
-    ny,
-    updatedAt: now,
-  });
-}
-
-function nationwideBaseEnvironmentalData(): EnvironmentalDataBundle {
-  return {
-    sources: {
-      uv: {
-        provider: 'KMA_LIVING_INDEX_V5',
-        state: 'UNAVAILABLE',
-        reason: 'PROVIDER_UNAVAILABLE',
-      },
-      airQuality: {
-        provider: 'AIRKOREA',
-        state: 'UNAVAILABLE',
-        reason: 'PROVIDER_UNAVAILABLE',
-      },
-    },
-  };
-}
-
 async function collectWarnings(
   env: ServerEnv,
   regions: CollectionTarget[],
@@ -679,16 +284,14 @@ async function collectWarnings(
     env.DB, 'WARNING_30_MINUTES', sourceVersion,
   )) return;
 
-  const provider = new KmaWarningProvider({ serviceKey: env.KMA_APIHUB_KEY });
+  const provider = new KmaWarningProvider({ serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
+    fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'WARNING', now, maxBytes: 1_000_000, sourceVersion }) });
   try {
     const cachedStations = await getCollectedCache<KmaWarningRegionStation[]>(
       env.DB, collectedCacheKey.warningStations,
     );
     let stations = cachedStations?.value;
     if (!cacheRecordIsFresh(cachedStations, 24 * 60 * 60 * 1000, now)) {
-      if (!await reserveApiHubBudget(
-        env.DB, 'WARNING_REGION_MAPPING', 1, 1_000_000, now,
-      )) return;
       stations = await provider.getRegionStations();
       await saveCollectedCache(env.DB, {
         key: collectedCacheKey.warningStations,
@@ -699,7 +302,6 @@ async function collectWarnings(
     }
     if (!stations?.length) throw new Error('KMA warning region mapping is empty');
     const ids = [...new Set(stations.map((station) => station.regionId))];
-    if (!await reserveApiHubBudget(env.DB, 'WARNING', 1, 256_000, now)) return;
     const warnings = await provider.getActiveForRegions(ids);
     await saveCollectedCache(env.DB, {
       key: collectedCacheKey.warningSnapshot,
@@ -742,264 +344,60 @@ async function collectUltraShortObservations(
   activeRegions: readonly CollectionTarget[] = [],
   fastRetry = false,
 ): Promise<void> {
-  if (!env.KMA_APIHUB_KEY || regions.length === 0) {
-    console.warn(JSON.stringify({
-      event: 'current_observation_collection_skipped',
-      reason: !env.KMA_APIHUB_KEY ? 'APIHUB_KEY_MISSING' : 'NO_REGIONS',
-    }));
-    return;
-  }
-  // 발표가 빠른 회차는 현재 10분 구간에서 먼저 받고, 미발표면 직전 구간을 쓴다.
-  const targetClock = new Date(
-    latestGridObservationTime(now).getTime() + 10 * 60 * 1000,
-  );
-  const expectedObservedAt = gridObservationKoreanIso(targetClock);
-  const activeKeys = new Set(activeRegions.map(({ nx, ny }) => `${nx}:${ny}`));
-  const cached = new Map<string, CollectedCacheRecord<UltraShortObservation> | null>();
-  const pending: CollectionTarget[] = [];
-  for (const region of regions) {
-    const record = await getCollectedCache<UltraShortObservation>(
-      env.DB,
-      collectedCacheKey.ultraShortObservation(region.nx, region.ny),
-    );
-    cached.set(`${region.nx}:${region.ny}`, record);
-    if (record?.status !== 'AVAILABLE' ||
-        record.value.observedAt < expectedObservedAt) {
-      pending.push(region);
-    }
-  }
-  const observations = new Map<string, UltraShortObservation>();
-  let stored = 0;
-  let latestGridCount = 0;
-  let previousGridCount = 0;
-  let awsCount = 0;
-  const gridProvider = new KmaGridObservationProvider({
-    serviceKey: env.KMA_APIHUB_KEY,
-  });
-  const fetchGrid = async (
-    targets: CollectionTarget[],
-    clock: Date,
-    slot: 'LATEST' | 'PREVIOUS',
-  ): Promise<void> => {
-    if (targets.length === 0) return;
-    const variableCount = fastRetry
-      ? REQUIRED_GRID_OBSERVATION_VARIABLES.length
-      : GRID_OBSERVATION_VARIABLES.length;
-    const reserved = await reserveApiHubBudget(
-      env.DB,
-      fastRetry ? 'GRID_OBSERVATION_FAST_RETRY' : 'GRID_OBSERVATION_10_MINUTES',
-      variableCount,
-      variableCount * 1_000_000,
-      now,
-      fastRetry ? {
-        providerDailyByteLimit: FAST_OBSERVATION_DAILY_BYTE_LIMIT,
-        dailyByteLimit: 3_500_000_000,
-      } : undefined,
-    );
-    if (!reserved) {
-      console.warn(JSON.stringify({
-        event: 'current_observation_budget_denied',
-        source: 'GRID',
-        slot,
-      }));
-      return;
-    }
-    try {
-      const exact = await gridProvider.getAt(targets, clock, {
-        requiredOnly: fastRetry,
-      });
-      if (slot === 'LATEST') latestGridCount = exact.size;
-      else previousGridCount = exact.size;
-      for (const [key, value] of exact) observations.set(key, value);
-    } catch (error) {
-      logCollectionFailure('grid_observation', error, {
-        slot,
-        targetObservedAt: gridObservationKoreanIso(clock),
-      });
-    }
-  };
-  await fetchGrid(pending, targetClock, 'LATEST');
-
-  const previousClock = new Date(targetClock.getTime() - 10 * 60 * 1000);
-  const previousObservedAt = gridObservationKoreanIso(previousClock);
-  const previousPending = pending.filter(({ nx, ny }) => {
-    const key = `${nx}:${ny}`;
-    const record = cached.get(key);
-    return !observations.has(key) &&
-      (record?.status !== 'AVAILABLE' ||
-        record.value.observedAt < previousObservedAt);
-  });
-  await fetchGrid(previousPending, previousClock, 'PREVIOUS');
-
-  const missingGrid = pending.filter(
-    (region) => !observations.has(`${region.nx}:${region.ny}`),
-  );
-  const fallbackTargets = (fastRetry ? [] : missingGrid).flatMap((region) => {
-    const coordinates = region.latitude !== undefined &&
-        region.longitude !== undefined
-      ? { latitude: region.latitude, longitude: region.longitude }
-      : kmaGridCoordinates(region.nx, region.ny);
-    return coordinates ? [{ region, coordinates }] : [];
-  });
-  const awsReserved = fallbackTargets.length > 0 && await reserveApiHubBudget(
-    env.DB,
-    'AWS_CURRENT_FALLBACK',
-    14,
-    3_000_000,
-    now,
-  );
-  if (fallbackTargets.length > 0 && !awsReserved) {
-    console.warn(JSON.stringify({
-      event: 'current_observation_budget_denied',
-      source: 'AWS_FALLBACK',
-    }));
-  }
-  if (awsReserved) {
-    try {
-      const fallback = await new KmaAwsMinuteObservationProvider({
-        serviceKey: env.KMA_APIHUB_KEY,
-        now: () => now,
-      }).getCurrentByLocations(fallbackTargets.map(({ coordinates }) => coordinates));
-      fallback.forEach((value, index) => {
-        if (!value) return;
-        awsCount += 1;
-        const region = fallbackTargets[index].region;
-        observations.set(`${region.nx}:${region.ny}`, value);
-      });
-    } catch (error) {
-      logCollectionFailure('aws_current_fallback', error);
-    }
-  }
-
-  await Promise.all(pending.flatMap((region) => {
-    const key = `${region.nx}:${region.ny}`;
-    const value = observations.get(key);
-    if (!value || (cached.get(key)?.value.observedAt ?? '') >= value.observedAt) {
-      return [];
-    }
-    stored += 1;
-    return [saveCollectedCache(env.DB, {
-      key: collectedCacheKey.ultraShortObservation(region.nx, region.ny),
-      type: 'COLLECTED_ULTRA_SHORT',
-      value,
-      nx: region.nx,
-      ny: region.ny,
-      updatedAt: now,
-    })];
-  }));
-  const missing = pending.filter(({ nx, ny }) =>
-    !observations.has(`${nx}:${ny}`));
-  const expiredActive = pending.filter(({ nx, ny }) => {
-    const key = `${nx}:${ny}`;
-    if (!activeKeys.has(key)) return false;
-    const cachedAt = cached.get(key)?.value.observedAt;
-    const fetchedAt = observations.get(key)?.observedAt;
-    const newestAt = Math.max(
-      cachedAt ? Date.parse(cachedAt) : -Infinity,
-      fetchedAt ? Date.parse(fetchedAt) : -Infinity,
-    );
-    return !Number.isFinite(newestAt) ||
-      now.getTime() - newestAt > 30 * 60 * 1000;
-  });
-  console.log(JSON.stringify({
-    event: 'current_observation_collection_completed',
-    targetObservedAt: expectedObservedAt,
-    regions: regions.length,
-    pending: pending.length,
-    latestGridCount,
-    awsCount,
-    previousGridCount,
-    stored,
-    missing: missing.length,
-    activeMissing: missing.filter(({ nx, ny }) =>
-      activeKeys.has(`${nx}:${ny}`)).slice(0, 50)
-      .map(({ nx, ny }) => `${nx}:${ny}`),
-    missingSample: missing.slice(0, 10).map(({ nx, ny }) => `${nx}:${ny}`),
-  }));
-  if (expiredActive.length > 0) {
-    console.error(JSON.stringify({
-      event: 'current_observation_freshness_breached',
-      targetObservedAt: expectedObservedAt,
-      count: expiredActive.length,
-      grids: expiredActive.slice(0, 50)
-        .map(({ nx, ny }) => `${nx}:${ny}`),
-    }));
-  }
-}
-
-async function collectCurrentPrecipitation(
-  env: ServerEnv,
-  targets: CollectionTarget[],
-  locations: Array<{ latitude: number; longitude: number }>,
-  now: Date,
-  forceSourceRefresh = false,
-): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
-  if (env.NATIONWIDE_PRECOLLECT_ENABLED === 'true' &&
-      await collectNationwidePrecipitation(env, locations, now, forceSourceRefresh)) {
-    return;
-  }
-  if (locations.length === 0) return;
-  const ultraByGrid = new Map<string, UltraShortObservation>();
-  for (const region of distinctRegions(targets)) {
-    const key = collectedCacheKey.ultraShortObservation(region.nx, region.ny);
-    const record = await getCollectedCache<UltraShortObservation>(env.DB, key);
-    if (record) ultraByGrid.set(`${region.nx}_${region.ny}`, record.value);
-  }
-
-  const targetByLocation = new Map(
-    targets.flatMap((target) =>
-      target.latitude === undefined || target.longitude === undefined
-        ? []
-        : [[locationCacheKey(target.latitude, target.longitude), target] as const],
-    ),
-  );
-  const inputs = locations.flatMap((location) => {
-    const target = targetByLocation.get(locationCacheKey(location.latitude, location.longitude));
-    const reference = target && ultraByGrid.get(`${target.nx}_${target.ny}`);
-    return reference ? [{ ...location,
-      referenceRainDetected: reference.qualityFlags?.includes(
-        'PRECIPITATION_TYPE_UNAVAILABLE',
-      ) ? undefined : reference.rainDetected,
-      referenceObservedAt: reference.observedAt }] : [];
+  const targetClock = latestGridObservationTime(now);
+  const expectedObservedAt = gridObservationKoreanIso(targetClock);
+  const latest = await collectGridObservationSnapshot({
+    db: env.DB, serviceKey: env.KMA_APIHUB_KEY, clock: targetClock, now,
+    requiredOnly: fastRetry, fastRetry,
   });
-  if (inputs.length === 0) return;
-  const sourceVersion = latestRadarProductVersion(now);
-  if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
-    env.DB,
-    'RADAR_15_MINUTES',
-    sourceVersion,
-  )) return;
-  const reserved = await reserveApiHubBudget(
-    env.DB,
-    'RADAR_AND_POINT_VALIDATION',
-    1 + ANALYSIS_VALIDATION_LIMIT,
-    RADAR_BYTES + ANALYSIS_VALIDATION_LIMIT * 4_096,
-    now,
-  );
-  if (!reserved) return;
-  try {
-    const observations = await new KmaPrecipitationObservationProvider({
-      serviceKey: env.KMA_APIHUB_KEY,
-      now: () => now,
-      timeoutMs: 12_000,
-      attempts: 1,
-    }).getCurrentByLocations(inputs, ANALYSIS_VALIDATION_LIMIT);
-    await Promise.all(observations.map((value) => saveCollectedCache(env.DB, {
-      key: collectedCacheKey.precipitation(value.latitude, value.longitude),
-      type: 'COLLECTED_PRECIPITATION',
-      value,
-      updatedAt: now,
-    })));
-    await saveCollectedSourceVersion(
-      env.DB,
-      'RADAR_15_MINUTES',
-      sourceVersion,
-      now,
-    );
-  } catch (error) {
-    logCollectionFailure('precipitation', error);
+  const exact = latest ? observationsFromGridSnapshot(latest, regions) : new Map<string, UltraShortObservation>();
+  const pending = regions.filter(({ nx, ny }) => !exact.has(`${nx}:${ny}`));
+  // 원본/핵심값이 없으면 이전 회차의 같은 격자만 쓴다. 관측소 대체는 하지 않는다.
+  const previous = pending.length > 0 || !latest ? await collectGridObservationSnapshot({
+    db: env.DB, serviceKey: env.KMA_APIHUB_KEY,
+    clock: new Date(targetClock.getTime() - 10 * 60 * 1000), now,
+    requiredOnly: fastRetry, fastRetry,
+  }) : null;
+  const previousValues = previous ? observationsFromGridSnapshot(previous, pending) : new Map<string, UltraShortObservation>();
+  const historicalClocks = new Set<number>();
+  let stored = 0;
+  const missing: string[] = [];
+  const expiredActive: string[] = [];
+  const activeKeys = new Set(activeRegions.map(({ nx, ny }) => `${nx}:${ny}`));
+  for (const region of regions) {
+    const key = `${region.nx}:${region.ny}`;
+    const value = exact.get(key) ?? previousValues.get(key);
+    const record = value ? { value, status: 'AVAILABLE' as const, updatedAt: now.toISOString() }
+      : await readCurrentGridObservation(env.DB, region.nx, region.ny, now);
+    if (!record) {
+      missing.push(key);
+      if (activeKeys.has(key)) expiredActive.push(key);
+      continue;
+    }
+    // 기존 키는 알림·프리워밍과의 호환용이다. 모든 GPS 조회의 원본은 전국 스냅샷이다.
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.ultraShortObservation(region.nx, region.ny),
+      type: 'COLLECTED_ULTRA_SHORT', value: record.value,
+      nx: region.nx, ny: region.ny, updatedAt: now,
+    });
+    stored += 1;
+    historicalClocks.add(Date.parse(record.value.observedAt) - 24 * 60 * 60 * 1000);
   }
+  if (latest) historicalClocks.add(Date.parse(latest.observedAt) - 24 * 60 * 60 * 1000);
+  // 어제 원본은 중앙에서 회차당 한 번만 보충한다. 앱 요청에서는 외부 API를 호출하지 않는다.
+  for (const instant of historicalClocks) {
+    await collectGridObservationSnapshot({ db: env.DB, serviceKey: env.KMA_APIHUB_KEY,
+      clock: new Date(instant + 9 * 60 * 60 * 1000), now, requiredOnly: true, historical: true });
+  }
+  console.log(JSON.stringify({ event: 'current_observation_collection_completed',
+    targetObservedAt: expectedObservedAt, regions: regions.length, pending: pending.length,
+    latestGridCount: exact.size, previousGridCount: previousValues.size, stored,
+    missing: missing.length, missingSample: missing.slice(0, 10),
+    activeMissing: missing.filter((key) => activeKeys.has(key)).slice(0, 50) }));
+  if (expiredActive.length > 0) console.error(JSON.stringify({
+    event: 'current_observation_freshness_breached', targetObservedAt: expectedObservedAt,
+    count: expiredActive.length, grids: expiredActive.slice(0, 50) }));
 }
 
 async function collectNationwidePrecipitation(
@@ -1009,7 +407,7 @@ async function collectNationwidePrecipitation(
   forceSourceRefresh: boolean,
 ): Promise<boolean> {
   // Winter road-ice archives share the same daily APIHub byte allowance.
-  if (!forceSourceRefresh && isRoadIceSeason(now) &&
+  if (!forceSourceRefresh &&
       now.getUTCMinutes() % 30 < 15 &&
       await getNationwidePrecipitation(env.DB, now) !== null) return true;
   const sourceVersion = latestRadarProductVersion(
@@ -1020,18 +418,13 @@ async function collectNationwidePrecipitation(
     'NATIONWIDE_PRECIPITATION_15_MINUTES',
     sourceVersion,
   )) return await getNationwidePrecipitation(env.DB, now) !== null;
-  if (!await reserveApiHubBudget(
-    env.DB,
-    'NATIONWIDE_ANALYSIS_AND_RADAR',
-    2,
-    NATIONWIDE_ANALYSIS_BYTES + RADAR_BYTES,
-    now,
-  )) return false;
   try {
     const snapshot = await new KmaPrecipitationObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY!,
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'NATIONWIDE_ANALYSIS_AND_RADAR', now, sourceVersion,
+        maxBytes: NATIONWIDE_ANALYSIS_BYTES + RADAR_BYTES }),
       now: () => now,
-      timeoutMs: 45_000,
+      timeoutMs: 30_000,
       attempts: 1,
     }).getNationwideSnapshot(new Date(compactIssueToIso(sourceVersion)));
     await saveNationwidePrecipitation(env.DB, snapshot, now);
@@ -1078,16 +471,10 @@ async function collectRoadIce(
     'ROAD_ICE_30_MINUTES',
     sourceVersion,
   )) return;
-  if (!await reserveApiHubBudget(
-    env.DB,
-    'ROAD_ICE',
-    ROAD_ICE_ROAD_NUMBERS.length,
-    ROAD_ICE_ROAD_NUMBERS.length * 2_100_000,
-    now,
-  )) return;
   try {
     const segments = await new KmaRoadIceProvider({
-      serviceKey: env.KMA_APIHUB_KEY,
+      serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'ROAD_ICE', now, sourceVersion, maxBytes: 2_100_000 }),
       now: () => now,
     }).getRiskSegments();
     await saveCollectedCache<RoadIceSegment[]>(env.DB, {
@@ -1172,53 +559,25 @@ async function collectCurrentVisibility(
   forceSourceRefresh = false,
 ): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
-  const regions = distinctRegions(targets).flatMap((target) => {
-    const coordinates = kmaGridCoordinates(target.nx, target.ny);
-    return coordinates ? [{ target, coordinates }] : [];
-  });
-  if (regions.length === 0) return;
-  const currentHour = latestCompletedKoreanHour(now);
+  const currentHour = latestVisibilityKoreanHour(now);
   const sourceVersion = ultraShortKoreanIso(currentHour);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
     env.DB,
     'ASOS_VISIBILITY_HOURLY',
     sourceVersion,
   )) return;
-  if (!await reserveApiHubBudget(
-    env.DB,
-    'ASOS_VISIBILITY',
-    4,
-    4 * 128_000,
-    now,
-  )) return;
   try {
     const provider = new KmaHourlyObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY,
+      timeoutMs: 30_000,
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'ASOS_VISIBILITY', now, sourceVersion, maxBytes: 512_000 }),
       now: () => now,
     });
     const current = await provider.getObservationsAt(currentHour, {
       includeVisibility: true,
     });
-    const visibility = nearestVisibilityObservations(
-      current,
-      regions.map(({ coordinates }) => coordinates),
-    );
-    const missingCount = visibility.filter((value) => value === undefined).length;
-    await Promise.all(regions.flatMap(({ target }, index) => {
-      const value = visibility[index];
-      if (!value) return [];
-      return [saveCollectedCache(env.DB, {
-        key: collectedCacheKey.visibility(target.nx, target.ny),
-        type: 'COLLECTED_VISIBILITY',
-        value,
-        nx: target.nx,
-        ny: target.ny,
-        updatedAt: now,
-      })];
-    }));
-    if (missingCount > 0) {
-      throw new Error(`VISIBILITY_COLLECTION_INCOMPLETE:${missingCount}`);
-    }
+    await saveCollectedCache(env.DB, { key: NATIONAL_VISIBILITY_KEY,
+      type: 'COLLECTED_NATIONWIDE_VISIBILITY', value: current, updatedAt: now });
     await saveCollectedSourceVersion(
       env.DB,
       'ASOS_VISIBILITY_HOURLY',
@@ -1230,97 +589,40 @@ async function collectCurrentVisibility(
   }
 }
 
-async function collectDailyObservations(
-  env: ServerEnv,
-  targets: CollectionTarget[],
-  now: Date,
-  options: {
-    candidateDates?: string[];
-    ignoreSourceVersion?: boolean;
-  } = {},
-): Promise<void> {
+async function collectNationalDailyObservations(env: ServerEnv, now: Date, lookbackDays: number): Promise<void> {
   if (!env.KMA_APIHUB_KEY) return;
-  const calendarWeek = currentKoreanCalendarWeek(now);
-  const endDate = previousKoreanDate(now);
-  const candidateDates = options.candidateDates ?? calendarWeek.dates.filter(
-    (date) => date <= endDate,
-  );
-  if (candidateDates.length === 0) return;
-  if (!options.ignoreSourceVersion && await collectedSourceVersionIsCurrent(
-    env.DB,
-    'AWS_DAILY',
-    endDate,
-  )) return;
-  const regions = distinctRegions(targets).flatMap((target) => {
-    const coordinates = kmaGridCoordinates(target.nx, target.ny);
-    return coordinates ? [{ target, coordinates }] : [];
-  });
-  const missingRegions: typeof regions = [];
-  const cachedByRegion = new Map<string, CollectedCacheRecord<CollectedWeeklyBundle> | null>();
-  let startDate = endDate;
-  for (const region of regions) {
-    const { target } = region;
-    const regionKey = `${target.nx}_${target.ny}`;
-    const cached = await getCollectedCache<CollectedWeeklyBundle>(
-      env.DB,
-      collectedCacheKey.weekly(target.nx, target.ny),
-    );
-    if (!cached) continue;
-    const observedDates = new Set(
-      cached?.value.observedDays
-        .filter((day) => day.weatherDataComplete === true)
-        .map((day) => compactCalendarDate(day.date)) ?? [],
-    );
-    const earliestMissing = candidateDates.find((date) => !observedDates.has(date));
-    if (earliestMissing) {
-      missingRegions.push(region);
-      cachedByRegion.set(regionKey, cached);
-      if (earliestMissing < startDate) startDate = earliestMissing;
-    }
-  }
-  if (missingRegions.length === 0 || !await reserveApiHubBudget(
-    env.DB,
-    'AWS_DAILY',
-    4,
-    2_048_000,
-    now,
-  )) return;
+  const dates = recentCompletedKoreanDates(now, Math.min(7, lookbackDays));
+  if (!dates.length) return;
+  const end = dates[dates.length - 1];
+  if (await collectedSourceVersionIsCurrent(env.DB, 'AWS_DAILY', end)) return;
   try {
-    const values = await new KmaDailyObservationProvider({
-      serviceKey: env.KMA_APIHUB_KEY,
-    }).getDailyByLocations(
-      missingRegions.map(({ coordinates }) => coordinates),
-      startDate,
-      endDate,
-    );
-    await Promise.all(missingRegions.flatMap(({ target }, index) => {
-      const key = collectedCacheKey.weekly(target.nx, target.ny);
-      const cached = cachedByRegion.get(`${target.nx}_${target.ny}`);
-      if (!cached) return [];
-      const incoming = values[index] ?? [];
-      const incomingDates = new Set(incoming.map((day) => day.date));
-      return [saveCollectedCache(env.DB, {
-        key,
-        type: 'COLLECTED_WEEKLY',
-        value: {
-          ...cached.value,
-          observedDays: [
-            ...cached.value.observedDays.filter(
-              (day) => !incomingDates.has(day.date),
-            ),
-            ...incoming,
-          ].sort((left, right) => left.date.localeCompare(right.date)),
-          collectedAt: now.toISOString(),
-        },
-        nx: target.nx,
-        ny: target.ny,
-        updatedAt: now,
-      })];
-    }));
-    await saveCollectedSourceVersion(env.DB, 'AWS_DAILY', endDate, now);
-  } catch (error) {
-    logCollectionFailure('daily_observation', error);
-  }
+    const cached = await getCollectedCache<import('../providers/weather/kmaDailyObservationProvider').NationwideDailySnapshot>(env.DB, NATIONAL_DAILY_KEY);
+    const knownDates = new Set(cached?.value.settledDates ?? cached?.value.completedDates ?? []);
+    const missingDates = dates.filter((date) => !knownDates.has(date));
+    if (!missingDates.length) return;
+    const dailyProvider = new KmaDailyObservationProvider({ serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'AWS_DAILY', now, sourceVersion: end, maxBytes: 2_048_000 })
+    });
+    const startDate = compactCalendarDate(missingDates[0]);
+    const endDate = compactCalendarDate(end);
+    const incoming = cached?.value.metricAvailability
+      ? await dailyProvider.getNationwide(startDate,endDate,cached.value)
+      : await dailyProvider.getNationwide(startDate,endDate);
+    const stations = new Map((cached?.value.stations ?? []).filter((station) => dates.includes(station.date))
+      .map((station) => [`${station.date}:${station.stationId}`, station]));
+    for (const station of incoming.stations) {
+      const id = `${station.date}:${station.stationId}`;
+      stations.set(id, { ...stations.get(id), ...station });
+    }
+    const completedDates = [...new Set([...(cached?.value.completedDates ?? []), ...(incoming.completedDates ?? [])])].filter((date) => dates.includes(date));
+    const settledDates = [...new Set([...knownDates,...(incoming.settledDates ?? incoming.completedDates ?? [])])].filter(date => dates.includes(date));
+    const metricAvailability = {...cached?.value.metricAvailability,...incoming.metricAvailability};
+    const value = { ...incoming, stations: [...stations.values()], completedDates,settledDates,metricAvailability };
+    await saveCollectedCache(env.DB, { key: NATIONAL_DAILY_KEY, type: 'COLLECTED_NATIONWIDE_DAILY', value, updatedAt: now });
+    if (dates.every((date) => settledDates.includes(compactCalendarDate(date)))) {
+      await saveCollectedSourceVersion(env.DB, 'AWS_DAILY', end, now);
+    }
+  } catch (error) { logCollectionFailure('national_daily_observation', error); }
 }
 
 function recentCompletedKoreanDates(now: Date, lookbackDays: number): string[] {
@@ -1347,23 +649,6 @@ function distinctRegions(targets: CollectionTarget[]): CollectionTarget[] {
     `${target.nx}_${target.ny}`,
     { ...target },
   ])).values()];
-}
-
-function distinctLocations(
-  targets: CollectionTarget[],
-): Array<{ latitude: number; longitude: number }> {
-  return [...new Map(targets.flatMap((target) =>
-    target.latitude === undefined || target.longitude === undefined
-      ? []
-      : [[locationCacheKey(target.latitude, target.longitude), {
-          latitude: target.latitude,
-          longitude: target.longitude,
-        }] as const],
-  )).values()];
-}
-
-function koreanHour(now: Date): number {
-  return new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCHours();
 }
 
 function logCollectionFailure(

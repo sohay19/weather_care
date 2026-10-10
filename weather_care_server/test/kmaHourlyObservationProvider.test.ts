@@ -141,3 +141,39 @@ describe('KMA hourly observation provider', () => {
     timeout.mockRestore();
   });
 });
+
+
+it('전국 시정 요청에서 VS가 실패하면 나머지 3지표를 선조회하지 않는다', async () => {
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('unavailable', { status: 504 }));
+  const provider = new KmaHourlyObservationProvider({ serviceKey: 'synthetic', fetcher });
+  await expect(provider.getObservationsAt(new Date('2026-10-04T08:00:00Z'), { includeVisibility: true })).rejects.toThrow();
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(new URL(String(fetcher.mock.calls[0][0])).searchParams.get('obs')).toBe('VS');
+});
+
+it('시정 전용 수집은 기온이 없는 가까운 관측소도 포함하고 추가 기상지표를 요청하지 않는다', async () => {
+  const fetcher = vi.fn<typeof fetch>(async () => new Response([
+    '202610040800,108,127.0000,37.2500,10,2000',
+    '202610040800,109,128.0000,37.2500,10,1000',
+    '202610040800,110,127.0010,37.2500,10,-99',
+  ].join('\n')));
+  const provider = new KmaHourlyObservationProvider({ serviceKey: 'synthetic', fetcher });
+  const source = await provider.getObservationsAt(new Date('2026-10-04T08:00:00Z'), { includeVisibility: true });
+  expect(fetcher).toHaveBeenCalledOnce();
+  expect(source.stations.map(s => s.stationId)).toEqual(['108', '109']);
+  expect(source.stations[0].temperature).toBeUndefined();
+  expect(nearestVisibilityObservations(source, [{ latitude: 37.25, longitude: 127 }])[0])
+    .toMatchObject({ stationId: '108', distanceKm: 0, visibilityMeters: 20000 });
+});
+
+it('기상청 504는 HTTP 단계·상태·회차를 남기며 응답 원문과 인증키는 기록하지 않는다', async () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    const provider = new KmaHourlyObservationProvider({ serviceKey: 'DO_NOT_LOG_KEY',
+      fetcher: async () => new Response('DO_NOT_LOG_BODY', { status: 504 }) });
+    await expect(provider.getObservationsAt(new Date('2026-10-04T08:00:00Z'), { includeVisibility: true })).rejects.toThrow('504');
+    expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({ metric: 'VS', stage: 'HTTP_STATUS',
+      target: '202610040800', httpStatus: 504, timeoutMs: 30000, failureReason: 'UPSTREAM_SERVER_ERROR' });
+    expect(JSON.stringify(log.mock.calls)).not.toContain('DO_NOT_LOG');
+  } finally { log.mockRestore(); }
+});

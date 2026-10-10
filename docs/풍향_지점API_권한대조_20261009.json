@@ -1,0 +1,48 @@
+{
+  "event": "forecast_point_crosscheck_summary",
+  "provider": "APIHUB_TYP02",
+  "calls": 1,
+  "report": [
+    {
+      "nx": 71,
+      "ny": 130,
+      "status": 403,
+      "outcome": "AUTH_OR_SERVICE_PERMISSION_REQUIRED",
+      "elapsedMs": 401
+    }
+  ],
+  "storedApiHubFields": [
+    {
+      "valid": "2026101203",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101206",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101209",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101212",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101215",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101218",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101221",
+      "variable": "WSD"
+    },
+    {
+      "valid": "2026101300",
+      "variable": "WSD"
+    }
+  ]
+}

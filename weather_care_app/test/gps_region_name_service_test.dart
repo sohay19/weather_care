@@ -2,6 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/gps_region_name_service.dart';
 
 void main() {
+  test('세종의 광역 표기와 시 표기를 중복해서 표시하지 않는다', () {
+    expect(
+        koreanAdministrativeDisplayName(
+            administrativeArea: '세종특별자치시', locality: '세종시', subLocality: '금남면'),
+        '세종시 금남면');
+  });
   test('도 지역은 시·구·동을 표시하고 결합된 시구 이름을 분리한다', () {
     expect(
       koreanAdministrativeDisplayName(

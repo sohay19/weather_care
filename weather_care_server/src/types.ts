@@ -209,7 +209,8 @@ export interface WeatherSnapshot {
     stationId?: string;
     stationName?: string;
     distanceKm?: number;
-    locationMatch: 'EXACT_GRID' | 'NEAREST_STATION';
+    locationMatch: 'EXACT_GRID' | 'NEAREST_STATION' | 'NEAREST_GRID';
+    distanceBasis?: 'GPS' | 'GRID_CENTER';
   };
   fieldSources?: Partial<Record<
     'temperature' | 'humidity' | 'windSpeed' | 'sky',
@@ -422,7 +423,7 @@ export interface EnvironmentalSourceStatus {
   state: EnvironmentalSourceState;
   observedAt?: string;
   cachedAt?: string;
-  reason?: 'PROVIDER_UNAVAILABLE' | 'UNSUPPORTED_REGION';
+  reason?: 'PROVIDER_UNAVAILABLE' | 'UNSUPPORTED_REGION' | 'LOCATION_UNRESOLVED' | 'LOCATION_COORDINATES_REQUIRED' | 'UPSTREAM_AREA_MISSING';
 }
 
 export type WeatherMessageRole =

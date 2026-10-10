@@ -1,18 +1,14 @@
 import { Hono } from 'hono';
+import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { ServerEnv } from '../types';
-import { regionFromQuery } from '../utils';
+import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import {
-  KmaUltraShortObservationProvider,
   ultraShortApparentTemperature,
 } from '../providers/weather/kmaUltraShortObservationProvider';
-import { getCollectedCache } from '../database/collectedWeatherRepository';
-import type { CollectedRegionBundle } from '../collection/collectionTypes';
-import { nextForecastSnapshot } from './weather';
-
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+import { getGridObservationSnapshot, readCurrentGridObservation } from '../database/gridObservationRepository';
+import { observationsFromGridSnapshot } from '../providers/weather/kmaGridObservationProvider';
 
 interface ComparisonRouterOptions {
-  fetcher?: typeof fetch;
   now?: () => Date;
 }
 
@@ -26,61 +22,42 @@ export function createComparisonRouter(
     const targetDate = yesterdayDate(now);
     const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
     try {
-      const regionRecord = await getCollectedCache<CollectedRegionBundle>(
-        c.env.DB,
-        `COLLECTED_REGION_${nx}_${ny}`,
-      );
-      const nextForecast = regionRecord?.status === 'AVAILABLE'
-        ? nextForecastSnapshot(regionRecord.value.forecast.hourly, now)
-        : undefined;
-      const forecastAt = nextForecast?.forecastAt ?? nextForecast?.observedAt;
-      const forecastInstant = forecastAt === undefined
-        ? Number.NaN
-        : Date.parse(forecastAt);
-      if (
-        nextForecast?.temperature === undefined ||
-        !Number.isFinite(forecastInstant)
-      ) {
-        return unavailableYesterday(targetDate, 'NEXT_FORECAST_UNAVAILABLE');
+      const coordinates = coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude'));
+      const current = await readCurrentGridObservation(c.env.DB, nx, ny, now, coordinates);
+      if (!current) return unavailableYesterday(targetDate, 'CURRENT_GRID_OBSERVATION_UNAVAILABLE');
+      const yesterdayAt = new Date(Date.parse(current.value.observedAt) - 24 * 60 * 60 * 1000).toISOString();
+      const snapshot = await getGridObservationSnapshot(c.env.DB, yesterdayAt);
+      const source = { nx: current.value.sourceLocation?.nx ?? nx, ny: current.value.sourceLocation?.ny ?? ny };
+      const comparison = snapshot && observationsFromGridSnapshot(snapshot.value, [source]).get(`${source.nx}:${source.ny}`);
+      if (!comparison) return unavailableYesterday(yesterdayAtKoreanDate(yesterdayAt), 'HISTORICAL_GRID_OBSERVATION_UNAVAILABLE');
+      if (current.value.humidity === undefined || !Number.isFinite(current.value.humidity) ||
+          current.value.humidity < 0 || current.value.humidity > 100 ||
+          current.value.windSpeed === undefined || !Number.isFinite(current.value.windSpeed) ||
+          current.value.windSpeed < 0 || current.value.windSpeed > 100) {
+        return unavailableYesterday(yesterdayAtKoreanDate(yesterdayAt), 'APPARENT_TEMPERATURE_INPUT_UNAVAILABLE');
       }
-      const comparisonKoreanClock = new Date(
-        forecastInstant + KST_OFFSET_MS - 24 * 60 * 60 * 1000,
-      );
-      const comparison = await new KmaUltraShortObservationProvider({
-        serviceKey: c.env.KMA_SERVICE_KEY,
-        fetcher: options.fetcher,
-        now: () => now,
-      }).getAt(nx, ny, comparisonKoreanClock);
-      if (comparison.temperature === undefined) {
-        return unavailableYesterday(targetDate, 'HISTORICAL_GRID_OBSERVATION_UNAVAILABLE');
+      const currentApparent = ultraShortApparentTemperature(current.value);
+      const comparisonApparent = ultraShortApparentTemperature(comparison);
+      if (currentApparent === undefined || comparisonApparent === undefined) {
+        return unavailableYesterday(yesterdayAtKoreanDate(yesterdayAt), 'APPARENT_TEMPERATURE_INPUT_UNAVAILABLE');
       }
       return c.json({
         comparisonAvailable: true,
-        current: {
-          temperature: nextForecast.temperature,
-          apparentTemperature: nextForecast.apparentTemperature,
-        },
-        comparison: {
-          temperature: comparison.temperature,
-          apparentTemperature: ultraShortApparentTemperature(comparison),
-        },
-        targetDate: comparison.observedAt.slice(0, 10),
+        current: { temperature: current.value.temperature, apparentTemperature: currentApparent },
+        comparison: { temperature: comparison.temperature, apparentTemperature: comparisonApparent },
+        targetDate: yesterdayAtKoreanDate(yesterdayAt),
         basis: {
-          provider: 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION',
-          dataRole: 'FORECAST_VS_OBSERVATION',
-          gridX: nx,
-          gridY: ny,
-          currentForecastAt: forecastAt,
-          forecastIssuedAt: nextForecast.issuedAt,
-          comparisonObservedAt: comparison.observedAt,
+          provider: 'KMA_APIHUB_GRID_OBSERVATION', dataRole: 'OBSERVATION_VS_OBSERVATION',
+          gridX: nx, gridY: ny,
+          sourceLocation: current.value.sourceLocation,
         },
       });
     } catch (error) {
       console.error(JSON.stringify({
         event: 'yesterday_grid_comparison_fetch_failed',
-        error: error instanceof Error ? error.name : 'UnknownError',
+        error: safeErrorName(error),
       }));
-      return unavailableYesterday(targetDate, 'FORECAST_OR_OBSERVATION_UNAVAILABLE');
+      return unavailableYesterday(targetDate, 'GRID_OBSERVATION_UNAVAILABLE');
     }
   });
 
@@ -108,6 +85,10 @@ export function lastYearDate(now = new Date()): string {
   const nowInKorea = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   nowInKorea.setUTCFullYear(nowInKorea.getUTCFullYear() - 1);
   return nowInKorea.toISOString().slice(0, 10);
+}
+
+function yesterdayAtKoreanDate(at: string): string {
+  return new Date(Date.parse(at) + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 function unavailableYesterday(targetDate: string, reason: string) {

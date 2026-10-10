@@ -9801,3 +9801,13 @@
 - 현재 적설 정규 수집·앱 계약, 인근 실황 요약 UI 실연결·어제 비교 GPS 전달, 2026 실제 경계 도형, 워치/생활 지표는 미완료로 기록. 기존 중기 전환 운영 근거는 20261010-midterm-portal/12:29 검증 JSON. 이 문서화·커밋 턴에서는 운영 배포·앱 설치·SSH·제공처 호출·운영 키 사용 없음.
 - 검증: 앱 전체500 테스트 통과/전체 Flutter analyze 문제0; 서버 tsc통과/Node13파일98개통과/Worker54파일414개통과. Worker 최초 동시 대량 실행 알림 테스트 timeout1·후속assert1 발생, 해당40개 단독 통과 및 전체 --maxWorkers=2 414개 통과. 생산코드·테스트 timeout 변경 없이 실행 동시성만 조정. 기존 적설 Word4문서72쪽 렌더 검토 유지. JSON 유효성·전체 문서 링크·인증정보 패턴·git diff 공백 검사 통과. docs/전체_수정사항_검증_20261010.json에 기준6009644 이후 전체 파일 목록·산식·검증 범위 저장.
 - API 키가 파일명에 있는 다운로드 원본2개는 삭제하지 않고 root .gitignore로 제외. 같은 비교의 키 없는 snow=0.txt/snow=2.txt와 미리보기·Word 렌더 결과·키 없는 cropped SGIS 자료 선택 안내 화면은 포함. .git 임시 도구/백업과 Python __pycache__는 제외. 사용자 원본과 기존 커밋 보존. 추가 커밋 메시지: docs: 전체 수정사항과 검증 결과 및 미리보기 자료 정리. 푸시는 이번 요청에 포함하지 않음.
+
+## 2026-10-10 12:45 커밋 기준 운영 서버 배포 완료
+
+- 사용자 커밋·배포 승인에 따라 794a84696bb1c06f50758d94a8c8edf935e6783d(feat: 전국 날씨 수집 보완과 중기예보 공공데이터 전환) 생성. 166파일의 앱·서버·문서 수정 및 신규 의존 소스·마이그레이션·테스트를 포함. 임시/인증정보 원본 제외. 별도 문서 정리 커밋219ff87도 생성된 상태 확인했으며 794a846 대비 server tree 차이0, 기존 커밋 보존.
+- 앱 전체500테스트 및 전체 analyze 문제0, 서버 tsc 통과. 기존 최종 Worker414+Node98=512 전체 통과 기록과 소스 상태 확인. 추가 생산 로직 변경 없음.
+- git archive가 Windows core.autocrlf=true로 139개 파일 줄바꿈을 변환해 최초 stage 해시검사 실패(내용 변경0). core.autocrlf=false로 다시 생성해 231파일 모두 Git blob 원본 해시 일치. 최종 archive410134B SHA25650245290e6b0dac7dd61141f402467abc8bd111cb9692a71161ac7969dffbca0.
+- 첫 cutover는 내부HTTP검사 결과를 기존 다른 사용자 소유 /tmp 파일에 root로 덮어쓰려다 protected_regular 권한 오류로 자동rollback. 결과를 새 전용 commit-internal-http-20261010.json으로 변경. 로컬 Python 첫 복사에서 UTF-8 파일을 cp949 기본 디코딩해 생성 실패, 전송단계의 오류 중단 누락으로 후속 검증helper 누락도 자동rollback. 명시UTF-8·전송오류중단·cutover전 helper존재/구문검사 추가 후 재실행 성공. 시스템권한·인증정보·Cloudflare 설정 변경 및 외부접근우회 없음.
+- 최종 release /opt/weather-care/releases/20261010-commit-794a84696bb1-v3/weather_care_server. commit의 server 전체231파일 독립 추출, 동일 package-lock 확인 후 기존 dependency 디렉터리 symlink 사용, .release-commit에 원본commit 기록. env·systemd설정·SQLite경로·migration14개 유지. 이전 release20261010-midterm-portal 보존. backup /var/backups/weather-care/commit-794a84696bb1-v3/before.sqlite quick_checkok 및 previous-release.txt 파일600/dir700. 미활성 stage/이전rollback릴리스 보존, DB복원 없음.
+- 12:45:58KST 최종 배포: 231/231 SHA256일치·mismatch0, API/scheduler/cloudflared active, 내부health 및 시흥/여행GPS/제주/부산 weekly 총5HTTP200. 4곳 중기캐시HIT/발표202610100600, sourceVersion DATA_GO_KR:202610100600, 포털기온176+육상10원본 확인. 수집키권한재요청·진단용외부기상호출없음; 정규scheduler는기존정책대로재시작.
+- docs/커밋_운영배포_검증_20261010.json에 commit·릴리스·전수해시·서비스·내부HTTP·중기캐시 최종증거 저장. 외부 Python 공개주소 검사 Cloudflare1010 제한은 기존 상태 유지, 외부성공을 주장하지 않음. Git push는 요청하지 않아 실행하지 않음. 최종작업기록은 별도 문서커밋으로 남겨 작업 완료.

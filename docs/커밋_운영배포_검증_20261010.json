@@ -1,0 +1,123 @@
+{
+  "작업": "수정사항 커밋 기준 운영 서버 배포",
+  "결과": "배포 완료",
+  "앱테스트": 500,
+  "앱정적분석": "문제 없음",
+  "서버타입검사": "통과",
+  "서버전체테스트기록": 512,
+  "서버커밋": "794a84696bb1c06f50758d94a8c8edf935e6783d",
+  "배포증거": {
+    "checkedAt": "2026-10-10T03:45:58.522990+00:00",
+    "commit": "794a84696bb1c06f50758d94a8c8edf935e6783d",
+    "release": "/opt/weather-care/releases/20261010-commit-794a84696bb1-v3/weather_care_server",
+    "manifestFiles": 231,
+    "verifiedFiles": 231,
+    "mismatches": [],
+    "services": [
+      "active",
+      "active",
+      "active"
+    ],
+    "sourceVersion": {
+      "version": "DATA_GO_KR:202610100600"
+    },
+    "portalCacheCounts": [
+      [
+        "COLLECTED_MID_TERM_LAND",
+        10
+      ],
+      [
+        "COLLECTED_MID_TERM_TA",
+        176
+      ]
+    ],
+    "internalHttp": {
+      "checkedAt": "2026-10-10T03:45:57.756117+00:00",
+      "requests": [
+        {
+          "target": "http://127.0.0.1:8787/health",
+          "status": 200,
+          "healthy": true
+        },
+        {
+          "target": "http://127.0.0.1:8787/시흥/weekly",
+          "status": 200,
+          "region": {
+            "nx": 57,
+            "ny": 124,
+            "adminCode": "4139054000",
+            "name": "경기도 시흥시 은행동",
+            "midTermTaRegId": "11B20202",
+            "midTermLandRegId": "11B00000"
+          },
+          "weeklyCoverage": {
+            "shortTermUntil": "2026-10-14T23:00:00+09:00",
+            "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+            "midTermCacheStatus": "HIT"
+          },
+          "midTermDays": []
+        },
+        {
+          "target": "http://127.0.0.1:8787/여행지/weekly",
+          "status": 200,
+          "region": {
+            "nx": 71,
+            "ny": 130,
+            "adminCode": "5172037000",
+            "name": "강원특별자치도 홍천군 서면",
+            "midTermTaRegId": "11D10302",
+            "midTermLandRegId": "11D10000"
+          },
+          "weeklyCoverage": {
+            "shortTermUntil": "2026-10-14T23:00:00+09:00",
+            "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+            "midTermCacheStatus": "HIT"
+          },
+          "midTermDays": []
+        },
+        {
+          "target": "http://127.0.0.1:8787/제주/weekly",
+          "status": 200,
+          "region": {
+            "nx": 52,
+            "ny": 38,
+            "adminCode": "5011054000",
+            "name": "제주특별자치도 제주시 이도2동",
+            "midTermTaRegId": "11G00201",
+            "midTermLandRegId": "11G00000"
+          },
+          "weeklyCoverage": {
+            "shortTermUntil": "2026-10-14T23:00:00+09:00",
+            "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+            "midTermCacheStatus": "HIT"
+          },
+          "midTermDays": []
+        },
+        {
+          "target": "http://127.0.0.1:8787/부산/weekly",
+          "status": 200,
+          "region": {
+            "nx": 98,
+            "ny": 76,
+            "adminCode": "2647069000",
+            "name": "부산광역시 연제구 연산제5동",
+            "midTermTaRegId": "11H20201",
+            "midTermLandRegId": "11H20000"
+          },
+          "weeklyCoverage": {
+            "shortTermUntil": "2026-10-14T23:00:00+09:00",
+            "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+            "midTermCacheStatus": "HIT"
+          },
+          "midTermDays": []
+        }
+      ]
+    }
+  },
+  "비고": [
+    "사용자 승인에 따라 수정사항 커밋 및 서버 배포. 인증키·환경변수·DB 스키마 변경 없음.",
+    "커밋 아카이브의 Windows 줄바꿈 변환을 비활성화하여 커밋 원본 231개 해시와 일치시킴.",
+    "초기 결과 파일 경로 재사용으로 보호된 임시 파일 쓰기가 실패해 자동 롤백. 결과 저장 경로와 검증 사전 점검을 수정 후 최종 배포 성공.",
+    "외부 자동 점검의 기존 Cloudflare1010 제한은 그대로이며 이번 검증은 내부 API와 운영 원본·소스 상태를 확인함."
+  ]
+}

@@ -1,0 +1,26 @@
+const { chromium } = require('C:/Users/SOHA/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const path = require('path');
+(async () => {
+  const browser = await chromium.launch({headless:true,channel:'msedge'});
+  const page = await browser.newPage({viewport:{width:736,height:950}});
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('file:///'+path.resolve(__dirname,'missing-observation-grids.preview.html').replaceAll('\\','/'));
+  const frame=page.frameLocator('iframe');
+  await frame.locator('.grid-cell').first().waitFor();
+  console.log('grid count',await frame.locator('.grid-cell').count());
+  console.log('land count',await frame.locator('.land').count());
+  await frame.locator('select').selectOption('42,52');
+  console.log('detail',await frame.locator('[data-detail]').textContent());
+  if(await frame.locator('.selected-cell').count()!==1)throw new Error('Missing selection');
+  await frame.locator('[data-action="zoom-in"]').click();
+  console.log('zoom',await frame.locator('.map-svg > g').getAttribute('transform'));
+  await frame.locator('[data-action="fit"]').click();
+  await page.screenshot({path:path.resolve(__dirname,'missing-observation-grids-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:360,height:950});
+  await page.waitForTimeout(250);
+  await page.screenshot({path:path.resolve(__dirname,'missing-observation-grids-mobile.png'),fullPage:true});
+  const overflow=await page.frames()[1].evaluate(()=>document.documentElement.scrollWidth>innerWidth);
+  console.log('mobile overflow',overflow,'errors',errors);
+  if(errors.length||overflow)throw new Error('Map preview failed');
+  await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

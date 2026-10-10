@@ -1,0 +1,127 @@
+<div id="nearby-weather-preview">
+  <style>
+    #nearby-weather-preview {--wc-background:light-dark(#f6f7f8,#171e24);--wc-surface:light-dark(#ffffff,#222c35);--wc-muted:light-dark(#f2f4f6,#2b3742);--wc-ink:light-dark(#29343d,#edf2f6);--wc-secondary:light-dark(#73808a,#b0beca);--wc-primary:light-dark(#3e5f7c,#aac9e3);--wc-soft:light-dark(#eaf0f5,#2b4154);--wc-line:light-dark(#e2e7ea,#3b4a56);--wc-warning:light-dark(#7e582f,#efc58e);--wc-warning-bg:light-dark(#faf3e8,#423326);font-family:'SUITE','Malgun Gothic',system-ui,sans-serif;color:var(--wc-ink)}
+    #nearby-weather-preview .preview-stage {min-height:920px;padding:22px 12px;box-sizing:border-box}
+    #nearby-weather-preview .phone-content {width:100%;max-width:390px;margin:0 auto;background:var(--wc-background);padding:22px 18px;border-radius:28px;box-sizing:border-box}
+    #nearby-weather-preview .example-label {font-size:12px;color:var(--wc-secondary);margin:0 0 12px}
+    #nearby-weather-preview .location {display:flex;align-items:center;gap:7px;font-size:19px;font-weight:700;margin:0 0 20px;letter-spacing:-.5px}
+    #nearby-weather-preview .wc-card {background:var(--wc-surface);border:1px solid var(--wc-line);border-radius:26px;padding:20px}
+    #nearby-weather-preview .observed {margin:0 0 10px;font-size:12px;font-weight:700;color:var(--wc-secondary)}
+    #nearby-weather-preview .headline {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    #nearby-weather-preview .temperature {font-size:34px;font-weight:800;letter-spacing:-1.2px;line-height:1.1}
+    #nearby-weather-preview .sky {display:flex;align-items:center;gap:7px;color:var(--wc-secondary);font-size:14px}
+    #nearby-weather-preview .sky small {display:block;font-size:11px;text-align:right;font-weight:400;margin-top:2px}
+    #nearby-weather-preview .source-summary {display:flex;align-items:center;gap:6px;background:var(--wc-soft);color:var(--wc-primary);border-radius:12px;list-style:none;padding:9px 10px;font-size:12px;font-weight:700;min-height:26px;box-sizing:content-box}
+    #nearby-weather-preview .source-summary::-webkit-details-marker {display:none}
+    #nearby-weather-preview .source-summary .info-icon {margin-left:auto;flex-shrink:0}
+    #nearby-weather-preview .source-details[open] .source-summary {margin-bottom:9px}
+    #nearby-weather-preview .source-body {font-size:12px;line-height:1.6;color:var(--wc-secondary);margin:0 0 12px;padding:0 2px}
+    #nearby-weather-preview .source-body p {margin:5px 0}
+    #nearby-weather-preview .source-body strong {font-weight:700;color:var(--wc-ink)}
+    #nearby-weather-preview .warning {font-size:12px;line-height:1.55;background:var(--wc-warning-bg);color:var(--wc-warning);padding:10px 12px;border-radius:12px;margin:10px 0 0}
+    #nearby-weather-preview .warning[hidden] {display:none}
+    #nearby-weather-preview .metrics {background:var(--wc-muted);border-radius:18px;padding:12px;margin-top:18px;display:grid;gap:10px}
+    #nearby-weather-preview .metric {display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
+    #nearby-weather-preview .metric-label {display:flex;align-items:center;gap:7px;color:var(--wc-secondary)}
+    #nearby-weather-preview .metric-value {font-weight:700;text-align:right}
+    #nearby-weather-preview .source-footnote {font-size:11px;color:var(--wc-secondary);margin:12px 0 0;line-height:1.5}
+    #nearby-weather-preview .forecast-card {margin-top:14px;padding:16px 18px;background:var(--wc-surface);border:1px solid var(--wc-line);border-radius:22px}
+    #nearby-weather-preview .forecast-title {margin:0;font-size:14px;font-weight:700}
+    #nearby-weather-preview .forecast-subtitle {font-size:11px;color:var(--wc-secondary);margin:4px 0 13px}
+    #nearby-weather-preview .forecast-hours {display:flex;justify-content:space-between;gap:12px;text-align:center;font-size:12px;color:var(--wc-secondary)}
+    #nearby-weather-preview .forecast-hour {flex:1;display:grid;justify-items:center;gap:7px}
+    #nearby-weather-preview .forecast-hour strong {color:var(--wc-ink);font-size:15px;font-weight:700}
+    #nearby-weather-preview .notice-source {background:var(--wc-soft);padding:12px;border-radius:14px;margin-top:4px;color:var(--wc-primary)}
+    #nearby-weather-preview .notice-title {font-size:13px;font-weight:700;display:flex;gap:6px;align-items:center;margin:0 0 5px}
+    #nearby-weather-preview .notice-text {font-size:12px;line-height:1.5;margin:0}
+    #nearby-weather-preview i {display:inline-flex;flex-shrink:0}
+    #nearby-weather-preview .sky svg {width:25px;height:25px;color:var(--wc-primary)}
+    #nearby-weather-preview .location svg {width:19px;height:19px;color:var(--wc-primary)}
+    @media(max-width:400px) {#nearby-weather-preview .preview-stage {padding:16px 0;min-height:1030px}#nearby-weather-preview .phone-content {padding:18px 12px}#nearby-weather-preview .wc-card {padding:16px}}
+  </style>
+  <div class="viz-carousel" aria-label="인근 실황 표시 방식" data-previous-label="이전 예시" data-next-label="다음 예시">
+    <section class="preview-stage viz-dotted-background" data-variant="간단 표기" aria-label="간단 표기 예시">
+      <div class="phone-content" data-preview="compact" aria-label="간단 표기 날씨 카드">
+        <p class="example-label">표시 예시 · 날씨 수치는 예시 값</p>
+        <h2 class="location"><i data-lucide="map-pin" aria-hidden="true"></i><span>서귀포시 대정읍</span></h2>
+        <div class="wc-card">
+          <p class="observed">11:40 실황</p>
+          <div class="headline"><span class="temperature">21.4℃</span><span class="sky"><span>구름많음<small>하늘 상태는 예보</small></span><i data-lucide="cloud-sun" aria-hidden="true"></i></span></div>
+          <details class="source-details">
+            <summary class="source-summary cursor-interaction"><i data-lucide="locate" aria-hidden="true"></i><span>인근 실황 · 약 <span data-distance>5.1</span>km</span><i class="info-icon" data-lucide="info" aria-hidden="true"></i></summary>
+            <div class="source-body">
+              <p><strong>현재 위치와 가장 가까운 정상 실황을 사용했어요.</strong></p>
+              <p>기온·체감·습도·바람·강수는 약 <span data-distance>5.1</span>km 떨어진 격자의 같은 시각 자료예요.</p>
+              <p>기상청 10분 격자 실황 · 11:40 관측<br>지역명과 시간별 예보는 현재 위치 기준이에요.</p>
+            </div>
+          </details>
+          <p class="warning" data-warning hidden>실황 출처가 멀어 현재 위치의 날씨와 차이가 클 수 있어요.</p>
+          <div class="metrics">
+            <div class="metric"><span class="metric-label"><i data-lucide="thermometer" aria-hidden="true"></i>체감</span><span class="metric-value">21.1℃</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="droplet" aria-hidden="true"></i>습도</span><span class="metric-value">60%</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="wind" aria-hidden="true"></i>바람</span><span class="metric-value">북동풍 3.1m/s</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="sun" aria-hidden="true"></i>자외선</span><span class="metric-value">4.0 · 보통</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="leaf" aria-hidden="true"></i>대기질</span><span class="metric-value">좋음</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="eye" aria-hidden="true"></i>가시거리</span><span class="metric-value">15km</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="sunrise" aria-hidden="true"></i>일출·일몰</span><span class="metric-value">06:35 · 18:09</span></div>
+          </div>
+          <p class="source-footnote">자외선·대기질·가시거리는 각각의 자료 기준</p>
+        </div>
+        <div class="forecast-card"><p class="forecast-title">시간별 예보</p><p class="forecast-subtitle">현재 위치 · 기상청 단기예보</p><div class="forecast-hours"><div class="forecast-hour">12시<i data-lucide="cloud-sun" aria-hidden="true"></i><strong>22℃</strong></div><div class="forecast-hour">13시<i data-lucide="cloud-sun" aria-hidden="true"></i><strong>23℃</strong></div><div class="forecast-hour">14시<i data-lucide="cloud" aria-hidden="true"></i><strong>22℃</strong></div></div></div>
+      </div>
+    </section>
+    <section class="preview-stage viz-dotted-background" data-variant="설명 함께 표기" aria-label="설명 함께 표기 예시" hidden>
+      <div class="phone-content" data-preview="notice" aria-label="설명 함께 표기 날씨 카드">
+        <p class="example-label">표시 예시 · 날씨 수치는 예시 값</p>
+        <h2 class="location"><i data-lucide="map-pin" aria-hidden="true"></i><span>태안군 근흥면</span></h2>
+        <div class="wc-card">
+          <p class="observed">11:40 실황</p>
+          <div class="headline"><span class="temperature">21.4℃</span><span class="sky"><span>구름많음<small>하늘 상태는 예보</small></span><i data-lucide="cloud-sun" aria-hidden="true"></i></span></div>
+          <div class="notice-source"><p class="notice-title"><i data-lucide="locate" aria-hidden="true"></i>인근 실황 · 약 <span data-distance>51.5</span>km</p><p class="notice-text">기온·체감·습도·바람·강수는<br>가장 가까운 정상 실황을 사용했어요.</p></div>
+          <p class="warning" data-warning>실황 출처가 멀어 현재 위치의 날씨와 차이가 클 수 있어요.</p>
+          <div class="metrics">
+            <div class="metric"><span class="metric-label"><i data-lucide="thermometer" aria-hidden="true"></i>체감</span><span class="metric-value">21.1℃</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="droplet" aria-hidden="true"></i>습도</span><span class="metric-value">60%</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="wind" aria-hidden="true"></i>바람</span><span class="metric-value">북동풍 3.1m/s</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="sun" aria-hidden="true"></i>자외선</span><span class="metric-value">4.0 · 보통</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="leaf" aria-hidden="true"></i>대기질</span><span class="metric-value">좋음</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="eye" aria-hidden="true"></i>가시거리</span><span class="metric-value">15km</span></div>
+            <div class="metric"><span class="metric-label"><i data-lucide="sunrise" aria-hidden="true"></i>일출·일몰</span><span class="metric-value">06:35 · 18:09</span></div>
+          </div>
+          <p class="source-footnote">자외선·대기질·가시거리는 각각의 자료 기준</p>
+        </div>
+        <div class="forecast-card"><p class="forecast-title">시간별 예보</p><p class="forecast-subtitle">현재 위치 · 기상청 단기예보</p><div class="forecast-hours"><div class="forecast-hour">12시<i data-lucide="cloud-sun" aria-hidden="true"></i><strong>22℃</strong></div><div class="forecast-hour">13시<i data-lucide="cloud-sun" aria-hidden="true"></i><strong>23℃</strong></div><div class="forecast-hour">14시<i data-lucide="cloud" aria-hidden="true"></i><strong>22℃</strong></div></div></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    (()=>{
+      const root=document.getElementById('nearby-weather-preview');
+      const states=[{case:'가까운 출처',expanded:false},{case:'먼 출처',expanded:false}];
+      const panels=[...root.querySelectorAll('[data-preview]')];
+      const apply=(i)=>{
+        const p=panels[i],s=states[i],far=s.case==='먼 출처';
+        p.querySelectorAll('[data-distance]').forEach(n=>n.textContent=far?'51.5':'5.1');
+        p.querySelector('[data-warning]').hidden=!far;
+        const details=p.querySelector('details');if(details)details.open=s.expanded;
+      };
+      function persist(){if(window.openai?.setWidgetState)Promise.resolve(window.openai.setWidgetState({privateContent:{states},modelContent:{nearbyWeatherPreview:true,scenarios:states.map(s=>s.case)}})).catch(()=>{});}
+      function restore(saved){
+        const values=saved?.privateContent?.states;if(!Array.isArray(values))return;
+        values.slice(0,2).forEach((s,i)=>{if(s?.case==='가까운 출처'||s?.case==='먼 출처')states[i].case=s.case;states[i].expanded=s?.expanded===true;apply(i)});
+      }
+      restore(window.openai?.widgetState);
+      states.forEach((s,i)=>{
+        apply(i);
+        const details=panels[i].querySelector('details');
+        if(details)details.addEventListener('toggle',()=>{if(s.expanded!==details.open){s.expanded=details.open;persist()}});
+        if(globalThis.Tweak){
+          const tweak=new Tweak({container:panels[i],onChange:()=>{apply(i);persist()}});
+          tweak.addSelect(s,'case',{label:'실황 출처 거리',options:['가까운 출처','먼 출처']});
+          if(details)tweak.addToggle(s,'expanded',{label:'출처 상세 펼치기'});
+        }
+      });
+      window.addEventListener('openai:set_globals',e=>restore(e.detail?.globals?.widgetState));
+    })();
+  </script>
+</div>

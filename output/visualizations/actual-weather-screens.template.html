@@ -1,0 +1,14 @@
+<div id="actual-weather-screens">
+  <style>
+    #actual-weather-screens .screen-image {display:block;width:100%;max-width:390px;height:auto;margin:12px auto 0}
+    #actual-weather-screens .screen-label {margin:0 0 8px}
+    #actual-weather-screens .screen-tabs {padding-right:90px}
+  </style>
+  <p class="text-small text-muted screen-label">실제 Flutter 화면 · 수정 후 · 날씨 수치는 예시</p>
+  <div class="nav nav-pills screen-tabs" role="tablist" aria-label="수정한 앱 화면">
+    <button class="nav-link active" id="actual-main-tab" type="button" role="tab" aria-selected="true" aria-controls="actual-main-panel">메인</button>
+    <button class="nav-link" id="actual-today-tab" type="button" role="tab" aria-selected="false" aria-controls="actual-today-panel">Today</button>
+  </div>
+  <div role="tabpanel" id="actual-main-panel" aria-labelledby="actual-main-tab"><img class="screen-image" src="__MAIN_IMAGE__" alt="수정한 메인 화면. 추정 체감온도 설명을 삭제하고 인근 실황은 거리만 표시합니다." width="780" height="2000"></div>
+  <div role="tabpanel" id="actual-today-panel" aria-labelledby="actual-today-tab" hidden><img class="screen-image" src="__TODAY_IMAGE__" alt="수정한 Today 화면. 카드 상단 실황 시각을 삭제하고 인근 실황은 거리만 표시합니다." width="780" height="2000"></div>
+</div>

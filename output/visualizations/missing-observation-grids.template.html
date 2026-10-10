@@ -1,0 +1,99 @@
+<div id="missing-observation-grid-map">
+  <style>
+    #missing-observation-grid-map .map-header {display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-right:90px}
+    #missing-observation-grid-map .map-holder {width:100%;height:560px;position:relative}
+    #missing-observation-grid-map .map-svg {display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+    #missing-observation-grid-map .map-svg:active {cursor:grabbing}
+    #missing-observation-grid-map .land {fill:var(--muted);stroke:var(--border);stroke-width:0.7;vector-effect:non-scaling-stroke}
+    #missing-observation-grid-map .grid-cell {fill:var(--viz-series-1);fill-opacity:0.6;stroke:var(--viz-series-1);stroke-width:0.7;vector-effect:non-scaling-stroke}
+    #missing-observation-grid-map .grid-center {fill:var(--viz-series-1)}
+    #missing-observation-grid-map .selected-cell {fill:var(--viz-series-2);stroke:var(--viz-series-2);fill-opacity:0.8;stroke-width:2;vector-effect:non-scaling-stroke}
+    #missing-observation-grid-map .map-label {fill:var(--muted-foreground);paint-order:stroke;stroke:var(--background);stroke-width:3;stroke-linejoin:round;pointer-events:none}
+    #missing-observation-grid-map .detail {margin-top:12px;overflow-wrap:anywhere}
+    #missing-observation-grid-map .detail p {margin:6px 0}
+    #missing-observation-grid-map .legend-mark {display:inline-block;width:10px;height:10px;background:var(--viz-series-1)}
+    #missing-observation-grid-map .select-wrap {display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    #missing-observation-grid-map .select-wrap select {flex:1;min-width:0}
+    @media(max-width:480px) {#missing-observation-grid-map .map-holder {height:360px}}
+  </style>
+  <div class="map-header">
+    <span><span class="legend-mark" aria-hidden="true"></span> 실황 결측 <strong>302개 격자</strong></span>
+    <button class="btn btn-ghost" type="button" data-action="zoom-in" aria-label="지도 확대">＋</button>
+    <button class="btn btn-ghost" type="button" data-action="zoom-out" aria-label="지도 축소">−</button>
+    <button class="btn btn-ghost" type="button" data-action="fit">전국 보기</button>
+  </div>
+  <div class="map-holder"><svg class="map-svg" role="img" aria-label="전국 302개 실황 결측 격자의 위치 지도. 격자 범위를 선택하면 연결 지역과 중심 좌표를 표시합니다."></svg></div>
+  <div class="detail" aria-live="polite">
+    <div class="select-wrap"><label for="missing-grid-selector">선택 격자</label><select class="form-select" id="missing-grid-selector" aria-label="302개 결측 격자 선택"><option value="">지도에서 격자를 선택</option></select></div>
+    <p data-detail>격자 범위 약 5km × 5km · 기온·습도·풍속 원본 결측</p>
+    <p class="text-small text-muted">결측 대상: 2026-10-09 09:20 실황 검증 · 경계: SGIS 2025년 2분기<br>표시 좌표는 격자 중심이며, 연결 지역은 해당 격자와 경계가 겹치는 지역입니다.</p>
+  </div>
+  <script>__D3_LIBRARY__</script>
+  <script>
+  (async () => {
+    const root=document.getElementById('missing-observation-grid-map');
+    const packed=Uint8Array.from(atob('__MAP_DATA__'),c=>c.charCodeAt(0));
+    const decoded=await new Response(new Blob([packed]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    const data=JSON.parse(decoded);
+    const svg=d3.select(root.querySelector('.map-svg'));
+    const holder=root.querySelector('.map-holder');
+    const select=root.querySelector('select');
+    const detail=root.querySelector('[data-detail]');
+    const viewport=svg.append('g');
+    const landLayer=viewport.append('g');
+    const gridLayer=viewport.append('g');
+    const labelLayer=viewport.append('g');
+    const selectedLayer=viewport.append('g');
+    let projection,path,width,height,selected=null,transform=d3.zoomIdentity,restoring=false;
+    const byId=new Map(data.grids.map(g=>[g.id,g]));
+    data.grids.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=`(${g.nx}, ${g.ny}) · ${g.areas.join(' / ')}`;select.append(o)});
+    const zoom=d3.zoom().scaleExtent([1,24]).on('zoom',e=>{transform=e.transform;viewport.attr('transform',transform);labelLayer.attr('visibility',transform.k>4?'hidden':'visible');gridLayer.selectAll('circle').attr('r',2/transform.k)}).on('end',save);
+    svg.call(zoom).on('dblclick.zoom',null);
+    function save(){
+      if(restoring)return;
+      const host=window.openai;
+      if(host&&typeof host.setWidgetState==='function') Promise.resolve(host.setWidgetState({modelContent:{selectedGrid:selected?{nx:selected.nx,ny:selected.ny,areas:selected.areas}:null},privateContent:{selectedId:selected?.id||null,zoom:{k:transform.k,x:transform.x/width,y:transform.y/height}}})).catch(()=>{});
+    }
+    function choose(id,persist=true){
+      selected=byId.get(id)||null;select.value=selected?.id||'';
+      selectedLayer.selectAll('*').remove();
+      if(selected){
+        selectedLayer.append('path').datum(selected.geometry).attr('class','selected-cell').attr('d',path).attr('pointer-events','none');
+        detail.textContent=`(${selected.nx}, ${selected.ny}) · ${selected.areas.join(' / ')} · 중심 위도 ${selected.lat.toFixed(6)}, 경도 ${selected.lon.toFixed(6)} · 격자 내 육지 ${(selected.landFraction*100).toFixed(3)}%`;
+      }else detail.textContent='격자 범위 약 5km × 5km · 기온·습도·풍속 원본 결측';
+      if(persist)save();
+    }
+    function draw(){
+      width=holder.clientWidth;height=holder.clientHeight;svg.attr('viewBox',`0 0 ${width} ${height}`);
+      projection=d3.geoMercator().fitExtent([[12,20],[width-12,height-20]],data.land);
+      path=d3.geoPath(projection);
+      landLayer.selectAll('path').data(data.land.features).join('path').attr('class','land').attr('d',path);
+      gridLayer.selectAll('path').data(data.grids).join('path').attr('class','grid-cell cursor-interaction').attr('d',g=>path(g.geometry)).attr('data-tooltip',g=>`(${g.nx}, ${g.ny}) · ${g.areas.join(' / ')}`).on('click',(e,g)=>{e.stopPropagation();choose(g.id)});
+      gridLayer.selectAll('circle').data(data.grids).join('circle').attr('class','grid-center cursor-interaction').attr('cx',g=>projection([g.lon,g.lat])[0]).attr('cy',g=>projection([g.lon,g.lat])[1]).attr('r',2/transform.k).on('click',(e,g)=>{e.stopPropagation();choose(g.id)});
+      labelLayer.selectAll('text').data(data.labels).join('text').attr('class','map-label text-small').attr('x',g=>projection(g.coordinates)[0]).attr('y',g=>projection(g.coordinates)[1]).attr('text-anchor','middle').text(g=>g.name);
+      svg.on('click',e=>{
+        if(e.defaultPrevented)return;
+        const p=transform.invert(d3.pointer(e,svg.node()));
+        let nearest=null,min=Infinity;
+        for(const g of data.grids){const xy=projection([g.lon,g.lat]);const dist=Math.hypot(xy[0]-p[0],xy[1]-p[1]);if(dist<min){min=dist;nearest=g}}
+        if(nearest&&min*transform.k<=22)choose(nearest.id);
+      });
+      choose(selected?.id,false);
+    }
+    function restore(state){
+      if(!state||!state.privateContent)return;
+      restoring=true;
+      const s=state.privateContent;choose(s.selectedId,false);
+      if(s.zoom&&Number.isFinite(s.zoom.k)&&s.zoom.k>=1&&s.zoom.k<=24&&Number.isFinite(s.zoom.x)&&Number.isFinite(s.zoom.y)) svg.call(zoom.transform,d3.zoomIdentity.translate(s.zoom.x*width,s.zoom.y*height).scale(s.zoom.k));
+      restoring=false;
+    }
+    select.addEventListener('change',()=>choose(select.value));
+    root.querySelector('[data-action="zoom-in"]').addEventListener('click',()=>svg.call(zoom.scaleBy,1.7));
+    root.querySelector('[data-action="zoom-out"]').addEventListener('click',()=>svg.call(zoom.scaleBy,1/1.7));
+    root.querySelector('[data-action="fit"]').addEventListener('click',()=>svg.call(zoom.transform,d3.zoomIdentity));
+    draw();restore(window.openai?.widgetState);
+    window.addEventListener('openai:set_globals',e=>restore(e.detail?.globals?.widgetState));
+    new ResizeObserver(()=>draw()).observe(holder);
+  })();
+  </script>
+</div>

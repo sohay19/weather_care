@@ -1,0 +1,211 @@
+{
+  "purpose": "현재 총 적설 수집 중지·미사용, 추후 다른 신규 항목들과 함께 추가 예정",
+  "deployment": {
+    "checkedAt": "2026-10-10T08:39:46.500742+00:00",
+    "release": "/opt/weather-care/releases/20261010-snow-stopped/weather_care_server",
+    "tree": "daeca1a8f247eee53ce51659739e3c9bef0b1e44",
+    "services": [
+      "active",
+      "active",
+      "active"
+    ],
+    "snowUsage": [
+      [
+        "2026-10-10",
+        24,
+        3678055
+      ]
+    ],
+    "requests": [
+      {
+        "region": "health",
+        "endpoint": "health",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "region": "여행지",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "여행지",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "여행지",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "region": "제주",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "제주",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "제주",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "region": "부산",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "부산",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "부산",
+        "endpoint": "weekly",
+        "status": 200
+      }
+    ],
+    "snowUsageAfterHttp": [
+      [
+        "2026-10-10",
+        24,
+        3678055
+      ]
+    ],
+    "retainedSnowCache": [
+      [
+        "2026-10-10T08:30:00.000Z"
+      ]
+    ]
+  },
+  "publicVerification": {
+    "checkedAt": "2026-10-10T08:39:19.447140+00:00",
+    "requests": [
+      {
+        "region": "health",
+        "endpoint": "health",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "region": "여행지",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "여행지",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "여행지",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "region": "제주",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "제주",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "제주",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "region": "부산",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "region": "부산",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "region": "부산",
+        "endpoint": "weekly",
+        "status": 200
+      }
+    ]
+  },
+  "followup": {
+    "checkedAt": "2026-10-10T08:44:52.511874+00:00",
+    "services": [
+      "active",
+      "active",
+      "active"
+    ],
+    "snowUsage": [
+      [
+        "2026-10-10",
+        24,
+        3678055
+      ]
+    ],
+    "retainedSnowCache": [
+      [
+        "2026-10-10T08:30:00.000Z"
+      ]
+    ]
+  },
+  "source": {
+    "tree": "daeca1a8f247eee53ce51659739e3c9bef0b1e44",
+    "baseCommit": "bbca3b41550abff6d3b0284f29f2b6a4f240323e",
+    "previous": "/opt/weather-care/releases/20261010-current-rain-snow/weather_care_server",
+    "release": "/opt/weather-care/releases/20261010-snow-stopped/weather_care_server",
+    "archiveSha256": "c79f2839b1dae93b4d4ffbf3615767d3f6ee3a3b4d407dc08cf0e65398e87280"
+  },
+  "verifiedFileCount": 234,
+  "validation": {
+    "typeCheck": "PASS",
+    "relatedWorkerTests": 43,
+    "relatedNodeTests": 7,
+    "snowFieldsAbsentInMainTodayPerAddress": 8,
+    "collectionProviderNotCalledInFullJobTest": true
+  },
+  "newCommit": false,
+  "historicalEmptyResponseCause": {
+    "confirmed": "기존 API 원본부터 수치 행 없음; 겨울 30행 파서 정상",
+    "inference": "무현상 공란에 대해 일 최심신적설 행이 생성·표출되지 않았을 가능성이 가장 유력",
+    "supplierInternalRuleConfirmed": false,
+    "guidelineScope": "기후통계지침(2021.5) 부록 A 1.3.18.2, 3시간 최심신적설의 공란·0.0 구분; 일통계 API 행 생략의 직접 명세가 아님"
+  }
+}

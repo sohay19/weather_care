@@ -1,0 +1,975 @@
+{
+  "checkedAt": "2026-10-10T14:24:09.753888+00:00",
+  "release": "/opt/weather-care/releases/20261010-snow-stopped/weather_care_server",
+  "releaseFilesMatch": true,
+  "services": [
+    "active",
+    "active",
+    "active"
+  ],
+  "daily": {
+    "status": "AVAILABLE",
+    "updatedAt": "2026-10-09T15:00:00.000Z",
+    "stationRecords": 5159,
+    "completedDates": [
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09"
+    ],
+    "settledDates": [
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09"
+    ],
+    "metricAvailability": {
+      "2026-10-09": {
+        "ta_min": "AVAILABLE",
+        "ta_max": "AVAILABLE",
+        "rn_day": "AVAILABLE",
+        "sd_day_max": "NO_RECORD"
+      }
+    }
+  },
+  "snowTotalUsage": [
+    [
+      "2026-10-10",
+      24,
+      3678055
+    ]
+  ],
+  "snowTotalCache": [
+    [
+      "2026-10-10T08:30:00.000Z"
+    ]
+  ],
+  "requests": [
+    {
+      "surface": "internal",
+      "region": "시흥",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "시흥",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "시흥",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "11",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "11",
+          "max": "21"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "8",
+          "max": "23"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "10",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "9",
+          "max": "26"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "11",
+          "max": "25"
+        }
+      ]
+    },
+    {
+      "surface": "internal",
+      "region": "여행지",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "여행지",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "여행지",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "8",
+          "max": "26"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "7",
+          "max": "20"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "4",
+          "max": "22"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "4",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "4",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "6",
+          "max": "25"
+        }
+      ]
+    },
+    {
+      "surface": "internal",
+      "region": "제주",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "제주",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "제주",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "20",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "19",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "18",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "17",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "16",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "18",
+          "max": "25"
+        }
+      ]
+    },
+    {
+      "surface": "internal",
+      "region": "부산",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "부산",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "internal",
+      "region": "부산",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "17",
+          "max": "26"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "16",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "12",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "11",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "12",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "13",
+          "max": "26"
+        }
+      ]
+    },
+    {
+      "surface": "public",
+      "region": "시흥",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "시흥",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "시흥",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "11",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "11",
+          "max": "21"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "8",
+          "max": "23"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "10",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "9",
+          "max": "26"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "11",
+          "max": "25"
+        }
+      ]
+    },
+    {
+      "surface": "public",
+      "region": "여행지",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "여행지",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "여행지",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "8",
+          "max": "26"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "7",
+          "max": "20"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "4",
+          "max": "22"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "4",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "4",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "6",
+          "max": "25"
+        }
+      ]
+    },
+    {
+      "surface": "public",
+      "region": "제주",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "제주",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "제주",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "비",
+          "min": "20",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "19",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "18",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "17",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "16",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "18",
+          "max": "25"
+        }
+      ]
+    },
+    {
+      "surface": "public",
+      "region": "부산",
+      "endpoint": "main",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "부산",
+      "endpoint": "today",
+      "status": 200,
+      "snowTotalFields": [],
+      "dataRole": "OBSERVATION"
+    },
+    {
+      "surface": "public",
+      "region": "부산",
+      "endpoint": "weekly",
+      "status": 200,
+      "pastDays": [
+        {
+          "forecastDate": "2026-10-04",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "17",
+          "max": "26"
+        },
+        {
+          "forecastDate": "2026-10-05",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "16",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-06",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "12",
+          "max": "24"
+        },
+        {
+          "forecastDate": "2026-10-07",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "11",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-08",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "12",
+          "max": "25"
+        },
+        {
+          "forecastDate": "2026-10-09",
+          "historical": true,
+          "weatherDataComplete": true,
+          "observationAvailability": {
+            "minTemperature": "AVAILABLE",
+            "maxTemperature": "AVAILABLE",
+            "precipitationAmount": "AVAILABLE",
+            "snowfallAmount": "NO_RECORD"
+          },
+          "snowfallAmount": null,
+          "weatherLabel": "하늘 상태 관측 없음",
+          "min": "13",
+          "max": "26"
+        }
+      ]
+    }
+  ],
+  "decision": "2026-10-08·09 일 최심신적설의 정상 빈 응답은 무적설 상황의 수치 기록 없음으로 판단한다. NO_RECORD를 유지하며 임의 0 생성·수집 장애 분류·신규 API 교체를 하지 않는다.",
+  "existingRegressionTests": {
+    "file": "test-node/collectionRecovery.test.ts",
+    "passed": 14
+  },
+  "projectionNote": "pastDays는 진단용 선택 필드다. snowfallAmount의 null은 Python dict.get으로 투영한 값이며 실제 API 필드의 null 직렬화를 뜻하지 않는다. 운영 코드에서 미가용 snowfallAmount는 undefined로 생략한다.",
+  "scope": "적설 판정에 따른 운영 영향 확인. 모든 제공처·전국 격자·시각을 이번에 전수 점검한 것은 아니다.",
+  "prewarmInspectLimitation": "별도 TS 진단 실행은 서비스 계정에서 esbuild EACCES로 실패했다. 권한 변경이나 우회 실행 없이 중단했으며 전체 필수 캐시 완비 수를 이번 검증 결과로 주장하지 않는다."
+}

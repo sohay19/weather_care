@@ -1,0 +1,750 @@
+{
+  "checkedAt": "2026-10-10T14:46:12.141Z",
+  "station": "정촌면",
+  "status": "23:40 KST 정규 갱신으로 지연 표시 해소",
+  "reason": "제공처 측정소별 실시간 API의 최근6개 자료에서22시행이없다. 서버는21시 유효자료를최대3시간이내 재사용하고, 관측시각기준2시간초과시STALE로표시한다. 시도별1시간조회주기로23:20·30에는제공처재조회없이재사용했고23:40경남재조회후23시값반영.",
+  "timeline": [
+    {
+      "at": "2026-10-10 21:00 KST",
+      "kind": "OBSERVATION",
+      "fact": "지연 당시 사용한 유효 관측값: PM10=16/PM25=12/O3=.032"
+    },
+    {
+      "at": "2026-10-10 22:00 KST",
+      "kind": "PROVIDER_OBSERVATION_GAP",
+      "fact": "23:46의제공처원문최근6행에서22시자료행없음. 정확한미수신발생시각·현장사유로그확인아님"
+    },
+    {
+      "at": "2026-10-10 23:00 이후 KST",
+      "kind": "DERIVED_STATUS_THRESHOLD",
+      "fact": "21시관측의나이가2시간초과해STALE조건충족. 실제첫STALE응답시각을소급확정한것아님"
+    },
+    {
+      "at": "2026-10-10 23:20·23:30 KST",
+      "kind": "SCHEDULED_COLLECTION",
+      "fact": "정규수집로그에서시도17곳모두스킵/제공처호출0. 시도별1시간캐시정책으로재조회없음"
+    },
+    {
+      "at": "2026-10-10 23:35~36 KST",
+      "kind": "OBSERVED_PUBLIC_RESPONSE",
+      "fact": "이전전체점검공개Today정촌면21시값·STALE·지연안내확인"
+    },
+    {
+      "at": "2026-10-10 23:40 KST",
+      "kind": "RECOVERY",
+      "fact": "경남캐시갱신시각23:40,공식23시값저장. 전체수집12시도성공·중단없음"
+    },
+    {
+      "at": "2026-10-10 23:45 KST",
+      "kind": "OBSERVED_PUBLIC_RESPONSE",
+      "fact": "정촌면23시값·CACHED·지연안내없음확인"
+    }
+  ],
+  "limitation": "22시행미제공의관측소장비/전송/집계/표출단계원인은반환데이터에설명되지않음. 조회시점자료행의부재를확인했으며22시값의원래발표시각·추후보정여부는단정하지않는다. 이원인은대전TIMEOUT과별개.",
+  "provider": {
+    "checkedAt": "2026-10-10T14:46:12.141Z",
+    "endpoint": "getMsrstnAcctoRltmMesureDnsty",
+    "stationName": "정촌면",
+    "calls": 1,
+    "status": 200,
+    "resultCode": "00",
+    "responseBytes": 2835,
+    "rows": [
+      {
+        "dataTime": "2026-10-10 23:00",
+        "pm10Value": "16",
+        "pm25Value": "14",
+        "o3Value": "0.018",
+        "pm10Flag": null,
+        "pm25Flag": null,
+        "o3Flag": null,
+        "so2Flag": null,
+        "coFlag": null,
+        "no2Flag": null
+      },
+      {
+        "dataTime": "2026-10-10 21:00",
+        "pm10Value": "16",
+        "pm25Value": "12",
+        "o3Value": "0.032",
+        "pm10Flag": null,
+        "pm25Flag": null,
+        "o3Flag": null,
+        "so2Flag": null,
+        "coFlag": null,
+        "no2Flag": null
+      },
+      {
+        "dataTime": "2026-10-10 20:00",
+        "pm10Value": "24",
+        "pm25Value": "12",
+        "o3Value": "0.053",
+        "pm10Flag": null,
+        "pm25Flag": null,
+        "o3Flag": null,
+        "so2Flag": null,
+        "coFlag": null,
+        "no2Flag": null
+      },
+      {
+        "dataTime": "2026-10-10 19:00",
+        "pm10Value": "22",
+        "pm25Value": "13",
+        "o3Value": "0.057",
+        "pm10Flag": null,
+        "pm25Flag": null,
+        "o3Flag": null,
+        "so2Flag": null,
+        "coFlag": null,
+        "no2Flag": null
+      },
+      {
+        "dataTime": "2026-10-10 18:00",
+        "pm10Value": "25",
+        "pm25Value": "14",
+        "o3Value": "0.059",
+        "pm10Flag": null,
+        "pm25Flag": null,
+        "o3Flag": null,
+        "so2Flag": null,
+        "coFlag": null,
+        "no2Flag": null
+      },
+      {
+        "dataTime": "2026-10-10 17:00",
+        "pm10Value": "23",
+        "pm25Value": "13",
+        "o3Value": "0.059",
+        "pm10Flag": null,
+        "pm25Flag": null,
+        "o3Flag": null,
+        "so2Flag": null,
+        "coFlag": null,
+        "no2Flag": null
+      }
+    ]
+  },
+  "collectionHistory": {
+    "checkedAt": "2026-10-10T14:45:28.744896+00:00",
+    "caches": [
+      {
+        "key": "COLLECTED_NATIONWIDE_AIR",
+        "type": "COLLECTED_NATIONWIDE_AIR",
+        "updatedAt": "2026-10-10T14:40:00.000Z",
+        "collectedAt": "2026-10-10T14:40:00.000Z",
+        "matches": [
+          {
+            "observedAt": "2026-10-10T23:00:00+09:00",
+            "stationName": "정촌면",
+            "pm10": 16,
+            "pm25": 14,
+            "airQualityGrade": "Good",
+            "ozone": 0.018,
+            "ozoneGrade": "Good",
+            "provider": "AIRKOREA"
+          }
+        ],
+        "observationTimes": {
+          "2026-10-10T23:00:00+09:00": 593,
+          "2026-10-10T22:00:00+09:00": 69
+        },
+        "retry": {}
+      },
+      {
+        "key": "AIR_PROVINCE_경남",
+        "type": "AIR_PROVINCE",
+        "updatedAt": "2026-10-10T14:40:00.000Z",
+        "collectedAt": null,
+        "matches": [
+          {
+            "observedAt": "2026-10-10T23:00:00+09:00",
+            "stationName": "정촌면",
+            "pm10": 16,
+            "pm25": 14,
+            "airQualityGrade": "Good",
+            "ozone": 0.018,
+            "ozoneGrade": "Good",
+            "provider": "AIRKOREA"
+          }
+        ],
+        "observationTimes": {
+          "2026-10-10T23:00:00+09:00": 48,
+          "2026-10-10T22:00:00+09:00": 1
+        },
+        "retry": {}
+      }
+    ],
+    "events": [
+      {
+        "at": "2026-10-10T10:00:12.725979+00:00",
+        "skipped": 15,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 2,
+        "actualCalls": 2
+      },
+      {
+        "at": "2026-10-10T10:00:17.002217+00:00",
+        "scheduledAt": "2026-10-10T10:00:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T10:11:10.894150+00:00",
+        "nextRetryAt": "2026-10-10T10:15:29.363Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "충남"
+      },
+      {
+        "at": "2026-10-10T10:11:10.897836+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T10:11:14.504787+00:00",
+        "scheduledAt": "2026-10-10T10:10:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T10:20:42.628319+00:00",
+        "nextRetryAt": "2026-10-10T10:30:13.406Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 2,
+        "authorizationBlocked": false,
+        "source": "충남"
+      },
+      {
+        "at": "2026-10-10T10:20:42.632113+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T10:20:46.186718+00:00",
+        "scheduledAt": "2026-10-10T10:20:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T10:30:43.032934+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 1,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T10:30:46.688446+00:00",
+        "scheduledAt": "2026-10-10T10:30:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T10:41:11.910166+00:00",
+        "nextRetryAt": "2026-10-10T10:45:00.343Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "서울"
+      },
+      {
+        "at": "2026-10-10T10:41:11.919640+00:00",
+        "skipped": 3,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 13,
+        "actualCalls": 14
+      },
+      {
+        "at": "2026-10-10T10:41:15.926975+00:00",
+        "scheduledAt": "2026-10-10T10:40:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T10:50:13.917973+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 1,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T10:50:17.515329+00:00",
+        "scheduledAt": "2026-10-10T10:50:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T11:01:12.916242+00:00",
+        "nextRetryAt": "2026-10-10T11:05:01.893Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "부산"
+      },
+      {
+        "at": "2026-10-10T11:01:12.920245+00:00",
+        "skipped": 15,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 1,
+        "actualCalls": 2
+      },
+      {
+        "at": "2026-10-10T11:01:16.979433+00:00",
+        "scheduledAt": "2026-10-10T11:00:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T11:10:13.755038+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 1,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T11:10:17.332930+00:00",
+        "scheduledAt": "2026-10-10T11:10:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T11:20:14.651560+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T11:22:12.929736+00:00",
+        "scheduledAt": "2026-10-10T11:20:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T11:30:14.695767+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 1,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T11:30:18.416220+00:00",
+        "scheduledAt": "2026-10-10T11:30:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T11:41:14.346218+00:00",
+        "nextRetryAt": "2026-10-10T11:45:18.407Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "광주"
+      },
+      {
+        "at": "2026-10-10T11:41:14.346739+00:00",
+        "nextRetryAt": "2026-10-10T11:45:23.052Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "대전"
+      },
+      {
+        "at": "2026-10-10T11:41:14.350479+00:00",
+        "skipped": 4,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 11,
+        "actualCalls": 13
+      },
+      {
+        "at": "2026-10-10T11:41:18.155464+00:00",
+        "scheduledAt": "2026-10-10T11:40:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T11:50:15.930599+00:00",
+        "skipped": 14,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 3,
+        "actualCalls": 3
+      },
+      {
+        "at": "2026-10-10T11:50:19.659604+00:00",
+        "scheduledAt": "2026-10-10T11:50:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T12:00:47.672497+00:00",
+        "nextRetryAt": "2026-10-10T12:05:24.079Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "울산"
+      },
+      {
+        "at": "2026-10-10T12:00:47.675998+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T12:00:51.990027+00:00",
+        "scheduledAt": "2026-10-10T12:00:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T12:10:05.991325+00:00",
+        "skipped": 15,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 2,
+        "actualCalls": 2
+      },
+      {
+        "at": "2026-10-10T12:10:10.024437+00:00",
+        "scheduledAt": "2026-10-10T12:10:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T12:20:02.451389+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T12:20:06.707393+00:00",
+        "scheduledAt": "2026-10-10T12:20:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T12:31:01.443093+00:00",
+        "nextRetryAt": "2026-10-10T12:35:21.300Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "인천"
+      },
+      {
+        "at": "2026-10-10T12:31:01.446667+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T12:31:40.677254+00:00",
+        "scheduledAt": "2026-10-10T12:30:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T12:40:08.231041+00:00",
+        "skipped": 5,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 12,
+        "actualCalls": 12
+      },
+      {
+        "at": "2026-10-10T12:40:12.683240+00:00",
+        "scheduledAt": "2026-10-10T12:40:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T12:50:04.356696+00:00",
+        "skipped": 14,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 3,
+        "actualCalls": 3
+      },
+      {
+        "at": "2026-10-10T12:50:07.985966+00:00",
+        "scheduledAt": "2026-10-10T12:50:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T13:00:32.779373+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T13:01:36.633493+00:00",
+        "scheduledAt": "2026-10-10T13:00:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T13:10:06.362855+00:00",
+        "skipped": 15,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 2,
+        "actualCalls": 2
+      },
+      {
+        "at": "2026-10-10T13:10:12.001210+00:00",
+        "scheduledAt": "2026-10-10T13:10:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T13:20:06.457798+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T13:20:10.090968+00:00",
+        "scheduledAt": "2026-10-10T13:20:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T13:30:05.517855+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T13:30:09.915031+00:00",
+        "scheduledAt": "2026-10-10T13:30:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T13:40:07.783389+00:00",
+        "skipped": 5,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 12,
+        "actualCalls": 12
+      },
+      {
+        "at": "2026-10-10T13:40:11.530664+00:00",
+        "scheduledAt": "2026-10-10T13:40:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T13:51:05.116371+00:00",
+        "nextRetryAt": "2026-10-10T13:55:02.124Z",
+        "failureReason": "TIMEOUT",
+        "event": "nationwide_air_source_failed",
+        "failures": 1,
+        "authorizationBlocked": false,
+        "source": "대전"
+      },
+      {
+        "at": "2026-10-10T13:51:05.120355+00:00",
+        "skipped": 14,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 2,
+        "actualCalls": 3
+      },
+      {
+        "at": "2026-10-10T13:51:11.473122+00:00",
+        "scheduledAt": "2026-10-10T13:50:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T14:00:35.556339+00:00",
+        "skipped": 16,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 1,
+        "actualCalls": 1
+      },
+      {
+        "at": "2026-10-10T14:00:40.238098+00:00",
+        "scheduledAt": "2026-10-10T14:00:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T14:10:08.312400+00:00",
+        "skipped": 15,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 2,
+        "actualCalls": 2
+      },
+      {
+        "at": "2026-10-10T14:10:12.019719+00:00",
+        "scheduledAt": "2026-10-10T14:10:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T14:20:08.739430+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T14:21:55.439286+00:00",
+        "scheduledAt": "2026-10-10T14:20:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T14:30:07.947146+00:00",
+        "skipped": 17,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 0,
+        "actualCalls": 0
+      },
+      {
+        "at": "2026-10-10T14:30:16.302670+00:00",
+        "scheduledAt": "2026-10-10T14:30:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      },
+      {
+        "at": "2026-10-10T14:40:08.924954+00:00",
+        "skipped": 5,
+        "stopped": false,
+        "event": "nationwide_air_collection_completed",
+        "observations": 662,
+        "succeeded": 12,
+        "actualCalls": 12
+      },
+      {
+        "at": "2026-10-10T14:40:12.440108+00:00",
+        "scheduledAt": "2026-10-10T14:40:00.000Z",
+        "job": "core",
+        "event": "node_scheduled_job_completed"
+      }
+    ],
+    "currentPublic": {
+      "status": 200,
+      "airQuality": {
+        "airQualityObservedAt": "2026-10-10T23:00:00+09:00",
+        "airQualityStationName": "정촌면",
+        "pm10": 16,
+        "pm25": 14,
+        "ozone": 0.018
+      },
+      "source": {
+        "provider": "AIRKOREA",
+        "state": "CACHED",
+        "observedAt": "2026-10-10T23:00:00+09:00",
+        "cachedAt": "2026-10-10T14:40:00.000Z"
+      },
+      "dataStatusMessages": []
+    }
+  },
+  "previousDelayedPublicSample": {
+    "status": 200,
+    "parameters": {
+      "nx": 80,
+      "ny": 74,
+      "latitude": 35.12594066540014,
+      "longitude": 128.07306253727376
+    },
+    "airQuality": {
+      "pm10": 16,
+      "pm25": 12,
+      "ozone": 0.032,
+      "airQualityObservedAt": "2026-10-10T21:00:00+09:00",
+      "airQualityStationName": "정촌면"
+    },
+    "source": {
+      "provider": "AIRKOREA",
+      "state": "STALE",
+      "observedAt": "2026-10-10T21:00:00+09:00",
+      "cachedAt": "2026-10-10T14:10:00.000Z"
+    },
+    "dataStatusMessages": [
+      {
+        "role": "DATA_STATUS",
+        "itemTitle": "대기질",
+        "text": "마지막으로 확인한 대기질은 오후 9시 자료예요 · 이후 달라졌을 수 있어요",
+        "source": "AIRKOREA"
+      }
+    ]
+  },
+  "sources": [
+    "src/services/nationwideAirCache.ts: 시도별1시간재사용·21시이전자료최대3시간유지",
+    "src/providers/environmental/environmentalDataService.ts: 관측2시간초과STALE",
+    "https://www.data.go.kr/data/15073861/openapi.do"
+  ],
+  "wordingRecommendation": "관측없음은수집실패처럼보이므로완곡한표현이더적합하다. 특이사항없음은기온·안개등확인하지않은현상까지포괄할수있어비·눈기록없음같이범위를명시하는표현권장. 정상강수0+적설NO_RECORD조건과실패UNAVAILABLE은분리해야한다.",
+  "changes": "코드/UI/수집주기/서버배포/커밋변경없음. 정규갱신은기존스케줄러가수행. 인증API추가진단1회/2835B만수행,키와전체인증URL미노출."
+}

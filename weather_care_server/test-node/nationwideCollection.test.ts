@@ -82,6 +82,7 @@ describe('대표 격자와 무관한 전국 원본 수집', () => {
     expect(result.totalGrids).toBe(37_697);
     expect(result.missingSample.some((key) => /^COLLECTED_(REGION|VISIBILITY|WEEKLY)_\d/.test(key))).toBe(false);
     expect(result.missingSample).toContain('NATIONAL_FORECAST_SOURCE');
+    expect(result.missingSample).not.toContain('COLLECTED_NATIONWIDE_SNOW_TOTAL');
   });
 });
 
@@ -135,6 +136,8 @@ it('설치 없는 전체 수집에서도 전국 항목을 갱신하고 대기질
     stations: dates.map(date => ({ date, stationId: '108', latitude: 37.57, longitude: 126.96, minTemperature: 15, maxTemperature: 25, snowfallAmount: 0 })) });
   await runWeatherCollectionJob(env, { now });
   await runWeatherCollectionJob(env, { now: new Date(now.getTime() + 4200000) });
+  expect(KmaSnowObservationProvider.prototype.getSnapshot).not.toHaveBeenCalled();
+  expect(database.sqlite.prepare("SELECT COUNT(*) AS n FROM api_usage_daily WHERE provider='SNOW_TOTAL'").get()).toEqual({ n: 0 });
   expect(forecast).toHaveBeenCalledTimes(2);
   expect(uv).toHaveBeenCalledOnce();
   expect(catalog).toHaveBeenCalledOnce();

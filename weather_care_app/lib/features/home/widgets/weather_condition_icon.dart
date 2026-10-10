@@ -19,6 +19,8 @@ enum WeatherConditionKind {
 WeatherConditionKind weatherConditionKind(String? condition) {
   final value = (condition ?? '').trim().toLowerCase().replaceAll(' ', '');
 
+  if (value == '비·눈기록없음') return WeatherConditionKind.unknown;
+
   if (value.contains('빗방울/눈날림')) {
     return WeatherConditionKind.lightWintryMix;
   }

@@ -53,6 +53,17 @@ void main() {
         isFalse);
   });
 
+  test('비·눈 기록 없음은 강수일로 세지 않고 수집 실패와 구분한다', () {
+    final day = _day('10', {'weatherLabel': '비·눈 기록 없음'});
+    expect(weekWeatherLabel(day), '비·눈 기록 없음');
+    expect(weekPrecipitation(day), isFalse);
+    expect(
+        weekPrecipitation(_day('11', {
+          'weatherLabel': '하늘 상태 관측 없음',
+        })),
+        isNull);
+  });
+
   test('빗방울을 포함한 강수 현상은 일부 결측이 있어도 확인된 날로 센다', () {
     for (final label in ['비', '눈', '소나기', '빗방울', '눈날림', '비/눈', '빗방울/눈날림']) {
       expect(

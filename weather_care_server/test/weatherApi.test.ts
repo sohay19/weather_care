@@ -324,7 +324,7 @@ describe('fast Main weather', () => {
     expect(missing.precipitationPeriod).toBeNull();
   });
 
-  it('Main·Today 환경 보완과 현재 시간 선택을 모두 거친 실제 응답에 총 적설을 보존한다', async () => {
+  it('현재 총 적설 캐시가 남아 있어도 Main·Today 응답에서 사용하지 않는다', async () => {
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-10T13:05:00+09:00'));
     try {
       const hourly=[snapshot(13,{observedAt:'2026-10-10T13:00:00+09:00',forecastAt:'2026-10-10T13:00:00+09:00'})];
@@ -339,8 +339,7 @@ describe('fast Main weather', () => {
         const response=await router.request(`/${endpoint}?nx=58&ny=124`,{}, {DB:env.DB});
         const body=await response.json<{current:WeatherSnapshot;hourly:WeatherSnapshot[]}>();
         expect(response.status).toBe(200);
-        expect(body.current).toMatchObject({snowDepthCm:0,snowDepthStatus:'AVAILABLE',
-          snowDepthObservedAt:'2026-10-10T12:00:00+09:00',snowDepthStationId:'42',snowDepthProvider:'KMA_APIHUB_SNOW_TOTAL'});
+        expect(Object.keys(body.current).filter(key=>key.startsWith('snowDepth'))).toEqual([]);
         expect(body.hourly.every(slot=>slot.snowDepthCm===undefined)).toBe(true);
       }
     }finally{vi.useRealTimers();}

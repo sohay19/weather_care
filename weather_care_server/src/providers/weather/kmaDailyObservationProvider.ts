@@ -261,8 +261,8 @@ function toDailyForecast(
       ? '눈'
       : hasRain
         ? '비'
-        : rain === 0 && snow === 0
-          ? '강수 관측 없음'
+        : rain === 0 && (snow === 0 || availability?.snowfallAmount === 'NO_RECORD')
+          ? '비·눈 기록 없음'
           : '하늘 상태 관측 없음';
   return {
     date: station.date.replaceAll('-', ''),

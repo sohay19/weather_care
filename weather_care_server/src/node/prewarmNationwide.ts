@@ -5,8 +5,6 @@ import { gridObservationKoreanIso, latestGridObservationTime, observationsFromGr
 import type { UltraShortObservation } from '../providers/weather/kmaUltraShortObservationProvider';
 import { pathToFileURL } from 'node:url';
 import { runWeatherCollectionJob } from '../collection/weatherCollectionJob';
-import { CURRENT_SNOW_CACHE_KEY } from '../services/currentSnowCache';
-import { snowStationIsFresh, type SnowSnapshot } from '../providers/weather/kmaSnowObservationProvider';
 import {
   cacheRecordIsFresh,
   collectedCacheKey,
@@ -185,7 +183,6 @@ export function inspectOperationalPrewarm(
   required.add(NATIONAL_UV_KEY);
   required.add(NATIONAL_VISIBILITY_KEY);
   required.add(NATIONAL_DAILY_KEY);
-  required.add(CURRENT_SNOW_CACHE_KEY);
   required.add('NATIONAL_FORECAST_SOURCE');
   const completeHours = runtime.database.sqlite.prepare(`SELECT COUNT(*) AS count FROM (
     SELECT valid_time,issue_time FROM nationwide_forecast_fields
@@ -249,10 +246,6 @@ function cacheRowHasUsablePayload(row: {
   if (row.status !== 'AVAILABLE' || row.payload.trim().length === 0) return false;
   try {
     const value: unknown = JSON.parse(row.payload);
-    if (row.cacheKey === CURRENT_SNOW_CACHE_KEY) {
-      const snapshot = value as SnowSnapshot;
-      return Array.isArray(snapshot.stations) && snapshot.stations.some((station)=>snowStationIsFresh(station,now));
-    }
     if (row.cacheKey === NATIONAL_UV_KEY) {
       const uv = value as { forecasts?: Record<string, { points?: unknown; issuedAt?: string }> };
       return !!uv.forecasts && Object.keys(uv.forecasts).length > 0 &&

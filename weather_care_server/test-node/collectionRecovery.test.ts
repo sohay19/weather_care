@@ -155,6 +155,7 @@ describe('적설의 독립 가용성',()=>{
     const day=dailyObservationsAtLocations(snapshot,[{latitude:37.5,longitude:127}],'2026-10-08','2026-10-08')[0][0];
     expect(day.weatherDataComplete).toBe(true);expect(day.snowfallDataAvailable).toBe(false);
     expect(day.observationAvailability!.snowfallAmount).toBe('NO_RECORD');
+    expect(day.skyCondition).toBe('비·눈 기록 없음');
     await provider.getNationwide('2026-10-08','2026-10-08',snapshot);expect(calls).toHaveLength(4);
   });
   it('적설 실패 시 UNAVAILABLE을 표시하고 정상 지표를 재요청하지 않는다',async()=>{
@@ -167,14 +168,17 @@ describe('적설의 독립 가용성',()=>{
     const snapshot=await provider.getNationwide('2026-10-08','2026-10-08');
     expect(snapshot.completedDates).toEqual(['2026-10-08']);expect(snapshot.settledDates).toEqual([]);
     expect(snapshot.metricAvailability!['2026-10-08'].sd_day_max).toBe('UNAVAILABLE');
+    const day=dailyObservationsAtLocations(snapshot,[{latitude:37.5,longitude:127}],'2026-10-08','2026-10-08')[0][0];
+    expect(day.skyCondition).toBe('하늘 상태 관측 없음');
     fail=false;const final=await provider.getNationwide('2026-10-08','2026-10-08',snapshot);
     expect(calls.slice(4)).toEqual(['sd_day_max']);expect(final.metricAvailability!['2026-10-08'].sd_day_max).toBe('AVAILABLE');
+    expect(dailyObservationsAtLocations(final,[{latitude:37.5,longitude:127}],'2026-10-08','2026-10-08')[0][0].skyCondition).toBe('비·눈 기록 없음');
   });
   it('먼 관측소의 양수 적설을 눈 기록 없는 인근 기온 관측소에 확대하지 않는다',()=>{
     const snapshot={snowfallMetricAvailable:true,stations:[
       {date:'2026-10-08',stationId:'A',latitude:37.5,longitude:127,minTemperature:18,maxTemperature:22,precipitationAmount:0},
       {date:'2026-10-08',stationId:'B',latitude:38.5,longitude:129,snowfallAmount:15}]};
     const day=dailyObservationsAtLocations(snapshot,[{latitude:37.5,longitude:127}],'2026-10-08','2026-10-08')[0][0];
-    expect(day.snowfallDataAvailable).toBe(false);expect(day.skyCondition).toBe('하늘 상태 관측 없음');
+    expect(day.snowfallDataAvailable).toBe(false);expect(day.skyCondition).toBe('비·눈 기록 없음');
   });
 });

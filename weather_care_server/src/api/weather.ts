@@ -1,5 +1,4 @@
 import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } from '../services/nationwideWeatherCache';
-import { currentSnowFields } from '../services/currentSnowCache';
 import { readCachedMidTermForecast } from '../services/midTermForecastCache';
 import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
 import { Hono } from 'hono';
@@ -174,11 +173,11 @@ router.get('/main', async (c) => {
       visibilityRecord?.value,
       generatedAt,
     );
-    const current = { ...currentFromUltraShortObservation(
+    const current = currentFromUltraShortObservation(
       forecast.current,
       ultraShortRecord,
       generatedAt,
-    ), ...await currentSnowFields(c.env.DB, location, generatedAt) };
+    );
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weekly?.status === 'AVAILABLE' ? weekly.value.airQuality : [], generatedAt,
@@ -325,11 +324,11 @@ router.get('/today', async (c) => {
       visibilityRecord?.value,
       generatedAt,
     );
-    const current = { ...currentFromUltraShortObservation(
+    const current = currentFromUltraShortObservation(
       forecast.current,
       ultraShortRecord,
       generatedAt,
-    ), ...await currentSnowFields(c.env.DB, location, generatedAt) };
+    );
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,

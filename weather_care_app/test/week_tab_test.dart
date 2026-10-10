@@ -201,7 +201,7 @@ void main() {
   testWidgets('지난 날의 실제 관측을 저장된 예보와 구분한다', (tester) async {
     final observation = WeeklyForecastItem.fromJson({
       'forecastDate': '2026-09-08',
-      'weatherLabel': '강수 관측 없음',
+      'weatherLabel': '비·눈 기록 없음',
       'forecastSource': 'KMA_OBSERVATION',
       'historical': true,
       'min': 18,
@@ -217,6 +217,10 @@ void main() {
     await _pump(tester, [observation]);
 
     expect(find.text('실제 관측'), findsOneWidget);
+    expect(find.text('비·눈 기록 없음'), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-condition-unknown')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-condition-rain')), findsNothing);
     expect(find.textContaining('예보격자 대표점에서 3.2km'), findsOneWidget);
     expect(find.text('강수 관측'), findsOneWidget);
     expect(find.text('지난 날은 준비물 추천 대상이 아니에요'), findsOneWidget);

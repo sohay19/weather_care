@@ -96,6 +96,7 @@ String? weekWeatherLabel(WeeklyForecastItem day) {
     '눈날림' => '눈날림',
     '비/눈' || '비와눈' => '비/눈',
     '빗방울/눈날림' => '빗방울/눈날림',
+    '비·눈기록없음' => '비·눈 기록 없음',
     '강수관측없음' => '강수 관측 없음',
     '하늘상태관측없음' => '하늘 상태 관측 없음',
     _ => null,
@@ -105,7 +106,7 @@ String? weekWeatherLabel(WeeklyForecastItem day) {
 bool? weekPrecipitation(WeeklyForecastItem day) {
   final label = weekWeatherLabel(day);
   if (label == null) return null;
-  if (label == '강수 관측 없음') return false;
+  if (label == '비·눈 기록 없음' || label == '강수 관측 없음') return false;
   if (label == '하늘 상태 관측 없음') return null;
   if (!const ['맑음', '구름 많음', '흐림'].contains(label)) return true;
   // A clear received slot does not establish absence in missing slots.

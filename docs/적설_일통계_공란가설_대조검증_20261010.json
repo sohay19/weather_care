@@ -1,0 +1,1787 @@
+{
+  "checkedAt": "2026-10-10T14:16:52.776187+00:00",
+  "scope": "기존 일 최심신적설 빈 응답의 무적설 공란 가설 대조. 현재 총 적설 수집 재개 아님",
+  "officialSourceDescription": "기상청 날씨누리에서 기상자료개방포털 자료를 표출하는 공식 경로. 내부 DB 직접 조회나 독립 관측망 대조 아님",
+  "verdict": "확인한 216개 지점·날짜에서는 공식 자료의 수치 유무와 기존 API 행 유무 일치. 10/8·9는 24개 유인 관서 모두 신적설 공란·눈 관련 현상 기록 없음으로 가설 지지",
+  "supplierInternalPolicyConfirmed": false,
+  "humanObservationLogsVerified": false,
+  "analysis": {
+    "officialSites": 24,
+    "octoberStationDays": 48,
+    "octoberBlankSnow": 48,
+    "octoberSnowPhenomenaRecorded": 0,
+    "winterApiRows": 30,
+    "winterAllMatch": true,
+    "winterExtraOfficialNumericRows": [],
+    "winterChecks": [
+      {
+        "stationId": "93",
+        "date": "2026-02-01",
+        "api": 0.3,
+        "official": "0.3",
+        "match": true
+      },
+      {
+        "stationId": "102",
+        "date": "2026-02-01",
+        "api": 0.4,
+        "official": "0.4",
+        "match": true
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-01",
+        "api": 0.3,
+        "official": "0.3",
+        "match": true
+      },
+      {
+        "stationId": "119",
+        "date": "2026-02-01",
+        "api": 0.1,
+        "official": "0.1",
+        "match": true
+      },
+      {
+        "stationId": "131",
+        "date": "2026-02-01",
+        "api": 0.5,
+        "official": "0.5",
+        "match": true
+      },
+      {
+        "stationId": "133",
+        "date": "2026-02-01",
+        "api": 0.3,
+        "official": "0.3",
+        "match": true
+      },
+      {
+        "stationId": "146",
+        "date": "2026-02-01",
+        "api": 0.1,
+        "official": "0.1",
+        "match": true
+      },
+      {
+        "stationId": "177",
+        "date": "2026-02-01",
+        "api": 0.0,
+        "official": "0.0",
+        "match": true
+      },
+      {
+        "stationId": "93",
+        "date": "2026-02-02",
+        "api": 8.4,
+        "official": "8.4",
+        "match": true
+      },
+      {
+        "stationId": "102",
+        "date": "2026-02-02",
+        "api": 0.4,
+        "official": "0.4",
+        "match": true
+      },
+      {
+        "stationId": "108",
+        "date": "2026-02-02",
+        "api": 6.2,
+        "official": "6.2",
+        "match": true
+      },
+      {
+        "stationId": "112",
+        "date": "2026-02-02",
+        "api": 2.6,
+        "official": "2.6",
+        "match": true
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-02",
+        "api": 7.5,
+        "official": "7.5",
+        "match": true
+      },
+      {
+        "stationId": "119",
+        "date": "2026-02-02",
+        "api": 4.2,
+        "official": "4.2",
+        "match": true
+      },
+      {
+        "stationId": "131",
+        "date": "2026-02-02",
+        "api": 2.8,
+        "official": "2.8",
+        "match": true
+      },
+      {
+        "stationId": "133",
+        "date": "2026-02-02",
+        "api": 3.9,
+        "official": "3.9",
+        "match": true
+      },
+      {
+        "stationId": "136",
+        "date": "2026-02-02",
+        "api": 0.8,
+        "official": "0.8",
+        "match": true
+      },
+      {
+        "stationId": "143",
+        "date": "2026-02-02",
+        "api": 1.7,
+        "official": "1.7",
+        "match": true
+      },
+      {
+        "stationId": "146",
+        "date": "2026-02-02",
+        "api": 2.3,
+        "official": "2.3",
+        "match": true
+      },
+      {
+        "stationId": "156",
+        "date": "2026-02-02",
+        "api": 3.3,
+        "official": "3.3",
+        "match": true
+      },
+      {
+        "stationId": "165",
+        "date": "2026-02-02",
+        "api": 1.7,
+        "official": "1.7",
+        "match": true
+      },
+      {
+        "stationId": "168",
+        "date": "2026-02-02",
+        "api": 0.4,
+        "official": "0.4",
+        "match": true
+      },
+      {
+        "stationId": "177",
+        "date": "2026-02-02",
+        "api": 0.7,
+        "official": "0.7",
+        "match": true
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-06",
+        "api": 13.9,
+        "official": "13.9",
+        "match": true
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-07",
+        "api": 31.5,
+        "official": "31.5",
+        "match": true
+      },
+      {
+        "stationId": "156",
+        "date": "2026-02-07",
+        "api": 4.0,
+        "official": "4.0",
+        "match": true
+      },
+      {
+        "stationId": "165",
+        "date": "2026-02-07",
+        "api": 8.0,
+        "official": "8.0",
+        "match": true
+      },
+      {
+        "stationId": "169",
+        "date": "2026-02-07",
+        "api": 0.6,
+        "official": "0.6",
+        "match": true
+      },
+      {
+        "stationId": "184",
+        "date": "2026-02-07",
+        "api": 1.3,
+        "official": "1.3",
+        "match": true
+      },
+      {
+        "stationId": "189",
+        "date": "2026-02-07",
+        "api": 0.4,
+        "official": "0.4",
+        "match": true
+      }
+    ],
+    "october": [
+      {
+        "stationId": "108",
+        "stationName": "서울(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.2℃ 최고기온:25.7℃ 최저기온:11.4℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "108",
+        "stationName": "서울(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.0℃ 최고기온:26.2℃ 최저기온:12.6℃ 평균운량:2.9 일강수량: -"
+      },
+      {
+        "stationId": "102",
+        "stationName": "백령도(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.5℃ 최고기온:22.6℃ 최저기온:14.3℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "102",
+        "stationName": "백령도(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "박무",
+        "dailyContext": "평균기온:18.2℃ 최고기온:22.7℃ 최저기온:15.2℃ 평균운량:1.9 일강수량: -"
+      },
+      {
+        "stationId": "112",
+        "stationName": "인천(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.5℃ 최고기온:24.2℃ 최저기온:13.3℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "112",
+        "stationName": "인천(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.3℃ 최고기온:24.9℃ 최저기온:15.1℃ 평균운량:3.1 일강수량: -"
+      },
+      {
+        "stationId": "119",
+        "stationName": "수원(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:16.9℃ 최고기온:25.4℃ 최저기온:9.8℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "119",
+        "stationName": "수원(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "박무 연무",
+        "dailyContext": "평균기온:17.3℃ 최고기온:25.2℃ 최저기온:11.2℃ 평균운량:3.1 일강수량: -"
+      },
+      {
+        "stationId": "93",
+        "stationName": "북춘천(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:13.7℃ 최고기온:24.3℃ 최저기온:5.5℃ 평균운량:0.4 일강수량: -"
+      },
+      {
+        "stationId": "93",
+        "stationName": "북춘천(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "박무",
+        "dailyContext": "평균기온:14.2℃ 최고기온:24.6℃ 최저기온:6.7℃ 평균운량:2.8 일강수량: -"
+      },
+      {
+        "stationId": "104",
+        "stationName": "북강릉(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:17.6℃ 최고기온:24.2℃ 최저기온:12.2℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "104",
+        "stationName": "북강릉(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.2℃ 최고기온:24.8℃ 최저기온:13.7℃ 평균운량:1.5 일강수량: -"
+      },
+      {
+        "stationId": "115",
+        "stationName": "울릉도(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.0℃ 최고기온:24.8℃ 최저기온:16.4℃ 평균운량:0.1 일강수량: -"
+      },
+      {
+        "stationId": "115",
+        "stationName": "울릉도(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.0℃ 최고기온:24.6℃ 최저기온:17.0℃ 평균운량:1.3 일강수량: -"
+      },
+      {
+        "stationId": "131",
+        "stationName": "청주(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:17.9℃ 최고기온:25.2℃ 최저기온:10.8℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "131",
+        "stationName": "청주(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.9℃ 최고기온:26.1℃ 최저기온:11.8℃ 평균운량:3.1 일강수량: -"
+      },
+      {
+        "stationId": "177",
+        "stationName": "홍성(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "박무",
+        "dailyContext": "평균기온:16.2℃ 최고기온:25.7℃ 최저기온:7.0℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "177",
+        "stationName": "홍성(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "박무",
+        "dailyContext": "평균기온:17.4℃ 최고기온:26.3℃ 최저기온:9.3℃ 평균운량:3.0 일강수량: -"
+      },
+      {
+        "stationId": "133",
+        "stationName": "대전(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:17.0℃ 최고기온:25.6℃ 최저기온:9.3℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "133",
+        "stationName": "대전(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:17.6℃ 최고기온:26.3℃ 최저기온:10.0℃ 평균운량:3.9 일강수량: -"
+      },
+      {
+        "stationId": "146",
+        "stationName": "전주(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.2℃ 최고기온:26.4℃ 최저기온:10.8℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "146",
+        "stationName": "전주(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.0℃ 최고기온:26.9℃ 최저기온:11.7℃ 평균운량:2.8 일강수량: -"
+      },
+      {
+        "stationId": "156",
+        "stationName": "광주(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.6℃ 최고기온:26.8℃ 최저기온:11.2℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "156",
+        "stationName": "광주(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.3℃ 최고기온:26.8℃ 최저기온:12.6℃ 평균운량:3.1 일강수량: -"
+      },
+      {
+        "stationId": "165",
+        "stationName": "목포(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.5℃ 최고기온:23.7℃ 최저기온:13.1℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "165",
+        "stationName": "목포(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.0℃ 최고기온:24.4℃ 최저기온:14.3℃ 평균운량:3.6 일강수량: -"
+      },
+      {
+        "stationId": "169",
+        "stationName": "흑산도(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.0℃ 최고기온:23.6℃ 최저기온:16.1℃ 평균운량:0.6 일강수량: -"
+      },
+      {
+        "stationId": "169",
+        "stationName": "흑산도(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.6℃ 최고기온:25.6℃ 최저기온:16.1℃ 평균운량:4.1 일강수량: -"
+      },
+      {
+        "stationId": "168",
+        "stationName": "여수(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.0℃ 최고기온:25.4℃ 최저기온:16.0℃ 평균운량:0.1 일강수량: -"
+      },
+      {
+        "stationId": "168",
+        "stationName": "여수(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.4℃ 최고기온:25.1℃ 최저기온:16.7℃ 평균운량:3.9 일강수량: -"
+      },
+      {
+        "stationId": "136",
+        "stationName": "안동(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "박무 안개",
+        "dailyContext": "평균기온:15.0℃ 최고기온:24.9℃ 최저기온:6.5℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "136",
+        "stationName": "안동(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "박무 안개",
+        "dailyContext": "평균기온:15.9℃ 최고기온:26.0℃ 최저기온:7.8℃ 평균운량:2.8 일강수량: -"
+      },
+      {
+        "stationId": "138",
+        "stationName": "포항(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.3℃ 최고기온:26.3℃ 최저기온:13.1℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "138",
+        "stationName": "포항(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.4℃ 최고기온:27.3℃ 최저기온:14.1℃ 평균운량:2.1 일강수량: -"
+      },
+      {
+        "stationId": "143",
+        "stationName": "대구(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:17.7℃ 최고기온:27.2℃ 최저기온:9.3℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "143",
+        "stationName": "대구(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.7℃ 최고기온:27.8℃ 최저기온:10.6℃ 평균운량:1.5 일강수량: -"
+      },
+      {
+        "stationId": "159",
+        "stationName": "부산(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.8℃ 최고기온:26.7℃ 최저기온:16.1℃ 평균운량:0.1 일강수량: -"
+      },
+      {
+        "stationId": "159",
+        "stationName": "부산(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:21.5℃ 최고기온:27.4℃ 최저기온:16.7℃ 평균운량:4.3 일강수량: -"
+      },
+      {
+        "stationId": "152",
+        "stationName": "울산(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.0℃ 최고기온:25.4℃ 최저기온:11.6℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "152",
+        "stationName": "울산(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.1℃ 최고기온:26.8℃ 최저기온:12.1℃ 평균운량:2.5 일강수량: -"
+      },
+      {
+        "stationId": "155",
+        "stationName": "창원(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:18.8℃ 최고기온:26.1℃ 최저기온:14.1℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "155",
+        "stationName": "창원(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.7℃ 최고기온:26.5℃ 최저기온:14.5℃ 평균운량:3.9 일강수량: -"
+      },
+      {
+        "stationId": "296",
+        "stationName": "북부산(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:17.7℃ 최고기온:27.4℃ 최저기온:9.7℃ 평균운량:0.0 일강수량: -"
+      },
+      {
+        "stationId": "296",
+        "stationName": "북부산(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:19.0℃ 최고기온:27.8℃ 최저기온:11.0℃ 평균운량:2.9 일강수량: -"
+      },
+      {
+        "stationId": "184",
+        "stationName": "제주(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:20.2℃ 최고기온:24.1℃ 최저기온:16.3℃ 평균운량:1.8 일강수량: -"
+      },
+      {
+        "stationId": "184",
+        "stationName": "제주(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:21.1℃ 최고기온:24.5℃ 최저기온:17.8℃ 평균운량:5.3 일강수량: -"
+      },
+      {
+        "stationId": "189",
+        "stationName": "서귀포(유)",
+        "date": "2026-10-08",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:21.1℃ 최고기온:25.8℃ 최저기온:17.0℃ 평균운량:1.1 일강수량: -"
+      },
+      {
+        "stationId": "189",
+        "stationName": "서귀포(유)",
+        "date": "2026-10-09",
+        "snowValue": "",
+        "phenomena": "",
+        "dailyContext": "평균기온:22.6℃ 최고기온:27.5℃ 최저기온:19.2℃ 평균운량:4.1 일강수량: -"
+      }
+    ],
+    "winterStationDays": 168,
+    "winterBlankStationDays": 138,
+    "controls": [
+      {
+        "stationId": "93",
+        "date": "2026-02-01",
+        "api": 0.3,
+        "official": "0.3",
+        "match": true,
+        "phenomena": "눈"
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-01",
+        "api": 0.3,
+        "official": "0.3",
+        "match": true,
+        "phenomena": "눈"
+      },
+      {
+        "stationId": "177",
+        "date": "2026-02-01",
+        "api": 0.0,
+        "official": "0.0",
+        "match": true,
+        "phenomena": "눈 박무 연무"
+      },
+      {
+        "stationId": "93",
+        "date": "2026-02-02",
+        "api": 8.4,
+        "official": "8.4",
+        "match": true,
+        "phenomena": "눈 박무"
+      },
+      {
+        "stationId": "108",
+        "date": "2026-02-02",
+        "api": 6.2,
+        "official": "6.2",
+        "match": true,
+        "phenomena": "눈 박무 연무"
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-02",
+        "api": 7.5,
+        "official": "7.5",
+        "match": true,
+        "phenomena": "눈"
+      },
+      {
+        "stationId": "177",
+        "date": "2026-02-02",
+        "api": 0.7,
+        "official": "0.7",
+        "match": true,
+        "phenomena": "눈 박무 연무"
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-06",
+        "api": 13.9,
+        "official": "13.9",
+        "match": true,
+        "phenomena": "눈"
+      },
+      {
+        "stationId": "115",
+        "date": "2026-02-07",
+        "api": 31.5,
+        "official": "31.5",
+        "match": true,
+        "phenomena": "눈"
+      }
+    ],
+    "apiCalls": 7,
+    "apiBytes": 6184
+  },
+  "api": {
+    "checkedAt": "2026-10-10T14:14:04.612Z",
+    "results": [
+      {
+        "name": "oct08-all",
+        "start": "20261008",
+        "end": "20261008",
+        "station": "0",
+        "status": 200,
+        "responseBytes": 633,
+        "rows": []
+      },
+      {
+        "name": "oct09-all",
+        "start": "20261009",
+        "end": "20261009",
+        "station": "0",
+        "status": 200,
+        "responseBytes": 633,
+        "rows": []
+      },
+      {
+        "name": "oct08-09-seoul",
+        "start": "20261008",
+        "end": "20261009",
+        "station": "108",
+        "status": 200,
+        "responseBytes": 633,
+        "rows": []
+      },
+      {
+        "name": "oct08-09-ulleung",
+        "start": "20261008",
+        "end": "20261009",
+        "station": "115",
+        "status": 200,
+        "responseBytes": 633,
+        "rows": []
+      },
+      {
+        "name": "oct08-09-hongseong",
+        "start": "20261008",
+        "end": "20261009",
+        "station": "177",
+        "status": 200,
+        "responseBytes": 633,
+        "rows": []
+      },
+      {
+        "name": "winter-all",
+        "start": "20260201",
+        "end": "20260207",
+        "station": "0",
+        "status": 200,
+        "responseBytes": 2278,
+        "rows": [
+          "20260201,93,127.75443000,37.94738000,95.78,0.3,북춘천=",
+          "20260201,102,124.71237000,37.97396000,36.00,0.4,백령도=",
+          "20260201,115,130.89863000,37.48129000,221.14,0.3,울릉도=",
+          "20260201,119,126.98300000,37.25746000,39.81,0.1,수원=",
+          "20260201,131,127.44066000,36.63924000,58.70,0.5,청주=",
+          "20260201,133,127.37210000,36.37199000,67.79,0.3,대전=",
+          "20260201,146,127.11718000,35.84092000,60.44,0.1,전주=",
+          "20260201,177,126.68772000,36.65759000,27.74,0.0,홍성=",
+          "20260202,93,127.75443000,37.94738000,95.78,8.4,북춘천=",
+          "20260202,102,124.71237000,37.97396000,36.00,0.4,백령도=",
+          "20260202,108,126.96580000,37.57142000,85.67,6.2,서울=",
+          "20260202,112,126.62490000,37.47772000,68.99,2.6,인천=",
+          "20260202,115,130.89863000,37.48129000,221.14,7.5,울릉도=",
+          "20260202,119,126.98300000,37.25746000,39.81,4.2,수원=",
+          "20260202,131,127.44066000,36.63924000,58.70,2.8,청주=",
+          "20260202,133,127.37210000,36.37199000,67.79,3.9,대전=",
+          "20260202,136,128.70733000,36.57293000,141.26,0.8,안동=",
+          "20260202,143,128.65296000,35.87797000,54.27,1.7,대구=",
+          "20260202,146,127.11718000,35.84092000,60.44,2.3,전주=",
+          "20260202,156,126.89156000,35.17294000,70.28,3.3,광주=",
+          "20260202,165,126.38151000,34.81732000,44.70,1.7,목포=",
+          "20260202,168,127.74063000,34.73929000,65.93,0.4,여수=",
+          "20260202,177,126.68772000,36.65759000,27.74,0.7,홍성=",
+          "20260206,115,130.89863000,37.48129000,221.14,13.9,울릉도=",
+          "20260207,115,130.89863000,37.48129000,221.14,31.5,울릉도=",
+          "20260207,156,126.89156000,35.17294000,70.28,4.0,광주=",
+          "20260207,165,126.38151000,34.81732000,44.70,8.0,목포=",
+          "20260207,169,125.45105000,34.68719000,75.12,0.6,흑산도=",
+          "20260207,184,126.52969000,33.51411000,20.79,1.3,제주=",
+          "20260207,189,126.56530000,33.24616000,51.86,0.4,서귀포="
+        ]
+      },
+      {
+        "name": "winter-hongseong",
+        "start": "20260201",
+        "end": "20260207",
+        "station": "177",
+        "status": 200,
+        "responseBytes": 741,
+        "rows": [
+          "20260201,177,126.68772000,36.65759000,27.74,0.0,홍성=",
+          "20260202,177,126.68772000,36.65759000,27.74,0.7,홍성="
+        ]
+      }
+    ]
+  },
+  "publicSourceMetadata": [
+    {
+      "stationId": "108",
+      "stationName": "서울(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=108&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "7875ec4ab0aadd1deb9246f66900f9e524b6eb020391fc03563282f8f1b6174b",
+      "responseBytes": 144967,
+      "file": "108-snow-10.html"
+    },
+    {
+      "stationId": "102",
+      "stationName": "백령도(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=102&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "a3fad15cc976efc1b6bb40b02f380d0d5df3ada83026b54296b784755ceef4f7",
+      "responseBytes": 144964,
+      "file": "102-snow-10.html"
+    },
+    {
+      "stationId": "112",
+      "stationName": "인천(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=112&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "15062a2b840354d095c42b629e19104d86e2e0d7effd5d7863628cd8af65c9e3",
+      "responseBytes": 144967,
+      "file": "112-snow-10.html"
+    },
+    {
+      "stationId": "119",
+      "stationName": "수원(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=119&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "1c05b05d6e0828772a36a119755ba27636086e9df9899b0483dec0aac7979f4f",
+      "responseBytes": 144964,
+      "file": "119-snow-10.html"
+    },
+    {
+      "stationId": "93",
+      "stationName": "북춘천(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=93&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "9ae8aa408cbe22126c1db1b4f96585fcae666aaf55daf141f025ed18f3d01405",
+      "responseBytes": 144958,
+      "file": "93-snow-10.html"
+    },
+    {
+      "stationId": "104",
+      "stationName": "북강릉(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=104&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "2d6c2350dd893483ce57537b15618879a178bb3c30bd4f01a1649ecb1c9d1a39",
+      "responseBytes": 144987,
+      "file": "104-snow-10.html"
+    },
+    {
+      "stationId": "115",
+      "stationName": "울릉도(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=115&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "f9797e498361c885f31c643d75a8881e20cbfe4eaa50ccf25749eed1d8f39b19",
+      "responseBytes": 144889,
+      "file": "115-snow-10.html"
+    },
+    {
+      "stationId": "131",
+      "stationName": "청주(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=131&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "528bc4ec7c40d400e4ac5fa5d8bdb5f37ef7994273d5d61f688bb52ac8c02ec1",
+      "responseBytes": 144946,
+      "file": "131-snow-10.html"
+    },
+    {
+      "stationId": "177",
+      "stationName": "홍성(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=177&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "05f2bdc2277b952012b4e8f07aa45f6a12d627fd7a61e1673d830e5a0e2e3399",
+      "responseBytes": 144949,
+      "file": "177-snow-10.html"
+    },
+    {
+      "stationId": "133",
+      "stationName": "대전(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=133&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "fe8793634f2805a4ae7ba5fdcc369b050b2520116555831817d42c0eff981164",
+      "responseBytes": 144961,
+      "file": "133-snow-10.html"
+    },
+    {
+      "stationId": "146",
+      "stationName": "전주(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=146&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "a9e6b4eec006f7c8a271a03703955a5257c287afa88df08787eb706b053a6e40",
+      "responseBytes": 144958,
+      "file": "146-snow-10.html"
+    },
+    {
+      "stationId": "156",
+      "stationName": "광주(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=156&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "54f5f772e40445ffe51b57a91369e2ca2354da7524751035479989c9af7ac774",
+      "responseBytes": 144952,
+      "file": "156-snow-10.html"
+    },
+    {
+      "stationId": "165",
+      "stationName": "목포(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=165&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "e964b65db74efc01bfe724aa3e50bcf34c3177a97aa1e7d8654527493a36f7f8",
+      "responseBytes": 144958,
+      "file": "165-snow-10.html"
+    },
+    {
+      "stationId": "169",
+      "stationName": "흑산도(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=169&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "7b55d00f6debdc372e939fa2c1f513100927d4721f421f99f44cf964e8305d7f",
+      "responseBytes": 144967,
+      "file": "169-snow-10.html"
+    },
+    {
+      "stationId": "168",
+      "stationName": "여수(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=168&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "7bf645f5ef988f14f74ef21affb99d5cbe534a9f5e1e68c7a0a17dc0888cbd09",
+      "responseBytes": 144985,
+      "file": "168-snow-10.html"
+    },
+    {
+      "stationId": "136",
+      "stationName": "안동(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=136&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "d23c78298dfcf8434bdf85f1fdcb5a724171e13b480fbf77b462f5f271bc615a",
+      "responseBytes": 144970,
+      "file": "136-snow-10.html"
+    },
+    {
+      "stationId": "138",
+      "stationName": "포항(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=138&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "abb0be2276a6a5da6f7eada82822d8176db9bca98073c9e3fb30a8c83a24a307",
+      "responseBytes": 144991,
+      "file": "138-snow-10.html"
+    },
+    {
+      "stationId": "143",
+      "stationName": "대구(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=143&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "4a7ecc2515cb2ad58b3d0587f6c7c743a62ab5df7610fc02bc4d95309423ba81",
+      "responseBytes": 144982,
+      "file": "143-snow-10.html"
+    },
+    {
+      "stationId": "159",
+      "stationName": "부산(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=159&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "f5670065246ae3ff071251e4a68571466eb1f737d7435480cc0a316a51483618",
+      "responseBytes": 144991,
+      "file": "159-snow-10.html"
+    },
+    {
+      "stationId": "152",
+      "stationName": "울산(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=152&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "c4d25121678221061b5f071ec78bfc3d43c823ba3323552240f4847832705aad",
+      "responseBytes": 144991,
+      "file": "152-snow-10.html"
+    },
+    {
+      "stationId": "155",
+      "stationName": "창원(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=155&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "9dd4264970ab1de3d1d7f9fb21d8389119c473ea405bbdd8249b9eeebbe19f7a",
+      "responseBytes": 144991,
+      "file": "155-snow-10.html"
+    },
+    {
+      "stationId": "296",
+      "stationName": "북부산(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=296&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "49e8b624a808c96b03d4701d5c6ca90338fc5592cb227d7741ab6e697d7e27ca",
+      "responseBytes": 144991,
+      "file": "296-snow-10.html"
+    },
+    {
+      "stationId": "184",
+      "stationName": "제주(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=184&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "03a456b59a0e6528460b25152b23d3744de7acf06568ff4dbe4a1c36aa6f4228",
+      "responseBytes": 144973,
+      "file": "184-snow-10.html"
+    },
+    {
+      "stationId": "189",
+      "stationName": "서귀포(유)",
+      "kind": "snow",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=189&yy=2026&obs=28",
+      "status": 200,
+      "sha256": "de0929bf37c2d8c6f04afee850e1ac2ebc33cd3371e8bc0090cec7660565936b",
+      "responseBytes": 144973,
+      "file": "189-snow-10.html"
+    },
+    {
+      "stationId": "108",
+      "stationName": "서울(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=108&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "a54c53ffdee765d99c81694606d2a19ccac77d573ac63f2981fa03c39d93bc8d",
+      "responseBytes": 82590,
+      "file": "108-phenomena-10.html"
+    },
+    {
+      "stationId": "102",
+      "stationName": "백령도(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=102&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "accd6ad76bca5148adbfd409f194508727e28a49d23c7e6c951c9e0561cc2395",
+      "responseBytes": 82596,
+      "file": "102-phenomena-10.html"
+    },
+    {
+      "stationId": "112",
+      "stationName": "인천(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=112&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "e94bca0f220037dac2dfc06bb619dc71cc8bc614195d9dbe44fc9261e018eb76",
+      "responseBytes": 82558,
+      "file": "112-phenomena-10.html"
+    },
+    {
+      "stationId": "119",
+      "stationName": "수원(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=119&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "8a141d4dfb7d20d489166e7787ad3602837d9ce6919439f399aeeb7715af2c17",
+      "responseBytes": 82841,
+      "file": "119-phenomena-10.html"
+    },
+    {
+      "stationId": "93",
+      "stationName": "북춘천(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=93&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "64653f4ea47d9e42adf0894be75f58c7c664b1c5aaf1477c9367847ca7095f49",
+      "responseBytes": 82663,
+      "file": "93-phenomena-10.html"
+    },
+    {
+      "stationId": "104",
+      "stationName": "북강릉(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=104&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "75cb75c69e3b8cb42827e490b95010791331087e04ed77b7a9f1d727823246e2",
+      "responseBytes": 82529,
+      "file": "104-phenomena-10.html"
+    },
+    {
+      "stationId": "115",
+      "stationName": "울릉도(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=115&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "85cc3ea39bf69788fd1f1ea503265141a083af9c16bea29ad0a2eac3c014af5c",
+      "responseBytes": 82689,
+      "file": "115-phenomena-10.html"
+    },
+    {
+      "stationId": "131",
+      "stationName": "청주(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=131&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "cd0eff0da4b194bb32a22977dce01fb84c90fef65b8228eae504311b3be295d6",
+      "responseBytes": 82590,
+      "file": "131-phenomena-10.html"
+    },
+    {
+      "stationId": "177",
+      "stationName": "홍성(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=177&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "bb53b348c4fa1804f78a4c3688cfb148777b860063b6bac94f182c5d4558f246",
+      "responseBytes": 82692,
+      "file": "177-phenomena-10.html"
+    },
+    {
+      "stationId": "133",
+      "stationName": "대전(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=133&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "cf5f99819a89d9d6ca272dc12b3c9b6fcadfda91622c263d6f6120c6ed2a1e1d",
+      "responseBytes": 82558,
+      "file": "133-phenomena-10.html"
+    },
+    {
+      "stationId": "146",
+      "stationName": "전주(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=146&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "7b846ea2c9faf1b5237790b839de5df80e2951091a26454ce7ea8101278786a9",
+      "responseBytes": 82590,
+      "file": "146-phenomena-10.html"
+    },
+    {
+      "stationId": "156",
+      "stationName": "광주(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=156&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "6fdbc70cf149694ecffa9bf8f6dffa4e732d83ab6b7f63f1c2bf4d736c2ab497",
+      "responseBytes": 82558,
+      "file": "156-phenomena-10.html"
+    },
+    {
+      "stationId": "165",
+      "stationName": "목포(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=165&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "2b9e69ef64b81b7b7d6e0ce1e5a4becd245b42c52a90ac33c8dad6b00ed00bf1",
+      "responseBytes": 82526,
+      "file": "165-phenomena-10.html"
+    },
+    {
+      "stationId": "169",
+      "stationName": "흑산도(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=169&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "cb89341636186b9be076c44cf37444a22aa2025d7a39fce56bc890442f2b1a51",
+      "responseBytes": 82873,
+      "file": "169-phenomena-10.html"
+    },
+    {
+      "stationId": "168",
+      "stationName": "여수(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=168&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "aaefde9dd181aa4e767dfae2039498af40446de92cfcccf171af059904c81325",
+      "responseBytes": 82526,
+      "file": "168-phenomena-10.html"
+    },
+    {
+      "stationId": "136",
+      "stationName": "안동(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=136&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "ca46d6b1ebcdbc03db89bb402b50b111d10be8d2bba2b082c4ba06884a2f6b8f",
+      "responseBytes": 82958,
+      "file": "136-phenomena-10.html"
+    },
+    {
+      "stationId": "138",
+      "stationName": "포항(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=138&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "8ec7c7157a865b0c339f11fceae647f855bf7be0e3d9c16fffee102c33c2daed",
+      "responseBytes": 82558,
+      "file": "138-phenomena-10.html"
+    },
+    {
+      "stationId": "143",
+      "stationName": "대구(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=143&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "e0e67547f45a3f564a427a86fcdebc0e05a09232074d9187f6146afaa154529d",
+      "responseBytes": 82558,
+      "file": "143-phenomena-10.html"
+    },
+    {
+      "stationId": "159",
+      "stationName": "부산(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=159&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "f9e2182f8836560eb90bf473f0fb6848c4123fda8cbb2d6ae210e1dce088a2d5",
+      "responseBytes": 82526,
+      "file": "159-phenomena-10.html"
+    },
+    {
+      "stationId": "152",
+      "stationName": "울산(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=152&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "247547fe08e7d1d6ff7d4e7305482ac95960902fa21b0db933552b333105f72e",
+      "responseBytes": 82558,
+      "file": "152-phenomena-10.html"
+    },
+    {
+      "stationId": "155",
+      "stationName": "창원(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=155&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "5ad8d24bf77ac8cd0f277815de805970e24264a87cbc575a6ba3265610924607",
+      "responseBytes": 82567,
+      "file": "155-phenomena-10.html"
+    },
+    {
+      "stationId": "296",
+      "stationName": "북부산(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=296&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "bc492614aa9a354ca71b285a67b1d3db7515dc2c327eee14b63669adc2721b2d",
+      "responseBytes": 82742,
+      "file": "296-phenomena-10.html"
+    },
+    {
+      "stationId": "184",
+      "stationName": "제주(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=184&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "6416cecd85e27453a0672e4b8fe08f04061b2ee6e842d1cf0e37aa199154a286",
+      "responseBytes": 82622,
+      "file": "184-phenomena-10.html"
+    },
+    {
+      "stationId": "189",
+      "stationName": "서귀포(유)",
+      "kind": "phenomena",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=189&yy=2026&obs=9&mm=10",
+      "status": 200,
+      "sha256": "8ad64707128e2223432f3cd5d44d74afdcee7a3f042bf6492e0cd000261c68b1",
+      "responseBytes": 82806,
+      "file": "189-phenomena-10.html"
+    },
+    {
+      "stationId": "108",
+      "stationName": "서울(유)",
+      "kind": "phenomena",
+      "month": 2,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=108&yy=2026&obs=9&mm=2",
+      "status": 200,
+      "sha256": "1ab191c9e67e1e3e49ca50c16892c4688632d92865303de14728b75a4017a11a",
+      "responseBytes": 85383,
+      "file": "108-phenomena-2.html"
+    },
+    {
+      "stationId": "93",
+      "stationName": "북춘천(유)",
+      "kind": "phenomena",
+      "month": 2,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=93&yy=2026&obs=9&mm=2",
+      "status": 200,
+      "sha256": "e11e9eaffb8630c7327ed1de6621fd51e98771d64114e44da285781c9b345fbe",
+      "responseBytes": 84446,
+      "file": "93-phenomena-2.html"
+    },
+    {
+      "stationId": "115",
+      "stationName": "울릉도(유)",
+      "kind": "phenomena",
+      "month": 2,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=115&yy=2026&obs=9&mm=2",
+      "status": 200,
+      "sha256": "54d4697fe2080a6729b2bdc5eea0e7fd1749d557c02b15e3f1d414c431bd2c50",
+      "responseBytes": 83336,
+      "file": "115-phenomena-2.html"
+    },
+    {
+      "stationId": "177",
+      "stationName": "홍성(유)",
+      "kind": "phenomena",
+      "month": 2,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=177&yy=2026&obs=9&mm=2",
+      "status": 200,
+      "sha256": "649b45b9619369dc630b3b4d72c7e02b8653775333dbe0c816f8a3566f7917d3",
+      "responseBytes": 85750,
+      "file": "177-phenomena-2.html"
+    },
+    {
+      "stationId": "108",
+      "stationName": "서울(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=108&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "5f28b760ba248df2d043a8ab561ce226c31384f6e41bf72721196606afa14041",
+      "responseBytes": 91693,
+      "file": "108-context-10.html"
+    },
+    {
+      "stationId": "102",
+      "stationName": "백령도(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=102&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "d9b6760bdaf4c72a23cba5964242c9dd6586f27f94c5adb5e9a6cd4e864ed7b9",
+      "responseBytes": 91694,
+      "file": "102-context-10.html"
+    },
+    {
+      "stationId": "112",
+      "stationName": "인천(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=112&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "4303b1f7b7bea6450130f77d7730d365afba82a5e218f32192fa8f0e3999da25",
+      "responseBytes": 91691,
+      "file": "112-context-10.html"
+    },
+    {
+      "stationId": "119",
+      "stationName": "수원(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=119&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "5acbdf1c561bd0e1e4b1d3f812391e10b0d50dd8d2c8e3fa5ff7f8ef7f31ae17",
+      "responseBytes": 91688,
+      "file": "119-context-10.html"
+    },
+    {
+      "stationId": "93",
+      "stationName": "북춘천(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=93&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "24b962795cd8718ed2ad74a6707876242f98573f7faeef0b5e16a166e31e247c",
+      "responseBytes": 91686,
+      "file": "93-context-10.html"
+    },
+    {
+      "stationId": "104",
+      "stationName": "북강릉(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=104&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "ea33ed2bed10d5710c22ad362b2f2813552663fc662d5d54d6a547178b2e31d7",
+      "responseBytes": 91690,
+      "file": "104-context-10.html"
+    },
+    {
+      "stationId": "115",
+      "stationName": "울릉도(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=115&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "bc7d28237fb81afecd76587b86eaff0d1cea915844b4f37337911b7acc71fc84",
+      "responseBytes": 91702,
+      "file": "115-context-10.html"
+    },
+    {
+      "stationId": "131",
+      "stationName": "청주(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=131&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "1cb32850ee0616dceb12207d472519b415a21d1c80aa15f1dde4a629a17d194a",
+      "responseBytes": 91692,
+      "file": "131-context-10.html"
+    },
+    {
+      "stationId": "177",
+      "stationName": "홍성(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=177&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "6e917d15dbe6ea3c84829815afa66e0a6168d6faef3f4f1eba02de6ebd12d212",
+      "responseBytes": 91688,
+      "file": "177-context-10.html"
+    },
+    {
+      "stationId": "133",
+      "stationName": "대전(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=133&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "6b5a06ceff40a6f8e5a06b2a66c052c4ff5a3e5f7425197a97330f28b402457b",
+      "responseBytes": 91687,
+      "file": "133-context-10.html"
+    },
+    {
+      "stationId": "146",
+      "stationName": "전주(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=146&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "33b6fb9bdfd28e21cc572d147a20e4a0bb573ef7889a8da4fc6496efb12d7237",
+      "responseBytes": 91691,
+      "file": "146-context-10.html"
+    },
+    {
+      "stationId": "156",
+      "stationName": "광주(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=156&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "c4c5c181861d0ae495caeef629f3722bf8c467bc109299209b596ab9d52fcc9c",
+      "responseBytes": 91691,
+      "file": "156-context-10.html"
+    },
+    {
+      "stationId": "165",
+      "stationName": "목포(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=165&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "7682bdf58e7236aa2ebc3569b55e6af99a403172d4f30a590d6efed602214307",
+      "responseBytes": 91689,
+      "file": "165-context-10.html"
+    },
+    {
+      "stationId": "169",
+      "stationName": "흑산도(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=169&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "6ad32613620b2f9ef72eb9a876c6f25e6ddf3ac65d645c5be33fc41cfb4ae6f5",
+      "responseBytes": 91700,
+      "file": "169-context-10.html"
+    },
+    {
+      "stationId": "168",
+      "stationName": "여수(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=168&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "6b69232eaabe48b409f0c4574d540c017cd9933650e2537fbbd6f3ae67893840",
+      "responseBytes": 91689,
+      "file": "168-context-10.html"
+    },
+    {
+      "stationId": "136",
+      "stationName": "안동(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=136&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "30d642280669901c4ac3df2b8bdf96ad6bc9cad5db66898f0a014386bd4994b0",
+      "responseBytes": 91682,
+      "file": "136-context-10.html"
+    },
+    {
+      "stationId": "138",
+      "stationName": "포항(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=138&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "3be2d93b79b95c887a6a9d9715239848e03d29f5d95ed581f119ce6afbacf2d7",
+      "responseBytes": 91691,
+      "file": "138-context-10.html"
+    },
+    {
+      "stationId": "143",
+      "stationName": "대구(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=143&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "86cf26d8cf41ac2daa824195e4f2143ae71d87df10f29de237618b3c0156f807",
+      "responseBytes": 91689,
+      "file": "143-context-10.html"
+    },
+    {
+      "stationId": "159",
+      "stationName": "부산(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=159&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "0537fc55fc3cd2c7f761c216def22bc353cb59ca187bb97769c1580ea5aa8ab2",
+      "responseBytes": 91689,
+      "file": "159-context-10.html"
+    },
+    {
+      "stationId": "152",
+      "stationName": "울산(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=152&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "c5ca7e8742f8f3051586b18579ab3dd27f54fa2e7fda43a954b7f7a94f83117e",
+      "responseBytes": 91691,
+      "file": "152-context-10.html"
+    },
+    {
+      "stationId": "155",
+      "stationName": "창원(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=155&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "7f691d93c5a194866c09b2bd78409ddc6af56c032f91aaa2e4aa262da49d780c",
+      "responseBytes": 91689,
+      "file": "155-context-10.html"
+    },
+    {
+      "stationId": "296",
+      "stationName": "북부산(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=296&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "0a1673b39c7b2d441547acd700b955320cc7320ac4c0d3106c2aaaf3b203d462",
+      "responseBytes": 91692,
+      "file": "296-context-10.html"
+    },
+    {
+      "stationId": "184",
+      "stationName": "제주(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=184&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "f42cda79abea69f3a8c1ca93e643ae5a9bb92ce9564a7ae6b9101b5ba6beaf35",
+      "responseBytes": 91695,
+      "file": "184-context-10.html"
+    },
+    {
+      "stationId": "189",
+      "stationName": "서귀포(유)",
+      "kind": "context",
+      "month": 10,
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-day.do?stn=189&yy=2026&obs=1&mm=10",
+      "status": 200,
+      "sha256": "e2422586a1c3227e42000f9c34981898a9ed9112bfd7f168b99a46a6ce72f357",
+      "responseBytes": 91698,
+      "file": "189-context-10.html"
+    }
+  ],
+  "sourceSnowLabels": [
+    {
+      "stationId": "108",
+      "stationName": "서울(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=108&yy=2026&obs=28"
+    },
+    {
+      "stationId": "102",
+      "stationName": "백령도(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=102&yy=2026&obs=28"
+    },
+    {
+      "stationId": "112",
+      "stationName": "인천(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=112&yy=2026&obs=28"
+    },
+    {
+      "stationId": "119",
+      "stationName": "수원(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=119&yy=2026&obs=28"
+    },
+    {
+      "stationId": "93",
+      "stationName": "북춘천(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=93&yy=2026&obs=28"
+    },
+    {
+      "stationId": "104",
+      "stationName": "북강릉(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=104&yy=2026&obs=28"
+    },
+    {
+      "stationId": "115",
+      "stationName": "울릉도(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=115&yy=2026&obs=28"
+    },
+    {
+      "stationId": "131",
+      "stationName": "청주(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=131&yy=2026&obs=28"
+    },
+    {
+      "stationId": "177",
+      "stationName": "홍성(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=177&yy=2026&obs=28"
+    },
+    {
+      "stationId": "133",
+      "stationName": "대전(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=133&yy=2026&obs=28"
+    },
+    {
+      "stationId": "146",
+      "stationName": "전주(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=146&yy=2026&obs=28"
+    },
+    {
+      "stationId": "156",
+      "stationName": "광주(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=156&yy=2026&obs=28"
+    },
+    {
+      "stationId": "165",
+      "stationName": "목포(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=165&yy=2026&obs=28"
+    },
+    {
+      "stationId": "169",
+      "stationName": "흑산도(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=169&yy=2026&obs=28"
+    },
+    {
+      "stationId": "168",
+      "stationName": "여수(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=168&yy=2026&obs=28"
+    },
+    {
+      "stationId": "136",
+      "stationName": "안동(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=136&yy=2026&obs=28"
+    },
+    {
+      "stationId": "138",
+      "stationName": "포항(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=138&yy=2026&obs=28"
+    },
+    {
+      "stationId": "143",
+      "stationName": "대구(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=143&yy=2026&obs=28"
+    },
+    {
+      "stationId": "159",
+      "stationName": "부산(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=159&yy=2026&obs=28"
+    },
+    {
+      "stationId": "152",
+      "stationName": "울산(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=152&yy=2026&obs=28"
+    },
+    {
+      "stationId": "155",
+      "stationName": "창원(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=155&yy=2026&obs=28"
+    },
+    {
+      "stationId": "296",
+      "stationName": "북부산(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=296&yy=2026&obs=28"
+    },
+    {
+      "stationId": "184",
+      "stationName": "제주(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=184&yy=2026&obs=28"
+    },
+    {
+      "stationId": "189",
+      "stationName": "서귀포(유)",
+      "caption": "[ 최심신적설(cm) ] 2026년 /지점명",
+      "url": "https://www.weather.go.kr/w/weather/land/past-obs/obs-by-element.do?stn=189&yy=2026&obs=28"
+    }
+  ],
+  "publicRetrievalCount": 76,
+  "authenticatedApiCalls": 7,
+  "authenticatedApiBytes": 6184,
+  "usageAccounting": "기존 apiHubBudgetedFetch, APIHUB_RETRY_HISTORY, 실제 호출·수신량 계상",
+  "runtimeCodeChanged": false,
+  "scheduledSnowCollectionResumed": false,
+  "externalInquirySent": false,
+  "newCommitCreated": false
+}

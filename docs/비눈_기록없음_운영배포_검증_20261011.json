@@ -1,0 +1,599 @@
+{
+  "결정": {
+    "정상공란문구": "비·눈 기록 없음",
+    "실패구분": "UNAVAILABLE은 정상 공란으로 표시하지 않음",
+    "대기질": "일시 지연 후 23:40 정규 갱신으로 복구한 사건으로 종결; 추가 수정 없음",
+    "현재총적설": "정규 수집·응답 사용 중지 유지; 추후 다른 신규 항목과 함께 검토",
+    "앱배포": "사용자 진행"
+  },
+  "tests": {
+    "serverTypecheck": "PASS",
+    "serverWorker": 417,
+    "serverNode": 110,
+    "appRelated": 58,
+    "flutterAnalyze": "No issues found",
+    "gitDiffCheck": "PASS"
+  },
+  "backup": "/var/backups/weather-care/deploy-20261011-no-record",
+  "deployment": {
+    "checkedAt": "2026-10-10T15:12:49.715365+00:00",
+    "release": "/opt/weather-care/releases/20261011-no-record/weather_care_server",
+    "tree": "751415fb13732b14883c1ede8bca5f83ec4e2ea8",
+    "verifiedFiles": 234,
+    "services": [
+      "active",
+      "active",
+      "active"
+    ],
+    "sqliteQuickCheck": "ok",
+    "snowUsageBefore": [
+      [
+        "2026-10-10",
+        24,
+        3678055
+      ]
+    ],
+    "requests": [
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "서울",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "서울",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "서울",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "서울",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "서울",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "시흥",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "시흥",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "시흥",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "시흥",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "시흥",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "여행지",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "여행지",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "여행지",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "여행지",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "여행지",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "부산",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "부산",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "부산",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "부산",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "부산",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "울릉도",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "울릉도",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "울릉도",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "울릉도",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "울릉도",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "백령도",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "백령도",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "백령도",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "백령도",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "백령도",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주해안",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주해안",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 47
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주해안",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주해안",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "http://127.0.0.1:8787",
+        "region": "제주해안",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "서울",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "서울",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "서울",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "서울",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "서울",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "시흥",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "시흥",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "시흥",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "시흥",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "시흥",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "여행지",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "여행지",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "여행지",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "여행지",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "여행지",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "부산",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "부산",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "부산",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "부산",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "부산",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "울릉도",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "울릉도",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "울릉도",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "울릉도",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "울릉도",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "백령도",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "백령도",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 48
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "백령도",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "백령도",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "백령도",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주해안",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주해안",
+        "endpoint": "today",
+        "status": 200,
+        "hourlyCount": 47
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주해안",
+        "endpoint": "weekly",
+        "status": 200,
+        "normalNoRecordDays": [],
+        "pastDays": []
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주해안",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "base": "https://weather-api.codesoha.com",
+        "region": "제주해안",
+        "endpoint": "comparison/yesterday",
+        "status": 200
+      }
+    ],
+    "snowUsageAfter": [
+      [
+        "2026-10-10",
+        24,
+        3678055
+      ]
+    ],
+    "retainedSnowCache": [
+      [
+        "2026-10-10T08:30:00.000Z"
+      ]
+    ]
+  },
+  "observation": {
+    "checkedAt": "2026-10-10T15:13:25.391Z",
+    "tree": "751415fb13732b14883c1ede8bca5f83ec4e2ea8",
+    "gridCount": 4728,
+    "storedDates": [
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10"
+    ],
+    "dayCount": 33096,
+    "normalLabelChecks": 31038,
+    "unavailableLabelChecks": 0,
+    "mode": "실제 저장 관측자료·배포 소스 해시 일치·읽기 전용 변환 검증",
+    "note": "2026-10-11은 일요일이므로 실제 Week API에는 이번 주의 과거 카드가 없음"
+  },
+  "verificationCorrection": "첫 배포 후 일요일 Week에 과거 날짜가 있어야 한다는 진단 조건으로 자동 복구. 현재 주 응답과 저장 과거자료 변환 검증을 분리해 재배포 완료. 운영 시각·API 계약 변경 없음."
+}

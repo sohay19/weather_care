@@ -1,4 +1,5 @@
 import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } from '../services/nationwideWeatherCache';
+import { currentSnowFields } from '../services/currentSnowCache';
 import { readCachedMidTermForecast } from '../services/midTermForecastCache';
 import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
 import { Hono } from 'hono';
@@ -98,7 +99,7 @@ import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { administrativeAreaForLocation, type NationwideLocation } from '../regions/nationwideLocation';
 import { resolveSavedLocation } from '../regions/resolvedLocation';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
-import { calculateApparentTemperatureForConditions } from '../providers/weather/kmaWeatherProvider';
+import { calculateApparentTemperatureForConditions, weatherLabel } from '../providers/weather/kmaWeatherProvider';
 import { calculateSunTimes } from '../presentation/sunTimes';
 import {
   ultraShortApparentTemperatureDetails,
@@ -173,11 +174,11 @@ router.get('/main', async (c) => {
       visibilityRecord?.value,
       generatedAt,
     );
-    const current = currentFromUltraShortObservation(
+    const current = { ...currentFromUltraShortObservation(
       forecast.current,
       ultraShortRecord,
       generatedAt,
-    );
+    ), ...await currentSnowFields(c.env.DB, location, generatedAt) };
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weekly?.status === 'AVAILABLE' ? weekly.value.airQuality : [], generatedAt,
@@ -324,11 +325,11 @@ router.get('/today', async (c) => {
       visibilityRecord?.value,
       generatedAt,
     );
-    const current = currentFromUltraShortObservation(
+    const current = { ...currentFromUltraShortObservation(
       forecast.current,
       ultraShortRecord,
       generatedAt,
-    );
+    ), ...await currentSnowFields(c.env.DB, location, generatedAt) };
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,
@@ -995,6 +996,13 @@ export function currentFromUltraShortObservation(
     observation,
     forecast.precipitationType,
   );
+  const typeAvailable = !observation.qualityFlags?.includes('PRECIPITATION_TYPE_UNAVAILABLE');
+  const amount = observation.precipitationAmount;
+  const amountAvailable = amount !== undefined && Number.isFinite(amount) && amount >= 0;
+  const skyCondition = typeAvailable
+    ? weatherLabel(observation.precipitationTypeCode ?? (observation.rainDetected ? 1 : 0), forecast.skyCode)
+      ?? (['맑음', '구름 많음', '흐림'].includes(forecast.skyCondition ?? '') ? forecast.skyCondition : undefined)
+    : forecast.skyCondition;
   return {
     ...forecast,
     observedAt: observation.observedAt,
@@ -1019,7 +1027,25 @@ export function currentFromUltraShortObservation(
     windSpeed: observation.windSpeed,
     windDirection: observation.windDirection,
     precipitationType,
-    precipitationAmount: observation.precipitationAmount,
+    precipitationAmount: amountAvailable ? amount : undefined,
+    precipitationAmountRange: amountAvailable
+      ? { type: amount === 0 ? 'NONE' : 'VALUE', min: amount, max: amount, unit: 'MM', rawValue: String(amount) }
+      : undefined,
+    precipitationProbability: undefined,
+    precipitationPeriod: amountAvailable
+      ? { start: new Date(observedInstant - 3_600_000).toISOString(), end: observation.observedAt }
+      : null,
+    snowProbability: undefined,
+    snowExpected: undefined,
+    snowfallAmount: undefined,
+    snowfallAmountRange: undefined,
+    skyCondition,
+    rawValue: {
+      ...(forecast.skyCode === undefined ? {} : { sky: String(forecast.skyCode) }),
+      ...(typeAvailable && observation.precipitationTypeCode !== undefined
+        ? { precipitationType: String(observation.precipitationTypeCode) } : {}),
+      ...(amountAvailable ? { precipitationAmount: String(amount) } : {}),
+    },
     provider: `${observation.provider}+KMA_FORECAST`,
     providerField: 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST',
     ...(observation.sourceLocation
@@ -1043,9 +1069,15 @@ export function currentFromUltraShortObservation(
       },
       sky: {
         role: 'FORECAST_PROXY',
-        field: 'SKY',
+        field: typeAvailable ? 'PTY_OBSERVATION+SKY_FORECAST' : 'PTY+SKY_FORECAST',
         forecastAt: forecast.forecastAt ?? forecast.observedAt,
       },
+      precipitationType: typeAvailable
+        ? { role: 'OBSERVATION', field: 'PTY', observedAt: observation.observedAt }
+        : { role: 'FORECAST_PROXY', field: 'PTY', forecastAt: forecast.forecastAt ?? forecast.observedAt },
+      ...(amountAvailable ? { precipitationAmount: {
+        role: 'OBSERVATION' as const, field: 'RN1', observedAt: observation.observedAt,
+      } } : {}),
     },
     qualityFlags: [
       ...(forecast.qualityFlags ?? []),

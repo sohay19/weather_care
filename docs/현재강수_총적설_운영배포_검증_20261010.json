@@ -1,0 +1,2743 @@
+{
+  "checkedAt": "2026-10-10T04:43:14.423725+00:00",
+  "tree": "b8e2e7c3b1040523a4208742a4d499607993a5e6",
+  "release": "/opt/weather-care/releases/20261010-current-rain-snow/weather_care_server",
+  "manifestFiles": 234,
+  "verifiedFiles": 234,
+  "mismatches": [],
+  "services": [
+    "active",
+    "active",
+    "active"
+  ],
+  "snow": {
+    "requestedAt": "202610101330",
+    "stations": 673,
+    "validStations": 663,
+    "explicitZero": 663,
+    "missingStations": 10,
+    "observedTimes": [
+      "2026-10-10T13:00:00+09:00"
+    ]
+  },
+  "pointForecasts": {
+    "total": 302,
+    "version2": 302
+  },
+  "internalHttp": {
+    "checkedAt": "2026-10-10T04:43:12.199942+00:00",
+    "requests": [
+      {
+        "endpoint": "health",
+        "status": 200,
+        "healthy": true
+      },
+      {
+        "region": "시흥",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 23.3,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 33.6,
+          "windSpeed": 1.6,
+          "windDirection": 315,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 38,
+          "pm25": 26,
+          "airQualityStationName": "서창",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.067,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 14,
+          "maxTemperature": 26,
+          "visibilityMeters": 15300,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "112",
+          "visibilityStationDistanceKm": 16.5,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 57,
+            "ny": 124,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "376",
+          "snowDepthStationName": "광명노온",
+          "snowDepthStationDistanceKm": 5.1
+        }
+      },
+      {
+        "region": "시흥",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 23.3,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 33.6,
+          "windSpeed": 1.6,
+          "windDirection": 315,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 38,
+          "pm25": 26,
+          "airQualityStationName": "서창",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.067,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 14,
+          "maxTemperature": 26,
+          "visibilityMeters": 15300,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "112",
+          "visibilityStationDistanceKm": 16.5,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 57,
+            "ny": 124,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "376",
+          "snowDepthStationName": "광명노온",
+          "snowDepthStationDistanceKm": 5.1,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "시흥",
+        "endpoint": "weekly",
+        "status": 200,
+        "weeklyCoverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      },
+      {
+        "region": "여행지",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 24,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 38.9,
+          "windSpeed": 1.4,
+          "windDirection": 200,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 1,
+          "skyCondition": "맑음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "1",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 3,
+          "pm10": 30,
+          "pm25": 17,
+          "airQualityStationName": "설악면",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.059,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 8,
+          "maxTemperature": 24,
+          "visibilityMeters": 48090,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "212",
+          "visibilityStationDistanceKm": 19.4,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 71,
+            "ny": 130,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "558",
+          "snowDepthStationName": "팔봉",
+          "snowDepthStationDistanceKm": 3.7
+        }
+      },
+      {
+        "region": "여행지",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 24,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 38.9,
+          "windSpeed": 1.4,
+          "windDirection": 200,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 1,
+          "skyCondition": "맑음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "1",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 3,
+          "pm10": 30,
+          "pm25": 17,
+          "airQualityStationName": "설악면",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.059,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 8,
+          "maxTemperature": 24,
+          "visibilityMeters": 48090,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "212",
+          "visibilityStationDistanceKm": 19.4,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 71,
+            "ny": 130,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "558",
+          "snowDepthStationName": "팔봉",
+          "snowDepthStationDistanceKm": 3.7,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "여행지",
+        "endpoint": "weekly",
+        "status": 200,
+        "weeklyCoverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      },
+      {
+        "region": "제주",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.2,
+          "apparentTemperature": 23.6,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.6,
+          "windSpeed": 3.4,
+          "windDirection": 41,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 4,
+          "pm10": 12,
+          "pm25": 8,
+          "airQualityStationName": "이도동",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "184",
+          "visibilityStationDistanceKm": 1.6,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 52,
+            "ny": 38,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "184",
+          "snowDepthStationName": "제주",
+          "snowDepthStationDistanceKm": 1.6
+        }
+      },
+      {
+        "region": "제주",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.2,
+          "apparentTemperature": 23.6,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.6,
+          "windSpeed": 3.4,
+          "windDirection": 41,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 4,
+          "pm10": 12,
+          "pm25": 8,
+          "airQualityStationName": "이도동",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "184",
+          "visibilityStationDistanceKm": 1.6,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 52,
+            "ny": 38,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "184",
+          "snowDepthStationName": "제주",
+          "snowDepthStationDistanceKm": 1.6,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "제주",
+        "endpoint": "weekly",
+        "status": 200,
+        "weeklyCoverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      },
+      {
+        "region": "부산",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.8,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.3,
+          "windSpeed": 1.8,
+          "windDirection": 158,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 25,
+          "pm25": 13,
+          "airQualityStationName": "연산동",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.05,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 28,
+          "visibilityMeters": 43150,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "159",
+          "visibilityStationDistanceKm": 9.2,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 98,
+            "ny": 76,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "940",
+          "snowDepthStationName": "동래",
+          "snowDepthStationDistanceKm": 3.5
+        }
+      },
+      {
+        "region": "부산",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.8,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.3,
+          "windSpeed": 1.8,
+          "windDirection": 158,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 25,
+          "pm25": 13,
+          "airQualityStationName": "연산동",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.05,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 28,
+          "visibilityMeters": 43150,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "159",
+          "visibilityStationDistanceKm": 9.2,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 98,
+            "ny": 76,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "940",
+          "snowDepthStationName": "동래",
+          "snowDepthStationDistanceKm": 3.5,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "부산",
+        "endpoint": "weekly",
+        "status": 200,
+        "weeklyCoverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      }
+    ],
+    "snowUsageBefore": [
+      [
+        2,
+        570845
+      ]
+    ],
+    "snowUsageAfter": [
+      [
+        2,
+        570845
+      ]
+    ]
+  },
+  "publicHttp": {
+    "checkedAt": "2026-10-10T04:43:20.037904+00:00",
+    "transport": "표준 curl, 사용자 에이전트 변경 없음",
+    "requests": [
+      {
+        "region": "health",
+        "endpoint": "health",
+        "status": 200
+      },
+      {
+        "region": "시흥",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 23.3,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 33.6,
+          "windSpeed": 1.6,
+          "windDirection": 315,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 38,
+          "pm25": 26,
+          "airQualityStationName": "서창",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.067,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 14,
+          "maxTemperature": 26,
+          "visibilityMeters": 15300,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "112",
+          "visibilityStationDistanceKm": 16.5,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 57,
+            "ny": 124,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "376",
+          "snowDepthStationName": "광명노온",
+          "snowDepthStationDistanceKm": 5.1
+        }
+      },
+      {
+        "region": "시흥",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 23.3,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 33.6,
+          "windSpeed": 1.6,
+          "windDirection": 315,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 38,
+          "pm25": 26,
+          "airQualityStationName": "서창",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.067,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 14,
+          "maxTemperature": 26,
+          "visibilityMeters": 15300,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "112",
+          "visibilityStationDistanceKm": 16.5,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 57,
+            "ny": 124,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "376",
+          "snowDepthStationName": "광명노온",
+          "snowDepthStationDistanceKm": 5.1,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "시흥",
+        "endpoint": "weekly",
+        "status": 200,
+        "coverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      },
+      {
+        "region": "여행지",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 24,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 38.9,
+          "windSpeed": 1.4,
+          "windDirection": 200,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 1,
+          "skyCondition": "맑음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "1",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 3,
+          "pm10": 30,
+          "pm25": 17,
+          "airQualityStationName": "설악면",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.059,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 8,
+          "maxTemperature": 24,
+          "visibilityMeters": 48090,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "212",
+          "visibilityStationDistanceKm": 19.4,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 71,
+            "ny": 130,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "558",
+          "snowDepthStationName": "팔봉",
+          "snowDepthStationDistanceKm": 3.7
+        }
+      },
+      {
+        "region": "여행지",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 24,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 38.9,
+          "windSpeed": 1.4,
+          "windDirection": 200,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 1,
+          "skyCondition": "맑음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "1",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 3,
+          "pm10": 30,
+          "pm25": 17,
+          "airQualityStationName": "설악면",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.059,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 8,
+          "maxTemperature": 24,
+          "visibilityMeters": 48090,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "212",
+          "visibilityStationDistanceKm": 19.4,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 71,
+            "ny": 130,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "558",
+          "snowDepthStationName": "팔봉",
+          "snowDepthStationDistanceKm": 3.7,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "여행지",
+        "endpoint": "weekly",
+        "status": 200,
+        "coverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      },
+      {
+        "region": "제주",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.2,
+          "apparentTemperature": 23.6,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.6,
+          "windSpeed": 3.4,
+          "windDirection": 41,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 4,
+          "pm10": 12,
+          "pm25": 8,
+          "airQualityStationName": "이도동",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "184",
+          "visibilityStationDistanceKm": 1.6,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 52,
+            "ny": 38,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "184",
+          "snowDepthStationName": "제주",
+          "snowDepthStationDistanceKm": 1.6
+        }
+      },
+      {
+        "region": "제주",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.2,
+          "apparentTemperature": 23.6,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.6,
+          "windSpeed": 3.4,
+          "windDirection": 41,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 4,
+          "pm10": 12,
+          "pm25": 8,
+          "airQualityStationName": "이도동",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "184",
+          "visibilityStationDistanceKm": 1.6,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 52,
+            "ny": 38,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "184",
+          "snowDepthStationName": "제주",
+          "snowDepthStationDistanceKm": 1.6,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "제주",
+        "endpoint": "weekly",
+        "status": 200,
+        "coverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      },
+      {
+        "region": "부산",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.8,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.3,
+          "windSpeed": 1.8,
+          "windDirection": 158,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 25,
+          "pm25": 13,
+          "airQualityStationName": "연산동",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.05,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 28,
+          "visibilityMeters": 43150,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "159",
+          "visibilityStationDistanceKm": 9.2,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 98,
+            "ny": 76,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "940",
+          "snowDepthStationName": "동래",
+          "snowDepthStationDistanceKm": 3.5
+        }
+      },
+      {
+        "region": "부산",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.8,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.3,
+          "windSpeed": 1.8,
+          "windDirection": 158,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 25,
+          "pm25": 13,
+          "airQualityStationName": "연산동",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.05,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 28,
+          "visibilityMeters": 43150,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "159",
+          "visibilityStationDistanceKm": 9.2,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 98,
+            "ny": 76,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "940",
+          "snowDepthStationName": "동래",
+          "snowDepthStationDistanceKm": 3.5,
+          "activeWarnings": []
+        }
+      },
+      {
+        "region": "부산",
+        "endpoint": "weekly",
+        "status": 200,
+        "coverage": {
+          "shortTermUntil": "2026-10-14T23:00:00+09:00",
+          "midTermIssuedAt": "2026-10-10T06:00:00+09:00",
+          "midTermCacheStatus": "HIT"
+        }
+      }
+    ]
+  },
+  "stageRead": {
+    "checkedAt": "2026-10-10T04:42:11.399Z",
+    "summary": {
+      "totalGrids": 37697,
+      "observationSourceMissingGrids": 33253,
+      "activeRegions": 8,
+      "activeLocations": 5,
+      "requiredCaches": 198,
+      "collectedCaches": 198,
+      "missingCaches": 0,
+      "missingSample": [],
+      "environmentalMissingSample": []
+    },
+    "requests": [
+      {
+        "query": "nx=57&ny=124&latitude=37.434&longitude=126.803",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 23.3,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 33.6,
+          "windSpeed": 1.6,
+          "windDirection": 315,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 38,
+          "pm25": 26,
+          "airQualityStationName": "서창",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.067,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 14,
+          "maxTemperature": 26,
+          "visibilityMeters": 15300,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "112",
+          "visibilityStationDistanceKm": 16.5,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 57,
+            "ny": 124,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "376",
+          "snowDepthStationName": "광명노온",
+          "snowDepthStationDistanceKm": 5.1
+        }
+      },
+      {
+        "query": "nx=57&ny=124&latitude=37.434&longitude=126.803",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 23.3,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 33.6,
+          "windSpeed": 1.6,
+          "windDirection": 315,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 38,
+          "pm25": 26,
+          "airQualityStationName": "서창",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.067,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 14,
+          "maxTemperature": 26,
+          "visibilityMeters": 15300,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "112",
+          "visibilityStationDistanceKm": 16.5,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 57,
+            "ny": 124,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "376",
+          "snowDepthStationName": "광명노온",
+          "snowDepthStationDistanceKm": 5.1,
+          "activeWarnings": []
+        }
+      },
+      {
+        "query": "nx=71&ny=130&latitude=37.697249&longitude=127.660949",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 24,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 38.9,
+          "windSpeed": 1.4,
+          "windDirection": 200,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 1,
+          "skyCondition": "맑음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "1",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 3,
+          "pm10": 30,
+          "pm25": 17,
+          "airQualityStationName": "설악면",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.059,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 8,
+          "maxTemperature": 24,
+          "visibilityMeters": 48090,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "212",
+          "visibilityStationDistanceKm": 19.4,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 71,
+            "ny": 130,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "558",
+          "snowDepthStationName": "팔봉",
+          "snowDepthStationDistanceKm": 3.7
+        }
+      },
+      {
+        "query": "nx=71&ny=130&latitude=37.697249&longitude=127.660949",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.9,
+          "apparentTemperature": 24,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 38.9,
+          "windSpeed": 1.4,
+          "windDirection": 200,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 1,
+          "skyCondition": "맑음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "1",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 3,
+          "pm10": 30,
+          "pm25": 17,
+          "airQualityStationName": "설악면",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Moderate",
+          "ozone": 0.059,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 8,
+          "maxTemperature": 24,
+          "visibilityMeters": 48090,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "212",
+          "visibilityStationDistanceKm": 19.4,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 71,
+            "ny": 130,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "558",
+          "snowDepthStationName": "팔봉",
+          "snowDepthStationDistanceKm": 3.7,
+          "activeWarnings": []
+        }
+      },
+      {
+        "query": "nx=52&ny=38&latitude=33.4996&longitude=126.5312",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.2,
+          "apparentTemperature": 23.6,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.6,
+          "windSpeed": 3.4,
+          "windDirection": 41,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 4,
+          "pm10": 12,
+          "pm25": 8,
+          "airQualityStationName": "이도동",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "184",
+          "visibilityStationDistanceKm": 1.6,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 52,
+            "ny": 38,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "184",
+          "snowDepthStationName": "제주",
+          "snowDepthStationDistanceKm": 1.6
+        }
+      },
+      {
+        "query": "nx=52&ny=38&latitude=33.4996&longitude=126.5312",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 24.2,
+          "apparentTemperature": 23.6,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.6,
+          "windSpeed": 3.4,
+          "windDirection": 41,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 4,
+          "pm10": 12,
+          "pm25": 8,
+          "airQualityStationName": "이도동",
+          "airQualityObservedAt": "2026-10-10T13:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "184",
+          "visibilityStationDistanceKm": 1.6,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 52,
+            "ny": 38,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "184",
+          "snowDepthStationName": "제주",
+          "snowDepthStationDistanceKm": 1.6,
+          "activeWarnings": []
+        }
+      },
+      {
+        "query": "nx=98&ny=76&latitude=35.1796&longitude=129.0756",
+        "endpoint": "main",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.8,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.3,
+          "windSpeed": 1.8,
+          "windDirection": 158,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 25,
+          "pm25": 13,
+          "airQualityStationName": "연산동",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.05,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 28,
+          "visibilityMeters": 43150,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "159",
+          "visibilityStationDistanceKm": 9.2,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 98,
+            "ny": 76,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "940",
+          "snowDepthStationName": "동래",
+          "snowDepthStationDistanceKm": 3.5
+        }
+      },
+      {
+        "query": "nx=98&ny=76&latitude=35.1796&longitude=129.0756",
+        "endpoint": "today",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T13:20:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T14:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T03:20:00.000Z",
+            "end": "2026-10-10T13:20:00+09:00"
+          },
+          "validTo": "2026-10-10T14:59:59+09:00",
+          "fetchedAt": "2026-10-10T04:30:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.8,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 58.3,
+          "windSpeed": 1.8,
+          "windDirection": 158,
+          "precipitationType": "NONE",
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "MM",
+            "rawValue": "0"
+          },
+          "skyCode": 3,
+          "skyCondition": "구름 많음",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "sky": "3",
+            "precipitationType": "0",
+            "precipitationAmount": "0"
+          },
+          "qualityFlags": [
+            "SOURCE_DELAYED",
+            "SKY_FROM_FORECAST"
+          ],
+          "uvIndex": 6,
+          "pm10": 25,
+          "pm25": 13,
+          "airQualityStationName": "연산동",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.05,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 19,
+          "maxTemperature": 28,
+          "visibilityMeters": 43150,
+          "visibilityObservedAt": "2026-10-10T12:00:00+09:00",
+          "visibilityStationId": "159",
+          "visibilityStationDistanceKm": 9.2,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 98,
+            "ny": 76,
+            "locationMatch": "EXACT_GRID"
+          },
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "PTY_OBSERVATION+SKY_FORECAST",
+              "forecastAt": "2026-10-10T14:00:00+09:00"
+            },
+            "precipitationType": {
+              "role": "OBSERVATION",
+              "field": "PTY",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            },
+            "precipitationAmount": {
+              "role": "OBSERVATION",
+              "field": "RN1",
+              "observedAt": "2026-10-10T13:20:00+09:00"
+            }
+          },
+          "snowDepthStatus": "AVAILABLE",
+          "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+          "snowDepthCm": 0,
+          "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+          "snowDepthStationId": "940",
+          "snowDepthStationName": "동래",
+          "snowDepthStationDistanceKm": 3.5,
+          "activeWarnings": []
+        }
+      }
+    ],
+    "providerCalls": 0
+  },
+  "liveSnowCollection": {
+    "checkedAt": "2026-10-10T04:40:21.751Z",
+    "requestedAt": "202610101330",
+    "stations": 673,
+    "invalidCoordinateRows": 1,
+    "validStations": 663,
+    "missing": 10,
+    "observedTimes": [
+      "2026-10-10T13:00:00+09:00"
+    ],
+    "sample": {
+      "snowDepthStatus": "AVAILABLE",
+      "snowDepthProvider": "KMA_APIHUB_SNOW_TOTAL",
+      "snowDepthCm": 0,
+      "snowDepthObservedAt": "2026-10-10T13:00:00+09:00",
+      "snowDepthStationId": "376",
+      "snowDepthStationName": "광명노온",
+      "snowDepthStationDistanceKm": 5.1
+    }
+  },
+  "tests": {
+    "typecheck": "PASS",
+    "worker": {
+      "files": 54,
+      "passed": 417
+    },
+    "node": {
+      "files": 14,
+      "passed": 110
+    },
+    "total": 527
+  },
+  "backup": {
+    "directory": "/var/backups/weather-care/current-rain-snow-20261010",
+    "sqliteQuickCheck": "ok",
+    "rollbackPrepared": true,
+    "rollbackExecuted": false
+  },
+  "changes": [
+    "현재 강수 문구·수치·범위·원문을 PTY/RN1 실황으로 일치, 구름 SKY는 예보 보완",
+    "현재 총 적설 전국 정규 수집·전용 캐시·Main/Today 현재 응답 연결"
+  ],
+  "snowPolicy": {
+    "parameters": {
+      "sd": "tot",
+      "snow": "0"
+    },
+    "intervalMinutes": 10,
+    "actualObservationMaxAgeHours": 3,
+    "noRecordIsNotZero": true,
+    "negativeDepthIsNotZero": true,
+    "nearestValidStation": true,
+    "invalidCoordinatesExcludedWithoutCorrection": true,
+    "requestBudget": "기존 APIHub 총량·재시도 예산, SNOW_TOTAL 및 APIHUB_RETRY_OTHER 계상"
+  },
+  "predeploymentFindings": {
+    "nodeProviderTimeouts": 4,
+    "regularHttp200BeforeParserFix": 1,
+    "curlDiagnosticHttp200": 1,
+    "invalidSourceCoordinate": {
+      "stationId": "536",
+      "stationName": "횡성",
+      "longitude": 27.97242,
+      "latitude": 37.4876,
+      "action": "좌표 임의 보정 없이 해당 행만 제외"
+    },
+    "attemptReset": "미활성 새 수집기의 파서 수정 검증 후 실패 상태 1회 초기화. 인증 차단 상태와 API 사용 장부는 변경하지 않음.",
+    "timeoutRootCause": "간헐적 상류·연결 지연의 구체 원인 미확정. 영구 IP 고정·DNS/WAF/인증 변경 없음."
+  },
+  "excluded": [
+    "앱 소스·앱 신규 배포",
+    "과거 최심신적설 기록·복원",
+    "출력에 쓰지 않는 과거 VEC/PTY/RN1 복구",
+    "2026 경계 승인 대기",
+    "공공데이터 운영계정 신청 대기"
+  ],
+  "appLimitation": "서버는 현재 총 적설 필드를 제공한다. 앱의 파싱·표시는 별도 앱 수정·배포 대상이며 이 서버 작업에 포함하지 않음.",
+  "serverSourceGitTree": "e675ef1843167af5156189ae3e582e000c336944"
+}

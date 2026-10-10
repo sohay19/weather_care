@@ -9,7 +9,8 @@ import { providerErrorDiagnostic } from '../observability/providerErrorDiagnosti
 import { mapWithConcurrency } from '../utils/concurrencyLimiter';
 
 interface Grid { nx: number; ny: number }
-interface PointForecast { nx: number; ny: number; forecast: WeatherForecast }
+interface PointForecast { nx: number; ny: number; forecast: WeatherForecast; version?: number }
+const POINT_FORECAST_VERSION = 2; // 실황 문구 조합에 필요한 원본 SKY 코드 포함
 export const POINT_FORECAST_DAILY_CALL_LIMIT = 9000;
 const cacheKey = (nx: number, ny: number) => `COLLECTED_POINT_FORECAST_${nx}_${ny}`;
 
@@ -57,8 +58,9 @@ export async function collectPointForecasts(db: D1Database, serviceKey: string, 
   await mapWithConcurrency(grids, 4, async ({ nx, ny }) => {
     if (stopped) return;
     const cached = await readPointForecast(db, nx, ny, now);
-    if (cached?.baseDate + cached?.baseTime === issue) return;
-    const lease = `POINT_FORECAST_ATTEMPT_${issue}_${nx}_${ny}`;
+    const record = await getCollectedCache<PointForecast>(db, cacheKey(nx, ny));
+    if (cached?.baseDate + cached?.baseTime === issue && record?.value.version === POINT_FORECAST_VERSION) return;
+    const lease = `POINT_FORECAST_ATTEMPT_${POINT_FORECAST_VERSION}_${issue}_${nx}_${ny}`;
     const owner = crypto.randomUUID();
     const acquired = await db.prepare(`INSERT INTO weather_cache(cache_key,region_id,nx,ny,cache_type,payload,status,updated_at)
       VALUES(?,?,?,?, 'POINT_FORECAST_ATTEMPT',?,'AVAILABLE',?) ON CONFLICT(cache_key) DO UPDATE SET
@@ -79,7 +81,7 @@ export async function collectPointForecasts(db: D1Database, serviceKey: string, 
         slot.qualityFlags = [...(slot.qualityFlags ?? []), 'POINT_FORECAST_SUPPLEMENT'];
       }
       forecast.dataSource = '기상청 공공데이터포털 단기예보';
-      await saveCollectedCache(db, { key: cacheKey(nx, ny), type: 'COLLECTED_POINT_FORECAST', value: { nx, ny, forecast }, nx, ny, updatedAt: now });
+      await saveCollectedCache(db, { key: cacheKey(nx, ny), type: 'COLLECTED_POINT_FORECAST', value: { nx, ny, forecast, version: POINT_FORECAST_VERSION }, nx, ny, updatedAt: now });
       collected++;
     } catch (error) {
       const diagnostic = providerErrorDiagnostic(error);

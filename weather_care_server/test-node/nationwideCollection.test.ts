@@ -13,6 +13,7 @@ import { SqliteD1Database, runSqliteMigrations } from '../src/node/sqliteD1';
 import { nodeServerEnv } from '../src/node/runtime';
 import { KmaDailyObservationProvider } from '../src/providers/weather/kmaDailyObservationProvider';
 import { KmaHourlyObservationProvider } from '../src/providers/weather/kmaHourlyObservationProvider';
+import { KmaSnowObservationProvider } from '../src/providers/weather/kmaSnowObservationProvider';
 import { NATIONAL_DAILY_KEY, NATIONAL_VISIBILITY_KEY, readNationwideVisibility } from '../src/services/nationwideWeatherCache';
 import { saveCollectedCache, getCollectedCache } from '../src/database/collectedWeatherRepository';
 import { inspectOperationalPrewarm } from '../src/node/prewarmNationwide';
@@ -23,6 +24,10 @@ beforeEach(() => {
   database = new SqliteD1Database(':memory:'); runSqliteMigrations(database);
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('TEST_EXTERNAL_NETWORK_FORBIDDEN'));
   vi.spyOn(console, 'log').mockImplementation(() => {});
+  vi.spyOn(KmaSnowObservationProvider.prototype,'getSnapshot').mockImplementation(async (at)=>({
+    requestedAt:'202610040920',stations:[{observedAt:new Date(at.getTime()-3_600_000).toISOString(),
+      stationId:'1',stationName:'합성 관측소',latitude:37.25,longitude:127,stationKind:'000-----',depthCm:0}],
+  }));
 });
 afterEach(() => { vi.restoreAllMocks(); database.close(); });
 

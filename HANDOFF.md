@@ -9811,3 +9811,44 @@
 - 최종 release /opt/weather-care/releases/20261010-commit-794a84696bb1-v3/weather_care_server. commit의 server 전체231파일 독립 추출, 동일 package-lock 확인 후 기존 dependency 디렉터리 symlink 사용, .release-commit에 원본commit 기록. env·systemd설정·SQLite경로·migration14개 유지. 이전 release20261010-midterm-portal 보존. backup /var/backups/weather-care/commit-794a84696bb1-v3/before.sqlite quick_checkok 및 previous-release.txt 파일600/dir700. 미활성 stage/이전rollback릴리스 보존, DB복원 없음.
 - 12:45:58KST 최종 배포: 231/231 SHA256일치·mismatch0, API/scheduler/cloudflared active, 내부health 및 시흥/여행GPS/제주/부산 weekly 총5HTTP200. 4곳 중기캐시HIT/발표202610100600, sourceVersion DATA_GO_KR:202610100600, 포털기온176+육상10원본 확인. 수집키권한재요청·진단용외부기상호출없음; 정규scheduler는기존정책대로재시작.
 - docs/커밋_운영배포_검증_20261010.json에 commit·릴리스·전수해시·서비스·내부HTTP·중기캐시 최종증거 저장. 외부 Python 공개주소 검사 Cloudflare1010 제한은 기존 상태 유지, 외부성공을 주장하지 않음. Git push는 요청하지 않아 실행하지 않음. 최종작업기록은 별도 문서커밋으로 남겨 작업 완료.
+
+
+## 2026-10-10 최신 운영 서버 잔여 이슈 재점검
+
+- 사용자 요청: 2026년10월 이후 자료만 점검, 2026년 경계 승인·공공데이터 운영계정 신청 대기 제외. 시작 HANDOFF/AGENTS 및 karpathy-guidelines 확인. 이번 범위는 점검·보고이며 생산 코드 수정·커밋·재배포 없음.
+- 12:48~12:54KST 최신 release20261010-commit-794a84696bb1-v3, commit794a84696bb1c06f50758d94a8c8edf935e6783d 확인. API/scheduler/cloudflared active. 외부fetch 차단한 진단으로 DB·생산 reader를 조회, 임시 release 진단helper2개는 종료 후 삭제. /tmp 및 .git 진단·증거 보존, env/키/서비스설정 변경 없음.
+- 정상: 필수캐시197/197, 육지실황4728/4728(12:40회차, 인근302), 지점예보302/302유효, UV/중기3559/3559, 10/3~9 핵심일관측4728/4728 완비, bootstrap10/8 17:20~10/10 12:40 실황261/261, 최신동일출처어제비교4728/4728. 대기질662관측/672좌표, 시정95, 특보0, 통제30, 레이더12:30 정상.
+- 확정수정6건: (1) current 실황PTY없음/RN1=0인데 예보 skyCondition비·PCP범위1mm미만·rawPTY1 잔존 (2) 앱어제비교GPS누락 (3) 승인현재총적설정규수집/앱계약미연결 (4) 인근실황sourceLocation/거리 현재앱미파싱·미표시 (5) 10/3~9 일최심신적설유효수치0관측소/승인전용일자료미연결 (6) RN1파일일부누락의과거회차재시도큐가 기존snapshot을제외하는NOT EXISTS조건으로미처리.
+- 내부HTTP3회모두200. 동일제주해안격자55:32 GPS테스트: Main·GPS비교오늘25.7℃ 출처55:33, 앱방식nx/ny만비교오늘26.2℃ 출처54:32; 어제24.6℃vs26.4℃. GPS전달시Main과비교가일치. CurrentWeather/ComparisonBasis 메타데이터미연결소스확인. 새앱설치/배포는수행하지않음.
+- 10/9 16:50KST RN1누락큐 attempts3/nextRetry17:26이12:50까지남음. 과거선택파일VEC160·PTY162·RN1164회차미보관이나필수T1H/REH/WSD전회차존재. 기온·체감비교공백으로과장하지않음.
+- 관찰만분리: PM10 4/PM2.5 15/오존7 원본결측, 충남timeout1 재시도예약. 원본283격자/22미래시각결측은48슬롯지점예보및10/10~14 일예보제공과별개, 현재화면장애로단정금지. latest배포후좌표없는해석로그1건은호출주체미확정. 공개주소기존Cloudflare1010자동진단차단을앱접속장애로단정하지않음. 작년비교/preOct복원 제외, 기존72h/7d보관정책유지.
+- docs/적설_정의_정정_및_운영_잔여이슈_20261010.md 최신릴리스·결과·6이슈·관찰로갱신, 전체수정문서에서최신점검연결. 누락되었던참조docs/운영_잔여이슈_점검_20261010.json 생성, runtime/coverage/queue/source/HTTP근거통합. JSON·핵심수치·GPS차이·강수불일치·파일경로검증통과, git diff --check확인. 보고문서만변경하며수정구현은다음요청대상.
+
+
+## 2026-10-10 앱 신규 배포 항목 제외 후 서버 이슈 재점검
+
+- 사용자 요청에 따라 앱 수정·배포로 처리할 어제 비교 GPS 전달과 인근 실황 출처/거리 표시를 제외. 두 승인대기 및2026년10월이전복원제외 유지. 시작 HANDOFF와 karpathy-guidelines 확인. 운영코드수정·커밋·서비스재배포 없음.
+- 13:00~13:02KST release20261010-commit-794a84696bb1-v3/commit794a846 유지, API/scheduler/cloudflared active. 서버관련소스3개 SHA256을Git commitblob과비교전부일치. 읽기전용DB·내부HTTP재확인3회모두200.
+- 서버 수정4건확정: current실황강수없음/RN1=0과예보sky비/PCP범위1mm미만/rawPTY1혼재; 승인현재총적설kma_snow1정규수집·API미연결; 과거10/3~9최심신적설전용일자료미연결/유효수치관측소0; 10/9 16:50RN1부분누락큐가snapshot기존존재회차배제쿼리로미처리. 현재적설은앱표시도필요하지만서버미구현이선행이므로서버항목유지.
+- 앱GPS비교는서버정상:13:02 Main25.9℃와GPS비교25.9℃ 일치, nx/ny만앱방식26.4℃. 앱변경전기존코드를그대로신규배포하면해결된다는주장은하지않음.
+- 재점검시12:50실황WSD TIMEOUT/30초1회로스냅샷미완성확인. 다음정규재시도까지기다려13:02:48검사에서T1H/REH/WSD/VEC/PTY/RN1모두저장·해당큐제거확인. 일시회복장애를추가수정이슈로세지않음. 이전날RN1누락큐1건만남음.
+- docs/운영_잔여이슈_점검_20261010.json에serverOnlyFollowup초기/최종/4이슈/복구기록추가, 기존6건원점검보존. 기존잔여이슈문서에앱제외서버4건절추가, 전체수정문서최신앵커보완. JSON/소스해시/HTTP/GPS일치/강수혼재/6파일복구/부분큐잔류검증통과. .git와remote/tmp에진단근거보존, 제공처추가진단호출없음.
+
+
+## 2026-10-10 강수·현재 적설 원인 조사 및 과거 불필요 항목 제외
+
+- 사용자 요청: 현재강수불일치와현재총적설미수집이유확인, 과거최심신적설기록필요없음, 과거부분파일출력이없으면제외. 시작HANDOFF확인, 적용중karpathy-guidelines의원인·실제출력기준으로범위축소. 구현·커밋·운영재배포·제공처추가호출없음.
+- 강수원인: kmaWeatherProvider.weatherLabel은예보PTY비를SKY구름코드보다우선해skyCondition비를생성하고PCP범위/원문생성. currentFromUltraShortObservation은forecastspread후실황precipitationType/precipitationAmount만교체, skyCondition/precipitationAmountRange/rawValue가예보대로남음. API수집실패가아닌실황병합누락. 단순히구름예보보완정책을제거하기보다강수문구·수치·범위·원문일관성/출처분리필요.
+- 현재총적설원인: 승인후진단성공만확인, 운영weatherCollectionJob에는kma_snow1정규호출/전용parser/cache/job/API계약없음. 현재6변수실황과예보SNO·일자료sd_day_max는총적설대체불가. 승인대기/실호출오류가아닌미구현.
+- 과거출력전수호출참조확인: comparison.yesterday가history를읽지만기온·체감만반환, 체감함수입력T1H/REH/WSD/관측시각. VEC/PTY/RN1은과거출력에불필요. Week과거는별도일관측이며latest현재읽기는30분범위. 과거최심신적설기록·복원은사용자지시로제외, 과거선택3파일복구도필요이슈에서제외. 최신6파일수집및어제비교핵심3파일이력은유지대상. 기존데이터·코드삭제/수집주기변경하지않음.
+- 현재서버필요이슈2건으로확정: 현재강수응답병합수정·현재총적설정규수집구현. docs잔여이슈의최신서버표2건및원인·과거제외기준갱신, 최초6건관측은역사기록임을명시. 전체수정문서현재범위2건반영. 검증JSON currentRequiredFindings2/causeAndOutputReview추가, 기존serverOnlyFollowup4및원증거보존. JSON·참조경로·공백검증확인.
+
+## 2026-10-10 현재 강수·총 적설 수정·검증·운영 배포
+
+- 사용자 두 서버 이슈 수정·검증·배포 후 커밋 명시 승인. HANDOFF/AGENTS·karpathy-guidelines 적용. 앱 동시 수정은 보존하며 커밋 대상에서 제외. 과거 최심신적설·불필요 선택 파일 복구·승인대기 제외 유지.
+- current 병합에서 PTY/RN1 문구·수치·범위·원문 일치, 현재 예보 POP/SNO 제거 및 시간별 예보 유지, SKY 원본 코드·필드 출처 추가. 지점예보 버전2/lease 버전으로302격자 정규 갱신.
+- 현재 총 적설 전용8열 UTF8/EUC-KR 파서·실제 TM·명시0/음수 구분·3시간 신선도·GPS/격자중심 인근 유효관측소·전국 공유캐시·10분 정규수집·원자lease/예산·실패 캐시 보존·2~60분 대기·401/403/미설정 중단·Main/Today snowDepth* 계약 추가. 환경·예보 조합 완료 후 현재 응답에 총 적설 최종 병합, 필수prewarm 항목 추가. 앱 파싱/표시는 별도.
+- 타입검사 PASS/Worker54파일417개/Node14파일110개=527개 PASS. 초기 메타데이터 테스트를 실제 Main·Today API 통합 회귀로 교체, 환경 재조합에서 현재 필드 유실을 확인해 최종 응답 병합으로 수정. 실제674행 중 횡성536 경도27.97242 원본오류 확인, 임의보정 없이 해당행 제외 및 회귀검증 추가. 실제 정상자료 파싱 보존.
+- 배포전 Node 제공처30초 timeout4 및HTTP200파서실패1, curl 진단2001 확인. 파서수정 검증후 미활성 신설 수집기 실패상태1회초기화, 인증차단·사용장부 유지. 후속 정규 실제수신 성공의시각·지점수·예산은 검증JSON 참조. 간헐 지연 최종 귀속 미확정/IP고정·DNS·인증·WAF변경 없음.
+- 13:43KST release20261010-current-rain-snow 독립234파일 SHA256 전수일치, 동일lockfile 기존의존성 사용, env/DBschema14개 유지. SQLite backup /var/backups/weather-care/current-rain-snow-20261010/before.sqlite quick_checkok/dir700/file600. symlink 원자교체·api/scheduler재시작·자동rollback준비/실행없음, 이전release보존. 서비스3개active. 캐시만읽는stage Main/Today8요청 제공처호출0. 내부·공개health+4지역Main/Today/Weekly각13HTTP200/현재적설8응답정상/중기4HIT. 공개curl표준UA, 과거urllib403기록은당시증거보존.
+- docs/현재강수_총적설_운영배포_검증_20261010.json 및 잔여점검·전체수정문서·README 갱신. 과거 점검증거보존/현재서버필요항목0. 앱 동시수정·보호원본·환경설정 보존. 사용자 승인된 이번 서버소스/관련문서만 별도index 커밋, push 없음.

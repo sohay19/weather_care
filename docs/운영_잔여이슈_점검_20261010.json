@@ -1,0 +1,2858 @@
+{
+  "scope": {
+    "fromKst": "2026-10-01T00:00:00+09:00",
+    "retention": "기존 실황72시간·일관측7일 보관 유지. 10월 이전 복원 및 작년 비교 제외.",
+    "excluded": [
+      "2026년 경계 승인 대기",
+      "공공데이터 운영계정 신청 대기"
+    ]
+  },
+  "deployment": {
+    "release": "/opt/weather-care/releases/20261010-commit-794a84696bb1-v3/weather_care_server",
+    "commit": "794a84696bb1c06f50758d94a8c8edf935e6783d",
+    "services": {
+      "weather-care-api": "active",
+      "weather-care-scheduler": "active",
+      "cloudflared": "active"
+    },
+    "recheckedAt": "2026-10-10T03:53:53Z"
+  },
+  "checkedPeriodKst": "2026-10-10 12:48~12:54",
+  "findings": [
+    {
+      "id": "CURRENT_PRECIPITATION_MIXED",
+      "priority": "높음",
+      "title": "현재 실황에 예보 강수 문구·범위 잔존",
+      "evidence": "운영 main GPS 응답: precipitationType=NONE, precipitationAmount=0이지만 skyCondition=비, precipitationAmountRange=LESS_THAN(1mm 미만), rawValue.precipitationType=1. 앱은 current.skyCondition으로 문구와 아이콘을 표시한다.",
+      "files": [
+        "weather_care_server/src/api/weather.ts:999",
+        "weather_care_app/lib/models/weather.dart:112",
+        "weather_care_app/lib/features/home/tabs/main_tab.dart:224"
+      ],
+      "action": "실황 병합 시 강수 형태·수치·범위·원문과 하늘 문구를 일관되게 처리하고, 예보 대체 항목의 출처를 명확히 표시한다."
+    },
+    {
+      "id": "COMPARISON_GPS_MISSING",
+      "priority": "높음",
+      "title": "앱 어제 비교 요청의 GPS 누락",
+      "evidence": "동일 nx=55,ny=32에서 main GPS와 GPS 비교 오늘값25.7℃/출처55:33, GPS 없는 앱 방식 비교 오늘값26.2℃/출처54:32. 어제값도24.6℃와26.4℃로 달라짐.",
+      "files": [
+        "weather_care_app/lib/services/weather_service.dart:231",
+        "weather_care_app/lib/features/home/home_screen.dart:736",
+        "weather_care_server/src/api/comparison.ts:24"
+      ],
+      "action": "Main/Today와 같은 위치 모드·GPS 좌표를 어제 비교에도 전달한다."
+    },
+    {
+      "id": "CURRENT_SNOW_NOT_CONNECTED",
+      "priority": "높음",
+      "title": "승인된 현재 적설 API 정규 수집·앱 미연결",
+      "evidence": "최신 운영 소스에 kma_snow1 수집기·현재 총 적설 계약이 없고 앱 CurrentWeather에도 총 적설 필드가 없음. 기존 승인 후 10/10 진단은674행/664개 명시적0/10개 음수 결측 확인.",
+      "files": [
+        "weather_care_app/lib/models/weather.dart:27",
+        "weather_care_server/src/types.ts:182"
+      ],
+      "action": "sd=tot&snow=0 전용 파서·정규 캐시·실제 관측시각·유효 인근 관측소·오류/결측 정책을 연결한다. 기존 snowfallAmount는 예보 신적설이므로 현재 적설로 사용하지 않는다."
+    },
+    {
+      "id": "NEARBY_SOURCE_UI_MISSING",
+      "priority": "보통",
+      "title": "인근 실황 출처·거리 앱 미표시",
+      "evidence": "전국302격자는 NEAREST_GRID 보충. 운영 current.sourceLocation에는 거리와GPS기준이 있으나 앱 CurrentWeather에서 파싱하지 않고 현재 날씨 UI에도 인근 실황 요약이 없음. ComparisonBasis도 중첩 sourceLocation을 파싱하지 않음.",
+      "files": [
+        "weather_care_app/lib/models/weather.dart:27",
+        "weather_care_app/lib/models/weather.dart:807",
+        "weather_care_app/lib/features/home/widgets/weather_card.dart:183"
+      ],
+      "action": "현재 응답 메타데이터를 모델·화면에 연결해 인근 실황 · 약 ○km로 간단히 안내한다."
+    },
+    {
+      "id": "DAILY_NEW_SNOW_NOT_CONNECTED",
+      "priority": "보통",
+      "title": "과거 최심신적설 수치 미기록",
+      "evidence": "10/3~10/9 운영 일관측의 유효 snowfallAmount 관측소 수는 날짜별 모두0. 기존 승인 전용 일자료 10/8·10/9 각각674지점 명시적0 진단이 있으나 정규 수집에는 미연결. 기온·강수는4728격자 모두7일 완비.",
+      "files": [
+        "weather_care_server/src/providers/weather/kmaDailyObservationProvider.ts"
+      ],
+      "action": "전용 일자료 파서·출처·항목 가용성을 연결하고 현재 총 적설과 별도 관리한다."
+    },
+    {
+      "id": "OPTIONAL_HISTORY_RETRY_SKIPPED",
+      "priority": "낮음",
+      "title": "일부 파일만 빠진 과거 실황 재시도 미처리",
+      "evidence": "10/9 16:50KST 회차 RN1 누락/attempts3/nextRetryAt10/9 17:26KST가 10/10 12:50에도 남음. backfill 큐 조회의 NOT EXISTS 조건이 이미 핵심 스냅샷을 저장한 회차를 제외하고 requiredOnly=true로만 복구함. 보관 전체의 VEC160·PTY162·RN1164회차 파일 미보관.",
+      "files": [
+        "weather_care_server/src/services/gridObservationCache.ts:129"
+      ],
+      "action": "필수 핵심 이력 복구를 우선 유지하면서 파일 일부 누락 재시도를 별도로 처리하거나 재시도 종료 상태를 명확히 정리한다. 기온·체감 어제 비교는 정상."
+    }
+  ],
+  "runtime": {
+    "checkedAt": "2026-10-10T03:50:38.057Z",
+    "summary": {
+      "totalGrids": 4728,
+      "observationSourceMissingGrids": 302,
+      "activeRegions": 8,
+      "activeLocations": 5,
+      "requiredCaches": 197,
+      "collectedCaches": 197,
+      "missingCaches": 0,
+      "missingSample": [],
+      "environmentalMissingSample": []
+    },
+    "forecastMissing": [],
+    "observations": [
+      {
+        "at": "2026-10-10T03:40:00.000Z",
+        "observedAt": "2026-10-10T12:40:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T03:30:00.000Z",
+        "observedAt": "2026-10-10T12:30:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T03:20:00.000Z",
+        "observedAt": "2026-10-10T12:20:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T03:10:00.000Z",
+        "observedAt": "2026-10-10T12:10:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T03:00:00.000Z",
+        "observedAt": "2026-10-10T12:00:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T02:50:00.000Z",
+        "observedAt": "2026-10-10T11:50:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T02:40:00.000Z",
+        "observedAt": "2026-10-10T11:40:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      },
+      {
+        "at": "2026-10-10T02:30:00.000Z",
+        "observedAt": "2026-10-10T11:30:00+09:00",
+        "gridCount": 37697,
+        "fields": {
+          "T1H": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "REH": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "WSD": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "VEC": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          },
+          "PTY": {
+            "storedCells": 37697,
+            "validCells": 9295,
+            "sourceMissingCells": 28402,
+            "fileAvailable": true
+          },
+          "RN1": {
+            "storedCells": 37697,
+            "validCells": 4444,
+            "sourceMissingCells": 33253,
+            "fileAvailable": true
+          }
+        },
+        "coreValidCells": 4444
+      }
+    ],
+    "currentLandObservation": {
+      "total": 4728,
+      "available": 4728,
+      "nearby": 302,
+      "ptyMissing": 0,
+      "vecMissing": 0,
+      "rnMissing": 0,
+      "ages": {
+        "2026-10-10T12:40:00+09:00": 4728
+      },
+      "unavailable": []
+    },
+    "point": {
+      "stored": 302,
+      "usable": 302,
+      "invalid": []
+    },
+    "uv": {
+      "updatedAt": "2026-10-10T03:30:00.000Z",
+      "issue": "2026101012",
+      "forecastAreas": 3851,
+      "boundaryFeatures": 3559,
+      "availableFeatures": 3559,
+      "unresolvedFeatures": 0,
+      "missing": []
+    },
+    "caches": [
+      {
+        "key": "COLLECTED_NATIONWIDE_AIR",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-10T03:50:00.000Z",
+        "collectedAt": "2026-10-10T03:50:00.000Z",
+        "observations": 662,
+        "stationCatalog": 672
+      },
+      {
+        "key": "COLLECTED_NATIONWIDE_AIR_FORECAST",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-10T02:30:00.000Z",
+        "issue": "202610101100",
+        "areas": {
+          "서울": 2,
+          "인천": 2,
+          "경기남부": 2,
+          "경기북부": 2,
+          "영서": 2,
+          "영동": 2,
+          "충북": 2,
+          "충남": 2,
+          "대전": 2,
+          "세종": 2,
+          "전북": 2,
+          "전남": 2,
+          "광주": 2,
+          "경북": 2,
+          "경남": 2,
+          "대구": 2,
+          "울산": 2,
+          "부산": 2,
+          "제주": 2
+        }
+      },
+      {
+        "key": "COLLECTED_NATIONWIDE_VISIBILITY",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-10T03:20:00.000Z",
+        "observedAt": "2026-10-10T11:00:00+09:00",
+        "count": 95,
+        "validVisibility": 95
+      },
+      {
+        "key": "COLLECTED_NATIONWIDE_DAILY",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-09T15:00:00.000Z",
+        "count": 5159,
+        "completedDates": [
+          "2026-10-03",
+          "2026-10-04",
+          "2026-10-05",
+          "2026-10-06",
+          "2026-10-07",
+          "2026-10-08",
+          "2026-10-09"
+        ],
+        "snowfallMetricAvailable": true,
+        "validVisibility": 0
+      },
+      {
+        "key": "COLLECTED_WARNING_SNAPSHOT",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-10T03:30:00.000Z",
+        "count": 711,
+        "warnings": 0,
+        "validVisibility": 0
+      },
+      {
+        "key": "COLLECTED_WARNING_STATIONS",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-10T02:30:00.000Z",
+        "count": 711
+      },
+      {
+        "key": "COLLECTED_ROAD_CONTROL_SNAPSHOT",
+        "status": "AVAILABLE",
+        "updatedAt": "2026-10-10T03:50:00.000Z",
+        "count": 30
+      }
+    ],
+    "radar": {
+      "available": true,
+      "observedAt": "2026-10-10T12:30:00+09:00",
+      "analysisBytes": 16793608,
+      "radarBytes": 13281414
+    },
+    "midTerm": {
+      "boundaryFeatures": 3559,
+      "available": 3559,
+      "missing": []
+    },
+    "dailyCoverage": {
+      "landGrids": 4728,
+      "all7Dates": 4728,
+      "all7Complete": 4728,
+      "byDate": {
+        "2026-10-03": {
+          "stations": 736,
+          "validSnowStations": 0
+        },
+        "2026-10-04": {
+          "stations": 737,
+          "validSnowStations": 0
+        },
+        "2026-10-05": {
+          "stations": 737,
+          "validSnowStations": 0
+        },
+        "2026-10-06": {
+          "stations": 738,
+          "validSnowStations": 0
+        },
+        "2026-10-07": {
+          "stations": 738,
+          "validSnowStations": 0
+        },
+        "2026-10-08": {
+          "stations": 737,
+          "validSnowStations": 0
+        },
+        "2026-10-09": {
+          "stations": 736,
+          "validSnowStations": 0
+        }
+      }
+    },
+    "roadIceInSeason": false
+  },
+  "coverage": {
+    "checkedAt": "2026-10-10T03:50:37.086843+00:00",
+    "landGrids": 4728,
+    "forecastSlots": [
+      {
+        "valid": "2026101012",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101013",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101014",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101015",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101016",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101017",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101018",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101019",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101020",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101021",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101022",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101023",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101100",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101101",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101102",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101103",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101104",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101105",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101106",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101107",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101108",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101109",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101110",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101111",
+        "issue": "2026101011",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101112",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101113",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101114",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101115",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101116",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101117",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101118",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101119",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101120",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101121",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101122",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101123",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101200",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101201",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101202",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101203",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101204",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101205",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101206",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101207",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101208",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101209",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101210",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 283,
+        "coreStillMissing": 0,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101211",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101212",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101213",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101214",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101215",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101216",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101217",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101218",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101219",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101220",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101221",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101222",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101223",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101300",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": false,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283,
+          "VEC": 0
+        }
+      },
+      {
+        "valid": "2026101303",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101306",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101309",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101312",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101315",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101318",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101321",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      },
+      {
+        "valid": "2026101400",
+        "issue": "2026101005",
+        "nativeRequired8MissingLand": 283,
+        "pointCoreSupplied": 0,
+        "coreStillMissing": 283,
+        "vecFileMissing": true,
+        "fieldMissing": {
+          "TMP": 283,
+          "REH": 283,
+          "WSD": 0,
+          "SKY": 0,
+          "PTY": 0,
+          "POP": 283,
+          "PCP": 283,
+          "SNO": 283
+        }
+      }
+    ],
+    "rawObservationLand": [
+      {
+        "at": "2026-10-10T03:40:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T03:30:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T03:20:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T03:10:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T03:00:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T02:50:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T02:40:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T02:30:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T02:20:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T02:10:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T02:00:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      },
+      {
+        "at": "2026-10-10T01:50:00.000Z",
+        "fieldLandMissing": {
+          "T1H": 302,
+          "REH": 302,
+          "WSD": 302,
+          "VEC": 302,
+          "PTY": 283,
+          "RN1": 302
+        },
+        "missingFiles": []
+      }
+    ],
+    "historical": {
+      "since": "2026-10-08T08:20:00+00:00",
+      "until": "2026-10-10T03:40:00+00:00",
+      "expectedSlots": 261,
+      "storedSlotsInWindow": 261,
+      "missingSlots": []
+    },
+    "airStored": {
+      "collectedAt": "2026-10-10T03:50:00.000Z",
+      "observedTimes": {
+        "2026-10-10T12:00:00+09:00": 574,
+        "2026-10-10T11:00:00+09:00": 88
+      },
+      "fieldMissing": {
+        "pm10": 4,
+        "pm25": 15,
+        "ozone": 7
+      }
+    }
+  },
+  "details": {
+    "checkedAt": "2026-10-10T03:50:41.224250+00:00",
+    "queue": [
+      {
+        "observedAt": "2026-10-09T07:50:00.000Z",
+        "attempts": 3,
+        "nextRetryAt": "2026-10-09T08:26:00.000Z",
+        "stored": true,
+        "missingFields": [
+          "RN1"
+        ]
+      }
+    ],
+    "historicalHoles": [],
+    "storedSnapshotFieldMissing": {
+      "T1H": 0,
+      "REH": 0,
+      "WSD": 0,
+      "VEC": 160,
+      "PTY": 162,
+      "RN1": 164
+    },
+    "problemCounts": {
+      "nationwide_air_source_failed:TIMEOUT": 1,
+      "nationwide_air_collection_completed:": 1,
+      "weather_location_unresolved:": 1
+    },
+    "problems": [
+      {
+        "event": "nationwide_air_source_failed",
+        "source": "충남",
+        "endpoint": "PROVINCE_MEASUREMENTS",
+        "failureReason": "TIMEOUT",
+        "failures": 1,
+        "nextRetryAt": "2026-10-10T03:55:04.295Z",
+        "authorizationBlocked": false,
+        "retryAfterMs": 0
+      },
+      {
+        "event": "nationwide_air_collection_completed",
+        "actualCalls": 3,
+        "succeeded": 2,
+        "skipped": 14,
+        "stopped": false,
+        "observations": 662
+      },
+      {
+        "event": "weather_location_unresolved",
+        "reason": "LOCATION_COORDINATES_REQUIRED"
+      }
+    ],
+    "airRetry": [
+      {
+        "source": "AIR_RETRY_충남",
+        "failures": 1,
+        "nextRetryAt": "2026-10-10T03:55:04.295Z"
+      }
+    ],
+    "snapshotRange": {
+      "first": "2026-10-07T14:50:00+00:00",
+      "last": "2026-10-10T03:40:00+00:00"
+    }
+  },
+  "sourceSelection": {
+    "checkedAt": "2026-10-10T03:52:34.847Z",
+    "currentAt": "2026-10-10T12:40:00+09:00",
+    "yesterdayAt": "2026-10-09T03:40:00.000Z",
+    "comparableLandGrids": 4728,
+    "landGrids": 4728,
+    "gpsSample": {
+      "grid": {
+        "nx": 55,
+        "ny": 32
+      },
+      "coordinates": {
+        "latitude": 33.23890911234366,
+        "longitude": 126.65327640090047
+      },
+      "gridCenter": {
+        "source": {
+          "type": "GRID",
+          "nx": 54,
+          "ny": 32,
+          "locationMatch": "NEAREST_GRID",
+          "distanceKm": 5.063681241070939,
+          "distanceBasis": "GRID_CENTER"
+        },
+        "temperature": 26.2
+      },
+      "gps": {
+        "source": {
+          "type": "GRID",
+          "nx": 55,
+          "ny": 33,
+          "locationMatch": "NEAREST_GRID",
+          "distanceKm": 3.72980017043023,
+          "distanceBasis": "GPS"
+        },
+        "temperature": 25.7
+      }
+    },
+    "pointSample": {
+      "nx": 48,
+      "ny": 29,
+      "hourly": 48,
+      "timeline": 22,
+      "dailyDates": [
+        "20261010",
+        "20261011",
+        "20261012",
+        "20261013",
+        "20261014"
+      ],
+      "lastHourly": "2026-10-12T10:00:00+09:00"
+    }
+  },
+  "internalHttp": {
+    "checkedAt": "2026-10-10T03:52:53.212621+00:00",
+    "requests": [
+      {
+        "name": "mainGps",
+        "status": 200,
+        "current": {
+          "observedAt": "2026-10-10T12:40:00+09:00",
+          "dataRole": "OBSERVATION",
+          "validFrom": "2026-10-10T12:00:00+09:00",
+          "precipitationPeriod": {
+            "start": "2026-10-10T02:00:00.000Z",
+            "end": "2026-10-10T12:00:00+09:00"
+          },
+          "validTo": "2026-10-10T12:59:59+09:00",
+          "fetchedAt": "2026-10-10T03:50:00.000Z",
+          "temperature": 25.7,
+          "apparentTemperature": 26.9,
+          "apparentTemperatureSource": "APP_STEADMAN_FROM_OBSERVATION",
+          "apparentTemperatureFormulaVersion": "STEADMAN_AT_NO_RADIATION_1994.1",
+          "humidity": 64.2,
+          "windSpeed": 2.5,
+          "windDirection": 26,
+          "precipitationType": "NONE",
+          "precipitationProbability": 60,
+          "precipitationAmount": 0,
+          "precipitationAmountRange": {
+            "type": "LESS_THAN",
+            "min": 0,
+            "max": 1,
+            "unit": "MM",
+            "rawValue": "1mm 미만"
+          },
+          "snowProbability": 0,
+          "snowExpected": false,
+          "snowfallAmount": 0,
+          "snowfallAmountRange": {
+            "type": "NONE",
+            "min": 0,
+            "max": 0,
+            "unit": "CM",
+            "rawValue": "적설없음"
+          },
+          "skyCondition": "비",
+          "provider": "KMA_APIHUB_GRID_OBSERVATION+KMA_FORECAST",
+          "providerField": "T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST",
+          "rawValue": {
+            "precipitationAmount": "1mm 미만",
+            "snowfallAmount": "적설없음",
+            "precipitationType": "1"
+          },
+          "qualityFlags": [
+            "POINT_FORECAST_SUPPLEMENT",
+            "UV_UNAVAILABLE",
+            "NEARBY_GRID_OBSERVATION",
+            "SKY_FROM_FORECAST"
+          ],
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 55,
+            "ny": 33,
+            "locationMatch": "NEAREST_GRID",
+            "distanceKm": 3.72980017043023,
+            "distanceBasis": "GPS"
+          },
+          "pm10": 14,
+          "pm25": 10,
+          "airQualityStationName": "남원읍",
+          "airQualityObservedAt": "2026-10-10T12:00:00+09:00",
+          "airQualityGrade": "Good",
+          "ozone": 0.055,
+          "ozoneGrade": "Moderate",
+          "minTemperature": 21,
+          "maxTemperature": 25,
+          "visibilityMeters": 50000,
+          "visibilityObservedAt": "2026-10-10T11:00:00+09:00",
+          "visibilityStationId": "189",
+          "visibilityStationDistanceKm": 8.2,
+          "fieldSources": {
+            "temperature": {
+              "role": "OBSERVATION",
+              "field": "T1H",
+              "observedAt": "2026-10-10T12:40:00+09:00"
+            },
+            "humidity": {
+              "role": "OBSERVATION",
+              "field": "REH",
+              "observedAt": "2026-10-10T12:40:00+09:00"
+            },
+            "windSpeed": {
+              "role": "OBSERVATION",
+              "field": "WSD",
+              "observedAt": "2026-10-10T12:40:00+09:00"
+            },
+            "sky": {
+              "role": "FORECAST_PROXY",
+              "field": "SKY",
+              "forecastAt": "2026-10-10T12:00:00+09:00"
+            }
+          }
+        },
+        "comparisonAvailable": null,
+        "comparison": null,
+        "basis": null,
+        "region": {
+          "nx": 55,
+          "ny": 32,
+          "name": "현재 위치"
+        }
+      },
+      {
+        "name": "comparisonGps",
+        "status": 200,
+        "current": {
+          "temperature": 25.7,
+          "apparentTemperature": 26.9
+        },
+        "comparisonAvailable": true,
+        "comparison": {
+          "temperature": 24.6,
+          "apparentTemperature": 24.5
+        },
+        "basis": {
+          "provider": "KMA_APIHUB_GRID_OBSERVATION",
+          "dataRole": "OBSERVATION_VS_OBSERVATION",
+          "gridX": 55,
+          "gridY": 32,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 55,
+            "ny": 33,
+            "locationMatch": "NEAREST_GRID",
+            "distanceKm": 3.72980017043023,
+            "distanceBasis": "GPS"
+          }
+        },
+        "region": null
+      },
+      {
+        "name": "comparisonGrid",
+        "status": 200,
+        "current": {
+          "temperature": 26.2,
+          "apparentTemperature": 26.3
+        },
+        "comparisonAvailable": true,
+        "comparison": {
+          "temperature": 26.4,
+          "apparentTemperature": 25.8
+        },
+        "basis": {
+          "provider": "KMA_APIHUB_GRID_OBSERVATION",
+          "dataRole": "OBSERVATION_VS_OBSERVATION",
+          "gridX": 55,
+          "gridY": 32,
+          "sourceLocation": {
+            "type": "GRID",
+            "nx": 54,
+            "ny": 32,
+            "locationMatch": "NEAREST_GRID",
+            "distanceKm": 5.063681241070939,
+            "distanceBasis": "GRID_CENTER"
+          }
+        },
+        "region": null
+      }
+    ]
+  },
+  "interpretation": {
+    "forecastRawGaps": "283격자/22시각(10/12 11시~10/14 00시)의 원본TMP·REH·POP·PCP·SNO 결측은 남음. 현재48시간 지점예보302/302유효이며 표본 일예보10/10~10/14도 존재하므로 원본 결측을 곧바로 현재 앱 장애로 분류하지 않음.",
+    "air": "662관측 중PM10 4·PM2.5 15·오존7결측, 최신12시574/11시88. 충남1회TIMEOUT은 재시도 예약·기존관측 제공 중이며 수정할 코드 장애로 확정하지 않음.",
+    "unresolvedLocation": "최신배포 이후 12:50 점검까지 LOCATION_COORDINATES_REQUIRED1건. 경로·호출주체 없으므로 원인 미확정. 행정경계 승인 이슈에 합산하지 않음.",
+    "externalAddress": "이번 점검은 내부API·캐시 기준. 기존 공개주소 Python403/Cloudflare1010은 자동화 요청 차단 근거만 있으며 실제 앱 접속 장애로 단정하지 않음.",
+    "readOnlyAudit": "운영 런타임·서비스·설정·마이그레이션을 변경하거나 재배포하지 않음. 진단 코드는 외부fetch를 차단한 상태로 캐시 조회. 내부HTTP3회는 일반 서비스 읽기 경로."
+  },
+  "previousSnowEvidence": [
+    "현재_적설_API_승인후_점검_20261010.json",
+    "적설_전용API_승인후_비교_20261010.json"
+  ],
+  "serverOnlyFollowup": {
+    "scope": "앱 수정·신규 배포로 처리할 GPS 전달·인근 실황 표시 제외, 두 승인 대기 제외",
+    "initial": {
+      "checkedAt": "2026-10-10T04:00:45.960049+00:00",
+      "commit": "794a84696bb1c06f50758d94a8c8edf935e6783d",
+      "release": "/opt/weather-care/releases/20261010-commit-794a84696bb1-v3/weather_care_server",
+      "latestObservation": {
+        "at": "2026-10-10T03:40:00.000Z",
+        "fields": [
+          "T1H",
+          "REH",
+          "WSD",
+          "VEC",
+          "RN1",
+          "PTY"
+        ]
+      },
+      "daily": {
+        "updatedAt": "2026-10-09T15:00:00.000Z",
+        "dates": {
+          "2026-10-03": {
+            "stations": 736,
+            "validSnowStations": 0
+          },
+          "2026-10-04": {
+            "stations": 737,
+            "validSnowStations": 0
+          },
+          "2026-10-05": {
+            "stations": 737,
+            "validSnowStations": 0
+          },
+          "2026-10-06": {
+            "stations": 738,
+            "validSnowStations": 0
+          },
+          "2026-10-07": {
+            "stations": 738,
+            "validSnowStations": 0
+          },
+          "2026-10-08": {
+            "stations": 737,
+            "validSnowStations": 0
+          },
+          "2026-10-09": {
+            "stations": 736,
+            "validSnowStations": 0
+          }
+        }
+      },
+      "retryQueue": [
+        {
+          "observedAt": "2026-10-09T07:50:00.000Z",
+          "attempts": 3,
+          "nextRetryAt": "2026-10-09T08:26:00.000Z",
+          "stored": true,
+          "missingFields": [
+            "RN1"
+          ],
+          "retryDue": true
+        },
+        {
+          "observedAt": "2026-10-10T03:50:00.000Z",
+          "attempts": 1,
+          "nextRetryAt": "2026-10-10T04:02:00.000Z",
+          "stored": false,
+          "missingFields": [
+            "T1H",
+            "REH",
+            "WSD",
+            "VEC",
+            "PTY",
+            "RN1"
+          ],
+          "retryDue": false
+        }
+      ],
+      "currentSnowRuntimeFiles": [],
+      "sourceHashes": {
+        "src/api/weather.ts": "a72d6aa0d41e1745a263afc004c8d431d8043391950e14c4769f5a2eb3c27981",
+        "src/services/gridObservationCache.ts": "f79109925f70ef42b9983080a6a15f4ac400ee81a098f878eaa431f077175f24",
+        "src/providers/weather/kmaDailyObservationProvider.ts": "e6db02bd994a7c902c4d843bdc2926245196523c59a73817eac11cd3b1c137df"
+      },
+      "requests": [
+        {
+          "name": "mainGps",
+          "status": 200,
+          "current": {
+            "observedAt": "2026-10-10T12:40:00+09:00",
+            "temperature": 25.7,
+            "precipitationType": "NONE",
+            "precipitationAmount": 0,
+            "precipitationAmountRange": {
+              "type": "LESS_THAN",
+              "min": 0,
+              "max": 1,
+              "unit": "MM",
+              "rawValue": "1mm 미만"
+            },
+            "skyCondition": "비",
+            "rawValue": {
+              "precipitationAmount": "1mm 미만",
+              "snowfallAmount": "적설없음",
+              "precipitationType": "1"
+            },
+            "sourceLocation": {
+              "type": "GRID",
+              "nx": 55,
+              "ny": 33,
+              "locationMatch": "NEAREST_GRID",
+              "distanceKm": 3.72980017043023,
+              "distanceBasis": "GPS"
+            }
+          },
+          "basis": null,
+          "comparisonAvailable": null
+        },
+        {
+          "name": "comparisonGps",
+          "status": 200,
+          "current": {
+            "observedAt": null,
+            "temperature": 25.7,
+            "precipitationType": null,
+            "precipitationAmount": null,
+            "precipitationAmountRange": null,
+            "skyCondition": null,
+            "rawValue": null,
+            "sourceLocation": null
+          },
+          "basis": {
+            "provider": "KMA_APIHUB_GRID_OBSERVATION",
+            "dataRole": "OBSERVATION_VS_OBSERVATION",
+            "gridX": 55,
+            "gridY": 32,
+            "sourceLocation": {
+              "type": "GRID",
+              "nx": 55,
+              "ny": 33,
+              "locationMatch": "NEAREST_GRID",
+              "distanceKm": 3.72980017043023,
+              "distanceBasis": "GPS"
+            }
+          },
+          "comparisonAvailable": true
+        },
+        {
+          "name": "comparisonGrid",
+          "status": 200,
+          "current": {
+            "observedAt": null,
+            "temperature": 26.2,
+            "precipitationType": null,
+            "precipitationAmount": null,
+            "precipitationAmountRange": null,
+            "skyCondition": null,
+            "rawValue": null,
+            "sourceLocation": null
+          },
+          "basis": {
+            "provider": "KMA_APIHUB_GRID_OBSERVATION",
+            "dataRole": "OBSERVATION_VS_OBSERVATION",
+            "gridX": 55,
+            "gridY": 32,
+            "sourceLocation": {
+              "type": "GRID",
+              "nx": 54,
+              "ny": 32,
+              "locationMatch": "NEAREST_GRID",
+              "distanceKm": 5.063681241070939,
+              "distanceBasis": "GRID_CENTER"
+            }
+          },
+          "comparisonAvailable": true
+        }
+      ],
+      "excludedAppOnly": [
+        "어제 비교 GPS 전달",
+        "인근 실황 출처·거리 UI 연결"
+      ],
+      "excludedWaiting": [
+        "2026년 경계 승인",
+        "공공데이터 운영계정 신청"
+      ]
+    },
+    "final": {
+      "checkedAt": "2026-10-10T04:02:48.099741+00:00",
+      "commit": "794a84696bb1c06f50758d94a8c8edf935e6783d",
+      "release": "/opt/weather-care/releases/20261010-commit-794a84696bb1-v3/weather_care_server",
+      "latestObservation": {
+        "at": "2026-10-10T03:50:00.000Z",
+        "fields": [
+          "T1H",
+          "RN1",
+          "VEC",
+          "REH",
+          "PTY",
+          "WSD"
+        ]
+      },
+      "daily": {
+        "updatedAt": "2026-10-09T15:00:00.000Z",
+        "dates": {
+          "2026-10-03": {
+            "stations": 736,
+            "validSnowStations": 0
+          },
+          "2026-10-04": {
+            "stations": 737,
+            "validSnowStations": 0
+          },
+          "2026-10-05": {
+            "stations": 737,
+            "validSnowStations": 0
+          },
+          "2026-10-06": {
+            "stations": 738,
+            "validSnowStations": 0
+          },
+          "2026-10-07": {
+            "stations": 738,
+            "validSnowStations": 0
+          },
+          "2026-10-08": {
+            "stations": 737,
+            "validSnowStations": 0
+          },
+          "2026-10-09": {
+            "stations": 736,
+            "validSnowStations": 0
+          }
+        }
+      },
+      "retryQueue": [
+        {
+          "observedAt": "2026-10-09T07:50:00.000Z",
+          "attempts": 3,
+          "nextRetryAt": "2026-10-09T08:26:00.000Z",
+          "stored": true,
+          "missingFields": [
+            "RN1"
+          ],
+          "retryDue": true
+        }
+      ],
+      "currentSnowRuntimeFiles": [],
+      "sourceHashes": {
+        "src/api/weather.ts": "a72d6aa0d41e1745a263afc004c8d431d8043391950e14c4769f5a2eb3c27981",
+        "src/services/gridObservationCache.ts": "f79109925f70ef42b9983080a6a15f4ac400ee81a098f878eaa431f077175f24",
+        "src/providers/weather/kmaDailyObservationProvider.ts": "e6db02bd994a7c902c4d843bdc2926245196523c59a73817eac11cd3b1c137df"
+      },
+      "requests": [
+        {
+          "name": "mainGps",
+          "status": 200,
+          "current": {
+            "observedAt": "2026-10-10T12:50:00+09:00",
+            "temperature": 25.9,
+            "precipitationType": "NONE",
+            "precipitationAmount": 0,
+            "precipitationAmountRange": {
+              "type": "LESS_THAN",
+              "min": 0,
+              "max": 1,
+              "unit": "MM",
+              "rawValue": "1mm 미만"
+            },
+            "skyCondition": "비",
+            "rawValue": {
+              "precipitationAmount": "1mm 미만",
+              "snowfallAmount": "적설없음",
+              "precipitationType": "1"
+            },
+            "sourceLocation": {
+              "type": "GRID",
+              "nx": 55,
+              "ny": 33,
+              "locationMatch": "NEAREST_GRID",
+              "distanceKm": 3.72980017043023,
+              "distanceBasis": "GPS"
+            }
+          },
+          "basis": null,
+          "comparisonAvailable": null
+        },
+        {
+          "name": "comparisonGps",
+          "status": 200,
+          "current": {
+            "observedAt": null,
+            "temperature": 25.9,
+            "precipitationType": null,
+            "precipitationAmount": null,
+            "precipitationAmountRange": null,
+            "skyCondition": null,
+            "rawValue": null,
+            "sourceLocation": null
+          },
+          "basis": {
+            "provider": "KMA_APIHUB_GRID_OBSERVATION",
+            "dataRole": "OBSERVATION_VS_OBSERVATION",
+            "gridX": 55,
+            "gridY": 32,
+            "sourceLocation": {
+              "type": "GRID",
+              "nx": 55,
+              "ny": 33,
+              "locationMatch": "NEAREST_GRID",
+              "distanceKm": 3.72980017043023,
+              "distanceBasis": "GPS"
+            }
+          },
+          "comparisonAvailable": true
+        },
+        {
+          "name": "comparisonGrid",
+          "status": 200,
+          "current": {
+            "observedAt": null,
+            "temperature": 26.4,
+            "precipitationType": null,
+            "precipitationAmount": null,
+            "precipitationAmountRange": null,
+            "skyCondition": null,
+            "rawValue": null,
+            "sourceLocation": null
+          },
+          "basis": {
+            "provider": "KMA_APIHUB_GRID_OBSERVATION",
+            "dataRole": "OBSERVATION_VS_OBSERVATION",
+            "gridX": 55,
+            "gridY": 32,
+            "sourceLocation": {
+              "type": "GRID",
+              "nx": 54,
+              "ny": 32,
+              "locationMatch": "NEAREST_GRID",
+              "distanceKm": 5.063681241070939,
+              "distanceBasis": "GRID_CENTER"
+            }
+          },
+          "comparisonAvailable": true
+        }
+      ],
+      "excludedAppOnly": [
+        "어제 비교 GPS 전달",
+        "인근 실황 출처·거리 UI 연결"
+      ],
+      "excludedWaiting": [
+        "2026년 경계 승인",
+        "공공데이터 운영계정 신청"
+      ]
+    },
+    "findings": [
+      {
+        "id": "CURRENT_PRECIPITATION_MIXED",
+        "priority": "높음",
+        "title": "현재 실황에 예보 강수 문구·범위 잔존",
+        "evidence": "운영 main GPS 응답: precipitationType=NONE, precipitationAmount=0이지만 skyCondition=비, precipitationAmountRange=LESS_THAN(1mm 미만), rawValue.precipitationType=1. 앱은 current.skyCondition으로 문구와 아이콘을 표시한다.",
+        "files": [
+          "weather_care_server/src/api/weather.ts:999",
+          "weather_care_app/lib/models/weather.dart:112",
+          "weather_care_app/lib/features/home/tabs/main_tab.dart:224"
+        ],
+        "action": "실황 병합 시 강수 형태·수치·범위·원문과 하늘 문구를 일관되게 처리하고, 예보 대체 항목의 출처를 명확히 표시한다."
+      },
+      {
+        "id": "CURRENT_SNOW_NOT_CONNECTED",
+        "priority": "높음",
+        "title": "승인된 현재 적설 API 정규 수집·앱 미연결",
+        "evidence": "최신 운영 소스에 kma_snow1 수집기·현재 총 적설 계약이 없고 앱 CurrentWeather에도 총 적설 필드가 없음. 기존 승인 후 10/10 진단은674행/664개 명시적0/10개 음수 결측 확인.",
+        "files": [
+          "weather_care_app/lib/models/weather.dart:27",
+          "weather_care_server/src/types.ts:182"
+        ],
+        "action": "sd=tot&snow=0 전용 파서·정규 캐시·실제 관측시각·유효 인근 관측소·오류/결측 정책을 연결한다. 기존 snowfallAmount는 예보 신적설이므로 현재 적설로 사용하지 않는다."
+      },
+      {
+        "id": "DAILY_NEW_SNOW_NOT_CONNECTED",
+        "priority": "보통",
+        "title": "과거 최심신적설 수치 미기록",
+        "evidence": "10/3~10/9 운영 일관측의 유효 snowfallAmount 관측소 수는 날짜별 모두0. 기존 승인 전용 일자료 10/8·10/9 각각674지점 명시적0 진단이 있으나 정규 수집에는 미연결. 기온·강수는4728격자 모두7일 완비.",
+        "files": [
+          "weather_care_server/src/providers/weather/kmaDailyObservationProvider.ts"
+        ],
+        "action": "전용 일자료 파서·출처·항목 가용성을 연결하고 현재 총 적설과 별도 관리한다."
+      },
+      {
+        "id": "OPTIONAL_HISTORY_RETRY_SKIPPED",
+        "priority": "낮음",
+        "title": "일부 파일만 빠진 과거 실황 재시도 미처리",
+        "evidence": "10/9 16:50KST 회차 RN1 누락/attempts3/nextRetryAt10/9 17:26KST가 10/10 12:50에도 남음. backfill 큐 조회의 NOT EXISTS 조건이 이미 핵심 스냅샷을 저장한 회차를 제외하고 requiredOnly=true로만 복구함. 보관 전체의 VEC160·PTY162·RN1164회차 파일 미보관.",
+        "files": [
+          "weather_care_server/src/services/gridObservationCache.ts:129"
+        ],
+        "action": "필수 핵심 이력 복구를 우선 유지하면서 파일 일부 누락 재시도를 별도로 처리하거나 재시도 종료 상태를 명확히 정리한다. 기온·체감 어제 비교는 정상."
+      }
+    ],
+    "transientRecovered": "12:50 회차 WSD 시간초과는13:02까지자동복구,6필드정상저장"
+  },
+  "currentRequiredFindings": [],
+  "causeAndOutputReview": {
+    "checkedAt": "2026-10-10T04:08:50.817614+00:00",
+    "method": "직전 검증 운영커밋794a846 소스와 운영응답증거에서 병합·수집·과거출력의 호출경로 추적. 추가 제공처 호출 없음.",
+    "precipitationCause": {
+      "source": "weather_care_server/src/api/weather.ts:999",
+      "forecastLabelSource": "weather_care_server/src/providers/weather/kmaWeatherProvider.ts:756",
+      "reason": "예보 PTY에서 비 문구·PCP범위를 만든 뒤 forecast spread로 보존. 실황 병합은 precipitationType/precipitationAmount만 대체하고 skyCondition/precipitationAmountRange/rawValue를 그대로 둠.",
+      "requiredFix": "실황 강수 값과 문구·범위·원문의 일관성 및 예보 보완 항목의 출처 분리"
+    },
+    "currentSnowCause": {
+      "source": "weather_care_server/src/collection/weatherCollectionJob.ts:126",
+      "reason": "승인 후 진단만 완료. 현재 총 적설 kma_snow1 정규 호출·파서·캐시·주기 작업·API 계약이 운영에 구현되지 않음. API 승인 응답은 이미 정상 확인.",
+      "notSubstitutes": [
+        "예보 SNO",
+        "일자료 sd_day_max"
+      ]
+    },
+    "excludedByUser": [
+      "과거 최심신적설 기록·복원"
+    ],
+    "excludedAfterOutputReview": {
+      "files": [
+        "과거 VEC",
+        "과거 PTY",
+        "과거 RN1"
+      ],
+      "reason": "어제 출력은 기온·체감온도만 반환, 계산은 T1H·REH·WSD. 주간 과거는 별도 일관측 자료.",
+      "sources": [
+        "weather_care_server/src/api/comparison.ts:47",
+        "weather_care_server/src/providers/weather/kmaUltraShortObservationProvider.ts:113",
+        "weather_care_server/src/services/nationwideWeatherCache.ts:82"
+      ]
+    },
+    "stillRequired": [
+      "어제 비교용 과거 T1H·REH·WSD",
+      "현재 날씨용 최신 실황6변수"
+    ],
+    "runtimeChange": "없음. 과거 데이터·기존 수집·캐시 삭제 또는 주기 변경 없음."
+  },
+  "resolvedCurrentFindings": [
+    {
+      "id": "CURRENT_PRECIPITATION_MIXED",
+      "priority": "높음",
+      "title": "현재 실황에 예보 강수 문구·범위 잔존",
+      "evidence": "운영 main GPS 응답: precipitationType=NONE, precipitationAmount=0이지만 skyCondition=비, precipitationAmountRange=LESS_THAN(1mm 미만), rawValue.precipitationType=1. 앱은 current.skyCondition으로 문구와 아이콘을 표시한다.",
+      "files": [
+        "weather_care_server/src/api/weather.ts:999",
+        "weather_care_app/lib/models/weather.dart:112",
+        "weather_care_app/lib/features/home/tabs/main_tab.dart:224"
+      ],
+      "action": "실황 병합 시 강수 형태·수치·범위·원문과 하늘 문구를 일관되게 처리하고, 예보 대체 항목의 출처를 명확히 표시한다.",
+      "status": "RESOLVED_SERVER_DEPLOYED",
+      "verification": "현재강수_총적설_운영배포_검증_20261010.json"
+    },
+    {
+      "id": "CURRENT_SNOW_NOT_CONNECTED",
+      "priority": "높음",
+      "title": "승인된 현재 적설 API 정규 수집·앱 미연결",
+      "evidence": "최신 운영 소스에 kma_snow1 수집기·현재 총 적설 계약이 없고 앱 CurrentWeather에도 총 적설 필드가 없음. 기존 승인 후 10/10 진단은674행/664개 명시적0/10개 음수 결측 확인.",
+      "files": [
+        "weather_care_app/lib/models/weather.dart:27",
+        "weather_care_server/src/types.ts:182"
+      ],
+      "action": "sd=tot&snow=0 전용 파서·정규 캐시·실제 관측시각·유효 인근 관측소·오류/결측 정책을 연결한다. 기존 snowfallAmount는 예보 신적설이므로 현재 적설로 사용하지 않는다.",
+      "status": "RESOLVED_SERVER_DEPLOYED",
+      "verification": "현재강수_총적설_운영배포_검증_20261010.json"
+    }
+  ],
+  "currentFixDeployment": {
+    "checkedAt": "2026-10-10T04:43:14.423725+00:00",
+    "release": "/opt/weather-care/releases/20261010-current-rain-snow/weather_care_server",
+    "serverFindingsRemaining": 0,
+    "appLimitation": "서버는 현재 총 적설 필드를 제공한다. 앱의 파싱·표시는 별도 앱 수정·배포 대상이며 이 서버 작업에 포함하지 않음."
+  }
+}

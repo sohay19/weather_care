@@ -1,4 +1,5 @@
 import { saveCollectedCache } from '../src/database/collectedWeatherRepository';
+import { CURRENT_SNOW_CACHE_KEY } from '../src/services/currentSnowCache';
 import { describe, expect, it, vi } from 'vitest';
 import router, {
   buildCurrentOptionalDataStatusMessages,
@@ -293,6 +294,56 @@ describe('fast Main weather', () => {
 
     expect(current.temperature).toBe(19);
     expect(current.precipitationType).toBe('RAIN');
+  });
+
+  it('현재 무강수 실황에 예보 비·강수 범위·신적설을 남기지 않고 구름 예보만 보완한다', () => {
+    const forecast=snapshot(13,{skyCode:4,skyCondition:'비',precipitationType:'RAIN',precipitationProbability:60,
+      precipitationAmountRange:{type:'LESS_THAN',max:1,unit:'MM',rawValue:'1mm 미만'},
+      snowfallAmount:2,snowfallAmountRange:{type:'VALUE',min:2,max:2,unit:'CM',rawValue:'2'},
+      rawValue:{precipitationType:'1',precipitationAmount:'1mm 미만',snowfallAmount:'2'}});
+    const value={observedAt:'2026-10-10T12:40:00+09:00',provider:'KMA_APIHUB_GRID_OBSERVATION' as const,
+      temperature:25,humidity:60,windSpeed:2,rainDetected:false,precipitationTypeCode:0,precipitationAmount:0};
+    const current=currentFromUltraShortObservation(forecast,{value,status:'AVAILABLE',updatedAt:value.observedAt},new Date('2026-10-10T12:55:00+09:00'));
+    expect(current).toMatchObject({skyCondition:'흐림',precipitationType:'NONE',precipitationAmount:0,
+      precipitationAmountRange:{type:'NONE',min:0,max:0},rawValue:{precipitationType:'0',precipitationAmount:'0'}});
+    expect(current.precipitationProbability).toBeUndefined();
+    expect(current.snowfallAmount).toBeUndefined();
+    expect(current.rawValue?.snowfallAmount).toBeUndefined();
+    expect(forecast.skyCondition).toBe('비');
+  });
+
+  it('현재 비 실황은 수치와 범위를 맞추고 RN1 결측을 예보 범위로 채우지 않는다', () => {
+    const value={observedAt:'2026-10-10T12:40:00+09:00',provider:'KMA_APIHUB_GRID_OBSERVATION' as const,
+      temperature:25,humidity:60,windSpeed:2,rainDetected:true,precipitationTypeCode:1,precipitationAmount:3.2};
+    const record={value,status:'AVAILABLE' as const,updatedAt:value.observedAt};
+    const at=new Date('2026-10-10T12:55:00+09:00');
+    expect(currentFromUltraShortObservation(snapshot(13,{skyCode:1}),record,at))
+      .toMatchObject({skyCondition:'비',precipitationAmount:3.2,precipitationAmountRange:{type:'VALUE',min:3.2,max:3.2}});
+    const missing=currentFromUltraShortObservation(snapshot(13),{...record,value:{...value,precipitationAmount:undefined}},at);
+    expect(missing.precipitationAmountRange).toBeUndefined();
+    expect(missing.precipitationPeriod).toBeNull();
+  });
+
+  it('Main·Today 환경 보완과 현재 시간 선택을 모두 거친 실제 응답에 총 적설을 보존한다', async () => {
+    vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-10T13:05:00+09:00'));
+    try {
+      const hourly=[snapshot(13,{observedAt:'2026-10-10T13:00:00+09:00',forecastAt:'2026-10-10T13:00:00+09:00'})];
+      await seedCollectedRegion(58,124,{current:hourly[0],hourly,daily:[],baseDate:'20261010',baseTime:'1100',dataSource:'기상청'});
+      await seedCollectedUltraShortObservation(58,124,{observedAt:'2026-10-10T12:50:00+09:00',
+        provider:'KMA_APIHUB_GRID_OBSERVATION',temperature:25,humidity:60,windSpeed:2,
+        rainDetected:false,precipitationTypeCode:0,precipitationAmount:0});
+      await saveCollectedCache(env.DB,{key:CURRENT_SNOW_CACHE_KEY,type:'COLLECTED_NATIONWIDE_SNOW_TOTAL',
+        value:{requestedAt:'202610101250',stations:[{stationId:'42',stationName:'서울 관측소',stationKind:'000-----',
+          latitude:37,longitude:127,depthCm:0,observedAt:'2026-10-10T12:00:00+09:00'}]}});
+      for(const endpoint of ['main','today']) {
+        const response=await router.request(`/${endpoint}?nx=58&ny=124`,{}, {DB:env.DB});
+        const body=await response.json<{current:WeatherSnapshot;hourly:WeatherSnapshot[]}>();
+        expect(response.status).toBe(200);
+        expect(body.current).toMatchObject({snowDepthCm:0,snowDepthStatus:'AVAILABLE',
+          snowDepthObservedAt:'2026-10-10T12:00:00+09:00',snowDepthStationId:'42',snowDepthProvider:'KMA_APIHUB_SNOW_TOTAL'});
+        expect(body.hourly.every(slot=>slot.snowDepthCm===undefined)).toBe(true);
+      }
+    }finally{vi.useRealTimers();}
   });
 
   it('selects the earliest forecast strictly after the current time', () => {

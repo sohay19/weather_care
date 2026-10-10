@@ -486,6 +486,7 @@ function snapshotFromSlot(
     snowExpected,
     snowfallAmount: snowfallAmountRange?.min,
     snowfallAmountRange,
+    skyCode: numericValue(categories.get('SKY')),
     skyCondition: weatherLabel(
       precipitationCode,
       numericValue(categories.get('SKY')),
@@ -753,7 +754,7 @@ function ifUndefined(
   return value === undefined ? flag : undefined;
 }
 
-function weatherLabel(
+export function weatherLabel(
   precipitationType: number | undefined,
   skyCode?: number,
 ): string | undefined {

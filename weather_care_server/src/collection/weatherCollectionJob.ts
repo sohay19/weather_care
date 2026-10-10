@@ -1,6 +1,7 @@
 import { collectNationwideAirQuality } from '../services/nationwideAirCache';
 import { collectNationwideForecast } from '../services/nationwideForecastCache';
 import { collectPointForecasts } from '../services/pointForecastCache';
+import { collectCurrentSnow } from '../services/currentSnowCache';
 import { collectNationwideUv, NATIONAL_VISIBILITY_KEY, NATIONAL_DAILY_KEY } from '../services/nationwideWeatherCache';
 import { apiHubBudgetedFetch } from '../services/apiHubFetch';
 import type {
@@ -126,6 +127,7 @@ export async function runWeatherCollectionJob(
   // 수집 단위는 전국 원본이다. 등록된 설치나 대표 격자 목록의 유무와 무관하다.
   if (options.collectCore !== false) {
     await collectUltraShortObservations(env, activeRegions, now, activeRegions);
+    await collectCurrentSnow(env.DB, env.KMA_APIHUB_KEY, now);
     await backfillGridObservationHistory(env.DB, env.KMA_APIHUB_KEY, now);
     await collectNationwideAirQuality(env, now);
     await collectNationwideAirForecast(env, now);

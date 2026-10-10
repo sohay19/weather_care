@@ -213,7 +213,7 @@ export interface WeatherSnapshot {
     distanceBasis?: 'GPS' | 'GRID_CENTER';
   };
   fieldSources?: Partial<Record<
-    'temperature' | 'humidity' | 'windSpeed' | 'sky',
+    'temperature' | 'humidity' | 'windSpeed' | 'sky' | 'precipitationType' | 'precipitationAmount',
     {
       role: 'OBSERVATION' | 'FORECAST' | 'FORECAST_PROXY';
       field: string;
@@ -249,7 +249,16 @@ export interface WeatherSnapshot {
   snowExpected?: boolean;
   snowfallAmount?: number;
   snowfallAmountRange?: AmountRange;
+  /** 현재 지면의 총 적설(cm). 예보 신적설 snowfallAmount와 별도다. */
+  snowDepthCm?: number;
+  snowDepthStatus?: 'AVAILABLE' | 'UNAVAILABLE';
+  snowDepthObservedAt?: string;
+  snowDepthStationId?: string;
+  snowDepthStationName?: string;
+  snowDepthStationDistanceKm?: number;
+  snowDepthProvider?: 'KMA_APIHUB_SNOW_TOTAL';
   uvIndex?: number;
+  skyCode?: number;
   skyCondition?: string;
   pm10?: number;
   pm25?: number;

@@ -9,11 +9,23 @@ private let appGroup = "group.com.codesoha.weathercare"
 private let snapshotKey = "snapshot"
 private let refreshStatusKey = "refresh_status"
 private let weatherCareHomeURL = URL(string: "weathercare://home")!
-private let ink = Color(red: 37 / 255, green: 55 / 255, blue: 78 / 255)
-private let secondaryInk = Color(red: 96 / 255, green: 117 / 255, blue: 138 / 255)
-private let surface = Color(red: 234 / 255, green: 244 / 255, blue: 251 / 255)
-private let preparationCircle = Color(red: 226 / 255, green: 239 / 255, blue: 248 / 255)
-private let refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)
+// WidgetKit의 시스템 모드를 따라가며 별도의 모드 설정을 저장하지 않는다.
+private func themeColor(_ light: UInt32, _ dark: UInt32) -> Color {
+  Color(uiColor: UIColor { traits in
+    let hex = traits.userInterfaceStyle == .dark ? dark : light
+    return UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255,
+                   green: CGFloat((hex >> 8) & 0xFF) / 255,
+                   blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+  })
+}
+private let ink = themeColor(0x29343D, 0xEDF2F6)
+private let secondaryInk = themeColor(0x63707A, 0xAAB7C3)
+private let surface = themeColor(0xEAF0F5, 0x253747)
+private let panelSurface = themeColor(0xFFFFFF, 0x1D2731)
+private let preparationCircle = themeColor(0xEAF0F5, 0x253747)
+private let refreshButtonSurface = themeColor(0x3E5F7C, 0x9DBDD8)
+private let refreshButtonInk = themeColor(0xFFFFFF, 0x172736)
+private let widgetDivider = themeColor(0xCEDAE4, 0x40566A)
 private let refreshButtonHitSurface = RadialGradient(
   stops: [
     .init(color: refreshButtonSurface, location: 0),
@@ -410,7 +422,7 @@ private struct WidgetRefreshButton: View {
       Button(intent: RefreshWeatherWidgetIntent()) {
         Image(systemName: "arrow.clockwise")
           .font(.system(size: 8.8, weight: .semibold))
-          .foregroundStyle(Color.white)
+          .foregroundStyle(refreshButtonInk)
           .frame(width: 44, height: 44)
           .background(refreshButtonHitSurface, in: Circle())
           .contentShape(.interaction, Rectangle())
@@ -459,7 +471,7 @@ private struct AdaptiveTemperatureRow: View {
           temperatureColumn(label: "현재", value: currentTemperature, scale: scale)
           Divider()
             .frame(width: 1, height: dividerHeight * scale)
-            .overlay(Color(red: 171 / 255, green: 195 / 255, blue: 214 / 255))
+            .overlay(widgetDivider)
           temperatureColumn(label: "체감", value: apparentTemperature, scale: scale)
         } else {
           temperatureText(currentTemperature, scale: scale)
@@ -664,8 +676,10 @@ private struct PreparationIconView: View {
         Circle().fill(preparationCircle)
         if let image = preparationImage(type) {
           Image(uiImage: image)
+            .renderingMode(.template)
             .resizable()
             .interpolation(.high)
+            .foregroundStyle(ink)
             .scaledToFit()
             .padding(side * 0.16)
         } else {
@@ -1179,7 +1193,7 @@ private extension View {
   }
 
   func widgetInfoPanel() -> some View {
-    background(Color.white.opacity(0.72))
+    background(panelSurface)
       .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
   }
 

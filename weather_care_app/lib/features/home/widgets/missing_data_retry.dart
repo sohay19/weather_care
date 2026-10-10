@@ -24,23 +24,23 @@ class MissingDataRetry extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 9, 6, 9),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
+        color: WeatherCareTheme.of(context).surfaceMuted,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             size: 17,
-            color: WeatherCareTheme.textSecondary,
+            color: WeatherCareTheme.of(context).textSecondary,
           ),
           const SizedBox(width: 7),
           Expanded(
             child: Text(
               message,
-              style: WeatherCareTheme.microTextStyle.copyWith(
-                color: WeatherCareTheme.textSecondary,
-              ),
+              style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                    color: WeatherCareTheme.of(context).textSecondary,
+                  ),
             ),
           ),
           if (retrying)
@@ -58,7 +58,7 @@ class MissingDataRetry extends StatelessWidget {
                 key: ValueKey(retryKey),
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
             ),
         ],

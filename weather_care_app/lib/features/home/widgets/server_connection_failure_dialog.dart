@@ -22,9 +22,9 @@ class ServerConnectionFailureDialog extends StatelessWidget {
     return PopScope(
       canPop: refreshFailure,
       child: AlertDialog(
-        icon: const Icon(
+        icon: Icon(
           Icons.cloud_off_outlined,
-          color: WeatherCareTheme.primaryDeep,
+          color: WeatherCareTheme.of(context).primaryDeep,
         ),
         title: Text(
           refreshFailure

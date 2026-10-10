@@ -4,11 +4,11 @@ import '../models/recommendation.dart';
 import 'weather_theme.dart';
 
 extension RecommendationPresentation on RecommendationType {
-  Color get accentColor {
-    return WeatherCareTheme.primaryDeep;
+  Color accentColor(BuildContext context) {
+    return WeatherCareTheme.of(context).primaryDeep;
   }
 
-  Color get softColor {
-    return WeatherCareTheme.primarySoft;
+  Color softColor(BuildContext context) {
+    return WeatherCareTheme.of(context).primarySoft;
   }
 }

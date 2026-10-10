@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/ads/consent_aware_native_ad_card.dart';
 import 'package:weather_care/services/ad_removal_service.dart';
 import 'package:weather_care/services/ads_consent.dart';
+import 'package:weather_care/theme/weather_theme.dart';
 
 import 'support/fake_ad_removal.dart';
 
@@ -40,6 +41,8 @@ void main() {
 
   Widget subject({NativeAdCardSize size = NativeAdCardSize.small}) =>
       MaterialApp(
+        theme: WeatherCareTheme.light(),
+        darkTheme: WeatherCareTheme.dark(),
         home: Scaffold(
           body: ConsentAwareNativeAdCard(
             size: size,
@@ -83,6 +86,23 @@ void main() {
     ]);
     expect(find.byKey(const ValueKey('week-native-ad-card')), findsOneWidget);
     expect(find.byKey(const ValueKey('fake-native-ad')), findsOneWidget);
+  });
+
+  testWidgets('시스템 모드가 바뀌면 기존 네이티브 광고를 폐기하고 다시 로드한다', (tester) async {
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+    eligible = true;
+    await consent.refresh();
+    await tester.pumpWidget(subject());
+    await tester.pumpAndSettle();
+    final previous = loader.handles.single;
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    await tester.pumpAndSettle();
+    expect(previous.disposeCount, 1);
+    expect(loader.handles, hasLength(2));
+    expect(find.byKey(const ValueKey('fake-native-ad')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(loader.handles.last.disposeCount, 1);
   });
 
   testWidgets('광고 요청 가능 상태가 해제되면 카드를 제거하고 폐기한다', (tester) async {

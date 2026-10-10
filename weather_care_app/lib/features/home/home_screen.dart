@@ -1036,10 +1036,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ));
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
+      value: (Theme.of(context).brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark)
+          .copyWith(
         statusBarColor: Colors.transparent,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: WeatherCareTheme.of(context).surface,
+        systemNavigationBarIconBrightness:
+            Theme.of(context).brightness == Brightness.dark
+                ? Brightness.light
+                : Brightness.dark,
       ),
       child: Scaffold(
         body: SafeArea(
@@ -1145,21 +1151,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           key: const ValueKey('main-bottom-navigation'),
           selectedIndex: _selectedIndex,
           height: 74,
-          backgroundColor: Colors.white,
+          backgroundColor: WeatherCareTheme.of(context).surface,
           surfaceTintColor: Colors.transparent,
-          indicatorColor: WeatherCareTheme.primarySoft,
+          indicatorColor: WeatherCareTheme.of(context).primarySoft,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: _selectTab,
-          destinations: const [
+          destinations: [
             NavigationDestination(
               tooltip: '오늘 날씨와 시간별 예보',
               icon: Icon(
                 Icons.work_outline_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).textSecondary,
               ),
               selectedIcon: Icon(
                 Icons.work_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               label: 'Today',
             ),
@@ -1167,11 +1173,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               tooltip: '항목별 근거와 자료',
               icon: Icon(
                 Icons.query_stats_outlined,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).textSecondary,
               ),
               selectedIcon: Icon(
                 Icons.query_stats_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               label: 'Detail',
             ),
@@ -1179,11 +1185,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               tooltip: '날씨, Check List, 간단한 타임라인',
               icon: Icon(
                 Icons.home_outlined,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).textSecondary,
               ),
               selectedIcon: Icon(
                 Icons.home_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               label: 'Main',
             ),
@@ -1191,11 +1197,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               tooltip: '이번 주 날씨',
               icon: Icon(
                 Icons.calendar_month_outlined,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).textSecondary,
               ),
               selectedIcon: Icon(
                 Icons.calendar_month_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               label: 'Week',
             ),
@@ -1203,11 +1209,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               tooltip: '설정',
               icon: Icon(
                 Icons.tune_outlined,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).textSecondary,
               ),
               selectedIcon: Icon(
                 Icons.tune_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               label: 'Setting',
             ),

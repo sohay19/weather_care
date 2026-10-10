@@ -29,7 +29,8 @@ class SettingsGuideScreen extends StatelessWidget {
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(18),
-                  decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
+                  decoration: WeatherCareTheme.of(context)
+                      .surfaceDecoration(radius: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

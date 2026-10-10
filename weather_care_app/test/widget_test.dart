@@ -24,15 +24,27 @@ import 'package:weather_care/services/notification_destination.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test('recommendation categories share one color palette', () {
-    expect(
-      RecommendationType.values.map((type) => type.accentColor).toSet(),
-      {WeatherCareTheme.primaryDeep},
-    );
-    expect(
-      RecommendationType.values.map((type) => type.softColor).toSet(),
-      {WeatherCareTheme.primarySoft},
-    );
+  testWidgets('준비물은 현재 테마의 같은 색상 팔레트를 사용한다', (tester) async {
+    for (final theme in [WeatherCareTheme.light(), WeatherCareTheme.dark()]) {
+      await tester.pumpWidget(MaterialApp(
+        theme: theme,
+        home: Builder(builder: (context) {
+          final colors = WeatherCareTheme.of(context);
+          expect(
+              RecommendationType.values
+                  .map((type) => type.accentColor(context))
+                  .toSet(),
+              {colors.primaryDeep});
+          expect(
+              RecommendationType.values
+                  .map((type) => type.softColor(context))
+                  .toSet(),
+              {colors.primarySoft});
+          return const SizedBox.shrink();
+        }),
+      ));
+      await tester.pumpAndSettle();
+    }
   });
 
   test('theme maps the four font roles', () {
@@ -424,7 +436,7 @@ void main() {
       );
       expect(
         (destination.selectedIcon! as Icon).color,
-        WeatherCareTheme.textSecondary,
+        WeatherCareTheme.primaryDeep,
       );
     }
     await tester.tap(find.text('Today'));

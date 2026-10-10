@@ -26,7 +26,7 @@
                 android:layout_height="wrap_content"
                 android:maxLines="2"
                 android:text="시흥시 은행동"
-                android:textColor="#25374E"
+                android:textColor="@color/weather_widget_text_primary"
                 android:textSize="9sp"
                 android:textStyle="bold" />
 
@@ -34,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="오전 8:20 기준"
-                android:textColor="#60758A"
+                android:textColor="@color/weather_widget_text_secondary"
                 android:textSize="6sp" />
         </LinearLayout>
 
@@ -67,7 +67,7 @@
             android:layout_marginStart="5dp"
             android:gravity="center"
             android:text="현재\n18°"
-            android:textColor="#25374E"
+            android:textColor="@color/weather_widget_text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -77,7 +77,7 @@
             android:layout_marginStart="7dp"
             android:gravity="center"
             android:text="체감\n18°"
-            android:textColor="#25374E"
+            android:textColor="@color/weather_widget_text_primary"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -96,7 +96,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:text="겉옷을 챙기세요"
-            android:textColor="#25374E"
+            android:textColor="@color/weather_widget_text_primary"
             android:textSize="8sp"
             android:textStyle="bold" />
 
@@ -106,7 +106,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:text="최저 12°   최고 20°"
-            android:textColor="#425A72"
+            android:textColor="@color/weather_widget_text_accent"
             android:textSize="7sp" />
     </LinearLayout>
 </LinearLayout>

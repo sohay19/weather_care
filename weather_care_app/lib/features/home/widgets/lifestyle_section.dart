@@ -13,7 +13,7 @@ class LifestyleSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -54,7 +54,7 @@ class _LifestyleTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
+        color: WeatherCareTheme.of(context).surfaceMuted,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -63,14 +63,14 @@ class _LifestyleTile extends StatelessWidget {
           Container(
             width: 44,
             height: 44,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: WeatherCareTheme.of(context).surface,
               shape: BoxShape.circle,
             ),
             child: Icon(
               _iconFor(message.type),
               size: 22,
-              color: WeatherCareTheme.primaryDeep,
+              color: WeatherCareTheme.of(context).primaryDeep,
             ),
           ),
           const SizedBox(width: 13),

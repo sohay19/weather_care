@@ -252,11 +252,11 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeSectionHeader(
+          const HomeSectionHeader(
             icon: Icons.playlist_add_check_rounded,
             title: 'Check List',
             subtitle: '외출 전 준비할 물건을 확인해요',
@@ -333,8 +333,9 @@ class _BagItem extends StatelessWidget {
     final type = recommendation.type;
 
     return Material(
-      color:
-          checked ? type.accentColor.withValues(alpha: 0.13) : type.softColor,
+      color: checked
+          ? type.accentColor(context).withValues(alpha: 0.13)
+          : type.softColor(context),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onToggle,
@@ -353,26 +354,30 @@ class _BagItem extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: checked ? type.accentColor : Colors.white,
+                        color: checked
+                            ? WeatherCareTheme.of(context).actionBackground
+                            : WeatherCareTheme.of(context).surface,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: type.accentColor.withValues(alpha: 0.14),
+                            color: type
+                                .accentColor(context)
+                                .withValues(alpha: 0.14),
                             blurRadius: 14,
                             offset: const Offset(0, 5),
                           ),
                         ],
                       ),
                       child: checked
-                          ? const Icon(
+                          ? Icon(
                               Icons.check_rounded,
-                              color: Colors.white,
+                              color: WeatherCareTheme.of(context).onPrimary,
                               size: 24,
                             )
                           : Center(
                               child: PreparationIcon(
                                 type: type,
-                                color: type.accentColor,
+                                color: type.accentColor(context),
                                 size: 34,
                               ),
                             ),
@@ -384,8 +389,8 @@ class _BagItem extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: WeatherCareTheme.textPrimary,
+                    style: TextStyle(
+                      color: WeatherCareTheme.of(context).textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                     ),
@@ -396,14 +401,18 @@ class _BagItem extends StatelessWidget {
                     height: 32,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: checked ? type.accentColor : Colors.white,
+                      color: checked
+                          ? WeatherCareTheme.of(context).actionBackground
+                          : WeatherCareTheme.of(context).surface,
                       borderRadius: BorderRadius.circular(11),
                     ),
                     child: Text(
                       pendingLabel ?? (checked ? '챙겼어요' : '챙길게요'),
                       maxLines: 1,
                       style: TextStyle(
-                        color: checked ? Colors.white : type.accentColor,
+                        color: checked
+                            ? WeatherCareTheme.of(context).onPrimary
+                            : type.accentColor(context),
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
@@ -426,7 +435,7 @@ class _BagItem extends StatelessWidget {
                     maximumSize: const Size(30, 30),
                     padding: EdgeInsets.zero,
                     backgroundColor: Colors.transparent,
-                    foregroundColor: type.accentColor,
+                    foregroundColor: type.accentColor(context),
                   ),
                   icon: const Icon(Icons.info_outline_rounded, size: 17),
                 ),
@@ -448,20 +457,20 @@ class _EmptyBag extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.primarySoft,
+        color: WeatherCareTheme.of(context).primarySoft,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Row(
+      child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Colors.white,
+            backgroundColor: WeatherCareTheme.of(context).surface,
             child: Icon(
               Icons.check_rounded,
-              color: WeatherCareTheme.primaryDeep,
+              color: WeatherCareTheme.of(context).primaryDeep,
             ),
           ),
-          SizedBox(width: 14),
-          Expanded(
+          const SizedBox(width: 14),
+          const Expanded(
             child: Text(
               '지금은 특별히 챙길 준비물이 없어요',
               style: TextStyle(fontWeight: FontWeight.w700),

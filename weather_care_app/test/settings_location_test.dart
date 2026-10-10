@@ -17,7 +17,10 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
       await tester.pumpAndSettle();
     }
-    await tester.tap(find.byKey(const ValueKey('location-settings-menu')));
+    final menu = find.byKey(const ValueKey('location-settings-menu'));
+    await tester.scrollUntilVisible(menu, 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(menu);
     await tester.pumpAndSettle();
   }
 

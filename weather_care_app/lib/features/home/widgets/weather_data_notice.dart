@@ -18,7 +18,7 @@ class WeatherDataNotice extends StatelessWidget {
     if (phase == WeatherDataPhase.ready) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Row(
         children: [
           if (phase == WeatherDataPhase.loading)

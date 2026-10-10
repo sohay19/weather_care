@@ -163,10 +163,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             '나의 위치와 필요한 알람을 설정할 수 있어요.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: WeatherCareTheme.textSecondary,
+                  color: WeatherCareTheme.of(context).textSecondary,
                 ),
           ),
         const SizedBox(height: 20),
+        Container(
+          key: const ValueKey('system-theme-status'),
+          padding: const EdgeInsets.all(20),
+          decoration: WeatherCareTheme.of(context).surfaceDecoration(),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(Icons.brightness_auto_rounded,
+                  color: WeatherCareTheme.of(context).primaryDeep),
+              const SizedBox(width: 10),
+              const Expanded(
+                  child: Text('화면 모드',
+                      style: TextStyle(fontWeight: FontWeight.w800))),
+            ]),
+            const SizedBox(height: 12),
+            const Text('시스템 설정에 맞춤'),
+            Text('앱과 홈 화면 위젯이 휴대폰의 라이트·다크 설정을 따라가요.',
+                style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 8),
+            Text(
+                Theme.of(context).brightness == Brightness.dark
+                    ? '현재 적용 중 · 다크 모드'
+                    : '현재 적용 중 · 라이트 모드',
+                style: TextStyle(
+                    color: WeatherCareTheme.of(context).primaryDeep,
+                    fontWeight: FontWeight.w700)),
+          ]),
+        ),
+        const SizedBox(height: 16),
         _AdRemovalBanner(
           isOwned: widget.adRemoval?.isOwned ?? false,
           onTap: _openAdRemovalPurchase,
@@ -211,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
     final refreshableBody = RefreshIndicator(
-      color: WeatherCareTheme.primary,
+      color: WeatherCareTheme.of(context).primary,
       onRefresh: widget.onRefresh ?? () async {},
       child: body,
     );
@@ -229,7 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return Text(
                 '버전 $version',
                 key: const ValueKey('settings-app-version'),
-                style: WeatherCareTheme.microTextStyle,
+                style: WeatherCareTheme.of(context).microTextStyle,
               );
             },
           ),
@@ -502,7 +531,7 @@ class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
                     if (settings.locationMode == 'GPS') ...[
                       const SizedBox(height: 6),
                       Padding(
-                        padding: EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.only(left: 10),
                         child: Text(location.message,
                             key: const ValueKey('location-status')),
                       ),
@@ -636,7 +665,7 @@ class _WeatherAlertsSettingsScreenState
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('알림 시간과 받을 날씨·생활 알림을 영역별로 설정해요',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: WeatherCareTheme.textSecondary,
+                  color: WeatherCareTheme.of(context).textSecondary,
                 )),
         const SizedBox(height: 16),
         _SettingsSection(
@@ -677,12 +706,12 @@ class _WeatherAlertsSettingsScreenState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
                   decoration: BoxDecoration(
-                    color: WeatherCareTheme.surfaceMuted,
+                    color: WeatherCareTheme.of(context).surfaceMuted,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Row(children: [
-                    const Icon(Icons.alarm_rounded,
-                        color: WeatherCareTheme.primary),
+                    Icon(Icons.alarm_rounded,
+                        color: WeatherCareTheme.of(context).primary),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text('설정 시각',
@@ -690,15 +719,15 @@ class _WeatherAlertsSettingsScreenState
                     ),
                     Text(
                       settings.notificationTime,
-                      style: const TextStyle(
-                        color: WeatherCareTheme.primaryDeep,
+                      style: TextStyle(
+                        color: WeatherCareTheme.of(context).primaryDeep,
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right_rounded,
-                        color: WeatherCareTheme.textSecondary),
+                    Icon(Icons.chevron_right_rounded,
+                        color: WeatherCareTheme.of(context).textSecondary),
                   ]),
                 ),
               ),
@@ -719,26 +748,26 @@ class _WeatherAlertsSettingsScreenState
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: WeatherCareTheme.attentionSoft,
+            color: WeatherCareTheme.of(context).attentionSoft,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline_rounded,
                 size: 19,
-                color: WeatherCareTheme.attention,
+                color: WeatherCareTheme.of(context).attention,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   '설정 실패 시 저장·기기 알림 상태에서 재시도 해주세요.',
-                  style: WeatherCareTheme.microTextStyle.copyWith(
-                    color: WeatherCareTheme.attentionDeep,
-                    fontSize: 12,
-                    height: 1.45,
-                  ),
+                  style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                        color: WeatherCareTheme.of(context).attentionDeep,
+                        fontSize: 12,
+                        height: 1.45,
+                      ),
                 ),
               ),
             ],
@@ -1205,20 +1234,21 @@ class _SettingsMenuButton extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           padding: const EdgeInsets.all(18),
-          decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
+          decoration:
+              WeatherCareTheme.of(context).surfaceDecoration(radius: 24),
           child: Row(
             children: [
               Container(
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.primarySoft,
+                  color: WeatherCareTheme.of(context).primarySoft,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   icon,
                   size: 21,
-                  color: WeatherCareTheme.primaryDeep,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1238,9 +1268,9 @@ class _SettingsMenuButton extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: WeatherCareTheme.textSecondary,
+                color: WeatherCareTheme.of(context).textSecondary,
               ),
             ],
           ),
@@ -1266,19 +1296,24 @@ class _AdRemovalBanner extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           padding: const EdgeInsets.all(18),
-          decoration: WeatherCareTheme.mood(
-            'clear',
-            borderRadius: BorderRadius.circular(24),
-          ).copyWith(
-            border: Border.all(color: WeatherCareTheme.primaryBorder),
-          ),
+          decoration: WeatherCareTheme.of(context)
+              .mood(
+                'clear',
+                borderRadius: BorderRadius.circular(24),
+              )
+              .copyWith(
+                border: Border.all(
+                    color: WeatherCareTheme.of(context).primaryBorder),
+              ),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.84),
+                  color: WeatherCareTheme.of(context)
+                      .surface
+                      .withValues(alpha: 0.84),
                   borderRadius: BorderRadius.circular(17),
                 ),
                 child: Icon(
@@ -1286,7 +1321,7 @@ class _AdRemovalBanner extends StatelessWidget {
                       ? Icons.verified_rounded
                       : Icons.workspace_premium_outlined,
                   size: 25,
-                  color: WeatherCareTheme.primaryDeep,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                 ),
               ),
               const SizedBox(width: 14),
@@ -1296,9 +1331,11 @@ class _AdRemovalBanner extends StatelessWidget {
                   children: [
                     Text(
                       isOwned ? 'AD-FREE · 구매 완료' : 'AD-FREE · 평생 이용',
-                      style: WeatherCareTheme.specialLabelStyle.copyWith(
-                        letterSpacing: 0.3,
-                      ),
+                      style: WeatherCareTheme.of(context)
+                          .specialLabelStyle
+                          .copyWith(
+                            letterSpacing: 0.3,
+                          ),
                     ),
                     const SizedBox(height: 5),
                     Text(
@@ -1320,13 +1357,15 @@ class _AdRemovalBanner extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.72),
+                  color: WeatherCareTheme.of(context)
+                      .surface
+                      .withValues(alpha: 0.72),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_forward_rounded,
                   size: 19,
-                  color: WeatherCareTheme.primaryDeep,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                 ),
               ),
             ],
@@ -1361,7 +1400,7 @@ class _SettingsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(radius: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1372,13 +1411,13 @@ class _SettingsSection extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.primarySoft,
+                  color: WeatherCareTheme.of(context).primarySoft,
                   borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(
                   icon,
                   size: 20,
-                  color: WeatherCareTheme.primaryDeep,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                 ),
               ),
               const SizedBox(width: 11),
@@ -1422,24 +1461,24 @@ class _LocationRadioTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? WeatherCareTheme.primarySoft
-          : WeatherCareTheme.surfaceSubtle,
+          ? WeatherCareTheme.of(context).primarySoft
+          : WeatherCareTheme.of(context).surfaceSubtle,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
           color: selected
-              ? WeatherCareTheme.primaryBorder
-              : WeatherCareTheme.outline,
+              ? WeatherCareTheme.of(context).primaryBorder
+              : WeatherCareTheme.of(context).outline,
         ),
       ),
       child: RadioListTile<LocationMode>(
         value: value,
-        activeColor: WeatherCareTheme.primary,
+        activeColor: WeatherCareTheme.of(context).primary,
         secondary: Icon(
           icon,
           color: selected
-              ? WeatherCareTheme.primaryDeep
-              : WeatherCareTheme.textSecondary,
+              ? WeatherCareTheme.of(context).primaryDeep
+              : WeatherCareTheme.of(context).textSecondary,
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text(subtitle),
@@ -1480,13 +1519,13 @@ class _SettingsToggleTile extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: WeatherCareTheme.primarySoft,
+                color: WeatherCareTheme.of(context).primarySoft,
                 borderRadius: BorderRadius.circular(13),
               ),
               child: Icon(
                 icon,
                 size: 20,
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
             ),
             const SizedBox(width: 12),
@@ -1502,7 +1541,7 @@ class _SettingsToggleTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: WeatherCareTheme.microTextStyle,
+                      style: WeatherCareTheme.of(context).microTextStyle,
                     ),
                   ],
                 ],

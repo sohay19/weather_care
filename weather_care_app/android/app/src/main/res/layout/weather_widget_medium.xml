@@ -26,6 +26,7 @@
 
             <ImageView
                 android:id="@+id/widget_region"
+                android:tint="@color/weather_widget_text_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="시흥시 은행동"
@@ -33,6 +34,7 @@
 
             <ImageView
                 android:id="@+id/widget_refresh_time"
+                android:tint="@color/weather_widget_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
@@ -62,6 +64,7 @@
 
         <ImageView
             android:id="@+id/widget_weather_icon"
+                android:tint="@color/weather_widget_text_accent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
@@ -77,6 +80,7 @@
 
             <ImageView
                 android:id="@+id/widget_current_label"
+                android:tint="@color/weather_widget_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
@@ -85,6 +89,7 @@
 
             <ImageView
                 android:id="@+id/widget_current_temperature"
+                android:tint="@color/weather_widget_text_accent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
@@ -97,7 +102,7 @@
             android:layout_height="34dp"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:background="#ABC3D6" />
+            android:background="@color/weather_widget_divider" />
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -107,6 +112,7 @@
 
             <ImageView
                 android:id="@+id/widget_apparent_label"
+                android:tint="@color/weather_widget_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
@@ -115,6 +121,7 @@
 
             <ImageView
                 android:id="@+id/widget_apparent_temperature"
+                android:tint="@color/weather_widget_text_accent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
@@ -137,6 +144,7 @@
 
         <ImageView
             android:id="@+id/widget_short_message"
+                android:tint="@color/weather_widget_text_primary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -145,6 +153,7 @@
 
         <ImageView
             android:id="@+id/widget_min_max"
+                android:tint="@color/weather_widget_text_accent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"

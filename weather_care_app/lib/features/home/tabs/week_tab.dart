@@ -104,7 +104,7 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
         .whereType<WeeklyForecastItem>()
         .toList(growable: false);
     return RefreshIndicator(
-      color: WeatherCareTheme.primary,
+      color: WeatherCareTheme.of(context).primary,
       onRefresh: widget.onRefresh,
       child: SingleChildScrollView(
         key: const ValueKey('week-tab'),
@@ -179,7 +179,7 @@ class _WeekSummary extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(19),
-      decoration: WeatherCareTheme.mood('clear'),
+      decoration: WeatherCareTheme.of(context).mood('clear'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -194,7 +194,9 @@ class _WeekSummary extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             '한 주의 날씨를 요약해서 보여드려요',
-            style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 12),
+            style: WeatherCareTheme.of(context)
+                .microTextStyle
+                .copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
           Row(
@@ -203,10 +205,10 @@ class _WeekSummary extends StatelessWidget {
               Expanded(
                 child: _SummaryMetric(
                   key: const ValueKey('week-summary-precipitation'),
-                  icon: const WeatherConditionIcon(
+                  icon: WeatherConditionIcon(
                     condition: '비/눈',
                     size: 21,
-                    color: WeatherCareTheme.primaryDeep,
+                    color: WeatherCareTheme.of(context).primaryDeep,
                   ),
                   label: '예상 강수일',
                   metric: summary.precipitation,
@@ -217,9 +219,9 @@ class _WeekSummary extends StatelessWidget {
               Expanded(
                 child: _SummaryMetric(
                   key: const ValueKey('week-summary-temperature'),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.device_thermostat_rounded,
-                    color: WeatherCareTheme.primaryDeep,
+                    color: WeatherCareTheme.of(context).primaryDeep,
                     size: 19,
                   ),
                   label: '예상 주중 최고기온',
@@ -231,9 +233,9 @@ class _WeekSummary extends StatelessWidget {
               Expanded(
                 child: _SummaryMetric(
                   key: const ValueKey('week-summary-preparations'),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.work_outline_rounded,
-                    color: WeatherCareTheme.primaryDeep,
+                    color: WeatherCareTheme.of(context).primaryDeep,
                     size: 19,
                   ),
                   label: '예상 준비물',
@@ -246,7 +248,7 @@ class _WeekSummary extends StatelessWidget {
           if (summary.excludedNotice != null) ...[
             const SizedBox(height: 8),
             Text(summary.excludedNotice!,
-                style: WeatherCareTheme.microTextStyle),
+                style: WeatherCareTheme.of(context).microTextStyle),
           ],
         ],
       ),
@@ -273,7 +275,7 @@ class _SummaryMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.66),
+        color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.66),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -281,10 +283,10 @@ class _SummaryMetric extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: WeatherCareTheme.microTextStyle.copyWith(
-              color: WeatherCareTheme.textPrimary,
-              fontWeight: FontWeight.w800,
-            ),
+            style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                  color: WeatherCareTheme.of(context).textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
           const SizedBox(height: 7),
           icon,
@@ -360,21 +362,21 @@ class _WeekDayCard extends StatelessWidget {
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: isPast
-            ? WeatherCareTheme.surfaceMuted
+            ? WeatherCareTheme.of(context).surfaceMuted
             : isToday
-                ? WeatherCareTheme.primarySoft
-                : Colors.white,
+                ? WeatherCareTheme.of(context).primarySoft
+                : WeatherCareTheme.of(context).surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isToday
-              ? WeatherCareTheme.primaryBorder
-              : WeatherCareTheme.outline,
+              ? WeatherCareTheme.of(context).primaryBorder
+              : WeatherCareTheme.of(context).outline,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: WeatherCareTheme.shadow,
+            color: WeatherCareTheme.of(context).shadow,
             blurRadius: 20,
-            offset: Offset(0, 7),
+            offset: const Offset(0, 7),
           ),
         ],
       ),
@@ -394,22 +396,24 @@ class _WeekDayCard extends StatelessWidget {
                       calendarDayLabel(calendarDay.date),
                       style: TextStyle(
                         color: isPast
-                            ? WeatherCareTheme.textSecondary
+                            ? WeatherCareTheme.of(context).textSecondary
                             : isToday
-                                ? WeatherCareTheme.primaryDeep
-                                : WeatherCareTheme.textPrimary,
+                                ? WeatherCareTheme.of(context).primaryDeep
+                                : WeatherCareTheme.of(context).textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     Text(
                       sourceLabel,
-                      style: WeatherCareTheme.specialLabelStyle.copyWith(
-                        color: isPast && sourceLabel == '실제 관측'
-                            ? WeatherCareTheme.textPrimary
-                            : WeatherCareTheme.primaryDeep,
-                        fontSize: 10,
-                      ),
+                      style: WeatherCareTheme.of(context)
+                          .specialLabelStyle
+                          .copyWith(
+                            color: isPast && sourceLabel == '실제 관측'
+                                ? WeatherCareTheme.of(context).textPrimary
+                                : WeatherCareTheme.of(context).primaryDeep,
+                            fontSize: 10,
+                          ),
                     ),
                   ],
                 ),
@@ -419,19 +423,21 @@ class _WeekDayCard extends StatelessWidget {
                 Text(
                   '오늘',
                   key: ValueKey('week-today-${day.forecastDate}'),
-                  style: WeatherCareTheme.specialLabelStyle.copyWith(
-                    fontSize: 11,
-                  ),
+                  style:
+                      WeatherCareTheme.of(context).specialLabelStyle.copyWith(
+                            fontSize: 11,
+                          ),
                 )
               else if (isPast)
                 Text(
                   '지난 날짜',
                   key: ValueKey('week-past-${day.forecastDate}'),
-                  style: WeatherCareTheme.specialLabelStyle.copyWith(
-                    color: WeatherCareTheme.textPrimary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style:
+                      WeatherCareTheme.of(context).specialLabelStyle.copyWith(
+                            color: WeatherCareTheme.of(context).textPrimary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
                 ),
             ],
           ),
@@ -440,7 +446,7 @@ class _WeekDayCard extends StatelessWidget {
             Text(
               '인근 기상청 지상·AWS 관측소의 일자료'
               '${day.observationDistanceKm == null ? '' : ' · 예보격자 대표점에서 ${day.observationDistanceKm!.toStringAsFixed(1)}km'}',
-              style: WeatherCareTheme.microTextStyle,
+              style: WeatherCareTheme.of(context).microTextStyle,
             ),
           ],
           const SizedBox(height: 10),
@@ -449,14 +455,16 @@ class _WeekDayCard extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: WeatherCareTheme.of(context)
+                    .surface
+                    .withValues(alpha: 0.72),
                 shape: BoxShape.circle,
               ),
               child: WeatherConditionIcon(
                 condition: weatherLabel,
                 color: isPast
-                    ? WeatherCareTheme.textSecondary
-                    : WeatherCareTheme.primaryDeep,
+                    ? WeatherCareTheme.of(context).textSecondary
+                    : WeatherCareTheme.of(context).primaryDeep,
                 size: 21,
               ),
             ),
@@ -465,7 +473,9 @@ class _WeekDayCard extends StatelessWidget {
               child: Text(
                 weatherLabel ?? dataPhase.missingText('날씨 자료 없음'),
                 style: TextStyle(
-                  color: isPast ? WeatherCareTheme.textSecondary : null,
+                  color: isPast
+                      ? WeatherCareTheme.of(context).textSecondary
+                      : null,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -473,7 +483,7 @@ class _WeekDayCard extends StatelessWidget {
           ]),
           if (weatherLabel != null && day.weatherDataComplete == false)
             Text('일부 시간대 날씨 ${dataPhase.missingText()}',
-                style: WeatherCareTheme.microTextStyle),
+                style: WeatherCareTheme.of(context).microTextStyle),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -501,7 +511,7 @@ class _WeekDayCard extends StatelessWidget {
           if (day.minTemperatureSource == 'HOURLY' ||
               day.maxTemperatureSource == 'HOURLY')
             Text('시간별 최저·최고는 받은 시간대만 비교한 값이에요.',
-                style: WeatherCareTheme.microTextStyle),
+                style: WeatherCareTheme.of(context).microTextStyle),
           if (additionalData.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(
@@ -520,7 +530,9 @@ class _WeekDayCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.65),
+                color: WeatherCareTheme.of(context)
+                    .surface
+                    .withValues(alpha: 0.65),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -529,17 +541,21 @@ class _WeekDayCard extends StatelessWidget {
                   Text(
                     '대기 상태',
                     style: TextStyle(
-                      color: isPast ? WeatherCareTheme.textSecondary : null,
+                      color: isPast
+                          ? WeatherCareTheme.of(context).textSecondary
+                          : null,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     airQualityLines.join(' · '),
-                    style: WeatherCareTheme.microTextStyle.copyWith(
-                      color: isPast ? WeatherCareTheme.textSecondary : null,
-                      fontSize: 12,
-                    ),
+                    style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                          color: isPast
+                              ? WeatherCareTheme.of(context).textSecondary
+                              : null,
+                          fontSize: 12,
+                        ),
                   ),
                 ],
               ),
@@ -552,7 +568,9 @@ class _WeekDayCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.65),
+                color: WeatherCareTheme.of(context)
+                    .surface
+                    .withValues(alpha: 0.65),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -562,12 +580,13 @@ class _WeekDayCard extends StatelessWidget {
                       day.forecastSource == 'KMA_OBSERVATION'
                           ? '강수 관측'
                           : '강수 예보',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
+                      style: const TextStyle(fontWeight: FontWeight.w800)),
                   for (final line in precipitationLines)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(line,
-                          style: WeatherCareTheme.microTextStyle
+                          style: WeatherCareTheme.of(context)
+                              .microTextStyle
                               .copyWith(fontSize: 12)),
                     ),
                 ],
@@ -587,7 +606,9 @@ class _WeekDayCard extends StatelessWidget {
                           : day.recommendationsAvailable
                               ? '표시할 준비물 추천 없음'
                               : '준비물 추천 ${dataPhase.missingText()}',
-                  style: WeatherCareTheme.microTextStyle.copyWith(fontSize: 11),
+                  style: WeatherCareTheme.of(context)
+                      .microTextStyle
+                      .copyWith(fontSize: 11),
                 )
               else
                 Wrap(
@@ -601,7 +622,7 @@ class _WeekDayCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: recommendation.type.softColor,
+                          color: recommendation.type.softColor(context),
                           borderRadius: BorderRadius.circular(9),
                         ),
                         child: Row(
@@ -610,7 +631,7 @@ class _WeekDayCard extends StatelessWidget {
                             PreparationIcon(
                               type: recommendation.type,
                               size: 10,
-                              color: recommendation.type.accentColor,
+                              color: recommendation.type.accentColor(context),
                             ),
                             const SizedBox(width: 3),
                             Flexible(
@@ -629,7 +650,7 @@ class _WeekDayCard extends StatelessWidget {
                 ),
               if (recommendations.isNotEmpty && !day.recommendationsAvailable)
                 Text('일부 준비물 추천 자료를 확인하기 어려워요',
-                    style: WeatherCareTheme.microTextStyle),
+                    style: WeatherCareTheme.of(context).microTextStyle),
             ],
           ),
           if (missing.isNotEmpty &&
@@ -668,7 +689,7 @@ class _WeekTemperaturePeriod extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.65),
+        color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -676,10 +697,12 @@ class _WeekTemperaturePeriod extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: WeatherCareTheme.microTextStyle.copyWith(
-                color: isPast ? WeatherCareTheme.textSecondary : null,
-                fontWeight: FontWeight.w700,
-              ),
+              style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                    color: isPast
+                        ? WeatherCareTheme.of(context).textSecondary
+                        : null,
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
           ),
           Flexible(
@@ -689,7 +712,9 @@ class _WeekTemperaturePeriod extends StatelessWidget {
               child: Text(
                 value,
                 style: TextStyle(
-                  color: isPast ? WeatherCareTheme.textSecondary : null,
+                  color: isPast
+                      ? WeatherCareTheme.of(context).textSecondary
+                      : null,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -716,12 +741,13 @@ class _WeekDataChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        isPast ? WeatherCareTheme.textSecondary : WeatherCareTheme.primaryDeep;
+    final color = isPast
+        ? WeatherCareTheme.of(context).textSecondary
+        : WeatherCareTheme.of(context).primaryDeep;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.65),
+        color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(11),
       ),
       child: Row(
@@ -731,11 +757,11 @@ class _WeekDataChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             data.label,
-            style: WeatherCareTheme.microTextStyle.copyWith(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
+            style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
           ),
         ],
       ),
@@ -808,21 +834,21 @@ class _UnavailableWeekDayCard extends StatelessWidget {
       padding: const EdgeInsets.all(17),
       decoration: BoxDecoration(
         color: isPast
-            ? WeatherCareTheme.surfaceMuted
+            ? WeatherCareTheme.of(context).surfaceMuted
             : isToday
-                ? WeatherCareTheme.primarySoft
-                : Colors.white,
+                ? WeatherCareTheme.of(context).primarySoft
+                : WeatherCareTheme.of(context).surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: isToday
-              ? WeatherCareTheme.primaryBorder
-              : WeatherCareTheme.outline,
+              ? WeatherCareTheme.of(context).primaryBorder
+              : WeatherCareTheme.of(context).outline,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: WeatherCareTheme.shadow,
+            color: WeatherCareTheme.of(context).shadow,
             blurRadius: 20,
-            offset: Offset(0, 7),
+            offset: const Offset(0, 7),
           ),
         ],
       ),
@@ -832,13 +858,13 @@ class _UnavailableWeekDayCard extends StatelessWidget {
           Container(
             width: 42,
             height: 42,
-            decoration: const BoxDecoration(
-              color: WeatherCareTheme.surfaceMuted,
+            decoration: BoxDecoration(
+              color: WeatherCareTheme.of(context).surfaceMuted,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.question_mark_rounded,
-              color: WeatherCareTheme.textSecondary,
+              color: WeatherCareTheme.of(context).textSecondary,
               size: 20,
             ),
           ),
@@ -854,8 +880,8 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                         calendarDayLabel(date),
                         style: TextStyle(
                           color: isToday
-                              ? WeatherCareTheme.primaryDeep
-                              : WeatherCareTheme.textPrimary,
+                              ? WeatherCareTheme.of(context).primaryDeep
+                              : WeatherCareTheme.of(context).textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                         ),
@@ -865,19 +891,23 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                       Text(
                         '오늘',
                         key: ValueKey('week-today-${dateInKorea(date)}'),
-                        style: WeatherCareTheme.specialLabelStyle.copyWith(
-                          fontSize: 11,
-                        ),
+                        style: WeatherCareTheme.of(context)
+                            .specialLabelStyle
+                            .copyWith(
+                              fontSize: 11,
+                            ),
                       )
                     else if (isPast)
                       Text(
                         '지난 날짜',
                         key: ValueKey('week-past-${dateInKorea(date)}'),
-                        style: WeatherCareTheme.specialLabelStyle.copyWith(
-                          color: WeatherCareTheme.textPrimary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: WeatherCareTheme.of(context)
+                            .specialLabelStyle
+                            .copyWith(
+                              color: WeatherCareTheme.of(context).textPrimary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                   ],
                 ),

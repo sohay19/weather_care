@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="weather_widget_background">#253747</color>
+    <color name="weather_widget_panel">#1D2731</color>
+    <color name="weather_widget_text_primary">#EDF2F6</color>
+    <color name="weather_widget_text_secondary">#AAB7C3</color>
+    <color name="weather_widget_text_accent">#B7D0E5</color>
+    <color name="weather_widget_divider">#40566A</color>
+    <color name="weather_widget_refresh_surface">#9DBDD8</color>
+    <color name="weather_widget_refresh_ink">#172736</color>
+    <color name="weather_widget_refresh_loading_surface">#34424F</color>
+    <color name="weather_widget_refresh_loading_ink">#B7D0E5</color>
+    <color name="weather_widget_preparation_surface">#253747</color>
+    <color name="weather_app_background">#141B22</color>
+</resources>

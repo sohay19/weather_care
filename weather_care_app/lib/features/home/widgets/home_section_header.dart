@@ -26,10 +26,11 @@ class HomeSectionHeader extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: WeatherCareTheme.primarySoft,
+              color: WeatherCareTheme.of(context).primarySoft,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, size: 21, color: WeatherCareTheme.primaryDeep),
+            child: Icon(icon,
+                size: 21, color: WeatherCareTheme.of(context).primaryDeep),
           ),
           const SizedBox(width: 12),
         ],

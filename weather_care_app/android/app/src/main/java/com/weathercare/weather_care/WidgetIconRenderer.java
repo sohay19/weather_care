@@ -20,7 +20,6 @@ final class WidgetIconRenderer {
     private static final int CLOUD_DARK = Color.rgb(84, 112, 139);
     private static final int RAIN = Color.rgb(73, 143, 203);
     private static final int QUESTION = Color.rgb(118, 133, 151);
-    private static final int PREPARATION_CIRCLE = Color.rgb(226, 239, 248);
 
     private WidgetIconRenderer() { }
 
@@ -112,9 +111,7 @@ final class WidgetIconRenderer {
         Bitmap bitmap = Bitmap.createBitmap(pixels, pixels, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         float s = pixels;
-        Paint background = fill();
-        background.setColor(PREPARATION_CIRCLE);
-        canvas.drawCircle(s * .5f, s * .5f, s * .48f, background);
+        // 원 배경과 아이콘 색은 레이아웃의 주간/야간 리소스에서 적용한다.
 
         String assetName = preparationAssetName(type);
         if (assetName != null) {

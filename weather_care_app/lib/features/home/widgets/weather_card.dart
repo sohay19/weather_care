@@ -154,7 +154,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
         .toList(growable: false);
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -169,7 +169,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
                           : widget.dataPhase.missingText()
                       : '${current.temperature!.toStringAsFixed(1)}℃',
                   style: TextStyle(
-                    color: WeatherCareTheme.textPrimary,
+                    color: WeatherCareTheme.of(context).textPrimary,
                     fontSize: current.temperature == null ? 20 : 34,
                     height: 1,
                     fontWeight: FontWeight.w800,
@@ -183,7 +183,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
                   current.sky ?? widget.dataPhase.missingText('하늘 상태 자료 없음'),
                   textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: WeatherCareTheme.textSecondary,
+                        color: WeatherCareTheme.of(context).textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -192,7 +192,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               WeatherConditionIcon(
                 condition: current.sky,
                 size: 27,
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
             ],
           ),
@@ -200,7 +200,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: WeatherCareTheme.surfaceMuted,
+              color: WeatherCareTheme.of(context).surfaceMuted,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Column(
@@ -460,7 +460,7 @@ class _MetricView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       key: ValueKey('weather-metric-${metric.label}'),
-      color: Colors.white.withValues(alpha: 0.82),
+      color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.82),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -475,14 +475,14 @@ class _MetricView extends StatelessWidget {
                   Container(
                     width: 32,
                     height: 32,
-                    decoration: const BoxDecoration(
-                      color: WeatherCareTheme.primarySoft,
+                    decoration: BoxDecoration(
+                      color: WeatherCareTheme.of(context).primarySoft,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       metric.icon,
                       size: 17,
-                      color: WeatherCareTheme.primaryDeep,
+                      color: WeatherCareTheme.of(context).primaryDeep,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -516,7 +516,7 @@ class _MetricView extends StatelessWidget {
                         expanded
                             ? Icons.expand_less_rounded
                             : Icons.expand_more_rounded,
-                        color: WeatherCareTheme.primaryDeep,
+                        color: WeatherCareTheme.of(context).primaryDeep,
                       ),
                     ),
                   ),
@@ -539,8 +539,8 @@ class _MetricView extends StatelessWidget {
                               key: ValueKey(
                                 'weather-metric-level-${metric.label}',
                               ),
-                              style: const TextStyle(
-                                color: WeatherCareTheme.primaryDeep,
+                              style: TextStyle(
+                                color: WeatherCareTheme.of(context).primaryDeep,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),

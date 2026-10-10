@@ -2,43 +2,49 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../theme/weather_theme.dart';
+
 import '../../../models/recommendation.dart';
 
 /// 앱과 홈 위젯이 공유하는 준비물 아이콘의 Flutter 구현입니다.
 class PreparationIcon extends StatelessWidget {
   final RecommendationType type;
   final double size;
-  final Color color;
+  final Color? color;
   final bool circularBackground;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   const PreparationIcon({
     super.key,
     required this.type,
     this.size = 24,
-    this.color = const Color(0xFF3E5F7C),
+    this.color,
     this.circularBackground = false,
-    this.backgroundColor = const Color(0xFFE2EFF8),
+    this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final palette = WeatherCareTheme.of(context);
+    final iconColor = color ?? palette.primaryDeep;
+    final iconBackground = backgroundColor ?? palette.primarySoft;
     final assetPath = type.assetPath;
     final icon = assetPath == null
         ? CustomPaint(
             size: Size.square(size),
             painter: _PreparationIconPainter(
               type: type,
-              color: color,
+              color: iconColor,
               circularBackground: circularBackground,
-              backgroundColor: backgroundColor,
+              backgroundColor: iconBackground,
             ),
           )
         : _AssetPreparationIcon(
             assetPath: assetPath,
+            color: iconColor,
             size: size,
             circularBackground: circularBackground,
-            backgroundColor: backgroundColor,
+            backgroundColor: iconBackground,
           );
     return Semantics(
       image: true,
@@ -49,12 +55,14 @@ class PreparationIcon extends StatelessWidget {
 }
 
 class _AssetPreparationIcon extends StatelessWidget {
+  final Color color;
   final String assetPath;
   final double size;
   final bool circularBackground;
   final Color backgroundColor;
 
   const _AssetPreparationIcon({
+    required this.color,
     required this.assetPath,
     required this.size,
     required this.circularBackground,
@@ -65,6 +73,8 @@ class _AssetPreparationIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = Image.asset(
       assetPath,
+      color: color,
+      colorBlendMode: BlendMode.srcIn,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.high,
       excludeFromSemantics: true,

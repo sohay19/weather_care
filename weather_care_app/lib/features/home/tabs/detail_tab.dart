@@ -103,7 +103,7 @@ class _DetailTabState extends State<DetailTab> {
       DetailFocusSource.selection => '선택한 항목의 근거',
     };
     return RefreshIndicator(
-      color: WeatherCareTheme.primary,
+      color: WeatherCareTheme.of(context).primary,
       onRefresh: widget.onRefresh,
       child: SingleChildScrollView(
         key: const ValueKey('detail-tab'),
@@ -112,7 +112,7 @@ class _DetailTabState extends State<DetailTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TabPageHeader(
+            const TabPageHeader(
               eyebrow: 'DETAIL',
               title: '자세히보기',
               subtitle: '항목별로 자세한 정보를 확인해요',

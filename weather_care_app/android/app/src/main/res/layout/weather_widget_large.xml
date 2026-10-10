@@ -26,6 +26,7 @@
 
             <ImageView
                 android:id="@+id/widget_region"
+                android:tint="@color/weather_widget_text_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="시흥시 은행동"
@@ -33,6 +34,7 @@
 
             <ImageView
                 android:id="@+id/widget_refresh_time"
+                android:tint="@color/weather_widget_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
@@ -68,6 +70,7 @@
 
             <ImageView
                 android:id="@+id/widget_weather_icon"
+                android:tint="@color/weather_widget_text_accent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
@@ -83,6 +86,7 @@
 
                 <ImageView
                     android:id="@+id/widget_current_label"
+                android:tint="@color/weather_widget_text_secondary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
@@ -91,6 +95,7 @@
 
                 <ImageView
                     android:id="@+id/widget_current_temperature"
+                android:tint="@color/weather_widget_text_accent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
@@ -103,7 +108,7 @@
                 android:layout_height="38dp"
                 android:layout_marginStart="18dp"
                 android:layout_marginEnd="18dp"
-                android:background="#ABC3D6" />
+                android:background="@color/weather_widget_divider" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -113,6 +118,7 @@
 
                 <ImageView
                     android:id="@+id/widget_apparent_label"
+                android:tint="@color/weather_widget_text_secondary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
@@ -121,6 +127,7 @@
 
                 <ImageView
                     android:id="@+id/widget_apparent_temperature"
+                android:tint="@color/weather_widget_text_accent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
@@ -131,6 +138,7 @@
 
         <ImageView
             android:id="@+id/widget_brief"
+                android:tint="@color/weather_widget_text_primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="18dp"
@@ -163,12 +171,15 @@
 
             <ImageView
                 android:id="@+id/widget_preparation_icon_1"
+                android:tint="@color/weather_widget_text_accent"
+                android:background="@drawable/weather_widget_preparation_background"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:contentDescription="@string/weather_widget_preparation_description" />
 
             <ImageView
                 android:id="@+id/widget_preparation_label_1"
+                android:tint="@color/weather_widget_text_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -195,12 +206,15 @@
 
             <ImageView
                 android:id="@+id/widget_preparation_icon_2"
+                android:tint="@color/weather_widget_text_accent"
+                android:background="@drawable/weather_widget_preparation_background"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:contentDescription="@string/weather_widget_preparation_description" />
 
             <ImageView
                 android:id="@+id/widget_preparation_label_2"
+                android:tint="@color/weather_widget_text_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -226,12 +240,15 @@
 
             <ImageView
                 android:id="@+id/widget_preparation_icon_3"
+                android:tint="@color/weather_widget_text_accent"
+                android:background="@drawable/weather_widget_preparation_background"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:contentDescription="@string/weather_widget_preparation_description" />
 
             <ImageView
                 android:id="@+id/widget_preparation_label_3"
+                android:tint="@color/weather_widget_text_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
@@ -253,6 +270,7 @@
 
         <ImageView
             android:id="@+id/widget_next_title"
+                android:tint="@color/weather_widget_text_primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="10dp"
@@ -262,6 +280,7 @@
 
         <ImageView
             android:id="@+id/widget_next_time"
+                android:tint="@color/weather_widget_text_primary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -270,6 +289,7 @@
 
         <ImageView
             android:id="@+id/widget_next_temperature"
+                android:tint="@color/weather_widget_text_primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
@@ -278,6 +298,7 @@
 
         <ImageView
             android:id="@+id/widget_next_icon"
+                android:tint="@color/weather_widget_text_accent"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginStart="3dp"
@@ -288,6 +309,7 @@
 
     <ImageView
         android:id="@+id/widget_min_max"
+                android:tint="@color/weather_widget_text_accent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/weather_widget_panel_background"

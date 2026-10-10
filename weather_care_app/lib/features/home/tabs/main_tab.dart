@@ -54,12 +54,12 @@ class MainTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WeatherDataPhaseScope(
         phase: dataPhase,
-        child: _content(),
+        child: _content(context),
       );
 
-  Widget _content() {
+  Widget _content(BuildContext context) {
     return RefreshIndicator(
-      color: WeatherCareTheme.primary,
+      color: WeatherCareTheme.of(context).primary,
       onRefresh: onRefresh,
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -177,7 +177,7 @@ class _TodaySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final phase = WeatherDataPhaseScope.of(context);
     final feelingStyle = TextStyle(
-      color: WeatherCareTheme.textPrimary,
+      color: WeatherCareTheme.of(context).textPrimary,
       fontSize: 13,
       height: 1.45,
       fontWeight: FontWeight.w600,
@@ -185,15 +185,15 @@ class _TodaySection extends StatelessWidget {
     final airQualityState = _airQualityState(current.pm10, current.pm25);
     return Column(
       children: [
-        const Row(
+        Row(
           children: [
             Icon(
               Icons.calendar_today_outlined,
               size: 18,
-              color: WeatherCareTheme.primaryDeep,
+              color: WeatherCareTheme.of(context).primaryDeep,
             ),
-            SizedBox(width: 9),
-            Expanded(
+            const SizedBox(width: 9),
+            const Expanded(
               child: Text(
                 '지금 날씨',
                 style: TextStyle(
@@ -232,7 +232,7 @@ class _TodaySection extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 1),
                 child: WeatherConditionIcon(
                   condition: current.sky,
-                  color: WeatherCareTheme.textPrimary,
+                  color: WeatherCareTheme.of(context).textPrimary,
                   size: 25,
                 ),
               ),
@@ -241,9 +241,9 @@ class _TodaySection extends StatelessWidget {
         ),
         const SizedBox(height: 13),
         Container(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.62),
+            color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(15),
           ),
           child: _TopMetricGrid(
@@ -380,19 +380,19 @@ class _YesterdayComparisonSection extends StatelessWidget {
       key: const ValueKey('yesterday-comparison-card'),
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Icons.compare_arrows_rounded,
                 size: 21,
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
-              SizedBox(width: 9),
-              Expanded(
+              const SizedBox(width: 9),
+              const Expanded(
                 child: Text(
                   '어제와 비교',
                   style: TextStyle(
@@ -407,7 +407,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
           Text(
             _comparisonSubtitle(basis),
             style: TextStyle(
-              color: WeatherCareTheme.textSecondary,
+              color: WeatherCareTheme.of(context).textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -436,7 +436,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
                         const BoxConstraints.tightFor(width: 36, height: 36),
                     onPressed: onRetry,
                     icon: const Icon(Icons.refresh_rounded),
-                    color: WeatherCareTheme.primaryDeep,
+                    color: WeatherCareTheme.of(context).primaryDeep,
                   ),
               ],
             ),
@@ -446,7 +446,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
                 basisLabel,
                 key: const ValueKey('yesterday-comparison-basis'),
                 style: TextStyle(
-                  color: WeatherCareTheme.textSecondary,
+                  color: WeatherCareTheme.of(context).textSecondary,
                   fontSize: 11,
                   height: 1.4,
                   fontWeight: FontWeight.w600,
@@ -506,22 +506,22 @@ class _TodayFutureSection extends StatelessWidget {
       key: const ValueKey('main-future-weather-card'),
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.mood(mood),
+      decoration: WeatherCareTheme.of(context).mood(mood),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.question_mark_outlined,
                 size: 18,
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               const SizedBox(width: 9),
-              Expanded(
+              const Expanded(
                 child: Text(
                   '미래 예상 날씨',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -535,7 +535,7 @@ class _TodayFutureSection extends StatelessWidget {
                 ? '예보 시각 ${phase.missingText()}'
                 : '$forecastTime의 기온과 체감온도를 예상해요',
             style: TextStyle(
-              color: WeatherCareTheme.textSecondary,
+              color: WeatherCareTheme.of(context).textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -553,14 +553,15 @@ class _TodayFutureSection extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '기온·습도·바람으로 계산한 추정 체감온도예요.',
-              style: WeatherCareTheme.microTextStyle,
+              style: WeatherCareTheme.of(context).microTextStyle,
             ),
           ],
           const SizedBox(height: 13),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.62),
+              color:
+                  WeatherCareTheme.of(context).surface.withValues(alpha: 0.62),
               borderRadius: BorderRadius.circular(15),
             ),
             child: _TopMetricGrid(
@@ -608,7 +609,7 @@ class _TodayFutureSection extends StatelessWidget {
           Text(
             '가시거리는 현재 관측자료만 제공돼 미래 예보에는 포함하지 않아요.',
             key: const ValueKey('main-future-visibility-notice'),
-            style: WeatherCareTheme.microTextStyle,
+            style: WeatherCareTheme.of(context).microTextStyle,
           ),
         ],
       ),
@@ -635,7 +636,7 @@ class _ComparisonMetric extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
+        color: WeatherCareTheme.of(context).surfaceMuted,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -652,7 +653,7 @@ class _ComparisonMetric extends StatelessWidget {
                 Text(
                   '${metric.currentLabel} ${value(metric.current!)} · '
                   '${metric.previousLabel} ${value(metric.previous!)}',
-                  style: WeatherCareTheme.microTextStyle,
+                  style: WeatherCareTheme.of(context).microTextStyle,
                 ),
               ],
             ),
@@ -782,10 +783,10 @@ class _ProgressiveLoadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Row(
         children: [
-          Icon(icon, color: WeatherCareTheme.primaryDeep),
+          Icon(icon, color: WeatherCareTheme.of(context).primaryDeep),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -842,7 +843,7 @@ class _TopWeatherCard extends StatelessWidget {
       curve: Curves.easeOutCubic,
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 13 : 16),
-      decoration: WeatherCareTheme.mood(mood),
+      decoration: WeatherCareTheme.of(context).mood(mood),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -855,7 +856,7 @@ class _TopWeatherCard extends StatelessWidget {
             receivedAt: today.receivedAt,
             style: TextStyle(
               fontFamily: WeatherCareTheme.fontNeoHyundai,
-              color: WeatherCareTheme.textPrimary,
+              color: WeatherCareTheme.of(context).textPrimary,
               fontSize: compact ? 21 : 23,
               height: 1.24,
               fontWeight: FontWeight.w800,
@@ -908,7 +909,7 @@ class _TemperatureLine extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
+        color: WeatherCareTheme.of(context).surfaceMuted,
         borderRadius: BorderRadius.circular(13),
       ),
       child: FittedBox(
@@ -941,8 +942,8 @@ class _TemperatureLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
-        color: WeatherCareTheme.textSecondary,
+      style: TextStyle(
+        color: WeatherCareTheme.of(context).textSecondary,
         fontSize: 11,
         fontWeight: FontWeight.w700,
       ),
@@ -964,8 +965,8 @@ class _TemperatureValue extends StatelessWidget {
               ? '--°'
               : phase.missingText()
           : '${value!.toStringAsFixed(1)}℃',
-      style: const TextStyle(
-        color: WeatherCareTheme.primaryDeep,
+      style: TextStyle(
+        color: WeatherCareTheme.of(context).primaryDeep,
         fontSize: 16,
         fontWeight: FontWeight.w800,
       ),
@@ -1007,19 +1008,19 @@ class _TopMetric extends StatelessWidget {
                 Text(
                   label,
                   maxLines: 1,
-                  style: WeatherCareTheme.microTextStyle.copyWith(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w400,
+                      ),
                 ),
                 const SizedBox(width: 4),
-                Icon(icon, size: 13, color: state.color),
+                Icon(icon, size: 13, color: state.color(context)),
                 const SizedBox(width: 3),
                 Text(
                   displayValue,
                   maxLines: 1,
                   style: TextStyle(
-                    color: state.color,
+                    color: state.color(context),
                     fontSize: 10.5,
                     height: 1.1,
                     fontWeight: FontWeight.w800,
@@ -1064,99 +1065,110 @@ class _TopMetricGrid extends StatelessWidget {
   }
 }
 
+enum _MetricTone { primary, attention, danger, muted }
+
 class _MetricState {
   final String label;
-  final Color color;
+  final _MetricTone tone;
 
-  const _MetricState(this.label, this.color);
+  const _MetricState(this.label, this.tone);
+
+  Color color(BuildContext context) {
+    final colors = WeatherCareTheme.of(context);
+    return switch (tone) {
+      _MetricTone.primary => colors.primaryDeep,
+      _MetricTone.attention => colors.attentionDeep,
+      _MetricTone.danger => colors.danger,
+      _MetricTone.muted => colors.textSecondary,
+    };
+  }
 }
 
-const _unavailableMetric =
-    _MetricState('정보 없음', WeatherCareTheme.textSecondary);
+const _unavailableMetric = _MetricState('정보 없음', _MetricTone.muted);
 
 _MetricState _humidityState(double? value) {
   if (value == null) return _unavailableMetric;
   if (value <= 35) {
-    return const _MetricState('건조', WeatherCareTheme.attentionDeep);
+    return const _MetricState('건조', _MetricTone.attention);
   }
   if (value < 70) {
-    return const _MetricState('쾌적', WeatherCareTheme.primaryDeep);
+    return const _MetricState('쾌적', _MetricTone.primary);
   }
   if (value < 80) {
-    return const _MetricState('습한 편', WeatherCareTheme.primaryDeep);
+    return const _MetricState('습한 편', _MetricTone.primary);
   }
-  return const _MetricState('매우 습함', WeatherCareTheme.attentionDeep);
+  return const _MetricState('매우 습함', _MetricTone.attention);
 }
 
 _MetricState _windState(double? value) {
   if (value == null) return _unavailableMetric;
   if (value < 4) {
-    return const _MetricState('약한 바람', WeatherCareTheme.primaryDeep);
+    return const _MetricState('약한 바람', _MetricTone.primary);
   }
   if (value < 9) {
-    return const _MetricState('약간 강한 바람', WeatherCareTheme.primaryDeep);
+    return const _MetricState('약간 강한 바람', _MetricTone.primary);
   }
   if (value < 14) {
-    return const _MetricState('강한 바람', WeatherCareTheme.attentionDeep);
+    return const _MetricState('강한 바람', _MetricTone.attention);
   }
-  return const _MetricState('매우 강한 바람', WeatherCareTheme.danger);
+  return const _MetricState('매우 강한 바람', _MetricTone.danger);
 }
 
 _MetricState _uvState(double? value) {
   if (value == null) return _unavailableMetric;
   if (value <= 2) {
-    return const _MetricState('낮음', WeatherCareTheme.primaryDeep);
+    return const _MetricState('낮음', _MetricTone.primary);
   }
   if (value <= 5) {
-    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+    return const _MetricState('보통', _MetricTone.primary);
   }
   if (value <= 7) {
-    return const _MetricState('높음', WeatherCareTheme.attentionDeep);
+    return const _MetricState('높음', _MetricTone.attention);
   }
   if (value <= 10) {
-    return const _MetricState('매우 높음', WeatherCareTheme.danger);
+    return const _MetricState('매우 높음', _MetricTone.danger);
   }
-  return const _MetricState('위험', WeatherCareTheme.danger);
+  return const _MetricState('위험', _MetricTone.danger);
 }
 
 _MetricState _pm25State(int? value) {
   if (value == null) return _unavailableMetric;
   if (value <= 15) {
-    return const _MetricState('좋음', WeatherCareTheme.primaryDeep);
+    return const _MetricState('좋음', _MetricTone.primary);
   }
   if (value <= 35) {
-    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+    return const _MetricState('보통', _MetricTone.primary);
   }
   if (value <= 75) {
-    return const _MetricState('나쁨', WeatherCareTheme.attentionDeep);
+    return const _MetricState('나쁨', _MetricTone.attention);
   }
-  return const _MetricState('매우 나쁨', WeatherCareTheme.danger);
+  return const _MetricState('매우 나쁨', _MetricTone.danger);
 }
 
 _MetricState _pm25ForecastState(String? value) {
   if (value == null || value.trim().isEmpty) return _unavailableMetric;
   final grade = value.trim();
   if (grade.contains('매우 나쁨') || grade.contains('매우 높음')) {
-    return _MetricState(grade, WeatherCareTheme.danger);
+    return _MetricState(grade, _MetricTone.danger);
   }
   if (grade.contains('나쁨') || grade.contains('높음')) {
-    return _MetricState(grade, WeatherCareTheme.attentionDeep);
+    return _MetricState(grade, _MetricTone.attention);
   }
-  return _MetricState(grade, WeatherCareTheme.primaryDeep);
+  return _MetricState(grade, _MetricTone.primary);
 }
 
 _MetricState _pm10State(int? value) {
   if (value == null) return _unavailableMetric;
   if (value <= 30) {
-    return const _MetricState('좋음', WeatherCareTheme.primaryDeep);
+    return const _MetricState('좋음', _MetricTone.primary);
   }
   if (value <= 80) {
-    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+    return const _MetricState('보통', _MetricTone.primary);
   }
   if (value <= 150) {
-    return const _MetricState('나쁨', WeatherCareTheme.attentionDeep);
+    return const _MetricState('나쁨', _MetricTone.attention);
   }
-  return const _MetricState('매우 나쁨', WeatherCareTheme.danger);
+  return const _MetricState('매우 나쁨', _MetricTone.danger);
 }
 
 _MetricState _airQualityState(int? pm10, int? pm25) {
@@ -1181,21 +1193,21 @@ _MetricState _airQualityState(int? pm10, int? pm25) {
 _MetricState _visibilityState(double? meters) {
   if (meters == null) return _unavailableMetric;
   if (meters < 200) {
-    return const _MetricState('매우 짧음', WeatherCareTheme.danger);
+    return const _MetricState('매우 짧음', _MetricTone.danger);
   }
   if (meters < 1000) {
-    return const _MetricState('짧음', WeatherCareTheme.danger);
+    return const _MetricState('짧음', _MetricTone.danger);
   }
   if (meters < 5000) {
-    return const _MetricState('나쁨', WeatherCareTheme.attentionDeep);
+    return const _MetricState('나쁨', _MetricTone.attention);
   }
   if (meters < 10000) {
-    return const _MetricState('보통', WeatherCareTheme.primaryDeep);
+    return const _MetricState('보통', _MetricTone.primary);
   }
   if (meters < 20000) {
-    return const _MetricState('좋음', WeatherCareTheme.primaryDeep);
+    return const _MetricState('좋음', _MetricTone.primary);
   }
-  return const _MetricState('매우 좋음', WeatherCareTheme.primaryDeep);
+  return const _MetricState('매우 좋음', _MetricTone.primary);
 }
 
 String _visibilityValue(double? meters) {
@@ -1245,15 +1257,15 @@ _MetricState _sunState(
   ).toUtc();
   if (sunrise == null || sunset == null) return _unavailableMetric;
   if (now.isBefore(sunrise)) {
-    return const _MetricState('해 뜨기 전', WeatherCareTheme.textSecondary);
+    return const _MetricState('해 뜨기 전', _MetricTone.muted);
   }
   if (!now.isBefore(sunset)) {
-    return const _MetricState('해가 진 뒤', WeatherCareTheme.textSecondary);
+    return const _MetricState('해가 진 뒤', _MetricTone.muted);
   }
   if (sunset.difference(now) <= const Duration(hours: 1)) {
-    return const _MetricState('곧 일몰', WeatherCareTheme.attentionDeep);
+    return const _MetricState('곧 일몰', _MetricTone.attention);
   }
-  return const _MetricState('해가 떠 있음', WeatherCareTheme.primaryDeep);
+  return const _MetricState('해가 떠 있음', _MetricTone.primary);
 }
 
 String? _koreaClock(String? timestamp) {

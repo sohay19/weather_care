@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../models/selectable_region.dart';
+import '../../theme/weather_theme.dart';
 import '../../services/region_catalog.dart';
 
 const weatherGridSelectorUrl =
@@ -47,6 +48,13 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
     if (widget.mapBuilder == null) _initializeWebView();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _webViewController
+        ?.setBackgroundColor(WeatherCareTheme.of(context).background);
+  }
+
   Uri get _selectorUri {
     final selected = widget.selectedGridId;
     final uri = Uri.parse(weatherGridSelectorUrl);
@@ -62,7 +70,7 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
   void _initializeWebView() {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xfff4f7fa))
+      ..setBackgroundColor(Colors.transparent)
       ..addJavaScriptChannel(
         _selectionChannel,
         onMessageReceived: (message) =>

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/weather_theme.dart';
+
 enum WeatherConditionKind {
   clear,
   partlyCloudy,
@@ -65,17 +67,18 @@ WeatherConditionKind weatherConditionKind(String? condition) {
 class WeatherConditionIcon extends StatelessWidget {
   final String? condition;
   final double size;
-  final Color color;
+  final Color? color;
 
   const WeatherConditionIcon({
     super.key,
     required this.condition,
     this.size = 24,
-    this.color = Colors.black,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? WeatherCareTheme.of(context).textPrimary;
     final kind = weatherConditionKind(condition);
     return Semantics(
       label: '날씨 ${condition?.trim().isNotEmpty == true ? condition : '정보 없음'}',

@@ -50,7 +50,7 @@ class HourlyForecastSection extends StatelessWidget {
     return Container(
       key: const ValueKey('today-hourly-forecast-section'),
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -68,7 +68,7 @@ class HourlyForecastSection extends StatelessWidget {
           Text(
             '가시거리는 현재 관측자료만 제공돼 시간별 예보에는 표시하지 않아요.',
             key: const ValueKey('today-hourly-visibility-notice'),
-            style: WeatherCareTheme.microTextStyle,
+            style: WeatherCareTheme.of(context).microTextStyle,
           ),
           const SizedBox(height: 16),
           if (visibleItems.isEmpty)
@@ -76,7 +76,7 @@ class HourlyForecastSection extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: WeatherCareTheme.surfaceMuted,
+                color: WeatherCareTheme.of(context).surfaceMuted,
                 borderRadius: BorderRadius.circular(17),
               ),
               child: Text(
@@ -87,8 +87,8 @@ class HourlyForecastSection extends StatelessWidget {
                         : items.isEmpty
                             ? '시간별 예보 자료가 없어 표시하기 어려워요.'
                             : '오늘 표시할 시간별 예보가 없어요.',
-                style: const TextStyle(
-                  color: WeatherCareTheme.textSecondary,
+                style: TextStyle(
+                  color: WeatherCareTheme.of(context).textSecondary,
                 ),
               ),
             )
@@ -182,9 +182,9 @@ class _HourlyRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceSubtle,
+        color: WeatherCareTheme.of(context).surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WeatherCareTheme.outline),
+        border: Border.all(color: WeatherCareTheme.of(context).outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,8 +195,8 @@ class _HourlyRow extends StatelessWidget {
                 Flexible(
                   child: Text(
                     timeLabel,
-                    style: const TextStyle(
-                      color: WeatherCareTheme.primaryDeep,
+                    style: TextStyle(
+                      color: WeatherCareTheme.of(context).primaryDeep,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -220,8 +220,8 @@ class _HourlyRow extends StatelessWidget {
                           item.displayedApparentTemperature == null
                               ? '예상 체감 ${dataPhase.missingText()}'
                               : '예상 체감 ${item.displayedApparentTemperature!.toStringAsFixed(0)}℃',
-                          style: const TextStyle(
-                            color: WeatherCareTheme.textSecondary,
+                          style: TextStyle(
+                            color: WeatherCareTheme.of(context).textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -239,7 +239,7 @@ class _HourlyRow extends StatelessWidget {
                   WeatherConditionIcon(
                     condition: item.skyCondition,
                     size: 19,
-                    color: WeatherCareTheme.textSecondary,
+                    color: WeatherCareTheme.of(context).textSecondary,
                   ),
                   const SizedBox(width: 7),
                   Expanded(
@@ -285,9 +285,9 @@ class _HourlyRow extends StatelessWidget {
           if (showPrecipitation && (showRain || showSnow)) ...[
             Text(
               period == null ? '강수 적용 구간 미확인' : '${period.label} 강수 예보',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w800,
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
             ),
             if (period != null)
@@ -327,7 +327,7 @@ class _HourlyRow extends StatelessWidget {
             Text(
               '${dataPhase.missingText()}: ${missing.join(' · ')}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: WeatherCareTheme.textSecondary,
+                    color: WeatherCareTheme.of(context).textSecondary,
                   ),
             ),
           ],
@@ -371,20 +371,21 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
+        color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: WeatherCareTheme.textSecondary),
+          Icon(icon,
+              size: 13, color: WeatherCareTheme.of(context).textSecondary),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,
-              style: WeatherCareTheme.microTextStyle.copyWith(
-                color: WeatherCareTheme.textPrimary,
-              ),
+              style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                    color: WeatherCareTheme.of(context).textPrimary,
+                  ),
             ),
           ),
         ],

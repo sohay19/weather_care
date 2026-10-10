@@ -29,7 +29,7 @@ class TodayTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: WeatherCareTheme.primary,
+      color: WeatherCareTheme.of(context).primary,
       onRefresh: onRefresh,
       child: SingleChildScrollView(
         key: const ValueKey('today-tab'),
@@ -38,7 +38,7 @@ class TodayTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TabPageHeader(
+            const TabPageHeader(
               eyebrow: 'TODAY',
               title: '오늘 하루',
               subtitle: '현재 상태와 시간별 예보를 함께 보여드려요',

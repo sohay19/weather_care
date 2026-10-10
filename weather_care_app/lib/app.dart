@@ -30,6 +30,8 @@ class WeatherCareApp extends StatelessWidget {
       title: '날씨챙겨',
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
+      darkTheme: WeatherCareTheme.dark(),
+      themeMode: ThemeMode.system,
       builder: WeatherCareTheme.textScaleBuilder,
       routes: {
         '/': (_) => HomeScreen(
@@ -102,17 +104,17 @@ class WeatherDetailsScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(22),
-            decoration: WeatherCareTheme.mood('clear'),
-            child: const Column(
+            decoration: WeatherCareTheme.of(context).mood('clear'),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.insights_rounded,
-                  color: WeatherCareTheme.primaryDeep,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                   size: 30,
                 ),
-                SizedBox(height: 16),
-                Text(
+                const SizedBox(height: 16),
+                const Text(
                   '숫자는 추천을 이해하는\n근거로 보여드릴게요.',
                   style: TextStyle(
                     fontFamily: WeatherCareTheme.fontNeoHyundai,
@@ -128,7 +130,7 @@ class WeatherDetailsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: WeatherCareTheme.surfaceDecoration(),
+            decoration: WeatherCareTheme.of(context).surfaceDecoration(),
             child: const _ConnectionNotice(
               title: '상세 예보를 준비 중이에요',
               message: '서버가 연결되면 시간별 기온·강수·자외선·대기질 데이터를 이 화면에 표시합니다.',
@@ -162,7 +164,7 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: WeatherCareTheme.primarySoft,
+              color: WeatherCareTheme.of(context).primarySoft,
               borderRadius: BorderRadius.circular(28),
             ),
             child: Column(
@@ -171,13 +173,13 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
                 Container(
                   width: 56,
                   height: 56,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: WeatherCareTheme.of(context).surface,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     icon,
-                    color: WeatherCareTheme.primaryDeep,
+                    color: WeatherCareTheme.of(context).primaryDeep,
                     size: 28,
                   ),
                 ),
@@ -194,8 +196,8 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: WeatherCareTheme.textSecondary,
+                  style: TextStyle(
+                    color: WeatherCareTheme.of(context).textSecondary,
                     fontSize: 14,
                     height: 1.45,
                   ),
@@ -206,7 +208,7 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: WeatherCareTheme.surfaceDecoration(),
+            decoration: WeatherCareTheme.of(context).surfaceDecoration(),
             child: const _ConnectionNotice(
               title: '추천 근거 데이터',
               message:
@@ -234,13 +236,13 @@ class _ConnectionNotice extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: WeatherCareTheme.primarySoft,
+            color: WeatherCareTheme.of(context).primarySoft,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.cloud_off_outlined,
             size: 20,
-            color: WeatherCareTheme.primaryDeep,
+            color: WeatherCareTheme.of(context).primaryDeep,
           ),
         ),
         const SizedBox(width: 12),

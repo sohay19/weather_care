@@ -1,0 +1,124 @@
+{
+  "검증일": "2026-10-10",
+  "요청": "시스템 라이트·다크 모드를 앱과 홈 화면 위젯에 적용하고 에뮬레이터에 설치",
+  "구현": {
+    "Flutter": "ThemeMode.system 및 ThemeExtension 팔레트, 화면·아이콘·광고·시작 화면 테마 적용",
+    "Android위젯": "values-night 리소스 및 이미지 tint로 앱이 실행되지 않아도 런처가 모드에 맞춰 렌더링",
+    "iOS위젯": "시스템 traits에 따라 UIColor 동적 색상 적용"
+  },
+  "정적분석": {
+    "결과": "통과",
+    "이슈": 0,
+    "로그": ".git/dark-analyze-final.log"
+  },
+  "테스트": {
+    "전체": 503,
+    "결과": "통과",
+    "추가수정후시스템테마재검증": 2,
+    "로그": [
+      ".git/dark-tests-all-final.log",
+      ".git/dark-tests-followup.log"
+    ]
+  },
+  "APK": {
+    "경로": "C:\\Users\\SOHA\\IdeaProjects\\weather_care\\weather_care_app\\build\\app\\outputs\\flutter-apk\\app-debug.apk",
+    "바이트": 181337750,
+    "sha256": "bae82f5787b426c9be14451ed61f5e5544106a74862014e16d539a4355ead000",
+    "빌드": "debug 성공",
+    "설치": "adb install -r Success",
+    "최종빌드로그": ".git/dark-apk-build-final.log"
+  },
+  "에뮬레이터": {
+    "AVD": "Medium_Phone_API_36",
+    "장치": "emulator-5554",
+    "Android_API": 36,
+    "실행": "창 없이 실행 중",
+    "패키지": "com.codesoha.weathercare",
+    "버전": "1.0.0",
+    "버전코드": 26100200,
+    "위젯ID": 2,
+    "최종모드": "다크"
+  },
+  "실기동검증": {
+    "앱": "설정 화면에서 시스템 모드 변경 시 배경·글자·현재 모드 안내·하단 메뉴 자동 전환 확인",
+    "위젯": [
+      "소형 라이트↔다크",
+      "중형 라이트↔다크",
+      "대형 라이트↔다크"
+    ],
+    "앱미실행검증": "am kill 후 pidof가 비어 있는 상태에서도 위젯 색상 전환 확인",
+    "지역및권한": "위치·알림 권한을 부여하지 않고 지역 설정 안내 상태로 위젯 검증",
+    "최종재설치후앱미실행재확인": "대형 위젯 라이트→다크 전환 양쪽 캡처, 전환 전후 pidof 비어 있음 확인"
+  },
+  "제한": [
+    "Windows 환경에서 iOS WidgetKit 빌드 및 실기동 미검증",
+    "실제 날씨가 채워진 위젯의 준비물 영역은 이번 에뮬레이터 캡처에 없음"
+  ],
+  "커밋": "수행하지 않음",
+  "캡처": [
+    {
+      "파일": "app-settings-light-final.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "0aa02fe8ad985e82dfbd30e5073ea0011c39b130b523f3fd1379a5d972162edc"
+    },
+    {
+      "파일": "app-settings-dark-final.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "3eb8986d2fa7b79d79d69c510256d64fd324b669b0b7a75be141eef9e9f0cdc5"
+    },
+    {
+      "파일": "widget-small-light.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "7dca3437f32f567c2b84d1027ea5775e30dee81e485c0ca076e0c0bbd6b84aec"
+    },
+    {
+      "파일": "widget-small-dark.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "97baac701cf85dab30082fc98baa60d94bf5ab211bc384c9b4021177ca208c1c"
+    },
+    {
+      "파일": "widget-medium-light.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "c9bb922d88317ac0e4eb37a3756df854a7f43c2ade6ac34db7ed3cbedbb1fd9b"
+    },
+    {
+      "파일": "widget-wide-dark.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "25201729e66ffdc353739c90e16baa1ecbe55a34e85fc585e35534e66a9c7dc3"
+    },
+    {
+      "파일": "widget-large-light-final.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "3babe146d34bb153a140b96adf2900966faabf49d96a92843b519ddc36b98903"
+    },
+    {
+      "파일": "widget-large-dark-final.png",
+      "해상도": [
+        1080,
+        2400
+      ],
+      "sha256": "1872ffa866ee994f12a717b16ea064ec5d432d627452870880205733781d2ce5"
+    }
+  ]
+}

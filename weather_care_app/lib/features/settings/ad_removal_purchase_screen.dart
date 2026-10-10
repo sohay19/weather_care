@@ -151,7 +151,7 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(22),
-              decoration: WeatherCareTheme.mood(
+              decoration: WeatherCareTheme.of(context).mood(
                 'clear',
                 borderRadius: BorderRadius.circular(28),
               ),
@@ -168,14 +168,16 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.84),
+                          color: WeatherCareTheme.of(context)
+                              .surface
+                              .withValues(alpha: 0.84),
                           borderRadius: BorderRadius.circular(17),
                         ),
                         child: Icon(
                           owned
                               ? Icons.verified_rounded
                               : Icons.workspace_premium_outlined,
-                          color: WeatherCareTheme.primaryDeep,
+                          color: WeatherCareTheme.of(context).primaryDeep,
                           size: 27,
                         ),
                       ),
@@ -185,14 +187,18 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: WeatherCareTheme.of(context)
+                              .surface
+                              .withValues(alpha: 0.72),
                           borderRadius: BorderRadius.circular(99),
                         ),
                         child: Text(
                           owned ? '구매 완료' : '평생 이용 · 1회 구매',
-                          style: WeatherCareTheme.specialLabelStyle.copyWith(
-                            letterSpacing: 0,
-                          ),
+                          style: WeatherCareTheme.of(context)
+                              .specialLabelStyle
+                              .copyWith(
+                                letterSpacing: 0,
+                              ),
                         ),
                       ),
                     ],
@@ -211,7 +217,7 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                         ? '이 플랫폼에서 날씨챙겨의 모든 광고가 제거됐어요.'
                         : '한 번 구매하면 이 플랫폼에서 날씨챙겨의 모든 광고가 사라져요.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: WeatherCareTheme.textSecondary,
+                          color: WeatherCareTheme.of(context).textSecondary,
                         ),
                   ),
                 ],
@@ -220,7 +226,8 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
+              decoration:
+                  WeatherCareTheme.of(context).surfaceDecoration(radius: 24),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -252,7 +259,8 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: WeatherCareTheme.surfaceDecoration(radius: 24),
+              decoration:
+                  WeatherCareTheme.of(context).surfaceDecoration(radius: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -280,7 +288,7 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                         (storeLoading ? '스토어 가격 확인 중' : '스토어 가격으로 표시돼요'),
                     key: const ValueKey('ad-removal-price'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: WeatherCareTheme.primaryDeep,
+                          color: WeatherCareTheme.of(context).primaryDeep,
                         ),
                   ),
                   const SizedBox(height: 4),
@@ -294,15 +302,15 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                       key: const ValueKey('ad-removal-owned-status'),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: WeatherCareTheme.primarySoft,
+                        color: WeatherCareTheme.of(context).primarySoft,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(Icons.check_circle_rounded,
-                              color: WeatherCareTheme.primaryDeep),
-                          SizedBox(width: 10),
-                          Expanded(
+                              color: WeatherCareTheme.of(context).primaryDeep),
+                          const SizedBox(width: 10),
+                          const Expanded(
                             child: Text(
                               '구매가 적용되어 광고가 표시되지 않아요.',
                               style: TextStyle(fontWeight: FontWeight.w700),
@@ -322,11 +330,11 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
                                 '지금은 UI 미리보기예요. 결제 기능은 다음 단계에서 연결해요.',
                               )),
                       icon: busy
-                          ? const SizedBox.square(
+                          ? SizedBox.square(
                               dimension: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: WeatherCareTheme.of(context).onPrimary,
                               ),
                             )
                           : const Icon(Icons.workspace_premium_outlined),
@@ -401,10 +409,11 @@ class _BenefitRow extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: WeatherCareTheme.primarySoft,
+            color: WeatherCareTheme.of(context).primarySoft,
             borderRadius: BorderRadius.circular(13),
           ),
-          child: Icon(icon, size: 20, color: WeatherCareTheme.primaryDeep),
+          child: Icon(icon,
+              size: 20, color: WeatherCareTheme.of(context).primaryDeep),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -413,7 +422,8 @@ class _BenefitRow extends StatelessWidget {
             children: [
               Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 2),
-              Text(subtitle, style: WeatherCareTheme.microTextStyle),
+              Text(subtitle,
+                  style: WeatherCareTheme.of(context).microTextStyle),
             ],
           ),
         ),

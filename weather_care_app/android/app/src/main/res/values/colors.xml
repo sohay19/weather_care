@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#4C77A4</color>
+    <color name="weather_widget_background">#EAF0F5</color>
+    <color name="weather_widget_panel">#FFFFFF</color>
+    <color name="weather_widget_text_primary">#29343D</color>
+    <color name="weather_widget_text_secondary">#63707A</color>
+    <color name="weather_widget_text_accent">#3E5F7C</color>
+    <color name="weather_widget_divider">#CEDAE4</color>
+    <color name="weather_widget_refresh_surface">#3E5F7C</color>
+    <color name="weather_widget_refresh_ink">#FFFFFF</color>
+    <color name="weather_widget_refresh_loading_surface">#CEDAE4</color>
+    <color name="weather_widget_refresh_loading_ink">#3E5F7C</color>
+    <color name="weather_widget_preparation_surface">#EAF0F5</color>
+    <color name="weather_app_background">#F6F7F8</color>
 </resources>

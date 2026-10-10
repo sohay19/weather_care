@@ -162,7 +162,7 @@ void main() {
     expect(
       widget,
       contains(
-        'refreshButtonSurface = Color(red: 71 / 255, green: 111 / 255, blue: 152 / 255)',
+        'refreshButtonSurface = themeColor(0x3E5F7C, 0x9DBDD8)',
       ),
     );
     expect(widget, isNot(contains('Link(destination: weatherCareHomeURL)')));
@@ -250,10 +250,10 @@ void main() {
     );
     expect(androidActivity, contains('!"현재 위치".equals(value)'));
     expect(androidActivity, contains('stored.startsWith(next)'));
-    expect(androidRefreshBackground, contains('#476F98'));
-    expect(androidLoadingBackground, contains('#D6E8F5'));
-    expect(androidRefreshIcon, contains('#FFFFFF'));
-    expect(androidLoadingIcon, contains('#476F98'));
+    expect(androidRefreshBackground, contains('@color/weather_widget_refresh_surface'));
+    expect(androidLoadingBackground, contains('@color/weather_widget_refresh_loading_surface'));
+    expect(androidRefreshIcon, contains('@color/weather_widget_refresh_ink'));
+    expect(androidLoadingIcon, contains('@color/weather_widget_refresh_loading_ink'));
     for (final family in ['small', 'medium', 'large']) {
       final layout = File(
         'android/app/src/main/res/layout/weather_widget_$family.xml',

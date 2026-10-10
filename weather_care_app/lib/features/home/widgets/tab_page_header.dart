@@ -26,12 +26,12 @@ class TabPageHeader extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: WeatherCareTheme.primarySoft,
+              color: WeatherCareTheme.of(context).primarySoft,
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
               icon,
-              color: WeatherCareTheme.primaryDeep,
+              color: WeatherCareTheme.of(context).primaryDeep,
               size: 23,
             ),
           ),
@@ -43,7 +43,7 @@ class TabPageHeader extends StatelessWidget {
             children: [
               Text(
                 eyebrow,
-                style: WeatherCareTheme.specialLabelStyle,
+                style: WeatherCareTheme.of(context).specialLabelStyle,
               ),
               const SizedBox(height: 2),
               Text(title, style: Theme.of(context).textTheme.headlineSmall),

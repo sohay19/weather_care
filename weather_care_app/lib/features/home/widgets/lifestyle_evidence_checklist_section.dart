@@ -60,7 +60,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
       key: const ValueKey('lifestyle-evidence-checklist'),
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -78,7 +78,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.surfaceMuted,
+                  color: WeatherCareTheme.of(context).surfaceMuted,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -155,11 +155,13 @@ class _LifestyleEvidenceSet extends StatelessWidget {
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: focused
-            ? WeatherCareTheme.primarySoft.withValues(alpha: 0.55)
-            : WeatherCareTheme.surfaceSubtle,
+            ? WeatherCareTheme.of(context).primarySoft.withValues(alpha: 0.55)
+            : WeatherCareTheme.of(context).surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: focused ? WeatherCareTheme.primary : WeatherCareTheme.outline,
+          color: focused
+              ? WeatherCareTheme.of(context).primary
+              : WeatherCareTheme.of(context).outline,
         ),
       ),
       child: Column(
@@ -168,10 +170,10 @@ class _LifestyleEvidenceSet extends StatelessWidget {
           if (focused && focusLabel != null) ...[
             Text(
               focusLabel!,
-              style: WeatherCareTheme.microTextStyle.copyWith(
-                color: WeatherCareTheme.primaryDeep,
-                fontWeight: FontWeight.w800,
-              ),
+              style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                    color: WeatherCareTheme.of(context).primaryDeep,
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
             const SizedBox(height: 7),
           ],
@@ -182,13 +184,13 @@ class _LifestyleEvidenceSet extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.primarySoft,
+                  color: WeatherCareTheme.of(context).primarySoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   _lifestyleIcon(message.type),
                   size: 20,
-                  color: WeatherCareTheme.primaryDeep,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                 ),
               ),
               const SizedBox(width: 11),
@@ -198,8 +200,8 @@ class _LifestyleEvidenceSet extends StatelessWidget {
                   children: [
                     Text(
                       message.type.title,
-                      style: const TextStyle(
-                        color: WeatherCareTheme.textPrimary,
+                      style: TextStyle(
+                        color: WeatherCareTheme.of(context).textPrimary,
                         fontSize: 15,
                         height: 1.35,
                         fontWeight: FontWeight.w800,
@@ -212,7 +214,7 @@ class _LifestyleEvidenceSet extends StatelessWidget {
                         key: ValueKey(
                           'detail-valid-period-${message.type.apiName.toLowerCase()}',
                         ),
-                        style: WeatherCareTheme.microTextStyle,
+                        style: WeatherCareTheme.of(context).microTextStyle,
                       ),
                     ],
                   ],
@@ -281,14 +283,14 @@ class _MatchedDetail extends StatelessWidget {
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: muted
-            ? WeatherCareTheme.surfaceMuted
-            : Colors.white.withValues(alpha: 0.78),
+            ? WeatherCareTheme.of(context).surfaceMuted
+            : WeatherCareTheme.of(context).surface.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: WeatherCareTheme.primaryDeep),
+          Icon(icon, size: 16, color: WeatherCareTheme.of(context).primaryDeep),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -296,10 +298,10 @@ class _MatchedDetail extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: WeatherCareTheme.microTextStyle.copyWith(
-                    color: WeatherCareTheme.primaryDeep,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                        color: WeatherCareTheme.of(context).primaryDeep,
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
                 const SizedBox(height: 3),
                 Text(text, style: Theme.of(context).textTheme.bodySmall),
@@ -308,10 +310,10 @@ class _MatchedDetail extends StatelessWidget {
                   Text(
                     source!,
                     key: ValueKey('detail-provider-$source'),
-                    style: WeatherCareTheme.microTextStyle.copyWith(
-                      color: WeatherCareTheme.textPrimary,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                          color: WeatherCareTheme.of(context).textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
                 ],
               ],
@@ -343,19 +345,19 @@ class _DataStatusCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceSubtle,
+        color: WeatherCareTheme.of(context).surfaceSubtle,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: WeatherCareTheme.outline),
+        border: Border.all(color: WeatherCareTheme.of(context).outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline_rounded,
                 size: 20,
-                color: WeatherCareTheme.primaryDeep,
+                color: WeatherCareTheme.of(context).primaryDeep,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -418,14 +420,14 @@ class _EmptyLifestyleChecklist extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceMuted,
+        color: WeatherCareTheme.of(context).surfaceMuted,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Text(
+      child: Text(
         '현재 예보에서 안내할 체크 항목과 근거가 없어요.',
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: WeatherCareTheme.textSecondary,
+          color: WeatherCareTheme.of(context).textSecondary,
           fontWeight: FontWeight.w700,
         ),
       ),

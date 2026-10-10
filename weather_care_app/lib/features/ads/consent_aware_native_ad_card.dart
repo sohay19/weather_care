@@ -24,7 +24,9 @@ abstract interface class NativeAdCardLoader {
 }
 
 class GoogleNativeAdCardLoader implements NativeAdCardLoader {
-  const GoogleNativeAdCardLoader();
+  final WeatherCarePalette colors;
+
+  const GoogleNativeAdCardLoader({this.colors = WeatherCarePalette.light});
 
   @override
   Future<NativeAdCardHandle?> load({
@@ -59,29 +61,29 @@ class GoogleNativeAdCardLoader implements NativeAdCardLoader {
         templateType: size == NativeAdCardSize.medium
             ? TemplateType.medium
             : TemplateType.small,
-        mainBackgroundColor: WeatherCareTheme.surface,
+        mainBackgroundColor: colors.surface,
         cornerRadius: 22,
         callToActionTextStyle: NativeTemplateTextStyle(
-          textColor: Colors.white,
-          backgroundColor: WeatherCareTheme.primary,
+          textColor: colors.onPrimary,
+          backgroundColor: colors.actionBackground,
           style: NativeTemplateFontStyle.bold,
           size: size == NativeAdCardSize.medium ? 15 : 13,
         ),
         primaryTextStyle: NativeTemplateTextStyle(
-          textColor: WeatherCareTheme.textPrimary,
-          backgroundColor: WeatherCareTheme.surface,
+          textColor: colors.textPrimary,
+          backgroundColor: colors.surface,
           style: NativeTemplateFontStyle.bold,
           size: size == NativeAdCardSize.medium ? 16 : 14,
         ),
         secondaryTextStyle: NativeTemplateTextStyle(
-          textColor: WeatherCareTheme.textSecondary,
-          backgroundColor: WeatherCareTheme.surface,
+          textColor: colors.textSecondary,
+          backgroundColor: colors.surface,
           style: NativeTemplateFontStyle.normal,
           size: size == NativeAdCardSize.medium ? 13 : 11,
         ),
         tertiaryTextStyle: NativeTemplateTextStyle(
-          textColor: WeatherCareTheme.textSecondary,
-          backgroundColor: WeatherCareTheme.surface,
+          textColor: colors.textSecondary,
+          backgroundColor: colors.surface,
           style: NativeTemplateFontStyle.normal,
           size: size == NativeAdCardSize.medium ? 12 : 10,
         ),
@@ -150,6 +152,18 @@ class ConsentAwareNativeAdCard extends StatefulWidget {
 }
 
 class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
+  Brightness? _adBrightness;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final brightness = Theme.of(context).brightness;
+    if (_adBrightness != null && _adBrightness != brightness) {
+      _clearAd(notify: false);
+    }
+    _adBrightness = brightness;
+  }
+
   NativeAdCardHandle? _nativeAd;
   String? _loadedId;
   String? _loadingId;
@@ -248,7 +262,13 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
     if (mounted) setState(() {});
 
     if (kDebugMode) debugPrint('네이티브 광고 로드 요청');
-    final loaded = await widget.loader.load(
+    final loader = widget.loader is GoogleNativeAdCardLoader
+        ? GoogleNativeAdCardLoader(
+            colors: _adBrightness == Brightness.dark
+                ? WeatherCarePalette.dark
+                : WeatherCarePalette.light)
+        : widget.loader;
+    final loaded = await loader.load(
       adUnitId: adUnitId,
       size: widget.size,
     );
@@ -300,7 +320,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
       child: _NativeAdFrame(
         frameKey: ValueKey('${widget.placement.name}-native-ad-card'),
         size: widget.size,
-        decoration: WeatherCareTheme.surfaceDecoration(radius: 22),
+        decoration: WeatherCareTheme.of(context).surfaceDecoration(radius: 22),
         child: nativeAd.buildWidget(),
       ),
     );
@@ -329,14 +349,14 @@ class _NativeAdLoadingPlaceholder extends StatelessWidget {
       frameKey: ValueKey('${placement.name}-native-ad-placeholder'),
       size: size,
       decoration: BoxDecoration(
-        color: WeatherCareTheme.surfaceSubtle,
+        color: WeatherCareTheme.of(context).surfaceSubtle,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: WeatherCareTheme.outline),
+        border: Border.all(color: WeatherCareTheme.of(context).outline),
       ),
       child: Center(
         child: Text(
           '광고를 불러오고 있어요',
-          style: WeatherCareTheme.microTextStyle,
+          style: WeatherCareTheme.of(context).microTextStyle,
         ),
       ),
     );

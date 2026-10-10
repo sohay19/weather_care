@@ -35,7 +35,7 @@ class WeatherStatusView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      color: WeatherCareTheme.primary,
+      color: WeatherCareTheme.of(context).primary,
       onRefresh: onRetry,
       child: CustomScrollView(
         key: ValueKey(viewKey),
@@ -50,17 +50,17 @@ class WeatherStatusView extends StatelessWidget {
                   width: double.infinity,
                   constraints: const BoxConstraints(maxWidth: 420),
                   padding: const EdgeInsets.all(24),
-                  decoration: WeatherCareTheme.surfaceDecoration(),
+                  decoration: WeatherCareTheme.of(context).surfaceDecoration(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (loading)
-                        const SizedBox(
+                        SizedBox(
                           width: 36,
                           height: 36,
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            color: WeatherCareTheme.primary,
+                            color: WeatherCareTheme.of(context).primary,
                           ),
                         )
                       else
@@ -69,7 +69,7 @@ class WeatherStatusView extends StatelessWidget {
                               ? Icons.wifi_off_rounded
                               : Icons.cloud_off_rounded,
                           size: 42,
-                          color: WeatherCareTheme.textSecondary,
+                          color: WeatherCareTheme.of(context).textSecondary,
                         ),
                       const SizedBox(height: 18),
                       Text(
@@ -87,7 +87,7 @@ class WeatherStatusView extends StatelessWidget {
                         message,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: WeatherCareTheme.textSecondary,
+                              color: WeatherCareTheme.of(context).textSecondary,
                             ),
                       ),
                       if (loading) ...[
@@ -96,9 +96,11 @@ class WeatherStatusView extends StatelessWidget {
                           '첫 실행은 권한 선택 시간을 제외하고 서버 재시도를 포함해 최대 약 2분 걸릴 수 있어요.',
                           key: const ValueKey('first-load-duration-guide'),
                           textAlign: TextAlign.center,
-                          style: WeatherCareTheme.microTextStyle.copyWith(
-                            fontSize: 11,
-                          ),
+                          style: WeatherCareTheme.of(context)
+                              .microTextStyle
+                              .copyWith(
+                                fontSize: 11,
+                              ),
                         ),
                       ],
                       if (!loading &&
@@ -135,9 +137,11 @@ class WeatherStatusView extends StatelessWidget {
                         Text(
                           '화면을 아래로 당겨 다시 확인할 수 있어요.',
                           textAlign: TextAlign.center,
-                          style: WeatherCareTheme.microTextStyle.copyWith(
-                            fontSize: 11,
-                          ),
+                          style: WeatherCareTheme.of(context)
+                              .microTextStyle
+                              .copyWith(
+                                fontSize: 11,
+                              ),
                         ),
                       ],
                     ],

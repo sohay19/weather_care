@@ -23,7 +23,7 @@ class ServerFeatureUnavailableCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -37,21 +37,21 @@ class ServerFeatureUnavailableCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: WeatherCareTheme.surfaceMuted,
+              color: WeatherCareTheme.of(context).surfaceMuted,
               borderRadius: BorderRadius.circular(17),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(
                   Icons.cloud_off_outlined,
-                  color: WeatherCareTheme.textSecondary,
+                  color: WeatherCareTheme.of(context).textSecondary,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     '운영 서버 미연결로 미지원',
                     style: TextStyle(
-                      color: WeatherCareTheme.textSecondary,
+                      color: WeatherCareTheme.of(context).textSecondary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

@@ -28,7 +28,7 @@ class _TimelineSectionState extends State<TimelineSection> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.surfaceDecoration(),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,9 +48,9 @@ class _TimelineSectionState extends State<TimelineSection> {
                   trailing: AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(
+                    child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: WeatherCareTheme.primaryDeep,
+                      color: WeatherCareTheme.of(context).primaryDeep,
                     ),
                   ),
                 ),
@@ -120,21 +120,21 @@ class _TimelineItemView extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: recommendations.isEmpty
-                        ? WeatherCareTheme.surfaceMuted
-                        : WeatherCareTheme.primarySoft,
+                        ? WeatherCareTheme.of(context).surfaceMuted
+                        : WeatherCareTheme.of(context).primarySoft,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: recommendations.isEmpty
-                          ? WeatherCareTheme.outline
-                          : WeatherCareTheme.primaryBorder,
+                          ? WeatherCareTheme.of(context).outline
+                          : WeatherCareTheme.of(context).primaryBorder,
                     ),
                   ),
                   child: Text(
                     item.timeLabel,
                     style: TextStyle(
                       color: recommendations.isEmpty
-                          ? WeatherCareTheme.textSecondary
-                          : WeatherCareTheme.primaryDeep,
+                          ? WeatherCareTheme.of(context).textSecondary
+                          : WeatherCareTheme.of(context).primaryDeep,
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                     ),
@@ -146,7 +146,7 @@ class _TimelineItemView extends StatelessWidget {
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 5),
                       decoration: BoxDecoration(
-                        color: WeatherCareTheme.primaryBorder,
+                        color: WeatherCareTheme.of(context).primaryBorder,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -161,9 +161,10 @@ class _TimelineItemView extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.surfaceSubtle,
+                  color: WeatherCareTheme.of(context).surfaceSubtle,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: WeatherCareTheme.outline),
+                  border:
+                      Border.all(color: WeatherCareTheme.of(context).outline),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,17 +177,19 @@ class _TimelineItemView extends StatelessWidget {
                     Text(
                       item.detail,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: WeatherCareTheme.textSecondary,
+                            color: WeatherCareTheme.of(context).textSecondary,
                           ),
                     ),
                     if (recommendations.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
                         '이 시간에 필요해요',
-                        style: WeatherCareTheme.microTextStyle.copyWith(
-                          color: WeatherCareTheme.textSecondary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: WeatherCareTheme.of(context)
+                            .microTextStyle
+                            .copyWith(
+                              color: WeatherCareTheme.of(context).textSecondary,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       const SizedBox(height: 6),
                       Wrap(
@@ -199,7 +202,7 @@ class _TimelineItemView extends StatelessWidget {
                               excludeSemantics: true,
                               label: '${recommendation.type.label} 근거 보기',
                               child: Material(
-                                color: recommendation.type.softColor,
+                                color: recommendation.type.softColor(context),
                                 borderRadius: BorderRadius.circular(10),
                                 child: InkWell(
                                   key: ValueKey(
@@ -219,8 +222,8 @@ class _TimelineItemView extends StatelessWidget {
                                         PreparationIcon(
                                           type: recommendation.type,
                                           size: 12,
-                                          color:
-                                              recommendation.type.accentColor,
+                                          color: recommendation.type
+                                              .accentColor(context),
                                         ),
                                         const SizedBox(width: 5),
                                         Text(
@@ -228,8 +231,8 @@ class _TimelineItemView extends StatelessWidget {
                                           style: TextStyle(
                                             fontFamily:
                                                 WeatherCareTheme.fontMona,
-                                            color:
-                                                recommendation.type.accentColor,
+                                            color: recommendation.type
+                                                .accentColor(context),
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -238,8 +241,8 @@ class _TimelineItemView extends StatelessWidget {
                                         Icon(
                                           Icons.chevron_right_rounded,
                                           size: 14,
-                                          color:
-                                              recommendation.type.accentColor,
+                                          color: recommendation.type
+                                              .accentColor(context),
                                         ),
                                       ],
                                     ),

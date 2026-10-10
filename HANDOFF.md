@@ -9843,6 +9843,26 @@
 - 과거출력전수호출참조확인: comparison.yesterday가history를읽지만기온·체감만반환, 체감함수입력T1H/REH/WSD/관측시각. VEC/PTY/RN1은과거출력에불필요. Week과거는별도일관측이며latest현재읽기는30분범위. 과거최심신적설기록·복원은사용자지시로제외, 과거선택3파일복구도필요이슈에서제외. 최신6파일수집및어제비교핵심3파일이력은유지대상. 기존데이터·코드삭제/수집주기변경하지않음.
 - 현재서버필요이슈2건으로확정: 현재강수응답병합수정·현재총적설정규수집구현. docs잔여이슈의최신서버표2건및원인·과거제외기준갱신, 최초6건관측은역사기록임을명시. 전체수정문서현재범위2건반영. 검증JSON currentRequiredFindings2/causeAndOutputReview추가, 기존serverOnlyFollowup4및원증거보존. JSON·참조경로·공백검증확인.
 
+## 2026-10-10 시스템 다크모드 주요 색상 디자인 예시
+
+- 사용자 요청: 폰 시스템 설정을 따르는 다크모드를 원하는 상황에서 주요 색상을 적용한 예시 디자인 제작·표시. 시작 HANDOFF/AGENTS 및 karpathy-guidelines 확인, visualize skill로 대화 내 미리보기 제작. 이번 범위는 디자인 검토이며 실제 Flutter 테마·설정·서버 코드 변경 없음, 커밋·배포 없음.
+- 현재 WeatherCareApp은 WeatherCareTheme.light()만 지정하며 darkTheme 미지정. 기존 주요 블루 #5D7F9E/진한 블루 #3E5F7C/배경 #F6F7F8/카드 #FFFFFF 확인. 기존 앱 Main 스크린샷과 5개 탭 구성을 참고.
+- 미리보기: C:/Users/SOHA/.codex/visualizations/2026/10/10/01a123fc-ea06-76e2-8851-3534a53c040d/weather-system-theme.html. 라이트·다크 시스템 상태 시뮬레이션, Main/Today/Detail/Week/Setting 탭, 준비 체크 상태 유지. 설정 예시에 시스템 설정에 맞춤·현재 모드 표시. 날씨 수치는 예시. 다크 주요 블루 #9DBDD8/강조 글자 #B7D0E5/배경 #141B22/카드 #1D2731/본문 #EDF2F6. 라이트 보조 글자 #63707A로 가독성 보강, 완료 버튼은 기존 진한 블루 사용.
+- 검증: headless Edge로 736/390/320px × 라이트/다크 × 5탭 총30개 레이아웃 검사, 가로 넘침·요소 내부 잘림·JS 오류 없음, 모드 전환 후 체크 상태 유지. 본문·보조 글자·강조·버튼·주의 문구 8개 조합 대비 모두4.5 이상(라이트 최저4.61, 다크 최저6.39). 라이트/다크 Main 및 다크 Setting 캡처 시각 검토, 한글·내용 배치 정상. verification.json/검사 스크립트/캡처는 같은 미리보기 디렉터리에 보존. 렌더링 Python 초기 cp949 출력 오류는 -X utf8로 수정, 시스템 설정 변경 없음.
+- 실제 구현 시 MaterialApp의 light/darkTheme와 ThemeMode.system 연결 및 화면별 고정 WeatherCareTheme 색상·Colors.white의 테마 인식 전환이 필요. 디자인 예시를 실제 앱 반영 완료로 간주하지 않음. 작업 이전 미커밋 운영 점검 문서와 HANDOFF 변경 보존.
+
+
+## 2026-10-10 시스템 다크모드 앱·홈 위젯 적용 및 에뮬레이터 설치
+
+- 사용자 승인한 주요 색상 디자인을 Flutter 앱과 Android/iOS 홈 위젯에 적용하고 Android 에뮬레이터 설치 요청 수행. 시작 HANDOFF/AGENTS 및 karpathy-guidelines 확인. 커밋·운영 배포 없음. 다른 작업의 서버·운영 문서 변경 보존.
+- 앱: ThemeMode.system, light/darkTheme, WeatherCarePalette ThemeExtension 연결. 5개 탭·설정·상세·안내/오류/권한/구매 화면·시작 화면·준비물/날씨 아이콘·버튼·스위치·시스템 바 색상 전환. Setting에 시스템 설정에 맞춤 및 현재 모드 안내. 별도 모드 저장/선택 설정 추가 없음. 다크 블루 #9DBDD8, 배경 #141B22, 카드 #1D2731, 본문 #EDF2F6. 네이티브 광고는 모드 변경 시 이전 광고 해제 후 올바른 팔레트로 로드, 기존 동의·생명주기 정책 유지.
+- Android 소형/중형/대형 위젯: values/values-night 색상, drawable/텍스트 비트맵·단색 아이콘 tint 적용. 준비물 원형 배경을 비트맵에서 레이아웃 리소스로 분리. 앱이 닫혀 있어도 런처가 테마 리소스 재적용. iOS는 UIColor 동적 traits 색상과 template 준비물 아이콘 적용. Windows에서 iOS 빌드/실기동은 미검증.
+- 검증: Flutter analyze 이슈0, 전체503 테스트 통과. 마지막 스위치 팔레트 보완 후 관련 시스템 테마2개 재통과 및 analyze 재통과. 시스템 라이트→다크→라이트, 작은320px/1.3글자 날씨 카드·경고색, 광고 재로드/해제 테스트 포함. Android debug APK 최초443.7초/최종30.3초 빌드 성공, 최종 APK adb install -r Success.
+- Medium_Phone_API_36(API36), emulator-5554 에뮬레이터 하나를 -no-window/숨김으로 실행. 현재 도구에 createdesktop 기능이 없어 사용자에게 창 없는 실행·ADB 캡처 방식을 설명하고 진행. 설치 패키지 com.codesoha.weathercare 버전1.0.0/26100200. 런처에 날씨챙겨 위젯ID2 추가, 소형·중형·대형으로 크기 조정 후 양쪽 모드 캡처 확인. am kill 후 pidof가 비어 있는 상태에도 배경·글자·날씨 아이콘·구분선·정보 패널 전환 확인. 최종 재설치 후 앱 및 대형 위젯 재확인, 에뮬레이터는 다크 홈 화면으로 실행 유지.
+- 위치·알림 권한 부여 없음. 첫 안내는 뒤로 닫아 설정을 확인, 위젯은 지역을 설정해주세요/미설정 상태로 검증. 실제 날씨 준비물 영역의 에뮬레이터 실출력은 미검증. 권한·서버/인증 구성 변경 없음.
+- 실제 캡처와 APK 해시·테스트/설치/제한 근거: output/verification/system-theme-20261010/verification.json, app-settings-light-final.png, app-settings-dark-final.png, widget-small-light.png, widget-small-dark.png, widget-medium-light.png, widget-wide-dark.png, widget-large-light.png, widget-large-dark-final.png. 임시 빌드/검사 로그는 .git/dark-*.log.
+
+
 ## 2026-10-10 현재 강수·총 적설 수정·검증·운영 배포
 
 - 사용자 두 서버 이슈 수정·검증·배포 후 커밋 명시 승인. HANDOFF/AGENTS·karpathy-guidelines 적용. 앱 동시 수정은 보존하며 커밋 대상에서 제외. 과거 최심신적설·불필요 선택 파일 복구·승인대기 제외 유지.
@@ -9852,3 +9872,29 @@
 - 배포전 Node 제공처30초 timeout4 및HTTP200파서실패1, curl 진단2001 확인. 파서수정 검증후 미활성 신설 수집기 실패상태1회초기화, 인증차단·사용장부 유지. 후속 정규 실제수신 성공의시각·지점수·예산은 검증JSON 참조. 간헐 지연 최종 귀속 미확정/IP고정·DNS·인증·WAF변경 없음.
 - 13:43KST release20261010-current-rain-snow 독립234파일 SHA256 전수일치, 동일lockfile 기존의존성 사용, env/DBschema14개 유지. SQLite backup /var/backups/weather-care/current-rain-snow-20261010/before.sqlite quick_checkok/dir700/file600. symlink 원자교체·api/scheduler재시작·자동rollback준비/실행없음, 이전release보존. 서비스3개active. 캐시만읽는stage Main/Today8요청 제공처호출0. 내부·공개health+4지역Main/Today/Weekly각13HTTP200/현재적설8응답정상/중기4HIT. 공개curl표준UA, 과거urllib403기록은당시증거보존.
 - docs/현재강수_총적설_운영배포_검증_20261010.json 및 잔여점검·전체수정문서·README 갱신. 과거 점검증거보존/현재서버필요항목0. 앱 동시수정·보호원본·환경설정 보존. 사용자 승인된 이번 서버소스/관련문서만 별도index 커밋, push 없음.
+
+## 2026-10-10 설치된 앱·위젯 실제 화면 캡처
+
+- 사용자 요청에 따라 실행 중인 emulator-5554에서 현재 다크 홈 위젯과 앱 Setting 화면을 ADB screencap으로 새로 캡처. 첫 권한 안내는 뒤로 닫고 테스트 광고는 Continue to app으로 닫음. 위치·알림 권한 부여 또는 코드/시스템 모드 변경 없음.
+- output/verification/system-theme-20261010/app-current.png, widget-current.png를 대화에 실제 이미지로 표시. 위젯은 지역 미설정 상태임을 설명. 커밋 없음.
+
+## 2026-10-10 실제 캡처 표시 방식 보완
+
+- 사용자가 Windows 경로 Markdown 이미지가 보이지 않는다고 알려 파일 미리보기 열기를 요청했으나 도구 응답은 queued. 열렸다고 주장하지 않음.
+- visualize 스킬의 인라인 표시 방식으로 실제 app-current.png/widget-current.png를 이미지 데이터로 포함한 actual-screen-preview.html 제작. 원본 캡처 유지, 표시용540×1200 축소 이미지 사용, 새 UI 합성/모형 제작 없음. 두 화면 탭으로 표시. HTML1MB 미만·2이미지 포함·원본 파일 존재 검증. 코드 수정·커밋 없음.
+
+## 2026-10-10 국내 지역 선택 후 메인·위젯 실제 날씨 캡처
+
+- 사용자 임의 국내 위치 설정 및 위젯·Main 캡처 요청. HANDOFF 확인 후 emulator-5554 앱의 정상 지역 직접 선택 화면에서 경기도 하남시 감북동(nx63/ny126)을 선택·저장. 위치/GPS·알림 권한 부여 없음. 시스템 다크 모드 유지.
+- 실제 서버 자료를 앱이 불러온 뒤 Main과 런처 대형 위젯 모두 하남시 감북동/현재25.8℃/체감24.2℃ 표시 확인. Main 습도28%, 위젯 다음시간26℃·최저13℃·최고26℃ 확인. 앱 표시 갱신시각 오후3:43. 가짜 데이터 삽입·앱/서버 소스 변경·커밋 없음.
+- 원본1080×2400 캡처 output/verification/system-theme-20261010/main-hanam-dark.png, widget-hanam-dark.png. Windows 경로 Markdown 표시 실패의 앞선 이력에 따라 실제 캡처를 포함한 hanam-main-widget-captures.html에 메인/홈위젯 탭으로 대화 내 표시. 원본 유지, 표시용540×1200 축소. 파일 크기1MB미만·2이미지·선택된 지역/실수치 육안 확인. 선택 단계 캡처와 hanam-capture-verification.json 근거 보존. 에뮬레이터는 실제 날씨 위젯이 있는 홈 화면으로 유지.
+
+
+## 2026-10-10 홈 위젯 캡처 단독 표시
+
+- 사용자가 두 화면 미리보기의 위젯 캡처가 보이지 않는다고 알려, 기존 실제 하남시 감북동 위젯 캡처를 탭/hidden 없이 독립 hanam-widget-capture.html로 표시. 원본과 이미지 데이터 동일,540×1200/1MB미만 확인. 앱·위치·코드 변경 없음.
+
+## 2026-10-10 시스템 다크모드 작업 커밋
+
+- 사용자 현재 대화의 커밋 요청에 따라 시스템 테마 앱·Android/iOS 위젯 구현, 관련 테스트, 최종 검증 JSON·캡처·대화 미리보기를 한국어 메시지로 커밋. 기존 전체503테스트/최종 analyze 이슈0/시스템 테마2개 재검증/Android APK 설치와 실제 날씨 Main·대형위젯 캡처 근거 확인. 추가 코드 변경 없음.
+- 별도 Git index로 앱 변경54파일 및 최종 증거18파일과 HANDOFF의 이번 작업6개 절·현재 커밋 기록만 포함. 다른 작업의 서버 적설 수집중지 코드·운영 문서·HANDOFF 기록 및 중간 캡처는 작업 트리에 보존. iOS 실기동 미검증 유지. push 수행 없음.

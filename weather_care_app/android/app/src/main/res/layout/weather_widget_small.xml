@@ -27,6 +27,7 @@
 
             <ImageView
                 android:id="@+id/widget_region"
+                android:tint="@color/weather_widget_text_primary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="시흥시 은행동"
@@ -34,6 +35,7 @@
 
             <ImageView
                 android:id="@+id/widget_refresh_time"
+                android:tint="@color/weather_widget_text_secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
@@ -63,6 +65,7 @@
 
         <ImageView
             android:id="@+id/widget_weather_icon"
+                android:tint="@color/weather_widget_text_accent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
@@ -71,6 +74,7 @@
 
         <ImageView
             android:id="@+id/widget_current_temperature"
+                android:tint="@color/weather_widget_text_accent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
@@ -81,6 +85,7 @@
 
     <ImageView
         android:id="@+id/widget_min_max"
+                android:tint="@color/weather_widget_text_accent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"

@@ -167,35 +167,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
           ),
         const SizedBox(height: 20),
-        Container(
-          key: const ValueKey('system-theme-status'),
-          padding: const EdgeInsets.all(20),
-          decoration: WeatherCareTheme.of(context).surfaceDecoration(),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Icon(Icons.brightness_auto_rounded,
-                  color: WeatherCareTheme.of(context).primaryDeep),
-              const SizedBox(width: 10),
-              const Expanded(
-                  child: Text('화면 모드',
-                      style: TextStyle(fontWeight: FontWeight.w800))),
-            ]),
-            const SizedBox(height: 12),
-            const Text('시스템 설정에 맞춤'),
-            Text('앱과 홈 화면 위젯이 휴대폰의 라이트·다크 설정을 따라가요.',
-                style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Text(
-                Theme.of(context).brightness == Brightness.dark
-                    ? '현재 적용 중 · 다크 모드'
-                    : '현재 적용 중 · 라이트 모드',
-                style: TextStyle(
-                    color: WeatherCareTheme.of(context).primaryDeep,
-                    fontWeight: FontWeight.w700)),
-          ]),
-        ),
-        const SizedBox(height: 16),
         _AdRemovalBanner(
           isOwned: widget.adRemoval?.isOwned ?? false,
           onTap: _openAdRemovalPurchase,

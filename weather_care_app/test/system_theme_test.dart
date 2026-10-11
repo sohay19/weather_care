@@ -23,21 +23,23 @@ void main() {
       home: const SettingsScreen(),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('현재 적용 중 · 라이트 모드'), findsOneWidget);
+    expect(find.byKey(const ValueKey('system-theme-status')), findsNothing);
     final lightContext = tester.element(find.byType(SettingsScreen));
+    expect(Theme.of(lightContext).brightness, Brightness.light);
     expect(Theme.of(lightContext).scaffoldBackgroundColor,
         WeatherCarePalette.light.background);
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     await tester.pumpAndSettle();
-    expect(find.text('현재 적용 중 · 다크 모드'), findsOneWidget);
     final darkContext = tester.element(find.byType(SettingsScreen));
+    expect(Theme.of(darkContext).brightness, Brightness.dark);
     expect(Theme.of(darkContext).scaffoldBackgroundColor,
         WeatherCarePalette.dark.background);
     expect(WeatherCareTheme.of(darkContext).textPrimary,
         WeatherCarePalette.dark.textPrimary);
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
     await tester.pumpAndSettle();
-    expect(find.text('현재 적용 중 · 라이트 모드'), findsOneWidget);
+    expect(Theme.of(tester.element(find.byType(SettingsScreen))).brightness,
+        Brightness.light);
     expect(tester.takeException(), isNull);
   });
 

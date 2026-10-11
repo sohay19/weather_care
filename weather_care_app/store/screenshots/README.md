@@ -3,15 +3,17 @@
 ## 결과물
 
 - iOS: `ios/` — 1320×2868 px, RGB PNG, 8장
-- Android: `android/` — 1080×1920 px, RGB PNG, 8장
+- Android: `android/` — 1080×1920 px, RGB PNG, 9장(등록 후보)
 - iPad 13형: `ipad/` — 2064×2752 px, RGB PNG, 8장
-- Android 태블릿: `android-tablet/` — 1440×2560 px, RGB PNG, 8장
+- Android 태블릿: `android-tablet/` — 1440×2560 px, RGB PNG, 9장(등록 후보)
 - 미리보기: `preview-ios.png`, `preview-android.png`, `preview-ipad.png`, `preview-android-tablet.png`
 - 실제 앱 캡처 원본: 휴대전화 `source/`, 태블릿 `source-tablet/`
 - Google Play 그래픽 이미지: `../google-play/feature-graphic.png` — 1024×500 px, RGB PNG
 - Google Play 스토어 아이콘: `../google-play/app-icon-512.png` — 512×512 px, RGBA PNG
 
 노출 순서는 핵심 화면을 먼저 보여주도록 `Main → Today → Detail → Widget → Setting → Week → Notification → Push Alert`로 구성했다.
+
+Android 전용 9번 `09-dark-mode.png`는 별도 추가 이미지다. Google Play는 기기별 최대 8장을 허용하므로, 등록할 때 기존 5번 설정 이미지 대신 9번을 선택하는 구성을 권장한다. iOS·iPad에는 다크모드 이미지를 추가하지 않았다. [Google Play 공식 안내](https://support.google.com/googleplay/android-developer/answer/9866151)
 
 ## 홍보 문구
 
@@ -23,6 +25,7 @@
 6. Week — `일주일 계획을 / 미리 가볍게`
 7. Notification — `원하는 알림만 / 필요한 시간에`
 8. Push Alert — `필요한 날씨를 / 알림으로 바로`
+9. Dark Mode(Android 전용) — `앱과 위젯 모두 / 다크 모드로 편안하게`
 
 ## 제작 기준
 
@@ -34,8 +37,11 @@
 - 8번은 앱이 발송하는 형식의 알림 4개를 사용했다. Android는 앱의 실제 알림 채널로 표시한 네 알림에 앱 아이콘·제목·본문이 각각 보이도록 시스템 알림 패널을 직접 캡처했다. iPhone은 iOS 18.6 시뮬레이터에 네 알림을 실제로 전달한 뒤 알림 센터를 직접 캡처했다. iPad는 동일한 네 제목·본문과 잠금화면 상태 요소, 반투명 블러 재질을 적용해 iPadOS 알림 목록 형태로 재현했다.
 - 작은·중간·큰 위젯은 한 장 안에서 위부터 세로로 하나씩 나열하며 최종 이미지의 세로 길이는 다른 스토어 스크린샷과 동일하게 유지한다.
 - PNG는 투명도 없는 RGB로 저장했다.
+- 9번은 2026-10-10에 실제 Android 에뮬레이터에서 캡처한 하남시 감북동 앱 Main과 대형 홈 위젯을 함께 배치했다. 원본은 `source/dark-main.png`, `source/dark-widget.png`에 보존했다. 시스템 바·홈 화면의 다른 앱 아이콘을 제외한 크롭과 비율 유지 확대만 적용했으며 UI 색상·문구·날씨 수치를 변경하지 않았다. 태블릿 규격 이미지도 같은 휴대전화 캡처를 사용한 소개 이미지이며, 태블릿에서 새로 촬영한 화면은 아니다.
 - Google Play 그래픽 이미지는 앱 아이콘을 크게 반복하지 않고 실제 Main 브리핑 카드를 사용했다. 캡처의 날짜·시각 영역은 제외했다.
 
 Google Play 대체 텍스트 권장안: `날씨에 맞춰 오늘을 챙겨요 문구와 현재 날씨·자외선·대기질을 보여주는 날씨챙겨 브리핑 카드`
 
 다시 생성하려면 `python store/generate_store_screenshots.py`를 실행한다.
+
+Android 다크모드 이미지와 Android 미리보기만 생성하려면 `python store/generate_store_screenshots.py --dark-mode-only`를 실행한다.

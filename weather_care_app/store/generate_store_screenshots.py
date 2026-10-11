@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -26,6 +27,7 @@ APP_SCREENS = [
     ("08-push-notification", "push-notification.png", "PUSH ALERT", "필요한 날씨를\n알림으로 바로"),
 ]
 WIDGET_SCREEN = ("04-widget", "WIDGET", "홈 화면에서도\n날씨를 바로 확인")
+DARK_MODE_SCREEN = ("09-dark-mode", "DARK MODE", "앱과 위젯 모두\n다크 모드로 편안하게")
 SCREEN_STEMS = sorted([stem for stem, *_ in APP_SCREENS] + [WIDGET_SCREEN[0]])
 IOS_PUSH_SOURCE = SOURCE_DIR / "push-notification-ios.png"
 IPAD_PUSH_SOURCE = TABLET_SOURCE_DIR / "push-notification-ios.png"
@@ -1107,7 +1109,8 @@ def compose_widget_showcase(
 
 
 def contact_sheet(platform: str) -> None:
-    source_paths = [OUTPUT_DIR / platform / f"{stem}.png" for stem in SCREEN_STEMS]
+    stems = SCREEN_STEMS + ([DARK_MODE_SCREEN[0]] if platform.startswith("android") else [])
+    source_paths = [OUTPUT_DIR / platform / f"{stem}.png" for stem in stems]
     with Image.open(source_paths[0]) as first:
         thumb_height = 820
         thumb_width = round(first.width * thumb_height / first.height)
@@ -1123,6 +1126,56 @@ def contact_sheet(platform: str) -> None:
         sheet.paste(thumb, (x, margin))
         x += thumb_width + gap
     sheet.save(OUTPUT_DIR / f"preview-{platform}.png", format="PNG", optimize=True)
+
+
+def compose_dark_mode_showcase(destination: Path, spec: dict) -> None:
+    width, height = spec["size"]
+    canvas = Image.new("RGBA", (width, height), BACKGROUND)
+    draw = ImageDraw.Draw(canvas)
+    _, label, headline = DARK_MODE_SCREEN
+    label_font = font("SUITE-Bold.ttf", spec["label_size"])
+    headline_font = font("SUITE-Heavy.ttf", spec["headline_size"])
+    label_box = draw.textbbox((0, 0), label, font=label_font)
+    draw.text(((width - label_box[2]) / 2, spec["label_y"]), label,
+              font=label_font, fill=LABEL_COLOR)
+    headline_box = draw.multiline_textbbox(
+        (0, 0), headline, font=headline_font,
+        spacing=spec["headline_spacing"], align="center",
+    )
+    draw.multiline_text(
+        ((width - headline_box[2]) / 2, spec["headline_y"]), headline,
+        font=headline_font, fill=HEADLINE_COLOR,
+        spacing=spec["headline_spacing"], align="center",
+    )
+
+    # 실제 캡처의 시스템 바와 다른 앱 아이콘만 제외한다. UI 색상은 보존한다.
+    with Image.open(SOURCE_DIR / "dark-main.png") as source:
+        app = source.crop((0, 70, 1080, 2360)).convert("RGB")
+    with Image.open(SOURCE_DIR / "dark-widget.png") as source:
+        widget = source.crop((67, 423, 1013, 1364)).convert("RGB")
+
+    top = spec["screen_y"] + round(width * 0.045)
+    bottom = round(height * 0.95)
+    available_height = bottom - top
+    app_width = min(round(width * 0.70), round(available_height * app.width / app.height))
+    app_card = rounded_screen(app, app_width, spec["radius"])
+    app_x = round(width * 0.07)
+    widget_width = min(round(width * 0.60), round(available_height * 0.46))
+    widget_card = rounded_screen(widget, widget_width, round(widget_width * 0.065))
+    widget_x = width - round(width * 0.055) - widget_card.width
+    widget_y = bottom - widget_card.height - round(width * 0.04)
+
+    for card, x, y in ((app_card, app_x, top), (widget_card, widget_x, widget_y)):
+        shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        shadow_mask = Image.new("L", canvas.size, 0)
+        shadow_mask.paste(card.getchannel("A").point(lambda alpha: round(alpha * 0.35)),
+                          (x, y + spec["shadow_offset"]))
+        shadow.putalpha(shadow_mask)
+        canvas = Image.alpha_composite(canvas, shadow.filter(ImageFilter.GaussianBlur(spec["shadow_blur"])))
+        canvas.alpha_composite(card, (x, y))
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    canvas.convert("RGB").save(destination, format="PNG", optimize=True)
 
 
 def create_google_play_feature_graphic() -> None:
@@ -1196,7 +1249,13 @@ def create_google_play_app_icon() -> None:
     icon.save(GOOGLE_PLAY_DIR / "app-icon-512.png", format="PNG", optimize=True)
 
 
-def main() -> None:
+def main(dark_mode_only: bool = False) -> None:
+    for platform, spec in (("android", FORMATS["android"]), ("android-tablet", TABLET_FORMATS["android-tablet"])):
+        compose_dark_mode_showcase(OUTPUT_DIR / platform / f"{DARK_MODE_SCREEN[0]}.png", spec)
+    if dark_mode_only:
+        contact_sheet("android")
+        contact_sheet("android-tablet")
+        return
     create_ios_push_source(IPAD_PUSH_SOURCE, (1440, 2560), tablet=True)
     for platform, spec in FORMATS.items():
         for stem, source_name, label, headline in APP_SCREENS:
@@ -1237,4 +1296,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="스토어 스크린샷 생성")
+    parser.add_argument("--dark-mode-only", action="store_true", help="Android 다크모드 이미지와 미리보기만 생성")
+    main(dark_mode_only=parser.parse_args().dark_mode_only)

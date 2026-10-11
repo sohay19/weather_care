@@ -10064,3 +10064,11 @@
 - git diff --check 통과. Flutter 3.47.5 기존 native_startup_defaults_test 실행은 SDK 캐시 잠금 파일 쓰기 권한으로 무출력 대기하여 중단했고, 권한 요청이 사용자에 의해 거절되어 재실행하지 않았다. 자동 테스트 통과를 주장하지 않음. Windows 환경에 Xcode/iOS 런타임이 없어 실제 다크모드 렌더링·가장자리 탭 확인 미완료.
 - Apple 공식 Color.opacity 및 WidgetKit 배경 문서를 참고했다. https://developer.apple.com/documentation/swiftui/color/opacity(_:) 및 https://developer.apple.com/documentation/widgetkit/displaying-the-right-widget-background . 기존 HANDOFF 변경 보존. 커밋·푸시·배포 없음.
 - 사용자 후속 지시: 추가 검증은 진행하지 않고 사용자가 직접 확인하기로 함. 이 지시에 따라 테스트·실기기 확인을 추가 시도하지 않음.
+
+## 2026-10-11 Android 스토어 다크모드 소개 이미지 추가
+
+- 사용자 앱·위젯 캡처를 섞은 다크모드 지원 이미지 요청. 별도 이미지 추가를 선택했고, Android만 작업하며 iOS는 Mac에서 직접 진행한다고 지정함. 후속 요청으로 앱 화면과 홈 위젯 구분 문구를 모두 제거함.
+- karpathy-guidelines 적용. 기존 파란 배경·흰 홍보 문구·노란 DARK MODE 라벨 유지. 앱과 위젯 모두 / 다크 모드로 편안하게 제목 및 실제 앱·대형 위젯 캡처를 겹쳐 배치. Android 1080×1920, Android 태블릿 1440×2560의 09-dark-mode.png 추가. 기존 8장은 보존함.
+- 실제 원본은 e2aa423의 2026-10-10 하남시 감북동 Main/Widget 캡처를 source/dark-main.png, source/dark-widget.png로 보존. 앱 시스템 바·홈 화면의 다른 앱 아이콘 제외한 크롭/비율 유지 확대만 적용. UI 색상·날씨 수치·문구 생성 또는 재색칠 없음. 태블릿 규격도 휴대전화 캡처를 활용한 홍보 이미지임을 README에 명시. UI 자동조작·에뮬레이터 실행 없음.
+- 생성기에 Android 다크모드 출력과 --dark-mode-only 옵션 추가. Android 두 미리보기 및 screenshots/assets ZIP 갱신. iOS·iPad 이미지/미리보기는 미수정이며 압축파일 내부 Apple 파일도 해시 동일 확인. README·스토어 등록정보 Markdown에 추가 이미지/대체텍스트 기록. Google Play 기기별 최대8장에 맞춰 기존5번 대신9번 선택 권장하되 기존파일 삭제 없음. 공식 근거 https://support.google.com/googleplay/android-developer/answer/9866151 .
+- 최종 PNG 두 장 시각 확인: 추가 앱 화면·홈 위젯 구분 라벨 없음, 한글 제목·색상·레이아웃 정상. PNG 크기/RGB/무결성·생성기 문법·ZIP CRC·압축파일과 최신 파일 일치·다른 압축파일 항목 내용 보존·git diff --check 통과. 앱 런타임 변경·커밋·푸시·스토어 등록 없음.

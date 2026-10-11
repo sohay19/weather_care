@@ -1109,7 +1109,7 @@ def compose_widget_showcase(
 
 
 def contact_sheet(platform: str) -> None:
-    stems = SCREEN_STEMS + ([DARK_MODE_SCREEN[0]] if platform.startswith("android") else [])
+    stems = SCREEN_STEMS + [DARK_MODE_SCREEN[0]]
     source_paths = [OUTPUT_DIR / platform / f"{stem}.png" for stem in stems]
     with Image.open(source_paths[0]) as first:
         thumb_height = 820
@@ -1128,7 +1128,7 @@ def contact_sheet(platform: str) -> None:
     sheet.save(OUTPUT_DIR / f"preview-{platform}.png", format="PNG", optimize=True)
 
 
-def compose_dark_mode_showcase(destination: Path, spec: dict) -> None:
+def compose_dark_mode_showcase(destination: Path, spec: dict, platform: str = "android") -> None:
     width, height = spec["size"]
     canvas = Image.new("RGBA", (width, height), BACKGROUND)
     draw = ImageDraw.Draw(canvas)
@@ -1149,10 +1149,19 @@ def compose_dark_mode_showcase(destination: Path, spec: dict) -> None:
     )
 
     # 실제 캡처의 시스템 바와 다른 앱 아이콘만 제외한다. UI 색상은 보존한다.
-    with Image.open(SOURCE_DIR / "dark-main.png") as source:
-        app = source.crop((0, 70, 1080, 2360)).convert("RGB")
-    with Image.open(SOURCE_DIR / "dark-widget.png") as source:
-        widget = source.crop((67, 423, 1013, 1364)).convert("RGB")
+    apple = platform in {"ios", "ipad"}
+    app_source = "dark-main-ios.png" if apple else "dark-main.png"
+    widget_source = "dark-widget-ios.png" if apple else "dark-widget.png"
+    app_crop = (0, 200, 1206, 2535) if apple else (0, 70, 1080, 2360)
+    widget_crop = (80, 873, 1128, 1968) if apple else (67, 423, 1013, 1364)
+    with Image.open(SOURCE_DIR / app_source) as source:
+        if apple and source.size != (1206, 2622):
+            raise ValueError("iOS 앱 원본은 1206×2622 캡처여야 합니다.")
+        app = source.crop(app_crop).convert("RGB")
+    with Image.open(SOURCE_DIR / widget_source) as source:
+        if apple and source.size != (1206, 2622):
+            raise ValueError("iOS 위젯 원본은 1206×2622 캡처여야 합니다.")
+        widget = source.crop(widget_crop).convert("RGB")
 
     top = spec["screen_y"] + round(width * 0.045)
     bottom = round(height * 0.95)
@@ -1161,7 +1170,7 @@ def compose_dark_mode_showcase(destination: Path, spec: dict) -> None:
     app_card = rounded_screen(app, app_width, spec["radius"])
     app_x = round(width * 0.07)
     widget_width = min(round(width * 0.60), round(available_height * 0.46))
-    widget_card = rounded_screen(widget, widget_width, round(widget_width * 0.065))
+    widget_card = rounded_screen(widget, widget_width, round(widget_width * (0.10 if apple else 0.065)))
     widget_x = width - round(width * 0.055) - widget_card.width
     widget_y = bottom - widget_card.height - round(width * 0.04)
 
@@ -1249,12 +1258,20 @@ def create_google_play_app_icon() -> None:
     icon.save(GOOGLE_PLAY_DIR / "app-icon-512.png", format="PNG", optimize=True)
 
 
-def main(dark_mode_only: bool = False) -> None:
-    for platform, spec in (("android", FORMATS["android"]), ("android-tablet", TABLET_FORMATS["android-tablet"])):
-        compose_dark_mode_showcase(OUTPUT_DIR / platform / f"{DARK_MODE_SCREEN[0]}.png", spec)
-    if dark_mode_only:
-        contact_sheet("android")
-        contact_sheet("android-tablet")
+def main(dark_mode_only: bool = False, ios_dark_mode_only: bool = False) -> None:
+    formats = {**FORMATS, **TABLET_FORMATS}
+    dark_platforms = (
+        ("ios", "ipad") if ios_dark_mode_only
+        else ("android", "android-tablet") if dark_mode_only
+        else tuple(formats)
+    )
+    for platform in dark_platforms:
+        compose_dark_mode_showcase(
+            OUTPUT_DIR / platform / f"{DARK_MODE_SCREEN[0]}.png", formats[platform], platform
+        )
+    if dark_mode_only or ios_dark_mode_only:
+        for platform in dark_platforms:
+            contact_sheet(platform)
         return
     create_ios_push_source(IPAD_PUSH_SOURCE, (1440, 2560), tablet=True)
     for platform, spec in FORMATS.items():
@@ -1297,5 +1314,8 @@ def main(dark_mode_only: bool = False) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="스토어 스크린샷 생성")
-    parser.add_argument("--dark-mode-only", action="store_true", help="Android 다크모드 이미지와 미리보기만 생성")
-    main(dark_mode_only=parser.parse_args().dark_mode_only)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--dark-mode-only", action="store_true", help="Android 다크모드 이미지와 미리보기만 생성")
+    group.add_argument("--ios-dark-mode-only", action="store_true", help="iPhone·iPad 다크모드 이미지와 미리보기만 생성")
+    args = parser.parse_args()
+    main(dark_mode_only=args.dark_mode_only, ios_dark_mode_only=args.ios_dark_mode_only)

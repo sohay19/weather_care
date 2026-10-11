@@ -10072,3 +10072,22 @@
 - 실제 원본은 e2aa423의 2026-10-10 하남시 감북동 Main/Widget 캡처를 source/dark-main.png, source/dark-widget.png로 보존. 앱 시스템 바·홈 화면의 다른 앱 아이콘 제외한 크롭/비율 유지 확대만 적용. UI 색상·날씨 수치·문구 생성 또는 재색칠 없음. 태블릿 규격도 휴대전화 캡처를 활용한 홍보 이미지임을 README에 명시. UI 자동조작·에뮬레이터 실행 없음.
 - 생성기에 Android 다크모드 출력과 --dark-mode-only 옵션 추가. Android 두 미리보기 및 screenshots/assets ZIP 갱신. iOS·iPad 이미지/미리보기는 미수정이며 압축파일 내부 Apple 파일도 해시 동일 확인. README·스토어 등록정보 Markdown에 추가 이미지/대체텍스트 기록. Google Play 기기별 최대8장에 맞춰 기존5번 대신9번 선택 권장하되 기존파일 삭제 없음. 공식 근거 https://support.google.com/googleplay/android-developer/answer/9866151 .
 - 최종 PNG 두 장 시각 확인: 추가 앱 화면·홈 위젯 구분 라벨 없음, 한글 제목·색상·레이아웃 정상. PNG 크기/RGB/무결성·생성기 문법·ZIP CRC·압축파일과 최신 파일 일치·다른 압축파일 항목 내용 보존·git diff --check 통과. 앱 런타임 변경·커밋·푸시·스토어 등록 없음.
+
+
+## 2026-10-11 iOS 스토어 다크모드 이미지 제작·위젯 시간 배치 및 재촬영
+
+- 사용자 요청: Android 9번을 참고해 iOS 스토어 이미지 제작. 후속으로 중형·대형 새로고침 주변 원형 경계 수정, 소형만 지역 아래 기준시간/중형·대형은 버튼 옆 기준시간, 완료 후 세 크기 실제 캡처 표시 요청. AGENTS/HANDOFF/karpathy-guidelines 적용. 커밋·푸시·스토어 등록 없음.
+- WeatherCareWidget.swift의 중형·대형 공통 WidgetHeader만 수정: 지역/기준시간/새로고침을 가운데 정렬 HStack으로 배치. 소형 SmallWidgetHeader의 지역 아래 시간은 유지. 모든 크기 공통 WidgetRefreshButton의 22pt 가시 원형/44pt 프레임·App Intent·contentShape·plain 스타일은 유지했다. 앞선 외곽 surface.opacity(0.01) 수정은 이미 소스에 있으나 설치된 이전 캡처에는 큰 원형 배경이 남아 있었다. 최신 소스 재빌드·설치 후 세 크기 모두 외곽 원형 경계가 사라짐을 확인했으며 추가 버튼 구조 변경은 필요하지 않았다.
+- Xcode 27.0 / iPhone 18 Pro iOS 27.0 시뮬레이터에서 최신 앱·WidgetKit 확장 빌드 성공. 처음 CODE_SIGNING_ALLOWED=NO 빌드는 App Group이 연결되지 않아 위젯 자료가 비었고, 정상 시뮬레이터 ad-hoc 서명으로 재빌드·설치해 기존 entitlements를 포함한 앱 그룹 연결과 앱 저장→위젯 표시를 확인. 소스 entitlement·권한·GPS 허용 설정 변경 없음. 새 시뮬레이터 실행/창 생성 없이 기존 Device Hub 사용, 별도 createdesktop 도구는 제공되지 않음.
+- 실제 경기도 이천시 호법면 자료(26.3℃/체감28.1℃)로 다크모드 소형·중형·대형 및 라이트모드 중형·대형 렌더링 확인. 중형·대형 기준시간은 새로고침 버튼 왼쪽, 소형은 지역 아래. 대형 중앙과 세 크기의 44pt 좌상단 약10% 영역 탭 후 앱을 열지 않은 Home 상태에서 snapshot.receivedAt 갱신/refresh_status 없음 확인. 대형 중앙07:52:45.549Z, 외곽07:53:03.120Z, 소형외곽07:54:11.376Z, 중형외곽07:55:39.463Z. 실제 탭 근거·이미지 해시는 screenshots/verification-ios/verification.json과 한국어 README에 보존. 실기기·iPad 네이티브 검증은 수행하지 않음.
+- 지정 Flutter SDK의 기존 native_startup_defaults_test 6개 PASS. 정상 서명 Xcode 시뮬레이터 빌드 PASS, git diff --check PASS. 실제 시스템 모드 전환 후 렌더링·탭으로 검증했으며 정적 소스 테스트만으로 동작 성공을 주장하지 않음. 캡처 완료 후 시뮬레이터 appearance를 기존 light로 복원.
+- iOS 1320×2868 및 iPad 2064×2752의 09-dark-mode.png를 Android 파란 배경·흰 제목·노란 DARK MODE 라벨·앱/대형위젯 겹침 구도로 제작. 실제 iOS Main/홈 위젯 source/dark-main-ios.png 및 dark-widget-ios.png를 최신 빌드로 재촬영(각1206×2622, 오후4:57기준). 생성형 UI·재색칠·수치 조작 없음. iPad 9번은 동일 iPhone 캡처를 사용하는 홍보 이미지임을 README에 명시. 기존 Android 전체 이미지 및 Apple1~8의 Git HEAD 대비 바이트 동일 확인.
+- 생성기에 --ios-dark-mode-only 추가, Android 전용 --dark-mode-only 유지. Apple9번 포함 미리보기 2개·한국어 README/등록정보 갱신. Apple 공식 screenshot-specifications 확인: 현재 규격 및 최대10장에 맞춰 Apple 각9장 사용 가능. 기존01~08에는 변경 없음.
+- screenshots/verification-ios/에 소형·중형·대형 다크모드 실제 홈 캡처 크롭과 원본3개(소형/대형dark, 중형/대형dark, 중형/대형light) 보존. 소형은492×492, 중형1048×492, 대형1048×1095의 원본 비율 크롭, 글자/색상 변경 없음. 사용자에게 최종 세 크기 이미지 표시.
+- weather-care-store-screenshots.zip 및 weather-care-store-assets.zip 갱신(검증 캡처 포함), 나머지 기존 ZIP 항목 바이트 보존 확인. app-store/weather-care-ios-screenshots.zip 생성: iPhone9+iPad9+미리보기2+README=21항목. PNG18개 규격/RGB/알파 없음/무결성 및 ZIP CRC·중복없음·최신파일 일치 PASS. 최종 iOS/iPad9번과 세 크기 크롭 시각 검수 PASS. 스토어 업로드·심사 제출·앱 배포 없음.
+
+
+## 2026-10-11 iOS 위젯 시간 배치·스토어 스크린샷 커밋
+
+- 사용자가 이번 대화에서 커밋을 명시적으로 승인했다. 위젯 공통 헤더 수정, iOS/iPad 다크모드 이미지·원본·세 크기 검증 캡처, 생성기·한국어 문서·ZIP 및 인계 기록을 커밋 대상으로 확인했다.
+- 앞선 native_startup_defaults_test 6개 및 Xcode 시뮬레이터 빌드·실제 새로고침·이미지/ZIP 검증 결과를 유지하고 git diff --check를 재확인했다. 추가 실행 코드 변경·스토어 등록·배포·푸시는 수행하지 않는다.

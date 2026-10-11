@@ -359,21 +359,20 @@ private struct WidgetHeader: View {
   let timeSize: CGFloat
 
   var body: some View {
-    HStack(alignment: .top, spacing: 2) {
-      VStack(alignment: .leading, spacing: 1) {
-        Text(snapshot.region)
-          .font(SuiteFont.extraBold(regionSize))
-          .lineLimit(2)
-          .minimumScaleFactor(0.72)
-          .fixedSize(horizontal: false, vertical: true)
-        Text(snapshot.refreshTime)
-          .font(SuiteFont.regular(timeSize))
-          .foregroundStyle(secondaryInk)
-          .lineLimit(1)
-          .fixedSize(horizontal: true, vertical: false)
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .widgetInvalidatableContent()
+    HStack(alignment: .center, spacing: 2) {
+      Text(snapshot.region)
+        .font(SuiteFont.extraBold(regionSize))
+        .lineLimit(2)
+        .minimumScaleFactor(0.72)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .widgetInvalidatableContent()
+      Text(snapshot.refreshTime)
+        .font(SuiteFont.regular(timeSize))
+        .foregroundStyle(secondaryInk)
+        .lineLimit(1)
+        .fixedSize(horizontal: true, vertical: false)
+        .widgetInvalidatableContent()
       WidgetRefreshButton()
     }
     .foregroundStyle(ink)

@@ -1,0 +1,72 @@
+{
+  "device": "iPhone 18 Pro",
+  "ios": "27.0",
+  "date": "2026-10-11",
+  "rendering": {
+    "dark": [
+      "small",
+      "medium",
+      "large"
+    ],
+    "light": [
+      "medium",
+      "large"
+    ],
+    "refreshOuterRingAbsent": true
+  },
+  "refreshTaps": [
+    {
+      "family": "large",
+      "target": "center",
+      "windowPoint": [
+        1567,
+        333
+      ],
+      "beforeReceivedAt": "2026-10-11T07:52:10.960112Z",
+      "afterReceivedAt": "2026-10-11T07:52:45.549Z"
+    },
+    {
+      "family": "large",
+      "target": "outer44ptTopLeft10Percent",
+      "windowPoint": [
+        1540,
+        307
+      ],
+      "afterReceivedAt": "2026-10-11T07:53:03.120Z"
+    },
+    {
+      "family": "small",
+      "target": "outer44ptTopLeft10Percent",
+      "windowPoint": [
+        1268,
+        307
+      ],
+      "afterReceivedAt": "2026-10-11T07:54:11.376Z"
+    },
+    {
+      "family": "medium",
+      "target": "outer44ptTopLeft10Percent",
+      "windowPoint": [
+        1540,
+        307
+      ],
+      "afterReceivedAt": "2026-10-11T07:55:39.463Z"
+    }
+  ],
+  "appRemainedOnHome": true,
+  "refreshStatusAfterTaps": null,
+  "checks": {
+    "nativeStartupDefaultsTests": {
+      "passed": 6
+    },
+    "xcodeSimulatorBuild": "passed"
+  },
+  "captureSha256": {
+    "large-dark.png": "3352fb03fd7e0c308e43c4fa27388791b475de9368667bfd360e55cb9a359c92",
+    "medium-dark.png": "ac7f758e11fbc665786c9255035b982034db7e5f260cb43cbeb6bce158447fa0",
+    "medium-large-dark-home.png": "5b9d376988c9731231d3954764b7d7218649adcfe3b19ddbd70ad7751c537b5f",
+    "medium-large-light-home.png": "f9ba48580a4970bbb35d7f366f6f284196adaf74bba1591b0f82a118e8b781d7",
+    "small-dark.png": "6ae380870257a08310a257b9c5c32a085ea84fd6702e7d7269cd5c5f53b4c883",
+    "small-large-dark-home.png": "843fc9f300b52ccb0a80b09fe1fb8923e408395515d5a89ef9882ca3952e5c50"
+  }
+}

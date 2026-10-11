@@ -10042,3 +10042,11 @@
 - 사용자가 앞선 설정 탭 화면 모드 안내 박스 제거 작업의 커밋과 푸시를 명시적으로 승인함.
 - 소스·시스템 테마 테스트 변경 및 HANDOFF 인계 기록을 커밋 대상으로 확인. 기존 Flutter 3.47.5 관련 테스트 22개 PASS·변경 파일 analyze 이슈 없음 결과를 유지하며 diff-check를 재확인함.
 - 원격 origin(master) fetch 성공, 시작 시 로컬/원격 선행·후행 커밋 모두 0개. 한국어 메시지로 커밋한 뒤 origin/master에 일반 푸시하고 동기화 상태를 확인하는 절차로 진행. 추가 코드 변경·배포 없음.
+
+## 2026-10-11 App Store 헤더·검색 결과 등록 소재 제작
+
+- 사용자 요청으로 새 헤더·검색 결과 등록용 이미지 2종 제작. HANDOFF·AGENTS·imagegen·karpathy-guidelines 확인, Apple 공식 creative-assets-specifications 및 asset-best-practices 웹 확인.
+- 기존 스토어의 파란 배경·흰 글자·노란 강조색을 유지. 우산·겉옷·선크림이 담긴 가방과 해·구름·빗방울로 현재 제공하는 날씨·준비물 기능 표현. 헤더 문구 날씨에 맞춰/오늘을 챙겨요, 검색 결과 오늘 날씨와/준비물을 한눈에. 미래 워치·꽃가루 기능 등 미제공 기능 홍보 없음.
+- 내장 image_gen에서 제작·수정 후 최종 한글·여백·그림 시각 검수. 원본 1915×821 및 1536×1024를 source에 보존하고 Pillow Lanczos로 등록 크기 확대. 네이티브 4K 원본이 아니라는 점 README에 기록.
+- weather_care_app/store/app-store/header-3840x1646.png 및 search-results-1920x1280.png 저장. 모두 RGB PNG·알파/투명도 없음, PIL 재열기·크기/모드·파일 무결성 검사 통과. 등록 이미지 2개와 한국어 안내만 담은 weather-care-app-store-creative-assets.zip 생성·testzip 통과. 한국어 README, 실제 프롬프트 기록, 재출력 스크립트 동봉.
+- 최종 PNG 두 장 시각 검수 및 git diff --check 통과. 앱·서버 실행 코드 변경·콘솔 등록·심사 제출·커밋·푸시 없음. App Store Connect 실제 기기 미리보기와 심사 승인은 사용자 등록 단계에서 확인 필요.

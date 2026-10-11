@@ -642,7 +642,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26100400;
+				CURRENT_PROJECT_VERSION = 26101100;
 				DEVELOPMENT_TEAM = M7QY569K4A;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = "$(MARKETING_VERSION)";
@@ -655,7 +655,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -840,7 +840,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26100400;
+				CURRENT_PROJECT_VERSION = 26101100;
 				DEVELOPMENT_TEAM = M7QY569K4A;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = "$(MARKETING_VERSION)";
@@ -853,7 +853,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -878,7 +878,7 @@
 				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26100400;
+				CURRENT_PROJECT_VERSION = 26101100;
 				DEVELOPMENT_TEAM = M7QY569K4A;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = "$(MARKETING_VERSION)";
@@ -891,7 +891,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -913,7 +913,7 @@
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26100300;
+				CURRENT_PROJECT_VERSION = 26101100;
 				DEVELOPMENT_TEAM = M7QY569K4A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
@@ -924,7 +924,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -948,7 +948,7 @@
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26100300;
+				CURRENT_PROJECT_VERSION = 26101100;
 				DEVELOPMENT_TEAM = M7QY569K4A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
@@ -959,7 +959,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -982,7 +982,7 @@
 				CODE_SIGN_ENTITLEMENTS = WeatherCareWidget/WeatherCareWidget.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 26100300;
+				CURRENT_PROJECT_VERSION = 26101100;
 				DEVELOPMENT_TEAM = M7QY569K4A;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = WeatherCareWidget/Info.plist;
@@ -993,7 +993,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.codesoha.weathercare.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

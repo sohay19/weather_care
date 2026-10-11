@@ -10050,3 +10050,17 @@
 - 내장 image_gen에서 제작·수정 후 최종 한글·여백·그림 시각 검수. 원본 1915×821 및 1536×1024를 source에 보존하고 Pillow Lanczos로 등록 크기 확대. 네이티브 4K 원본이 아니라는 점 README에 기록.
 - weather_care_app/store/app-store/header-3840x1646.png 및 search-results-1920x1280.png 저장. 모두 RGB PNG·알파/투명도 없음, PIL 재열기·크기/모드·파일 무결성 검사 통과. 등록 이미지 2개와 한국어 안내만 담은 weather-care-app-store-creative-assets.zip 생성·testzip 통과. 한국어 README, 실제 프롬프트 기록, 재출력 스크립트 동봉.
 - 최종 PNG 두 장 시각 검수 및 git diff --check 통과. 앱·서버 실행 코드 변경·콘솔 등록·심사 제출·커밋·푸시 없음. App Store Connect 실제 기기 미리보기와 심사 승인은 사용자 등록 단계에서 확인 필요.
+
+## 2026-10-11 AdMob app-ads.txt 인증 문제 확인·직접 작업 안내
+
+- 사용자 요청으로 HANDOFF·AGENTS·karpathy-guidelines 확인 및 공개 사이트/로그인된 AdMob 화면 읽기 수행. Google Play 개발자 웹사이트 https://www.codesoha.com, AdMob iOS 조회 codesoha.com/app-ads.txt 확인. codesoha.com 및 www.codesoha.com의 HTTP/HTTPS app-ads.txt는 현재 404, weather-care.pages.dev도 404. robots.txt에 Google 크롤러 차단 규칙 없음. Android 화면은 게시자 정보 불일치 안내이며 요구 스니펫 google.com, pub-6152243173470406, DIRECT, f08c47fec0942fa0 확인.
+- 로컬 Wrangler whoami 미인증 확인 후 Cloudflare 변경 중단. 사용자가 홈페이지는 Cloudflare+집 미니PC라고 확인하여 기존 승인된 SSH weather-care로 읽기전용 진단. codesoha-web.service active, Next.js standalone /var/www/codesoha-web, public 경로 확인. nginx는 127.0.0.1:3000으로 프록시, 내부 app-ads.txt도 404. SSH·비대화형 sudo 정상.
+- 사용자가 방법만 알려주고 직접 하겠다고 변경하여 운영 파일 추가·서비스 재시작·DNS/Cloudflare 변경·AdMob 업데이트 확인 버튼 조작 없이 중단. 서버 public/app-ads.txt에 정확한 한 줄 작성→codesoha-web만 재시작→공개 URL 검증→AdMob 업데이트 확인 절차 안내. 향후 홈페이지 재배포 때 원본 저장소 public에도 포함 필요. 커밋·배포 없음.
+
+## 2026-10-11 iOS 다크모드 위젯 새로고침 버튼 외곽 경계 완화
+
+- 사용자 사진의 새로고침 버튼 주변 큰 원형 경계를 확인. 버튼은 중앙 22pt만 버튼색이고 외곽 44pt 영역은 불투명한 위젯 surface로 그려져 있어, iOS가 처리하는 컨테이너 배경과 별도 버튼 배경의 색상 차이가 드러나는 것으로 판단했다.
+- WeatherCareWidget.swift의 방사형 배경 외곽 두 stop만 surface.opacity(0.01)로 변경. 보이는 중앙 원형·아이콘·44pt 프레임·contentShape·plain 스타일·App Intent·배치 유지. 완전 투명 바깥 영역에서 과거 WidgetKit 터치 실패가 재현된 인계 기록을 고려해 알파를 남겼으나, 1% 알파에서 실제 터치 영역 보존은 이번 환경에서 미검증이다.
+- git diff --check 통과. Flutter 3.47.5 기존 native_startup_defaults_test 실행은 SDK 캐시 잠금 파일 쓰기 권한으로 무출력 대기하여 중단했고, 권한 요청이 사용자에 의해 거절되어 재실행하지 않았다. 자동 테스트 통과를 주장하지 않음. Windows 환경에 Xcode/iOS 런타임이 없어 실제 다크모드 렌더링·가장자리 탭 확인 미완료.
+- Apple 공식 Color.opacity 및 WidgetKit 배경 문서를 참고했다. https://developer.apple.com/documentation/swiftui/color/opacity(_:) 및 https://developer.apple.com/documentation/widgetkit/displaying-the-right-widget-background . 기존 HANDOFF 변경 보존. 커밋·푸시·배포 없음.
+- 사용자 후속 지시: 추가 검증은 진행하지 않고 사용자가 직접 확인하기로 함. 이 지시에 따라 테스트·실기기 확인을 추가 시도하지 않음.

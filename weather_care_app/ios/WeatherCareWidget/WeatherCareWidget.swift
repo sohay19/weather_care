@@ -26,12 +26,14 @@ private let preparationCircle = themeColor(0xEAF0F5, 0x253747)
 private let refreshButtonSurface = themeColor(0x3E5F7C, 0x9DBDD8)
 private let refreshButtonInk = themeColor(0xFFFFFF, 0x172736)
 private let widgetDivider = themeColor(0xCEDAE4, 0x40566A)
+// 바깥 터치 영역은 배경 효과와 경계가 생기지 않게 거의 투명하게 그린다.
+// 완전 투명하면 WidgetKit이 버튼 영역을 축소할 수 있어 알파를 남긴다.
 private let refreshButtonHitSurface = RadialGradient(
   stops: [
     .init(color: refreshButtonSurface, location: 0),
     .init(color: refreshButtonSurface, location: 0.499),
-    .init(color: surface, location: 0.5),
-    .init(color: surface, location: 1),
+    .init(color: surface.opacity(0.01), location: 0.5),
+    .init(color: surface.opacity(0.01), location: 1),
   ],
   center: .center,
   startRadius: 0,

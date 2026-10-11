@@ -282,9 +282,10 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         float regionSize = size == WidgetSize.SMALL ? 12 : size == WidgetSize.MEDIUM ? 13 : 14;
         int horizontalPadding = size == WidgetSize.SMALL ? 28
                 : size == WidgetSize.MEDIUM ? 32 : 36;
-        int regionWidth = Math.max(1, minWidth - horizontalPadding - 32);
         float refreshSize = size == WidgetSize.SMALL ? 9 : size == WidgetSize.MEDIUM ? 10 : 11;
         int refreshWidth = size == WidgetSize.SMALL ? 78 : size == WidgetSize.MEDIUM ? 90 : 100;
+        int timeSpace = size == WidgetSize.SMALL ? 0 : refreshWidth + 8;
+        int regionWidth = Math.max(1, minWidth - horizontalPadding - 32 - timeSpace);
         String displayRegion = refreshStatus == null ? snapshot.region : refreshStatus;
         setTextBitmap(
                 views,

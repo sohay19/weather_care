@@ -10091,3 +10091,32 @@
 
 - 사용자가 이번 대화에서 커밋을 명시적으로 승인했다. 위젯 공통 헤더 수정, iOS/iPad 다크모드 이미지·원본·세 크기 검증 캡처, 생성기·한국어 문서·ZIP 및 인계 기록을 커밋 대상으로 확인했다.
 - 앞선 native_startup_defaults_test 6개 및 Xcode 시뮬레이터 빌드·실제 새로고침·이미지/ZIP 검증 결과를 유지하고 git diff --check를 재확인했다. 추가 실행 코드 변경·스토어 등록·배포·푸시는 수행하지 않는다.
+
+## 2026-10-11 기본 날씨 알림 발송 조건 확인
+
+- 사용자 기본 알림 시각에 특별한 이슈가 없으면 미발송인지 질문. 최신 notificationBuilder/notificationScheduler와 통합 브리핑 선택기를 대조함.
+- MORNING_BRIEF는 유효한 일반 준비물 추천 또는 설정에 부합하는 DEFAULT 이외 브리핑이 있을 때만 생성. 따라서 준비물도 없고 DEFAULT 기본 안내만 있으면 설정 시각에도 발송하지 않음. 다만 습도·체감 쾌적·좋은 시야 등 위험하지 않은 scene도 요약 발송 가능하므로 특보나 위험이 없다는 이유만으로 미발송하는 것은 아님.
+- 전체 알림과 dailyWeatherEnabled 및 설정 시각·당일 중복 확인 적용. 현재 비·공식 특보 등 별도 알림은 독립. 9/10 계약 문서와 설정 화면의 준비물이 있을 때만 설명은 최신 브리핑 포함 동작보다 좁음을 확인함.
+- 코드·정책·운영 변경 및 테스트 실행·커밋 없음. 기존 테스트의 습한 날 준비물 스위치 모두 끄고도 요약 생성 기대값을 읽어 근거 대조함.
+## 2026-10-11 Android·iOS 위젯 날씨 아이콘 색상 차이 원인 확인
+
+- 사용자 iOS 위젯은 날씨 아이콘에 색이 있는데 Android는 없는 이유 질문. karpathy-guidelines 및 HANDOFF 확인 후 양 플랫폼 현재 날씨 아이콘 생성·레이아웃 대조.
+- Android WidgetIconRenderer는 현재 날씨를 monochrome=false로 생성하여 해·구름·강수의 원래 색상을 그린다. 그러나 10/10 다크모드 적용 커밋 a979697에서 소형·중형·대형의 widget_weather_icon ImageView 모두에 android:tint=@color/weather_widget_text_accent를 추가해 완성된 컬러 비트맵을 단색으로 덮는다. 다크 accent=#B7D0E5이며 라이트에서도 틴트가 적용됨. iOS 현재 아이콘은 컬러 Canvas 렌더링을 유지한다.
+- 현재 날씨 아이콘의 틴트를 제거하면 컬러 렌더링을 유지할 수 있음. 양 플랫폼 다음 시간 예보의 작은 아이콘은 원래 monochrome=true로 요청하므로 현재 아이콘 차이와 구분. 이번 질문은 원인 확인으로 처리하여 제품 코드·스크린샷·테스트·커밋·배포 변경 없음. 기존 HANDOFF 변경 보존.
+
+## 2026-10-11 Android 위젯 컬러 복원·기준시간 배치 및 실제 캡처
+
+- 사용자 요청으로 소형·중형·대형 XML의 현재 날씨 ImageView에 있던 android:tint만 제거하여 WidgetIconRenderer의 원래 컬러를 표시한다. 다음 시간 예보의 작은 단색 아이콘과 글자색 처리는 유지한다. karpathy-guidelines 적용, Android만 수정.
+- 추가 요청에 따라 소형 기준시간은 지역명 아래 유지하고, 중형·대형은 지역명·기준시간·새로고침 버튼을 같은 가로 헤더에 배치했다. 기준시간은 버튼 왼쪽에 표시한다. Provider의 지역명 비트맵 폭 계산에서 기준시간 폭과 간격을 제외해 겹침을 방지했다.
+- Flutter 3.47.5 최종 디버그 APK 빌드 성공. 기존 native_startup_defaults_test 및 home_widget_snapshot_test 총 16개 PASS, XML 틴트·헤더 구조 검사 및 git diff --check PASS. 추가 iOS 검증은 진행하지 않았다.
+- 화면을 띄우지 않는 Android API 36 에뮬레이터에 최종 APK 설치 후 정상 앱 UI에서 하남시 감북동을 수동 선택했다. 실제 서버 응답으로 Main 및 런처 위젯을 촬영하고, 런처 크기 조절로 소형·중형·대형 각각 컬러와 기준시간 위치를 확인했다. 초기 2GB 에뮬레이터의 LOW_MEMORY 종료를 확인하여 3GB·SwiftShader로 재시작했다. 캡처를 위한 앱 코드·권한·데이터 주입 없음. 종료 후 에뮬레이터와 임시 WebView 디버깅 포워딩 정리.
+- 실제 원본 4장과 위젯 크롭 3장은 output/verification/widget-color-20261011/에 보존했다. 사용자에게 세 위젯 크롭을 인라인으로 함께 보여준다.
+- source/dark-main.png와 source/dark-widget.png를 새 실제 캡처로 갱신하고 --dark-mode-only로 Android 1080×1920·태블릿 1440×2560의 9번 및 미리보기 재생성. 앱 화면·홈 위젯 구분 문구 없음. 태블릿은 같은 휴대전화 원본을 활용하며 iOS·iPad 파일은 변경하지 않았다. 제작 날짜·변경 내용을 README에 기록했다.
+- screenshots/assets ZIP에서 변경된 7개 항목만 갱신. 나머지 50개/39개 내용 해시 동일, 중복 항목 없음, CRC 정상, ZIP 내부 최신 파일과 로컬 바이트 동일 확인. 두 9번 PNG는 RGB·크기·무결성 및 시각 확인 완료. 커밋·푸시·스토어 등록 없음.
+
+## 2026-10-11 원격 iOS 변경 pull 및 Android 위젯 작업 커밋
+
+- 사용자가 충돌 없이 pull하고 커밋하도록 명시적으로 승인했다. karpathy-guidelines 적용, 기존 미커밋 수정과 캡처를 stash --include-untracked로 보존한 뒤 origin/master의 iOS 수정·스크린샷 커밋 1bb0e8f를 fast-forward pull했다.
+- stash 복원 시 HANDOFF·스크린샷 README 및 통합 ZIP 2개에서 충돌이 발생했다. HANDOFF는 양쪽 추가 기록을 모두 보존하고, README는 최신 iOS 안내에 Android 재촬영 내용만 반영했다. 통합 ZIP은 원격 버전을 기준으로 Android 변경 7개 항목만 갱신하여 최신 iOS 항목과 나머지 기존 자료를 보존했다.
+- Android 소스·PNG 10개와 미추적 실제 캡처 8개가 보관한 작업과 동일한지 Git 객체 해시로 확인했다. ZIP 2개는 중복 없음·CRC 정상·최신 7개 로컬 파일 일치 및 원격의 나머지 62개/51개 내용 해시 보존 확인. 충돌 표시와 미해결 파일 없음 및 git diff --check를 확인한다. 앞선 빌드·테스트 결과를 유지하며 이번 Git 작업에서 앱 실행·추가 테스트는 하지 않는다.
+- Android 위젯 컬러·시간 배치·9번 스크린샷 및 실제 캡처를 한글 메시지로 커밋한다. 원격 iOS 커밋은 그대로 보존하며 푸시·배포·스토어 등록은 수행하지 않는다.

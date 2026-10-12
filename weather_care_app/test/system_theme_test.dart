@@ -1,36 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:weather_care/app.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/theme/weather_theme.dart';
+import 'package:weather_care/services/theme_mode_settings.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('앱은 시스템 모드를 지정하고 실행 중 변경에 맞춰 설정 화면을 갱신한다', (tester) async {
-    final app = const WeatherCareApp().build(tester.element(find.byType(View)));
-    expect((app as MaterialApp).themeMode, ThemeMode.system);
-    expect(app.darkTheme?.brightness, Brightness.dark);
+  testWidgets('설정 모드 선택이 즉시 적용·저장되고 시스템 모드에서 기기 설정을 따른다', (tester) async {
+    await ThemeModeSettings.instance.load();
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
-    await tester.pumpWidget(MaterialApp(
-      theme: app.theme,
-      darkTheme: app.darkTheme,
-      themeMode: app.themeMode,
-      home: const SettingsScreen(),
+    await tester.pumpWidget(ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeModeSettings.instance,
+      builder: (context, mode, _) => MaterialApp(
+        theme: WeatherCareTheme.light()
+            .copyWith(splashFactory: NoSplash.splashFactory),
+        darkTheme: WeatherCareTheme.dark()
+            .copyWith(splashFactory: NoSplash.splashFactory),
+        themeMode: mode,
+        home: const SettingsScreen(),
+      ),
     ));
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('system-theme-status')), findsNothing);
     final lightContext = tester.element(find.byType(SettingsScreen));
     expect(Theme.of(lightContext).brightness, Brightness.light);
     expect(Theme.of(lightContext).scaffoldBackgroundColor,
         WeatherCarePalette.light.background);
+
+    await tester.tap(find.byKey(const ValueKey('theme-mode-menu')));
+    await tester.pumpAndSettle();
+    expect(find.text('라이트'), findsOneWidget);
+    expect(find.text('다크'), findsOneWidget);
+    expect(find.text('시스템 설정에 따름'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('theme-mode-dark')));
+    await tester.pumpAndSettle();
+    expect(ThemeModeSettings.instance.value, ThemeMode.dark);
+    expect(
+        Theme.of(tester.element(find.byKey(const ValueKey('theme-mode-dark'))))
+            .brightness,
+        Brightness.dark);
+    await ThemeModeSettings.instance.load();
+    expect(ThemeModeSettings.instance.value, ThemeMode.dark);
+
+    await tester.tap(find.byKey(const ValueKey('theme-mode-light')));
+    await tester.pumpAndSettle();
+    expect(
+        Theme.of(tester.element(find.byKey(const ValueKey('theme-mode-light'))))
+            .brightness,
+        Brightness.light);
+    await tester.tap(find.byKey(const ValueKey('theme-mode-system')));
+    await tester.pumpAndSettle();
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
     await tester.pumpAndSettle();
-    final darkContext = tester.element(find.byType(SettingsScreen));
+    final darkContext =
+        tester.element(find.byKey(const ValueKey('theme-mode-system')));
     expect(Theme.of(darkContext).brightness, Brightness.dark);
     expect(Theme.of(darkContext).scaffoldBackgroundColor,
         WeatherCarePalette.dark.background);
@@ -38,7 +65,10 @@ void main() {
         WeatherCarePalette.dark.textPrimary);
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
     await tester.pumpAndSettle();
-    expect(Theme.of(tester.element(find.byType(SettingsScreen))).brightness,
+    expect(
+        Theme.of(
+                tester.element(find.byKey(const ValueKey('theme-mode-system'))))
+            .brightness,
         Brightness.light);
     expect(tester.takeException(), isNull);
   });

@@ -23,6 +23,7 @@ import 'settings_guide_screen.dart';
 import 'analytics_consent_control.dart';
 import 'ads_privacy_control.dart';
 import '../../services/server_data_access.dart';
+import '../../services/theme_mode_settings.dart';
 
 const _weatherMapUrl = 'https://weather-care.pages.dev/weather-map';
 typedef _LocationDisplay = ({LocationResult location, String? regionName});
@@ -185,6 +186,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: _openLocationSettings,
         ),
         const SizedBox(height: 16),
+        ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeModeSettings.instance,
+          builder: (context, mode, _) => _SettingsMenuButton(
+            key: const ValueKey('theme-mode-menu'),
+            icon: Icons.brightness_6_outlined,
+            title: '모드',
+            subtitle: _themeModeLabel(mode),
+            onTap: _openThemeModeSettings,
+          ),
+        ),
+        const SizedBox(height: 16),
         _SettingsMenuButton(
           key: const ValueKey('weather-alerts-menu'),
           icon: Icons.notifications_active_outlined,
@@ -295,6 +307,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         paused: widget.serverDataAccess?.paused ?? false,
         onSettingsChanged: _updateSettings,
       ),
+    ));
+  }
+
+  void _openThemeModeSettings() {
+    Navigator.of(context).push<void>(MaterialPageRoute(
+      builder: (_) => const _ThemeModeSettingsScreen(),
     ));
   }
 
@@ -906,6 +924,66 @@ class _SettingsDetailScaffold extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [child],
+        ),
+      ),
+    );
+  }
+}
+
+String _themeModeLabel(ThemeMode mode) => switch (mode) {
+      ThemeMode.light => '라이트',
+      ThemeMode.dark => '다크',
+      ThemeMode.system => '시스템 설정에 따름',
+    };
+
+class _ThemeModeSettingsScreen extends StatelessWidget {
+  const _ThemeModeSettingsScreen();
+
+  Future<void> _selectMode(BuildContext context, ThemeMode mode) async {
+    try {
+      await ThemeModeSettings.instance.save(mode);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('모드를 저장하지 못했어요. 다시 시도해주세요.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SettingsDetailScaffold(
+      title: '모드',
+      child: _SettingsSection(
+        icon: Icons.brightness_6_outlined,
+        title: '화면 모드',
+        subtitle: '앱 화면의 밝기를 선택해요',
+        child: ValueListenableBuilder<ThemeMode>(
+          valueListenable: ThemeModeSettings.instance,
+          builder: (context, selected, _) => RadioGroup<ThemeMode>(
+            groupValue: selected,
+            onChanged: (value) {
+              if (value != null) unawaited(_selectMode(context, value));
+            },
+            child: Column(
+              children: [
+                for (final mode in [
+                  ThemeMode.light,
+                  ThemeMode.dark,
+                  ThemeMode.system,
+                ])
+                  Material(
+                    color: Colors.transparent,
+                    child: RadioListTile<ThemeMode>(
+                      key: ValueKey('theme-mode-${mode.name}'),
+                      title: Text(_themeModeLabel(mode)),
+                      value: mode,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

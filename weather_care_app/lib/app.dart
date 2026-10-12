@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'features/home/home_screen.dart';
 import 'services/ad_removal_service.dart';
 import 'services/notification_destination.dart';
+import 'services/theme_mode_settings.dart';
 import 'theme/weather_theme.dart';
 
 class WeatherCareApp extends StatelessWidget {
@@ -21,6 +22,13 @@ class WeatherCareApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeModeSettings.instance,
+      builder: (context, mode, _) => _buildApp(mode),
+    );
+  }
+
+  MaterialApp _buildApp(ThemeMode mode) {
     final initialDestination = initialNotificationData == null
         ? null
         : NotificationDestination.fromMessageData(initialNotificationData!);
@@ -31,7 +39,7 @@ class WeatherCareApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
       darkTheme: WeatherCareTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: mode,
       builder: WeatherCareTheme.textScaleBuilder,
       routes: {
         '/': (_) => HomeScreen(

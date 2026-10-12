@@ -15,6 +15,7 @@ import 'services/app_open_ad_controller.dart';
 import 'services/app_open_ad_unit_config.dart';
 import 'services/app_open_launch_store.dart';
 import 'services/native_ad_unit_config.dart';
+import 'services/theme_mode_settings.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/notification_navigation_service.dart';
 import 'startup.dart';
@@ -48,6 +49,7 @@ Future<void> main() async {
 }
 
 Future<Widget> _initializeApp() async {
+  await ThemeModeSettings.instance.load();
   await AdRemovalService.instance.initialize();
   _wasAdRemovalOwned = AdRemovalService.instance.isOwned;
   if (!_adRemovalListenerAttached) {

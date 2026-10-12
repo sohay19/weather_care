@@ -56,7 +56,9 @@ export async function importAdministrativeBoundaries(database: SqliteD1Database,
       const row = JSON.parse(line);
       if (!manifest) {
         if (row.type !== 'manifest' || row.format !== 1 || typeof row.version !== 'string' || !hashPattern.test(row.version) ||
-            typeof row.sourceDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(row.sourceDate) || typeof row.source !== 'string' || !row.source.trim() ||
+            !(typeof row.sourceDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(row.sourceDate) ||
+              typeof row.sourceMonth === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(row.sourceMonth)) ||
+            typeof row.source !== 'string' || !row.source.trim() ||
             !Number.isInteger(row.featureCount) || row.featureCount < 1 || row.featureCount > 50_000 ||
             !Number.isInteger(row.gridCount) || row.gridCount < 0 || row.gridCount > 37_697 ||
             !row.sourceSha256 || !Object.values(row.sourceSha256).every((v: string) => typeof v === 'string' && hashPattern.test(v))) invalid();
@@ -76,7 +78,7 @@ export async function importAdministrativeBoundaries(database: SqliteD1Database,
       digest.update(line + '\n');
       if (row.type === 'feature') {
         const area = areas.get(row.kmaCode);
-        if (typeof row.sgisCode !== 'string' || !/^\d{8}$/.test(row.sgisCode) || typeof row.sourceName !== 'string' || row.sourceName.length > 200 || !row.sourceName.trim() ||
+        if (typeof row.sgisCode !== 'string' || !/^(\d{8}|\d{10})$/.test(row.sgisCode) || typeof row.sourceName !== 'string' || row.sourceName.length > 200 || !row.sourceName.trim() ||
             !['DONG', 'PARENT', 'UNMAPPED'].includes(row.precision) ||
             (row.precision === 'UNMAPPED' ? row.kmaCode !== null : !area) ||
             (row.precision === 'DONG' && area[0].endsWith('00000')) ||

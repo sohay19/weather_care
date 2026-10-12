@@ -29,20 +29,29 @@ function feature(sgisCode: string, kmaCode: string, rings = [square(126, 37)]) {
   return { type: 'feature', sgisCode, kmaCode, sourceName: '공식 자료 검증 표본', precision: 'DONG',
     bbox: [Math.min(...points.map((p) => p[0])), Math.min(...points.map((p) => p[1])), Math.max(...points.map((p) => p[0])), Math.max(...points.map((p) => p[1]))], geometry: payload(rings) };
 }
-function archive(rows: Record<string, any>[], options: { corrupt?: boolean; catalogHash?: string; version?: string } = {}) {
+function archive(rows: Record<string, any>[], options: { corrupt?: boolean; catalogHash?: string; version?: string; sourceMonth?: string } = {}) {
   const data = rows.map((row) => JSON.stringify(row) + '\n').join('');
   const checksum = createHash('sha256').update(data).digest('hex');
   const counts = { DONG: 0, PARENT: 0, UNMAPPED: 0 };
   rows.filter((row) => row.type === 'feature').forEach((row) => counts[row.precision]++);
-  const manifest = { type: 'manifest', format: 1, version: options.version ?? checksum, sourceDate: '2025-06-30', source: 'SGIS 테스트 경계',
+  const manifest: Record<string, any> = { type: 'manifest', format: 1, version: options.version ?? checksum, sourceDate: '2025-06-30', source: 'SGIS 테스트 경계',
     sourceSha256: { boundaries: checksum, codebook: checksum }, catalogSha256: options.catalogHash ?? administrativeCatalogHash(),
     featureCount: rows.filter((row) => row.type === 'feature').length, gridCount: rows.filter((row) => row.type === 'grid').length, precisionCounts: counts };
+  if (options.sourceMonth) { delete manifest.sourceDate; manifest.sourceMonth = options.sourceMonth; }
   const path = join(directory, `${checksum}-${options.corrupt ? 'bad' : 'ok'}.gz`);
   writeFileSync(path, gzipSync(JSON.stringify(manifest) + '\n' + data + JSON.stringify({ type: 'complete', sha256: options.corrupt ? '0'.repeat(64) : checksum }) + '\n'));
   return path;
 }
 
 describe('전국 행정 경계', () => {
+  it('월전체분의 10자리 행정동 코드와 기준월을 가져온다', async () => {
+    const path = archive([feature('4139054000', '4139054000')], { sourceMonth: '2026-09' });
+    const result = await importAdministrativeBoundaries(database, path);
+    expect(result).toMatchObject({ features: 1, precisionCounts: { DONG: 1 } });
+    expect((await resolveAdministrativeBoundary(asD1Database(database), {
+      nx: 57, ny: 124, coordinates: { longitude: 126.5, latitude: 37.5 },
+    }))?.area?.[0]).toBe('4139054000');
+  });
   it('구멍·떨어진 섬을 보존하고 선 위·밖의 점을 구분한다', () => {
     const raw = decodeBoundaryGeometry(payload([square(126, 37), square(126.2, 37.2, 0.1), square(128, 37, 0.2)]));
     expect(boundaryContainsPoint(raw, 126.1, 37.1)).toBe(true);

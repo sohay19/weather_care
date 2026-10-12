@@ -8,25 +8,32 @@ import pyproj, shapefile
 from shapely.geometry import Polygon, shape
 from shapely.strtree import STRtree
 from build_administrative_boundaries import grid_point, sha
+from build_juso_boundaries import source_hash, source_shapes, valid_polygon
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--boundaries', type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument('--boundaries', type=Path)
+    source.add_argument('--juso-dir', type=Path)
     parser.add_argument('--audit', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     manifest = json.loads(args.audit.read_text(encoding='utf8'))['manifest']
-    source_hash = sha(args.boundaries)
-    if source_hash != manifest['sourceSha256']['boundaries']:
+    boundary_hash = source_hash(sorted(args.juso_dir.glob('구역의도형_전체분_*.zip')))[0] if args.juso_dir else sha(args.boundaries)
+    if boundary_hash != manifest['sourceSha256']['boundaries']:
         raise ValueError('LAND_GRID_SOURCE_MISMATCH')
-    with zipfile.ZipFile(args.boundaries) as outer:
-        archive = next(name for name in outer.namelist() if Path(name).name.startswith('bnd_dong_') and name.endswith('.zip'))
-        with zipfile.ZipFile(io.BytesIO(outer.read(archive))) as z:
-            base = next(name[:-4] for name in z.namelist() if name.endswith('.shp'))
-            crs = pyproj.CRS.from_wkt(z.read(base+'.prj').decode())
-            transform = pyproj.Transformer.from_crs(4326, crs, always_xy=True)
-            reader = shapefile.Reader(shp=io.BytesIO(z.read(base+'.shp')), dbf=io.BytesIO(z.read(base+'.dbf')), encoding='utf8')
-            features = [shape(item.__geo_interface__) for item in reader.iterShapes()]
+    if args.juso_dir:
+        transform = pyproj.Transformer.from_crs(4326, 5179, always_xy=True)
+        features = [valid_polygon(item)[0] for _, _, item in source_shapes(args.juso_dir)]
+    else:
+        with zipfile.ZipFile(args.boundaries) as outer:
+            archive = next(name for name in outer.namelist() if Path(name).name.startswith('bnd_dong_') and name.endswith('.zip'))
+            with zipfile.ZipFile(io.BytesIO(outer.read(archive))) as z:
+                base = next(name[:-4] for name in z.namelist() if name.endswith('.shp'))
+                crs = pyproj.CRS.from_wkt(z.read(base+'.prj').decode())
+                transform = pyproj.Transformer.from_crs(4326, crs, always_xy=True)
+                reader = shapefile.Reader(shp=io.BytesIO(z.read(base+'.shp')), dbf=io.BytesIO(z.read(base+'.dbf')), encoding='utf8')
+                features = [shape(item.__geo_interface__) for item in reader.iterShapes()]
     tree = STRtree(features)
     grids = []
     for ny in range(1, 254):
@@ -40,7 +47,7 @@ def main():
             cell = Polygon(edge)
             if any(features[int(index)].intersection(cell).area > 1 for index in tree.query(cell)):
                 grids.append({'nx':nx, 'ny':ny})
-    value = {'boundaryVersion':manifest['version'], 'sourceSha256':source_hash,
+    value = {'boundaryVersion':manifest['version'], 'sourceSha256':boundary_hash,
              'basis':'행정 경계와 DFS 격자의 교차 면적 1㎡ 초과', 'count':len(grids), 'grids':grids}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     staging = args.output.with_suffix('.tmp')

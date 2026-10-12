@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'ad_removal_service.dart';
 import 'ads_consent.dart';
+import 'app_open_ad_display_store.dart';
 import 'app_open_ad_unit_config.dart';
 
 abstract interface class AppOpenAdHandle {
@@ -105,12 +106,14 @@ class GoogleAppOpenLifecycle implements AppOpenLifecycle {
 
 class AppOpenAdController {
   static const maxCacheDuration = Duration(hours: 4);
+  static const minDisplayInterval = Duration(hours: 1);
 
   final AdsConsent consent;
   final AdRemovalService adRemoval;
   final AppOpenAdLoader loader;
   final AppOpenLifecycle lifecycle;
   final AppOpenAdUnitConfig adUnitConfig;
+  final AppOpenAdDisplayStore displayStore;
   final TargetPlatform? platformOverride;
   final bool? releaseModeOverride;
   final bool? webOverride;
@@ -122,6 +125,7 @@ class AppOpenAdController {
     this.loader = const GoogleAppOpenAdLoader(),
     this.lifecycle = const GoogleAppOpenLifecycle(),
     this.adUnitConfig = AppOpenAdUnitConfig.current,
+    this.displayStore = const SharedPreferencesAppOpenAdDisplayStore(),
     this.platformOverride,
     this.releaseModeOverride,
     this.webOverride,
@@ -136,6 +140,7 @@ class AppOpenAdController {
   bool _started = false;
   bool _loading = false;
   bool _showing = false;
+  bool _checkingShow = false;
   bool _initialShowPending = false;
   bool _homeReady = false;
   bool _wentToBackground = false;
@@ -244,11 +249,37 @@ class AppOpenAdController {
   }
 
   Future<void> _show() async {
-    if (_showing ||
+    if (_checkingShow ||
+        _showing ||
         !_hasValidAd ||
         adRemoval.isOwned ||
         !consent.canRequestAds) {
       return;
+    }
+    _checkingShow = true;
+    try {
+      final lastShownAt = await displayStore.lastShownAt();
+      if (lastShownAt != null &&
+          now().difference(lastShownAt) < minDisplayInterval) {
+        return;
+      }
+      if (!_started ||
+          !_hasValidAd ||
+          adRemoval.isOwned ||
+          !consent.canRequestAds) {
+        return;
+      }
+      await displayStore.recordShownAt(now());
+      if (!_started ||
+          !_hasValidAd ||
+          adRemoval.isOwned ||
+          !consent.canRequestAds) {
+        return;
+      }
+    } catch (_) {
+      return;
+    } finally {
+      _checkingShow = false;
     }
     final ad = _ad!;
     _ad = null;

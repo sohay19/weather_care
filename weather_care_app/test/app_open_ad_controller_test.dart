@@ -6,6 +6,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:weather_care/services/ad_removal_service.dart';
 import 'package:weather_care/services/ads_consent.dart';
 import 'package:weather_care/services/app_open_ad_controller.dart';
+import 'package:weather_care/services/app_open_ad_display_store.dart';
 
 import 'support/fake_ad_removal.dart';
 
@@ -17,6 +18,8 @@ void main() {
   late AppOpenAdController controller;
   late FakeAdRemovalPurchaseGateway purchaseGateway;
   late AdRemovalService adRemoval;
+  late _FakeAppOpenAdDisplayStore displayStore;
+  late DateTime currentTime;
 
   setUp(() async {
     eligible = true;
@@ -36,11 +39,15 @@ void main() {
       gateway: purchaseGateway,
       ownershipStore: MemoryAdRemovalOwnershipStore(),
     );
+    displayStore = _FakeAppOpenAdDisplayStore();
+    currentTime = DateTime(2026, 10, 13, 12);
     controller = AppOpenAdController(
       consent: consent,
       adRemoval: adRemoval,
       loader: loader,
       lifecycle: lifecycle,
+      displayStore: displayStore,
+      now: () => currentTime,
       platformOverride: TargetPlatform.android,
       releaseModeOverride: false,
       webOverride: false,
@@ -89,7 +96,7 @@ void main() {
     expect(loader.handles.single.showCount, 0);
   });
 
-  test('광고를 닫으면 폐기하고 다음 전경 진입용 광고를 미리 로드한다', () async {
+  test('광고를 닫으면 다음 광고를 미리 로드하되 1시간 안에는 표시하지 않는다', () async {
     await controller.start(showOnInitialLoad: true);
     await pumpEventQueue();
     final shown = loader.handles.first;
@@ -101,6 +108,47 @@ void main() {
     expect(loader.requests, hasLength(2));
     expect(loader.handles.last.showCount, 0);
 
+    lifecycle.background();
+    lifecycle.foreground();
+    await pumpEventQueue();
+    expect(loader.handles.last.showCount, 0);
+
+    currentTime = currentTime.add(const Duration(hours: 1));
+    lifecycle.background();
+    lifecycle.foreground();
+    await pumpEventQueue();
+    expect(loader.handles.last.showCount, 1);
+  });
+
+  test('앱을 다시 시작해도 마지막 표시 시점부터 1시간 간격을 유지한다', () async {
+    await controller.start(showOnInitialLoad: true);
+    await pumpEventQueue();
+    loader.handles.first.dismiss();
+    await pumpEventQueue();
+    await controller.dispose();
+
+    controller = AppOpenAdController(
+      consent: consent,
+      adRemoval: adRemoval,
+      loader: loader,
+      lifecycle: lifecycle,
+      displayStore: displayStore,
+      now: () => currentTime,
+      platformOverride: TargetPlatform.android,
+      releaseModeOverride: false,
+      webOverride: false,
+    );
+    await controller.start(showOnInitialLoad: true);
+    await pumpEventQueue();
+    expect(loader.handles.last.showCount, 0);
+
+    currentTime = currentTime.add(const Duration(minutes: 59));
+    lifecycle.background();
+    lifecycle.foreground();
+    await pumpEventQueue();
+    expect(loader.handles.last.showCount, 0);
+
+    currentTime = currentTime.add(const Duration(minutes: 1));
     lifecycle.background();
     lifecycle.foreground();
     await pumpEventQueue();
@@ -145,6 +193,18 @@ void main() {
     await pumpEventQueue();
     expect(loader.requests, hasLength(1));
   });
+}
+
+class _FakeAppOpenAdDisplayStore implements AppOpenAdDisplayStore {
+  DateTime? shownAt;
+
+  @override
+  Future<DateTime?> lastShownAt() async => shownAt;
+
+  @override
+  Future<void> recordShownAt(DateTime time) async {
+    shownAt = time;
+  }
 }
 
 class _FakeAppOpenAdLoader implements AppOpenAdLoader {

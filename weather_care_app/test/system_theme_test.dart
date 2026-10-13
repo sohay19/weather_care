@@ -83,7 +83,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('어두운 날씨 카드와 경고 지표는 작은 화면·큰 글자에서도 표시된다', (tester) async {
+  testWidgets('어두운 날씨 카드는 작은 화면·큰 글자에서도 표시된다', (tester) async {
     tester.view.physicalSize = const Size(320, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -132,20 +132,10 @@ void main() {
     final weatherCard = tester.widget<AnimatedContainer>(
         find.byKey(const ValueKey('main-top-weather-card')));
     expect(weatherCard.decoration, palette.surfaceDecoration());
-    final windMetric = find.byKey(const ValueKey('main-top-metric-바람'));
-    expect(
-        tester
-            .widget<Icon>(
-                find.descendant(of: windMetric, matching: find.byType(Icon)))
-            .color,
-        palette.danger);
-    final uvMetric = find.byKey(const ValueKey('main-top-metric-자외선'));
-    expect(
-        tester
-            .widget<Icon>(
-                find.descendant(of: uvMetric, matching: find.byType(Icon)))
-            .color,
-        palette.danger);
+    expect(find.byKey(const ValueKey('main-top-metric-바람')), findsNothing);
+    expect(find.byKey(const ValueKey('main-top-metric-자외선')), findsNothing);
+    expect(find.byKey(const ValueKey('main-current-forecast-row')),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

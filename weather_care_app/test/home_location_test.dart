@@ -470,7 +470,8 @@ void main() {
     await tester.tap(find.text('Today'));
     await tester.pump();
     expect(find.text('23.0℃'), findsNothing);
-    expect(find.text('--°'), findsWidgets);
+    expect(find.byKey(const ValueKey('weather-apparent-temperature')),
+        findsNothing);
 
     weather.pendingWeeklyCallback?.call(result.weekly!);
     await tester.pump();

@@ -12,6 +12,7 @@ class WeatherInfoCard extends StatelessWidget {
   final WeatherDataPhase dataPhase;
   final String? sunriseAt;
   final String? sunsetAt;
+  final bool showCurrentSummary;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
 
@@ -21,6 +22,7 @@ class WeatherInfoCard extends StatelessWidget {
     this.dataPhase = WeatherDataPhase.ready,
     this.sunriseAt,
     this.sunsetAt,
+    this.showCurrentSummary = true,
     this.onRetryMissingData,
     this.retrying = false,
   });
@@ -42,14 +44,15 @@ class WeatherInfoCard extends StatelessWidget {
             'APP_STEADMAN_FROM_FORECAST' ||
         current.apparentTemperatureSource == 'APP_STEADMAN_FROM_OBSERVATION';
     final missing = <String>[
-      if (current.temperature == null) '현재 기온',
-      if (current.sky == null) '하늘 상태',
-      if (apparentTemperature == null) '체감온도',
+      if (showCurrentSummary && current.temperature == null) '현재 기온',
+      if (showCurrentSummary && current.sky == null) '하늘 상태',
+      if (showCurrentSummary && apparentTemperature == null) '체감온도',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',
       if (current.visibilityMeters == null) '가시거리',
       if (current.uvIndex == null) '자외선',
-      if (current.pm25 == null && current.pm10 == null && current.ozone == null) '대기질',
+      if (current.pm25 == null && current.pm10 == null && current.ozone == null)
+        '대기질',
       if (sunriseAt == null || sunsetAt == null) '일출·일몰',
     ];
     final metrics = [
@@ -108,8 +111,11 @@ class WeatherInfoCard extends StatelessWidget {
       _WeatherMetric(
         icon: Icons.eco_outlined,
         label: '대기질',
-        value: _airQualityGrade(current.pm10, current.pm25, current.ozone) ?? '자료 없음',
-        levelTitle: _airQualityGrade(current.pm10, current.pm25, current.ozone) == null
+        value: _airQualityGrade(current.pm10, current.pm25, current.ozone) ??
+            '자료 없음',
+        levelTitle: _airQualityGrade(
+                    current.pm10, current.pm25, current.ozone) ==
+                null
             ? '대기질 수준을 확인하기 어려워요'
             : '대기질은 ${_airQualityGrade(current.pm10, current.pm25, current.ozone)} 등급이에요',
         detailBody: _airQualityDetail(current),
@@ -174,107 +180,118 @@ class WeatherInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              double textWidth(String value, TextStyle? style) {
-                final painter = TextPainter(
-                  text: TextSpan(text: value, style: style),
-                  textDirection: Directionality.of(context),
-                  textScaler: MediaQuery.textScalerOf(context),
-                  maxLines: 1,
-                )..layout();
-                final width = painter.width;
-                painter.dispose();
-                return width;
-              }
-              final apparentWidth = textWidth(apparentText, apparentStyle) + 32;
-              final fitsOnOneLine = textWidth(temperatureText, temperatureStyle) +
-                          apparentWidth + 10 <= constraints.maxWidth;
-              final weather = Wrap(
-                spacing: 10,
-                runSpacing: 2,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(temperatureText, style: temperatureStyle),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.55),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            current.sky ?? dataPhase.missingText('하늘 상태 자료 없음'),
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: WeatherCareTheme.of(context)
-                                          .textSecondary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+          if (showCurrentSummary) ...[
+            LayoutBuilder(
+              builder: (context, constraints) {
+                double textWidth(String value, TextStyle? style) {
+                  final painter = TextPainter(
+                    text: TextSpan(text: value, style: style),
+                    textDirection: Directionality.of(context),
+                    textScaler: MediaQuery.textScalerOf(context),
+                    maxLines: 1,
+                  )..layout();
+                  final width = painter.width;
+                  painter.dispose();
+                  return width;
+                }
+
+                final apparentWidth =
+                    textWidth(apparentText, apparentStyle) + 32;
+                final fitsOnOneLine =
+                    textWidth(temperatureText, temperatureStyle) +
+                            apparentWidth +
+                            10 <=
+                        constraints.maxWidth;
+                final weather = Wrap(
+                  spacing: 10,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(temperatureText, style: temperatureStyle),
+                    ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: constraints.maxWidth * 0.55),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              current.sky ??
+                                  dataPhase.missingText('하늘 상태 자료 없음'),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: WeatherCareTheme.of(context)
+                                        .textSecondary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        WeatherConditionIcon(
-                          condition: current.sky,
-                          size: 27,
-                          color: WeatherCareTheme.of(context).primaryDeep,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-              final apparent = ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        apparentText,
-                        key: const ValueKey('weather-apparent-temperature'),
-                        style: apparentStyle,
+                          const SizedBox(width: 4),
+                          WeatherConditionIcon(
+                            condition: current.sky,
+                            size: 27,
+                            color: WeatherCareTheme.of(context).primaryDeep,
+                          ),
+                        ],
                       ),
                     ),
-                    IconButton(
-                      key: const ValueKey('weather-apparent-detail'),
-                      tooltip: '체감온도 자세히 보기',
-                      onPressed: () =>
-                          _showMetricDetail(context, apparentMetric),
-                      iconSize: 16,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 32,
-                        height: 32,
-                      ),
-                      style: const ButtonStyle(
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      icon: Icon(Icons.error_outline_rounded,
-                          color: WeatherCareTheme.of(context).primaryDeep),
-                    ),
-                  ],
-                ),
-              );
-              if (fitsOnOneLine) {
-                return Row(
-                  children: [
-                    Expanded(child: weather),
-                    const SizedBox(width: 10),
-                    apparent,
                   ],
                 );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  weather,
-                  Align(alignment: Alignment.centerRight, child: apparent),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 18),
+                final apparent = ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          apparentText,
+                          key: const ValueKey('weather-apparent-temperature'),
+                          style: apparentStyle,
+                        ),
+                      ),
+                      IconButton(
+                        key: const ValueKey('weather-apparent-detail'),
+                        tooltip: '체감온도 자세히 보기',
+                        onPressed: () =>
+                            _showMetricDetail(context, apparentMetric),
+                        iconSize: 16,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints.tightFor(
+                          width: 32,
+                          height: 32,
+                        ),
+                        style: const ButtonStyle(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: Icon(Icons.error_outline_rounded,
+                            color: WeatherCareTheme.of(context).primaryDeep),
+                      ),
+                    ],
+                  ),
+                );
+                if (fitsOnOneLine) {
+                  return Row(
+                    children: [
+                      Expanded(child: weather),
+                      const SizedBox(width: 10),
+                      apparent,
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    weather,
+                    Align(alignment: Alignment.centerRight, child: apparent),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 18),
+          ],
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -304,10 +321,12 @@ class WeatherInfoCard extends StatelessWidget {
               },
             ),
           ),
-          if (missing.isNotEmpty && dataPhase != WeatherDataPhase.loading &&
+          if (missing.isNotEmpty &&
+              dataPhase != WeatherDataPhase.loading &&
               onRetryMissingData != null) ...[
             const SizedBox(height: 12),
-            MissingDataRetry( message: dataPhase == WeatherDataPhase.failed
+            MissingDataRetry(
+              message: dataPhase == WeatherDataPhase.failed
                   ? '서버에서 현재 날씨를 불러오지 못했어요: ${missing.join(' · ')}'
                   : '받지 못한 현재 날씨: ${missing.join(' · ')}',
               retryKey: 'today-current-data-retry',
@@ -497,7 +516,8 @@ String _pm10Grade(int value) {
   return '매우 나쁨';
 }
 
-const _metricValueStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.normal);
+const _metricValueStyle =
+    TextStyle(fontSize: 13, fontWeight: FontWeight.normal);
 const _metricStatusStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w800);
 
 TextSpan _valueSpanFor(_WeatherMetric metric) {
@@ -547,9 +567,12 @@ double _equalMetricHeight(
 
   var tallest = 0.0;
   for (final metric in metrics) {
-    final height = 8 + 32 +
+    final height = 8 +
+        32 +
         textHeight(TextSpan(text: metric.label, style: labelStyle)) +
-        3 + textHeight(_valueSpanFor(metric)) + 10;
+        3 +
+        textHeight(_valueSpanFor(metric)) +
+        10;
     if (height > tallest) tallest = height;
   }
   return tallest.ceilToDouble() + 2;

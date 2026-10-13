@@ -547,7 +547,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Main 현재 대기질은 오존만 있어도 등급을 표시한다', (tester) async {
+  testWidgets('Main 요약 카드에서는 대기질 지표를 표시하지 않는다', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MainTab(
@@ -569,13 +569,9 @@ void main() {
         ),
       ),
     ));
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('main-top-metric-대기질')),
-        matching: find.text('나쁨'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('main-top-metric-대기질')), findsNothing);
+    expect(find.byKey(const ValueKey('main-current-forecast-row')),
+        findsOneWidget);
   });
 
   testWidgets('Main 날씨 문구는 앱 재판정 없이 서버 문구를 사용한다', (tester) async {

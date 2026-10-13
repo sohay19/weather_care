@@ -526,89 +526,15 @@ void main() {
     expect(find.text('시간대별 흐름 확인하기'), findsNothing);
     expect(find.text('물 한 모금 챙기기'), findsNothing);
     expect(find.text('여유 있게 움직이기'), findsNothing);
-    final uvMetric = find.byKey(const ValueKey('main-top-metric-자외선'));
-    final airQualityMetric = find.byKey(const ValueKey('main-top-metric-대기질'));
-    final visibilityMetric = find.byKey(const ValueKey('main-top-metric-가시거리'));
-    final humidityMetric = find.byKey(const ValueKey('main-top-metric-습도'));
-    final windMetric = find.byKey(const ValueKey('main-top-metric-바람'));
-    final sunMetric = find.byKey(const ValueKey('main-top-metric-일출·일몰'));
-    expect(
-      find.descendant(of: airQualityMetric, matching: find.text('매우 나쁨')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: visibilityMetric, matching: find.text('좋음')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: windMetric, matching: find.text('약한 바람')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: humidityMetric, matching: find.text('쾌적')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: sunMetric, matching: find.text('5:53 · 19:18')),
-      findsOneWidget,
-    );
-    final uvLabelPosition = tester.getCenter(
-      find.descendant(of: uvMetric, matching: find.text('자외선')),
-    );
-    final uvIconPosition = tester.getCenter(
-      find.descendant(
-        of: uvMetric,
-        matching: find.byIcon(Icons.wb_sunny_outlined),
-      ),
-    );
-    final uvValuePosition = tester.getCenter(
-      find.descendant(of: uvMetric, matching: find.text('보통')),
-    );
-    expect(uvIconPosition.dy, uvLabelPosition.dy);
-    expect(uvValuePosition.dy, uvLabelPosition.dy);
-    expect(
-      tester
-          .widget<Text>(
-            find.descendant(of: uvMetric, matching: find.text('자외선')),
-          )
-          .style
-          ?.fontWeight,
-      FontWeight.w400,
-    );
-    expect(
-      tester
-          .widget<Text>(
-            find.descendant(of: uvMetric, matching: find.text('자외선')),
-          )
-          .style
-          ?.fontSize,
-      9,
-    );
-    final uvPosition = tester.getCenter(uvMetric);
-    final airQualityPosition = tester.getCenter(airQualityMetric);
-    final visibilityPosition = tester.getCenter(visibilityMetric);
-    final humidityPosition = tester.getCenter(humidityMetric);
-    final windPosition = tester.getCenter(windMetric);
-    final sunPosition = tester.getCenter(sunMetric);
-    expect(airQualityPosition.dy, closeTo(uvPosition.dy, 0.01));
-    expect(visibilityPosition.dy, greaterThan(uvPosition.dy));
-    expect(humidityPosition.dy, closeTo(visibilityPosition.dy, 0.01));
-    expect(windPosition.dy, greaterThan(visibilityPosition.dy));
-    expect(sunPosition.dy, closeTo(windPosition.dy, 0.01));
-    expect(visibilityPosition.dx, closeTo(uvPosition.dx, 0.01));
-    expect(humidityPosition.dx, closeTo(airQualityPosition.dx, 0.01));
-    expect(windPosition.dx, closeTo(uvPosition.dx, 0.01));
-    expect(sunPosition.dx, closeTo(airQualityPosition.dx, 0.01));
+    for (final label in ['자외선', '대기질', '가시거리', '습도', '바람', '일출·일몰']) {
+      expect(find.byKey(ValueKey('main-top-metric-$label')), findsNothing);
+    }
     expect(find.text('어제와 비교'), findsOneWidget);
     const weatherFeeling = '구름이 많은 날씨예요.';
     expect(find.text(weatherFeeling), findsOneWidget);
     expect(
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
       13,
-    );
-    expect(
-      tester.widget<Text>(find.text('매우 나쁨').first).style?.color,
-      WeatherCareTheme.danger,
     );
     expect(find.byTooltip('날씨 새로고침'), findsNothing);
     expect(tester.widget<Text>(find.text(brief)).maxLines, isNull);
@@ -710,6 +636,10 @@ void main() {
     expect(find.text(mainBrief), findsNothing);
     expect(find.textContaining('챙겨야하는 항목'), findsNothing);
     expect(find.byType(WeatherInfoCard), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-apparent-temperature')),
+        findsNothing);
+    expect(find.byKey(const ValueKey('weather-apparent-detail')), findsNothing);
+    expect(find.byType(WeatherConditionIcon), findsNothing);
     expect(find.byKey(const ValueKey('weather-metric-바람')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-대기질')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-가시거리')), findsOneWidget);

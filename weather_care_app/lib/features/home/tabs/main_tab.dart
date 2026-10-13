@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/briefing_time.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
-import '../weather_labels.dart';
 import '../weather_data_phase.dart';
 import '../widgets/missing_data_retry.dart';
 import '../widgets/hourly_forecast_section.dart';
@@ -30,7 +28,6 @@ class MainTab extends StatelessWidget {
   final bool retryingData;
   final ValueChanged<RecommendationType> onDetail;
   final Widget? advertisement;
-  final int metricColumns;
 
   const MainTab({
     super.key,
@@ -48,8 +45,7 @@ class MainTab extends StatelessWidget {
     this.retryingData = false,
     required this.onDetail,
     this.advertisement,
-    this.metricColumns = 2,
-  }) : assert(metricColumns == 2 || metricColumns == 3);
+  });
 
   @override
   Widget build(BuildContext context) => WeatherDataPhaseScope(
@@ -118,7 +114,6 @@ class MainTab extends StatelessWidget {
                       onRetry: onRetryData,
                       onRetryComparison: onRetryComparison,
                       retrying: retryingData,
-                      metricColumns: metricColumns,
                       comparisonLoading: comparisonLoading,
                     ),
                     SizedBox(height: compact ? 12 : 16),
@@ -147,18 +142,14 @@ class MainTab extends StatelessWidget {
 }
 
 class _TodaySection extends StatelessWidget {
-  final TodayWeatherResponse today;
   final ComparisonResponse? yesterday;
   final CurrentWeather current;
-  final int metricColumns;
   final Future<void> Function()? onRetryComparison;
   final bool comparisonLoading;
 
   const _TodaySection({
-    required this.today,
     required this.yesterday,
     required this.current,
-    required this.metricColumns,
     required this.comparisonLoading,
     this.onRetryComparison,
   });
@@ -172,8 +163,6 @@ class _TodaySection extends StatelessWidget {
       height: 1.45,
       fontWeight: FontWeight.w600,
     );
-    final airQualityState =
-        _airQualityState(current.pm10, current.pm25, current.ozone);
     return Column(
       children: [
         Row(
@@ -194,14 +183,6 @@ class _TodaySection extends StatelessWidget {
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 8),
-        _TemperatureLine(
-          lineKey: const ValueKey('main-current-forecast-row'),
-          temperatureLabel: '현재 기온',
-          temperature: current.temperature,
-          apparentLabel: '현재 체감온도',
-          apparentTemperature: current.displayedApparentTemperature,
         ),
         const SizedBox(height: 13),
         Padding(
@@ -227,69 +208,13 @@ class _TodaySection extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 13),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: WeatherCareTheme.of(context)
-                .primarySoft
-                .withValues(alpha: 0.62),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: _TopMetricGrid(
-            columns: metricColumns,
-            metrics: [
-              _TopMetric(
-                key: const ValueKey('main-top-metric-자외선'),
-                icon: Icons.wb_sunny_outlined,
-                label: '자외선',
-                value: uvDescription(current.uvIndex) ?? '--',
-                state: _uvState(current.uvIndex),
-              ),
-              _TopMetric(
-                key: const ValueKey('main-top-metric-대기질'),
-                icon: Icons.eco_outlined,
-                label: '대기질',
-                value: airQualityState == _unavailableMetric
-                    ? '--'
-                    : airQualityState.label,
-                state: airQualityState,
-              ),
-              _TopMetric(
-                key: const ValueKey('main-top-metric-가시거리'),
-                icon: Icons.visibility_outlined,
-                label: '가시거리',
-                value: visibilityDescription(current.visibilityMeters) ?? '--',
-                state: _visibilityState(current.visibilityMeters),
-              ),
-              _TopMetric(
-                key: const ValueKey('main-top-metric-습도'),
-                icon: Icons.water_drop_outlined,
-                label: '습도',
-                value: humidityDescription(current.humidity) ?? '--',
-                state: _humidityState(current.humidity),
-              ),
-              _TopMetric(
-                key: const ValueKey('main-top-metric-바람'),
-                icon: Icons.air_rounded,
-                label: '바람',
-                value: windDescription(current.windSpeed) ?? '--',
-                state: _windState(current.windSpeed),
-              ),
-              _TopMetric(
-                key: const ValueKey('main-top-metric-일출·일몰'),
-                icon: Icons.wb_twilight_rounded,
-                label: '일출·일몰',
-                value: _sunTimesValue(today.sunriseAt, today.sunsetAt),
-                state: _sunState(
-                  today.sunriseAt,
-                  today.sunsetAt,
-                  today.generatedAt,
-                  today.receivedAt,
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: 8),
+        _TemperatureLine(
+          lineKey: const ValueKey('main-current-forecast-row'),
+          temperatureLabel: '현재 기온',
+          temperature: current.temperature,
+          apparentLabel: '현재 체감온도',
+          apparentTemperature: current.displayedApparentTemperature,
         ),
         const SizedBox(height: 20),
         Row(
@@ -653,7 +578,6 @@ class _TopWeatherCard extends StatelessWidget {
   final Future<void> Function()? onRetry;
   final Future<void> Function()? onRetryComparison;
   final bool retrying;
-  final int metricColumns;
   final bool comparisonLoading;
 
   const _TopWeatherCard({
@@ -661,7 +585,6 @@ class _TopWeatherCard extends StatelessWidget {
     required this.yesterday,
     required this.mood,
     required this.compact,
-    required this.metricColumns,
     required this.comparisonLoading,
     this.onRetry,
     this.onRetryComparison,
@@ -675,13 +598,6 @@ class _TopWeatherCard extends StatelessWidget {
       if (current.temperature == null) '현재 기온',
       if (current.displayedApparentTemperature == null) '현재 체감온도',
       if (current.sky == null) '하늘 상태',
-      if (current.humidity == null) '습도',
-      if (current.windSpeed == null) '바람',
-      if (current.uvIndex == null) '자외선',
-      if (current.pm25 == null && current.pm10 == null && current.ozone == null)
-        '대기질',
-      if (current.visibilityMeters == null) '가시거리',
-      if (today.sunriseAt == null || today.sunsetAt == null) '일출·일몰',
     ];
 
     return AnimatedContainer(
@@ -712,10 +628,8 @@ class _TopWeatherCard extends StatelessWidget {
           ),
           SizedBox(height: compact ? 22 : 28),
           _TodaySection(
-            today: today,
             yesterday: yesterday,
             current: current,
-            metricColumns: metricColumns,
             onRetryComparison: onRetryComparison,
             comparisonLoading: comparisonLoading,
           ),
@@ -822,268 +736,6 @@ class _TemperatureValue extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TopMetric extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final _MetricState state;
-
-  const _TopMetric({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.state,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final phase = WeatherDataPhaseScope.of(context);
-    final missing = state == _unavailableMetric;
-    final displayValue = missing ? phase.missingText('정보 없음') : value;
-    final displayState = missing ? displayValue : state.label;
-    return Expanded(
-      child: Semantics(
-        label: displayValue == displayState
-            ? '$label $displayValue'
-            : '$label $displayValue, $displayState',
-        excludeSemantics: true,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 3),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  style: WeatherCareTheme.of(context).microTextStyle.copyWith(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w400,
-                      ),
-                ),
-                const SizedBox(width: 4),
-                Icon(icon, size: 13, color: state.color(context)),
-                const SizedBox(width: 3),
-                Text(
-                  displayValue,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: state.color(context),
-                    fontSize: 10.5,
-                    height: 1.1,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TopMetricGrid extends StatelessWidget {
-  final List<_TopMetric> metrics;
-  final int columns;
-
-  const _TopMetricGrid({required this.metrics, required this.columns})
-      : assert(metrics.length > 0),
-        assert(columns == 2 || columns == 3);
-
-  @override
-  Widget build(BuildContext context) {
-    final rowCount = (metrics.length / columns).ceil();
-    return Column(
-      children: List.generate(rowCount, (rowIndex) {
-        final start = rowIndex * columns;
-        final end = (start + columns).clamp(0, metrics.length);
-        return Padding(
-          padding: EdgeInsets.only(top: rowIndex == 0 ? 0 : 18),
-          child: Row(
-            children: [
-              ...metrics.sublist(start, end),
-              for (var index = end - start; index < columns; index++)
-                const Expanded(child: SizedBox()),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
-enum _MetricTone { primary, attention, danger, muted }
-
-class _MetricState {
-  final String label;
-  final _MetricTone tone;
-
-  const _MetricState(this.label, this.tone);
-
-  Color color(BuildContext context) {
-    final colors = WeatherCareTheme.of(context);
-    return switch (tone) {
-      _MetricTone.primary => colors.primaryDeep,
-      _MetricTone.attention => colors.attentionDeep,
-      _MetricTone.danger => colors.danger,
-      _MetricTone.muted => colors.textSecondary,
-    };
-  }
-}
-
-const _unavailableMetric = _MetricState('정보 없음', _MetricTone.muted);
-
-_MetricState _humidityState(double? value) {
-  final label = humidityDescription(value);
-  if (label == null) return _unavailableMetric;
-  return _MetricState(
-    label,
-    label == '건조' || label == '매우 습함'
-        ? _MetricTone.attention
-        : _MetricTone.primary,
-  );
-}
-
-_MetricState _windState(double? value) {
-  final label = windDescription(value);
-  if (label == null) return _unavailableMetric;
-  return _MetricState(
-      label,
-      switch (label) {
-        '강한 바람' => _MetricTone.attention,
-        '매우 강한 바람' => _MetricTone.danger,
-        _ => _MetricTone.primary,
-      });
-}
-
-_MetricState _uvState(double? value) {
-  final label = uvDescription(value);
-  if (label == null) return _unavailableMetric;
-  return _MetricState(
-      label,
-      switch (label) {
-        '높음' => _MetricTone.attention,
-        '매우 높음' || '위험' => _MetricTone.danger,
-        _ => _MetricTone.primary,
-      });
-}
-
-_MetricState _pm25State(int? value) {
-  if (value == null) return _unavailableMetric;
-  if (value <= 15) {
-    return const _MetricState('좋음', _MetricTone.primary);
-  }
-  if (value <= 35) {
-    return const _MetricState('보통', _MetricTone.primary);
-  }
-  if (value <= 75) {
-    return const _MetricState('나쁨', _MetricTone.attention);
-  }
-  return const _MetricState('매우 나쁨', _MetricTone.danger);
-}
-
-_MetricState _pm10State(int? value) {
-  if (value == null) return _unavailableMetric;
-  if (value <= 30) {
-    return const _MetricState('좋음', _MetricTone.primary);
-  }
-  if (value <= 80) {
-    return const _MetricState('보통', _MetricTone.primary);
-  }
-  if (value <= 150) {
-    return const _MetricState('나쁨', _MetricTone.attention);
-  }
-  return const _MetricState('매우 나쁨', _MetricTone.danger);
-}
-
-_MetricState _airQualityState(int? pm10, int? pm25, [double? ozone]) {
-  final states = [
-    if (pm10 != null) _pm10State(pm10),
-    if (pm25 != null) _pm25State(pm25),
-    if (ozoneDescription(ozone) case final grade?)
-      _MetricState(
-          grade,
-          switch (grade) {
-            '나쁨' => _MetricTone.attention,
-            '매우 나쁨' => _MetricTone.danger,
-            _ => _MetricTone.primary,
-          }),
-  ];
-  if (states.isEmpty) return _unavailableMetric;
-  const severity = {
-    '좋음': 0,
-    '보통': 1,
-    '나쁨': 2,
-    '매우 나쁨': 3,
-  };
-  return states.reduce(
-    (left, right) => (severity[right.label] ?? 0) > (severity[left.label] ?? 0)
-        ? right
-        : left,
-  );
-}
-
-_MetricState _visibilityState(double? meters) {
-  final label = visibilityDescription(meters);
-  if (label == null) return _unavailableMetric;
-  return _MetricState(
-      label,
-      switch (label) {
-        '매우 짧음' || '짧음' => _MetricTone.danger,
-        '나쁨' => _MetricTone.attention,
-        _ => _MetricTone.primary,
-      });
-}
-
-String _sunTimesValue(String? sunriseAt, String? sunsetAt) {
-  final sunrise = _koreaClock(sunriseAt);
-  final sunset = _koreaClock(sunsetAt);
-  if (sunrise == null && sunset == null) return '--';
-  return '${sunrise ?? '--:--'} · ${sunset ?? '--:--'}';
-}
-
-_MetricState _sunState(
-  String? sunriseAt,
-  String? sunsetAt,
-  String? generatedAt,
-  DateTime? receivedAt,
-) {
-  final sunrise = _parseTimestamp(sunriseAt);
-  final sunset = _parseTimestamp(sunsetAt);
-  final now = responseNow(
-    DateTime.now(),
-    generatedAt: generatedAt,
-    receivedAt: receivedAt,
-  ).toUtc();
-  if (sunrise == null || sunset == null) return _unavailableMetric;
-  if (now.isBefore(sunrise)) {
-    return const _MetricState('해 뜨기 전', _MetricTone.muted);
-  }
-  if (!now.isBefore(sunset)) {
-    return const _MetricState('해가 진 뒤', _MetricTone.muted);
-  }
-  if (sunset.difference(now) <= const Duration(hours: 1)) {
-    return const _MetricState('곧 일몰', _MetricTone.attention);
-  }
-  return const _MetricState('해가 떠 있음', _MetricTone.primary);
-}
-
-String? _koreaClock(String? timestamp) {
-  final value = _parseTimestamp(timestamp);
-  if (value == null) return null;
-  final korea = value.add(const Duration(hours: 9));
-  return '${korea.hour}:'
-      '${korea.minute.toString().padLeft(2, '0')}';
-}
-
-DateTime? _parseTimestamp(String? timestamp) {
-  if (timestamp == null) return null;
-  return DateTime.tryParse(timestamp)?.toUtc();
 }
 
 String _weatherExpression(String? sky) {

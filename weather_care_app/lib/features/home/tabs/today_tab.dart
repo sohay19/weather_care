@@ -50,6 +50,7 @@ class TodayTab extends StatelessWidget {
             ],
             WeatherInfoCard(
               current: today.current,
+              showCurrentSummary: false,
               dataPhase: dataPhase,
               sunriseAt: today.sunriseAt,
               sunsetAt: today.sunsetAt,

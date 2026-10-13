@@ -268,7 +268,7 @@ void main() {
       {bool settle = true,
       ServerDataAccess? access,
       HomeWidgetService? widgetService,
-      int initialIndex = 4,
+      int initialIndex = 3,
       VoidCallback? onHomeReady,
       DateTime Function()? now}) async {
     await tester.pumpWidget(MaterialApp(
@@ -299,7 +299,7 @@ void main() {
   testWidgets('주간 개별 재조회에도 현재 정밀 GPS와 격자를 전달한다', (tester) async {
     location.result =
         const LocationResult(LocationState.ready, coordinates: _seoul);
-    await start(tester, initialIndex: 3);
+    await start(tester, initialIndex: 2);
     final original = weather.calls.single;
     final week = tester.widget<WeekTab>(find.byType(WeekTab));
     await week.onRetryData!();
@@ -313,7 +313,7 @@ void main() {
   testWidgets('첫 안내 확인 한 번으로 알림과 위치 권한을 차례대로 요청한다', (tester) async {
     SharedPreferences.setMockInitialValues({});
 
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester, settle: false, initialIndex: 1);
 
     expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
         findsOneWidget);
@@ -341,7 +341,7 @@ void main() {
       const LocationResult(LocationState.timedOut),
       const LocationResult(LocationState.ready, coordinates: _seoul),
     ]);
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester, settle: false, initialIndex: 1);
 
     tester
         .widget<FilledButton>(
@@ -362,7 +362,7 @@ void main() {
       const LocationResult(LocationState.ready, coordinates: _seoul),
     ]);
 
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 1);
 
     expect(location.requests, [false, false]);
     expect(location.freshRequests, [false, true]);
@@ -373,7 +373,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     location.result = const LocationResult(LocationState.denied);
 
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester, settle: false, initialIndex: 1);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
@@ -395,7 +395,7 @@ void main() {
     weather.pending = Completer<WeatherLoadResult>();
     weather.emitTodayWhilePending = true;
 
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester, settle: false, initialIndex: 1);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
     expect(find.textContaining('지금 날씨'), findsOneWidget);
@@ -413,7 +413,7 @@ void main() {
     final comparison = Completer<ComparisonResponse>();
     weather.comparisonPending = comparison;
 
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester, settle: false, initialIndex: 1);
 
     final brief = find.byKey(const ValueKey('main-weather-brief'));
     expect(tester.widget<Text>(brief).data, '불러오는 중');
@@ -459,7 +459,7 @@ void main() {
 
     await start(tester,
         settle: false,
-        initialIndex: 2,
+        initialIndex: 1,
         widgetService: widgetService,
         now: () => DateTime(2026, 10, 1, 13));
 
@@ -494,7 +494,7 @@ void main() {
     weather.mainPreview = _weather(60, 127).today;
     weather.pending = Completer<WeatherLoadResult>();
 
-    await start(tester, settle: false, initialIndex: 2);
+    await start(tester, settle: false, initialIndex: 1);
 
     expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
     expect(find.text('불러오는 중'), findsWidgets);
@@ -513,7 +513,7 @@ void main() {
     expect(find.text('자료 없음'), findsWidgets);
   });
 
-  testWidgets('자료 대기 중 Today·Detail·Week도 로딩 문구를 표시한다', (tester) async {
+  testWidgets('자료 대기 중 Today·Week도 로딩 문구를 표시한다', (tester) async {
     weather.mainPreview = _weather(60, 127).today;
     weather.pending = Completer<WeatherLoadResult>();
     await start(tester, settle: false, initialIndex: 0);
@@ -521,10 +521,6 @@ void main() {
     expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
     expect(find.text('불러오는 중'), findsWidgets);
     expect(find.text('타임라인을 불러오고 있어요.'), findsNothing);
-
-    await tester.tap(find.text('Detail'));
-    await tester.pump();
-    expect(find.text('상세 날씨 자료를 불러오고 있어요.'), findsOneWidget);
 
     await tester.tap(find.text('Week'));
     await tester.pump();
@@ -541,7 +537,7 @@ void main() {
     await start(
       tester,
       settle: false,
-      initialIndex: 2,
+      initialIndex: 1,
       onHomeReady: () => readyCount += 1,
     );
     expect(readyCount, 0);
@@ -555,7 +551,7 @@ void main() {
   });
 
   testWidgets('탭 스와이프 새로고침이 서버 실패하면 기존 자료와 팝업을 유지한다', (tester) async {
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 1);
     final originalRegion = find.text('현재 위치 날씨');
     expect(originalRegion, findsOneWidget);
     weather.response = const WeatherLoadResult(
@@ -595,13 +591,6 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.text('Detail'));
-    await tester.pump();
-    expect(
-      find.text('상세 날씨 자료를 서버에서 불러오지 못했어요. 이전 자료가 표시될 수 있어요.'),
-      findsOneWidget,
-    );
-
     await tester.tap(find.text('Week'));
     await tester.pump();
     expect(
@@ -612,9 +601,8 @@ void main() {
 
   for (final tab in <({int index, String key})>[
     (index: 0, key: 'today-tab'),
-    (index: 1, key: 'detail-tab'),
-    (index: 2, key: 'main-tab'),
-    (index: 3, key: 'week-tab'),
+    (index: 1, key: 'main-tab'),
+    (index: 2, key: 'week-tab'),
   ]) {
     testWidgets('${tab.key} 새로고침은 오늘·주간·비교 자료를 모두 받을 때까지 기다린다', (tester) async {
       await start(tester, initialIndex: tab.index);
@@ -648,7 +636,7 @@ void main() {
 
   testWidgets('한국시간 정시가 되면 현재 탭과 관계없이 전체 날씨를 다시 받는다', (tester) async {
     var now = DateTime.parse('2026-09-21T22:59:50Z');
-    await start(tester, initialIndex: 3, now: () => now);
+    await start(tester, initialIndex: 2, now: () => now);
     final weatherCalls = weather.calls.length;
     final comparisonCalls = weather.comparisonCalls.length;
 
@@ -663,7 +651,7 @@ void main() {
   });
 
   testWidgets('탭 스와이프에서 일부 자료만 받아도 부분 실패 팝업을 표시한다', (tester) async {
-    await start(tester, initialIndex: 3);
+    await start(tester, initialIndex: 2);
     weather.response = WeatherLoadResult(
       today: _weather(60, 127).today,
       weekly: null,
@@ -694,7 +682,7 @@ void main() {
       comparison: ComparisonWeatherSnapshot(temperature: 18),
     );
 
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 1);
 
     expect(weather.comparisonCalls, [(nx: 60, ny: 127)]);
     await tester.dragUntilVisible(
@@ -712,7 +700,7 @@ void main() {
     weather.pending = Completer<WeatherLoadResult>();
 
     await start(tester,
-        settle: false, initialIndex: 2, widgetService: widgetService);
+        settle: false, initialIndex: 1, widgetService: widgetService);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
     expect(widgetService.published, isEmpty);
@@ -912,7 +900,7 @@ void main() {
   });
   testWidgets('날씨가 비어 있는 화면을 당겨도 GPS를 다시 측정한다', (tester) async {
     location.result = const LocationResult(LocationState.timedOut);
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 1);
     location.result =
         const LocationResult(LocationState.ready, coordinates: _busan);
 
@@ -928,14 +916,14 @@ void main() {
   });
   testWidgets('위치를 확인하지 못하면 수동 지역 메뉴로 이동할 수 있다', (tester) async {
     location.result = const LocationResult(LocationState.denied);
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 1);
 
     await tester.tap(find.byKey(const ValueKey('manual-location-action')));
     await tester.pumpAndSettle();
 
     final navigation = tester.widget<NavigationBar>(
         find.byKey(const ValueKey('main-bottom-navigation')));
-    expect(navigation.selectedIndex, 4);
+    expect(navigation.selectedIndex, 3);
     expect(find.text('지역 선택'), findsOneWidget);
   });
   testWidgets('선택한 항목의 근거는 다른 탭으로 이동하면 초기화된다', (tester) async {
@@ -971,7 +959,7 @@ void main() {
       mode: WeatherLoadMode.server,
       message: 'test',
     );
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 1);
 
     final detailButton = find.byKey(const ValueKey('bag-detail-umbrella'));
     await tester.scrollUntilVisible(
@@ -985,14 +973,22 @@ void main() {
     tester.widget<IconButton>(detailButton).onPressed!.call();
     await tester.pumpAndSettle();
     expect(find.text('선택한 항목의 근거'), findsOneWidget);
+    expect(find.text('오후에 비가 예보됐어요'), findsOneWidget);
 
-    await tester.tap(find.text('Today'));
+    await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Detail'));
+    await tester.tap(find.text('Today'));
     await tester.pumpAndSettle();
 
     expect(find.text('선택한 항목의 근거'), findsNothing);
-    expect(find.text('우산을 챙겨요'), findsWidgets);
+    expect(find.text('우산을 챙겨요'), findsOneWidget);
+    expect(find.text('오후에 비가 예보됐어요'), findsNothing);
+
+    await tester.tap(find.text('Main'));
+    await tester.pumpAndSettle();
+    tester.widget<IconButton>(detailButton).onPressed!.call();
+    await tester.pumpAndSettle();
+    expect(find.text('오후에 비가 예보됐어요'), findsOneWidget);
   });
   testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
     weather.regionName = '선택 지역';

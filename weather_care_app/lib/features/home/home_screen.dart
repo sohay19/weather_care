@@ -34,7 +34,7 @@ import '../settings/settings_screen.dart';
 import '../ads/consent_aware_native_ad_card.dart';
 import 'weather_labels.dart';
 import 'weather_data_phase.dart';
-import 'tabs/detail_tab.dart';
+import 'tabs/evidence_focus.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
 import 'tabs/week_tab.dart';
@@ -61,7 +61,7 @@ class HomeScreen extends StatefulWidget {
 
   const HomeScreen({
     super.key,
-    this.initialIndex = 2,
+    this.initialIndex = 1,
     this.initialNotificationTopic,
     this.locationService = const CurrentLocationService(),
     this.gpsRegionNameService = const PlatformGpsRegionNameService(),
@@ -262,12 +262,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _settings = AppSettings.fallback('initializing-installation');
     _selectedIndex = widget.initialIndex < 0
         ? 0
-        : widget.initialIndex > 4
-            ? 4
+        : widget.initialIndex > 3
+            ? 3
             : widget.initialIndex;
     _todayAdvertisementActivated = _selectedIndex == 0;
-    _mainAdvertisementActivated = _selectedIndex == 2;
-    _weekAdvertisementActivated = _selectedIndex == 3;
+    _mainAdvertisementActivated = _selectedIndex == 1;
+    _weekAdvertisementActivated = _selectedIndex == 2;
     _detailFocusTopic = widget.initialNotificationTopic;
     _scheduleWeatherHourRefresh();
     _initialize();
@@ -953,13 +953,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  List<WeatherRecommendation> get _priorityRecommendations {
-    final recommendations = List<WeatherRecommendation>.from(
-      _today?.recommendations ?? const [],
-    )..sort((a, b) => b.priority.compareTo(a.priority));
-    return recommendations.where((item) => item.recommended).toList();
-  }
-
   String get _mood {
     final sky = (_today?.current.sky ?? '').toLowerCase();
     if (sky.contains('비')) return 'rain';
@@ -1061,6 +1054,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,
                       retrying: _todayRetrying,
+                      serverFeaturesAvailable: serverFeaturesAvailable,
+                      focusTopic: _detailFocusTopic,
+                      focusLifestyleType: _detailFocusLifestyleType,
+                      focusSource: _detailFocusSource,
+                      focusRequestId: _detailFocusRequestId,
                       advertisement: _todayAdvertisementActivated &&
                               !(widget.adRemoval?.isOwned ?? false)
                           ? ConsentAwareNativeAdCard(
@@ -1068,21 +1066,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               adRemoval: widget.adRemoval,
                             )
                           : null,
-                    ),
-              today == null
-                  ? _statusView('detail-tab')
-                  : DetailTab(
-                      today: visibleToday!,
-                      dataPhase: todayPhase,
-                      recommendations: _priorityRecommendations,
-                      serverFeaturesAvailable: serverFeaturesAvailable,
-                      onRefresh: _refreshFromTab,
-                      onRetryData: _retryTodayData,
-                      retrying: _todayRetrying,
-                      focusTopic: _detailFocusTopic,
-                      focusLifestyleType: _detailFocusLifestyleType,
-                      focusSource: _detailFocusSource,
-                      focusRequestId: _detailFocusRequestId,
                     ),
               today == null
                   ? _statusView('main-tab')
@@ -1170,18 +1153,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Today',
             ),
             NavigationDestination(
-              tooltip: '항목별 근거와 자료',
-              icon: Icon(
-                Icons.query_stats_outlined,
-                color: WeatherCareTheme.of(context).textSecondary,
-              ),
-              selectedIcon: Icon(
-                Icons.query_stats_rounded,
-                color: WeatherCareTheme.of(context).primaryDeep,
-              ),
-              label: 'Detail',
-            ),
-            NavigationDestination(
               tooltip: '날씨, Check List, 어제 비교와 예상',
               icon: Icon(
                 Icons.home_outlined,
@@ -1264,22 +1235,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openManualRegionMenu() {
-    _selectTab(4);
+    _selectTab(3);
   }
 
   void _selectTab(int index) {
     if (_selectedIndex == index) return;
     setState(() {
-      if (_selectedIndex == 1 &&
+      if (_selectedIndex == 0 &&
           _detailFocusSource == DetailFocusSource.selection) {
         _detailFocusTopic = null;
         _detailFocusLifestyleType = null;
         _detailFocusSource = DetailFocusSource.notification;
+        _detailFocusRequestId += 1;
       }
       _selectedIndex = index;
       if (index == 0) _todayAdvertisementActivated = true;
-      if (index == 2) _mainAdvertisementActivated = true;
-      if (index == 3) _weekAdvertisementActivated = true;
+      if (index == 1) _mainAdvertisementActivated = true;
+      if (index == 2) _weekAdvertisementActivated = true;
     });
   }
 
@@ -1290,7 +1262,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           detailLifestyleTypeForRecommendationType(type);
       _detailFocusSource = DetailFocusSource.selection;
       _detailFocusRequestId += 1;
-      _selectedIndex = 1;
+      _selectedIndex = 0;
+      _todayAdvertisementActivated = true;
     });
   }
 

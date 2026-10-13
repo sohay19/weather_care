@@ -14,6 +14,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
   final String? missingFocusMessage;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
+  final int focusRequestId;
 
   const LifestyleEvidenceChecklistSection({
     super.key,
@@ -25,6 +26,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
     this.missingFocusMessage,
     this.onRetryMissingData,
     this.retrying = false,
+    this.focusRequestId = 0,
   });
 
   @override
@@ -93,10 +95,13 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
           else
             for (var index = 0; index < orderedMessages.length; index++) ...[
               _LifestyleEvidenceSet(
+                key: ValueKey(
+                    'evidence-${orderedMessages[index].type.apiName}-${orderedMessages[index].title}-$index'),
                 message: orderedMessages[index],
                 focused: index == focusedIndex,
                 focusLabel: focusLabel,
                 focusedItemKey: focusedItemKey,
+                focusRequestId: focusRequestId,
               ),
               if (index < orderedMessages.length - 1)
                 const SizedBox(height: 12),
@@ -105,6 +110,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
             const SizedBox(height: 14),
             for (var index = 0; index < statusGroups.length; index++) ...[
               _DataStatusCard(
+                key: ValueKey('evidence-status-${statusGroups[index].key}'),
                 title: statusGroups[index].key,
                 parts: statusGroups[index].value,
                 onRetry: onRetryMissingData,
@@ -119,21 +125,50 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
   }
 }
 
-class _LifestyleEvidenceSet extends StatelessWidget {
+class _LifestyleEvidenceSet extends StatefulWidget {
   final LifestyleMessage message;
   final bool focused;
   final String? focusLabel;
   final Key? focusedItemKey;
+  final int focusRequestId;
 
   const _LifestyleEvidenceSet({
+    super.key,
     required this.message,
     required this.focused,
     required this.focusLabel,
     required this.focusedItemKey,
+    required this.focusRequestId,
   });
 
   @override
+  State<_LifestyleEvidenceSet> createState() => _LifestyleEvidenceSetState();
+}
+
+class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.focused;
+  }
+
+  @override
+  void didUpdateWidget(covariant _LifestyleEvidenceSet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusRequestId != widget.focusRequestId ||
+        oldWidget.focused != widget.focused) {
+      _expanded = widget.focused;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final message = widget.message;
+    final focused = widget.focused;
+    final focusLabel = widget.focusLabel;
+    final focusedItemKey = widget.focusedItemKey;
     final parts = message.parts
         .where((part) => part.text.trim().isNotEmpty)
         .toList(growable: false);
@@ -169,7 +204,7 @@ class _LifestyleEvidenceSet extends StatelessWidget {
         children: [
           if (focused && focusLabel != null) ...[
             Text(
-              focusLabel!,
+              focusLabel,
               style: WeatherCareTheme.of(context).microTextStyle.copyWith(
                     color: WeatherCareTheme.of(context).primaryDeep,
                     fontWeight: FontWeight.w800,
@@ -177,76 +212,99 @@ class _LifestyleEvidenceSet extends StatelessWidget {
             ),
             const SizedBox(height: 7),
           ],
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: WeatherCareTheme.of(context).primarySoft,
-                  borderRadius: BorderRadius.circular(12),
+          InkWell(
+            key: ValueKey(
+                'detail-evidence-toggle-${message.type.apiName.toLowerCase()}'),
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: WeatherCareTheme.of(context).primarySoft,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _lifestyleIcon(message.type),
+                    size: 20,
+                    color: WeatherCareTheme.of(context).primaryDeep,
+                  ),
                 ),
-                child: Icon(
-                  _lifestyleIcon(message.type),
-                  size: 20,
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message.type.title,
+                        style: TextStyle(
+                          color: WeatherCareTheme.of(context).textPrimary,
+                          fontSize: 15,
+                          height: 1.35,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (!_expanded &&
+                          message.title.trim().isNotEmpty &&
+                          message.title != message.type.title &&
+                          message.title != action) ...[
+                        const SizedBox(height: 2),
+                        Text(message.title,
+                            style: WeatherCareTheme.of(context).microTextStyle),
+                      ],
+                      if (validPeriod != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          validPeriod,
+                          key: ValueKey(
+                            'detail-valid-period-${message.type.apiName.toLowerCase()}',
+                          ),
+                          style: WeatherCareTheme.of(context).microTextStyle,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(
+                  _expanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
                   color: WeatherCareTheme.of(context).primaryDeep,
                 ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      message.type.title,
-                      style: TextStyle(
-                        color: WeatherCareTheme.of(context).textPrimary,
-                        fontSize: 15,
-                        height: 1.35,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    if (validPeriod != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        validPeriod,
-                        key: ValueKey(
-                          'detail-valid-period-${message.type.apiName.toLowerCase()}',
-                        ),
-                        style: WeatherCareTheme.of(context).microTextStyle,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 13),
           _MatchedDetail(
             icon: Icons.check_circle_outline_rounded,
             label: '체크할 일',
             text: action,
+            highlighted: true,
           ),
-          if (supporting.isEmpty) ...[
-            const SizedBox(height: 8),
-            const _MatchedDetail(
-              icon: Icons.info_outline_rounded,
-              label: '근거와 자료',
-              text: '이 항목에 연결된 추가 근거 자료가 없어요.',
-              muted: true,
-            ),
-          ] else
-            for (final part in supporting) ...[
+          if (_expanded) ...[
+            if (supporting.isEmpty) ...[
               const SizedBox(height: 8),
-              _MatchedDetail(
-                icon: _roleIcon(part.role),
-                label: _roleSetLabel(part.role),
-                text: part.text,
-                source: _partSource(part),
-                muted: part.role == WeatherMessageRole.dataStatus,
+              const _MatchedDetail(
+                icon: Icons.info_outline_rounded,
+                label: '근거와 자료',
+                text: '이 항목에 연결된 추가 근거 자료가 없어요.',
+                muted: true,
               ),
-            ],
+            ] else
+              for (final part in supporting) ...[
+                const SizedBox(height: 8),
+                _MatchedDetail(
+                  icon: _roleIcon(part.role),
+                  label: _roleSetLabel(part.role),
+                  text: part.text,
+                  source: _partSource(part),
+                  muted: part.role == WeatherMessageRole.dataStatus,
+                ),
+              ],
+          ],
         ],
       ),
     );
@@ -267,6 +325,7 @@ class _MatchedDetail extends StatelessWidget {
   final String text;
   final String? source;
   final bool muted;
+  final bool highlighted;
 
   const _MatchedDetail({
     required this.icon,
@@ -274,17 +333,21 @@ class _MatchedDetail extends StatelessWidget {
     required this.text,
     this.source,
     this.muted = false,
+    this.highlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: highlighted ? const ValueKey('detail-check-action') : null,
       width: double.infinity,
       padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: muted
             ? WeatherCareTheme.of(context).surfaceMuted
-            : WeatherCareTheme.of(context).surface.withValues(alpha: 0.78),
+            : highlighted
+                ? WeatherCareTheme.of(context).primarySoft
+                : WeatherCareTheme.of(context).surface.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -325,13 +388,14 @@ class _MatchedDetail extends StatelessWidget {
   }
 }
 
-class _DataStatusCard extends StatelessWidget {
+class _DataStatusCard extends StatefulWidget {
   final String title;
   final List<WeatherMessagePart> parts;
   final Future<void> Function()? onRetry;
   final bool retrying;
 
   const _DataStatusCard({
+    super.key,
     required this.title,
     required this.parts,
     this.onRetry,
@@ -339,9 +403,16 @@ class _DataStatusCard extends StatelessWidget {
   });
 
   @override
+  State<_DataStatusCard> createState() => _DataStatusCardState();
+}
+
+class _DataStatusCardState extends State<_DataStatusCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      key: ValueKey('detail-data-status-$title'),
+      key: ValueKey('detail-data-status-${widget.title}'),
       width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -352,35 +423,45 @@ class _DataStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                size: 20,
-                color: WeatherCareTheme.of(context).primaryDeep,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+          InkWell(
+            key: ValueKey('detail-data-status-toggle-${widget.title}'),
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 20,
+                  color: WeatherCareTheme.of(context).primaryDeep,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                Icon(_expanded
+                    ? Icons.expand_less_rounded
+                    : Icons.expand_more_rounded),
+              ],
+            ),
           ),
-          for (final part in parts) ...[
-            const SizedBox(height: 7),
-            Text(part.text, style: Theme.of(context).textTheme.bodySmall),
-          ],
-          if (onRetry != null && parts.any((part) => part.retryable)) ...[
+          if (_expanded)
+            for (final part in widget.parts) ...[
+              const SizedBox(height: 7),
+              Text(part.text, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          if (_expanded &&
+              widget.onRetry != null &&
+              widget.parts.any((part) => part.retryable)) ...[
             const SizedBox(height: 10),
             MissingDataRetry(
-              message: '서버에 저장된 $title 자료를 다시 받아올 수 있어요. '
+              message: '서버에 저장된 ${widget.title} 자료를 다시 받아올 수 있어요. '
                   '외부 자료는 서버가 다음 수집 주기에 다시 확인해요.',
-              retryKey: 'detail-data-retry-$title',
-              retryTooltip: '서버의 $title 자료 다시 받기',
-              onRetry: onRetry!,
-              retrying: retrying,
+              retryKey: 'detail-data-retry-${widget.title}',
+              retryTooltip: '서버의 ${widget.title} 자료 다시 받기',
+              onRetry: widget.onRetry!,
+              retrying: widget.retrying,
             ),
           ],
         ],

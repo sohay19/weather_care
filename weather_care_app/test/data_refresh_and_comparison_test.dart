@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/tabs/week_tab.dart';
@@ -69,9 +68,8 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: DetailTab(
+        body: TodayTab(
           today: incompleteToday,
-          recommendations: const [],
           serverFeaturesAvailable: false,
           onRefresh: () async {},
           onRetryData: () async {},

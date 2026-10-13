@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/app.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/home_screen.dart';
@@ -334,7 +333,7 @@ void main() {
     );
   });
 
-  testWidgets('종료 상태에서 선택한 날씨 알림은 상세 탭으로 시작한다', (tester) async {
+  testWidgets('종료 상태에서 선택한 날씨 알림은 Today 탭으로 시작한다', (tester) async {
     await tester.pumpWidget(
       const WeatherCareApp(
         initialNotificationData: {
@@ -348,8 +347,8 @@ void main() {
     final navigation = tester.widget<NavigationBar>(
       find.byKey(const ValueKey('main-bottom-navigation')),
     );
-    expect(navigation.selectedIndex, 1);
-    expect(find.byKey(const ValueKey('detail-tab')), findsOneWidget);
+    expect(navigation.selectedIndex, 0);
+    expect(find.byKey(const ValueKey('today-tab')), findsOneWidget);
     expect(
       tester
           .widget<HomeScreen>(find.byType(HomeScreen))
@@ -391,7 +390,7 @@ void main() {
     expect(find.textContaining('기온과 상대습도'), findsOneWidget);
   });
 
-  testWidgets('five tabs start on a pull-to-refresh Main screen',
+  testWidgets('four tabs start on a pull-to-refresh Main screen',
       (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -404,12 +403,12 @@ void main() {
     final navigation = tester.widget<NavigationBar>(
       find.byKey(const ValueKey('main-bottom-navigation')),
     );
-    expect(navigation.selectedIndex, 2);
+    expect(navigation.selectedIndex, 1);
     expect(
       navigation.destinations
           .whereType<NavigationDestination>()
           .map((destination) => destination.label),
-      ['Today', 'Detail', 'Main', 'Week', 'Setting'],
+      ['Today', 'Main', 'Week', 'Setting'],
     );
     expect(
       navigation.destinations
@@ -417,7 +416,6 @@ void main() {
           .map((destination) => destination.tooltip),
       [
         '오늘 날씨 자세히 보기',
-        '항목별 근거와 자료',
         '날씨, Check List, 어제 비교와 예상',
         '이번 주 날씨',
         '설정',
@@ -590,7 +588,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Today는 현재 날씨 카드만 표시한다', (tester) async {
+  testWidgets('Today는 현재 날씨 카드와 하단 상세 자료를 표시한다', (tester) async {
     const mainBrief = '자외선이 강할 수 있으니, 외출한다면 양산을 준비하세요';
     await tester.pumpWidget(
       MaterialApp(
@@ -636,6 +634,8 @@ void main() {
     expect(find.text(mainBrief), findsNothing);
     expect(find.textContaining('챙겨야하는 항목'), findsNothing);
     expect(find.byType(WeatherInfoCard), findsOneWidget);
+    expect(find.byKey(const ValueKey('lifestyle-evidence-checklist')),
+        findsOneWidget);
     expect(find.byKey(const ValueKey('weather-apparent-temperature')),
         findsNothing);
     expect(find.byKey(const ValueKey('weather-apparent-detail')), findsNothing);
@@ -655,7 +655,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Detail은 체크할 일과 판단 근거·자료를 항목별 세트로 표시한다', (tester) async {
+  testWidgets('Today 상세 자료는 항목을 열면 판단 근거와 자료를 표시한다', (tester) async {
     tester.view.physicalSize = const Size(360, 1100);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -664,7 +664,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DetailTab(
+          body: TodayTab(
             today: TodayWeatherResponse(
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
@@ -708,7 +708,6 @@ void main() {
               timeline: const [],
               hourly: const [],
             ),
-            recommendations: const [],
             serverFeaturesAvailable: true,
             onRefresh: () async {},
           ),
@@ -720,6 +719,10 @@ void main() {
       const ValueKey('lifestyle-evidence-set-rain_gear_useful'),
     );
     expect(matchedSet, findsOneWidget);
+    expect(find.text('판단 근거'), findsNothing);
+    await tester.tap(
+        find.byKey(const ValueKey('detail-evidence-toggle-rain_gear_useful')));
+    await tester.pumpAndSettle();
     expect(
       find.descendant(of: matchedSet, matching: find.text('체크할 일')),
       findsOneWidget,
@@ -742,7 +745,7 @@ void main() {
     expect(find.text('800 m'), findsNothing);
     expect(
         find.byKey(const ValueKey('visibility-forecast-limit')), findsNothing);
-    expect(find.byType(WeatherInfoCard), findsNothing);
+    expect(find.byType(WeatherInfoCard), findsOneWidget);
     expect(find.text('타임라인'), findsNothing);
     expect(tester.takeException(), isNull);
   });

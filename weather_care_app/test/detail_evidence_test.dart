@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
+import 'package:weather_care/features/home/tabs/evidence_focus.dart';
+import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
+import 'package:weather_care/theme/weather_theme.dart';
 
 void main() {
   testWidgets('모든 근거와 자료 상태를 항목 제목별 카드로 표시한다', (tester) async {
@@ -18,7 +20,10 @@ void main() {
     for (var index = 0; index < 8; index++) {
       expect(find.text('생활 근거 $index'), findsOneWidget);
     }
-    expect(find.byKey(const ValueKey('detail-evidence-toggle')), findsNothing);
+    expect(find.text('자료 상태 원문 0'), findsNothing);
+    for (var index = 0; index < 3; index++) {
+      await _openStatus(tester, '자료 항목 $index');
+    }
     for (final status in statuses) {
       expect(find.text(status.text), findsOneWidget);
     }
@@ -54,6 +59,8 @@ void main() {
     expect(find.text('현재 예보에서 안내할 체크 항목과 근거가 없어요.'), findsNothing);
     expect(find.text('현재 조건에서는 별도 준비물 추천이 없어요.'), findsNothing);
     expect(find.textContaining('정상'), findsNothing);
+    expect(find.text(texts.first), findsNothing);
+    await _openStatus(tester, '자료 상태');
     for (final text in texts) {
       expect(find.text(text), findsOneWidget);
     }
@@ -101,8 +108,10 @@ void main() {
       ],
     );
 
-    expect(find.byKey(const ValueKey('detail-data-status-현재 강수')), findsNothing);
-    expect(find.byKey(const ValueKey('detail-data-status-도로 통제')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('detail-data-status-현재 강수')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('detail-data-status-도로 통제')), findsNothing);
   });
 
   testWidgets('재시도는 서버 저장 자료를 다시 받는 동작으로 안내한다', (tester) async {
@@ -125,6 +134,8 @@ void main() {
       ],
       onRetryData: () async => retryCount += 1,
     );
+    await _openStatus(tester, '대기질');
+    await _openStatus(tester, '자외선지수');
 
     expect(
       find.text(
@@ -179,6 +190,7 @@ void main() {
         ],
       ),
     ]);
+    await _open(tester, LifestyleMessageType.outdoorCaution);
     expect(find.text('사용한 자료'), findsOneWidget);
     expect(find.text('수원에는 강풍주의보가 발효 중이에요'), findsOneWidget);
     expect(find.text('판단 근거'), findsOneWidget);
@@ -203,6 +215,7 @@ void main() {
         ],
       ),
     ]);
+    await _open(tester, LifestyleMessageType.rainGearUseful);
 
     expect(find.text('앱 자체 분석'), findsOneWidget);
     expect(find.textContaining('날씨챙겨'), findsNothing);
@@ -268,8 +281,26 @@ void main() {
           ),
         ],
         scale: 1.3);
-
     const validPeriod = '9월 18일 12시~9월 19일 11시 59분 유효 (24H)';
+    final card = find.byKey(
+      const ValueKey('lifestyle-evidence-set-rapid_temperature_drop'),
+    );
+    final actionBox = find.descendant(
+      of: card,
+      matching: find.byKey(const ValueKey('detail-check-action')),
+    );
+    expect(actionBox, findsOneWidget);
+    expect(find.descendant(of: actionBox, matching: find.text('겉옷을 준비하세요')),
+        findsOneWidget);
+    expect(find.text('계산 근거'), findsNothing);
+    expect(tester.getTopLeft(find.text(validPeriod)).dy,
+        lessThan(tester.getTopLeft(actionBox).dy));
+    final actionDecoration = tester.widget<Container>(actionBox).decoration;
+    expect((actionDecoration as BoxDecoration).color,
+        WeatherCareTheme.of(tester.element(actionBox)).primarySoft);
+
+    await _open(tester, LifestyleMessageType.rapidTemperatureDrop);
+
     expect(find.text(validPeriod), findsOneWidget);
     expect(
       find.text('9월 18일 12시~9월 18일 23시 59분 유효 (12H)'),
@@ -309,6 +340,7 @@ void main() {
         ],
       ),
     ]);
+    await _open(tester, LifestyleMessageType.outdoorCaution);
     expect(find.text(title), findsOneWidget);
     expect(find.text('사용한 자료'), findsOneWidget);
     expect(find.text('체크할 일'), findsOneWidget);
@@ -420,6 +452,21 @@ List<LifestyleMessage> _messages(int count) => List.generate(
           title: '생활 근거 $index',
         ));
 
+Future<void> _open(WidgetTester tester, LifestyleMessageType type) async {
+  final toggle = find
+      .byKey(ValueKey('detail-evidence-toggle-${type.apiName.toLowerCase()}'));
+  await tester.ensureVisible(toggle);
+  await tester.tap(toggle);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openStatus(WidgetTester tester, String title) async {
+  final toggle = find.byKey(ValueKey('detail-data-status-toggle-$title'));
+  await tester.ensureVisible(toggle);
+  await tester.tap(toggle);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   List<LifestyleMessage> messages = const [],
@@ -436,7 +483,7 @@ Future<void> _pump(
     home: Scaffold(
       body: MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-        child: DetailTab(
+        child: TodayTab(
           today: TodayWeatherResponse(
             dataSource: 'test',
             region: WeatherRegion(nx: regionNx, ny: 121, name: '수원'),
@@ -448,7 +495,6 @@ Future<void> _pump(
             timeline: const [],
             hourly: const [],
           ),
-          recommendations: const [],
           serverFeaturesAvailable: serverAvailable,
           focusTopic: focusTopic,
           focusLifestyleType: focusType,

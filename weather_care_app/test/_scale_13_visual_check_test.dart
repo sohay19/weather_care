@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/tabs/week_tab.dart';
@@ -117,12 +116,6 @@ void main() {
           onDetail: (_) {},
         ),
     'today': () => TodayTab(today: _today, onRefresh: () async {}),
-    'detail': () => DetailTab(
-          today: _today,
-          recommendations: _recommendations,
-          serverFeaturesAvailable: true,
-          onRefresh: () async {},
-        ),
     'week': () => WeekTab(
           weekly: _weekly,
           serverFeaturesAvailable: true,

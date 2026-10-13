@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
+import 'package:weather_care/features/home/tabs/evidence_focus.dart';
+import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/widgets/hourly_forecast_section.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/recommendation.dart';
@@ -92,7 +93,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DetailTab(
+          body: TodayTab(
             today: TodayWeatherResponse(
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 127, name: '서울'),
@@ -103,7 +104,6 @@ void main() {
               timeline: const [],
               hourly: const [],
             ),
-            recommendations: const [],
             serverFeaturesAvailable: true,
             focusTopic: NotificationTopic.commute,
             onRefresh: () async {},
@@ -149,7 +149,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DetailTab(
+          body: TodayTab(
             today: TodayWeatherResponse(
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
@@ -169,7 +169,6 @@ void main() {
               timeline: const [],
               hourly: const [],
             ),
-            recommendations: const [],
             serverFeaturesAvailable: true,
             focusLifestyleType: LifestyleMessageType.rainGearUseful,
             focusSource: DetailFocusSource.selection,

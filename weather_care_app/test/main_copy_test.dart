@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weather_care/features/home/tabs/detail_tab.dart';
+import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
-  testWidgets('Detail 체크리스트는 행동·판단·계산·공식 자료를 한 세트로 표시한다', (tester) async {
+  testWidgets('Today 상세 자료는 닫힌 항목을 열 때 행동·판단·계산·공식 자료를 표시한다', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: DetailTab(
+          body: TodayTab(
             today: TodayWeatherResponse(
               dataSource: 'test',
               region: const WeatherRegion(nx: 60, ny: 121, name: '수원시'),
@@ -48,7 +48,6 @@ void main() {
               timeline: const [],
               hourly: const [],
             ),
-            recommendations: const [],
             serverFeaturesAvailable: true,
             onRefresh: () async {},
           ),
@@ -57,6 +56,13 @@ void main() {
     );
 
     expect(find.text('상세 자료'), findsOneWidget);
+    expect(find.text('판단 근거'), findsNothing);
+    expect(find.text('계산 근거'), findsNothing);
+    final toggle = find.byKey(
+        const ValueKey('detail-evidence-toggle-large_temperature_swing'));
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
     expect(find.text('체크할 일'), findsOneWidget);
     expect(find.text('판단 근거'), findsOneWidget);
     expect(find.text('계산 근거'), findsOneWidget);

@@ -10,7 +10,6 @@ import 'package:weather_care/features/home/widgets/preparation_icon.dart';
 import 'package:weather_care/features/home/widgets/tab_page_header.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/features/home/widgets/server_connection_failure_dialog.dart';
-import 'package:weather_care/features/home/widgets/timeline_section.dart';
 import 'package:weather_care/features/home/widgets/weather_card.dart';
 import 'package:weather_care/features/home/widgets/weather_condition_icon.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
@@ -419,7 +418,7 @@ void main() {
       [
         '오늘 날씨와 시간별 예보',
         '항목별 근거와 자료',
-        '날씨, Check List, 간단한 타임라인',
+        '날씨, Check List, 어제 비교와 예상',
         '이번 주 날씨',
         '설정',
       ],
@@ -650,14 +649,8 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.dragUntilVisible(
-      find.text('간단한 타임라인'),
-      find.byKey(const ValueKey('main-tab')),
-      const Offset(0, -300),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('간단한 타임라인'), findsOneWidget);
-    expect(find.text('표시할 시간별 예보가 없어요'), findsOneWidget);
+    expect(find.text('간단한 타임라인'), findsNothing);
+    expect(find.byKey(const ValueKey('timeline-content')), findsNothing);
 
     final scrollable = tester.state<ScrollableState>(
       find.descendant(
@@ -847,7 +840,7 @@ void main() {
     );
 
     expect(find.text('운영 서버 날씨 자료를 받지 못했어요'), findsOneWidget);
-    expect(find.textContaining('Check List와 간단한 타임라인'), findsOneWidget);
+    expect(find.textContaining('Check List와 시간별 예보'), findsOneWidget);
     expect(find.textContaining('자료 준비가 잠시 지연'), findsOneWidget);
     expect(find.textContaining('오늘의 TODO'), findsNothing);
     expect(find.text('단기예보만 보기'), findsNothing);
@@ -961,67 +954,6 @@ void main() {
       34,
     );
     expect(find.text('장화'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('타임라인은 좁은 화면에서 가로 스크롤하고 항목을 전환한다', (tester) async {
-    tester.view.physicalSize = const Size(360, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(splashFactory: NoSplash.splashFactory),
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: TimelineSection(
-              items: [
-                for (var hour = 6; hour < 12; hour++)
-                  HourlyWeatherItem(
-                    time: hour.toString().padLeft(2, '0'),
-                    temperature: 18,
-                    precipitationProbability: 70,
-                    precipitationAmount: 2,
-                    snowExpected: false,
-                    snowfallAmount: 0,
-                    windSpeed: 3.2,
-                    humidity: 65,
-                    uvIndex: 4,
-                    skyCondition: '맑음',
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    expect(tester.takeException(), isNull);
-    expect(find.byKey(const ValueKey('timeline-content')), findsOneWidget);
-    expect(find.text('18°'), findsWidgets);
-    expect(find.text('06시'), findsOneWidget);
-    await tester.drag(
-        find.byKey(const ValueKey('timeline-content')), const Offset(-300, 0));
-    await tester.pumpAndSettle();
-    expect(find.text('11시'), findsOneWidget);
-
-    await tester
-        .tap(find.byKey(const ValueKey('timeline-filter-precipitation')));
-    await tester.pumpAndSettle();
-    expect(find.text('70%'), findsWidgets);
-    expect(find.text('2.0mm'), findsWidgets);
-    await tester.tap(find.byKey(const ValueKey('timeline-filter-uv')));
-    await tester.pumpAndSettle();
-    expect(find.text('4'), findsWidgets);
-    await tester.tap(find.byKey(const ValueKey('timeline-filter-wind')));
-    await tester.pumpAndSettle();
-    expect(find.text('3.2'), findsWidgets);
-    await tester
-        .ensureVisible(find.byKey(const ValueKey('timeline-filter-humidity')));
-    await tester.tap(find.byKey(const ValueKey('timeline-filter-humidity')));
-    await tester.pumpAndSettle();
-    expect(find.text('65%'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

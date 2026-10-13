@@ -127,11 +127,12 @@ void main() {
       const Offset(0, -300),
     );
     await tester.pumpAndSettle();
-    expect(find.descendant(of: card, matching: find.text('14.4℃')), findsOneWidget);
+    expect(find.descendant(of: card, matching: find.text('14.4℃')),
+        findsOneWidget);
     expect(find.text('기온·습도·바람으로 계산한 추정 체감온도예요.'), findsOneWidget);
   });
 
-  testWidgets('Main 카드를 날씨, Check List, 어제 비교, 예상 순서로 표시한다', (tester) async {
+  testWidgets('Main 카드를 Check List, 날씨, 어제 비교, 예상 순서로 표시한다', (tester) async {
     tester.view.physicalSize = const Size(400, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -289,8 +290,8 @@ void main() {
       find.ancestor(of: futureCard, matching: topCard),
       findsNothing,
     );
-    expect(checklist.dy, greaterThan(top.dy));
-    expect(comparison.dy, greaterThan(checklist.dy));
+    expect(checklist.dy, lessThan(top.dy));
+    expect(comparison.dy, greaterThan(top.dy));
     expect(future.dy, greaterThan(comparison.dy));
   });
 
@@ -298,6 +299,7 @@ void main() {
     var todayRetries = 0;
     var comparisonRetries = 0;
     await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
       home: Scaffold(
         body: TodayTab(
           today: incompleteToday,
@@ -314,6 +316,7 @@ void main() {
     expect(comparisonRetries, 0);
 
     await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
       home: Scaffold(
         body: MainTab(
           today: incompleteToday,

@@ -11,7 +11,6 @@ import '../widgets/weather_data_notice.dart';
 import '../widgets/recommendation_bag_section.dart';
 import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
-import '../widgets/timeline_section.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/weather_brief_text.dart';
 
@@ -112,34 +111,14 @@ class MainTab extends StatelessWidget {
                     ],
                     _TopWeatherCard(
                       today: today,
+                      yesterday: yesterdayComparison,
                       mood: mood,
                       compact: compact,
                       onRetry: onRetryData,
+                      onRetryComparison: onRetryComparison,
                       retrying: retryingData,
                       metricColumns: metricColumns,
-                    ),
-                    SizedBox(height: compact ? 12 : 16),
-                    if (detailsLoading)
-                      const _ProgressiveLoadingCard(
-                        icon: Icons.schedule_rounded,
-                        title: '시간별 자료를 불러오고 있어요',
-                      )
-                    else if (serverFeaturesAvailable)
-                      TimelineSection(
-                        items: today.hourly.take(24).toList(),
-                      )
-                    else
-                      ServerFeatureUnavailableCard(
-                        icon: Icons.schedule_rounded,
-                        title: '간단한 타임라인',
-                        onRetry: onRetryData,
-                        retrying: retryingData,
-                      ),
-                    SizedBox(height: compact ? 12 : 16),
-                    _YesterdayComparisonSection(
-                      comparison: yesterdayComparison,
-                      loading: comparisonLoading,
-                      onRetry: onRetryComparison,
+                      comparisonLoading: comparisonLoading,
                     ),
                     SizedBox(height: compact ? 12 : 16),
                     _TodayFutureSection(
@@ -163,13 +142,20 @@ class MainTab extends StatelessWidget {
 
 class _TodaySection extends StatelessWidget {
   final TodayWeatherResponse today;
+  final ComparisonResponse? yesterday;
   final CurrentWeather current;
   final int metricColumns;
+  final Future<void> Function()? onRetryComparison;
+  final bool comparisonLoading;
+
 
   const _TodaySection({
     required this.today,
+    required this.yesterday,
     required this.current,
     required this.metricColumns,
+    required this.comparisonLoading,
+    this.onRetryComparison,
   });
 
   @override
@@ -187,7 +173,7 @@ class _TodaySection extends StatelessWidget {
         Row(
           children: [
             Icon(
-              Icons.calendar_today_outlined,
+              Icons.today_outlined,
               size: 18,
               color: WeatherCareTheme.of(context).primaryDeep,
             ),
@@ -203,7 +189,7 @@ class _TodaySection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 13),
+        const SizedBox(height: 8),
         _TemperatureLine(
           lineKey: const ValueKey('main-current-forecast-row'),
           temperatureLabel: '현재 기온',
@@ -216,7 +202,7 @@ class _TodaySection extends StatelessWidget {
           padding: const EdgeInsets.only(left: 10, right: 10),
           child: Row(
             key: const ValueKey('main-weather-feeling'),
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
@@ -227,13 +213,10 @@ class _TodaySection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 1),
-                child: WeatherConditionIcon(
-                  condition: current.sky,
-                  color: WeatherCareTheme.of(context).textPrimary,
-                  size: 25,
-                ),
+              WeatherConditionIcon(
+                condition: current.sky,
+                color: WeatherCareTheme.of(context).textPrimary,
+                size: 25,
               ),
             ],
           ),
@@ -305,6 +288,32 @@ class _TodaySection extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Icon(
+              Icons.call_missed,
+              size: 18,
+              color: WeatherCareTheme.of(context).primaryDeep,
+            ),
+            const SizedBox(width: 9),
+            const Expanded(
+              child: Text(
+                '어제와 비교',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        _YesterdayComparisonSection(
+          comparison: yesterday,
+          loading: comparisonLoading,
+          onRetry: onRetryComparison,
+        ),
       ],
     );
   }
@@ -325,8 +334,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final todayObservation = comparison?.current;
     final yesterdayObservation = comparison?.comparison;
-    final forecastComparison = comparison?.basis?.provider ==
-        'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION';
+    final forecastComparison = comparison?.basis?.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION';
     final metrics = todayObservation == null || yesterdayObservation == null
         ? const <_ComparisonMetricData>[]
         : [
@@ -375,103 +383,72 @@ class _YesterdayComparisonSection extends StatelessWidget {
     final basis = comparison?.basis;
     final basisLabel = _comparisonBasisLabel(basis);
 
-    return Container(
-      key: const ValueKey('yesterday-comparison-card'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _comparisonSubtitle(basis),
+          style: TextStyle(
+            color: WeatherCareTheme.of(context).textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        if (loading) ...[
+          const LinearProgressIndicator(minHeight: 3),
+          const SizedBox(height: 10),
+          const Text('어제 날씨를 확인하고 있어요.'),
+        ] else if (!available) ...[
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: WeatherCareTheme.of(context).primarySoft,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.compare_arrows_rounded,
-                    size: 21, color: WeatherCareTheme.of(context).primaryDeep),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '어제와 비교',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  comparison?.requestFailed == true
+                      ? '서버에서 어제 비교 자료를 불러오지 못했어요.'
+                      : '받지 못한 자료: 어제와 같은 시각의 관측값',
                 ),
               ),
+              if (onRetry != null)
+                IconButton(
+                  key: const ValueKey('yesterday-comparison-retry'),
+                  tooltip: '어제 비교 자료만 다시 요청',
+                  visualDensity: VisualDensity.compact,
+                  constraints:
+                  const BoxConstraints.tightFor(width: 36, height: 36),
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  color: WeatherCareTheme.of(context).primaryDeep,
+                ),
             ],
           ),
-          const SizedBox(height: 5),
-          Text(
-            _comparisonSubtitle(basis),
-            style: TextStyle(
-              color: WeatherCareTheme.of(context).textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+        ] else ...[
+          if (basisLabel != null) ...[
+            Text(
+              basisLabel,
+              key: const ValueKey('yesterday-comparison-basis'),
+              style: TextStyle(
+                color: WeatherCareTheme.of(context).textSecondary,
+                fontSize: 11,
+                height: 1.4,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          const SizedBox(height: 13),
-          if (loading) ...[
-            const LinearProgressIndicator(minHeight: 3),
             const SizedBox(height: 10),
-            const Text('어제 날씨를 확인하고 있어요.'),
-          ] else if (!available) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    comparison?.requestFailed == true
-                        ? '서버에서 어제 비교 자료를 불러오지 못했어요.'
-                        : '받지 못한 자료: 어제와 같은 시각의 관측값',
-                  ),
-                ),
-                if (onRetry != null)
-                  IconButton(
-                    key: const ValueKey('yesterday-comparison-retry'),
-                    tooltip: '어제 비교 자료만 다시 요청',
-                    visualDensity: VisualDensity.compact,
-                    constraints:
-                        const BoxConstraints.tightFor(width: 36, height: 36),
-                    onPressed: onRetry,
-                    icon: const Icon(Icons.refresh_rounded),
-                    color: WeatherCareTheme.of(context).primaryDeep,
-                  ),
-              ],
+          ],
+          if (skyComparable)
+            Text(
+              '하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
+                  '어제 ${yesterdayObservation!.skyCondition}였어요.',
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-          ] else ...[
-            if (basisLabel != null) ...[
-              Text(
-                basisLabel,
-                key: const ValueKey('yesterday-comparison-basis'),
-                style: TextStyle(
-                  color: WeatherCareTheme.of(context).textSecondary,
-                  fontSize: 11,
-                  height: 1.4,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            if (skyComparable)
-              Text(
-                '하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
-                '어제 ${yesterdayObservation!.skyCondition}였어요.',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
-            for (var index = 0; index < metrics.length; index++) ...[
-              _ComparisonMetric(metric: metrics[index]),
-              if (index < metrics.length - 1) const SizedBox(height: 9),
-            ],
+          if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
+          for (var index = 0; index < metrics.length; index++) ...[
+            _ComparisonMetric(metric: metrics[index]),
+            if (index < metrics.length - 1) const SizedBox(height: 9),
           ],
         ],
-      ),
+      ],
     );
   }
 }
@@ -499,7 +476,8 @@ class _TodayFutureSection extends StatelessWidget {
               subject: '미래 예상 날씨',
             );
     }
-    final nextForecast = today.nextForecast ?? const CurrentWeather(temperature: null);
+    final nextForecast =
+        today.nextForecast ?? const CurrentWeather(temperature: null);
     final forecastTime = forecastTemperatureLabel(nextForecast.forecastAt);
     final forecastAirQuality = nextForecast.pm25ForecastGrade;
     final airQualityState = forecastAirQuality == null
@@ -644,7 +622,7 @@ class _ComparisonMetric extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surfaceMuted,
+        color: WeatherCareTheme.of(context).surface,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -815,19 +793,26 @@ class _ProgressiveLoadingCard extends StatelessWidget {
 
 class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
+  final ComparisonResponse? yesterday;
   final String mood;
   final bool compact;
   final Future<void> Function()? onRetry;
+  final Future<void> Function()? onRetryComparison;
   final bool retrying;
   final int metricColumns;
+  final bool comparisonLoading;
+
 
   const _TopWeatherCard({
     required this.today,
+    required this.yesterday,
     required this.mood,
     required this.compact,
-    this.onRetry,
-    this.retrying = false,
     required this.metricColumns,
+    required this.comparisonLoading,
+    this.onRetry,
+    this.onRetryComparison,
+    this.retrying = false,
   });
   @override
   Widget build(BuildContext context) {
@@ -874,8 +859,11 @@ class _TopWeatherCard extends StatelessWidget {
           SizedBox(height: compact ? 22 : 28),
           _TodaySection(
             today: today,
+            yesterday: yesterday,
             current: current,
             metricColumns: metricColumns,
+            onRetryComparison: onRetryComparison,
+            comparisonLoading: comparisonLoading,
           ),
           if (missing.isNotEmpty &&
               phase != WeatherDataPhase.loading &&
@@ -917,7 +905,7 @@ class _TemperatureLine extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surfaceMuted,
+        color: WeatherCareTheme.of(context).surface,
         borderRadius: BorderRadius.circular(13),
       ),
       child: FittedBox(

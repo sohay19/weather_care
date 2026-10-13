@@ -1182,7 +1182,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Detail',
             ),
             NavigationDestination(
-              tooltip: '날씨, Check List, 간단한 타임라인',
+              tooltip: '날씨, Check List, 어제 비교와 예상',
               icon: Icon(
                 Icons.home_outlined,
                 color: WeatherCareTheme.of(context).textSecondary,

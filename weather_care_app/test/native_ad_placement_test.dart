@@ -78,10 +78,12 @@ void main() {
       ),
     );
 
-    final timeline = tester.getTopLeft(find.text('간단한 타임라인')).dy;
+    final future = tester
+        .getTopLeft(find.byKey(const ValueKey('main-future-weather-card')))
+        .dy;
     final advertisement = tester
         .getTopLeft(find.byKey(const ValueKey('test-main-advertisement')))
         .dy;
-    expect(advertisement, greaterThan(timeline));
+    expect(advertisement, greaterThan(future));
   });
 }

@@ -335,10 +335,8 @@ class WeatherCarePalette extends ThemeExtension<WeatherCarePalette> {
     danger: Color(0xFFF0A39B),
   );
 
-  Color get onPrimary =>
-      brightness == Brightness.dark ? const Color(0xFF172736) : Colors.white;
-  Color get actionBackground =>
-      brightness == Brightness.dark ? primary : primaryDeep;
+  Color get onPrimary => brightness == Brightness.dark ? const Color(0xFF172736) : Colors.white;
+  Color get actionBackground => brightness == Brightness.dark ? primary : primaryDeep;
 
   TextStyle get specialLabelStyle =>
       WeatherCareTheme.specialLabelStyle.copyWith(color: primaryDeep);

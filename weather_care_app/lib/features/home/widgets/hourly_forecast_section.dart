@@ -45,13 +45,21 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
       generatedAt: widget.generatedAt,
       receivedAt: widget.receivedAt,
     ));
-    final visibleItems = _todayHourlyItems(widget.items, today);
+    final forecastItems = widget.items
+        .where((item) =>
+            item.forecastDate == null ||
+            item.forecastDate!.compareTo(today) >= 0)
+        .toList(growable: false);
+    final visibleItems = forecastItems.take(24).toList(growable: false);
     final selectedItems = _selected == _HourlyMetric.precipitation
-        ? visibleItems
-        : visibleItems
-            .where((item) =>
-                item.forecastDate == null || item.forecastDate == today)
-            .toList(growable: false);
+        ? [
+            ...visibleItems,
+            if (forecastItems.length > 24 &&
+                forecastItems[24].precipitationPeriod?.date == today &&
+                _hasMeaningfulPrecipitation(forecastItems[24]))
+              forecastItems[24],
+          ]
+        : visibleItems;
     final hasMissingData = visibleItems.isEmpty ||
         visibleItems.any(
           (item) =>
@@ -218,14 +226,19 @@ class _HourlyPoint extends StatelessWidget {
     final palette = WeatherCareTheme.of(context);
     final period = item.precipitationPeriod;
     final precipitationValid = !item.precipitationPeriodProvided ||
-        (period != null && period.date == today);
+        (period != null && period.date.compareTo(today) >= 0);
     final hour = int.tryParse(item.time);
+    final labelDate = metric == _HourlyMetric.precipitation && period != null
+        ? period.date
+        : item.forecastDate;
+    final dayPrefix =
+        labelDate != null && labelDate.compareTo(today) > 0 ? '내일 ' : '';
     final timeLabel = metric == _HourlyMetric.precipitation &&
             period != null &&
-            period.date == today
-        ? period.label
+            precipitationValid
+        ? '$dayPrefix${period.label}'
         : hour != null && hour >= 0 && hour < 24
-            ? '${hour.toString().padLeft(2, '0')}시'
+            ? '$dayPrefix${hour.toString().padLeft(2, '0')}시'
             : '시각 ${dataPhase.missingText()}';
     final icon = switch (metric) {
       _HourlyMetric.weather => WeatherConditionIcon(
@@ -370,19 +383,4 @@ bool _hasMeaningfulPrecipitation(HourlyWeatherItem item) {
       item.snowExpected == true ||
       _hasPositiveAmount(rainAmount, 'mm') ||
       _hasPositiveAmount(snowAmount, 'cm');
-}
-
-List<HourlyWeatherItem> _todayHourlyItems(
-    List<HourlyWeatherItem> items, String today) {
-  final hasForecastDates = items.any((item) => item.forecastDate != null);
-  if (!hasForecastDates) {
-    return items.take(24).toList(growable: false);
-  }
-
-  return items
-      .where((item) =>
-          item.forecastDate == today ||
-          (item.precipitationPeriod?.date == today &&
-              _hasMeaningfulPrecipitation(item)))
-      .toList(growable: false);
 }

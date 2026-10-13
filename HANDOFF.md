@@ -10272,3 +10272,30 @@
 - 사용자 제공 `붙여넣은 마크다운.md`는 LLDB가 붙은 JIT 디버그 실행 로그 283줄이며 Firebase 초기화·광고 시작 관련 메시지만 보였다. 새 `WeatherCareNotification` 진단 이벤트가 한 줄도 없고 새로고침 시각도 기록되지 않아 토큰 조회 단계는 이 파일로 판정할 수 없다. FirebaseCore의 시작 직후 `No app has been configured yet` 한 줄만으로 영구 초기화 실패를 단정하지 않는다.
 - 운영 릴리스 DB 읽기 전용 확인: 10:13:30.516 KST에 기존 9월 18일 생성 알림 설정이 활성 상태로 다시 저장됐으나 대응 설치 행은 없다. iOS 설치 6건 중 FCM 토큰은 여전히 0건이고 10:00 이후 갱신된 iOS 설치 행도 0건이다. 로그와 설정 행의 직접 기기 ID 대조는 하지 않았다.
 - Xcode 디버그 콘솔에서 확인하기 쉽게 `WeatherCareNotification`을 debugPrint에도 기록하고, 등록 서비스 생성 시 `service:ready`를 남기도록 보강했다. 토큰·인증 값은 포함하지 않는다. Flutter 3.47.4 등록 서비스 테스트 13개 통과, 수정 Dart 파일 analyze 이슈 없음. 다른 미커밋 UI 변경은 보존했다.
+
+## 2026-10-13 Main·Today 시간별 예보 통합
+
+- 작업 시작 시 있던 HANDOFF·Today 카드/시간별 UI·관련 테스트 변경 6개 파일을 한글 기반 메시지 `feat(ui): 오늘 예보 선택형 시간축 정리`로 `51d637b` 커밋했다. 당시 작업 트리는 깨끗해졌다.
+- 이후 Main의 중복 `간단한 타임라인` 카드와 전용 위젯을 제거했다. 날씨·강수·자외선·바람·습도·대기질 선택형 가로 시간축은 Today `시간별 예보`에서 계속 제공한다. Main 카드 간격·광고의 최하단 배치, 탭 툴팁과 서버 연결 실패 안내 문구를 현 구조에 맞췄다.
+- Main에서 제공하던 앞 24시간 범위도 Today 시간축으로 옮겼다. 다음 날 시각은 `내일`로 구분하며, 24번째 정시 뒤에 이어지는 오늘 23~24시 강수 구간이 있으면 강수 항목에 추가로 남긴다. 날짜 경계 테스트를 이에 맞게 갱신했다.
+- Main·Today 관련 테스트 37개와 화면 테스트 3개 통과, 변경 Dart 파일 analyze 이슈 없음, git diff --check 통과. 기존 Main 카드 순서 기대값과 테스트 런타임 셰이더로 실패하던 새로고침 테스트를 현 배치/NoSplash 테스트 테마에 맞게 갱신했다.
+- 통합 작업의 새 변경은 커밋·푸시·배포하지 않았다. 별도 데스크톱 UI는 띄우지 않았다.
+
+## 2026-10-13 iOS APNs 미등록 원인 확인 및 등록 경로 수정
+
+- 사용자가 보낸 `붙여넣은 마크다운(2).md`의 새 디버그 로그에서 등록 시도 2회 모두 `permission:authorized`→`apns:missing`→`fcm:error:firebase:apns-token-not-set`을 확인했다. 따라서 설치 PUT은 시작되지 않는다. 토큰 원문은 로그에 없었다.
+- 프로젝트는 `FirebaseMessagingAutoInitEnabled=false`와 앱 시작 `setAutoInitEnabled(false)`를 사용한다. 로컬 설치된 `firebase_messaging 16.6.0` iOS 소스에서 자동 초기화가 꺼지면 플러그인이 `registerForRemoteNotifications`를 호출하지 않고, `getNotificationSettings`와 `requestPermission`도 원격 알림 등록을 호출하지 않음을 확인했다. 권한은 이미 허용된 상태라 현재 앱이 APNs 등록을 시작하지 않았던 것이 직접 원인이다.
+- iOS에서 권한 허용·등록 활성일 때 네이티브 `UIApplication.registerForRemoteNotifications()`를 호출하고, 성공 콜백에서 Firebase Messaging의 APNs 토큰 속성을 설정한다. Dart는 토큰이 도착할 때까지 최대 약 9.5초 기다린 다음 FCM을 조회하며, APNs가 없으면 FCM 조회를 건너뛰고 상태를 기록한다. 네이티브 등록 실패는 민감 값 없이 오류 번호만 기록한다. 자동 초기화 OFF 정책은 유지한다.
+- Flutter 3.47.4 등록 서비스 테스트 15개 통과 및 수정 Dart 파일 analyze 이슈 없음. Windows에서 Swift/iOS 실기기 빌드 검증은 불가하여 새 디버그/TestFlight 빌드에서 `apns:registered`·`apns:present`·`fcm:present`·`server:success`와 운영 서버 설치 행을 후속 확인해야 한다. 다른 작업의 UI 변경은 보존한다.
+
+## 2026-10-13 iOS APNs·FCM 등록 해결 확인
+
+- 사용자 제공 `붙여넣은 마크다운(3).md`의 새 Xcode 로그에서 `permission:authorized`→`apns:request`→네이티브 `apns:registered`→`apns:present`→`fcm:present`→`server:request`→`server:success`를 확인했다. 전 버전의 `apns-token-not-set`은 이 실행에서 재발하지 않았다.
+- 운영 릴리스 DB를 읽기 전용으로 대조했다. 10:47:29 KST에 새 iOS 설치 행이 생성됐고 FCM 토큰 존재=1, 연결된 알림 설정·매일 날씨·우산·약한 비 항목 활성=1, 알림 시각 07:00, 연령정책 확인 및 버전1을 확인했다. 앞서 설치 행이 없던 9월 18일 생성 설정의 연결 설치 행도 생겼다. iOS 토큰 보유 행은 전체 0→1건이다. 실제 푸시 발송·APNs 전달·기기 표시까지는 아직 검증하지 않았다.
+- 토큰·설치 ID·인증 값은 출력하지 않았고 앱·서버 상태를 변경하지 않았다. 진행 중인 다른 UI 작업은 보존했다.
+
+## 2026-10-13 현재 작업 트리 전체 커밋
+
+- Main의 중복 간단한 타임라인을 제거하고 Today 시간별 예보로 통합한 변경, Main 상단 카드의 어제 비교 배치 조정, 관련 문구·테마·테스트 변경을 함께 반영한다.
+- 현재 미커밋 파일을 모두 한글 기반 커밋 메시지로 기록한다. 커밋 전 git diff --check 통과, Main·Today 관련 테스트 40개와 변경 Dart 파일 analyze는 앞선 작업에서 통과했다.
+- 별도 UI 실행·푸시·배포 없음.

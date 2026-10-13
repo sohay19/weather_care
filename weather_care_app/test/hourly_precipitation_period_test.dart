@@ -73,7 +73,7 @@ void main() {
     });
   }
 
-  testWidgets('오늘의 마지막 강수 구간은 유지하되 내일 00시의 기온은 섞지 않는다', (tester) async {
+  testWidgets('오늘의 마지막 강수 구간과 내일 00시 기온을 날짜로 구분한다', (tester) async {
     final now = DateTime.now();
     final today = dateInKorea(now);
     final tomorrow = dateInKorea(now.add(const Duration(days: 1)));
@@ -83,24 +83,39 @@ void main() {
     ]);
     expect(find.text('23시'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
-    expect(find.text('기온 99℃'), findsNothing);
+    expect(find.text('내일 00시'), findsOneWidget);
+    expect(find.text('기온 99℃'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     await _selectHourly(tester, 'wind');
-    expect(find.text('바람 2.0m/s'), findsOneWidget);
+    expect(find.text('바람 2.0m/s'), findsNWidgets(2));
   });
 
-  testWidgets('내일 00시 강수 구간만 있어도 날씨 항목에 내일 기온을 노출하지 않는다', (tester) async {
+  testWidgets('내일 00시만 있어도 날씨와 전날 강수 구간을 각각 표시한다', (tester) async {
     final tomorrow = dateInKorea(DateTime.now().add(const Duration(days: 1)));
     await _pump(tester, [_slot(tomorrow, 0)]);
-    expect(find.text('오늘 표시할 시간별 예보가 없어요.'), findsOneWidget);
-    expect(find.text('기온 22℃'), findsNothing);
+    expect(find.text('내일 00시'), findsOneWidget);
+    expect(find.text('기온 22℃'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     expect(find.text('강수량 1mm 미만'), findsOneWidget);
   });
 
-  testWidgets('내일 00시가 명시적인 무강수이면 빈 23~24시 행을 만들지 않는다', (tester) async {
+  testWidgets('24개 정시 뒤의 오늘 마지막 강수 구간도 강수 항목에 남긴다', (tester) async {
+    final now = DateTime.now();
+    final today = dateInKorea(now);
+    final tomorrow = dateInKorea(now.add(const Duration(days: 1)));
+    await _pump(tester, [
+      for (var hour = 0; hour < 24; hour++) _slot(today, hour),
+      _slot(tomorrow, 0),
+    ]);
+    expect(find.byKey(const ValueKey('today-hourly-24')), findsNothing);
+    await _selectHourly(tester, 'precipitation');
+    expect(find.byKey(const ValueKey('today-hourly-24')), findsOneWidget);
+    expect(find.text('23~24시'), findsOneWidget);
+  });
+
+  testWidgets('내일 00시가 명시적인 무강수이면 23~24시를 0으로 표시한다', (tester) async {
     final now = DateTime.now();
     final today = dateInKorea(now);
     final tomorrow = dateInKorea(now.add(const Duration(days: 1)));
@@ -120,7 +135,8 @@ void main() {
     ]);
     expect(find.text('23시'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('23~24시'), findsNothing);
+    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.text('강수확률 0%'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
   });
 

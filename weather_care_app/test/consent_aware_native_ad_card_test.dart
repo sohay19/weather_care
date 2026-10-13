@@ -169,13 +169,17 @@ void main() {
     await tester.pump();
 
     expect(loader.sizes, [NativeAdCardSize.medium]);
-    expect(
-      tester.getSize(find.byKey(const ValueKey('week-native-ad-card'))).height,
-      360,
-    );
+    final card =
+        tester.getRect(find.byKey(const ValueKey('week-native-ad-card')));
+    final ad = tester.getRect(find.byKey(const ValueKey('fake-native-ad')));
+    expect(card.size, const Size(400, 360));
+    expect(ad.left - card.left, 12);
+    expect(ad.top - card.top, 12);
+    expect(card.right - ad.right, 12);
+    expect(card.bottom - ad.bottom, 12);
   });
 
-  testWidgets('소형 카드는 4:1 비율로 카드와 광고 중심을 맞춘다', (tester) async {
+  testWidgets('소형 광고는 카드 안쪽 여백을 제외하고 4:1 비율을 유지한다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -190,15 +194,16 @@ void main() {
     final card = tester.getSize(
       find.byKey(const ValueKey('week-native-ad-card')),
     );
-    expect(card.width, 336);
-    expect(card.height, 84);
+    expect(card.width, 360);
+    expect(card.height, 108);
+    expect(tester.getSize(find.byKey(const ValueKey('fake-native-ad'))),
+        const Size(336, 84));
     expect(tester.getCenter(find.byKey(const ValueKey('fake-native-ad'))),
         tester.getCenter(find.byKey(const ValueKey('week-native-ad-card'))));
   });
 
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
-    testWidgets('${platform.name} 광고와 로딩 자리는 네 방향에 12px 여백을 둔다',
-        (tester) async {
+    testWidgets('${platform.name} 광고 박스는 유지하고 광고를 안쪽에 배치한다', (tester) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -227,19 +232,23 @@ void main() {
       final placeholder = tester.getRect(
         find.byKey(const ValueKey('week-native-ad-placeholder')),
       );
-      expect(placeholder.left, 12);
-      expect(placeholder.top, 12);
-      expect(placeholder.width, 336);
-      expect(placeholder.height, 84);
+      expect(placeholder.left, 0);
+      expect(placeholder.top, 0);
+      expect(placeholder.width, 360);
+      expect(placeholder.height, 108);
       final bounds = tester.getRect(find.byType(ConsentAwareNativeAdCard));
-      expect(bounds.right - placeholder.right, 12);
-      expect(bounds.bottom - placeholder.bottom, 12);
+      expect(placeholder, bounds);
 
       await tester.pump();
       final card = tester.getRect(
         find.byKey(const ValueKey('week-native-ad-card')),
       );
       expect(card, placeholder);
+      final ad = tester.getRect(find.byKey(const ValueKey('fake-native-ad')));
+      expect(ad.left - card.left, 12);
+      expect(ad.top - card.top, 12);
+      expect(card.right - ad.right, 12);
+      expect(card.bottom - ad.bottom, 12);
       expect(tester.takeException(), isNull);
     });
   }

@@ -1,17 +1,22 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import 'api_client.dart';
 import 'current_location_service.dart';
 import 'minimum_age_policy.dart';
 
 class NotificationRegistrationService {
+  static const _diagnostics =
+      MethodChannel('com.codesoha.weathercare/notification-diagnostics');
   final ApiClient client;
   final FirebaseMessaging? _messaging;
   final bool Function()? canRegister;
+  final void Function(String)? diagnosticLog;
   FirebaseMessaging get messaging => _messaging ?? FirebaseMessaging.instance;
   StreamSubscription<String>? _tokenSubscription;
   _RegistrationTarget? _target;
@@ -22,7 +27,34 @@ class NotificationRegistrationService {
     this.client, {
     FirebaseMessaging? messaging,
     this.canRegister,
+    this.diagnosticLog,
   }) : _messaging = messaging;
+
+  void _record(String event) {
+    if (diagnosticLog != null) {
+      diagnosticLog!(event);
+      return;
+    }
+    log('WeatherCareNotification $event');
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      unawaited(_diagnostics.invokeMethod<void>('record', event).catchError(
+            (Object _) {},
+          ));
+    }
+  }
+
+  String _failure(Object error) {
+    String safeCode(String code) =>
+        RegExp(r'^[A-Za-z0-9_.-]{1,64}$').hasMatch(code) ? code : 'UNKNOWN';
+    if (error is FirebaseException) {
+      return 'firebase:${safeCode(error.code)}';
+    }
+    if (error is ApiException) {
+      return 'http:${error.status}:${safeCode(error.code)}';
+    }
+    if (error is TimeoutException) return 'timeout';
+    return error.runtimeType.toString();
+  }
 
   Future<void> initialize({
     required String installationId,
@@ -31,7 +63,10 @@ class NotificationRegistrationService {
     required String locationMode,
     DeviceCoordinates? coordinates,
   }) async {
-    if (_disposed || !(canRegister?.call() ?? true)) return;
+    if (_disposed || !(canRegister?.call() ?? true)) {
+      _record('skip:inactive');
+      return;
+    }
     _target =
         _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
@@ -42,11 +77,11 @@ class NotificationRegistrationService {
       _tokenSubscription = messaging.onTokenRefresh.listen(
         (refreshedToken) => unawaited(_registerCurrent(refreshedToken)),
         onError: (Object error) {
-          log('FCM token refresh failed (${error.runtimeType})');
+          _record('fcm_refresh:error:${_failure(error)}');
         },
       );
     } catch (error) {
-      log('Notification registration unavailable (${error.runtimeType})');
+      _record('initialize:error:${_failure(error)}');
     }
   }
 
@@ -60,6 +95,7 @@ class NotificationRegistrationService {
   // confirmed. The server retains its last registered region until a valid update.
   void invalidateLocation() {
     _target = null;
+    _record('skip:no_location');
   }
 
   Future<void> syncInstallation({
@@ -69,46 +105,79 @@ class NotificationRegistrationService {
     required String locationMode,
     DeviceCoordinates? coordinates,
   }) async {
-    if (_disposed || !(canRegister?.call() ?? true)) return;
+    if (_disposed || !(canRegister?.call() ?? true)) {
+      _record('skip:inactive');
+      return;
+    }
     _target =
         _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
     try {
       await _registerCurrent();
     } catch (error) {
-      log('Installation synchronization failed (${error.runtimeType})');
+      _record('sync:error:${_failure(error)}');
     }
   }
 
   Future<void> _registerCurrent([String? refreshedToken]) {
     _registrationQueue = _registrationQueue.then((_) async {
       if (_disposed || _target == null || !(canRegister?.call() ?? true)) {
+        _record('skip:inactive_or_no_location');
         return;
       }
-      // Read inside the queue so a delayed token refresh cannot restore a token
-      // after a queued permission denial. Only explicit Settings actions ask.
-      final permission = await messaging.getNotificationSettings();
-      final allowed =
-          permission.authorizationStatus == AuthorizationStatus.authorized ||
-              permission.authorizationStatus == AuthorizationStatus.provisional;
-      final token =
-          allowed ? refreshedToken ?? await messaging.getToken() : null;
-      final target = _target;
-      if (_disposed || target == null || !(canRegister?.call() ?? true)) return;
-      await client.putJson(
-        '/api/v1/installations/${target.installationId}',
-        {
-          ...minimumAgeServerAssertion,
-          'fcmToken': token,
-          'locationMode': target.locationMode,
-          'platform': defaultTargetPlatform.name,
-          'timezone': 'Asia/Seoul',
-          'latitude': target.coordinates?.latitude,
-          'longitude': target.coordinates?.longitude,
-        },
-        query: {'nx': '${target.nx}', 'ny': '${target.ny}'},
-      );
+      _record('start');
+      var stage = 'permission';
+      try {
+        // Read inside the queue so a delayed token refresh cannot restore a token
+        // after a queued permission denial. Only explicit Settings actions ask.
+        final permission = await messaging.getNotificationSettings();
+        _record('permission:${permission.authorizationStatus.name}');
+        final allowed = permission.authorizationStatus ==
+                AuthorizationStatus.authorized ||
+            permission.authorizationStatus == AuthorizationStatus.provisional;
+        if (allowed && defaultTargetPlatform == TargetPlatform.iOS) {
+          try {
+            final apnsToken = await messaging.getAPNSToken();
+            _record(apnsToken == null || apnsToken.isEmpty
+                ? 'apns:missing'
+                : 'apns:present');
+          } catch (error) {
+            _record('apns:error:${_failure(error)}');
+          }
+        }
+        stage = 'fcm';
+        final token =
+            allowed ? refreshedToken ?? await messaging.getToken() : null;
+        _record(allowed
+            ? token == null || token.isEmpty
+                ? 'fcm:missing'
+                : 'fcm:present'
+            : 'fcm:skipped_permission');
+        final target = _target;
+        if (_disposed || target == null || !(canRegister?.call() ?? true)) {
+          _record('skip:inactive_or_no_location');
+          return;
+        }
+        stage = 'server';
+        _record('server:request');
+        await client.putJson(
+          '/api/v1/installations/${target.installationId}',
+          {
+            ...minimumAgeServerAssertion,
+            'fcmToken': token,
+            'locationMode': target.locationMode,
+            'platform': defaultTargetPlatform.name,
+            'timezone': 'Asia/Seoul',
+            'latitude': target.coordinates?.latitude,
+            'longitude': target.coordinates?.longitude,
+          },
+          query: {'nx': '${target.nx}', 'ny': '${target.ny}'},
+        );
+        _record('server:success');
+      } catch (error) {
+        _record('$stage:error:${_failure(error)}');
+      }
     }).catchError((Object error) {
-      log('Installation registration failed (${error.runtimeType})');
+      _record('queue:error:${_failure(error)}');
     });
     return _registrationQueue;
   }

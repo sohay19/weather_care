@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/current_location_service.dart';
@@ -18,13 +20,20 @@ class _Messaging implements FirebaseMessaging {
   final tokens = StreamController<String>.broadcast();
   AuthorizationStatus authorization = AuthorizationStatus.authorized;
   Completer<NotificationSettings>? pendingPermission;
+  String? apnsToken;
+  Object? tokenError;
   int requests = 0;
   @override
   Stream<String> get onTokenRefresh => tokens.stream;
   @override
   Future<String?> getToken(
-          {String? vapidKey, String? serviceWorkerScriptPath}) async =>
-      'test-token';
+      {String? vapidKey, String? serviceWorkerScriptPath}) async {
+    if (tokenError != null) throw tokenError!;
+    return 'test-token';
+  }
+
+  @override
+  Future<String?> getAPNSToken() async => apnsToken;
   @override
   Future<NotificationSettings> getNotificationSettings() async {
     final pending = pendingPermission;
@@ -54,6 +63,7 @@ class _Client extends ApiClient {
   final calls = <({Map<String, dynamic> body, Map<String, String>? query})>[];
   Completer<void>? pending;
   bool fail = false;
+  Object? error;
   int active = 0;
   int maxActive = 0;
   _Client() : super(baseUrl: '');
@@ -65,6 +75,7 @@ class _Client extends ApiClient {
     if (active > maxActive) maxActive = active;
     try {
       if (fail) throw StateError('offline');
+      if (error != null) throw error!;
       await pending?.future;
     } finally {
       active--;
@@ -76,12 +87,16 @@ void main() {
   late _Messaging messaging;
   late _Client client;
   late NotificationRegistrationService service;
+  late List<String> events;
   setUp(() {
     messaging = _Messaging();
     client = _Client();
-    service = NotificationRegistrationService(client, messaging: messaging);
+    events = [];
+    service = NotificationRegistrationService(client,
+        messaging: messaging, diagnosticLog: events.add);
   });
   tearDown(() async {
+    debugDefaultTargetPlatformOverride = null;
     await service.dispose();
     await messaging.tokens.close();
   });
@@ -156,6 +171,7 @@ void main() {
   test('위치 확인 실패 후 토큰 갱신은 이전 좌표를 다시 보내지 않는다', () async {
     await initialize();
     service.invalidateLocation();
+    expect(events, contains('skip:no_location'));
     messaging.tokens.add('refreshed-token');
     await flush();
     expect(client.calls, hasLength(1));
@@ -231,5 +247,45 @@ void main() {
     messaging.authorization = AuthorizationStatus.authorized;
     await moved();
     expect(client.calls.last.body['fcmToken'], 'test-token');
+  });
+
+  test('iOS APNs 미발급과 FCM 조회 오류 코드를 토큰 없이 기록한다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    messaging.tokenError = FirebaseException(
+        plugin: 'firebase_messaging',
+        code: 'apns-token-not-set',
+        message: 'private-token-must-not-be-logged');
+
+    await initialize();
+
+    expect(
+        events,
+        containsAllInOrder([
+          'start',
+          'permission:authorized',
+          'apns:missing',
+          'fcm:error:firebase:apns-token-not-set',
+        ]));
+    expect(client.calls, isEmpty);
+    expect(events.join(' '), isNot(contains('private-token')));
+  });
+
+  test('iOS 토큰 조회 성공 뒤 서버 오류 상태를 토큰 없이 기록한다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    messaging.apnsToken = 'private-apns-token';
+    client.error = const ApiException(401, 'INSTALLATION_AUTH_REQUIRED');
+
+    await initialize();
+
+    expect(
+        events,
+        containsAllInOrder([
+          'apns:present',
+          'fcm:present',
+          'server:request',
+          'server:error:http:401:INSTALLATION_AUTH_REQUIRED',
+        ]));
+    expect(events.join(' '), isNot(contains('private-apns-token')));
+    expect(events.join(' '), isNot(contains('test-token')));
   });
 }

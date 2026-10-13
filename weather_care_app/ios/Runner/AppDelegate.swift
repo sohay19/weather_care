@@ -1,4 +1,5 @@
 import Flutter
+import os
 import StoreKit
 import UIKit
 import WidgetKit
@@ -11,6 +12,9 @@ import WidgetKit
   private let homeWidgetRefreshStatusKey = "refresh_status"
   private let homeWidgetRefreshURLKey = "refresh_url"
   private let adRemovalChannel = "com.codesoha.weathercare/ad-removal"
+  private let notificationDiagnosticsChannel = "com.codesoha.weathercare/notification-diagnostics"
+  private let notificationLogger = Logger(
+    subsystem: "com.codesoha.weathercare", category: "NotificationRegistration")
   private let homeWidgetGPSEnabledKey = "gps_enabled"
 
   override func application(
@@ -22,6 +26,18 @@ import WidgetKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let diagnostics = FlutterMethodChannel(
+      name: notificationDiagnosticsChannel,
+      binaryMessenger: engineBridge.applicationRegistrar.messenger()
+    )
+    diagnostics.setMethodCallHandler { [weak self] call, result in
+      guard call.method == "record", let event = call.arguments as? String else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      self?.notificationLogger.notice("WeatherCareNotification \(event, privacy: .public)")
+      result(nil)
+    }
     let purchaseChannel = FlutterMethodChannel(
       name: adRemovalChannel,
       binaryMessenger: engineBridge.applicationRegistrar.messenger()

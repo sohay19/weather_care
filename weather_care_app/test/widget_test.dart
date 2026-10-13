@@ -728,8 +728,9 @@ void main() {
     expect(find.byKey(const ValueKey('weather-metric-대기질')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-가시거리')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-일출·일몰')), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-info')), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
-        findsOneWidget);
+        findsNothing);
     expect(find.text('시간별 예보'), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
     expect(

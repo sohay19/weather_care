@@ -153,7 +153,7 @@ class WeatherInfoCard extends StatelessWidget {
         : '${current.temperature!.toStringAsFixed(1)}℃';
     final temperatureStyle = TextStyle(
       color: WeatherCareTheme.of(context).textPrimary,
-      fontSize: current.temperature == null ? 20 : 34,
+      fontSize: current.temperature == null ? 18 : 32,
       height: 1,
       fontWeight: FontWeight.w800,
       letterSpacing: -1.2,
@@ -182,13 +182,9 @@ class WeatherInfoCard extends StatelessWidget {
                 painter.dispose();
                 return width;
               }
-
               final apparentWidth = textWidth(apparentText, apparentStyle) + 32;
-              final fitsOnOneLine =
-                  textWidth(temperatureText, temperatureStyle) +
-                          apparentWidth +
-                          10 <=
-                      constraints.maxWidth;
+              final fitsOnOneLine = textWidth(temperatureText, temperatureStyle) +
+                          apparentWidth + 10 <= constraints.maxWidth;
               final weather = Wrap(
                 spacing: 10,
                 runSpacing: 2,
@@ -196,8 +192,7 @@ class WeatherInfoCard extends StatelessWidget {
                 children: [
                   Text(temperatureText, style: temperatureStyle),
                   ConstrainedBox(
-                    constraints:
-                        BoxConstraints(maxWidth: constraints.maxWidth * 0.55),
+                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.55),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

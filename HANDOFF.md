@@ -10245,3 +10245,30 @@
 
 - Today 최상단 날씨 카드의 체감온도 및 6개 지표 느낌표 아이콘을 모두 16px로 줄였다. 버튼의 32×32 터치 영역과 상세 팝업 동작은 유지했고, 기존 미커밋 변경도 보존했다.
 - Flutter 3.47.4 기준 weather_card_test.dart 20개 통과, weather_card.dart analyze 이슈 없음, git diff --check 통과. 별도 데스크톱 UI를 띄우지 않았고 커밋·푸시·배포 없음.
+
+## 2026-10-13 09:52 iPhone 콘솔 로그 확인
+
+- 사용자 제공 `붙여넣은 텍스트(1).txt`는 09:52:08.884~09:52:26.536 KST의 iPhone 통합 로그 27,124줄이다. `Runner`가 09:52:11 실행됐고, 09:52:11.493에 `[FirebaseCore][I-COR000005] No app has been configured yet`가 1회 기록된 뒤 `[FirebaseMessaging][I-FCM001000]` 프록시 활성화 로그가 기록됐다. `getNotificationSettings` 호출은 09:52:11 및 09:52:19에 보인다.
+- 이 파일에 앱 자체의 `Installation registration failed`/`FCM token refresh failed`, APNs 토큰 존재 여부, FCM `getToken()` 결과, 설치 PUT 결과는 기록돼 있지 않다. SpringBoard의 09:52:11.404 `without push registration`은 앱 시작 직후이며 이후 등록 상태의 증거로 단정하지 않는다. 기타 WebContent·FlutterView 시스템 경고는 현재 알림 원인으로 연결되지 않는다.
+- 운영 릴리스 DB를 읽기 전용으로 재확인했다. 09:52:12.834 KST에 9월 18일 생성된 알림 설정 행이 다시 저장됐고 `notification_enabled=1`, `daily_weather_enabled=1`이지만 대응하는 `installations` 행은 없다. 전체 iOS 설치 6건의 FCM 토큰은 0건이며, 09:52 이후 갱신된 iOS 설치 행은 0건이다. 시각상 로그의 기기와 일치할 가능성이 높지만 ID 직접 대조는 하지 않았다.
+- Firebase 초기 구성 경고는 로그 한 줄만으로 지속적인 초기화 실패라고 판정할 수 없다. APNs 등록 누락·FCM 조회 오류·설치 PUT 실패 중 어느 단계인지 확정하려면 토큰 원문 없이 단계별 성공/오류 코드를 남기는 진단 빌드가 필요하다. 앱 코드·서버 상태 변경 없음.
+
+## 2026-10-13 iOS 알림 토큰 등록 단계 진단 로그
+
+- 일반 설치본/TestFlight에서 Mac 콘솔 앱으로 확인할 수 있도록 `NotificationRegistrationService`의 권한→APNs 토큰 존재 여부→FCM 토큰 조회 결과→서버 설치 등록 결과를 `WeatherCareNotification` 접두어로 기록한다. iOS `AppDelegate`의 `os.Logger` 브리지에서 공개 문자열로 시스템 로그에 남긴다.
+- 기록 내용은 상태 및 제한된 Firebase/API 오류 코드만 포함한다. APNs/FCM 토큰 원문, 설치 ID, 좌표, 인증 헤더, 오류 메시지, 서버 응답 본문은 기록하지 않는다. APNs 조회 실패도 기록하고 기존 FCM 조회 흐름은 유지한다. 위치 무효화·등록 중지 상태도 별도 기록한다.
+- Flutter 3.47.4에서 등록 서비스 테스트 13개 통과 및 수정 Dart 파일 분석 이슈 없음. Windows 환경이라 Swift/iOS 실기기 빌드는 확인하지 못했으며 새 TestFlight 빌드 설치 후 iPhone의 Mac 콘솔에서 `WeatherCareNotification` 필터로 재현해야 한다.
+- 다른 작업 중인 UI 변경과 기존 HANDOFF 미커밋 기록은 커밋 대상에서 제외한다.
+
+## 2026-10-13 Today 시간별 예보 선택형 타임라인
+
+- Today 시간별 예보의 상시 노출 안내 문구를 헤더 느낌표 버튼의 팝업으로 옮겼다. 기존 정시/강수 구간·자료 제공 범위·가시거리 안내 문구를 팝업에서 확인할 수 있다.
+- 시간별 상세 카드들을 날씨·강수·자외선·바람·습도·대기질 6개 선택 버튼과 카드 내부 가로 시간축으로 교체했다. 날씨는 아이콘·기온·체감, 강수는 확률·강수량(눈 예보 시 신적설), 대기질은 미세먼지·초미세먼지를 표시한다. 결측은 대시로 구분하고 받은 강수 범위 문구는 보존한다. 오늘 정시 예보만 기본 항목에 표시하되, 오늘에 해당하는 내일 00시 강수 구간은 강수 항목에서 유지한다.
+- Flutter 3.47.4 기준 시간별/강수 구간/Today 상세 테스트 30개, Today 상단 표시 단일 테스트 통과. 수정 Dart 4개 analyze 이슈 없음, 관련 파일 git diff --check 통과. 추가 data_refresh_and_comparison_test.dart 실행에서는 관련 Today 결측 표시 2개가 통과했고, 기존 Main 카드 순서 기대값 1개와 테스트 런타임 셰이더 디코딩 1개가 실패했다.
+- UI 별도 실행·커밋·푸시·배포 없음. 기존 HANDOFF 및 다른 작업의 미커밋 변경은 보존했다.
+
+## 2026-10-13 Xcode 디버그 로그 재확인 및 출력 보강
+
+- 사용자 제공 `붙여넣은 마크다운.md`는 LLDB가 붙은 JIT 디버그 실행 로그 283줄이며 Firebase 초기화·광고 시작 관련 메시지만 보였다. 새 `WeatherCareNotification` 진단 이벤트가 한 줄도 없고 새로고침 시각도 기록되지 않아 토큰 조회 단계는 이 파일로 판정할 수 없다. FirebaseCore의 시작 직후 `No app has been configured yet` 한 줄만으로 영구 초기화 실패를 단정하지 않는다.
+- 운영 릴리스 DB 읽기 전용 확인: 10:13:30.516 KST에 기존 9월 18일 생성 알림 설정이 활성 상태로 다시 저장됐으나 대응 설치 행은 없다. iOS 설치 6건 중 FCM 토큰은 여전히 0건이고 10:00 이후 갱신된 iOS 설치 행도 0건이다. 로그와 설정 행의 직접 기기 ID 대조는 하지 않았다.
+- Xcode 디버그 콘솔에서 확인하기 쉽게 `WeatherCareNotification`을 debugPrint에도 기록하고, 등록 서비스 생성 시 `service:ready`를 남기도록 보강했다. 토큰·인증 값은 포함하지 않는다. Flutter 3.47.4 등록 서비스 테스트 13개 통과, 수정 Dart 파일 analyze 이슈 없음. 다른 미커밋 UI 변경은 보존했다.

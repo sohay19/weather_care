@@ -88,17 +88,21 @@ void main() {
     expect(row, findsOneWidget);
     for (final text in [
       '시각 자료 없음',
-      '날씨 자료 없음',
-      '예상 기온 자료 없음',
-      '예상 체감 자료 없음',
-      '자료 없음: 강수확률 · 강수량 · 예상 신적설 · 풍속',
+      '날씨 —',
+      '기온 —',
+      '체감 —',
     ]) {
       expect(
           find.descendant(of: row, matching: find.text(text)), findsOneWidget);
     }
+    await _selectHourly(tester, 'precipitation');
+    expect(find.text('강수확률 —'), findsOneWidget);
+    expect(find.text('강수량 —'), findsOneWidget);
+    await _selectHourly(tester, 'wind');
+    expect(find.text('바람 —'), findsOneWidget);
     for (final text in [
       '맑음',
-      '예상 기온 0℃',
+      '기온 0℃',
       '강수확률 0%',
       '강수량 0mm',
       '바람 0.0m/s',
@@ -111,29 +115,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('0도·무풍·대기질 0은 표시하고 무강수·무적설은 반복하지 않는다', (tester) async {
+  testWidgets('0도·무풍·대기질 0과 명시된 무강수는 구분해 표시한다', (tester) async {
     await _pumpHourly(tester, [_zero]);
     final row = find.byKey(const ValueKey('today-hourly-0'));
-    for (final text in [
-      '예상 기온 0℃',
-      '예상 체감 0℃',
-      '바람 0.0m/s',
-      '자외선 0',
-      '초미세먼지 0㎍/㎥',
-      '미세먼지 0㎍/㎥'
-    ]) {
-      expect(
-          find.descendant(of: row, matching: find.text(text)), findsOneWidget);
-    }
-    expect(find.descendant(of: row, matching: find.textContaining('자료 없음')),
-        findsNothing);
-    expect(find.text('강수확률 0%'), findsNothing);
-    expect(find.text('강수량 0mm'), findsNothing);
-    expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(
-      tester.getCenter(find.text('예상 기온 0℃')).dy,
-      closeTo(tester.getCenter(find.text('예상 체감 0℃')).dy, 2),
-    );
+        find.descendant(of: row, matching: find.text('기온 0℃')), findsOneWidget);
+    expect(
+        find.descendant(of: row, matching: find.text('체감 0℃')), findsOneWidget);
+    await _selectHourly(tester, 'precipitation');
+    expect(find.text('강수확률 0%'), findsOneWidget);
+    expect(find.text('강수량 0mm'), findsOneWidget);
+    expect(find.textContaining('신적설'), findsNothing);
+    await _selectHourly(tester, 'wind');
+    expect(find.text('바람 0.0m/s'), findsOneWidget);
+    await _selectHourly(tester, 'uv');
+    expect(find.text('자외선 0'), findsOneWidget);
+    await _selectHourly(tester, 'airQuality');
+    expect(find.text('미세먼지 0㎍/㎥'), findsOneWidget);
+    expect(find.text('초미세먼지 0㎍/㎥'), findsOneWidget);
   });
 
   testWidgets('명시된 NONE 범위는 수치 필드가 없어도 결측으로 안내하지 않는다', (tester) async {
@@ -153,9 +152,9 @@ void main() {
       }
     ]);
     final row = find.byKey(const ValueKey('today-hourly-0'));
-    expect(find.descendant(of: row, matching: find.textContaining('자료 없음')),
-        findsNothing);
-    expect(find.text('강수량 0mm'), findsNothing);
+    await _selectHourly(tester, 'precipitation');
+    expect(find.descendant(of: row, matching: find.text('강수량 0mm')),
+        findsOneWidget);
     expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(find.text('강수확률 20%'), findsOneWidget);
   });
@@ -165,13 +164,14 @@ void main() {
       {'time': '14', 'precipitationAmount': 2.5},
       {'time': '15', 'precipitationProbability': 80, 'snowExpected': true},
     ]);
+    await _selectHourly(tester, 'precipitation');
     expect(find.text('강수량 2.5mm'), findsOneWidget);
     expect(find.text('강수확률 80%'), findsOneWidget);
-    expect(find.text('눈이 예보됐어요'), findsOneWidget);
+    expect(find.text('신적설 —'), findsOneWidget);
     expect(find.text('강수확률 0%'), findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
     expect(find.text('예상 신적설 0cm'), findsNothing);
-    expect(find.text('자료 없음: 강수량 · 예상 신적설 · 풍속'), findsOneWidget);
+    expect(find.text('강수량 —'), findsOneWidget);
   });
 
   for (final scale in [1.0, 2.0]) {
@@ -216,19 +216,21 @@ void main() {
           scale: scale);
       expect(
           find.byKey(const ValueKey('today-hourly-timeline')), findsOneWidget);
+      await _selectHourly(tester, 'precipitation');
       for (final text in [
         '강수확률 80%',
         '강수량 1mm 미만',
-        '예상 신적설 0.5cm 미만',
-        '초미세먼지 0㎍/㎥',
-        '미세먼지 0㎍/㎥',
+        '신적설 0.5cm 미만',
         '강수량 30~50mm',
-        '예상 신적설 5cm 이상'
+        '신적설 5cm 이상'
       ]) {
         expect(find.text(text), findsOneWidget);
       }
       expect(find.text('강수량 1mm'), findsNothing);
       expect(find.text('예상 신적설 0.5cm'), findsNothing);
+      await _selectHourly(tester, 'airQuality');
+      expect(find.text('초미세먼지 0㎍/㎥'), findsOneWidget);
+      expect(find.text('미세먼지 0㎍/㎥'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -239,7 +241,7 @@ void main() {
     expect(find.text('시간별 예보 자료가 없어 표시하기 어려워요.'), findsOneWidget);
   });
 
-  testWidgets('시간별 상세 카드는 가로로 넘기며 습도와 강수 수치를 유지한다', (tester) async {
+  testWidgets('선택한 시간별 지표는 가로로 넘기며 바꿔 볼 수 있다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -253,9 +255,11 @@ void main() {
         'precipitationProbability': 80,
         'precipitationAmount': 2,
       },
+      {..._zero, 'time': '16', 'humidity': 75},
     ]);
 
     final timeline = find.byKey(const ValueKey('today-hourly-timeline'));
+    await _selectHourly(tester, 'humidity');
     expect(find.text('습도 60%'), findsOneWidget);
     await tester.drag(timeline, const Offset(-240, 0));
     await tester.pumpAndSettle();
@@ -265,9 +269,26 @@ void main() {
     expect(scrollable.position.pixels, greaterThan(0));
     expect(find.text('15시'), findsOneWidget);
     expect(find.text('습도 70%'), findsOneWidget);
+    await _selectHourly(tester, 'precipitation');
     expect(find.text('강수확률 80%'), findsOneWidget);
     expect(find.text('강수량 2mm'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('시간별 예보 안내는 느낌표 버튼의 팝업에서만 보인다', (tester) async {
+    await _pumpHourly(tester, [_zero]);
+    expect(find.textContaining('기온·바람은 정시 값'), findsNothing);
+    expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
+        findsNothing);
+    await tester.tap(find.byKey(const ValueKey('today-hourly-info')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('기온·바람은 정시 값'), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
+        findsOneWidget);
+    await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
+        findsNothing);
   });
 }
 
@@ -289,6 +310,7 @@ const _zero = <String, dynamic>{
 Future<void> _pumpHourly(WidgetTester tester, List<Map<String, dynamic>> hourly,
     {double scale = 1}) async {
   await tester.pumpWidget(MaterialApp(
+    theme: ThemeData(splashFactory: NoSplash.splashFactory),
     home: Scaffold(
       body: MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(scale)),
@@ -300,4 +322,9 @@ Future<void> _pumpHourly(WidgetTester tester, List<Map<String, dynamic>> hourly,
       ),
     ),
   ));
+}
+
+Future<void> _selectHourly(WidgetTester tester, String metric) async {
+  await tester.tap(find.byKey(ValueKey('today-hourly-filter-$metric')));
+  await tester.pumpAndSettle();
 }

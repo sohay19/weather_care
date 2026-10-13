@@ -53,23 +53,50 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
       generatedAt: widget.generatedAt,
       receivedAt: widget.receivedAt,
     ));
-    final forecastItems = widget.items
-        .where((item) =>
-            item.forecastDate == null ||
-            item.forecastDate!.compareTo(today) >= 0)
-        .toList(growable: false);
-    final visibleItems = forecastItems.take(24).toList(growable: false);
-    final selectedItems = _selected == _HourlyMetric.precipitation
-        ? [
-            ...visibleItems,
-            if (forecastItems.length > 24 &&
-                forecastItems[24].precipitationPeriod?.date == today &&
-                _hasMeaningfulPrecipitation(forecastItems[24]))
-              forecastItems[24],
-          ]
-        : visibleItems;
-    final hasMissingData = visibleItems.isEmpty ||
-        visibleItems.any(
+    final hourlyByHour = <int, HourlyWeatherItem>{};
+    final precipitationByHour = <int, HourlyWeatherItem>{};
+    for (final item in widget.items) {
+      final hour = int.tryParse(item.time);
+      final isToday = item.forecastDate == null || item.forecastDate == today;
+      if (isToday && hour != null && hour >= 0 && hour < 24) {
+        hourlyByHour.putIfAbsent(hour, () => item);
+      }
+      final period = item.precipitationPeriod;
+      if (period != null && period.date == today) {
+        final startHour =
+            period.start.toUtc().add(const Duration(hours: 9)).hour;
+        precipitationByHour.putIfAbsent(startHour, () => item);
+      } else if (period == null &&
+          isToday &&
+          hour != null &&
+          hour >= 0 &&
+          hour < 24) {
+        precipitationByHour.putIfAbsent(hour, () => item);
+      }
+    }
+    final emptySlots = [
+      for (var hour = 0; hour < 24; hour++)
+        HourlyWeatherItem(
+          time: hour.toString().padLeft(2, '0'),
+          forecastDate: today,
+          temperature: null,
+          precipitationProbability: null,
+          precipitationAmount: null,
+          snowExpected: null,
+          snowfallAmount: null,
+          windSpeed: null,
+          skyCondition: null,
+        ),
+    ];
+    final selectedItems = [
+      for (var hour = 0; hour < 24; hour++)
+        (_selected == _HourlyMetric.precipitation
+                ? precipitationByHour[hour]
+                : hourlyByHour[hour]) ??
+            emptySlots[hour],
+    ];
+    final hasMissingData = hourlyByHour.isEmpty ||
+        hourlyByHour.values.any(
           (item) =>
               item.time == '--' ||
               item.temperature == null ||
@@ -127,7 +154,28 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
             ),
           ),
           const SizedBox(height: 12),
-          if (selectedItems.isEmpty)
+          SingleChildScrollView(
+            key: ValueKey('${widget.keyPrefix}-hourly-timeline'),
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var index = 0; index < selectedItems.length; index++)
+                  _HourlyPoint(
+                    key: ValueKey('${widget.keyPrefix}-hourly-$index'),
+                    item: selectedItems[index],
+                    metric: _selected,
+                    dataPhase: widget.dataPhase,
+                    today: today,
+                  ),
+              ],
+            ),
+          ),
+          if ((_selected == _HourlyMetric.precipitation
+                  ? precipitationByHour
+                  : hourlyByHour)
+              .isEmpty) ...[
+            const SizedBox(height: 12),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -147,25 +195,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
                   color: WeatherCareTheme.of(context).textSecondary,
                 ),
               ),
-            )
-          else
-            SingleChildScrollView(
-              key: ValueKey('${widget.keyPrefix}-hourly-timeline'),
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (var index = 0; index < selectedItems.length; index++)
-                    _HourlyPoint(
-                      key: ValueKey('${widget.keyPrefix}-hourly-$index'),
-                      item: selectedItems[index],
-                      metric: _selected,
-                      dataPhase: widget.dataPhase,
-                      today: today,
-                    ),
-                ],
-              ),
             ),
+          ],
           if (hasMissingData &&
               widget.dataPhase != WeatherDataPhase.loading &&
               widget.onRetryMissingData != null) ...[
@@ -321,14 +352,10 @@ class _HourlyPoint extends StatelessWidget {
           : ['강수 구간 —'],
       _HourlyMetric.uv => [uvDescription(item.uvIndex) ?? '—'],
       _HourlyMetric.wind => [
-          item.windSpeed == null
-              ? '—'
-              : '${item.windSpeed!.toStringAsFixed(1)}m/s',
-          _windDirectionLabel(item.windDirection),
+          windDescription(item.windSpeed) ?? '—',
+          '${_windDirectionLabel(item.windDirection)} · ${item.windSpeed == null ? '—' : '${item.windSpeed!.toStringAsFixed(1)}m/s'}',
         ],
-      _HourlyMetric.humidity => [
-          item.humidity == null ? '—' : '${item.humidity!.toStringAsFixed(0)}%',
-        ],
+      _HourlyMetric.humidity => [humidityDescription(item.humidity) ?? '—'],
     };
 
     return SizedBox(
@@ -373,13 +400,16 @@ class _HourlyPoint extends StatelessWidget {
               values[index],
               textAlign: TextAlign.center,
               maxLines: 1,
-              style: index == 0
+              style: index == 0 &&
+                      metric != _HourlyMetric.precipitation &&
+                      metric != _HourlyMetric.uv
                   ? Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: palette.textPrimary,
                         fontWeight: FontWeight.w800,
                       )
                   : Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: palette.textSecondary,
+                        fontSize: 10,
                       ),
             ),
         ],
@@ -493,21 +523,45 @@ class _HumidityCup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFilledLabel = humidity != null && humidity! > 49;
     return Semantics(
       label: humidity == null
           ? '습도 자료 없음'
           : '습도 ${humidity!.toStringAsFixed(0)}% 채움',
       excludeSemantics: true,
       child: SizedBox(
-        child: Center(
-          child: CustomPaint(
-            size: const Size(20, 25),
-            painter: _HumidityCupPainter(
-              fill: (humidity ?? 0).clamp(0, 100) / 100,
-              color: color,
-              background: background,
+        width: 40,
+        height: 42,
+        child: Stack(
+          children: [
+            CustomPaint(
+              size: const Size(40, 42),
+              painter: _HumidityCupPainter(
+                fill: (humidity ?? 0).clamp(0, 100) / 100,
+                color: color,
+                background: background,
+              ),
             ),
-          ),
+            Positioned(
+              top: isFilledLabel ? 23 : 11,
+              left: 4,
+              right: 4,
+              height: 12,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  humidity == null ? '—' : '${humidity!.toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: isFilledLabel
+                        ? WeatherCareTheme.of(context).onPrimary
+                        : WeatherCareTheme.of(context).textPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -587,18 +641,3 @@ String _amountNumber(double value) => value == value.roundToDouble()
 
 bool _hasPositiveAmount(String? label, String unit) =>
     label != null && label != '0$unit' && label != '0.0$unit';
-
-bool _hasMeaningfulPrecipitation(HourlyWeatherItem item) {
-  final rainAmount = item.precipitationAmountLabel ??
-      (item.precipitationAmount == null
-          ? null
-          : '${_amountNumber(item.precipitationAmount!)}mm');
-  final snowAmount = item.snowfallAmountLabel ??
-      (item.snowfallAmount == null
-          ? null
-          : '${_amountNumber(item.snowfallAmount!)}cm');
-  return (item.precipitationProbability ?? 0) > 0 ||
-      item.snowExpected == true ||
-      _hasPositiveAmount(rainAmount, 'mm') ||
-      _hasPositiveAmount(snowAmount, 'cm');
-}

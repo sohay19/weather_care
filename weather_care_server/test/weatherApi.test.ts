@@ -956,6 +956,7 @@ describe('today timeline', () => {
       const data = await response.json<{
         current: WeatherSnapshot;
         hourly: WeatherSnapshot[];
+        timelineHourly: WeatherSnapshot[];
         timeline: ReturnType<typeof buildTimeline>;
       }>();
 
@@ -964,6 +965,9 @@ describe('today timeline', () => {
       expect(data.hourly.map((item) => item.observedAt.slice(11, 13))).toEqual([
         '09',
         '12',
+      ]);
+      expect(data.timelineHourly.map((item) => item.observedAt.slice(11, 13))).toEqual([
+        '03', '06', '09', '12', '15', '18', '21', '00',
       ]);
       expect(data).not.toHaveProperty('nextForecast');
       expect(data.timeline[0].detail).toBe('예상기온 24.0℃ / 맑음');

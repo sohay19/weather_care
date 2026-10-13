@@ -129,18 +129,26 @@ export class KmaWeatherProvider implements WeatherProvider {
       latestBaseDateTimes(now, 4),
       fetchItems,
     );
-    const coveragePromise = includeDailyCoverage
+    const coverageBases = includeDailyCoverage
+      ? dailyCoverageBaseDateTimes(now)
+      : [];
+    const firstIssuePromise = coverageBases[0]?.baseTime === '0200'
+      ? firstAvailableForecastItems([coverageBases[0]], fetchItems, true)
+          .catch(() => undefined)
+      : Promise.resolve(undefined);
+    const nightPromise = coverageBases.length
       ? firstAvailableForecastItems(
-          dailyCoverageBaseDateTimes(now),
+          coverageBases.filter((base) => base.baseTime !== '0200'),
           fetchItems,
           true,
         ).catch(() => undefined)
       : Promise.resolve(undefined);
     const latest = await latestPromise;
-    const coverage = await coveragePromise;
-    const items = coverage
-      ? mergeForecastItems(coverage.items, latest.items)
-      : latest.items;
+    const [firstIssue, night] = await Promise.all([firstIssuePromise, nightPromise]);
+    const items = mergeForecastItems(
+      mergeForecastItems(night?.items ?? [], firstIssue?.items ?? []),
+      latest.items,
+    );
     return buildForecastFromItems(
       items,
       now,

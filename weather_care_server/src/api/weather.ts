@@ -478,6 +478,7 @@ router.get('/today', async (c) => {
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
       hourly: responseForecast.hourly,
+      timelineHourly: responseForecast.timelineHourly ?? responseForecast.hourly,
       recommendations,
       lifestyleMessages: [
         ...warningMessages,

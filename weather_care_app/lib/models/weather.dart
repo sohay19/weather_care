@@ -173,13 +173,15 @@ class HourlyWeatherItem {
     final explicitSnowExpected = json['snowExpected'];
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
-      precipitationPeriod: PrecipitationPeriod.fromJson(json['precipitationPeriod'], observedAt),
+      precipitationPeriod:
+          PrecipitationPeriod.fromJson(json['precipitationPeriod'], observedAt),
       precipitationPeriodProvided: json.containsKey('precipitationPeriod'),
       forecastDate: json['forecastDate']?.toString() ?? parsedDate,
       temperature: _optionalNumber(json['temperature']),
       apparentTemperature: _optionalNumber(json['apparentTemperature']),
       kmaApparentTemperature: _optionalNumber(json['kmaApparentTemperature']),
-      precipitationProbability: _optionalNumber(json['precipitationProbability']),
+      precipitationProbability:
+          _optionalNumber(json['precipitationProbability']),
       precipitationAmount: _optionalNumber(json['precipitationAmount']),
       precipitationAmountLabel: _amountRangeLabel(
         json['precipitationAmountRange'],
@@ -597,6 +599,7 @@ class TodayWeatherResponse {
   final List<WeatherMessagePart> dataStatusMessages;
   final List<TimelineItem> timeline;
   final List<HourlyWeatherItem> hourly;
+  final List<HourlyWeatherItem>? timelineHourly;
 
   const TodayWeatherResponse({
     required this.dataSource,
@@ -615,6 +618,7 @@ class TodayWeatherResponse {
     this.dataStatusMessages = const [],
     required this.timeline,
     required this.hourly,
+    this.timelineHourly,
   });
 
   TodayWeatherResponse withRegionName(String name) => TodayWeatherResponse(
@@ -634,6 +638,7 @@ class TodayWeatherResponse {
         dataStatusMessages: dataStatusMessages,
         timeline: timeline,
         hourly: hourly,
+        timelineHourly: timelineHourly,
       );
 
   factory TodayWeatherResponse.fromJson(Map<String, dynamic> json,
@@ -672,6 +677,10 @@ class TodayWeatherResponse {
         .whereType<Map<String, dynamic>>()
         .map(HourlyWeatherItem.fromJson)
         .toList();
+    final timelineHourly = (json['timelineHourly'] as List<dynamic>?)
+        ?.whereType<Map<String, dynamic>>()
+        .map(HourlyWeatherItem.fromJson)
+        .toList();
     final briefing = json['briefing'];
     final briefingTimeline =
         (json['briefingTimeline'] as List<dynamic>? ?? const [])
@@ -705,6 +714,7 @@ class TodayWeatherResponse {
       dataStatusMessages: dataStatusMessages,
       timeline: timeline,
       hourly: hourly,
+      timelineHourly: timelineHourly,
     );
   }
 }

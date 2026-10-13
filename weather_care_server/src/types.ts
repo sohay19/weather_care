@@ -474,6 +474,8 @@ export interface TodayWeatherResponse {
   currentRoadIce?: RoadIceRisk;
   currentRoadControl?: OfficialRoadControl;
   hourly: WeatherSnapshot[];
+  /** 당일 지난 시각을 포함해 Main 타임라인에 표시할 시간별 자료. */
+  timelineHourly?: WeatherSnapshot[];
   recommendations: Recommendation[];
   lifestyleMessages: {
     type: LifestyleInsightType;

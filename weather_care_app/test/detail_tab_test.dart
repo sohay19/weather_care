@@ -8,7 +8,7 @@ import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
-  testWidgets('Main 타임라인은 다음 날 시각을 구분해 24시간 표시한다', (tester) async {
+  testWidgets('Main 타임라인은 다음 날 자료를 제외하고 오늘 00~23시를 표시한다', (tester) async {
     final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
     final today = _isoDate(nowInKorea);
     final tomorrow = _isoDate(nowInKorea.add(const Duration(days: 1)));
@@ -55,9 +55,16 @@ void main() {
 
     expect(find.byKey(const ValueKey('main-hourly-23')), findsOneWidget);
     expect(find.byKey(const ValueKey('main-hourly-24')), findsNothing);
+    expect(find.text('00시'), findsOneWidget);
     expect(find.text('23시'), findsOneWidget);
-    expect(find.text('내일 00시'), findsOneWidget);
+    expect(find.text('내일 00시'), findsNothing);
     expect(find.text('내일 18시'), findsNothing);
+    expect(find.text('100°C'), findsNothing);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('main-hourly-18')),
+            matching: find.text('0°C')),
+        findsOneWidget);
     expect(find.text('눈 없음'), findsNothing);
     expect(tester.takeException(), isNull);
   });

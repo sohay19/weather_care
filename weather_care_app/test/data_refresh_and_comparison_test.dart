@@ -153,8 +153,8 @@ void main() {
       const Offset(0, -300),
     );
     await tester.pumpAndSettle();
-    final first = find.byKey(const ValueKey('main-hourly-0'));
-    final second = find.byKey(const ValueKey('main-hourly-1'));
+    final first = find.byKey(const ValueKey('main-hourly-10'));
+    final second = find.byKey(const ValueKey('main-hourly-11'));
     expect(
         find.descendant(of: first, matching: find.byType(WeatherConditionIcon)),
         findsOneWidget);

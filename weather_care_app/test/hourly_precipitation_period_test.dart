@@ -68,12 +68,12 @@ void main() {
       expect(find.text('14~15시'), findsOneWidget);
       expect(find.text('1mm 미만'), findsOneWidget);
       await _selectHourly(tester, 'wind');
-      expect(find.text('2.0m/s'), findsOneWidget);
+      expect(find.text('방향 — · 2.0m/s'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('오늘의 마지막 강수 구간과 내일 00시 기온을 날짜로 구분한다', (tester) async {
+  testWidgets('오늘의 마지막 강수 구간은 유지하고 내일 기온은 제외한다', (tester) async {
     final now = DateTime.now();
     final today = dateInKorea(now);
     final tomorrow = dateInKorea(now.add(const Duration(days: 1)));
@@ -82,22 +82,27 @@ void main() {
       {..._slot(tomorrow, 0), 'temperature': 99}
     ]);
     expect(find.text('23시'), findsOneWidget);
-    expect(find.text('00시'), findsNothing);
-    expect(find.text('내일 00시'), findsOneWidget);
-    expect(find.text('99°C'), findsOneWidget);
-    expect(find.text('(체감 22°C)'), findsNWidgets(2));
+    expect(find.text('00시'), findsOneWidget);
+    expect(find.text('내일 00시'), findsNothing);
+    expect(find.text('99°C'), findsNothing);
+    expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('23~24시'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('today-hourly-23')),
+            matching: find.text('23~24시')),
+        findsOneWidget);
     await _selectHourly(tester, 'wind');
-    expect(find.text('2.0m/s'), findsNWidgets(2));
+    expect(find.text('방향 — · 2.0m/s'), findsOneWidget);
   });
 
-  testWidgets('내일 00시만 있어도 날씨와 전날 강수 구간을 각각 표시한다', (tester) async {
+  testWidgets('내일 00시만 있어도 오늘 마지막 강수 구간을 표시한다', (tester) async {
     final tomorrow = dateInKorea(DateTime.now().add(const Duration(days: 1)));
     await _pump(tester, [_slot(tomorrow, 0)]);
-    expect(find.text('내일 00시'), findsOneWidget);
-    expect(find.text('22°C'), findsOneWidget);
-    expect(find.text('(체감 22°C)'), findsOneWidget);
+    expect(find.text('내일 00시'), findsNothing);
+    expect(find.text('22°C'), findsNothing);
+    expect(find.text('(체감 22°C)'), findsNothing);
+    expect(find.byKey(const ValueKey('today-hourly-23')), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     expect(find.text('1mm 미만'), findsOneWidget);
@@ -113,8 +118,12 @@ void main() {
     ]);
     expect(find.byKey(const ValueKey('today-hourly-24')), findsNothing);
     await _selectHourly(tester, 'precipitation');
-    expect(find.byKey(const ValueKey('today-hourly-24')), findsOneWidget);
-    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-24')), findsNothing);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('today-hourly-23')),
+            matching: find.text('23~24시')),
+        findsOneWidget);
   });
 
   testWidgets('내일 00시가 명시적인 무강수이면 23~24시를 0으로 표시한다', (tester) async {
@@ -139,7 +148,7 @@ void main() {
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     expect(find.text('0%'), findsOneWidget);
-    expect(find.text('00시'), findsNothing);
+    expect(find.text('00시'), findsOneWidget);
   });
 
   testWidgets('Main으로 옮긴 타임라인도 오늘 마지막 강수 구간을 유지한다', (tester) async {
@@ -164,7 +173,8 @@ void main() {
             find.byKey(const ValueKey('main-hourly-filter-precipitation')))
         .onSelected!(true);
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('main-hourly-24')), findsOneWidget);
+    expect(find.byKey(const ValueKey('main-hourly-24')), findsNothing);
+    expect(find.byKey(const ValueKey('main-hourly-23')), findsOneWidget);
     expect(find.text('23~24시'), findsOneWidget);
     expect(find.text('1mm 미만'), findsNWidgets(24));
   });
@@ -196,7 +206,12 @@ void main() {
       ),
     ));
     expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
-    expect(find.byKey(const ValueKey('today-hourly-1')), findsNothing);
+    expect(find.byKey(const ValueKey('today-hourly-23')), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('today-hourly-15')),
+            matching: find.text('22°C')),
+        findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('14~15시'), findsOneWidget);
   });

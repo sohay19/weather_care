@@ -119,7 +119,7 @@ class MainTab extends StatelessWidget {
                     SizedBox(height: compact ? 12 : 16),
                     HourlyForecastSection(
                       keyPrefix: 'main',
-                      items: today.hourly,
+                      items: today.timelineHourly ?? today.hourly,
                       generatedAt: today.generatedAt,
                       receivedAt: today.receivedAt,
                       dataPhase: dataPhase,

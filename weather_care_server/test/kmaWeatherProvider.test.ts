@@ -326,6 +326,12 @@ describe('KmaWeatherProvider', () => {
           ),
         );
       }
+      if (requestBase === '2300') {
+        return successResponse(
+          slot('20260820', '0000', { TMP: '20', PTY: '0', SKY: '1' },
+            { baseDate: '20260819', baseTime: '2300' }),
+        );
+      }
       throw new Error(`Unexpected base time: ${requestBase}`);
     });
 
@@ -336,7 +342,7 @@ describe('KmaWeatherProvider', () => {
     });
     const forecast = await provider.getForecastByRegion(60, 121);
 
-    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(4);
     const requestUrls = fetcher.mock.calls.map(([input]) =>
       new URL(String(input)),
     );
@@ -344,10 +350,10 @@ describe('KmaWeatherProvider', () => {
     expect(firstUrl.searchParams.get('serviceKey')).toBe('abc+123');
     expect(firstUrl.searchParams.get('base_time')).toBe('0800');
     expect(requestUrls.map((url) => url.searchParams.get('base_time'))).toEqual(
-      expect.arrayContaining(['0200', '0500', '0800']),
+      expect.arrayContaining(['2300', '0200', '0500', '0800']),
     );
     expect(forecast.current.temperature).toBe(27);
-    expect(forecast.timelineHourly?.[0].temperature).toBe(21);
+    expect(forecast.timelineHourly?.[0].temperature).toBe(20);
   });
 
   it('loads the latest issue only for the fast Main response', async () => {
@@ -418,6 +424,14 @@ describe('KmaWeatherProvider', () => {
           ),
         ]);
       }
+      if (requestBase === '2300') {
+        return successResponse([
+          ...slot('20260915', '0000', { TMP: '17', PTY: '0', SKY: '1' },
+            { baseDate: '20260914', baseTime: '2300' }),
+          ...slot('20260915', '0300', { TMP: '16', PTY: '0', SKY: '1' },
+            { baseDate: '20260914', baseTime: '2300' }),
+        ]);
+      }
       throw new Error(`Unexpected base time: ${requestBase}`);
     });
     const provider = new KmaWeatherProvider({
@@ -428,7 +442,7 @@ describe('KmaWeatherProvider', () => {
 
     const forecast = await provider.getForecastByRegion(60, 121);
 
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3);
     expect(forecast.hourly.map((item) => item.observedAt)).toEqual([
       '2026-09-15T09:00:00+09:00',
       '2026-09-16T00:00:00+09:00',
@@ -439,6 +453,7 @@ describe('KmaWeatherProvider', () => {
       item.temperature,
       item.issuedAt,
     ])).toEqual([
+      ['2026-09-15T00:00:00+09:00', 17, '2026-09-14T23:00:00+09:00'],
       ['2026-09-15T03:00:00+09:00', 18, '2026-09-15T02:00:00+09:00'],
       ['2026-09-15T06:00:00+09:00', 20, '2026-09-15T02:00:00+09:00'],
       ['2026-09-15T09:00:00+09:00', 25, '2026-09-15T08:00:00+09:00'],

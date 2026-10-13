@@ -41,6 +41,16 @@ describe('weekly precipitation intervals', () => {
     expect(hours?.map((hour) => hour.amountText)).toEqual(['', '자료없음', ' ', '강수없음']);
   });
 
+  it('adds mm to quantitative grid PCP values for the weekly response', () => {
+    const forecast = buildForecastFromItems([
+      ...slot('20261231', '1000', { TMP: '1', POP: '70', PCP: '2' }),
+      ...slot('20261231', '1100', { POP: '30', PCP: '0.5' }),
+      ...slot('20261231', '1200', { POP: '0', PCP: '0' }),
+    ], now, base);
+    expect(forecast.daily[0].precipitationDetail?.hours.map((hour) => hour.amountText))
+      .toEqual(['2mm', '0.5mm', '0mm']);
+  });
+
   it.each(['0800', '1700'])('does not treat extended categorical PCP as mm (%s publication)', (baseTime) => {
     const extendedDate = baseTime === '0800' ? '20270103' : '20270104';
     const forecast = buildForecastFromItems([

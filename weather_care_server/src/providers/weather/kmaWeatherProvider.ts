@@ -611,12 +611,19 @@ function dailyPrecipitationDetail(
     }).map((snapshot) => ({
       forecastAt: snapshot.observedAt,
       probability: validProbability(snapshot.precipitationProbability),
-      amountText: typeof snapshot.rawValue === 'object' && snapshot.rawValue !== null
-        && 'precipitationAmount' in snapshot.rawValue
-        && typeof snapshot.rawValue.precipitationAmount === 'string'
-        ? snapshot.rawValue.precipitationAmount : undefined,
+      amountText: weeklyPrecipitationAmountText(snapshot),
     })),
   };
+}
+
+function weeklyPrecipitationAmountText(snapshot: WeatherSnapshot): string | undefined {
+  const raw = typeof snapshot.rawValue === 'object' && snapshot.rawValue !== null
+    && 'precipitationAmount' in snapshot.rawValue
+    && typeof snapshot.rawValue.precipitationAmount === 'string'
+    ? snapshot.rawValue.precipitationAmount : undefined;
+  if (raw === undefined) return undefined;
+  const numeric = raw.trim();
+  return /^\d+(?:\.\d+)?$/.test(numeric) ? `${numeric}mm` : raw;
 }
 
 function hourlyPrecipitationPeriod(forecastAt: string, base: BaseDateTime): WeatherSnapshot['precipitationPeriod'] {

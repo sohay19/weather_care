@@ -308,10 +308,14 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
     }
 
     _scheduleLoad(adUnitId);
+    final margin =
+        (widget.platformOverride ?? defaultTargetPlatform) == TargetPlatform.iOS
+            ? const EdgeInsets.all(12)
+            : EdgeInsets.zero;
     final nativeAd = _nativeAd;
     if (nativeAd == null) {
       if (_failedId == adUnitId) return const SizedBox.shrink();
-      return _NativeAdLoadingPlaceholder(widget.placement, widget.size);
+      return _NativeAdLoadingPlaceholder(widget.placement, widget.size, margin);
     }
 
     return Semantics(
@@ -320,6 +324,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
       child: _NativeAdFrame(
         frameKey: ValueKey('${widget.placement.name}-native-ad-card'),
         size: widget.size,
+        margin: margin,
         decoration: WeatherCareTheme.of(context).surfaceDecoration(radius: 22),
         child: nativeAd.buildWidget(),
       ),
@@ -340,14 +345,16 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
 class _NativeAdLoadingPlaceholder extends StatelessWidget {
   final NativeAdPlacement placement;
   final NativeAdCardSize size;
+  final EdgeInsets margin;
 
-  const _NativeAdLoadingPlaceholder(this.placement, this.size);
+  const _NativeAdLoadingPlaceholder(this.placement, this.size, this.margin);
 
   @override
   Widget build(BuildContext context) {
     return _NativeAdFrame(
       frameKey: ValueKey('${placement.name}-native-ad-placeholder'),
       size: size,
+      margin: margin,
       decoration: BoxDecoration(
         color: WeatherCareTheme.of(context).surfaceSubtle,
         borderRadius: BorderRadius.circular(22),
@@ -366,38 +373,43 @@ class _NativeAdLoadingPlaceholder extends StatelessWidget {
 class _NativeAdFrame extends StatelessWidget {
   final Key frameKey;
   final NativeAdCardSize size;
+  final EdgeInsets margin;
   final Decoration decoration;
   final Widget child;
 
   const _NativeAdFrame({
     required this.frameKey,
     required this.size,
+    required this.margin,
     required this.decoration,
     required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.constrainWidth(400);
-        final height = switch (size) {
-          // Google의 소형 네이티브 템플릿은 Android와 iOS 모두 4:1이다.
-          // 템플릿보다 높은 고정 영역을 만들면 내용이 위로 치우쳐 보인다.
-          NativeAdCardSize.small => width / 4,
-          NativeAdCardSize.medium => 360.0,
-        };
-        return Center(
-          child: Container(
-            key: frameKey,
-            width: width,
-            height: height,
-            clipBehavior: Clip.antiAlias,
-            decoration: decoration,
-            child: child,
-          ),
-        );
-      },
+    return Padding(
+      padding: margin,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.constrainWidth(400);
+          final height = switch (size) {
+            // Google의 소형 네이티브 템플릿은 Android와 iOS 모두 4:1이다.
+            // 템플릿보다 높은 고정 영역을 만들면 내용이 위로 치우쳐 보인다.
+            NativeAdCardSize.small => width / 4,
+            NativeAdCardSize.medium => 360.0,
+          };
+          return Center(
+            child: Container(
+              key: frameKey,
+              width: width,
+              height: height,
+              clipBehavior: Clip.antiAlias,
+              decoration: decoration,
+              child: child,
+            ),
+          );
+        },
+      ),
     );
   }
 }

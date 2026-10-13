@@ -6,6 +6,36 @@ import 'package:weather_care/features/home/widgets/weather_card.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
+  test('상태 표현은 각 범위의 경계에서 일관되게 바뀐다', () {
+    expect(humidityDescription(35), '건조');
+    expect(humidityDescription(35.1), '쾌적');
+    expect(humidityDescription(70), '습한 편');
+    expect(humidityDescription(80), '매우 습함');
+    expect(windDescription(3.9), '약한 바람');
+    expect(windDescription(4), '약간 강한 바람');
+    expect(windDescription(9), '강한 바람');
+    expect(windDescription(14), '매우 강한 바람');
+    expect(uvDescription(2), '낮음');
+    expect(uvDescription(2.1), '보통');
+    expect(uvDescription(7), '높음');
+    expect(uvDescription(10.1), '위험');
+    expect(ozoneDescription(0.03), '좋음');
+    expect(ozoneDescription(0.0301), '보통');
+    expect(ozoneDescription(0.09), '보통');
+    expect(ozoneDescription(0.0901), '나쁨');
+    expect(ozoneDescription(0.15), '나쁨');
+    expect(ozoneDescription(0.1501), '매우 나쁨');
+    expect(visibilityDescription(199), '매우 짧음');
+    expect(visibilityDescription(200), '짧음');
+    expect(visibilityDescription(1000), '나쁨');
+    expect(visibilityDescription(10000), '좋음');
+    expect(visibilityDescription(20000), '매우 좋음');
+    expect(humidityDescription(null), isNull);
+    expect(windDescription(null), isNull);
+    expect(uvDescription(null), isNull);
+    expect(visibilityDescription(null), isNull);
+  });
+
   test('대기질 측정소명과 관측 시각을 읽고 없는 정보는 만들지 않는다', () {
     final current = CurrentWeather.fromJson({
       'current': {
@@ -18,6 +48,25 @@ void main() {
     expect(current.airQualityObservedAt, '2026-09-10T09:00:00Z');
     expect(CurrentWeather.fromJson({}).airQualityStationName, isNull);
     expect(CurrentWeather.fromJson({}).airQualityObservedAt, isNull);
+  });
+
+  testWidgets('현재 대기질에 오존을 포함하고 관측 농도를 안내한다', (tester) async {
+    final current = CurrentWeather.fromJson({
+      'current': {'pm10': 20, 'pm25': 8, 'ozone': 0.12},
+    });
+    expect(current.ozone, 0.12);
+    await _pumpCard(tester, current);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('weather-metric-대기질')),
+        matching: find.text('나쁨'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('weather-metric-detail-대기질')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('오존 0.120ppm'), findsOneWidget);
+    expect(find.textContaining('공식 통합대기환경지수는 아니에요'), findsOneWidget);
   });
 
   for (final timestamp in [
@@ -263,11 +312,11 @@ void main() {
   testWidgets('각 지표 상세는 수준을 먼저 보여주고 설명을 아래에 둔다', (tester) async {
     final expectedLevels = {
       '체감': '기상청 방식으로 계산한 체감온도예요',
-      '습도': '실외 습도는 높은 수준이에요',
-      '바람': '바람은 강한 수준이에요',
+      '습도': '실외 습도 · 습한 편',
+      '바람': '바람 · 강한 바람',
       '자외선': '자외선은 높음 단계예요',
       '대기질': '대기질은 나쁨 등급이에요',
-      '가시거리': '현재 시야는 좋은 수준이에요',
+      '가시거리': '가시거리 · 좋음',
       '일출·일몰': '오늘의 일출·일몰 시각이에요',
     };
     await _pumpCard(
@@ -286,6 +335,27 @@ void main() {
       sunriseAt: '2026-09-20T21:17:00Z',
       sunsetAt: '2026-09-21T09:28:00Z',
     );
+    final expectedValues = {
+      '습도': '습한 편\n72%',
+      '바람': '강한 바람\n남서 10.0m/s',
+      '자외선': '높음\n7.0',
+      '가시거리': '좋음\n12 km',
+    };
+    for (final entry in expectedValues.entries) {
+      expect(
+        find.descendant(
+          of: find.byKey(ValueKey('weather-metric-${entry.key}')),
+          matching: find.text(entry.value),
+        ),
+        findsOneWidget,
+      );
+    }
+    const expectedRanges = {
+      '습도': '35% 이하: 건조',
+      '바람': '14m/s 이상: 매우 강한 바람',
+      '자외선': '10 초과: 위험',
+      '가시거리': '20km 이상: 매우 좋음',
+    };
     for (final entry in expectedLevels.entries) {
       final button = find.byKey(entry.key == '체감'
           ? const ValueKey('weather-apparent-detail')
@@ -298,6 +368,9 @@ void main() {
       );
       expect(level, findsOneWidget);
       expect(tester.widget<Text>(level).data, entry.value);
+      if (expectedRanges[entry.key] case final range?) {
+        expect(find.textContaining(range), findsOneWidget);
+      }
       await tester.tap(find.text('닫기'));
       await tester.pumpAndSettle();
     }
@@ -324,11 +397,11 @@ void main() {
     expect(find.text('자료 없음'), findsNothing);
     expect(find.text('0.0℃'), findsOneWidget);
     expect(find.text('체감 0.0℃'), findsOneWidget);
-    expect(find.text('0%'), findsOneWidget);
-    expect(find.text('0.0m/s'), findsOneWidget);
-    expect(find.text('0.0'), findsOneWidget);
+    expect(find.text('건조\n0%'), findsOneWidget);
+    expect(find.text('약한 바람\n0.0m/s'), findsOneWidget);
+    expect(find.text('낮음\n0.0'), findsOneWidget);
     expect(find.text('좋음'), findsOneWidget);
-    expect(find.text('0 m'), findsOneWidget);
+    expect(find.text('매우 짧음\n0 m'), findsOneWidget);
     expect(find.text('6:17 · 18:28'), findsOneWidget);
   });
 
@@ -381,10 +454,19 @@ void main() {
           .getTopRight(find.byKey(const ValueKey('weather-apparent-detail')))
           .dx;
       expect(apparentRight, closeTo(cardRight - 20, 1.1));
-      expect(find.text('남서 2.8m/s'), findsOneWidget);
+      expect(find.text('약한 바람\n남서 2.8m/s'), findsOneWidget);
       expect(find.text('나쁨'), findsOneWidget);
-      expect(find.text('12 km'), findsOneWidget);
+      expect(find.text('좋음\n12 km'), findsOneWidget);
       expect(find.byKey(const ValueKey('weather-metric-체감')), findsNothing);
+      final metricHeight = tester
+          .getSize(find.byKey(const ValueKey('weather-metric-습도')))
+          .height;
+      for (final label in ['바람', '자외선', '대기질', '가시거리', '일출·일몰']) {
+        expect(
+          tester.getSize(find.byKey(ValueKey('weather-metric-$label'))).height,
+          closeTo(metricHeight, 0.01),
+        );
+      }
       final first =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-습도')));
       final second =
@@ -466,6 +548,37 @@ void main() {
     );
     expect(find.text('0.0℃'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Main 현재 대기질은 오존만 있어도 등급을 표시한다', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: MainTab(
+          today: const TodayWeatherResponse(
+            dataSource: 'test',
+            region: WeatherRegion(nx: 60, ny: 127, name: '서울'),
+            brief: '테스트',
+            current: CurrentWeather(temperature: 20, ozone: 0.12),
+            recommendations: [],
+            lifestyleMessages: [],
+            timeline: [],
+            hourly: [],
+          ),
+          dateLabel: '9월 10일',
+          mood: 'calm',
+          serverFeaturesAvailable: true,
+          onRefresh: () async {},
+          onDetail: (_) {},
+        ),
+      ),
+    ));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('main-top-metric-대기질')),
+        matching: find.text('나쁨'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Main 날씨 문구는 앱 재판정 없이 서버 문구를 사용한다', (tester) async {

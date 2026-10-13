@@ -8,7 +8,7 @@ import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
-  testWidgets('Today 시간별 예보는 다음 날 시각을 구분해 24시간 표시한다', (tester) async {
+  testWidgets('Today 타임라인은 다음 날 시각을 구분해 24시간 표시한다', (tester) async {
     final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
     final today = _isoDate(nowInKorea);
     final tomorrow = _isoDate(nowInKorea.add(const Duration(days: 1)));

@@ -279,7 +279,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
                     for (final recommendation in visible)
                       SizedBox(
                         width: itemWidth,
-                        height: 150,
+                        height: 160,
                         child: _BagItem(
                           key: ValueKey(
                             'bag-item-${recommendation.type.apiName.toLowerCase()}',

@@ -10,6 +10,11 @@ import 'package:weather_care/services/theme_mode_settings.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test('신규 설치에 저장된 테마가 없으면 시스템 설정을 따른다', () async {
+    await ThemeModeSettings.instance.load();
+    expect(ThemeModeSettings.instance.value, ThemeMode.system);
+  });
+
   testWidgets('설정 모드 선택이 즉시 적용·저장되고 시스템 모드에서 기기 설정을 따른다', (tester) async {
     await ThemeModeSettings.instance.load();
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
@@ -119,17 +124,9 @@ void main() {
     final palette = WeatherCareTheme.of(context);
     expect(palette.moodColors('cloudy').first,
         WeatherCarePalette.dark.primarySoft);
-    final weatherCard = tester
-        .widgetList<Container>(find.byType(Container))
-        .where((widget) =>
-            widget.decoration is BoxDecoration &&
-            (widget.decoration as BoxDecoration).gradient != null)
-        .first;
-    expect(
-        ((weatherCard.decoration as BoxDecoration).gradient as LinearGradient)
-            .colors
-            .first,
-        palette.primarySoft);
+    final weatherCard = tester.widget<AnimatedContainer>(
+        find.byKey(const ValueKey('main-top-weather-card')));
+    expect(weatherCard.decoration, palette.surfaceDecoration());
     final windMetric = find.byKey(const ValueKey('main-top-metric-바람'));
     expect(
         tester

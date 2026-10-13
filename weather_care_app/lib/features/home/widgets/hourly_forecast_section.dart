@@ -9,7 +9,7 @@ import 'home_section_header.dart';
 import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
-enum _HourlyMetric { weather, precipitation, uv, wind, humidity, airQuality }
+enum _HourlyMetric { weather, precipitation, uv, wind, humidity }
 
 class HourlyForecastSection extends StatefulWidget {
   final List<HourlyWeatherItem> items;
@@ -79,11 +79,11 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
         children: [
           HomeSectionHeader(
             icon: Icons.schedule_rounded,
-            title: '시간별 예보',
+            title: '타임라인',
             subtitle: '항목을 선택해 시간별로 비교해요',
             trailing: IconButton(
               key: const ValueKey('today-hourly-info'),
-              tooltip: '시간별 예보 안내',
+              tooltip: '타임라인 안내',
               onPressed: () => _showHourlyInfo(context),
               iconSize: 16,
               padding: EdgeInsets.zero,
@@ -96,19 +96,24 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
             ),
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 7,
-            runSpacing: 0,
-            children: [
-              for (final metric in _HourlyMetric.values)
-                ChoiceChip(
-                  key: ValueKey('today-hourly-filter-${metric.name}'),
-                  showCheckmark: false,
-                  label: Text(_metricLabel(metric)),
-                  selected: _selected == metric,
-                  onSelected: (_) => setState(() => _selected = metric),
-                ),
-            ],
+          SingleChildScrollView(
+            key: const ValueKey('today-hourly-filters'),
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final metric in _HourlyMetric.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 7),
+                    child: ChoiceChip(
+                      key: ValueKey('today-hourly-filter-${metric.name}'),
+                      showCheckmark: false,
+                      label: Text(_metricLabel(metric)),
+                      selected: _selected == metric,
+                      onSelected: (_) => setState(() => _selected = metric),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           if (selectedItems.isEmpty)
@@ -121,12 +126,12 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
               ),
               child: Text(
                 widget.dataPhase == WeatherDataPhase.loading
-                    ? '시간별 예보를 불러오고 있어요.'
+                    ? '타임라인을 불러오고 있어요.'
                     : widget.dataPhase == WeatherDataPhase.failed
-                        ? '서버에서 시간별 예보를 불러오지 못했어요.'
+                        ? '서버에서 타임라인을 불러오지 못했어요.'
                         : widget.items.isEmpty
-                            ? '시간별 예보 자료가 없어 표시하기 어려워요.'
-                            : '오늘 표시할 시간별 예보가 없어요.',
+                            ? '타임라인 자료가 없어 표시하기 어려워요.'
+                            : '표시할 타임라인 자료가 없어요.',
                 style: TextStyle(
                   color: WeatherCareTheme.of(context).textSecondary,
                 ),
@@ -156,8 +161,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
             const SizedBox(height: 12),
             MissingDataRetry(
               message: widget.dataPhase == WeatherDataPhase.failed
-                  ? '서버에서 시간별 예보 항목을 불러오지 못했어요.'
-                  : '받지 못한 시간별 예보 항목이 있어요.',
+                  ? '서버에서 타임라인 항목을 불러오지 못했어요.'
+                  : '받지 못한 타임라인 항목이 있어요.',
               retryKey: 'today-hourly-data-retry',
               onRetry: widget.onRetryMissingData!,
               retrying: widget.retrying,
@@ -173,13 +178,13 @@ void _showHourlyInfo(BuildContext context) {
   showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('시간별 예보 안내'),
+      title: const Text('타임라인 안내'),
       content: const SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선과 대기질은 자료가 있는 경우에만 표시해요.'),
+            Text('기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
             SizedBox(height: 8),
             Text(
               '가시거리는 현재 관측자료만 제공돼 시간별 예보에는 표시하지 않아요.',
@@ -204,7 +209,6 @@ String _metricLabel(_HourlyMetric metric) => switch (metric) {
       _HourlyMetric.uv => '자외선',
       _HourlyMetric.wind => '바람',
       _HourlyMetric.humidity => '습도',
-      _HourlyMetric.airQuality => '대기질',
     };
 
 class _HourlyPoint extends StatelessWidget {
@@ -240,22 +244,41 @@ class _HourlyPoint extends StatelessWidget {
         : hour != null && hour >= 0 && hour < 24
             ? '$dayPrefix${hour.toString().padLeft(2, '0')}시'
             : '시각 ${dataPhase.missingText()}';
-    final icon = switch (metric) {
+    final visual = switch (metric) {
       _HourlyMetric.weather => WeatherConditionIcon(
           condition: item.skyCondition,
           size: 28,
           color: palette.primaryDeep,
         ),
-      _HourlyMetric.precipitation =>
-        Icon(Icons.water_drop_outlined, size: 28, color: palette.primaryDeep),
-      _HourlyMetric.uv =>
-        Icon(Icons.wb_sunny_outlined, size: 28, color: palette.primaryDeep),
+      _HourlyMetric.precipitation => _MetricIconValue(
+          icon: Icons.water_drop,
+          color: palette.primaryDeep,
+          solidDrop: true,
+          value: precipitationValid && item.precipitationProbability != null
+              ? '${item.precipitationProbability!.toStringAsFixed(0)}%'
+              : '—',
+          semanticLabel:
+              precipitationValid && item.precipitationProbability != null
+                  ? '강수확률 ${item.precipitationProbability!.toStringAsFixed(0)}%'
+                  : '강수확률 자료 없음',
+        ),
+      _HourlyMetric.uv => _MetricIconValue(
+          icon: Icons.wb_sunny_rounded,
+          color: _uvColor(item.uvIndex, palette),
+          value: item.uvIndex?.toStringAsFixed(0) ?? '—',
+          semanticLabel: item.uvIndex == null
+              ? '자외선지수 자료 없음'
+              : '자외선지수 ${item.uvIndex!.toStringAsFixed(0)}',
+          sun: true,
+        ),
       _HourlyMetric.wind =>
-        Icon(Icons.air_rounded, size: 28, color: palette.primaryDeep),
-      _HourlyMetric.humidity =>
-        Icon(Icons.opacity_rounded, size: 28, color: palette.primaryDeep),
-      _HourlyMetric.airQuality =>
-        Icon(Icons.grain_rounded, size: 28, color: palette.primaryDeep),
+        Icon(Icons.air_rounded, size: 42, color: palette.primaryDeep),
+      _HourlyMetric.humidity => _HumidityDrop(
+          key: const ValueKey('today-hourly-humidity-icon'),
+          humidity: item.humidity,
+          color: palette.primaryDeep,
+          background: palette.surfaceMuted,
+        ),
     };
     final rainAmount = item.precipitationAmountLabel ??
         (item.precipitationAmount == null
@@ -268,47 +291,32 @@ class _HourlyPoint extends StatelessWidget {
     final values = switch (metric) {
       _HourlyMetric.weather => [
           item.temperature == null
-              ? '기온 —'
-              : '기온 ${item.temperature!.toStringAsFixed(0)}℃',
-          item.displayedApparentTemperature == null
-              ? '체감 —'
-              : '체감 ${item.displayedApparentTemperature!.toStringAsFixed(0)}℃',
+              ? '—'
+              : '${item.temperature!.toStringAsFixed(0)}°C',
+          '(체감 ${item.displayedApparentTemperature == null ? '—' : '${item.displayedApparentTemperature!.toStringAsFixed(0)}°C'})',
           if (item.skyCondition == null) '날씨 —',
         ],
       _HourlyMetric.precipitation => precipitationValid
           ? [
-              item.precipitationProbability == null
-                  ? '강수확률 —'
-                  : '강수확률 ${item.precipitationProbability!.toStringAsFixed(0)}%',
               '강수량 ${rainAmount ?? '—'}',
               if (item.snowExpected == true ||
                   _hasPositiveAmount(snowAmount, 'cm'))
                 '신적설 ${snowAmount ?? '—'}',
             ]
           : ['강수 구간 —'],
-      _HourlyMetric.uv => [
-          item.uvIndex == null
-              ? '자외선 —'
-              : '자외선 ${item.uvIndex!.toStringAsFixed(0)}',
-        ],
+      _HourlyMetric.uv => <String>[],
       _HourlyMetric.wind => [
           item.windSpeed == null
-              ? '바람 —'
-              : '바람 ${item.windSpeed!.toStringAsFixed(1)}m/s',
+              ? '—'
+              : '${item.windSpeed!.toStringAsFixed(1)}m/s',
+          _windDirectionLabel(item.windDirection),
         ],
-      _HourlyMetric.humidity => [
-          item.humidity == null
-              ? '습도 —'
-              : '습도 ${item.humidity!.toStringAsFixed(0)}%',
-        ],
-      _HourlyMetric.airQuality => [
-          '미세먼지 ${item.pm10 == null ? '—' : '${item.pm10}㎍/㎥'}',
-          '초미세먼지 ${item.pm25 == null ? '—' : '${item.pm25}㎍/㎥'}',
-        ],
+      _HourlyMetric.humidity => <String>[],
     };
 
     return SizedBox(
-      width: 150,
+      width: MediaQuery.textScalerOf(context)
+          .scale(metric == _HourlyMetric.weather ? 180 : 150),
       child: Column(
         children: [
           SizedBox(
@@ -341,13 +349,13 @@ class _HourlyPoint extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          icon,
+          SizedBox(height: 44, child: Center(child: visual)),
           const SizedBox(height: 5),
           for (var index = 0; index < values.length; index++)
             Text(
               values[index],
               textAlign: TextAlign.center,
-              maxLines: 2,
+              maxLines: 1,
               style: index == 0
                   ? Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: palette.textPrimary,
@@ -361,6 +369,207 @@ class _HourlyPoint extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MetricIconValue extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String value;
+  final String semanticLabel;
+  final bool sun;
+  final bool solidDrop;
+
+  const _MetricIconValue({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.semanticLabel,
+    this.sun = false,
+    this.solidDrop = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+      label: semanticLabel,
+      child: SizedBox(
+        width: 52,
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (solidDrop)
+              CustomPaint(
+                key: const ValueKey('today-hourly-precipitation-icon'),
+                size: const Size(44, 44),
+                painter: _SolidDropPainter(color),
+              )
+            else
+              Icon(icon, size: 44, color: color),
+            if (sun)
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: WeatherCareTheme.of(context).surface,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            Transform.translate(
+              offset: Offset(0, sun ? 0 : 4),
+              child: Text(
+                value,
+                maxLines: 1,
+                style: TextStyle(
+                  color: sun ? color : WeatherCareTheme.of(context).onPrimary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ));
+}
+
+class _SolidDropPainter extends CustomPainter {
+  final Color color;
+
+  const _SolidDropPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawPath(_dropPath(size), Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_SolidDropPainter oldDelegate) => color != oldDelegate.color;
+}
+
+Color _uvColor(double? index, WeatherCarePalette palette) => switch (index) {
+      null || < 3 => palette.primaryDeep,
+      < 6 => Colors.orange,
+      < 8 => Colors.deepOrange,
+      < 11 => Colors.red,
+      _ => Colors.red.shade900,
+    };
+
+String _windDirectionLabel(double? direction) {
+  if (direction == null) return '방향 —';
+  const labels = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+  final normalized = ((direction % 360) + 360) % 360;
+  return '${labels[((normalized + 22.5) ~/ 45) % labels.length]}풍';
+}
+
+class _HumidityDrop extends StatelessWidget {
+  final double? humidity;
+  final Color color;
+  final Color background;
+
+  const _HumidityDrop({
+    super.key,
+    required this.humidity,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = WeatherCareTheme.of(context);
+    return Semantics(
+        label: humidity == null
+            ? '습도 자료 없음'
+            : '습도 ${humidity!.toStringAsFixed(0)}% 채움',
+        excludeSemantics: true,
+        child: SizedBox(
+          width: 36,
+          height: 44,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CustomPaint(
+                size: const Size(36, 44),
+                painter: _HumidityDropPainter(
+                  fill: (humidity ?? 0).clamp(0, 100) / 100,
+                  color: color,
+                  background: background,
+                ),
+              ),
+              Transform.translate(
+                offset: const Offset(0, 5),
+                child: SizedBox(
+                  width: 30,
+                  height: 18,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      humidity == null ? '—' : '${humidity!.toStringAsFixed(0)}%',
+                      style: TextStyle(
+                        color: humidity != null && humidity! >= 50
+                            ? palette.onPrimary
+                            : palette.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+  }
+}
+
+class _HumidityDropPainter extends CustomPainter {
+  final double fill;
+  final Color color;
+  final Color background;
+
+  const _HumidityDropPainter({
+    required this.fill,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final drop = _dropPath(size);
+    canvas.drawPath(drop, Paint()..color = background);
+    canvas.save();
+    canvas.clipPath(drop);
+    canvas.drawRect(
+      Rect.fromLTWH(0, h * (1 - fill), w, h * fill),
+      Paint()..color = color,
+    );
+    canvas.restore();
+    canvas.drawPath(
+      drop,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_HumidityDropPainter oldDelegate) =>
+      fill != oldDelegate.fill ||
+      color != oldDelegate.color ||
+      background != oldDelegate.background;
+}
+
+Path _dropPath(Size size) {
+  final w = size.width;
+  final h = size.height;
+  return Path()
+    ..moveTo(w / 2, 1)
+    ..cubicTo(w * .72, h * .24, w * .95, h * .52, w * .95, h * .68)
+    ..cubicTo(w * .95, h * 1.08, w * .05, h * 1.08, w * .05, h * .68)
+    ..cubicTo(w * .05, h * .52, w * .28, h * .24, w / 2, 1)
+    ..close();
 }
 
 String _amountNumber(double value) => value == value.roundToDouble()

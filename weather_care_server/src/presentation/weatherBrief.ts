@@ -180,6 +180,7 @@ function buildIntentAt(
   const severityItems = context.severityRecommendedItems === undefined
     ? meaning.recommendedItems
     : meaning.recommendedItems.filter((item) =>
+        (selection.scene === 'RAIN' && item === 'UMBRELLA') ||
         context.severityRecommendedItems?.includes(item));
   const recommendedItems = context.allowedRecommendedItems === undefined
     ? severityItems
@@ -314,6 +315,9 @@ function sceneAllowedByContext(
   context: WeatherBriefContext,
 ): boolean {
   if (context.allowedRecommendedItems === undefined) return true;
+  if (scene === 'RAIN') {
+    return context.allowedRecommendedItems.includes('UMBRELLA');
+  }
   const required = sceneMeaning(
     scene,
     context.expandedPreparations ?? false,

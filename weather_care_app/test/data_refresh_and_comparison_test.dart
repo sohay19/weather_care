@@ -31,7 +31,7 @@ void main() {
       ),
     ));
     expect(find.textContaining('받지 못한 현재 날씨:'), findsOneWidget);
-    expect(find.text('받지 못한 시간별 예보 항목이 있어요.'), findsOneWidget);
+    expect(find.text('받지 못한 타임라인 항목이 있어요.'), findsOneWidget);
     expect(find.text(removedHint), findsNothing);
 
     await tester.pumpWidget(MaterialApp(
@@ -52,7 +52,7 @@ void main() {
     expect(find.textContaining('받지 못한 날씨 자료:'), findsOneWidget);
     expect(find.text(removedHint), findsNothing);
     await tester.dragUntilVisible(
-      find.byKey(const ValueKey('yesterday-comparison-card')),
+      find.text('어제와 비교'),
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, -300),
     );
@@ -132,7 +132,7 @@ void main() {
     expect(find.text('기온·습도·바람으로 계산한 추정 체감온도예요.'), findsOneWidget);
   });
 
-  testWidgets('Main 카드를 Check List, 날씨, 어제 비교, 예상 순서로 표시한다', (tester) async {
+  testWidgets('Main은 Check List 다음 날씨 카드 안에 어제 비교를 표시한다', (tester) async {
     tester.view.physicalSize = const Size(400, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -220,19 +220,31 @@ void main() {
     expect(find.text('22.5℃'), findsOneWidget);
     final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
     expect(
-      find.descendant(of: futureCard, matching: find.text('64%')),
+      find.descendant(
+        of: find.byKey(const ValueKey('main-future-metric-습도')),
+        matching: find.text('쾌적'),
+      ),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: futureCard, matching: find.text('3.2m/s')),
+      find.descendant(
+        of: find.byKey(const ValueKey('main-future-metric-바람')),
+        matching: find.text('약한 바람'),
+      ),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: futureCard, matching: find.text('5')),
+      find.descendant(
+        of: find.byKey(const ValueKey('main-future-metric-자외선')),
+        matching: find.text('보통'),
+      ),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: futureCard, matching: find.text('보통')),
+      find.descendant(
+        of: find.byKey(const ValueKey('main-future-metric-대기질')),
+        matching: find.text('보통'),
+      ),
       findsOneWidget,
     );
     expect(
@@ -268,8 +280,7 @@ void main() {
       find.descendant(of: topCard, matching: find.text('22.3℃')),
       findsNothing,
     );
-    final comparisonCard =
-        find.byKey(const ValueKey('yesterday-comparison-card'));
+    final comparisonCard = find.text('어제와 비교');
     final top = tester.getTopLeft(topCard);
     final comparison = tester.getTopLeft(comparisonCard);
     final checklist = tester.getTopLeft(find.text('Check List'));
@@ -284,7 +295,7 @@ void main() {
     );
     expect(
       find.ancestor(of: comparisonCard, matching: topCard),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.ancestor(of: futureCard, matching: topCard),
@@ -332,7 +343,7 @@ void main() {
       ),
     ));
     await tester.dragUntilVisible(
-      find.byKey(const ValueKey('yesterday-comparison-card')),
+      find.text('어제와 비교'),
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, -300),
     );

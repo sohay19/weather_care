@@ -41,7 +41,7 @@ class TodayTab extends StatelessWidget {
             const TabPageHeader(
               eyebrow: 'TODAY',
               title: '오늘 하루',
-              subtitle: '현재 상태와 시간별 예보를 함께 보여드려요',
+              subtitle: '현재 상태와 타임라인을 함께 보여드려요',
               icon: Icons.schedule_rounded,
             ),
             const SizedBox(height: 18),

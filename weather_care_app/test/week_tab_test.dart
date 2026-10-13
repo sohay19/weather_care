@@ -185,7 +185,7 @@ void main() {
     );
   });
 
-  testWidgets('지난 예보와 중기예보의 출처를 카드에 표시한다', (tester) async {
+  testWidgets('지난 날짜의 자료출처는 숨기고 당일 출처만 표시한다', (tester) async {
     await _pump(
       tester,
       [
@@ -193,7 +193,7 @@ void main() {
         _day('2026-09-10', forecastSource: 'KMA_MID_TERM'),
       ],
     );
-    expect(find.text('저장된 예보'), findsOneWidget);
+    expect(find.text('저장된 예보'), findsNothing);
     expect(find.text('중기예보'), findsOneWidget);
     expect(find.text('지난 날짜'), findsNWidgets(4));
   });
@@ -216,24 +216,20 @@ void main() {
     });
     await _pump(tester, [observation]);
 
-    expect(find.text('실제 관측'), findsOneWidget);
+    expect(find.text('실제 관측'), findsNothing);
     expect(find.text('비·눈 기록 없음'), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-condition-unknown')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('weather-condition-rain')), findsNothing);
-    expect(find.textContaining('예보격자 대표점에서 3.2km'), findsOneWidget);
-    expect(find.text('강수 관측'), findsOneWidget);
-    expect(find.text('지난 날은 준비물 추천 대상이 아니에요'), findsOneWidget);
+    expect(find.textContaining('예보격자 대표점에서 3.2km'), findsNothing);
+    expect(find.textContaining('강수 관측'), findsNothing);
+    expect(find.text('지난 날은 준비물 추천 대상이 아니에요'), findsNothing);
     expect(find.byKey(const ValueKey('week-past-2026-09-08')), findsOneWidget);
     expect(
       tester
           .widget<Text>(find.byKey(const ValueKey('week-past-2026-09-08')))
           .style
           ?.color,
-      WeatherCareTheme.textPrimary,
-    );
-    expect(
-      tester.widget<Text>(find.text('실제 관측')).style?.color,
       WeatherCareTheme.textPrimary,
     );
     expect(find.byType(ColorFiltered), findsNothing);
@@ -292,12 +288,47 @@ void main() {
     expect(find.text('최저'), findsOneWidget);
     expect(find.text('18℃'), findsOneWidget);
     expect(find.text('최고'), findsOneWidget);
-    expect(find.text('27℃'), findsNWidgets(2));
+    expect(find.text('27℃'), findsOneWidget);
+    expect(find.textContaining('최저 18℃'), findsOneWidget);
+    expect(find.textContaining('최고 27℃'), findsOneWidget);
+    expect(find.textContaining('습도 쾌적'), findsOneWidget);
+    expect(find.textContaining('바람 약간 강한 바람'), findsOneWidget);
+    expect(find.textContaining('신적설 없음'), findsOneWidget);
+    expect(find.textContaining('자외선 높음'), findsOneWidget);
+    expect(find.textContaining('대기질 보통·낮음'), findsOneWidget);
+    final humidityChip = tester.widget<ChoiceChip>(
+      find.ancestor(
+        of: find.textContaining('습도 쾌적'),
+        matching: find.byType(ChoiceChip),
+      ),
+    );
+    expect(humidityChip.elevation, 2);
+    expect(humidityChip.side?.width, 1.2);
+    expect(find.byIcon(Icons.touch_app_outlined), findsNWidgets(5));
+    await tester.scrollUntilVisible(find.textContaining('습도 쾌적'), 250);
+    await tester.tap(find.textContaining('습도 쾌적'));
+    await tester.pumpAndSettle();
     expect(find.text('평균 습도 63%'), findsOneWidget);
-    expect(find.text('최대 풍속 4.2m/s'), findsOneWidget);
-    expect(find.text('예상 신적설 0cm'), findsOneWidget);
-    expect(find.text('자외선 최고 7'), findsOneWidget);
-    expect(find.text('미세먼지 보통 · 초미세먼지 낮음 · 신뢰도 높음'), findsOneWidget);
+    await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
+    for (final (label, value) in [
+      ('바람 약간 강한 바람', '최대 풍속 4.2m/s'),
+      ('신적설 없음', '예상 신적설 0cm'),
+      ('자외선 높음', '자외선지수 최고 7'),
+    ]) {
+      await tester.ensureVisible(find.textContaining(label));
+      await tester.tap(find.textContaining(label));
+      await tester.pumpAndSettle();
+      expect(find.text(value), findsOneWidget);
+      await tester.tap(find.text('닫기'));
+      await tester.pumpAndSettle();
+    }
+    await tester.ensureVisible(find.textContaining('대기질 보통·낮음'));
+    await tester.tap(find.textContaining('대기질 보통·낮음'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('농도 수치는 주간 예보에서 제공되지 않아요'), findsOneWidget);
+    await tester.tap(find.text('닫기'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('오존'), findsNothing);
   });
 
@@ -376,6 +407,15 @@ void main() {
           'weatherLabel': '비와 눈',
           'min': '-15',
           'max': '-5',
+          'averageHumidity': 63,
+          'maximumWindSpeed': 4.2,
+          'maximumUvIndex': 7,
+          'snowfallAmount': 1,
+          'airQualityForecast': {
+            'pm10Grade': '보통',
+            'pm25Grade': '낮음',
+            'ozoneGrade': '높음',
+          },
           'recommendations': [
             {'type': 'HEAVY_SNOW_CAUTION', 'recommended': true},
             {'type': 'UMBRELLA', 'recommended': true},
@@ -393,6 +433,7 @@ void main() {
     );
     expect(find.text('12월 31일 (목)'), findsOneWidget);
     expect(find.text('많은 눈 대비'), findsOneWidget);
+    expect(tester.widget<Text>(find.text('많은 눈 대비')).style?.fontSize, 13);
     expect(tester.takeException(), isNull);
   });
 }
@@ -422,6 +463,7 @@ Future<void> _pump(
 }) async {
   addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   await tester.pumpWidget(MaterialApp(
+    theme: ThemeData(splashFactory: NoSplash.splashFactory),
     home: MediaQuery(
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
       child: Scaffold(

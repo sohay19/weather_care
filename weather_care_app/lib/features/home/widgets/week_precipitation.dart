@@ -2,6 +2,64 @@ import '../../../models/precipitation.dart';
 import '../../../models/weather.dart';
 import '../../../utils/korea_date.dart';
 
+/// 검증된 관측량 또는 받은 시간대의 예상 누적량만 반환한다.
+PrecipitationAmount? weekPrecipitationAmount(WeeklyForecastItem day) {
+  final detail = day.precipitationDetail;
+  if (detail == null) return null;
+  if (detail.kind == 'OBSERVATION') {
+    final value = detail.observedAmount;
+    if (value == null) return null;
+    final millimetres = (value * 1000).round();
+    return PrecipitationAmount(millimetres, millimetres);
+  }
+  final date = parseForecastDate(day.forecastDate);
+  if (detail.kind != 'HOURLY' || date == null || detail.hours.isEmpty) {
+    return null;
+  }
+  final starts = <int>{};
+  for (final hour in detail.hours) {
+    final at = hour.forecastAt;
+    if (at == null || hour.amount == null) return null;
+    final start = at.toUtc().add(const Duration(hours: 8));
+    if (start.year != date.year ||
+        start.month != date.month ||
+        start.day != date.day ||
+        start.minute != 0 ||
+        start.second != 0 ||
+        !starts.add(start.hour)) {
+      return null;
+    }
+  }
+  final first = starts.reduce((a, b) => a < b ? a : b);
+  final last = starts.reduce((a, b) => a > b ? a : b);
+  if (last - first + 1 != starts.length) return null;
+  return detail.hours.map((hour) => hour.amount!).reduce((a, b) => a.plus(b));
+}
+
+String? weekPrecipitationCompact(WeeklyForecastItem day,
+    {required bool isPast}) {
+  final detail = day.precipitationDetail;
+  if (isPast) {
+    final amount =
+        detail?.kind == 'OBSERVATION' ? weekPrecipitationAmount(day) : null;
+    return amount == null || amount.isZero ? null : '강수 관측 ${amount.label}';
+  }
+  if (detail == null) return '강수 자료 없음';
+  if (weekPrecipitationLines(day).any((line) => line.contains('날짜·시간에 오류'))) {
+    return '강수 자료 없음';
+  }
+  final amount = weekPrecipitationAmount(day);
+  final probabilities = detail.kind == 'EXTENDED'
+      ? [detail.extendedMaxProbability]
+      : detail.hours.map((hour) => hour.probability);
+  final known = probabilities.whereType<double>().toList();
+  final probability =
+      known.isEmpty ? null : known.reduce((a, b) => a > b ? a : b);
+  if (probability == null && amount == null) return '강수 자료 없음';
+  return '강수확률 ${probability == null ? '자료 없음' : '최고 ${_percent(probability)}%'}'
+      ' · 강수량 ${amount?.label ?? '자료 없음'}';
+}
+
 /// Independent from weather/PTY: missing PCP or POP must not become zero.
 List<String> weekPrecipitationLines(WeeklyForecastItem day) {
   final detail = day.precipitationDetail;

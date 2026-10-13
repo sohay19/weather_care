@@ -44,6 +44,7 @@ class CurrentWeather {
   final double? uvIndex;
   final int? pm10;
   final int? pm25;
+  final double? ozone;
   final String? pm25ForecastGrade;
   final String? sky;
   final String? airQualityStationName;
@@ -69,6 +70,7 @@ class CurrentWeather {
     this.uvIndex,
     this.pm10,
     this.pm25,
+    this.ozone,
     this.pm25ForecastGrade,
     this.sky,
     this.airQualityStationName,
@@ -98,6 +100,7 @@ class CurrentWeather {
       uvIndex: (c['uvIndex'] as num?)?.toDouble(),
       pm10: (c['pm10'] as num?)?.toInt(),
       pm25: (c['pm25'] as num?)?.toInt(),
+      ozone: _optionalNumber(c['ozone']),
       pm25ForecastGrade: _optionalText(c['pm25ForecastGrade']),
       sky: c['skyCondition']?.toString(),
       airQualityStationName: _optionalText(c['airQualityStationName']),

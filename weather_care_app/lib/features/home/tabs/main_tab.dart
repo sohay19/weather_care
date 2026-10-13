@@ -167,7 +167,7 @@ class _TodaySection extends StatelessWidget {
       height: 1.45,
       fontWeight: FontWeight.w600,
     );
-    final airQualityState = _airQualityState(current.pm10, current.pm25);
+    final airQualityState = _airQualityState(current.pm10, current.pm25, current.ozone);
     return Column(
       children: [
         Row(
@@ -225,7 +225,7 @@ class _TodaySection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.62),
+            color: WeatherCareTheme.of(context).primarySoft.withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(15),
           ),
           child: _TopMetricGrid(
@@ -235,7 +235,7 @@ class _TodaySection extends StatelessWidget {
                 key: const ValueKey('main-top-metric-자외선'),
                 icon: Icons.wb_sunny_outlined,
                 label: '자외선',
-                value: current.uvIndex?.toStringAsFixed(0) ?? '--',
+                value: uvDescription(current.uvIndex) ?? '--',
                 state: _uvState(current.uvIndex),
               ),
               _TopMetric(
@@ -251,26 +251,21 @@ class _TodaySection extends StatelessWidget {
                 key: const ValueKey('main-top-metric-가시거리'),
                 icon: Icons.visibility_outlined,
                 label: '가시거리',
-                value: _visibilityValue(current.visibilityMeters),
+                value: visibilityDescription(current.visibilityMeters) ?? '--',
                 state: _visibilityState(current.visibilityMeters),
               ),
               _TopMetric(
                 key: const ValueKey('main-top-metric-습도'),
                 icon: Icons.water_drop_outlined,
                 label: '습도',
-                value: current.humidity == null
-                    ? '--'
-                    : '${current.humidity!.toStringAsFixed(0)}%',
+                value: humidityDescription(current.humidity) ?? '--',
                 state: _humidityState(current.humidity),
               ),
               _TopMetric(
                 key: const ValueKey('main-top-metric-바람'),
                 icon: Icons.air_rounded,
                 label: '바람',
-                value: _windValue(
-                  current.windDirection,
-                  current.windSpeed,
-                ),
+                value: windDescription(current.windSpeed) ?? '--',
                 state: _windState(current.windSpeed),
               ),
               _TopMetric(
@@ -437,8 +432,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (skyComparable)
-            Text(
-              '하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
+            Text('하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
                   '어제 ${yesterdayObservation!.skyCondition}였어요.',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
@@ -476,8 +470,7 @@ class _TodayFutureSection extends StatelessWidget {
               subject: '미래 예상 날씨',
             );
     }
-    final nextForecast =
-        today.nextForecast ?? const CurrentWeather(temperature: null);
+    final nextForecast = today.nextForecast ?? const CurrentWeather(temperature: null);
     final forecastTime = forecastTemperatureLabel(nextForecast.forecastAt);
     final forecastAirQuality = nextForecast.pm25ForecastGrade;
     final airQualityState = forecastAirQuality == null
@@ -487,7 +480,7 @@ class _TodayFutureSection extends StatelessWidget {
       key: const ValueKey('main-future-weather-card'),
       width: double.infinity,
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.of(context).mood(mood),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -547,7 +540,7 @@ class _TodayFutureSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               color:
-                  WeatherCareTheme.of(context).surface.withValues(alpha: 0.62),
+                  WeatherCareTheme.of(context).surfaceMuted.withValues(alpha: 0.62),
               borderRadius: BorderRadius.circular(15),
             ),
             child: _TopMetricGrid(
@@ -557,26 +550,21 @@ class _TodayFutureSection extends StatelessWidget {
                   key: const ValueKey('main-future-metric-습도'),
                   icon: Icons.water_drop_outlined,
                   label: '습도',
-                  value: nextForecast.humidity == null
-                      ? '--'
-                      : '${nextForecast.humidity!.toStringAsFixed(0)}%',
+                  value: humidityDescription(nextForecast.humidity) ?? '--',
                   state: _humidityState(nextForecast.humidity),
                 ),
                 _TopMetric(
                   key: const ValueKey('main-future-metric-바람'),
                   icon: Icons.air_rounded,
                   label: '바람',
-                  value: _windValue(
-                    nextForecast.windDirection,
-                    nextForecast.windSpeed,
-                  ),
+                  value: windDescription(nextForecast.windSpeed) ?? '--',
                   state: _windState(nextForecast.windSpeed),
                 ),
                 _TopMetric(
                   key: const ValueKey('main-future-metric-자외선'),
                   icon: Icons.wb_sunny_outlined,
                   label: '자외선',
-                  value: nextForecast.uvIndex?.toStringAsFixed(0) ?? '--',
+                  value: uvDescription(nextForecast.uvIndex) ?? '--',
                   state: _uvState(nextForecast.uvIndex),
                 ),
                 _TopMetric(
@@ -612,8 +600,7 @@ class _ComparisonMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     final difference = metric.current! - metric.previous!;
     final same = difference.abs() < (metric.fractionDigits == 0 ? 0.5 : 0.05);
-    final change = same
-        ? '${metric.previousLabel}과 같아요'
+    final change = same ? '${metric.previousLabel}과 같아요'
         : '${metric.previousReference} ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
             '${difference > 0 ? '높아요' : '낮아요'}';
     String value(double value) =>
@@ -622,7 +609,7 @@ class _ComparisonMetric extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surface,
+        color: WeatherCareTheme.of(context).surfaceMuted,
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -825,7 +812,7 @@ class _TopWeatherCard extends StatelessWidget {
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',
       if (current.uvIndex == null) '자외선',
-      if (current.pm25 == null && current.pm10 == null) '대기질',
+      if (current.pm25 == null && current.pm10 == null && current.ozone == null) '대기질',
       if (current.visibilityMeters == null) '가시거리',
       if (today.sunriseAt == null || today.sunsetAt == null) '일출·일몰',
     ];
@@ -836,7 +823,7 @@ class _TopWeatherCard extends StatelessWidget {
       curve: Curves.easeOutCubic,
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 13 : 16),
-      decoration: WeatherCareTheme.of(context).mood(mood),
+      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -905,7 +892,7 @@ class _TemperatureLine extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surface,
+        color: WeatherCareTheme.of(context).primarySoft,
         borderRadius: BorderRadius.circular(13),
       ),
       child: FittedBox(
@@ -992,7 +979,9 @@ class _TopMetric extends StatelessWidget {
     final displayState = missing ? displayValue : state.label;
     return Expanded(
       child: Semantics(
-        label: '$label $displayValue, $displayState',
+        label: displayValue == displayState
+            ? '$label $displayValue'
+            : '$label $displayValue, $displayState',
         excludeSemantics: true,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -1083,48 +1072,38 @@ class _MetricState {
 const _unavailableMetric = _MetricState('정보 없음', _MetricTone.muted);
 
 _MetricState _humidityState(double? value) {
-  if (value == null) return _unavailableMetric;
-  if (value <= 35) {
-    return const _MetricState('건조', _MetricTone.attention);
-  }
-  if (value < 70) {
-    return const _MetricState('쾌적', _MetricTone.primary);
-  }
-  if (value < 80) {
-    return const _MetricState('습한 편', _MetricTone.primary);
-  }
-  return const _MetricState('매우 습함', _MetricTone.attention);
+  final label = humidityDescription(value);
+  if (label == null) return _unavailableMetric;
+  return _MetricState(
+    label,
+    label == '건조' || label == '매우 습함'
+        ? _MetricTone.attention
+        : _MetricTone.primary,
+  );
 }
 
 _MetricState _windState(double? value) {
-  if (value == null) return _unavailableMetric;
-  if (value < 4) {
-    return const _MetricState('약한 바람', _MetricTone.primary);
-  }
-  if (value < 9) {
-    return const _MetricState('약간 강한 바람', _MetricTone.primary);
-  }
-  if (value < 14) {
-    return const _MetricState('강한 바람', _MetricTone.attention);
-  }
-  return const _MetricState('매우 강한 바람', _MetricTone.danger);
+  final label = windDescription(value);
+  if (label == null) return _unavailableMetric;
+  return _MetricState(
+      label,
+      switch (label) {
+        '강한 바람' => _MetricTone.attention,
+        '매우 강한 바람' => _MetricTone.danger,
+        _ => _MetricTone.primary,
+      });
 }
 
 _MetricState _uvState(double? value) {
-  if (value == null) return _unavailableMetric;
-  if (value <= 2) {
-    return const _MetricState('낮음', _MetricTone.primary);
-  }
-  if (value <= 5) {
-    return const _MetricState('보통', _MetricTone.primary);
-  }
-  if (value <= 7) {
-    return const _MetricState('높음', _MetricTone.attention);
-  }
-  if (value <= 10) {
-    return const _MetricState('매우 높음', _MetricTone.danger);
-  }
-  return const _MetricState('위험', _MetricTone.danger);
+  final label = uvDescription(value);
+  if (label == null) return _unavailableMetric;
+  return _MetricState(
+      label,
+      switch (label) {
+        '높음' => _MetricTone.attention,
+        '매우 높음' || '위험' => _MetricTone.danger,
+        _ => _MetricTone.primary,
+      });
 }
 
 _MetricState _pm25State(int? value) {
@@ -1167,10 +1146,16 @@ _MetricState _pm10State(int? value) {
   return const _MetricState('매우 나쁨', _MetricTone.danger);
 }
 
-_MetricState _airQualityState(int? pm10, int? pm25) {
+_MetricState _airQualityState(int? pm10, int? pm25, [double? ozone]) {
   final states = [
     if (pm10 != null) _pm10State(pm10),
     if (pm25 != null) _pm25State(pm25),
+    if (ozoneDescription(ozone) case final grade?)
+      _MetricState(grade, switch (grade) {
+        '나쁨' => _MetricTone.attention,
+        '매우 나쁨' => _MetricTone.danger,
+        _ => _MetricTone.primary,
+      }),
   ];
   if (states.isEmpty) return _unavailableMetric;
   const severity = {
@@ -1187,48 +1172,15 @@ _MetricState _airQualityState(int? pm10, int? pm25) {
 }
 
 _MetricState _visibilityState(double? meters) {
-  if (meters == null) return _unavailableMetric;
-  if (meters < 200) {
-    return const _MetricState('매우 짧음', _MetricTone.danger);
-  }
-  if (meters < 1000) {
-    return const _MetricState('짧음', _MetricTone.danger);
-  }
-  if (meters < 5000) {
-    return const _MetricState('나쁨', _MetricTone.attention);
-  }
-  if (meters < 10000) {
-    return const _MetricState('보통', _MetricTone.primary);
-  }
-  if (meters < 20000) {
-    return const _MetricState('좋음', _MetricTone.primary);
-  }
-  return const _MetricState('매우 좋음', _MetricTone.primary);
-}
-
-String _visibilityValue(double? meters) {
-  if (meters == null) return '--';
-  if (meters >= 20000) return '20km+';
-  if (meters >= 1000) {
-    final kilometres = meters / 1000;
-    return '${kilometres == kilometres.roundToDouble() ? kilometres.toStringAsFixed(0) : kilometres.toStringAsFixed(1)}km';
-  }
-  return '${meters.round()}m';
-}
-
-String _windValue(double? direction, double? speed) {
-  if (direction == null && speed == null) return '--';
-  final directionLabel = _windDirectionLabel(direction);
-  if (speed == null) return directionLabel == null ? '--' : '$directionLabel풍';
-  return '${directionLabel == null ? '' : '$directionLabel '}'
-      '${speed.toStringAsFixed(1)}m/s';
-}
-
-String? _windDirectionLabel(double? direction) {
-  if (direction == null || !direction.isFinite) return null;
-  const labels = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
-  final normalized = ((direction % 360) + 360) % 360;
-  return labels[((normalized + 22.5) ~/ 45) % labels.length];
+  final label = visibilityDescription(meters);
+  if (label == null) return _unavailableMetric;
+  return _MetricState(
+      label,
+      switch (label) {
+        '매우 짧음' || '짧음' => _MetricTone.danger,
+        '나쁨' => _MetricTone.attention,
+        _ => _MetricTone.primary,
+      });
 }
 
 String _sunTimesValue(String? sunriseAt, String? sunsetAt) {

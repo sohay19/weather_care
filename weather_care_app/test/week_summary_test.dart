@@ -93,6 +93,45 @@ void main() {
     expect(summary.preparations.value, '1일 확인');
   });
 
+  test('강수 최고량·주간 최저와 최고·준비물 종류를 함께 요약한다', () {
+    final summary = buildWeekSummary([
+      _day('09', {
+        'forecastSource': 'KMA_OBSERVATION',
+        'weatherLabel': '비',
+        'min': 8,
+        'max': 18,
+        'precipitationDetail': {
+          'kind': 'OBSERVATION',
+          'hours': [],
+          'observedAmount': 4.5,
+        },
+      }),
+      _day('10', {
+        'weatherLabel': '비',
+        'min': 12,
+        'max': 25,
+        'recommendations': [_rec('UMBRELLA'), _rec('MASK')],
+        'precipitationDetail': {
+          'kind': 'HOURLY',
+          'hours': [
+            {
+              'forecastAt': '2026-09-10T10:00:00+09:00',
+              'probability': 70,
+              'amountText': '2mm',
+            },
+          ],
+        },
+      }),
+    ], serverFeaturesAvailable: true, today: DateTime(2026, 9, 10));
+
+    expect(summary.precipitation.value, '2일');
+    expect(summary.precipitationAmount.value, '4.5mm (관측)');
+    expect(summary.minimum.value, '8℃');
+    expect(summary.maximum.value, '25℃');
+    expect(summary.preparations.value, '1일');
+    expect(summary.preparationItems.value, '우산 · 마스크');
+  });
+
   test('모든 결측·부분 무강수·확인된 무강수를 구분한다', () {
     expect(_summary([_day('10', {})]).precipitation.value, '0일');
     final clear =
@@ -185,17 +224,17 @@ void main() {
     expect(find.text('오후 최고'), findsNothing);
     expect(find.text('준비물 추천 자료 없음'), findsOneWidget);
     expect(find.text('준비물 없음'), findsNothing);
-    expect(find.text('0일'), findsOneWidget);
-    expect(find.text('예상 강수일'), findsOneWidget);
-    expect(find.text('예상 주중 최고기온'), findsOneWidget);
-    expect(find.text('예상 준비물'), findsOneWidget);
+    expect(find.textContaining('강수일 0일'), findsOneWidget);
+    expect(find.textContaining('최고 강수량'), findsOneWidget);
+    expect(find.text('기온'), findsOneWidget);
+    expect(find.textContaining('예상 준비물'), findsOneWidget);
   });
 
   testWidgets('빈 추천은 불필요하다는 뜻으로 표시하지 않는다', (tester) async {
     await _pump(tester, [
       _day('10', {'recommendations': []})
     ]);
-    expect(find.text('표시할 준비물 추천 없음'), findsOneWidget);
+    expect(find.text('표시할 준비물 추천 없음'), findsNothing);
     expect(find.text('준비물 없음'), findsNothing);
   });
 
@@ -209,7 +248,7 @@ void main() {
         ],
         server: false);
     expect(find.text('마스크'), findsNothing);
-    expect(find.text('미지원'), findsOneWidget);
+    expect(find.textContaining('미지원'), findsNWidgets(2));
     expect(find.text('운영 서버 미연결로 준비물 미지원'), findsOneWidget);
   });
 
@@ -237,16 +276,18 @@ void main() {
     final preparations = tester.getRect(
       find.byKey(const ValueKey('week-summary-preparations')),
     );
-    expect(precipitation.top, closeTo(temperature.top, 0.1));
-    expect(temperature.top, closeTo(preparations.top, 0.1));
-    expect(precipitation.right, lessThan(temperature.left));
-    expect(temperature.right, lessThan(preparations.left));
+    expect(temperature.top, greaterThan(precipitation.bottom));
+    expect(preparations.top, greaterThan(temperature.bottom));
+    expect(precipitation.left, closeTo(temperature.left, 0.1));
+    expect(temperature.left, closeTo(preparations.left, 0.1));
+    expect(precipitation.width, closeTo(preparations.width, 0.1));
     await tester.scrollUntilVisible(find.text('일부 준비물 추천 자료를 확인하기 어려워요'), 250,
         scrollable: find.byType(Scrollable).first);
     expect(find.text('일부 시간대 날씨 자료 없음'), findsOneWidget);
     expect(find.text('오전 최저'), findsNothing);
     expect(find.text('최고'), findsOneWidget);
-    expect(find.text('24℃'), findsNWidgets(2));
+    expect(find.text('24℃'), findsOneWidget);
+    expect(find.textContaining('최고 24℃'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

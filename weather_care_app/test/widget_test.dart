@@ -416,7 +416,7 @@ void main() {
           .whereType<NavigationDestination>()
           .map((destination) => destination.tooltip),
       [
-        '오늘 날씨와 시간별 예보',
+        '오늘 날씨와 타임라인',
         '항목별 근거와 자료',
         '날씨, Check List, 어제 비교와 예상',
         '이번 주 날씨',
@@ -441,7 +441,7 @@ void main() {
         WeatherCareTheme.primaryDeep,
       );
     }
-    await tester.tap(find.text('Today'));
+    navigation.onDestinationSelected!(0);
     await tester.pump();
     expect(
       tester
@@ -533,11 +533,15 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.descendant(of: visibilityMetric, matching: find.text('12km')),
+      find.descendant(of: visibilityMetric, matching: find.text('좋음')),
       findsOneWidget,
     );
     expect(
-      find.descendant(of: windMetric, matching: find.text('남서 2.1m/s')),
+      find.descendant(of: windMetric, matching: find.text('약한 바람')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: humidityMetric, matching: find.text('쾌적')),
       findsOneWidget,
     );
     expect(
@@ -554,7 +558,7 @@ void main() {
       ),
     );
     final uvValuePosition = tester.getCenter(
-      find.descendant(of: uvMetric, matching: find.text('4')),
+      find.descendant(of: uvMetric, matching: find.text('보통')),
     );
     expect(uvIconPosition.dy, uvLabelPosition.dy);
     expect(uvValuePosition.dy, uvLabelPosition.dy);
@@ -639,6 +643,12 @@ void main() {
     final futureWindPosition = tester.getCenter(futureWind);
     final futureUvPosition = tester.getCenter(futureUv);
     final futureAirPosition = tester.getCenter(futureAir);
+    expect(find.descendant(of: futureHumidity, matching: find.text('쾌적')),
+        findsOneWidget);
+    expect(find.descendant(of: futureWind, matching: find.text('약한 바람')),
+        findsOneWidget);
+    expect(find.descendant(of: futureUv, matching: find.text('보통')),
+        findsOneWidget);
     expect(futureWindPosition.dy, closeTo(futureHumidityPosition.dy, 0.01));
     expect(futureUvPosition.dy, greaterThan(futureHumidityPosition.dy));
     expect(futureAirPosition.dy, closeTo(futureUvPosition.dy, 0.01));
@@ -671,7 +681,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Today는 현재 날씨 카드와 시간별 예보를 표시한다', (tester) async {
+  testWidgets('Today는 현재 날씨 카드와 타임라인을 표시한다', (tester) async {
     const mainBrief = '자외선이 강할 수 있으니, 외출한다면 양산을 준비하세요';
     await tester.pumpWidget(
       MaterialApp(
@@ -724,7 +734,7 @@ void main() {
     expect(find.byKey(const ValueKey('today-hourly-info')), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
         findsNothing);
-    expect(find.text('시간별 예보'), findsOneWidget);
+    expect(find.text('타임라인'), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
     expect(
       tester.getTopLeft(find.byType(WeatherInfoCard)).dy,
@@ -830,7 +840,7 @@ void main() {
     expect(
         find.byKey(const ValueKey('visibility-forecast-limit')), findsNothing);
     expect(find.byType(WeatherInfoCard), findsNothing);
-    expect(find.text('시간별 예보'), findsNothing);
+    expect(find.text('타임라인'), findsNothing);
     expect(tester.takeException(), isNull);
   });
   testWidgets('server failure dialog retries without direct API fallback',
@@ -840,7 +850,7 @@ void main() {
     );
 
     expect(find.text('운영 서버 날씨 자료를 받지 못했어요'), findsOneWidget);
-    expect(find.textContaining('Check List와 시간별 예보'), findsOneWidget);
+    expect(find.textContaining('Check List와 타임라인'), findsOneWidget);
     expect(find.textContaining('자료 준비가 잠시 지연'), findsOneWidget);
     expect(find.textContaining('오늘의 TODO'), findsNothing);
     expect(find.text('단기예보만 보기'), findsNothing);
@@ -861,6 +871,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
         home: Scaffold(
           body: RecommendationBagSection(
             regionName: '수원',
@@ -960,7 +971,10 @@ void main() {
   testWidgets('settings disables notification time and shows all data sources',
       (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: SettingsScreen())),
+      MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
+        home: const Scaffold(body: SettingsScreen()),
+      ),
     );
 
     await tester.tap(find.byKey(const ValueKey('weather-alerts-menu')));

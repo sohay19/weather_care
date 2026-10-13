@@ -8,6 +8,7 @@ import '../../../models/weather.dart';
 import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
+import '../weather_labels.dart';
 import '../weather_data_phase.dart';
 import '../widgets/weather_data_notice.dart';
 import '../widgets/tab_page_header.dart';
@@ -127,6 +128,7 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
             if (calendarForecasts.isNotEmpty)
               _WeekSummary(
                 days: calendarForecasts,
+                today: parseForecastDate(today)!,
                 dataPhase: widget.dataPhase,
                 serverFeaturesAvailable: widget.serverFeaturesAvailable,
               )
@@ -163,11 +165,13 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
 
 class _WeekSummary extends StatelessWidget {
   final List<WeeklyForecastItem> days;
+  final DateTime today;
   final WeatherDataPhase dataPhase;
   final bool serverFeaturesAvailable;
 
   const _WeekSummary({
     required this.days,
+    required this.today,
     required this.dataPhase,
     required this.serverFeaturesAvailable,
   });
@@ -175,7 +179,7 @@ class _WeekSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = buildWeekSummary(days,
-        serverFeaturesAvailable: serverFeaturesAvailable);
+        serverFeaturesAvailable: serverFeaturesAvailable, today: today);
 
     return Container(
       padding: const EdgeInsets.all(19),
@@ -199,51 +203,49 @@ class _WeekSummary extends StatelessWidget {
                 .copyWith(fontSize: 12),
           ),
           const SizedBox(height: 15),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _SummaryMetric(
-                  key: const ValueKey('week-summary-precipitation'),
-                  icon: WeatherConditionIcon(
-                    condition: '비/눈',
-                    size: 21,
-                    color: WeatherCareTheme.of(context).primaryDeep,
-                  ),
-                  label: '예상 강수일',
-                  metric: summary.precipitation,
-                  dataPhase: dataPhase,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SummaryMetric(
-                  key: const ValueKey('week-summary-temperature'),
-                  icon: Icon(
-                    Icons.device_thermostat_rounded,
-                    color: WeatherCareTheme.of(context).primaryDeep,
-                    size: 19,
-                  ),
-                  label: '예상 주중 최고기온',
-                  metric: summary.maximum,
-                  dataPhase: dataPhase,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SummaryMetric(
-                  key: const ValueKey('week-summary-preparations'),
-                  icon: Icon(
-                    Icons.work_outline_rounded,
-                    color: WeatherCareTheme.of(context).primaryDeep,
-                    size: 19,
-                  ),
-                  label: '예상 준비물',
-                  metric: summary.preparations,
-                  dataPhase: dataPhase,
-                ),
-              ),
+          _SummaryMetric(
+            key: const ValueKey('week-summary-precipitation'),
+            icon: WeatherConditionIcon(
+              condition: '비/눈',
+              size: 21,
+              color: WeatherCareTheme.of(context).primaryDeep,
+            ),
+            label: '강수',
+            details: [
+              ('강수일', summary.precipitation),
+              ('최고 강수량', summary.precipitationAmount),
             ],
+            dataPhase: dataPhase,
+          ),
+          const SizedBox(height: 8),
+          _SummaryMetric(
+            key: const ValueKey('week-summary-temperature'),
+            icon: Icon(
+              Icons.device_thermostat_rounded,
+              color: WeatherCareTheme.of(context).primaryDeep,
+              size: 19,
+            ),
+            label: '기온',
+            details: [
+              ('최저', summary.minimum),
+              ('최고', summary.maximum),
+            ],
+            dataPhase: dataPhase,
+          ),
+          const SizedBox(height: 8),
+          _SummaryMetric(
+            key: const ValueKey('week-summary-preparations'),
+            icon: Icon(
+              Icons.work_outline_rounded,
+              color: WeatherCareTheme.of(context).primaryDeep,
+              size: 19,
+            ),
+            label: '준비물',
+            details: [
+              ('필요한 일수', summary.preparations),
+              ('예상 준비물', summary.preparationItems),
+            ],
+            dataPhase: dataPhase,
           ),
           if (summary.excludedNotice != null) ...[
             const SizedBox(height: 8),
@@ -259,42 +261,56 @@ class _WeekSummary extends StatelessWidget {
 class _SummaryMetric extends StatelessWidget {
   final Widget icon;
   final String label;
-  final WeekSummaryMetric metric;
+  final List<(String, WeekSummaryMetric)> details;
   final WeatherDataPhase dataPhase;
 
   const _SummaryMetric({
     super.key,
     required this.icon,
     required this.label,
-    required this.metric,
+    required this.details,
     required this.dataPhase,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       decoration: BoxDecoration(
         color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.66),
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Column(
+      child: Row(
         children: [
+          icon,
+          const SizedBox(width: 8),
           Text(
             label,
-            textAlign: TextAlign.center,
             style: WeatherCareTheme.of(context).microTextStyle.copyWith(
                   color: WeatherCareTheme.of(context).textPrimary,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w900,
                 ),
           ),
-          const SizedBox(height: 7),
-          icon,
-          const SizedBox(height: 5),
-          Text(metric.value.replaceAll('자료 없음', dataPhase.missingText()),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w900)),
-          const SizedBox(height: 4),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text.rich(
+              TextSpan(children: [
+                for (var index = 0; index < details.length; index++) ...[
+                  if (index > 0) const TextSpan(text: '  ·  '),
+                  TextSpan(text: '${details[index].$1} '),
+                  TextSpan(
+                    text: details[index]
+                        .$2
+                        .value
+                        .replaceAll('자료 없음', dataPhase.missingText()),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ]),
+              textAlign: TextAlign.right,
+              style: WeatherCareTheme.of(context).microTextStyle,
+            ),
+          ),
         ],
       ),
     );
@@ -336,14 +352,13 @@ class _WeekDayCard extends StatelessWidget {
       );
     }
     final weatherLabel = weekWeatherLabel(day);
-    final precipitationLines = weekPrecipitationLines(day);
-    final recommendations = serverFeaturesAvailable
+    final precipitation = weekPrecipitationCompact(day, isPast: isPast);
+    final recommendations = !isPast && serverFeaturesAvailable
         ? weekRecommendations(day)
         : <WeatherRecommendation>[];
     final minimumTemperature = weekTemperature(day, maximum: false);
     final maximumTemperature = weekTemperature(day, maximum: true);
-    final additionalData = _additionalWeekData(day);
-    final airQualityLines = _airQualityLines(day.airQualityForecast);
+    final additionalData = _additionalWeekData(day, isPast: isPast);
     final sourceLabel = day.forecastSource == 'KMA_OBSERVATION'
         ? '실제 관측'
         : day.historical
@@ -355,7 +370,8 @@ class _WeekDayCard extends StatelessWidget {
       if (weatherLabel == null || day.weatherDataComplete != true) '날씨',
       if (minimumTemperature == null) '최저기온',
       if (maximumTemperature == null) '최고기온',
-      if (serverFeaturesAvailable && !day.recommendationsAvailable) '준비물 추천',
+      if (!isPast && serverFeaturesAvailable && !day.recommendationsAvailable)
+        '준비물 추천',
     ];
     final card = Container(
       key: ValueKey('week-day-${day.forecastDate}'),
@@ -404,17 +420,13 @@ class _WeekDayCard extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Text(
-                      sourceLabel,
-                      style: WeatherCareTheme.of(context)
-                          .specialLabelStyle
-                          .copyWith(
-                            color: isPast && sourceLabel == '실제 관측'
-                                ? WeatherCareTheme.of(context).textPrimary
-                                : WeatherCareTheme.of(context).primaryDeep,
-                            fontSize: 10,
-                          ),
-                    ),
+                    if (!isPast)
+                      Text(
+                        sourceLabel,
+                        style: WeatherCareTheme.of(context)
+                            .specialLabelStyle
+                            .copyWith(fontSize: 10),
+                      ),
                   ],
                 ),
               ),
@@ -441,14 +453,6 @@ class _WeekDayCard extends StatelessWidget {
                 ),
             ],
           ),
-          if (day.forecastSource == 'KMA_OBSERVATION') ...[
-            const SizedBox(height: 5),
-            Text(
-              '인근 기상청 지상·AWS 관측소의 일자료'
-              '${day.observationDistanceKm == null ? '' : ' · 예보격자 대표점에서 ${day.observationDistanceKm!.toStringAsFixed(1)}km'}',
-              style: WeatherCareTheme.of(context).microTextStyle,
-            ),
-          ],
           const SizedBox(height: 10),
           Row(children: [
             Container(
@@ -510,7 +514,7 @@ class _WeekDayCard extends StatelessWidget {
           ),
           if (day.minTemperatureSource == 'HOURLY' ||
               day.maxTemperatureSource == 'HOURLY')
-            Text('시간별 최저·최고는 받은 시간대만 비교한 값이에요.',
+            Text('받은 시간대 기준 최저·최고',
                 style: WeatherCareTheme.of(context).microTextStyle),
           if (additionalData.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -523,45 +527,7 @@ class _WeekDayCard extends StatelessWidget {
               ],
             ),
           ],
-          if (airQualityLines.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Container(
-              key: ValueKey('week-air-quality-${day.forecastDate}'),
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: WeatherCareTheme.of(context)
-                    .surface
-                    .withValues(alpha: 0.65),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '대기 상태',
-                    style: TextStyle(
-                      color: isPast
-                          ? WeatherCareTheme.of(context).textSecondary
-                          : null,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    airQualityLines.join(' · '),
-                    style: WeatherCareTheme.of(context).microTextStyle.copyWith(
-                          color: isPast
-                              ? WeatherCareTheme.of(context).textSecondary
-                              : null,
-                          fontSize: 12,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (precipitationLines.isNotEmpty) ...[
+          if (precipitation != null) ...[
             const SizedBox(height: 10),
             Container(
               key: ValueKey('week-precipitation-${day.forecastDate}'),
@@ -573,86 +539,80 @@ class _WeekDayCard extends StatelessWidget {
                     .withValues(alpha: 0.65),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                      day.forecastSource == 'KMA_OBSERVATION'
-                          ? '강수 관측'
-                          : '강수 예보',
-                      style: const TextStyle(fontWeight: FontWeight.w800)),
-                  for (final line in precipitationLines)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(line,
-                          style: WeatherCareTheme.of(context)
-                              .microTextStyle
-                              .copyWith(fontSize: 12)),
-                    ),
+                  Icon(Icons.water_drop_outlined,
+                      size: 17,
+                      color: WeatherCareTheme.of(context).primaryDeep),
+                  const SizedBox(width: 7),
+                  Expanded(
+                      child: Text(precipitation,
+                          style: const TextStyle(fontWeight: FontWeight.w800))),
                 ],
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (recommendations.isEmpty)
-                Text(
-                  !serverFeaturesAvailable
-                      ? '운영 서버 미연결로 준비물 미지원'
-                      : day.forecastSource == 'KMA_OBSERVATION'
-                          ? '지난 날은 준비물 추천 대상이 아니에요'
-                          : day.recommendationsAvailable
-                              ? '표시할 준비물 추천 없음'
-                              : '준비물 추천 ${dataPhase.missingText()}',
-                  style: WeatherCareTheme.of(context)
-                      .microTextStyle
-                      .copyWith(fontSize: 11),
-                )
-              else
-                Wrap(
-                  spacing: 5,
-                  runSpacing: 5,
-                  children: [
-                    for (final recommendation in recommendations)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: recommendation.type.softColor(context),
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            PreparationIcon(
-                              type: recommendation.type,
-                              size: 10,
-                              color: recommendation.type.accentColor(context),
-                            ),
-                            const SizedBox(width: 3),
-                            Flexible(
-                                child: Text(
-                              recommendation.type.label,
-                              style: const TextStyle(
-                                fontFamily: WeatherCareTheme.fontMona,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
+          if (!isPast &&
+              (recommendations.isNotEmpty ||
+                  !serverFeaturesAvailable ||
+                  !day.recommendationsAvailable)) ...[
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (recommendations.isEmpty)
+                  Text(
+                    !serverFeaturesAvailable
+                        ? '운영 서버 미연결로 준비물 미지원'
+                        : '준비물 추천 ${dataPhase.missingText()}',
+                    style: WeatherCareTheme.of(context)
+                        .microTextStyle
+                        .copyWith(fontSize: 11),
+                  )
+                else
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final recommendation in recommendations)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 11,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: recommendation.type.softColor(context),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PreparationIcon(
+                                type: recommendation.type,
+                                size: 16,
+                                color: recommendation.type.accentColor(context),
                               ),
-                            )),
-                          ],
+                              const SizedBox(width: 6),
+                              Flexible(
+                                  child: Text(
+                                recommendation.type.label,
+                                style: const TextStyle(
+                                  fontFamily: WeatherCareTheme.fontMona,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              )),
+                            ],
+                          ),
                         ),
-                      ),
-                  ],
-                ),
-              if (recommendations.isNotEmpty && !day.recommendationsAvailable)
-                Text('일부 준비물 추천 자료를 확인하기 어려워요',
-                    style: WeatherCareTheme.of(context).microTextStyle),
-            ],
-          ),
+                    ],
+                  ),
+                if (recommendations.isNotEmpty && !day.recommendationsAvailable)
+                  Text('일부 준비물 추천 자료를 확인하기 어려워요',
+                      style: WeatherCareTheme.of(context).microTextStyle),
+              ],
+            ),
+          ],
           if (missing.isNotEmpty &&
               dataPhase != WeatherDataPhase.loading &&
               onRetry != null) ...[
@@ -728,9 +688,11 @@ class _WeekTemperaturePeriod extends StatelessWidget {
 
 class _WeekData {
   final IconData icon;
+  final String title;
   final String label;
+  final String detail;
 
-  const _WeekData(this.icon, this.label);
+  const _WeekData(this.icon, this.title, this.label, this.detail);
 }
 
 class _WeekDataChip extends StatelessWidget {
@@ -744,44 +706,118 @@ class _WeekDataChip extends StatelessWidget {
     final color = isPast
         ? WeatherCareTheme.of(context).textSecondary
         : WeatherCareTheme.of(context).primaryDeep;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-      decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(data.icon, size: 15, color: color),
-          const SizedBox(width: 5),
-          Text(
-            data.label,
-            style: WeatherCareTheme.of(context).microTextStyle.copyWith(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+    return Tooltip(
+      message: isPast ? data.label : '눌러서 수치 보기',
+      child: ChoiceChip(
+        label: Text.rich(TextSpan(children: [
+          TextSpan(text: data.label),
+          if (!isPast)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: Icon(Icons.touch_app_outlined, size: 16, color: color),
+              ),
+            ),
+        ])),
+        avatar: Icon(data.icon, size: 17, color: color),
+        selected: false,
+        onSelected: isPast
+            ? null
+            : (_) => showDialog<void>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text(data.title),
+                    content: Text(data.detail),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('닫기'),
+                      )
+                    ],
+                  ),
                 ),
-          ),
-        ],
+        labelStyle: WeatherCareTheme.of(context).microTextStyle.copyWith(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+        backgroundColor: isPast
+            ? WeatherCareTheme.of(context).surface.withValues(alpha: 0.65)
+            : color.withValues(alpha: 0.13),
+        side: BorderSide(
+          color: isPast ? Colors.transparent : color.withValues(alpha: 0.65),
+          width: 1.2,
+        ),
+        elevation: isPast ? 0 : 2,
+        shadowColor: color.withValues(alpha: 0.32),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+        visualDensity: VisualDensity.standard,
       ),
     );
   }
 }
 
-List<_WeekData> _additionalWeekData(WeeklyForecastItem day) => [
+List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
+        {required bool isPast}) =>
+    [
       if (day.averageHumidity case final value?)
-        _WeekData(Icons.water_drop_outlined, '평균 습도 ${value.round()}%'),
+        _WeekData(
+          Icons.water_drop_outlined,
+          '습도',
+          isPast
+              ? '평균 습도 ${value.round()}%'
+              : '습도 ${humidityDescription(value)}',
+          '평균 습도 ${value.round()}%',
+        ),
       if (day.maximumWindSpeed case final value?)
-        _WeekData(Icons.air_rounded, '최대 풍속 ${_decimal(value)}m/s'),
+        _WeekData(
+          Icons.air_rounded,
+          '바람',
+          isPast
+              ? '최대 풍속 ${_decimal(value)}m/s'
+              : '바람 ${windDescription(value)}',
+          '최대 풍속 ${_decimal(value)}m/s',
+        ),
       if (day.snowfallAmount case final value?)
         _WeekData(
           Icons.ac_unit_rounded,
-          '${day.historical || day.forecastSource == 'KMA_OBSERVATION' ? '최심신적설' : '예상 신적설'} ${_decimal(value)}cm',
+          isPast ? '최심신적설' : '예상 신적설',
+          isPast
+              ? '최심신적설 ${_decimal(value)}cm'
+              : value > 0
+                  ? '신적설 예상'
+                  : '신적설 없음',
+          '${isPast ? '최심신적설' : '예상 신적설'} ${_decimal(value)}cm',
         ),
       if (day.maximumUvIndex case final value?)
-        _WeekData(Icons.wb_sunny_outlined, '자외선 최고 ${_decimal(value)}'),
+        _WeekData(
+          Icons.wb_sunny_outlined,
+          '자외선',
+          isPast ? '자외선 최고 ${_decimal(value)}' : '자외선 ${uvDescription(value)}',
+          '자외선지수 최고 ${_decimal(value)}',
+        ),
+      if (day.airQualityForecast case final air?
+          when air.pm10Grade != null ||
+              air.pm25Grade != null ||
+              air.ozoneGrade != null ||
+              air.yellowDustMentioned)
+        _WeekData(
+          Icons.cloud_outlined,
+          '대기 상태',
+          _airQualityLabel(air),
+          '${_airQualityLines(air).join(' · ')}\n농도 수치는 주간 예보에서 제공되지 않아요.',
+        ),
     ];
+
+String _airQualityLabel(WeeklyAirQualityForecast air) {
+  final grades = [
+    air.pm10Grade,
+    air.pm25Grade,
+    air.ozoneGrade,
+  ].whereType<String>().toSet();
+  return grades.isEmpty ? '황사 영향 언급' : '대기질 ${grades.join('·')}';
+}
 
 List<String> _airQualityLines(WeeklyAirQualityForecast? air) {
   if (air == null) return const [];

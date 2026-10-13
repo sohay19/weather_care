@@ -247,6 +247,22 @@ describe('Canonical Briefing Intent v2', () => {
     );
   });
 
+  it('비 브리핑이 우산을 권하면 추천 엔진 결과가 비어도 준비물에 우산을 넣는다', () => {
+    const result = buildWeatherBriefResult(forecast([], {
+      precipitationType: 'RAIN',
+      precipitationProbability: 70,
+    }), {
+      expandedPreparations: true,
+      allowedRecommendedItems: ['UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS'],
+      severityRecommendedItems: [],
+    });
+
+    expect(result.scene).toBe('RAIN');
+    expect(result.text).toBe('현재 시각대에는 비 가능성이 높아요. 외출한다면 우산을 챙기세요.');
+    expect(result.intent.recommendedItems).toEqual(['UMBRELLA']);
+    expect(result.timeline[0].recommendedItems).toEqual(['UMBRELLA']);
+  });
+
   it('UV 7 브리핑은 추천 엔진이 고른 선크림만 제공한다', () => {
     const result = buildWeatherBriefResult(forecast([
       snapshot(15, { uvIndex: 7 }),
@@ -271,6 +287,22 @@ describe('Canonical Briefing Intent v2', () => {
 
     expect(result.scene).not.toBe('RAIN');
     expect(result.intent.recommendedItems).not.toContain('UMBRELLA');
+    expect(result.text).not.toContain('우산');
+  });
+
+  it('우산을 꺼 둔 경우 다른 비 준비물이 켜져 있어도 우산 안내를 하지 않는다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(15, {
+        precipitationType: 'RAIN',
+        precipitationProbability: 70,
+      }),
+    ]), {
+      expandedPreparations: true,
+      allowedRecommendedItems: ['RAINCOAT'],
+      severityRecommendedItems: ['RAINCOAT'],
+    });
+
+    expect(result.scene).not.toBe('RAIN');
     expect(result.text).not.toContain('우산');
   });
 });

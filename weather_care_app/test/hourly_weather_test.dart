@@ -89,23 +89,24 @@ void main() {
     for (final text in [
       '시각 자료 없음',
       '날씨 —',
-      '기온 —',
-      '체감 —',
+      '—',
+      '(체감 —)',
     ]) {
       expect(
           find.descendant(of: row, matching: find.text(text)), findsOneWidget);
     }
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('강수확률 —'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
     expect(find.text('강수량 —'), findsOneWidget);
     await _selectHourly(tester, 'wind');
-    expect(find.text('바람 —'), findsOneWidget);
+    expect(find.text('방향 —'), findsOneWidget);
     for (final text in [
       '맑음',
-      '기온 0℃',
-      '강수확률 0%',
+      '0°C',
+      '(체감 0°C)',
+      '0%',
       '강수량 0mm',
-      '바람 0.0m/s',
+      '0.0m/s',
       '눈 없음',
       '체감 미지원'
     ]) {
@@ -115,24 +116,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('0도·무풍·대기질 0과 명시된 무강수는 구분해 표시한다', (tester) async {
+  testWidgets('0도·무풍·자외선 0과 명시된 무강수는 구분해 표시한다', (tester) async {
     await _pumpHourly(tester, [_zero]);
     final row = find.byKey(const ValueKey('today-hourly-0'));
-    expect(
-        find.descendant(of: row, matching: find.text('기온 0℃')), findsOneWidget);
-    expect(
-        find.descendant(of: row, matching: find.text('체감 0℃')), findsOneWidget);
+    expect(find.descendant(of: row, matching: find.text('0°C')),
+        findsOneWidget);
+    expect(find.descendant(of: row, matching: find.text('(체감 0°C)')),
+        findsOneWidget);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('강수확률 0%'), findsOneWidget);
+    expect(find.text('0%'), findsOneWidget);
     expect(find.text('강수량 0mm'), findsOneWidget);
     expect(find.textContaining('신적설'), findsNothing);
     await _selectHourly(tester, 'wind');
-    expect(find.text('바람 0.0m/s'), findsOneWidget);
+    expect(find.text('0.0m/s'), findsOneWidget);
     await _selectHourly(tester, 'uv');
-    expect(find.text('자외선 0'), findsOneWidget);
-    await _selectHourly(tester, 'airQuality');
-    expect(find.text('미세먼지 0㎍/㎥'), findsOneWidget);
-    expect(find.text('초미세먼지 0㎍/㎥'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('—'), findsNothing);
   });
 
   testWidgets('명시된 NONE 범위는 수치 필드가 없어도 결측으로 안내하지 않는다', (tester) async {
@@ -156,7 +155,7 @@ void main() {
     expect(find.descendant(of: row, matching: find.text('강수량 0mm')),
         findsOneWidget);
     expect(find.text('예상 신적설 0cm'), findsNothing);
-    expect(find.text('강수확률 20%'), findsOneWidget);
+    expect(find.text('20%'), findsOneWidget);
   });
 
   testWidgets('일부 강수자료만 있을 때 다른 값을 보충하지 않는다', (tester) async {
@@ -166,9 +165,9 @@ void main() {
     ]);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('강수량 2.5mm'), findsOneWidget);
-    expect(find.text('강수확률 80%'), findsOneWidget);
+    expect(find.text('80%'), findsOneWidget);
     expect(find.text('신적설 —'), findsOneWidget);
-    expect(find.text('강수확률 0%'), findsNothing);
+    expect(find.text('0%'), findsNothing);
     expect(find.text('강수량 0mm'), findsNothing);
     expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(find.text('강수량 —'), findsOneWidget);
@@ -218,7 +217,7 @@ void main() {
           find.byKey(const ValueKey('today-hourly-timeline')), findsOneWidget);
       await _selectHourly(tester, 'precipitation');
       for (final text in [
-        '강수확률 80%',
+        '80%',
         '강수량 1mm 미만',
         '신적설 0.5cm 미만',
         '강수량 30~50mm',
@@ -228,9 +227,8 @@ void main() {
       }
       expect(find.text('강수량 1mm'), findsNothing);
       expect(find.text('예상 신적설 0.5cm'), findsNothing);
-      await _selectHourly(tester, 'airQuality');
-      expect(find.text('초미세먼지 0㎍/㎥'), findsOneWidget);
-      expect(find.text('미세먼지 0㎍/㎥'), findsOneWidget);
+      expect(find.byKey(const ValueKey('today-hourly-filter-airQuality')),
+          findsNothing);
       expect(tester.takeException(), isNull);
     });
   }
@@ -238,7 +236,7 @@ void main() {
   testWidgets('빈 시간별 예보는 0 값의 행을 만들지 않는다', (tester) async {
     await _pumpHourly(tester, []);
     expect(find.byKey(const ValueKey('today-hourly-0')), findsNothing);
-    expect(find.text('시간별 예보 자료가 없어 표시하기 어려워요.'), findsOneWidget);
+    expect(find.text('타임라인 자료가 없어 표시하기 어려워요.'), findsOneWidget);
   });
 
   testWidgets('선택한 시간별 지표는 가로로 넘기며 바꿔 볼 수 있다', (tester) async {
@@ -260,7 +258,7 @@ void main() {
 
     final timeline = find.byKey(const ValueKey('today-hourly-timeline'));
     await _selectHourly(tester, 'humidity');
-    expect(find.text('습도 60%'), findsOneWidget);
+    expect(find.text('60%'), findsOneWidget);
     await tester.drag(timeline, const Offset(-240, 0));
     await tester.pumpAndSettle();
     final scrollable = tester.state<ScrollableState>(
@@ -268,14 +266,120 @@ void main() {
     );
     expect(scrollable.position.pixels, greaterThan(0));
     expect(find.text('15시'), findsOneWidget);
-    expect(find.text('습도 70%'), findsOneWidget);
+    expect(find.text('70%'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('강수확률 80%'), findsOneWidget);
+    expect(find.text('80%'), findsOneWidget);
     expect(find.text('강수량 2mm'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('시간별 예보 안내는 느낌표 버튼의 팝업에서만 보인다', (tester) async {
+  testWidgets('타임라인 선택 버튼은 한 줄이고 값은 아이콘과 함께 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pumpHourly(tester, [
+      {
+        ..._zero,
+        'temperature': 20,
+        'apparentTemperature': 19,
+        'precipitationProbability': 10,
+        'humidity': 25,
+        'windDirection': 90,
+        'uvIndex': 2
+      },
+      {..._zero, 'time': '15', 'humidity': 75, 'uvIndex': 9},
+    ]);
+
+    final chips = [
+      for (final metric in [
+        'weather',
+        'precipitation',
+        'uv',
+        'wind',
+        'humidity',
+      ])
+        find.byKey(ValueKey('today-hourly-filter-$metric')),
+    ];
+    for (final chip in chips.skip(1)) {
+      expect(tester.getTopLeft(chip).dy, tester.getTopLeft(chips[0]).dy);
+    }
+    expect(find.byKey(const ValueKey('today-hourly-filter-airQuality')),
+        findsNothing);
+    expect(find.text('20°C'), findsOneWidget);
+    final apparent = find.text('(체감 19°C)');
+    expect(apparent, findsOneWidget);
+    expect(tester.widget<Text>(apparent).style?.fontWeight, isNot(FontWeight.w800));
+
+    await _selectHourly(tester, 'precipitation');
+    final first = find.byKey(const ValueKey('today-hourly-0'));
+    expect(
+        find.descendant(of: first, matching: find.text('10%')), findsOneWidget);
+    expect(find.descendant(
+        of: first,
+        matching: find.byKey(const ValueKey('today-hourly-precipitation-icon'))),
+        findsOneWidget);
+    expect(find.descendant(of: first, matching: find.byIcon(Icons.water_drop)),
+        findsNothing);
+    expect(find.descendant(of: first, matching: find.text('강수량 0mm')),
+        findsOneWidget);
+
+    await _selectHourly(tester, 'uv');
+    final lowSun = tester.widget<Icon>(find.descendant(
+        of: first, matching: find.byIcon(Icons.wb_sunny_rounded)));
+    final highSun = tester.widget<Icon>(find.descendant(
+        of: find.byKey(const ValueKey('today-hourly-1')),
+        matching: find.byIcon(Icons.wb_sunny_rounded)));
+    expect(lowSun.color, isNot(Colors.red));
+    expect(highSun.color, Colors.red);
+    expect(
+        find.descendant(of: first, matching: find.text('2')), findsOneWidget);
+
+    await _selectHourly(tester, 'wind');
+    expect(find.descendant(of: first, matching: find.text('0.0m/s')),
+        findsOneWidget);
+    expect(
+        find.descendant(of: first, matching: find.text('동풍')), findsOneWidget);
+    expect(find.descendant(of: first, matching: find.byIcon(Icons.air_rounded)),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('today-hourly-wind-direction-icon')),
+        findsNothing);
+
+    await _selectHourly(tester, 'humidity');
+    expect(
+        find.descendant(of: first, matching: find.text('25%')), findsOneWidget);
+    final lowHumidity = tester.widget<Text>(
+        find.descendant(of: first, matching: find.text('25%')));
+    final highHumidity = tester.widget<Text>(find.descendant(
+        of: find.byKey(const ValueKey('today-hourly-1')),
+        matching: find.text('75%')));
+    expect(lowHumidity.style?.color, isNot(highHumidity.style?.color));
+    expect(tester.getCenter(find.descendant(of: first, matching: find.text('25%'))).dy,
+        closeTo(tester.getCenter(find.descendant(
+                of: first,
+                matching: find.byKey(const ValueKey('today-hourly-humidity-icon')))).dy + 5, 2));
+    expect(
+        find.descendant(
+            of: first,
+            matching: find.byWidgetPredicate((widget) =>
+                widget is Semantics && widget.properties.label == '습도 25% 채움')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('today-hourly-1')),
+            matching: find.byWidgetPredicate((widget) =>
+                widget is Semantics && widget.properties.label == '습도 75% 채움')),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await _pumpHourly(tester, [_zero], scale: 2);
+    for (final chip in chips.skip(1)) {
+      expect(tester.getTopLeft(chip).dy, tester.getTopLeft(chips[0]).dy);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('타임라인 안내는 느낌표 버튼의 팝업에서만 보인다', (tester) async {
     await _pumpHourly(tester, [_zero]);
     expect(find.textContaining('기온·바람은 정시 값'), findsNothing);
     expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
@@ -325,6 +429,8 @@ Future<void> _pumpHourly(WidgetTester tester, List<Map<String, dynamic>> hourly,
 }
 
 Future<void> _selectHourly(WidgetTester tester, String metric) async {
-  await tester.tap(find.byKey(ValueKey('today-hourly-filter-$metric')));
+  final chip = find.byKey(ValueKey('today-hourly-filter-$metric'));
+  await tester.ensureVisible(chip);
+  await tester.tap(chip);
   await tester.pumpAndSettle();
 }

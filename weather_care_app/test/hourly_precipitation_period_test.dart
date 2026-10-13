@@ -61,14 +61,14 @@ void main() {
       await _pump(tester, [_slot(dateInKorea(DateTime.now()), 15)],
           scale: scale);
       expect(find.text('15시'), findsOneWidget);
-      expect(find.text('기온 22℃'), findsOneWidget);
-      expect(find.text('체감 22℃'), findsOneWidget);
+      expect(find.text('22°C'), findsOneWidget);
+      expect(find.text('(체감 22°C)'), findsOneWidget);
       expect(find.text('정시 예보'), findsNothing);
       await _selectHourly(tester, 'precipitation');
       expect(find.text('14~15시'), findsOneWidget);
       expect(find.text('강수량 1mm 미만'), findsOneWidget);
       await _selectHourly(tester, 'wind');
-      expect(find.text('바람 2.0m/s'), findsOneWidget);
+      expect(find.text('2.0m/s'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -84,18 +84,20 @@ void main() {
     expect(find.text('23시'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
     expect(find.text('내일 00시'), findsOneWidget);
-    expect(find.text('기온 99℃'), findsOneWidget);
+    expect(find.text('99°C'), findsOneWidget);
+    expect(find.text('(체감 22°C)'), findsNWidgets(2));
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     await _selectHourly(tester, 'wind');
-    expect(find.text('바람 2.0m/s'), findsNWidgets(2));
+    expect(find.text('2.0m/s'), findsNWidgets(2));
   });
 
   testWidgets('내일 00시만 있어도 날씨와 전날 강수 구간을 각각 표시한다', (tester) async {
     final tomorrow = dateInKorea(DateTime.now().add(const Duration(days: 1)));
     await _pump(tester, [_slot(tomorrow, 0)]);
     expect(find.text('내일 00시'), findsOneWidget);
-    expect(find.text('기온 22℃'), findsOneWidget);
+    expect(find.text('22°C'), findsOneWidget);
+    expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     expect(find.text('강수량 1mm 미만'), findsOneWidget);
@@ -136,14 +138,15 @@ void main() {
     expect(find.text('23시'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
-    expect(find.text('강수확률 0%'), findsOneWidget);
+    expect(find.text('0%'), findsOneWidget);
     expect(find.text('00시'), findsNothing);
   });
 
   testWidgets('오늘 00시 기온은 표시해도 어제 23~24시 강수는 오늘에 섞지 않는다', (tester) async {
     await _pump(tester, [_slot(dateInKorea(DateTime.now()), 0)]);
     expect(find.text('00시'), findsOneWidget);
-    expect(find.text('기온 22℃'), findsOneWidget);
+    expect(find.text('22°C'), findsOneWidget);
+    expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsNothing);
     expect(find.text('강수량 1mm 미만'), findsNothing);
@@ -175,7 +178,8 @@ void main() {
     await _pump(tester, [
       {..._slot(dateInKorea(DateTime.now()), 15), 'precipitationPeriod': null}
     ]);
-    expect(find.text('기온 22℃'), findsOneWidget);
+    expect(find.text('22°C'), findsOneWidget);
+    expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('강수 구간 —'), findsOneWidget);
     expect(find.text('강수량 1mm 미만'), findsNothing);
@@ -226,6 +230,8 @@ Future<void> _pump(WidgetTester tester, List<Map<String, dynamic>> hourly,
 }
 
 Future<void> _selectHourly(WidgetTester tester, String metric) async {
-  await tester.tap(find.byKey(ValueKey('today-hourly-filter-$metric')));
+  final chip = find.byKey(ValueKey('today-hourly-filter-$metric'));
+  await tester.ensureVisible(chip);
+  await tester.tap(chip);
   await tester.pumpAndSettle();
 }

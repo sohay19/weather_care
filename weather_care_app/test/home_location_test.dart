@@ -272,6 +272,7 @@ void main() {
       VoidCallback? onHomeReady,
       DateTime Function()? now}) async {
     await tester.pumpWidget(MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
         home: HomeScreen(
             serverDataAccess: access,
             initialIndex: initialIndex,
@@ -519,7 +520,7 @@ void main() {
 
     expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
     expect(find.text('불러오는 중'), findsWidgets);
-    expect(find.text('시간별 예보를 불러오고 있어요.'), findsOneWidget);
+    expect(find.text('타임라인을 불러오고 있어요.'), findsOneWidget);
 
     await tester.tap(find.text('Detail'));
     await tester.pump();
@@ -697,7 +698,7 @@ void main() {
 
     expect(weather.comparisonCalls, [(nx: 60, ny: 127)]);
     await tester.dragUntilVisible(
-      find.byKey(const ValueKey('yesterday-comparison-card')),
+      find.text('어제와 비교'),
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, -300),
     );
@@ -726,13 +727,8 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Check List를 불러오고 있어요'), findsOneWidget);
-    await tester.dragUntilVisible(
-      find.text('시간별 자료를 불러오고 있어요'),
-      find.byKey(const ValueKey('main-tab')),
-      const Offset(0, -200),
-    );
-    await tester.pump();
-    expect(find.text('시간별 자료를 불러오고 있어요'), findsOneWidget);
+    expect(find.text('시간별 자료를 불러오고 있어요'), findsNothing);
+    expect(find.byKey(const ValueKey('main-top-weather-card')), findsOneWidget);
 
     weather.pending!.complete(_weather(60, 127));
     await tester.pumpAndSettle();

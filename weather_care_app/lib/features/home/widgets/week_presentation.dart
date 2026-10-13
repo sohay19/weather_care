@@ -1,6 +1,7 @@
 import '../../../models/weather.dart';
 import '../../../models/recommendation.dart';
 import '../../../utils/korea_date.dart';
+import 'week_precipitation.dart';
 
 class WeekCalendarDay {
   final DateTime date;
@@ -150,15 +151,24 @@ class WeekSummaryMetric {
 
 class WeekSummaryData {
   final WeekSummaryMetric precipitation;
+  final WeekSummaryMetric precipitationAmount;
+  final WeekSummaryMetric minimum;
   final WeekSummaryMetric maximum;
   final WeekSummaryMetric preparations;
+  final WeekSummaryMetric preparationItems;
   final String? excludedNotice;
   const WeekSummaryData(
-      this.precipitation, this.maximum, this.preparations, this.excludedNotice);
+      this.precipitation,
+      this.precipitationAmount,
+      this.minimum,
+      this.maximum,
+      this.preparations,
+      this.preparationItems,
+      this.excludedNotice);
 }
 
 WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
-    {required bool serverFeaturesAvailable}) {
+    {required bool serverFeaturesAvailable, DateTime? today}) {
   final grouped = <String, List<WeeklyForecastItem>>{};
   var missingDates = 0;
   for (final day in days) {
@@ -195,12 +205,47 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
     return WeekSummaryMetric(value);
   }
 
-  final temperatures = eligible
+  final maximumTemperatures = eligible
       .map((day) => weekTemperature(day, maximum: true))
       .whereType<double>()
       .toList();
-  final max = temperatures.fold<double?>(
+  final minimumTemperatures = eligible
+      .map((day) => weekTemperature(day, maximum: false))
+      .whereType<double>()
+      .toList();
+  final max = maximumTemperatures.fold<double?>(
       null, (max, value) => max == null || value > max ? value : max);
+  final min = minimumTemperatures.fold<double?>(
+      null, (min, value) => min == null || value < min ? value : min);
+  final knownAmounts = eligible
+      .map((day) => (day: day, amount: weekPrecipitationAmount(day)))
+      .where((item) => item.amount != null)
+      .toList();
+  knownAmounts.sort((a, b) =>
+      (b.amount!.upper ?? 1000000000).compareTo(a.amount!.upper ?? 1000000000));
+  final highestAmount = knownAmounts.isEmpty
+      ? '자료 없음'
+      : '${knownAmounts.first.amount!.label} '
+          '(${knownAmounts.first.day.forecastSource == 'KMA_OBSERVATION' ? '관측' : '예상'})';
+  final preparationDays = eligible
+      .where((day) =>
+          day.forecastSource != 'KMA_OBSERVATION' &&
+          (today == null ||
+              !parseForecastDate(day.forecastDate)!.isBefore(today)))
+      .toList();
+  final itemTypes = <RecommendationType>{
+    for (final day in preparationDays)
+      for (final item in weekRecommendations(day)) item.type,
+  }.toList();
+  final itemLabels = itemTypes.take(3).map((type) => type.label).join(' · ');
+  final incompletePreparations =
+      preparationDays.any((day) => !day.recommendationsAvailable);
+  final preparationLabels = itemTypes.isEmpty
+      ? incompletePreparations
+          ? '자료 없음'
+          : '없음'
+      : '$itemLabels${itemTypes.length > 3 ? ' 외 ${itemTypes.length - 3}종' : ''}'
+          '${incompletePreparations ? ' · 일부 확인' : ''}';
   final exclusions = [
     if (missingDates > 0) '날짜 미확인 $missingDates개',
     if (duplicates > 0) '중복 날짜 $duplicates일',
@@ -210,22 +255,22 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
       eligible.map(weekPrecipitation).toList(),
       zeroWhenNoPositive: true,
     ),
+    WeekSummaryMetric(highestAmount),
+    WeekSummaryMetric(min == null ? '자료 없음' : weekDegrees(min)),
     WeekSummaryMetric(max == null ? '자료 없음' : weekDegrees(max)),
     serverFeaturesAvailable
         ? count(
-            eligible
-                .where((day) => day.forecastSource != 'KMA_OBSERVATION')
+            preparationDays
                 .map((day) => weekRecommendations(day).isNotEmpty
                     ? true
                     : day.recommendationsAvailable
                         ? false
                         : null)
                 .toList(),
-            denominator: eligible
-                .where((day) => day.forecastSource != 'KMA_OBSERVATION')
-                .length,
+            denominator: preparationDays.length,
           )
         : const WeekSummaryMetric('미지원'),
+    WeekSummaryMetric(serverFeaturesAvailable ? preparationLabels : '미지원'),
     exclusions.isEmpty ? null : '요약 제외: ${exclusions.join(' · ')}',
   );
 }

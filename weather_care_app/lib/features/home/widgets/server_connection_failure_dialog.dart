@@ -39,7 +39,7 @@ class ServerConnectionFailureDialog extends StatelessWidget {
                   '서버 연결 또는 선택 지역의 자료 준비가 잠시 '
                   '지연될 수 있어요.\n\n현재 화면의 기존 자료는 '
                   '유지되며 잠시 후 다시 시도할 수 있어요.'
-              : 'Check List와 시간별 예보는 운영 서버가 준비한 '
+              : 'Check List와 타임라인은 운영 서버가 준비한 '
                   '날씨 자료가 있어야 제공할 수 있어요.\n\n서버 연결 또는 '
                   '선택 지역의 자료 준비가 잠시 지연될 수 있어요. '
                   '잠시 후 다시 시도해 주세요.',

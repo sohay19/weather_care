@@ -169,6 +169,51 @@ void main() {
 
     expect(weekPrecipitationLines(wet), ['인근 관측소 실제 일강수량 4.5mm']);
     expect(weekPrecipitationLines(dry), ['인근 관측소에서 강수가 관측되지 않았어요.']);
+    expect(weekPrecipitationCompact(wet, isPast: true), '강수 관측 4.5mm');
+    expect(weekPrecipitationCompact(dry, isPast: true), isNull);
+  });
+
+  test('날짜별 강수확률 최고치와 강수량을 나란히 표시한다', () {
+    final day = _day([
+      _hour(10, amount: '2mm', pop: 20),
+      _hour(11, amount: '1mm 미만', pop: 70),
+    ]);
+    expect(weekPrecipitationCompact(day, isPast: false),
+        '강수확률 최고 70% · 강수량 2mm 이상 3mm 미만');
+    expect(
+      weekPrecipitationCompact(_day([_hour(10, amount: '', pop: 60)]),
+          isPast: false),
+      '강수확률 최고 60% · 강수량 자료 없음',
+    );
+    expect(
+      weekPrecipitationCompact(_day([_hour(10, amount: '2mm', pop: -1)]),
+          isPast: false),
+      '강수확률 자료 없음 · 강수량 2mm',
+    );
+    expect(
+      weekPrecipitationCompact(_day([_hour(10, amount: '', pop: -1)]),
+          isPast: false),
+      '강수 자료 없음',
+    );
+    expect(
+      weekPrecipitationCompact(_day([_hour(10, amount: '강수없음', pop: 0)]),
+          isPast: false),
+      '강수확률 최고 0% · 강수량 0mm',
+    );
+    final extended = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-12-31',
+      'precipitationDetail': {
+        'kind': 'EXTENDED',
+        'hours': [],
+        'extendedMaxProbability': 70,
+      },
+    });
+    expect(weekPrecipitationCompact(extended, isPast: false),
+        '강수확률 최고 70% · 강수량 자료 없음');
+    final unavailable = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-12-31',
+    });
+    expect(weekPrecipitationCompact(unavailable, isPast: false), '강수 자료 없음');
   });
   testWidgets('강수 표시가 360px·2배 글자에서 넘치지 않는다', (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 1600));
@@ -195,7 +240,7 @@ void main() {
       const Offset(0, -700),
     );
     await tester.pump();
-    expect(find.text('예상 누적 강수량 30mm 이상 51mm 미만'), findsOneWidget);
+    expect(find.text('강수확률 최고 90% · 강수량 30mm 이상 51mm 미만'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

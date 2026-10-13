@@ -12,7 +12,7 @@ import 'home_section_header.dart';
 import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
-enum _HourlyMetric { weather, precipitation, uv, wind, humidity }
+enum _HourlyMetric { weather, precipitation, snowfall, uv, wind, humidity }
 
 const _timeLabelHeight = 28.0;
 const _timeDotGap = 3.0;
@@ -90,7 +90,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
     ];
     final selectedItems = [
       for (var hour = 0; hour < 24; hour++)
-        (_selected == _HourlyMetric.precipitation
+        (_selected == _HourlyMetric.precipitation ||
+                    _selected == _HourlyMetric.snowfall
                 ? precipitationByHour[hour]
                 : hourlyByHour[hour]) ??
             emptySlots[hour],
@@ -171,7 +172,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
               ],
             ),
           ),
-          if ((_selected == _HourlyMetric.precipitation
+          if ((_selected == _HourlyMetric.precipitation ||
+                      _selected == _HourlyMetric.snowfall
                   ? precipitationByHour
                   : hourlyByHour)
               .isEmpty) ...[
@@ -227,7 +229,7 @@ void _showHourlyInfo(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                '기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
+                '기온·바람은 정시 값, 강수와 강설은 직전 1시간 구간의 예보예요. 강설의 신적설은 새로 쌓일 눈의 깊이이며 현재 쌓인 눈의 전체 깊이가 아니에요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
             SizedBox(height: 8),
             Text(
               '가시거리는 현재 관측자료만 제공돼 시간별 예보에는 표시하지 않아요.',
@@ -249,6 +251,7 @@ void _showHourlyInfo(BuildContext context) {
 String _metricLabel(_HourlyMetric metric) => switch (metric) {
       _HourlyMetric.weather => '날씨',
       _HourlyMetric.precipitation => '강수',
+      _HourlyMetric.snowfall => '강설',
       _HourlyMetric.uv => '자외선',
       _HourlyMetric.wind => '바람',
       _HourlyMetric.humidity => '습도',
@@ -275,18 +278,19 @@ class _HourlyPoint extends StatelessWidget {
     final precipitationValid = !item.precipitationPeriodProvided ||
         (period != null && period.date.compareTo(today) >= 0);
     final hour = int.tryParse(item.time);
-    final labelDate = metric == _HourlyMetric.precipitation && period != null
+    final isPrecipitationPeriod = metric == _HourlyMetric.precipitation ||
+        metric == _HourlyMetric.snowfall;
+    final labelDate = isPrecipitationPeriod && period != null
         ? period.date
         : item.forecastDate;
     final dayPrefix =
         labelDate != null && labelDate.compareTo(today) > 0 ? '내일 ' : '';
-    final timeLabel = metric == _HourlyMetric.precipitation &&
-            period != null &&
-            precipitationValid
-        ? '$dayPrefix${period.label}'
-        : hour != null && hour >= 0 && hour < 24
-            ? '$dayPrefix${hour.toString().padLeft(2, '0')}시'
-            : '시각 ${dataPhase.missingText()}';
+    final timeLabel =
+        isPrecipitationPeriod && period != null && precipitationValid
+            ? '$dayPrefix${period.label}'
+            : hour != null && hour >= 0 && hour < 24
+                ? '$dayPrefix${hour.toString().padLeft(2, '0')}시'
+                : '시각 ${dataPhase.missingText()}';
     final visual = switch (metric) {
       _HourlyMetric.weather => WeatherConditionIcon(
           condition: item.skyCondition,
@@ -304,6 +308,12 @@ class _HourlyPoint extends StatelessWidget {
               precipitationValid && item.precipitationProbability != null
                   ? '강수확률 ${item.precipitationProbability!.toStringAsFixed(0)}%'
                   : '강수확률 자료 없음',
+        ),
+      _HourlyMetric.snowfall => Icon(
+          Icons.ac_unit_rounded,
+          size: 32,
+          color: palette.primaryDeep,
+          semanticLabel: '강설 예보',
         ),
       _HourlyMetric.uv => _MetricIconValue(
           icon: Icons.wb_sunny_rounded,
@@ -345,11 +355,18 @@ class _HourlyPoint extends StatelessWidget {
       _HourlyMetric.precipitation => precipitationValid
           ? [
               rainAmount ?? '—',
-              if (item.snowExpected == true ||
-                  _hasPositiveAmount(snowAmount, 'cm'))
-                '신적설 ${snowAmount ?? '—'}',
             ]
           : ['강수 구간 —'],
+      _HourlyMetric.snowfall => precipitationValid
+          ? [
+              item.snowExpected == true
+                  ? '눈 예상'
+                  : item.snowExpected == false
+                      ? '눈 예보 없음'
+                      : '눈 예보 —',
+              '신적설 ${snowAmount ?? '—'}',
+            ]
+          : ['강설 구간 —'],
       _HourlyMetric.uv => [uvDescription(item.uvIndex) ?? '—'],
       _HourlyMetric.wind => [
           windDescription(item.windSpeed) ?? '—',
@@ -638,6 +655,3 @@ Path _dropPath(Size size) {
 String _amountNumber(double value) => value == value.roundToDouble()
     ? value.toInt().toString()
     : value.toStringAsFixed(1);
-
-bool _hasPositiveAmount(String? label, String unit) =>
-    label != null && label != '0$unit' && label != '0.0$unit';

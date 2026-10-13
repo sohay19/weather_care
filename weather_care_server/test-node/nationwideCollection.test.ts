@@ -1,4 +1,5 @@
 import * as nationalForecast from '../src/services/nationwideForecastCache';
+import * as livingIndices from '../src/services/livingIndices';
 import { KmaGridObservationProvider, gridObservationKoreanIso } from '../src/providers/weather/kmaGridObservationProvider';
 import { observationSnapshot } from './gridObservationFixture';
 import { KmaUvProvider } from '../src/providers/uv/kmaUvProvider';
@@ -120,6 +121,7 @@ it('설치 없는 전체 수집에서도 전국 항목을 갱신하고 대기질
   await saveCollectedSourceVersion(env.DB, 'KMA_MID_TERM_SUPPORTED_REGIONS', `DATA_GO_KR:${latestMidTermIssueTimes(now, 1)[0]}`, now);
   vi.spyOn(KmaGridObservationProvider.prototype, 'getSnapshot').mockImplementation(async clock => observationSnapshot(gridObservationKoreanIso(clock)));
   const forecast = vi.spyOn(nationalForecast, 'collectNationwideForecast').mockResolvedValue();
+  const living = vi.spyOn(livingIndices, 'collectNationwideLivingIndices').mockResolvedValue();
   const uv = vi.spyOn(KmaUvProvider.prototype, 'getNationwide').mockResolvedValue({ '4139054000': {
     areaNo: '4139054000', issuedAt: '2026-10-04T09:00:00+09:00', provider: 'KMA_LIVING_INDEX_V5', points: [{ forecastAt: now.toISOString(), uvIndex: 4 }],
   } });
@@ -136,9 +138,11 @@ it('설치 없는 전체 수집에서도 전국 항목을 갱신하고 대기질
     stations: dates.map(date => ({ date, stationId: '108', latitude: 37.57, longitude: 126.96, minTemperature: 15, maxTemperature: 25, snowfallAmount: 0 })) });
   await runWeatherCollectionJob(env, { now });
   await runWeatherCollectionJob(env, { now: new Date(now.getTime() + 4200000) });
-  expect(KmaSnowObservationProvider.prototype.getSnapshot).not.toHaveBeenCalled();
+  expect(KmaSnowObservationProvider.prototype.getSnapshot).toHaveBeenCalledTimes(2);
+  expect((await getCollectedCache<{ stations: unknown[] }>(env.DB, 'COLLECTED_NATIONWIDE_SNOW_TOTAL'))?.value.stations).toHaveLength(1);
   expect(database.sqlite.prepare("SELECT COUNT(*) AS n FROM api_usage_daily WHERE provider='SNOW_TOTAL'").get()).toEqual({ n: 0 });
   expect(forecast).toHaveBeenCalledTimes(2);
+  expect(living).toHaveBeenCalledTimes(2);
   expect(uv).toHaveBeenCalledOnce();
   expect(catalog).toHaveBeenCalledOnce();
   expect(air).toHaveBeenCalledTimes(AIRKOREA_PROVINCES.length * 2);

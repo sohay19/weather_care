@@ -317,7 +317,7 @@ describe('fast Main weather', () => {
     expect(missing.precipitationPeriod).toBeNull();
   });
 
-  it('현재 총 적설 캐시가 남아 있어도 Main·Today 응답에서 사용하지 않는다', async () => {
+  it('현재 총 적설은 Today 현재값에만 관측소·시각과 함께 넣고 시간별 예보와 분리한다', async () => {
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-10T13:05:00+09:00'));
     try {
       const hourly=[snapshot(13,{observedAt:'2026-10-10T13:00:00+09:00',forecastAt:'2026-10-10T13:00:00+09:00'})];
@@ -328,13 +328,21 @@ describe('fast Main weather', () => {
       await saveCollectedCache(env.DB,{key:CURRENT_SNOW_CACHE_KEY,type:'COLLECTED_NATIONWIDE_SNOW_TOTAL',
         value:{requestedAt:'202610101250',stations:[{stationId:'42',stationName:'서울 관측소',stationKind:'000-----',
           latitude:37,longitude:127,depthCm:0,observedAt:'2026-10-10T12:00:00+09:00'}]}});
-      for(const endpoint of ['main','today']) {
-        const response=await router.request(`/${endpoint}?nx=58&ny=124`,{}, {DB:env.DB});
-        const body=await response.json<{current:WeatherSnapshot;hourly:WeatherSnapshot[]}>();
-        expect(response.status).toBe(200);
-        expect(Object.keys(body.current).filter(key=>key.startsWith('snowDepth'))).toEqual([]);
-        expect(body.hourly.every(slot=>slot.snowDepthCm===undefined)).toBe(true);
-      }
+      const main=await router.request('/main?nx=58&ny=124',{}, {DB:env.DB});
+      expect(Object.keys((await main.json<{current:WeatherSnapshot}>()).current).filter(key=>key.startsWith('snowDepth'))).toEqual([]);
+      const today=await router.request('/today?nx=58&ny=124',{}, {DB:env.DB});
+      const body=await today.json<{current:WeatherSnapshot;hourly:WeatherSnapshot[]}>();
+      expect(today.status).toBe(200);
+      expect(body.current).toMatchObject({snowDepthCm:0,snowDepthStatus:'AVAILABLE',
+        snowDepthStationName:'서울 관측소',snowDepthObservedAt:'2026-10-10T12:00:00+09:00'});
+      expect(body.hourly.every(slot=>slot.snowDepthCm===undefined)).toBe(true);
+      await saveCollectedCache(env.DB,{key:CURRENT_SNOW_CACHE_KEY,type:'COLLECTED_NATIONWIDE_SNOW_TOTAL',
+        value:{requestedAt:'202610100900',stations:[{stationId:'42',stationName:'서울 관측소',stationKind:'000-----',
+          latitude:37,longitude:127,depthCm:4,observedAt:'2026-10-10T09:00:00+09:00'}]}});
+      const stale=await router.request('/today?nx=58&ny=124',{}, {DB:env.DB});
+      const staleBody=await stale.json<{current:WeatherSnapshot}>();
+      expect(staleBody.current.snowDepthStatus).toBe('UNAVAILABLE');
+      expect(staleBody.current.snowDepthCm).toBeUndefined();
     }finally{vi.useRealTimers();}
   });
 

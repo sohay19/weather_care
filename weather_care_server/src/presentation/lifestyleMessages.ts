@@ -570,7 +570,7 @@ function dataStatusPartFor(
   ) {
     return {
       role: 'DATA_STATUS',
-      text: '적설량 자료를 받아오지 못해 예상 적설량을 확인하기 어려워요',
+      text: '신적설 예보 자료를 받아오지 못해 예상 신적설을 확인하기 어려워요',
       source: '기상청 단기예보',
     };
   }

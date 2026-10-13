@@ -1,4 +1,6 @@
 import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } from '../services/nationwideWeatherCache';
+import { currentSnowFields } from '../services/currentSnowCache';
+import { readTodayLivingIndices } from '../services/livingIndices';
 import { readCachedMidTermForecast } from '../services/midTermForecastCache';
 import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
 import { Hono } from 'hono';
@@ -200,6 +202,7 @@ router.get('/main', async (c) => {
       briefingTimeline: brief.timeline,
       ...sunTimes,
       current,
+      livingIndices: await readTodayLivingIndices(c.env.DB, location, generatedAt),
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
@@ -251,7 +254,7 @@ router.get('/today', async (c) => {
       warningSnapshotRecord,
       roadIceRecord, roadIceSnapshotRecord, preciseRoadControlRecord, weeklyRecord,
       visibilityRecord, ultraShortRecord, nationwidePrecipitation,
-      roadControlSnapshotRecord] = await Promise.all([
+      roadControlSnapshotRecord, snowFields] = await Promise.all([
       readNationwideRegion(c.env.DB, location, generatedAt),
       settingsForRequest(
       c.env.DB,
@@ -307,6 +310,7 @@ router.get('/today', async (c) => {
             collectedCacheKey.roadControlSnapshot,
           )
         : Promise.resolve(null),
+      currentSnowFields(c.env.DB, location, generatedAt),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
@@ -320,11 +324,10 @@ router.get('/today', async (c) => {
       visibilityRecord?.value,
       generatedAt,
     );
-    const current = currentFromUltraShortObservation(
-      forecast.current,
-      ultraShortRecord,
-      generatedAt,
-    );
+    const current = {
+      ...currentFromUltraShortObservation(forecast.current, ultraShortRecord, generatedAt),
+      ...snowFields,
+    };
     const responseForecast = { ...forecast, current };
     const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
       weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,
@@ -474,6 +477,7 @@ router.get('/today', async (c) => {
         ...current,
         activeWarnings: warnings,
       },
+      livingIndices: await readTodayLivingIndices(c.env.DB, location, generatedAt),
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,

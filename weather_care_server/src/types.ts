@@ -457,6 +457,12 @@ export interface WeatherMessagePart {
   retryable?: boolean;
 }
 
+export interface TodayLivingIndices {
+  pollenStatus: 'AVAILABLE' | 'UNAVAILABLE' | 'OUT_OF_SEASON';
+  pollen: { species: string; level: string; issuedAt: string }[];
+  airStagnation?: { level: string; issuedAt: string; forecastAt: string };
+}
+
 export interface TodayWeatherResponse {
   dataSource: string;
   region: { nx: number; ny: number; name: string };
@@ -470,6 +476,7 @@ export interface TodayWeatherResponse {
   sunriseAt?: string;
   sunsetAt?: string;
   current: WeatherSnapshot;
+  livingIndices?: TodayLivingIndices;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;
   currentRoadControl?: OfficialRoadControl;

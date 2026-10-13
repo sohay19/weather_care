@@ -146,6 +146,9 @@ void main() {
     expect(find.text('0%'), findsOneWidget);
     expect(find.text('0mm'), findsOneWidget);
     expect(find.textContaining('신적설'), findsNothing);
+    await _selectHourly(tester, 'snowfall');
+    expect(find.text('눈 예보 없음'), findsOneWidget);
+    expect(find.text('신적설 0cm'), findsOneWidget);
     await _selectHourly(tester, 'wind');
     expect(find.text('약한 바람'), findsOneWidget);
     expect(find.text('방향 — · 0.0m/s'), findsOneWidget);
@@ -186,11 +189,18 @@ void main() {
     await _selectHourly(tester, 'precipitation');
     expect(find.text('2.5mm'), findsOneWidget);
     expect(find.text('80%'), findsOneWidget);
-    expect(find.text('신적설 —'), findsOneWidget);
+    expect(find.textContaining('신적설'), findsNothing);
+    await _selectHourly(tester, 'snowfall');
+    expect(find.text('눈 예상'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('today-hourly-15')),
+            matching: find.text('신적설 —')),
+        findsOneWidget);
     expect(find.text('0%'), findsNothing);
     expect(find.text('0mm'), findsNothing);
     expect(find.text('예상 신적설 0cm'), findsNothing);
-    expect(find.text('—'), findsWidgets);
+    expect(find.text('신적설 —'), findsWidgets);
   });
 
   for (final scale in [1.0, 2.0]) {
@@ -239,12 +249,14 @@ void main() {
       for (final text in [
         '80%',
         '1mm 미만',
-        '신적설 0.5cm 미만',
         '30~50mm',
-        '신적설 5cm 이상'
       ]) {
         expect(find.text(text), findsOneWidget);
       }
+      expect(find.textContaining('신적설'), findsNothing);
+      await _selectHourly(tester, 'snowfall');
+      expect(find.text('신적설 0.5cm 미만'), findsOneWidget);
+      expect(find.text('신적설 5cm 이상'), findsOneWidget);
       expect(find.text('1mm'), findsNothing);
       expect(find.text('예상 신적설 0.5cm'), findsNothing);
       expect(find.byKey(const ValueKey('today-hourly-filter-airQuality')),
@@ -362,6 +374,7 @@ void main() {
       for (final metric in [
         'weather',
         'precipitation',
+        'snowfall',
         'uv',
         'wind',
         'humidity',

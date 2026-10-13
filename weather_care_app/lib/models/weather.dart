@@ -49,6 +49,13 @@ class CurrentWeather {
   final String? airQualityStationName;
   final String? airQualityObservedAt;
 
+  /// 가까운 관측소의 현재 총 적설. 예보 신적설과 별개다.
+  final double? snowDepthCm;
+  final String? snowDepthStatus;
+  final String? snowDepthObservedAt;
+  final String? snowDepthStationName;
+  final double? snowDepthStationDistanceKm;
+
   const CurrentWeather({
     required this.temperature,
     this.observedAt,
@@ -73,6 +80,11 @@ class CurrentWeather {
     this.sky,
     this.airQualityStationName,
     this.airQualityObservedAt,
+    this.snowDepthCm,
+    this.snowDepthStatus,
+    this.snowDepthObservedAt,
+    this.snowDepthStationName,
+    this.snowDepthStationDistanceKm,
   });
 
   factory CurrentWeather.fromJson(Map<String, dynamic> json) {
@@ -102,6 +114,12 @@ class CurrentWeather {
       sky: c['skyCondition']?.toString(),
       airQualityStationName: _optionalText(c['airQualityStationName']),
       airQualityObservedAt: _optionalText(c['airQualityObservedAt']),
+      snowDepthCm: _optionalNumber(c['snowDepthCm']),
+      snowDepthStatus: _optionalText(c['snowDepthStatus']),
+      snowDepthObservedAt: _optionalText(c['snowDepthObservedAt']),
+      snowDepthStationName: _optionalText(c['snowDepthStationName']),
+      snowDepthStationDistanceKm:
+          _optionalNumber(c['snowDepthStationDistanceKm']),
     );
   }
 
@@ -582,6 +600,49 @@ class BriefingTimelineEntry {
   }
 }
 
+class TodayLivingIndices {
+  final String pollenStatus;
+  final List<PollenRisk> pollen;
+  final String? airStagnationLevel;
+  final String? airStagnationForecastAt;
+
+  const TodayLivingIndices({
+    required this.pollenStatus,
+    required this.pollen,
+    this.airStagnationLevel,
+    this.airStagnationForecastAt,
+  });
+
+  factory TodayLivingIndices.fromJson(Map<String, dynamic> json) {
+    final stagnation = json['airStagnation'];
+    return TodayLivingIndices(
+      pollenStatus: json['pollenStatus']?.toString() ?? 'UNAVAILABLE',
+      pollen: (json['pollen'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(PollenRisk.fromJson)
+          .toList(growable: false),
+      airStagnationLevel: stagnation is Map<String, dynamic>
+          ? _optionalText(stagnation['level'])
+          : null,
+      airStagnationForecastAt: stagnation is Map<String, dynamic>
+          ? _optionalText(stagnation['forecastAt'])
+          : null,
+    );
+  }
+}
+
+class PollenRisk {
+  final String species;
+  final String level;
+
+  const PollenRisk({required this.species, required this.level});
+
+  factory PollenRisk.fromJson(Map<String, dynamic> json) => PollenRisk(
+        species: json['species']?.toString() ?? '',
+        level: json['level']?.toString() ?? '',
+      );
+}
+
 class TodayWeatherResponse {
   final String dataSource;
   final String? generatedAt;
@@ -594,6 +655,7 @@ class TodayWeatherResponse {
   final String? sunriseAt;
   final String? sunsetAt;
   final CurrentWeather current;
+  final TodayLivingIndices? livingIndices;
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
   final List<WeatherMessagePart> dataStatusMessages;
@@ -613,6 +675,7 @@ class TodayWeatherResponse {
     this.sunriseAt,
     this.sunsetAt,
     required this.current,
+    this.livingIndices,
     required this.recommendations,
     required this.lifestyleMessages,
     this.dataStatusMessages = const [],
@@ -633,6 +696,7 @@ class TodayWeatherResponse {
         sunriseAt: sunriseAt,
         sunsetAt: sunsetAt,
         current: current,
+        livingIndices: livingIndices,
         recommendations: recommendations,
         lifestyleMessages: lifestyleMessages,
         dataStatusMessages: dataStatusMessages,
@@ -708,6 +772,10 @@ class TodayWeatherResponse {
       briefingTimeline: briefingTimeline,
       sunriseAt: _optionalText(json['sunriseAt']),
       sunsetAt: _optionalText(json['sunsetAt']),
+      livingIndices: json['livingIndices'] is Map<String, dynamic>
+          ? TodayLivingIndices.fromJson(
+              json['livingIndices'] as Map<String, dynamic>)
+          : null,
       current: CurrentWeather.fromJson(json),
       recommendations: recs,
       lifestyleMessages: lifestyles,

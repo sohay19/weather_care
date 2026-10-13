@@ -6,6 +6,55 @@ import 'package:weather_care/features/home/widgets/weather_card.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
+  test('Today 응답에서 꽃가루·대기정체 지표를 읽는다', () {
+    final response = TodayWeatherResponse.fromJson({
+      'current': {},
+      'livingIndices': {
+        'pollenStatus': 'AVAILABLE',
+        'pollen': [
+          {'species': '잡초류', 'level': '높음'}
+        ],
+        'airStagnation': {
+          'level': '보통',
+          'forecastAt': '2026-10-13T03:00:00Z',
+        },
+      },
+    });
+    expect(response.livingIndices?.pollen.single.species, '잡초류');
+    expect(response.livingIndices?.airStagnationLevel, '보통');
+  });
+
+  testWidgets('Today 꽃가루·대기정체 공식 단계와 수종을 표시한다', (tester) async {
+    await _pumpCard(tester, const CurrentWeather(temperature: 20),
+        showCurrentSummary: false,
+        livingIndices: const TodayLivingIndices(
+          pollenStatus: 'AVAILABLE',
+          pollen: [
+            PollenRisk(species: '참나무', level: '높음'),
+            PollenRisk(species: '소나무', level: '보통')
+          ],
+          airStagnationLevel: '매우 높음',
+        ));
+    expect(find.byKey(const ValueKey('weather-metric-꽃가루')), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-대기정체')), findsOneWidget);
+    expect(find.text('높음\n참나무'), findsOneWidget);
+    expect(find.text('매우 높음'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('weather-metric-detail-꽃가루')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('소나무: 보통'), findsOneWidget);
+  });
+
+  testWidgets('꽃가루 제공 기간 밖을 낮음으로 표시하지 않는다', (tester) async {
+    await _pumpCard(tester, const CurrentWeather(temperature: 20),
+        showCurrentSummary: false,
+        livingIndices: const TodayLivingIndices(
+          pollenStatus: 'OUT_OF_SEASON',
+          pollen: [],
+        ));
+    expect(find.text('제공 기간 밖'), findsOneWidget);
+    expect(find.text('낮음'), findsNothing);
+  });
+
   test('상태 표현은 각 범위의 경계에서 일관되게 바뀐다', () {
     expect(humidityDescription(35), '건조');
     expect(humidityDescription(35.1), '쾌적');
@@ -48,6 +97,54 @@ void main() {
     expect(current.airQualityObservedAt, '2026-09-10T09:00:00Z');
     expect(CurrentWeather.fromJson({}).airQualityStationName, isNull);
     expect(CurrentWeather.fromJson({}).airQualityObservedAt, isNull);
+  });
+
+  testWidgets('Today 현재 적설은 0cm도 관측값으로 표시하고 출처를 설명한다', (tester) async {
+    final current = CurrentWeather.fromJson({
+      'current': {
+        'snowDepthCm': 0,
+        'snowDepthStatus': 'AVAILABLE',
+        'snowDepthObservedAt': '2026-10-10T03:00:00Z',
+        'snowDepthStationName': '서울',
+        'snowDepthStationDistanceKm': 2.4,
+      },
+    });
+    await _pumpCard(tester, current, showCurrentSummary: false);
+    expect(find.text('쌓인 눈 없음\n0cm'), findsOneWidget);
+    final detail = find.byKey(const ValueKey('weather-metric-detail-현재 적설'));
+    await tester.ensureVisible(detail);
+    await tester.tap(detail);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('서울 관측소 · 요청 위치에서 2.4km · 10월 10일 12시 00분 관측'),
+        findsOneWidget);
+    expect(find.textContaining('예보 신적설과 달라요'), findsOneWidget);
+  });
+
+  testWidgets('현재 적설 결측을 0cm로 바꾸지 않는다', (tester) async {
+    await _pumpCard(
+        tester,
+        const CurrentWeather(
+            temperature: 20, snowDepthStatus: 'UNAVAILABLE', snowDepthCm: 0),
+        showCurrentSummary: false);
+    final metric = find.byKey(const ValueKey('weather-metric-현재 적설'));
+    expect(find.descendant(of: metric, matching: find.text('자료 없음')),
+        findsOneWidget);
+    expect(find.text('0cm'), findsNothing);
+  });
+
+  testWidgets('현재 적설 양수는 새로 내릴 눈과 구분해 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pumpCard(
+      tester,
+      const CurrentWeather(temperature: 20, snowDepthCm: 2.5),
+      showCurrentSummary: false,
+      scale: 2,
+    );
+    expect(find.text('눈 쌓임\n2.5cm'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('현재 대기질에 오존을 포함하고 관측 농도를 안내한다', (tester) async {
@@ -617,6 +714,8 @@ Future<void> _pumpCard(
   double scale = 1,
   String? sunriseAt,
   String? sunsetAt,
+  bool showCurrentSummary = true,
+  TodayLivingIndices? livingIndices,
 }) async {
   await tester.pumpWidget(MaterialApp(
     theme: ThemeData(splashFactory: NoSplash.splashFactory),
@@ -627,6 +726,8 @@ Future<void> _pumpCard(
           padding: const EdgeInsets.all(16),
           child: WeatherInfoCard(
             current: current,
+            livingIndices: livingIndices,
+            showCurrentSummary: showCurrentSummary,
             sunriseAt: sunriseAt,
             sunsetAt: sunsetAt,
           ),

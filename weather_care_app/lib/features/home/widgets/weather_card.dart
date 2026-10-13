@@ -9,6 +9,7 @@ import 'weather_condition_icon.dart';
 
 class WeatherInfoCard extends StatelessWidget {
   final CurrentWeather current;
+  final TodayLivingIndices? livingIndices;
   final WeatherDataPhase dataPhase;
   final String? sunriseAt;
   final String? sunsetAt;
@@ -19,6 +20,7 @@ class WeatherInfoCard extends StatelessWidget {
   const WeatherInfoCard({
     super.key,
     required this.current,
+    this.livingIndices,
     this.dataPhase = WeatherDataPhase.ready,
     this.sunriseAt,
     this.sunsetAt,
@@ -40,6 +42,8 @@ class WeatherInfoCard extends StatelessWidget {
                 ? '기상청 AWS 관측'
                 : '기상청 초단기실황';
     final apparentTemperature = current.displayedApparentTemperature;
+    final snowDepth =
+        current.snowDepthStatus == 'UNAVAILABLE' ? null : current.snowDepthCm;
     final estimatedApparentTemperature = current.apparentTemperatureSource ==
             'APP_STEADMAN_FROM_FORECAST' ||
         current.apparentTemperatureSource == 'APP_STEADMAN_FROM_OBSERVATION';
@@ -54,6 +58,12 @@ class WeatherInfoCard extends StatelessWidget {
       if (current.pm25 == null && current.pm10 == null && current.ozone == null)
         '대기질',
       if (sunriseAt == null || sunsetAt == null) '일출·일몰',
+      if (!showCurrentSummary &&
+          livingIndices?.pollenStatus != 'OUT_OF_SEASON' &&
+          (livingIndices?.pollen.isEmpty ?? true))
+        '꽃가루',
+      if (!showCurrentSummary && livingIndices?.airStagnationLevel == null)
+        '대기정체',
     ];
     final metrics = [
       _WeatherMetric(
@@ -129,6 +139,50 @@ class WeatherInfoCard extends StatelessWidget {
         levelTitle: _visibilityLevel(current.visibilityMeters),
         detailBody: _visibilityDetail(current),
       ),
+      if (!showCurrentSummary) ...[
+        _WeatherMetric(
+          icon: Icons.grass_rounded,
+          label: '꽃가루',
+          value: livingIndices?.pollenStatus == 'OUT_OF_SEASON'
+              ? '제공 기간 밖'
+              : _pollenSummary(livingIndices?.pollen),
+          levelTitle: livingIndices?.pollenStatus == 'OUT_OF_SEASON'
+              ? '현재는 꽃가루농도위험지수 제공 기간이 아니에요'
+              : (livingIndices?.pollen.isEmpty ?? true)
+                  ? '꽃가루 위험 수준을 확인하기 어려워요'
+                  : '오늘의 꽃가루농도위험지수예요',
+          detailBody: livingIndices?.pollenStatus == 'OUT_OF_SEASON'
+              ? '기상청은 참나무·소나무를 3~6월, 잡초류를 8~10월에 제공해요. 제공 기간 밖을 낮음 단계로 해석하지 않아요.'
+              : (livingIndices?.pollen.isEmpty ?? true)
+                  ? '기상청 꽃가루농도위험지수 자료를 받지 못했어요. 자료 없음은 꽃가루가 없다는 뜻이 아니에요.'
+                  : '기상청 꽃가루농도위험지수의 오늘 예측값이에요.\n${livingIndices!.pollen.map((risk) => '${risk.species}: ${risk.level}').join(' · ')}\n개인의 알레르기 반응은 다를 수 있어요.',
+        ),
+        _WeatherMetric(
+          icon: Icons.air_rounded,
+          label: '대기정체',
+          value: livingIndices?.airStagnationLevel ?? '자료 없음',
+          levelTitle: livingIndices?.airStagnationLevel == null
+              ? '대기정체 수준을 확인하기 어려워요'
+              : '대기정체지수는 ${livingIndices!.airStagnationLevel} 단계예요',
+          detailBody: livingIndices?.airStagnationLevel == null
+              ? '기상청 대기정체지수 예측 자료를 받지 못했어요. 미세먼지 농도로 대기정체 수준을 추정하지 않아요.'
+              : '기상청 대기정체지수의 ${_koreaClock(livingIndices?.airStagnationForecastAt) ?? '오늘'} 예측값이에요. 대기가 얼마나 잘 순환하는지 나타내며, 실제 미세먼지 농도와는 다른 정보예요.',
+        ),
+      ],
+      if (!showCurrentSummary)
+        _WeatherMetric(
+          icon: Icons.ac_unit_rounded,
+          label: '현재 적설',
+          value: snowDepth == null
+              ? '자료 없음'
+              : snowDepth == 0
+                  ? '쌓인 눈 없음\n0cm'
+                  : '눈 쌓임\n${_snowDepthValue(snowDepth)}cm',
+          levelTitle: snowDepth == null
+              ? '현재 쌓인 눈의 깊이를 확인하기 어려워요'
+              : '관측소의 현재 적설은 ${_snowDepthValue(snowDepth)}cm예요',
+          detailBody: _snowDepthDetail(current),
+        ),
       _WeatherMetric(
         icon: Icons.wb_twilight_rounded,
         label: '일출·일몰',
@@ -340,6 +394,14 @@ class WeatherInfoCard extends StatelessWidget {
   }
 }
 
+String _pollenSummary(List<PollenRisk>? pollen) {
+  if (pollen == null || pollen.isEmpty) return '자료 없음';
+  const levels = ['낮음', '보통', '높음', '매우 높음'];
+  final highest = pollen.reduce(
+      (a, b) => levels.indexOf(a.level) >= levels.indexOf(b.level) ? a : b);
+  return '${highest.level}\n${highest.species}';
+}
+
 String _airObservationSource(CurrentWeather current) {
   final station = current.airQualityStationName?.trim();
   final rawTime = current.airQualityObservedAt;
@@ -439,6 +501,28 @@ String _visibilityDetail(CurrentWeather current) {
       '$sourceText\n시간별·주간 미래 가시거리 예보로 확대하지 않아요.\n\n$visibilityRanges';
 }
 
+String _snowDepthValue(double value) => value == value.roundToDouble()
+    ? value.toStringAsFixed(0)
+    : value.toStringAsFixed(1);
+
+String _snowDepthDetail(CurrentWeather current) {
+  final depth =
+      current.snowDepthStatus == 'UNAVAILABLE' ? null : current.snowDepthCm;
+  if (depth == null) {
+    return '기상청의 현재 적설 관측값을 받지 못했어요. 예보 신적설이나 지난 날 최심신적설로 대신 채우지 않아요.';
+  }
+  final station = current.snowDepthStationName?.trim();
+  final source = [
+    if (station != null && station.isNotEmpty) '$station 관측소',
+    if (current.snowDepthStationDistanceKm case final distance?)
+      '요청 위치에서 ${distance.toStringAsFixed(1)}km',
+    if (_koreaObservationClock(current.snowDepthObservedAt) case final time?)
+      time,
+  ].join(' · ');
+  return '기상청 관측소에서 측정한 현재 총 적설은 ${_snowDepthValue(depth)}cm예요.'
+      '${source.isEmpty ? '' : '\n$source'}\n선택한 위치에서 직접 측정한 값은 아니며, 앞으로 새로 쌓일 눈의 예보 신적설과 달라요.';
+}
+
 String _sunTimesValue(String? sunriseAt, String? sunsetAt) {
   final sunrise = _koreaClock(sunriseAt);
   final sunset = _koreaClock(sunsetAt);
@@ -534,11 +618,12 @@ TextSpan _valueSpanFor(_WeatherMetric metric) {
       ),
     ]);
   }
-  final isAirQualityGrade = metric.label == '대기질' &&
-      const {'좋음', '보통', '나쁨', '매우 나쁨'}.contains(metric.value);
+  final isLevel = {'대기질', '대기정체'}.contains(metric.label) &&
+      const {'좋음', '보통', '나쁨', '매우 나쁨', '낮음', '높음', '매우 높음'}
+          .contains(metric.value);
   return TextSpan(
     text: metric.value,
-    style: metric.label == '일출·일몰' || isAirQualityGrade
+    style: metric.label == '일출·일몰' || isLevel
         ? _metricStatusStyle
         : _metricValueStyle,
   );

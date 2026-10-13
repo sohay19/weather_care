@@ -106,6 +106,9 @@ void main() {
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
     expect(find.text('1mm 미만'), findsOneWidget);
+    await _selectHourly(tester, 'snowfall');
+    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.text('신적설 0cm'), findsOneWidget);
   });
 
   testWidgets('24개 정시 뒤의 오늘 마지막 강수 구간도 강수 항목에 남긴다', (tester) async {
@@ -225,6 +228,9 @@ void main() {
     await _selectHourly(tester, 'precipitation');
     expect(find.text('강수 구간 —'), findsOneWidget);
     expect(find.text('1mm 미만'), findsNothing);
+    await _selectHourly(tester, 'snowfall');
+    expect(find.text('강설 구간 —'), findsOneWidget);
+    expect(find.text('신적설 0cm'), findsNothing);
   });
 }
 

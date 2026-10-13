@@ -2,6 +2,8 @@ import { collectNationwideAirQuality } from '../services/nationwideAirCache';
 import { collectNationwideForecast } from '../services/nationwideForecastCache';
 import { collectPointForecasts } from '../services/pointForecastCache';
 import { collectNationwideUv, NATIONAL_VISIBILITY_KEY, NATIONAL_DAILY_KEY } from '../services/nationwideWeatherCache';
+import { collectCurrentSnow } from '../services/currentSnowCache';
+import { collectNationwideLivingIndices } from '../services/livingIndices';
 import { apiHubBudgetedFetch } from '../services/apiHubFetch';
 import type {
   OfficialRoadControl,
@@ -131,10 +133,13 @@ export async function runWeatherCollectionJob(
     await collectNationwideAirForecast(env, now);
     try { await collectNationwideUv(env.DB, env.KMA_SERVICE_KEY, now); }
     catch (error) { logCollectionFailure('national_uv', error); }
+    try { await collectNationwideLivingIndices(env.DB, env.KMA_SERVICE_KEY, now); }
+    catch (error) { logCollectionFailure('national_living_indices', error); }
     await collectSupportedMidTermForecasts(env, now);
     await collectWarnings(env, [], now);
     await collectRoadControls(env, [], now);
     await collectCurrentVisibility(env, [], now);
+    if (env.KMA_APIHUB_KEY) await collectCurrentSnow(env.DB, env.KMA_APIHUB_KEY, now);
     await collectNationalDailyObservations(env, now, options.dailyObservationLookbackDays ?? 7);
     await collectNationwideForecast(env.DB, env.KMA_APIHUB_KEY, now);
     try { await collectPointForecasts(env.DB, env.KMA_SERVICE_KEY, now); }

@@ -83,19 +83,6 @@ class MainTab extends StatelessWidget {
                       subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
                     ),
                     SizedBox(height: compact ? 20 : 24),
-                    if (dataPhase != WeatherDataPhase.ready) ...[
-                      WeatherDataNotice(phase: dataPhase, subject: '오늘 날씨'),
-                      SizedBox(height: compact ? 12 : 16),
-                    ],
-                    _TopWeatherCard(
-                      today: today,
-                      mood: mood,
-                      compact: compact,
-                      onRetry: onRetryData,
-                      retrying: retryingData,
-                      metricColumns: metricColumns,
-                    ),
-                    SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(
                         icon: Icons.playlist_add_check_rounded,
@@ -118,6 +105,19 @@ class MainTab extends StatelessWidget {
                         onRetry: onRetryData,
                         retrying: retryingData,
                       ),
+                    SizedBox(height: compact ? 12 : 16),
+                    if (dataPhase != WeatherDataPhase.ready) ...[
+                      WeatherDataNotice(phase: dataPhase, subject: '오늘 날씨'),
+                      SizedBox(height: compact ? 12 : 16),
+                    ],
+                    _TopWeatherCard(
+                      today: today,
+                      mood: mood,
+                      compact: compact,
+                      onRetry: onRetryData,
+                      retrying: retryingData,
+                      metricColumns: metricColumns,
+                    ),
                     SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(

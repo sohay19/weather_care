@@ -146,68 +146,132 @@ class WeatherInfoCard extends StatelessWidget {
                 : metric)
         .toList(growable: false);
     final apparentMetric = displayMetrics.first;
+    final temperatureText = current.temperature == null
+        ? dataPhase == WeatherDataPhase.loading
+            ? '--°'
+            : dataPhase.missingText()
+        : '${current.temperature!.toStringAsFixed(1)}℃';
+    final temperatureStyle = TextStyle(
+      color: WeatherCareTheme.of(context).textPrimary,
+      fontSize: current.temperature == null ? 20 : 34,
+      height: 1,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -1.2,
+    );
+    final apparentText = '체감 ${apparentMetric.value}';
+    final apparentStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: WeatherCareTheme.of(context).textSecondary,
+          fontWeight: FontWeight.w700,
+        );
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  current.temperature == null
-                      ? dataPhase == WeatherDataPhase.loading
-                          ? '--°'
-                          : dataPhase.missingText()
-                      : '${current.temperature!.toStringAsFixed(1)}℃',
-                  style: TextStyle(
-                    color: WeatherCareTheme.of(context).textPrimary,
-                    fontSize: current.temperature == null ? 20 : 34,
-                    height: 1,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1.2,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Flexible(
-                child: Text(
-                  current.sky ?? dataPhase.missingText('하늘 상태 자료 없음'),
-                  textAlign: TextAlign.end,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: WeatherCareTheme.of(context).textSecondary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              WeatherConditionIcon(
-                condition: current.sky,
-                size: 27,
-                color: WeatherCareTheme.of(context).primaryDeep,
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                '체감 ${apparentMetric.value}',
-                key: const ValueKey('weather-apparent-temperature'),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: WeatherCareTheme.of(context).textSecondary,
-                      fontWeight: FontWeight.w700,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              double textWidth(String value, TextStyle? style) {
+                final painter = TextPainter(
+                  text: TextSpan(text: value, style: style),
+                  textDirection: Directionality.of(context),
+                  textScaler: MediaQuery.textScalerOf(context),
+                  maxLines: 1,
+                )..layout();
+                final width = painter.width;
+                painter.dispose();
+                return width;
+              }
+
+              final apparentWidth = textWidth(apparentText, apparentStyle) + 32;
+              final fitsOnOneLine =
+                  textWidth(temperatureText, temperatureStyle) +
+                          apparentWidth +
+                          10 <=
+                      constraints.maxWidth;
+              final weather = Wrap(
+                spacing: 10,
+                runSpacing: 2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(temperatureText, style: temperatureStyle),
+                  ConstrainedBox(
+                    constraints:
+                        BoxConstraints(maxWidth: constraints.maxWidth * 0.55),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            current.sky ?? dataPhase.missingText('하늘 상태 자료 없음'),
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: WeatherCareTheme.of(context)
+                                          .textSecondary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        WeatherConditionIcon(
+                          condition: current.sky,
+                          size: 27,
+                          color: WeatherCareTheme.of(context).primaryDeep,
+                        ),
+                      ],
                     ),
-              ),
-              IconButton(
-                key: const ValueKey('weather-apparent-detail'),
-                tooltip: '체감온도 자세히 보기',
-                onPressed: () => _showMetricDetail(context, apparentMetric),
-                icon: Icon(Icons.error_outline_rounded,
-                    size: 18, color: WeatherCareTheme.of(context).primaryDeep),
-              ),
-            ],
+                  ),
+                ],
+              );
+              final apparent = ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        apparentText,
+                        key: const ValueKey('weather-apparent-temperature'),
+                        style: apparentStyle,
+                      ),
+                    ),
+                    IconButton(
+                      key: const ValueKey('weather-apparent-detail'),
+                      tooltip: '체감온도 자세히 보기',
+                      onPressed: () =>
+                          _showMetricDetail(context, apparentMetric),
+                      iconSize: 16,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 32,
+                        height: 32,
+                      ),
+                      style: const ButtonStyle(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: Icon(Icons.error_outline_rounded,
+                          color: WeatherCareTheme.of(context).primaryDeep),
+                    ),
+                  ],
+                ),
+              );
+              if (fitsOnOneLine) {
+                return Row(
+                  children: [
+                    Expanded(child: weather),
+                    const SizedBox(width: 10),
+                    apparent,
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  weather,
+                  Align(alignment: Alignment.centerRight, child: apparent),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 18),
           Container(
@@ -468,7 +532,7 @@ class _MetricView extends StatelessWidget {
         onTap: () => _showMetricDetail(context, metric),
         borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 8, 10),
+          padding: const EdgeInsets.fromLTRB(10, 8, 4, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -493,7 +557,15 @@ class _MetricView extends StatelessWidget {
                     child: IconButton(
                       key: ValueKey('weather-metric-detail-${metric.label}'),
                       onPressed: () => _showMetricDetail(context, metric),
-                      visualDensity: VisualDensity.compact,
+                      iconSize: 16,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 32,
+                        height: 32,
+                      ),
+                      style: const ButtonStyle(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       icon: Icon(Icons.error_outline_rounded,
                           color: WeatherCareTheme.of(context).primaryDeep),
                     ),

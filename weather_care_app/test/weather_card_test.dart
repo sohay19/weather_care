@@ -376,6 +376,11 @@ void main() {
       expect(find.text('오후 3시'), findsNothing);
       expect(find.text('29.0℃'), findsOneWidget);
       expect(find.text('체감 32.7℃'), findsOneWidget);
+      final cardRight = tester.getTopRight(find.byType(WeatherInfoCard)).dx;
+      final apparentRight = tester
+          .getTopRight(find.byKey(const ValueKey('weather-apparent-detail')))
+          .dx;
+      expect(apparentRight, closeTo(cardRight - 20, 1.1));
       expect(find.text('남서 2.8m/s'), findsOneWidget);
       expect(find.text('나쁨'), findsOneWidget);
       expect(find.text('12 km'), findsOneWidget);

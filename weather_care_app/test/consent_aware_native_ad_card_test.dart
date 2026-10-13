@@ -190,56 +190,59 @@ void main() {
     final card = tester.getSize(
       find.byKey(const ValueKey('week-native-ad-card')),
     );
-    expect(card.width, 360);
-    expect(card.height, 90);
+    expect(card.width, 336);
+    expect(card.height, 84);
     expect(tester.getCenter(find.byKey(const ValueKey('fake-native-ad'))),
         tester.getCenter(find.byKey(const ValueKey('week-native-ad-card'))));
   });
 
-  testWidgets('iOS 광고와 로딩 자리는 네 방향에 12px 여백을 둔다', (tester) async {
-    tester.view.physicalSize = const Size(360, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets('${platform.name} 광고와 로딩 자리는 네 방향에 12px 여백을 둔다',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Column(
-          children: [
-            ConsentAwareNativeAdCard(
-              controller: consent,
-              adRemoval: adRemoval,
-              loader: loader,
-              platformOverride: TargetPlatform.iOS,
-              releaseModeOverride: false,
-              webOverride: false,
-            ),
-          ],
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              ConsentAwareNativeAdCard(
+                controller: consent,
+                adRemoval: adRemoval,
+                loader: loader,
+                platformOverride: platform,
+                releaseModeOverride: false,
+                webOverride: false,
+              ),
+            ],
+          ),
         ),
-      ),
-    ));
-    eligible = true;
-    await consent.refresh();
-    await tester.pump();
+      ));
+      eligible = true;
+      await consent.refresh();
+      await tester.pump();
 
-    final placeholder = tester.getRect(
-      find.byKey(const ValueKey('week-native-ad-placeholder')),
-    );
-    expect(placeholder.left, 12);
-    expect(placeholder.top, 12);
-    expect(placeholder.width, 336);
-    expect(placeholder.height, 84);
-    final bounds = tester.getRect(find.byType(ConsentAwareNativeAdCard));
-    expect(bounds.right - placeholder.right, 12);
-    expect(bounds.bottom - placeholder.bottom, 12);
+      final placeholder = tester.getRect(
+        find.byKey(const ValueKey('week-native-ad-placeholder')),
+      );
+      expect(placeholder.left, 12);
+      expect(placeholder.top, 12);
+      expect(placeholder.width, 336);
+      expect(placeholder.height, 84);
+      final bounds = tester.getRect(find.byType(ConsentAwareNativeAdCard));
+      expect(bounds.right - placeholder.right, 12);
+      expect(bounds.bottom - placeholder.bottom, 12);
 
-    await tester.pump();
-    final card = tester.getRect(
-      find.byKey(const ValueKey('week-native-ad-card')),
-    );
-    expect(card, placeholder);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.pump();
+      final card = tester.getRect(
+        find.byKey(const ValueKey('week-native-ad-card')),
+      );
+      expect(card, placeholder);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
 
 class _FakeNativeAdCardLoader implements NativeAdCardLoader {

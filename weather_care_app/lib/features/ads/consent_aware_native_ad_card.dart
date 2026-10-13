@@ -308,10 +308,7 @@ class _ConsentAwareNativeAdCardState extends State<ConsentAwareNativeAdCard> {
     }
 
     _scheduleLoad(adUnitId);
-    final margin =
-        (widget.platformOverride ?? defaultTargetPlatform) == TargetPlatform.iOS
-            ? const EdgeInsets.all(12)
-            : EdgeInsets.zero;
+    const margin = EdgeInsets.all(12);
     final nativeAd = _nativeAd;
     if (nativeAd == null) {
       if (_failedId == adUnitId) return const SizedBox.shrink();

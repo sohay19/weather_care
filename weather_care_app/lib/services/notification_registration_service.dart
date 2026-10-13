@@ -28,7 +28,9 @@ class NotificationRegistrationService {
     FirebaseMessaging? messaging,
     this.canRegister,
     this.diagnosticLog,
-  }) : _messaging = messaging;
+  }) : _messaging = messaging {
+    _record('service:ready');
+  }
 
   void _record(String event) {
     if (diagnosticLog != null) {
@@ -36,6 +38,7 @@ class NotificationRegistrationService {
       return;
     }
     log('WeatherCareNotification $event');
+    if (kDebugMode) debugPrint('WeatherCareNotification $event');
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       unawaited(_diagnostics.invokeMethod<void>('record', event).catchError(
             (Object _) {},

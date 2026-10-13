@@ -135,7 +135,9 @@ void main() {
     await service.dispose();
     var allowed = true;
     service = NotificationRegistrationService(client,
-        messaging: messaging, canRegister: () => allowed);
+        messaging: messaging,
+        canRegister: () => allowed,
+        diagnosticLog: events.add);
     await initialize();
     expect(client.calls, hasLength(1));
     allowed = false;
@@ -150,7 +152,9 @@ void main() {
     await service.dispose();
     var allowed = true;
     service = NotificationRegistrationService(client,
-        messaging: messaging, canRegister: () => allowed);
+        messaging: messaging,
+        canRegister: () => allowed,
+        diagnosticLog: events.add);
     final pending = Completer<NotificationSettings>();
     messaging.pendingPermission = pending;
     final work = initialize();
@@ -258,6 +262,7 @@ void main() {
 
     await initialize();
 
+    expect(events.first, 'service:ready');
     expect(
         events,
         containsAllInOrder([

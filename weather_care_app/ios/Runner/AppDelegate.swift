@@ -1,4 +1,5 @@
 import Flutter
+import FirebaseMessaging
 import os
 import StoreKit
 import UIKit
@@ -24,6 +25,23 @@ import WidgetKit
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
+  override func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
+    Messaging.messaging().apnsToken = deviceToken
+    notificationLogger.notice("WeatherCareNotification apns:registered")
+  }
+
+  override func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+  ) {
+    super.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
+    notificationLogger.error("WeatherCareNotification apns:registration_failed:\((error as NSError).code, privacy: .public)")
+  }
+
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let diagnostics = FlutterMethodChannel(
@@ -31,12 +49,20 @@ import WidgetKit
       binaryMessenger: engineBridge.applicationRegistrar.messenger()
     )
     diagnostics.setMethodCallHandler { [weak self] call, result in
-      guard call.method == "record", let event = call.arguments as? String else {
+      switch call.method {
+      case "record":
+        guard let event = call.arguments as? String else {
+          result(FlutterMethodNotImplemented)
+          return
+        }
+        self?.notificationLogger.notice("WeatherCareNotification \(event, privacy: .public)")
+        result(nil)
+      case "registerForRemoteNotifications":
+        UIApplication.shared.registerForRemoteNotifications()
+        result(nil)
+      default:
         result(FlutterMethodNotImplemented)
-        return
       }
-      self?.notificationLogger.notice("WeatherCareNotification \(event, privacy: .public)")
-      result(nil)
     }
     let purchaseChannel = FlutterMethodChannel(
       name: adRemovalChannel,

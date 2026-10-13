@@ -17,6 +17,8 @@ class NotificationRegistrationService {
   final FirebaseMessaging? _messaging;
   final bool Function()? canRegister;
   final void Function(String)? diagnosticLog;
+  final Future<void> Function()? registerForRemoteNotifications;
+  final Duration apnsRetryDelay;
   FirebaseMessaging get messaging => _messaging ?? FirebaseMessaging.instance;
   StreamSubscription<String>? _tokenSubscription;
   _RegistrationTarget? _target;
@@ -28,6 +30,8 @@ class NotificationRegistrationService {
     FirebaseMessaging? messaging,
     this.canRegister,
     this.diagnosticLog,
+    this.registerForRemoteNotifications,
+    this.apnsRetryDelay = const Duration(milliseconds: 500),
   }) : _messaging = messaging {
     _record('service:ready');
   }
@@ -55,8 +59,27 @@ class NotificationRegistrationService {
     if (error is ApiException) {
       return 'http:${error.status}:${safeCode(error.code)}';
     }
+    if (error is PlatformException) {
+      return 'platform:${safeCode(error.code)}';
+    }
     if (error is TimeoutException) return 'timeout';
     return error.runtimeType.toString();
+  }
+
+  Future<bool> _prepareApns() async {
+    _record('apns:request');
+    await (registerForRemoteNotifications?.call() ??
+        _diagnostics.invokeMethod<void>('registerForRemoteNotifications'));
+    for (var attempt = 0; attempt < 20; attempt++) {
+      final token = await messaging.getAPNSToken();
+      if (token != null && token.isNotEmpty) {
+        _record('apns:present');
+        return true;
+      }
+      if (attempt < 19) await Future<void>.delayed(apnsRetryDelay);
+    }
+    _record('apns:missing');
+    return false;
   }
 
   Future<void> initialize({
@@ -137,14 +160,15 @@ class NotificationRegistrationService {
         final allowed = permission.authorizationStatus ==
                 AuthorizationStatus.authorized ||
             permission.authorizationStatus == AuthorizationStatus.provisional;
+        if (_disposed || _target == null || !(canRegister?.call() ?? true)) {
+          _record('skip:inactive_or_no_location');
+          return;
+        }
         if (allowed && defaultTargetPlatform == TargetPlatform.iOS) {
-          try {
-            final apnsToken = await messaging.getAPNSToken();
-            _record(apnsToken == null || apnsToken.isEmpty
-                ? 'apns:missing'
-                : 'apns:present');
-          } catch (error) {
-            _record('apns:error:${_failure(error)}');
+          stage = 'apns';
+          if (!await _prepareApns()) {
+            _record('fcm:skipped_apns');
+            return;
           }
         }
         stage = 'fcm';

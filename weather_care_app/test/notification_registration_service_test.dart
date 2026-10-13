@@ -21,6 +21,9 @@ class _Messaging implements FirebaseMessaging {
   AuthorizationStatus authorization = AuthorizationStatus.authorized;
   Completer<NotificationSettings>? pendingPermission;
   String? apnsToken;
+  int apnsAvailableAfter = 1;
+  int apnsReads = 0;
+  int tokenRequests = 0;
   Object? tokenError;
   int requests = 0;
   @override
@@ -28,12 +31,17 @@ class _Messaging implements FirebaseMessaging {
   @override
   Future<String?> getToken(
       {String? vapidKey, String? serviceWorkerScriptPath}) async {
+    tokenRequests++;
     if (tokenError != null) throw tokenError!;
     return 'test-token';
   }
 
   @override
-  Future<String?> getAPNSToken() async => apnsToken;
+  Future<String?> getAPNSToken() async {
+    apnsReads++;
+    return apnsReads >= apnsAvailableAfter ? apnsToken : null;
+  }
+
   @override
   Future<NotificationSettings> getNotificationSettings() async {
     final pending = pendingPermission;
@@ -88,12 +96,17 @@ void main() {
   late _Client client;
   late NotificationRegistrationService service;
   late List<String> events;
+  late int apnsRegistrationRequests;
   setUp(() {
     messaging = _Messaging();
     client = _Client();
     events = [];
+    apnsRegistrationRequests = 0;
     service = NotificationRegistrationService(client,
-        messaging: messaging, diagnosticLog: events.add);
+        messaging: messaging,
+        diagnosticLog: events.add, registerForRemoteNotifications: () async {
+      apnsRegistrationRequests++;
+    }, apnsRetryDelay: Duration.zero);
   });
   tearDown(() async {
     debugDefaultTargetPlatformOverride = null;
@@ -150,11 +163,16 @@ void main() {
 
   test('권한 응답을 기다리던 등록도 삭제 중지 상태를 다시 확인한다', () async {
     await service.dispose();
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     var allowed = true;
     service = NotificationRegistrationService(client,
         messaging: messaging,
         canRegister: () => allowed,
-        diagnosticLog: events.add);
+        diagnosticLog: events.add,
+        registerForRemoteNotifications: () async {
+          apnsRegistrationRequests++;
+        },
+        apnsRetryDelay: Duration.zero);
     final pending = Completer<NotificationSettings>();
     messaging.pendingPermission = pending;
     final work = initialize();
@@ -163,6 +181,7 @@ void main() {
     pending.complete(_Permission(AuthorizationStatus.authorized));
     await work;
     expect(client.calls, isEmpty);
+    expect(apnsRegistrationRequests, 0);
   });
   test('대략적 위치로 바뀌면 기존 정밀 좌표를 null로 갱신한다', () async {
     await initialize();
@@ -253,12 +272,8 @@ void main() {
     expect(client.calls.last.body['fcmToken'], 'test-token');
   });
 
-  test('iOS APNs 미발급과 FCM 조회 오류 코드를 토큰 없이 기록한다', () async {
+  test('iOS APNs 미발급이면 FCM 조회와 서버 등록을 건너뛴다', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    messaging.tokenError = FirebaseException(
-        plugin: 'firebase_messaging',
-        code: 'apns-token-not-set',
-        message: 'private-token-must-not-be-logged');
 
     await initialize();
 
@@ -268,16 +283,19 @@ void main() {
         containsAllInOrder([
           'start',
           'permission:authorized',
+          'apns:request',
           'apns:missing',
-          'fcm:error:firebase:apns-token-not-set',
+          'fcm:skipped_apns',
         ]));
+    expect(apnsRegistrationRequests, 1);
+    expect(messaging.tokenRequests, 0);
     expect(client.calls, isEmpty);
-    expect(events.join(' '), isNot(contains('private-token')));
   });
 
-  test('iOS 토큰 조회 성공 뒤 서버 오류 상태를 토큰 없이 기록한다', () async {
+  test('iOS APNs 등록이 늦어도 토큰을 기다린 뒤 서버 오류를 기록한다', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     messaging.apnsToken = 'private-apns-token';
+    messaging.apnsAvailableAfter = 3;
     client.error = const ApiException(401, 'INSTALLATION_AUTH_REQUIRED');
 
     await initialize();
@@ -285,12 +303,41 @@ void main() {
     expect(
         events,
         containsAllInOrder([
+          'apns:request',
           'apns:present',
           'fcm:present',
           'server:request',
           'server:error:http:401:INSTALLATION_AUTH_REQUIRED',
         ]));
+    expect(messaging.apnsReads, 3);
+    expect(apnsRegistrationRequests, 1);
     expect(events.join(' '), isNot(contains('private-apns-token')));
     expect(events.join(' '), isNot(contains('test-token')));
+  });
+
+  test('APNs 등록 후 FCM 오류 코드는 기록하고 서버 요청은 보내지 않는다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    messaging.apnsToken = 'private-apns-token';
+    messaging.tokenError = FirebaseException(
+        plugin: 'firebase_messaging',
+        code: 'unavailable',
+        message: 'private-token-must-not-be-logged');
+
+    await initialize();
+
+    expect(events, contains('fcm:error:firebase:unavailable'));
+    expect(client.calls, isEmpty);
+    expect(events.join(' '), isNot(contains('private-token')));
+  });
+
+  test('iOS 알림 권한이 없으면 APNs 등록과 FCM 조회를 시작하지 않는다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    messaging.authorization = AuthorizationStatus.denied;
+
+    await initialize();
+
+    expect(apnsRegistrationRequests, 0);
+    expect(messaging.tokenRequests, 0);
+    expect(client.calls.single.body['fcmToken'], isNull);
   });
 }

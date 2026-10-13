@@ -69,6 +69,10 @@ flutter:
       fonts:
         - asset: assets/fonts/ChosunSg.TTF
           weight: 400
+        - asset: assets/fonts/ChosunKg.TTF
+          weight: 700
+        - asset: assets/fonts/ChosunBg.TTF
+          weight: 900
     - family: Mona
       fonts:
         - asset: assets/fonts/Mona10.ttf

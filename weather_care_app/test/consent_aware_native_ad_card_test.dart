@@ -88,7 +88,7 @@ void main() {
     expect(find.byKey(const ValueKey('fake-native-ad')), findsOneWidget);
   });
 
-  testWidgets('시스템 모드가 바뀌면 기존 네이티브 광고를 폐기하고 다시 로드한다', (tester) async {
+  testWidgets('시스템 테마가 바뀌면 기존 네이티브 광고를 폐기하고 다시 로드한다', (tester) async {
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
     eligible = true;

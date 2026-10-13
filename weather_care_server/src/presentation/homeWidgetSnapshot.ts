@@ -18,16 +18,19 @@ const preparationLabels: Record<string, string> = {
   UMBRELLA: '우산',
   RAINCOAT: '우비',
   RAIN_BOOTS: '장화',
+  SLIP_RESISTANT_SHOES: '미끄럼 방지 신발',
   PARASOL: '양산',
+  SUN_HAT: '모자',
   SUNSCREEN: '선크림',
   SUNGLASSES: '선글라스',
   WATER: '물',
   PORTABLE_FAN: '휴대용 선풍기',
   COOLING_ITEM: '쿨링제품',
   OUTERWEAR: '두꺼운 겉옷',
+  LIGHT_OUTERWEAR: '가벼운 겉옷',
   SCARF: '목도리',
   HAND_WARMER: '핫팩',
-  SNOW_CHAINS: '스노우체인',
+  SNOW_CHAINS: '스노우체인(운전 시)',
   POWER_BANK: '보조배터리',
   WINTER_BOOTS: '방한부츠',
   HEAVY_SNOW_CAUTION: '많은 눈 대비',
@@ -54,7 +57,14 @@ export function buildHomeWidgetSnapshot(
     ? timeline.flatMap((entry) => entry.recommendedItems)
     : fallbackTypes;
   const daily = todayWidgetDay(weekly.days ?? [], now);
-  const next = today.nextForecast;
+  const next = today.hourly
+    .filter((item) => {
+      const at = Date.parse(item.forecastAt ?? item.observedAt);
+      return Number.isFinite(at) && at > now.getTime();
+    })
+    .sort((left, right) =>
+      Date.parse(left.forecastAt ?? left.observedAt) -
+      Date.parse(right.forecastAt ?? right.observedAt))[0];
   const fallbackBrief = singleSpaced(today.brief);
   const brief = singleSpaced(
     active?.longMessage ?? (today.briefing ? '' : fallbackBrief),
@@ -91,7 +101,7 @@ export function buildHomeWidgetSnapshot(
     ),
     brief: brief || '최신 날씨를 확인해 주세요.',
     nextTime: forecastTime(next),
-    nextCondition: weatherCondition(next?.skyCondition ?? today.current.skyCondition),
+    nextCondition: weatherCondition(next?.skyCondition),
     nextTemperature: temperature(next?.temperature),
     preparations: preparations(currentTypes, 3),
     preparationCatalog: preparations(catalogTypes),

@@ -4,13 +4,16 @@ enum RecommendationType {
   umbrella,
   raincoat,
   rainBoots,
+  slipResistantShoes,
   parasol,
+  sunHat,
   sunscreen,
   sunglasses,
   water,
   portableFan,
   coolingItem,
   outerwear,
+  lightOuterwear,
   scarf,
   handWarmer,
   snowChains,
@@ -32,16 +35,19 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.umbrella => '우산',
       RecommendationType.raincoat => '우비',
       RecommendationType.rainBoots => '장화',
+      RecommendationType.slipResistantShoes => '미끄럼 방지 신발',
       RecommendationType.parasol => '양산',
+      RecommendationType.sunHat => '모자',
       RecommendationType.sunscreen => '선크림',
       RecommendationType.sunglasses => '선글라스',
       RecommendationType.water => '물',
       RecommendationType.portableFan => '휴대용 선풍기',
       RecommendationType.coolingItem => '쿨링제품',
       RecommendationType.outerwear => '두꺼운 겉옷',
+      RecommendationType.lightOuterwear => '가벼운 겉옷',
       RecommendationType.scarf => '목도리',
       RecommendationType.handWarmer => '핫팩',
-      RecommendationType.snowChains => '스노우체인',
+      RecommendationType.snowChains => '스노우체인(운전 시)',
       RecommendationType.powerBank => '보조배터리',
       RecommendationType.winterBoots => '방한부츠',
       RecommendationType.heavySnowCaution => '많은 눈 대비',
@@ -54,16 +60,19 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.umbrella => '우산 챙겨요',
       RecommendationType.raincoat => '우비 챙겨요',
       RecommendationType.rainBoots => '장화 챙겨요',
+      RecommendationType.slipResistantShoes => '미끄럼 방지 신발 신어요',
       RecommendationType.parasol => '양산 챙겨요',
+      RecommendationType.sunHat => '모자 챙겨요',
       RecommendationType.sunscreen => '선크림 챙겨요',
       RecommendationType.sunglasses => '선글라스 챙겨요',
       RecommendationType.water => '물 챙겨요',
       RecommendationType.portableFan => '휴대용 선풍기 챙겨요',
       RecommendationType.coolingItem => '쿨링제품 챙겨요',
       RecommendationType.outerwear => '두꺼운 겉옷 챙겨요',
+      RecommendationType.lightOuterwear => '가벼운 겉옷 챙겨요',
       RecommendationType.scarf => '목도리 챙겨요',
       RecommendationType.handWarmer => '핫팩 챙겨요',
-      RecommendationType.snowChains => '스노우체인 챙겨요',
+      RecommendationType.snowChains => '운전한다면 스노우체인 챙겨요',
       RecommendationType.powerBank => '보조배터리 챙겨요',
       RecommendationType.winterBoots => '방한부츠 챙겨요',
       RecommendationType.heavySnowCaution => '많은 눈 대비',
@@ -76,13 +85,16 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.umbrella => Icons.umbrella,
       RecommendationType.raincoat => Icons.checkroom,
       RecommendationType.rainBoots => Icons.hiking,
+      RecommendationType.slipResistantShoes => Icons.hiking,
       RecommendationType.parasol => Icons.wb_sunny,
+      RecommendationType.sunHat => Icons.face,
       RecommendationType.sunscreen => Icons.spa,
       RecommendationType.sunglasses => Icons.visibility,
       RecommendationType.water => Icons.local_drink,
       RecommendationType.portableFan => Icons.air,
       RecommendationType.coolingItem => Icons.ac_unit,
       RecommendationType.outerwear => Icons.checkroom,
+      RecommendationType.lightOuterwear => Icons.checkroom,
       RecommendationType.scarf => Icons.checkroom,
       RecommendationType.handWarmer => Icons.local_fire_department,
       RecommendationType.snowChains => Icons.directions_car,
@@ -98,13 +110,16 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.umbrella => 'UMBRELLA',
       RecommendationType.raincoat => 'RAINCOAT',
       RecommendationType.rainBoots => 'RAIN_BOOTS',
+      RecommendationType.slipResistantShoes => 'SLIP_RESISTANT_SHOES',
       RecommendationType.parasol => 'PARASOL',
+      RecommendationType.sunHat => 'SUN_HAT',
       RecommendationType.sunscreen => 'SUNSCREEN',
       RecommendationType.sunglasses => 'SUNGLASSES',
       RecommendationType.water => 'WATER',
       RecommendationType.portableFan => 'PORTABLE_FAN',
       RecommendationType.coolingItem => 'COOLING_ITEM',
       RecommendationType.outerwear => 'OUTERWEAR',
+      RecommendationType.lightOuterwear => 'LIGHT_OUTERWEAR',
       RecommendationType.scarf => 'SCARF',
       RecommendationType.handWarmer => 'HAND_WARMER',
       RecommendationType.snowChains => 'SNOW_CHAINS',
@@ -132,7 +147,12 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.snowChains => 'assets/icons/prep_snow_chains.png',
       RecommendationType.powerBank => 'assets/icons/prep_power_bank.png',
       RecommendationType.winterBoots => 'assets/icons/prep_winter_boots.png',
-      RecommendationType.heavySnowCaution || RecommendationType.mask => null,
+      RecommendationType.heavySnowCaution ||
+      RecommendationType.mask ||
+      RecommendationType.slipResistantShoes ||
+      RecommendationType.sunHat ||
+      RecommendationType.lightOuterwear =>
+        null,
     };
   }
 }
@@ -205,8 +225,12 @@ RecommendationType? recommendationTypeFromApiName(String raw) {
       return RecommendationType.raincoat;
     case 'RAIN_BOOTS':
       return RecommendationType.rainBoots;
+    case 'SLIP_RESISTANT_SHOES':
+      return RecommendationType.slipResistantShoes;
     case 'PARASOL':
       return RecommendationType.parasol;
+    case 'SUN_HAT':
+      return RecommendationType.sunHat;
     case 'SUNSCREEN':
       return RecommendationType.sunscreen;
     case 'SUNGLASSES':
@@ -219,6 +243,8 @@ RecommendationType? recommendationTypeFromApiName(String raw) {
       return RecommendationType.coolingItem;
     case 'OUTERWEAR':
       return RecommendationType.outerwear;
+    case 'LIGHT_OUTERWEAR':
+      return RecommendationType.lightOuterwear;
     case 'SCARF':
       return RecommendationType.scarf;
     case 'HAND_WARMER':

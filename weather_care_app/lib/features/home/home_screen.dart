@@ -1158,7 +1158,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           onDestinationSelected: _selectTab,
           destinations: [
             NavigationDestination(
-              tooltip: '오늘 날씨와 타임라인',
+              tooltip: '오늘 날씨 자세히 보기',
               icon: Icon(
                 Icons.work_outline_rounded,
                 color: WeatherCareTheme.of(context).textSecondary,

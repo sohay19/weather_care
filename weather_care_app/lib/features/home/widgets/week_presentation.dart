@@ -140,7 +140,6 @@ List<WeatherRecommendation> weekRecommendations(WeeklyForecastItem day) {
   final seen = <RecommendationType>{};
   return day.recommendations
       .where((item) => item.recommended && seen.add(item.type))
-      .take(3)
       .toList();
 }
 
@@ -225,8 +224,8 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
       (b.amount!.upper ?? 1000000000).compareTo(a.amount!.upper ?? 1000000000));
   final highestAmount = knownAmounts.isEmpty
       ? '자료 없음'
-      : '${knownAmounts.first.amount!.label} '
-          '(${knownAmounts.first.day.forecastSource == 'KMA_OBSERVATION' ? '관측' : '예상'})';
+      : '${knownAmounts.first.amount!.label}'
+          '${knownAmounts.first.day.forecastSource == 'KMA_OBSERVATION' ? '' : ' (예상)'}';
   final preparationDays = eligible
       .where((day) =>
           day.forecastSource != 'KMA_OBSERVATION' &&
@@ -237,7 +236,7 @@ WeekSummaryData buildWeekSummary(List<WeeklyForecastItem> days,
     for (final day in preparationDays)
       for (final item in weekRecommendations(day)) item.type,
   }.toList();
-  final itemLabels = itemTypes.take(3).map((type) => type.label).join(' · ');
+  final itemLabels = itemTypes.take(3).map((type) => type.label).join(', ');
   final incompletePreparations =
       preparationDays.any((day) => !day.recommendationsAvailable);
   final preparationLabels = itemTypes.isEmpty

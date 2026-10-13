@@ -66,9 +66,7 @@ describe('weather access log', () => {
         fields: {
           currentTemperature: false,
           currentApparentTemperature: false,
-          nextTemperature: true,
-          nextApparentTemperature: true,
-          nextForecastAt: nextAt.toISOString(),
+          hourlyCount: 0,
         },
       });
       expect(entry.deviceTag).toMatch(/^[0-9a-f]{24}$/);

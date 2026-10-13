@@ -247,6 +247,28 @@ describe('Canonical Briefing Intent v2', () => {
     );
   });
 
+  it('새 카탈로그는 같은 시간대의 비·추위·먼지 준비물을 함께 제공한다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(15, {
+        precipitationType: 'RAIN', precipitationAmount: 15,
+        precipitationProbability: 80, temperature: 10,
+        apparentTemperature: 10, pm25: 40,
+      }),
+    ]), {
+      now: new Date('2026-08-21T15:00:00+09:00'),
+      expandedPreparations: true,
+      tieredPreparations: true,
+      allowedRecommendedItems: [
+        'UMBRELLA', 'RAINCOAT', 'RAIN_BOOTS', 'OUTERWEAR', 'MASK',
+      ],
+    });
+
+    expect(result.intent.recommendedItems).toEqual([
+      'UMBRELLA', 'OUTERWEAR', 'MASK', 'RAINCOAT', 'RAIN_BOOTS',
+    ]);
+    expect(result.timeline[0].recommendedItems).toEqual(result.intent.recommendedItems);
+  });
+
   it('비 브리핑이 우산을 권하면 추천 엔진 결과가 비어도 준비물에 우산을 넣는다', () => {
     const result = buildWeatherBriefResult(forecast([], {
       precipitationType: 'RAIN',

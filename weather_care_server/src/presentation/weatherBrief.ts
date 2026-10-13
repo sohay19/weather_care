@@ -1,4 +1,5 @@
 import { defaultRuleConfig } from '../config/ruleConfig';
+import { preparationsForWindow } from '../recommendations/preparationPolicy';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import {
   koreaDate,
@@ -35,6 +36,7 @@ export interface WeatherBriefContext {
   severityRecommendedItems?: RecommendationType[];
   /** 새 앱의 확장 준비물 카탈로그를 브리핑과 함께 사용한다. */
   expandedPreparations?: boolean;
+  tieredPreparations?: boolean;
 }
 
 export interface WeatherBriefResult {
@@ -159,7 +161,7 @@ function buildIntentAt(
     selection.snapshot.kmaApparentTemperature ??
       selection.snapshot.apparentTemperature ?? '',
   ].join(':');
-  const rendered = renderCopy(selection, seed);
+  const rendered = renderCopy(selection, seed, context.tieredPreparations ?? false);
   const sourceTime = selection.snapshot.forecastAt ??
     selection.snapshot.validFrom ?? selection.snapshot.observedAt;
   const validFrom = now.toISOString();
@@ -182,9 +184,12 @@ function buildIntentAt(
     : meaning.recommendedItems.filter((item) =>
         (selection.scene === 'RAIN' && item === 'UMBRELLA') ||
         context.severityRecommendedItems?.includes(item));
+  const selectedItems = context.tieredPreparations
+    ? preparationsForWindow(forecast, now).map((item) => item.type)
+    : severityItems;
   const recommendedItems = context.allowedRecommendedItems === undefined
-    ? severityItems
-    : severityItems.filter((item) =>
+    ? selectedItems
+    : selectedItems.filter((item) =>
         context.allowedRecommendedItems?.includes(item));
   return {
     eventTime,
@@ -260,12 +265,20 @@ function selectScene(
   add('SNOW', 95, isSnowy, true);
   add('RAIN', 90, isRainy, true);
   add('VISIBILITY', 82, (item) => (item.visibilityMeters ?? Infinity) < 1_000);
-  add('AIR_QUALITY', 78, hasPoorAirQuality);
+  add('AIR_QUALITY', 78, context.tieredPreparations
+    ? (item) => (item.pm25 ?? 0) >= defaultRuleConfig.airQuality.pm25 ||
+        (item.pm10 ?? 0) >= defaultRuleConfig.airQuality.pm10 ||
+        /bad|나쁨/i.test(item.pm25ForecastGrade ?? '')
+    : hasPoorAirQuality);
   add('OZONE', 74, (item) => (item.ozone ?? 0) >= 0.09);
   add('UV', 70, (item) =>
-    (item.uvIndex ?? 0) >= defaultRuleConfig.uv.highThreshold, false, true);
-  add('THERMAL_HOT', 67, isHot);
-  add('THERMAL_COLD', 67, isCold);
+    (item.uvIndex ?? 0) >= (context.tieredPreparations ? 3 : defaultRuleConfig.uv.highThreshold), false, true);
+  add('THERMAL_HOT', 67, context.tieredPreparations
+    ? (item) => (item.kmaApparentTemperature ?? item.apparentTemperature ?? item.temperature ?? -Infinity) >= 26
+    : isHot);
+  add('THERMAL_COLD', 67, context.tieredPreparations
+    ? (item) => (item.kmaApparentTemperature ?? item.apparentTemperature ?? item.temperature ?? Infinity) <= 17
+    : isCold);
   add('WIND', 60, (item) =>
     (item.windSpeed ?? 0) >= defaultRuleConfig.wind.caution);
   add('HUMIDITY_HIGH', 44, (item) =>
@@ -422,6 +435,7 @@ function snapshotInterval(
 function renderCopy(
   selection: SceneSelection,
   seed: string,
+  tieredPreparations = false,
 ): { variantKey: string; copy: BriefingCopy } {
   const eventStart = koreanHour(new Date(selection.start).toISOString());
   const eventRange = periodLabel(
@@ -435,7 +449,7 @@ function renderCopy(
     eventRange,
     period,
     observed,
-  });
+  }, tieredPreparations);
   const index = deterministicIndex(seed, variants.length);
   return {
     variantKey: `${selection.scene.toLowerCase()}-${index + 1}`,
@@ -451,6 +465,7 @@ function copyVariants(
     period: string;
     observed: boolean;
   },
+  tieredPreparations = false,
 ): BriefingCopy[] {
   switch (selection.scene) {
     case 'SNOW':
@@ -481,6 +496,13 @@ function copyVariants(
         `${time.eventRange} ${precipitationName} 가능성이 높아요. 외출한다면 우산을 챙기세요.`,
       )];
     case 'UV':
+      if (tieredPreparations) return [copy(
+        '자외선에 대비해요. 선크림을 챙기세요.',
+        '낮 동안 자외선에 대비해 선크림을 챙기세요.',
+        '낮 동안 야외활동을 한다면 선크림을 바르고 햇볕을 가려주세요.',
+        '낮 자외선에 대비하세요',
+        '외출한다면 선크림을 챙기세요.',
+      )];
       return [copy(
         '자외선이 강해요. 햇볕을 피하세요.',
         '낮 동안 자외선이 강해요. 선크림이나 양산을 챙기세요.',
@@ -687,6 +709,7 @@ function sameTimelineMeaning(
   right: BriefingTimelineEntry,
 ): boolean {
   return left.sceneId === right.sceneId &&
+    left.recommendedItems.join(',') === right.recommendedItems.join(',') &&
     left.targetFrom === right.targetFrom &&
     left.targetUntil === right.targetUntil &&
     left.action === right.action &&

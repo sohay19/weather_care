@@ -2,10 +2,13 @@ export type RecommendationType =
   | 'UMBRELLA'
   | 'RAINCOAT'
   | 'RAIN_BOOTS'
+  | 'SLIP_RESISTANT_SHOES'
   | 'PARASOL'
+  | 'SUN_HAT'
   | 'SUNGLASSES'
   | 'HEAVY_SNOW_CAUTION'
   | 'OUTERWEAR'
+  | 'LIGHT_OUTERWEAR'
   | 'SCARF'
   | 'HAND_WARMER'
   | 'MASK'
@@ -467,8 +470,6 @@ export interface TodayWeatherResponse {
   sunriseAt?: string;
   sunsetAt?: string;
   current: WeatherSnapshot;
-  /** First hourly forecast whose valid time is later than generatedAt. */
-  nextForecast: WeatherSnapshot;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;
   currentRoadControl?: OfficialRoadControl;

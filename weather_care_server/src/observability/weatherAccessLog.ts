@@ -9,11 +9,6 @@ export interface WeatherAccessFields {
   forecastBase?: string;
   currentTemperature?: boolean;
   currentApparentTemperature?: boolean;
-  nextForecastAt?: string;
-  nextTemperature?: boolean;
-  nextApparentTemperature?: boolean;
-  nextHumidity?: boolean;
-  nextWindSpeed?: boolean;
   hourlyCount?: number;
   weeklyDaysCount?: number;
   weeklyCompleteDaysCount?: number;
@@ -75,7 +70,6 @@ export function todayWeatherAccessFields(
   cacheUpdatedAt: string,
   forecast: WeatherForecast,
 ): WeatherAccessFields {
-  const next = response.nextForecast;
   return {
     cacheUpdatedAt,
     forecastBase: `${forecast.baseDate}${forecast.baseTime}`,
@@ -83,13 +77,6 @@ export function todayWeatherAccessFields(
     currentApparentTemperature: presentNumber(
       response.current.kmaApparentTemperature ?? response.current.apparentTemperature,
     ),
-    nextForecastAt: next.forecastAt ?? next.observedAt,
-    nextTemperature: presentNumber(next.temperature),
-    nextApparentTemperature: presentNumber(
-      next.kmaApparentTemperature ?? next.apparentTemperature,
-    ),
-    nextHumidity: presentNumber(next.humidity),
-    nextWindSpeed: presentNumber(next.windSpeed),
     hourlyCount: response.hourly.length,
   };
 }

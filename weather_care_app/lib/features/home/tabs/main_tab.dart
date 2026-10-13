@@ -7,6 +7,7 @@ import '../../../theme/weather_theme.dart';
 import '../weather_labels.dart';
 import '../weather_data_phase.dart';
 import '../widgets/missing_data_retry.dart';
+import '../widgets/hourly_forecast_section.dart';
 import '../widgets/weather_data_notice.dart';
 import '../widgets/recommendation_bag_section.dart';
 import '../widgets/server_feature_unavailable_card.dart';
@@ -121,9 +122,14 @@ class MainTab extends StatelessWidget {
                       comparisonLoading: comparisonLoading,
                     ),
                     SizedBox(height: compact ? 12 : 16),
-                    _TodayFutureSection(
-                      today: today,
-                      mood: mood,
+                    HourlyForecastSection(
+                      keyPrefix: 'main',
+                      items: today.hourly,
+                      generatedAt: today.generatedAt,
+                      receivedAt: today.receivedAt,
+                      dataPhase: dataPhase,
+                      onRetryMissingData: onRetryData,
+                      retrying: retryingData,
                     ),
                     if (advertisement != null) ...[
                       SizedBox(height: compact ? 12 : 16),
@@ -148,7 +154,6 @@ class _TodaySection extends StatelessWidget {
   final Future<void> Function()? onRetryComparison;
   final bool comparisonLoading;
 
-
   const _TodaySection({
     required this.today,
     required this.yesterday,
@@ -167,7 +172,8 @@ class _TodaySection extends StatelessWidget {
       height: 1.45,
       fontWeight: FontWeight.w600,
     );
-    final airQualityState = _airQualityState(current.pm10, current.pm25, current.ozone);
+    final airQualityState =
+        _airQualityState(current.pm10, current.pm25, current.ozone);
     return Column(
       children: [
         Row(
@@ -225,7 +231,9 @@ class _TodaySection extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: WeatherCareTheme.of(context).primarySoft.withValues(alpha: 0.62),
+            color: WeatherCareTheme.of(context)
+                .primarySoft
+                .withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(15),
           ),
           child: _TopMetricGrid(
@@ -329,7 +337,8 @@ class _YesterdayComparisonSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final todayObservation = comparison?.current;
     final yesterdayObservation = comparison?.comparison;
-    final forecastComparison = comparison?.basis?.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION';
+    final forecastComparison = comparison?.basis?.provider ==
+        'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION';
     final metrics = todayObservation == null || yesterdayObservation == null
         ? const <_ComparisonMetricData>[]
         : [
@@ -410,7 +419,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
                   tooltip: '어제 비교 자료만 다시 요청',
                   visualDensity: VisualDensity.compact,
                   constraints:
-                  const BoxConstraints.tightFor(width: 36, height: 36),
+                      const BoxConstraints.tightFor(width: 36, height: 36),
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),
                   color: WeatherCareTheme.of(context).primaryDeep,
@@ -432,8 +441,9 @@ class _YesterdayComparisonSection extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (skyComparable)
-            Text('하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
-                  '어제 ${yesterdayObservation!.skyCondition}였어요.',
+            Text(
+              '하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
+              '어제 ${yesterdayObservation!.skyCondition}였어요.',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
@@ -447,150 +457,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
   }
 }
 
-class _TodayFutureSection extends StatelessWidget {
-  final TodayWeatherResponse today;
-  final String mood;
-
-  const _TodayFutureSection({
-    required this.today,
-    required this.mood,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final phase = WeatherDataPhaseScope.of(context);
-    if (today.nextForecast == null && phase != WeatherDataPhase.ready) {
-      return phase == WeatherDataPhase.loading
-          ? const _ProgressiveLoadingCard(
-              icon: Icons.schedule_rounded,
-              title: '미래 예상 날씨를 불러오고 있어요',
-            )
-          : const WeatherDataNotice(
-              phase: WeatherDataPhase.failed,
-              subject: '미래 예상 날씨',
-            );
-    }
-    final nextForecast = today.nextForecast ?? const CurrentWeather(temperature: null);
-    final forecastTime = forecastTemperatureLabel(nextForecast.forecastAt);
-    final forecastAirQuality = nextForecast.pm25ForecastGrade;
-    final airQualityState = forecastAirQuality == null
-        ? _airQualityState(nextForecast.pm10, nextForecast.pm25)
-        : _pm25ForecastState(forecastAirQuality);
-    return Container(
-      key: const ValueKey('main-future-weather-card'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: WeatherCareTheme.of(context).primaryBorder,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.question_mark_outlined,
-                    size: 21, color: WeatherCareTheme.of(context).primaryDeep),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  '미래 예상 날씨',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Text(
-            forecastTime == '시'
-                ? '예보 시각 ${phase.missingText()}'
-                : '$forecastTime의 기온과 체감온도를 예상해요',
-            style: TextStyle(
-              color: WeatherCareTheme.of(context).textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 13),
-          _TemperatureLine(
-            lineKey: const ValueKey('main-apparent-temperature-row'),
-            temperatureLabel: '예상 기온',
-            temperature: nextForecast.temperature,
-            apparentLabel: '예상 체감온도',
-            apparentTemperature: nextForecast.displayedApparentTemperature,
-          ),
-          if (nextForecast.apparentTemperatureSource ==
-              'APP_STEADMAN_FROM_FORECAST') ...[
-            const SizedBox(height: 6),
-            Text(
-              '기온·습도·바람으로 계산한 추정 체감온도예요.',
-              style: WeatherCareTheme.of(context).microTextStyle,
-            ),
-          ],
-          const SizedBox(height: 13),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color:
-                  WeatherCareTheme.of(context).surfaceMuted.withValues(alpha: 0.62),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: _TopMetricGrid(
-              columns: 2,
-              metrics: [
-                _TopMetric(
-                  key: const ValueKey('main-future-metric-습도'),
-                  icon: Icons.water_drop_outlined,
-                  label: '습도',
-                  value: humidityDescription(nextForecast.humidity) ?? '--',
-                  state: _humidityState(nextForecast.humidity),
-                ),
-                _TopMetric(
-                  key: const ValueKey('main-future-metric-바람'),
-                  icon: Icons.air_rounded,
-                  label: '바람',
-                  value: windDescription(nextForecast.windSpeed) ?? '--',
-                  state: _windState(nextForecast.windSpeed),
-                ),
-                _TopMetric(
-                  key: const ValueKey('main-future-metric-자외선'),
-                  icon: Icons.wb_sunny_outlined,
-                  label: '자외선',
-                  value: uvDescription(nextForecast.uvIndex) ?? '--',
-                  state: _uvState(nextForecast.uvIndex),
-                ),
-                _TopMetric(
-                  key: const ValueKey('main-future-metric-대기질'),
-                  icon: Icons.eco_outlined,
-                  label: '대기질',
-                  value: airQualityState == _unavailableMetric
-                      ? '--'
-                      : airQualityState.label,
-                  state: airQualityState,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 9),
-          Text(
-            '가시거리는 현재 관측자료만 제공돼 미래 예보에는 포함하지 않아요.',
-            key: const ValueKey('main-future-visibility-notice'),
-            style: WeatherCareTheme.of(context).microTextStyle,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ComparisonMetric extends StatelessWidget {
   final _ComparisonMetricData metric;
 
@@ -600,7 +466,8 @@ class _ComparisonMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     final difference = metric.current! - metric.previous!;
     final same = difference.abs() < (metric.fractionDigits == 0 ? 0.5 : 0.05);
-    final change = same ? '${metric.previousLabel}과 같아요'
+    final change = same
+        ? '${metric.previousLabel}과 같아요'
         : '${metric.previousReference} ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
             '${difference > 0 ? '높아요' : '낮아요'}';
     String value(double value) =>
@@ -789,7 +656,6 @@ class _TopWeatherCard extends StatelessWidget {
   final int metricColumns;
   final bool comparisonLoading;
 
-
   const _TopWeatherCard({
     required this.today,
     required this.yesterday,
@@ -812,7 +678,8 @@ class _TopWeatherCard extends StatelessWidget {
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',
       if (current.uvIndex == null) '자외선',
-      if (current.pm25 == null && current.pm10 == null && current.ozone == null) '대기질',
+      if (current.pm25 == null && current.pm10 == null && current.ozone == null)
+        '대기질',
       if (current.visibilityMeters == null) '가시거리',
       if (today.sunriseAt == null || today.sunsetAt == null) '일출·일몰',
     ];
@@ -1120,18 +987,6 @@ _MetricState _pm25State(int? value) {
   return const _MetricState('매우 나쁨', _MetricTone.danger);
 }
 
-_MetricState _pm25ForecastState(String? value) {
-  if (value == null || value.trim().isEmpty) return _unavailableMetric;
-  final grade = value.trim();
-  if (grade.contains('매우 나쁨') || grade.contains('매우 높음')) {
-    return _MetricState(grade, _MetricTone.danger);
-  }
-  if (grade.contains('나쁨') || grade.contains('높음')) {
-    return _MetricState(grade, _MetricTone.attention);
-  }
-  return _MetricState(grade, _MetricTone.primary);
-}
-
 _MetricState _pm10State(int? value) {
   if (value == null) return _unavailableMetric;
   if (value <= 30) {
@@ -1151,11 +1006,13 @@ _MetricState _airQualityState(int? pm10, int? pm25, [double? ozone]) {
     if (pm10 != null) _pm10State(pm10),
     if (pm25 != null) _pm25State(pm25),
     if (ozoneDescription(ozone) case final grade?)
-      _MetricState(grade, switch (grade) {
-        '나쁨' => _MetricTone.attention,
-        '매우 나쁨' => _MetricTone.danger,
-        _ => _MetricTone.primary,
-      }),
+      _MetricState(
+          grade,
+          switch (grade) {
+            '나쁨' => _MetricTone.attention,
+            '매우 나쁨' => _MetricTone.danger,
+            _ => _MetricTone.primary,
+          }),
   ];
   if (states.isEmpty) return _unavailableMetric;
   const severity = {

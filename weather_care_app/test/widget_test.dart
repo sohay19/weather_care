@@ -416,7 +416,7 @@ void main() {
           .whereType<NavigationDestination>()
           .map((destination) => destination.tooltip),
       [
-        '오늘 날씨와 타임라인',
+        '오늘 날씨 자세히 보기',
         '항목별 근거와 자료',
         '날씨, Check List, 어제 비교와 예상',
         '이번 주 날씨',
@@ -424,10 +424,12 @@ void main() {
       ],
     );
     expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('main-tab')),
-        matching: find.byType(Scrollable),
-      ),
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('main-tab')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
       findsOneWidget,
     );
     for (final destination
@@ -489,20 +491,22 @@ void main() {
                 pm25: 76,
                 sky: '구름 많음',
               ),
-              nextForecast: CurrentWeather(
-                temperature: 23,
-                apparentTemperature: 22,
-                humidity: 55,
-                windSpeed: 2.5,
-                uvIndex: 4,
-                pm10: 24,
-                pm25: 76,
-                forecastAt: '2026-08-21T15:00:00+09:00',
-              ),
               recommendations: [],
               lifestyleMessages: [],
               timeline: [],
-              hourly: [],
+              hourly: [
+                HourlyWeatherItem(
+                  time: '15',
+                  temperature: 23,
+                  apparentTemperature: 22,
+                  precipitationProbability: 40,
+                  precipitationAmount: 1,
+                  snowExpected: false,
+                  snowfallAmount: 0,
+                  windSpeed: 2.5,
+                  skyCondition: '구름 많음',
+                )
+              ],
             ),
             dateLabel: '8월 21일 금요일',
             mood: 'cloudy',
@@ -602,9 +606,6 @@ void main() {
       tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
       13,
     );
-    final weatherFeelingRow = tester.getRect(
-      find.byKey(const ValueKey('main-weather-feeling')),
-    );
     expect(
       tester.widget<Text>(find.text('매우 나쁨').first).style?.color,
       WeatherCareTheme.danger,
@@ -614,59 +615,41 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await tester.dragUntilVisible(
-      find.byKey(const ValueKey('main-future-weather-card')),
+      find.byKey(const ValueKey('main-hourly-timeline-section')),
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, -250),
     );
     await tester.pumpAndSettle();
-    final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
-    expect(find.text('오후 3시의 기온과 체감온도를 예상해요'), findsOneWidget);
-    final futureTemperatureLabel =
-        find.descendant(of: futureCard, matching: find.text('예상 기온'));
-    final futureApparentLabel =
-        find.descendant(of: futureCard, matching: find.text('예상 체감온도'));
-    expect(futureTemperatureLabel, findsOneWidget);
-    expect(futureApparentLabel, findsOneWidget);
+    final timeline = find.byKey(const ValueKey('main-hourly-timeline-section'));
+    expect(find.descendant(of: timeline, matching: find.text('15시')),
+        findsOneWidget);
+    expect(find.descendant(of: timeline, matching: find.text('23°C')),
+        findsOneWidget);
+    expect(find.descendant(of: timeline, matching: find.text('(체감 22°C)')),
+        findsOneWidget);
+    tester
+        .widget<ChoiceChip>(
+            find.byKey(const ValueKey('main-hourly-filter-precipitation')))
+        .onSelected!(true);
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: timeline, matching: find.text('1mm')),
+        findsOneWidget);
     expect(
-      tester.getTopLeft(futureTemperatureLabel).dy,
-      tester.getTopLeft(futureApparentLabel).dy,
-    );
-    final apparentTemperatureRow = tester.getRect(
-      find.byKey(const ValueKey('main-apparent-temperature-row')),
-    );
-    expect(apparentTemperatureRow.top, greaterThan(weatherFeelingRow.bottom));
-    final futureHumidity = find.byKey(const ValueKey('main-future-metric-습도'));
-    final futureWind = find.byKey(const ValueKey('main-future-metric-바람'));
-    final futureUv = find.byKey(const ValueKey('main-future-metric-자외선'));
-    final futureAir = find.byKey(const ValueKey('main-future-metric-대기질'));
-    final futureHumidityPosition = tester.getCenter(futureHumidity);
-    final futureWindPosition = tester.getCenter(futureWind);
-    final futureUvPosition = tester.getCenter(futureUv);
-    final futureAirPosition = tester.getCenter(futureAir);
-    expect(find.descendant(of: futureHumidity, matching: find.text('쾌적')),
-        findsOneWidget);
-    expect(find.descendant(of: futureWind, matching: find.text('약한 바람')),
-        findsOneWidget);
-    expect(find.descendant(of: futureUv, matching: find.text('보통')),
-        findsOneWidget);
-    expect(futureWindPosition.dy, closeTo(futureHumidityPosition.dy, 0.01));
-    expect(futureUvPosition.dy, greaterThan(futureHumidityPosition.dy));
-    expect(futureAirPosition.dy, closeTo(futureUvPosition.dy, 0.01));
-    expect(futureUvPosition.dx, closeTo(futureHumidityPosition.dx, 0.01));
-    expect(futureAirPosition.dx, closeTo(futureWindPosition.dx, 0.01));
-    expect(
-      find.byKey(const ValueKey('main-future-visibility-notice')),
-      findsOneWidget,
-    );
+        find.ancestor(
+            of: timeline,
+            matching: find.byKey(const ValueKey('main-top-weather-card'))),
+        findsNothing);
 
     expect(find.text('간단한 타임라인'), findsNothing);
     expect(find.byKey(const ValueKey('timeline-content')), findsNothing);
 
     final scrollable = tester.state<ScrollableState>(
-      find.descendant(
-        of: find.byKey(const ValueKey('main-tab')),
-        matching: find.byType(Scrollable),
-      ),
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('main-tab')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
     scrollable.position.jumpTo(0);
     await tester.pumpAndSettle();
@@ -681,7 +664,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Today는 현재 날씨 카드와 타임라인을 표시한다', (tester) async {
+  testWidgets('Today는 현재 날씨 카드만 표시한다', (tester) async {
     const mainBrief = '자외선이 강할 수 있으니, 외출한다면 양산을 준비하세요';
     await tester.pumpWidget(
       MaterialApp(
@@ -731,21 +714,11 @@ void main() {
     expect(find.byKey(const ValueKey('weather-metric-대기질')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-가시거리')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-일출·일몰')), findsOneWidget);
-    expect(find.byKey(const ValueKey('today-hourly-info')), findsOneWidget);
-    expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
+    expect(find.byKey(const ValueKey('today-hourly-info')), findsNothing);
+    expect(find.byKey(const ValueKey('today-hourly-forecast-section')),
         findsNothing);
-    expect(find.text('타임라인'), findsOneWidget);
-    expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.byType(WeatherInfoCard)).dy,
-      lessThan(
-        tester
-            .getTopLeft(
-              find.byKey(const ValueKey('today-hourly-forecast-section')),
-            )
-            .dy,
-      ),
-    );
+    expect(find.text('타임라인'), findsNothing);
+    expect(find.text('현재 날씨를 자세히 확인해요'), findsOneWidget);
     expect(find.text('Check List + 근거와 자료'), findsNothing);
     expect(find.text('간단한 타임라인'), findsNothing);
     expect(find.text('외출 전 준비할 물건을 확인해요'), findsNothing);
@@ -953,9 +926,9 @@ void main() {
     expect(tester.getSize(first).width, greaterThanOrEqualTo(78));
     expect(
         tester.getTopLeft(second).dx, greaterThan(tester.getTopLeft(first).dx));
+    expect(tester.getTopLeft(third).dx, tester.getTopLeft(first).dx);
     expect(
-        tester.getTopLeft(third).dx, greaterThan(tester.getTopLeft(second).dx));
-    expect(tester.getTopLeft(third).dy, tester.getTopLeft(first).dy);
+        tester.getTopLeft(third).dy, greaterThan(tester.getTopLeft(first).dy));
     expect(
       tester
           .widget<PreparationIcon>(

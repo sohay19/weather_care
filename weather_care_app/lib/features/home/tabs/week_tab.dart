@@ -242,8 +242,8 @@ class _WeekSummary extends StatelessWidget {
             ),
             label: '준비물',
             details: [
-              ('필요한 일수', summary.preparations),
-              ('예상 준비물', summary.preparationItems),
+              ('', summary.preparations),
+              ('', summary.preparationItems),
             ],
             dataPhase: dataPhase,
           ),
@@ -288,7 +288,7 @@ class _SummaryMetric extends StatelessWidget {
             label,
             style: WeatherCareTheme.of(context).microTextStyle.copyWith(
                   color: WeatherCareTheme.of(context).textPrimary,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                 ),
           ),
           const SizedBox(width: 12),
@@ -297,13 +297,19 @@ class _SummaryMetric extends StatelessWidget {
               TextSpan(children: [
                 for (var index = 0; index < details.length; index++) ...[
                   if (index > 0) const TextSpan(text: '  ·  '),
-                  TextSpan(text: '${details[index].$1} '),
+                  if (details[index].$1.isNotEmpty)
+                    TextSpan(text: '${details[index].$1} '),
                   TextSpan(
                     text: details[index]
                         .$2
                         .value
                         .replaceAll('자료 없음', dataPhase.missingText()),
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      color: WeatherCareTheme.of(context).primaryDeep,
+                      fontFamily: WeatherCareTheme.fontSuite,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ]),
@@ -498,6 +504,7 @@ class _WeekDayCard extends StatelessWidget {
                       ? dataPhase.missingText()
                       : weekDegrees(minimumTemperature),
                   isPast: isPast,
+                  isFuture: !isToday && !isPast,
                 ),
               ),
               const SizedBox(width: 8),
@@ -508,6 +515,7 @@ class _WeekDayCard extends StatelessWidget {
                       ? dataPhase.missingText()
                       : weekDegrees(maximumTemperature),
                   isPast: isPast,
+                  isFuture: !isToday && !isPast,
                 ),
               ),
             ],
@@ -546,8 +554,14 @@ class _WeekDayCard extends StatelessWidget {
                       color: WeatherCareTheme.of(context).primaryDeep),
                   const SizedBox(width: 7),
                   Expanded(
-                      child: Text(precipitation,
-                          style: const TextStyle(fontWeight: FontWeight.w800))),
+                    child: Text.rich(
+                      TextSpan(
+                          children: _weekPrecipitationSpans(precipitation)),
+                      style: WeatherCareTheme.of(context)
+                          .microTextStyle
+                          .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -598,7 +612,7 @@ class _WeekDayCard extends StatelessWidget {
                                 recommendation.type.label,
                                 style: const TextStyle(
                                   fontFamily: WeatherCareTheme.fontMona,
-                                  fontSize: 13,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
                               )),
@@ -637,11 +651,13 @@ class _WeekTemperaturePeriod extends StatelessWidget {
   final String label;
   final String value;
   final bool isPast;
+  final bool isFuture;
 
   const _WeekTemperaturePeriod({
     required this.label,
     required this.value,
     required this.isPast,
+    required this.isFuture,
   });
 
   @override
@@ -649,7 +665,9 @@ class _WeekTemperaturePeriod extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.65),
+        color: isFuture
+            ? WeatherCareTheme.of(context).primarySoft.withValues(alpha: 0.35)
+            : WeatherCareTheme.of(context).surface.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -686,13 +704,35 @@ class _WeekTemperaturePeriod extends StatelessWidget {
   }
 }
 
+List<InlineSpan> _weekPrecipitationSpans(String text) {
+  const probabilityLabel = '강수확률 ';
+  const amountLabel = ' · 강수량 ';
+  final parts = text.split(amountLabel);
+  if (parts.length != 2 || !parts.first.startsWith(probabilityLabel)) {
+    return [TextSpan(text: text)];
+  }
+  return [
+    const TextSpan(text: probabilityLabel),
+    TextSpan(
+      text: parts.first.substring(probabilityLabel.length),
+      style: const TextStyle(fontFamily: WeatherCareTheme.fontSuite, fontWeight: FontWeight.w700),
+    ),
+    const TextSpan(text: amountLabel),
+    TextSpan(
+      text: parts.last,
+      style: const TextStyle(fontFamily: WeatherCareTheme.fontSuite, fontWeight: FontWeight.w700),
+    ),
+  ];
+}
+
 class _WeekData {
   final IconData icon;
   final String title;
   final String label;
+  final String value;
   final String detail;
 
-  const _WeekData(this.icon, this.title, this.label, this.detail);
+  const _WeekData(this.icon, this.title, this.label, this.value, this.detail);
 }
 
 class _WeekDataChip extends StatelessWidget {
@@ -707,18 +747,14 @@ class _WeekDataChip extends StatelessWidget {
         ? WeatherCareTheme.of(context).textSecondary
         : WeatherCareTheme.of(context).primaryDeep;
     return Tooltip(
-      message: isPast ? data.label : '눌러서 수치 보기',
+      message: isPast ? '${data.label} ${data.value}' : '눌러서 수치 보기',
       child: ChoiceChip(
         label: Text.rich(TextSpan(children: [
-          TextSpan(text: data.label),
-          if (!isPast)
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 5),
-                child: Icon(Icons.touch_app_outlined, size: 16, color: color),
-              ),
-            ),
+          TextSpan(text: '${data.label} '),
+          TextSpan(
+            text: data.value,
+            style: const TextStyle(fontFamily: WeatherCareTheme.fontSuite, fontWeight: FontWeight.w700),
+          ),
         ])),
         avatar: Icon(data.icon, size: 17, color: color),
         selected: false,
@@ -740,11 +776,9 @@ class _WeekDataChip extends StatelessWidget {
         labelStyle: WeatherCareTheme.of(context).microTextStyle.copyWith(
               color: color,
               fontSize: 11,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w400,
             ),
-        backgroundColor: isPast
-            ? WeatherCareTheme.of(context).surface.withValues(alpha: 0.65)
-            : color.withValues(alpha: 0.13),
+        backgroundColor: WeatherCareTheme.of(context).surface.withValues(alpha: 0.35),
         side: BorderSide(
           color: isPast ? Colors.transparent : color.withValues(alpha: 0.65),
           width: 1.2,
@@ -765,36 +799,36 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
         _WeekData(
           Icons.water_drop_outlined,
           '습도',
-          isPast
-              ? '평균 습도 ${value.round()}%'
-              : '습도 ${humidityDescription(value)}',
+          isPast ? '평균 습도' : '습도',
+          isPast ? '${value.round()}%' : humidityDescription(value)!,
           '평균 습도 ${value.round()}%',
         ),
       if (day.maximumWindSpeed case final value?)
         _WeekData(
           Icons.air_rounded,
           '바람',
-          isPast
-              ? '최대 풍속 ${_decimal(value)}m/s'
-              : '바람 ${windDescription(value)}',
+          isPast ? '최대 풍속' : '바람',
+          isPast ? '${_decimal(value)}m/s' : windDescription(value)!,
           '최대 풍속 ${_decimal(value)}m/s',
         ),
       if (day.snowfallAmount case final value?)
         _WeekData(
           Icons.ac_unit_rounded,
           isPast ? '최심신적설' : '예상 신적설',
+          isPast ? '최심신적설' : '신적설',
           isPast
-              ? '최심신적설 ${_decimal(value)}cm'
+              ? '${_decimal(value)}cm'
               : value > 0
-                  ? '신적설 예상'
-                  : '신적설 없음',
+                  ? '예상'
+                  : '없음',
           '${isPast ? '최심신적설' : '예상 신적설'} ${_decimal(value)}cm',
         ),
       if (day.maximumUvIndex case final value?)
         _WeekData(
           Icons.wb_sunny_outlined,
           '자외선',
-          isPast ? '자외선 최고 ${_decimal(value)}' : '자외선 ${uvDescription(value)}',
+          isPast ? '자외선 최고' : '자외선',
+          isPast ? _decimal(value) : uvDescription(value)!,
           '자외선지수 최고 ${_decimal(value)}',
         ),
       if (day.airQualityForecast case final air?
@@ -805,18 +839,19 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
         _WeekData(
           Icons.cloud_outlined,
           '대기 상태',
-          _airQualityLabel(air),
+          _airQualityLabel(air).$1,
+          _airQualityLabel(air).$2,
           '${_airQualityLines(air).join(' · ')}\n농도 수치는 주간 예보에서 제공되지 않아요.',
         ),
     ];
 
-String _airQualityLabel(WeeklyAirQualityForecast air) {
+(String, String) _airQualityLabel(WeeklyAirQualityForecast air) {
   final grades = [
     air.pm10Grade,
     air.pm25Grade,
     air.ozoneGrade,
   ].whereType<String>().toSet();
-  return grades.isEmpty ? '황사 영향 언급' : '대기질 ${grades.join('·')}';
+  return grades.isEmpty ? ('황사', '영향 언급') : ('대기질', grades.join('·'));
 }
 
 List<String> _airQualityLines(WeeklyAirQualityForecast? air) {

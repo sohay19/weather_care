@@ -15,7 +15,7 @@ void main() {
     expect(ThemeModeSettings.instance.value, ThemeMode.system);
   });
 
-  testWidgets('설정 모드 선택이 즉시 적용·저장되고 시스템 모드에서 기기 설정을 따른다', (tester) async {
+  testWidgets('설정 테마 선택이 즉시 적용·저장되고 시스템 테마에서 기기 설정을 따른다', (tester) async {
     await ThemeModeSettings.instance.load();
     tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
@@ -36,8 +36,13 @@ void main() {
     expect(Theme.of(lightContext).scaffoldBackgroundColor,
         WeatherCarePalette.light.background);
 
+    expect(find.text('테마'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('theme-mode-menu')));
     await tester.pumpAndSettle();
+    expect(find.text('테마'), findsOneWidget);
+    expect(find.text('화면 테마'), findsOneWidget);
+    expect(find.text('앱 화면의 테마를 선택해요'), findsOneWidget);
+    expect(find.text('화면 모드'), findsNothing);
     expect(find.text('라이트'), findsOneWidget);
     expect(find.text('다크'), findsOneWidget);
     expect(find.text('시스템 설정에 따름'), findsOneWidget);

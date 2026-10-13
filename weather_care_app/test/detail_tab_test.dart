@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/detail_tab.dart';
-import 'package:weather_care/features/home/tabs/today_tab.dart';
+import 'package:weather_care/features/home/widgets/hourly_forecast_section.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
-  testWidgets('Today 타임라인은 다음 날 시각을 구분해 24시간 표시한다', (tester) async {
+  testWidgets('Main 타임라인은 다음 날 시각을 구분해 24시간 표시한다', (tester) async {
     final nowInKorea = DateTime.now().toUtc().add(const Duration(hours: 9));
     final today = _isoDate(nowInKorea);
     final tomorrow = _isoDate(nowInKorea.add(const Duration(days: 1)));
@@ -48,25 +48,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: TodayTab(
-            today: TodayWeatherResponse(
-              dataSource: 'test',
-              region: const WeatherRegion(nx: 60, ny: 121, name: '수원'),
-              brief: '테스트',
-              current: const CurrentWeather(temperature: 0),
-              recommendations: const [],
-              lifestyleMessages: const [],
-              timeline: const [],
-              hourly: hourly,
-            ),
-            onRefresh: () async {},
-          ),
+          body: HourlyForecastSection(items: hourly, keyPrefix: 'main'),
         ),
       ),
     );
 
-    expect(find.byKey(const ValueKey('today-hourly-23')), findsOneWidget);
-    expect(find.byKey(const ValueKey('today-hourly-24')), findsNothing);
+    expect(find.byKey(const ValueKey('main-hourly-23')), findsOneWidget);
+    expect(find.byKey(const ValueKey('main-hourly-24')), findsNothing);
     expect(find.text('23시'), findsOneWidget);
     expect(find.text('내일 00시'), findsOneWidget);
     expect(find.text('내일 18시'), findsNothing);

@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../models/briefing_time.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/korea_date.dart';
+import '../weather_labels.dart';
 import '../weather_data_phase.dart';
 import 'home_section_header.dart';
 import 'missing_data_retry.dart';
@@ -11,7 +14,11 @@ import 'weather_condition_icon.dart';
 
 enum _HourlyMetric { weather, precipitation, uv, wind, humidity }
 
+const _timeLabelHeight = 28.0;
+const _timeDotGap = 3.0;
+
 class HourlyForecastSection extends StatefulWidget {
+  final String keyPrefix;
   final List<HourlyWeatherItem> items;
   final String? generatedAt;
   final DateTime? receivedAt;
@@ -22,6 +29,7 @@ class HourlyForecastSection extends StatefulWidget {
 
   const HourlyForecastSection({
     super.key,
+    this.keyPrefix = 'today',
     required this.items,
     this.generatedAt,
     this.receivedAt,
@@ -71,7 +79,9 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
               item.skyCondition == null,
         );
     return Container(
-      key: const ValueKey('today-hourly-forecast-section'),
+      key: ValueKey(widget.keyPrefix == 'main'
+          ? 'main-hourly-timeline-section'
+          : 'today-hourly-forecast-section'),
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
@@ -82,7 +92,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
             title: '타임라인',
             subtitle: '항목을 선택해 시간별로 비교해요',
             trailing: IconButton(
-              key: const ValueKey('today-hourly-info'),
+              key: ValueKey('${widget.keyPrefix}-hourly-info'),
               tooltip: '타임라인 안내',
               onPressed: () => _showHourlyInfo(context),
               iconSize: 16,
@@ -97,7 +107,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
-            key: const ValueKey('today-hourly-filters'),
+            key: ValueKey('${widget.keyPrefix}-hourly-filters'),
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
@@ -105,7 +115,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
                   Padding(
                     padding: const EdgeInsets.only(right: 7),
                     child: ChoiceChip(
-                      key: ValueKey('today-hourly-filter-${metric.name}'),
+                      key: ValueKey(
+                          '${widget.keyPrefix}-hourly-filter-${metric.name}'),
                       showCheckmark: false,
                       label: Text(_metricLabel(metric)),
                       selected: _selected == metric,
@@ -139,14 +150,14 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
             )
           else
             SingleChildScrollView(
-              key: const ValueKey('today-hourly-timeline'),
+              key: ValueKey('${widget.keyPrefix}-hourly-timeline'),
               scrollDirection: Axis.horizontal,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   for (var index = 0; index < selectedItems.length; index++)
                     _HourlyPoint(
-                      key: ValueKey('today-hourly-$index'),
+                      key: ValueKey('${widget.keyPrefix}-hourly-$index'),
                       item: selectedItems[index],
                       metric: _selected,
                       dataPhase: widget.dataPhase,
@@ -163,7 +174,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
               message: widget.dataPhase == WeatherDataPhase.failed
                   ? '서버에서 타임라인 항목을 불러오지 못했어요.'
                   : '받지 못한 타임라인 항목이 있어요.',
-              retryKey: 'today-hourly-data-retry',
+              retryKey: '${widget.keyPrefix}-hourly-data-retry',
               onRetry: widget.onRetryMissingData!,
               retrying: widget.retrying,
             ),
@@ -184,7 +195,8 @@ void _showHourlyInfo(BuildContext context) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
+            Text(
+                '기온·바람은 정시 값, 강수는 시간 구간의 예보예요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
             SizedBox(height: 8),
             Text(
               '가시거리는 현재 관측자료만 제공돼 시간별 예보에는 표시하지 않아요.',
@@ -271,9 +283,12 @@ class _HourlyPoint extends StatelessWidget {
               : '자외선지수 ${item.uvIndex!.toStringAsFixed(0)}',
           sun: true,
         ),
-      _HourlyMetric.wind =>
-        Icon(Icons.air_rounded, size: 42, color: palette.primaryDeep),
-      _HourlyMetric.humidity => _HumidityDrop(
+      _HourlyMetric.wind => Transform.rotate(
+          key: const ValueKey('today-hourly-wind-icon'),
+          angle: ((item.windDirection ?? 90) - 90) * math.pi / 180,
+          child: Icon(Icons.air_rounded, size: 30, color: palette.primaryDeep),
+        ),
+      _HourlyMetric.humidity => _HumidityCup(
           key: const ValueKey('today-hourly-humidity-icon'),
           humidity: item.humidity,
           color: palette.primaryDeep,
@@ -298,29 +313,31 @@ class _HourlyPoint extends StatelessWidget {
         ],
       _HourlyMetric.precipitation => precipitationValid
           ? [
-              '강수량 ${rainAmount ?? '—'}',
+              rainAmount ?? '—',
               if (item.snowExpected == true ||
                   _hasPositiveAmount(snowAmount, 'cm'))
                 '신적설 ${snowAmount ?? '—'}',
             ]
           : ['강수 구간 —'],
-      _HourlyMetric.uv => <String>[],
+      _HourlyMetric.uv => [uvDescription(item.uvIndex) ?? '—'],
       _HourlyMetric.wind => [
           item.windSpeed == null
               ? '—'
               : '${item.windSpeed!.toStringAsFixed(1)}m/s',
           _windDirectionLabel(item.windDirection),
         ],
-      _HourlyMetric.humidity => <String>[],
+      _HourlyMetric.humidity => [
+          item.humidity == null ? '—' : '${item.humidity!.toStringAsFixed(0)}%',
+        ],
     };
 
     return SizedBox(
       width: MediaQuery.textScalerOf(context)
-          .scale(metric == _HourlyMetric.weather ? 180 : 150),
+          .scale(metric == _HourlyMetric.weather ? 120 : 100),
       child: Column(
         children: [
           SizedBox(
-            height: MediaQuery.textScalerOf(context).scale(32),
+            height: MediaQuery.textScalerOf(context).scale(_timeLabelHeight),
             child: Center(
               child: Text(
                 timeLabel,
@@ -333,7 +350,7 @@ class _HourlyPoint extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: _timeDotGap),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -348,16 +365,16 @@ class _HourlyPoint extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           SizedBox(height: 44, child: Center(child: visual)),
-          const SizedBox(height: 5),
+          const SizedBox(height: 3),
           for (var index = 0; index < values.length; index++)
             Text(
               values[index],
               textAlign: TextAlign.center,
               maxLines: 1,
               style: index == 0
-                  ? Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  ? Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: palette.textPrimary,
                         fontWeight: FontWeight.w800,
                       )
@@ -400,29 +417,30 @@ class _MetricIconValue extends StatelessWidget {
             if (solidDrop)
               CustomPaint(
                 key: const ValueKey('today-hourly-precipitation-icon'),
-                size: const Size(44, 44),
+                size: const Size(36, 36),
                 painter: _SolidDropPainter(color),
               )
             else
-              Icon(icon, size: 44, color: color),
+              Icon(icon, size: 40, color: color),
             if (sun)
               Container(
-                width: 24,
-                height: 24,
+                key: const ValueKey('today-hourly-uv-center'),
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   color: WeatherCareTheme.of(context).surface,
                   shape: BoxShape.circle,
                 ),
               ),
             Transform.translate(
-              offset: Offset(0, sun ? 0 : 4),
+              offset: Offset(0, sun ? 0 : 6),
               child: Text(
                 value,
                 maxLines: 1,
                 style: TextStyle(
                   color: sun ? color : WeatherCareTheme.of(context).onPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+                  fontSize: sun ? 13 : 9,
+                  fontWeight: sun ? FontWeight.w900 : FontWeight.w900,
                 ),
               ),
             ),
@@ -442,7 +460,8 @@ class _SolidDropPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SolidDropPainter oldDelegate) => color != oldDelegate.color;
+  bool shouldRepaint(_SolidDropPainter oldDelegate) =>
+      color != oldDelegate.color;
 }
 
 Color _uvColor(double? index, WeatherCarePalette palette) => switch (index) {
@@ -460,12 +479,12 @@ String _windDirectionLabel(double? direction) {
   return '${labels[((normalized + 22.5) ~/ 45) % labels.length]}풍';
 }
 
-class _HumidityDrop extends StatelessWidget {
+class _HumidityCup extends StatelessWidget {
   final double? humidity;
   final Color color;
   final Color background;
 
-  const _HumidityDrop({
+  const _HumidityCup({
     super.key,
     required this.humidity,
     required this.color,
@@ -474,59 +493,33 @@ class _HumidityDrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = WeatherCareTheme.of(context);
     return Semantics(
-        label: humidity == null
-            ? '습도 자료 없음'
-            : '습도 ${humidity!.toStringAsFixed(0)}% 채움',
-        excludeSemantics: true,
-        child: SizedBox(
-          width: 36,
-          height: 44,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CustomPaint(
-                size: const Size(36, 44),
-                painter: _HumidityDropPainter(
-                  fill: (humidity ?? 0).clamp(0, 100) / 100,
-                  color: color,
-                  background: background,
-                ),
-              ),
-              Transform.translate(
-                offset: const Offset(0, 5),
-                child: SizedBox(
-                  width: 30,
-                  height: 18,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      humidity == null ? '—' : '${humidity!.toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        color: humidity != null && humidity! >= 50
-                            ? palette.onPrimary
-                            : palette.textPrimary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+      label: humidity == null
+          ? '습도 자료 없음'
+          : '습도 ${humidity!.toStringAsFixed(0)}% 채움',
+      excludeSemantics: true,
+      child: SizedBox(
+        child: Center(
+          child: CustomPaint(
+            size: const Size(20, 25),
+            painter: _HumidityCupPainter(
+              fill: (humidity ?? 0).clamp(0, 100) / 100,
+              color: color,
+              background: background,
+            ),
           ),
         ),
-      );
+      ),
+    );
   }
 }
 
-class _HumidityDropPainter extends CustomPainter {
+class _HumidityCupPainter extends CustomPainter {
   final double fill;
   final Color color;
   final Color background;
 
-  const _HumidityDropPainter({
+  const _HumidityCupPainter({
     required this.fill,
     required this.color,
     required this.background,
@@ -536,17 +529,33 @@ class _HumidityDropPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final drop = _dropPath(size);
-    canvas.drawPath(drop, Paint()..color = background);
+    final cup = Path()
+      ..moveTo(w * .1, h * .1)
+      ..lineTo(w * .25, h * .9)
+      ..quadraticBezierTo(w * .5, h * .98, w * .75, h * .9)
+      ..lineTo(w * .9, h * .1)
+      ..close();
+    canvas.drawPath(cup, Paint()..color = background);
     canvas.save();
-    canvas.clipPath(drop);
+    canvas.clipPath(cup);
     canvas.drawRect(
       Rect.fromLTWH(0, h * (1 - fill), w, h * fill),
       Paint()..color = color,
     );
     canvas.restore();
     canvas.drawPath(
-      drop,
+      Path()
+        ..moveTo(w * .1, h * .1)
+        ..lineTo(w * .25, h * .9)
+        ..quadraticBezierTo(w * .5, h * .98, w * .75, h * .9)
+        ..lineTo(w * .9, h * .1),
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    canvas.drawOval(
+      Rect.fromLTWH(w * .1, 0, w * .8, h * .2),
       Paint()
         ..color = color
         ..style = PaintingStyle.stroke
@@ -555,7 +564,7 @@ class _HumidityDropPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HumidityDropPainter oldDelegate) =>
+  bool shouldRepaint(_HumidityCupPainter oldDelegate) =>
       fill != oldDelegate.fill ||
       color != oldDelegate.color ||
       background != oldDelegate.background;

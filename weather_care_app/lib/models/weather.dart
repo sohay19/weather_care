@@ -45,7 +45,6 @@ class CurrentWeather {
   final int? pm10;
   final int? pm25;
   final double? ozone;
-  final String? pm25ForecastGrade;
   final String? sky;
   final String? airQualityStationName;
   final String? airQualityObservedAt;
@@ -71,7 +70,6 @@ class CurrentWeather {
     this.pm10,
     this.pm25,
     this.ozone,
-    this.pm25ForecastGrade,
     this.sky,
     this.airQualityStationName,
     this.airQualityObservedAt,
@@ -101,7 +99,6 @@ class CurrentWeather {
       pm10: (c['pm10'] as num?)?.toInt(),
       pm25: (c['pm25'] as num?)?.toInt(),
       ozone: _optionalNumber(c['ozone']),
-      pm25ForecastGrade: _optionalText(c['pm25ForecastGrade']),
       sky: c['skyCondition']?.toString(),
       airQualityStationName: _optionalText(c['airQualityStationName']),
       airQualityObservedAt: _optionalText(c['airQualityObservedAt']),
@@ -176,15 +173,13 @@ class HourlyWeatherItem {
     final explicitSnowExpected = json['snowExpected'];
     return HourlyWeatherItem(
       time: json['time']?.toString() ?? parsedTime,
-      precipitationPeriod:
-          PrecipitationPeriod.fromJson(json['precipitationPeriod'], observedAt),
+      precipitationPeriod: PrecipitationPeriod.fromJson(json['precipitationPeriod'], observedAt),
       precipitationPeriodProvided: json.containsKey('precipitationPeriod'),
       forecastDate: json['forecastDate']?.toString() ?? parsedDate,
       temperature: _optionalNumber(json['temperature']),
       apparentTemperature: _optionalNumber(json['apparentTemperature']),
       kmaApparentTemperature: _optionalNumber(json['kmaApparentTemperature']),
-      precipitationProbability:
-          _optionalNumber(json['precipitationProbability']),
+      precipitationProbability: _optionalNumber(json['precipitationProbability']),
       precipitationAmount: _optionalNumber(json['precipitationAmount']),
       precipitationAmountLabel: _amountRangeLabel(
         json['precipitationAmountRange'],
@@ -597,7 +592,6 @@ class TodayWeatherResponse {
   final String? sunriseAt;
   final String? sunsetAt;
   final CurrentWeather current;
-  final CurrentWeather? nextForecast;
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
   final List<WeatherMessagePart> dataStatusMessages;
@@ -616,7 +610,6 @@ class TodayWeatherResponse {
     this.sunriseAt,
     this.sunsetAt,
     required this.current,
-    this.nextForecast,
     required this.recommendations,
     required this.lifestyleMessages,
     this.dataStatusMessages = const [],
@@ -636,7 +629,6 @@ class TodayWeatherResponse {
         sunriseAt: sunriseAt,
         sunsetAt: sunsetAt,
         current: current,
-        nextForecast: nextForecast,
         recommendations: recommendations,
         lifestyleMessages: lifestyleMessages,
         dataStatusMessages: dataStatusMessages,
@@ -680,7 +672,6 @@ class TodayWeatherResponse {
         .whereType<Map<String, dynamic>>()
         .map(HourlyWeatherItem.fromJson)
         .toList();
-    final nextForecast = json['nextForecast'];
     final briefing = json['briefing'];
     final briefingTimeline =
         (json['briefingTimeline'] as List<dynamic>? ?? const [])
@@ -709,11 +700,6 @@ class TodayWeatherResponse {
       sunriseAt: _optionalText(json['sunriseAt']),
       sunsetAt: _optionalText(json['sunsetAt']),
       current: CurrentWeather.fromJson(json),
-      nextForecast: nextForecast is Map
-          ? CurrentWeather.fromJson({
-              'current': Map<String, dynamic>.from(nextForecast),
-            })
-          : null,
       recommendations: recs,
       lifestyleMessages: lifestyles,
       dataStatusMessages: dataStatusMessages,

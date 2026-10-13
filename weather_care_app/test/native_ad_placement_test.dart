@@ -28,7 +28,7 @@ void main() {
     ],
   );
 
-  testWidgets('Today 광고는 타임라인 아래에 표시한다', (tester) async {
+  testWidgets('Today 광고는 현재 날씨 카드 아래에 표시한다', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -44,13 +44,12 @@ void main() {
       ),
     );
 
-    final weather = tester.getTopLeft(find.byType(WeatherInfoCard)).dy;
+    final weather = tester.getBottomLeft(find.byType(WeatherInfoCard)).dy;
     final advertisement = tester
         .getTopLeft(find.byKey(const ValueKey('test-today-advertisement')))
         .dy;
-    final hourly = tester.getTopLeft(find.text('타임라인')).dy;
     expect(advertisement, greaterThan(weather));
-    expect(advertisement, greaterThan(hourly));
+    expect(find.text('타임라인'), findsNothing);
   });
 
   testWidgets('Main 광고는 콘텐츠 제일 하단에 표시한다', (tester) async {
@@ -79,7 +78,7 @@ void main() {
     );
 
     final future = tester
-        .getTopLeft(find.byKey(const ValueKey('main-future-weather-card')))
+        .getTopLeft(find.byKey(const ValueKey('main-hourly-timeline-section')))
         .dy;
     final advertisement = tester
         .getTopLeft(find.byKey(const ValueKey('test-main-advertisement')))

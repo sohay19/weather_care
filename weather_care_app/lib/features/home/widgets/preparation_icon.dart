@@ -29,23 +29,38 @@ class PreparationIcon extends StatelessWidget {
     final iconColor = color ?? palette.primaryDeep;
     final iconBackground = backgroundColor ?? palette.primarySoft;
     final assetPath = type.assetPath;
-    final icon = assetPath == null
-        ? CustomPaint(
-            size: Size.square(size),
-            painter: _PreparationIconPainter(
-              type: type,
-              color: iconColor,
-              circularBackground: circularBackground,
-              backgroundColor: iconBackground,
+    final icon = {
+      RecommendationType.slipResistantShoes,
+      RecommendationType.sunHat,
+      RecommendationType.lightOuterwear,
+    }.contains(type)
+        ? SizedBox.square(
+            dimension: size,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: circularBackground ? iconBackground : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(type.icon, size: size * 0.8, color: iconColor),
             ),
           )
-        : _AssetPreparationIcon(
-            assetPath: assetPath,
-            color: iconColor,
-            size: size,
-            circularBackground: circularBackground,
-            backgroundColor: iconBackground,
-          );
+        : assetPath == null
+            ? CustomPaint(
+                size: Size.square(size),
+                painter: _PreparationIconPainter(
+                  type: type,
+                  color: iconColor,
+                  circularBackground: circularBackground,
+                  backgroundColor: iconBackground,
+                ),
+              )
+            : _AssetPreparationIcon(
+                assetPath: assetPath,
+                color: iconColor,
+                size: size,
+                circularBackground: circularBackground,
+                backgroundColor: iconBackground,
+              );
     return Semantics(
       image: true,
       label: type.label,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_data_phase.dart';
-import '../widgets/hourly_forecast_section.dart';
 import '../widgets/weather_data_notice.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_card.dart';
@@ -41,7 +40,7 @@ class TodayTab extends StatelessWidget {
             const TabPageHeader(
               eyebrow: 'TODAY',
               title: '오늘 하루',
-              subtitle: '현재 상태와 타임라인을 함께 보여드려요',
+              subtitle: '현재 날씨를 자세히 확인해요',
               icon: Icons.schedule_rounded,
             ),
             const SizedBox(height: 18),
@@ -54,15 +53,6 @@ class TodayTab extends StatelessWidget {
               dataPhase: dataPhase,
               sunriseAt: today.sunriseAt,
               sunsetAt: today.sunsetAt,
-              onRetryMissingData: onRetryData,
-              retrying: retrying,
-            ),
-            const SizedBox(height: 16),
-            HourlyForecastSection(
-              items: today.hourly,
-              generatedAt: today.generatedAt,
-              receivedAt: today.receivedAt,
-              dataPhase: dataPhase,
               onRetryMissingData: onRetryData,
               retrying: retrying,
             ),

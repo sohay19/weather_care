@@ -206,6 +206,99 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('준비물이 3개를 넘으면 남은 목록을 펼쳐 체크할 수 있다', (tester) async {
+    final now = DateTime.parse('2026-09-10T12:30:00+09:00');
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RecommendationBagSection(
+            regionName: '서울',
+            recommendations: const [],
+            now: () => now,
+            briefingTimeline: const [
+              BriefingTimelineEntry(
+                briefingId: 'multiple',
+                sceneId: 'RAIN',
+                validFrom: '2026-09-10T12:00:00+09:00',
+                validUntil: '2026-09-10T15:00:00+09:00',
+                recommendedItems: [
+                  'UMBRELLA',
+                  'OUTERWEAR',
+                  'MASK',
+                  'RAINCOAT',
+                  'SUNSCREEN',
+                ],
+                copy: BriefingCopy(
+                  short: '준비물 안내',
+                  medium: '준비물 안내',
+                  long: '준비물 안내',
+                  notificationTitle: '준비물 안내',
+                  notificationBody: '준비물 안내',
+                ),
+              ),
+            ],
+            onDetail: (_) {},
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bag-item-raincoat')), findsNothing);
+    await tester.tap(find.text('외 2개 더 보기'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('bag-item-raincoat')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bag-item-sunscreen')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('bag-item-raincoat')));
+    await tester.tap(find.byKey(const ValueKey('bag-item-raincoat')));
+    await tester.pumpAndSettle();
+    expect(await repository.load('2026-09-10'), {RecommendationType.raincoat});
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('좁은 화면의 큰 글씨에서도 준비 시작 시각이 잘리지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final now = DateTime.parse('2026-09-10T12:00:00+09:00');
+    final types = [
+      RecommendationType.slipResistantShoes,
+      RecommendationType.lightOuterwear,
+      RecommendationType.sunHat,
+    ];
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
+      home: MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: Scaffold(
+          body: SingleChildScrollView(
+            child: RecommendationBagSection(
+              regionName: '서울',
+              now: () => now,
+              recommendations: [
+                for (final type in types)
+                  WeatherRecommendation(
+                    type: type,
+                    recommended: true,
+                    priority: 90,
+                    title: type.title,
+                    description: '준비물 안내',
+                    notificationEligible: false,
+                    validFrom: '2026-09-10T14:00:00+09:00',
+                  ),
+              ],
+              onDetail: (_) {},
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('14시부터'), findsNWidgets(3));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('기기 시계가 서버보다 5시간 느려도 응답 후 준비물을 바로 표시한다', (tester) async {
     final now = DateTime.parse('2026-09-10T12:00:00+09:00');
     await tester.pumpWidget(MaterialApp(
@@ -267,28 +360,29 @@ Widget bag({
   String region = '수원',
 }) =>
     MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
         home: Scaffold(
             body: SingleChildScrollView(
-      child: RecommendationBagSection(
-        regionName: region,
-        now: now,
-        generatedAt: generatedAt,
-        receivedAt: receivedAt,
-        checklistRepository: repository,
-        recommendations: [
-          if (visible)
-            WeatherRecommendation(
-              type: RecommendationType.umbrella,
-              recommended: true,
-              priority: 90,
-              title: '우산',
-              description: '비가 내릴 수 있어요',
-              notificationEligible: true,
-            )
-        ],
-        onDetail: (_) {},
-      ),
-    )));
+          child: RecommendationBagSection(
+            regionName: region,
+            now: now,
+            generatedAt: generatedAt,
+            receivedAt: receivedAt,
+            checklistRepository: repository,
+            recommendations: [
+              if (visible)
+                WeatherRecommendation(
+                  type: RecommendationType.umbrella,
+                  recommended: true,
+                  priority: 90,
+                  title: '우산',
+                  description: '비가 내릴 수 있어요',
+                  notificationEligible: true,
+                )
+            ],
+            onDetail: (_) {},
+          ),
+        )));
 
 class DelayedRepository extends PreparationChecklistRepository {
   final previousDay = Completer<Set<RecommendationType>>();

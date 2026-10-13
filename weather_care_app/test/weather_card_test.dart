@@ -258,23 +258,6 @@ void main() {
     expect(find.textContaining('햇볕의 영향은 포함하지 않아요.'), findsOneWidget);
   });
 
-  test('예상기온 시각은 한국시간을 사용하고 없는 시각은 만들지 않는다', () {
-    for (final timestamp in [
-      '2026-09-10T15:00:00+09:00',
-      '2026-09-10T06:00:00Z',
-      '2026-09-10T15:00:00',
-    ]) {
-      expect(forecastTemperatureLabel(timestamp), '오후 3시');
-    }
-    expect(
-      forecastTemperatureLabel('2026-09-10T15:00:00Z'),
-      '오전 12시',
-    );
-    expect(forecastTemperatureLabel(null), '시');
-    expect(forecastTemperatureLabel('unknown'), '시');
-    expect(forecastTemperatureLabel('2026-09-10'), '시');
-  });
-
   testWidgets('체감은 상단에 두고 결측인 6개 지표를 0으로 바꾸지 않는다', (tester) async {
     await _pumpCard(tester, const CurrentWeather(temperature: null));
 
@@ -339,17 +322,37 @@ void main() {
       '습도': '습한 편\n72%',
       '바람': '강한 바람\n남서 10.0m/s',
       '자외선': '높음\n7.0',
+      '대기질': '나쁨',
       '가시거리': '좋음\n12 km',
     };
     for (final entry in expectedValues.entries) {
-      expect(
-        find.descendant(
-          of: find.byKey(ValueKey('weather-metric-${entry.key}')),
-          matching: find.text(entry.value),
-        ),
-        findsOneWidget,
+      final value = find.descendant(
+        of: find.byKey(ValueKey('weather-metric-${entry.key}')),
+        matching: find.text(entry.value),
       );
+      expect(value, findsOneWidget);
+      final valueSpan = tester.widget<Text>(value).textSpan! as TextSpan;
+      final statusSpan = entry.key == '대기질'
+          ? valueSpan
+          : valueSpan.children!.first as TextSpan;
+      expect(statusSpan.style?.fontSize, 15);
+      expect(statusSpan.style?.fontWeight, FontWeight.w800);
+      if (entry.key != '대기질') {
+        final numberSpan = valueSpan.children!.last as TextSpan;
+        expect(numberSpan.style?.fontSize, 13);
+        expect(numberSpan.style?.fontWeight, FontWeight.normal);
+      }
     }
+    final sunTimes = find.descendant(
+      of: find.byKey(const ValueKey('weather-metric-일출·일몰')),
+      matching: find.text('6:17 · 18:28'),
+    );
+    expect(sunTimes, findsOneWidget);
+    expect(tester.widget<Text>(sunTimes).textSpan?.style?.fontSize, 15);
+    expect(
+      tester.widget<Text>(sunTimes).textSpan?.style?.fontWeight,
+      FontWeight.w800,
+    );
     const expectedRanges = {
       '습도': '35% 이하: 건조',
       '바람': '14m/s 이상: 매우 강한 바람',
@@ -449,6 +452,7 @@ void main() {
       expect(find.text('오후 3시'), findsNothing);
       expect(find.text('29.0℃'), findsOneWidget);
       expect(find.text('체감 32.7℃'), findsOneWidget);
+      expect(tester.widget<Text>(find.text('구름 많음')).style?.fontSize, 14);
       final cardRight = tester.getTopRight(find.byType(WeatherInfoCard)).dx;
       final apparentRight = tester
           .getTopRight(find.byKey(const ValueKey('weather-apparent-detail')))
@@ -533,19 +537,12 @@ void main() {
     expect(find.textContaining('맑은 하늘'), findsNothing);
     expect(find.text('0.0℃'), findsNothing);
     await tester.dragUntilVisible(
-      find.byKey(const ValueKey('main-future-weather-card')),
+      find.byKey(const ValueKey('main-hourly-timeline-section')),
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, -300),
     );
     await tester.pumpAndSettle();
-    expect(find.text('예상 기온'), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('main-apparent-temperature-row')),
-        matching: find.text('자료 없음'),
-      ),
-      findsNWidgets(2),
-    );
+    expect(find.text('타임라인 자료가 없어 표시하기 어려워요.'), findsOneWidget);
     expect(find.text('0.0℃'), findsNothing);
     expect(tester.takeException(), isNull);
   });

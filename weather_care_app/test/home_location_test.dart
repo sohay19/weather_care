@@ -436,10 +436,9 @@ void main() {
           'apparentTemperature': 21,
           'skyCondition': '맑음',
         },
-        'nextForecast': {
-          'temperature': 25,
-          'forecastAt': '2026-10-01T14:00:00+09:00',
-        },
+        'hourly': [
+          {'temperature': 25, 'forecastAt': '2026-10-01T14:00:00+09:00'},
+        ],
       }),
       weekly: WeeklyWeatherResponse.fromJson({
         'days': [
@@ -499,11 +498,11 @@ void main() {
     expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
     expect(find.text('불러오는 중'), findsWidgets);
     await tester.dragUntilVisible(
-      find.text('미래 예상 날씨를 불러오고 있어요'),
+      find.text('타임라인을 불러오고 있어요.'),
       find.byKey(const ValueKey('main-tab')),
       const Offset(0, -200),
     );
-    expect(find.text('미래 예상 날씨를 불러오고 있어요'), findsOneWidget);
+    expect(find.text('타임라인을 불러오고 있어요.'), findsOneWidget);
 
     weather.pending!.complete(_weather(60, 127));
     await tester.pumpAndSettle();
@@ -520,7 +519,7 @@ void main() {
 
     expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
     expect(find.text('불러오는 중'), findsWidgets);
-    expect(find.text('타임라인을 불러오고 있어요.'), findsOneWidget);
+    expect(find.text('타임라인을 불러오고 있어요.'), findsNothing);
 
     await tester.tap(find.text('Detail'));
     await tester.pump();

@@ -195,7 +195,20 @@ class HomeWidgetSnapshot {
       activeBriefing?.longMessage ??
           (today.briefing == null ? fallbackBrief : ''),
     );
-    final next = today.nextForecast;
+    final upcoming = today.hourly.where((item) {
+      final date = item.forecastDate;
+      final hour = int.tryParse(item.time);
+      if (date == null || hour == null || hour < 0 || hour > 23) return false;
+      final at =
+          DateTime.tryParse('${date}T${item.time.padLeft(2, '0')}:00:00+09:00');
+      return at != null && at.isAfter(instant);
+    }).toList()
+      ..sort((left, right) {
+        final leftAt = '${left.forecastDate}T${left.time.padLeft(2, '0')}';
+        final rightAt = '${right.forecastDate}T${right.time.padLeft(2, '0')}';
+        return leftAt.compareTo(rightAt);
+      });
+    final next = upcoming.isEmpty ? null : upcoming.first;
     final validUntil = activeBriefing?.validUntil ?? '';
     final dataFreshUntil = briefingTimeline.isEmpty
         ? validUntil
@@ -224,8 +237,10 @@ class HomeWidgetSnapshot {
       shortMessage:
           _singleSpaced(activeBriefing?.shortMessage ?? '최신 날씨를 확인해 주세요.'),
       brief: brief.isEmpty ? '최신 날씨를 확인해 주세요.' : brief,
-      nextTime: widgetForecastTime(next?.forecastAt ?? next?.issuedAt),
-      nextCondition: widgetWeatherCondition(next?.sky),
+      nextTime: widgetForecastTime(next == null
+          ? null
+          : '${next.forecastDate}T${next.time.padLeft(2, '0')}:00:00+09:00'),
+      nextCondition: widgetWeatherCondition(next?.skyCondition),
       nextTemperature: _temperature(next?.temperature),
       preparations: preparations,
       preparationCatalog: preparationCatalog,

@@ -302,9 +302,16 @@ void main() {
         matching: find.byType(ChoiceChip),
       ),
     );
+    final humiditySpans =
+        ((humidityChip.label as Text).textSpan! as TextSpan).children!;
+    expect((humiditySpans[0] as TextSpan).text, '습도 ');
+    expect((humiditySpans[1] as TextSpan).text, '쾌적');
+    expect(humidityChip.labelStyle?.fontFamily, WeatherCareTheme.fontChosunSg);
+    expect(humidityChip.labelStyle?.fontWeight, FontWeight.w400);
+    expect(humiditySpans[1].style?.fontWeight, FontWeight.w700);
     expect(humidityChip.elevation, 2);
     expect(humidityChip.side?.width, 1.2);
-    expect(find.byIcon(Icons.touch_app_outlined), findsNWidgets(5));
+    expect(find.byIcon(Icons.touch_app_outlined), findsNothing);
     await tester.scrollUntilVisible(find.textContaining('습도 쾌적'), 250);
     await tester.tap(find.textContaining('습도 쾌적'));
     await tester.pumpAndSettle();
@@ -433,7 +440,7 @@ void main() {
     );
     expect(find.text('12월 31일 (목)'), findsOneWidget);
     expect(find.text('많은 눈 대비'), findsOneWidget);
-    expect(tester.widget<Text>(find.text('많은 눈 대비')).style?.fontSize, 13);
+    expect(tester.widget<Text>(find.text('많은 눈 대비')).style?.fontSize, 10);
     expect(tester.takeException(), isNull);
   });
 }

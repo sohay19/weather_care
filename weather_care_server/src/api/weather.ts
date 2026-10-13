@@ -29,6 +29,7 @@ import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import {
   enabledRecommendationTypes,
   PREPARATION_RECOMMENDATION_CATALOG,
+  TIERED_PREPARATION_CATALOG,
   runRecommendationEngine,
 } from '../recommendations/recommendationEngine';
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
@@ -199,12 +200,6 @@ router.get('/main', async (c) => {
       briefingTimeline: brief.timeline,
       ...sunTimes,
       current,
-      nextForecast:
-        nextForecastSnapshot(
-          responseForecast.hourly,
-          generatedAt,
-          airForecast,
-        ) ?? forecast.current,
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
@@ -238,6 +233,7 @@ router.get('/today', async (c) => {
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
+  const tieredPreparations = c.req.query('recommendationCatalog') === TIERED_PREPARATION_CATALOG;
   const requestedCoordinates = coordinatesFromQuery(
     c.req.query('latitude'),
     c.req.query('longitude'),
@@ -425,6 +421,8 @@ router.get('/today', async (c) => {
     const lifestyle = runLifestyleWeatherEngine(rules, decisionHourly);
     const recommendations = runRecommendationEngine(lifestyle, settings, {
       expandedPreparations,
+      tieredPreparations,
+      snapshots: decisionHourly,
     });
     const regionLabel = administrativeAreaForLocation(location)?.[1] ?? '현재 위치';
 
@@ -459,6 +457,7 @@ router.get('/today', async (c) => {
         .filter((item) => item.recommended)
         .map((item) => item.type),
       expandedPreparations,
+      tieredPreparations,
       ...sunTimes,
     });
     const response: TodayWeatherResponse = {
@@ -475,12 +474,6 @@ router.get('/today', async (c) => {
         ...current,
         activeWarnings: warnings,
       },
-      nextForecast:
-        nextForecastSnapshot(
-          responseForecast.hourly,
-          generatedAt,
-          airForecast,
-        ) ?? forecast.current,
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
@@ -507,6 +500,7 @@ router.get('/today', async (c) => {
         settings,
         generatedAt.toISOString(),
         expandedPreparations,
+        tieredPreparations,
       ),
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
@@ -544,6 +538,7 @@ router.get('/weekly', async (c) => {
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
+  const tieredPreparations = c.req.query('recommendationCatalog') === TIERED_PREPARATION_CATALOG;
 
   try {
     const now = new Date();
@@ -718,7 +713,8 @@ router.get('/weekly', async (c) => {
               forecast?.hourly ?? [],
               settings,
               expandedPreparations,
-            ).filter((item) => item.recommended).slice(0, 3),
+              tieredPreparations,
+            ).filter((item) => item.recommended).slice(0, tieredPreparations ? undefined : 3),
       })),
     };
     c.set('weatherAccessFields', {
@@ -737,7 +733,7 @@ router.get('/weekly', async (c) => {
 router.get('/widget', async (c) => {
   const query = new URL(c.req.url).searchParams;
   query.set('includeExtras', 'true');
-  query.set('recommendationCatalog', 'PREPARATION_15');
+  query.set('recommendationCatalog', TIERED_PREPARATION_CATALOG);
   const suffix = `?${query.toString()}`;
   const headers = new Headers();
   const authorization = c.req.header('Authorization');
@@ -927,37 +923,6 @@ function compactCalendarDate(value: string): string {
 }
 
 export default router;
-
-export function nextForecastSnapshot(
-  hourly: WeatherSnapshot[],
-  now = new Date(),
-  airQuality: DailyAirQualityForecastAtDate[] = [],
-): WeatherSnapshot | undefined {
-  const reference = now.getTime();
-  let next: WeatherSnapshot | undefined;
-  let nextTime = Number.POSITIVE_INFINITY;
-  for (const snapshot of hourly) {
-    const forecastTime = Date.parse(snapshot.forecastAt ?? snapshot.observedAt);
-    if (
-      Number.isFinite(forecastTime) &&
-      forecastTime > reference &&
-      forecastTime < nextTime
-    ) {
-      next = snapshot;
-      nextTime = forecastTime;
-    }
-  }
-  if (!next) return undefined;
-
-  const forecastDate = koreaDate(next.forecastAt ?? next.observedAt)
-    .replaceAll('-', '');
-  const pm25ForecastGrade = airQuality.find(
-    (item) => item.date.replaceAll('-', '') === forecastDate,
-  )?.pm25Grade;
-  return pm25ForecastGrade
-    ? { ...next, pm25ForecastGrade }
-    : next;
-}
 
 export function currentFromUltraShortObservation(
   forecast: WeatherSnapshot,
@@ -1198,6 +1163,7 @@ export function buildTimeline(
     defaultNotificationSettings('anonymous'),
   referenceTime?: string,
   expandedPreparations = false,
+  tieredPreparations = false,
 ) {
   const firstTime = hourly[0]?.forecastAt ?? hourly[0]?.observedAt;
   const targetDate = referenceTime
@@ -1248,6 +1214,7 @@ export function buildTimeline(
       item,
       settings,
       expandedPreparations,
+      tieredPreparations,
     );
     const topRecommendation = recommendations[0]?.type;
     const previousTemperature = slots
@@ -1321,10 +1288,13 @@ function timelineStateLabel(
     UMBRELLA: '비가 예보됐어요',
     RAINCOAT: '비가 예보됐어요',
     RAIN_BOOTS: '비가 예보됐어요',
+    SLIP_RESISTANT_SHOES: '눈이 예보됐어요',
     PARASOL: '자외선지수가 높게 예보됐어요',
+    SUN_HAT: '자외선지수가 높게 예보됐어요',
     SUNGLASSES: '자외선지수가 높게 예보됐어요',
     HEAVY_SNOW_CAUTION: '많은 눈이 예보됐어요',
     OUTERWEAR: '기온이 낮게 예보됐어요',
+    LIGHT_OUTERWEAR: '기온이 서늘하게 예보됐어요',
     SCARF: '기온이 낮게 예보됐어요',
     HAND_WARMER: '기온이 낮게 예보됐어요',
     MASK: '대기질이 나쁨 단계예요',
@@ -1475,11 +1445,12 @@ function recommendationsForSnapshot(
   snapshot: WeatherSnapshot,
   settings: Partial<NotificationSettings>,
   expandedPreparations = false,
+  tieredPreparations = false,
 ): Recommendation[] {
   return runRecommendationEngine(
     runLifestyleWeatherEngine(runWeatherRuleEngine(snapshot)),
     settings,
-    { expandedPreparations },
+    { expandedPreparations, tieredPreparations, snapshots: [snapshot] },
   );
 }
 
@@ -1489,6 +1460,7 @@ export function recommendationsForDay(
   settings: Partial<NotificationSettings> =
     defaultNotificationSettings('anonymous'),
   expandedPreparations = false,
+  tieredPreparations = false,
 ): Recommendation[] {
   const dayHourly = hourly.flatMap((item) => {
     const pointDate = koreaDate(item.forecastAt ?? item.observedAt).replaceAll('-', '');
@@ -1503,7 +1475,7 @@ export function recommendationsForDay(
     return runRecommendationEngine(
       runLifestyleWeatherEngine(facts, dayHourly),
       settings,
-      { expandedPreparations },
+      { expandedPreparations, tieredPreparations, snapshots: dayHourly },
     );
   }
 
@@ -1518,11 +1490,12 @@ export function recommendationsForDay(
     snowfallAmount: day.snowfallAmount,
     skyCondition: day.skyCondition,
   };
-  return recommendationsForSnapshot(snapshot, settings, expandedPreparations);
+  return recommendationsForSnapshot(snapshot, settings, expandedPreparations, tieredPreparations);
 }
 
 function supportsExpandedPreparations(catalog: string | undefined): boolean {
-  return catalog === PREPARATION_RECOMMENDATION_CATALOG;
+  return catalog === PREPARATION_RECOMMENDATION_CATALOG ||
+    catalog === TIERED_PREPARATION_CATALOG;
 }
 
 async function settingsForRequest(

@@ -208,6 +208,7 @@ class WeatherInfoCard extends StatelessWidget {
                                 Theme.of(context).textTheme.bodyLarge?.copyWith(
                                       color: WeatherCareTheme.of(context)
                                           .textSecondary,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                     ),
                           ),
@@ -496,7 +497,32 @@ String _pm10Grade(int value) {
   return '매우 나쁨';
 }
 
-const _metricValueStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w800);
+const _metricValueStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.normal);
+const _metricStatusStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w800);
+
+TextSpan _valueSpanFor(_WeatherMetric metric) {
+  final lineBreak = metric.value.indexOf('\n');
+  if (lineBreak != -1) {
+    return TextSpan(children: [
+      TextSpan(
+        text: metric.value.substring(0, lineBreak),
+        style: _metricStatusStyle,
+      ),
+      TextSpan(
+        text: metric.value.substring(lineBreak),
+        style: _metricValueStyle,
+      ),
+    ]);
+  }
+  final isAirQualityGrade = metric.label == '대기질' &&
+      const {'좋음', '보통', '나쁨', '매우 나쁨'}.contains(metric.value);
+  return TextSpan(
+    text: metric.value,
+    style: metric.label == '일출·일몰' || isAirQualityGrade
+        ? _metricStatusStyle
+        : _metricValueStyle,
+  );
+}
 
 double _equalMetricHeight(
   BuildContext context,
@@ -505,13 +531,12 @@ double _equalMetricHeight(
 ) {
   final defaultStyle = DefaultTextStyle.of(context).style;
   final labelStyle = defaultStyle.merge(Theme.of(context).textTheme.bodySmall);
-  final valueStyle = defaultStyle.merge(_metricValueStyle);
   final textScaler = MediaQuery.textScalerOf(context);
   final textDirection = Directionality.of(context);
 
-  double textHeight(String text, TextStyle style) {
+  double textHeight(TextSpan span) {
     final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
+      text: TextSpan(style: defaultStyle, children: [span]),
       textDirection: textDirection,
       textScaler: textScaler,
     )..layout(maxWidth: itemWidth - 14);
@@ -522,8 +547,9 @@ double _equalMetricHeight(
 
   var tallest = 0.0;
   for (final metric in metrics) {
-    final height = 8 + 32 + textHeight(metric.label, labelStyle) +
-        3 + textHeight(metric.value, valueStyle) + 10;
+    final height = 8 + 32 +
+        textHeight(TextSpan(text: metric.label, style: labelStyle)) +
+        3 + textHeight(_valueSpanFor(metric)) + 10;
     if (height > tallest) tallest = height;
   }
   return tallest.ceilToDouble() + 2;
@@ -586,10 +612,7 @@ class _MetricView extends StatelessWidget {
               ),
               Text(metric.label, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 3),
-              Text(
-                metric.value,
-                style: _metricValueStyle,
-              ),
+              Text.rich(_valueSpanFor(metric)),
             ],
           ),
         ),

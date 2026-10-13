@@ -10,7 +10,6 @@ import router, {
   forecastForCurrentHour,
   isFreshMainSnapshot,
   mergeWeeklyForecastDays,
-  nextForecastSnapshot,
   recommendationsForDay,
   settleWithin,
   weeklyCalendarDays,
@@ -90,7 +89,6 @@ describe('fast Main weather', () => {
         brief: string;
         briefing: CanonicalBriefingIntent;
         current: WeatherSnapshot;
-        nextForecast: WeatherSnapshot;
         hourly: WeatherSnapshot[];
       }>();
 
@@ -126,12 +124,7 @@ describe('fast Main weather', () => {
         observedAt: '2026-08-20T15:20:00+09:00',
       });
       expect(data.brief).toBe(data.briefing.copy.medium);
-      expect(data.nextForecast).toMatchObject({
-        forecastAt: '2026-08-20T18:00:00+09:00',
-        temperature: 28,
-        kmaApparentTemperature: 24,
-        pm25ForecastGrade: '보통',
-      });
+      expect(data).not.toHaveProperty('nextForecast');
       expect(data.hourly).toEqual([]);
       expect(optional).not.toHaveBeenCalled();
       expect(provider).not.toHaveBeenCalled();
@@ -343,17 +336,6 @@ describe('fast Main weather', () => {
         expect(body.hourly.every(slot=>slot.snowDepthCm===undefined)).toBe(true);
       }
     }finally{vi.useRealTimers();}
-  });
-
-  it('selects the earliest forecast strictly after the current time', () => {
-    expect(nextForecastSnapshot(
-      [snapshot(12), snapshot(11), snapshot(10)],
-      new Date('2026-08-20T10:35:00+09:00'),
-    )?.forecastAt).toBe('2026-08-20T11:00:00+09:00');
-    expect(nextForecastSnapshot(
-      [snapshot(11), snapshot(10)],
-      new Date('2026-08-20T10:00:00+09:00'),
-    )?.forecastAt).toBe('2026-08-20T11:00:00+09:00');
   });
 
   it('uses cached Main weather only inside its short freshness window', () => {
@@ -974,7 +956,6 @@ describe('today timeline', () => {
       const data = await response.json<{
         current: WeatherSnapshot;
         hourly: WeatherSnapshot[];
-        nextForecast: WeatherSnapshot;
         timeline: ReturnType<typeof buildTimeline>;
       }>();
 
@@ -984,7 +965,7 @@ describe('today timeline', () => {
         '09',
         '12',
       ]);
-      expect(data.nextForecast.forecastAt).toBe('2026-08-20T12:00:00+09:00');
+      expect(data).not.toHaveProperty('nextForecast');
       expect(data.timeline[0].detail).toBe('예상기온 24.0℃ / 맑음');
       expect(data.timeline[1].detail).toBe('예상기온 24.0℃ / 맑음');
       await waitOnExecutionContext(ctx);

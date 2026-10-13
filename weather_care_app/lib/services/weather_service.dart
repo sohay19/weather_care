@@ -148,7 +148,7 @@ class WeatherService {
         'nx': '$nx',
         'ny': '$ny',
         'installationId': installationId,
-        'recommendationCatalog': 'PREPARATION_15',
+        'recommendationCatalog': 'PREPARATION_18',
         if (coordinates != null) ...{
           'latitude': '${coordinates.latitude}',
           'longitude': '${coordinates.longitude}',
@@ -177,7 +177,7 @@ class WeatherService {
         'ny': '$ny',
         'installationId': installationId,
         'includeExtras': 'true',
-        'recommendationCatalog': 'PREPARATION_15',
+        'recommendationCatalog': 'PREPARATION_18',
         if (coordinates != null) ...{
           'latitude': '${coordinates.latitude}',
           'longitude': '${coordinates.longitude}',

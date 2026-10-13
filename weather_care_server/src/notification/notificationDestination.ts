@@ -43,6 +43,7 @@ export function recommendationDestination(
     case 'RAIN_BOOTS':
       return weatherDetailsDestination('PRECIPITATION');
     case 'PARASOL':
+    case 'SUN_HAT':
     case 'SUNSCREEN':
     case 'SUNGLASSES':
       return weatherDetailsDestination('UV');
@@ -50,8 +51,10 @@ export function recommendationDestination(
     case 'SNOW_CHAINS':
     case 'POWER_BANK':
     case 'WINTER_BOOTS':
+    case 'SLIP_RESISTANT_SHOES':
       return weatherDetailsDestination('SNOW');
     case 'OUTERWEAR':
+    case 'LIGHT_OUTERWEAR':
     case 'SCARF':
     case 'HAND_WARMER':
       return weatherDetailsDestination('TEMPERATURE');

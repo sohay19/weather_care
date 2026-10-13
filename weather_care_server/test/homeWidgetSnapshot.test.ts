@@ -19,12 +19,22 @@ describe('home widget snapshot', () => {
         apparentTemperature: 17.5,
         skyCondition: '구름많음',
       },
-      nextForecast: {
+      hourly: [{
+        observedAt: '2026-09-28T01:00:00.000Z',
+        forecastAt: '2026-09-28T01:00:00.000Z',
+        temperature: 20,
+        skyCondition: '비',
+      }, {
+        observedAt: now.toISOString(),
+        forecastAt: now.toISOString(),
+        temperature: 18,
+        skyCondition: '구름많음',
+      }, {
         observedAt: '2026-09-28T00:00:00.000Z',
         forecastAt: '2026-09-28T00:00:00.000Z',
         temperature: 19,
         skyCondition: '맑음',
-      },
+      }],
       brief: '오전에는  선선해요.',
       briefing: {
         briefingId: 'brief-1',

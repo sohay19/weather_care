@@ -257,13 +257,11 @@ void main() {
       'briefExpiresAt': '2026-09-10T06:00:00Z',
       'generatedAt': '2026-09-18T04:33:00Z',
       'current': {'forecastAt': '2026-09-10T15:00:00+09:00'},
-      'nextForecast': {'forecastAt': '2026-09-10T16:00:00+09:00'},
     }).withRegionName('부산 해운대구');
     expect(response.briefExpiresAt, '2026-09-10T06:00:00Z');
     expect(response.generatedAt, '2026-09-18T04:33:00Z');
     expect(response.brief, action);
     expect(response.current.forecastAt, '2026-09-10T15:00:00+09:00');
-    expect(response.nextForecast?.forecastAt, '2026-09-10T16:00:00+09:00');
     expect(TodayWeatherResponse.fromJson({'brief': action}).briefExpiresAt,
         isNull);
   });
@@ -339,16 +337,9 @@ void main() {
     ))));
     expect(find.text(action), findsNothing);
     expect(find.text('최신 날씨를 확인해 주세요.'), findsOneWidget);
-    expect(find.text('예보 시각 자료 없음'), findsOneWidget);
-    final futureCard = find.byKey(const ValueKey('main-future-weather-card'));
+    expect(find.text('타임라인 자료가 없어 표시하기 어려워요.'), findsOneWidget);
     expect(
-      find.descendant(of: futureCard, matching: find.text('28.0℃')),
-      findsNothing,
-    );
-    expect(
-      find.descendant(of: futureCard, matching: find.text('자료 없음')),
-      findsNWidgets(2),
-    );
+        find.byKey(const ValueKey('main-future-weather-card')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

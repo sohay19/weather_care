@@ -66,7 +66,7 @@ void main() {
       expect(find.text('정시 예보'), findsNothing);
       await _selectHourly(tester, 'precipitation');
       expect(find.text('14~15시'), findsOneWidget);
-      expect(find.text('강수량 1mm 미만'), findsOneWidget);
+      expect(find.text('1mm 미만'), findsOneWidget);
       await _selectHourly(tester, 'wind');
       expect(find.text('2.0m/s'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -100,7 +100,7 @@ void main() {
     expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsOneWidget);
-    expect(find.text('강수량 1mm 미만'), findsOneWidget);
+    expect(find.text('1mm 미만'), findsOneWidget);
   });
 
   testWidgets('24개 정시 뒤의 오늘 마지막 강수 구간도 강수 항목에 남긴다', (tester) async {
@@ -142,6 +142,33 @@ void main() {
     expect(find.text('00시'), findsNothing);
   });
 
+  testWidgets('Main으로 옮긴 타임라인도 오늘 마지막 강수 구간을 유지한다', (tester) async {
+    final now = DateTime.now();
+    final today = dateInKorea(now);
+    final tomorrow = dateInKorea(now.add(const Duration(days: 1)));
+    final hourly = TodayWeatherResponse.fromJson({
+      'hourly': [
+        for (var hour = 0; hour < 24; hour++) _slot(today, hour),
+        _slot(tomorrow, 0),
+      ],
+    }).hourly;
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
+      home: Scaffold(
+        body: HourlyForecastSection(items: hourly, now: now, keyPrefix: 'main'),
+      ),
+    ));
+    expect(find.byKey(const ValueKey('main-hourly-24')), findsNothing);
+    tester
+        .widget<ChoiceChip>(
+            find.byKey(const ValueKey('main-hourly-filter-precipitation')))
+        .onSelected!(true);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('main-hourly-24')), findsOneWidget);
+    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.text('1mm 미만'), findsNWidgets(24));
+  });
+
   testWidgets('오늘 00시 기온은 표시해도 어제 23~24시 강수는 오늘에 섞지 않는다', (tester) async {
     await _pump(tester, [_slot(dateInKorea(DateTime.now()), 0)]);
     expect(find.text('00시'), findsOneWidget);
@@ -149,7 +176,7 @@ void main() {
     expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsNothing);
-    expect(find.text('강수량 1mm 미만'), findsNothing);
+    expect(find.text('1mm 미만'), findsNothing);
   });
 
   testWidgets('기기 날짜가 하루 느려도 응답 시각의 오늘 예보를 표시한다', (tester) async {
@@ -182,7 +209,7 @@ void main() {
     expect(find.text('(체감 22°C)'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
     expect(find.text('강수 구간 —'), findsOneWidget);
-    expect(find.text('강수량 1mm 미만'), findsNothing);
+    expect(find.text('1mm 미만'), findsNothing);
   });
 }
 

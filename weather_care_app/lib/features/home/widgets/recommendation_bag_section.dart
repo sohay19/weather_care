@@ -49,6 +49,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   bool _loading = true;
   bool _saving = false;
   bool _loadFailed = false;
+  bool _expanded = false;
 
   DateTime get _now => responseNow(
         (widget.now ?? DateTime.now)(),
@@ -67,6 +68,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   @override
   void didUpdateWidget(covariant RecommendationBagSection oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.regionName != widget.regionName) _expanded = false;
     _refreshDate();
     _scheduleBriefingBoundary();
   }
@@ -165,7 +167,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
             description: description,
             notificationEligible: false,
           ));
-      if (visible.length == 3) break;
     }
     return visible;
   }
@@ -248,7 +249,9 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
 
   @override
   Widget build(BuildContext context) {
-    final visible = _visibleRecommendations();
+    final all = _visibleRecommendations();
+    final visible = _expanded ? all : all.take(3).toList();
+    final now = _now;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -268,7 +271,12 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
             LayoutBuilder(
               builder: (context, constraints) {
                 const spacing = 6.0;
-                final columns = visible.length.clamp(1, 3);
+                final textScale = MediaQuery.textScalerOf(context).scale(1);
+                final maxColumns = ((constraints.maxWidth + spacing) /
+                        (100 * textScale + spacing))
+                    .floor()
+                    .clamp(1, 3);
+                final columns = visible.length.clamp(1, maxColumns);
                 final itemWidth =
                     (constraints.maxWidth - (columns - 1) * spacing) / columns;
 
@@ -279,12 +287,13 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
                     for (final recommendation in visible)
                       SizedBox(
                         width: itemWidth,
-                        height: 160,
+                        height: 176 + (textScale - 1).clamp(0, 2) * 110,
                         child: _BagItem(
                           key: ValueKey(
                             'bag-item-${recommendation.type.apiName.toLowerCase()}',
                           ),
                           recommendation: recommendation,
+                          now: now,
                           checked: _checked.contains(recommendation.type),
                           pendingLabel: _loading
                               ? '확인 중'
@@ -306,6 +315,12 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
               onPressed: () => _refreshDate(retry: true),
               child: const Text('체크 상태를 불러오지 못했어요 · 다시 시도'),
             ),
+          if (all.length > 3)
+            TextButton.icon(
+              onPressed: () => setState(() => _expanded = !_expanded),
+              icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+              label: Text(_expanded ? '접기' : '외 ${all.length - 3}개 더 보기'),
+            ),
         ],
       ),
     );
@@ -314,6 +329,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
 
 class _BagItem extends StatelessWidget {
   final WeatherRecommendation recommendation;
+  final DateTime now;
   final bool checked;
   final VoidCallback? onToggle;
   final String? pendingLabel;
@@ -322,6 +338,7 @@ class _BagItem extends StatelessWidget {
   const _BagItem({
     super.key,
     required this.recommendation,
+    required this.now,
     required this.checked,
     required this.onToggle,
     required this.onDetail,
@@ -331,6 +348,11 @@ class _BagItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = recommendation.type;
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final startsAt = DateTime.tryParse(recommendation.validFrom ?? '');
+    final futureStart = startsAt != null &&
+        startsAt.isAfter(now.add(const Duration(minutes: 10)));
+    final koreaStart = startsAt?.toUtc().add(const Duration(hours: 9));
 
     return Material(
       color: checked
@@ -395,10 +417,16 @@ class _BagItem extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
+                  if (futureStart && koreaStart != null)
+                    Text(
+                      '${koreaStart.hour}시부터',
+                      textAlign: TextAlign.center,
+                      style: WeatherCareTheme.of(context).microTextStyle,
+                    ),
                   const Spacer(),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
-                    height: 32,
+                    height: 32 * textScale.clamp(1, 2),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: checked

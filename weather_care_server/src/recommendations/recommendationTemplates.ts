@@ -3,6 +3,9 @@ import { LifestyleInsightType, RecommendationType } from '../types';
 export const CATALOG_VERSION = 'ko-KR-2026.09.3';
 
 export const recommendationMessageCatalog: Record<RecommendationType, string[]> = {
+  SLIP_RESISTANT_SHOES: ['눈길에 대비해 미끄럼 방지 신발을 신으세요.'],
+  SUN_HAT: ['자외선에 대비해 챙이 넓은 모자를 준비하세요.'],
+  LIGHT_OUTERWEAR: ['서늘한 시간에 입을 가벼운 겉옷을 준비하세요.'],
   UMBRELLA: [
     '비가 올 수 있으니, 외출한다면 우산을 챙기세요.',
     '비가 예상되니, 나가기 전에 우산을 준비하세요.',
@@ -95,10 +98,13 @@ export function titleFor(type: RecommendationType): string {
     UMBRELLA: '우산',
     RAINCOAT: '우비',
     RAIN_BOOTS: '장화',
+    SLIP_RESISTANT_SHOES: '미끄럼 방지 신발',
     PARASOL: '양산',
+    SUN_HAT: '모자',
     SUNGLASSES: '선글라스',
     HEAVY_SNOW_CAUTION: '많은 눈 대비',
     OUTERWEAR: '두꺼운 겉옷',
+    LIGHT_OUTERWEAR: '가벼운 겉옷',
     SCARF: '목도리',
     HAND_WARMER: '핫팩',
     MASK: '마스크',
@@ -106,7 +112,7 @@ export function titleFor(type: RecommendationType): string {
     PORTABLE_FAN: '휴대용 선풍기',
     COOLING_ITEM: '쿨링제품',
     SUNSCREEN: '선크림',
-    SNOW_CHAINS: '스노우체인',
+    SNOW_CHAINS: '스노우체인(운전 시)',
     POWER_BANK: '보조배터리',
     WINTER_BOOTS: '방한부츠',
   }[type];

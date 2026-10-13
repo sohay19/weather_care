@@ -191,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           builder: (context, mode, _) => _SettingsMenuButton(
             key: const ValueKey('theme-mode-menu'),
             icon: Icons.brightness_6_outlined,
-            title: '모드',
+            title: '테마',
             subtitle: _themeModeLabel(mode),
             onTap: _openThemeModeSettings,
           ),
@@ -945,7 +945,7 @@ class _ThemeModeSettingsScreen extends StatelessWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('모드를 저장하지 못했어요. 다시 시도해주세요.')),
+          const SnackBar(content: Text('테마를 저장하지 못했어요. 다시 시도해주세요.')),
         );
       }
     }
@@ -954,11 +954,11 @@ class _ThemeModeSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SettingsDetailScaffold(
-      title: '모드',
+      title: '테마',
       child: _SettingsSection(
         icon: Icons.brightness_6_outlined,
-        title: '화면 모드',
-        subtitle: '앱 화면의 밝기를 선택해요',
+        title: '화면 테마',
+        subtitle: '앱 화면의 테마를 선택해요',
         child: ValueListenableBuilder<ThemeMode>(
           valueListenable: ThemeModeSettings.instance,
           builder: (context, selected, _) => RadioGroup<ThemeMode>(

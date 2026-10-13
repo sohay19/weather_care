@@ -254,7 +254,7 @@ class WeatherCareTheme {
   }
 }
 
-/// 화면의 Theme에서 얻는 색상. 시스템 모드 전환에도 전역 상태를 사용하지 않는다.
+/// 화면의 Theme에서 얻는 색상. 시스템 테마 전환에도 전역 상태를 사용하지 않는다.
 @immutable
 class WeatherCarePalette extends ThemeExtension<WeatherCarePalette> {
   final Brightness brightness;

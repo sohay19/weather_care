@@ -4,6 +4,7 @@ import 'package:weather_care/features/home/tabs/week_tab.dart';
 import 'package:weather_care/features/home/widgets/week_presentation.dart';
 import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/models/weather.dart';
+import 'package:weather_care/theme/weather_theme.dart';
 
 void main() {
   test('날짜별 결측과 잘못된 숫자를 맑음·0·빈 추천 목록으로 해석하지 않는다', () {
@@ -125,11 +126,11 @@ void main() {
     ], serverFeaturesAvailable: true, today: DateTime(2026, 9, 10));
 
     expect(summary.precipitation.value, '2일');
-    expect(summary.precipitationAmount.value, '4.5mm (관측)');
+    expect(summary.precipitationAmount.value, '4.5mm');
     expect(summary.minimum.value, '8℃');
     expect(summary.maximum.value, '25℃');
     expect(summary.preparations.value, '1일');
-    expect(summary.preparationItems.value, '우산 · 마스크');
+    expect(summary.preparationItems.value, '우산, 마스크');
   });
 
   test('모든 결측·부분 무강수·확인된 무강수를 구분한다', () {
@@ -227,7 +228,8 @@ void main() {
     expect(find.textContaining('강수일 0일'), findsOneWidget);
     expect(find.textContaining('최고 강수량'), findsOneWidget);
     expect(find.text('기온'), findsOneWidget);
-    expect(find.textContaining('예상 준비물'), findsOneWidget);
+    expect(find.textContaining('예상 준비물'), findsNothing);
+    expect(find.textContaining('필요한 일수'), findsNothing);
   });
 
   testWidgets('빈 추천은 불필요하다는 뜻으로 표시하지 않는다', (tester) async {
@@ -236,6 +238,26 @@ void main() {
     ]);
     expect(find.text('표시할 준비물 추천 없음'), findsNothing);
     expect(find.text('준비물 없음'), findsNothing);
+  });
+
+  testWidgets('요약 준비물은 일수와 목록만 강조하고 구분자를 달리한다', (tester) async {
+    await _pump(tester, [
+      _day('10', {
+        'recommendations': [_rec('UMBRELLA'), _rec('MASK')],
+      }),
+    ]);
+    final summaryText = tester.widget<Text>(find.text('1일  ·  우산, 마스크'));
+    final spans = (summaryText.textSpan! as TextSpan).children!;
+    expect((spans[0] as TextSpan).text, '1일');
+    expect(spans[0].style?.fontWeight, FontWeight.w700);
+    expect(spans[0].style?.fontSize, 11);
+    expect(spans[0].style?.fontFamily, WeatherCareTheme.fontSuite);
+    expect((spans[1] as TextSpan).text, '  ·  ');
+    expect((spans[2] as TextSpan).text, '우산, 마스크');
+    expect(spans[2].style?.fontWeight, FontWeight.w700);
+    expect(spans[2].style?.fontFamily, WeatherCareTheme.fontSuite);
+    expect(find.textContaining('필요한 일수'), findsNothing);
+    expect(find.textContaining('예상 준비물'), findsNothing);
   });
 
   testWidgets('직접 조회에서는 오래된 추천도 노출하지 않고 미지원으로 안내한다', (tester) async {

@@ -110,7 +110,7 @@ void main() {
     final snapshot = HomeWidgetSnapshot.fromWeather(
       today: _today(
         recommendations: const [],
-        nextForecast: null,
+        hourly: const [],
       ),
       weekly: WeeklyWeatherResponse.fromJson({
         'days': [
@@ -271,11 +271,19 @@ TodayWeatherResponse _today({
   CanonicalBriefing? briefing,
   List<BriefingTimelineEntry> briefingTimeline = const [],
   required List<WeatherRecommendation> recommendations,
-  CurrentWeather? nextForecast = const CurrentWeather(
-    temperature: 19,
-    forecastAt: '2026-09-19T00:00:00Z',
-    sky: '맑음',
-  ),
+  List<HourlyWeatherItem> hourly = const [
+    HourlyWeatherItem(
+      time: '09',
+      forecastDate: '2026-09-19',
+      temperature: 19,
+      precipitationProbability: 0,
+      precipitationAmount: 0,
+      snowExpected: false,
+      snowfallAmount: 0,
+      windSpeed: 1,
+      skyCondition: '맑음',
+    )
+  ],
 }) {
   return TodayWeatherResponse(
     dataSource: '서버 데이터',
@@ -294,11 +302,10 @@ TodayWeatherResponse _today({
       apparentTemperature: 17.5,
       sky: '빗방울',
     ),
-    nextForecast: nextForecast,
     recommendations: recommendations,
     lifestyleMessages: const [],
     timeline: const [],
-    hourly: const [],
+    hourly: hourly,
   );
 }
 

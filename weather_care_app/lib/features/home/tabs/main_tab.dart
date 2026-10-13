@@ -119,6 +119,23 @@ class MainTab extends StatelessWidget {
                         retrying: retryingData,
                       ),
                     SizedBox(height: compact ? 12 : 16),
+                    if (detailsLoading)
+                      const _ProgressiveLoadingCard(
+                        icon: Icons.schedule_rounded,
+                        title: '시간별 자료를 불러오고 있어요',
+                      )
+                    else if (serverFeaturesAvailable)
+                      TimelineSection(
+                        items: today.hourly.take(24).toList(),
+                      )
+                    else
+                      ServerFeatureUnavailableCard(
+                        icon: Icons.schedule_rounded,
+                        title: '간단한 타임라인',
+                        onRetry: onRetryData,
+                        retrying: retryingData,
+                      ),
+                    SizedBox(height: compact ? 12 : 16),
                     _YesterdayComparisonSection(
                       comparison: yesterdayComparison,
                       loading: comparisonLoading,
@@ -129,24 +146,6 @@ class MainTab extends StatelessWidget {
                       today: today,
                       mood: mood,
                     ),
-                    SizedBox(height: compact ? 12 : 16),
-                    if (detailsLoading)
-                      const _ProgressiveLoadingCard(
-                        icon: Icons.schedule_rounded,
-                        title: '시간별 자료를 불러오고 있어요',
-                      )
-                    else if (serverFeaturesAvailable)
-                      TimelineSection(
-                        items: today.timeline,
-                        onDetail: onDetail,
-                      )
-                    else
-                      ServerFeatureUnavailableCard(
-                        icon: Icons.schedule_rounded,
-                        title: '간단한 타임라인',
-                        onRetry: onRetryData,
-                        retrying: retryingData,
-                      ),
                     if (advertisement != null) ...[
                       SizedBox(height: compact ? 12 : 16),
                       advertisement!,
@@ -386,12 +385,17 @@ class _YesterdayComparisonSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.compare_arrows_rounded,
-                size: 21,
-                color: WeatherCareTheme.of(context).primaryDeep,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: WeatherCareTheme.of(context).primarySoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.compare_arrows_rounded,
+                    size: 21, color: WeatherCareTheme.of(context).primaryDeep),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 12),
               const Expanded(
                 child: Text(
                   '어제와 비교',
@@ -495,8 +499,7 @@ class _TodayFutureSection extends StatelessWidget {
               subject: '미래 예상 날씨',
             );
     }
-    final nextForecast =
-        today.nextForecast ?? const CurrentWeather(temperature: null);
+    final nextForecast = today.nextForecast ?? const CurrentWeather(temperature: null);
     final forecastTime = forecastTemperatureLabel(nextForecast.forecastAt);
     final forecastAirQuality = nextForecast.pm25ForecastGrade;
     final airQualityState = forecastAirQuality == null
@@ -512,12 +515,17 @@ class _TodayFutureSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.question_mark_outlined,
-                size: 18,
-                color: WeatherCareTheme.of(context).primaryDeep,
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: WeatherCareTheme.of(context).primaryBorder,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.question_mark_outlined,
+                    size: 21, color: WeatherCareTheme.of(context).primaryDeep),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 12),
               const Expanded(
                 child: Text(
                   '미래 예상 날씨',

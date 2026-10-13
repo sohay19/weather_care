@@ -244,7 +244,7 @@ void main() {
         WeatherCareTheme.surfaceMuted);
   });
 
-  testWidgets('전달된 광고 영역은 주간 요약과 날짜 카드 사이에만 표시한다', (tester) async {
+  testWidgets('광고는 주간 두 번째 날짜 카드 뒤에 표시한다', (tester) async {
     await _pump(
       tester,
       [_day('2026-09-10')],
@@ -258,9 +258,15 @@ void main() {
     final advertisement = tester
         .getTopLeft(find.byKey(const ValueKey('test-week-advertisement')))
         .dy;
-    final day = tester.getTopLeft(find.text('9월 10일 (목)')).dy;
+    final secondDay = tester
+        .getTopLeft(find.byKey(const ValueKey('week-unavailable-2026-09-07')))
+        .dy;
+    final thirdDay = tester
+        .getTopLeft(find.byKey(const ValueKey('week-unavailable-2026-09-08')))
+        .dy;
     expect(advertisement, greaterThan(summary));
-    expect(advertisement, lessThan(day));
+    expect(advertisement, greaterThan(secondDay));
+    expect(advertisement, lessThan(thirdDay));
   });
 
   testWidgets('온도와 날짜별 추가 자료를 값이 있는 항목만 표시한다', (tester) async {

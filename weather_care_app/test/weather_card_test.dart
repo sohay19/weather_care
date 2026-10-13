@@ -43,8 +43,7 @@ void main() {
         expect(
             find.textContaining('좌동 측정소 · 9월 10일 18시 00분 관측'), findsOneWidget);
         expect(find.textContaining('사용자 위치에서 직접 측정한 농도는 아니에요'), findsNothing);
-        await tester.ensureVisible(detailButton);
-        await tester.tap(detailButton);
+        await tester.tap(find.text('닫기'));
         await tester.pumpAndSettle();
         expect(
           find.byKey(ValueKey('weather-metric-detail-content-$label')),
@@ -151,7 +150,7 @@ void main() {
     );
 
     expect(find.text('오후 2시 실황'), findsNothing);
-    final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
+    final detailButton = find.byKey(const ValueKey('weather-apparent-detail'));
     await tester.ensureVisible(detailButton);
     await tester.tap(detailButton);
     await tester.pumpAndSettle();
@@ -176,7 +175,7 @@ void main() {
       ),
     );
 
-    final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
+    final detailButton = find.byKey(const ValueKey('weather-apparent-detail'));
     await tester.ensureVisible(detailButton);
     await tester.tap(detailButton);
     await tester.pumpAndSettle();
@@ -201,7 +200,7 @@ void main() {
       ),
     );
 
-    final detailButton = find.byKey(const ValueKey('weather-metric-detail-체감'));
+    final detailButton = find.byKey(const ValueKey('weather-apparent-detail'));
     await tester.ensureVisible(detailButton);
     await tester.tap(detailButton);
     await tester.pumpAndSettle();
@@ -227,15 +226,16 @@ void main() {
     expect(forecastTemperatureLabel('2026-09-10'), '시');
   });
 
-  testWidgets('결측이어도 7개 지표를 유지하고 0이나 정상 등급으로 표시하지 않는다', (tester) async {
+  testWidgets('체감은 상단에 두고 결측인 6개 지표를 0으로 바꾸지 않는다', (tester) async {
     await _pumpCard(tester, const CurrentWeather(temperature: null));
 
-    expect(find.text('자료 없음'), findsNWidgets(8));
+    expect(find.text('자료 없음'), findsNWidgets(7));
+    expect(find.text('체감 자료 없음'), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-체감')), findsNothing);
     expect(find.text('하늘 상태 자료 없음'), findsOneWidget);
     expect(find.text('미지원'), findsNothing);
     expect(find.text('0.0℃'), findsNothing);
     for (final label in [
-      '체감',
       '습도',
       '바람',
       '자외선',
@@ -254,8 +254,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('대기질은 좋음 등급이에요'), findsNothing);
-      await tester.ensureVisible(detailButton);
-      await tester.tap(detailButton);
+      await tester.tap(find.text('닫기'));
       await tester.pumpAndSettle();
     }
     expect(tester.takeException(), isNull);
@@ -288,9 +287,9 @@ void main() {
       sunsetAt: '2026-09-21T09:28:00Z',
     );
     for (final entry in expectedLevels.entries) {
-      final button = find.byKey(
-        ValueKey('weather-metric-detail-${entry.key}'),
-      );
+      final button = find.byKey(entry.key == '체감'
+          ? const ValueKey('weather-apparent-detail')
+          : ValueKey('weather-metric-detail-${entry.key}'));
       await tester.ensureVisible(button);
       await tester.tap(button);
       await tester.pumpAndSettle();
@@ -299,6 +298,8 @@ void main() {
       );
       expect(level, findsOneWidget);
       expect(tester.widget<Text>(level).data, entry.value);
+      await tester.tap(find.text('닫기'));
+      await tester.pumpAndSettle();
     }
     expect(tester.takeException(), isNull);
   });
@@ -321,7 +322,8 @@ void main() {
       sunsetAt: '2026-09-21T09:28:00Z',
     );
     expect(find.text('자료 없음'), findsNothing);
-    expect(find.text('0.0℃'), findsNWidgets(2));
+    expect(find.text('0.0℃'), findsOneWidget);
+    expect(find.text('체감 0.0℃'), findsOneWidget);
     expect(find.text('0%'), findsOneWidget);
     expect(find.text('0.0m/s'), findsOneWidget);
     expect(find.text('0.0'), findsOneWidget);
@@ -373,18 +375,19 @@ void main() {
       );
       expect(find.text('오후 3시'), findsNothing);
       expect(find.text('29.0℃'), findsOneWidget);
-      expect(find.text('32.7℃'), findsOneWidget);
+      expect(find.text('체감 32.7℃'), findsOneWidget);
       expect(find.text('남서 2.8m/s'), findsOneWidget);
       expect(find.text('나쁨'), findsOneWidget);
       expect(find.text('12 km'), findsOneWidget);
+      expect(find.byKey(const ValueKey('weather-metric-체감')), findsNothing);
       final first =
-          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-체감')));
-      final second =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-습도')));
-      final third =
+      final second =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-바람')));
-      expect(second.dx, first.dx);
-      expect(second.dy, greaterThan(first.dy));
+      final third =
+          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-자외선')));
+      expect(second.dy, first.dy);
+      expect(second.dx, greaterThan(first.dx));
       expect(third.dx, first.dx);
       expect(third.dy, greaterThan(second.dy));
 
@@ -410,8 +413,7 @@ void main() {
           ),
           findsOneWidget,
         );
-        await tester.ensureVisible(detailButton);
-        await tester.tap(detailButton);
+        await tester.tap(find.text('닫기'));
         await tester.pumpAndSettle();
       }
       expect(tester.takeException(), isNull);
@@ -506,6 +508,7 @@ Future<void> _pumpCard(
   String? sunsetAt,
 }) async {
   await tester.pumpWidget(MaterialApp(
+    theme: ThemeData(splashFactory: NoSplash.splashFactory),
     home: Scaffold(
       body: MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(scale)),

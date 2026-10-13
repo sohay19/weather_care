@@ -134,10 +134,6 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               Text(widget.dataPhase == WeatherDataPhase.ready
                   ? '자료를 받아오면 해당 날짜의 날씨와 준비물을 표시해요.'
                   : widget.dataPhase.explanation),
-            if (widget.advertisement != null) ...[
-              const SizedBox(height: 18),
-              widget.advertisement!,
-            ],
             const SizedBox(height: 16),
             for (var index = 0; index < calendarDays.length; index++) ...[
               _WeekDayCard(
@@ -152,6 +148,10 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
                 onRetry: widget.onRetryData,
                 retrying: widget.retrying,
               ),
+              if (widget.advertisement != null && index == 1) ...[
+                const SizedBox(height: 18),
+                widget.advertisement!,
+              ],
               if (index < calendarDays.length - 1) const SizedBox(height: 10),
             ],
           ],

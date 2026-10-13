@@ -6,7 +6,7 @@ import '../weather_data_phase.dart';
 import 'missing_data_retry.dart';
 import 'weather_condition_icon.dart';
 
-class WeatherInfoCard extends StatefulWidget {
+class WeatherInfoCard extends StatelessWidget {
   final CurrentWeather current;
   final WeatherDataPhase dataPhase;
   final String? sunriseAt;
@@ -25,15 +25,8 @@ class WeatherInfoCard extends StatefulWidget {
   });
 
   @override
-  State<WeatherInfoCard> createState() => _WeatherInfoCardState();
-}
-
-class _WeatherInfoCardState extends State<WeatherInfoCard> {
-  final Set<String> _expandedMetrics = {};
-
-  @override
   Widget build(BuildContext context) {
-    final current = widget.current;
+    final current = this.current;
     final isObservation = current.dataRole == 'OBSERVATION';
     final currentSource = !isObservation
         ? '기상청 단기예보'
@@ -56,7 +49,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
       if (current.visibilityMeters == null) '가시거리',
       if (current.uvIndex == null) '자외선',
       if (current.pm25 == null && current.pm10 == null) '대기질',
-      if (widget.sunriseAt == null || widget.sunsetAt == null) '일출·일몰',
+      if (sunriseAt == null || sunsetAt == null) '일출·일몰',
     ];
     final metrics = [
       _WeatherMetric(
@@ -128,30 +121,31 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
       _WeatherMetric(
         icon: Icons.wb_twilight_rounded,
         label: '일출·일몰',
-        value: _sunTimesValue(widget.sunriseAt, widget.sunsetAt),
-        levelTitle: widget.sunriseAt == null || widget.sunsetAt == null
+        value: _sunTimesValue(sunriseAt, sunsetAt),
+        levelTitle: sunriseAt == null || sunsetAt == null
             ? '일출·일몰 시각을 확인하기 어려워요'
             : '오늘의 일출·일몰 시각이에요',
-        detailBody: widget.sunriseAt == null || widget.sunsetAt == null
+        detailBody: sunriseAt == null || sunsetAt == null
             ? '요청 지역과 날짜로 계산한 일출·일몰 시각을 받지 못해 임의의 시각을 표시하지 않아요.'
             : '요청 지역의 대표 좌표와 한국 날짜를 기준으로 계산한 시각이에요.\n지형과 건물 때문에 실제로 해가 보이는 시각은 달라질 수 있어요.',
       ),
     ];
     final displayMetrics = metrics
-        .map((metric) => metric.value == '자료 없음' &&
-                widget.dataPhase != WeatherDataPhase.ready
-            ? _WeatherMetric(
-                icon: metric.icon,
-                label: metric.label,
-                value: widget.dataPhase == WeatherDataPhase.loading &&
-                        metric.label == '체감'
-                    ? '--°'
-                    : widget.dataPhase.missingText(),
-                levelTitle: widget.dataPhase.explanation,
-                detailBody: widget.dataPhase.explanation,
-              )
-            : metric)
+        .map((metric) =>
+            metric.value == '자료 없음' && dataPhase != WeatherDataPhase.ready
+                ? _WeatherMetric(
+                    icon: metric.icon,
+                    label: metric.label,
+                    value: dataPhase == WeatherDataPhase.loading &&
+                            metric.label == '체감'
+                        ? '--°'
+                        : dataPhase.missingText(),
+                    levelTitle: dataPhase.explanation,
+                    detailBody: dataPhase.explanation,
+                  )
+                : metric)
         .toList(growable: false);
+    final apparentMetric = displayMetrics.first;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.of(context).surfaceDecoration(),
@@ -164,9 +158,9 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               Expanded(
                 child: Text(
                   current.temperature == null
-                      ? widget.dataPhase == WeatherDataPhase.loading
+                      ? dataPhase == WeatherDataPhase.loading
                           ? '--°'
-                          : widget.dataPhase.missingText()
+                          : dataPhase.missingText()
                       : '${current.temperature!.toStringAsFixed(1)}℃',
                   style: TextStyle(
                     color: WeatherCareTheme.of(context).textPrimary,
@@ -180,7 +174,7 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               const SizedBox(width: 12),
               Flexible(
                 child: Text(
-                  current.sky ?? widget.dataPhase.missingText('하늘 상태 자료 없음'),
+                  current.sky ?? dataPhase.missingText('하늘 상태 자료 없음'),
                   textAlign: TextAlign.end,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: WeatherCareTheme.of(context).textSecondary,
@@ -196,6 +190,25 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               ),
             ],
           ),
+          Row(
+            children: [
+              Text(
+                '체감 ${apparentMetric.value}',
+                key: const ValueKey('weather-apparent-temperature'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: WeatherCareTheme.of(context).textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              IconButton(
+                key: const ValueKey('weather-apparent-detail'),
+                tooltip: '체감온도 자세히 보기',
+                onPressed: () => _showMetricDetail(context, apparentMetric),
+                icon: Icon(Icons.error_outline_rounded,
+                    size: 18, color: WeatherCareTheme.of(context).primaryDeep),
+              ),
+            ],
+          ),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(12),
@@ -203,39 +216,34 @@ class _WeatherInfoCardState extends State<WeatherInfoCard> {
               color: WeatherCareTheme.of(context).surfaceMuted,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Column(
-              children: [
-                for (var index = 0; index < displayMetrics.length; index++) ...[
-                  _MetricView(
-                    metric: displayMetrics[index],
-                    expanded:
-                        _expandedMetrics.contains(displayMetrics[index].label),
-                    onTap: () {
-                      setState(() {
-                        if (!_expandedMetrics
-                            .remove(displayMetrics[index].label)) {
-                          _expandedMetrics.add(displayMetrics[index].label);
-                        }
-                      });
-                    },
-                  ),
-                  if (index < displayMetrics.length - 1)
-                    const SizedBox(height: 8),
-                ],
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final itemWidth = (constraints.maxWidth - 8) / 2;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final metric in displayMetrics.skip(1))
+                      SizedBox(
+                        width: itemWidth,
+                        child: _MetricView(metric: metric),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
           if (missing.isNotEmpty &&
-              widget.dataPhase != WeatherDataPhase.loading &&
-              widget.onRetryMissingData != null) ...[
+              dataPhase != WeatherDataPhase.loading &&
+              onRetryMissingData != null) ...[
             const SizedBox(height: 12),
             MissingDataRetry(
-              message: widget.dataPhase == WeatherDataPhase.failed
+              message: dataPhase == WeatherDataPhase.failed
                   ? '서버에서 현재 날씨를 불러오지 못했어요: ${missing.join(' · ')}'
                   : '받지 못한 현재 날씨: ${missing.join(' · ')}',
               retryKey: 'today-current-data-retry',
-              onRetry: widget.onRetryMissingData!,
-              retrying: widget.retrying,
+              onRetry: onRetryMissingData!,
+              retrying: retrying,
             ),
           ],
         ],
@@ -447,14 +455,8 @@ String _pm10Grade(int value) {
 
 class _MetricView extends StatelessWidget {
   final _WeatherMetric metric;
-  final bool expanded;
-  final VoidCallback onTap;
 
-  const _MetricView({
-    required this.metric,
-    required this.expanded,
-    required this.onTap,
-  });
+  const _MetricView({required this.metric});
 
   @override
   Widget build(BuildContext context) {
@@ -463,99 +465,48 @@ class _MetricView extends StatelessWidget {
       color: WeatherCareTheme.of(context).surface.withValues(alpha: 0.82),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        onTap: onTap,
+        onTap: () => _showMetricDetail(context, metric),
         borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          padding: const EdgeInsets.fromLTRB(10, 8, 8, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
                       color: WeatherCareTheme.of(context).primarySoft,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       metric.icon,
-                      size: 17,
+                      size: 16,
                       color: WeatherCareTheme.of(context).primaryDeep,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          metric.label,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          metric.value,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const Spacer(),
                   Tooltip(
-                    message: expanded
-                        ? '${metric.label} 상세 내용 접기'
-                        : '${metric.label} 자세히 보기',
+                    message: '${metric.label} 자세히 보기',
                     child: IconButton(
                       key: ValueKey('weather-metric-detail-${metric.label}'),
-                      onPressed: onTap,
-                      icon: Icon(
-                        expanded
-                            ? Icons.expand_less_rounded
-                            : Icons.expand_more_rounded,
-                        color: WeatherCareTheme.of(context).primaryDeep,
-                      ),
+                      onPressed: () => _showMetricDetail(context, metric),
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.error_outline_rounded,
+                          color: WeatherCareTheme.of(context).primaryDeep),
                     ),
                   ),
                 ],
               ),
-              AnimatedSize(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                child: expanded
-                    ? Padding(
-                        key: ValueKey(
-                          'weather-metric-detail-content-${metric.label}',
-                        ),
-                        padding: const EdgeInsets.fromLTRB(42, 10, 8, 2),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              metric.levelTitle,
-                              key: ValueKey(
-                                'weather-metric-level-${metric.label}',
-                              ),
-                              style: TextStyle(
-                                color: WeatherCareTheme.of(context).primaryDeep,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              metric.detailBody,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(height: 1.5),
-                            ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
+              Text(metric.label, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 3),
+              Text(
+                metric.value,
+                maxLines: 2,
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -563,6 +514,40 @@ class _MetricView extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showMetricDetail(BuildContext context, _WeatherMetric metric) {
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text('${metric.label} 상세'),
+      content: SingleChildScrollView(
+        key: ValueKey('weather-metric-detail-content-${metric.label}'),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              metric.levelTitle,
+              key: ValueKey('weather-metric-level-${metric.label}'),
+              style: TextStyle(
+                color: WeatherCareTheme.of(dialogContext).primaryDeep,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(metric.detailBody),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('닫기'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _WeatherMetric {

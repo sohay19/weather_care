@@ -1,263 +1,185 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/recommendation.dart';
 import '../../../models/weather.dart';
-import '../../../theme/recommendation_theme.dart';
 import '../../../theme/weather_theme.dart';
 import 'home_section_header.dart';
-import 'preparation_icon.dart';
+import 'weather_condition_icon.dart';
+
+enum _TimelineMetric { weather, precipitation, uv, wind, humidity }
 
 class TimelineSection extends StatefulWidget {
-  final List<TimelineItem> items;
-  final ValueChanged<RecommendationType> onDetail;
+  final List<HourlyWeatherItem> items;
 
-  const TimelineSection({
-    super.key,
-    required this.items,
-    required this.onDetail,
-  });
+  const TimelineSection({super.key, required this.items});
 
   @override
   State<TimelineSection> createState() => _TimelineSectionState();
 }
 
 class _TimelineSectionState extends State<TimelineSection> {
-  bool _expanded = false;
+  _TimelineMetric _selected = _TimelineMetric.weather;
 
   @override
   Widget build(BuildContext context) {
+    final palette = WeatherCareTheme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
+      decoration: palette.surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            button: true,
-            label: _expanded ? '간단한 타임라인 접기' : '간단한 타임라인 펼치기',
-            child: InkWell(
-              key: const ValueKey('timeline-toggle'),
-              onTap: () => setState(() => _expanded = !_expanded),
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: HomeSectionHeader(
-                  icon: Icons.schedule_rounded,
-                  title: '간단한 타임라인',
-                  subtitle: '준비물이 필요한 시간과 날씨를 확인해요',
-                  trailing: AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: WeatherCareTheme.of(context).primaryDeep,
-                    ),
-                  ),
+          const HomeSectionHeader(
+            icon: Icons.schedule_rounded,
+            title: '간단한 타임라인',
+            subtitle: '시간별 예보',
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 7,
+            runSpacing: 0,
+            children: [
+              for (final metric in _TimelineMetric.values)
+                ChoiceChip(
+                  key: ValueKey('timeline-filter-${metric.name}'),
+                  showCheckmark: false,
+                  label: Text(_metricLabel(metric)),
+                  selected: _selected == metric,
+                  onSelected: (_) => setState(() => _selected = metric),
                 ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (widget.items.isEmpty)
+            Text('표시할 시간별 예보가 없어요',
+                style: Theme.of(context).textTheme.bodyMedium)
+          else
+            SingleChildScrollView(
+              key: const ValueKey('timeline-content'),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final item in widget.items)
+                    _TimelinePoint(
+                      item: item,
+                      metric: _selected,
+                      nextDay: widget.items.first.forecastDate != null &&
+                          item.forecastDate != null &&
+                          item.forecastDate != widget.items.first.forecastDate,
+                    ),
+                ],
               ),
             ),
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            child: _expanded
-                ? Column(
-                    key: const ValueKey('timeline-content'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 18),
-                      if (widget.items.isEmpty)
-                        Text(
-                          '표시할 타임라인이 없어요',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        )
-                      else
-                        for (var index = 0;
-                            index < widget.items.length;
-                            index++)
-                          _TimelineItemView(
-                            item: widget.items[index],
-                            isLast: index == widget.items.length - 1,
-                            onDetail: widget.onDetail,
-                          ),
-                    ],
-                  )
-                : const SizedBox.shrink(),
-          ),
         ],
       ),
     );
   }
 }
 
-class _TimelineItemView extends StatelessWidget {
-  final TimelineItem item;
-  final bool isLast;
-  final ValueChanged<RecommendationType> onDetail;
+String _metricLabel(_TimelineMetric metric) => switch (metric) {
+      _TimelineMetric.weather => '날씨',
+      _TimelineMetric.precipitation => '강수',
+      _TimelineMetric.uv => '자외선',
+      _TimelineMetric.wind => '바람',
+      _TimelineMetric.humidity => '습도',
+    };
 
-  const _TimelineItemView({
+class _TimelinePoint extends StatelessWidget {
+  final HourlyWeatherItem item;
+  final _TimelineMetric metric;
+  final bool nextDay;
+
+  const _TimelinePoint({
     required this.item,
-    required this.isLast,
-    required this.onDetail,
+    required this.metric,
+    required this.nextDay,
   });
 
   @override
   Widget build(BuildContext context) {
-    final recommendations =
-        item.recommendations.where((item) => item.recommended).toList();
-
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 46,
-            child: Column(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: recommendations.isEmpty
-                        ? WeatherCareTheme.of(context).surfaceMuted
-                        : WeatherCareTheme.of(context).primarySoft,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: recommendations.isEmpty
-                          ? WeatherCareTheme.of(context).outline
-                          : WeatherCareTheme.of(context).primaryBorder,
-                    ),
-                  ),
-                  child: Text(
-                    item.timeLabel,
-                    style: TextStyle(
-                      color: recommendations.isEmpty
-                          ? WeatherCareTheme.of(context).textSecondary
-                          : WeatherCareTheme.of(context).primaryDeep,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      decoration: BoxDecoration(
-                        color: WeatherCareTheme.of(context).primaryBorder,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+    final palette = WeatherCareTheme.of(context);
+    final (icon, value, secondary) = switch (metric) {
+      _TimelineMetric.weather => (
+          WeatherConditionIcon(
+            condition: item.skyCondition,
+            size: 28,
+            color: palette.primaryDeep,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
-              child: Container(
-                padding: const EdgeInsets.all(15),
+          item.temperature == null
+              ? '—'
+              : '${item.temperature!.toStringAsFixed(0)}°',
+          '',
+        ),
+      _TimelineMetric.precipitation => (
+          Icon(Icons.water_drop_outlined, size: 28, color: palette.primaryDeep),
+          item.precipitationProbability == null
+              ? '—'
+              : '${item.precipitationProbability!.toStringAsFixed(0)}%',
+          item.precipitationAmountLabel ??
+              (item.precipitationAmount == null
+                  ? '—'
+                  : '${item.precipitationAmount!.toStringAsFixed(1)}mm'),
+        ),
+      _TimelineMetric.uv => (
+          Icon(Icons.wb_sunny_outlined, size: 28, color: palette.primaryDeep),
+          item.uvIndex == null ? '—' : item.uvIndex!.toStringAsFixed(0),
+          '',
+        ),
+      _TimelineMetric.wind => (
+          Icon(Icons.air_rounded, size: 28, color: palette.primaryDeep),
+          item.windSpeed == null ? '—' : item.windSpeed!.toStringAsFixed(1),
+          item.windSpeed == null ? '' : 'm/s',
+        ),
+      _TimelineMetric.humidity => (
+          Icon(Icons.opacity_rounded, size: 28, color: palette.primaryDeep),
+          item.humidity == null ? '—' : '${item.humidity!.toStringAsFixed(0)}%',
+          '',
+        ),
+    };
+
+    return SizedBox(
+      key: ValueKey('timeline-point-${item.forecastDate ?? ''}-${item.time}'),
+      width: 104,
+      child: Column(
+        children: [
+          icon,
+          const SizedBox(height: 5),
+          Text(value,
+              maxLines: 1,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: palette.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  )),
+          if (metric == _TimelineMetric.precipitation || metric == _TimelineMetric.wind) ...[
+            SizedBox(
+              height: 19,
+              child: Text(secondary,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: palette.textSecondary,
+                  )),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(height: 2, color: palette.primaryBorder),
+              Container(
+                width: 10,
+                height: 10,
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.of(context).surfaceSubtle,
-                  borderRadius: BorderRadius.circular(18),
-                  border:
-                      Border.all(color: WeatherCareTheme.of(context).outline),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.stateLabel,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      item.detail,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: WeatherCareTheme.of(context).textSecondary,
-                          ),
-                    ),
-                    if (recommendations.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Text(
-                        '이 시간에 필요해요',
-                        style: WeatherCareTheme.of(context)
-                            .microTextStyle
-                            .copyWith(
-                              color: WeatherCareTheme.of(context).textSecondary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          for (final recommendation in recommendations)
-                            Semantics(
-                              button: true,
-                              excludeSemantics: true,
-                              label: '${recommendation.type.label} 근거 보기',
-                              child: Material(
-                                color: recommendation.type.softColor(context),
-                                borderRadius: BorderRadius.circular(10),
-                                child: InkWell(
-                                  key: ValueKey(
-                                    'timeline-detail-${item.timeLabel}-'
-                                    '${recommendation.type.apiName.toLowerCase()}',
-                                  ),
-                                  onTap: () => onDetail(recommendation.type),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 9,
-                                      vertical: 8,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        PreparationIcon(
-                                          type: recommendation.type,
-                                          size: 12,
-                                          color: recommendation.type
-                                              .accentColor(context),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          recommendation.type.label,
-                                          style: TextStyle(
-                                            fontFamily:
-                                                WeatherCareTheme.fontMona,
-                                            color: recommendation.type
-                                                .accentColor(context),
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 1),
-                                        Icon(
-                                          Icons.chevron_right_rounded,
-                                          size: 14,
-                                          color: recommendation.type
-                                              .accentColor(context),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ],
+                  color: palette.primaryDeep,
+                  shape: BoxShape.circle,
                 ),
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 8),
+          Text('${nextDay ? '내일 ' : ''}${item.time}시',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: palette.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  )),
         ],
       ),
     );

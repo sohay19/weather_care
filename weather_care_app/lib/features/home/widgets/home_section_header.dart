@@ -18,6 +18,16 @@ class HomeSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const titleStyle = TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w800,
+    );
+    final subtitleStyle = TextStyle(
+      color: WeatherCareTheme.of(context).textSecondary,
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+    );
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -38,9 +48,9 @@ class HomeSectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              Text(title, style: titleStyle),
               const SizedBox(height: 2),
-              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              Text(subtitle, style: subtitleStyle),
             ],
           ),
         ),

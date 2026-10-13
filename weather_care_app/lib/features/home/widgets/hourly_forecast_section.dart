@@ -93,17 +93,67 @@ class HourlyForecastSection extends StatelessWidget {
               ),
             )
           else
-            for (var index = 0; index < visibleItems.length; index++) ...[
-              _HourlyRow(
-                key: ValueKey('today-hourly-$index'),
-                item: visibleItems[index],
-                dataPhase: dataPhase,
-                showPoint: visibleItems[index].forecastDate == null ||
-                    visibleItems[index].forecastDate == today,
-                today: today,
+            SingleChildScrollView(
+              key: const ValueKey('today-hourly-timeline'),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var index = 0; index < visibleItems.length; index++)
+                    SizedBox(
+                      key: ValueKey('today-hourly-$index'),
+                      width: 280,
+                      child: Column(
+                        children: [
+                          Text(
+                            _hourLabel(
+                                visibleItems[index],
+                                dataPhase,
+                                visibleItems[index].forecastDate == null ||
+                                    visibleItems[index].forecastDate == today),
+                            style: TextStyle(
+                              color: WeatherCareTheme.of(context).primaryDeep,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                height: 2,
+                                color:
+                                    WeatherCareTheme.of(context).primaryBorder,
+                              ),
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color:
+                                      WeatherCareTheme.of(context).primaryDeep,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: _HourlyRow(
+                              item: visibleItems[index],
+                              dataPhase: dataPhase,
+                              showPoint:
+                                  visibleItems[index].forecastDate == null ||
+                                      visibleItems[index].forecastDate == today,
+                              today: today,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-              if (index < visibleItems.length - 1) const SizedBox(height: 9),
-            ],
+            ),
           if (hasMissingData &&
               dataPhase != WeatherDataPhase.loading &&
               onRetryMissingData != null) ...[
@@ -121,6 +171,15 @@ class HourlyForecastSection extends StatelessWidget {
       ),
     );
   }
+}
+
+String _hourLabel(
+    HourlyWeatherItem item, WeatherDataPhase dataPhase, bool showPoint) {
+  if (!showPoint) return '강수 구간';
+  final hour = int.tryParse(item.time);
+  return hour != null && hour >= 0 && hour < 24
+      ? '${hour.toString().padLeft(2, '0')}시'
+      : '시각 ${dataPhase.missingText()}';
 }
 
 List<HourlyWeatherItem> _todayHourlyItems(
@@ -145,7 +204,6 @@ class _HourlyRow extends StatelessWidget {
   final String today;
 
   const _HourlyRow({
-    super.key,
     required this.item,
     required this.dataPhase,
     this.showPoint = true,
@@ -175,10 +233,6 @@ class _HourlyRow extends StatelessWidget {
       if (showPrecipitation && snowAmount == null) '예상 신적설',
       if (showPoint && item.windSpeed == null) '풍속',
     ];
-    final hour = int.tryParse(item.time);
-    final timeLabel = hour != null && hour >= 0 && hour < 24
-        ? '${hour.toString().padLeft(2, '0')}시'
-        : '시각 ${dataPhase.missingText()}';
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -190,44 +244,24 @@ class _HourlyRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showPoint) ...[
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 3,
               children: [
-                Flexible(
-                  child: Text(
-                    timeLabel,
-                    style: TextStyle(
-                      color: WeatherCareTheme.of(context).primaryDeep,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                Text(
+                  item.temperature == null
+                      ? '예상 기온 ${dataPhase.missingText()}'
+                      : '예상 기온 ${item.temperature!.toStringAsFixed(0)}℃',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          item.temperature == null
-                              ? '예상 기온 ${dataPhase.missingText()}'
-                              : '예상 기온 ${item.temperature!.toStringAsFixed(0)}℃',
-                          style: const TextStyle(fontWeight: FontWeight.w900),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          item.displayedApparentTemperature == null
-                              ? '예상 체감 ${dataPhase.missingText()}'
-                              : '예상 체감 ${item.displayedApparentTemperature!.toStringAsFixed(0)}℃',
-                          style: TextStyle(
-                            color: WeatherCareTheme.of(context).textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
+                Text(
+                  item.displayedApparentTemperature == null
+                      ? '예상 체감 ${dataPhase.missingText()}'
+                      : '예상 체감 ${item.displayedApparentTemperature!.toStringAsFixed(0)}℃',
+                  style: TextStyle(
+                    color: WeatherCareTheme.of(context).textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -262,6 +296,11 @@ class _HourlyRow extends StatelessWidget {
                   _MetricChip(
                     icon: Icons.air_rounded,
                     label: '바람 ${item.windSpeed!.toStringAsFixed(1)}m/s',
+                  ),
+                if (item.humidity != null)
+                  _MetricChip(
+                    icon: Icons.opacity_rounded,
+                    label: '습도 ${item.humidity!.toStringAsFixed(0)}%',
                   ),
                 if (item.uvIndex != null)
                   _MetricChip(

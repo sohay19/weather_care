@@ -120,7 +120,7 @@ void main() {
     expect(response.current.visibilityStationId, '108');
   });
 
-  test('시간별 예보는 자외선과 미세먼지 값을 보존한다', () {
+  test('시간별 예보는 자외선·습도·미세먼지 값을 보존한다', () {
     final item = HourlyWeatherItem.fromJson({
       'time': '12',
       'temperature': 31,
@@ -130,6 +130,7 @@ void main() {
       'snowfallAmount': 0,
       'windSpeed': 2,
       'windDirection': 180,
+      'humidity': 65,
       'skyCondition': '구름 많음',
       'uvIndex': 7,
       'pm10': 52,
@@ -137,6 +138,7 @@ void main() {
     });
 
     expect(item.uvIndex, 7);
+    expect(item.humidity, 65);
     expect(item.pm10, 52);
     expect(item.pm25, 31);
     expect(item.windDirection, 180);
@@ -359,8 +361,9 @@ void main() {
 
   testWidgets('temperature values include the Celsius unit', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
+      MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
+        home: const Scaffold(
           body: SingleChildScrollView(
             child: WeatherInfoCard(
               current: CurrentWeather(
@@ -378,11 +381,11 @@ void main() {
     );
 
     expect(find.text('29.0℃'), findsOneWidget);
-    expect(find.text('32.7℃'), findsOneWidget);
+    expect(find.text('체감 32.7℃'), findsOneWidget);
     expect(find.text('대기질'), findsOneWidget);
 
     await tester.tap(
-      find.byKey(const ValueKey('weather-metric-detail-체감')),
+      find.byKey(const ValueKey('weather-apparent-detail')),
     );
     await tester.pumpAndSettle();
     expect(find.text('기상청 방식으로 계산한 체감온도예요'), findsOneWidget);
@@ -654,10 +657,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('간단한 타임라인'), findsOneWidget);
-    expect(find.text('표시할 타임라인이 없어요'), findsNothing);
-    await tester.tap(find.byKey(const ValueKey('timeline-toggle')));
-    await tester.pumpAndSettle();
-    expect(find.text('표시할 타임라인이 없어요'), findsOneWidget);
+    expect(find.text('표시할 시간별 예보가 없어요'), findsOneWidget);
 
     final scrollable = tester.state<ScrollableState>(
       find.descendant(
@@ -963,45 +963,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('timeline keeps labels readable on a narrow screen',
-      (tester) async {
+  testWidgets('타임라인은 좁은 화면에서 가로 스크롤하고 항목을 전환한다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final recommendations = [
-      RecommendationType.sunscreen,
-      RecommendationType.parasol,
-      RecommendationType.water,
-    ]
-        .map(
-          (type) => WeatherRecommendation(
-            type: type,
-            recommended: true,
-            priority: 70,
-            title: type.title,
-            description: '추천 설명',
-            notificationEligible: true,
-          ),
-        )
-        .toList();
-    RecommendationType? openedDetail;
-
     await tester.pumpWidget(
       MaterialApp(
+        theme: ThemeData(splashFactory: NoSplash.splashFactory),
         home: Scaffold(
           body: SingleChildScrollView(
             child: TimelineSection(
               items: [
-                TimelineItem(
-                  timeLabel: '06',
-                  stateLabel: '시간별 예보를 확인하세요',
-                  detail: '예상기온 18.0℃ / 맑음\n강수 예보 · 강수확률 10%',
-                  recommendations: recommendations,
-                ),
+                for (var hour = 6; hour < 12; hour++)
+                  HourlyWeatherItem(
+                    time: hour.toString().padLeft(2, '0'),
+                    temperature: 18,
+                    precipitationProbability: 70,
+                    precipitationAmount: 2,
+                    snowExpected: false,
+                    snowfallAmount: 0,
+                    windSpeed: 3.2,
+                    humidity: 65,
+                    uvIndex: 4,
+                    skyCondition: '맑음',
+                  ),
               ],
-              onDetail: (type) => openedDetail = type,
             ),
           ),
         ),
@@ -1009,30 +997,30 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(find.text('06'), findsNothing);
-    expect(find.byKey(const ValueKey('timeline-content')), findsNothing);
-
-    await tester.tap(find.byKey(const ValueKey('timeline-toggle')));
+    expect(find.byKey(const ValueKey('timeline-content')), findsOneWidget);
+    expect(find.text('18°'), findsWidgets);
+    expect(find.text('06시'), findsOneWidget);
+    await tester.drag(
+        find.byKey(const ValueKey('timeline-content')), const Offset(-300, 0));
     await tester.pumpAndSettle();
+    expect(find.text('11시'), findsOneWidget);
 
-    expect(find.text('06'), findsOneWidget);
-    expect(find.text('시간별 예보를 확인하세요'), findsOneWidget);
-    expect(
-      find.text('예상기온 18.0℃ / 맑음\n강수 예보 · 강수확률 10%'),
-      findsOneWidget,
-    );
-    expect(find.text('이 시간에 필요해요'), findsOneWidget);
-    expect(find.bySemanticsLabel('선크림 근거 보기'), findsOneWidget);
-
-    await tester.tap(
-      find.byKey(const ValueKey('timeline-detail-06-sunscreen')),
-    );
-    await tester.pump();
-    expect(openedDetail, RecommendationType.sunscreen);
-
-    await tester.tap(find.byKey(const ValueKey('timeline-toggle')));
+    await tester
+        .tap(find.byKey(const ValueKey('timeline-filter-precipitation')));
     await tester.pumpAndSettle();
-    expect(find.text('06'), findsNothing);
+    expect(find.text('70%'), findsWidgets);
+    expect(find.text('2.0mm'), findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('timeline-filter-uv')));
+    await tester.pumpAndSettle();
+    expect(find.text('4'), findsWidgets);
+    await tester.tap(find.byKey(const ValueKey('timeline-filter-wind')));
+    await tester.pumpAndSettle();
+    expect(find.text('3.2'), findsWidgets);
+    await tester
+        .ensureVisible(find.byKey(const ValueKey('timeline-filter-humidity')));
+    await tester.tap(find.byKey(const ValueKey('timeline-filter-humidity')));
+    await tester.pumpAndSettle();
+    expect(find.text('65%'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

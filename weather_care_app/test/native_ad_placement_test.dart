@@ -28,7 +28,7 @@ void main() {
     ],
   );
 
-  testWidgets('Today 광고는 현재 날씨와 시간별 예보 사이에 표시한다', (tester) async {
+  testWidgets('Today 광고는 시간별 예보 아래에 표시한다', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -50,7 +50,7 @@ void main() {
         .dy;
     final hourly = tester.getTopLeft(find.text('시간별 예보')).dy;
     expect(advertisement, greaterThan(weather));
-    expect(advertisement, lessThan(hourly));
+    expect(advertisement, greaterThan(hourly));
   });
 
   testWidgets('Main 광고는 콘텐츠 제일 하단에 표시한다', (tester) async {

@@ -58,10 +58,6 @@ class TodayTab extends StatelessWidget {
               retrying: retrying,
             ),
             const SizedBox(height: 16),
-            if (advertisement != null) ...[
-              advertisement!,
-              const SizedBox(height: 16),
-            ],
             HourlyForecastSection(
               items: today.hourly,
               generatedAt: today.generatedAt,
@@ -70,6 +66,10 @@ class TodayTab extends StatelessWidget {
               onRetryMissingData: onRetryData,
               retrying: retrying,
             ),
+            if (advertisement != null) ...[
+              const SizedBox(height: 16),
+              advertisement!,
+            ],
           ],
         ),
       ),

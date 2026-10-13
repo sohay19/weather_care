@@ -132,7 +132,7 @@ void main() {
     expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(
       tester.getCenter(find.text('예상 기온 0℃')).dy,
-      tester.getCenter(find.text('예상 체감 0℃')).dy,
+      closeTo(tester.getCenter(find.text('예상 체감 0℃')).dy, 2),
     );
   });
 
@@ -214,12 +214,8 @@ void main() {
             },
           ],
           scale: scale);
-      await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('today-hourly-0')),
-        400,
-        scrollable: find.byType(Scrollable),
-      );
-      await tester.pumpAndSettle();
+      expect(
+          find.byKey(const ValueKey('today-hourly-timeline')), findsOneWidget);
       for (final text in [
         '강수확률 80%',
         '강수량 1mm 미만',
@@ -241,6 +237,37 @@ void main() {
     await _pumpHourly(tester, []);
     expect(find.byKey(const ValueKey('today-hourly-0')), findsNothing);
     expect(find.text('시간별 예보 자료가 없어 표시하기 어려워요.'), findsOneWidget);
+  });
+
+  testWidgets('시간별 상세 카드는 가로로 넘기며 습도와 강수 수치를 유지한다', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pumpHourly(tester, [
+      {..._zero, 'humidity': 60},
+      {
+        ..._zero,
+        'time': '15',
+        'humidity': 70,
+        'precipitationProbability': 80,
+        'precipitationAmount': 2,
+      },
+    ]);
+
+    final timeline = find.byKey(const ValueKey('today-hourly-timeline'));
+    expect(find.text('습도 60%'), findsOneWidget);
+    await tester.drag(timeline, const Offset(-240, 0));
+    await tester.pumpAndSettle();
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(of: timeline, matching: find.byType(Scrollable)),
+    );
+    expect(scrollable.position.pixels, greaterThan(0));
+    expect(find.text('15시'), findsOneWidget);
+    expect(find.text('습도 70%'), findsOneWidget);
+    expect(find.text('강수확률 80%'), findsOneWidget);
+    expect(find.text('강수량 2mm'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 

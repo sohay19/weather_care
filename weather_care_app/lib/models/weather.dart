@@ -126,6 +126,7 @@ class HourlyWeatherItem {
   final String? snowfallAmountLabel;
   final double? windSpeed;
   final double? windDirection;
+  final double? humidity;
   final double? uvIndex;
   final int? pm10;
   final int? pm25;
@@ -147,6 +148,7 @@ class HourlyWeatherItem {
     this.snowfallAmountLabel,
     required this.windSpeed,
     this.windDirection,
+    this.humidity,
     this.uvIndex,
     this.pm10,
     this.pm25,
@@ -201,6 +203,7 @@ class HourlyWeatherItem {
       ),
       windSpeed: _optionalNumber(json['windSpeed']),
       windDirection: _optionalNumber(json['windDirection']),
+      humidity: _optionalNumber(json['humidity']),
       uvIndex: _optionalNumber(json['uvIndex']),
       pm10: _optionalNumber(json['pm10'])?.toInt(),
       pm25: _optionalNumber(json['pm25'])?.toInt(),

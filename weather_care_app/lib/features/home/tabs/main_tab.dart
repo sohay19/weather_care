@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
+import '../../../models/selectable_region.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_data_phase.dart';
@@ -28,6 +29,13 @@ class MainTab extends StatelessWidget {
   final bool retryingData;
   final ValueChanged<RecommendationType> onDetail;
   final Widget? advertisement;
+  final List<ForecastRegion> savedRegions;
+  final String? selectedRegionKey;
+  final bool gpsSelected;
+  final VoidCallback? onSelectGps;
+  final ValueChanged<ForecastRegion>? onSelectRegion;
+  final VoidCallback? onAddRegion;
+  final VoidCallback? onOpenWeatherMap;
 
   const MainTab({
     super.key,
@@ -45,6 +53,13 @@ class MainTab extends StatelessWidget {
     this.retryingData = false,
     required this.onDetail,
     this.advertisement,
+    this.savedRegions = const [],
+    this.selectedRegionKey,
+    this.gpsSelected = true,
+    this.onSelectGps,
+    this.onSelectRegion,
+    this.onAddRegion,
+    this.onOpenWeatherMap,
   });
 
   @override
@@ -76,7 +91,67 @@ class MainTab extends StatelessWidget {
                     TabPageHeader(
                       eyebrow: dateLabel,
                       title: '${today.region.name} 날씨',
-                      subtitle: '화면을 아래로 당기면 최신 날씨 정보를 가져와요',
+                      subtitle: '예보 기준 구역 지도를 확인할 수 있어요',
+                      subtitleTrailing: IconButton(
+                        key: const ValueKey('main-weather-map-info'),
+                        icon: const Icon(Icons.info_outline_rounded, size: 18),
+                        tooltip: '예보 기준 구역 지도 열기',
+                        visualDensity: VisualDensity.compact,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: WeatherCareTheme.of(context).primary,
+                        ),
+                        onPressed: onOpenWeatherMap,
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        key: const ValueKey('main-region-menu'),
+                        tooltip: '지역 선택',
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                        onSelected: (value) {
+                          if (value == 'gps') {
+                            onSelectGps?.call();
+                          } else if (value == 'add') {
+                            onAddRegion?.call();
+                          } else {
+                            for (final region in savedRegions) {
+                              if (region.key == value) {
+                                onSelectRegion?.call(region);
+                                break;
+                              }
+                            }
+                          }
+                        },
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'gps',
+                            child: Row(children: [
+                              if (gpsSelected)
+                                const Icon(Icons.check_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              const Text('현재 위치'),
+                            ]),
+                          ),
+                          for (final region in savedRegions)
+                            PopupMenuItem(
+                              value: region.key,
+                              child: Row(children: [
+                                if (!gpsSelected &&
+                                    selectedRegionKey == region.key)
+                                  const Icon(Icons.check_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(child: Text(region.fullName)),
+                              ]),
+                            ),
+                          const PopupMenuItem(
+                            value: 'add',
+                            child: Row(children: [
+                              Icon(Icons.add_rounded, size: 18),
+                              SizedBox(width: 8),
+                              Text('구역 추가'),
+                            ]),
+                          ),
+                        ],
+                      ),
                     ),
                     SizedBox(height: compact ? 20 : 24),
                     if (detailsLoading)
@@ -262,8 +337,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final todayObservation = comparison?.current;
     final yesterdayObservation = comparison?.comparison;
-    final forecastComparison = comparison?.basis?.provider ==
-        'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION';
     final metrics = todayObservation == null || yesterdayObservation == null
         ? const <_ComparisonMetricData>[]
         : [
@@ -273,9 +346,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
               previous: yesterdayObservation.temperature,
               unit: '℃',
               fractionDigits: 1,
-              currentLabel: forecastComparison ? '오늘 예보' : '오늘',
-              previousLabel: forecastComparison ? '어제 실황' : '어제',
-              previousReference: '어제보다',
             ),
             _ComparisonMetricData(
               subject: '체감온도는',
@@ -283,9 +353,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
               previous: yesterdayObservation.apparentTemperature,
               unit: '℃',
               fractionDigits: 1,
-              currentLabel: forecastComparison ? '오늘 예보' : '오늘',
-              previousLabel: forecastComparison ? '어제 실황' : '어제',
-              previousReference: '어제보다',
             ),
             if (todayObservation.pm25 != null &&
                 yesterdayObservation.pm25 != null)
@@ -315,7 +382,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        _singleLineComparisonText(
           _comparisonSubtitle(basis),
           style: TextStyle(
             color: WeatherCareTheme.of(context).textSecondary,
@@ -332,7 +399,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: _singleLineComparisonText(
                   comparison?.requestFailed == true
                       ? '서버에서 어제 비교 자료를 불러오지 못했어요.'
                       : '받지 못한 자료: 어제와 같은 시각의 관측값',
@@ -353,7 +420,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
           ),
         ] else ...[
           if (basisLabel != null) ...[
-            Text(
+            _singleLineComparisonText(
               basisLabel,
               key: const ValueKey('yesterday-comparison-basis'),
               style: TextStyle(
@@ -366,9 +433,9 @@ class _YesterdayComparisonSection extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           if (skyComparable)
-            Text(
+            _singleLineComparisonText(
               '하늘 상태는 오늘 ${todayObservation!.skyCondition}, '
-              '어제 ${yesterdayObservation!.skyCondition}였어요.',
+              '어제 ${yesterdayObservation!.skyCondition}이었어요.',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
@@ -392,8 +459,8 @@ class _ComparisonMetric extends StatelessWidget {
     final difference = metric.current! - metric.previous!;
     final same = difference.abs() < (metric.fractionDigits == 0 ? 0.5 : 0.05);
     final change = same
-        ? '${metric.previousLabel}과 같아요'
-        : '${metric.previousReference} ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
+        ? '어제와 같아요'
+        : '어제보다 ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
             '${difference > 0 ? '높아요' : '낮아요'}';
     String value(double value) =>
         '${value.toStringAsFixed(metric.fractionDigits)}${metric.unit}';
@@ -405,28 +472,49 @@ class _ComparisonMetric extends StatelessWidget {
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
+        key: ValueKey('yesterday-comparison-row-${metric.subject}'),
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${metric.subject} $change.',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${metric.currentLabel} ${value(metric.current!)} · '
-                  '${metric.previousLabel} ${value(metric.previous!)}',
-                  style: WeatherCareTheme.of(context).microTextStyle,
-                ),
-              ],
+            flex: 20,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${metric.subject} $change.',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+                maxLines: 1,
+                softWrap: false,
+              ),
             ),
+          ),
+          const Spacer(),
+          Text(
+            '어제 ${value(metric.previous!)}',
+            style: WeatherCareTheme.of(context).microTextStyle,
+            maxLines: 1,
+            softWrap: false,
           ),
         ],
       ),
     );
   }
+}
+
+Widget _singleLineComparisonText(String text, {TextStyle? style, Key? key}) {
+  return SizedBox(
+    width: double.infinity,
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        key: key,
+        style: style,
+        maxLines: 1,
+        softWrap: false,
+      ),
+    ),
+  );
 }
 
 class _ComparisonMetricData {
@@ -435,9 +523,6 @@ class _ComparisonMetricData {
   final double? previous;
   final String unit;
   final int fractionDigits;
-  final String currentLabel;
-  final String previousLabel;
-  final String previousReference;
 
   const _ComparisonMetricData({
     this.subject = '기온은',
@@ -445,9 +530,6 @@ class _ComparisonMetricData {
     required this.previous,
     required this.unit,
     required this.fractionDigits,
-    this.currentLabel = '오늘',
-    this.previousLabel = '어제',
-    this.previousReference = '어제보다',
   });
 
   bool get isComparable => current != null && previous != null;

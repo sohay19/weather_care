@@ -26,9 +26,13 @@ List<WeekCalendarDay> currentCalendarWeek(
     final date = sunday.add(Duration(days: index));
     final key = _calendarDateKey(date);
     final matches = grouped[key] ?? const <WeeklyForecastItem>[];
+    final forecast = matches.length == 1 ? matches.single : null;
     return WeekCalendarDay(
       date: date,
-      forecast: matches.length == 1 ? matches.single : null,
+      forecast:
+          date.isBefore(today) && forecast?.forecastSource != 'KMA_OBSERVATION'
+              ? null
+              : forecast,
     );
   });
 }

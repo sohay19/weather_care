@@ -7,6 +7,8 @@ class TabPageHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData? icon;
+  final Widget? trailing;
+  final Widget? subtitleTrailing;
 
   const TabPageHeader({
     super.key,
@@ -14,6 +16,8 @@ class TabPageHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.icon,
+    this.trailing,
+    this.subtitleTrailing,
   });
 
   @override
@@ -48,10 +52,16 @@ class TabPageHeader extends StatelessWidget {
               const SizedBox(height: 2),
               Text(title, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 2),
-              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+              Row(children: [
+                Flexible(
+                    child: Text(subtitle,
+                        style: Theme.of(context).textTheme.bodySmall)),
+                if (subtitleTrailing != null) subtitleTrailing!,
+              ]),
             ],
           ),
         ),
+        if (trailing != null) trailing!,
       ],
     );
   }

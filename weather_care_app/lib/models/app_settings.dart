@@ -3,6 +3,7 @@ class AppSettings {
   final String locationMode;
   final String? currentRegionId;
   final String? manualRegionKey;
+  final List<String> savedRegionKeys;
   final bool onboardingCompleted;
   final bool notificationEnabled;
   final String notificationTime;
@@ -24,6 +25,7 @@ class AppSettings {
     required this.locationMode,
     this.currentRegionId,
     this.manualRegionKey,
+    this.savedRegionKeys = const [],
     required this.onboardingCompleted,
     required this.notificationEnabled,
     required this.notificationTime,
@@ -45,6 +47,7 @@ class AppSettings {
     String? locationMode,
     String? currentRegionId,
     String? manualRegionKey,
+    List<String>? savedRegionKeys,
     bool clearManualRegionKey = false,
     bool? onboardingCompleted,
     bool? notificationEnabled,
@@ -68,6 +71,7 @@ class AppSettings {
       currentRegionId: currentRegionId ?? this.currentRegionId,
       manualRegionKey:
           clearManualRegionKey ? null : manualRegionKey ?? this.manualRegionKey,
+      savedRegionKeys: savedRegionKeys ?? this.savedRegionKeys,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       notificationTime: notificationTime ?? this.notificationTime,
@@ -114,15 +118,23 @@ class AppSettings {
     String installationId,
   ) {
     final fallbackSettings = AppSettings.fallback(installationId);
+    final rawSavedRegions = json['savedRegionKeys'];
+    final savedRegionKeys = rawSavedRegions is List
+        ? rawSavedRegions.whereType<String>().toList()
+        : <String>[];
+    final manualRegionKey = json['manualRegionKey'];
+    if (manualRegionKey is String &&
+        !savedRegionKeys.contains(manualRegionKey)) {
+      savedRegionKeys.add(manualRegionKey);
+    }
     return AppSettings(
       installationId: installationId,
       locationMode:
           json['locationMode'] as String? ?? fallbackSettings.locationMode,
       currentRegionId:
           json['currentRegion'] as String? ?? fallbackSettings.currentRegionId,
-      manualRegionKey: json['manualRegionKey'] is String
-          ? json['manualRegionKey'] as String
-          : null,
+      manualRegionKey: manualRegionKey is String ? manualRegionKey : null,
+      savedRegionKeys: savedRegionKeys,
       onboardingCompleted: json['onboardingCompleted'] as bool? ??
           fallbackSettings.onboardingCompleted,
       notificationEnabled: json['notificationEnabled'] as bool? ??
@@ -161,6 +173,7 @@ class AppSettings {
       'locationMode': locationMode,
       'currentRegion': currentRegionId,
       'manualRegionKey': manualRegionKey,
+      'savedRegionKeys': savedRegionKeys,
       'onboardingCompleted': onboardingCompleted,
       'notificationEnabled': notificationEnabled,
       'notificationTime': notificationTime,

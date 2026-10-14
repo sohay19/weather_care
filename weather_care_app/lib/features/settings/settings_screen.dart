@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/app_settings.dart';
 import '../../services/ad_removal_service.dart';
@@ -11,33 +9,17 @@ import '../../services/current_location_service.dart';
 import '../../services/region_catalog.dart';
 import '../../services/settings_save_controller.dart';
 import '../../services/notification_permission_service.dart';
-import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
 import 'ad_removal_purchase_screen.dart';
-import 'location_mode.dart';
-import 'region_picker_screen.dart';
 import 'notification_schedule.dart';
+import 'region_picker_screen.dart' show RegionMapBuilder;
 import 'settings_guide.dart';
 import 'settings_guide_screen.dart';
 import 'analytics_consent_control.dart';
 import 'ads_privacy_control.dart';
 import '../../services/server_data_access.dart';
 import '../../services/theme_mode_settings.dart';
-
-const _weatherMapUrl = 'https://weather-care.pages.dev/weather-map';
-typedef _LocationDisplay = ({LocationResult location, String? regionName});
-
-String? _forecastGridLabel(String? gridId) {
-  final match = RegExp(r'^(\d{1,3})_(\d{1,3})$').firstMatch(gridId ?? '');
-  if (match == null) return null;
-  return '예보 구역 nx ${match.group(1)} · ny ${match.group(2)}';
-}
-
-String? _manualSelectionLabel(AppSettings settings, String? regionName) {
-  if (settings.manualRegionKey != null && regionName != null) return regionName;
-  return _forecastGridLabel(settings.currentRegionId);
-}
 
 class SettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -96,17 +78,12 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late AppSettings settings;
   late final Future<String?> _appVersion;
-  late final ValueNotifier<_LocationDisplay> _locationDisplay;
 
   @override
   void initState() {
     super.initState();
     settings =
         widget.initialSettings ?? AppSettings.fallback('local-installation');
-    _locationDisplay = ValueNotifier((
-      location: widget.location,
-      regionName: widget.regionName,
-    ));
     _appVersion = _loadAppVersion();
     widget.adRemoval?.addListener(_onAdRemovalChanged);
   }
@@ -117,13 +94,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final updated = widget.initialSettings;
     if (updated != null && updated != oldWidget.initialSettings) {
       settings = updated;
-    }
-    if (widget.location != oldWidget.location ||
-        widget.regionName != oldWidget.regionName) {
-      _locationDisplay.value = (
-        location: widget.location,
-        regionName: widget.regionName,
-      );
     }
     if (oldWidget.adRemoval != widget.adRemoval) {
       oldWidget.adRemoval?.removeListener(_onAdRemovalChanged);
@@ -138,7 +108,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     widget.adRemoval?.removeListener(_onAdRemovalChanged);
-    _locationDisplay.dispose();
     super.dispose();
   }
 
@@ -157,12 +126,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const TabPageHeader(
             eyebrow: 'SETTING',
             title: '설정',
-            subtitle: '나의 위치와 필요한 알람을 설정할 수 있어요.',
+            subtitle: '필요한 알림과 데이터 사용을 설정할 수 있어요.',
             icon: Icons.tune_rounded,
           )
         else
           Text(
-            '나의 위치와 필요한 알람을 설정할 수 있어요.',
+            '필요한 알림과 데이터 사용을 설정할 수 있어요.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: WeatherCareTheme.of(context).textSecondary,
                 ),
@@ -171,19 +140,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _AdRemovalBanner(
           isOwned: widget.adRemoval?.isOwned ?? false,
           onTap: _openAdRemovalPurchase,
-        ),
-        const SizedBox(height: 16),
-        _SettingsMenuButton(
-          key: const ValueKey('location-settings-menu'),
-          icon: Icons.location_on_outlined,
-          title: '지역 선택',
-          subtitle: settings.locationMode == 'GPS'
-              ? widget.location.hasLocation
-                  ? '${widget.regionName ?? '확인한 위치'} 기준으로 안내해요'
-                  : '현재 위치 확인이 필요해요'
-              : _manualSelectionLabel(settings, widget.manualRegionName) ??
-                  '선택 지역을 확인해요',
-          onTap: _openLocationSettings,
         ),
         const SizedBox(height: 16),
         ValueListenableBuilder<ThemeMode>(
@@ -216,7 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _SettingsMenuButton(
           key: const ValueKey('data-permission-menu'),
           icon: Icons.info_outline_rounded,
-          title: '데이터·권한 안내',
+          title: '데이터 권한 안내',
           subtitle: '자료 출처와 위치·알림 정보 사용을 확인해요',
           onTap: _openDataPermissionSettings,
         ),
@@ -283,23 +239,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ));
   }
 
-  void _openLocationSettings() {
-    Navigator.of(context).push<void>(MaterialPageRoute(
-      builder: (_) => _LocationSettingsScreen(
-        initialSettings: settings,
-        locationDisplay: _locationDisplay,
-        manualRegionName: widget.manualRegionName,
-        onLocate: widget.onLocate,
-        onOpenLocationSettings: widget.onOpenLocationSettings,
-        loadRegionCatalog: widget.loadRegionCatalog,
-        onSettingsChanged: _updateSettings,
-        onOpenGuide: () => _openGuide(SettingsGuide.location),
-        openExternalLink: widget.openExternalLink,
-        regionMapBuilder: widget.regionMapBuilder,
-      ),
-    ));
-  }
-
   void _openWeatherAlertsSettings() {
     Navigator.of(context).push<void>(MaterialPageRoute(
       builder: (_) => _WeatherAlertsSettingsScreen(
@@ -348,249 +287,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onOpenGuide: _openGuide,
       ),
     ));
-  }
-}
-
-class _LocationSettingsScreen extends StatefulWidget {
-  final AppSettings initialSettings;
-  final ValueListenable<_LocationDisplay> locationDisplay;
-  final String? manualRegionName;
-  final Future<void> Function()? onLocate;
-  final Future<void> Function()? onOpenLocationSettings;
-  final Future<RegionCatalog> Function()? loadRegionCatalog;
-  final ValueChanged<AppSettings> onSettingsChanged;
-  final VoidCallback onOpenGuide;
-  final Future<bool> Function(Uri)? openExternalLink;
-  final RegionMapBuilder? regionMapBuilder;
-
-  const _LocationSettingsScreen({
-    required this.initialSettings,
-    required this.locationDisplay,
-    required this.manualRegionName,
-    required this.onLocate,
-    required this.onOpenLocationSettings,
-    required this.loadRegionCatalog,
-    required this.onSettingsChanged,
-    required this.onOpenGuide,
-    required this.openExternalLink,
-    required this.regionMapBuilder,
-  });
-
-  @override
-  State<_LocationSettingsScreen> createState() =>
-      _LocationSettingsScreenState();
-}
-
-class _LocationSettingsScreenState extends State<_LocationSettingsScreen> {
-  late AppSettings settings;
-  late String? _manualRegionName;
-  bool _pickingRegion = false;
-  bool _openingWeatherMap = false;
-
-  @override
-  void initState() {
-    super.initState();
-    settings = widget.initialSettings;
-    _manualRegionName = widget.manualRegionName;
-    widget.locationDisplay.addListener(_onLocationChanged);
-  }
-
-  void _onLocationChanged() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    widget.locationDisplay.removeListener(_onLocationChanged);
-    super.dispose();
-  }
-
-  void _update(AppSettings updated) {
-    setState(() => settings = updated);
-    widget.onSettingsChanged(updated);
-  }
-
-  Future<void> _selectRegion() async {
-    if (_pickingRegion) return;
-    setState(() => _pickingRegion = true);
-    final selected = await Navigator.of(context)
-        .push<ForecastGridSelection>(MaterialPageRoute(
-      builder: (_) => RegionPickerScreen(
-        loadCatalog: widget.loadRegionCatalog,
-        selectedGridId: settings.currentRegionId,
-        selectedRegionKey: settings.manualRegionKey,
-        mapBuilder: widget.regionMapBuilder,
-      ),
-    ));
-    if (!mounted) return;
-    setState(() => _pickingRegion = false);
-    if (selected == null) return;
-    _manualRegionName = selected.regionName;
-    _update(settings.copyWith(
-      locationMode: 'MANUAL',
-      currentRegionId: selected.gridId,
-      manualRegionKey: selected.regionKey,
-    ));
-  }
-
-  Future<void> _openWeatherMap() async {
-    if (_openingWeatherMap) return;
-    setState(() => _openingWeatherMap = true);
-    var opened = false;
-    try {
-      final uri = Uri.parse(_weatherMapUrl);
-      opened = await (widget.openExternalLink?.call(uri) ??
-          launchUrl(uri, mode: LaunchMode.externalApplication));
-    } catch (_) {
-      // 브라우저가 없거나 실행할 수 없으면 아래 안내를 표시한다.
-    }
-    if (!mounted) return;
-    setState(() => _openingWeatherMap = false);
-    if (opened) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('예보 구역 지도를 열지 못했어요.\n인터넷 연결을 확인해주세요.')),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final location = widget.locationDisplay.value.location;
-    final regionName = widget.locationDisplay.value.regionName;
-    return _SettingsDetailScaffold(
-        title: '지역 선택',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SettingsSection(
-              icon: Icons.map_outlined,
-              title: '지역 설정 방법',
-              subtitle: settings.locationMode == 'GPS'
-                  ? location.hasLocation
-                      ? '${regionName ?? '확인한 위치'} 기준으로 지역 예보를 안내해요'
-                      : '현재 위치 확인이 필요해요'
-                  : settings.currentRegionId == null
-                      ? '선택된 지역이 없어요'
-                      : _manualSelectionLabel(
-                            settings,
-                            _manualRegionName,
-                          ) ??
-                          '저장한 지역 기준으로 안내해요',
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RadioGroup<LocationMode>(
-                      groupValue: settings.locationMode == 'GPS'
-                          ? LocationMode.gps
-                          : LocationMode.manual,
-                      onChanged: (mode) {
-                        if (mode == null) return;
-                        if (mode == LocationMode.manual &&
-                            settings.currentRegionId == null) {
-                          unawaited(_selectRegion());
-                          return;
-                        }
-                        _update(settings.copyWith(locationMode: mode.label));
-                      },
-                      child: Column(children: [
-                        _LocationRadioTile(
-                          value: LocationMode.gps,
-                          icon: Icons.my_location_rounded,
-                          title: '현재 위치 사용',
-                          subtitle: '앱 실행·복귀·새로고침 때 위치를 확인해요',
-                          selected: settings.locationMode == 'GPS',
-                        ),
-                        const SizedBox(height: 8),
-                        _LocationRadioTile(
-                          value: LocationMode.manual,
-                          icon: Icons.map_outlined,
-                          title: '지역 직접 선택',
-                          subtitle: settings.currentRegionId == null
-                              ? '저장된 지역이 없어요'
-                              : _manualSelectionLabel(
-                                    settings,
-                                    _manualRegionName,
-                                  ) ??
-                                  '저장한 지역을 사용할 수 있어요',
-                          selected: settings.locationMode == 'MANUAL',
-                        ),
-                      ]),
-                    ),
-                    if (settings.locationMode == 'GPS') ...[
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text(location.message,
-                            key: const ValueKey('location-status')),
-                      ),
-                      const SizedBox(height: 20),
-                      Wrap(spacing: 8, runSpacing: 4, children: [
-                        FilledButton.tonalIcon(
-                          key: const ValueKey('location-refresh'),
-                          onPressed: location.state == LocationState.checking
-                              ? null
-                              : widget.onLocate,
-                          icon: const Icon(Icons.my_location_rounded),
-                          label: Text(location.state == LocationState.denied ||
-                                  location.state == LocationState.idle
-                              ? '현재 위치 확인'
-                              : '위치 다시 확인'),
-                        ),
-                        if (location.measuredAt != null) ...[
-                          const SizedBox(height: 6),
-                          Text(_locationTimeLabel(location.measuredAt!),
-                              style: Theme.of(context).textTheme.bodySmall),
-                        ],
-                        if ({
-                          LocationState.serviceDisabled,
-                          LocationState.denied,
-                          LocationState.deniedForever,
-                          LocationState.approximate,
-                        }.contains(location.state))
-                          TextButton(
-                            key: const ValueKey('location-settings'),
-                            onPressed: widget.onOpenLocationSettings,
-                            child: Text(
-                              location.state == LocationState.serviceDisabled
-                                  ? '기기 위치 설정 열기'
-                                  : '앱 권한 설정 열기',
-                            ),
-                          ),
-                      ]),
-                      const SizedBox(height: 15),
-                      Text('백그라운드에서 위치를 계속 추적하지 않아요.\n알림은 마지막 등록 지역 기준이에요.',
-                          style: Theme.of(context).textTheme.bodySmall),
-                    ] else ...[
-                      const SizedBox(height: 10),
-                      if (settings.currentRegionId == null)
-                        const Text('저장된 지역이 없어 날씨를 조회할 수 없어요.\n위치를 선택해주세요.'),
-                      FilledButton.tonalIcon(
-                        key: const ValueKey('region-change'),
-                        onPressed: _pickingRegion ? null : _selectRegion,
-                        icon: const Icon(Icons.map_outlined),
-                        label: const Text('지역 선택·변경'),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                          '선택 지역의 대표 예보 지점 기준이며 정밀 강수·도로 분석에는 사용하지 않아요.'),
-                    ],
-                  ]),
-            ),
-            TextButton.icon(
-              key: const ValueKey('location-guide'),
-              onPressed: widget.onOpenGuide,
-              icon: const Icon(Icons.help_outline_rounded, size: 18),
-              label: const Text('위치 권한은 어디에 쓰이나요?'),
-            ),
-            TextButton.icon(
-              key: const ValueKey('weather-grid-guide'),
-              onPressed: _openingWeatherMap ? null : _openWeatherMap,
-              icon: const Icon(Icons.grid_view_rounded, size: 18),
-              label: const Text('예보 기준 구역은 어떻게 되어있나요?'),
-            ),
-          ],
-        ));
   }
 }
 
@@ -1171,7 +867,7 @@ class _DataPermissionSettingsScreen extends StatelessWidget {
     return Column(children: [
       _SettingsSection(
         icon: Icons.data_array_outlined,
-        title: '데이터·권한 안내',
+        title: '데이터 권한 안내',
         subtitle: '자료 출처와 위치·알림 정보 사용을 확인하세요',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1249,7 +945,7 @@ class _DataPermissionSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final access = serverDataAccess;
     return _SettingsDetailScaffold(
-      title: '데이터·권한 안내',
+      title: '데이터 권한 안내',
       child: access == null
           ? _content(context, null)
           : ListenableBuilder(
@@ -1425,12 +1121,6 @@ class _AdRemovalBanner extends StatelessWidget {
   }
 }
 
-String _locationTimeLabel(DateTime time) {
-  final korea = time.toUtc().add(const Duration(hours: 9));
-  final minute = korea.minute.toString().padLeft(2, '0');
-  return '위치 확인: ${korea.month}월 ${korea.day}일 ${korea.hour}:$minute';
-}
-
 class _SettingsSection extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -1486,52 +1176,6 @@ class _SettingsSection extends StatelessWidget {
           const SizedBox(height: 15),
           child,
         ],
-      ),
-    );
-  }
-}
-
-class _LocationRadioTile extends StatelessWidget {
-  final LocationMode value;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool selected;
-
-  const _LocationRadioTile({
-    required this.value,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected
-          ? WeatherCareTheme.of(context).primarySoft
-          : WeatherCareTheme.of(context).surfaceSubtle,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: selected
-              ? WeatherCareTheme.of(context).primaryBorder
-              : WeatherCareTheme.of(context).outline,
-        ),
-      ),
-      child: RadioListTile<LocationMode>(
-        value: value,
-        activeColor: WeatherCareTheme.of(context).primary,
-        secondary: Icon(
-          icon,
-          color: selected
-              ? WeatherCareTheme.of(context).primaryDeep
-              : WeatherCareTheme.of(context).textSecondary,
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(subtitle),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     );
   }

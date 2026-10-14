@@ -47,7 +47,7 @@ class WeatherCareApp extends StatelessWidget {
               adRemoval: adRemoval,
             ),
         '/settings': (_) => HomeScreen(
-              initialIndex: 3,
+              initialIndex: 4,
               onHomeReady: onHomeReady,
               adRemoval: adRemoval,
             ),

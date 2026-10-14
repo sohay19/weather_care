@@ -76,7 +76,6 @@ void main() {
   testWidgets('설정 최상위에는 묶인 날씨 알림과 상태 메뉴만 표시한다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     for (final key in [
-      'location-settings-menu',
       'weather-alerts-menu',
       'notification-status-menu',
       'data-permission-menu',
@@ -85,6 +84,7 @@ void main() {
       await reveal(tester, menu);
       expect(menu, findsOneWidget);
     }
+    expect(find.byKey(const ValueKey('location-settings-menu')), findsNothing);
     expect(find.byKey(const ValueKey('notification-time-menu')), findsNothing);
     expect(find.byKey(const ValueKey('carry-notification-menu')), findsNothing);
     expect(

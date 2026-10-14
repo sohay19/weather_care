@@ -403,12 +403,12 @@ void main() {
     final navigation = tester.widget<NavigationBar>(
       find.byKey(const ValueKey('main-bottom-navigation')),
     );
-    expect(navigation.selectedIndex, 1);
+    expect(navigation.selectedIndex, 2);
     expect(
       navigation.destinations
           .whereType<NavigationDestination>()
           .map((destination) => destination.label),
-      ['Today', 'Main', 'Week', 'Setting'],
+      ['Today', 'Data', 'Main', 'Week', 'Setting'],
     );
     expect(
       navigation.destinations
@@ -416,6 +416,7 @@ void main() {
           .map((destination) => destination.tooltip),
       [
         '오늘 날씨 자세히 보기',
+        '격자와 관측 지점 자료',
         '날씨, Check List, 어제 비교와 예상',
         '이번 주 날씨',
         '설정',
@@ -643,7 +644,7 @@ void main() {
     expect(find.byKey(const ValueKey('weather-metric-바람')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-대기질')), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-가시거리')), findsOneWidget);
-    expect(find.byKey(const ValueKey('weather-metric-일출·일몰')), findsOneWidget);
+    expect(find.byKey(const ValueKey('weather-metric-일출/일몰')), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-info')), findsNothing);
     expect(find.byKey(const ValueKey('today-hourly-forecast-section')),
         findsNothing);
@@ -940,7 +941,7 @@ void main() {
     expect(find.text('SETTING'), findsOneWidget);
     expect(find.text('설정'), findsOneWidget);
     expect(
-      find.text('나의 위치와 필요한 알람을 설정할 수 있어요.'),
+      find.text('필요한 알림과 데이터 사용을 설정할 수 있어요.'),
       findsOneWidget,
     );
     expect(find.byIcon(Icons.tune_rounded), findsOneWidget);

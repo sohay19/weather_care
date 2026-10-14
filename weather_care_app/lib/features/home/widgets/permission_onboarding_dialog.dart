@@ -27,7 +27,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(
-            '계속을 누르면 운영체제 권한 창이 차례대로 표시돼요.\niOS 위젯의 위치 사용은 위젯을 추가할 때 별도로 물을 수 있어요.\n권한을 허용하지 않아도 Setting에서 지역을 직접 선택할 수 있어요.',
+            '계속을 누르면 운영체제 권한 창이 차례대로 표시돼요.\niOS 위젯의 위치 사용은 위젯을 추가할 때 별도로 물을 수 있어요.\n권한을 허용하지 않아도 Main에서 구역을 추가해 선택할 수 있어요.',
             style: TextStyle(
               color: WeatherCareTheme.of(context).textSecondary,
               fontSize: 12,

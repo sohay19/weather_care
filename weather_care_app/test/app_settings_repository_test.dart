@@ -27,6 +27,7 @@ void main() {
       notificationTime: '06:35',
       umbrellaEnabled: false,
       heavyRainEnabled: false,
+      savedRegionKeys: ['부산|100|76', '제주|80|40'],
     );
 
     await repository.save(changed);
@@ -36,5 +37,15 @@ void main() {
     expect(loaded.notificationTime, '06:35');
     expect(loaded.umbrellaEnabled, false);
     expect(loaded.heavyRainEnabled, false);
+    expect(loaded.savedRegionKeys, ['부산|100|76', '제주|80|40']);
+  });
+
+  test('이전 단일 선택 구역을 저장 구역 목록으로 옮긴다', () {
+    final loaded = AppSettings.fromJson({
+      'locationMode': 'MANUAL',
+      'manualRegionKey': '이전 구역',
+      'currentRegion': '60_121',
+    }, 'device-1');
+    expect(loaded.savedRegionKeys, ['이전 구역']);
   });
 }

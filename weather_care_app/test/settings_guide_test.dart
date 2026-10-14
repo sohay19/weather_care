@@ -14,18 +14,13 @@ Future<void> reveal(WidgetTester tester, Finder finder) async {
       find.byType(SettingsScreen).evaluate().isNotEmpty) {
     final notificationGuide =
         finder.toString().contains("<'notification-guide'>");
-    final locationGuide = finder.toString().contains("<'location-guide'>");
-    final menu = find.byKey(ValueKey(locationGuide
-        ? 'location-settings-menu'
-        : notificationGuide
-            ? 'notification-status-menu'
-            : 'data-permission-menu'));
+    final menu = find.byKey(ValueKey(notificationGuide
+        ? 'notification-status-menu'
+        : 'data-permission-menu'));
     await tester.scrollUntilVisible(menu, 200,
         scrollable: find.byType(Scrollable).first, maxScrolls: 90);
-    if (!locationGuide) {
-      await tester.drag(find.byType(ListView).first, const Offset(0, -280));
-      await tester.pumpAndSettle();
-    }
+    await tester.drag(find.byType(ListView).first, const Offset(0, -280));
+    await tester.pumpAndSettle();
     await tester.tap(menu);
     await tester.pumpAndSettle();
   }
@@ -130,10 +125,10 @@ void main() {
   }
 
   for (final entry in {
-    'location-guide': SettingsGuide.location,
+    'guide-entry-location': SettingsGuide.location,
     'notification-guide': SettingsGuide.notifications,
   }.entries) {
-    testWidgets('${entry.key}: 권한 제어 옆에서 설명만 연다', (tester) async {
+    testWidgets('${entry.key}: 데이터 권한 안내에서 설명만 연다', (tester) async {
       var requested = false;
       await tester.pumpWidget(MaterialApp(
           home: SettingsScreen(

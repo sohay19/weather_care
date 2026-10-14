@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/home_screen.dart';
 import 'package:weather_care/features/home/tabs/week_tab.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
+import 'package:weather_care/features/settings/region_picker_screen.dart';
 import 'package:weather_care/models/app_settings.dart';
 import 'package:weather_care/models/home_widget_snapshot.dart';
 import 'package:weather_care/models/weather.dart';
@@ -27,6 +28,7 @@ import 'package:weather_care/services/settings_save_controller.dart';
 import 'package:weather_care/services/notification_permission_service.dart';
 import 'package:weather_care/services/permission_onboarding_store.dart';
 import 'package:weather_care/services/server_data_access.dart';
+import 'package:weather_care/theme/weather_theme.dart';
 
 const _seoul = DeviceCoordinates(latitude: 37.57, longitude: 126.98);
 const _busan = DeviceCoordinates(latitude: 35.18, longitude: 129.07);
@@ -268,7 +270,9 @@ void main() {
       {bool settle = true,
       ServerDataAccess? access,
       HomeWidgetService? widgetService,
-      int initialIndex = 3,
+      RegionMapBuilder? regionMapBuilder,
+      Future<bool> Function(Uri)? openExternalLink,
+      int initialIndex = 4,
       VoidCallback? onHomeReady,
       DateTime Function()? now}) async {
     await tester.pumpWidget(MaterialApp(
@@ -282,6 +286,8 @@ void main() {
             homeWidgetService: widgetService ?? const HomeWidgetService(),
             settingsSync: sync,
             regionCatalog: catalog,
+            regionMapBuilder: regionMapBuilder,
+            openExternalLink: openExternalLink,
             onHomeReady: onHomeReady,
             now: now,
             notificationPermission: notificationPermission,
@@ -293,13 +299,13 @@ void main() {
     if (settle) await tester.pumpAndSettle();
   }
 
-  SettingsScreen screen(WidgetTester tester) =>
-      tester.widget<SettingsScreen>(find.byType(SettingsScreen));
+  SettingsScreen screen(WidgetTester tester) => tester
+      .widget<SettingsScreen>(find.byType(SettingsScreen, skipOffstage: false));
 
   testWidgets('주간 개별 재조회에도 현재 정밀 GPS와 격자를 전달한다', (tester) async {
     location.result =
         const LocationResult(LocationState.ready, coordinates: _seoul);
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 3);
     final original = weather.calls.single;
     final week = tester.widget<WeekTab>(find.byType(WeekTab));
     await week.onRetryData!();
@@ -313,7 +319,7 @@ void main() {
   testWidgets('첫 안내 확인 한 번으로 알림과 위치 권한을 차례대로 요청한다', (tester) async {
     SharedPreferences.setMockInitialValues({});
 
-    await start(tester, settle: false, initialIndex: 1);
+    await start(tester, settle: false, initialIndex: 2);
 
     expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
         findsOneWidget);
@@ -341,7 +347,7 @@ void main() {
       const LocationResult(LocationState.timedOut),
       const LocationResult(LocationState.ready, coordinates: _seoul),
     ]);
-    await start(tester, settle: false, initialIndex: 1);
+    await start(tester, settle: false, initialIndex: 2);
 
     tester
         .widget<FilledButton>(
@@ -362,7 +368,7 @@ void main() {
       const LocationResult(LocationState.ready, coordinates: _seoul),
     ]);
 
-    await start(tester, initialIndex: 1);
+    await start(tester, initialIndex: 2);
 
     expect(location.requests, [false, false]);
     expect(location.freshRequests, [false, true]);
@@ -373,7 +379,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     location.result = const LocationResult(LocationState.denied);
 
-    await start(tester, settle: false, initialIndex: 1);
+    await start(tester, settle: false, initialIndex: 2);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
@@ -395,7 +401,7 @@ void main() {
     weather.pending = Completer<WeatherLoadResult>();
     weather.emitTodayWhilePending = true;
 
-    await start(tester, settle: false, initialIndex: 1);
+    await start(tester, settle: false, initialIndex: 2);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
     expect(find.textContaining('지금 날씨'), findsOneWidget);
@@ -413,7 +419,7 @@ void main() {
     final comparison = Completer<ComparisonResponse>();
     weather.comparisonPending = comparison;
 
-    await start(tester, settle: false, initialIndex: 1);
+    await start(tester, settle: false, initialIndex: 2);
 
     final brief = find.byKey(const ValueKey('main-weather-brief'));
     expect(tester.widget<Text>(brief).data, '불러오는 중');
@@ -459,7 +465,7 @@ void main() {
 
     await start(tester,
         settle: false,
-        initialIndex: 1,
+        initialIndex: 2,
         widgetService: widgetService,
         now: () => DateTime(2026, 10, 1, 13));
 
@@ -494,7 +500,7 @@ void main() {
     weather.mainPreview = _weather(60, 127).today;
     weather.pending = Completer<WeatherLoadResult>();
 
-    await start(tester, settle: false, initialIndex: 1);
+    await start(tester, settle: false, initialIndex: 2);
 
     expect(find.text('오늘 날씨 자료를 불러오고 있어요.'), findsOneWidget);
     expect(find.text('불러오는 중'), findsWidgets);
@@ -537,7 +543,7 @@ void main() {
     await start(
       tester,
       settle: false,
-      initialIndex: 1,
+      initialIndex: 2,
       onHomeReady: () => readyCount += 1,
     );
     expect(readyCount, 0);
@@ -551,7 +557,7 @@ void main() {
   });
 
   testWidgets('탭 스와이프 새로고침이 서버 실패하면 기존 자료와 팝업을 유지한다', (tester) async {
-    await start(tester, initialIndex: 1);
+    await start(tester, initialIndex: 2);
     final originalRegion = find.text('현재 위치 날씨');
     expect(originalRegion, findsOneWidget);
     weather.response = const WeatherLoadResult(
@@ -601,8 +607,8 @@ void main() {
 
   for (final tab in <({int index, String key})>[
     (index: 0, key: 'today-tab'),
-    (index: 1, key: 'main-tab'),
-    (index: 2, key: 'week-tab'),
+    (index: 2, key: 'main-tab'),
+    (index: 3, key: 'week-tab'),
   ]) {
     testWidgets('${tab.key} 새로고침은 오늘·주간·비교 자료를 모두 받을 때까지 기다린다', (tester) async {
       await start(tester, initialIndex: tab.index);
@@ -636,7 +642,7 @@ void main() {
 
   testWidgets('한국시간 정시가 되면 현재 탭과 관계없이 전체 날씨를 다시 받는다', (tester) async {
     var now = DateTime.parse('2026-09-21T22:59:50Z');
-    await start(tester, initialIndex: 2, now: () => now);
+    await start(tester, initialIndex: 3, now: () => now);
     final weatherCalls = weather.calls.length;
     final comparisonCalls = weather.comparisonCalls.length;
 
@@ -651,7 +657,7 @@ void main() {
   });
 
   testWidgets('탭 스와이프에서 일부 자료만 받아도 부분 실패 팝업을 표시한다', (tester) async {
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 3);
     weather.response = WeatherLoadResult(
       today: _weather(60, 127).today,
       weekly: null,
@@ -682,7 +688,7 @@ void main() {
       comparison: ComparisonWeatherSnapshot(temperature: 18),
     );
 
-    await start(tester, initialIndex: 1);
+    await start(tester, initialIndex: 2);
 
     expect(weather.comparisonCalls, [(nx: 60, ny: 127)]);
     await tester.dragUntilVisible(
@@ -700,7 +706,7 @@ void main() {
     weather.pending = Completer<WeatherLoadResult>();
 
     await start(tester,
-        settle: false, initialIndex: 1, widgetService: widgetService);
+        settle: false, initialIndex: 2, widgetService: widgetService);
 
     expect(find.byKey(const ValueKey('main-tab')), findsOneWidget);
     expect(widgetService.published, isEmpty);
@@ -900,7 +906,7 @@ void main() {
   });
   testWidgets('날씨가 비어 있는 화면을 당겨도 GPS를 다시 측정한다', (tester) async {
     location.result = const LocationResult(LocationState.timedOut);
-    await start(tester, initialIndex: 1);
+    await start(tester, initialIndex: 2);
     location.result =
         const LocationResult(LocationState.ready, coordinates: _busan);
 
@@ -914,17 +920,18 @@ void main() {
     expect(location.freshRequests.last, isTrue);
     expect(weather.calls.last.coordinates, _busan);
   });
-  testWidgets('위치를 확인하지 못하면 수동 지역 메뉴로 이동할 수 있다', (tester) async {
+  testWidgets('위치를 확인하지 못하면 구역 추가 지도를 열 수 있다', (tester) async {
     location.result = const LocationResult(LocationState.denied);
-    await start(tester, initialIndex: 1);
+    await start(tester,
+        initialIndex: 2,
+        regionMapBuilder: (context, onSelection) =>
+            const Center(child: Text('지도 준비')));
 
     await tester.tap(find.byKey(const ValueKey('manual-location-action')));
     await tester.pumpAndSettle();
 
-    final navigation = tester.widget<NavigationBar>(
-        find.byKey(const ValueKey('main-bottom-navigation')));
-    expect(navigation.selectedIndex, 3);
-    expect(find.text('지역 선택'), findsOneWidget);
+    expect(find.byType(RegionPickerScreen), findsOneWidget);
+    expect(find.text('지도 준비'), findsOneWidget);
   });
   testWidgets('선택한 항목의 근거는 다른 탭으로 이동하면 초기화된다', (tester) async {
     weather.response = WeatherLoadResult(
@@ -959,7 +966,7 @@ void main() {
       mode: WeatherLoadMode.server,
       message: 'test',
     );
-    await start(tester, initialIndex: 1);
+    await start(tester, initialIndex: 2);
 
     final detailButton = find.byKey(const ValueKey('bag-detail-umbrella'));
     await tester.scrollUntilVisible(
@@ -1034,22 +1041,24 @@ void main() {
     expect(weather.calls.last.coordinates, _seoul);
     expect(registration.calls.last.coordinates, _seoul);
   });
-  testWidgets('지역 선택의 위치 다시 확인은 새 위치를 읽고 열린 화면을 갱신한다', (tester) async {
+  testWidgets('Main 새로고침은 새 위치를 읽고 지역명을 갱신한다', (tester) async {
     gpsRegionName.result = '서울 강남구 역삼동';
-    await start(tester);
-    await tester.tap(find.byKey(const ValueKey('location-settings-menu')));
-    await tester.pumpAndSettle();
-    expect(find.text('서울 강남구 역삼동 기준으로 지역 예보를 안내해요'), findsOneWidget);
+    await start(tester, initialIndex: 2);
+    expect(find.text('서울 강남구 역삼동 날씨'), findsOneWidget);
 
     location.result =
         const LocationResult(LocationState.ready, coordinates: _busan);
     gpsRegionName.result = '부산 해운대구 우동';
-    await tester.tap(find.byKey(const ValueKey('location-refresh')));
+    final indicator = tester.widget<RefreshIndicator>(find.ancestor(
+      of: find.byKey(const ValueKey('main-tab')),
+      matching: find.byType(RefreshIndicator),
+    ));
+    await indicator.onRefresh();
     await tester.pumpAndSettle();
 
     expect(location.freshRequests.last, isTrue);
     expect(weather.calls.last.coordinates, _busan);
-    expect(find.text('부산 해운대구 우동 기준으로 지역 예보를 안내해요'), findsOneWidget);
+    expect(find.text('부산 해운대구 우동 날씨'), findsOneWidget);
   });
   testWidgets('대략적 위치는 날씨와 알림 양쪽에 정밀 좌표를 보내지 않는다', (tester) async {
     location.result =
@@ -1236,5 +1245,75 @@ void main() {
         .onSettingsChanged!(settings.copyWith(manualRegionKey: second.key));
     await tester.pumpAndSettle();
     expect(screen(tester).regionName, second.fullName);
+  });
+
+  testWidgets('Main에서 구역을 추가하고 저장 구역과 GPS를 전환한다', (tester) async {
+    final first = catalog.search('부산 해운대 좌1동').single;
+    final second = catalog.search('제주 우도면').single;
+    await const AppSettingsRepository()
+        .save(AppSettings.fallback('test').copyWith(
+      savedRegionKeys: [first.key],
+    ));
+    await start(
+      tester,
+      initialIndex: 2,
+      regionMapBuilder: (_, onSelection) => Center(
+          child: FilledButton(
+        onPressed: () => onSelection(jsonEncode({
+          'type': 'weather-grid-selection',
+          'gridId': second.gridId,
+          'nx': second.nx,
+          'ny': second.ny,
+          'regionKey': second.key,
+        })),
+        child: const Text('새 구역 선택'),
+      )),
+    );
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    expect(find.text('현재 위치'), findsOneWidget);
+    expect(find.text(first.fullName), findsOneWidget);
+    await tester.tap(find.text('구역 추가'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('새 구역 선택'));
+    await tester.pumpAndSettle();
+    expect(weather.calls.last.nx, second.nx);
+    expect(screen(tester).initialSettings!.savedRegionKeys,
+        [first.key, second.key]);
+
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(first.fullName));
+    await tester.pumpAndSettle();
+    expect(weather.calls.last.nx, first.nx);
+    expect(weather.calls.last.coordinates, isNull);
+
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('현재 위치'));
+    await tester.pumpAndSettle();
+    expect(weather.calls.last.coordinates, _seoul);
+    expect(screen(tester).initialSettings!.savedRegionKeys,
+        [first.key, second.key]);
+  });
+
+  testWidgets('Main 예보 구역 안내는 지도를 연다', (tester) async {
+    Uri? opened;
+    await start(tester, initialIndex: 2, openExternalLink: (uri) async {
+      opened = uri;
+      return true;
+    });
+    expect(find.text('예보 기준 구역 지도를 확인할 수 있어요'), findsOneWidget);
+    final mapButton = tester.widget<IconButton>(
+        find.byKey(const ValueKey('main-weather-map-info')));
+    expect(mapButton.style?.backgroundColor?.resolve({}), Colors.transparent);
+    expect(
+        mapButton.style?.foregroundColor?.resolve({}),
+        WeatherCareTheme.of(tester
+                .element(find.byKey(const ValueKey('main-weather-map-info'))))
+            .primary);
+    await tester.tap(find.byKey(const ValueKey('main-weather-map-info')));
+    await tester.pump();
+    expect(opened, Uri.parse('https://weather-care.pages.dev/weather-map'));
   });
 }

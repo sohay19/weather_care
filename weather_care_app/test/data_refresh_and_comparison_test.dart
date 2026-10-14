@@ -192,7 +192,7 @@ void main() {
   });
 
   testWidgets('Main은 Check List 다음 날씨 카드 안에 어제 비교를 표시한다', (tester) async {
-    tester.view.physicalSize = const Size(400, 1800);
+    tester.view.physicalSize = const Size(320, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -312,6 +312,13 @@ void main() {
       find.text('기온은 어제보다 2.3℃ 높아요.'),
       findsOneWidget,
     );
+    expect(find.text('어제 20.0℃'), findsOneWidget);
+    expect(find.text('어제 19.5℃'), findsOneWidget);
+    final temperatureRow =
+        find.byKey(const ValueKey('yesterday-comparison-row-기온은'));
+    expect(tester.getRect(find.text('어제 20.0℃')).right,
+        closeTo(tester.getRect(temperatureRow).right, 1));
+    expect(find.textContaining('오늘 예보 22.3℃ · 어제 실황'), findsNothing);
     final topCard = find.byKey(const ValueKey('main-top-weather-card'));
     expect(
       find.descendant(of: topCard, matching: find.text('22.3℃')),
@@ -333,6 +340,18 @@ void main() {
     expect(checklist.dy, lessThan(top.dy));
     expect(comparison.dy, greaterThan(top.dy));
     expect(future.dy, greaterThan(comparison.dy));
+
+    for (final text in [
+      '오전 10시 기준, 다음 시간 기온 예보를 어제 실황과 비교해요',
+      '하늘 상태는 오늘 맑음, 어제 구름 많음이었어요.',
+      '기온은 어제보다 2.3℃ 높아요.',
+      '어제 20.0℃',
+    ]) {
+      final widget = tester.widget<Text>(find.text(text));
+      expect(widget.maxLines, 1);
+      expect(widget.softWrap, isFalse);
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('카드의 새로고침 버튼은 해당 자료 콜백만 실행한다', (tester) async {

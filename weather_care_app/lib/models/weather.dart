@@ -35,6 +35,8 @@ class CurrentWeather {
   final String? apparentTemperatureSource;
   final double? kmaApparentTemperature;
   final double? humidity;
+  final double? precipitationAmount;
+  final String? precipitationType;
   final double? windSpeed;
   final double? windDirection;
   final double? visibilityMeters;
@@ -67,6 +69,8 @@ class CurrentWeather {
     this.apparentTemperatureSource,
     this.kmaApparentTemperature,
     this.humidity,
+    this.precipitationAmount,
+    this.precipitationType,
     this.windSpeed,
     this.windDirection,
     this.visibilityMeters,
@@ -100,6 +104,8 @@ class CurrentWeather {
       apparentTemperatureSource: c['apparentTemperatureSource']?.toString(),
       kmaApparentTemperature: (c['kmaApparentTemperature'] as num?)?.toDouble(),
       humidity: (c['humidity'] as num?)?.toDouble(),
+      precipitationAmount: _optionalNumber(c['precipitationAmount']),
+      precipitationType: _optionalText(c['precipitationType']),
       windSpeed: (c['windSpeed'] as num?)?.toDouble(),
       windDirection: (c['windDirection'] as num?)?.toDouble(),
       visibilityMeters: (c['visibilityMeters'] as num?)?.toDouble(),

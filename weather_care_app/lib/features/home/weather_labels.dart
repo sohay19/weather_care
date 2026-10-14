@@ -17,6 +17,18 @@ String? humidityDescription(double? percent) {
   return '매우 습함';
 }
 
+String? apparentTemperatureDescription(double? celsius) {
+  if (celsius == null) return null;
+  if (celsius >= 38) return '위험한 더위';
+  if (celsius >= 35) return '더위 경계';
+  if (celsius >= 33) return '더위 주의';
+  if (celsius >= 28) return '더움';
+  if (celsius >= 20) return '조금 더움';
+  if (celsius >= 10) return '선선한 편';
+  if (celsius >= 0) return '쌀쌀한 편';
+  return '추운 날씨';
+}
+
 String? windDescription(double? metersPerSecond) {
   if (metersPerSecond == null) return null;
   if (metersPerSecond < 4) return '약한 바람';
@@ -51,6 +63,12 @@ String? visibilityDescription(double? meters) {
   if (meters < 20000) return '좋음';
   return '매우 좋음';
 }
+
+const apparentTemperatureRanges = '표현 기준 (체감온도)\n'
+    '0℃ 미만: 추운 날씨\n0~10℃ 미만: 쌀쌀한 편\n'
+    '10~20℃ 미만: 선선한 편\n20~28℃ 미만: 조금 더움\n'
+    '28~33℃ 미만: 더움\n33~35℃ 미만: 더위 주의\n'
+    '35~38℃ 미만: 더위 경계\n38℃ 이상: 위험한 더위';
 
 const humidityRanges = '표현 기준 (실외 상대습도)\n'
     '35% 이하: 건조\n35% 초과~70% 미만: 쾌적\n'

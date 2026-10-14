@@ -44,34 +44,42 @@ class WeatherInfoCard extends StatelessWidget {
     final apparentTemperature = current.displayedApparentTemperature;
     final snowDepth =
         current.snowDepthStatus == 'UNAVAILABLE' ? null : current.snowDepthCm;
+    final precipitationAmount = isObservation &&
+            current.precipitationAmount != null &&
+            current.precipitationAmount! >= 0
+        ? current.precipitationAmount
+        : null;
+    final precipitationObservedAt = _koreaObservationClock(current.observedAt);
     final estimatedApparentTemperature = current.apparentTemperatureSource ==
             'APP_STEADMAN_FROM_FORECAST' ||
         current.apparentTemperatureSource == 'APP_STEADMAN_FROM_OBSERVATION';
     final missing = <String>[
       if (showCurrentSummary && current.temperature == null) '현재 기온',
       if (showCurrentSummary && current.sky == null) '하늘 상태',
-      if (showCurrentSummary && apparentTemperature == null) '체감온도',
+      if (apparentTemperature == null) '체감온도',
       if (current.humidity == null) '습도',
       if (current.windSpeed == null) '바람',
       if (current.visibilityMeters == null) '가시거리',
       if (current.uvIndex == null) '자외선',
       if (current.pm25 == null && current.pm10 == null && current.ozone == null)
         '대기질',
-      if (sunriseAt == null || sunsetAt == null) '일출·일몰',
+      if (sunriseAt == null || sunsetAt == null) '일출/일몰',
       if (!showCurrentSummary &&
           livingIndices?.pollenStatus != 'OUT_OF_SEASON' &&
           (livingIndices?.pollen.isEmpty ?? true))
         '꽃가루',
       if (!showCurrentSummary && livingIndices?.airStagnationLevel == null)
         '대기정체',
+      if (!showCurrentSummary && precipitationAmount == null) '강수량',
+      if (!showCurrentSummary && snowDepth == null) '적설량',
     ];
     final metrics = [
       _WeatherMetric(
         icon: Icons.device_thermostat_rounded,
-        label: '체감',
+        label: '체감온도',
         value: apparentTemperature == null
             ? '자료 없음'
-            : '${apparentTemperature.toStringAsFixed(1)}℃',
+            : '${apparentTemperatureDescription(apparentTemperature)}\n${apparentTemperature.toStringAsFixed(1)}℃',
         levelTitle: estimatedApparentTemperature
             ? '기온·습도·바람으로 계산한 추정 체감온도예요'
             : '기상청 방식으로 계산한 체감온도예요',
@@ -82,6 +90,9 @@ class WeatherInfoCard extends StatelessWidget {
                 currentSource,
                 isObservation,
               ),
+        interpretation: estimatedApparentTemperature
+            ? '기온·습도·바람을 이용한 추정값이에요. 실제 느낌은 환경과 활동량에 따라 달라질 수 있어요.\n\n$apparentTemperatureRanges'
+            : '기상청 계절별 산식으로 계산한 값이에요. 기온과 다를 수 있어요.\n\n$apparentTemperatureRanges',
       ),
       _WeatherMetric(
         icon: Icons.water_drop_outlined,
@@ -91,8 +102,10 @@ class WeatherInfoCard extends StatelessWidget {
             : '${humidityDescription(current.humidity)}\n${current.humidity!.toStringAsFixed(0)}%',
         levelTitle: _humidityLevel(current.humidity),
         detailBody: current.humidity == null
-            ? '$currentSource에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요.\n실내 습도나 피부가 느끼는 건조함을 임의로 추정하지 않아요.\n\n$humidityRanges'
-            : '$currentSource의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요.\n상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증기량에 얼마나 가까운지를 나타내며, 실내 습도와는 다를 수 있어요.\n\n$humidityRanges',
+            ? '$currentSource에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요.'
+            : '$currentSource의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요.',
+        interpretation:
+            '상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증량에 얼마나 가까운지를 나타내요. 실내 습도나 피부가 느끼는 건조함과는 다를 수 있어요.\n\n$humidityRanges',
       ),
       _WeatherMetric(
         icon: Icons.air_rounded,
@@ -102,8 +115,10 @@ class WeatherInfoCard extends StatelessWidget {
             : '${windDescription(current.windSpeed)}\n${_windValue(current.windDirection, current.windSpeed)}',
         levelTitle: _windLevel(current.windSpeed),
         detailBody: current.windSpeed == null
-            ? '$currentSource에서 풍속 자료를 받지 못해 현재 바람 수준을 표시하지 않아요.\n자료가 없다는 이유로 바람이 약하다고 판단하지 않아요.\n\n$windRanges'
-            : '$currentSource의 바람은 ${_windValue(current.windDirection, current.windSpeed)}예요.\n선택한 격자와 시각의 값이며, 돌풍이나 건물 사이·산지·해안의 국지적인 바람은 실제 위치에서 더 강하거나 약할 수 있어요.\n\n$windRanges',
+            ? '$currentSource에서 풍속 자료를 받지 못해 현재 바람 수준을 표시하지 않아요.'
+            : '$currentSource의 바람 자료예요.',
+        interpretation:
+            '자료가 없다고 바람이 약하다고 판단하지 않아요. 선택한 격자와 시각의 값이며 돌풍이나 건물 사이·산지·해안에서는 다를 수 있어요.\n\n$windRanges',
       ),
       _WeatherMetric(
         icon: Icons.wb_sunny_outlined,
@@ -115,8 +130,10 @@ class WeatherInfoCard extends StatelessWidget {
             ? '자외선 수준을 확인하기 어려워요'
             : '자외선은 ${uvDescription(current.uvIndex)} 단계예요',
         detailBody: current.uvIndex == null
-            ? '기상청 생활기상지수 자료를 받지 못해 자외선지수와 단계를 표시하지 않아요.\n자료가 없음을 낮음 단계로 바꾸지 않아요.\n\n$uvRanges'
-            : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${uvDescription(current.uvIndex)} 단계예요.\n구름, 그늘, 고도와 노출 시간에 따라 개인의 실제 노출량은 달라질 수 있어요.\n\n$uvRanges',
+            ? '기상청 생활기상지수 자료를 받지 못해 자외선지수와 단계를 표시하지 않아요.'
+            : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${uvDescription(current.uvIndex)} 단계예요.',
+        interpretation:
+            '자료가 없음을 낮음 단계로 바꾸지 않아요. 구름·그늘·고도와 노출 시간에 따라 실제 노출량은 달라질 수 있어요.\n\n$uvRanges',
       ),
       _WeatherMetric(
         icon: Icons.eco_outlined,
@@ -129,6 +146,8 @@ class WeatherInfoCard extends StatelessWidget {
             ? '대기질 수준을 확인하기 어려워요'
             : '대기질은 ${_airQualityGrade(current.pm10, current.pm25, current.ozone)} 등급이에요',
         detailBody: _airQualityDetail(current),
+        interpretation:
+            '제공된 오염물질 관측값 중 가장 나쁜 등급을 표시해요. 공식 통합대기환경지수는 아니에요. 자료가 없음을 좋음 등급으로 바꾸지 않아요.\n\n$_airQualityRanges',
       ),
       _WeatherMetric(
         icon: Icons.visibility_outlined,
@@ -138,6 +157,8 @@ class WeatherInfoCard extends StatelessWidget {
             : '${visibilityDescription(current.visibilityMeters)}\n${_visibilityValue(current.visibilityMeters)}',
         levelTitle: _visibilityLevel(current.visibilityMeters),
         detailBody: _visibilityDetail(current),
+        interpretation:
+            '가시거리는 미래 예보값으로 대신 채우지 않으며 시간별·주간 미래 가시거리 예보로 확대하지 않아요.\n\n$visibilityRanges',
       ),
       if (!showCurrentSummary) ...[
         _WeatherMetric(
@@ -152,10 +173,12 @@ class WeatherInfoCard extends StatelessWidget {
                   ? '꽃가루 위험 수준을 확인하기 어려워요'
                   : '오늘의 꽃가루농도위험지수예요',
           detailBody: livingIndices?.pollenStatus == 'OUT_OF_SEASON'
-              ? '기상청은 참나무·소나무를 3~6월, 잡초류를 8~10월에 제공해요. 제공 기간 밖을 낮음 단계로 해석하지 않아요.'
+              ? '현재는 꽃가루농도위험지수 제공 기간 밖이에요.'
               : (livingIndices?.pollen.isEmpty ?? true)
-                  ? '기상청 꽃가루농도위험지수 자료를 받지 못했어요. 자료 없음은 꽃가루가 없다는 뜻이 아니에요.'
-                  : '기상청 꽃가루농도위험지수의 오늘 예측값이에요.\n${livingIndices!.pollen.map((risk) => '${risk.species}: ${risk.level}').join(' · ')}\n개인의 알레르기 반응은 다를 수 있어요.',
+                  ? '기상청 꽃가루농도위험지수 자료를 받지 못했어요.'
+                  : '기상청 꽃가루농도위험지수의 오늘 예측값이에요.\n${livingIndices!.pollen.map((risk) => '${risk.species}: ${risk.level}').join(' · ')}',
+          interpretation:
+              '표현 기준: 기상청이 제공한 종별 낮음·보통·높음·매우 높음 단계 중 가장 높은 위험 수준을 표시해요. 앱에서 농도 수치로 다시 판정하지 않아요.\n\n기상청은 참나무·소나무를 3~6월, 잡초류를 8~10월에 제공해요. 제공 기간 밖이나 자료 없음을 낮음 단계로 해석하지 않아요. 개인의 알레르기 반응은 다를 수 있어요.',
         ),
         _WeatherMetric(
           icon: Icons.air_rounded,
@@ -165,34 +188,55 @@ class WeatherInfoCard extends StatelessWidget {
               ? '대기정체 수준을 확인하기 어려워요'
               : '대기정체지수는 ${livingIndices!.airStagnationLevel} 단계예요',
           detailBody: livingIndices?.airStagnationLevel == null
-              ? '기상청 대기정체지수 예측 자료를 받지 못했어요. 미세먼지 농도로 대기정체 수준을 추정하지 않아요.'
-              : '기상청 대기정체지수의 ${_koreaClock(livingIndices?.airStagnationForecastAt) ?? '오늘'} 예측값이에요. 대기가 얼마나 잘 순환하는지 나타내며, 실제 미세먼지 농도와는 다른 정보예요.',
+              ? '기상청 대기정체지수 예측 자료를 받지 못했어요.'
+              : '기상청 대기정체지수의 ${_koreaClock(livingIndices?.airStagnationForecastAt) ?? '오늘'} 예측값이에요.',
+          interpretation:
+              '표현 기준: 기상청이 제공한 대기정체지수 예측 단계를 그대로 표시해요. 앱에서 수치 경계를 다시 계산하지 않아요.\n\n대기가 얼마나 잘 순환하는지를 나타내는 예측 단계예요. 실제 미세먼지 농도와는 다른 정보이며, 미세먼지로 대기정체 수준을 추정하지 않아요.',
         ),
       ],
       if (!showCurrentSummary)
         _WeatherMetric(
+          icon: Icons.water_drop_rounded,
+          label: '강수량',
+          value: precipitationAmount == null
+              ? '자료 없음'
+              : '${_precipitationDescription(precipitationAmount, current.precipitationType)}\n${_precipitationValue(precipitationAmount)}mm',
+          levelTitle: precipitationAmount == null
+              ? '최근 1시간 관측 강수량을 확인하기 어려워요'
+              : '관측 시각까지 1시간 강수량은 ${_precipitationValue(precipitationAmount)}mm예요',
+          detailBody: precipitationAmount == null
+              ? '기상청 현재 강수량 관측값을 받지 못했어요.'
+              : '$currentSource에서 관측한 지난 1시간 강수량이에요.'
+                  '${precipitationObservedAt == null ? '' : '\n$precipitationObservedAt'}',
+          interpretation:
+              '강수량은 관측 시각까지 지난 1시간에 내린 비·눈 등의 양을 mm로 나타내요. 지금 내리는지와는 다른 정보예요. 비의 양 표현은 시간당 강수량 기준을 참고한 앱의 안내이며 특보를 뜻하지 않아요. 자료 없음은 0mm로 바꾸지 않아요.\n\n$_precipitationRanges',
+        ),
+      if (!showCurrentSummary)
+        _WeatherMetric(
           icon: Icons.ac_unit_rounded,
-          label: '현재 적설',
+          label: '적설량',
           value: snowDepth == null
               ? '자료 없음'
-              : snowDepth == 0
-                  ? '쌓인 눈 없음\n0cm'
-                  : '눈 쌓임\n${_snowDepthValue(snowDepth)}cm',
+              : '${_snowDepthDescription(snowDepth)}\n${_snowDepthValue(snowDepth)}cm',
           levelTitle: snowDepth == null
               ? '현재 쌓인 눈의 깊이를 확인하기 어려워요'
               : '관측소의 현재 적설은 ${_snowDepthValue(snowDepth)}cm예요',
           detailBody: _snowDepthDetail(current),
+          interpretation:
+              '관측소의 지면에 쌓인 눈 깊이예요. 표현 단계는 현재 깊이를 쉽게 읽기 위한 앱의 구간이며 대설 특보 기준이 아니에요. 선택한 위치에서 직접 측정한 값은 아니며, 앞으로 새로 쌓일 눈의 예보 신적설과 달라요. 지난 날 최심신적설로도 대신 채우지 않아요.\n\n$_snowDepthRanges',
         ),
       _WeatherMetric(
         icon: Icons.wb_twilight_rounded,
-        label: '일출·일몰',
+        label: '일출/일몰',
         value: _sunTimesValue(sunriseAt, sunsetAt),
         levelTitle: sunriseAt == null || sunsetAt == null
             ? '일출·일몰 시각을 확인하기 어려워요'
             : '오늘의 일출·일몰 시각이에요',
         detailBody: sunriseAt == null || sunsetAt == null
             ? '요청 지역과 날짜로 계산한 일출·일몰 시각을 받지 못해 임의의 시각을 표시하지 않아요.'
-            : '요청 지역의 대표 좌표와 한국 날짜를 기준으로 계산한 시각이에요.\n지형과 건물 때문에 실제로 해가 보이는 시각은 달라질 수 있어요.',
+            : '요청 지역의 대표 좌표와 한국 날짜를 기준으로 계산한 시각이에요.',
+        interpretation:
+            '표현 기준: 오늘 한국 날짜의 대표 좌표에서 계산한 일출·일몰 시각을 시:분으로 표시해요. 높음·낮음 같은 단계는 없어요.\n\n지형과 건물 때문에 실제로 해가 보이는 시각은 달라질 수 있어요.',
       ),
     ];
     final displayMetrics = metrics
@@ -202,14 +246,34 @@ class WeatherInfoCard extends StatelessWidget {
                     icon: metric.icon,
                     label: metric.label,
                     value: dataPhase == WeatherDataPhase.loading &&
-                            metric.label == '체감'
+                            metric.label == '체감온도'
                         ? '--°'
                         : dataPhase.missingText(),
                     levelTitle: dataPhase.explanation,
                     detailBody: dataPhase.explanation,
+                    interpretation: metric.interpretation,
                   )
                 : metric)
         .toList(growable: false);
+    const todayMetricOrder = [
+      '체감온도',
+      '습도',
+      '자외선',
+      '바람',
+      '대기질',
+      '대기정체',
+      '가시거리',
+      '꽃가루',
+      '강수량',
+      '적설량',
+      '일출/일몰',
+    ];
+    final cardMetrics = showCurrentSummary
+        ? displayMetrics.skip(1).toList(growable: false)
+        : (displayMetrics.toList()
+          ..sort((a, b) => todayMetricOrder
+              .indexOf(a.label)
+              .compareTo(todayMetricOrder.indexOf(b.label))));
     final apparentMetric = displayMetrics.first;
     final temperatureText = current.temperature == null
         ? dataPhase == WeatherDataPhase.loading
@@ -223,7 +287,8 @@ class WeatherInfoCard extends StatelessWidget {
       fontWeight: FontWeight.w800,
       letterSpacing: -1.2,
     );
-    final apparentText = '체감 ${apparentMetric.value}';
+    final apparentText =
+        '체감 ${apparentTemperature == null ? apparentMetric.value : '${apparentTemperature.toStringAsFixed(1)}℃'}';
     final apparentStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: WeatherCareTheme.of(context).textSecondary,
           fontWeight: FontWeight.w700,
@@ -357,14 +422,14 @@ class WeatherInfoCard extends StatelessWidget {
                 final itemWidth = (constraints.maxWidth - 8) / 2;
                 final metricHeight = _equalMetricHeight(
                   context,
-                  displayMetrics.skip(1),
+                  cardMetrics,
                   itemWidth,
                 );
                 return Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    for (final metric in displayMetrics.skip(1))
+                    for (final metric in cardMetrics)
                       SizedBox(
                         width: itemWidth,
                         height: metricHeight,
@@ -435,7 +500,7 @@ String? _airQualityGrade(int? pm10, int? pm25, double? ozone) {
 String _airQualityDetail(CurrentWeather current) {
   final grade = _airQualityGrade(current.pm10, current.pm25, current.ozone);
   if (grade == null) {
-    return '에어코리아 관측자료를 받지 못해 대기질을 표시하지 않아요.\n자료가 없음을 좋음 등급으로 바꾸지 않아요.';
+    return '에어코리아 관측자료를 받지 못해 대기질을 표시하지 않아요.';
   }
   final values = [
     if (current.pm25 != null) '초미세먼지 ${current.pm25}㎍/㎥',
@@ -443,8 +508,7 @@ String _airQualityDetail(CurrentWeather current) {
     if (ozoneDescription(current.ozone) != null)
       '오존 ${current.ozone!.toStringAsFixed(3)}ppm',
   ].join(' · ');
-  return '제공된 에어코리아 오염물질 관측값 중 가장 나쁜 등급을 표시해요. 공식 통합대기환경지수는 아니에요.\n'
-      '$values · 표시 등급 $grade${_airObservationSource(current)}';
+  return '$values · 표시 등급 $grade${_airObservationSource(current)}';
 }
 
 String _windValue(double? direction, double? speed) {
@@ -485,7 +549,7 @@ String _visibilityLevel(double? meters) {
 String _visibilityDetail(CurrentWeather current) {
   final meters = current.visibilityMeters;
   if (meters == null) {
-    return '기상청 지상관측 자료를 받지 못해 현재 가시거리를 표시하지 않아요.\n가시거리는 미래 예보값으로 대신 채우지 않아요.\n\n$visibilityRanges';
+    return '기상청 지상관측 자료를 받지 못해 현재 가시거리를 표시하지 않아요.';
   }
   final source = <String>[];
   if (current.visibilityStationId case final station?) {
@@ -498,18 +562,53 @@ String _visibilityDetail(CurrentWeather current) {
   if (observed != null) source.add(observed);
   final sourceText = source.isEmpty ? '' : '\n${source.join(' · ')}';
   return '기상청 지상관측의 현재 가시거리는 ${_visibilityValue(meters)}예요.'
-      '$sourceText\n시간별·주간 미래 가시거리 예보로 확대하지 않아요.\n\n$visibilityRanges';
+      '$sourceText';
 }
 
 String _snowDepthValue(double value) => value == value.roundToDouble()
     ? value.toStringAsFixed(0)
     : value.toStringAsFixed(1);
 
+String _precipitationValue(double value) =>
+    value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+
+String _precipitationDescription(double amount, String? type) {
+  if (amount == 0) return '강수 없음';
+  final rain = type == 'RAIN' || type == 'SHOWER';
+  if (amount < 3) return rain ? '적은 비' : '적은 강수';
+  if (amount < 15) return rain ? '보통 비' : '보통 강수';
+  if (amount < 30) return rain ? '많은 비' : '많은 강수';
+  return rain ? '폭우' : '매우 많은 강수';
+}
+
+String _snowDepthDescription(double depth) {
+  if (depth == 0) return '쌓인 눈 없음';
+  if (depth < 1) return '조금 쌓임';
+  if (depth < 5) return '제법 쌓임';
+  if (depth < 20) return '많이 쌓임';
+  return '폭설';
+}
+
+const _airQualityRanges = '표현 기준 (좋음 / 보통 / 나쁨 / 매우 나쁨)\n'
+    '초미세먼지 PM2.5 (㎍/㎥): 15 이하 / 16~35 / 36~75 / 76 이상\n'
+    '미세먼지 PM10 (㎍/㎥): 30 이하 / 31~80 / 81~150 / 151 이상\n'
+    '오존 (ppm): 0.03 이하 / 0.03 초과~0.09 이하 / 0.09 초과~0.15 이하 / 0.15 초과';
+
+const _precipitationRanges = '표현 기준 (지난 1시간 강수량)\n'
+    '0mm: 강수 없음\n0mm 초과~3mm 미만: 적은 비\n'
+    '3~15mm 미만: 보통 비\n15~30mm 미만: 많은 비\n'
+    '30mm 이상: 폭우\n비로 확인되지 않으면 같은 양 구간을 강수로 표현해요.';
+
+const _snowDepthRanges = '표현 기준 (현재 총 적설 깊이)\n'
+    '0cm: 쌓인 눈 없음\n0cm 초과~1cm 미만: 조금 쌓임\n'
+    '1~5cm 미만: 제법 쌓임\n5~20cm 미만: 많이 쌓임\n'
+    '20cm 이상: 폭설';
+
 String _snowDepthDetail(CurrentWeather current) {
   final depth =
       current.snowDepthStatus == 'UNAVAILABLE' ? null : current.snowDepthCm;
   if (depth == null) {
-    return '기상청의 현재 적설 관측값을 받지 못했어요. 예보 신적설이나 지난 날 최심신적설로 대신 채우지 않아요.';
+    return '기상청의 현재 적설 관측값을 받지 못했어요.';
   }
   final station = current.snowDepthStationName?.trim();
   final source = [
@@ -520,14 +619,14 @@ String _snowDepthDetail(CurrentWeather current) {
       time,
   ].join(' · ');
   return '기상청 관측소에서 측정한 현재 총 적설은 ${_snowDepthValue(depth)}cm예요.'
-      '${source.isEmpty ? '' : '\n$source'}\n선택한 위치에서 직접 측정한 값은 아니며, 앞으로 새로 쌓일 눈의 예보 신적설과 달라요.';
+      '${source.isEmpty ? '' : '\n$source'}';
 }
 
 String _sunTimesValue(String? sunriseAt, String? sunsetAt) {
   final sunrise = _koreaClock(sunriseAt);
   final sunset = _koreaClock(sunsetAt);
   if (sunrise == null && sunset == null) return '자료 없음';
-  return '${sunrise ?? '--:--'} · ${sunset ?? '--:--'}';
+  return '일출 ${sunrise ?? '--:--'}\n일몰 ${sunset ?? '--:--'}';
 }
 
 String? _koreaClock(String? timestamp) {
@@ -605,6 +704,9 @@ const _metricValueStyle =
 const _metricStatusStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.w800);
 
 TextSpan _valueSpanFor(_WeatherMetric metric) {
+  if (metric.label == '일출/일몰') {
+    return TextSpan(text: metric.value, style: _metricStatusStyle);
+  }
   final lineBreak = metric.value.indexOf('\n');
   if (lineBreak != -1) {
     return TextSpan(children: [
@@ -623,7 +725,7 @@ TextSpan _valueSpanFor(_WeatherMetric metric) {
           .contains(metric.value);
   return TextSpan(
     text: metric.value,
-    style: metric.label == '일출·일몰' || isLevel
+    style: metric.label == '일출/일몰' || isLevel
         ? _metricStatusStyle
         : _metricValueStyle,
   );
@@ -740,16 +842,54 @@ void _showMetricDetail(BuildContext context, _WeatherMetric metric) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              metric.levelTitle,
-              key: ValueKey('weather-metric-level-${metric.label}'),
-              style: TextStyle(
-                color: WeatherCareTheme.of(dialogContext).primaryDeep,
-                fontWeight: FontWeight.w800,
+            Container(
+              key: ValueKey('weather-metric-current-${metric.label}'),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: WeatherCareTheme.of(dialogContext).primarySoft,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('현재 표시값',
+                      style: Theme.of(dialogContext).textTheme.labelMedium),
+                  const SizedBox(height: 6),
+                  Text(
+                    metric.value.replaceAll('\n', ' · '),
+                    style: Theme.of(dialogContext)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(
+                          color: WeatherCareTheme.of(dialogContext).primaryDeep,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    metric.levelTitle,
+                    key: ValueKey('weather-metric-level-${metric.label}'),
+                    style: TextStyle(
+                      color: WeatherCareTheme.of(dialogContext).primaryDeep,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(metric.detailBody),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            Text(metric.detailBody),
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+            Text('표현 기준과 해석',
+                style: Theme.of(dialogContext).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    )),
+            const SizedBox(height: 8),
+            Text(metric.interpretation,
+                key: ValueKey('weather-metric-interpretation-${metric.label}')),
           ],
         ),
       ),
@@ -769,6 +909,7 @@ class _WeatherMetric {
   final String value;
   final String levelTitle;
   final String detailBody;
+  final String interpretation;
 
   const _WeatherMetric({
     required this.icon,
@@ -776,5 +917,6 @@ class _WeatherMetric {
     required this.value,
     required this.levelTitle,
     required this.detailBody,
+    required this.interpretation,
   });
 }

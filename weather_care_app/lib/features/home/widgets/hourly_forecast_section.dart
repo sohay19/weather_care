@@ -23,6 +23,9 @@ class HourlyForecastSection extends StatefulWidget {
   final String? generatedAt;
   final DateTime? receivedAt;
   final DateTime? now;
+  final String? targetDate;
+  final bool availableOnly;
+  final bool inline;
   final WeatherDataPhase dataPhase;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
@@ -34,6 +37,9 @@ class HourlyForecastSection extends StatefulWidget {
     this.generatedAt,
     this.receivedAt,
     this.now,
+    this.targetDate,
+    this.availableOnly = false,
+    this.inline = false,
     this.dataPhase = WeatherDataPhase.ready,
     this.onRetryMissingData,
     this.retrying = false,
@@ -48,16 +54,19 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
 
   @override
   Widget build(BuildContext context) {
-    final today = dateInKorea(responseNow(
-      widget.now ?? DateTime.now(),
-      generatedAt: widget.generatedAt,
-      receivedAt: widget.receivedAt,
-    ));
+    final today = widget.targetDate ??
+        dateInKorea(responseNow(
+          widget.now ?? DateTime.now(),
+          generatedAt: widget.generatedAt,
+          receivedAt: widget.receivedAt,
+        ));
     final hourlyByHour = <int, HourlyWeatherItem>{};
     final precipitationByHour = <int, HourlyWeatherItem>{};
+    final snowfallByHour = <int, HourlyWeatherItem>{};
     for (final item in widget.items) {
       final hour = int.tryParse(item.time);
-      final isToday = item.forecastDate == null || item.forecastDate == today;
+      final isToday = item.forecastDate == today ||
+          (widget.targetDate == null && item.forecastDate == null);
       if (isToday && hour != null && hour >= 0 && hour < 24) {
         hourlyByHour.putIfAbsent(hour, () => item);
       }
@@ -65,13 +74,24 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
       if (period != null && period.date == today) {
         final startHour =
             period.start.toUtc().add(const Duration(hours: 9)).hour;
-        precipitationByHour.putIfAbsent(startHour, () => item);
+        final previous = precipitationByHour[startHour];
+        if (previous == null ||
+            !_hasValue(_HourlyMetric.precipitation, previous)) {
+          precipitationByHour[startHour] = item;
+        }
+        snowfallByHour.putIfAbsent(startHour, () => item);
       } else if (period == null &&
+          !widget.availableOnly &&
           isToday &&
           hour != null &&
           hour >= 0 &&
           hour < 24) {
-        precipitationByHour.putIfAbsent(hour, () => item);
+        final previous = precipitationByHour[hour];
+        if (previous == null ||
+            !_hasValue(_HourlyMetric.precipitation, previous)) {
+          precipitationByHour[hour] = item;
+        }
+        snowfallByHour.putIfAbsent(hour, () => item);
       }
     }
     final emptySlots = [
@@ -88,14 +108,31 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
           skyCondition: null,
         ),
     ];
-    final selectedItems = [
-      for (var hour = 0; hour < 24; hour++)
-        (_selected == _HourlyMetric.precipitation ||
-                    _selected == _HourlyMetric.snowfall
-                ? precipitationByHour[hour]
-                : hourlyByHour[hour]) ??
-            emptySlots[hour],
+    Map<int, HourlyWeatherItem> itemsFor(_HourlyMetric metric) =>
+        switch (metric) {
+          _HourlyMetric.precipitation => precipitationByHour,
+          _HourlyMetric.snowfall => snowfallByHour,
+          _ => hourlyByHour,
+        };
+    final availableMetrics = [
+      for (final metric in _HourlyMetric.values)
+        if (!widget.availableOnly ||
+            itemsFor(metric).values.any((item) => _hasValue(metric, item)))
+          metric,
     ];
+    if (availableMetrics.isEmpty) return const SizedBox.shrink();
+    final selected = availableMetrics.contains(_selected)
+        ? _selected
+        : availableMetrics.first;
+    final selectedItems = <HourlyWeatherItem>[];
+    for (var hour = 0; hour < 24; hour++) {
+      final item = itemsFor(selected)[hour];
+      if (widget.availableOnly) {
+        if (item != null && _hasValue(selected, item)) selectedItems.add(item);
+      } else {
+        selectedItems.add(item ?? emptySlots[hour]);
+      }
+    }
     final hasMissingData = hourlyByHour.isEmpty ||
         hourlyByHour.values.any(
           (item) =>
@@ -109,37 +146,61 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
     return Container(
       key: ValueKey(widget.keyPrefix == 'main'
           ? 'main-hourly-timeline-section'
-          : 'today-hourly-forecast-section'),
-      padding: const EdgeInsets.all(20),
-      decoration: WeatherCareTheme.of(context).surfaceDecoration(),
+          : widget.inline
+              ? '${widget.keyPrefix}-hourly-timeline-section'
+              : 'today-hourly-forecast-section'),
+      padding: widget.inline
+          ? const EdgeInsets.only(top: 12)
+          : const EdgeInsets.all(20),
+      decoration: widget.inline
+          ? null
+          : WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HomeSectionHeader(
-            icon: Icons.schedule_rounded,
-            title: '타임라인',
-            subtitle: '항목을 선택해 시간별로 비교해요',
-            trailing: IconButton(
-              key: ValueKey('${widget.keyPrefix}-hourly-info'),
-              tooltip: '타임라인 안내',
-              onPressed: () => _showHourlyInfo(context),
-              iconSize: 16,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-              style: const ButtonStyle(
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          if (widget.inline)
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  key: ValueKey('${widget.keyPrefix}-hourly-title-icon'),
+                  size: 18,
+                  color: WeatherCareTheme.of(context).primaryDeep,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text('시간별 예보',
+                      style: Theme.of(context).textTheme.labelLarge),
+                ),
+              ],
+            )
+          else
+            HomeSectionHeader(
+              icon: Icons.schedule_rounded,
+              title: '타임라인',
+              subtitle: '항목을 선택해 시간별로 비교해요',
+              trailing: IconButton(
+                key: ValueKey('${widget.keyPrefix}-hourly-info'),
+                tooltip: '타임라인 안내',
+                onPressed: () => _showHourlyInfo(context),
+                iconSize: 16,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints.tightFor(width: 32, height: 32),
+                style: const ButtonStyle(
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: Icon(Icons.error_outline_rounded,
+                    color: WeatherCareTheme.of(context).primaryDeep),
               ),
-              icon: Icon(Icons.error_outline_rounded,
-                  color: WeatherCareTheme.of(context).primaryDeep),
             ),
-          ),
           const SizedBox(height: 12),
           SingleChildScrollView(
             key: ValueKey('${widget.keyPrefix}-hourly-filters'),
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                for (final metric in _HourlyMetric.values)
+                for (final metric in availableMetrics)
                   Padding(
                     padding: const EdgeInsets.only(right: 7),
                     child: ChoiceChip(
@@ -147,7 +208,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
                           '${widget.keyPrefix}-hourly-filter-${metric.name}'),
                       showCheckmark: false,
                       label: Text(_metricLabel(metric)),
-                      selected: _selected == metric,
+                      selected: selected == metric,
                       onSelected: (_) => setState(() => _selected = metric),
                     ),
                   ),
@@ -165,18 +226,14 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
                   _HourlyPoint(
                     key: ValueKey('${widget.keyPrefix}-hourly-$index'),
                     item: selectedItems[index],
-                    metric: _selected,
+                    metric: selected,
                     dataPhase: widget.dataPhase,
                     today: today,
                   ),
               ],
             ),
           ),
-          if ((_selected == _HourlyMetric.precipitation ||
-                      _selected == _HourlyMetric.snowfall
-                  ? precipitationByHour
-                  : hourlyByHour)
-              .isEmpty) ...[
+          if (itemsFor(selected).isEmpty) ...[
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
@@ -217,6 +274,21 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
     );
   }
 }
+
+bool _hasValue(_HourlyMetric metric, HourlyWeatherItem item) =>
+    switch (metric) {
+      _HourlyMetric.weather =>
+        item.skyCondition != null || item.temperature != null,
+      _HourlyMetric.precipitation => item.precipitationProbability != null ||
+          item.precipitationAmount != null ||
+          item.precipitationAmountLabel != null,
+      _HourlyMetric.snowfall => item.snowExpected != null ||
+          item.snowfallAmount != null ||
+          item.snowfallAmountLabel != null,
+      _HourlyMetric.uv => item.uvIndex != null,
+      _HourlyMetric.wind => item.windSpeed != null,
+      _HourlyMetric.humidity => item.humidity != null,
+    };
 
 void _showHourlyInfo(BuildContext context) {
   showDialog<void>(

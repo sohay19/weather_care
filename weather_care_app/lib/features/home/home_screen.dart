@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 
 import '../../models/app_settings.dart';
@@ -31,12 +32,14 @@ import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../../utils/korea_date.dart';
 import '../settings/settings_screen.dart';
+import '../settings/region_picker_screen.dart';
 import '../ads/consent_aware_native_ad_card.dart';
 import 'weather_labels.dart';
 import 'weather_data_phase.dart';
 import 'tabs/evidence_focus.dart';
 import 'tabs/main_tab.dart';
 import 'tabs/today_tab.dart';
+import 'tabs/extra_tab.dart';
 import 'tabs/week_tab.dart';
 import 'widgets/server_connection_failure_dialog.dart';
 import 'widgets/permission_onboarding_dialog.dart';
@@ -51,6 +54,8 @@ class HomeScreen extends StatefulWidget {
   final SettingsSyncService? settingsSync;
   final NotificationRegistrationService? notificationRegistration;
   final RegionCatalog? regionCatalog;
+  final RegionMapBuilder? regionMapBuilder;
+  final Future<bool> Function(Uri)? openExternalLink;
   final NotificationPermissionService? notificationPermission;
   final ServerDataAccess? serverDataAccess;
   final PermissionOnboardingStore permissionOnboardingStore;
@@ -61,7 +66,7 @@ class HomeScreen extends StatefulWidget {
 
   const HomeScreen({
     super.key,
-    this.initialIndex = 1,
+    this.initialIndex = 2,
     this.initialNotificationTopic,
     this.locationService = const CurrentLocationService(),
     this.gpsRegionNameService = const PlatformGpsRegionNameService(),
@@ -69,6 +74,8 @@ class HomeScreen extends StatefulWidget {
     this.settingsSync,
     this.notificationRegistration,
     this.regionCatalog,
+    this.regionMapBuilder,
+    this.openExternalLink,
     this.notificationPermission,
     this.serverDataAccess,
     this.permissionOnboardingStore = const PermissionOnboardingStore(),
@@ -262,12 +269,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _settings = AppSettings.fallback('initializing-installation');
     _selectedIndex = widget.initialIndex < 0
         ? 0
-        : widget.initialIndex > 3
-            ? 3
+        : widget.initialIndex > 4
+            ? 4
             : widget.initialIndex;
     _todayAdvertisementActivated = _selectedIndex == 0;
-    _mainAdvertisementActivated = _selectedIndex == 1;
-    _weekAdvertisementActivated = _selectedIndex == 2;
+    _mainAdvertisementActivated = _selectedIndex == 2;
+    _weekAdvertisementActivated = _selectedIndex == 3;
     _detailFocusTopic = widget.initialNotificationTopic;
     _scheduleWeatherHourRefresh();
     _initialize();
@@ -491,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _loadMode = WeatherLoadMode.unavailable;
             _statusMessage = _settings.locationMode == 'GPS'
                 ? '${_location.message}.\n위치 권한을 확인하거나 지역을 직접 선택해주세요.'
-                : '저장된 지역을 확인할 수 없어요.\nSetting에서 위치를 다시 선택해주세요.';
+                : '저장된 지역을 확인할 수 없어요.\nMain에서 구역을 다시 추가해주세요.';
           });
           _clearHomeWidget();
           _notificationRegistration?.invalidateLocation();
@@ -1067,6 +1074,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             )
                           : null,
                     ),
+              ExtraTab(
+                  client: _service?.client,
+                  grid: _weatherGrid,
+                  active: _selectedIndex == 1),
               today == null
                   ? _statusView('main-tab')
                   : MainTab(
@@ -1086,6 +1097,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRetryComparison: _retryYesterdayComparison,
                       retryingData: _todayRetrying,
                       onDetail: _openRecommendationDetail,
+                      savedRegions: [
+                        for (final key in _settings.savedRegionKeys)
+                          if (_regionCatalog?.find(key) case final region?)
+                            region,
+                      ],
+                      selectedRegionKey: _settings.manualRegionKey,
+                      gpsSelected: _settings.locationMode == 'GPS',
+                      onSelectGps: () {
+                        if (_settings.locationMode != 'GPS') {
+                          unawaited(_handleSettingsChanged(
+                              _settings.copyWith(locationMode: 'GPS')));
+                        }
+                      },
+                      onSelectRegion: (region) => unawaited(
+                        _handleSettingsChanged(_settings.copyWith(
+                          locationMode: 'MANUAL',
+                          currentRegionId: region.gridId,
+                          manualRegionKey: region.key,
+                        )),
+                      ),
+                      onAddRegion: () => unawaited(_addRegion()),
+                      onOpenWeatherMap: () => unawaited(_openWeatherMap()),
                       advertisement: _mainAdvertisementActivated &&
                               !(widget.adRemoval?.isOwned ?? false)
                           ? ConsentAwareNativeAdCard(
@@ -1117,11 +1150,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       now: widget.now,
                       fallbackGeneratedAt: today?.generatedAt,
                       fallbackReceivedAt: today?.receivedAt,
+                      hourly: visibleToday?.hourly ?? const [],
+                      timelineHourly: visibleToday?.timelineHourly ?? const [],
                       advertisement: _weekAdvertisementActivated &&
                               !(widget.adRemoval?.isOwned ?? false)
                           ? ConsentAwareNativeAdCard(
                               placement: NativeAdPlacement.week,
-                              size: NativeAdCardSize.medium,
+                              size: NativeAdCardSize.small,
                               adRemoval: widget.adRemoval,
                             )
                           : null,
@@ -1151,6 +1186,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 color: WeatherCareTheme.of(context).primaryDeep,
               ),
               label: 'Today',
+            ),
+            NavigationDestination(
+              tooltip: '격자와 관측 지점 자료',
+              icon: Icon(
+                Icons.query_stats_outlined,
+                color: WeatherCareTheme.of(context).textSecondary,
+              ),
+              selectedIcon: Icon(
+                Icons.query_stats_rounded,
+                color: WeatherCareTheme.of(context).primaryDeep,
+              ),
+              label: 'Data',
             ),
             NavigationDestination(
               tooltip: '날씨, Check List, 어제 비교와 예상',
@@ -1235,7 +1282,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openManualRegionMenu() {
-    _selectTab(3);
+    unawaited(_addRegion());
+  }
+
+  Future<void> _addRegion() async {
+    final selected = await Navigator.of(context).push<ForecastGridSelection>(
+      MaterialPageRoute(
+        builder: (_) => RegionPickerScreen(
+          loadCatalog: _loadRegionCatalog,
+          selectedGridId: _settings.currentRegionId,
+          selectedRegionKey: _settings.manualRegionKey,
+          mapBuilder: widget.regionMapBuilder,
+        ),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    final keys = [..._settings.savedRegionKeys];
+    if (!keys.contains(selected.regionKey)) keys.add(selected.regionKey);
+    await _handleSettingsChanged(_settings.copyWith(
+      locationMode: 'MANUAL',
+      currentRegionId: selected.gridId,
+      manualRegionKey: selected.regionKey,
+      savedRegionKeys: keys,
+    ));
+  }
+
+  Future<void> _openWeatherMap() async {
+    var opened = false;
+    try {
+      final uri = Uri.parse('https://weather-care.pages.dev/weather-map');
+      opened = await (widget.openExternalLink?.call(uri) ??
+          launchUrl(uri, mode: LaunchMode.externalApplication));
+    } catch (_) {
+      // 브라우저를 열 수 없으면 아래 안내를 표시한다.
+    }
+    if (!mounted || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('예보 구역 지도를 열지 못했어요.\n인터넷 연결을 확인해주세요.'),
+    ));
   }
 
   void _selectTab(int index) {
@@ -1250,8 +1334,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
       _selectedIndex = index;
       if (index == 0) _todayAdvertisementActivated = true;
-      if (index == 1) _mainAdvertisementActivated = true;
-      if (index == 2) _weekAdvertisementActivated = true;
+      if (index == 2) _mainAdvertisementActivated = true;
+      if (index == 3) _weekAdvertisementActivated = true;
     });
   }
 

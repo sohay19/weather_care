@@ -13,7 +13,7 @@ Widget _app(Widget home) => MaterialApp(
     );
 
 void main() {
-  testWidgets('광고 제거 배너는 지역 선택 위에서 상세 화면을 연다', (tester) async {
+  testWidgets('광고 제거 배너는 설정 메뉴 위에서 상세 화면을 연다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -21,9 +21,8 @@ void main() {
 
     await tester.pumpWidget(_app(const SettingsScreen()));
     final menu = find.byKey(const ValueKey('ad-removal-menu'));
-    final location = find.byKey(const ValueKey('location-settings-menu'));
-    expect(
-        tester.getTopLeft(menu).dy, lessThan(tester.getTopLeft(location).dy));
+    final theme = find.byKey(const ValueKey('theme-mode-menu'));
+    expect(tester.getTopLeft(menu).dy, lessThan(tester.getTopLeft(theme).dy));
     await tester.tap(menu);
     await tester.pumpAndSettle();
 

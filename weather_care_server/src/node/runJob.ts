@@ -1,5 +1,8 @@
 import {
   CORE_COLLECTION_CRON,
+  GRID_HOURLY_CRON,
+  GRID_LIGHTNING_CRON,
+  GRID_RIVER_FLOW_CRON,
   CURRENT_OBSERVATION_CRON,
   RADAR_COLLECTION_CRON,
   ROAD_ICE_COLLECTION_CRON,
@@ -9,12 +12,16 @@ import { pathToFileURL } from 'node:url';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { assertNodeEnvironment, createNodeRuntime } from './runtime';
 import type { ScheduledJobName } from './schedule';
+import { loadGridExtraConfig } from './gridExtraConfig';
 
 const cronByJob: Record<ScheduledJobName, string> = {
   core: CORE_COLLECTION_CRON,
   observation: CURRENT_OBSERVATION_CRON,
   radar: RADAR_COLLECTION_CRON,
   'road-ice': ROAD_ICE_COLLECTION_CRON,
+  'grid-hourly': GRID_HOURLY_CRON,
+  'grid-lightning': GRID_LIGHTNING_CRON,
+  'grid-river-flow': GRID_RIVER_FLOW_CRON,
 };
 
 export async function runNodeJob(
@@ -23,7 +30,8 @@ export async function runNodeJob(
   runtime = createNodeRuntime(),
 ): Promise<void> {
   try {
-    await runScheduledJobs(runtime.env, cronByJob[job], scheduledAt.getTime());
+    await runScheduledJobs(runtime.env, cronByJob[job], scheduledAt.getTime(),
+      loadGridExtraConfig(process.env.GRID_COLLECTION_CONFIG_PATH) ?? undefined);
   } finally {
     runtime.close();
   }

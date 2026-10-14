@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { ServerEnv } from './types';
 import weatherRoutes from './api/weather';
+import gridExtraRoutes from './api/gridExtra';
 import comparisonRoutes from './api/comparison';
 import installationsRoutes from './api/installations';
 import notificationSettingsRoutes from './api/notificationSettings';
@@ -28,6 +29,7 @@ app.onError((error, c) => {
 app.get('/health', (c) => c.text('ok'));
 
 app.route('/api/v1/weather', weatherRoutes);
+app.route('/api/v1/weather/extra', gridExtraRoutes);
 app.route('/api/v1/weather/comparison', comparisonRoutes);
 app.route('/api/v1/installations', installationOwnershipRoutes);
 app.route('/api/v1/installations', installationsRoutes);

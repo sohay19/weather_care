@@ -39,6 +39,8 @@ export async function runDataRetentionJob(db: D1Database, now = new Date()) {
       AND julianday(json_extract(payload,'$.observedAt')) < julianday(?, '-3 days')`).bind(timestamp),
     db.prepare(`DELETE FROM api_usage_daily
       WHERE usage_date < date(?, '-31 days')`).bind(timestamp),
+    db.prepare(`DELETE FROM grid_extra_snapshots
+      WHERE collected_at < ?`).bind(new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString()),
     db.prepare(`DELETE FROM weather_cache
       WHERE cache_type IN ('COLLECTED_PRECIPITATION', 'COLLECTED_ROAD_ICE', 'COLLECTED_ROAD_CONTROL', 'COLLECTED_ROAD_CONTROL_SNAPSHOT', 'COLLECTED_HOURLY_OBSERVATION', 'GRID_OBSERVATION_FETCH_LEASE', 'NATIONAL_SOURCE_LEASE', 'NATIONAL_APIHUB_ATTEMPT', 'POINT_FORECAST_TARGETS', 'POINT_FORECAST_ATTEMPT', 'COLLECTED_POINT_FORECAST')
         AND julianday(updated_at) < julianday(?, '-2 days')`).bind(timestamp),

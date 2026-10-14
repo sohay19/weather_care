@@ -29,9 +29,9 @@ export async function reserveApiHubBudget(
        (usage_date, provider, request_count, response_bytes, updated_at)
      SELECT ?, ?, ?, ?, ? WHERE
        (SELECT COALESCE(SUM(request_count), 0) FROM api_usage_daily
-        WHERE usage_date = ? AND provider NOT LIKE 'ITS_%' AND provider NOT LIKE 'DATA_GO_%') + ? <= ?
+        WHERE usage_date = ? AND provider NOT LIKE 'ITS_%' AND provider NOT LIKE 'DATA_GO_%' AND provider NOT LIKE 'NIFS_%' AND provider NOT LIKE 'HRFCO_%') + ? <= ?
        AND (SELECT COALESCE(SUM(response_bytes), 0) FROM api_usage_daily
-        WHERE usage_date = ? AND provider NOT LIKE 'ITS_%' AND provider NOT LIKE 'DATA_GO_%') + ? <= ?
+        WHERE usage_date = ? AND provider NOT LIKE 'ITS_%' AND provider NOT LIKE 'DATA_GO_%' AND provider NOT LIKE 'NIFS_%' AND provider NOT LIKE 'HRFCO_%') + ? <= ?
        AND (? IS NULL OR (SELECT COALESCE(SUM(response_bytes), 0) FROM api_usage_daily
         WHERE usage_date = ? AND provider = ?) + ? <= ?)
        AND (? IS NULL OR (SELECT COALESCE(SUM(response_bytes), 0) FROM api_usage_daily
@@ -57,7 +57,8 @@ export async function getApiHubUsage(
     `SELECT COALESCE(SUM(request_count), 0) AS requestCount,
             COALESCE(SUM(response_bytes), 0) AS responseBytes
      FROM api_usage_daily
-     WHERE usage_date = ? AND provider NOT LIKE 'ITS_%' AND provider NOT LIKE 'DATA_GO_%'`,
+     WHERE usage_date = ? AND provider NOT LIKE 'ITS_%' AND provider NOT LIKE 'DATA_GO_%'
+       AND provider NOT LIKE 'NIFS_%' AND provider NOT LIKE 'HRFCO_%'`,
   ).bind(koreanDate(now)).first<ApiUsageDaily>();
   return {
     requestCount: Number(row?.requestCount ?? 0),

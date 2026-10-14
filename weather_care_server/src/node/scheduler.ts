@@ -1,5 +1,8 @@
 import {
   CORE_COLLECTION_CRON,
+  GRID_HOURLY_CRON,
+  GRID_LIGHTNING_CRON,
+  GRID_RIVER_FLOW_CRON,
   CURRENT_OBSERVATION_CRON,
   RADAR_COLLECTION_CRON,
   ROAD_ICE_COLLECTION_CRON,
@@ -9,16 +12,21 @@ import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { prewarmNationwideInRuntime } from './prewarmNationwide';
 import { assertNodeEnvironment, createNodeRuntime } from './runtime';
 import { dueScheduledJobs, scheduledMinute, type ScheduledJobName } from './schedule';
+import { loadGridExtraConfig } from './gridExtraConfig';
 
 const cronByJob: Record<ScheduledJobName, string> = {
   core: CORE_COLLECTION_CRON,
   observation: CURRENT_OBSERVATION_CRON,
   radar: RADAR_COLLECTION_CRON,
   'road-ice': ROAD_ICE_COLLECTION_CRON,
+  'grid-hourly': GRID_HOURLY_CRON,
+  'grid-lightning': GRID_LIGHTNING_CRON,
+  'grid-river-flow': GRID_RIVER_FLOW_CRON,
 };
 
 assertNodeEnvironment();
 const runtime = createNodeRuntime();
+const gridConfig = loadGridExtraConfig(process.env.GRID_COLLECTION_CONFIG_PATH);
 const delivered = new Set<string>();
 const running = new Set<Promise<void>>();
 const runningJobs = new Set<ScheduledJobName>();
@@ -44,6 +52,7 @@ function runDueJobs(now = new Date()): void {
       runtime.env,
       cronByJob[job],
       scheduledAt.getTime(),
+      gridConfig ?? undefined,
     ).then(() => {
       console.log(JSON.stringify({
         event: 'node_scheduled_job_completed', job, scheduledAt: scheduledAt.toISOString(),

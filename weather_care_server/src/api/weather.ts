@@ -82,9 +82,7 @@ import type { DailyAirQualityForecastAtDate } from '../providers/air/airKoreaFor
 import { readCollectedAirForecast } from '../providers/air/airKoreaForecastProvider';
 import {
   currentKoreanCalendarWeek,
-  getWeeklyForecastRecords,
   koreanCalendarDate,
-  saveWeeklyForecastRecords,
 } from '../database/weeklyForecastRepository';
 import {
   cacheRecordIsFresh,
@@ -552,7 +550,7 @@ router.get('/weekly', async (c) => {
     const today = koreanCalendarDate(now);
     const nationwideLocation = await resolveSavedLocation(c.env.DB, { nx, ny, adminCode, regionName: requestedRegionName,
       coordinates: coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude')) }, now);
-    const [collected, settings, savedDays] = await Promise.all([
+    const [collected, settings] = await Promise.all([
       readNationwideWeekly(c.env.DB, nationwideLocation, now),
       settingsForRequest(
         c.env.DB,
@@ -560,20 +558,6 @@ router.get('/weekly', async (c) => {
         c.req.header('Authorization'),
         c.req.query('widgetSettings'),
       ),
-      c.env.DB
-        ? getWeeklyForecastRecords(
-            c.env.DB,
-            regionId,
-            calendarWeek.startDate,
-            calendarWeek.endDate,
-          ).catch((error: unknown) => {
-            console.error(JSON.stringify({
-              event: 'weekly_forecast_history_load_failed',
-              error: safeErrorName(error),
-            }));
-            return [];
-          })
-        : Promise.resolve([] as DailyWeatherForecast[]),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
@@ -654,19 +638,9 @@ router.get('/weekly', async (c) => {
     const displayedDays = weeklyCalendarDays(
       liveDays,
       observedDays,
-      savedDays,
       calendarWeek.dates,
       today,
     );
-    if (c.env.DB) {
-      await saveWeeklyForecastRecords(c.env.DB, regionId, liveDays, now)
-        .catch((error: unknown) => {
-          console.error(JSON.stringify({
-            event: 'weekly_forecast_history_save_failed',
-            error: safeErrorName(error),
-          }));
-        });
-    }
     const response = {
       dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
       generatedAt: now.toISOString(),
@@ -703,9 +677,11 @@ router.get('/weekly', async (c) => {
           : undefined,
         airQualityForecast: day.airQualityForecast,
         forecastSource: day.forecastSource,
-        source: day.forecastSource === 'KMA_MID_TERM'
-          ? 'MID_TERM'
-          : 'SHORT_TERM',
+        source: day.forecastSource === 'KMA_OBSERVATION'
+          ? 'OBSERVATION'
+          : day.forecastSource === 'KMA_MID_TERM'
+            ? 'MID_TERM'
+            : 'SHORT_TERM',
         issuedAt: day.issuedAt,
         recordedAt: day.recordedAt,
         historical: day.historical === true,
@@ -886,20 +862,20 @@ export function enrichWeeklyForecastDays(
 export function weeklyCalendarDays(
   liveDays: DailyWeatherForecast[],
   observedDays: DailyWeatherForecast[],
-  savedDays: DailyWeatherForecast[],
   calendarDates: string[],
   today: string,
 ): DailyWeatherForecast[] {
   const live = new Map(liveDays.map((day) => [compactCalendarDate(day.date), day]));
   const observed = new Map(
-    observedDays.map((day) => [compactCalendarDate(day.date), day]),
+    observedDays
+      .filter((day) => day.forecastSource === 'KMA_OBSERVATION')
+      .map((day) => [compactCalendarDate(day.date), day]),
   );
-  const saved = new Map(savedDays.map((day) => [compactCalendarDate(day.date), day]));
   const result: DailyWeatherForecast[] = [];
   for (const date of calendarDates) {
     if (date < today) {
-      const recorded = observed.get(date) ?? saved.get(date);
-      if (recorded) result.push({ ...recorded, historical: true });
+      const observation = observed.get(date);
+      if (observation) result.push({ ...observation, historical: true });
       continue;
     }
     const current = live.get(date);

@@ -385,7 +385,7 @@ describe('weekly calendar date contract', () => {
     expect(enriched[1].maximumUvIndex).toBeUndefined();
   });
 
-  it('uses short-term days first, fills later dates from mid-term, and keeps saved past records', () => {
+  it('uses short-term and mid-term forecasts only for today and later dates', () => {
     const short = {
       ...day(25),
       date: '20260915',
@@ -409,22 +409,25 @@ describe('weekly calendar date contract', () => {
       },
     ], [mid])).toEqual([mid]);
 
-    const recorded = {
+    const pastForecast = {
       ...day(21),
       date: '20260913',
-      recordedAt: '2026-09-12T21:00:00.000Z',
     };
     expect(weeklyCalendarDays(
-      merged,
+      [...merged, pastForecast],
       [],
-      [recorded],
       ['2026-09-13', '2026-09-15', '2026-09-19'],
       '2026-09-15',
     )).toEqual([
-      { ...recorded, historical: true },
       { ...short, historical: false },
       { ...mid, historical: false },
     ]);
+    expect(weeklyCalendarDays(
+      [],
+      [pastForecast],
+      ['2026-09-13'],
+      '2026-09-15',
+    )).toEqual([]);
 
     const observed = {
       ...day(20),
@@ -432,9 +435,8 @@ describe('weekly calendar date contract', () => {
       forecastSource: 'KMA_OBSERVATION' as const,
     };
     expect(weeklyCalendarDays(
-      merged,
+      [...merged, pastForecast],
       [observed],
-      [recorded],
       ['2026-09-13'],
       '2026-09-15',
     )).toEqual([{ ...observed, historical: true }]);

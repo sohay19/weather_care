@@ -409,6 +409,10 @@ export type ServerEnv = {
   GA_PROPERTY_ID: string;
   KMA_SERVICE_KEY: string;
   KMA_APIHUB_KEY: string;
+  KHOA_SERVICE_KEY?: string;
+  KWATER_SERVICE_KEY?: string;
+  NIFS_API_KEY?: string;
+  HRFCO_API_KEY?: string;
   FCM_CLIENT_EMAIL: string;
   FCM_PRIVATE_KEY: string;
   GA_ADMIN_CLIENT_EMAIL: string;

@@ -1,5 +1,8 @@
 import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
 import { ServerEnv } from '../types';
+import { collectGridHourly, collectGridLightning, collectGridRiverFlow,
+  type GridExtraConfig } from '../collection/gridExtraCollection';
+import { selectGridCollectionStations } from '../collection/gridStationSelection';
 import { clearExpiredEnrollmentData } from '../security/installationAccess';
 import { runDataRetentionJob } from '../database/dataRetention';
 import {
@@ -11,6 +14,14 @@ export const RADAR_COLLECTION_CRON = '2-59/15 * * * *';
 export const ROAD_ICE_COLLECTION_CRON = '7-59/30 * * * *';
 export const CORE_COLLECTION_CRON = '*/10 * * * *';
 export const CURRENT_OBSERVATION_CRON = '*/2 * * * *';
+export const GRID_HOURLY_CRON = '6 * * * *';
+export const GRID_LIGHTNING_CRON = '5-59/10 * * * *';
+export const GRID_RIVER_FLOW_CRON = '19 * * * *';
+
+const emptyGridConfig: GridExtraConfig = {
+  tideStations: [], buoyStations: [], forecastStations: [], ripCurrentBeaches: [],
+  romsAreas: [], riverStations: [], dams: [],
+};
 
 export async function runForecastRefreshJob(env: ServerEnv): Promise<void> {
   if (!env.DB) return;
@@ -21,8 +32,26 @@ export async function runScheduledJobs(
   env: ServerEnv,
   cron: string,
   scheduledTime?: number,
+  gridConfig?: GridExtraConfig,
 ): Promise<void> {
   const now = scheduledTime === undefined ? new Date() : new Date(scheduledTime);
+  if (cron === GRID_HOURLY_CRON) {
+    const config = await selectGridCollectionStations(env.DB, gridConfig ?? emptyGridConfig);
+    await collectGridHourly({ db: env.DB, config, now,
+      khoaKey: decodePublicDataKey(env.KHOA_SERVICE_KEY || env.KMA_SERVICE_KEY),
+      kwaterKey: decodePublicDataKey(env.KWATER_SERVICE_KEY || env.KMA_SERVICE_KEY),
+      nifsKey: env.NIFS_API_KEY });
+    return;
+  }
+  if (cron === GRID_LIGHTNING_CRON) {
+    await collectGridLightning({ db: env.DB, key: env.KMA_APIHUB_KEY, now });
+    return;
+  }
+  if (cron === GRID_RIVER_FLOW_CRON) {
+    if (env.HRFCO_API_KEY)
+      await collectGridRiverFlow({ db: env.DB, key: env.HRFCO_API_KEY, now });
+    return;
+  }
   if (cron === ROAD_ICE_COLLECTION_CRON) {
     await runWeatherCollectionJob(env, {
       now,
@@ -52,6 +81,12 @@ export async function runScheduledJobs(
     collectRoadIce: false,
   });
   await runRecommendationNotificationJobFromCron(env, scheduledTime);
+}
+
+function decodePublicDataKey(key: string | undefined): string | undefined {
+  if (!key) return undefined;
+  try { return decodeURIComponent(key); }
+  catch { return key; }
 }
 
 export async function runRecommendationNotificationJobFromCron(

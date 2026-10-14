@@ -25,6 +25,16 @@ describe('미니 PC Node 런타임', () => {
       .toBe('2026-09-17T00:37:00.000Z');
   });
 
+  it('격자 부가자료 수집을 예정된 분에 배치한다', () => {
+    expect(dueScheduledJobs(new Date('2026-10-14T00:05:00Z'))).toEqual(['grid-lightning']);
+    expect(dueScheduledJobs(new Date('2026-10-14T00:06:00Z'))).toEqual([
+      'observation', 'grid-hourly',
+    ]);
+    expect(dueScheduledJobs(new Date('2026-10-14T00:19:00Z'))).toEqual([
+      'grid-river-flow',
+    ]);
+  });
+
   it('백업 파일명에서 밀리초와 경로 비호환 문자를 제거한다', () => {
     expect(backupTimestamp(new Date('2026-09-17T06:34:05.326Z')))
       .toBe('20260917T063405Z');

@@ -17,6 +17,8 @@ class PrepareTestDbTest(unittest.TestCase):
             )
             for path, label in ((live_path, "live"), (test_path, "test")):
                 with closing(sqlite3.connect(path)) as db, db:
+                    if label == "live":
+                        db.execute("PRAGMA journal_mode=WAL")
                     for table in TEST_ONLY_TABLES:
                         db.execute(f'CREATE TABLE "{table}" (value TEXT)')
                         db.execute(f'INSERT INTO "{table}" VALUES (?)', (label,))

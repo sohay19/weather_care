@@ -110,6 +110,7 @@ def prepare(live_path: Path, test_path: Path, output_path: Path) -> dict[str, in
                 )
             for _, sql in triggers:
                 db.execute(sql)
+        db.execute("DETACH DATABASE test")
         if db.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise RuntimeError("TEST_DATABASE_QUICK_CHECK_FAILED")
         db.execute("PRAGMA wal_checkpoint(TRUNCATE)")

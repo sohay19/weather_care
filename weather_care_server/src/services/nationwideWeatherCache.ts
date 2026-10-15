@@ -14,6 +14,7 @@ import { readCollectedAirForecast } from '../providers/air/airKoreaForecastProvi
 import { readPointForecast } from './pointForecastCache';
 
 export const NATIONAL_UV_KEY = 'COLLECTED_NATIONWIDE_UV';
+export const NATIONAL_UV_DAY_START_KEY = 'COLLECTED_NATIONWIDE_UV_DAY_START';
 export const NATIONAL_VISIBILITY_KEY = 'COLLECTED_NATIONWIDE_VISIBILITY';
 export const NATIONAL_DAILY_KEY = 'COLLECTED_NATIONWIDE_DAILY';
 export interface NationwideUvSnapshot { forecasts: Record<string, UvForecast>; issue: string }
@@ -25,9 +26,23 @@ export function emptyEnvironmentalData(): EnvironmentalDataBundle {
 export async function collectNationwideUv(db: D1Database, key: string, now: Date): Promise<void> {
   const issue = latestUvPublicationTimes(now, 1)[0];
   const cached = await getCollectedCache<NationwideUvSnapshot>(db, NATIONAL_UV_KEY);
-  if (cached?.status === 'AVAILABLE' && cached.value.issue === issue) return;
-  const forecasts = await new KmaUvProvider({ serviceKey: key, now: () => now }).getNationwide();
-  await saveCollectedCache(db, { key: NATIONAL_UV_KEY, type: 'COLLECTED_NATIONWIDE_UV', value: { forecasts, issue }, updatedAt: now });
+  const provider = new KmaUvProvider({ serviceKey: key, now: () => now });
+  let forecasts = cached?.value.forecasts;
+  if (cached?.status !== 'AVAILABLE' || cached.value.issue !== issue) {
+    forecasts = await provider.getNationwide();
+    await saveCollectedCache(db, { key: NATIONAL_UV_KEY, type: NATIONAL_UV_KEY, value: { forecasts, issue }, updatedAt: now });
+  }
+  const dayStartIssue = `${new Date(now.getTime() + 9 * 3_600_000).toISOString().slice(0, 10).replace(/-/g, '')}00`;
+  if (issue < dayStartIssue) return;
+  const dayStart = await getCollectedCache<NationwideUvSnapshot>(db, NATIONAL_UV_DAY_START_KEY);
+  if (dayStart?.status === 'AVAILABLE' && dayStart.value.issue === dayStartIssue) return;
+  try {
+    const dayStartForecasts = issue === dayStartIssue ? forecasts! : await provider.getNationwide(dayStartIssue);
+    await saveCollectedCache(db, { key: NATIONAL_UV_DAY_START_KEY, type: NATIONAL_UV_DAY_START_KEY,
+      value: { forecasts: dayStartForecasts, issue: dayStartIssue }, updatedAt: now });
+  } catch (error) {
+    console.warn('자외선 첫 발표 자료 수집 실패', error instanceof Error ? error.name : 'UNKNOWN');
+  }
 }
 export async function readNationwideVisibility(db: D1Database | undefined, location: NationwideLocation, now: Date) {
   const source = await getCollectedCache<KmaHourlyObservationSnapshot>(db, NATIONAL_VISIBILITY_KEY);

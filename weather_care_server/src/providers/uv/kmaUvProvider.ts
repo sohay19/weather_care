@@ -72,9 +72,9 @@ export class KmaUvProvider implements UvProvider {
     this.timeoutMs = options.timeoutMs ?? 6_000;
   }
 
-  async getNationwide(): Promise<Record<string, UvForecast>> {
+  async getNationwide(issue?: string): Promise<Record<string, UvForecast>> {
     if (!this.serviceKey) throw new KmaUvProviderError('KMA living-index key is not configured');
-    const time = latestUvPublicationTimes(this.now(), 1)[0];
+    const time = issue ?? latestUvPublicationTimes(this.now(), 1)[0];
     const forecasts: Record<string, UvForecast> = {};
     let expectedTotal: number | undefined;
     for (let page = 1; page <= (expectedTotal === undefined ? 1 : Math.ceil(expectedTotal / 1000)); page++) {

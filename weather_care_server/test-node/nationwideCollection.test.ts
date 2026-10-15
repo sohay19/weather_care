@@ -143,7 +143,7 @@ it('설치 없는 전체 수집에서도 전국 항목을 갱신하고 대기질
   expect(database.sqlite.prepare("SELECT COUNT(*) AS n FROM api_usage_daily WHERE provider='SNOW_TOTAL'").get()).toEqual({ n: 0 });
   expect(forecast).toHaveBeenCalledTimes(2);
   expect(living).toHaveBeenCalledTimes(2);
-  expect(uv).toHaveBeenCalledOnce();
+  expect(uv).toHaveBeenCalledTimes(2);
   expect(catalog).toHaveBeenCalledOnce();
   expect(air).toHaveBeenCalledTimes(AIRKOREA_PROVINCES.length * 2);
   expect(globalThis.fetch).not.toHaveBeenCalled();

@@ -147,10 +147,11 @@ export async function readCollectedEnvironmentalData(
   location: NationwideLocation = { nx, ny },
 ): Promise<EnvironmentalDataBundle> {
   location = await resolveSavedLocation(db, location, now);
-  const [environmental, nationwide, nationwideUv] = await Promise.all([
+  const [environmental, nationwide, nationwideUv, dayStartUv] = await Promise.all([
     getCollectedCache<EnvironmentalDataBundle>(db, collectedCacheKey.environmental(nx, ny)),
     getCollectedCache<NationwideAirQualitySnapshot>(db, collectedCacheKey.nationwideAir),
     getCollectedCache<{ forecasts: Record<string, UvForecast> }>(db, 'COLLECTED_NATIONWIDE_UV'),
+    getCollectedCache<{ issue: string; forecasts: Record<string, UvForecast> }>(db, 'COLLECTED_NATIONWIDE_UV_DAY_START'),
   ]);
   let base = environmental?.status === 'AVAILABLE' ? environmental.value : fallback;
   const area = administrativeAreaForLocation(location);
@@ -158,7 +159,15 @@ export async function readCollectedEnvironmentalData(
     base = { ...base, uv: undefined, sources: { ...base.sources, uv: unavailableSource('KMA_LIVING_INDEX_V5') } };
   }
   if (nationwideUv?.status === 'AVAILABLE') {
-    const uv = area ? nationwideUv.value.forecasts[area[0]] : undefined;
+    const latest = area ? nationwideUv.value.forecasts[area[0]] : undefined;
+    const dayStart = area && dayStartUv?.status === 'AVAILABLE' &&
+      dayStartUv.value.issue.slice(0, 8) === new Date(now.getTime() + 9 * 3_600_000)
+        .toISOString().slice(0, 10).replace(/-/g, '')
+      ? dayStartUv.value.forecasts[area[0]] : undefined;
+    const uv = latest && dayStart ? { ...latest, points: [
+      ...dayStart.points.filter((point) => Date.parse(point.forecastAt) < Date.parse(latest.issuedAt)),
+      ...latest.points,
+    ] } : latest;
     base = { ...base, uv, sources: { ...base.sources,
       uv: uv ? availableSource('KMA_LIVING_INDEX_V5', 'CACHED', uv.issuedAt, nationwideUv.updatedAt)
         : unavailableSource('KMA_LIVING_INDEX_V5', area ? 'UPSTREAM_AREA_MISSING'

@@ -5,7 +5,8 @@ import { readNationwideForecast, saveNationwideForecastField } from '../src/data
 import { NATIONAL_FORECAST_VARIABLES, KmaNationwideForecastProvider, nationwideForecastPlan } from '../src/providers/weather/kmaNationwideForecastProvider';
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 import { saveCollectedCache } from '../src/database/collectedWeatherRepository';
-import { NATIONAL_UV_KEY, readNationwideRegion } from '../src/services/nationwideWeatherCache';
+import { NATIONAL_UV_KEY, NATIONAL_UV_DAY_START_KEY, emptyEnvironmentalData, readNationwideRegion } from '../src/services/nationwideWeatherCache';
+import { readCollectedEnvironmentalData } from '../src/providers/environmental/environmentalDataService';
 import { administrativeAreaForLocation } from '../src/regions/nationwideLocation';
 import { KMA_ADMINISTRATIVE_AREAS } from '../src/regions/kmaAdministrativeAreas';
 import weatherRouter from '../src/api/weather';
@@ -30,6 +31,25 @@ async function seedHour(valid = '2026100409', issue = '2026100408') {
   }
 }
 describe('전국 GPS 데이터 계약', () => {
+  it('당일 첫 자외선 발표의 지난 시간과 최신 발표의 미래 시간을 함께 제공한다', async () => {
+    const db = asD1Database(database);
+    const location = { nx: 57, ny: 124, regionName: '시흥시 은행동',
+      coordinates: { latitude: 37.434, longitude: 126.803 } };
+    const areaNo = administrativeAreaForLocation(location)![0];
+    await saveCollectedCache(db, { key: NATIONAL_UV_DAY_START_KEY,
+      type: NATIONAL_UV_DAY_START_KEY, value: { issue: '2026100400', forecasts: {
+        [areaNo]: { areaNo, issuedAt: '2026-10-04T00:00:00+09:00',
+          points: [{ forecastAt: '2026-10-04T06:00:00+09:00', uvIndex: 2 }] },
+      } }, updatedAt: now });
+    await saveCollectedCache(db, { key: NATIONAL_UV_KEY, type: NATIONAL_UV_KEY,
+      value: { issue: '2026100409', forecasts: {
+        [areaNo]: { areaNo, issuedAt: '2026-10-04T09:00:00+09:00',
+          points: [{ forecastAt: '2026-10-04T09:00:00+09:00', uvIndex: 4 }] },
+      } }, updatedAt: now });
+    const data = await readCollectedEnvironmentalData(db, 57, 124, emptyEnvironmentalData(), now,
+      location.coordinates, location);
+    expect(data.uv?.points.map((point) => point.uvIndex)).toEqual([2, 4]);
+  });
   it('전체 37,697개 셀을 무손실 저장하고 첫·끝·대표 목록 밖 격자에서 정확한 값을 읽는다', async () => {
     await seedHour();
     const row = database.sqlite.prepare("SELECT payload FROM nationwide_forecast_fields WHERE variable='TMP'").get() as { payload: string };

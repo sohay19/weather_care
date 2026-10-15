@@ -406,7 +406,7 @@ function parseWarningRow(line: string): ParsedWarningRow | undefined {
 
   // ED_TM(해제예고 시점)과 행 끝 '='는 특보의 활성 여부를 바꾸지 않는다.
   const normalized = trimmed.replace(/\s*,\s*/g, ' ').replace(/\s*=\s*$/, '').trim();
-  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+\d{12})?$/.exec(
+  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(?:\d{12}|\d{1,2}일))?$/.exec(
     normalized,
   );
   if (!match) return undefined;

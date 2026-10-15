@@ -62,6 +62,12 @@ describe('KMA warning provider', () => {
     ]);
   });
 
+  it('해제예고가 날짜 문구로 제공돼도 현재 특보를 읽는다', () => {
+    const payload = 'L1014000, 서해5도, L1014200, 백령도.대청도, 202610150630, 202610150630, 강풍, 주의, 발표, 15일 ,=';
+    expect(parseActiveWarnings(payload, ['L1014200'], new Date('2026-10-15T02:00:00Z')))
+      .toEqual([expect.objectContaining({ type: '강풍', level: '주의보', regionId: 'L1014200' })]);
+  });
+
   it('선택 지역의 알 수 없는 한글 코드나 열은 특보 없음으로 처리하지 않는다', () => {
     for (const fields of ['건조,주의,알수없음', '알수없음,주의,발표', '건조,알수없음,발표', '건조,주의,발표,알수없음']) {
       expect(() => parseActiveWarnings(

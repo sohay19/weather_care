@@ -1,0 +1,10 @@
+[Unit]
+Description=날씨챙겨 시험 DB 날씨 캐시 5분 동기화
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+Unit=weather-care-test-cache-sync.service
+
+[Install]
+WantedBy=timers.target

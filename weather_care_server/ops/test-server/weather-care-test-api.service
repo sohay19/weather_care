@@ -1,0 +1,24 @@
+[Unit]
+Description=날씨챙겨 시험 API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=weather-care
+Group=weather-care
+WorkingDirectory=/opt/weather-care/weather_care_test_server
+EnvironmentFile=/etc/weather-care/weather-care.env
+EnvironmentFile=/etc/weather-care/weather-care-test.env
+ExecStart=/opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/server.ts
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/weather-care
+
+[Install]
+WantedBy=multi-user.target

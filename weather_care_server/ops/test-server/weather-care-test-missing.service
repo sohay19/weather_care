@@ -1,0 +1,22 @@
+[Unit]
+Description=날씨챙겨 시험 DB 누락 부가자료 수집
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=weather-care
+Group=weather-care
+WorkingDirectory=/opt/weather-care/weather_care_test_server
+EnvironmentFile=/etc/weather-care/weather-care.env
+EnvironmentFile=/etc/weather-care/weather-care-test.env
+ExecStart=/opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/runJob.ts grid-hourly
+ExecStart=/opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/runJob.ts grid-lightning
+ExecStart=/opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/runJob.ts grid-river-flow
+TimeoutStartSec=30min
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/weather-care

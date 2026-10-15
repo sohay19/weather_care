@@ -1,0 +1,15 @@
+[Unit]
+Description=날씨챙겨 시험 DB 날씨 캐시 동기화
+
+[Service]
+Type=oneshot
+User=weather-care
+Group=weather-care
+WorkingDirectory=/opt/weather-care/weather_care_test_server
+ExecStart=/usr/bin/python3 ops/test-server/sync_cache.py /var/lib/weather-care/weather-care-release.sqlite /var/lib/weather-care/weather-care-test.sqlite
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/weather-care

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../services/api_client.dart';
 import '../../../services/kma_grid.dart';
 import '../../../theme/weather_theme.dart';
+import '../widgets/extra_data_overview.dart';
 import '../widgets/tab_page_header.dart';
 
 class ExtraTab extends StatefulWidget {
@@ -62,6 +63,7 @@ class _ExtraTabState extends State<ExtraTab> {
     final request = ++_request;
     setState(() {
       _loadingCatalog = true;
+      _loadingRecords = false;
       _error = null;
     });
     try {
@@ -154,62 +156,54 @@ class _ExtraTabState extends State<ExtraTab> {
     if (target != null) _loadRecords();
   }
 
-  Future<void> _chooseTarget() async {
+  void _selectTarget(String? id) {
     final targets = _maps(_selectedGroup?['targets']);
-    if (targets.isEmpty) return;
-    final selected = await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (context) {
-          String search = '';
-          return StatefulBuilder(builder: (context, update) {
-            final visible = targets
-                .where((item) => '${item['name']} ${item['id']}'
-                    .toLowerCase()
-                    .contains(search.toLowerCase()))
-                .take(100)
-                .toList();
-            return SafeArea(
-                child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                  16, 8, 16, MediaQuery.viewInsetsOf(context).bottom + 16),
-              child: SizedBox(
-                  height: MediaQuery.sizeOf(context).height * 0.65,
-                  child: Column(children: [
-                    Text('${_selectedGroup?['title']} 선택',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 12),
-                    TextField(
-                        autofocus: true,
-                        decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.search),
-                            hintText: '이름 또는 코드 검색'),
-                        onChanged: (value) => update(() => search = value)),
-                    const SizedBox(height: 8),
-                    Expanded(
-                        child: ListView.builder(
-                            itemCount: visible.length,
-                            itemBuilder: (context, index) {
-                              final item = visible[index];
-                              return ListTile(
-                                  title: Text('${item['name']}'),
-                                  subtitle: Text('${item['id']}'),
-                                  onTap: () => Navigator.pop(context, item));
-                            })),
-                  ])),
-            ));
-          });
-        });
-    if (!mounted || selected == null) return;
+    final selected = targets.where((item) => item['id'] == id).firstOrNull;
+    if (selected == null || id == _selectedTarget?['id']) return;
     setState(() => _selectedTarget = selected);
     _loadRecords();
   }
 
+  String _category(Map<String, dynamic> group) {
+    final source = '${group['source']}';
+    if (source.startsWith('KHOA_')) return '해양';
+    if (source.startsWith('KWATER_') || source.startsWith('HRFCO_')) {
+      return '댐·하천';
+    }
+    if (group['scope'] == 'report') return '보고서';
+    return '기상';
+  }
+
+  String _targetLabel(Map<String, dynamic> group) => switch (group['scope']) {
+        'station' => '관측소 선택',
+        'dam' => '댐·보 선택',
+        'beach' => '해수욕장 선택',
+        'area' => '해역 선택',
+        'report' => '보고서 선택',
+        _ => '구역 선택',
+      };
+
+  DateTime? _recordTime(Object? raw) {
+    final text = '$raw';
+    // 날짜만 있는 자료에 임의의 시각을 붙이지 않는다.
+    if (!RegExp(r'[T ]\d{2}:\d{2}').hasMatch(text)) return null;
+    final time = DateTime.tryParse(text);
+    if (time == null) return null;
+    final korea = time.isUtc ? time.add(const Duration(hours: 9)) : time;
+    // 한국 달력 시각을 동일한 좌표로 만들어 기기 시간대에 따른 그래프 간격 차이를 막는다.
+    return DateTime.utc(korea.year, korea.month, korea.day, korea.hour,
+        korea.minute, korea.second, korea.millisecond, korea.microsecond);
+  }
+
   String _timeLabel(String raw) {
+    final time = _recordTime(raw);
+    if (time != null) {
+      String two(int value) => value.toString().padLeft(2, '0');
+      return '${time.year}-${two(time.month)}-${two(time.day)} '
+          '${two(time.hour)}:${two(time.minute)}';
+    }
     final date = raw.length >= 10 ? raw.substring(0, 10) : raw;
-    if (raw.length < 16) return date;
-    return '$date ${raw.substring(11, 16)}';
+    return date;
   }
 
   String _valueLabel(String key) =>
@@ -250,18 +244,185 @@ class _ExtraTabState extends State<ExtraTab> {
       }[key] ??
       '';
 
+  Widget _categoryBox(String title, List<Map<String, dynamic>> groups) {
+    final palette = WeatherCareTheme.of(context);
+    return Card(
+      key: ValueKey('extra-category-$title'),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(
+                switch (title) {
+                  '해양' => Icons.waves_rounded,
+                  '댐·하천' => Icons.water_rounded,
+                  '보고서' => Icons.article_outlined,
+                  _ => Icons.bolt_rounded,
+                },
+                size: 18,
+                color: palette.primaryDeep),
+            const SizedBox(width: 8),
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const Spacer(),
+            Text('${groups.length}종', style: palette.microTextStyle),
+          ]),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, runSpacing: 6, children: [
+            for (final group in groups)
+              ChoiceChip(
+                key: ValueKey('extra-source-${group['source']}'),
+                showCheckmark: false,
+                label: Text('${group['title']}',
+                    style: const TextStyle(
+                        fontFamily: WeatherCareTheme.fontSuite)),
+                selected: _selectedGroup?['source'] == group['source'],
+                onSelected: (_) => _selectGroup(group),
+              ),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _recordCard(Map<String, dynamic> entry, {bool showTime = true}) {
+    final palette = WeatherCareTheme.of(context);
+    final report = _selectedGroup?['scope'] == 'report';
+    final values = Map<String, dynamic>.from(
+        entry['values'] is Map ? entry['values'] as Map : {});
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: palette.outline)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (showTime) ...[
+            Row(children: [
+              Icon(
+                  report
+                      ? Icons.article_outlined
+                      : Icons.calendar_today_outlined,
+                  size: 16,
+                  color: palette.primaryDeep),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: Text(_timeLabel('${entry['time']}'),
+                      style: TextStyle(
+                          color: palette.primaryDeep,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12))),
+            ]),
+            const SizedBox(height: 12),
+            Divider(height: 1, color: palette.outline),
+            const SizedBox(height: 12),
+          ],
+          for (final value in values.entries)
+            if (value.value != null)
+              Padding(
+                padding: EdgeInsets.only(bottom: report ? 12 : 7),
+                child: Text.rich(
+                    TextSpan(children: [
+                      TextSpan(
+                          text: '${_valueLabel(value.key)}  ',
+                          style: TextStyle(color: palette.textSecondary)),
+                      TextSpan(
+                          text:
+                              '${value.value is num ? formatWeatherNumber(value.value as num) : value.value}${_unit(value.key)}',
+                          style: TextStyle(
+                              fontWeight: value.value is num
+                                  ? FontWeight.w800
+                                  : FontWeight.w500)),
+                    ]),
+                    style: const TextStyle(fontSize: 13, height: 1.6)),
+              ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _timeline(List<Map<String, dynamic>> records) {
+    final palette = WeatherCareTheme.of(context);
+    final sorted = [...records]..sort((a, b) =>
+        _timeLabel('${a['time']}').compareTo(_timeLabel('${b['time']}')));
+    String? previousDate;
+    final children = <Widget>[];
+    for (final entry in sorted) {
+      final label = _timeLabel('${entry['time']}');
+      final date = label.substring(0, 10);
+      if (date != previousDate) {
+        children.add(Padding(
+          padding: const EdgeInsets.only(top: 16, bottom: 12),
+          child: Text(date, style: Theme.of(context).textTheme.titleMedium),
+        ));
+        previousDate = date;
+      }
+      children.add(Stack(children: [
+        Positioned(
+          left: 63,
+          top: 0,
+          bottom: 0,
+          child: Container(width: 2, color: palette.primaryBorder),
+        ),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(
+            width: 52,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(label.substring(11),
+                  style: Theme.of(context).textTheme.labelLarge),
+            ),
+          ),
+          SizedBox(
+            width: 24,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Center(
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: palette.primary, shape: BoxShape.circle),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 12),
+              child: _recordCard(entry, showTime: false),
+            ),
+          ),
+        ]),
+      ]));
+    }
+    return Column(
+      key: const ValueKey('extra-timeline'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = WeatherCareTheme.of(context);
     final group = _selectedGroup;
     final targets = _maps(group?['targets']);
-    final hourly = group?['period'] == 'hourly';
+    final categories = <String, List<Map<String, dynamic>>>{};
+    for (final item in _groups) {
+      categories.putIfAbsent(_category(item), () => []).add(item);
+    }
+    final timeline = group?['scope'] != 'report' &&
+        _records.isNotEmpty &&
+        _records.every((entry) => _recordTime(entry['time']) != null);
     return Container(
       key: const ValueKey('extra-tab'),
       color: palette.background,
       child: RefreshIndicator(
           onRefresh: _loadCatalog,
           child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               children: [
                 const TabPageHeader(
@@ -281,16 +442,13 @@ class _ExtraTabState extends State<ExtraTab> {
                 else if (widget.client == null)
                   const Text('서버 연결을 확인하고 있어요.')
                 else ...[
-                  Wrap(spacing: 8, runSpacing: 6, children: [
-                    for (final item in _groups)
-                      ChoiceChip(
-                          label: Text('${item['title']}'),
-                          selected: group?['source'] == item['source'],
-                          onSelected: (_) => _selectGroup(item))
-                  ]),
-                  const SizedBox(height: 20),
+                  for (final category in categories.entries)
+                    _categoryBox(category.key, category.value),
+                  if (_groups.isEmpty && _error == null)
+                    const Text('표시할 자료 종류가 없어요.'),
+                  const SizedBox(height: 8),
                   if (group != null) ...[
-                    Text(hourly ? '시간별 자료' : '일자별 자료',
+                    Text('${group['title']}',
                         style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 5),
                     Text(
@@ -299,18 +457,34 @@ class _ExtraTabState extends State<ExtraTab> {
                             : group['source'] == 'KHOA_ROMS' &&
                                     _selectedTarget?['id'] == 'GRID'
                                 ? '현재 격자 안 해양 모델 지점의 예측값입니다.'
-                                : '선택한 ${group['title']}의 자료입니다. 격자 전체의 값은 아닙니다.',
+                                : group['scope'] == 'report'
+                                    ? '선택한 보고서의 내용입니다.'
+                                    : '선택한 관측소·시설·해역의 자료입니다. 격자 전체의 값은 아닙니다.',
                         style: Theme.of(context).textTheme.bodySmall),
                     const SizedBox(height: 12),
                     if (group['scope'] != 'grid')
-                      OutlinedButton.icon(
-                          onPressed: targets.isEmpty ? null : _chooseTarget,
-                          icon: const Icon(Icons.place_outlined),
-                          label: Text(targets.isEmpty
-                              ? '수집된 선택 대상 없음'
-                              : _selectedTarget == null
-                                  ? '대상 선택'
-                                  : '${_selectedTarget!['name']} 변경')),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey(
+                            'extra-target-${group['source']}-${_selectedTarget?['id']}'),
+                        initialValue: _selectedTarget?['id'] as String?,
+                        isExpanded: true,
+                        menuMaxHeight: 360,
+                        decoration: InputDecoration(
+                          labelText: _targetLabel(group),
+                          prefixIcon: const Icon(Icons.place_outlined),
+                          border: const OutlineInputBorder(),
+                        ),
+                        hint: const Text('수집된 선택 대상 없음'),
+                        items: [
+                          for (final target in targets)
+                            DropdownMenuItem(
+                              value: '${target['id']}',
+                              child: Text('${target['name']} (${target['id']})',
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ),
+                        ],
+                        onChanged: targets.isEmpty ? null : _selectTarget,
+                      ),
                     if (_selectedTarget == null && targets.isNotEmpty)
                       const Padding(
                           padding: EdgeInsets.only(top: 12),
@@ -319,17 +493,6 @@ class _ExtraTabState extends State<ExtraTab> {
                       const Padding(
                           padding: EdgeInsets.all(24),
                           child: Center(child: CircularProgressIndicator())),
-                    if (_error != null)
-                      Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Row(children: [
-                            Expanded(child: Text(_error!)),
-                            TextButton(
-                                onPressed: _selectedTarget == null
-                                    ? _loadCatalog
-                                    : _loadRecords,
-                                child: const Text('다시 시도'))
-                          ])),
                     if (!_loadingRecords &&
                         _error == null &&
                         _selectedTarget != null &&
@@ -337,33 +500,51 @@ class _ExtraTabState extends State<ExtraTab> {
                       const Padding(
                           padding: EdgeInsets.only(top: 12),
                           child: Text('아직 저장된 자료가 없어요.')),
-                    for (final entry in _records)
-                      Card(
-                          margin: const EdgeInsets.only(top: 10),
-                          child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(_timeLabel('${entry['time']}'),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium),
-                                    const SizedBox(height: 8),
-                                    for (final value
-                                        in Map<String, dynamic>.from(
-                                                entry['values'] is Map
-                                                    ? entry['values'] as Map
-                                                    : {})
-                                            .entries)
-                                      if (value.value != null)
-                                        Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 3),
-                                            child: Text(
-                                                '${_valueLabel(value.key)}  ${value.value is num ? formatWeatherNumber(value.value as num) : value.value}${_unit(value.key)}')),
-                                  ]))),
+                    if (_records.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      if (timeline)
+                        ExtraDataOverview(
+                          key: ValueKey(
+                              'extra-overview-${group['source']}-${_selectedTarget?['id']}'),
+                          records: _records,
+                          source: '${group['source']}',
+                          targetName:
+                              '${_selectedTarget?['name'] ?? group['title']}',
+                          labelFor: _valueLabel,
+                          unitFor: _unit,
+                          timeFor: _recordTime,
+                          timeLabel: _timeLabel,
+                        ),
+                      Text(
+                          timeline
+                              ? '시간대별 타임라인 · 한국 표준시'
+                              : group['scope'] == 'report'
+                                  ? '보고서 내용'
+                                  : '일자별 자료',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      if (timeline)
+                        _timeline(_records)
+                      else
+                        for (final entry in _records)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: _recordCard(entry),
+                          ),
+                    ],
                   ],
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(children: [
+                        Expanded(child: Text(_error!)),
+                        TextButton(
+                          onPressed: _selectedTarget == null
+                              ? _loadCatalog
+                              : _loadRecords,
+                          child: const Text('다시 시도'),
+                        ),
+                      ]),
+                    ),
                 ],
               ])),
     );

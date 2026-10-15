@@ -37,13 +37,13 @@ PrecipitationAmount? weekPrecipitationAmount(WeeklyForecastItem day) {
   return detail.hours.map((hour) => hour.amount!).reduce((a, b) => a.plus(b));
 }
 
-String? weekPrecipitationCompact(WeeklyForecastItem day,
+String weekPrecipitationCompact(WeeklyForecastItem day,
     {required bool isPast}) {
   final detail = day.precipitationDetail;
   if (isPast) {
     final amount =
         detail?.kind == 'OBSERVATION' ? weekPrecipitationAmount(day) : null;
-    return amount == null || amount.isZero ? null : '강수 관측 ${amount.label}';
+    return '강수확률 예보 이력 없음 · 강수 관측 ${amount?.label ?? '자료 없음'}';
   }
   if (detail == null) return '강수 자료 없음';
   if (weekPrecipitationLines(day).any((line) => line.contains('날짜·시간에 오류'))) {

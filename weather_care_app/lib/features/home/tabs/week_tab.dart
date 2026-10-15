@@ -506,13 +506,13 @@ class _WeekDayCard extends StatelessWidget {
     }
     final weatherLabel = weekWeatherLabel(day);
     final precipitation = weekPrecipitationCompact(day, isPast: isPast);
+    final snowfall = _weekSnowfallText(day, isPast: isPast);
     final recommendations = !isPast && serverFeaturesAvailable
         ? weekRecommendations(day)
         : <WeatherRecommendation>[];
     final minimumTemperature = weekTemperature(day, maximum: false);
     final maximumTemperature = weekTemperature(day, maximum: true);
-    final additionalData =
-        _additionalWeekData(day, isPast: isPast, hourly: hourly);
+    final additionalData = _additionalWeekData(day, isPast: isPast);
     final sourceLabel = day.forecastSource == 'KMA_OBSERVATION'
         ? '실제 관측'
         : day.forecastSource == 'KMA_MID_TERM'
@@ -664,42 +664,24 @@ class _WeekDayCard extends StatelessWidget {
               ],
             ),
           ],
-          if (precipitation != null) ...[
+          for (final (kind, icon, text) in [
+            ('precipitation', Icons.water_drop_outlined, precipitation),
+            ('snowfall', Icons.ac_unit_rounded, snowfall),
+          ]) ...[
             const SizedBox(height: 10),
-            Container(
-              key: ValueKey('week-precipitation-${day.forecastDate}'),
-              width: double.infinity,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: WeatherCareTheme.of(context)
-                    .surface
-                    .withValues(alpha: 0.65),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.water_drop_outlined,
-                      size: 17,
-                      color: WeatherCareTheme.of(context).primaryDeep),
-                  const SizedBox(width: 7),
-                  Expanded(
-                    child: Text.rich(
-                      TextSpan(
-                          children: _weekPrecipitationSpans(precipitation)),
-                      style: WeatherCareTheme.of(context)
-                          .microTextStyle
-                          .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
-                    ),
-                  ),
-                ],
-              ),
+            _WeekAmountRow(
+              key: ValueKey('week-$kind-${day.forecastDate}'),
+              icon: icon,
+              text: text,
+              isToday: isToday,
+              isPast: isPast,
             ),
           ],
           if (!isPast &&
               (recommendations.isNotEmpty ||
                   !serverFeaturesAvailable ||
                   !day.recommendationsAvailable)) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 18),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -724,7 +706,9 @@ class _WeekDayCard extends StatelessWidget {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: recommendation.type.softColor(context),
+                            color: isToday
+                                ? WeatherCareTheme.of(context).surface
+                                : recommendation.type.softColor(context),
                             borderRadius: BorderRadius.circular(9),
                           ),
                           child: Row(
@@ -770,6 +754,9 @@ class _WeekDayCard extends StatelessWidget {
               targetDate: day.forecastDate,
               availableOnly: true,
               inline: true,
+              contrastFilters: isToday,
+              uvCenterColor:
+                  isToday ? WeatherCareTheme.of(context).primarySoft : null,
             ),
           ],
           if (missing.isNotEmpty &&
@@ -841,6 +828,49 @@ class _WeekTemperaturePeriod extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeekAmountRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool isToday;
+  final bool isPast;
+
+  const _WeekAmountRow({
+    super.key,
+    required this.icon,
+    required this.text,
+    required this.isToday,
+    required this.isPast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isToday || isPast
+            ? WeatherCareTheme.of(context).surface.withValues(alpha: 0.65)
+            : WeatherCareTheme.of(context).surfaceMuted,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: WeatherCareTheme.of(context).primaryDeep),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text.rich(
+              TextSpan(children: _weekPrecipitationSpans(text)),
+              style: WeatherCareTheme.of(context)
+                  .microTextStyle
+                  .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
             ),
           ),
         ],
@@ -940,33 +970,21 @@ class _WeekDataChip extends StatelessWidget {
   }
 }
 
-List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
-    {required bool isPast, required List<HourlyWeatherItem> hourly}) {
-  final byHour = <int, HourlyWeatherItem>{};
-  final snowByHour = <int, HourlyWeatherItem>{};
-  for (final item in hourly) {
-    final hour = int.tryParse(item.time);
-    if (item.forecastDate == day.forecastDate &&
-        hour != null &&
-        hour >= 0 &&
-        hour < 24) {
-      byHour.putIfAbsent(hour, () => item);
-    }
-    final period = item.precipitationPeriod;
-    if (period != null && period.date == day.forecastDate) {
-      final startHour = period.start.toUtc().add(const Duration(hours: 9)).hour;
-      snowByHour.putIfAbsent(startHour, () => item);
-    }
+String _weekSnowfallText(WeeklyForecastItem day, {required bool isPast}) {
+  final amount = day.snowfallAmount;
+  final probabilityText = isPast ? '강설확률 예보 이력 없음' : '강설확률 자료 없음';
+  if (isPast) {
+    return '$probabilityText · 강설 관측 · 최심신적설 '
+        '${amount == null ? '자료 없음' : '${_decimal(amount)}cm'}';
   }
-  final hasHumidity = byHour.values.any((item) => item.humidity != null);
-  final hasWind = byHour.values.any((item) => item.windSpeed != null);
-  final hasUv = byHour.values.any((item) => item.uvIndex != null);
-  final hasSnow = snowByHour.values.any((item) =>
-      item.snowExpected != null ||
-      item.snowfallAmount != null ||
-      item.snowfallAmountLabel != null);
+  return '$probabilityText · 예상 신적설 '
+      '${amount == null ? '자료 없음' : '${_decimal(amount)}cm'}';
+}
+
+List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
+    {required bool isPast}) {
   return [
-    if (day.averageHumidity case final value? when !hasHumidity)
+    if (day.averageHumidity case final value?)
       _WeekData(
         Icons.water_drop_outlined,
         '습도',
@@ -974,7 +992,7 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
         isPast ? '${formatWeatherNumber(value)}%' : humidityDescription(value)!,
         '평균 습도 ${formatWeatherNumber(value)}%',
       ),
-    if (day.maximumWindSpeed case final value? when !hasWind)
+    if (day.maximumWindSpeed case final value?)
       _WeekData(
         Icons.air_rounded,
         '바람',
@@ -982,19 +1000,7 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
         isPast ? '${_decimal(value)}m/s' : windDescription(value)!,
         '최대 풍속 ${_decimal(value)}m/s',
       ),
-    if (day.snowfallAmount case final value? when !hasSnow)
-      _WeekData(
-        Icons.ac_unit_rounded,
-        isPast ? '최심신적설' : '예상 신적설',
-        isPast ? '최심신적설' : '신적설',
-        isPast
-            ? '${_decimal(value)}cm'
-            : value > 0
-                ? '예상'
-                : '없음',
-        '${isPast ? '최심신적설' : '예상 신적설'} ${_decimal(value)}cm',
-      ),
-    if (day.maximumUvIndex case final value? when !hasUv)
+    if (day.maximumUvIndex case final value?)
       _WeekData(
         Icons.wb_sunny_outlined,
         '자외선',
@@ -1163,6 +1169,29 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(message, style: Theme.of(context).textTheme.bodySmall),
+                for (final (kind, icon, text) in [
+                  (
+                    'precipitation',
+                    Icons.water_drop_outlined,
+                    isPast ? '강수확률 예보 이력 없음 · 강수 관측 자료 없음' : '강수 자료 없음'
+                  ),
+                  (
+                    'snowfall',
+                    Icons.ac_unit_rounded,
+                    isPast
+                        ? '강설확률 예보 이력 없음 · 최심신적설 자료 없음'
+                        : '강설확률 자료 없음 · 예상 신적설 자료 없음'
+                  ),
+                ]) ...[
+                  const SizedBox(height: 10),
+                  _WeekAmountRow(
+                    key: ValueKey('week-$kind-${dateInKorea(date)}'),
+                    icon: icon,
+                    text: text,
+                    isToday: isToday,
+                    isPast: isPast,
+                  ),
+                ],
                 if (hourly.isNotEmpty)
                   HourlyForecastSection(
                     key: ValueKey('week-hourly-${dateInKorea(date)}'),
@@ -1171,6 +1200,7 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                     targetDate: dateInKorea(date),
                     availableOnly: true,
                     inline: true,
+                    contrastFilters: isToday,
                   ),
                 if (dataPhase != WeatherDataPhase.loading &&
                     onRetry != null) ...[

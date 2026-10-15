@@ -169,8 +169,13 @@ void main() {
 
     expect(weekPrecipitationLines(wet), ['인근 관측소 실제 일강수량 4.5mm']);
     expect(weekPrecipitationLines(dry), ['인근 관측소에서 강수가 관측되지 않았어요.']);
-    expect(weekPrecipitationCompact(wet, isPast: true), '강수 관측 4.5mm');
-    expect(weekPrecipitationCompact(dry, isPast: true), isNull);
+    expect(weekPrecipitationCompact(wet, isPast: true),
+        '강수확률 예보 이력 없음 · 강수 관측 4.5mm');
+    expect(weekPrecipitationCompact(dry, isPast: true),
+        '강수확률 예보 이력 없음 · 강수 관측 0mm');
+    expect(weekPrecipitationCompact(WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-12-31',
+    }), isPast: true), '강수확률 예보 이력 없음 · 강수 관측 자료 없음');
   });
 
   test('날짜별 강수확률 최고치와 강수량을 나란히 표시한다', () {

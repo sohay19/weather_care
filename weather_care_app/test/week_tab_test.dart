@@ -134,6 +134,10 @@ void main() {
     await _pump(tester, [_day('2026-09-11')]);
     expect(find.text('이번 주'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-precipitation-2026-09-10')),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('week-snowfall-2026-09-10')), findsOneWidget);
     await _moveDays(tester, 1);
     expect(find.text('9월 11일 (금)'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsNothing);
@@ -233,7 +237,7 @@ void main() {
         findsOneWidget);
     expect(find.byKey(const ValueKey('weather-condition-rain')), findsNothing);
     expect(find.textContaining('예보격자 대표점에서 3.2km'), findsNothing);
-    expect(find.textContaining('강수 관측'), findsNothing);
+    expect(find.textContaining('강수 관측 0mm'), findsOneWidget);
     expect(find.text('지난 날은 준비물 추천 대상이 아니에요'), findsNothing);
     expect(find.byKey(const ValueKey('week-past-2026-09-08')), findsOneWidget);
     expect(
@@ -425,7 +429,7 @@ void main() {
     );
   });
 
-  testWidgets('시간별 항목이 있으면 같은 일별 칩만 숨긴다', (tester) async {
+  testWidgets('시간별 항목이 있어도 일별 칩을 함께 표시한다', (tester) async {
     final day = WeeklyForecastItem.fromJson({
       'forecastDate': '2026-09-10',
       'weatherLabel': '맑음',
@@ -453,9 +457,9 @@ void main() {
       ),
     ]);
 
-    expect(find.textContaining('습도 쾌적'), findsNothing);
-    expect(find.textContaining('바람 약간 강한 바람'), findsNothing);
-    expect(find.textContaining('신적설 없음'), findsOneWidget);
+    expect(find.textContaining('습도 쾌적'), findsOneWidget);
+    expect(find.textContaining('바람 약간 강한 바람'), findsOneWidget);
+    expect(find.textContaining('예상 신적설 0cm'), findsOneWidget);
     expect(find.textContaining('자외선 높음'), findsOneWidget);
     expect(find.textContaining('대기질 보통'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-humidity')),
@@ -466,7 +470,7 @@ void main() {
         findsNothing);
   });
 
-  testWidgets('시간별 신적설과 자외선이 있으면 해당 일별 칩도 숨긴다', (tester) async {
+  testWidgets('시간별 신적설과 자외선이 있어도 일별 행과 칩을 표시한다', (tester) async {
     final day = WeeklyForecastItem.fromJson({
       'forecastDate': '2026-09-10',
       'weatherLabel': '맑음',
@@ -495,8 +499,8 @@ void main() {
       ),
     ]);
 
-    expect(find.textContaining('신적설 없음'), findsNothing);
-    expect(find.textContaining('자외선 높음'), findsNothing);
+    expect(find.textContaining('예상 신적설 0cm'), findsOneWidget);
+    expect(find.textContaining('자외선 높음'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-snowfall')),
         findsOneWidget);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-uv')),
@@ -553,6 +557,35 @@ void main() {
         find.descendant(of: section, matching: find.text('10시')), findsNothing);
     expect(find.descendant(of: section, matching: find.text('12시')),
         findsOneWidget);
+  });
+
+  testWidgets('오늘 자외선 수치 안쪽은 오늘 카드와 같은 배경색을 쓴다', (tester) async {
+    await _pump(tester, [
+      _day('2026-09-10')
+    ], timelineHourly: [
+      const HourlyWeatherItem(
+        time: '12',
+        forecastDate: '2026-09-10',
+        temperature: null,
+        precipitationProbability: null,
+        precipitationAmount: null,
+        snowExpected: null,
+        snowfallAmount: null,
+        windSpeed: null,
+        uvIndex: 3,
+        skyCondition: null,
+      ),
+    ]);
+    final uvFilter =
+        find.byKey(const ValueKey('week-2026-09-10-hourly-filter-uv'));
+    await tester.ensureVisible(uvFilter);
+    await tester.tap(uvFilter);
+    await tester.pumpAndSettle();
+    final center = tester.widget<Container>(
+      find.byKey(const ValueKey('today-hourly-uv-center')),
+    );
+    expect((center.decoration! as BoxDecoration).color,
+        WeatherCareTheme.of(tester.element(uvFilter)).primarySoft);
   });
 
   testWidgets('Week에만 있는 시간별 강수는 강수 타임라인으로 표시한다', (tester) async {
@@ -652,7 +685,7 @@ void main() {
     expect(find.textContaining('최고 27℃'), findsOneWidget);
     expect(find.textContaining('습도 쾌적'), findsOneWidget);
     expect(find.textContaining('바람 약간 강한 바람'), findsOneWidget);
-    expect(find.textContaining('신적설 없음'), findsOneWidget);
+    expect(find.textContaining('예상 신적설 0cm'), findsOneWidget);
     expect(find.textContaining('자외선 높음'), findsOneWidget);
     expect(find.textContaining('대기질 보통·낮음'), findsOneWidget);
     final humidityChip = tester.widget<ChoiceChip>(
@@ -679,7 +712,6 @@ void main() {
     await tester.pumpAndSettle();
     for (final (label, value) in [
       ('바람 약간 강한 바람', '최대 풍속 4.2m/s'),
-      ('신적설 없음', '예상 신적설 0cm'),
       ('자외선 높음', '자외선지수 최고 7'),
     ]) {
       await tester.ensureVisible(find.textContaining(label));
@@ -711,8 +743,15 @@ void main() {
     await _pump(tester, [day],
         now: () => DateTime.parse('2026-10-10T01:00:00Z'));
     await _moveDays(tester, -1);
-    await tester.scrollUntilVisible(find.text('최심신적설 1.2cm'), 200);
-    expect(find.text('최심신적설 1.2cm'), findsOneWidget);
+    await tester.scrollUntilVisible(find.textContaining('최심신적설 1.2cm'), 200);
+    expect(find.textContaining('강설 관측 · 최심신적설 1.2cm'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('week-snowfall-2026-10-09')), findsOneWidget);
+    expect(
+        find.ancestor(
+            of: find.textContaining('최심신적설 1.2cm'),
+            matching: find.byType(ChoiceChip)),
+        findsNothing);
     expect(find.textContaining('예상 신적설'), findsNothing);
     expect(find.text('적설량 1.2cm'), findsNothing);
   });
@@ -732,7 +771,10 @@ void main() {
           })
         ],
         now: () => DateTime.parse('2026-10-10T01:00:00Z'));
-    expect(find.textContaining('최심신적설'), findsNothing);
+    await _moveDays(tester, -1);
+    expect(find.textContaining('최심신적설 자료 없음'), findsOneWidget);
+    expect(find.textContaining('최심신적설 0cm'), findsNothing);
+    expect(find.textContaining('강수 관측 자료 없음'), findsOneWidget);
     expect(find.textContaining('예상 신적설'), findsNothing);
   });
 

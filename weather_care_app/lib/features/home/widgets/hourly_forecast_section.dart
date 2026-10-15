@@ -27,6 +27,8 @@ class HourlyForecastSection extends StatefulWidget {
   final String? targetDate;
   final bool availableOnly;
   final bool inline;
+  final bool contrastFilters;
+  final Color? uvCenterColor;
   final WeatherDataPhase dataPhase;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
@@ -41,6 +43,8 @@ class HourlyForecastSection extends StatefulWidget {
     this.targetDate,
     this.availableOnly = false,
     this.inline = false,
+    this.contrastFilters = false,
+    this.uvCenterColor,
     this.dataPhase = WeatherDataPhase.ready,
     this.onRetryMissingData,
     this.retrying = false,
@@ -245,6 +249,19 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
                       showCheckmark: false,
                       label: Text(_metricLabel(metric)),
                       selected: selected == metric,
+                      backgroundColor: widget.contrastFilters
+                          ? WeatherCareTheme.of(context).surface
+                          : null,
+                      selectedColor: widget.contrastFilters
+                          ? WeatherCareTheme.of(context).actionBackground
+                          : null,
+                      labelStyle: widget.contrastFilters
+                          ? Theme.of(context).chipTheme.labelStyle?.copyWith(
+                                color: selected == metric
+                                    ? WeatherCareTheme.of(context).onPrimary
+                                    : WeatherCareTheme.of(context).textPrimary,
+                              )
+                          : null,
                       onSelected: (_) => setState(() => _selected = metric),
                     ),
                   ),
@@ -266,6 +283,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
                     metric: selected,
                     dataPhase: widget.dataPhase,
                     today: today,
+                    uvCenterColor: widget.uvCenterColor,
                   ),
               ],
             ),
@@ -371,6 +389,7 @@ class _HourlyPoint extends StatelessWidget {
   final _HourlyMetric metric;
   final WeatherDataPhase dataPhase;
   final String today;
+  final Color? uvCenterColor;
 
   const _HourlyPoint({
     super.key,
@@ -378,6 +397,7 @@ class _HourlyPoint extends StatelessWidget {
     required this.metric,
     required this.dataPhase,
     required this.today,
+    this.uvCenterColor,
   });
 
   @override
@@ -433,6 +453,7 @@ class _HourlyPoint extends StatelessWidget {
               ? '자외선지수 자료 없음'
               : '자외선지수 ${formatWeatherNumber(item.uvIndex!)}',
           sun: true,
+          centerColor: uvCenterColor,
         ),
       _HourlyMetric.wind => Transform.rotate(
           key: const ValueKey('today-hourly-wind-icon'),
@@ -552,6 +573,7 @@ class _MetricIconValue extends StatelessWidget {
   final String semanticLabel;
   final bool sun;
   final bool solidDrop;
+  final Color? centerColor;
 
   const _MetricIconValue({
     required this.icon,
@@ -560,6 +582,7 @@ class _MetricIconValue extends StatelessWidget {
     required this.semanticLabel,
     this.sun = false,
     this.solidDrop = false,
+    this.centerColor,
   });
 
   @override
@@ -585,7 +608,7 @@ class _MetricIconValue extends StatelessWidget {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: WeatherCareTheme.of(context).surface,
+                  color: centerColor ?? WeatherCareTheme.of(context).surface,
                   shape: BoxShape.circle,
                 ),
               ),

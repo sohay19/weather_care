@@ -10,10 +10,10 @@ const DAILY_OBSERVATION_URL =
   'https://apihub.kma.go.kr/api/typ01/url/sfc_aws_day.php';
 const MAX_RANGE_DAYS = 7;
 
-type DailyMetric = 'ta_min' | 'ta_max' | 'rn_day' | 'sd_day_max';
+type DailyMetric = 'ta_min' | 'ta_max' | 'rn_day' | 'sd_day_max' | 'ws_max';
 type Availability = 'AVAILABLE' | 'NO_RECORD' | 'UNAVAILABLE';
-const DAILY_METRICS = ['ta_min','ta_max','rn_day','sd_day_max'] as const;
-const METRIC_FIELDS = {ta_min:'minTemperature',ta_max:'maxTemperature',rn_day:'precipitationAmount',sd_day_max:'snowfallAmount'} as const;
+const DAILY_METRICS = ['ta_min','ta_max','rn_day','sd_day_max','ws_max'] as const;
+const METRIC_FIELDS = {ta_min:'minTemperature',ta_max:'maxTemperature',rn_day:'precipitationAmount',sd_day_max:'snowfallAmount',ws_max:'maximumWindSpeed'} as const;
 
 export interface KmaDailyObservationRow {
   date: string;
@@ -38,6 +38,7 @@ export interface StationDay {
   maxTemperature?: number;
   precipitationAmount?: number;
   snowfallAmount?: number;
+  maximumWindSpeed?: number;
 }
 
 export class KmaDailyObservationProviderError extends Error {
@@ -142,6 +143,8 @@ export class KmaDailyObservationProvider {
           station.precipitationAmount = row.value;
         } else if (metric === 'sd_day_max' && validAmount(row.value)) {
           station.snowfallAmount = row.value;
+        } else if (metric === 'ws_max' && validWindSpeed(row.value)) {
+          station.maximumWindSpeed = row.value;
         }
         byStationDay.set(key, station);
       }
@@ -276,6 +279,7 @@ function toDailyForecast(
     minTemperatureSource: 'DAILY',
     maxTemperatureSource: 'DAILY',
     snowfallDataAvailable: snow !== undefined,
+    maximumWindSpeed: station.maximumWindSpeed,
     observationAvailability: availability,
     weatherDataComplete:
       station.minTemperature !== undefined &&
@@ -360,6 +364,10 @@ function validTemperature(value: number): boolean {
 
 function validAmount(value: number): boolean {
   return Number.isFinite(value) && value >= 0 && value <= 2_000;
+}
+
+function validWindSpeed(value: number): boolean {
+  return Number.isFinite(value) && value >= 0 && value <= 150;
 }
 
 function validateLocation(latitude: number, longitude: number): void {

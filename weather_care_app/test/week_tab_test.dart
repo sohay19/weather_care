@@ -251,6 +251,47 @@ void main() {
         WeatherCareTheme.surfaceMuted);
   });
 
+  testWidgets('지난 날짜의 대기질은 저장된 측정소 관측 평균으로 표시한다', (tester) async {
+    final observation = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-09-08',
+      'weatherLabel': '비·눈 기록 없음',
+      'forecastSource': 'KMA_OBSERVATION',
+      'historical': true,
+      'min': 18,
+      'max': 25,
+      'averageHumidity': 51,
+      'maximumWindSpeed': 5.4,
+      'airQualityObservation': {
+        'stationName': '구로',
+        'observedHours': 20,
+        'pm25': 12.5,
+        'pm10': 27,
+      },
+      'recommendations': [],
+    });
+    await _pump(tester, [observation]);
+    await _moveDays(tester, -2);
+    expect(find.textContaining('평균 습도 51%'), findsWidgets);
+    expect(find.textContaining('최대 풍속 5.4m/s'), findsWidgets);
+    expect(find.textContaining('초미세먼지 12.5㎍/㎥'), findsWidgets);
+    expect(find.textContaining('주간 예보에서 제공되지 않아요'), findsNothing);
+    for (final (label, title) in [
+      ('평균 습도 51%', '습도'),
+      ('최대 풍속 5.4m/s', '바람'),
+      ('초미세먼지 12.5㎍/㎥', '대기질 관측'),
+    ]) {
+      await tester.ensureVisible(find.textContaining(label));
+      await tester.tap(find.textContaining(label));
+      await tester.pumpAndSettle();
+      expect(
+          find.descendant(
+              of: find.byType(AlertDialog), matching: find.text(title)),
+          findsOneWidget);
+      await tester.tap(find.text('닫기'));
+      await tester.pumpAndSettle();
+    }
+  });
+
   testWidgets('지난 날짜에 남은 예보값은 실제 관측으로 표시하지 않는다', (tester) async {
     await _pump(tester, [
       WeeklyForecastItem.fromJson({

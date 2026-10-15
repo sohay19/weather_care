@@ -301,6 +301,7 @@ class WeeklyForecastItem {
   // 예보는 신적설, KMA_OBSERVATION은 일 최심신적설. 현재 총 적설이 아니다.
   final double? snowfallAmount;
   final WeeklyAirQualityForecast? airQualityForecast;
+  final WeeklyAirQualityObservation? airQualityObservation;
   final String? forecastSource;
   final String? issuedAt;
   final String? recordedAt;
@@ -325,6 +326,7 @@ class WeeklyForecastItem {
     this.maximumUvIndex,
     this.snowfallAmount,
     this.airQualityForecast,
+    this.airQualityObservation,
     this.forecastSource,
     this.issuedAt,
     this.recordedAt,
@@ -374,6 +376,8 @@ class WeeklyForecastItem {
       snowfallAmount: _weeklyNumber(json['snowfallAmount']),
       airQualityForecast:
           WeeklyAirQualityForecast.fromJson(json['airQualityForecast']),
+      airQualityObservation:
+          WeeklyAirQualityObservation.fromJson(json['airQualityObservation']),
       forecastSource: _optionalText(json['forecastSource']),
       issuedAt: _optionalText(json['issuedAt']),
       recordedAt: _optionalText(json['recordedAt']),
@@ -421,6 +425,38 @@ class WeeklyAirQualityForecast {
             forecast.confidence == null
         ? null
         : forecast;
+  }
+}
+
+class WeeklyAirQualityObservation {
+  final String stationName;
+  final int observedHours;
+  final double? pm10;
+  final double? pm25;
+  final double? ozone;
+
+  const WeeklyAirQualityObservation({
+    required this.stationName,
+    required this.observedHours,
+    this.pm10,
+    this.pm25,
+    this.ozone,
+  });
+
+  static WeeklyAirQualityObservation? fromJson(Object? value) {
+    if (value is! Map<String, dynamic>) return null;
+    final stationName = _optionalText(value['stationName']);
+    final hours = value['observedHours'];
+    if (stationName == null || hours is! int || hours < 1 || hours > 24) {
+      return null;
+    }
+    return WeeklyAirQualityObservation(
+      stationName: stationName,
+      observedHours: hours,
+      pm10: _weeklyNumber(value['pm10']),
+      pm25: _weeklyNumber(value['pm25']),
+      ozone: _weeklyNumber(value['ozone']),
+    );
   }
 }
 

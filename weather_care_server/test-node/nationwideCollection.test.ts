@@ -67,8 +67,11 @@ describe('대표 격자와 무관한 전국 원본 수집', () => {
   });
 
   it('과거 일 관측은 전국 관측소 원본을 저장하고 같은 완료 날짜를 중복 수집하지 않는다', async () => {
+    const dates = Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2026, 8, 27 + i)).toISOString().slice(0, 10));
     const source = vi.spyOn(KmaDailyObservationProvider.prototype, 'getNationwide').mockResolvedValue({
-      stations: [{ date: '2026-10-03', stationId: 'A', latitude: 37.25, longitude: 127, minTemperature: 15, maxTemperature: 25, precipitationAmount: 0, snowfallAmount: 0 }], snowfallMetricAvailable: true, completedDates: Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2026, 8, 27 + i)).toISOString().slice(0, 10)),
+      stations: [{ date: '2026-10-03', stationId: 'A', latitude: 37.25, longitude: 127, minTemperature: 15, maxTemperature: 25, precipitationAmount: 0, snowfallAmount: 0, maximumWindSpeed: 5.4 }],
+      snowfallMetricAvailable: true, completedDates: dates, settledDates: dates,
+      metricAvailability: Object.fromEntries(dates.map(date => [date, { ws_max: 'AVAILABLE' as const }])),
     });
     const env = nodeServerEnv(database, { KMA_APIHUB_KEY: 'synthetic' });
     await runWeatherCollectionJob(env, { now, collectCore: false, dailyObservationLookbackDays: 7 });
@@ -94,7 +97,8 @@ it('일 관측의 일부 지표가 실패하면 완료로 표시하지 않고 �
     .mockResolvedValueOnce({ stations: [{ date: '2026-10-03', stationId: 'A', latitude: 37, longitude: 127, minTemperature: 15 }],
       snowfallMetricAvailable: false, completedDates: [] })
     .mockResolvedValueOnce({ stations: [{ date: '2026-10-03', stationId: 'A', latitude: 37, longitude: 127, maxTemperature: 25, snowfallAmount: 0 }],
-      snowfallMetricAvailable: true, completedDates: dates });
+      snowfallMetricAvailable: true, completedDates: dates, settledDates: dates,
+      metricAvailability: Object.fromEntries(dates.map(date => [date, { ws_max: 'AVAILABLE' as const }])) });
   const env = nodeServerEnv(database, { KMA_APIHUB_KEY: 'synthetic' });
   await runWeatherCollectionJob(env, { now, collectCore: false, dailyObservationLookbackDays: 7 });
   await runWeatherCollectionJob(env, { now, collectCore: false, dailyObservationLookbackDays: 7 });
@@ -134,7 +138,8 @@ it('설치 없는 전체 수집에서도 전국 항목을 갱신하고 대기질
   vi.spyOn(KmaHourlyObservationProvider.prototype, 'getObservationsAt').mockImplementation(async clock => ({ observedAt: gridObservationKoreanIso(clock),
     stations: [{ observedAt: gridObservationKoreanIso(clock), stationId: '108', latitude: 37.57, longitude: 126.96, temperature: 20, visibilityMeters: 10000 }] }));
   const dates = Array.from({ length: 7 }, (_, i) => new Date(Date.UTC(2026, 8, 27 + i)).toISOString().slice(0, 10));
-  vi.spyOn(KmaDailyObservationProvider.prototype, 'getNationwide').mockResolvedValue({ snowfallMetricAvailable: true, completedDates: dates,
+  vi.spyOn(KmaDailyObservationProvider.prototype, 'getNationwide').mockResolvedValue({ snowfallMetricAvailable: true, completedDates: dates, settledDates: dates,
+    metricAvailability: Object.fromEntries(dates.map(date => [date, { ws_max: 'AVAILABLE' as const }])),
     stations: dates.map(date => ({ date, stationId: '108', latitude: 37.57, longitude: 126.96, minTemperature: 15, maxTemperature: 25, snowfallAmount: 0 })) });
   await runWeatherCollectionJob(env, { now });
   await runWeatherCollectionJob(env, { now: new Date(now.getTime() + 4200000) });

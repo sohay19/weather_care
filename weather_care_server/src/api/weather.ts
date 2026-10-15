@@ -102,6 +102,10 @@ import { resolveSavedLocation } from '../regions/resolvedLocation';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
 import { calculateApparentTemperatureForConditions, weatherLabel } from '../providers/weather/kmaWeatherProvider';
 import { calculateSunTimes } from '../presentation/sunTimes';
+import { readObservedDailyHumidity } from '../services/dailyHumidityHistory';
+import { readDailyAirQualityObservation } from '../services/airQualityHistory';
+import type { NationwideAirQualitySnapshot } from '../providers/environmental/environmentalDataService';
+import type { AirStationCatalog } from '../providers/air/airKoreaAirQualityProvider';
 import {
   ultraShortApparentTemperatureDetails,
   type UltraShortObservation,
@@ -638,12 +642,30 @@ router.get('/weekly', async (c) => {
       uv,
       airQuality,
     );
-    const displayedDays = weeklyCalendarDays(
+    const calendarDays = weeklyCalendarDays(
       liveDays,
       observedDays,
       calendarWeek.dates,
       today,
     );
+    const airHistory = await getCollectedCache<NationwideAirQualitySnapshot>(
+      c.env.DB, collectedCacheKey.nationwideAir);
+    const airCatalog = airHistory?.value.catalog ??
+      (await getCollectedCache<AirStationCatalog>(c.env.DB, 'AIR_STATION_CATALOG'))?.value;
+    const coordinates = nationwideLocation.coordinates ?? kmaGridCoordinates(nx, ny);
+    const displayedDays = await Promise.all(calendarDays.map(async day => {
+      if (day.forecastSource !== 'KMA_OBSERVATION') {
+        return { ...day, airQualityObservation: undefined };
+      }
+      const date = `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`;
+      const [averageHumidity, airQualityObservation] = await Promise.all([
+        readObservedDailyHumidity(c.env.DB, date, nx, ny, now),
+        airCatalog && coordinates
+          ? readDailyAirQualityObservation(c.env.DB, date, airCatalog, coordinates)
+          : Promise.resolve(undefined),
+      ]);
+      return { ...day, averageHumidity, airQualityObservation };
+    }));
     const response = {
       dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
       generatedAt: now.toISOString(),
@@ -673,6 +695,7 @@ router.get('/weekly', async (c) => {
         minTemperatureSource: day.minTemperatureSource,
         maxTemperatureSource: day.maxTemperatureSource,
         averageHumidity: roundOptional(day.averageHumidity),
+        airQualityObservation: day.airQualityObservation,
         maximumWindSpeed: roundOptional(day.maximumWindSpeed),
         maximumUvIndex: roundOptional(day.maximumUvIndex),
         snowfallAmount: day.snowfallDataAvailable

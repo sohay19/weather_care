@@ -148,7 +148,7 @@ describe('적설의 독립 가용성',()=>{
   it('적설 빈 응답은 NO_RECORD이며 기온·강수는 완비로 제공하고 다음 수집에서 빈 응답을 재요청하지 않는다',async()=>{
     const calls:string[]=[];const provider=new KmaDailyObservationProvider({serviceKey:'synthetic',fetcher:async input=>{
       const metric=new URL(String(input)).searchParams.get('obs')!;calls.push(metric);
-      return new Response(metric==='sd_day_max'?'#END':`20261008,108,127,37.5,0,${{ta_min:18,ta_max:22,rn_day:0}[metric]}`);
+      return new Response(metric==='sd_day_max'?'#END':`20261008,108,127,37.5,0,${{ta_min:18,ta_max:22,rn_day:0,ws_max:5.4}[metric]}`);
     }});
     const snapshot=await provider.getNationwide('2026-10-08','2026-10-08');
     expect(snapshot.metricAvailability!['2026-10-08'].sd_day_max).toBe('NO_RECORD');
@@ -156,14 +156,14 @@ describe('적설의 독립 가용성',()=>{
     expect(day.weatherDataComplete).toBe(true);expect(day.snowfallDataAvailable).toBe(false);
     expect(day.observationAvailability!.snowfallAmount).toBe('NO_RECORD');
     expect(day.skyCondition).toBe('비·눈 기록 없음');
-    await provider.getNationwide('2026-10-08','2026-10-08',snapshot);expect(calls).toHaveLength(4);
+    await provider.getNationwide('2026-10-08','2026-10-08',snapshot);expect(calls).toHaveLength(5);
   });
   it('적설 실패 시 UNAVAILABLE을 표시하고 정상 지표를 재요청하지 않는다',async()=>{
     const calls:string[]=[];let fail=true;
     const provider=new KmaDailyObservationProvider({serviceKey:'synthetic',fetcher:async input=>{
       const metric=new URL(String(input)).searchParams.get('obs')!;calls.push(metric);
       if(metric==='sd_day_max'&&fail)throw new DOMException('timeout','TimeoutError');
-      return new Response(`20261008,108,127,37.5,0,${{ta_min:18,ta_max:22,rn_day:0,sd_day_max:0}[metric]}`);
+      return new Response(`20261008,108,127,37.5,0,${{ta_min:18,ta_max:22,rn_day:0,sd_day_max:0,ws_max:5.4}[metric]}`);
     }});
     const snapshot=await provider.getNationwide('2026-10-08','2026-10-08');
     expect(snapshot.completedDates).toEqual(['2026-10-08']);expect(snapshot.settledDates).toEqual([]);
@@ -171,7 +171,7 @@ describe('적설의 독립 가용성',()=>{
     const day=dailyObservationsAtLocations(snapshot,[{latitude:37.5,longitude:127}],'2026-10-08','2026-10-08')[0][0];
     expect(day.skyCondition).toBe('하늘 상태 관측 없음');
     fail=false;const final=await provider.getNationwide('2026-10-08','2026-10-08',snapshot);
-    expect(calls.slice(4)).toEqual(['sd_day_max']);expect(final.metricAvailability!['2026-10-08'].sd_day_max).toBe('AVAILABLE');
+    expect(calls.slice(5)).toEqual(['sd_day_max']);expect(final.metricAvailability!['2026-10-08'].sd_day_max).toBe('AVAILABLE');
     expect(dailyObservationsAtLocations(final,[{latitude:37.5,longitude:127}],'2026-10-08','2026-10-08')[0][0].skyCondition).toBe('비·눈 기록 없음');
   });
   it('먼 관측소의 양수 적설을 눈 기록 없는 인근 기온 관측소에 확대하지 않는다',()=>{

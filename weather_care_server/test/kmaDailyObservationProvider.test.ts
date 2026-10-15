@@ -26,6 +26,7 @@ describe('KMA daily observation provider', () => {
       ta_max: { '108': 27, '999': 25 },
       rn_day: { '108': 4.5, '999': 0 },
       sd_day_max: { '108': 0, '999': 0 },
+      ws_max: { '108': 5.4, '999': 3.2 },
     };
     const provider = new KmaDailyObservationProvider({
       serviceKey: 'test-key',
@@ -53,6 +54,7 @@ describe('KMA daily observation provider', () => {
       maxTemperature: 27,
       skyCondition: '비',
       precipitationAmount: 4.5,
+      maximumWindSpeed: 5.4,
       precipitationDetail: {
         kind: 'OBSERVATION',
         hours: [],

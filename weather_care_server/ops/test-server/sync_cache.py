@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Copy public weather caches from the live SQLite DB into the test DB."""
 
+import json
 import sqlite3
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -38,6 +40,55 @@ def copy_table(db: sqlite3.Connection, table: str, since: str | None) -> int:
         params,
     )
     return cursor.rowcount
+
+
+def archive_air_quality(db: sqlite3.Connection) -> int:
+    source = db.execute(
+        "SELECT payload, updated_at FROM source.weather_cache "
+        "WHERE cache_key='COLLECTED_NATIONWIDE_AIR'"
+    ).fetchone()
+    if not source:
+        return 0
+    payload, stamp = source
+    previous = db.execute(
+        "SELECT last_stamp FROM test_cache_sync_state WHERE table_name='air_history'"
+    ).fetchone()
+    if previous and previous[0] == stamp:
+        return 0
+    observations = json.loads(payload).get("observations", [])
+    grouped = {}
+    korea = timezone(timedelta(hours=9))
+    for item in observations:
+        if not item.get("stationName") or not item.get("observedAt"):
+            continue
+        try:
+            date = datetime.fromisoformat(item["observedAt"].replace("Z", "+00:00"))
+            date = date.astimezone(korea).date().isoformat()
+        except ValueError:
+            continue
+        grouped.setdefault(date, []).append(item)
+    for date, items in grouped.items():
+        key = f"AIR_HISTORY_{date}_전국"
+        old = db.execute("SELECT payload FROM weather_cache WHERE cache_key=?", (key,)).fetchone()
+        records = {
+            (item["stationName"], item["observedAt"]): item
+            for item in json.loads(old[0]) if item.get("stationName") and item.get("observedAt")
+        } if old else {}
+        records.update({(item["stationName"], item["observedAt"]): item for item in items})
+        db.execute(
+            "INSERT INTO weather_cache "
+            "(cache_key, region_id, nx, ny, cache_type, payload, status, updated_at) "
+            "VALUES (?, ?, 0, 0, 'AIR_HISTORY', ?, 'AVAILABLE', ?) "
+            "ON CONFLICT(cache_key) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at",
+            (key, key, json.dumps(list(records.values()), ensure_ascii=False),
+             datetime.now(timezone.utc).isoformat(timespec="milliseconds")),
+        )
+    db.execute(
+        "INSERT INTO test_cache_sync_state VALUES ('air_history', ?) "
+        "ON CONFLICT(table_name) DO UPDATE SET last_stamp=excluded.last_stamp",
+        (stamp,),
+    )
+    return len(observations)
 
 
 def main() -> None:
@@ -79,6 +130,16 @@ def main() -> None:
                     "INSERT INTO test_cache_sync_state VALUES (?, ?) "
                     "ON CONFLICT(table_name) DO UPDATE SET last_stamp=excluded.last_stamp",
                     (table, maximum or last_stamp or ""),
+                )
+            copied["air_history"] = archive_air_quality(db)
+            cutoff = (datetime.now(timezone(timedelta(hours=9))).date() - timedelta(days=8)).isoformat()
+            for cache_type, prefix in (
+                ("AIR_HISTORY", "AIR_HISTORY_"),
+                ("OBSERVED_DAILY_HUMIDITY", "OBSERVED_DAILY_HUMIDITY_"),
+            ):
+                db.execute(
+                    "DELETE FROM weather_cache WHERE cache_type=? AND cache_key < ?",
+                    (cache_type, prefix + cutoff + "_"),
                 )
         print(copied)
 

@@ -53,7 +53,7 @@ export function apiHubBudgetedFetch(input: {
     let headersElapsedMs: number | undefined;
     let bytes = 0;
     const rawMetric = cleanUrl.searchParams.get('obs') ?? cleanUrl.searchParams.get('vars');
-    const metric = rawMetric && /^(TA|HM|WS|VS|T1H|REH|WSD|VEC|PTY|RN1|TMP|SKY|POP|PCP|SNO|TMN|TMX|ta_min|ta_max|rn_day|sd_day_max)$/.test(rawMetric) ? rawMetric : undefined;
+    const metric = rawMetric && /^(TA|HM|WS|VS|T1H|REH|WSD|VEC|PTY|RN1|TMP|SKY|POP|PCP|SNO|TMN|TMX|ta_min|ta_max|rn_day|sd_day_max|ws_max)$/.test(rawMetric) ? rawMetric : undefined;
     const sourceVersion = input.sourceVersion && /^(\d{8,14}(?::\d{8,14})?|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|\+09:00))$/.test(input.sourceVersion)
       ? input.sourceVersion : undefined;
     try {

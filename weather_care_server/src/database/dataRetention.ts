@@ -56,6 +56,8 @@ export async function runDataRetentionJob(db: D1Database, now = new Date()) {
         AND julianday(updated_at) < julianday(?, '-2 days')`).bind(timestamp),
     db.prepare(`DELETE FROM weather_cache WHERE cache_type = 'COLLECTED_LOCATION_IDENTITY'
       AND julianday(updated_at) < julianday(?, '-365 days')`).bind(timestamp),
+    db.prepare(`DELETE FROM weather_cache WHERE cache_type = 'OBSERVED_DAILY_HUMIDITY'
+      AND cache_key < ?`).bind(`OBSERVED_DAILY_HUMIDITY_${new Date(now.getTime() + 9 * 3_600_000 - 8 * 86_400_000).toISOString().slice(0, 10)}_`),
   ]);
   return {
     installations: results[1].results[0].count,

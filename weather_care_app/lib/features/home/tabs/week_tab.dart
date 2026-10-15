@@ -894,7 +894,7 @@ class _WeekDataChip extends StatelessWidget {
         ? WeatherCareTheme.of(context).textSecondary
         : WeatherCareTheme.of(context).primaryDeep;
     return Tooltip(
-      message: isPast ? '${data.label} ${data.value}' : '눌러서 수치 보기',
+      message: '눌러서 수치 보기',
       child: ChoiceChip(
         label: Text.rich(TextSpan(children: [
           TextSpan(text: '${data.label} '),
@@ -907,21 +907,19 @@ class _WeekDataChip extends StatelessWidget {
         ])),
         avatar: Icon(data.icon, size: 17, color: color),
         selected: false,
-        onSelected: isPast
-            ? null
-            : (_) => showDialog<void>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(data.title),
-                    content: Text(data.detail),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('닫기'),
-                      )
-                    ],
-                  ),
-                ),
+        onSelected: (_) => showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(data.title),
+            content: Text(data.detail),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('닫기'),
+              )
+            ],
+          ),
+        ),
         labelStyle: WeatherCareTheme.of(context).microTextStyle.copyWith(
               color: color,
               fontSize: 11,
@@ -1003,6 +1001,24 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
         isPast ? '자외선 최고' : '자외선',
         isPast ? _decimal(value) : uvDescription(value)!,
         '자외선지수 최고 ${_decimal(value)}',
+      ),
+    if (day.airQualityObservation case final observed?
+        when observed.pm10 != null ||
+            observed.pm25 != null ||
+            observed.ozone != null)
+      _WeekData(
+        Icons.cloud_outlined,
+        '대기질 관측',
+        '대기질',
+        observed.pm25 != null
+            ? '초미세먼지 ${formatWeatherNumber(observed.pm25!)}㎍/㎥'
+            : observed.pm10 != null
+                ? '미세먼지 ${formatWeatherNumber(observed.pm10!)}㎍/㎥'
+                : '오존 ${formatWeatherNumber(observed.ozone!)}ppm',
+        '${observed.stationName} 측정소 · ${observed.observedHours}개 시간대 관측 평균'
+            '${observed.pm25 == null ? '' : '\n초미세먼지 ${formatWeatherNumber(observed.pm25!)}㎍/㎥'}'
+            '${observed.pm10 == null ? '' : '\n미세먼지 ${formatWeatherNumber(observed.pm10!)}㎍/㎥'}'
+            '${observed.ozone == null ? '' : '\n오존 ${formatWeatherNumber(observed.ozone!)}ppm'}',
       ),
     if (day.airQualityForecast case final air?
         when air.pm10Grade != null ||

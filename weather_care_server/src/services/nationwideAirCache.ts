@@ -5,6 +5,7 @@ import type { AirQualitySnapshot } from '../providers/air/airQualityProvider';
 import type { NationwideAirQualitySnapshot } from '../providers/environmental/environmentalDataService';
 import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
 import type { ServerEnv } from '../types';
+import { saveAirQualityHistory } from './airQualityHistory';
 
 interface AirRetry { failures: number; nextRetryAt: string; blocked?: boolean }
 const retryKey = (source:string) => `AIR_RETRY_${source}`;
@@ -66,6 +67,7 @@ async function collectAir(env:ServerEnv, now:Date):Promise<NationwideAirQualityS
       try {
         const observations = await provider.getProvinceMeasurements(province);
         await saveCollectedCache(env.DB,{key:provinceKey(province),type:'AIR_PROVINCE',value:observations,updatedAt:now});
+        await saveAirQualityHistory(env.DB, province, observations, now);
         await clearRetry(env.DB,province);
         succeeded++;
       } catch (error) {

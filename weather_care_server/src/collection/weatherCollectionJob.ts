@@ -83,6 +83,7 @@ import {
 } from '../database/apiUsageRepository';
 import { collectGridObservationSnapshot, backfillGridObservationHistory } from '../services/gridObservationCache';
 import { readCurrentGridObservation } from '../database/gridObservationRepository';
+import { archiveActiveDailyHumidity } from '../services/dailyHumidityHistory';
 import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
 import {
   compactIssueToIso,
@@ -129,6 +130,8 @@ export async function runWeatherCollectionJob(
   if (options.collectCore !== false) {
     await collectUltraShortObservations(env, activeRegions, now, activeRegions);
     await backfillGridObservationHistory(env.DB, env.KMA_APIHUB_KEY, now);
+    await archiveActiveDailyHumidity(env.DB, now, activeRegions).catch(error =>
+      logCollectionFailure('daily_humidity_archive', error));
     await collectNationwideAirQuality(env, now);
     await collectNationwideAirForecast(env, now);
     try { await collectNationwideUv(env.DB, env.KMA_SERVICE_KEY, now); }
@@ -599,11 +602,13 @@ async function collectNationalDailyObservations(env: ServerEnv, now: Date, lookb
   const dates = recentCompletedKoreanDates(now, Math.min(7, lookbackDays));
   if (!dates.length) return;
   const end = dates[dates.length - 1];
-  if (await collectedSourceVersionIsCurrent(env.DB, 'AWS_DAILY', end)) return;
   try {
     const cached = await getCollectedCache<import('../providers/weather/kmaDailyObservationProvider').NationwideDailySnapshot>(env.DB, NATIONAL_DAILY_KEY);
+    if (await collectedSourceVersionIsCurrent(env.DB, 'AWS_DAILY', end) &&
+        dates.every(date => cached?.value.metricAvailability?.[date]?.ws_max)) return;
     const knownDates = new Set(cached?.value.settledDates ?? cached?.value.completedDates ?? []);
-    const missingDates = dates.filter((date) => !knownDates.has(date));
+    const missingDates = dates.filter((date) => !knownDates.has(date) ||
+      !cached?.value.metricAvailability?.[date]?.ws_max);
     if (!missingDates.length) return;
     const dailyProvider = new KmaDailyObservationProvider({ serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
       fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'AWS_DAILY', now, sourceVersion: end, maxBytes: 2_048_000 })

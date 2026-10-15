@@ -147,6 +147,10 @@ class WeatherInfoCard extends StatelessWidget {
             ? '대기질 수준을 확인하기 어려워요'
             : '대기질은 ${_airQualityGrade(current.pm10, current.pm25, current.ozone)} 등급이에요',
         detailBody: _airQualityDetail(current),
+        stationDetail:
+            _airQualityGrade(current.pm10, current.pm25, current.ozone) == null
+                ? null
+                : _airObservationSource(current).trim(),
         interpretation:
             '제공된 오염물질 관측값 중 가장 나쁜 등급을 표시해요. 공식 통합대기환경지수는 아니에요. 자료가 없음을 좋음 등급으로 바꾸지 않아요.\n\n$_airQualityRanges',
       ),
@@ -158,6 +162,9 @@ class WeatherInfoCard extends StatelessWidget {
             : '${visibilityDescription(current.visibilityMeters)}\n${_visibilityValue(current.visibilityMeters)}',
         levelTitle: _visibilityLevel(current.visibilityMeters),
         detailBody: _visibilityDetail(current),
+        stationDetail: current.visibilityMeters == null
+            ? null
+            : _visibilityObservationSource(current),
         interpretation:
             '가시거리는 미래 예보값으로 대신 채우지 않으며 시간별·주간 미래 가시거리 예보로 확대하지 않아요.\n\n$visibilityRanges',
       ),
@@ -223,6 +230,8 @@ class WeatherInfoCard extends StatelessWidget {
               ? '현재 쌓인 눈의 깊이를 확인하기 어려워요'
               : '관측소의 현재 적설은 ${_snowDepthValue(snowDepth)}cm예요',
           detailBody: _snowDepthDetail(current),
+          stationDetail:
+              snowDepth == null ? null : _snowDepthObservationSource(current),
           interpretation:
               '관측소의 지면에 쌓인 눈 깊이예요. 표현 단계는 현재 깊이를 쉽게 읽기 위한 앱의 구간이며 대설 특보 기준이 아니에요. 선택한 위치에서 직접 측정한 값은 아니며, 앞으로 새로 쌓일 눈의 예보 신적설과 달라요. 지난 날 최심신적설로도 대신 채우지 않아요.\n\n$_snowDepthRanges',
         ),
@@ -509,7 +518,7 @@ String _airQualityDetail(CurrentWeather current) {
     if (ozoneDescription(current.ozone) != null)
       '오존 ${formatWeatherNumber(current.ozone!)}ppm',
   ].join(' · ');
-  return '$values · 표시 등급 $grade${_airObservationSource(current)}';
+  return '$values · 표시 등급 $grade';
 }
 
 String _windValue(double? direction, double? speed) {
@@ -550,6 +559,10 @@ String _visibilityDetail(CurrentWeather current) {
   if (meters == null) {
     return '기상청 지상관측 자료를 받지 못해 현재 가시거리를 표시하지 않아요.';
   }
+  return '기상청 지상관측의 현재 가시거리는 ${_visibilityValue(meters)}예요.';
+}
+
+String? _visibilityObservationSource(CurrentWeather current) {
   final source = <String>[];
   if (current.visibilityStationId case final station?) {
     source.add('관측소 $station');
@@ -560,9 +573,7 @@ String _visibilityDetail(CurrentWeather current) {
   }
   final observed = _koreaObservationClock(current.visibilityObservedAt);
   if (observed != null) source.add(observed);
-  final sourceText = source.isEmpty ? '' : '\n${source.join(' · ')}';
-  return '기상청 지상관측의 현재 가시거리는 ${_visibilityValue(meters)}예요.'
-      '$sourceText';
+  return source.isEmpty ? null : source.join(' · ');
 }
 
 String _snowDepthValue(double value) => formatWeatherNumber(value);
@@ -607,6 +618,10 @@ String _snowDepthDetail(CurrentWeather current) {
   if (depth == null) {
     return '기상청의 현재 적설 관측값을 받지 못했어요.';
   }
+  return '기상청 관측소에서 측정한 현재 총 적설은 ${_snowDepthValue(depth)}cm예요.';
+}
+
+String? _snowDepthObservationSource(CurrentWeather current) {
   final station = current.snowDepthStationName?.trim();
   final source = [
     if (station != null && station.isNotEmpty) '$station 관측소',
@@ -615,8 +630,7 @@ String _snowDepthDetail(CurrentWeather current) {
     if (_koreaObservationClock(current.snowDepthObservedAt) case final time?)
       time,
   ].join(' · ');
-  return '기상청 관측소에서 측정한 현재 총 적설은 ${_snowDepthValue(depth)}cm예요.'
-      '${source.isEmpty ? '' : '\n$source'}';
+  return source.isEmpty ? null : source;
 }
 
 String _sunTimesValue(String? sunriseAt, String? sunsetAt) {
@@ -874,6 +888,14 @@ void _showMetricDetail(BuildContext context, _WeatherMetric metric) {
                   ),
                   const SizedBox(height: 8),
                   Text(metric.detailBody),
+                  if (metric.stationDetail case final stationDetail?) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      stationDetail,
+                      key: ValueKey('weather-metric-station-${metric.label}'),
+                      style: Theme.of(dialogContext).textTheme.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -906,6 +928,7 @@ class _WeatherMetric {
   final String value;
   final String levelTitle;
   final String detailBody;
+  final String? stationDetail;
   final String interpretation;
 
   const _WeatherMetric({
@@ -914,6 +937,7 @@ class _WeatherMetric {
     required this.value,
     required this.levelTitle,
     required this.detailBody,
+    this.stationDetail,
     required this.interpretation,
   });
 }

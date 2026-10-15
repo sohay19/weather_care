@@ -10841,3 +10841,56 @@
 - 이전 작업에서 남아 있던 서버 변경을 `feat(서버): 관측 기반 주간 응답과 부가자료 API 추가`로, 앱 변경을 `feat(앱): Data 탭과 날씨 화면 구성 갱신`으로 나눠 커밋했다. 서버 커밋에는 0015 스냅샷 마이그레이션과 조회·수집 API가 포함된다.
 - 조사표, 생성 스크립트, 앱 탭 현황, 부가자료 수집 설정, 작업 기록은 문서 커밋으로 정리한다. `tmp/grid_api_research`의 미추적 미리보기·초안·검사 파일은 결과물이 아니어서 스테이징하지 않는다.
 - 전체 차이의 공백 오류와 신규 비밀값 포함 여부를 확인했다. 이 작업에서 배포·push는 진행하지 않았다.
+
+## 2026-10-15 테스트폰 전용 시험 서버 가능성 확인
+
+- 앱은 `SERVER_URL` 빌드 인자로 API 주소를 바꿀 수 있고, Node API는 `NODE_PORT`와 `NODE_DATABASE_PATH`로 별도 인스턴스를 띄울 수 있다.
+- 현재 날씨 조회 API는 인증 없이 접근 가능하며 설치 등록도 신규 기기에 열려 있다. 주소 변경만으로 테스트폰 전용 접근을 보장하지 않는다.
+- 앱의 설치 인증 정보는 서버 주소와 무관한 고정 저장 키를 사용하므로 운영 앱과 시험 앱을 같은 앱 ID로 번갈아 쓰면 인증 정보가 충돌할 수 있다. 별도 앱 ID 또는 환경별 인증 저장 분리가 필요하다.
+- 운영 스케줄러는 전국 수집을 수행하므로 시험 서버에서 그대로 중복 실행하면 외부 API 사용량이 증가한다. 별도 DB의 데이터 공급 방식을 설계해야 한다.
+- 이번 작업은 구성 가능성만 확인했다. 코드·운영 서버·배포 설정은 변경하지 않았다.
+
+## 2026-10-15 앱 삭제 후 FCM 토큰 정리 보완
+
+- 앱 삭제를 서버가 즉시 통지받을 수 없으므로 기존 FCM `UNREGISTERED` 응답 시 현재 토큰 제거 흐름을 유지했다. 알림이 발송되지 않는 설치도 마지막 인증된 앱 사용 후 30일이 지나면 10분 주기 보유기간 작업에서 토큰만 제거한다. 설치 등록·설정·인증 정보의 1년 보유기간은 유지한다.
+- 앱 안내와 서버 보유기간 문서에 실제 삭제 시점과 앱 재실행 시 재등록 동작을 반영했다. 토큰 정리는 실행당 최대 100건이며 기존 설치 만료와 같은 D1 batch에서 처리한다.
+- 서버 타입 검사, 관련 Worker 테스트 59개, Flutter 3.47.4 설정 안내 테스트 20개와 수정 Dart 파일 정적 분석을 통과했다. 운영 배포·커밋은 수행하지 않았다.
+
+## 2026-10-15 현재 앱 서버 주소 확인
+
+- 앱 코드의 기본 서버 주소와 로컬 `config/kma.config.json`의 `SERVER_URL`이 모두 `https://weather-api.codesoha.com`임을 확인했다.
+- 이 확인은 현재 소스·설정 기준이며 `--dart-define=SERVER_URL`로 빌드한 설치 앱은 다른 주소를 사용할 수 있다. 서버 배포나 앱 빌드는 하지 않았다.
+
+## 2026-10-15 테스트폰용 시험 API 구성
+
+- 미니 PC에 별도 릴리스 `/opt/weather-care/releases/20261015-test-api/weather_care_server`를 설치했다. 소스 기준은 커밋 `1333a96079bb`와 시험 접근 키 검증용 `src/node/server.ts` 변경이며, 아카이브 SHA-256은 `aeffd6b5fb28ca6af489af648c745d1888c74aeef6e30c086f22a9ea6a80bff1`이다. 기존 운영 릴리스와 8787 API·스케줄러는 교체하지 않았다.
+- `weather-care-test-api.service`가 `127.0.0.1:8788`과 별도 SQLite DB `/var/lib/weather-care/weather-care-test.sqlite`로 실행 중이다. `weather-care-test-cache-sync.timer`는 운영 DB를 읽기 전용으로 열어 행정경계·날씨 캐시만 5분 간격으로 복사한다. 설치·인증·알림 데이터는 복사하지 않는다. 시험 수집기와 시험 알림 작업은 실행하지 않는다.
+- 앱에는 시험 호스트 전용 `TEST_ACCESS_KEY` 헤더 전송과 별도 설치 인증 저장 키를 추가했다. Git 제외 파일 `weather_care_app/config/test-server.define.json`에 시험 URL과 접근 키를 저장했다. 키 값은 작업 기록에 남기지 않았다.
+- 내부 검증: 인증 헤더 없는 `/health` 403, 인증된 `/health` 및 `/main`·`/today`·`/weekly` 200, 시험 DB `PRAGMA quick_check=ok`, 설치·인증·알림 관련 테이블 0건. 서버 타입 검사와 Flutter 3.47.4 변경 파일 분석·관련 테스트 20개가 통과했다. 운영 공개 `/health`도 200을 유지했다.
+- Cloudflare 관리형 Tunnel에 `weather-test-api.codesoha.com` → `127.0.0.1:8788` 라우트를 추가했다. 현재 연결된 Wrangler OAuth 토큰은 DNS Write 권한이 없어 CNAME 생성 API가 403으로 거부됐다. 사용자가 Cloudflare DNS에서 프록시 CNAME `weather-test-api.codesoha.com` → `18cc7415-c93b-4c1e-ac8e-99e089e06a4c.cfargotunnel.com`을 직접 추가하기로 했다. 공개 URL은 DNS 연결 후 재검증해야 한다.
+
+## 2026-10-15 시험 API 공개 주소 연결 확인
+
+- 사용자가 Cloudflare DNS에 시험 CNAME을 추가했다. Cloudflare 권한 DNS 및 1.1.1.1에서 `weather-test-api.codesoha.com`의 프록시 A 레코드가 조회됐다. 로컬 기본 DNS와 8.8.8.8은 확인 시점에 이전 NXDOMAIN 캐시가 남아 있었다.
+- 공개 Cloudflare IP를 지정한 HTTPS 검증에서 접근 키를 넣은 `/health`, `/api/v1/weather/main`, `/today`, `/weekly`가 모두 200이고, 키 없는 `/health`는 403이었다. 운영 공개 `/health`는 200, 운영 API와 시험 API 및 시험 캐시 동기화 타이머는 active였다.
+- 앱 빌드는 `weather_care_app`에서 `flutter run -d <기기 ID> --dart-define-from-file=config/test-server.define.json`을 사용한다. DNS 전파 후 일반 네트워크에서도 주소가 조회되는지 확인하면 된다.
+
+## 2026-10-15 시험 서버 주소를 프로젝트 파일에서 수정하도록 변경
+
+- Git 제외 파일 `weather_care_app/config/kma.config.json`에 시험 URL과 기존 시험 접근 키를 저장했다. 이제 이 파일의 `SERVER_URL`을 코드 편집기에서 바꾸고 별도 `--dart-define` 없이 앱을 실행·빌드할 수 있다. 키 값은 기록하지 않았다.
+- `AppConfig`가 로컬 자산의 `TEST_ACCESS_KEY`를 읽고 두 API 클라이언트에 전달한다. 기존 `--dart-define` 방식은 계속 지원하며, 시험 호스트는 운영 설치 인증 정보와 별도 저장 키를 사용한다.
+- Flutter 3.47.4 정적 분석, 관련 테스트 31개, 인자 없는 Android debug APK 빌드가 통과했다. 시험 서버 자체와 Cloudflare 설정은 이번 변경에서 수정하지 않았다.
+
+## 2026-10-15 시험 서버 배포 소스 재확인
+
+- 시험 서비스는 `/opt/weather-care/releases/20261015-test-api/weather_care_server`에서 실행 중이며, 기준 소스는 최신 커밋 `1333a96079bb`와 시험 접근 키 검증 변경이다.
+- 현재 작업 폴더의 미커밋 `src/database/dataRetention.ts` 변경은 시험 릴리스에 포함되지 않았다. 따라서 작업 폴더 전체와 시험 서버 코드가 완전히 일치하는 상태는 아니다. 확인만 수행했고 재배포는 하지 않았다.
+
+## 2026-10-15 변경사항 항목별 커밋 및 최신 시험 서버 배포
+
+- 미사용 FCM 토큰 정리, 시험 DB 복제·누락 수집, 앱 시험 URL 설정, 임시 산출물 제외를 기능별 커밋으로 분리했다. 배포 중 발견한 SQLite 트리거·WAL 연결·복제 파일 권한 문제도 각각 수정해 커밋했다. `tmp/test_server_deploy`와 `tmp/grid_api_research`의 생성·미리보기 파일은 로컬에 보존하고 Git에서 제외했다.
+- 서버 릴리스 `/opt/weather-care/releases/20261015-test-api-26b8ff0/weather_care_server`를 설치하고 안정 경로 `/opt/weather-care/weather_care_test_server`를 연결했다. 시험 API·5분 캐시 동기화 타이머는 새 릴리스를 사용하며 운영 API 서비스와 릴리스는 교체하지 않았다.
+- SQLite 온라인 백업으로 운영 DB를 시험 DB 후보로 복사한 후 운영 설치·인증·알림 정보를 기존 시험 DB 값으로 교체했다. 운영 설치 65건은 시험 DB로 넘어오지 않았고, 시험 설치·인증·설정 각 1건은 기존 내용과 동일하게 유지했다. 운영·시험 API 사용량은 제공처·날짜별 큰 값으로 합쳐 호출 한도를 유지하고, 기존 시험 격자 부가자료도 보존한다. 기존 시험 DB는 `/var/lib/weather-care/weather-care-test-before-5ae148f.sqlite`에 보관했다.
+- 부가자료 일회성 누락 수집에서 조위·부이·만조·간조, K-water 댐 59곳, 하천 유량, 낙뢰 등 `grid_extra_snapshots` 68건을 저장했다. 같은 시간 슬롯으로 다시 실행했을 때 외부 API 요청 수는 증가하지 않았다. 이안류·ROMS·K-water 별도 수위는 수집 설정이 없어서 요청하지 않았고 해파리는 한국 시간 6시간 간격 조건 밖이라 이번 실행에서 요청하지 않았다.
+- 공개 시험 URL은 키 포함 `/health`, Main·Today·Week·Data 목록·댐 기록이 200, 키 없는 `/health`는 403이었다. 운영 `/health`는 200, 운영·시험 API와 시험 동기화 타이머는 active, 시험 DB `quick_check=ok`였다. 운영·시험 SQLite 본체와 WAL·SHM 파일 권한을 소유자 전용으로 제한하고, 실패한 복제 후보 파일은 제거했다.
+- 서버 TypeScript 타입 검사, Worker 430개·Node 127개, Flutter 관련 51개, 시험 DB 복제 단위 테스트가 통과했다. 시험 APK 빌드는 직전 작업에서 성공했고 이번에는 다시 빌드하지 않았다. 원격 배포는 시험 서버에만 적용했고 Git push는 하지 않았다.

@@ -296,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ServerDataAccess(
             api: ApiClient(
                 baseUrl: config.serverUrl,
+                testAccessKey: config.testAccessKey,
                 timeout: const Duration(seconds: 20)),
             legacyInstallationId: installationId);
     _serverDataAccess = access;
@@ -309,8 +310,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (access.paused) {
       _settings = _settings.copyWith(notificationEnabled: false);
     }
-    final client =
-        InstallationApiClient(baseUrl: config.serverUrl, access: access);
+    final client = InstallationApiClient(
+        baseUrl: config.serverUrl,
+        testAccessKey: config.testAccessKey,
+        access: access);
     _settingsSync = widget.settingsSync ?? SettingsSyncService(client);
     _service = widget.weatherService ?? WeatherService(client);
     _notificationRegistration = widget.notificationRegistration ??

@@ -2,13 +2,23 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiClient {
+  static const _definedTestAccessKey =
+      String.fromEnvironment('TEST_ACCESS_KEY');
+  static const _testHost = 'weather-test-api.codesoha.com';
   final String baseUrl;
   final Duration timeout;
+  final String testAccessKey;
+
+  Map<String, String> get _testHeaders =>
+      testAccessKey.isNotEmpty && Uri.parse(baseUrl).host == _testHost
+          ? {'X-Weather-Care-Test-Key': testAccessKey}
+          : const {};
 
   ApiClient({
     required this.baseUrl,
     this.timeout = const Duration(seconds: 6),
-  });
+    String? testAccessKey,
+  }) : testAccessKey = testAccessKey ?? _definedTestAccessKey;
 
   /// Authenticated operations use headers, never URL query parameters. Do not
   /// include response bodies, tokens or coordinates in exception messages.
@@ -23,7 +33,11 @@ class ApiClient {
     final client = http.Client();
     try {
       final request = http.Request(method, uri)
-        ..headers.addAll({'Content-Type': 'application/json', ...?headers});
+        ..headers.addAll({
+          'Content-Type': 'application/json',
+          ..._testHeaders,
+          ...?headers,
+        });
       if (body != null) request.body = jsonEncode(body);
       final response = await client
           .send(request)
@@ -53,7 +67,8 @@ class ApiClient {
   Future<Map<String, dynamic>> get(String path,
       {Map<String, String>? query}) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
-    final response = await http.get(uri).timeout(timeout);
+    final response =
+        await http.get(uri, headers: _testHeaders).timeout(timeout);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('HTTP ${response.statusCode}');
     }
@@ -70,7 +85,7 @@ class ApiClient {
     final response = await http
         .put(
           uri,
-          headers: {'Content-Type': 'application/json'},
+          headers: {'Content-Type': 'application/json', ..._testHeaders},
           body: jsonEncode(body),
         )
         .timeout(timeout);

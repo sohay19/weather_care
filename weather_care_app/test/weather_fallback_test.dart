@@ -32,14 +32,16 @@ void main() {
     expect(config.serverUrl, 'https://weather-api.codesoha.com');
   });
 
-  test('앱 설정에서는 운영 서버 주소만 로드한다', () async {
+  test('앱 설정에서는 서버 주소와 시험 접근 키를 로드한다', () async {
     final config = await AppConfig.load(
       bundle: _JsonAssetBundle({
         'SERVER_URL': 'https://weather.example.com',
+        'TEST_ACCESS_KEY': 'test-key',
         'KMA_SERVICE_KEY': '앱에-남으면-안되는-값',
       }),
     );
     expect(config.serverUrl, 'https://weather.example.com');
+    expect(config.testAccessKey, 'test-key');
   });
 
   test('운영 서버 실패 시 외부 API로 우회하지 않는다', () async {

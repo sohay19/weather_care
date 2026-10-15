@@ -23,7 +23,7 @@ flutter run
 
 ## 환경 변수
 
-별도 실행 인자 없이 Cloudflare Tunnel로 공개한 미니 PC 운영 서버를 기본으로 사용합니다.
+설정 파일이 없으면 Cloudflare Tunnel로 공개한 미니 PC 운영 서버를 사용합니다.
 
 ```text
 https://weather-api.codesoha.com
@@ -39,7 +39,22 @@ flutter run --dart-define=SERVER_URL=http://localhost:8787
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-별도 값을 지정하지 않으면 모든 플랫폼에서 위 운영 서버를 사용합니다.
+시험폰에서 별도 시험 API를 쓸 때는 Git 제외 파일
+`config/kma.config.json`의 `SERVER_URL`을 코드 편집기에서 수정합니다.
+이 파일에는 시험 접근 키도 저장되어 있습니다. 현재 설정은 아래 주소를 사용하므로
+별도 실행 인자 없이 IDE에서 실행할 수 있습니다.
+
+```powershell
+flutter run -d <기기 ID>
+```
+
+시험 서버는 접근 키가 없는 요청을 거부합니다. 시험 빌드는 운영 서버의 설치
+인증 정보와 다른 저장 키를 사용합니다. 운영 서버로 되돌릴 때는 같은 파일의
+`SERVER_URL`을 `https://weather-api.codesoha.com`으로 바꾸고
+`TEST_ACCESS_KEY`를 지웁니다. 접근 키가 담긴 APK와 설정 파일은 공개하지 않습니다.
+기존 `config/test-server.define.json`을 사용하는 빌드 명령도 계속 지원합니다.
+
+현재 로컬 `config/kma.config.json`은 시험 서버로 설정되어 있습니다.
 앱은 최초 실행 시 기기별 설치 ID를 생성해 보관하고, 알림 권한이 허용되면 FCM
 토큰을 설치 위치와 함께 서버에 등록합니다. Firebase가 토큰을 갱신할 때도 같은
 설치 ID로 서버 등록값을 자동 갱신합니다.
@@ -49,7 +64,7 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 운영 응답에서는 서버가 기상청 단기예보에 생활기상지수 자외선과 에어코리아 PM10·PM2.5를 병합합니다. 앱은 `current.uvIndex`, `current.pm10`, `current.pm25`를 파싱하고, 결측시 `--`를 표시합니다.
 
 앱은 외부 날씨 API를 직접 호출하지 않습니다. `config/kma.config.json`에는
-운영 서버 주소만 저장하며 기상청 인증키는 앱 바이너리에 포함하지 않습니다.
+연결할 서버 주소와 시험 서버 접근 키만 저장합니다. 기상청 인증키는 앱에 넣지 않습니다.
 
 ```json
 {
@@ -57,8 +72,9 @@ flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 }
 ```
 
-앱이 이 파일을 Flutter 자산으로 읽기 때문에 별도 실행 인자 없이 Debug와 Release에
-모두 자동 적용됩니다. IntelliJ 실행 구성도 다시 수정할 필요가 없습니다.
+시험 서버를 사용할 때는 같은 파일에 `TEST_ACCESS_KEY`도 넣습니다. 앱이 이 파일을
+Flutter 자산으로 읽기 때문에 별도 실행 인자 없이 Debug와 Release에 자동 적용됩니다.
+IntelliJ 실행 구성도 다시 수정할 필요가 없습니다.
 
 첫 날씨 조회에서는 저장된 최근 위치를 먼저 확인하고, 운영 서버의 경량 Main 응답으로
 상단 날씨 카드를 우선 표시합니다. Today 상세 자료와 Week 자료는 동시에 계속 조회해

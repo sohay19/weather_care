@@ -25,6 +25,11 @@ class ServerDataPaused implements Exception {
 /// One gate for registration, settings, deletion and re-enrollment. A deletion
 /// intent is persisted BEFORE its network call, and survives uncertain replies.
 class ServerDataAccess extends ChangeNotifier {
+  static String _storageKey(String baseUrl) =>
+      Uri.parse(baseUrl).host == 'weather-test-api.codesoha.com'
+          ? 'weather_care_server_access_test'
+          : 'weather_care_server_access';
+
   final ApiClient api;
   final String legacyInstallationId;
   final Future<String?> Function() readStore;
@@ -51,10 +56,10 @@ class ServerDataAccess extends ChangeNotifier {
     this.proofTimeout = const Duration(seconds: 45),
   })  : readStore = readStore ??
             (() => const FlutterSecureStorage()
-                .read(key: 'weather_care_server_access')),
+                .read(key: _storageKey(api.baseUrl))),
         writeStore = writeStore ??
             ((value) => const FlutterSecureStorage()
-                .write(key: 'weather_care_server_access', value: value)),
+                .write(key: _storageKey(api.baseUrl), value: value)),
         ownershipMessages =
             ownershipMessages ?? (() => FirebaseMessaging.onMessage);
 
@@ -319,7 +324,8 @@ String _randomSecret() {
 /// Existing services keep a local ID; only this boundary resolves the server ID.
 class InstallationApiClient extends ApiClient {
   final ServerDataAccess access;
-  InstallationApiClient({required super.baseUrl, required this.access});
+  InstallationApiClient(
+      {required super.baseUrl, required this.access, super.testAccessKey});
 
   @override
   Future<void> putJson(String path, Map<String, dynamic> body,

@@ -18,12 +18,22 @@ export async function recordInstallationActivity(
 
 export async function runDataRetentionJob(db: D1Database, now = new Date()) {
   const timestamp = now.toISOString(); // Reject invalid time before any writes.
+  // App removal has no reliable server callback. FCM removes known-invalid
+  // tokens on send; this also clears tokens that receive no notifications.
+  const staleTokens = `SELECT a.installation_id FROM installation_activity a
+    JOIN installations i ON i.installation_id = a.installation_id
+    WHERE i.fcm_token IS NOT NULL
+      AND julianday(a.last_active_at) <= julianday(?, '-30 days')
+    ORDER BY a.last_active_at, a.installation_id LIMIT 100`;
   // Candidate selection and the trigger's deletes share one transaction. An app
   // request either renews before it or sees its credential has been removed.
   const candidates = `SELECT installation_id FROM installation_activity
     WHERE ${installationExpirySql} <= julianday(?)
     ORDER BY ${installationExpirySql}, installation_id LIMIT 100`;
   const results = await db.batch<{ count: number }>([
+    db.prepare(`UPDATE installations SET fcm_token = NULL, updated_at = ?
+      WHERE fcm_token IS NOT NULL AND installation_id IN (${staleTokens})`)
+      .bind(timestamp, timestamp),
     db.prepare(`SELECT COUNT(*) AS count FROM installations
       WHERE installation_id IN (${candidates})`).bind(timestamp),
     db.prepare(`SELECT COUNT(*) AS count FROM notification_history
@@ -48,7 +58,7 @@ export async function runDataRetentionJob(db: D1Database, now = new Date()) {
       AND julianday(updated_at) < julianday(?, '-365 days')`).bind(timestamp),
   ]);
   return {
-    installations: results[0].results[0].count,
-    notificationHistory: results[1].results[0].count + results[3].meta.changes,
+    installations: results[1].results[0].count,
+    notificationHistory: results[2].results[0].count + results[4].meta.changes,
   };
 }

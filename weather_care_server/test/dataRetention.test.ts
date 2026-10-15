@@ -65,6 +65,29 @@ beforeEach(async () => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('one-year data retention', () => {
+  it('clears inactive FCM tokens after 30 days without deleting installation data', async () => {
+    const staleAt = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const freshAt = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000 + 1000).toISOString();
+    await seed(id, staleAt);
+    await seed(other, freshAt);
+    await env.DB.prepare('UPDATE installations SET fcm_token = ? WHERE installation_id = ?')
+      .bind('stale-token', id).run();
+    await env.DB.prepare('UPDATE installations SET fcm_token = ? WHERE installation_id = ?')
+      .bind('fresh-token', other).run();
+
+    await runDataRetentionJob(env.DB, new Date(now.getTime() - 1));
+    expect(await env.DB.prepare('SELECT fcm_token FROM installations WHERE installation_id = ?')
+      .bind(id).first('fcm_token')).toBe('stale-token');
+
+    await runDataRetentionJob(env.DB, now);
+    expect(await env.DB.prepare('SELECT fcm_token FROM installations WHERE installation_id = ?')
+      .bind(id).first('fcm_token')).toBeNull();
+    expect(await env.DB.prepare('SELECT fcm_token FROM installations WHERE installation_id = ?')
+      .bind(other).first('fcm_token')).toBe('fresh-token');
+    expect(await count('installation_credentials')).toBe(1);
+    expect(await count('notification_settings')).toBe(1);
+  });
+
   it('격자 부가자료의 날짜형 슬롯은 수집 시각을 기준으로 8일 보존한다', async () => {
     await env.DB.prepare(`INSERT INTO grid_extra_snapshots
       (source,target_id,slot,payload,collected_at) VALUES (?,?,?,?,?)`)

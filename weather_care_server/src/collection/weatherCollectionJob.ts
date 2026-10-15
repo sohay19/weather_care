@@ -283,7 +283,7 @@ export function shouldRefreshEnvironmentalRecord(
   return now.getTime() - updatedAt >= maxAgeMs;
 }
 
-async function collectWarnings(
+export async function collectWarnings(
   env: ServerEnv,
   regions: CollectionTarget[],
   now: Date,

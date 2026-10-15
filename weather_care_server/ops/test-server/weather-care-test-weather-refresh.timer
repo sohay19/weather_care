@@ -1,0 +1,10 @@
+[Unit]
+Description=날씨챙겨 시험 서버 자외선·생활지수·특보·적설 30분 갱신
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=true
+Unit=weather-care-test-weather-refresh.service
+
+[Install]
+WantedBy=timers.target

@@ -13,6 +13,34 @@ import {
 const base = { baseDate: '20260820', baseTime: '0800' };
 
 describe('KmaWeatherProvider', () => {
+  it('uses the maximum POP only from snow or mixed-snow periods', () => {
+    const forecast = buildForecastFromItems([
+      ...slot('20260820', '1000', { TMP: '-1', PTY: '3', POP: '70' }),
+      ...slot('20260820', '1100', { TMP: '1', PTY: '1', POP: '95' }),
+      ...slot('20260820', '1200', { TMP: '0', PTY: '2', POP: '80' }),
+    ], new Date('2026-08-20T01:00:00Z'), base);
+    expect(forecast.daily[0]).toMatchObject({ snowProbability: 80,
+      snowProbabilitySource: 'KMA_PRECIPITATION_FORECAST' });
+  });
+
+  it.each([{ PTY: '3' }, { POP: '70' }, { PTY: '3', POP: '-1' }, { PTY: '3', POP: '101' }])(
+    'leaves snow probability unavailable for missing or invalid inputs %j', values => {
+      const forecast = buildForecastFromItems(slot('20260820', '1000', values),
+        new Date('2026-08-20T01:00:00Z'), base);
+      expect(forecast.daily[0].snowProbability).toBeUndefined();
+      expect(forecast.daily[0].snowProbabilitySource).toBeUndefined();
+    });
+
+  it('assigns midnight precipitation probability to the preceding day', () => {
+    const forecast = buildForecastFromItems([
+      ...slot('20260820', '2300', { TMP: '0', PTY: '3', POP: '40' }),
+      ...slot('20260821', '0000', { TMP: '0', PTY: '3', POP: '80' }),
+      ...slot('20260821', '0100', { TMP: '0', PTY: '3', POP: '50' }),
+    ], new Date('2026-08-20T01:00:00Z'), base);
+    expect(forecast.daily.find(day => day.date === '20260820')?.snowProbability).toBe(80);
+    expect(forecast.daily.find(day => day.date === '20260821')?.snowProbability).toBe(50);
+  });
+
   it.each([
     { TMP: '28' },
     { TMP: '28', PTY: '0' },

@@ -210,12 +210,19 @@ export function buildMidTermDailyForecast(
       return [];
     }
     const skyCondition = representativeMidTermWeather(weather);
+    const snowProbabilities = weatherValues.flatMap((value, index) => {
+      const probability = probabilityValues[index];
+      if (value === undefined || probability === undefined ||
+          !Number.isFinite(probability) || probability < 0 || probability > 100) return [];
+      return [value.includes('눈') ? probability : 0];
+    });
+    const snowProbability = snowProbabilities.length === weatherValues.length
+      ? Math.max(...snowProbabilities) : undefined;
     const precipitationProbability = probabilities.length === 0 ? 0 : Math.max(...probabilities);
     const date = new Date(issueDate.getTime() + offset * 86_400_000)
       .toISOString()
       .slice(0, 10)
       .replaceAll('-', '');
-    const snowExpected = skyCondition.includes('눈');
     return [{
       date,
       forecastSource: 'KMA_MID_TERM',
@@ -236,8 +243,8 @@ export function buildMidTermDailyForecast(
       skyCondition,
       precipitationProbability,
       precipitationAmount: 0,
-      snowProbability: snowExpected ? precipitationProbability : 0,
-      snowfallAmount: 0,
+      snowProbability,
+      snowProbabilitySource: snowProbability === undefined ? undefined : 'KMA_PRECIPITATION_FORECAST',
     }];
   });
 }

@@ -44,9 +44,11 @@ export interface DailyWeatherForecast {
   skyCondition: string;
   precipitationProbability: number;
   precipitationAmount: number;
-  snowProbability: number;
+  snowProbability?: number;
+  /** Snow-forecast periods' precipitation probability; not an independent ensemble probability. */
+  snowProbabilitySource?: 'KMA_PRECIPITATION_FORECAST';
   /** Forecast new snowfall; KMA_OBSERVATION uses daily maximum new snow depth (sd_day_max). Never current total snow depth. */
-  snowfallAmount: number;
+  snowfallAmount?: number;
 }
 
 export interface WeatherForecast {

@@ -673,6 +673,13 @@ class _WeekDayCard extends StatelessWidget {
               key: ValueKey('week-$kind-${day.forecastDate}'),
               icon: icon,
               text: text,
+              detail: kind == 'snowfall' && day.snowProbability != null
+                  ? '눈 또는 비/눈으로 예보된 시간대의 기상청 강수확률을 표시해요. '
+                      '기상청이 별도로 산출한 강설확률은 아니에요. '
+                      '비/눈은 비가 내릴 가능성도 포함해요. '
+                      '일별 수치는 해당 예보 시간대 중 가장 높은 값이에요.'
+                      '${isPast ? '\n지난 날짜의 확률은 관측값이 아닌 당시 저장한 예보예요.' : ''}'
+                  : null,
               isToday: isToday,
               isPast: isPast,
             ),
@@ -841,9 +848,11 @@ class _WeekAmountRow extends StatelessWidget {
   final String text;
   final bool isToday;
   final bool isPast;
+  final String? detail;
 
   const _WeekAmountRow({
     super.key,
+    this.detail,
     required this.icon,
     required this.text,
     required this.isToday,
@@ -873,6 +882,24 @@ class _WeekAmountRow extends StatelessWidget {
                   .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
             ),
           ),
+          if (detail != null)
+            IconButton(
+              tooltip: '강설확률 설명',
+              icon: const Icon(Icons.info_outline_rounded, size: 17),
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('강설확률'),
+                  content: Text(detail!),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('확인'),
+                    )
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -972,11 +999,15 @@ class _WeekDataChip extends StatelessWidget {
 
 String _weekSnowfallText(WeeklyForecastItem day, {required bool isPast}) {
   final amount = day.snowfallAmount;
-  final probabilityText = isPast ? '강설확률 예보 이력 없음' : '강설확률 자료 없음';
+  final probability = day.snowProbability;
+  final probabilityText = probability == null
+      ? (isPast ? '강설확률 예보 이력 없음' : '강설확률 자료 없음')
+      : '강설확률 최고 ${formatWeatherNumber(probability)}%${isPast ? ' (당시 예보)' : ''}';
   if (isPast) {
     return '$probabilityText · 강설 관측 · 최심신적설 '
         '${amount == null ? '자료 없음' : '${_decimal(amount)}cm'}';
   }
+  if (day.forecastSource == 'KMA_MID_TERM') return probabilityText;
   return '$probabilityText · 예상 신적설 '
       '${amount == null ? '자료 없음' : '${_decimal(amount)}cm'}';
 }

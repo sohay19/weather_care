@@ -85,6 +85,8 @@ import { readCollectedAirForecast } from '../providers/air/airKoreaForecastProvi
 import {
   currentKoreanCalendarWeek,
   koreanCalendarDate,
+  getWeeklyForecastRecords,
+  saveWeeklyForecastRecords,
 } from '../database/weeklyForecastRepository';
 import {
   cacheRecordIsFresh,
@@ -645,6 +647,15 @@ router.get('/weekly', async (c) => {
       uv,
       airQuality,
     );
+    await saveWeeklyForecastRecords(c.env.DB, regionId,
+      liveDays.filter(day => day.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'), now)
+      .catch(error => console.warn(JSON.stringify({ event: 'snow_probability_history_save_failed', error: safeErrorName(error) })));
+    const history = await getWeeklyForecastRecords(c.env.DB, regionId,
+      calendarWeek.startDate, calendarWeek.endDate).catch(error => {
+        console.warn(JSON.stringify({ event: 'snow_probability_history_read_failed', error: safeErrorName(error) }));
+        return [] as DailyWeatherForecast[];
+      });
+    const historyByDate = new Map<string, DailyWeatherForecast>(history.map(day => [day.date, day] as const));
     const calendarDays = weeklyCalendarDays(
       liveDays,
       observedDays,
@@ -667,7 +678,14 @@ router.get('/weekly', async (c) => {
           ? readDailyAirQualityObservation(c.env.DB, date, airCatalog, coordinates)
           : Promise.resolve(undefined),
       ]);
-      return { ...day, averageHumidity, airQualityObservation };
+      const previousForecast = historyByDate.get(day.date);
+      const savedProbability = previousForecast?.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'
+        ? previousForecast : undefined;
+      return { ...day, averageHumidity, airQualityObservation,
+        snowProbability: savedProbability?.snowProbability,
+        snowProbabilitySource: savedProbability?.snowProbabilitySource,
+        snowProbabilityIssuedAt: savedProbability?.issuedAt };
+
     }));
     const response = {
       dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
@@ -701,7 +719,12 @@ router.get('/weekly', async (c) => {
         airQualityObservation: day.airQualityObservation,
         maximumWindSpeed: roundOptional(day.maximumWindSpeed),
         maximumUvIndex: roundOptional(day.maximumUvIndex),
-        snowfallAmount: day.snowfallDataAvailable
+        snowProbability: day.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'
+          ? roundOptional(day.snowProbability) : undefined,
+        snowProbabilitySource: day.snowProbabilitySource,
+        snowProbabilityIssuedAt: 'snowProbabilityIssuedAt' in day
+          ? day.snowProbabilityIssuedAt : day.issuedAt,
+        snowfallAmount: day.forecastSource !== 'KMA_MID_TERM' && day.snowfallDataAvailable
           ? roundOptional(day.snowfallAmount)
           : undefined,
         airQualityForecast: day.airQualityForecast,
@@ -844,7 +867,12 @@ export function mergeWeeklyForecastDays(
   midTerm: DailyWeatherForecast[],
 ): DailyWeatherForecast[] {
   const byDate = new Map<string, DailyWeatherForecast>();
-  for (const day of midTerm) byDate.set(day.date, day);
+  for (const day of midTerm) {
+    const { snowfallAmount: _snowfallAmount, snowProbability: _snowProbability,
+      snowfallDataAvailable: _snowfallDataAvailable, ...forecast } = day;
+    byDate.set(day.date, day.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'
+      ? { ...forecast, snowProbability: day.snowProbability } : forecast);
+  }
   for (const day of shortTerm) {
     const medium = byDate.get(day.date);
     const hasOfficialDailyTemperatures =

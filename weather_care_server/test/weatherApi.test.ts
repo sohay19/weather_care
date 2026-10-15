@@ -426,6 +426,8 @@ describe('weekly calendar date contract', () => {
       maxTemperatureSource: 'DAILY' as const,
     };
     const mid = { ...day(27), date: '20260919', forecastSource: 'KMA_MID_TERM' as const };
+    delete mid.snowfallAmount;
+    delete mid.snowProbability;
     const merged = mergeWeeklyForecastDays([short], [
       { ...mid, date: '20260915' },
       mid,
@@ -654,6 +656,9 @@ describe('weekly provider independence', () => {
       ...day(24),
       date: '20260917',
       forecastSource: 'KMA_MID_TERM' as const,
+      snowfallAmount: 17,
+      snowfallDataAvailable: true,
+      snowProbability: 96,
     };
     const mid = vi.spyOn(KmaMidTermProvider.prototype, 'getForecast')
       .mockResolvedValue([midDay]);
@@ -670,10 +675,13 @@ describe('weekly provider independence', () => {
         { DB: env.DB, KMA_SERVICE_KEY: 'short-key', KMA_APIHUB_KEY: 'hub-key' },
       );
       expect(response.status).toBe(200);
-      expect(await response.json()).toMatchObject({
+      const body = await response.json<{ dataSource: string; days: Record<string, unknown>[] }>();
+      expect(body).toMatchObject({
         dataSource: '기상청 중기예보',
         days: [{ forecastDate: '2026-09-17', forecastSource: 'KMA_MID_TERM' }],
       });
+      expect(body.days[0]).not.toHaveProperty('snowfallAmount');
+      expect(body.days[0]).not.toHaveProperty('snowProbability');
     } finally {
       short.mockRestore();
       mid.mockRestore();

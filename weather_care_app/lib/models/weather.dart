@@ -315,6 +315,8 @@ class WeeklyForecastItem {
   final double? maximumUvIndex;
   // 예보는 신적설, KMA_OBSERVATION은 일 최심신적설. 현재 총 적설이 아니다.
   final double? snowfallAmount;
+  final double? snowProbability;
+  final String? snowProbabilitySource;
   final WeeklyAirQualityForecast? airQualityForecast;
   final WeeklyAirQualityObservation? airQualityObservation;
   final String? forecastSource;
@@ -340,6 +342,8 @@ class WeeklyForecastItem {
     this.maximumWindSpeed,
     this.maximumUvIndex,
     this.snowfallAmount,
+    this.snowProbability,
+    this.snowProbabilitySource,
     this.airQualityForecast,
     this.airQualityObservation,
     this.forecastSource,
@@ -359,6 +363,7 @@ class WeeklyForecastItem {
       min = null;
       max = null;
     }
+    final snowProbability = _weeklyNumber(json['snowProbability']);
     final raw = json['recommendations'];
     final valid = raw is List
         ? raw
@@ -388,7 +393,17 @@ class WeeklyForecastItem {
       averageHumidity: _weeklyNumber(json['averageHumidity']),
       maximumWindSpeed: _weeklyNumber(json['maximumWindSpeed']),
       maximumUvIndex: _weeklyNumber(json['maximumUvIndex']),
-      snowfallAmount: _weeklyNumber(json['snowfallAmount']),
+      snowfallAmount: json['forecastSource'] == 'KMA_MID_TERM'
+          ? null
+          : _weeklyNumber(json['snowfallAmount']),
+      snowProbability:
+          json['snowProbabilitySource'] == 'KMA_PRECIPITATION_FORECAST' &&
+                  snowProbability != null &&
+                  snowProbability >= 0 &&
+                  snowProbability <= 100
+              ? snowProbability
+              : null,
+      snowProbabilitySource: _optionalText(json['snowProbabilitySource']),
       airQualityForecast:
           WeeklyAirQualityForecast.fromJson(json['airQualityForecast']),
       airQualityObservation:

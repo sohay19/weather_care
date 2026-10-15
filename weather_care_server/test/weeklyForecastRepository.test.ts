@@ -18,6 +18,20 @@ beforeAll(async () => {
 });
 
 describe('weekly forecast history', () => {
+  it('retains mid-term weather records without unsupported snow fields', async () => {
+    const forecast = { ...day('20260919', 24), forecastSource: 'KMA_MID_TERM' as const };
+    delete forecast.snowProbability;
+    delete forecast.snowfallAmount;
+    await saveWeeklyForecastRecords(env.DB, 'test_week_mid_snow', [forecast],
+      new Date('2026-09-15T03:00:00Z'));
+    const saved = await getWeeklyForecastRecords(env.DB, 'test_week_mid_snow',
+      '2026-09-19', '2026-09-19');
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({ forecastSource: 'KMA_MID_TERM', maxTemperature: 24 });
+    expect(saved[0]).not.toHaveProperty('snowfallAmount');
+    expect(saved[0]).not.toHaveProperty('snowProbability');
+  });
+
   it('keeps a passed date unchanged and updates only dates that are current or future', async () => {
     const regionId = 'test_week_preserve';
     await saveWeeklyForecastRecords(env.DB, regionId, [day('20260915', 25)],

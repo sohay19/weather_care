@@ -1,15 +1,39 @@
+import { saveWeeklyForecastRecords } from '../src/database/weeklyForecastRepository';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SqliteD1Database, runSqliteMigrations, asD1Database } from '../src/node/sqliteD1';
 import { saveAirQualityHistory, readDailyAirQualityObservation } from '../src/services/airQualityHistory';
 import { readObservedDailyHumidity, archiveActiveDailyHumidity } from '../src/services/dailyHumidityHistory';
 import { collectedCacheKey, saveCollectedCache } from '../src/database/collectedWeatherRepository';
 import weatherRouter from '../src/api/weather';
+import { archiveSnowProbabilityForecasts } from '../src/services/snowProbabilityHistory';
 
 let database: SqliteD1Database;
 beforeEach(() => { database = new SqliteD1Database(':memory:'); runSqliteMigrations(database); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); database.close(); });
 
 describe('지난 날짜 관측 기록', () => {
+  it('강설확률은 저장된 예보에서 외부 호출 없이 보관하고 지난 날짜를 덮어쓰지 않는다', async () => {
+    const db = asD1Database(database);
+    const now = new Date('2026-10-15T12:00:00+09:00');
+    const fetcher = vi.fn(() => { throw new Error('외부 요청 금지'); });
+    vi.stubGlobal('fetch', fetcher);
+    const day = { date: '20261015', skyCondition: '눈', precipitationProbability: 70,
+      precipitationAmount: 0, snowProbability: 70,
+      snowProbabilitySource: 'KMA_PRECIPITATION_FORECAST', issuedAt: '2026-10-15T11:00:00+09:00' };
+    await saveCollectedCache(db, { key: 'COLLECTED_POINT_FORECAST_58_125',
+      type: 'COLLECTED_POINT_FORECAST', value: { nx: 58, ny: 125, forecast: {
+        baseDate: '20261015', baseTime: '1100', daily: [day], hourly: [{
+          observedAt: '2026-10-15T13:00:00+09:00', temperature: 0, humidity: 80, windSpeed: 2,
+        }],
+      } }, updatedAt: now });
+    await archiveSnowProbabilityForecasts(db, now, [{ nx: 58, ny: 125 }]);
+    await saveWeeklyForecastRecords(db, '58_125', [{ ...day, snowProbability: 0,
+      snowProbabilitySource: 'KMA_PRECIPITATION_FORECAST' }], new Date('2026-10-16T12:00:00+09:00'));
+    const record = database.sqlite.prepare('SELECT forecast_payload FROM weekly_forecast_records').get() as { forecast_payload: string };
+    expect(JSON.parse(record.forecast_payload).snowProbability).toBe(70);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it('이미 수집한 대기질을 시간·측정소별로 보관하고 같은 시각 갱신은 중복하지 않는다', async () => {
     const db = asD1Database(database);
     const now = new Date('2026-10-15T12:00:00+09:00');
@@ -84,13 +108,20 @@ describe('지난 날짜 관측 기록', () => {
           skyCondition: '비·눈 기록 없음', precipitationProbability: 0,
           precipitationAmount: 0, snowProbability: 0, snowfallAmount: 0 }],
       }, updatedAt: now });
+    await saveWeeklyForecastRecords(db, '58_125', [{
+      date: '20261014', forecastSource: 'KMA_SHORT_TERM', skyCondition: '눈',
+      precipitationProbability: 70, precipitationAmount: 0, snowProbability: 70,
+      snowProbabilitySource: 'KMA_PRECIPITATION_FORECAST', issuedAt: '2026-10-14T14:00:00+09:00',
+    }], new Date('2026-10-14T15:00:00+09:00'));
     const response = await weatherRouter.request(
       '/weekly?nx=58&ny=125&latitude=37.5&longitude=126.9', {}, { DB: db });
     expect(response.status).toBe(200);
     const body = await response.json() as { days: { forecastDate: string; averageHumidity?: number;
       maximumWindSpeed?: number; airQualityObservation?: { stationName: string; pm25?: number } }[] };
     expect(body.days.find(day => day.forecastDate === '2026-10-14')).toMatchObject({
-      averageHumidity: 54, maximumWindSpeed: 5.4,
+      averageHumidity: 54, maximumWindSpeed: 5.4, snowProbability: 70,
+      snowProbabilitySource: 'KMA_PRECIPITATION_FORECAST',
+      snowProbabilityIssuedAt: '2026-10-14T14:00:00+09:00',
       airQualityObservation: { stationName: '구로', pm25: 14 },
     });
   });

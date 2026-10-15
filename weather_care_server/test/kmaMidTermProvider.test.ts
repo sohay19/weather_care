@@ -58,6 +58,26 @@ describe('KmaMidTermProvider', () => {
     });
   });
 
+  it('uses weather and POP for snow probability without inventing snowfall amounts', () => {
+    const [day] = buildMidTermDailyForecast('202609150600',
+      { regId: '11B10101', taMin4: -2, taMax4: 1 },
+      { regId: '11B00000', wf4Am: '눈', wf4Pm: '눈', rnSt4Am: 70, rnSt4Pm: 80 });
+    expect(day.skyCondition).toBe('눈');
+    expect(day.precipitationProbability).toBe(80);
+    expect(day).not.toHaveProperty('snowfallAmount');
+    expect(day).toMatchObject({ snowProbability: 80, snowProbabilitySource: 'KMA_PRECIPITATION_FORECAST' });
+  });
+
+  it('keeps snow-period POP separate from higher rain-period POP and missing periods', () => {
+    const temperature = { regId: '11B10101', taMin4: -2, taMax4: 1 };
+    const [day] = buildMidTermDailyForecast('202609150600', temperature,
+      { regId: '11B00000', wf4Am: '비', wf4Pm: '비/눈', rnSt4Am: 95, rnSt4Pm: 70 });
+    expect(day.snowProbability).toBe(70);
+    const [missing] = buildMidTermDailyForecast('202609150600', temperature,
+      { regId: '11B00000', wf4Am: '비', wf4Pm: '눈', rnSt4Am: 95 });
+    expect(missing.snowProbability).toBeUndefined();
+  });
+
   it('fetches temperature and land data for the resolved city', async () => {
     const calls: string[] = [];
     const fetcher: typeof fetch = async (input) => {

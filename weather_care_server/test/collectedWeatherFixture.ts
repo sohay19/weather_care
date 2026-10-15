@@ -1,3 +1,4 @@
+import weeklyHistoryMigration from '../migrations/0010_weekly_forecast_records.sql?raw';
 import nationwideForecastMigration from '../migrations/0013_nationwide_forecast.sql?raw';
 import administrativeBoundariesMigration from '../migrations/0014_administrative_boundaries.sql?raw';
 import { env } from 'cloudflare:test';
@@ -80,6 +81,7 @@ export async function seedCollectedComparison(
 }
 
 async function ensureWeatherCache(): Promise<void> {
+  await env.DB.exec(weeklyHistoryMigration.replaceAll(/--[^\n]*/g, '').replaceAll(/\r?\n/g, ' '));
   await env.DB.exec(administrativeBoundariesMigration.replaceAll(/--[^\n]*/g, '').replaceAll(/\r?\n/g, ' '));
   await env.DB.exec(nationwideForecastMigration.replaceAll(/\r?\n/g, ' ').replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS ').replace('CREATE INDEX ', 'CREATE INDEX IF NOT EXISTS '));
   await env.DB.exec(gridHistoryMigration.replaceAll(/--[^\n]*/g, '').replaceAll(/\r?\n/g, ' ').replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS '));

@@ -197,6 +197,85 @@ void main() {
     );
   });
 
+  testWidgets('중기는 눈 예보의 강수확률만 표시하고 설명을 연다', (tester) async {
+    final day = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-09-10',
+      'weatherLabel': '비/눈',
+      'forecastSource': 'KMA_MID_TERM',
+      'min': -1,
+      'max': 2,
+      'snowProbability': 70.25,
+      'snowProbabilitySource': 'KMA_PRECIPITATION_FORECAST',
+      'snowfallAmount': 17,
+      'recommendations': [],
+    });
+    await _pump(tester, [day]);
+    expect(find.textContaining('강설확률 최고 70.3%'), findsOneWidget);
+    expect(find.textContaining('예상 신적설'), findsNothing);
+    await tester.ensureVisible(find.byTooltip('강설확률 설명'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('강설확률 설명'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('비가 내릴 가능성도 포함'), findsOneWidget);
+  });
+
+  testWidgets('지난 확률은 당시 예보로 표시하고 실제 신적설과 구분한다', (tester) async {
+    await _pump(tester, [
+      WeeklyForecastItem.fromJson({
+        'forecastDate': '2026-09-09',
+        'weatherLabel': '눈',
+        'forecastSource': 'KMA_OBSERVATION',
+        'historical': true,
+        'min': -1,
+        'max': 2,
+        'snowProbability': 70,
+        'snowProbabilitySource': 'KMA_PRECIPITATION_FORECAST',
+        'snowfallAmount': 1.2,
+        'recommendations': [],
+      })
+    ]);
+    await _moveDays(tester, -1);
+    expect(find.textContaining('강설확률 최고 70% (당시 예보)'), findsOneWidget);
+    expect(find.textContaining('최심신적설 1.2cm'), findsOneWidget);
+  });
+
+  test('출처가 없는 기존 강설확률과 범위 밖 숫자는 사용하지 않는다', () {
+    for (final value in [-1, 101]) {
+      expect(
+          WeeklyForecastItem.fromJson({
+            'snowProbability': value,
+            'snowProbabilitySource': 'KMA_PRECIPITATION_FORECAST',
+          }).snowProbability,
+          isNull);
+    }
+    expect(WeeklyForecastItem.fromJson({'snowProbability': 70}).snowProbability,
+        isNull);
+    expect(
+        WeeklyForecastItem.fromJson({
+          'snowProbability': 0,
+          'snowProbabilitySource': 'KMA_PRECIPITATION_FORECAST',
+        }).snowProbability,
+        0);
+  });
+
+  testWidgets('중기예보는 기존 캐시의 신적설량도 표시하지 않는다', (tester) async {
+    final day = WeeklyForecastItem.fromJson({
+      'forecastDate': '2026-09-10',
+      'weatherLabel': '눈',
+      'forecastSource': 'KMA_MID_TERM',
+      'min': -2,
+      'max': 1,
+      'snowfallAmount': 17,
+      'recommendations': [],
+    });
+    expect(day.snowfallAmount, isNull);
+    await _pump(tester, [day]);
+    expect(find.text('중기예보'), findsOneWidget);
+    expect(find.text('강설확률 자료 없음'), findsOneWidget);
+    expect(find.textContaining('예상 신적설'), findsNothing);
+    expect(find.textContaining('17cm'), findsNothing);
+  });
+
   testWidgets('지난 날짜의 자료출처는 숨기고 당일 출처만 표시한다', (tester) async {
     await _pump(
       tester,

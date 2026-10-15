@@ -1,3 +1,4 @@
+import { archiveSnowProbabilityForecasts } from '../services/snowProbabilityHistory';
 import { collectNationwideAirQuality } from '../services/nationwideAirCache';
 import { collectNationwideForecast } from '../services/nationwideForecastCache';
 import { collectPointForecasts } from '../services/pointForecastCache';
@@ -147,6 +148,8 @@ export async function runWeatherCollectionJob(
     await collectNationwideForecast(env.DB, env.KMA_APIHUB_KEY, now);
     try { await collectPointForecasts(env.DB, env.KMA_SERVICE_KEY, now); }
     catch (error) { logCollectionFailure('point_forecast', error); }
+    await archiveSnowProbabilityForecasts(env.DB, now, activeRegions).catch(error =>
+      logCollectionFailure('snow_probability_archive', error));
   } else {
     if (options.collectHourlyObservations) await collectCurrentVisibility(env, [], now);
     if (options.dailyObservationLookbackDays !== undefined) await collectNationalDailyObservations(env, now, options.dailyObservationLookbackDays);

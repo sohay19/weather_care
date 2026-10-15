@@ -546,9 +546,14 @@ function buildDailyForecast(
       const precipitationProbability = maximum(
         snapshots.map((snapshot) => snapshot.precipitationProbability ?? 0),
       ) ?? 0;
-      const snowProbability = maximum(
-        snapshots.map((snapshot) => snapshot.snowProbability ?? 0),
-      ) ?? 0;
+      const snowSnapshots = hourly.filter(snapshot =>
+        formatKmaDate(new Date(Date.parse(snapshot.observedAt) + KST_OFFSET_MS - 3_600_000)) === date);
+      const snowProbability = maximum(snowSnapshots.flatMap((snapshot) => {
+        const probability = snapshot.precipitationProbability;
+        if (probability === undefined || !Number.isFinite(probability) ||
+            probability < 0 || probability > 100 || snapshot.snowExpected === undefined) return [];
+        return [snapshot.snowExpected ? probability : 0];
+      }));
       const humidities = snapshots
         .map((snapshot) => snapshot.humidity)
         .filter((value): value is number => value !== undefined);
@@ -586,6 +591,7 @@ function buildDailyForecast(
           0,
         ),
         snowProbability,
+        snowProbabilitySource: snowProbability === undefined ? undefined : 'KMA_PRECIPITATION_FORECAST',
         snowfallAmount: snapshots.reduce(
           (sum, snapshot) => sum + (snapshot.snowfallAmount ?? 0),
           0,

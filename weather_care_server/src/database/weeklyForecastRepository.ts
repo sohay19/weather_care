@@ -24,7 +24,9 @@ export async function saveWeeklyForecastRecords(
          forecast_payload=excluded.forecast_payload,
          source=excluded.source,
          issued_at=excluded.issued_at,
-         recorded_at=excluded.recorded_at`,
+         recorded_at=excluded.recorded_at
+       WHERE COALESCE(excluded.issued_at, '') >= COALESCE(weekly_forecast_records.issued_at, '')
+         AND excluded.forecast_payload != weekly_forecast_records.forecast_payload`,
     ).bind(
       regionId,
       compactToCalendarDate(day.date),
@@ -95,6 +97,6 @@ function isDailyWeatherForecast(value: unknown): value is DailyWeatherForecast {
     typeof day.skyCondition === 'string' &&
     typeof day.precipitationProbability === 'number' &&
     typeof day.precipitationAmount === 'number' &&
-    typeof day.snowProbability === 'number' &&
-    typeof day.snowfallAmount === 'number';
+    (day.snowProbability === undefined || typeof day.snowProbability === 'number') &&
+    (day.snowfallAmount === undefined || typeof day.snowfallAmount === 'number');
 }

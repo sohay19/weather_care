@@ -73,13 +73,17 @@ class _ExtraTabState extends State<ExtraTab> {
       final selected = groups
               .where((group) => group['source'] == previousSource)
               .firstOrNull ??
-          (groups.isEmpty ? null : groups.first);
+          groups
+              .where((group) =>
+                  group['scope'] != 'grid' &&
+                  _maps(group['targets']).isNotEmpty)
+              .firstOrNull ??
+          groups.firstOrNull;
       final targets = _maps(selected?['targets']);
       final previousTarget = _selectedTarget?['id'];
       final target =
           targets.where((item) => item['id'] == previousTarget).firstOrNull ??
-              (selected?['scope'] == 'grid' || selected?['source'] == 'KHOA_ROMS'
-                  ? targets.firstOrNull : null);
+              targets.firstOrNull;
       setState(() {
         _groups = groups;
         _selectedGroup = selected;
@@ -139,8 +143,7 @@ class _ExtraTabState extends State<ExtraTab> {
     if (_selectedGroup?['source'] == group['source']) return;
     ++_request;
     final targets = _maps(group['targets']);
-    final target = group['scope'] == 'grid' || group['source'] == 'KHOA_ROMS'
-        ? targets.firstOrNull : null;
+    final target = targets.firstOrNull;
     setState(() {
       _selectedGroup = group;
       _selectedTarget = target;

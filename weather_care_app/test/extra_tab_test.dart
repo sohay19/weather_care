@@ -30,17 +30,19 @@ class _ExtraApi extends ApiClient {
 }
 
 void main() {
-  testWidgets('격자 낙뢰와 선택한 댐 자료를 각각 표시한다', (tester) async {
+  testWidgets('처음부터 수집된 자료를 보여주고 격자 낙뢰도 선택할 수 있다', (tester) async {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: ExtraTab(
       client: _ExtraApi(), grid: const KmaGrid(nx: 60, ny: 121), active: true))));
+    await tester.pumpAndSettle();
+    expect(find.text('수위  20.5m'), findsOneWidget);
+    await tester.tap(find.text('낙뢰').first);
     await tester.pumpAndSettle();
     expect(find.text('낙뢰 발생  2회'), findsOneWidget);
     await tester.tap(find.text('댐·보 운영').first);
     await tester.pumpAndSettle();
-    expect(find.text('대상 선택'), findsOneWidget);
-    await tester.tap(find.text('대상 선택'));
+    await tester.tap(find.text('첫째댐 변경'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('첫째댐').last);
+    await tester.tap(find.text('둘째댐').last);
     await tester.pumpAndSettle();
     expect(find.text('수위  20.5m'), findsOneWidget);
     expect(find.text('유입량  4.2㎥/s'), findsOneWidget);

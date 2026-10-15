@@ -3,6 +3,7 @@
 
 import sqlite3
 import sys
+import os
 from contextlib import closing
 from pathlib import Path
 
@@ -59,9 +60,13 @@ def prepare(live_path: Path, test_path: Path, output_path: Path) -> dict[str, in
     if len(set(paths)) != 3 or not all(path.is_file() for path in paths[:2]) or paths[2].exists():
         raise RuntimeError("TEST_DATABASE_PATH_INVALID")
 
-    with closing(sqlite3.connect(paths[0].as_uri() + "?mode=ro", uri=True)) as live:
-        with closing(sqlite3.connect(paths[2])) as output:
-            live.backup(output, pages=1000, sleep=0.05)
+    previous_umask = os.umask(0o077)
+    try:
+        with closing(sqlite3.connect(paths[0].as_uri() + "?mode=ro", uri=True)) as live:
+            with closing(sqlite3.connect(paths[2])) as output:
+                live.backup(output, pages=1000, sleep=0.05)
+    finally:
+        os.umask(previous_umask)
 
     copied: dict[str, int] = {}
     with closing(sqlite3.connect(paths[2], uri=True)) as db:

@@ -1,6 +1,7 @@
 import sqlite3
 import tempfile
 import unittest
+import os
 from contextlib import closing
 from pathlib import Path
 
@@ -45,6 +46,8 @@ class PrepareTestDbTest(unittest.TestCase):
                                "installation_activity BEGIN DELETE FROM installations; END")
 
             copied = prepare(live_path, test_path, output_path)
+            if os.name != "nt":
+                self.assertEqual(output_path.stat().st_mode & 0o777, 0o600)
             with closing(sqlite3.connect(output_path)) as db:
                 self.assertEqual(copied["installations"], 1)
                 self.assertEqual(db.execute("SELECT value FROM installations").fetchone()[0], "test")

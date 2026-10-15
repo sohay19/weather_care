@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
@@ -345,14 +346,12 @@ class _YesterdayComparisonSection extends StatelessWidget {
               current: todayObservation.temperature,
               previous: yesterdayObservation.temperature,
               unit: '℃',
-              fractionDigits: 1,
             ),
             _ComparisonMetricData(
               subject: '체감온도는',
               current: todayObservation.apparentTemperature,
               previous: yesterdayObservation.apparentTemperature,
               unit: '℃',
-              fractionDigits: 1,
             ),
             if (todayObservation.pm25 != null &&
                 yesterdayObservation.pm25 != null)
@@ -361,7 +360,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
                 current: todayObservation.pm25?.toDouble(),
                 previous: yesterdayObservation.pm25?.toDouble(),
                 unit: '㎍/㎥',
-                fractionDigits: 0,
               )
             else if (todayObservation.pm10 != null &&
                 yesterdayObservation.pm10 != null)
@@ -370,7 +368,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
                 current: todayObservation.pm10?.toDouble(),
                 previous: yesterdayObservation.pm10?.toDouble(),
                 unit: '㎍/㎥',
-                fractionDigits: 0,
               ),
           ].where((metric) => metric.isComparable).toList(growable: false);
     final skyComparable = todayObservation?.skyCondition != null &&
@@ -457,13 +454,14 @@ class _ComparisonMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final difference = metric.current! - metric.previous!;
-    final same = difference.abs() < (metric.fractionDigits == 0 ? 0.5 : 0.05);
+    final same = formatWeatherNumber(metric.current!) ==
+        formatWeatherNumber(metric.previous!);
     final change = same
         ? '어제와 같아요'
-        : '어제보다 ${difference.abs().toStringAsFixed(metric.fractionDigits)}${metric.unit} '
+        : '어제보다 ${formatWeatherNumber(difference.abs(), keepDecimal: metric.unit == '℃')}${metric.unit} '
             '${difference > 0 ? '높아요' : '낮아요'}';
     String value(double value) =>
-        '${value.toStringAsFixed(metric.fractionDigits)}${metric.unit}';
+        '${formatWeatherNumber(value, keepDecimal: metric.unit == '℃')}${metric.unit}';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -522,14 +520,12 @@ class _ComparisonMetricData {
   final double? current;
   final double? previous;
   final String unit;
-  final int fractionDigits;
 
   const _ComparisonMetricData({
     this.subject = '기온은',
     required this.current,
     required this.previous,
     required this.unit,
-    required this.fractionDigits,
   });
 
   bool get isComparable => current != null && previous != null;
@@ -560,7 +556,7 @@ String? _comparisonBasisLabel(ComparisonBasis? basis) {
   final source = <String>[];
   if (basis.stationId case final station?) source.add('관측소 $station');
   if (basis.distanceKm case final distance?) {
-    source.add('대표 위치에서 ${distance.toStringAsFixed(1)}km');
+    source.add('대표 위치에서 ${formatWeatherNumber(distance, keepDecimal: true)}km');
   }
   if (basis.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION') {
     return source.isEmpty ? null : source.join(' · ');
@@ -810,7 +806,7 @@ class _TemperatureValue extends StatelessWidget {
           ? phase == WeatherDataPhase.loading
               ? '--°'
               : phase.missingText()
-          : '${value!.toStringAsFixed(1)}℃',
+          : '${formatWeatherNumber(value!, keepDecimal: true)}℃',
       style: TextStyle(
         color: WeatherCareTheme.of(context).primaryDeep,
         fontSize: 16,

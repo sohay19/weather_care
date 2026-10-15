@@ -1,3 +1,4 @@
+import '../utils/weather_number.dart';
 import 'dart:convert';
 
 import '../utils/korea_date.dart';
@@ -373,9 +374,7 @@ WeeklyForecastItem? _todayForecast(
 
 String _temperature(double? value) {
   if (value == null || !value.isFinite) return '--°';
-  final number = value == value.roundToDouble()
-      ? value.toInt().toString()
-      : value.toStringAsFixed(1);
+  final number = formatWeatherNumber(value);
   return '$number°';
 }
 

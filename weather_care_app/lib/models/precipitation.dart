@@ -1,3 +1,4 @@
+import '../utils/weather_number.dart';
 import '../utils/korea_date.dart';
 
 /// A source-confirmed one-hour precipitation window, with an exclusive end.
@@ -167,8 +168,7 @@ class PrecipitationAmount {
   bool get isZero => lower == 0 && upper == 0;
 
   String get label {
-    String mm(int value) =>
-        (value / 1000).toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '');
+    String mm(int value) => formatWeatherNumber(value / 1000);
     if (upper == null) return '${mm(lower)}mm 이상';
     if (lower == upper) return '${mm(lower)}mm';
     if (upperExclusive) {

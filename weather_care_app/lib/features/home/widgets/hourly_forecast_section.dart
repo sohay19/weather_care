@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -374,12 +375,12 @@ class _HourlyPoint extends StatelessWidget {
           color: palette.primaryDeep,
           solidDrop: true,
           value: precipitationValid && item.precipitationProbability != null
-              ? '${item.precipitationProbability!.toStringAsFixed(0)}%'
+              ? '${formatWeatherNumber(item.precipitationProbability!)}%'
               : '—',
-          semanticLabel:
-              precipitationValid && item.precipitationProbability != null
-                  ? '강수확률 ${item.precipitationProbability!.toStringAsFixed(0)}%'
-                  : '강수확률 자료 없음',
+          semanticLabel: precipitationValid &&
+                  item.precipitationProbability != null
+              ? '강수확률 ${formatWeatherNumber(item.precipitationProbability!)}%'
+              : '강수확률 자료 없음',
         ),
       _HourlyMetric.snowfall => Icon(
           Icons.ac_unit_rounded,
@@ -390,10 +391,11 @@ class _HourlyPoint extends StatelessWidget {
       _HourlyMetric.uv => _MetricIconValue(
           icon: Icons.wb_sunny_rounded,
           color: _uvColor(item.uvIndex, palette),
-          value: item.uvIndex?.toStringAsFixed(0) ?? '—',
+          value:
+              item.uvIndex == null ? '—' : formatWeatherNumber(item.uvIndex!),
           semanticLabel: item.uvIndex == null
               ? '자외선지수 자료 없음'
-              : '자외선지수 ${item.uvIndex!.toStringAsFixed(0)}',
+              : '자외선지수 ${formatWeatherNumber(item.uvIndex!)}',
           sun: true,
         ),
       _HourlyMetric.wind => Transform.rotate(
@@ -420,8 +422,8 @@ class _HourlyPoint extends StatelessWidget {
       _HourlyMetric.weather => [
           item.temperature == null
               ? '—'
-              : '${item.temperature!.toStringAsFixed(0)}°C',
-          '(체감 ${item.displayedApparentTemperature == null ? '—' : '${item.displayedApparentTemperature!.toStringAsFixed(0)}°C'})',
+              : '${formatWeatherNumber(item.temperature!)}°C',
+          '(체감 ${item.displayedApparentTemperature == null ? '—' : '${formatWeatherNumber(item.displayedApparentTemperature!)}°C'})',
           if (item.skyCondition == null) '날씨 —',
         ],
       _HourlyMetric.precipitation => precipitationValid
@@ -442,7 +444,7 @@ class _HourlyPoint extends StatelessWidget {
       _HourlyMetric.uv => [uvDescription(item.uvIndex) ?? '—'],
       _HourlyMetric.wind => [
           windDescription(item.windSpeed) ?? '—',
-          '${_windDirectionLabel(item.windDirection)} · ${item.windSpeed == null ? '—' : '${item.windSpeed!.toStringAsFixed(1)}m/s'}',
+          '${_windDirectionLabel(item.windDirection)} · ${item.windSpeed == null ? '—' : '${formatWeatherNumber(item.windSpeed!, keepDecimal: true)}m/s'}',
         ],
       _HourlyMetric.humidity => [humidityDescription(item.humidity) ?? '—'],
     };
@@ -616,7 +618,7 @@ class _HumidityCup extends StatelessWidget {
     return Semantics(
       label: humidity == null
           ? '습도 자료 없음'
-          : '습도 ${humidity!.toStringAsFixed(0)}% 채움',
+          : '습도 ${formatWeatherNumber(humidity!)}% 채움',
       excludeSemantics: true,
       child: SizedBox(
         width: 40,
@@ -639,7 +641,7 @@ class _HumidityCup extends StatelessWidget {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  humidity == null ? '—' : '${humidity!.toStringAsFixed(0)}%',
+                  humidity == null ? '—' : '${formatWeatherNumber(humidity!)}%',
                   style: TextStyle(
                     color: isFilledLabel
                         ? WeatherCareTheme.of(context).onPrimary
@@ -724,6 +726,4 @@ Path _dropPath(Size size) {
     ..close();
 }
 
-String _amountNumber(double value) => value == value.roundToDouble()
-    ? value.toInt().toString()
-    : value.toStringAsFixed(1);
+String _amountNumber(double value) => formatWeatherNumber(value);

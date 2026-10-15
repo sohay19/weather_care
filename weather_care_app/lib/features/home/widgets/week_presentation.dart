@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import '../../../models/weather.dart';
 import '../../../models/recommendation.dart';
 import '../../../utils/korea_date.dart';
@@ -128,9 +129,7 @@ double? weekTemperature(WeeklyForecastItem day, {required bool maximum}) {
   return value?.isFinite == true ? value : null;
 }
 
-String weekDegrees(double value) => value == value.roundToDouble()
-    ? '${value.toInt()}℃'
-    : '${value.toStringAsFixed(1)}℃';
+String weekDegrees(double value) => '${formatWeatherNumber(value)}℃';
 
 String weekTemperatureLabel(WeeklyForecastItem day, {required bool maximum}) {
   final label = maximum ? '최고' : '최저';

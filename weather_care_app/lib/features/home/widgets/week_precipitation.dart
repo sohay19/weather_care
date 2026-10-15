@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import '../../../models/precipitation.dart';
 import '../../../models/weather.dart';
 import '../../../utils/korea_date.dart';
@@ -138,10 +139,6 @@ List<String> weekPrecipitationLines(WeeklyForecastItem day) {
   ];
 }
 
-String _percent(double value) => value == value.roundToDouble()
-    ? value.toInt().toString()
-    : value.toString();
+String _percent(double value) => formatWeatherNumber(value);
 
-String _millimetres(double value) => value == value.roundToDouble()
-    ? '${value.toInt()}mm'
-    : '${value.toStringAsFixed(1)}mm';
+String _millimetres(double value) => '${formatWeatherNumber(value)}mm';

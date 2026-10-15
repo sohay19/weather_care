@@ -1,3 +1,4 @@
+import { formatWeatherNumber } from '../utils/weatherNumber';
 import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } from '../services/nationwideWeatherCache';
 import { currentSnowFields } from '../services/currentSnowCache';
 import { readTodayLivingIndices } from '../services/livingIndices';
@@ -670,10 +671,10 @@ router.get('/weekly', async (c) => {
         minTemperatureSource: day.minTemperatureSource,
         maxTemperatureSource: day.maxTemperatureSource,
         averageHumidity: roundOptional(day.averageHumidity),
-        maximumWindSpeed: roundOptional(day.maximumWindSpeed, 1),
-        maximumUvIndex: roundOptional(day.maximumUvIndex, 1),
+        maximumWindSpeed: roundOptional(day.maximumWindSpeed),
+        maximumUvIndex: roundOptional(day.maximumUvIndex),
         snowfallAmount: day.snowfallDataAvailable
-          ? roundOptional(day.snowfallAmount, 1)
+          ? roundOptional(day.snowfallAmount)
           : undefined,
         airQualityForecast: day.airQualityForecast,
         forecastSource: day.forecastSource,
@@ -1246,7 +1247,7 @@ function shiftCalendarDate(date: string, days: number): string {
 function timelineWeatherSummary(snapshot: WeatherSnapshot): string {
   const temperature = snapshot.temperature === undefined
     ? '예상기온 자료 없음'
-    : `예상기온 ${snapshot.temperature.toFixed(1)}℃`;
+    : `예상기온 ${formatWeatherNumber(snapshot.temperature, true)}℃`;
   return `${temperature} / ${snapshot.skyCondition ?? '날씨 자료 없음'}`;
 }
 
@@ -1404,7 +1405,7 @@ function timelinePrecipitationSummary(
     : forecastLabel;
   return snapshot.precipitationProbability === undefined
     ? timedLabel
-    : `${timedLabel} · 강수확률 ${Math.round(snapshot.precipitationProbability)}%`;
+    : `${timedLabel} · 강수확률 ${formatWeatherNumber(snapshot.precipitationProbability)}%`;
 }
 
 function precipitationForecastLabel(snapshot: WeatherSnapshot): string {
@@ -1526,13 +1527,12 @@ function weekdayLabel(kmaDate: string): string {
 }
 
 function formatTemperature(value?: number): string {
-  return value === undefined ? '--' : String(Math.round(value));
+  return value === undefined ? '--' : formatWeatherNumber(value);
 }
 
-function roundOptional(value: number | undefined, fractionDigits = 0): number | undefined {
+function roundOptional(value: number | undefined): number | undefined {
   if (value === undefined || !Number.isFinite(value)) return undefined;
-  const factor = 10 ** fractionDigits;
-  return Math.round(value * factor) / factor;
+  return Number(formatWeatherNumber(value));
 }
 
 function maximum(values: number[]): number {

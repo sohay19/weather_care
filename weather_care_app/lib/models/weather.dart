@@ -1,3 +1,4 @@
+import '../utils/weather_number.dart';
 import 'recommendation.dart';
 import 'lifestyle_message.dart';
 import 'precipitation.dart';
@@ -44,8 +45,8 @@ class CurrentWeather {
   final String? visibilityStationId;
   final double? visibilityStationDistanceKm;
   final double? uvIndex;
-  final int? pm10;
-  final int? pm25;
+  final num? pm10;
+  final num? pm25;
   final double? ozone;
   final String? sky;
   final String? airQualityStationName;
@@ -114,8 +115,8 @@ class CurrentWeather {
       visibilityStationDistanceKm:
           (c['visibilityStationDistanceKm'] as num?)?.toDouble(),
       uvIndex: (c['uvIndex'] as num?)?.toDouble(),
-      pm10: (c['pm10'] as num?)?.toInt(),
-      pm25: (c['pm25'] as num?)?.toInt(),
+      pm10: _optionalNumber(c['pm10']),
+      pm25: _optionalNumber(c['pm25']),
       ozone: _optionalNumber(c['ozone']),
       sky: c['skyCondition']?.toString(),
       airQualityStationName: _optionalText(c['airQualityStationName']),
@@ -152,8 +153,8 @@ class HourlyWeatherItem {
   final double? windDirection;
   final double? humidity;
   final double? uvIndex;
-  final int? pm10;
-  final int? pm25;
+  final num? pm10;
+  final num? pm25;
   final String? skyCondition;
 
   const HourlyWeatherItem({
@@ -229,8 +230,8 @@ class HourlyWeatherItem {
       windDirection: _optionalNumber(json['windDirection']),
       humidity: _optionalNumber(json['humidity']),
       uvIndex: _optionalNumber(json['uvIndex']),
-      pm10: _optionalNumber(json['pm10'])?.toInt(),
-      pm25: _optionalNumber(json['pm25'])?.toInt(),
+      pm10: _optionalNumber(json['pm10']),
+      pm25: _optionalNumber(json['pm25']),
       skyCondition: _optionalText(json['skyCondition']),
     );
   }
@@ -258,9 +259,7 @@ String? _amountRangeLabel(Object? raw, String fallbackUnit) {
   final min = _optionalNumber(raw['min']);
   final max = _optionalNumber(raw['max']);
   final unit = raw['unit']?.toString() == 'CM' ? 'cm' : fallbackUnit;
-  String number(double value) => value == value.roundToDouble()
-      ? value.toInt().toString()
-      : value.toStringAsFixed(1);
+  String number(double value) => formatWeatherNumber(value);
   return switch (type) {
     'NONE' => '0$unit',
     'LESS_THAN' when max != null => '${number(max)}$unit 미만',
@@ -924,8 +923,8 @@ class ComparisonBasis {
 class ComparisonWeatherSnapshot {
   final double? temperature;
   final double? apparentTemperature;
-  final int? pm10;
-  final int? pm25;
+  final num? pm10;
+  final num? pm25;
   final String? skyCondition;
 
   const ComparisonWeatherSnapshot({
@@ -942,8 +941,8 @@ class ComparisonWeatherSnapshot {
       apparentTemperature: ((json['apparentTemperature'] ??
               json['apparent_temperature']) as num?)
           ?.toDouble(),
-      pm10: (json['pm10'] as num?)?.toInt(),
-      pm25: (json['pm25'] as num?)?.toInt(),
+      pm10: _optionalNumber(json['pm10']),
+      pm25: _optionalNumber(json['pm25']),
       skyCondition: (json['skyCondition'] ?? json['summary'])?.toString(),
     );
   }

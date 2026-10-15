@@ -1,3 +1,4 @@
+import { formatWeatherNumber } from '../utils/weatherNumber';
 import { getCollectedCache, saveCollectedCache } from '../database/collectedWeatherRepository';
 import { KmaSnowObservationProvider, snowRequestTime, snowStationIsFresh,
   SNOW_RESPONSE_MAX_BYTES, type SnowSnapshot } from '../providers/weather/kmaSnowObservationProvider';
@@ -58,5 +59,5 @@ export async function currentSnowFields(db: D1Database | undefined, location: Na
   if (!nearest) return unavailable;
   return {snowDepthStatus:'AVAILABLE',snowDepthProvider:'KMA_APIHUB_SNOW_TOTAL',snowDepthCm:nearest.depthCm,
     snowDepthObservedAt:nearest.observedAt,snowDepthStationId:nearest.stationId,
-    snowDepthStationName:nearest.stationName,snowDepthStationDistanceKm:Number(distance.toFixed(1))};
+    snowDepthStationName:nearest.stationName,snowDepthStationDistanceKm:Number(formatWeatherNumber(distance))};
 }

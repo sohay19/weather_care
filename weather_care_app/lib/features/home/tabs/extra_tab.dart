@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import 'package:flutter/material.dart';
 
 import '../../../services/api_client.dart';
@@ -341,7 +342,7 @@ class _ExtraTabState extends State<ExtraTab> {
                               child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                          Text(_timeLabel('${entry['time']}'),
+                                    Text(_timeLabel('${entry['time']}'),
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleMedium),
@@ -357,7 +358,7 @@ class _ExtraTabState extends State<ExtraTab> {
                                             padding: const EdgeInsets.only(
                                                 bottom: 3),
                                             child: Text(
-                                                '${_valueLabel(value.key)}  ${value.value}${_unit(value.key)}')),
+                                                '${_valueLabel(value.key)}  ${value.value is num ? formatWeatherNumber(value.value as num) : value.value}${_unit(value.key)}')),
                                   ]))),
                   ],
                 ],

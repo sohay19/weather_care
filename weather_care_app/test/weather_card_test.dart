@@ -342,7 +342,7 @@ void main() {
     );
     await tester.tap(find.byKey(const ValueKey('weather-metric-detail-대기질')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('오존 0.120ppm'), findsOneWidget);
+    expect(find.textContaining('오존 0.1ppm'), findsOneWidget);
     expect(find.textContaining('공식 통합대기환경지수는 아니에요'), findsOneWidget);
   });
 

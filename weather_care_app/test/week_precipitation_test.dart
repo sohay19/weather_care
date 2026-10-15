@@ -14,7 +14,7 @@ void main() {
     '30.0~50.0mm': '30~50mm',
     '50.0mm 이상': '50mm 이상',
     '2,5mm': '2.5mm',
-    '0.125mm': '0.125mm',
+    '0.125mm': '0.1mm',
   }.entries) {
     test('강수 범위 원형 유지: ${entry.key}', () {
       expect(PrecipitationAmount.parse(entry.key)?.label, entry.value);

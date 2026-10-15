@@ -1,3 +1,4 @@
+import { formatWeatherNumber } from '../../utils/weatherNumber';
 import {
   kmaApiHubErrorReason,
   kmaApiHubErrorStatus,
@@ -269,7 +270,7 @@ function toDailyForecast(
     forecastSource: 'KMA_OBSERVATION',
     historical: true,
     observationStationId: station.stationId,
-    observationDistanceKm: Number(distanceKm.toFixed(1)),
+    observationDistanceKm: Number(formatWeatherNumber(distanceKm)),
     minTemperature: station.minTemperature,
     maxTemperature: station.maxTemperature,
     minTemperatureSource: 'DAILY',

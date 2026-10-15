@@ -1,3 +1,4 @@
+import { formatWeatherNumber } from '../utils/weatherNumber';
 import { lifestyleMessageFor } from '../lifestyle/lifestyleTemplates';
 import {
   AmountRange,
@@ -422,7 +423,7 @@ function airQualityFact(
   if (snapshot.pm25 !== undefined) {
     return {
       ...officialFact(
-        `에어코리아는 ${time} ${station}의 초미세먼지 농도를 ${Math.round(snapshot.pm25)}㎍/㎥로 제공했어요`,
+        `에어코리아는 ${time} ${station}의 초미세먼지 농도를 ${formatWeatherNumber(snapshot.pm25)}㎍/㎥로 제공했어요`,
         snapshot,
         '에어코리아',
       ),
@@ -433,7 +434,7 @@ function airQualityFact(
   if (snapshot.pm10 !== undefined) {
     return {
       ...officialFact(
-        `에어코리아는 ${time} ${station}의 미세먼지 농도를 ${Math.round(snapshot.pm10)}㎍/㎥로 제공했어요`,
+        `에어코리아는 ${time} ${station}의 미세먼지 농도를 ${formatWeatherNumber(snapshot.pm10)}㎍/㎥로 제공했어요`,
         snapshot,
         '에어코리아',
       ),
@@ -458,7 +459,7 @@ function ozoneFact(
   const grade = ozoneGradeLabel(snapshot.ozoneGrade, snapshot.ozone);
   const text = snapshot.ozone === undefined
     ? `에어코리아는 ${time} ${station}의 오존 등급을 ${grade}으로 제공했어요`
-    : `에어코리아는 ${time} ${station}의 오존 농도를 ${snapshot.ozone.toFixed(3)}ppm, ${grade} 단계로 제공했어요`;
+    : `에어코리아는 ${time} ${station}의 오존 농도를 ${formatWeatherNumber(snapshot.ozone)}ppm, ${grade} 단계로 제공했어요`;
   return {
     ...officialFact(text, snapshot, '에어코리아'),
     validFrom: snapshot.airQualityObservedAt,
@@ -698,7 +699,7 @@ function windLabel(speed: number): string {
 }
 
 function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return formatWeatherNumber(value);
 }
 
 function stringContext(

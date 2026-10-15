@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -972,8 +973,8 @@ List<_WeekData> _additionalWeekData(WeeklyForecastItem day,
         Icons.water_drop_outlined,
         '습도',
         isPast ? '평균 습도' : '습도',
-        isPast ? '${value.round()}%' : humidityDescription(value)!,
-        '평균 습도 ${value.round()}%',
+        isPast ? '${formatWeatherNumber(value)}%' : humidityDescription(value)!,
+        '평균 습도 ${formatWeatherNumber(value)}%',
       ),
     if (day.maximumWindSpeed case final value? when !hasWind)
       _WeekData(
@@ -1038,9 +1039,7 @@ List<String> _airQualityLines(WeeklyAirQualityForecast? air) {
   ];
 }
 
-String _decimal(double value) => value == value.roundToDouble()
-    ? value.toInt().toString()
-    : value.toStringAsFixed(1);
+String _decimal(double value) => formatWeatherNumber(value);
 
 class _UnavailableWeekDayCard extends StatelessWidget {
   final DateTime date;

@@ -1,3 +1,4 @@
+import { formatWeatherNumber } from '../../utils/weatherNumber';
 import { z } from 'zod';
 import {
   AmountRange,
@@ -901,5 +902,5 @@ function calculateSteadmanApparentTemperature(
 }
 
 function roundOne(value: number): number {
-  return Math.round(value * 10) / 10;
+  return Number(formatWeatherNumber(value));
 }

@@ -1,3 +1,4 @@
+import '../../../utils/weather_number.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/weather.dart';
@@ -79,7 +80,7 @@ class WeatherInfoCard extends StatelessWidget {
         label: '체감온도',
         value: apparentTemperature == null
             ? '자료 없음'
-            : '${apparentTemperatureDescription(apparentTemperature)}\n${apparentTemperature.toStringAsFixed(1)}℃',
+            : '${apparentTemperatureDescription(apparentTemperature)}\n${formatWeatherNumber(apparentTemperature, keepDecimal: true)}℃',
         levelTitle: estimatedApparentTemperature
             ? '기온·습도·바람으로 계산한 추정 체감온도예요'
             : '기상청 방식으로 계산한 체감온도예요',
@@ -99,11 +100,11 @@ class WeatherInfoCard extends StatelessWidget {
         label: '습도',
         value: current.humidity == null
             ? '자료 없음'
-            : '${humidityDescription(current.humidity)}\n${current.humidity!.toStringAsFixed(0)}%',
+            : '${humidityDescription(current.humidity)}\n${formatWeatherNumber(current.humidity!)}%',
         levelTitle: _humidityLevel(current.humidity),
         detailBody: current.humidity == null
             ? '$currentSource에서 상대습도 자료를 받지 못해 현재 값을 표시하지 않아요.'
-            : '$currentSource의 상대습도는 ${current.humidity!.toStringAsFixed(0)}%예요.',
+            : '$currentSource의 상대습도는 ${formatWeatherNumber(current.humidity!)}%예요.',
         interpretation:
             '상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증량에 얼마나 가까운지를 나타내요. 실내 습도나 피부가 느끼는 건조함과는 다를 수 있어요.\n\n$humidityRanges',
       ),
@@ -279,7 +280,7 @@ class WeatherInfoCard extends StatelessWidget {
         ? dataPhase == WeatherDataPhase.loading
             ? '--°'
             : dataPhase.missingText()
-        : '${current.temperature!.toStringAsFixed(1)}℃';
+        : '${formatWeatherNumber(current.temperature!, keepDecimal: true)}℃';
     final temperatureStyle = TextStyle(
       color: WeatherCareTheme.of(context).textPrimary,
       fontSize: current.temperature == null ? 18 : 32,
@@ -288,7 +289,7 @@ class WeatherInfoCard extends StatelessWidget {
       letterSpacing: -1.2,
     );
     final apparentText =
-        '체감 ${apparentTemperature == null ? apparentMetric.value : '${apparentTemperature.toStringAsFixed(1)}℃'}';
+        '체감 ${apparentTemperature == null ? apparentMetric.value : '${formatWeatherNumber(apparentTemperature, keepDecimal: true)}℃'}';
     final apparentStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: WeatherCareTheme.of(context).textSecondary,
           fontWeight: FontWeight.w700,
@@ -483,7 +484,7 @@ String _airObservationSource(CurrentWeather current) {
   return '\n\n$stationLabel · $timeLabel\n'.trimRight();
 }
 
-String? _airQualityGrade(int? pm10, int? pm25, double? ozone) {
+String? _airQualityGrade(num? pm10, num? pm25, double? ozone) {
   final grades = [
     if (pm10 != null) _pm10Grade(pm10),
     if (pm25 != null) _pm25Grade(pm25),
@@ -503,10 +504,10 @@ String _airQualityDetail(CurrentWeather current) {
     return '에어코리아 관측자료를 받지 못해 대기질을 표시하지 않아요.';
   }
   final values = [
-    if (current.pm25 != null) '초미세먼지 ${current.pm25}㎍/㎥',
-    if (current.pm10 != null) '미세먼지 ${current.pm10}㎍/㎥',
+    if (current.pm25 != null) '초미세먼지 ${formatWeatherNumber(current.pm25!)}㎍/㎥',
+    if (current.pm10 != null) '미세먼지 ${formatWeatherNumber(current.pm10!)}㎍/㎥',
     if (ozoneDescription(current.ozone) != null)
-      '오존 ${current.ozone!.toStringAsFixed(3)}ppm',
+      '오존 ${formatWeatherNumber(current.ozone!)}ppm',
   ].join(' · ');
   return '$values · 표시 등급 $grade${_airObservationSource(current)}';
 }
@@ -518,7 +519,7 @@ String _windValue(double? direction, double? speed) {
     return directionLabel == null ? '자료 없음' : '$directionLabel풍';
   }
   return '${directionLabel == null ? '' : '$directionLabel '}'
-      '${speed.toStringAsFixed(1)}m/s';
+      '${formatWeatherNumber(speed, keepDecimal: true)}m/s';
 }
 
 String? _windDirectionLabel(double? direction) {
@@ -533,12 +534,10 @@ String _visibilityValue(double? meters) {
   if (meters >= 20000) return '20km 이상';
   if (meters >= 1000) {
     final kilometres = meters / 1000;
-    final value = kilometres == kilometres.roundToDouble()
-        ? kilometres.toStringAsFixed(0)
-        : kilometres.toStringAsFixed(1);
+    final value = formatWeatherNumber(kilometres);
     return '$value km';
   }
-  return '${meters.round()} m';
+  return '${formatWeatherNumber(meters)} m';
 }
 
 String _visibilityLevel(double? meters) {
@@ -556,7 +555,8 @@ String _visibilityDetail(CurrentWeather current) {
     source.add('관측소 $station');
   }
   if (current.visibilityStationDistanceKm case final distance?) {
-    source.add('요청 위치에서 관측소까지 ${distance.toStringAsFixed(1)}km');
+    source.add(
+        '요청 위치에서 관측소까지 ${formatWeatherNumber(distance, keepDecimal: true)}km');
   }
   final observed = _koreaObservationClock(current.visibilityObservedAt);
   if (observed != null) source.add(observed);
@@ -565,12 +565,9 @@ String _visibilityDetail(CurrentWeather current) {
       '$sourceText';
 }
 
-String _snowDepthValue(double value) => value == value.roundToDouble()
-    ? value.toStringAsFixed(0)
-    : value.toStringAsFixed(1);
+String _snowDepthValue(double value) => formatWeatherNumber(value);
 
-String _precipitationValue(double value) =>
-    value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+String _precipitationValue(double value) => formatWeatherNumber(value);
 
 String _precipitationDescription(double amount, String? type) {
   if (amount == 0) return '강수 없음';
@@ -614,7 +611,7 @@ String _snowDepthDetail(CurrentWeather current) {
   final source = [
     if (station != null && station.isNotEmpty) '$station 관측소',
     if (current.snowDepthStationDistanceKm case final distance?)
-      '요청 위치에서 ${distance.toStringAsFixed(1)}km',
+      '요청 위치에서 ${formatWeatherNumber(distance, keepDecimal: true)}km',
     if (_koreaObservationClock(current.snowDepthObservedAt) case final time?)
       time,
   ].join(' · ');
@@ -659,16 +656,16 @@ String _apparentTemperatureDetail(
     estimated
         ? '$currentSource의 기온·습도·바람으로 계산한 '
             '${isObservation ? '' : '예상 '}추정 체감온도는 '
-            '${apparent.toStringAsFixed(1)}℃예요. 햇볕의 영향은 포함하지 않아요.'
+            '${formatWeatherNumber(apparent, keepDecimal: true)}℃예요. 햇볕의 영향은 포함하지 않아요.'
         : '$currentSource의 기온과 상대습도(5~9월) 또는 기온과 풍속(10~4월)을 '
             '기상청 산식에 적용한 ${isObservation ? '' : '예상 '}체감온도는 '
-            '${apparent.toStringAsFixed(1)}℃예요.',
+            '${formatWeatherNumber(apparent, keepDecimal: true)}℃예요.',
   ];
   final temperature = current.temperature;
   if (temperature != null && (apparent - temperature).abs() >= 0.6) {
     final difference = apparent - temperature;
     parts.add(
-      '실제 기온보다 ${difference.abs().toStringAsFixed(1)}℃ '
+      '실제 기온보다 ${formatWeatherNumber(difference.abs(), keepDecimal: true)}℃ '
       '${difference > 0 ? '높게' : '낮게'} 계산됐어요.',
     );
   }
@@ -685,14 +682,14 @@ String _windLevel(double? value) {
   return '바람 · ${windDescription(value)}';
 }
 
-String _pm25Grade(int value) {
+String _pm25Grade(num value) {
   if (value <= 15) return '좋음';
   if (value <= 35) return '보통';
   if (value <= 75) return '나쁨';
   return '매우 나쁨';
 }
 
-String _pm10Grade(int value) {
+String _pm10Grade(num value) {
   if (value <= 30) return '좋음';
   if (value <= 80) return '보통';
   if (value <= 150) return '나쁨';

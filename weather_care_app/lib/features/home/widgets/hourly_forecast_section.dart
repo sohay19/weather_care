@@ -52,6 +52,15 @@ class HourlyForecastSection extends StatefulWidget {
 
 class _HourlyForecastSectionState extends State<HourlyForecastSection> {
   _HourlyMetric _selected = _HourlyMetric.weather;
+  final ScrollController _timelineController = ScrollController();
+  Object? _scrolledItems;
+  String? _scrolledSelection;
+
+  @override
+  void dispose() {
+    _timelineController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,13 +135,39 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
         ? _selected
         : availableMetrics.first;
     final selectedItems = <HourlyWeatherItem>[];
+    final selectedHours = <int>[];
     for (var hour = 0; hour < 24; hour++) {
       final item = itemsFor(selected)[hour];
       if (widget.availableOnly) {
-        if (item != null && _hasValue(selected, item)) selectedItems.add(item);
+        if (item != null && _hasValue(selected, item)) {
+          selectedItems.add(item);
+          selectedHours.add(hour);
+        }
       } else {
         selectedItems.add(item ?? emptySlots[hour]);
+        selectedHours.add(hour);
       }
+    }
+    final currentTime = widget.now ?? DateTime.now();
+    final currentHour = today == dateInKorea(currentTime)
+        ? currentTime.toUtc().add(const Duration(hours: 9)).hour
+        : 0;
+    final scrollSelection = '$today:${selected.name}:$currentHour';
+    if (!identical(_scrolledItems, widget.items) ||
+        _scrolledSelection != scrollSelection) {
+      _scrolledItems = widget.items;
+      _scrolledSelection = scrollSelection;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_timelineController.hasClients) return;
+        final index = selectedHours.indexWhere((hour) => hour >= currentHour);
+        final pointWidth = MediaQuery.textScalerOf(context).scale(
+          selected == _HourlyMetric.weather ? 120.0 : 100.0,
+        );
+        _timelineController.jumpTo(
+          ((index < 0 ? selectedItems.length - 1 : index) * pointWidth)
+              .clamp(0.0, _timelineController.position.maxScrollExtent),
+        );
+      });
     }
     final hasMissingData = hourlyByHour.isEmpty ||
         hourlyByHour.values.any(
@@ -219,6 +254,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection> {
           const SizedBox(height: 12),
           SingleChildScrollView(
             key: ValueKey('${widget.keyPrefix}-hourly-timeline'),
+            controller: _timelineController,
             scrollDirection: Axis.horizontal,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -276,14 +276,14 @@ void main() {
     expect(find.text('타임라인 자료가 없어 표시하기 어려워요.'), findsOneWidget);
   });
 
-  testWidgets('지난 시간부터 보여주고 뒤의 예보까지 스크롤한다', (tester) async {
+  testWidgets('자료가 갱신되면 현재 시간으로 스크롤하고 지난 시간도 볼 수 있다', (tester) async {
     final now = DateTime.parse('2026-10-13T06:30:00Z'); // 한국 15시 30분
     await _pumpHourly(tester, [], now: now, keyPrefix: 'main');
     final timeline = find.byKey(const ValueKey('main-hourly-timeline'));
     final scrollable = tester.state<ScrollableState>(
       find.descendant(of: timeline, matching: find.byType(Scrollable)),
     );
-    expect(scrollable.position.pixels, 0);
+    expect(scrollable.position.pixels, greaterThan(0));
 
     await _pumpHourly(
         tester,
@@ -305,16 +305,16 @@ void main() {
         now: now,
         keyPrefix: 'main');
     await tester.pump();
-    expect(scrollable.position.pixels, 0);
+    expect(scrollable.position.pixels, greaterThan(0));
     expect(find.byKey(const ValueKey('main-hourly-0')), findsOneWidget);
     expect(find.byKey(const ValueKey('main-hourly-23')), findsOneWidget);
     expect(find.text('18°C'), findsOneWidget);
     expect(find.text('17°C'), findsOneWidget);
 
-    await tester.drag(timeline, const Offset(-16 * 120, 0));
+    await tester.drag(timeline, const Offset(16 * 120, 0));
     await tester.pumpAndSettle();
-    expect(scrollable.position.pixels, greaterThan(0));
-    expect(find.text('16시'), findsOneWidget);
+    expect(scrollable.position.pixels, lessThan(15 * 120));
+    expect(find.text('00시'), findsOneWidget);
   });
 
   testWidgets('선택한 시간별 지표는 가로로 넘기며 바꿔 볼 수 있다', (tester) async {

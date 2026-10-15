@@ -673,13 +673,13 @@ class _WeekDayCard extends StatelessWidget {
               key: ValueKey('week-$kind-${day.forecastDate}'),
               icon: icon,
               text: text,
-              detail: kind == 'snowfall' && day.snowProbability != null
-                  ? '눈 또는 비/눈으로 예보된 시간대의 기상청 강수확률을 표시해요. '
-                      '기상청이 별도로 산출한 강설확률은 아니에요. '
-                      '비/눈은 비가 내릴 가능성도 포함해요. '
-                      '일별 수치는 해당 예보 시간대 중 가장 높은 값이에요.'
-                      '${isPast ? '\n지난 날짜의 확률은 관측값이 아닌 당시 저장한 예보예요.' : ''}'
-                  : null,
+              detail:
+                  !isPast && kind == 'snowfall' && day.snowProbability != null
+                      ? '눈 또는 비/눈으로 예보된 시간대의 기상청 강수확률을 표시해요. '
+                          '기상청이 별도로 산출한 강설확률은 아니에요. '
+                          '비/눈은 비가 내릴 가능성도 포함해요. '
+                          '일별 수치는 해당 예보 시간대 중 가장 높은 값이에요.'
+                      : null,
               isToday: isToday,
               isPast: isPast,
             ),
@@ -861,9 +861,16 @@ class _WeekAmountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label = Text.rich(
+      TextSpan(children: _weekPrecipitationSpans(text)),
+      style: WeatherCareTheme.of(context)
+          .microTextStyle
+          .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
+    );
+    final singleLine = text.startsWith('강설확률 ') && !text.contains('예보 이력 없음');
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.fromLTRB(10, 10, detail == null ? 10 : 2, 10),
       decoration: BoxDecoration(
         color: isToday || isPast
             ? WeatherCareTheme.of(context).surface.withValues(alpha: 0.65)
@@ -875,16 +882,23 @@ class _WeekAmountRow extends StatelessWidget {
           Icon(icon, size: 17, color: WeatherCareTheme.of(context).primaryDeep),
           const SizedBox(width: 7),
           Expanded(
-            child: Text.rich(
-              TextSpan(children: _weekPrecipitationSpans(text)),
-              style: WeatherCareTheme.of(context)
-                  .microTextStyle
-                  .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
-            ),
+            child: singleLine
+                ? FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: label)
+                : label,
           ),
           if (detail != null)
             IconButton(
               tooltip: '강설확률 설명',
+              padding: EdgeInsets.zero,
+              alignment: Alignment.centerRight,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 40),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               icon: const Icon(Icons.info_outline_rounded, size: 17),
               onPressed: () => showDialog<void>(
                 context: context,
@@ -907,26 +921,22 @@ class _WeekAmountRow extends StatelessWidget {
 }
 
 List<InlineSpan> _weekPrecipitationSpans(String text) {
-  const probabilityLabel = '강수확률 ';
-  const amountLabel = ' · 강수량 ';
-  final parts = text.split(amountLabel);
-  if (parts.length != 2 || !parts.first.startsWith(probabilityLabel)) {
-    return [TextSpan(text: text)];
+  text = text.replaceAll('예보 이력 없음 · ', '예보 이력 없음\n');
+  final pattern =
+      RegExp(r'(강수확률 |강수량 |강수 관측 |강설확률 |최심신적설 |예상 신적설 )(.*?)(?= · |\n|$)');
+  final spans = <InlineSpan>[];
+  var end = 0;
+  for (final match in pattern.allMatches(text)) {
+    spans.add(TextSpan(text: '${text.substring(end, match.start)}${match[1]}'));
+    spans.add(TextSpan(
+      text: match[2],
+      style: const TextStyle(
+          fontFamily: WeatherCareTheme.fontSuite, fontWeight: FontWeight.w700),
+    ));
+    end = match.end;
   }
-  return [
-    const TextSpan(text: probabilityLabel),
-    TextSpan(
-      text: parts.first.substring(probabilityLabel.length),
-      style: const TextStyle(
-          fontFamily: WeatherCareTheme.fontSuite, fontWeight: FontWeight.w700),
-    ),
-    const TextSpan(text: amountLabel),
-    TextSpan(
-      text: parts.last,
-      style: const TextStyle(
-          fontFamily: WeatherCareTheme.fontSuite, fontWeight: FontWeight.w700),
-    ),
-  ];
+  if (end < text.length) spans.add(TextSpan(text: text.substring(end)));
+  return spans;
 }
 
 class _WeekData {
@@ -999,14 +1009,14 @@ class _WeekDataChip extends StatelessWidget {
 
 String _weekSnowfallText(WeeklyForecastItem day, {required bool isPast}) {
   final amount = day.snowfallAmount;
-  final probability = day.snowProbability;
-  final probabilityText = probability == null
-      ? (isPast ? '강설확률 예보 이력 없음' : '강설확률 자료 없음')
-      : '강설확률 최고 ${formatWeatherNumber(probability)}%${isPast ? ' (당시 예보)' : ''}';
   if (isPast) {
-    return '$probabilityText · 강설 관측 · 최심신적설 '
+    return '강설 관측 · 최심신적설 '
         '${amount == null ? '자료 없음' : '${_decimal(amount)}cm'}';
   }
+  final probability = day.snowProbability;
+  final probabilityText = probability == null
+      ? '강설확률 자료 없음'
+      : '강설확률 최고 ${formatWeatherNumber(probability)}%';
   if (day.forecastSource == 'KMA_MID_TERM') return probabilityText;
   return '$probabilityText · 예상 신적설 '
       '${amount == null ? '자료 없음' : '${_decimal(amount)}cm'}';
@@ -1204,14 +1214,12 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                   (
                     'precipitation',
                     Icons.water_drop_outlined,
-                    isPast ? '강수확률 예보 이력 없음 · 강수 관측 자료 없음' : '강수 자료 없음'
+                    isPast ? '강수 관측 자료 없음' : '강수 자료 없음'
                   ),
                   (
                     'snowfall',
                     Icons.ac_unit_rounded,
-                    isPast
-                        ? '강설확률 예보 이력 없음 · 최심신적설 자료 없음'
-                        : '강설확률 자료 없음 · 예상 신적설 자료 없음'
+                    isPast ? '최심신적설 자료 없음' : '강설확률 자료 없음 · 예상 신적설 자료 없음'
                   ),
                 ]) ...[
                   const SizedBox(height: 10),

@@ -43,7 +43,7 @@ String weekPrecipitationCompact(WeeklyForecastItem day,
   if (isPast) {
     final amount =
         detail?.kind == 'OBSERVATION' ? weekPrecipitationAmount(day) : null;
-    return '강수확률 예보 이력 없음 · 강수 관측 ${amount?.label ?? '자료 없음'}';
+    return '강수 관측 ${amount?.label ?? '자료 없음'}';
   }
   if (detail == null) return '강수 자료 없음';
   if (weekPrecipitationLines(day).any((line) => line.contains('날짜·시간에 오류'))) {

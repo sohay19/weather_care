@@ -211,6 +211,15 @@ void main() {
     });
     await _pump(tester, [day]);
     expect(find.textContaining('강설확률 최고 70.3%'), findsOneWidget);
+    final label = tester.widget<Text>(find.text('강설확률 최고 70.3%'));
+    final spans = (label.textSpan! as TextSpan).children!;
+    expect((spans[0] as TextSpan).text, '강설확률 ');
+    expect(spans[0].style?.fontWeight, isNull);
+    expect((spans[1] as TextSpan).text, '최고 70.3%');
+    expect(spans[1].style?.fontWeight, FontWeight.w700);
+    final info = tester.widget<IconButton>(find.byWidgetPredicate(
+        (widget) => widget is IconButton && widget.tooltip == '강설확률 설명'));
+    expect(info.style?.backgroundColor?.resolve({}), Colors.transparent);
     expect(find.textContaining('예상 신적설'), findsNothing);
     await tester.ensureVisible(find.byTooltip('강설확률 설명'));
     await tester.pumpAndSettle();
@@ -219,7 +228,7 @@ void main() {
     expect(find.textContaining('비가 내릴 가능성도 포함'), findsOneWidget);
   });
 
-  testWidgets('지난 확률은 당시 예보로 표시하고 실제 신적설과 구분한다', (tester) async {
+  testWidgets('지난 날짜는 저장된 확률이 있어도 숨기고 실제 신적설만 표시한다', (tester) async {
     await _pump(tester, [
       WeeklyForecastItem.fromJson({
         'forecastDate': '2026-09-09',
@@ -235,7 +244,9 @@ void main() {
       })
     ]);
     await _moveDays(tester, -1);
-    expect(find.textContaining('강설확률 최고 70% (당시 예보)'), findsOneWidget);
+    expect(find.textContaining('강설확률'), findsNothing);
+    expect(find.textContaining('강수확률'), findsNothing);
+    expect(find.byTooltip('강설확률 설명'), findsNothing);
     expect(find.textContaining('최심신적설 1.2cm'), findsOneWidget);
   });
 
@@ -539,6 +550,7 @@ void main() {
     expect(find.textContaining('습도 쾌적'), findsOneWidget);
     expect(find.textContaining('바람 약간 강한 바람'), findsOneWidget);
     expect(find.textContaining('예상 신적설 0cm'), findsOneWidget);
+    expect(find.text('강설확률 자료 없음 · 예상 신적설 0cm'), findsOneWidget);
     expect(find.textContaining('자외선 높음'), findsOneWidget);
     expect(find.textContaining('대기질 보통'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-humidity')),

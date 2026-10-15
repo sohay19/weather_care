@@ -11,3 +11,7 @@ docs/경계/*.zip
 # 배포 중간 파일과 조사 미리보기는 로컬에만 둔다.
 tmp/test_server_deploy/
 tmp/grid_api_research/
+tmp/mid-snow-remote/
+tmp/pop-snow-remote/
+tmp/precision-remote/
+tmp/snow-*.log

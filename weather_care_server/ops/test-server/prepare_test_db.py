@@ -68,6 +68,12 @@ def prepare(live_path: Path, test_path: Path, output_path: Path) -> dict[str, in
         db.execute("PRAGMA foreign_keys=OFF")
         db.execute("ATTACH DATABASE ? AS test", (paths[1].as_uri() + "?mode=ro",))
         with db:
+            triggers = db.execute(
+                "SELECT name, sql FROM main.sqlite_master WHERE type='trigger'"
+            ).fetchall()
+            for name, _ in triggers:
+                quoted_name = name.replace('"', '""')
+                db.execute(f'DROP TRIGGER "{quoted_name}"')
             for table in TEST_ONLY_TABLES:
                 copied[table] = copy_test_table(db, table)
             copied[EXTRA_TABLE] = copy_test_table(db, EXTRA_TABLE)
@@ -102,6 +108,8 @@ def prepare(live_path: Path, test_path: Path, output_path: Path) -> dict[str, in
                     "INSERT INTO test_cache_sync_state VALUES (?, ?)",
                     (table, maximum or ""),
                 )
+            for _, sql in triggers:
+                db.execute(sql)
         if db.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise RuntimeError("TEST_DATABASE_QUICK_CHECK_FAILED")
         db.execute("PRAGMA wal_checkpoint(TRUNCATE)")

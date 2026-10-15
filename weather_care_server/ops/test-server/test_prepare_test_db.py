@@ -39,6 +39,8 @@ class PrepareTestDbTest(unittest.TestCase):
                             f'INSERT INTO "{table}" VALUES (?, ?)',
                             (label, "2026-10-15T00:00:00.000Z"),
                         )
+                    db.execute("CREATE TRIGGER activity_cleanup AFTER DELETE ON "
+                               "installation_activity BEGIN DELETE FROM installations; END")
 
             copied = prepare(live_path, test_path, output_path)
             with closing(sqlite3.connect(output_path)) as db:
@@ -50,6 +52,8 @@ class PrepareTestDbTest(unittest.TestCase):
                                             "WHERE provider='TEST'").fetchone()[0], 2)
                 self.assertEqual(db.execute(f"SELECT value FROM {EXTRA_TABLE}").fetchone()[0], "test")
                 self.assertEqual(db.execute("SELECT value FROM weather_cache").fetchone()[0], "live")
+                self.assertIsNotNone(db.execute("SELECT 1 FROM sqlite_master WHERE "
+                                                "type='trigger' AND name='activity_cleanup'").fetchone())
                 self.assertEqual(
                     db.execute("SELECT last_stamp FROM test_cache_sync_state "
                                "WHERE table_name='weather_cache'").fetchone()[0],

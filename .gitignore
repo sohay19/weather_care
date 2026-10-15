@@ -8,3 +8,6 @@ docs/경계/*.zip
 *.pyc
 # 로컬 JavaScript 패키지 설치 파일
 **/node_modules/
+# 배포 중간 파일과 조사 미리보기는 로컬에만 둔다.
+tmp/test_server_deploy/
+tmp/grid_api_research/

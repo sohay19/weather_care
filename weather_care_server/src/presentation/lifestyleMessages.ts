@@ -1,5 +1,6 @@
 import { formatWeatherNumber } from '../utils/weatherNumber';
 import { lifestyleMessageFor } from '../lifestyle/lifestyleTemplates';
+import type { AirQualitySnapshot } from '../providers/air/airQualityProvider';
 import {
   AmountRange,
   EnvironmentalSourceStatus,
@@ -70,10 +71,10 @@ export function buildLifestyleMessages(
 export function buildEnvironmentalDataStatusMessages(sources: {
   uv: EnvironmentalSourceStatus;
   airQuality: EnvironmentalSourceStatus;
-}): WeatherMessagePart[] {
+}, airQuality?: AirQualitySnapshot): WeatherMessagePart[] {
   return [
     environmentalStatusPart('자외선지수', sources.uv),
-    environmentalStatusPart('대기질', sources.airQuality),
+    environmentalStatusPart('대기질', sources.airQuality, airQuality),
   ].filter((item): item is WeatherMessagePart => item !== undefined);
 }
 
@@ -581,6 +582,7 @@ function dataStatusPartFor(
 function environmentalStatusPart(
   label: string,
   source: EnvironmentalSourceStatus,
+  airQuality?: AirQualitySnapshot,
 ): WeatherMessagePart | undefined {
   if (source.state === 'AVAILABLE' || source.state === 'CACHED') {
     return undefined;
@@ -589,9 +591,15 @@ function environmentalStatusPart(
     return {
       role: 'DATA_STATUS',
       itemTitle: label,
-      text: source.observedAt
+      text: (source.observedAt
         ? `마지막으로 확인한 ${label}은 ${formatHour(source.observedAt)} 자료예요 · 이후 달라졌을 수 있어요`
-        : `마지막으로 확인한 ${label}은 이전 자료예요 · 현재 상태는 달라졌을 수 있어요`,
+        : `마지막으로 확인한 ${label}은 이전 자료예요 · 현재 상태는 달라졌을 수 있어요`)
+        + (airQuality ? `\n${[
+          `${airQuality.stationName} 측정소`,
+          ...(airQuality.pm25 === undefined ? [] : [`초미세먼지 ${formatWeatherNumber(airQuality.pm25)}㎍/㎥`]),
+          ...(airQuality.pm10 === undefined ? [] : [`미세먼지 ${formatWeatherNumber(airQuality.pm10)}㎍/㎥`]),
+          ...(airQuality.ozone === undefined ? [] : [`오존 ${formatWeatherNumber(airQuality.ozone)}ppm`]),
+        ].join(' · ')}` : ''),
       source: source.provider,
     };
   }

@@ -491,7 +491,9 @@ router.get('/today', async (c) => {
         ...forecastLifestyleMessages,
       ],
       dataStatusMessages: [
-        ...buildEnvironmentalDataStatusMessages(environmentalData.sources),
+        ...buildEnvironmentalDataStatusMessages(
+          environmentalData.sources, environmentalData.airQuality,
+        ),
         ...buildOptionalProviderTimeoutStatusMessages(optionalTimeouts),
         ...buildCurrentOptionalDataStatusMessages({
           coordinatesAvailable: coordinates !== undefined,

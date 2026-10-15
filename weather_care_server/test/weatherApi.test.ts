@@ -1142,6 +1142,23 @@ describe('today optional provider deadline', () => {
     ]);
   });
 
+  it('shows the measured values with an older air-quality observation', () => {
+    expect(buildEnvironmentalDataStatusMessages({
+      uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'AVAILABLE' },
+      airQuality: {
+        provider: 'AIRKOREA', state: 'STALE',
+        observedAt: '2026-09-17T10:00:00+09:00',
+      },
+    }, {
+      provider: 'AIRKOREA', observedAt: '2026-09-17T10:00:00+09:00',
+      stationName: '서울', pm25: 12, pm10: 24, ozone: 0.021,
+    })).toEqual([{
+      role: 'DATA_STATUS', itemTitle: '대기질', source: 'AIRKOREA',
+      text: '마지막으로 확인한 대기질은 오전 10시 자료예요 · 이후 달라졌을 수 있어요\n'
+        + '서울 측정소 · 초미세먼지 12㎍/㎥ · 미세먼지 24㎍/㎥ · 오존 0.02ppm',
+    }]);
+  });
+
   it('does not offer a reload for an unsupported region', () => {
     expect(buildEnvironmentalDataStatusMessages({
       uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNSUPPORTED_REGION' },

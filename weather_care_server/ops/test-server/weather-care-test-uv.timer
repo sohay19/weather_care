@@ -1,0 +1,10 @@
+[Unit]
+Description=날씨챙겨 시험 서버 자외선 10분 갱신
+
+[Timer]
+OnCalendar=*-*-* *:00/10:30
+Persistent=true
+Unit=weather-care-test-uv.service
+
+[Install]
+WantedBy=timers.target

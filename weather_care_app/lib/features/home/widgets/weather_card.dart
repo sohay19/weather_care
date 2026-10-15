@@ -126,13 +126,13 @@ class WeatherInfoCard extends StatelessWidget {
         label: '자외선',
         value: current.uvIndex == null
             ? '자료 없음'
-            : '${uvDescription(current.uvIndex)}\n${current.uvIndex!.toStringAsFixed(1)}',
+            : '${uvDescription(current.uvIndex)}\n${formatWeatherNumber(current.uvIndex!, keepDecimal: true)}'
+                '${current.uvProvider == 'KMA_APIHUB_UV' ? '\n${current.uvStationName ?? '인근'} · ${_koreaClock(current.uvObservedAt) ?? '--:--'} 관측' : ''}',
         levelTitle: current.uvIndex == null
             ? '자외선 수준을 확인하기 어려워요'
             : '자외선은 ${uvDescription(current.uvIndex)} 단계예요',
-        detailBody: current.uvIndex == null
-            ? '기상청 생활기상지수 자료를 받지 못해 자외선지수와 단계를 표시하지 않아요.'
-            : '기상청 자외선지수는 ${current.uvIndex!.toStringAsFixed(1)}, ${uvDescription(current.uvIndex)} 단계예요.',
+        detailBody: _uvDetail(current),
+        stationDetail: _uvObservationSource(current),
         interpretation:
             '자료가 없음을 낮음 단계로 바꾸지 않아요. 구름·그늘·고도와 노출 시간에 따라 실제 노출량은 달라질 수 있어요.\n\n$uvRanges',
       ),
@@ -467,6 +467,30 @@ class WeatherInfoCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _uvDetail(CurrentWeather current) {
+  if (current.uvProvider != 'KMA_APIHUB_UV') {
+    return current.uvIndex == null
+        ? '기상청 생활기상지수 자료를 받지 못해 자외선지수와 단계를 표시하지 않아요.'
+        : '기상청 자외선지수는 ${formatWeatherNumber(current.uvIndex!, keepDecimal: true)}, ${uvDescription(current.uvIndex)} 단계예요.';
+  }
+  if (current.uvIndex == null) {
+    return '최근 30분 이내의 유효한 자외선 관측값을 받지 못했어요. 예보값으로 대신 표시하지 않아요.';
+  }
+  return '기상청 자외선 관측지수는 ${formatWeatherNumber(current.uvIndex!, keepDecimal: true)}, ${uvDescription(current.uvIndex)} 단계예요.';
+}
+
+String? _uvObservationSource(CurrentWeather current) {
+  if (current.uvProvider != 'KMA_APIHUB_UV' || current.uvIndex == null) {
+    return null;
+  }
+  final station = current.uvStationName ?? '인근';
+  final distance = current.uvStationDistanceKm;
+  return '가장 가까운 유효 관측소인 $station 관측소의 자외선지수예요.'
+      '${distance == null ? '' : '\n선택 위치에서 약 ${formatWeatherNumber(distance, keepDecimal: true)}km 떨어져 있어요.'}'
+      '\n${_koreaObservationClock(current.uvObservedAt) ?? '관측 시각 미확인'}'
+      '\n관측소에서 측정한 값으로, 선택 위치의 직접 측정값과는 다를 수 있어요.';
 }
 
 String _pollenSummary(List<PollenRisk>? pollen) {
@@ -868,7 +892,7 @@ void _showMetricDetail(BuildContext context, _WeatherMetric metric) {
                       style: Theme.of(dialogContext).textTheme.labelMedium),
                   const SizedBox(height: 6),
                   Text(
-                    metric.value.replaceAll('\n', ' · '),
+                    metric.value.split('\n').take(2).join(' · '),
                     style: Theme.of(dialogContext)
                         .textTheme
                         .titleLarge

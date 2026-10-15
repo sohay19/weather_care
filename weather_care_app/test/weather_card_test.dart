@@ -6,6 +6,33 @@ import 'package:weather_care/features/home/widgets/weather_card.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
+  testWidgets('Today 자외선 실측의 관측소·시각과 거리를 표시한다', (tester) async {
+    final current = CurrentWeather.fromJson({
+      'current': {
+        'uvIndex': 0.4, 'uvStatus': 'AVAILABLE', 'uvProvider': 'KMA_APIHUB_UV',
+        'uvStationName': '서울', 'uvObservedAt': '2026-10-15T14:10:00+09:00',
+        'uvStationDistanceKm': 12.3,
+      }
+    });
+    await _pumpCard(tester, current, showCurrentSummary: false);
+    expect(find.textContaining('서울 · 14:10 관측'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('weather-metric-detail-자외선')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('12.3km'), findsOneWidget);
+    expect(find.textContaining('10월 15일 14시 10분 관측'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Today 자외선 관측 결측을 예보나 0으로 표현하지 않는다', (tester) async {
+    await _pumpCard(tester, const CurrentWeather(temperature: 20,
+        uvProvider: 'KMA_APIHUB_UV', uvStatus: 'UNAVAILABLE'), showCurrentSummary: false);
+    final metric = find.byKey(const ValueKey('weather-metric-자외선'));
+    expect(find.descendant(of: metric, matching: find.text('자료 없음')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('weather-metric-detail-자외선')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('예보값으로 대신 표시하지 않아요'), findsOneWidget);
+  });
+
   test('Today 응답에서 꽃가루·대기정체 지표를 읽는다', () {
     final response = TodayWeatherResponse.fromJson({
       'current': {},

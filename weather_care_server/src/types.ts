@@ -261,6 +261,12 @@ export interface WeatherSnapshot {
   snowDepthStationDistanceKm?: number;
   snowDepthProvider?: 'KMA_APIHUB_SNOW_TOTAL';
   uvIndex?: number;
+  uvStatus?: 'AVAILABLE' | 'UNAVAILABLE';
+  uvProvider?: 'KMA_APIHUB_UV';
+  uvObservedAt?: string;
+  uvStationId?: string;
+  uvStationName?: string;
+  uvStationDistanceKm?: number;
   skyCode?: number;
   skyCondition?: string;
   pm10?: number;

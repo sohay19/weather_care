@@ -1,5 +1,6 @@
 import { saveCollectedCache } from '../src/database/collectedWeatherRepository';
 import { CURRENT_SNOW_CACHE_KEY } from '../src/services/currentSnowCache';
+import { UV_STATIONS_KEY, UV_OBSERVATIONS_KEY } from '../src/services/currentUvCache';
 import { describe, expect, it, vi } from 'vitest';
 import router, {
   buildCurrentOptionalDataStatusMessages,
@@ -344,6 +345,37 @@ describe('fast Main weather', () => {
       expect(staleBody.current.snowDepthStatus).toBe('UNAVAILABLE');
       expect(staleBody.current.snowDepthCm).toBeUndefined();
     }finally{vi.useRealTimers();}
+  });
+
+  it('Today 자외선은 인근 실측으로 교체하고 시간별 예보는 유지하며 오래된 관측에 예보를 쓰지 않는다', async () => {
+    const now = new Date('2026-10-15T14:10:00+09:00');
+    vi.useFakeTimers(); vi.setSystemTime(now);
+    try {
+      const hourly = [snapshot(14, { observedAt: '2026-10-15T14:00:00+09:00',
+        forecastAt: '2026-10-15T14:00:00+09:00', uvIndex: 7 })];
+      await seedCollectedRegion(58, 125, { current: hourly[0], hourly, daily: [],
+        baseDate: '20261015', baseTime: '1100', dataSource: '기상청' }, {
+          uv: { areaNo: '1153052000', provider: 'KMA_LIVING_INDEX_V5', issuedAt: '2026-10-15T12:00:00+09:00',
+            points: [{ forecastAt: '2026-10-15T14:00:00+09:00', uvIndex: 7 }] },
+          sources: { uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'CACHED', cachedAt: now.toISOString() },
+            airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' } },
+        });
+      await saveCollectedCache(env.DB, { key: UV_STATIONS_KEY, type: UV_STATIONS_KEY,
+        value: [{ stationId: '108', stationName: '서울', latitude: 37.571, longitude: 126.965 }], updatedAt: now });
+      await saveCollectedCache(env.DB, { key: UV_OBSERVATIONS_KEY, type: UV_OBSERVATIONS_KEY,
+        value: [{ stationId: '108', observedAt: '2026-10-15T14:00:00+09:00', uvIndex: 0.4 }], updatedAt: now });
+      const today = await router.request('/today?nx=58&ny=125&adminCode=1153052000', {}, { DB: env.DB });
+      const body = await today.json<{ current: WeatherSnapshot; hourly: WeatherSnapshot[] }>();
+      expect(today.status).toBe(200);
+      expect(body.current).toMatchObject({ uvIndex: 0.4, uvStationId: '108', uvProvider: 'KMA_APIHUB_UV', uvStatus: 'AVAILABLE' });
+      expect(body.hourly[0].uvIndex).toBe(7);
+      await saveCollectedCache(env.DB, { key: UV_OBSERVATIONS_KEY, type: UV_OBSERVATIONS_KEY,
+        value: [{ stationId: '108', observedAt: '2026-10-15T13:00:00+09:00', uvIndex: 1 }], updatedAt: now });
+      const stale = await router.request('/today?nx=58&ny=125&adminCode=1153052000', {}, { DB: env.DB });
+      const current = (await stale.json<{ current: WeatherSnapshot }>()).current;
+      expect(current.uvStatus).toBe('UNAVAILABLE');
+      expect(current.uvIndex).toBeUndefined();
+    } finally { vi.useRealTimers(); }
   });
 
   it('uses cached Main weather only inside its short freshness window', () => {

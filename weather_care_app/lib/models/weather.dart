@@ -45,6 +45,11 @@ class CurrentWeather {
   final String? visibilityStationId;
   final double? visibilityStationDistanceKm;
   final double? uvIndex;
+  final String? uvProvider;
+  final String? uvStatus;
+  final String? uvObservedAt;
+  final String? uvStationName;
+  final double? uvStationDistanceKm;
   final num? pm10;
   final num? pm25;
   final double? ozone;
@@ -79,6 +84,11 @@ class CurrentWeather {
     this.visibilityStationId,
     this.visibilityStationDistanceKm,
     this.uvIndex,
+    this.uvProvider,
+    this.uvStatus,
+    this.uvObservedAt,
+    this.uvStationName,
+    this.uvStationDistanceKm,
     this.pm10,
     this.pm25,
     this.ozone,
@@ -115,6 +125,11 @@ class CurrentWeather {
       visibilityStationDistanceKm:
           (c['visibilityStationDistanceKm'] as num?)?.toDouble(),
       uvIndex: (c['uvIndex'] as num?)?.toDouble(),
+      uvProvider: _optionalText(c['uvProvider']),
+      uvStatus: _optionalText(c['uvStatus']),
+      uvObservedAt: _optionalText(c['uvObservedAt']),
+      uvStationName: _optionalText(c['uvStationName']),
+      uvStationDistanceKm: _optionalNumber(c['uvStationDistanceKm']),
       pm10: _optionalNumber(c['pm10']),
       pm25: _optionalNumber(c['pm25']),
       ozone: _optionalNumber(c['ozone']),

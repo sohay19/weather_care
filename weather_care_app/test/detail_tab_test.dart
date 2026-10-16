@@ -1,3 +1,4 @@
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/evidence_focus.dart';
@@ -62,10 +63,12 @@ void main() {
     expect(find.text('내일 18시'), findsNothing);
     expect(find.text('100°C'), findsNothing);
     expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('main-hourly-18')),
-            matching: find.text('0°C')),
-        findsOneWidget);
+        tester
+            .widget<HourlyValueChart>(find.byType(HourlyValueChart))
+            .series
+            .values[18]
+            ?.lower,
+        0);
     expect(find.text('눈 없음'), findsNothing);
     expect(tester.takeException(), isNull);
   });

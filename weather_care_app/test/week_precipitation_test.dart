@@ -247,16 +247,16 @@ void main() {
       const Offset(0, -700),
     );
     await tester.pump();
-    expect(find.text('강수확률 최고 90% · 강수량 30mm 이상 51mm 미만'), findsOneWidget);
+    expect(find.text('강수확률 최고 90%\n강수량 30mm 이상 51mm 미만'), findsOneWidget);
     final label = tester.widget<Text>(
-      find.text('강수확률 최고 90% · 강수량 30mm 이상 51mm 미만'),
+      find.text('강수확률 최고 90%\n강수량 30mm 이상 51mm 미만'),
     );
     final spans = (label.textSpan! as TextSpan).children!;
     expect(label.style?.fontSize, 12);
     expect((spans[0] as TextSpan).text, '강수확률 ');
     expect(spans[0].style?.fontWeight, isNot(FontWeight.bold));
     expect(spans[1].style?.fontWeight, FontWeight.w700);
-    expect((spans[2] as TextSpan).text, ' · 강수량 ');
+    expect((spans[2] as TextSpan).text, '\n강수량 ');
     expect(spans[2].style?.fontWeight, isNot(FontWeight.bold));
     expect(spans[3].style?.fontWeight, FontWeight.w700);
     expect(tester.takeException(), isNull);

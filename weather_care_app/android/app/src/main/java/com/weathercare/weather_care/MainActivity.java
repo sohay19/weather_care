@@ -10,6 +10,7 @@ import io.flutter.plugin.common.MethodChannel;
 import org.json.JSONObject;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "com.codesoha.weathercare/home-widget";
@@ -17,6 +18,8 @@ public class MainActivity extends FlutterActivity {
     static final String SNAPSHOT_KEY = "snapshot";
     static final String REFRESH_URL_KEY = "refresh_url";
     static final String GPS_ENABLED_KEY = "gps_enabled";
+    static final String REVISION_KEY = "selection_revision";
+    static final Object WIDGET_LOCK = new Object();
 
     @Override
     public void configureFlutterEngine(FlutterEngine flutterEngine) {
@@ -25,58 +28,60 @@ public class MainActivity extends FlutterActivity {
                 flutterEngine.getDartExecutor().getBinaryMessenger(),
                 CHANNEL
         ).setMethodCallHandler((call, result) -> {
-            SharedPreferences preferences = getSharedPreferences(
-                    WIDGET_PREFERENCES,
-                    Context.MODE_PRIVATE
-            );
-            if ("save".equals(call.method)) {
-                String snapshot = null;
-                String refreshUrl = null;
-                boolean gpsEnabled = false;
-                if (call.arguments instanceof String) {
-                    snapshot = (String) call.arguments;
-                } else if (call.arguments instanceof Map<?, ?> values) {
-                    Object rawSnapshot = values.get("snapshot");
-                    Object rawRefreshUrl = values.get("refreshUrl");
-                    Object rawGpsEnabled = values.get("gpsEnabled");
-                    if (rawSnapshot instanceof String) snapshot = (String) rawSnapshot;
-                    if (rawRefreshUrl instanceof String) refreshUrl = (String) rawRefreshUrl;
-                    if (rawGpsEnabled instanceof Boolean) gpsEnabled = (Boolean) rawGpsEnabled;
-                }
-                if (snapshot == null) {
-                    result.error("INVALID_WIDGET_DATA", "위젯 자료가 비어 있습니다.", null);
+            synchronized (WIDGET_LOCK) {
+                SharedPreferences preferences = getSharedPreferences(
+                        WIDGET_PREFERENCES,
+                        Context.MODE_PRIVATE
+                );
+                if ("save".equals(call.method)) {
+                    String snapshot = null;
+                    String refreshUrl = null;
+                    boolean gpsEnabled = false;
+                    if (call.arguments instanceof String) {
+                        snapshot = (String) call.arguments;
+                    } else if (call.arguments instanceof Map<?, ?> values) {
+                        Object rawSnapshot = values.get("snapshot");
+                        Object rawRefreshUrl = values.get("refreshUrl");
+                        Object rawGpsEnabled = values.get("gpsEnabled");
+                        if (rawSnapshot instanceof String) snapshot = (String) rawSnapshot;
+                        if (rawRefreshUrl instanceof String) refreshUrl = (String) rawRefreshUrl;
+                        if (rawGpsEnabled instanceof Boolean) gpsEnabled = (Boolean) rawGpsEnabled;
+                    }
+                    if (snapshot == null) {
+                        result.error("INVALID_WIDGET_DATA", "위젯 자료가 비어 있습니다.", null);
+                        return;
+                    }
+                    SharedPreferences.Editor editor = preferences.edit()
+                            .putString(REVISION_KEY, UUID.randomUUID().toString())
+                            .putString(SNAPSHOT_KEY, snapshot)
+                            .putBoolean(WeatherCareWidgetProvider.REFRESH_IN_PROGRESS_KEY, false)
+                            .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
+                            .putBoolean(GPS_ENABLED_KEY, gpsEnabled);
+                    if (refreshUrl == null || refreshUrl.isBlank()) {
+                        editor.remove(REFRESH_URL_KEY);
+                    } else {
+                        editor.putString(REFRESH_URL_KEY, refreshUrl);
+                    }
+                    editor.apply();
+                    WeatherCareWidgetProvider.updateAll(this);
+                    result.success(null);
                     return;
                 }
-                snapshot = preserveSpecificWidgetRegion(
-                        snapshot,
-                        preferences.getString(SNAPSHOT_KEY, null)
-                );
-                SharedPreferences.Editor editor = preferences.edit()
-                        .putString(SNAPSHOT_KEY, snapshot)
-                        .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
-                        .putBoolean(GPS_ENABLED_KEY, gpsEnabled);
-                if (refreshUrl == null || refreshUrl.isBlank()) {
-                    editor.remove(REFRESH_URL_KEY);
-                } else {
-                    editor.putString(REFRESH_URL_KEY, refreshUrl);
+                if ("clear".equals(call.method)) {
+                    preferences.edit()
+                            .putString(REVISION_KEY, UUID.randomUUID().toString())
+                            .remove(SNAPSHOT_KEY)
+                            .remove(REFRESH_URL_KEY)
+                            .remove(GPS_ENABLED_KEY)
+                            .putBoolean(WeatherCareWidgetProvider.REFRESH_IN_PROGRESS_KEY, false)
+                            .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
+                            .apply();
+                    WeatherCareWidgetProvider.updateAll(this);
+                    result.success(null);
+                    return;
                 }
-                editor.apply();
-                WeatherCareWidgetProvider.updateAll(this);
-                result.success(null);
-                return;
+                result.notImplemented();
             }
-            if ("clear".equals(call.method)) {
-                preferences.edit()
-                        .remove(SNAPSHOT_KEY)
-                        .remove(REFRESH_URL_KEY)
-                        .remove(GPS_ENABLED_KEY)
-                        .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
-                        .apply();
-                WeatherCareWidgetProvider.updateAll(this);
-                result.success(null);
-                return;
-            }
-            result.notImplemented();
         });
     }
 

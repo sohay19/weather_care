@@ -12,6 +12,7 @@ import WidgetKit
   private let homeWidgetSnapshotKey = "snapshot"
   private let homeWidgetRefreshStatusKey = "refresh_status"
   private let homeWidgetRefreshURLKey = "refresh_url"
+  private let homeWidgetRevisionKey = "selection_revision"
   private let adRemovalChannel = "com.codesoha.weathercare/ad-removal"
   private let notificationDiagnosticsChannel = "com.codesoha.weathercare/notification-diagnostics"
   private let notificationLogger = Logger(
@@ -107,6 +108,7 @@ import WidgetKit
     let widgetSnapshotKey = homeWidgetSnapshotKey
     let widgetRefreshStatusKey = homeWidgetRefreshStatusKey
     let widgetRefreshURLKey = homeWidgetRefreshURLKey
+    let widgetRevisionKey = homeWidgetRevisionKey
     let widgetGPSEnabledKey = homeWidgetGPSEnabledKey
     let channel = FlutterMethodChannel(
       name: homeWidgetChannel,
@@ -133,11 +135,8 @@ import WidgetKit
           ))
           return
         }
-        let storedSnapshot = weatherWidgetSnapshotPreservingSpecificRegion(
-          snapshot,
-          previous: defaults.string(forKey: widgetSnapshotKey)
-        )
-        defaults.set(storedSnapshot, forKey: widgetSnapshotKey)
+        defaults.set(UUID().uuidString, forKey: widgetRevisionKey)
+        defaults.set(snapshot, forKey: widgetSnapshotKey)
         defaults.removeObject(forKey: widgetRefreshStatusKey)
         if let refreshURL = values?["refreshUrl"] as? String,
            !refreshURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -149,6 +148,7 @@ import WidgetKit
         WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
         result(nil)
       case "clear":
+        defaults.set(UUID().uuidString, forKey: widgetRevisionKey)
         defaults.removeObject(forKey: widgetSnapshotKey)
         defaults.removeObject(forKey: widgetRefreshStatusKey)
         defaults.removeObject(forKey: widgetRefreshURLKey)

@@ -26,6 +26,7 @@ import '../../services/permission_onboarding_store.dart';
 import '../../services/weather_service.dart';
 import '../../services/current_location_service.dart';
 import '../../services/gps_region_name_service.dart';
+import '../../services/address_search_service.dart';
 import '../../services/home_widget_service.dart';
 import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
@@ -33,6 +34,9 @@ import '../../theme/weather_theme.dart';
 import '../../utils/korea_date.dart';
 import '../settings/settings_screen.dart';
 import '../settings/region_picker_screen.dart';
+import '../settings/administrative_region_picker_screen.dart';
+import '../settings/address_region_picker_screen.dart';
+import '../settings/postal_address_picker_screen.dart';
 import '../ads/consent_aware_native_ad_card.dart';
 import 'weather_labels.dart';
 import 'weather_data_phase.dart';
@@ -45,6 +49,8 @@ import 'widgets/server_connection_failure_dialog.dart';
 import 'widgets/permission_onboarding_dialog.dart';
 import 'widgets/weather_status_view.dart';
 
+enum _RegionSelectionMethod { administrative, address, map }
+
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
   final NotificationTopic? initialNotificationTopic;
@@ -55,6 +61,8 @@ class HomeScreen extends StatefulWidget {
   final NotificationRegistrationService? notificationRegistration;
   final RegionCatalog? regionCatalog;
   final RegionMapBuilder? regionMapBuilder;
+  final AddressSearchService addressSearchService;
+  final PostalAddressPicker? postalAddressPicker;
   final Future<bool> Function(Uri)? openExternalLink;
   final NotificationPermissionService? notificationPermission;
   final ServerDataAccess? serverDataAccess;
@@ -75,6 +83,8 @@ class HomeScreen extends StatefulWidget {
     this.notificationRegistration,
     this.regionCatalog,
     this.regionMapBuilder,
+    this.addressSearchService = const PlatformAddressSearchService(),
+    this.postalAddressPicker,
     this.openExternalLink,
     this.notificationPermission,
     this.serverDataAccess,
@@ -176,7 +186,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _publishHomeWidget() {
     final today = _today;
+    final grid = _weatherGrid;
     if (today == null ||
+        grid == null ||
+        today.region.nx != grid.nx ||
+        today.region.ny != grid.ny ||
         _refreshFuture != null ||
         _mainDetailsLoading ||
         _todayRefreshing ||
@@ -191,7 +205,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     unawaited(widget.homeWidgetService.publish(
       snapshot,
       refreshUrl: _homeWidgetRefreshUrl(),
-      gpsEnabled: _settings.locationMode == 'GPS',
     ));
   }
 
@@ -1289,19 +1302,85 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _addRegion() async {
+    final method = await showModalBottomSheet<_RegionSelectionMethod>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: Text('구역 추가',
+                    style: Theme.of(context).textTheme.titleLarge),
+              ),
+              ListTile(
+                leading: const Icon(Icons.search_rounded),
+                title: const Text('행정지역명으로 선택'),
+                subtitle: const Text('시·도, 시·군·구, 읍·면·동으로 찾아요'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.pop(
+                    context, _RegionSelectionMethod.administrative),
+              ),
+              ListTile(
+                leading: const Icon(Icons.location_on_outlined),
+                title: const Text('주소로 선택'),
+                subtitle: const Text('도로명주소나 지번주소로 찾아요'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () =>
+                    Navigator.pop(context, _RegionSelectionMethod.address),
+              ),
+              ListTile(
+                leading: const Icon(Icons.map_outlined),
+                title: const Text('지도에서 구역 선택'),
+                subtitle: const Text('지도에서 원하는 예보 구역을 골라요'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.pop(context, _RegionSelectionMethod.map),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || method == null) return;
+    final catalog = await _loadRegionCatalog();
+    if (!mounted) return;
+    final savedGridIds = {
+      for (final key in _settings.savedRegionKeys)
+        if (catalog.find(key) case final region?) region.gridId,
+    };
     final selected = await Navigator.of(context).push<ForecastGridSelection>(
       MaterialPageRoute(
-        builder: (_) => RegionPickerScreen(
-          loadCatalog: _loadRegionCatalog,
-          selectedGridId: _settings.currentRegionId,
-          selectedRegionKey: _settings.manualRegionKey,
-          mapBuilder: widget.regionMapBuilder,
-        ),
+        builder: (_) => switch (method) {
+          _RegionSelectionMethod.administrative =>
+            AdministrativeRegionPickerScreen(
+              loadCatalog: _loadRegionCatalog,
+              selectedRegionKey: _settings.manualRegionKey,
+              savedGridIds: savedGridIds,
+            ),
+          _RegionSelectionMethod.address => AddressRegionPickerScreen(
+              loadCatalog: _loadRegionCatalog,
+              searchService: widget.addressSearchService,
+              pickAddress: widget.postalAddressPicker,
+              savedGridIds: savedGridIds,
+            ),
+          _RegionSelectionMethod.map => RegionPickerScreen(
+              loadCatalog: _loadRegionCatalog,
+              selectedGridId: _settings.currentRegionId,
+              selectedRegionKey: _settings.manualRegionKey,
+              mapBuilder: widget.regionMapBuilder,
+              savedGridIds: savedGridIds,
+            ),
+        },
       ),
     );
     if (!mounted || selected == null) return;
     final keys = [..._settings.savedRegionKeys];
-    if (!keys.contains(selected.regionKey)) keys.add(selected.regionKey);
+    keys.add(selected.regionKey);
     await _handleSettingsChanged(_settings.copyWith(
       locationMode: 'MANUAL',
       currentRegionId: selected.gridId,

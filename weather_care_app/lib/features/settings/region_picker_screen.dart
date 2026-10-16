@@ -6,6 +6,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
 import '../../services/region_catalog.dart';
+import 'region_selection_notice.dart';
 
 const weatherGridSelectorUrl =
     'https://weather-care.pages.dev/weather-map/select';
@@ -21,6 +22,7 @@ class RegionPickerScreen extends StatefulWidget {
   final String? selectedGridId;
   final String? selectedRegionKey;
   final RegionMapBuilder? mapBuilder;
+  final Set<String> savedGridIds;
 
   const RegionPickerScreen({
     super.key,
@@ -28,6 +30,7 @@ class RegionPickerScreen extends StatefulWidget {
     this.selectedGridId,
     this.selectedRegionKey,
     this.mapBuilder,
+    this.savedGridIds = const {},
   });
 
   @override
@@ -157,7 +160,11 @@ class _RegionPickerScreenState extends State<RegionPickerScreen> {
         regionKey: selectedRegion.key,
         regionName: selectedRegion.fullName,
       );
-      if (mounted) Navigator.pop(context, selection);
+      if (!mounted ||
+          !canAddForecastGrid(context, selection.gridId, widget.savedGridIds)) {
+        return;
+      }
+      Navigator.pop(context, selection);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

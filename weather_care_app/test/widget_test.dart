@@ -1,3 +1,4 @@
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -548,9 +549,11 @@ void main() {
     final timeline = find.byKey(const ValueKey('main-hourly-timeline-section'));
     expect(find.descendant(of: timeline, matching: find.text('15시')),
         findsOneWidget);
+    final chart = tester.widget<HourlyValueChart>(
+        find.descendant(of: timeline, matching: find.byType(HourlyValueChart)));
+    expect(chart.series.values[15]?.lower, 23);
+    expect(chart.overlays.single.values[15]?.lower, 22);
     expect(find.descendant(of: timeline, matching: find.text('23°C')),
-        findsOneWidget);
-    expect(find.descendant(of: timeline, matching: find.text('(체감 22°C)')),
         findsOneWidget);
     tester
         .widget<ChoiceChip>(

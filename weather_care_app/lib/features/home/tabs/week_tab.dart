@@ -527,7 +527,7 @@ class _WeekDayCard extends StatelessWidget {
     ];
     final card = Container(
       key: ValueKey('week-day-${day.forecastDate}'),
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 17),
       decoration: BoxDecoration(
         color: isPast
             ? WeatherCareTheme.of(context).surfaceMuted
@@ -762,8 +762,6 @@ class _WeekDayCard extends StatelessWidget {
               availableOnly: true,
               inline: true,
               contrastFilters: isToday,
-              uvCenterColor:
-                  isToday ? WeatherCareTheme.of(context).primarySoft : null,
             ),
           ],
           if (missing.isNotEmpty &&
@@ -779,7 +777,15 @@ class _WeekDayCard extends StatelessWidget {
               retrying: retrying,
             ),
           ],
-        ],
+          // 시간별 예보는 Main처럼 좌우 8px, 나머지 내용은 기존 17px을 유지한다.
+        ]
+            .map((child) => child is HourlyForecastSection
+                ? child
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 9),
+                    child: child,
+                  ))
+            .toList(),
       ),
     );
     return card;
@@ -867,10 +873,9 @@ class _WeekAmountRow extends StatelessWidget {
           .microTextStyle
           .copyWith(fontSize: 12, fontWeight: FontWeight.w400),
     );
-    final singleLine = text.startsWith('강설확률 ') && !text.contains('예보 이력 없음');
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(10, 10, detail == null ? 10 : 2, 10),
+      padding: EdgeInsets.fromLTRB(10, 10, detail == null ? 10 : 2.5, 10),
       decoration: BoxDecoration(
         color: isToday || isPast
             ? WeatherCareTheme.of(context).surface.withValues(alpha: 0.65)
@@ -881,25 +886,19 @@ class _WeekAmountRow extends StatelessWidget {
         children: [
           Icon(icon, size: 17, color: WeatherCareTheme.of(context).primaryDeep),
           const SizedBox(width: 7),
-          Expanded(
-            child: singleLine
-                ? FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: label)
-                : label,
-          ),
+          Expanded(child: label),
           if (detail != null)
             IconButton(
               tooltip: '강설확률 설명',
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
               alignment: Alignment.centerRight,
-              constraints: const BoxConstraints(minWidth: 28, minHeight: 40),
+              iconSize: 17,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              icon: const Icon(Icons.info_outline_rounded, size: 17),
+              icon: const Icon(Icons.info_outline_rounded),
               onPressed: () => showDialog<void>(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -921,7 +920,7 @@ class _WeekAmountRow extends StatelessWidget {
 }
 
 List<InlineSpan> _weekPrecipitationSpans(String text) {
-  text = text.replaceAll('예보 이력 없음 · ', '예보 이력 없음\n');
+  text = text.replaceAll(' · ', '\n');
   final pattern =
       RegExp(r'(강수확률 |강수량 |강수 관측 |강설확률 |최심신적설 |예상 신적설 )(.*?)(?= · |\n|$)');
   final spans = <InlineSpan>[];
@@ -1139,7 +1138,7 @@ class _UnavailableWeekDayCard extends StatelessWidget {
     final card = Container(
       key: ValueKey('week-unavailable-${dateInKorea(date)}'),
       width: double.infinity,
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.symmetric(vertical: 17),
       decoration: BoxDecoration(
         color: isPast
             ? WeatherCareTheme.of(context).surfaceMuted
@@ -1160,102 +1159,116 @@ class _UnavailableWeekDayCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: WeatherCareTheme.of(context).surfaceMuted,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.question_mark_rounded,
-              color: WeatherCareTheme.of(context).textSecondary,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 17),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Spacer(),
-                    if (isToday)
-                      Text(
-                        '오늘',
-                        key: ValueKey('week-today-${dateInKorea(date)}'),
-                        style: WeatherCareTheme.of(context)
-                            .specialLabelStyle
-                            .copyWith(
-                              fontSize: 11,
-                            ),
-                      )
-                    else if (isPast)
-                      Text(
-                        '지난 날짜',
-                        key: ValueKey('week-past-${dateInKorea(date)}'),
-                        style: WeatherCareTheme.of(context)
-                            .specialLabelStyle
-                            .copyWith(
-                              color: WeatherCareTheme.of(context).textPrimary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      ),
-                  ],
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: WeatherCareTheme.of(context).surfaceMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.question_mark_rounded,
+                    color: WeatherCareTheme.of(context).textSecondary,
+                    size: 20,
+                  ),
                 ),
-                const SizedBox(height: 7),
-                Text(message, style: Theme.of(context).textTheme.bodySmall),
-                for (final (kind, icon, text) in [
-                  (
-                    'precipitation',
-                    Icons.water_drop_outlined,
-                    isPast ? '강수 관측 자료 없음' : '강수 자료 없음'
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Spacer(),
+                          if (isToday)
+                            Text(
+                              '오늘',
+                              key: ValueKey('week-today-${dateInKorea(date)}'),
+                              style: WeatherCareTheme.of(context)
+                                  .specialLabelStyle
+                                  .copyWith(
+                                    fontSize: 11,
+                                  ),
+                            )
+                          else if (isPast)
+                            Text(
+                              '지난 날짜',
+                              key: ValueKey('week-past-${dateInKorea(date)}'),
+                              style: WeatherCareTheme.of(context)
+                                  .specialLabelStyle
+                                  .copyWith(
+                                    color: WeatherCareTheme.of(context)
+                                        .textPrimary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      Text(message,
+                          style: Theme.of(context).textTheme.bodySmall),
+                      for (final (kind, icon, text) in [
+                        (
+                          'precipitation',
+                          Icons.water_drop_outlined,
+                          isPast ? '강수 관측 자료 없음' : '강수 자료 없음'
+                        ),
+                        (
+                          'snowfall',
+                          Icons.ac_unit_rounded,
+                          isPast ? '최심신적설 자료 없음' : '강설확률 자료 없음 · 예상 신적설 자료 없음'
+                        ),
+                      ]) ...[
+                        const SizedBox(height: 10),
+                        _WeekAmountRow(
+                          key: ValueKey('week-$kind-${dateInKorea(date)}'),
+                          icon: icon,
+                          text: text,
+                          isToday: isToday,
+                          isPast: isPast,
+                        ),
+                      ],
+                      if (dataPhase != WeatherDataPhase.loading &&
+                          onRetry != null) ...[
+                        const SizedBox(height: 10),
+                        MissingDataRetry(
+                          message: dataPhase == WeatherDataPhase.failed
+                              ? '서버에서 이 날짜의 날씨를 불러오지 못했어요.'
+                              : '받지 못한 항목: 이 날짜의 날씨',
+                          retryKey:
+                              'week-unavailable-retry-${dateInKorea(date)}',
+                          onRetry: onRetry!,
+                          retrying: retrying,
+                        ),
+                      ],
+                    ],
                   ),
-                  (
-                    'snowfall',
-                    Icons.ac_unit_rounded,
-                    isPast ? '최심신적설 자료 없음' : '강설확률 자료 없음 · 예상 신적설 자료 없음'
-                  ),
-                ]) ...[
-                  const SizedBox(height: 10),
-                  _WeekAmountRow(
-                    key: ValueKey('week-$kind-${dateInKorea(date)}'),
-                    icon: icon,
-                    text: text,
-                    isToday: isToday,
-                    isPast: isPast,
-                  ),
-                ],
-                if (hourly.isNotEmpty)
-                  HourlyForecastSection(
-                    key: ValueKey('week-hourly-${dateInKorea(date)}'),
-                    keyPrefix: 'week-${dateInKorea(date)}',
-                    items: hourly,
-                    targetDate: dateInKorea(date),
-                    availableOnly: true,
-                    inline: true,
-                    contrastFilters: isToday,
-                  ),
-                if (dataPhase != WeatherDataPhase.loading &&
-                    onRetry != null) ...[
-                  const SizedBox(height: 10),
-                  MissingDataRetry(
-                    message: dataPhase == WeatherDataPhase.failed
-                        ? '서버에서 이 날짜의 날씨를 불러오지 못했어요.'
-                        : '받지 못한 항목: 이 날짜의 날씨',
-                    retryKey: 'week-unavailable-retry-${dateInKorea(date)}',
-                    onRetry: onRetry!,
-                    retrying: retrying,
-                  ),
-                ],
+                ),
               ],
             ),
           ),
+          if (hourly.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: HourlyForecastSection(
+                key: ValueKey('week-hourly-${dateInKorea(date)}'),
+                keyPrefix: 'week-${dateInKorea(date)}',
+                items: hourly,
+                targetDate: dateInKorea(date),
+                availableOnly: true,
+                inline: true,
+                contrastFilters: isToday,
+              ),
+            ),
         ],
       ),
     );

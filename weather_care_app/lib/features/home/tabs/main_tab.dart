@@ -107,7 +107,15 @@ class MainTab extends StatelessWidget {
                       trailing: PopupMenuButton<String>(
                         key: const ValueKey('main-region-menu'),
                         tooltip: '지역 선택',
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: WeatherCareTheme.of(context).primary,
+                        ),
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: WeatherCareTheme.of(context).primary,
+                          size: 36,
+                        ),
                         onSelected: (value) {
                           if (value == 'gps') {
                             onSelectGps?.call();
@@ -683,25 +691,28 @@ class _TopWeatherCard extends StatelessWidget {
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
       width: double.infinity,
-      padding: EdgeInsets.all(compact ? 13 : 16),
+      padding: EdgeInsets.all(compact ? 16 : 19),
       decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          WeatherBriefText(
-            text: today.briefing?.copy.medium ?? today.brief,
-            expiresAt:
-                today.briefing?.nextBriefingBoundary ?? today.briefExpiresAt,
-            timeline: today.briefingTimeline,
-            generatedAt: today.generatedAt,
-            receivedAt: today.receivedAt,
-            style: TextStyle(
-              fontFamily: WeatherCareTheme.fontNeoHyundai,
-              color: WeatherCareTheme.of(context).textPrimary,
-              fontSize: compact ? 21 : 23,
-              height: 1.24,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.45,
+          Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10),
+            child: WeatherBriefText(
+              text: today.briefing?.copy.medium ?? today.brief,
+              expiresAt:
+                  today.briefing?.nextBriefingBoundary ?? today.briefExpiresAt,
+              timeline: today.briefingTimeline,
+              generatedAt: today.generatedAt,
+              receivedAt: today.receivedAt,
+              style: TextStyle(
+                fontFamily: WeatherCareTheme.fontNeoHyundai,
+                color: WeatherCareTheme.of(context).textPrimary,
+                fontSize: compact ? 21 : 23,
+                height: 1.24,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.45,
+              ),
             ),
           ),
           SizedBox(height: compact ? 22 : 28),

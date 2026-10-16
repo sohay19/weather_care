@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/widgets/hourly_forecast_section.dart';
 import 'package:weather_care/models/weather.dart';
-import 'package:weather_care/theme/weather_theme.dart';
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 
 void main() {
   test('시간별 결측은 0·맑음·눈 없음으로 대체하지 않는다', () {
@@ -104,18 +104,22 @@ void main() {
     await _pumpHourly(tester, [{}]);
     final row = find.byKey(const ValueKey('today-hourly-0'));
     expect(row, findsOneWidget);
-    for (final text in [
-      '00시',
-      '날씨 —',
-      '—',
-      '(체감 —)',
-    ]) {
-      expect(
-          find.descendant(of: row, matching: find.text(text)), findsOneWidget);
-    }
+    expect(
+        find.descendant(of: row, matching: find.text('00시')), findsOneWidget);
+    expect(
+        _series(tester, 'temperature').values.every((value) => value == null),
+        isTrue);
+    expect(_series(tester, 'apparent').values.every((value) => value == null),
+        isTrue);
     await _selectHourly(tester, 'precipitation');
     expect(
-        find.descendant(of: row, matching: find.text('—')), findsNWidgets(2));
+        _series(tester, 'rain-amount').values.every((value) => value == null),
+        isTrue);
+    expect(
+        _series(tester, 'rain-probability')
+            .values
+            .every((value) => value == null),
+        isTrue);
     await _selectHourly(tester, 'wind');
     expect(find.descendant(of: row, matching: find.text('방향 — · —')),
         findsOneWidget);
@@ -138,22 +142,21 @@ void main() {
   testWidgets('0도·무풍·자외선 0과 명시된 무강수는 구분해 표시한다', (tester) async {
     await _pumpHourly(tester, [_zero]);
     final row = find.byKey(const ValueKey('today-hourly-14'));
-    expect(
-        find.descendant(of: row, matching: find.text('0°C')), findsOneWidget);
-    expect(find.descendant(of: row, matching: find.text('(체감 0°C)')),
-        findsOneWidget);
+    expect(_series(tester, 'temperature').values[14]?.lower, 0);
+    expect(_series(tester, 'apparent').values[14]?.lower, 0);
+    expect(find.text('0°C'), findsNWidgets(2));
     await _selectHourly(tester, 'precipitation');
     expect(find.text('0%'), findsOneWidget);
     expect(find.text('0mm'), findsOneWidget);
     expect(find.textContaining('신적설'), findsNothing);
     await _selectHourly(tester, 'snowfall');
-    expect(find.text('눈 예보 없음'), findsOneWidget);
-    expect(find.text('신적설 0cm'), findsOneWidget);
+    expect(find.text('0cm'), findsOneWidget);
+    expect(_series(tester, 'snow-probability').values[14]?.lower, 0);
     await _selectHourly(tester, 'wind');
     expect(find.text('약한 바람'), findsOneWidget);
     expect(find.text('방향 — · 0.0m/s'), findsOneWidget);
     await _selectHourly(tester, 'uv');
-    expect(find.text('0'), findsOneWidget);
+    expect(find.byKey(const ValueKey('hourly-value-uv-14')), findsOneWidget);
     expect(find.descendant(of: row, matching: find.text('—')), findsNothing);
   });
 
@@ -173,10 +176,8 @@ void main() {
         },
       }
     ]);
-    final row = find.byKey(const ValueKey('today-hourly-14'));
     await _selectHourly(tester, 'precipitation');
-    expect(
-        find.descendant(of: row, matching: find.text('0mm')), findsOneWidget);
+    expect(find.text('0mm'), findsOneWidget);
     expect(find.text('예상 신적설 0cm'), findsNothing);
     expect(find.text('20%'), findsOneWidget);
   });
@@ -191,16 +192,14 @@ void main() {
     expect(find.text('80%'), findsOneWidget);
     expect(find.textContaining('신적설'), findsNothing);
     await _selectHourly(tester, 'snowfall');
-    expect(find.text('눈 예상'), findsOneWidget);
-    expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('today-hourly-15')),
-            matching: find.text('신적설 —')),
-        findsOneWidget);
+    expect(_series(tester, 'snow-amount').values.whereType<HourlyChartValue>(),
+        isEmpty);
+    expect(find.text('80%'), findsOneWidget);
     expect(find.text('0%'), findsNothing);
     expect(find.text('0mm'), findsNothing);
     expect(find.text('예상 신적설 0cm'), findsNothing);
-    expect(find.text('신적설 —'), findsWidgets);
+    expect(find.byKey(const ValueKey('hourly-value-snow-amount-15')),
+        findsNothing);
   });
 
   for (final scale in [1.0, 2.0]) {
@@ -255,8 +254,8 @@ void main() {
       }
       expect(find.textContaining('신적설'), findsNothing);
       await _selectHourly(tester, 'snowfall');
-      expect(find.text('신적설 0.5cm 미만'), findsOneWidget);
-      expect(find.text('신적설 5cm 이상'), findsOneWidget);
+      expect(find.text('0.5cm 미만'), findsOneWidget);
+      expect(find.text('5cm 이상'), findsOneWidget);
       expect(find.text('1mm'), findsNothing);
       expect(find.text('예상 신적설 0.5cm'), findsNothing);
       expect(find.byKey(const ValueKey('today-hourly-filter-airQuality')),
@@ -308,12 +307,12 @@ void main() {
     expect(scrollable.position.pixels, greaterThan(0));
     expect(find.byKey(const ValueKey('main-hourly-0')), findsOneWidget);
     expect(find.byKey(const ValueKey('main-hourly-23')), findsOneWidget);
-    expect(find.text('18°C'), findsOneWidget);
-    expect(find.text('17°C'), findsOneWidget);
+    expect(_series(tester, 'temperature').values[0]?.lower, 18);
+    expect(_series(tester, 'temperature').values[1]?.lower, 17);
 
-    await tester.drag(timeline, const Offset(16 * 120, 0));
+    await tester.drag(timeline, const Offset(16 * 80, 0));
     await tester.pumpAndSettle();
-    expect(scrollable.position.pixels, lessThan(15 * 120));
+    expect(scrollable.position.pixels, lessThan(15 * 80));
     expect(find.text('00시'), findsOneWidget);
   });
 
@@ -352,7 +351,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('타임라인 선택 버튼은 한 줄이고 값은 아이콘과 함께 표시한다', (tester) async {
+  testWidgets('선택 버튼은 한 줄이고 지표에 맞는 수치 그래프를 표시한다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -364,187 +363,50 @@ void main() {
         'apparentTemperature': 19,
         'precipitationProbability': 10,
         'humidity': 25,
-        'windDirection': 90,
         'uvIndex': 2
       },
       {..._zero, 'time': '15', 'humidity': 75, 'uvIndex': 9},
     ]);
-
     final chips = [
       for (final metric in [
         'weather',
         'precipitation',
-        'snowfall',
+        'humidity',
         'uv',
         'wind',
-        'humidity',
+        'snowfall'
       ])
-        find.byKey(ValueKey('today-hourly-filter-$metric')),
+        find.byKey(ValueKey('today-hourly-filter-$metric'))
     ];
     for (final chip in chips.skip(1)) {
-      expect(tester.getTopLeft(chip).dy, tester.getTopLeft(chips[0]).dy);
+      expect(tester.getTopLeft(chip).dy, tester.getTopLeft(chips.first).dy);
     }
-    expect(find.byKey(const ValueKey('today-hourly-filter-airQuality')),
-        findsNothing);
-    expect(find.text('20°C'), findsOneWidget);
-    expect(tester.getSize(find.byKey(const ValueKey('today-hourly-0'))).width,
-        120);
-    final apparent = find.text('(체감 19°C)');
-    expect(apparent, findsOneWidget);
-    expect(tester.widget<Text>(apparent).style?.fontWeight,
-        isNot(FontWeight.w800));
-
+    HourlyChartSeries graph(String id) => _series(tester, id);
+    expect(find.text('기온'), findsWidgets);
+    expect(graph('temperature').values[14]?.lower, 20);
+    expect(graph('apparent').values[14]?.lower, 19);
     await _selectHourly(tester, 'precipitation');
-    final first = find.byKey(const ValueKey('today-hourly-14'));
-    expect(tester.getSize(first).width, 100);
-    expect(
-        find.descendant(of: first, matching: find.text('10%')), findsOneWidget);
-    expect(
-        find.descendant(
-            of: first,
-            matching:
-                find.byKey(const ValueKey('today-hourly-precipitation-icon'))),
-        findsOneWidget);
-    expect(find.descendant(of: first, matching: find.byIcon(Icons.water_drop)),
+    expect(graph('rain-amount').bars, isFalse);
+    expect(graph('rain-probability').bars, isTrue);
+    expect(graph('rain-probability').fixedMax, 100);
+    expect(graph('rain-probability').values[14]?.lower, 10);
+    expect(find.byKey(const ValueKey('today-hourly-precipitation-icon')),
         findsNothing);
-    expect(
-        find.descendant(of: first, matching: find.text('0mm')), findsOneWidget);
-    final rainIcon = find.descendant(
-        of: first,
-        matching:
-            find.byKey(const ValueKey('today-hourly-precipitation-icon')));
-    expect(tester.widget<CustomPaint>(rainIcon).size, const Size(36, 36));
-    expect(
-        tester
-            .getCenter(find.descendant(of: first, matching: find.text('10%')))
-            .dy,
-        closeTo(tester.getCenter(rainIcon).dy + 6, 1));
-    expect(
-        tester
-            .widget<Text>(
-                find.descendant(of: first, matching: find.text('0mm')))
-            .style
-            ?.fontSize,
-        10);
-
     await _selectHourly(tester, 'uv');
-    final lowSun = tester.widget<Icon>(find.descendant(
-        of: first, matching: find.byIcon(Icons.wb_sunny_rounded)));
-    final highSun = tester.widget<Icon>(find.descendant(
-        of: find.byKey(const ValueKey('today-hourly-15')),
-        matching: find.byIcon(Icons.wb_sunny_rounded)));
-    expect(lowSun.color, isNot(Colors.red));
-    expect(highSun.color, Colors.red);
-    expect(
-        find.descendant(of: first, matching: find.text('2')), findsOneWidget);
-    expect(
-        find.descendant(of: first, matching: find.text('낮음')), findsOneWidget);
-    expect(
-        tester
-            .widget<Text>(find.descendant(of: first, matching: find.text('낮음')))
-            .style
-            ?.fontSize,
-        10);
-    expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('today-hourly-15')),
-            matching: find.text('매우 높음')),
-        findsOneWidget);
-    expect(
-        tester
-            .widget<Text>(find.descendant(of: first, matching: find.text('2')))
-            .style
-            ?.fontSize,
-        13);
-    expect(
-        tester.getSize(find.descendant(
-            of: first,
-            matching: find.byKey(const ValueKey('today-hourly-uv-center')))),
-        const Size(22, 22));
-
-    await _selectHourly(tester, 'wind');
-    expect(find.descendant(of: first, matching: find.text('약한 바람')),
-        findsOneWidget);
-    expect(find.descendant(of: first, matching: find.text('동풍 · 0.0m/s')),
-        findsOneWidget);
-    final windValue = tester
-        .widget<Text>(find.descendant(of: first, matching: find.text('약한 바람')));
-    final windSpeed = tester.widget<Text>(
-        find.descendant(of: first, matching: find.text('동풍 · 0.0m/s')));
-    expect(windValue.style?.fontSize,
-        Theme.of(tester.element(first)).textTheme.labelMedium?.fontSize);
-    expect(windSpeed.style?.fontSize, 10);
-    expect(find.descendant(of: first, matching: find.byIcon(Icons.air_rounded)),
-        findsOneWidget);
-    expect(find.byKey(const ValueKey('today-hourly-wind-direction-icon')),
-        findsNothing);
-
+    expect(graph('uv').bars, isFalse);
+    expect(graph('uv').bands.map((band) => band.to), [2, 5, 7, 10, 100]);
+    await tester.tap(find.byKey(const ValueKey('uv-legend-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('낮음 ·'), findsOneWidget);
+    expect(find.textContaining('매우 높음 ·'), findsOneWidget);
     await _selectHourly(tester, 'humidity');
-    expect(
-        find.descendant(of: first, matching: find.text('건조')), findsOneWidget);
-    expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('today-hourly-15')),
-            matching: find.text('습한 편')),
-        findsOneWidget);
-    expect(
-        find.descendant(of: first, matching: find.text('25%')), findsOneWidget);
-    final lowHumidity = tester
-        .widget<Text>(find.descendant(of: first, matching: find.text('25%')));
-    final highHumidity = tester.widget<Text>(find.descendant(
-        of: find.byKey(const ValueKey('today-hourly-15')),
-        matching: find.text('75%')));
-    final palette = WeatherCareTheme.of(tester.element(first));
-    expect(lowHumidity.style?.color, palette.textPrimary);
-    expect(highHumidity.style?.color, palette.onPrimary);
-    expect(lowHumidity.style?.fontSize, 10);
-    final humidityPaint =
-        find.descendant(of: first, matching: find.byType(CustomPaint)).last;
-    expect(tester.widget<CustomPaint>(humidityPaint).size, const Size(40, 42));
-    expect(
-        tester
-            .getTopLeft(find.descendant(of: first, matching: find.text('25%')))
-            .dy,
-        greaterThan(tester.getTopLeft(humidityPaint).dy));
-    expect(
-        tester
-            .getBottomLeft(
-                find.descendant(of: first, matching: find.text('25%')))
-            .dy,
-        lessThan(tester.getBottomLeft(humidityPaint).dy));
-    expect(
-        tester
-            .getTopLeft(find.descendant(
-                of: find.byKey(const ValueKey('today-hourly-15')),
-                matching: find.text('75%')))
-            .dy,
-        greaterThan(tester
-            .getTopLeft(find.descendant(of: first, matching: find.text('25%')))
-            .dy));
-    expect(
-        find.descendant(
-            of: first,
-            matching: find.byWidgetPredicate((widget) =>
-                widget is Semantics && widget.properties.label == '습도 25% 채움')),
-        findsOneWidget);
-    expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('today-hourly-15')),
-            matching: find.byWidgetPredicate((widget) =>
-                widget is Semantics && widget.properties.label == '습도 75% 채움')),
-        findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    await _pumpHourly(
-        tester,
-        [
-          {..._zero, 'humidity': 75}
-        ],
-        scale: 2);
-    for (final chip in chips.skip(1)) {
-      expect(tester.getTopLeft(chip).dy, tester.getTopLeft(chips[0]).dy);
-    }
-    await _selectHourly(tester, 'humidity');
+    expect(graph('humidity').bars, isTrue);
+    await tester.tap(find.byKey(const ValueKey('humidity-legend-toggle')));
+    await tester.pumpAndSettle();
+    expect(graph('humidity').bands.map((band) => band.to), [35, 70, 80, 100]);
+    expect(find.textContaining('건조 ·'), findsOneWidget);
+    expect(find.textContaining('습한 편 ·'), findsOneWidget);
+    expect(find.text('25%'), findsOneWidget);
     expect(find.text('75%'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -593,6 +455,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('today-hourly-info')));
     await tester.pumpAndSettle();
     expect(find.textContaining('기온·바람은 정시 값'), findsOneWidget);
+    expect(find.textContaining('양·확률은 정시 눈금 사이의 1시간 구간'), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-visibility-notice')),
         findsOneWidget);
     await tester.tap(find.text('닫기'));
@@ -642,3 +505,8 @@ Future<void> _selectHourly(WidgetTester tester, String metric) async {
   await tester.tap(chip);
   await tester.pumpAndSettle();
 }
+
+HourlyChartSeries _series(WidgetTester tester, String id) => tester
+    .widgetList<HourlyValueChart>(find.byType(HourlyValueChart))
+    .expand((chart) => [chart.series, ...chart.overlays])
+    .singleWhere((chart) => chart.id == id);

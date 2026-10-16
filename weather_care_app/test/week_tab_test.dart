@@ -1,3 +1,4 @@
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/week_tab.dart';
@@ -220,6 +221,13 @@ void main() {
     final info = tester.widget<IconButton>(find.byWidgetPredicate(
         (widget) => widget is IconButton && widget.tooltip == '강설확률 설명'));
     expect(info.style?.backgroundColor?.resolve({}), Colors.transparent);
+    final snowRow =
+        tester.getRect(find.byKey(const ValueKey('week-snowfall-2026-09-10')));
+    final infoIcon = tester.getRect(find.descendant(
+      of: find.byTooltip('강설확률 설명'),
+      matching: find.byIcon(Icons.info_outline_rounded),
+    ));
+    expect(snowRow.right - infoIcon.right, closeTo(2.5, 0.1));
     expect(find.textContaining('예상 신적설'), findsNothing);
     await tester.ensureVisible(find.byTooltip('강설확률 설명'));
     await tester.pumpAndSettle();
@@ -550,7 +558,7 @@ void main() {
     expect(find.textContaining('습도 쾌적'), findsOneWidget);
     expect(find.textContaining('바람 약간 강한 바람'), findsOneWidget);
     expect(find.textContaining('예상 신적설 0cm'), findsOneWidget);
-    expect(find.text('강설확률 자료 없음 · 예상 신적설 0cm'), findsOneWidget);
+    expect(find.text('강설확률 자료 없음\n예상 신적설 0cm'), findsOneWidget);
     expect(find.textContaining('자외선 높음'), findsOneWidget);
     expect(find.textContaining('대기질 보통'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-humidity')),
@@ -650,7 +658,7 @@ void main() {
         findsOneWidget);
   });
 
-  testWidgets('오늘 자외선 수치 안쪽은 오늘 카드와 같은 배경색을 쓴다', (tester) async {
+  testWidgets('오늘 자외선은 수치 구간 배경과 단계 문구를 표시한다', (tester) async {
     await _pump(tester, [
       _day('2026-09-10')
     ], timelineHourly: [
@@ -672,11 +680,19 @@ void main() {
     await tester.ensureVisible(uvFilter);
     await tester.tap(uvFilter);
     await tester.pumpAndSettle();
-    final center = tester.widget<Container>(
-      find.byKey(const ValueKey('today-hourly-uv-center')),
-    );
-    expect((center.decoration! as BoxDecoration).color,
-        WeatherCareTheme.of(tester.element(uvFilter)).primarySoft);
+    final chart = tester
+        .widget<CustomPaint>(find.byKey(const ValueKey('hourly-chart-uv')));
+    final painter = chart.painter! as HourlyValueChartPainter;
+    expect(painter.series.bands.length, 5);
+    expect(painter.series.values.single?.lower, 3);
+    await tester.ensureVisible(find.byKey(const ValueKey('uv-legend-toggle')));
+    await tester.tap(find.byKey(const ValueKey('uv-legend-toggle')));
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(
+            of: find.byType(HourlyChartLegend),
+            matching: find.textContaining('보통 ·')),
+        findsOneWidget);
   });
 
   testWidgets('Week에만 있는 시간별 강수는 강수 타임라인으로 표시한다', (tester) async {
@@ -713,8 +729,12 @@ void main() {
             const ValueKey('week-2026-09-12-hourly-filter-precipitation')),
         findsOneWidget);
     expect(find.descendant(of: section, matching: find.text('10~11시')),
-        findsOneWidget);
+        findsNothing);
     expect(find.descendant(of: section, matching: find.text('11~12시')),
+        findsNothing);
+    expect(find.descendant(of: section, matching: find.text('11시')),
+        findsOneWidget);
+    expect(find.descendant(of: section, matching: find.text('12시')),
         findsOneWidget);
   });
 
@@ -835,7 +855,7 @@ void main() {
         now: () => DateTime.parse('2026-10-10T01:00:00Z'));
     await _moveDays(tester, -1);
     await tester.scrollUntilVisible(find.textContaining('최심신적설 1.2cm'), 200);
-    expect(find.textContaining('강설 관측 · 최심신적설 1.2cm'), findsOneWidget);
+    expect(find.textContaining('강설 관측\n최심신적설 1.2cm'), findsOneWidget);
     expect(
         find.byKey(const ValueKey('week-snowfall-2026-10-09')), findsOneWidget);
     expect(

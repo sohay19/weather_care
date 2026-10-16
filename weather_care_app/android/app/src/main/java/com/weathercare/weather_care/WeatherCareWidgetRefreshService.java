@@ -54,46 +54,9 @@ public final class WeatherCareWidgetRefreshService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (running) return START_NOT_STICKY;
-        running = true;
-        try {
-            startLocationForeground();
-        } catch (RuntimeException ignored) {
-            WeatherCareWidgetProvider.showLocationUnavailable(this);
-            stopSelf();
-            return START_NOT_STICKY;
-        }
-        WeatherCareWidgetProvider.setRefreshInProgress(this, true);
-        executor.execute(() -> {
-            try {
-                SharedPreferences preferences = getSharedPreferences(
-                        MainActivity.WIDGET_PREFERENCES, Context.MODE_PRIVATE
-                );
-                Location location = currentLocation();
-                if (location == null) {
-                    WeatherCareWidgetProvider.showLocationUnavailable(this);
-                    return;
-                }
-                String url = refreshUrl(
-                        preferences.getString(MainActivity.REFRESH_URL_KEY, null), location
-                );
-                if (url == null) {
-                    WeatherCareWidgetProvider.showLocationUnavailable(this);
-                    return;
-                }
-                int status = WeatherCareWidgetRefreshWorker.refresh(this, url, false);
-                if (status >= 200 && status < 300) {
-                    preferences.edit().putString(MainActivity.REFRESH_URL_KEY, url).apply();
-                } else {
-                    WeatherCareWidgetProvider.setRefreshStatus(this, "서버 연결 실패");
-                }
-            } catch (Exception ignored) {
-                WeatherCareWidgetProvider.setRefreshStatus(this, "서버 연결 실패");
-            } finally {
-                WeatherCareWidgetProvider.setRefreshInProgress(this, false);
-                stopSelf();
-            }
-        });
+        // 이전 버전의 서비스 진입도 앱에서 선택한 구역으로 갱신한다.
+        WeatherCareWidgetProvider.enqueueRefresh(this);
+        stopSelf();
         return START_NOT_STICKY;
     }
 

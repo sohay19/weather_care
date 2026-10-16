@@ -1,6 +1,5 @@
 package com.codesoha.weathercare;
 
-import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -9,7 +8,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -54,24 +52,8 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             return;
         }
         if (ACTION_REFRESH.equals(intent.getAction())) {
-            if (gpsEnabled(context)) {
-                if (context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED &&
-                        context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                                != PackageManager.PERMISSION_GRANTED) {
-                    showLocationUnavailable(context);
-                    return;
-                }
-                try {
-                    context.startForegroundService(new Intent(
-                            context, WeatherCareWidgetRefreshService.class
-                    ));
-                } catch (RuntimeException ignored) {
-                    showLocationUnavailable(context);
-                }
-            } else {
-                enqueueRefresh(context);
-            }
+            // 앱이 저장한 선택 구역의 URL을 그대로 사용한다.
+            enqueueRefresh(context);
             return;
         }
         super.onReceive(context, intent);
@@ -205,13 +187,6 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         return url != null && !url.isBlank();
     }
 
-    private static boolean gpsEnabled(Context context) {
-        return context.getSharedPreferences(
-                MainActivity.WIDGET_PREFERENCES,
-                Context.MODE_PRIVATE
-        ).getBoolean(MainActivity.GPS_ENABLED_KEY, false);
-    }
-
     static void showLocationUnavailable(Context context) {
         setRefreshStatus(context, "위치 확인 필요");
     }
@@ -244,7 +219,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         updateAll(context);
     }
 
-    private static void enqueueRefresh(Context context) {
+    static void enqueueRefresh(Context context) {
         OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(
                 WeatherCareWidgetRefreshWorker.class
         ).build();

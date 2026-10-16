@@ -1,3 +1,4 @@
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/widgets/hourly_forecast_section.dart';
@@ -6,6 +7,74 @@ import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/utils/korea_date.dart';
 
 void main() {
+  for (final inline in [false, true]) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets('양·확률은 구간 중앙, 구간 시간은 숨기고 자정·누락 시간 유지: Week $inline 배율 $scale',
+          (tester) async {
+        tester.view.physicalSize = const Size(360, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(MaterialApp(
+            home: Scaffold(
+                body: MediaQuery(
+                    data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+                    child: SingleChildScrollView(
+                        child: HourlyForecastSection(
+                            targetDate: '2026-12-31',
+                            now: DateTime.parse('2026-12-31T15:00:00+09:00'),
+                            inline: inline,
+                            availableOnly: inline,
+                            items: [
+                          for (final slot in [
+                            _slot('2026-12-31', 15),
+                            _slot('2026-12-31', 17),
+                            _slot('2027-01-01', 0),
+                          ])
+                            HourlyWeatherItem.fromJson(slot),
+                        ]))))));
+        for (final metric in ['precipitation', 'snowfall']) {
+          await _selectHourly(tester, metric);
+          final chart =
+              tester.widget<HourlyValueChart>(find.byType(HourlyValueChart));
+          final id = metric == 'precipitation' ? 'rain' : 'snow';
+          final probability = _series(tester, '$id-probability');
+          final index = inline ? 0 : 14;
+          final last = inline ? 2 : 23;
+          expect(probability.intervals, isTrue);
+          expect(chart.series.intervals, isTrue);
+          final amountRect = tester
+              .getRect(find.byKey(ValueKey('hourly-value-$id-amount-$index')));
+          final probabilityRect = tester.getRect(
+              find.byKey(ValueKey('hourly-value-$id-probability-$index')));
+          expect(
+              probabilityRect.center.dx - amountRect.center.dx, closeTo(0, .1));
+          final point = find.byKey(ValueKey('today-hourly-$index'));
+          final clock = find.descendant(
+              of: point,
+              matching: find.byKey(const ValueKey('hourly-probability-time')));
+          expect(tester.widget<Text>(clock).data, '15시');
+          expect(tester.getCenter(clock).dx,
+              closeTo(probabilityRect.center.dx + chart.pointWidth / 2, .1));
+          expect(find.text('14~15시'), findsNothing);
+          final midnight = find.descendant(
+              of: find.byKey(ValueKey('today-hourly-$last')),
+              matching: find.byKey(const ValueKey('hourly-probability-time')));
+          expect(tester.widget<Text>(midnight).data, '24시');
+          expect(find.text('23~24시'), findsNothing);
+          expect(find.text('24시'), findsOneWidget);
+          expect(chart.hours.last - chart.hours.first, inline ? 9 : 23);
+          final canvas =
+              tester.getRect(find.byKey(ValueKey('hourly-chart-$id-amount')));
+          final lastLabel = tester.getRect(
+              find.byKey(ValueKey('hourly-value-$id-probability-$last')));
+          expect(lastLabel.right, lessThanOrEqualTo(canvas.right));
+          expect(tester.takeException(), isNull);
+        }
+      });
+    }
+  }
+
   test('기온은 정시를 유지하고 강수는 이전 1시간을 UTC/KST 모두 같은 값으로 읽는다', () {
     final first = HourlyWeatherItem.fromJson(_slot('2026-12-31', 15));
     final second = HourlyWeatherItem.fromJson({
@@ -61,11 +130,22 @@ void main() {
       await _pump(tester, [_slot(dateInKorea(DateTime.now()), 15)],
           scale: scale);
       expect(find.text('15시'), findsOneWidget);
-      expect(find.text('22°C'), findsOneWidget);
-      expect(find.text('(체감 22°C)'), findsOneWidget);
+      expect(
+          _series(tester, 'temperature')
+              .values
+              .whereType<HourlyChartValue>()
+              .map((value) => value.lower),
+          contains(22));
+      expect(
+          _series(tester, 'apparent')
+              .values
+              .whereType<HourlyChartValue>()
+              .map((value) => value.lower),
+          contains(22));
       expect(find.text('정시 예보'), findsNothing);
       await _selectHourly(tester, 'precipitation');
-      expect(find.text('14~15시'), findsOneWidget);
+      expect(find.text('14~15시'), findsNothing);
+      expect(find.text('15시'), findsOneWidget);
       expect(find.text('1mm 미만'), findsOneWidget);
       await _selectHourly(tester, 'wind');
       expect(find.text('방향 — · 2.0m/s'), findsOneWidget);
@@ -85,12 +165,17 @@ void main() {
     expect(find.text('00시'), findsOneWidget);
     expect(find.text('내일 00시'), findsNothing);
     expect(find.text('99°C'), findsNothing);
-    expect(find.text('(체감 22°C)'), findsOneWidget);
+    expect(
+        _series(tester, 'apparent')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        contains(22));
     await _selectHourly(tester, 'precipitation');
     expect(
         find.descendant(
             of: find.byKey(const ValueKey('today-hourly-23')),
-            matching: find.text('23~24시')),
+            matching: find.text('24시')),
         findsOneWidget);
     await _selectHourly(tester, 'wind');
     expect(find.text('방향 — · 2.0m/s'), findsOneWidget);
@@ -100,15 +185,27 @@ void main() {
     final tomorrow = dateInKorea(DateTime.now().add(const Duration(days: 1)));
     await _pump(tester, [_slot(tomorrow, 0)]);
     expect(find.text('내일 00시'), findsNothing);
-    expect(find.text('22°C'), findsNothing);
-    expect(find.text('(체감 22°C)'), findsNothing);
+    expect(
+        _series(tester, 'temperature')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        isNot(contains(22)));
+    expect(
+        _series(tester, 'apparent')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        isNot(contains(22)));
     expect(find.byKey(const ValueKey('today-hourly-23')), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.text('23~24시'), findsNothing);
+    expect(find.text('24시'), findsOneWidget);
     expect(find.text('1mm 미만'), findsOneWidget);
     await _selectHourly(tester, 'snowfall');
-    expect(find.text('23~24시'), findsOneWidget);
-    expect(find.text('신적설 0cm'), findsOneWidget);
+    expect(find.text('23~24시'), findsNothing);
+    expect(find.text('24시'), findsOneWidget);
+    expect(find.text('0cm'), findsOneWidget);
   });
 
   testWidgets('24개 정시 뒤의 오늘 마지막 강수 구간도 강수 항목에 남긴다', (tester) async {
@@ -125,7 +222,7 @@ void main() {
     expect(
         find.descendant(
             of: find.byKey(const ValueKey('today-hourly-23')),
-            matching: find.text('23~24시')),
+            matching: find.text('24시')),
         findsOneWidget);
   });
 
@@ -149,7 +246,8 @@ void main() {
     ]);
     expect(find.text('23시'), findsOneWidget);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.text('23~24시'), findsNothing);
+    expect(find.text('24시'), findsOneWidget);
     expect(find.text('0%'), findsOneWidget);
     expect(find.text('00시'), findsOneWidget);
   });
@@ -178,15 +276,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('main-hourly-24')), findsNothing);
     expect(find.byKey(const ValueKey('main-hourly-23')), findsOneWidget);
-    expect(find.text('23~24시'), findsOneWidget);
+    expect(find.text('23~24시'), findsNothing);
+    expect(find.text('24시'), findsOneWidget);
     expect(find.text('1mm 미만'), findsNWidgets(24));
   });
 
   testWidgets('오늘 00시 기온은 표시해도 어제 23~24시 강수는 오늘에 섞지 않는다', (tester) async {
     await _pump(tester, [_slot(dateInKorea(DateTime.now()), 0)]);
     expect(find.text('00시'), findsOneWidget);
-    expect(find.text('22°C'), findsOneWidget);
-    expect(find.text('(체감 22°C)'), findsOneWidget);
+    expect(
+        _series(tester, 'temperature')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        contains(22));
+    expect(
+        _series(tester, 'apparent')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        contains(22));
     await _selectHourly(tester, 'precipitation');
     expect(find.text('23~24시'), findsNothing);
     expect(find.text('1mm 미만'), findsNothing);
@@ -210,27 +319,34 @@ void main() {
     ));
     expect(find.byKey(const ValueKey('today-hourly-0')), findsOneWidget);
     expect(find.byKey(const ValueKey('today-hourly-23')), findsOneWidget);
-    expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('today-hourly-15')),
-            matching: find.text('22°C')),
-        findsOneWidget);
+    expect(_series(tester, 'temperature').values[15]?.lower, 22);
     await _selectHourly(tester, 'precipitation');
-    expect(find.text('14~15시'), findsOneWidget);
+    expect(find.text('14~15시'), findsNothing);
+    expect(find.text('15시'), findsOneWidget);
   });
 
   testWidgets('구간을 모르는 새 응답은 강수 코드값을 mm로 노출하지 않는다', (tester) async {
     await _pump(tester, [
       {..._slot(dateInKorea(DateTime.now()), 15), 'precipitationPeriod': null}
     ]);
-    expect(find.text('22°C'), findsOneWidget);
-    expect(find.text('(체감 22°C)'), findsOneWidget);
+    expect(
+        _series(tester, 'temperature')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        contains(22));
+    expect(
+        _series(tester, 'apparent')
+            .values
+            .whereType<HourlyChartValue>()
+            .map((value) => value.lower),
+        contains(22));
     await _selectHourly(tester, 'precipitation');
     expect(find.text('강수 구간 —'), findsOneWidget);
     expect(find.text('1mm 미만'), findsNothing);
     await _selectHourly(tester, 'snowfall');
     expect(find.text('강설 구간 —'), findsOneWidget);
-    expect(find.text('신적설 0cm'), findsNothing);
+    expect(find.text('0cm'), findsNothing);
   });
 }
 
@@ -283,3 +399,8 @@ Future<void> _selectHourly(WidgetTester tester, String metric) async {
   await tester.tap(chip);
   await tester.pumpAndSettle();
 }
+
+HourlyChartSeries _series(WidgetTester tester, String id) => tester
+    .widgetList<HourlyValueChart>(find.byType(HourlyValueChart))
+    .expand((chart) => [chart.series, ...chart.overlays])
+    .singleWhere((chart) => chart.id == id);

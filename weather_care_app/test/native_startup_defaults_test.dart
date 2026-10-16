@@ -173,7 +173,8 @@ void main() {
     expect(widget, contains('refreshButtonHitSurface = RadialGradient('));
     expect(widget, contains('endRadius: 22'));
     expect(widget, contains('.frame(width: 44, height: 44)'));
-    expect(widget, contains('.background(refreshButtonHitSurface, in: Circle())'));
+    expect(
+        widget, contains('.background(refreshButtonHitSurface, in: Circle())'));
     expect(widget, contains('.contentShape(.interaction, Rectangle())'));
     expect(widget, contains('.accessibilityLabel("날씨 새로고침")'));
     expect(widget, contains('.padding(.trailing, -11)'));
@@ -200,9 +201,6 @@ void main() {
     final androidService = File(
       'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetRefreshService.java',
     ).readAsStringSync();
-    final androidManifest = File(
-      'android/app/src/main/AndroidManifest.xml',
-    ).readAsStringSync();
     final androidActivity = File(
       'android/app/src/main/java/com/weathercare/weather_care/MainActivity.java',
     ).readAsStringSync();
@@ -225,11 +223,10 @@ void main() {
 
     expect(provider, contains('ACTION_REFRESH'));
     expect(provider, contains('WeatherCareWidgetRefreshWorker.class'));
-    expect(provider, contains('startForegroundService('));
-    expect(androidManifest, contains('android:foregroundServiceType="location"'));
-    expect(androidManifest, contains('android.permission.FOREGROUND_SERVICE_LOCATION'));
+    expect(provider, isNot(contains('startForegroundService(')));
     expect(androidActivity, contains('GPS_ENABLED_KEY'));
-    expect(androidService, contains('WeatherCareWidgetRefreshWorker.refresh(this, url, false)'));
+    expect(androidService,
+        contains('WeatherCareWidgetProvider.enqueueRefresh(this)'));
     expect(androidService, isNot(contains('getElapsedRealtimeNanos()')));
     expect(provider, contains('REFRESH_IN_PROGRESS_KEY'));
     expect(provider, contains('weather_widget_refresh_background_loading'));
@@ -250,10 +247,13 @@ void main() {
     );
     expect(androidActivity, contains('!"현재 위치".equals(value)'));
     expect(androidActivity, contains('stored.startsWith(next)'));
-    expect(androidRefreshBackground, contains('@color/weather_widget_refresh_surface'));
-    expect(androidLoadingBackground, contains('@color/weather_widget_refresh_loading_surface'));
+    expect(androidRefreshBackground,
+        contains('@color/weather_widget_refresh_surface'));
+    expect(androidLoadingBackground,
+        contains('@color/weather_widget_refresh_loading_surface'));
     expect(androidRefreshIcon, contains('@color/weather_widget_refresh_ink'));
-    expect(androidLoadingIcon, contains('@color/weather_widget_refresh_loading_ink'));
+    expect(androidLoadingIcon,
+        contains('@color/weather_widget_refresh_loading_ink'));
     for (final family in ['small', 'medium', 'large']) {
       final layout = File(
         'android/app/src/main/res/layout/weather_widget_$family.xml',
@@ -265,10 +265,9 @@ void main() {
         iosWidget, contains('.fixedSize(horizontal: true, vertical: false)'));
     expect(iosIntent, contains('struct RefreshWeatherWidgetIntent: AppIntent'));
     expect(iosIntent, contains('static var openAppWhenRun = false'));
-    expect(iosWidgetPlist, contains('<key>NSWidgetWantsLocation</key>'));
-    expect(iosIntent, contains('CoreLocation'));
-    expect(iosIntent, contains('manager.isAuthorizedForWidgetUpdates'));
-    expect(iosIntent, contains('locationManagerDidChangeAuthorization'));
+    expect(iosWidgetPlist, isNot(contains('<key>NSWidgetWantsLocation</key>')));
+    expect(iosIntent, isNot(contains('CoreLocation')));
+    expect(iosIntent, isNot(contains('WidgetLocationReader')));
     expect(iosIntent, isNot(contains('locationServicesEnabled()')));
     expect(iosIntent, contains('url: url'));
     expect(iosAppDelegate, contains('values?["gpsEnabled"]'));
@@ -276,10 +275,15 @@ void main() {
       iosIntent,
       contains('weatherWidgetSnapshotPreservingSpecificRegion('),
     );
+    expect(iosAppDelegate,
+        contains('defaults.set(snapshot, forKey: widgetSnapshotKey)'));
+    expect(androidActivity, contains('selection_revision'));
+    expect(iosAppDelegate, contains('selection_revision'));
     expect(
-      iosAppDelegate,
-      contains('weatherWidgetSnapshotPreservingSpecificRegion('),
-    );
+        androidWorker,
+        contains(
+            'if (!isCurrentSelection(preferences, rawUrl, revision)) return status;'));
+    expect(iosIntent, contains('guard isCurrentSelection() else { return }'));
     expect(iosIntent, contains('stored.hasPrefix(incoming)'));
     expect(
       RegExp(r'WidgetRefreshIntent\.swift in Sources')

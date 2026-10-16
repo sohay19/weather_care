@@ -18,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Objects;
 
 public final class WeatherCareWidgetRefreshWorker extends Worker {
     private static final int MAX_RESPONSE_CHARS = 512 * 1024;
@@ -33,28 +34,51 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
     @Override
     public Result doWork() {
         Context context = getApplicationContext();
-        WeatherCareWidgetProvider.setRefreshInProgress(context, true);
         SharedPreferences preferences = context.getSharedPreferences(
                 MainActivity.WIDGET_PREFERENCES,
                 Context.MODE_PRIVATE
         );
-        String rawUrl = preferences.getString(MainActivity.REFRESH_URL_KEY, null);
+        final String rawUrl;
+        final String revision;
+        synchronized (MainActivity.WIDGET_LOCK) {
+            rawUrl = preferences.getString(MainActivity.REFRESH_URL_KEY, null);
+            revision = preferences.getString(MainActivity.REVISION_KEY, null);
+            if (!isAllowedUrl(rawUrl)) return Result.success();
+            WeatherCareWidgetProvider.setRefreshInProgress(context, true);
+        }
         try {
-            int status = refresh(context, rawUrl, true);
-            if (status >= 200 && status < 300) return Result.success();
-            WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
-            return status >= 500 && getRunAttemptCount() < 2
-                    ? Result.retry()
-                    : Result.failure();
+            int status = refresh(context, preferences, rawUrl, revision);
+            synchronized (MainActivity.WIDGET_LOCK) {
+                if (!isCurrentSelection(preferences, rawUrl, revision) ||
+                        (status >= 200 && status < 300)) return Result.success();
+                WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
+                return Result.failure();
+            }
         } catch (Exception ignored) {
-            WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
-            return getRunAttemptCount() < 2 ? Result.retry() : Result.failure();
+            synchronized (MainActivity.WIDGET_LOCK) {
+                if (!isCurrentSelection(preferences, rawUrl, revision)) return Result.success();
+                WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
+                return Result.failure();
+            }
         } finally {
-            WeatherCareWidgetProvider.setRefreshInProgress(context, false);
+            synchronized (MainActivity.WIDGET_LOCK) {
+                if (isCurrentSelection(preferences, rawUrl, revision)) {
+                    WeatherCareWidgetProvider.setRefreshInProgress(context, false);
+                }
+            }
         }
     }
 
-    static int refresh(Context context, String rawUrl, boolean preserveRegion) throws Exception {
+    private static boolean isCurrentSelection(
+            SharedPreferences preferences, String rawUrl, String revision
+    ) {
+        return Objects.equals(revision, preferences.getString(MainActivity.REVISION_KEY, null)) &&
+                Objects.equals(rawUrl, preferences.getString(MainActivity.REFRESH_URL_KEY, null));
+    }
+
+    private static int refresh(
+            Context context, SharedPreferences preferences, String rawUrl, String revision
+    ) throws Exception {
         if (!isAllowedUrl(rawUrl)) throw new IOException("Invalid widget refresh URL");
         HttpURLConnection connection = (HttpURLConnection) new URL(rawUrl).openConnection();
         try {
@@ -66,26 +90,23 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
             int status = connection.getResponseCode();
             if (status < 200 || status >= 300) return status;
             String body = readResponse(connection.getInputStream());
-            SharedPreferences preferences = context.getSharedPreferences(
-                    MainActivity.WIDGET_PREFERENCES,
-                    Context.MODE_PRIVATE
-            );
-            if (preserveRegion) {
-                body = MainActivity.preserveSpecificWidgetRegion(
-                        body,
-                        preferences.getString(MainActivity.SNAPSHOT_KEY, null)
-                );
-            }
             JSONObject snapshot = new JSONObject(body);
             if (snapshot.optInt("schemaVersion", 0) != 3 ||
                     !snapshot.has("region") || !snapshot.has("refreshTime")) {
                 throw new IOException("Invalid widget snapshot");
             }
             snapshot.put("receivedAt", Instant.now().toString());
-            preferences.edit()
-                    .putString(MainActivity.SNAPSHOT_KEY, snapshot.toString())
-                    .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
-                    .apply();
+            synchronized (MainActivity.WIDGET_LOCK) {
+                // 구역 전환/삭제/앱 갱신 전의 늦은 응답은 저장하지 않는다.
+                if (!isCurrentSelection(preferences, rawUrl, revision)) return status;
+                String selectedSnapshot = MainActivity.preserveSpecificWidgetRegion(
+                        snapshot.toString(),
+                        preferences.getString(MainActivity.SNAPSHOT_KEY, null));
+                preferences.edit()
+                        .putString(MainActivity.SNAPSHOT_KEY, selectedSnapshot)
+                        .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
+                        .apply();
+            }
             return status;
         } finally {
             connection.disconnect();

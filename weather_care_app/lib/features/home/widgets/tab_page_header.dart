@@ -50,7 +50,15 @@ class TabPageHeader extends StatelessWidget {
                 style: WeatherCareTheme.of(context).specialLabelStyle,
               ),
               const SizedBox(height: 2),
-              Text(title, style: Theme.of(context).textTheme.headlineSmall),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(title,
+                        style: Theme.of(context).textTheme.headlineSmall),
+                  ),
+                  if (trailing != null) trailing!,
+                ],
+              ),
               const SizedBox(height: 2),
               Row(children: [
                 Flexible(
@@ -61,7 +69,6 @@ class TabPageHeader extends StatelessWidget {
             ],
           ),
         ),
-        if (trailing != null) trailing!,
       ],
     );
   }

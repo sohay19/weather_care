@@ -36,7 +36,7 @@ class _AddressRegionPickerScreenState extends State<AddressRegionPickerScreen> {
   _AddressMatch? _selected;
   bool _loading = false;
   int _request = 0;
-  String _message = '도로명주소나 지번주소를 입력해주세요.';
+  String _message = '';
 
   @override
   void dispose() {
@@ -51,7 +51,7 @@ class _AddressRegionPickerScreenState extends State<AddressRegionPickerScreen> {
       _loading = false;
       _selected = null;
       _results = [];
-      _message = '도로명주소나 지번주소를 입력해주세요.';
+      _message = '';
     });
   }
 
@@ -73,7 +73,7 @@ class _AddressRegionPickerScreenState extends State<AddressRegionPickerScreen> {
       if (postal == null) {
         setState(() {
           _loading = false;
-          _message = '도로명주소나 지번주소를 입력해주세요.';
+          _message = '';
         });
         return;
       }

@@ -11372,3 +11372,14 @@
 - Android debug APK를 갱신했다: weather_care_app/build/app/outputs/flutter-apk/app-debug.apk. iOS는 Windows 환경에서 빌드/실기기 검증을 실행하지 못했으며 네이티브 코드 및 공통 흐름을 검토했다. 서버 수정/배포·기기 설치·push는 하지 않았다.
 - 참고: 처음 루트 Gradle testDebugUnitTest로 의존 플러그인의 테스트까지 실행했을 때 google_mobile_ads의 Robolectric DefaultSdkProvider에서 UnsupportedOperationException으로 실패했다(32개 중 20개 실패). 앱 범위 :app:testDebugUnitTest를 별도 실행해 4개 모두 통과했고 APK 빌드도 성공했다. 기존 Week 강설 안내 아이콘 여백 불일치 검사는 이번 범위에서 다시 실행하거나 변경하지 않았다.
 - 사용자 '작업내용 모두 커밋' 요청으로 기존 타임라인·Week·지역/주소 선택 작업과 이번 위젯/화면 수정을 함께 커밋 대상으로 확정했다. caveman-commit 스킬은 한글 Conventional Commits 메시지 작성에만 참고했다. 커밋 메시지: feat: 구역 선택·타임라인·위젯 동작 개선.
+
+## 2026-10-16 주소 입력 안내 문구 삭제
+
+- 주소로 선택 화면의 '도로명주소나 지번주소를 입력해주세요.' 문구를 삭제했다. 최초 진입·입력 수정·검색 취소 시 모두 빈 안내를 사용해 문구와 해당 여백이 표시되지 않는다. 검색 중·실패·결과 없음 안내는 유지한다.
+- 단순 문구 삭제로 테스트 재실행·APK 빌드·커밋은 하지 않았다. git diff --check 통과.
+
+## 2026-10-16 구역 선택 버튼을 위치 제목과 같은 행으로 이동·전체 커밋
+
+- TabPageHeader의 trailing 버튼을 헤더 전체의 우측 상단에서 제목 행의 오른쪽으로 옮겼다. Main 구역 선택 화살표가 위치 텍스트와 세로 중앙을 맞추며, 기존 투명 배경·primary 색상·36 크기를 유지한다. 다른 탭은 trailing을 사용하지 않아 기존 제목 구성을 유지한다.
+- 실제 글꼴의 비표시 렌더링/구역 선택 흐름 검사 1개 통과. build/design-preview/region-main-header.png에서 버튼과 위치 제목의 같은 행 배치를 확인했다. git diff --check 통과. 단순 배치 변경으로 APK 재빌드는 하지 않았다.
+- 사용자 '모두 커밋해줘' 요청으로 직전 주소 입력 안내 문구 삭제와 이번 버튼 배치 및 인계 기록을 함께 커밋한다. 메시지: fix: 구역 선택 버튼 정렬과 주소 안내 문구 정리.

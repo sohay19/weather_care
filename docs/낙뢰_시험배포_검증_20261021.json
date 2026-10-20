@@ -1,0 +1,166 @@
+{
+  "작업": "낙뢰 감지 알림·Today 상세자료 시험 서버 배포 및 검증",
+  "기록시각": "2026-10-21T08:42:13.396034+09:00",
+  "대상_커밋": "3d11d0378117415068a6cb61b37bdb1853fd7681",
+  "적용_마이그레이션": "0016_lightning_alerts.sql",
+  "기존_시험_사용자_자료": "설치·인증·설정·알림 이력의 기존 열 값을 백업과 전수 비교해 보존 확인",
+  "운영_서버": "기존 릴리스·DB 스키마 유지. 내부 및 공개 curl health HTTP 200",
+  "원격_격리_검증": {
+    "freshGridSummary": true,
+    "alertAndDeduplication": true,
+    "concurrentDeduplication": true,
+    "settingsDisable": true,
+    "expiredIgnored": true,
+    "failedNotEmptySuccess": true,
+    "staleIgnored": true,
+    "otherRegionIgnored": true,
+    "databaseFailure503": true
+  },
+  "앱_검증": {
+    "실제_ApiClient_공개_시험서버_조회": "성공",
+    "접근키_없는_요청": 403,
+    "Today_HTTP": 200,
+    "실자료_낙뢰_상태": "AVAILABLE",
+    "실자료_관측_횟수": 0,
+    "Today_위젯_검사_통과": 6,
+    "렌더링": "실제 글꼴 360px·320px/1.3배, 격리 관측·실패·재시도·만료·스크롤 확인"
+  },
+  "푸시_검증": {
+    "방법": "FCM validate_only",
+    "결과": {
+      "tokenAvailable": true,
+      "requests": 1,
+      "results": [
+        {
+          "success": true,
+          "status": 200,
+          "unregistered": false
+        }
+      ]
+    },
+    "실제_기기_알림_발송": false,
+    "기기_수신_및_실제_알림_탭": "미실행"
+  },
+  "초기_수집_검증": {
+    "직접_기상청_요청": 4,
+    "응답_합계_바이트": 1344,
+    "정상_HTTP": 200,
+    "검증_회차": "08:33 최초 수동 3구간 + 08:35 자동 타이머 1구간 (한국시간)",
+    "정기_수집": "시험 전용 매시 05·15·25·35·45·55분. 이후 회차는 계속 실행"
+  },
+  "배포_감사": {
+    "release": "/opt/weather-care/releases/20261021-test-lightning-3d11d03/weather_care_server",
+    "productionRelease": "/opt/weather-care/releases/20261012-juso-202609/weather_care_server",
+    "sourceSha256Matches": {
+      "migrations/0016_lightning_alerts.sql": true,
+      "src/api/gridExtra.ts": true,
+      "src/collection/gridExtraCollection.ts": true,
+      "src/cron/jobs.ts": true,
+      "src/database/notificationSettingsRepository.ts": true,
+      "src/notification/fcmClient.ts": true,
+      "src/notification/lightningNotificationJob.ts": true,
+      "src/notification/notificationDestination.ts": true,
+      "src/services/lightning.ts": true,
+      "src/types.ts": true,
+      "src/validation/notificationSettings.ts": true
+    },
+    "database": {
+      "migrationCount": 16,
+      "latestMigration": "0016_lightning_alerts.sql",
+      "installations": 16,
+      "settings": 18,
+      "lightningSettingPresent": true,
+      "syntheticInstallationRows": 0,
+      "lightningClaimRows": 0,
+      "lightningPushHistoryRows": 0,
+      "lightningSnapshots": 7,
+      "collectionState": [
+        "2026-10-20T23:35:01.408Z",
+        "2026-10-20T23:30:00.000Z",
+        "AVAILABLE"
+      ]
+    },
+    "production": {
+      "latestMigration": "0014_administrative_boundaries.sql",
+      "lightningStateTable": false
+    },
+    "services": {
+      "weather-care-test-api.service": "active",
+      "weather-care-test-lightning.timer": "active",
+      "weather-care-test-cache-sync.timer": "active",
+      "weather-care-test-uv.timer": "active",
+      "weather-care-test-weather-refresh.timer": "active",
+      "weather-care-api.service": "active",
+      "weather-care-scheduler.service": "active"
+    },
+    "timer": "NextElapseUSecRealtime=Tue 2026-10-20 23:45:00 UTC\nLastTriggerUSec=Tue 2026-10-20 23:35:00 UTC\n",
+    "backupDirectory": "/var/backups/weather-care/test-lightning-20261021",
+    "fcmValidateOnly": {
+      "tokenAvailable": true,
+      "requests": 1,
+      "results": [
+        {
+          "success": true,
+          "status": 200,
+          "unregistered": false
+        }
+      ]
+    }
+  },
+  "배포_매니페스트": {
+    "commit": "3d11d0378117415068a6cb61b37bdb1853fd7681",
+    "files": {
+      "migrations/0016_lightning_alerts.sql": {
+        "sha256": "54e1127c5e53b5554db5776b0499fa7c8fab05e9fec1e44f26f1e9e47c3eff9d",
+        "previousSha256": null
+      },
+      "src/api/gridExtra.ts": {
+        "sha256": "3d74f36a6c158785532476608a32e9c11be3c9616648f9aa77756d972b9c82e2",
+        "previousSha256": "66f8e92b48eabc4efc83cdc1272a78a15493de8ba7c0701ccbdadf2be4217c31"
+      },
+      "src/collection/gridExtraCollection.ts": {
+        "sha256": "4559b8c60fe7866595c0c874dee2da414b7773a9cc821a8456febdb1d1e12c1f",
+        "previousSha256": "80f1c8e28cafc3c07de93d55ed0ffc0581898974076c4432b901e03c916e9ada"
+      },
+      "src/cron/jobs.ts": {
+        "sha256": "1a243fabbc3185d086e1ed4ecae423652728d619e215350d4223477111ec7b42",
+        "previousSha256": "c194de2744c79fbdc932d7148afff2f07f045ff99c9aceaa7ef89fe93d0fd1df"
+      },
+      "src/database/notificationSettingsRepository.ts": {
+        "sha256": "553a351e18a71bf18fad6de80334bf7d806f0c704e2e01ba325fd13a7d85cf0e",
+        "previousSha256": "9ced55cce893222b1a29e459c85b96d65a458f563ab5633d04b3be74ef197f1d"
+      },
+      "src/notification/fcmClient.ts": {
+        "sha256": "8b257ba639038979c8751af0178bd8f4a0766e18cc5a7207220a445786639882",
+        "previousSha256": "9c9d75dd84ecbd1ddfef3358d659e2742cd5eaf36321ed5b421524123ae38aa4"
+      },
+      "src/notification/lightningNotificationJob.ts": {
+        "sha256": "499c0895a91ea2f93b1e20fcb14024e01af6eec982853a7677f465244078662c",
+        "previousSha256": null
+      },
+      "src/notification/notificationDestination.ts": {
+        "sha256": "5f60d51b8e368afc80e66a7fe78b7f67261877c084335b76e7a2889a6c178561",
+        "previousSha256": "9e4df1717ab286ef70cb6a2d8b7b4153202b72701c7528dc6083760415dacd28"
+      },
+      "src/services/lightning.ts": {
+        "sha256": "aa86da2a8c22e6a1751bdebde2abd7b56a5d4873b127a7bd99a6266381eea85f",
+        "previousSha256": null
+      },
+      "src/types.ts": {
+        "sha256": "17bc0f984fae6fb888c20f6075de9dfc683874e7ddc5ec09bb257518088715df",
+        "previousSha256": "f140edb5aee4cbcb286d7cdc44999fe3c2d04bc1b40f66d4a5297985795e331b"
+      },
+      "src/validation/notificationSettings.ts": {
+        "sha256": "0ba757fd4739adf94cce3c90a1b181ec8d03d65da703cea702e0ff314181c9f9",
+        "previousSha256": "81ebb3d9a105f977625539b28f5179eed811f05b48b0e77e90e3d047c4c4be42"
+      }
+    },
+    "archiveSha256": "881a28d95aa28823f114776a98826c610f96e9b53828ebc570825212b361dcbe"
+  },
+  "systemd_원본_SHA256": {
+    "weather-care-test-lightning.service": "3501651cc53ce68d19fd2e244d178cdeb2d452fc472f0421704a4a03a24b9f99",
+    "weather-care-test-lightning.timer": "d4c62efc551c66e3a70853dd1097e02e9c0b85c5ccdd0c78dd870c3429f8b637"
+  },
+  "로컬_검증_산출물": "weather_care_app/build/lightning-deploy-20261021/ (Git 제외)",
+  "원격_검증_산출물": "/tmp/weather-care-lightning-20261021/"
+}

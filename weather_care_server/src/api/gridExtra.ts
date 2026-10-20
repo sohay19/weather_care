@@ -3,6 +3,7 @@ import type { ServerEnv } from '../types';
 import { kmaGridFromCoordinates } from '../regions/kmaGridFromCoordinates';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { regionFromQuery } from '../utils';
+import { KHOA_BUOY_STATIONS, KHOA_TIDE_STATIONS } from '../collection/khoaStationCatalog';
 
 type Row = Record<string, unknown>;
 type Snapshot = { source: string; target_id: string; slot: string; payload: string };
@@ -37,6 +38,23 @@ function nameFor(snapshot: Snapshot): string {
   const data = payload(snapshot);
   const first = rows(data)[0] ?? record(data);
   return String(first.name ?? first.obsvtrNm ?? first.damnm ?? snapshot.target_id);
+}
+
+function pointFor(row: Row): { latitude: number; longitude: number } | undefined {
+  if (row.latitude == null || row.longitude == null) return;
+  const latitude = Number(row.latitude);
+  const longitude = Number(row.longitude);
+  if (Number.isFinite(latitude) && Number.isFinite(longitude) &&
+      Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) return { latitude, longitude };
+}
+
+function distanceKm(a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number }): number {
+  const r = Math.PI / 180;
+  const h = Math.sin((a.latitude - b.latitude) * r / 2) ** 2 +
+    Math.cos(a.latitude * r) * Math.cos(b.latitude * r) *
+    Math.sin((a.longitude - b.longitude) * r / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 
 function dateFor(row: Row, slot: string): string {
@@ -132,6 +150,37 @@ app.get('/catalog', async (c) => {
     .filter((row) => row.board_idx != null)
     .map((row) => [String(row.board_idx),
       String(row.title ?? row.subject ?? row.board_title ?? row.board_idx)]));
+  const suppliedPosition = pointFor(query);
+  const suppliedGrid = suppliedPosition && kmaGridFromCoordinates(
+    suppliedPosition.latitude, suppliedPosition.longitude);
+  const position = suppliedGrid?.nx === grid.nx && suppliedGrid.ny === grid.ny
+    ? suppliedPosition! : kmaGridCoordinates(grid.nx, grid.ny)!;
+  const namedStations = snapshots.results
+    .filter((s) => ['KHOA_BUOY_OBS', 'KHOA_TIDE_OBS'].includes(s.source))
+    .flatMap((s) => {
+      const point = rows(payload(s)).map(pointFor).find(Boolean);
+      const name = nameFor(s);
+      return point && name !== s.target_id ? [{ ...point, name, id: s.target_id }] : [];
+    });
+  const marineTarget = (snapshot: Snapshot) => {
+    const data = rows(payload(snapshot));
+    const points = data.map(pointFor).filter((p) => p !== undefined);
+    const buoy = [...KHOA_BUOY_STATIONS, ...KHOA_TIDE_STATIONS]
+      .find(([code]) => code === snapshot.target_id);
+    const point = points.sort((a, b) => distanceKm(a, position) - distanceKm(b, position))[0] ??
+      (buoy ? { latitude: buoy[1], longitude: buoy[2] } : undefined);
+    let name = nameFor(snapshot);
+    if (snapshot.source === 'KHOA_ROMS' && point) {
+      const linked = namedStations.find((s) => snapshot.target_id === `BUOY_${s.id}`);
+      const nearest = linked ?? [...namedStations].sort((a, b) =>
+        distanceKm(a, point) - distanceKm(b, point))[0];
+      name = nearest && distanceKm(nearest, point) <= 30
+        ? `${nearest.name} 인근 해역`
+        : `해양 예측 지점 (북위 ${point.latitude.toFixed(2)}°, 동경 ${point.longitude.toFixed(2)}°)`;
+    }
+    return { id: snapshot.target_id, name, hasData: data.length > 0,
+      ...(point ? { ...point, distanceKm: distanceKm(position, point) } : {}) };
+  };
   return c.json({ grid: { nx: grid.nx, ny: grid.ny }, groups: groups.map((group) => ({
     ...group,
     targets: group.scope === 'grid' ? [{ id: `${grid.nx}_${grid.ny}`, name: `현재 격자 ${grid.nx}, ${grid.ny}` }]
@@ -139,7 +188,8 @@ app.get('/catalog', async (c) => {
       : [...(group.source === 'KHOA_ROMS' && snapshots.results.some((row) => row.source === group.source)
         ? [{ id: 'GRID', name: `현재 해양 격자 ${grid.nx}, ${grid.ny}` }] : []),
       ...snapshots.results.filter((row) => row.source === group.source)
-        .map((row) => ({ id: row.target_id,
+        .map((row) => ['KHOA_ROMS', 'KHOA_BUOY_OBS', 'KHOA_TIDE_OBS', 'KHOA_TIDE_HOURLY'].includes(group.source)
+          ? marineTarget(row) : ({ id: row.target_id,
           name: group.source === 'KWATER_DAM' ? damNames.get(row.target_id) ?? row.target_id
             : group.source === 'NIFS_JELLYFISH_DETAIL'
               ? jellyNames.get(row.target_id) ?? row.target_id : nameFor(row) }))

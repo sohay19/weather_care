@@ -531,6 +531,16 @@ class _WeatherAlertsSettingsScreenState
           subtitle: '특보와 현재 날씨 안내를 관리해요',
           child: Column(children: [
             _SettingsToggleTile(
+              icon: Icons.bolt_rounded,
+              settingId: 'lightningEnabled',
+              title: '낙뢰 감지 알림',
+              subtitle: '선택 지역의 기상 격자에서 최근 30분 이내 관측된 낙뢰를 안내해요',
+              value: settings.lightningEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(lightningEnabled: value)),
+            ),
+            _SettingsToggleTile(
               icon: Icons.thunderstorm_outlined,
               settingId: 'heavyRainEnabled',
               title: '호우특보 안내',

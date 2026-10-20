@@ -107,6 +107,7 @@ describe('notification scheduler', () => {
           heatwave_enabled INTEGER NOT NULL DEFAULT 1,
           cold_wave_enabled INTEGER NOT NULL DEFAULT 1,
           shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
+          lightning_enabled INTEGER NOT NULL DEFAULT 1,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(

@@ -3,6 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/foreground_notification_service.dart';
 
 void main() {
+  test('유효 시간이 지난 낙뢰 전경 알림은 표시하지 않는다', () {
+    expect(
+        ForegroundNotificationContent.fromRemoteMessage(const RemoteMessage(
+          data: {
+            'notificationTopic': 'LIGHTNING',
+            'expiresAt': '2020-01-01T00:00:00Z'
+          },
+          notification: RemoteNotification(title: '낙뢰 관측'),
+        )),
+        isNull);
+  });
   test('FCM 알림을 제목·본문·이동 데이터가 있는 전경 알림으로 변환한다', () {
     const message = RemoteMessage(
       messageId: 'firebase-message-id',

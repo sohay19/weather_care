@@ -19,6 +19,7 @@ void main() {
       'SNOW': NotificationTopic.snow,
       'STRONG_WIND': NotificationTopic.strongWind,
       'ROAD_ICE': NotificationTopic.roadIce,
+      'LIGHTNING': NotificationTopic.lightning,
       'UV': NotificationTopic.uv,
       'LAUNDRY': NotificationTopic.laundry,
       'PET_WALK': NotificationTopic.petWalk,
@@ -43,6 +44,7 @@ void main() {
     final cases = {
       'CURRENT_RAIN': NotificationTopic.precipitation,
       'ROAD_ICE_100_2_202609101200': NotificationTopic.roadIce,
+      'LIGHTNING_60_121_202610200300': NotificationTopic.lightning,
       'ROAD_CONTROL_event_FULL': NotificationTopic.commute,
       'IMPORTANT_HEAVY_SNOW_CAUTION': NotificationTopic.snow,
       'OFFICIAL_WARNING_ACTIVE_W_202609101200': NotificationTopic.strongWind,

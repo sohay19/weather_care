@@ -6,6 +6,7 @@ export type NotificationTopic =
   | 'OVERVIEW'
   | 'STRONG_WIND'
   | 'ROAD_ICE'
+  | 'LIGHTNING'
   | 'UV'
   | 'PRECIPITATION'
   | 'LAUNDRY'

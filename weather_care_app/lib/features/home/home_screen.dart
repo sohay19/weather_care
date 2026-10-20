@@ -1073,6 +1073,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? _statusView('today-tab')
                   : TodayTab(
                       today: visibleToday!,
+                      lightningClient: _serverDataAccess?.paused == false
+                          ? _service?.client
+                          : null,
+                      lightningGrid: _weatherGrid,
+                      active: _selectedIndex == 0,
                       dataPhase: todayPhase,
                       onRefresh: _refreshFromTab,
                       onRetryData: _retryTodayData,

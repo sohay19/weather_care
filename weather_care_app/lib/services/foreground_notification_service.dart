@@ -30,6 +30,11 @@ class ForegroundNotificationContent {
     RemoteMessage message,
   ) {
     final notification = message.notification;
+    final rawExpiry = message.data['expiresAt'];
+    if (rawExpiry != null) {
+      final expiry = DateTime.tryParse(rawExpiry.toString());
+      if (expiry == null || !DateTime.now().isBefore(expiry)) return null;
+    }
     if (notification == null ||
         (!_hasText(notification.title) && !_hasText(notification.body))) {
       return null;

@@ -62,6 +62,7 @@ Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
           LifestyleMessageType.veryHotAndHumid,
         },
       NotificationTopic.overview ||
+      NotificationTopic.lightning ||
       NotificationTopic.weatherWarning ||
       NotificationTopic.unknown ||
       null =>

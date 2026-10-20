@@ -19,6 +19,8 @@ beforeEach(() => {
     source TEXT NOT NULL, target_id TEXT NOT NULL, slot TEXT NOT NULL,
     payload TEXT NOT NULL, collected_at TEXT NOT NULL,
     PRIMARY KEY(source,target_id,slot));
+    CREATE TABLE lightning_collection_state (
+      id INTEGER PRIMARY KEY,attempted_at TEXT NOT NULL,window_end TEXT NOT NULL,status TEXT NOT NULL);
     CREATE TABLE weather_cache (
     cache_key TEXT PRIMARY KEY, region_id TEXT NOT NULL, nx INTEGER NOT NULL,
     ny INTEGER NOT NULL, cache_type TEXT NOT NULL, payload TEXT NOT NULL,

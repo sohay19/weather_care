@@ -34,6 +34,7 @@ void main() {
     'heatwaveEnabled': '폭염특보 안내',
     'coldWaveEnabled': '한파특보 안내',
     'showerAndLightRainEnabled': '현재 비 안내',
+    'lightningEnabled': '낙뢰 감지 알림',
     'dailyWeatherEnabled': '준비물 요약 알림',
   };
   for (final entry in fields.entries) {

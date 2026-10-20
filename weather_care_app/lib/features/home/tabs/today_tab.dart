@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../models/weather.dart';
 import '../../../models/lifestyle_message.dart';
 import '../../../services/notification_destination.dart';
+import '../../../services/api_client.dart';
+import '../../../services/kma_grid.dart';
+import '../widgets/lightning_details_card.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_data_phase.dart';
 import 'evidence_focus.dart';
@@ -24,6 +27,9 @@ class TodayTab extends StatefulWidget {
   final LifestyleMessageType? focusLifestyleType;
   final DetailFocusSource focusSource;
   final int focusRequestId;
+  final ApiClient? lightningClient;
+  final KmaGrid? lightningGrid;
+  final bool active;
 
   const TodayTab({
     super.key,
@@ -38,6 +44,9 @@ class TodayTab extends StatefulWidget {
     this.focusLifestyleType,
     this.focusSource = DetailFocusSource.notification,
     this.focusRequestId = 0,
+    this.lightningClient,
+    this.lightningGrid,
+    this.active = true,
   });
 
   @override
@@ -47,6 +56,9 @@ class TodayTab extends StatefulWidget {
 class _TodayTabState extends State<TodayTab> {
   final _focusedEvidenceKey = GlobalKey();
   final _evidenceSectionKey = GlobalKey();
+  final _lightningKey = GlobalKey();
+  int _lightningRefreshId = 0;
+  bool _lightningFocusLoaded = false;
   bool _focusScheduled = false;
 
   @override
@@ -59,6 +71,10 @@ class _TodayTabState extends State<TodayTab> {
   void didUpdateWidget(covariant TodayTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusRequestId != widget.focusRequestId ||
+        oldWidget.focusTopic != widget.focusTopic) {
+      _lightningFocusLoaded = false;
+    }
+    if (oldWidget.focusRequestId != widget.focusRequestId ||
         oldWidget.dataPhase != widget.dataPhase ||
         oldWidget.serverFeaturesAvailable != widget.serverFeaturesAvailable ||
         oldWidget.today != widget.today) {
@@ -69,14 +85,17 @@ class _TodayTabState extends State<TodayTab> {
 
   void _scheduleFocusScroll() {
     if (_focusScheduled ||
-        (widget.focusLifestyleType == null &&
+        (widget.focusTopic != NotificationTopic.lightning &&
+            widget.focusLifestyleType == null &&
             lifestyleTypesForNotificationTopic(widget.focusTopic).isEmpty)) {
       return;
     }
     _focusScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final target = _focusedEvidenceKey.currentContext ??
+      final target = (widget.focusTopic == NotificationTopic.lightning
+              ? _lightningKey.currentContext
+              : _focusedEvidenceKey.currentContext) ??
           _evidenceSectionKey.currentContext;
       if (target == null) return;
       Scrollable.ensureVisible(
@@ -98,7 +117,13 @@ class _TodayTabState extends State<TodayTab> {
         : '알림에서 확인한 항목';
     return RefreshIndicator(
       color: WeatherCareTheme.of(context).primary,
-      onRefresh: widget.onRefresh,
+      onRefresh: () async {
+        try {
+          await widget.onRefresh();
+        } finally {
+          if (mounted) setState(() => ++_lightningRefreshId);
+        }
+      },
       child: SingleChildScrollView(
         key: const ValueKey('today-tab'),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -132,6 +157,22 @@ class _TodayTabState extends State<TodayTab> {
               widget.advertisement!,
             ],
             const SizedBox(height: 16),
+            LightningDetailsCard(
+              key: _lightningKey,
+              client: widget.lightningClient,
+              grid: widget.lightningGrid,
+              active: widget.active,
+              focused: widget.focusTopic == NotificationTopic.lightning,
+              refreshId: _lightningRefreshId + widget.focusRequestId,
+              onLoaded: () {
+                if (widget.focusTopic == NotificationTopic.lightning &&
+                    !_lightningFocusLoaded) {
+                  _lightningFocusLoaded = true;
+                  _focusScheduled = false;
+                  _scheduleFocusScroll();
+                }
+              },
+            ),
             if (widget.dataPhase == WeatherDataPhase.loading)
               const Center(child: CircularProgressIndicator())
             else if (widget.serverFeaturesAvailable)

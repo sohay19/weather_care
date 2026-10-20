@@ -23,6 +23,7 @@ class SettingsSyncService {
       'heatwaveEnabled': settings.heatwaveEnabled,
       'coldWaveEnabled': settings.coldWaveEnabled,
       'showerAndLightRainEnabled': settings.showerAndLightRainEnabled,
+      'lightningEnabled': settings.lightningEnabled,
       'dailyWeatherEnabled': settings.dailyWeatherEnabled,
     };
     await client.putJson(

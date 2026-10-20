@@ -22,6 +22,7 @@ describe('notification settings API', () => {
         heatwave_enabled INTEGER NOT NULL DEFAULT 1,
         cold_wave_enabled INTEGER NOT NULL DEFAULT 1,
         shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
+        lightning_enabled INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL)`,
     ).run();
@@ -38,6 +39,7 @@ describe('notification settings API', () => {
           notificationTime: '06:35',
           umbrellaEnabled: false,
           heavyRainEnabled: false,
+          lightningEnabled: false,
         }),
       },
     );
@@ -53,6 +55,7 @@ describe('notification settings API', () => {
       notificationTime: '06:35',
       umbrellaEnabled: false,
       heavyRainEnabled: false,
+      lightningEnabled: false,
       parasolEnabled: true,
     });
   });

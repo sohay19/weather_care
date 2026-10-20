@@ -13,6 +13,7 @@ export interface FcmPayload {
   notificationKey: string;
   notificationTarget: NotificationTarget;
   notificationTopic: NotificationTopic;
+  expiresAt?: string;
 }
 
 export interface FcmCredentials {
@@ -94,7 +95,8 @@ export async function sendBatch(
 
   return Promise.all(
     payloads.map((payload) =>
-      sendFcmMessage(fetcher, credentials.projectId, accessToken, payload),
+      sendFcmMessage(fetcher, credentials.projectId, accessToken, payload,
+        (dependencies.now ?? Date.now)()),
     ),
   );
 }
@@ -104,11 +106,18 @@ async function sendFcmMessage(
   projectId: string,
   accessToken: string,
   payload: FcmPayload,
+  now: number,
 ): Promise<FcmSendResult> {
+  const ttl = payload.expiresAt ? Math.floor((Date.parse(payload.expiresAt) - now) / 1000) : undefined;
+  if (ttl !== undefined && (!Number.isFinite(ttl) || ttl <= 0)) return {
+    token: payload.token, notificationKey: payload.notificationKey,
+    success: false, unregistered: false, status: 410,
+  };
   const response = await fetcher(
     `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/messages:send`,
     {
       method: 'POST',
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
@@ -124,11 +133,16 @@ async function sendFcmMessage(
             notificationKey: payload.notificationKey,
             notificationTarget: payload.notificationTarget,
             notificationTopic: payload.notificationTopic,
+            ...(payload.expiresAt ? { expiresAt: payload.expiresAt } : {}),
           },
           android: {
             priority: 'high',
+            ...(ttl === undefined ? {} : { ttl: `${ttl}s` }),
           },
           apns: {
+            ...(payload.expiresAt ? { headers: {
+              'apns-expiration': `${Math.floor(Date.parse(payload.expiresAt) / 1000)}`,
+            } } : {}),
             payload: {
               aps: { sound: 'default' },
             },

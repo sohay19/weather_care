@@ -16,6 +16,7 @@ interface NotificationSettingsRow {
   heatwaveEnabled: number;
   coldWaveEnabled: number;
   showerAndLightRainEnabled: number;
+  lightningEnabled: number;
 }
 
 export function defaultNotificationSettings(
@@ -37,6 +38,7 @@ export function defaultNotificationSettings(
     heatwaveEnabled: true,
     coldWaveEnabled: true,
     showerAndLightRainEnabled: true,
+    lightningEnabled: true,
   };
 }
 
@@ -61,7 +63,8 @@ export async function getNotificationSettings(
          heavy_rain_enabled AS heavyRainEnabled,
          heatwave_enabled AS heatwaveEnabled,
          cold_wave_enabled AS coldWaveEnabled,
-         shower_light_rain_enabled AS showerAndLightRainEnabled
+         shower_light_rain_enabled AS showerAndLightRainEnabled,
+         lightning_enabled AS lightningEnabled
        FROM notification_settings
        WHERE installation_id = ?`,
     )
@@ -84,6 +87,7 @@ export async function getNotificationSettings(
     heatwaveEnabled: row.heatwaveEnabled === 1,
     coldWaveEnabled: row.coldWaveEnabled === 1,
     showerAndLightRainEnabled: row.showerAndLightRainEnabled === 1,
+    lightningEnabled: row.lightningEnabled === 1,
   };
 }
 
@@ -100,8 +104,8 @@ export async function upsertNotificationSettings(
        umbrella_enabled, parasol_enabled, heavy_snow_enabled,
        outerwear_enabled, mask_enabled, water_enabled, sunscreen_enabled,
        daily_weather_enabled, heavy_rain_enabled, heatwave_enabled,
-       cold_wave_enabled, shower_light_rain_enabled, created_at, updated_at)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
@@ -119,6 +123,7 @@ export async function upsertNotificationSettings(
         heatwave_enabled=excluded.heatwave_enabled,
         cold_wave_enabled=excluded.cold_wave_enabled,
         shower_light_rain_enabled=excluded.shower_light_rain_enabled,
+        lightning_enabled=excluded.lightning_enabled,
         updated_at=excluded.updated_at`,
     )
     .bind(
@@ -137,6 +142,7 @@ export async function upsertNotificationSettings(
       booleanInteger(payload.heatwaveEnabled),
       booleanInteger(payload.coldWaveEnabled),
       booleanInteger(payload.showerAndLightRainEnabled),
+      booleanInteger(payload.lightningEnabled),
       now,
       now,
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),

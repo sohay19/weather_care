@@ -7,6 +7,7 @@ enum NotificationTopic {
   overview,
   strongWind,
   roadIce,
+  lightning,
   uv,
   precipitation,
   laundry,
@@ -63,6 +64,7 @@ NotificationTopic _topicFromWireValue(Object? value) {
     'OVERVIEW' => NotificationTopic.overview,
     'STRONG_WIND' => NotificationTopic.strongWind,
     'ROAD_ICE' => NotificationTopic.roadIce,
+    'LIGHTNING' => NotificationTopic.lightning,
     'UV' => NotificationTopic.uv,
     'PRECIPITATION' => NotificationTopic.precipitation,
     'LAUNDRY' => NotificationTopic.laundry,
@@ -79,6 +81,12 @@ NotificationTopic _topicFromWireValue(Object? value) {
 }
 
 NotificationDestination _legacyDestination(String notificationKey) {
+  if (notificationKey.startsWith('LIGHTNING_')) {
+    return const NotificationDestination(
+      target: NotificationTarget.weatherDetails,
+      topic: NotificationTopic.lightning,
+    );
+  }
   if (notificationKey == 'MORNING_BRIEF') {
     return const NotificationDestination(
       target: NotificationTarget.main,

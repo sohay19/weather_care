@@ -14,6 +14,7 @@ class AppSettings {
   final bool heatwaveEnabled;
   final bool coldWaveEnabled;
   final bool showerAndLightRainEnabled;
+  final bool lightningEnabled;
   final bool outerwearEnabled;
   final bool maskEnabled;
   final bool waterEnabled;
@@ -36,6 +37,7 @@ class AppSettings {
     required this.heatwaveEnabled,
     required this.coldWaveEnabled,
     required this.showerAndLightRainEnabled,
+    this.lightningEnabled = true,
     required this.outerwearEnabled,
     required this.maskEnabled,
     required this.waterEnabled,
@@ -59,6 +61,7 @@ class AppSettings {
     bool? heatwaveEnabled,
     bool? coldWaveEnabled,
     bool? showerAndLightRainEnabled,
+    bool? lightningEnabled,
     bool? outerwearEnabled,
     bool? maskEnabled,
     bool? waterEnabled,
@@ -83,6 +86,7 @@ class AppSettings {
       coldWaveEnabled: coldWaveEnabled ?? this.coldWaveEnabled,
       showerAndLightRainEnabled:
           showerAndLightRainEnabled ?? this.showerAndLightRainEnabled,
+      lightningEnabled: lightningEnabled ?? this.lightningEnabled,
       outerwearEnabled: outerwearEnabled ?? this.outerwearEnabled,
       maskEnabled: maskEnabled ?? this.maskEnabled,
       waterEnabled: waterEnabled ?? this.waterEnabled,
@@ -155,6 +159,7 @@ class AppSettings {
           json['coldWaveEnabled'] as bool? ?? fallbackSettings.coldWaveEnabled,
       showerAndLightRainEnabled: json['showerAndLightRainEnabled'] as bool? ??
           fallbackSettings.showerAndLightRainEnabled,
+      lightningEnabled: json['lightningEnabled'] as bool? ?? true,
       outerwearEnabled: json['outerwearEnabled'] as bool? ??
           fallbackSettings.outerwearEnabled,
       maskEnabled: json['maskEnabled'] as bool? ?? fallbackSettings.maskEnabled,
@@ -184,6 +189,7 @@ class AppSettings {
       'heatwaveEnabled': heatwaveEnabled,
       'coldWaveEnabled': coldWaveEnabled,
       'showerAndLightRainEnabled': showerAndLightRainEnabled,
+      'lightningEnabled': lightningEnabled,
       'outerwearEnabled': outerwearEnabled,
       'maskEnabled': maskEnabled,
       'waterEnabled': waterEnabled,

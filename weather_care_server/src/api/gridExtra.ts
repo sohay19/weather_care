@@ -4,6 +4,7 @@ import { kmaGridFromCoordinates } from '../regions/kmaGridFromCoordinates';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { regionFromQuery } from '../utils';
 import { KHOA_BUOY_STATIONS, KHOA_TIDE_STATIONS } from '../collection/khoaStationCatalog';
+import { lightningForGrid, readLightningFeed } from '../services/lightning';
 
 type Row = Record<string, unknown>;
 type Snapshot = { source: string; target_id: string; slot: string; payload: string };
@@ -121,6 +122,18 @@ function lightningRecords(snapshots: Snapshot[], nx: number, ny: number) {
 }
 
 const app = new Hono<{ Bindings: ServerEnv }>();
+
+app.get('/lightning', async (c) => {
+  const grid = requestedGrid(c.req.query('nx'), c.req.query('ny'));
+  if (!grid) return c.json({ error: 'INVALID_GRID' }, 400);
+  c.header('Cache-Control', 'no-store');
+  const now = new Date();
+  try {
+    return c.json(lightningForGrid(await readLightningFeed(c.env.DB, now), grid.nx, grid.ny, now));
+  } catch {
+    return c.json({ status: 'FAILED', nx: grid.nx, ny: grid.ny, count: 0 }, 503);
+  }
+});
 
 function requestedGrid(nx: string | undefined, ny: string | undefined) {
   const grid = regionFromQuery(nx ?? null, ny ?? null);

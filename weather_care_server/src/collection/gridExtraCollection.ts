@@ -144,8 +144,8 @@ async function fetchAllPages(input: {
 async function collectOne(input: {
   db: D1Database; source: Source; targetId: string; slot: string;
   now: Date; load: () => Promise<unknown>;
-}): Promise<void> {
-  if (await gridExtraSnapshotExists(input.db, input.source, input.targetId, input.slot)) return;
+}): Promise<boolean> {
+  if (await gridExtraSnapshotExists(input.db, input.source, input.targetId, input.slot)) return true;
   try {
     const payload = await input.load();
     await saveGridExtraSnapshot(input.db, {
@@ -154,12 +154,14 @@ async function collectOne(input: {
     });
     console.log(JSON.stringify({ event: 'grid_extra_collected', source: input.source,
       targetId: input.targetId, slot: input.slot }));
+    return true;
   } catch (error) {
     console.error(JSON.stringify({ event: 'grid_extra_collection_failed',
       source: input.source, targetId: input.targetId, slot: input.slot,
       reason: error instanceof Error && /^GRID_(?:EXTRA|LIGHTNING)_[A-Z0-9_]+$/.test(error.message)
         ? error.message : undefined,
       ...providerErrorDiagnostic(error) }));
+    return false;
   }
 }
 
@@ -176,7 +178,7 @@ export async function collectGridHourly(input: {
   const fetcher = input.fetcher ?? fetch;
   const date = compactDate(now);
   const slot = hourSlot(now);
-  const jobs: Array<() => Promise<void>> = [];
+  const jobs: Array<() => Promise<unknown>> = [];
   const add = (source: Source, targetId: string, period: string,
     load: () => Promise<unknown>) => jobs.push(() => collectOne({ db, source, targetId,
       slot: period, now, load }));
@@ -356,14 +358,17 @@ export async function collectGridRiverFlow(input: {
 export async function collectGridLightning(input: {
   db: D1Database; key: string; now: Date; fetcher?: typeof fetch;
 }): Promise<void> {
-  if (!input.key) return;
   const newest = Math.floor((input.now.getTime() - 5 * 60_000) / 600_000) * 600_000 - 600_000;
+  if (!input.key) {
+    await saveLightningCollectionState(input.db, input.now, new Date(newest + 600_000), false);
+    return;
+  }
   for (let missed = 2; missed >= 0; missed -= 1) {
     const slotStart = new Date(newest - missed * 600_000);
     const midpoint = new Date(slotStart.getTime() + 5 * 60_000);
     const local = new Date(midpoint.getTime() + 9 * 3_600_000).toISOString();
     const tm = local.slice(0, 16).replaceAll(/[-T:]/g, '');
-    await collectOne({ db: input.db, source: 'KMA_LIGHTNING', targetId: 'ALL',
+    const available = await collectOne({ db: input.db, source: 'KMA_LIGHTNING', targetId: 'ALL',
       slot: slotStart.toISOString(), now: input.now, load: async () => {
         const url = new URL('https://apihub.kma.go.kr/api/typ01/url/lgt_pnt.php');
         url.searchParams.set('tm', tm);
@@ -374,13 +379,24 @@ export async function collectGridLightning(input: {
           fetcher: input.fetcher })(url, { signal: AbortSignal.timeout(20_000) });
         if (!response.ok) throw new Error(`GRID_LIGHTNING_HTTP_${response.status}`);
         const text = await response.text();
-        if (/활용신청|인증키|초과|<html|<\?xml/i.test(text.slice(0, 300)))
+        if (/활용신청|인증키|초과|오류|error|invalid|denied|<html|<\?xml/i.test(text.slice(0, 300)))
           throw new Error('GRID_LIGHTNING_PROVIDER_ERROR');
         const events = parseLightningText(text);
-        if (events.length === 0 && /^\d{12,14}\s/m.test(text))
+        if (events.length === 0 && (!text.trim() ||
+          text.split(/\r?\n/).some((line) => line.trim() && !line.trim().startsWith('#'))))
           throw new Error('GRID_LIGHTNING_UNPARSEABLE_RESPONSE');
         return { windowStart: slotStart.toISOString(), windowEnd:
           new Date(slotStart.getTime() + 600_000).toISOString(), events };
       } });
+    if (missed === 0) await saveLightningCollectionState(input.db, input.now,
+      new Date(slotStart.getTime() + 600_000), available);
   }
+}
+
+async function saveLightningCollectionState(db: D1Database, now: Date, windowEnd: Date,
+  available: boolean): Promise<void> {
+  await db.prepare(`INSERT INTO lightning_collection_state(id,attempted_at,window_end,status)
+    VALUES(1,?,?,?) ON CONFLICT(id) DO UPDATE SET attempted_at=excluded.attempted_at,
+    window_end=excluded.window_end,status=excluded.status WHERE excluded.window_end>=window_end`)
+    .bind(now.toISOString(), windowEnd.toISOString(), available ? 'AVAILABLE' : 'FAILED').run();
 }

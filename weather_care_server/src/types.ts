@@ -337,6 +337,7 @@ export interface NotificationSettings {
   heatwaveEnabled: boolean;
   coldWaveEnabled: boolean;
   showerAndLightRainEnabled: boolean;
+  lightningEnabled: boolean;
 }
 
 export interface Installation {

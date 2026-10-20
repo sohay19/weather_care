@@ -1,4 +1,5 @@
 import { runRecommendationNotificationJob } from '../notification/notificationScheduler';
+import { runLightningNotificationJob } from '../notification/lightningNotificationJob';
 import { ServerEnv } from '../types';
 import { collectGridHourly, collectGridLightning, collectGridRiverFlow,
   type GridExtraConfig } from '../collection/gridExtraCollection';
@@ -45,6 +46,7 @@ export async function runScheduledJobs(
   }
   if (cron === GRID_LIGHTNING_CRON) {
     await collectGridLightning({ db: env.DB, key: env.KMA_APIHUB_KEY, now });
+    await runLightningNotificationJob(env);
     return;
   }
   if (cron === GRID_RIVER_FLOW_CRON) {

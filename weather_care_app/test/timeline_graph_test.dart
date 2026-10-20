@@ -116,7 +116,7 @@ void main() {
     final temperature = _graph(tester, 'temperature');
     expect(temperature.hours, [8, 11]);
     expect(temperature.series.values.map((value) => value?.lower), [-7, null]);
-    expect(temperature.series.bounds.$1, lessThan(-7));
+    expect(temperature.sharedBounds, (-12, -1));
     expect(_series(tester, 'apparent').values.last?.lower, -4);
     expect(
         tester
@@ -259,7 +259,7 @@ void main() {
         tester.widget<HourlyValueChart>(find.byType(HourlyValueChart));
     expect(find.byType(HourlyValueChart), findsOneWidget);
     expect(chart.series.color, isNot(chart.overlays.single.color));
-    expect(chart.sharedBounds, isNotNull);
+    expect(chart.sharedBounds, (7, 25));
     expect(chart.showValues, isTrue);
     expect(find.text('20°C'), findsOneWidget);
     expect(find.text('10°C'), findsOneWidget);

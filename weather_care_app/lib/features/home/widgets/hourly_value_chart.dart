@@ -68,6 +68,13 @@ class HourlyChartSeries {
   (double, double) get bounds {
     final numbers = values.whereType<HourlyChartValue>();
     if (fixedMax != null) return (0, fixedMax!);
+    if (unit == '°C') {
+      if (numbers.isEmpty) return (-3, 3);
+      final low = numbers.map((value) => value.lower).reduce(math.min);
+      final high =
+          numbers.map((value) => value.upper ?? value.lower).reduce(math.max);
+      return (low - 3, high + 3);
+    }
     var low = numbers.fold(0.0, (a, b) => math.min(a, b.lower));
     var high = numbers.fold(0.0, (a, b) => math.max(a, b.upper ?? b.lower));
     final padding = math.max((high - low) * .12, high == 0 ? 1.0 : .1);

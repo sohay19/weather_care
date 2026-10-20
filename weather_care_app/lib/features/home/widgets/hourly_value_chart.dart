@@ -143,6 +143,7 @@ List<double> _axisTicks(HourlyChartSeries series, (double, double) bounds) =>
 /// 세로축은 가로 스크롤 밖에 두어 어느 시각에서도 수치를 읽을 수 있다.
 class HourlyChartAxis extends StatelessWidget {
   final HourlyChartSeries series;
+  final String? title;
   final double height;
   final (double, double)? sharedBounds;
   final bool right;
@@ -150,6 +151,7 @@ class HourlyChartAxis extends StatelessWidget {
   const HourlyChartAxis(
       {super.key,
       required this.series,
+      this.title,
       this.height = hourlyChartHeight,
       this.sharedBounds,
       this.right = false,
@@ -183,7 +185,7 @@ class HourlyChartAxis extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.bottomCenter,
                     child: Text(
-                        '${sharedBounds != null ? '온도' : right ? '확률' : series.title}\n${series.unit}',
+                        '${title ?? (sharedBounds != null ? '온도' : right ? '확률' : series.title)}\n${series.unit}',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontFamily: WeatherCareTheme.fontSuite,

@@ -1093,6 +1093,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ExtraTab(
                   client: _service?.client,
                   grid: _weatherGrid,
+                  coordinates: _settings.locationMode == 'GPS' &&
+                          _location.canUseLocalAnalysis &&
+                          _serverDataAccess?.paused == false
+                      ? _coordinates
+                      : null,
                   active: _selectedIndex == 1),
               today == null
                   ? _statusView('main-tab')

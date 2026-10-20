@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/weather_theme.dart';
 import '../../../utils/weather_number.dart';
+import 'extra_chip_row.dart';
 
 /// 저장된 시각과 값만 그린다. 결측을 0으로 바꾸거나 시각 간격을 균등화하지 않는다.
 class ExtraDataOverview extends StatefulWidget {
@@ -153,13 +154,19 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
                   style: TextStyle(color: palette.primaryDeep, fontSize: 11))),
         ]),
         const SizedBox(height: 18),
-        Wrap(spacing: 6, runSpacing: 6, children: [
+        ExtraChipRow(children: [
           for (final key in metrics)
             ChoiceChip(
                 key: ValueKey('extra-metric-$key'),
                 label: Text(widget.labelFor(key),
                     style: const TextStyle(
                         fontFamily: WeatherCareTheme.fontSuite)),
+                selectedColor: palette.primaryDeep,
+                backgroundColor: palette.surfaceMuted,
+                labelStyle: TextStyle(
+                    color: metric == key
+                        ? palette.onPrimary
+                        : palette.textPrimary),
                 selected: metric == key,
                 showCheckmark: false,
                 onSelected: (_) => setState(() => _metric = key)),
@@ -277,13 +284,6 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
             spacing: 8,
             runSpacing: 8,
             children: [stat('최저', low), stat('최고', high)]),
-        const SizedBox(height: 10),
-        Text(
-            records.length == 1
-                ? '자료가 1개여서 해당 시점만 표시해요.'
-                : '그래프를 누르거나 슬라이더로 시각을 선택해요.\n비어 있는 값과 긴 수집 공백은 연결하지 않아요.',
-            style: TextStyle(
-                color: palette.textSecondary, fontSize: 11, height: 1.5)),
       ]),
     );
   }

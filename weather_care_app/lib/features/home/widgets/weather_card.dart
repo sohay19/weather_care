@@ -276,11 +276,12 @@ class WeatherInfoCard extends StatelessWidget {
       '꽃가루',
       '강수량',
       '적설량',
-      '일출/일몰',
     ];
+    final sunMetric =
+        displayMetrics.firstWhere((metric) => metric.label == '일출/일몰');
     final cardMetrics = showCurrentSummary
         ? displayMetrics.skip(1).toList(growable: false)
-        : (displayMetrics.toList()
+        : (displayMetrics.where((metric) => metric != sunMetric).toList()
           ..sort((a, b) => todayMetricOrder
               .indexOf(a.label)
               .compareTo(todayMetricOrder.indexOf(b.label))));
@@ -303,12 +304,51 @@ class WeatherInfoCard extends StatelessWidget {
           color: WeatherCareTheme.of(context).textSecondary,
           fontWeight: FontWeight.w700,
         );
+    final sunTimeStyle = TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      color: WeatherCareTheme.of(context).textPrimary,
+    );
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: WeatherCareTheme.of(context).surfaceDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!showCurrentSummary) ...[
+            Row(
+              key: const ValueKey('weather-metric-일출/일몰'),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.wb_sunny_outlined,
+                            size: 22,
+                            color: WeatherCareTheme.of(context).primaryDeep),
+                        const SizedBox(width: 10),
+                        Text(
+                            '일출 ${_koreaClock(sunriseAt) ?? dataPhase.missingText()}',
+                            style: sunTimeStyle),
+                        const SizedBox(width: 28),
+                        Icon(Icons.wb_twilight_rounded,
+                            size: 22,
+                            color: WeatherCareTheme.of(context).primaryDeep),
+                        const SizedBox(width: 10),
+                        Text(
+                            '일몰 ${_koreaClock(sunsetAt) ?? dataPhase.missingText()}',
+                            style: sunTimeStyle),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           if (showCurrentSummary) ...[
             LayoutBuilder(
               builder: (context, constraints) {

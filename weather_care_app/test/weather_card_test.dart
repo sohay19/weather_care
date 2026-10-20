@@ -71,9 +71,16 @@ void main() {
     expect(find.textContaining('소나무: 보통'), findsOneWidget);
   });
 
-  testWidgets('Today 상단 지표에 체감온도를 포함하고 지정한 순서로 표시한다', (tester) async {
+  testWidgets('Today 일출·일몰을 맨 위 한 행에 두고 나머지 지표를 지정한 순서로 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await _pumpCard(tester, const CurrentWeather(temperature: 20),
-        showCurrentSummary: false);
+        showCurrentSummary: false,
+        scale: 2,
+        sunriseAt: '2026-09-20T21:17:00Z',
+        sunsetAt: '2026-09-21T09:28:00Z');
     const labels = [
       '체감온도',
       '습도',
@@ -85,8 +92,30 @@ void main() {
       '꽃가루',
       '강수량',
       '적설량',
-      '일출/일몰',
     ];
+    final sun = find.byKey(const ValueKey('weather-metric-일출/일몰'));
+    expect(tester.widget(sun), isA<Row>());
+    expect(tester.widget<Row>(sun).mainAxisAlignment, MainAxisAlignment.center);
+    expect(find.text('일출 6:17'), findsOneWidget);
+    expect(find.text('일몰 18:28'), findsOneWidget);
+    expect(tester.widget<Text>(find.text('일출 6:17')).style?.fontSize, 18);
+    expect(find.byKey(const ValueKey('weather-metric-detail-일출/일몰')),
+        findsNothing);
+    expect(find.descendant(of: sun, matching: find.byType(IconButton)),
+        findsNothing);
+    expect(find.descendant(of: sun, matching: find.byIcon(Icons.wb_sunny_outlined)),
+        findsOneWidget);
+    expect(find.descendant(of: sun, matching: find.byIcon(Icons.wb_twilight_rounded)),
+        findsOneWidget);
+    final content = tester.getRect(find.descendant(of: sun, matching: find.byType(FittedBox)));
+    expect(content.center.dx, closeTo(tester.getRect(sun).center.dx, .1));
+    expect(tester.getCenter(find.text('일출 6:17')).dy,
+        closeTo(tester.getCenter(find.text('일몰 18:28')).dy, .1));
+    expect(
+        tester.getBottomLeft(sun).dy,
+        lessThan(tester
+            .getTopLeft(find.byKey(const ValueKey('weather-metric-체감온도')))
+            .dy));
     for (var i = 0; i < labels.length; i++) {
       final metric = find.byKey(ValueKey('weather-metric-${labels[i]}'));
       expect(metric, findsOneWidget);
@@ -323,7 +352,6 @@ void main() {
       '꽃가루',
       '강수량',
       '적설량',
-      '일출/일몰',
     ];
     const criteria = {
       '체감온도': '33~35℃ 미만: 더위 주의',
@@ -332,7 +360,6 @@ void main() {
       '대기정체': '예측 단계를 그대로 표시',
       '강수량': '30mm 이상: 폭우',
       '적설량': '20cm 이상: 폭설',
-      '일출/일몰': '시:분으로 표시',
     };
     for (final label in labels) {
       final detail = find.byKey(ValueKey('weather-metric-detail-$label'));

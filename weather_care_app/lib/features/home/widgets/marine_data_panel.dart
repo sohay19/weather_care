@@ -270,31 +270,34 @@ class _MarineDataPanelState extends State<MarineDataPanel> {
                         _load();
                       });
                     }),
-          const SizedBox(height: 16),
-          ExtraChipRow(key: const ValueKey('marine-metric-chips'), children: [
-            for (final m in metrics)
-              ChoiceChip(
-                  key: ValueKey('marine-metric-$m'),
-                  label: Text({
-                    'tideCm': '조위',
-                    'waterTempC': '수온',
-                    'currentSpeed': '유속',
-                    'currentDirectionDeg': '유향'
-                  }[m]!),
-                  selected: metric == m,
-                  showCheckmark: false,
-                  selectedColor: palette.primaryDeep,
-                  backgroundColor: palette.surfaceMuted,
-                  labelStyle: TextStyle(
-                      fontFamily: WeatherCareTheme.fontSuite,
-                      color: metric == m
-                          ? palette.onPrimary
-                          : palette.textPrimary),
-                  side: BorderSide(
-                      color:
-                          metric == m ? palette.primaryDeep : palette.outline),
-                  onSelected: (_) => setState(() => _metric = m)),
-          ]),
+          if (metrics.length > 1) ...[
+            const SizedBox(height: 16),
+            ExtraChipRow(key: const ValueKey('marine-metric-chips'), children: [
+              for (final m in metrics)
+                ChoiceChip(
+                    key: ValueKey('marine-metric-$m'),
+                    label: Text({
+                      'tideCm': '조위',
+                      'waterTempC': '수온',
+                      'currentSpeed': '유속',
+                      'currentDirectionDeg': '유향'
+                    }[m]!),
+                    selected: metric == m,
+                    showCheckmark: false,
+                    selectedColor: palette.primaryDeep,
+                    backgroundColor: palette.surfaceMuted,
+                    labelStyle: TextStyle(
+                        fontFamily: WeatherCareTheme.fontSuite,
+                        color: metric == m
+                            ? palette.onPrimary
+                            : palette.textPrimary),
+                    side: BorderSide(
+                        color: metric == m
+                            ? palette.primaryDeep
+                            : palette.outline),
+                    onSelected: (_) => setState(() => _metric = m)),
+            ]),
+          ],
           if (_loading)
             const Padding(
                 padding: EdgeInsets.all(24),

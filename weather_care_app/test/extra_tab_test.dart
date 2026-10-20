@@ -613,6 +613,7 @@ void main() {
     expect(find.text('기준 시간 · 10/14 10:00'), findsOneWidget);
     expect(find.text('최저 230cm'), findsOneWidget);
     expect(find.text('최고 999cm'), findsOneWidget);
+    expect(find.byKey(const ValueKey('marine-metric-chips')), findsNothing);
     expect(find.byKey(const ValueKey('extra-data-modes')), findsNothing);
     expect(find.byKey(const ValueKey('marine-hourly-scroll')), findsOneWidget);
     expect(find.text('조위\ncm'), findsOneWidget);

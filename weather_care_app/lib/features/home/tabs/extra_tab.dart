@@ -241,7 +241,9 @@ class _ExtraTabState extends State<ExtraTab>
         }
       });
       if (!mounted || request != _request) return;
-      final groups = _maps(data['groups']);
+      final groups = _maps(data['groups'])
+          .where((group) => group['source'] != 'KMA_LIGHTNING')
+          .toList();
       final selectable = groups
           .where((group) => group['source'] != 'KHOA_TIDE_EXTREME')
           .toList();
@@ -409,7 +411,6 @@ class _ExtraTabState extends State<ExtraTab>
 
   String _valueLabel(String key) =>
       const {
-        'count': '낙뢰 발생',
         'tideCm': '조위',
         'waterTempC': '수온',
         'currentSpeedMs': '유속',
@@ -431,7 +432,6 @@ class _ExtraTabState extends State<ExtraTab>
 
   String _unit(String key) =>
       const {
-        'count': '회',
         'tideCm': 'cm',
         'waterTempC': '℃',
         'currentSpeedMs': 'm/s',

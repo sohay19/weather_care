@@ -78,16 +78,6 @@ class _ExtraApi extends ApiClient {
     queries.add({...query!});
     if (failRecords) throw StateError('자료 오류');
     if (records != null) return records!(query);
-    if (query['source'] == 'KMA_LIGHTNING') {
-      return {
-        'records': [
-          {
-            'time': '2026-10-14T10:00:00',
-            'values': {'count': 2}
-          }
-        ]
-      };
-    }
     if (query['source'] == 'NIFS_JELLYFISH_DETAIL') {
       return {
         'records': [
@@ -361,7 +351,7 @@ void main() {
         'NEAR');
   });
 
-  testWidgets('큰 박스의 바다·하천 탭은 지정한 칩을 표시하고 기상 자료도 유지한다', (tester) async {
+  testWidgets('바다·하천 칩을 유지하고 낙뢰는 목록·선택·조회에서 제외한다', (tester) async {
     _screen(tester);
     final api = _ExtraApi();
     await _open(tester, api);
@@ -369,7 +359,10 @@ void main() {
     expect(box, findsOneWidget);
     expect(find.descendant(of: box, matching: find.byType(TabBar)),
         findsOneWidget);
-    expect(find.byKey(const ValueKey('extra-category-기상')), findsOneWidget);
+    expect(find.byKey(const ValueKey('extra-category-기상')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('extra-source-KMA_LIGHTNING')), findsNothing);
+    expect(find.text('낙뢰'), findsNothing);
     List<String> topics() => tester
         .widgetList<ChoiceChip>(find.descendant(
             of: find.byKey(const ValueKey('extra-topic-chips')),
@@ -397,10 +390,18 @@ void main() {
     expect(find.byType(Checkbox), findsNothing);
     expect(api.queries.any((query) => query['source'] == 'KHOA_TIDE_EXTREME'),
         isTrue);
-    await _select(tester, 'KMA_LIGHTNING');
-    expect(find.text('낙뢰 발생  2회'), findsOneWidget);
-    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
-    expect(api.queries.last['targetId'], '60_121');
+    expect(api.queries.any((query) => query['source'] == 'KMA_LIGHTNING'),
+        isFalse);
+    // 낙뢰만 반환하는 서버에서도 기본 선택으로 되살리거나 조회하지 않는다.
+    api.groups = [_groups.first];
+    final queryCount = api.queries.length;
+    await tester
+        .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+        .onRefresh();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('extra-category-기상')), findsNothing);
+    expect(find.text('낙뢰'), findsNothing);
+    expect(api.queries.length, queryCount);
     expect(tester.takeException(), isNull);
   });
 

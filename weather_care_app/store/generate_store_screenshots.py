@@ -1259,11 +1259,15 @@ def create_google_play_app_icon() -> None:
 
 
 def main(dark_mode_only: bool = False, ios_dark_mode_only: bool = False) -> None:
+    if dark_mode_only:
+        from generate_android_store import main as generate_android_current
+        generate_android_current()
+        return
     formats = {**FORMATS, **TABLET_FORMATS}
     dark_platforms = (
         ("ios", "ipad") if ios_dark_mode_only
         else ("android", "android-tablet") if dark_mode_only
-        else tuple(formats)
+        else ("ios", "ipad")
     )
     for platform in dark_platforms:
         compose_dark_mode_showcase(
@@ -1275,6 +1279,8 @@ def main(dark_mode_only: bool = False, ios_dark_mode_only: bool = False) -> None
         return
     create_ios_push_source(IPAD_PUSH_SOURCE, (1440, 2560), tablet=True)
     for platform, spec in FORMATS.items():
+        if platform == "android":
+            continue
         for stem, source_name, label, headline in APP_SCREENS:
             compose(
                 app_source_path(platform, source_name, tablet=False),
@@ -1292,6 +1298,8 @@ def main(dark_mode_only: bool = False, ios_dark_mode_only: bool = False) -> None
         )
         contact_sheet(platform)
     for platform, spec in TABLET_FORMATS.items():
+        if platform == "android-tablet":
+            continue
         for stem, source_name, label, headline in APP_SCREENS:
             compose(
                 app_source_path(platform, source_name, tablet=True),
@@ -1308,14 +1316,15 @@ def main(dark_mode_only: bool = False, ios_dark_mode_only: bool = False) -> None
             platform,
         )
         contact_sheet(platform)
-    create_google_play_feature_graphic()
+    from generate_android_store import main as generate_android_current
+    generate_android_current()
     create_google_play_app_icon()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="스토어 스크린샷 생성")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--dark-mode-only", action="store_true", help="Android 다크모드 이미지와 미리보기만 생성")
+    group.add_argument("--dark-mode-only", action="store_true", help="최신 Android 8장 구성과 다크모드·묶음 재생성(이전 옵션 호환)")
     group.add_argument("--ios-dark-mode-only", action="store_true", help="iPhone·iPad 다크모드 이미지와 미리보기만 생성")
     args = parser.parse_args()
     main(dark_mode_only=args.dark_mode_only, ios_dark_mode_only=args.ios_dark_mode_only)

@@ -1,0 +1,160 @@
+{
+  "기준일": "2026-10-21",
+  "화면": "현재 Flutter 코드의 비표시 렌더링",
+  "데이터": "촬영용 예시 날씨와 알림, 실제 현재 관측 아님",
+  "files": [
+    {
+      "path": "screenshots/android/01-main.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "99d88c472d8befd47744f3015fe57bad3827c36b7a9e68dd57f2efd395a165d1"
+    },
+    {
+      "path": "screenshots/android/02-timeline.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "552d5c5d104cc2e9722256de5934ed028c64b016ee2a3ed1382d5ea4360230f7"
+    },
+    {
+      "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "4924d406b95c27c4ca8e066e5e8e1879acd8da09aafd80fa4d3635b3b00dd7d6"
+    },
+    {
+      "path": "screenshots/android/04-dark-mode.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "41b52b5612c92be26c15a36735a3e90d27d0c9667c44bcd0f0c11bf1c2403f51"
+    },
+    {
+      "path": "screenshots/android/05-notifications.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "c0f6536e39c114b9da82978507f58c59f011ff4432400241df61baa0c42ebeae"
+    },
+    {
+      "path": "screenshots/android/06-advanced.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "b8065edc78e1839048930f62955f9d64be7e2686841c782a06a9e02d29f70d02"
+    },
+    {
+      "path": "screenshots/android/07-week.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "88df43610be7a47f58259ddae0b33634de9138589d9caf4956bbbdde26d69601"
+    },
+    {
+      "path": "screenshots/android/08-notification-settings.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "4d814e6b8f1cb6e32ed22e725d0e543162ed2b1043ea2ad67c81d153a69a3421"
+    },
+    {
+      "path": "screenshots/android-tablet/01-main.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "6edf9703abb2d22bbeef5f610f5059c5b22528cf1b6328bd4f714a249f8a75d1"
+    },
+    {
+      "path": "screenshots/android-tablet/02-timeline.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "fc7326b4c0a7e80f6980cb03f7cd8ee8dee649acf0feee702f6a43e604463694"
+    },
+    {
+      "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "22cb27245f0c3bf574b59bc77c2865137b71b63f632324d3d5b8d1e867f85775"
+    },
+    {
+      "path": "screenshots/android-tablet/04-dark-mode.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "a132fd2f5ff21f85e5210e594aa586b57c1277673cde900759a20778fe5fab03"
+    },
+    {
+      "path": "screenshots/android-tablet/05-notifications.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "2d08c3b51280baece0fd140eca4f006c519042e2b08b02644096892aa0555563"
+    },
+    {
+      "path": "screenshots/android-tablet/06-advanced.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "5ec23d307bbc264208ed9ac660b8877f4915e8ed1c914171a0f8f8b485511648"
+    },
+    {
+      "path": "screenshots/android-tablet/07-week.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "5125e930cd11ca4f3ac40232b31c3586c44f59fa917f3d67ca7ea7ffab40dea2"
+    },
+    {
+      "path": "screenshots/android-tablet/08-notification-settings.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "ec881ecd8e5411be87755005a2431aacdb2b5a75c7d901ee0d907b268a7e0c67"
+    },
+    {
+      "path": "google-play/feature-graphic.png",
+      "size": [
+        1024,
+        500
+      ],
+      "mode": "RGB",
+      "sha256": "67329f97b44347e157dbe64496bca4c9582568f30d25dbf6e7a048be2d24dedf"
+    }
+  ]
+}

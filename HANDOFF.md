@@ -12030,3 +12030,14 @@
 - Flutter analyze --no-pub lib test 이슈 없음, 서버 npm run typecheck 통과, 변경 JSON 전체 파싱 통과, git diff --check 통과. 전체 Flutter analyze는 동시 이미지 작업이 새로 만든 store/capture_android_test.dart의 테스트 전용 API 위치 경고 1건을 출력했으며 앱 lib/test에는 경고가 없었다.
 - 로그: weather_care_app/build/commit-all-{analyze,source-analyze,tests}-20261021.log, weather_care_server/.commit-{typecheck,node-tests,worker-tests}-20261021.log. 기존 커밋 비교 로그는 .git/commit-all-20261021/baseline-{flutter,node,worker}.log. 로그·임시 비교 소스는 Git 추적에서 제외된다.
 - 작업 도중 같은 저장소의 ‘안드로이드 스크린샷과 그래픽 재제작’ 채팅에서 새 스토어 캡처/그래픽을 생성 중인 것을 확인했다. 기존 기능 변경과 분리해 해당 작업의 완료 결과도 별도 항목으로 정리하고, 마지막 푸시 후 작업 트리와 원격 커밋 일치를 확인한다.
+
+
+## 2026-10-21 Android 스토어 스크린샷·그래픽 이미지 현재 UI로 재제작
+
+- 사용자 요청의 7개 주제(메인 요약, 위젯, 다크모드, 다양한 알림, 심화 날씨 정보, 한주 날씨, 원하는 알림 켜기/끄기)를 반영했다. 메인을 요약/타임라인으로 나눠 휴대전화1080×1920 및 태블릿1440×2560 각8장과 Google Play 그래픽1024×500을 제작했다. 모두 RGB PNG이며 기존 브랜드 배경·SUITE 한글 홍보 문구를 사용했다.
+- 현재 MainTab/WeekTab/ExtraTab/SettingsScreen을 직접 가져오는 store/capture_android_test.dart로 사용자 창 없이 각각412×1000dp(3배)/800×1280dp(2배)를 렌더링했다. source-android-20261021/phone·tablet에 각9개 원본을 보관한다. 현재 센서 아이콘·심화 날씨 정보·만조·간조/조위 통합 박스·기준 시간·현재 알림 설정 스위치를 반영했다. 준비물 이미지 사전 디코딩, 테스트 엔진에서 글꼴 미지정 부분의 한글 SUITE 대체 처리, 예시 generatedAt/receivedAt 기준시각 정합화도 캡처 도구 안에서 처리했다.
+- 앱 화면은 현재 실제 위젯의 비표시 렌더링이며 에뮬레이터/실기기 캡처가 아니다. 날씨·관측소·선택 스위치는 촬영용 예시이고 실제 현재 관측값·사용자 설정이 아니다. 위젯은 현재 네이티브 XML/주야간 색상/공유 준비물 자산을 기준으로 제작한 소개용 재현이다. 다양한 알림은 현행 지원 종류(준비물 요약/현재 비/호우특보/낙뢰)를 소개하는 카드이며 이미지에 예시임을 표시했다. 실제 푸시 발송이나 시스템 패널 캡처는 없다. 제작 기준을 store/screenshots/ANDROID_20261021.md에 명시했다.
+- 새 store/generate_android_store.py로 합성·미리보기·해시 명세·Android 전용 ZIP과 기존 통합ZIP2개를 생성한다. 이전 Android 최종 이미지16개는 ignored build/store-backup-20261021에 백업 후 현재 폴더에서 제거해 각각 최신8장만 남겼다. Main·미리보기·그래픽 이전본도 같은 폴더에 백업했다. 기존 iOS/iPad·아이콘은 변경하지 않았으며 통합ZIP의 해당 항목은 원본 바이트로 보존했다. 기존 통합 생성기의 Android 경로도 최신 도구로 연결했다.
+- 결과: store/google-play/weather-care-android-store-20261021.zip, store/screenshots/preview-android.png·preview-android-tablet.png, store/google-play/feature-graphic.png. 기존 weather-care-store-assets.zip·weather-care-store-screenshots.zip과 스크린샷 README·스토어 등록정보의 최신 이미지 안내도 갱신했다.
+- 검증: Flutter3.47.4 캡처 테스트1개(폰/태블릿18개 원본) 통과, 캡처 Dart 정적 분석 이슈 없음. 최종17개 PNG 크기/RGB/디코딩/SHA256, Android 폴더별8개, ZIP3개 무결성 및 ZIP 안의 Android 파일과 디스크 파일 바이트 일치, Python2개 컴파일, git diff --check 통과. 휴대전화·태블릿 전체 미리보기와 주요 개별 이미지·그래픽을 눈으로 확인했다. 초기 캡처의 지연 자산/한글 대체 및 임시 도구 컴파일·표준출력 인코딩 문제는 수정해 최종 재생성했다.
+- 앱/서버 기능 코드·사용자 위치/권한/설정·앱 실행/설치·서버 배포·스토어 업로드·커밋/push는 변경하지 않았다. 다른 채팅의 미커밋 변경을 보존했다. 모든 작업은 비표시 렌더링/파일 처리로 진행해 사용자 UI 창을 띄우지 않았다.

@@ -1,5 +1,9 @@
 # 스토어 스크린샷
 
+## 2026-10-21 Android 최신 이미지
+
+Android 휴대전화·태블릿은 현재 앱 기준으로 각각 8장과 그래픽 이미지를 새로 제작했다. 구성·원본·재생성 방법은 [Android 최신 안내](ANDROID_20261021.md)를 따른다. 배포 묶음은 `../google-play/weather-care-android-store-20261021.zip`이다. 아래 내용은 이전 제작 이력이며 iOS·iPad는 기존 이미지를 유지한다. Android에는 아래의 옛 9장 순서를 사용하지 않는다.
+
 ## 결과물
 
 - iOS: `ios/` — 1320×2868 px, RGB PNG, 9장
@@ -45,7 +49,7 @@ Google Play 대체 텍스트 권장안: `날씨에 맞춰 오늘을 챙겨요 �
 
 다시 생성하려면 `python store/generate_store_screenshots.py`를 실행한다.
 
-Android 다크모드 이미지와 Android 미리보기만 생성하려면 `python store/generate_store_screenshots.py --dark-mode-only`를 실행한다.
+최신 Android 이미지는 `python store/generate_android_store.py`로 생성한다. 이전 `python store/generate_store_screenshots.py --dark-mode-only` 옵션도 현재 Android 8장 구성과 묶음을 재생성한다.
 
 iPhone·iPad 다크모드 이미지와 미리보기만 생성하려면 `python store/generate_store_screenshots.py --ios-dark-mode-only`를 실행한다.
 

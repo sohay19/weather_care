@@ -198,7 +198,9 @@ class _WidgetService extends HomeWidgetService {
   Future<void> publish(
     HomeWidgetSnapshot snapshot, {
     String? refreshUrl,
+    String? testAccessKey,
     bool gpsEnabled = false,
+    DateTime? locationMeasuredAt,
   }) async {
     published.add(snapshot);
     refreshUrls.add(refreshUrl);
@@ -229,7 +231,8 @@ class _Registration extends NotificationRegistrationService {
       required int nx,
       required int ny,
       required String locationMode,
-      DeviceCoordinates? coordinates}) async {
+      DeviceCoordinates? coordinates,
+      DateTime? locationMeasuredAt}) async {
     calls.add((nx: nx, ny: ny, coordinates: coordinates));
   }
 
@@ -239,7 +242,8 @@ class _Registration extends NotificationRegistrationService {
           required int nx,
           required int ny,
           required String locationMode,
-          DeviceCoordinates? coordinates}) =>
+          DeviceCoordinates? coordinates,
+          DateTime? locationMeasuredAt}) =>
       initialize(
           installationId: installationId,
           nx: nx,
@@ -276,10 +280,23 @@ void main() {
   late _Sync sync;
   late _Registration registration;
   late _NotificationPermission notificationPermission;
+  const backgroundChannel =
+      MethodChannel('com.codesoha.weathercare/background-location');
+  final backgroundCalls = <MethodCall>[];
   final catalog = RegionCatalog.fromJson(
       jsonDecode(File('assets/data/kma_regions.json').readAsStringSync())
           as Map<String, dynamic>);
   setUp(() {
+    backgroundCalls.clear();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(backgroundChannel, (call) async {
+      backgroundCalls.add(call);
+      if (call.method == 'requestPermission') {
+        expect(location.requests, contains(true));
+        expect(notificationPermission.requests, contains(true));
+      }
+      return call.method == 'status' ? {'status': 'disabled'} : null;
+    });
     rootBundle.evict('config/kma.config.json');
     rootBundle.evict('assets/data/kma_regions.json');
     SharedPreferences.setMockInitialValues({
@@ -292,6 +309,10 @@ void main() {
     sync = _Sync();
     registration = _Registration();
     notificationPermission = _NotificationPermission();
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(backgroundChannel, null);
   });
   Future<void> start(WidgetTester tester,
       {bool settle = true,
@@ -359,6 +380,8 @@ void main() {
         findsOneWidget);
     expect(notificationPermission.requests, isEmpty);
     expect(location.requests, isEmpty);
+    expect(
+        backgroundCalls.where((c) => c.method == 'requestPermission'), isEmpty);
 
     tester
         .widget<FilledButton>(
@@ -369,10 +392,64 @@ void main() {
 
     expect(notificationPermission.requests, [true]);
     expect(location.requests, [true]);
+    expect(
+        backgroundCalls
+            .singleWhere((c) => c.method == 'requestPermission')
+            .arguments,
+        {'initial': true});
+    expect(
+        (await const AppSettingsRepository().load('test'))
+            .backgroundLocationEnabled,
+        isTrue);
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getBool(PermissionOnboardingStore.storageKey), isTrue);
     expect(find.byKey(const ValueKey('permission-onboarding-dialog')),
         findsNothing);
+  });
+
+  testWidgets('초기 백그라운드 권한은 서버 날씨 응답을 기다리지 않고 요청한다', (tester) async {
+    SharedPreferences.setMockInitialValues(
+        {'permission_onboarding_v1_confirmed': true});
+    final pending = Completer<WeatherLoadResult>();
+    weather.pending = pending;
+    await start(tester, settle: false, initialIndex: 2);
+    tester
+        .widget<FilledButton>(
+            find.byKey(const ValueKey('permission-onboarding-confirm')))
+        .onPressed!();
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(
+        backgroundCalls
+            .singleWhere((c) => c.method == 'requestPermission')
+            .arguments,
+        {'initial': true});
+    expect(pending.isCompleted, isFalse);
+    pending.complete(_weather(60, 127));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('백그라운드 제외 선택은 일반 권한만 요청하고 동의를 저장하지 않는다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await start(tester, settle: false, initialIndex: 2);
+    tester
+        .widget<TextButton>(
+            find.byKey(const ValueKey('permission-onboarding-foreground-only')))
+        .onPressed!();
+    await tester.pumpAndSettle();
+    expect(notificationPermission.requests, [true]);
+    expect(location.requests, [true]);
+    expect(
+        backgroundCalls.where((c) => c.method == 'requestPermission'), isEmpty);
+    expect(
+        (await const AppSettingsRepository().load('test'))
+            .backgroundLocationEnabled,
+        isFalse);
+    expect(
+        (await SharedPreferences.getInstance())
+            .getBool(PermissionOnboardingStore.storageKey),
+        isTrue);
   });
 
   testWidgets('첫 권한 요청 후 위치 시간 초과는 팝업 없이 한 번 더 측정한다', (tester) async {
@@ -1163,7 +1240,7 @@ void main() {
     gpsRegionName.result = '서울 종로구 청운효자동';
     await start(tester, widgetService: widgetService);
     expect(widgetService.published.last.region, '서울 종로구 청운효자동');
-    expect(widgetService.gpsModes.last, isFalse);
+    expect(widgetService.gpsModes.last, isTrue);
     var query = Uri.parse(widgetService.refreshUrls.last!).queryParameters;
     expect(query['nx'], '60');
     expect(query['ny'], '127');
@@ -1186,6 +1263,7 @@ void main() {
       expect(query['ny'], '${selected.ny}');
       expect(query, isNot(contains('latitude')));
       expect(query, isNot(contains('longitude')));
+      expect(widgetService.gpsModes.last, isFalse);
       await screen(tester).onRefresh!();
       await tester.pumpAndSettle();
       expect(widgetService.published.last.region,
@@ -1213,7 +1291,7 @@ void main() {
     expect(query['ny'], '76');
     expect(query['regionName'], '부산 해운대구 우동');
     expect(query, isNot(contains('regionCode')));
-    expect(restoredWidget.gpsModes.last, isFalse);
+    expect(restoredWidget.gpsModes.last, isTrue);
   });
   testWidgets('저장한 수동 지역이 없거나 잘못됐으면 조회와 등록을 하지 않는다', (tester) async {
     await const AppSettingsRepository().save(AppSettings.fallback('test')

@@ -1,0 +1,410 @@
+{
+  "작업": "시험 서버 0017 적용·배포 및 이동에 따른 위치·알림 지역 갱신 검증",
+  "기록시각": "2026-10-21T09:53:48.832536+09:00",
+  "적용_마이그레이션": "0017_background_location.sql",
+  "배포_릴리스": "/opt/weather-care/releases/20261021-test-background-location-0017/weather_care_server",
+  "운영_서버": "릴리스·DB 스키마 유지. 운영 및 시험 내부·공개 health 모두 HTTP 200",
+  "이동_검증": {
+    "방법": "공개 HTTPS 시험 API로 합성 설치를 등록하고 실제 SQLite 행을 확인",
+    "서울_좌표": [
+      37.5665,
+      126.978
+    ],
+    "서울_격자": [
+      60,
+      127
+    ],
+    "부산_좌표": [
+      35.1796,
+      129.0756
+    ],
+    "부산_격자": [
+      98,
+      76
+    ],
+    "확인_내용": "위도·경도·측정 시각·nx/ny·region_topic 갱신, 토큰과 개별 설정 보존, 대략적 위치의 정밀 좌표 제거",
+    "시나리오_수": 12,
+    "HTTP_요청_수": 37,
+    "상세": {
+      "checkedAt": "2026-10-21T00:48:58.302Z",
+      "origin": "https://weather-test-api.codesoha.com",
+      "publicApiChecks": {
+        "testKeyAndOwnerAuthenticationRequired": true,
+        "liveLocationAndNotificationRegionUpdated": true,
+        "tokenAndIndividualPreferencesPreserved": true,
+        "duplicateAndOutOfOrderIgnored": true,
+        "expiredFutureAndInvalidCoordinatesRejected": true,
+        "approximateLocationClearsPreciseCoordinates": true,
+        "previousAndDisabledSessionsRejected": true,
+        "manualRegionRevokesMovementSession": true,
+        "masterOffRevokesAndDoesNotRestoreOldSession": true,
+        "lateForegroundRegistrationKeepsNewerMovement": true,
+        "deletionPreventsFurtherLocationUpdates": true,
+        "syntheticDataFullyRemoved": true
+      },
+      "requests": [
+        {
+          "step": "public_health",
+          "httpStatus": 200
+        },
+        {
+          "step": "test_key_required",
+          "httpStatus": 403
+        },
+        {
+          "step": "enroll_synthetic_installation",
+          "httpStatus": 201
+        },
+        {
+          "step": "register_initial_gps",
+          "httpStatus": 200
+        },
+        {
+          "step": "set_notification_preferences",
+          "httpStatus": 200
+        },
+        {
+          "step": "enable_movement_session",
+          "httpStatus": 200
+        },
+        {
+          "step": "wrong_owner_rejected",
+          "httpStatus": 401
+        },
+        {
+          "step": "move_seoul_to_busan",
+          "httpStatus": 200
+        },
+        {
+          "step": "duplicate_ignored",
+          "httpStatus": 200
+        },
+        {
+          "step": "older_ignored",
+          "httpStatus": 200
+        },
+        {
+          "step": "stale_location_rejected",
+          "httpStatus": 422
+        },
+        {
+          "step": "future_location_rejected",
+          "httpStatus": 422
+        },
+        {
+          "step": "outside_service_area_rejected",
+          "httpStatus": 400
+        },
+        {
+          "step": "approximate_location_grid_only",
+          "httpStatus": 200
+        },
+        {
+          "step": "replace_movement_session",
+          "httpStatus": 200
+        },
+        {
+          "step": "previous_session_rejected",
+          "httpStatus": 409
+        },
+        {
+          "step": "new_session_updates_location",
+          "httpStatus": 200
+        },
+        {
+          "step": "disable_movement_session",
+          "httpStatus": 200
+        },
+        {
+          "step": "disabled_session_rejected",
+          "httpStatus": 409
+        },
+        {
+          "step": "enable_before_manual_selection",
+          "httpStatus": 200
+        },
+        {
+          "step": "manual_region_selected",
+          "httpStatus": 200
+        },
+        {
+          "step": "manual_mode_blocks_movement",
+          "httpStatus": 409
+        },
+        {
+          "step": "manual_mode_blocks_enable",
+          "httpStatus": 409
+        },
+        {
+          "step": "return_to_gps",
+          "httpStatus": 200
+        },
+        {
+          "step": "enable_before_master_off",
+          "httpStatus": 200
+        },
+        {
+          "step": "master_notifications_off",
+          "httpStatus": 200
+        },
+        {
+          "step": "master_off_blocks_location",
+          "httpStatus": 409
+        },
+        {
+          "step": "master_off_blocks_enable",
+          "httpStatus": 409
+        },
+        {
+          "step": "master_notifications_on",
+          "httpStatus": 200
+        },
+        {
+          "step": "reenable_does_not_restore_old_session",
+          "httpStatus": 409
+        },
+        {
+          "step": "new_session_after_reenable",
+          "httpStatus": 200
+        },
+        {
+          "step": "move_busan_to_seoul",
+          "httpStatus": 200
+        },
+        {
+          "step": "late_foreground_registration",
+          "httpStatus": 200
+        },
+        {
+          "step": "delete_synthetic_installation",
+          "httpStatus": 204
+        },
+        {
+          "step": "deleted_installation_cannot_update",
+          "httpStatus": 401
+        },
+        {
+          "step": "deleted_installation_status",
+          "httpStatus": 410
+        },
+        {
+          "step": "cleanup_synthetic_installation",
+          "httpStatus": 204
+        }
+      ],
+      "realPushSent": false,
+      "realUserRowsChanged": false,
+      "syntheticFcmToken": null
+    }
+  },
+  "알림_지역_검증": {
+    "방법": "실 API 갱신 결과를 격리 메모리 DB에 재현하고 배포된 낙뢰 알림 모듈의 sender만 교체",
+    "확인_내용": "새 격자 낙뢰만 알림 대상 선택, 이전 격자 제외, 중복 방지, 전체 알림 끄기",
+    "시나리오_수": 8,
+    "상세": {
+      "checkedAt": "2026-10-21T00:49:40.865Z",
+      "checks": {
+        "movedToBusanIgnoresPreviousRegion": true,
+        "movedToBusanTargetsUpdatedRegion": true,
+        "movedToBusanDeduplicates": true,
+        "movedToBusanMasterOffStopsAlerts": true,
+        "returnedToSeoulIgnoresPreviousRegion": true,
+        "returnedToSeoulTargetsUpdatedRegion": true,
+        "returnedToSeoulDeduplicates": true,
+        "returnedToSeoulMasterOffStopsAlerts": true
+      },
+      "targets": [
+        {
+          "case": "movedToBusan",
+          "nx": 98,
+          "ny": 76,
+          "title": "선택 지역 낙뢰 관측"
+        },
+        {
+          "case": "returnedToSeoul",
+          "nx": 60,
+          "ny": 127,
+          "title": "서울 낙뢰 관측"
+        }
+      ],
+      "externalRequests": 0,
+      "realPushSent": false,
+      "database": "isolated-memory-replayed-from-live-location-results"
+    },
+    "기존_표기_제약": "부산 98/76은 기존 regionName 카탈로그에 없어 제목이 선택 지역으로 표시되지만 필터·알림 키는 갱신된 부산 격자이다. 서울 60/127은 서울로 표시된다."
+  },
+  "앱_서비스_실서버_검증": {
+    "검사_통과": 1,
+    "상세": {
+      "actualAppApiClient": true,
+      "actualBackgroundLocationService": true,
+      "publicTestServer": true,
+      "serverSessionBeforeNativeConfiguration": true,
+      "movementUpdated": true,
+      "disabledSessionRejected": true,
+      "deletedServerDataStopsMonitoring": true,
+      "systemPermissionRequests": 0,
+      "nativeGpsBridge": "mocked",
+      "realPushSent": false,
+      "syntheticDataDeleted": true
+    },
+    "범위": "ApiClient·ServerDataAccess·BackgroundLocationService는 실제 코드와 실제 공개 서버를 사용했고 네이티브 GPS·권한 브리지만 모의 처리"
+  },
+  "기존_자료_보존": {
+    "마이그레이션_직후": {
+      "migration": "0017_background_location.sql",
+      "quickCheck": "ok",
+      "existingData": {
+        "installations": {
+          "rows": 16,
+          "preserved": true
+        },
+        "installation_credentials": {
+          "rows": 18,
+          "preserved": true
+        },
+        "notification_settings": {
+          "rows": 18,
+          "preserved": true
+        },
+        "notification_history": {
+          "rows": 0,
+          "preserved": true
+        },
+        "installation_activity": {
+          "rows": 18,
+          "preserved": true
+        },
+        "lightning_notification_claims": {
+          "rows": 0,
+          "preserved": true
+        }
+      }
+    },
+    "검증_후": {
+      "installations": true,
+      "installation_credentials": true,
+      "notification_settings": true,
+      "notification_history": true,
+      "installation_activity": true
+    }
+  },
+  "정리": "합성 설치·인증·설정·활동·알림 관련 행과 임시 인증정보 파일 제거 확인. 실제 사용자 감시 세션은 켜지 않았음.",
+  "실제_푸시_발송": false,
+  "실기기_GPS_이동_및_OS_백그라운드_검증": "미실행. 앱 설치·권한 변경 없이 서버/API 경로와 알림 대상 선택을 검증함.",
+  "백업_경로": "/var/backups/weather-care/test-background-location-20261021",
+  "백업_파일_크기_바이트": 2695979008,
+  "배포_감사": {
+    "release": "/opt/weather-care/releases/20261021-test-background-location-0017/weather_care_server",
+    "productionRelease": "/opt/weather-care/releases/20261012-juso-202609/weather_care_server",
+    "sourceSha256Matches": {
+      "src/api/installations.ts": true,
+      "src/api/backgroundLocation.ts": true,
+      "src/database/installationsRepository.ts": true,
+      "src/types.ts": true,
+      "migrations/0017_background_location.sql": true
+    },
+    "database": {
+      "quickCheck": "ok",
+      "migrationCount": 17,
+      "latestMigration": "0017_background_location.sql",
+      "installations": 16,
+      "settings": 18,
+      "credentials": 18,
+      "activeMovementSessions": 0,
+      "migrationTriggerPresent": true
+    },
+    "existingUserDataUnchangedAfterVerification": {
+      "installations": true,
+      "installation_credentials": true,
+      "notification_settings": true,
+      "notification_history": true,
+      "installation_activity": true
+    },
+    "production": {
+      "latestMigration": "0014_administrative_boundaries.sql",
+      "movementColumnPresent": false
+    },
+    "services": {
+      "weather-care-test-api.service": "active",
+      "weather-care-test-lightning.timer": "active",
+      "weather-care-test-cache-sync.timer": "active",
+      "weather-care-test-uv.timer": "active",
+      "weather-care-test-weather-refresh.timer": "active",
+      "weather-care-api.service": "active",
+      "weather-care-scheduler.service": "active"
+    },
+    "healthHttp": {
+      "testInternal": 200,
+      "productionInternal": 200,
+      "testPublic": 200,
+      "productionPublic": 200
+    },
+    "backupDirectory": "/var/backups/weather-care/test-background-location-20261021",
+    "publicChecks": {
+      "testKeyAndOwnerAuthenticationRequired": true,
+      "liveLocationAndNotificationRegionUpdated": true,
+      "tokenAndIndividualPreferencesPreserved": true,
+      "duplicateAndOutOfOrderIgnored": true,
+      "expiredFutureAndInvalidCoordinatesRejected": true,
+      "approximateLocationClearsPreciseCoordinates": true,
+      "previousAndDisabledSessionsRejected": true,
+      "manualRegionRevokesMovementSession": true,
+      "masterOffRevokesAndDoesNotRestoreOldSession": true,
+      "lateForegroundRegistrationKeepsNewerMovement": true,
+      "deletionPreventsFurtherLocationUpdates": true,
+      "syntheticDataFullyRemoved": true
+    },
+    "alertChecks": {
+      "movedToBusanIgnoresPreviousRegion": true,
+      "movedToBusanTargetsUpdatedRegion": true,
+      "movedToBusanDeduplicates": true,
+      "movedToBusanMasterOffStopsAlerts": true,
+      "returnedToSeoulIgnoresPreviousRegion": true,
+      "returnedToSeoulTargetsUpdatedRegion": true,
+      "returnedToSeoulDeduplicates": true,
+      "returnedToSeoulMasterOffStopsAlerts": true
+    },
+    "temporaryCredentialFileRemoved": true
+  },
+  "배포_매니페스트": {
+    "baseCommit": "309e6d0282b0e0e25b816b12f93e2b28d6fa9c3f",
+    "files": {
+      "src/api/installations.ts": {
+        "sha256": "e9596a045723133179bb81308e0b9d1c0c06e10d6debbc1578067d18683f6c2b",
+        "previousSha256": "3e8ff217ac8c0a1f4e3b459edacf928c865c1eb1955d2b191ac7684b1241ae7b"
+      },
+      "src/api/backgroundLocation.ts": {
+        "sha256": "4aa328c572d8ce6c260a08771da3db5d5a8c5b1c28c11e6496ce077afbb47af5",
+        "previousSha256": null
+      },
+      "src/database/installationsRepository.ts": {
+        "sha256": "ef7e47c723ab082882aac2f004f397005d6696216567e924700872ee5ffdd56e",
+        "previousSha256": "d3d73a3dac52ad45b35fab88ae7de4a9d4bf0c58c4e366c49d76c3f84fdb32fb"
+      },
+      "src/types.ts": {
+        "sha256": "bdc6cb73f0799d90d897e13f9f1d1e344298c17b674d09fdcc5b7fd57b0e21bd",
+        "previousSha256": "17bc0f984fae6fb888c20f6075de9dfc683874e7ddc5ec09bb257518088715df"
+      },
+      "migrations/0017_background_location.sql": {
+        "sha256": "2412169ae248b29f2fe242dec54ee4b4e78223eca9b2b592ad6dd50f38440bfb",
+        "previousSha256": null
+      }
+    },
+    "dependencies": {
+      "src/security/installationAccess.ts": "cb99f40311c7b9139bc5ab5e3e345311d6656f289e542fa777fccdec8c1bd5de",
+      "src/regions/kmaGridFromCoordinates.ts": "2716025ecf59f1b76872959d059bc6f5b7b7a7ffb9bc4b926d6d062bde1b17fd",
+      "src/validation/minimumAge.ts": "081d77405a6031296742878a23c67db615155d9d8b6e3abd911cc4759e442887",
+      "src/database/dataRetention.ts": "45ae9d775176d0f4c8461b2cade72349c818ba5a5ccbd510bc21e5b24a14c697",
+      "src/index.ts": "d495ddc3f9b2cb4a216708d95a6f78cb2c2a6398200bab1db686f35d8dbcefa5",
+      "src/node/sqliteD1.ts": "110444d71c1c332a45a637ddee7e6eeb0491bbba6c07cd6a094e7933a178f071",
+      "src/node/runtime.ts": "53e6d70a73b723ef1c57e66bafa0493b3a7bb393a5f4b590f08c5a96737c3026",
+      "src/node/server.ts": "bc1556e95f65ae8d52663994e2fd33eeb8b25cedb484310296ccbe7804d64035",
+      "src/database/notificationSettingsRepository.ts": "553a351e18a71bf18fad6de80334bf7d806f0c704e2e01ba325fd13a7d85cf0e",
+      "src/notification/lightningNotificationJob.ts": "499c0895a91ea2f93b1e20fcb14024e01af6eec982853a7677f465244078662c"
+    },
+    "archiveSha256": "88bafeb90d6505c5c68bab8a2ece2f3e18851838fc3cf873429c607e298086a7"
+  },
+  "로컬_산출물": "weather_care_app/build/background-location-deploy-20261021/",
+  "원격_산출물": "/tmp/weather-care-background-location-20261021/"
+}

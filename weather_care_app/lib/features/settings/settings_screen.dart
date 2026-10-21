@@ -18,6 +18,8 @@ import 'settings_guide.dart';
 import 'settings_guide_screen.dart';
 import 'analytics_consent_control.dart';
 import 'ads_privacy_control.dart';
+import 'background_location_control.dart';
+import '../../services/background_location_service.dart';
 import '../../services/server_data_access.dart';
 import '../../services/theme_mode_settings.dart';
 
@@ -44,6 +46,8 @@ class SettingsScreen extends StatefulWidget {
   final Future<bool> Function(Uri)? openExternalLink;
   final RegionMapBuilder? regionMapBuilder;
   final AdRemovalService? adRemoval;
+  final BackgroundLocationService? backgroundLocation;
+  final Future<void> Function()? onBackgroundLocationPermission;
 
   const SettingsScreen({
     super.key,
@@ -69,6 +73,8 @@ class SettingsScreen extends StatefulWidget {
     this.openExternalLink,
     this.regionMapBuilder,
     this.adRemoval,
+    this.backgroundLocation,
+    this.onBackgroundLocationPermission,
   });
 
   @override
@@ -168,6 +174,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: '설정 저장과 기기 권한 상태를 확인해요',
           onTap: _openNotificationStatusSettings,
         ),
+        if (widget.backgroundLocation case final service?) ...[
+          const SizedBox(height: 16),
+          BackgroundLocationControl(
+            service: service,
+            enabled: settings.backgroundLocationEnabled,
+            available: settings.locationMode == 'GPS' && _alertsEnabled,
+            onChanged: (value) async {
+              final updated =
+                  settings.copyWith(backgroundLocationEnabled: value);
+              setState(() => settings = updated);
+              await widget.onSettingsChanged?.call(updated);
+            },
+            onPermission: widget.onBackgroundLocationPermission ?? () async {},
+          ),
+        ],
         const SizedBox(height: 16),
         _SettingsMenuButton(
           key: const ValueKey('data-permission-menu'),

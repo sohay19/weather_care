@@ -12,14 +12,24 @@ class HomeWidgetService {
   Future<void> publish(
     HomeWidgetSnapshot snapshot, {
     String? refreshUrl,
+    String? testAccessKey,
     bool gpsEnabled = false,
+    DateTime? locationMeasuredAt,
   }) async {
     if (!_isSupportedPlatform) return;
     try {
       await _channel.invokeMethod<void>('save', {
         'snapshot': snapshot.encode(),
         if (refreshUrl != null) 'refreshUrl': refreshUrl,
+        if (Uri.tryParse(refreshUrl ?? '')?.host ==
+                'weather-test-api.codesoha.com' &&
+            Uri.tryParse(refreshUrl ?? '')?.scheme == 'https' &&
+            testAccessKey != null &&
+            testAccessKey.isNotEmpty)
+          'testAccessKey': testAccessKey,
         'gpsEnabled': gpsEnabled,
+        if (locationMeasuredAt != null)
+          'locationMeasuredAt': locationMeasuredAt.toUtc().toIso8601String(),
       });
     } on MissingPluginException {
       // Widget extensions are not available in unit/widget test hosts.

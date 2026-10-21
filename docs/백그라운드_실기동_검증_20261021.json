@@ -1,0 +1,135 @@
+{
+  "검증일": "2026-10-21",
+  "대상": "Android emulator-5554 / 시험 서버",
+  "결론": "위치 측정이 전달되는 조건에서 백그라운드 서버·위젯 갱신 경로 통과. 좌표 변경만으로 15분 내 자동 수신은 확인 실패. 위젯의 구체적인 지역명 표시 누락 확인.",
+  "조건": "정밀/백그라운드 위치·알림 권한 허용, GPS 모드·전체 알림·이동 감시 켜짐. 앱 실행·위젯 새로고침·작업 강제 실행·서버 위치 직접 수정 없이 관찰.",
+  "좌표변경단독": {
+    "입력시각": "2026-10-21T05:25:27.275994+00:00",
+    "이전좌표": [
+      37.4329667,
+      126.8044933
+    ],
+    "입력좌표": [
+      37.5665,
+      126.978
+    ],
+    "관찰초": 922.0,
+    "자동갱신": false,
+    "관측": "geo fix OK이나 OS Fused 마지막 측정은 기존 시흥 좌표. STILL/stationary, Request[OFF], network 위치 없음."
+  },
+  "측정활성조건": {
+    "시작시각": "2026-10-21T05:40:49.404838+00:00",
+    "방법": "별도 shell GNSS 소비자가 90초간 OS LocationManager GPS 측정만 요청. 앱 수신기·작업·서버 API 직접 호출, mock provider 교체, 권한 변경, 앱 감시 간격 변경 없음.",
+    "종료": "소비자가 요청을 해제하고 종료. /data/local/tmp의 진단 dex 파일도 검증 후 제거.",
+    "제한": "이 조건의 성공은 좌표 변경 단독의 성공이나 Android 갱신 시간 보장을 의미하지 않는다."
+  },
+  "프로세스이벤트": "14:40:10 패키지 업데이트로 killDueToPackageUpdate, WidgetProvider broadcast로 새 프로세스가 시작됨. MainActivity create 기록은 있으나 resume 기록 없음. 전후 런처가 전면이었다. 이번 검증 도구는 앱 설치/실행을 수행하지 않았다.",
+  "시각UTC": {
+    "GPS측정": "2026-10-21T05:40:52.570Z",
+    "서버갱신": "2026-10-21T05:40:55.919Z",
+    "위젯수신": "2026-10-21T05:40:59.016592Z"
+  },
+  "측정후초": {
+    "서버갱신": 3.349,
+    "위젯수신": 6.447
+  },
+  "서버전후": {
+    "이전격자": [
+      57,
+      124
+    ],
+    "이후격자": [
+      60,
+      127
+    ],
+    "이전알림토픽": "weather_57_124",
+    "이후알림토픽": "weather_60_127"
+  },
+  "위젯전후": {
+    "이전": {
+      "locationKey": "57:124",
+      "region": "시흥시 은행동",
+      "refreshTime": "오후 2:20 기준",
+      "generatedAt": "2026-10-21T05:20:11.633Z",
+      "receivedAt": "2026-10-21T05:20:07.573830Z",
+      "currentTemperature": "14.9°",
+      "condition": "clear",
+      "minimumTemperature": "13°",
+      "maximumTemperature": "16°",
+      "apparentTemperature": "10°"
+    },
+    "이후": {
+      "locationKey": "60:127",
+      "region": "현재 위치",
+      "refreshTime": "오후 2:40 기준",
+      "generatedAt": "2026-10-21T05:40:57.289Z",
+      "receivedAt": "2026-10-21T05:40:59.016592Z",
+      "currentTemperature": "15°",
+      "condition": "clear",
+      "minimumTemperature": "13°",
+      "maximumTemperature": "17°",
+      "apparentTemperature": "9.7°"
+    }
+  },
+  "검사": {
+    "관찰 표본에서 런처가 전면 유지": true,
+    "새 위치 수신 시점 앱 resume 기록 없음": true,
+    "실제 서버 좌표·알림 격자·토픽 변경": true,
+    "동일 설치·이동 감시 세션 유지": true,
+    "FCM 토큰·개별 알림 설정 유지": true,
+    "위젯 측정 시각·선택 revision 변경": true,
+    "위젯과 실제 API 날씨 7항목 일치": true,
+    "위치 전송·위젯 조회 네이티브 작업 성공": true,
+    "진단 GPS 요청 종료": true
+  },
+  "실제서버응답대조": {
+    "locationKey": {
+      "widget": "60:127",
+      "api": "60:127",
+      "equal": true
+    },
+    "region": {
+      "widget": "현재 위치",
+      "api": "현재 위치",
+      "equal": true
+    },
+    "currentTemperature": {
+      "widget": "15°",
+      "api": "15°",
+      "equal": true
+    },
+    "condition": {
+      "widget": "clear",
+      "api": "clear",
+      "equal": true
+    },
+    "apparentTemperature": {
+      "widget": "9.7°",
+      "api": "9.7°",
+      "equal": true
+    },
+    "minimumTemperature": {
+      "widget": "13°",
+      "api": "13°",
+      "equal": true
+    },
+    "maximumTemperature": {
+      "widget": "17°",
+      "api": "17°",
+      "equal": true
+    }
+  },
+  "남은문제": [
+    "좌표 변경 단독으로 922초 동안 OS 위치를 수신하지 못함. 별도 GNSS 소비자가 있어야 이번 에뮬레이터에서 위치가 전달됨.",
+    "갱신 후 위젯의 구체적인 주소명이 현재 위치로 표시됨. 격자/좌표와 날씨는 새 위치이나 새 지역명은 제공되지 않음."
+  ],
+  "화면": {
+    "이전": "weather_care_app/build/background-e2e-20261021/before-home.png",
+    "이후": "weather_care_app/build/background-e2e-20261021/after-home.png"
+  },
+  "범위": "기능 코드·빌드/설치·서버 배포·DB 직접 수정·시험 푸시 발송·수집 실행·운영 변경 없음. 에뮬레이터 위치는 서울로 유지. iOS 실기기 검증은 아님.",
+  "참고": [
+    "https://developer.android.com/studio/run/emulator-console",
+    "https://developers.google.com/android/reference/com/google/android/gms/location/Priority"
+  ]
+}

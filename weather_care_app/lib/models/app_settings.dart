@@ -6,6 +6,7 @@ class AppSettings {
   final List<String> savedRegionKeys;
   final bool onboardingCompleted;
   final bool notificationEnabled;
+  final bool backgroundLocationEnabled;
   final String notificationTime;
   final bool umbrellaEnabled;
   final bool parasolEnabled;
@@ -29,6 +30,7 @@ class AppSettings {
     this.savedRegionKeys = const [],
     required this.onboardingCompleted,
     required this.notificationEnabled,
+    this.backgroundLocationEnabled = false,
     required this.notificationTime,
     required this.umbrellaEnabled,
     required this.parasolEnabled,
@@ -53,6 +55,7 @@ class AppSettings {
     bool clearManualRegionKey = false,
     bool? onboardingCompleted,
     bool? notificationEnabled,
+    bool? backgroundLocationEnabled,
     String? notificationTime,
     bool? umbrellaEnabled,
     bool? parasolEnabled,
@@ -77,6 +80,8 @@ class AppSettings {
       savedRegionKeys: savedRegionKeys ?? this.savedRegionKeys,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
+      backgroundLocationEnabled:
+          backgroundLocationEnabled ?? this.backgroundLocationEnabled,
       notificationTime: notificationTime ?? this.notificationTime,
       umbrellaEnabled: umbrellaEnabled ?? this.umbrellaEnabled,
       parasolEnabled: parasolEnabled ?? this.parasolEnabled,
@@ -143,6 +148,7 @@ class AppSettings {
           fallbackSettings.onboardingCompleted,
       notificationEnabled: json['notificationEnabled'] as bool? ??
           fallbackSettings.notificationEnabled,
+      backgroundLocationEnabled: json['backgroundLocationEnabled'] == true,
       notificationTime: json['notificationTime'] as String? ??
           fallbackSettings.notificationTime,
       umbrellaEnabled:
@@ -181,6 +187,7 @@ class AppSettings {
       'savedRegionKeys': savedRegionKeys,
       'onboardingCompleted': onboardingCompleted,
       'notificationEnabled': notificationEnabled,
+      'backgroundLocationEnabled': backgroundLocationEnabled,
       'notificationTime': notificationTime,
       'umbrellaEnabled': umbrellaEnabled,
       'parasolEnabled': parasolEnabled,

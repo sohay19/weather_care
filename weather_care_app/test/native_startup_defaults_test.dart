@@ -283,7 +283,10 @@ void main() {
         androidWorker,
         contains(
             'if (!isCurrentSelection(preferences, rawUrl, revision)) return status;'));
-    expect(iosIntent, contains('guard isCurrentSelection() else { return }'));
+    expect(
+        iosIntent,
+        contains(
+            'guard !Task.isCancelled, isCurrentSelection() else { return false }'));
     expect(iosIntent, contains('stored.hasPrefix(incoming)'));
     expect(
       RegExp(r'WidgetRefreshIntent\.swift in Sources')

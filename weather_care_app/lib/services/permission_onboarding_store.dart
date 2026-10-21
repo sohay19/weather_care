@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PermissionOnboardingStore {
-  static const storageKey = 'permission_onboarding_v1_confirmed';
+  static const storageKey = 'permission_onboarding_v2_confirmed';
 
   const PermissionOnboardingStore();
 

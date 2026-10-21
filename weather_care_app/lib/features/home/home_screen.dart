@@ -28,6 +28,7 @@ import '../../services/current_location_service.dart';
 import '../../services/gps_region_name_service.dart';
 import '../../services/address_search_service.dart';
 import '../../services/home_widget_service.dart';
+import '../../services/background_location_service.dart';
 import '../../services/region_catalog.dart';
 import '../../models/selectable_region.dart';
 import '../../theme/weather_theme.dart';
@@ -105,6 +106,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       const AppSettingsRepository();
   WeatherService? _service;
   NotificationRegistrationService? _notificationRegistration;
+  final BackgroundLocationService _backgroundLocation =
+      BackgroundLocationService();
   SettingsSyncService? _settingsSync;
   ServerDataAccess? _serverDataAccess;
   CurrentLocationService get _locationService => widget.locationService;
@@ -115,6 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _refreshAgain = false;
   bool _notifyRefreshFailure = false;
   bool _requestPermission = false;
+  bool _requestInitialBackgroundPermission = false;
   bool _forceLocationRefresh = false;
   bool _initialized = false;
   bool _leftApp = false;
@@ -205,6 +209,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     unawaited(widget.homeWidgetService.publish(
       snapshot,
       refreshUrl: _homeWidgetRefreshUrl(),
+      testAccessKey: _serverDataAccess?.api.testAccessKey,
+      gpsEnabled: _settings.locationMode == 'GPS',
+      locationMeasuredAt:
+          _settings.locationMode == 'GPS' ? _location.measuredAt : null,
     ));
   }
 
@@ -342,6 +350,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ..addListener(_onSettingsSaveChanged);
     unawaited(_settingsSave!.save(_settings));
     _initialized = true;
+    unawaited(_syncBackgroundLocation());
     final permissionsConfirmed =
         await widget.permissionOnboardingStore.isConfirmed();
     if (!mounted) return;
@@ -352,7 +361,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         builder: (_) => const PermissionOnboardingDialog(),
       );
       if (!mounted) return;
-      if (confirmed == true) {
+      if (confirmed != null) {
+        _settings = _settings.copyWith(backgroundLocationEnabled: confirmed);
+        if (!confirmed) unawaited(_syncBackgroundLocation());
+        await _settingsSave?.save(_settings);
+        if (!mounted) return;
         try {
           await widget.permissionOnboardingStore.confirm();
         } catch (_) {
@@ -362,6 +375,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           await _readNotificationPermission(request: true, sync: true);
         }
         if (!mounted) return;
+        _requestInitialBackgroundPermission = confirmed;
         await _refresh(requestPermission: _settings.locationMode == 'GPS');
         return;
       }
@@ -388,6 +402,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     widget.adRemoval?.removeListener(_onAdRemovalChanged);
     _locationRevision++;
     _settingsSave?.dispose();
+    _backgroundLocation.dispose();
     _serverDataAccess?.removeListener(_onServerDataChanged);
     _weatherHourTimer?.cancel();
     if (widget.serverDataAccess == null) _serverDataAccess?.dispose();
@@ -403,6 +418,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _leftApp = true;
     }
     if (state == AppLifecycleState.resumed && _leftApp) {
+      unawaited(_syncBackgroundLocation());
       _leftApp = false;
       if (_initialized) unawaited(_readNotificationPermission(sync: true));
       final crossedWeatherHour =
@@ -470,6 +486,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _refreshAgain = false;
         final revision = _locationRevision;
         final ask = _requestPermission;
+        final askBackground = _requestInitialBackgroundPermission;
+        _requestInitialBackgroundPermission = false;
         final forceLocationRefresh = _forceLocationRefresh;
         final notifyFailure = _notifyRefreshFailure;
         Future<String?>? gpsRegionNameFuture;
@@ -498,6 +516,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _coordinates = result.coordinates;
             _gpsRegionName = null;
           });
+          if (askBackground && _backgroundLocationWanted) {
+            await _backgroundLocation.requestPermission(initial: true);
+            if (!mounted) return;
+            if (revision != _locationRevision) continue;
+            unawaited(_syncBackgroundLocation());
+          }
           if (result.canUseLocalAnalysis) {
             gpsRegionNameFuture = _resolveGpsRegionName(result.coordinates!);
           }
@@ -538,11 +562,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               : registration.initialize;
           _registrationInitialized = true;
           unawaited(register(
-              installationId: _settings.installationId,
-              nx: grid.nx,
-              ny: grid.ny,
-              locationMode: _settings.locationMode,
-              coordinates: preciseCoordinates));
+                  installationId: _settings.installationId,
+                  nx: grid.nx,
+                  ny: grid.ny,
+                  locationMode: _settings.locationMode,
+                  coordinates: preciseCoordinates,
+                  locationMeasuredAt: _settings.locationMode == 'GPS'
+                      ? _location.measuredAt
+                      : null)
+              .then((_) => _syncBackgroundLocation()));
         }
         await _fetchWeather(
           revision,
@@ -1023,6 +1051,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final settingsPanel = AbsorbPointer(
         absorbing: !_initialized,
         child: SettingsScreen(
+          backgroundLocation: _backgroundLocation,
+          onBackgroundLocationPermission: _requestBackgroundLocationPermission,
           embedded: true,
           onRefresh: _refreshFromSettings,
           initialSettings: _settings,
@@ -1470,10 +1500,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           supersede: true,
           forceLocationRefresh: updated.locationMode == 'GPS'));
     }
-    return _saveSettings(updated, refreshWeather: !locationChanged);
+    if (!_backgroundLocationWanted) unawaited(_syncBackgroundLocation());
+    return _saveSettings(updated, refreshWeather: !locationChanged).then((_) {
+      unawaited(_syncBackgroundLocation());
+    });
+  }
+
+  bool get _backgroundLocationWanted =>
+      _settings.backgroundLocationEnabled &&
+      _settings.locationMode == 'GPS' &&
+      _settings.notificationEnabled &&
+      !(_serverDataAccess?.paused ?? true) &&
+      _settingsSave?.state != SettingsSaveState.localFailed;
+
+  Future<void> _syncBackgroundLocation() async {
+    final access = _serverDataAccess;
+    if (access == null || !mounted) return;
+    await _backgroundLocation.synchronize(
+        enabled: _backgroundLocationWanted, access: access);
+  }
+
+  Future<void> _requestBackgroundLocationPermission() async {
+    if (!_backgroundLocationWanted) return;
+    // Foreground and Always permission requests must be separate on both OSes.
+    await _locationService.locate(requestPermission: true);
+    if (!mounted || !_backgroundLocationWanted) return;
+    await _backgroundLocation.requestPermission();
+    await _syncBackgroundLocation();
   }
 
   void _onSettingsSaveChanged() {
+    if (_settingsSave?.state == SettingsSaveState.localFailed) {
+      unawaited(_syncBackgroundLocation());
+    }
     if (mounted) setState(() {});
   }
 
@@ -1529,7 +1588,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             coordinates:
                 _settings.locationMode == 'GPS' && _location.canUseLocalAnalysis
                     ? _coordinates
-                    : null) ??
+                    : null,
+            locationMeasuredAt: _settings.locationMode == 'GPS'
+                ? _location.measuredAt
+                : null) ??
         Future<void>.value());
   }
 
@@ -1541,6 +1603,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _onServerDataChanged() {
+    unawaited(_syncBackgroundLocation());
     if (_serverDataAccess?.paused ?? true) {
       _notificationRegistration?.invalidateLocation();
     }

@@ -1,0 +1,157 @@
+{
+  "검증일": "2026-10-21",
+  "결론": "최종 Android APK에서 외부 GPS 측정 없이 백그라운드 이동·서버 알림 지역·위젯 새 지역명과 날씨 갱신 검증 통과",
+  "수정": {
+    "Android": "위치 foreground service와 실행 알림. GPS 우선 PendingIntent 요청5분/최소1분/이동1km, 약5분마다 캐시0·최대20초 자체 새 위치 요청. 정지/짧은 이동 재전송 억제와 만료된 오프라인 측정 재시도. 끄면 측정 토큰/예약/구독/서비스/알림 종료.",
+    "지역명": "Android·iOS 네이티브 역지오코딩 최대4초. 새 좌표의 지역명을 UTF-8 위젯 요청에 전달. 수동 전환/새 측정/세션 변경은 늦은 응답보다 우선. 정밀 권한 없으면 역지오코딩 및 정밀 좌표 전달 제외.",
+    "안내": "초기/설정 동의 팝업에 Android 실행 알림과 GPS 배터리 사용 명시"
+  },
+  "시험방법": {
+    "대상": "emulator-5554 / 시험 API와 시험 SQLite 읽기 전용 비교",
+    "시작위치": [
+      35.1796,
+      129.0756
+    ],
+    "변경위치": [
+      37.48677,
+      126.89515
+    ],
+    "준비": "최종 APK 설치 후 앱에서 감시 초기화, 홈으로 내린 뒤 시각 기록과 위치 변경. 기존 위치·알림 권한 유지.",
+    "제외": "외부 GNSS 소비자/다른 지도 앱/수신기 수동 호출/Worker 강제 실행/위젯 새로고침/서버 수동 위치 PUT/DB 직접 수정 없음.",
+    "주검증종료이후": "앱 UI에서 이동 감시 끄기/다시 켜기 시험을 별도로 진행하고 원래 켜짐 상태로 복원, 홈 화면으로 복귀."
+  },
+  "시각UTC": {
+    "좌표입력": "2026-10-21T06:15:08.251691+00:00",
+    "GPS측정": "2026-10-21T06:19:35.935Z",
+    "서버갱신": "2026-10-21T06:19:37.861Z",
+    "위젯수신": "2026-10-21T06:19:39.244761Z"
+  },
+  "좌표입력후초": {
+    "GPS측정": 267.683,
+    "서버갱신": 269.609,
+    "위젯수신": 270.993
+  },
+  "측정이후초": {
+    "서버갱신": 1.926,
+    "위젯수신": 3.31
+  },
+  "서버전후": {
+    "이전격자": [
+      98,
+      76
+    ],
+    "새격자": [
+      58,
+      125
+    ],
+    "이전알림토픽": "weather_98_76",
+    "새알림토픽": "weather_58_125"
+  },
+  "위젯전후": {
+    "이전": {
+      "locationKey": "98:76",
+      "region": "현재 위치",
+      "refreshTime": "오후 3:14 기준",
+      "generatedAt": "2026-10-21T06:14:34.630Z",
+      "receivedAt": "2026-10-21T06:14:36.443274Z",
+      "currentTemperature": "20.9°",
+      "condition": "partlyCloudy",
+      "minimumTemperature": "16°",
+      "maximumTemperature": "22°",
+      "apparentTemperature": "19.1°"
+    },
+    "이후": {
+      "locationKey": "58:125:name:서울 구로구 구로동",
+      "region": "서울 구로구 구로동",
+      "refreshTime": "오후 3:19 기준",
+      "generatedAt": "2026-10-21T06:19:39.918Z",
+      "receivedAt": "2026-10-21T06:19:39.244761Z",
+      "currentTemperature": "16.3°",
+      "condition": "clear",
+      "minimumTemperature": "13°",
+      "maximumTemperature": "16°",
+      "apparentTemperature": "12.5°"
+    }
+  },
+  "검사": {
+    "위치만 변경·외부 GPS 소비자 없음": true,
+    "백그라운드 관찰 표본 전부 런처": true,
+    "주 검증 중 앱 resume 기록 없음": true,
+    "동일 설치·감시 세션 유지": true,
+    "서버 좌표·알림 지역 토픽 변경": true,
+    "알림 토큰·개별 설정 유지": true,
+    "위젯 새 한국어 지역명 적용": true,
+    "위젯 새 위치·측정·선택 revision 반영": true,
+    "실제 날씨 API 7항목 일치": true,
+    "실제 위치·위젯 작업 성공": true,
+    "끄면 서비스·알림·구독·기기 구성 종료": true,
+    "다시 켠 뒤 서비스·알림·기기 구성 복원": true,
+    "앱 자체 20초 GPS 요청 기록": true
+  },
+  "날씨응답대조": {
+    "locationKey": {
+      "widget": "58:125:name:서울 구로구 구로동",
+      "api": "58:125:name:서울 구로구 구로동",
+      "equal": true
+    },
+    "region": {
+      "widget": "서울 구로구 구로동",
+      "api": "서울 구로구 구로동",
+      "equal": true
+    },
+    "currentTemperature": {
+      "widget": "16.3°",
+      "api": "16.3°",
+      "equal": true
+    },
+    "condition": {
+      "widget": "clear",
+      "api": "clear",
+      "equal": true
+    },
+    "apparentTemperature": {
+      "widget": "12.5°",
+      "api": "12.5°",
+      "equal": true
+    },
+    "minimumTemperature": {
+      "widget": "13°",
+      "api": "13°",
+      "equal": true
+    },
+    "maximumTemperature": {
+      "widget": "16°",
+      "api": "16°",
+      "equal": true
+    }
+  },
+  "자동검사": {
+    "Flutter": 76,
+    "AndroidJUnit": 22,
+    "총계": 98,
+    "Dart정적분석": "통과",
+    "Android시험APK": "빌드·설치 성공",
+    "diffCheck": "통과"
+  },
+  "종료검사": {
+    "enabled": false,
+    "servicePresent": false,
+    "encryptedConfigPresent": false,
+    "ongoingNotificationPresent": false,
+    "nativePendingIntentPresent": false
+  },
+  "복원검사": {
+    "checkedAt": "2026-10-21T06:25:31.539817+00:00",
+    "enabled": true,
+    "foregroundLocationService": true,
+    "encryptedConfigPresent": true,
+    "ongoingNotificationPresent": true
+  },
+  "근거": "weather_care_app/build/background-gps-fix-20261021/final (before-home.png/after-home.png, primary-result.json, GMS·lifecycle·작업 기록, settings-off/restored/consent 화면)",
+  "범위와한계": [
+    "iOS 지역명 보완·취소 보호 코드는 반영했지만 Windows이므로 Xcode 빌드/실기기 미검증.",
+    "이번 시간은 Android 에뮬레이터 실측이며 실기기 절전·강제 종료·GPS 수신·네트워크별 주기 보장이 아니다.",
+    "주소 서비스 장애/시간 초과 시 이전 지역명을 새 좌표로 재사용하지 않고 현재 위치 안내로 날씨 조회를 유지한다.",
+    "서버 배포/SQL 직접 변경/기상 자료 강제 수집/시험 푸시/운영 변경/커밋/push 없음. 실행 안내 알림은 새 위치 서비스의 정상 동작이다."
+  ]
+}

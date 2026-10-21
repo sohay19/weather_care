@@ -17,6 +17,9 @@ import android.widget.RemoteViews;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
+import androidx.work.Constraints;
+import androidx.work.NetworkType;
+import androidx.work.Data;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -220,9 +223,14 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     }
 
     static void enqueueRefresh(Context context) {
-        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(
-                WeatherCareWidgetRefreshWorker.class
-        ).build();
+        enqueueRefresh(context, false);
+    }
+
+    static void enqueueRefresh(Context context, boolean backgroundLocation) {
+        OneTimeWorkRequest.Builder builder = new OneTimeWorkRequest.Builder(WeatherCareWidgetRefreshWorker.class)
+                .setInputData(new Data.Builder().putBoolean("backgroundLocation", backgroundLocation).build());
+        if (backgroundLocation) builder.setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build());
+        OneTimeWorkRequest request = builder.build();
         WorkManager.getInstance(context).enqueueUniqueWork(
                 "weather-care-widget-refresh",
                 ExistingWorkPolicy.REPLACE,

@@ -88,13 +88,14 @@ class NotificationRegistrationService {
     required int ny,
     required String locationMode,
     DeviceCoordinates? coordinates,
+    DateTime? locationMeasuredAt,
   }) async {
     if (_disposed || !(canRegister?.call() ?? true)) {
       _record('skip:inactive');
       return;
     }
-    _target =
-        _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
+    _target = _RegistrationTarget(
+        installationId, nx, ny, locationMode, coordinates, locationMeasuredAt);
     try {
       await _registerCurrent();
 
@@ -130,13 +131,14 @@ class NotificationRegistrationService {
     required int ny,
     required String locationMode,
     DeviceCoordinates? coordinates,
+    DateTime? locationMeasuredAt,
   }) async {
     if (_disposed || !(canRegister?.call() ?? true)) {
       _record('skip:inactive');
       return;
     }
-    _target =
-        _RegistrationTarget(installationId, nx, ny, locationMode, coordinates);
+    _target = _RegistrationTarget(
+        installationId, nx, ny, locationMode, coordinates, locationMeasuredAt);
     try {
       await _registerCurrent();
     } catch (error) {
@@ -196,6 +198,9 @@ class NotificationRegistrationService {
             'timezone': 'Asia/Seoul',
             'latitude': target.coordinates?.latitude,
             'longitude': target.coordinates?.longitude,
+            if (target.locationMeasuredAt != null)
+              'locationMeasuredAt':
+                  target.locationMeasuredAt!.toUtc().toIso8601String(),
           },
           query: {'nx': '${target.nx}', 'ny': '${target.ny}'},
         );
@@ -216,7 +221,8 @@ class _RegistrationTarget {
   final int ny;
   final String locationMode;
   final DeviceCoordinates? coordinates;
+  final DateTime? locationMeasuredAt;
 
   const _RegistrationTarget(this.installationId, this.nx, this.ny,
-      this.locationMode, this.coordinates);
+      this.locationMode, this.coordinates, this.locationMeasuredAt);
 }

@@ -52,12 +52,15 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                 if (!isCurrentSelection(preferences, rawUrl, revision) ||
                         (status >= 200 && status < 300)) return Result.success();
                 WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
+                if (getInputData().getBoolean("backgroundLocation", false) && getRunAttemptCount() < 5 &&
+                        (status >= 500 || status == 429)) return Result.retry();
                 return Result.failure();
             }
         } catch (Exception ignored) {
             synchronized (MainActivity.WIDGET_LOCK) {
                 if (!isCurrentSelection(preferences, rawUrl, revision)) return Result.success();
                 WeatherCareWidgetProvider.setRefreshStatus(context, "서버 연결 실패");
+                if (getInputData().getBoolean("backgroundLocation", false) && getRunAttemptCount() < 5) return Result.retry();
                 return Result.failure();
             }
         } finally {
@@ -84,6 +87,7 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
         try {
             connection.setRequestMethod("GET");
             connection.setRequestProperty("Accept", "application/json");
+            authorizeTestServer(connection, preferences.getString(MainActivity.WIDGET_TEST_ACCESS_KEY, null));
             connection.setConnectTimeout(10_000);
             connection.setReadTimeout(20_000);
             connection.setUseCaches(false);
@@ -119,6 +123,16 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
         String scheme = uri.getScheme();
         return uri.getHost() != null &&
                 ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme));
+    }
+
+    static void authorizeTestServer(HttpURLConnection connection, String key) {
+        URL url = connection.getURL();
+        if ("https".equals(url.getProtocol()) &&
+                "weather-test-api.codesoha.com".equals(url.getHost()) &&
+                key != null && !key.isBlank()) {
+            connection.setInstanceFollowRedirects(false);
+            connection.setRequestProperty("X-Weather-Care-Test-Key", key);
+        }
     }
 
     private static String readResponse(InputStream input) throws IOException {

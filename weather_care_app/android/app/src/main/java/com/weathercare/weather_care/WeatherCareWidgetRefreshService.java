@@ -197,10 +197,15 @@ public final class WeatherCareWidgetRefreshService extends Service {
 
     @Nullable
     private String regionName(Location location) {
+        return regionName(this, location.getLatitude(), location.getLongitude());
+    }
+
+    @Nullable
+    static String regionName(Context context, double latitude, double longitude) {
         if (!Geocoder.isPresent()) return null;
         try {
-            List<Address> addresses = new Geocoder(this, Locale.KOREA).getFromLocation(
-                    location.getLatitude(), location.getLongitude(), 5
+            List<Address> addresses = new Geocoder(context, Locale.KOREA).getFromLocation(
+                    latitude, longitude, 5
             );
             if (addresses == null || addresses.isEmpty()) return null;
             String firstName = null;

@@ -8,6 +8,17 @@ private let refreshWidgetSnapshotKey = "snapshot"
 private let refreshWidgetStatusKey = "refresh_status"
 private let refreshWidgetURLKey = "refresh_url"
 private let refreshWidgetRevisionKey = "selection_revision"
+private let refreshWidgetTestAccessKey = "test_access_key"
+
+private final class WidgetRefreshSessionDelegate: NSObject, URLSessionTaskDelegate {
+  func urlSession(
+    _ session: URLSession, task: URLSessionTask,
+    willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
+    completionHandler: @escaping (URLRequest?) -> Void
+  ) {
+    completionHandler(nil)
+  }
+}
 
 @available(iOS 17.0, *)
 struct RefreshWeatherWidgetIntent: AppIntent {
@@ -21,21 +32,21 @@ struct RefreshWeatherWidgetIntent: AppIntent {
   }
 }
 
-@available(iOS 17.0, *)
 @MainActor
-private func refreshWeatherWidget() async {
+@discardableResult
+func refreshWeatherWidget() async -> Bool {
   guard
     let defaults = UserDefaults(suiteName: refreshWidgetGroup),
     let rawURL = defaults.string(forKey: refreshWidgetURLKey),
     let url = URL(string: rawURL)
-  else { return }
+  else { return false }
   let revision = defaults.string(forKey: refreshWidgetRevisionKey)
   func isCurrentSelection() -> Bool {
     defaults.string(forKey: refreshWidgetRevisionKey) == revision &&
       defaults.string(forKey: refreshWidgetURLKey) == rawURL
   }
   func showStatus(_ status: String) {
-    guard isCurrentSelection() else { return }
+    guard !Task.isCancelled, isCurrentSelection() else { return }
     defaults.set(status, forKey: refreshWidgetStatusKey)
     WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
   }
@@ -43,7 +54,7 @@ private func refreshWeatherWidget() async {
   guard ["https", "http"].contains(url.scheme?.lowercased() ?? ""),
         url.host != nil else {
     showStatus("서버 연결 실패")
-    return
+    return false
   }
   showStatus("불러오는 중")
   var request = URLRequest(
@@ -52,8 +63,19 @@ private func refreshWeatherWidget() async {
     timeoutInterval: 20
   )
   request.setValue("application/json", forHTTPHeaderField: "Accept")
+  if url.scheme == "https", url.host == "weather-test-api.codesoha.com",
+     let key = defaults.string(forKey: refreshWidgetTestAccessKey), !key.isEmpty {
+    request.setValue(key, forHTTPHeaderField: "X-Weather-Care-Test-Key")
+  }
+  let session = request.value(forHTTPHeaderField: "X-Weather-Care-Test-Key") == nil
+    ? URLSession.shared
+    : URLSession(configuration: .ephemeral,
+        delegate: WidgetRefreshSessionDelegate(), delegateQueue: nil)
+  defer {
+    if session !== URLSession.shared { session.invalidateAndCancel() }
+  }
   guard
-    let (data, response) = try? await URLSession.shared.data(for: request),
+    let (data, response) = try? await session.data(for: request),
     let http = response as? HTTPURLResponse,
     (200..<300).contains(http.statusCode),
     data.count <= 512 * 1024,
@@ -63,26 +85,27 @@ private func refreshWeatherWidget() async {
     object["refreshTime"] is String
   else {
     showStatus("서버 연결 실패")
-    return
+    return false
   }
   // 구역 전환/삭제/앱 갱신 전의 응답과 오류는 새 선택을 덮어쓰지 않는다.
-  guard isCurrentSelection() else { return }
+  guard !Task.isCancelled, isCurrentSelection() else { return false }
   let formatter = ISO8601DateFormatter()
   formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
   object["receivedAt"] = formatter.string(from: Date())
   guard let stamped = try? JSONSerialization.data(withJSONObject: object),
         let rawSnapshot = String(data: stamped, encoding: .utf8) else {
     showStatus("서버 연결 실패")
-    return
+    return false
   }
   let snapshot = weatherWidgetSnapshotPreservingSpecificRegion(
     rawSnapshot,
     previous: defaults.string(forKey: refreshWidgetSnapshotKey)
   )
-  guard isCurrentSelection() else { return }
+  guard !Task.isCancelled, isCurrentSelection() else { return false }
   defaults.set(snapshot, forKey: refreshWidgetSnapshotKey)
   defaults.removeObject(forKey: refreshWidgetStatusKey)
   WidgetCenter.shared.reloadTimelines(ofKind: refreshWidgetKind)
+  return true
 }
 
 func weatherWidgetSnapshotPreservingSpecificRegion(

@@ -10,7 +10,8 @@ class PermissionOnboardingDialog extends StatelessWidget {
     return AlertDialog(
       key: const ValueKey('permission-onboarding-dialog'),
       title: const Text('\'날씨 챙겨\'에서 필요한 권한이에요'),
-      content: Column(
+      content: SingleChildScrollView(
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -26,8 +27,15 @@ class PermissionOnboardingDialog extends StatelessWidget {
             description: '사용자가 켠 날씨·준비물 알림을 기기에 표시할 때 사용해요.',
           ),
           const SizedBox(height: 18),
+          const _PermissionPurpose(
+            icon: Icons.location_searching_rounded,
+            title: '백그라운드 위치 갱신 · 선택',
+            description:
+                '앱을 사용하지 않을 때도 이동을 감지해 현재 위치·날씨 알림 지역·홈 위젯 날씨를 갱신해요. 최신 위치를 서버에 보내며 이동 경로는 저장하지 않아요.',
+          ),
+          const SizedBox(height: 14),
           Text(
-            '계속을 누르면 운영체제 권한 창이 차례대로 표시돼요.\niOS 위젯의 위치 사용은 위젯을 추가할 때 별도로 물을 수 있어요.\n권한을 허용하지 않아도 Main에서 구역을 추가해 선택할 수 있어요.',
+            '동의하고 계속을 누르면 알림 → 사용 중 위치 → 백그라운드 위치 순서로 요청해요.\nAndroid 11 이상은 권한 화면에서 ‘항상 허용’을 선택해주세요. iOS는 ‘앱을 사용하는 동안 허용’ 뒤 추가 요청에서 ‘항상 허용’이 필요해요. 표시 시점은 운영체제가 정해요. Android는 감시 중 알림을 표시하며 GPS 사용으로 배터리를 더 사용할 수 있어요.\nGPS 모드·전체 알림·서버 사용이 켜진 동안 동작하며 기능을 끄거나 지역을 직접 선택하면 감시를 중지해요.\n권한을 거부해도 직접 선택한 지역의 날씨를 볼 수 있어요.',
             style: TextStyle(
               color: WeatherCareTheme.of(context).textSecondary,
               fontSize: 12,
@@ -35,12 +43,17 @@ class PermissionOnboardingDialog extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
       actions: [
+        TextButton(
+          key: const ValueKey('permission-onboarding-foreground-only'),
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('백그라운드 제외'),
+        ),
         FilledButton(
           key: const ValueKey('permission-onboarding-confirm'),
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('계속'),
+          child: const Text('동의하고 계속'),
         ),
       ],
     );

@@ -12,17 +12,20 @@ import WidgetKit
   private let homeWidgetSnapshotKey = "snapshot"
   private let homeWidgetRefreshStatusKey = "refresh_status"
   private let homeWidgetRefreshURLKey = "refresh_url"
+  private let homeWidgetTestAccessKey = "test_access_key"
   private let homeWidgetRevisionKey = "selection_revision"
   private let adRemovalChannel = "com.codesoha.weathercare/ad-removal"
   private let notificationDiagnosticsChannel = "com.codesoha.weathercare/notification-diagnostics"
   private let notificationLogger = Logger(
     subsystem: "com.codesoha.weathercare", category: "NotificationRegistration")
   private let homeWidgetGPSEnabledKey = "gps_enabled"
+  private let backgroundLocation = BackgroundLocationMonitor()
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    backgroundLocation.resume()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -45,6 +48,12 @@ import WidgetKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    let locationChannel = FlutterMethodChannel(
+      name: "com.codesoha.weathercare/background-location",
+      binaryMessenger: engineBridge.applicationRegistrar.messenger())
+    locationChannel.setMethodCallHandler { [weak self] call, result in
+      self?.backgroundLocation.handle(call, result: result)
+    }
     let diagnostics = FlutterMethodChannel(
       name: notificationDiagnosticsChannel,
       binaryMessenger: engineBridge.applicationRegistrar.messenger()
@@ -108,6 +117,7 @@ import WidgetKit
     let widgetSnapshotKey = homeWidgetSnapshotKey
     let widgetRefreshStatusKey = homeWidgetRefreshStatusKey
     let widgetRefreshURLKey = homeWidgetRefreshURLKey
+    let widgetTestAccessKey = homeWidgetTestAccessKey
     let widgetRevisionKey = homeWidgetRevisionKey
     let widgetGPSEnabledKey = homeWidgetGPSEnabledKey
     let channel = FlutterMethodChannel(
@@ -135,6 +145,21 @@ import WidgetKit
           ))
           return
         }
+        let gpsEnabled = values?["gpsEnabled"] as? Bool ?? false
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let measuredAt = (values?["locationMeasuredAt"] as? String).flatMap { formatter.date(from: $0) }
+        let storedAt = defaults.string(forKey: "location_measured_at").flatMap { formatter.date(from: $0) }
+        if gpsEnabled, defaults.bool(forKey: widgetGPSEnabledKey), let storedAt,
+           measuredAt == nil || storedAt > measuredAt! {
+          result(nil)
+          return
+        }
+        if gpsEnabled, let measuredAt {
+          defaults.set(formatter.string(from: measuredAt), forKey: "location_measured_at")
+        } else {
+          defaults.removeObject(forKey: "location_measured_at")
+        }
         defaults.set(UUID().uuidString, forKey: widgetRevisionKey)
         defaults.set(snapshot, forKey: widgetSnapshotKey)
         defaults.removeObject(forKey: widgetRefreshStatusKey)
@@ -145,6 +170,11 @@ import WidgetKit
           defaults.removeObject(forKey: widgetRefreshURLKey)
         }
         defaults.set(values?["gpsEnabled"] as? Bool ?? false, forKey: widgetGPSEnabledKey)
+        if let key = values?["testAccessKey"] as? String, !key.isEmpty {
+          defaults.set(key, forKey: widgetTestAccessKey)
+        } else {
+          defaults.removeObject(forKey: widgetTestAccessKey)
+        }
         WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
         result(nil)
       case "clear":
@@ -152,7 +182,9 @@ import WidgetKit
         defaults.removeObject(forKey: widgetSnapshotKey)
         defaults.removeObject(forKey: widgetRefreshStatusKey)
         defaults.removeObject(forKey: widgetRefreshURLKey)
+        defaults.removeObject(forKey: widgetTestAccessKey)
         defaults.removeObject(forKey: widgetGPSEnabledKey)
+        defaults.removeObject(forKey: "location_measured_at")
         WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
         result(nil)
       default:

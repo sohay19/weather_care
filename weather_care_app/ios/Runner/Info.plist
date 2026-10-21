@@ -51,6 +51,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>현재 위치의 날씨와 500m 강수 관측을 확인하고 날씨 알림과 홈 화면 위젯 새로고침에 사용합니다.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>앱을 사용하지 않을 때도 이동을 감지해 최신 위치를 서버에 보내고 이동한 지역의 날씨·낙뢰 알림과 홈 위젯 위치·날씨를 갱신합니다. 초기 권한 안내에서 동의하거나 설정에서 켤 수 있습니다.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -76,6 +78,7 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>location</string>
 		<string>remote-notification</string>
 		<string>fetch</string>
 	</array>

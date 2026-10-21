@@ -25,19 +25,21 @@ class MarinePoint {
 }
 
 List<MarinePoint> marinePoints(List<Map<String, dynamic>> records,
-    {bool buoy = false, Map<String, dynamic>? location}) {
+    {bool buoy = false,
+    Map<String, dynamic>? location,
+    List<String> metrics = const [
+      'tideCm',
+      'waterTempC',
+      'currentSpeed',
+      'currentDirectionDeg'
+    ]}) {
   final chosen = <DateTime, (MarinePoint, double)>{};
   for (final record in records) {
     final time = marineRecordTime(record['time']);
     if (time == null) continue;
     final raw = Map<String, dynamic>.from(record['values'] as Map? ?? {});
     final values = <String, double>{};
-    for (final key in [
-      'tideCm',
-      'waterTempC',
-      'currentSpeed',
-      'currentDirectionDeg'
-    ]) {
+    for (final key in metrics) {
       final value = key == 'currentSpeed' && buoy
           ? (raw['currentSpeedCmPerSec'] is num
               ? (raw['currentSpeedCmPerSec'] as num) / 100
@@ -83,9 +85,9 @@ class MarineHourlyData {
           _today(p) && !p.time.isAfter(now) && p.values.containsKey(metric))
       .lastOrNull;
 
-  (double, double)? range(String metric) {
-    final values = forecasts
-        .where(_today)
+  (double, double)? range(String metric, {bool observed = false}) {
+    final values = (observed ? observations : forecasts)
+        .where((p) => _today(p) && (!observed || !p.time.isAfter(now)))
         .map((p) => p.values[metric])
         .whereType<double>();
     return values.isEmpty
@@ -93,13 +95,13 @@ class MarineHourlyData {
         : (values.reduce(math.min), values.reduce(math.max));
   }
 
-  /// 과거의 빈 관측값을 예측값으로 메우지 않는다. 현재 이후의 관측값도 사용하지 않는다.
+  /// 관측은 현재까지, 예측은 오늘 0시부터 표시한다. 두 자료의 결측은 따로 유지한다.
   List<double?> hourly(String metric, {required bool forecast}) =>
       List.generate(24, (hour) {
         final rows = (forecast ? forecasts : observations).where((p) =>
             _today(p) &&
             p.time.hour == hour &&
-            (forecast ? p.time.isAfter(now) : !p.time.isAfter(now)));
+            (forecast || !p.time.isAfter(now)));
         return rows
             .where((p) => p.values.containsKey(metric))
             .lastOrNull

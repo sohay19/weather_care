@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/weather_theme.dart';
 import '../../../utils/weather_number.dart';
 import 'extra_chip_row.dart';
+import 'data_range_tile.dart';
 
 /// 저장된 시각과 값만 그린다. 결측을 0으로 바꾸거나 시각 간격을 균등화하지 않는다.
 class ExtraDataOverview extends StatefulWidget {
@@ -15,6 +16,7 @@ class ExtraDataOverview extends StatefulWidget {
   final String Function(String) unitFor;
   final DateTime? Function(Object?) timeFor;
   final String Function(String) timeLabel;
+  final Key? currentKey;
 
   const ExtraDataOverview({
     super.key,
@@ -25,6 +27,7 @@ class ExtraDataOverview extends StatefulWidget {
     required this.unitFor,
     required this.timeFor,
     required this.timeLabel,
+    this.currentKey,
   });
 
   @override
@@ -85,6 +88,9 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
     final unit = widget.unitFor(metric);
     final title = widget.labelFor(metric);
     final selectedLabel = widget.timeLabel('${records[selected]['time']}');
+    final selectedClock = '${times[selected].hour.toString().padLeft(2, '0')}:'
+        '${times[selected].minute.toString().padLeft(2, '0')}';
+    const chartHeight = 256.0;
     final forecast = ['KHOA_TIDE_HOURLY', 'KHOA_TIDE_EXTREME', 'KHOA_ROMS']
         .contains(widget.source);
     final connect =
@@ -104,23 +110,6 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
       }
       setState(() => _selected = closest);
     }
-
-    Widget stat(String label, double value) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-              color: palette.surface.withValues(alpha: .75),
-              borderRadius: BorderRadius.circular(12)),
-          child: Text.rich(
-              TextSpan(children: [
-                TextSpan(
-                    text: '$label  ',
-                    style: TextStyle(color: palette.textSecondary)),
-                TextSpan(
-                    text: '${formatWeatherNumber(value)}$unit',
-                    style: const TextStyle(fontWeight: FontWeight.w800)),
-              ]),
-              style: const TextStyle(fontSize: 12)),
-        );
 
     return Container(
       key: const ValueKey('extra-data-overview'),
@@ -172,36 +161,78 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
                 onSelected: (_) => setState(() => _metric = key)),
         ]),
         const SizedBox(height: 14),
-        Text('선택 시각 · $selectedLabel',
-            key: const ValueKey('extra-selected-time'),
-            style: TextStyle(color: palette.textSecondary, fontSize: 11)),
-        const SizedBox(height: 4),
-        Text.rich(
-            TextSpan(children: [
-              TextSpan(
-                  text: values[selected] == null
-                      ? '자료 없음'
-                      : formatWeatherNumber(values[selected]!),
-                  style: const TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: WeatherCareTheme.fontSuite)),
-              if (values[selected] != null)
-                TextSpan(
-                    text: ' $unit',
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w500)),
-            ]),
-            key: const ValueKey('extra-selected-value'),
-            style: TextStyle(color: palette.primaryDeep)),
+        Container(
+            key: const ValueKey('extra-current'),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+                color: palette.primarySoft,
+                borderRadius: BorderRadius.circular(16)),
+            child: Column(
+                key: widget.currentKey,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Expanded(
+                        flex: 3,
+                        child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text('${forecast ? '예측' : '관측'} · $title',
+                                style:
+                                    Theme.of(context).textTheme.titleMedium))),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        flex: 2,
+                        child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text('기준 시간 · $selectedClock',
+                                key: const ValueKey('extra-selected-time'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(fontSize: 10)))),
+                  ]),
+                  const SizedBox(height: 4),
+                  Text.rich(
+                      TextSpan(children: [
+                        TextSpan(
+                            text: values[selected] == null
+                                ? '자료 없음'
+                                : formatWeatherNumber(values[selected]!),
+                            style: const TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: WeatherCareTheme.fontSuite)),
+                        if (values[selected] != null)
+                          TextSpan(
+                              text: ' $unit',
+                              style: const TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w500)),
+                      ]),
+                      key: const ValueKey('extra-selected-value'),
+                      style: TextStyle(color: palette.primaryDeep)),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(
+                        child: DataRangeTile(
+                            label: '최저',
+                            value: '${formatWeatherNumber(low)}$unit')),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        child: DataRangeTile(
+                            label: '최고',
+                            value: '${formatWeatherNumber(high)}$unit')),
+                  ]),
+                ])),
         const SizedBox(height: 16),
         Text('$title${unit.isEmpty ? '' : ' ($unit)'} · ${known.length}개 시점',
             style: TextStyle(color: palette.textSecondary, fontSize: 11)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 24),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           SizedBox(
               width: 46,
-              height: 132,
+              height: chartHeight,
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +260,7 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
                               '최저 ${formatWeatherNumber(low)}$unit, 최고 ${formatWeatherNumber(high)}$unit. 아래에서 시각을 선택할 수 있어요.',
                           child: CustomPaint(
                               key: ValueKey('extra-chart-$metric'),
-                              size: const Size(double.infinity, 132),
+                              size: const Size(double.infinity, chartHeight),
                               painter: _ExtraChartPainter(
                                   times: times,
                                   values: values,
@@ -255,17 +286,25 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
                           widget
                               .timeLabel('${records.first['time']}')
                               .replaceFirst(' ', '\n'),
+                          key: const ValueKey('extra-chart-start-time'),
                           style: TextStyle(
-                              color: palette.textSecondary, fontSize: 10))),
+                              color: palette.textSecondary,
+                              fontSize: 10,
+                              fontFamily: WeatherCareTheme.fontSuite,
+                              fontWeight: FontWeight.w800))),
                   if (records.length > 1)
                     Expanded(
                         child: Text(
                             widget
                                 .timeLabel('${records.last['time']}')
                                 .replaceFirst(' ', '\n'),
+                            key: const ValueKey('extra-chart-end-time'),
                             textAlign: TextAlign.right,
                             style: TextStyle(
-                                color: palette.textSecondary, fontSize: 10))),
+                                color: palette.textSecondary,
+                                fontSize: 10,
+                                fontFamily: WeatherCareTheme.fontSuite,
+                                fontWeight: FontWeight.w800))),
                 ])),
         if (records.length > 1)
           Slider(
@@ -280,10 +319,6 @@ class _ExtraDataOverviewState extends State<ExtraDataOverview> {
           )
         else
           const SizedBox(height: 12),
-        Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [stat('최저', low), stat('최고', high)]),
       ]),
     );
   }

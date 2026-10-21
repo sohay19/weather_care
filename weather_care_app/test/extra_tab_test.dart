@@ -2,7 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/tabs/extra_tab.dart';
+import 'package:weather_care/features/home/widgets/extra_data_overview.dart';
+import 'package:weather_care/features/home/widgets/data_range_tile.dart';
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
+import 'package:weather_care/features/home/widgets/marine_series.dart';
 import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/current_location_service.dart';
 import 'package:weather_care/services/kma_grid.dart';
@@ -122,13 +127,16 @@ class _ExtraApi extends ApiClient {
 }
 
 Future<void> _open(WidgetTester tester, _ExtraApi api,
-    {DateTime? now, DeviceCoordinates? coordinates, bool active = true}) async {
+    {DateTime? now,
+    DeviceCoordinates? coordinates,
+    bool active = true,
+    KmaGrid grid = const KmaGrid(nx: 60, ny: 121)}) async {
   await tester.pumpWidget(MaterialApp(
     theme: WeatherCareTheme.light(),
     home: Scaffold(
         body: ExtraTab(
             client: api,
-            grid: const KmaGrid(nx: 60, ny: 121),
+            grid: grid,
             active: active,
             coordinates: coordinates,
             now: now ?? DateTime.utc(2026, 10, 14, 4))),
@@ -161,7 +169,398 @@ void _screen(WidgetTester tester, {double width = 800}) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+Finder _tideTime(String text) {
+  final parts = text.split(' ');
+  return find.descendant(
+      of: find.byKey(ValueKey(
+          parts.first == '만조' ? 'marine-tide-high' : 'marine-tide-low')),
+      matching: find.text(parts.last));
+}
+
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('관측소 항목마다 가까운 기본값·저장한 선택·자동선택 버튼을 동일하게 적용한다', (tester) async {
+    _screen(tester, width: 320);
+    for (final (source, scope) in [
+      ('HRFCO_RIVER_FLOW', 'station'),
+      ('KWATER_DAM', 'dam'),
+      ('KHOA_TIDE_OBS', 'station'),
+      ('KHOA_BUOY_OBS', 'station'),
+      ('KHOA_RIP_CURRENT', 'beach'),
+    ]) {
+      await tester.pumpWidget(const SizedBox());
+      final api = _ExtraApi()
+        ..groups = [
+          {
+            'source': source,
+            'scope': scope,
+            'title': '관측',
+            'targets': [
+              {'id': 'FAR', 'name': '먼 관측소', 'distanceKm': 50},
+              {
+                'id': 'NEAR',
+                'name': '가까운 관측소',
+                'distanceKm': 1,
+                'hasData': false
+              },
+            ]
+          }
+        ];
+      await _open(tester, api, now: DateTime.utc(2026, 7, 14, 4));
+      expect(api.queries.where((q) => q['source'] == source).last['targetId'],
+          'NEAR');
+      tester
+          .widget<DropdownButtonFormField<String>>(
+              find.byType(DropdownButtonFormField<String>))
+          .onChanged!('FAR');
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+      await _open(tester, api, now: DateTime.utc(2026, 7, 14, 4));
+      expect(api.queries.where((q) => q['source'] == source).last['targetId'],
+          'FAR');
+      final button = find.byKey(ValueKey(source == 'KHOA_RIP_CURRENT'
+          ? 'extra-nearest-$source'
+          : '${source.startsWith('KHOA') ? 'marine' : 'river'}-nearest-target'));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(api.queries.where((q) => q['source'] == source).last['targetId'],
+          'NEAR');
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('모든 관측소 선택은 조회가 끝나면 결과를 화면 중앙으로 스크롤한다', (tester) async {
+    _screen(tester, width: 320);
+    tester.view.physicalSize = const Size(320, 800);
+    for (final (source, scope) in [
+      ('HRFCO_RIVER_FLOW', 'station'),
+      ('KWATER_DAM', 'dam'),
+      ('KHOA_TIDE_OBS', 'station'),
+      ('KHOA_BUOY_OBS', 'station'),
+      ('KHOA_RIP_CURRENT', 'beach'),
+    ]) {
+      await tester.pumpWidget(const SizedBox());
+      SharedPreferences.setMockInitialValues({});
+      final pending = Completer<Map<String, dynamic>>();
+      final api = _ExtraApi()
+        ..groups = [
+          {
+            'source': source,
+            'scope': scope,
+            'title': '관측',
+            'targets': [
+              {'id': 'NEAR', 'name': '가까운 관측소', 'distanceKm': 1},
+              {'id': 'FAR', 'name': '먼 관측소', 'distanceKm': 50},
+            ],
+          }
+        ];
+      Map<String, dynamic> records() => {
+            'records': [
+              {
+                'time': '2026-07-14T11:00:00+09:00',
+                'values': {
+                  'levelM': 10,
+                  'tideCm': 100,
+                  'waterTempC': 20,
+                  'inflowM3PerSec': 2,
+                  'riskScore': 10,
+                  'extremeType': 1
+                },
+              }
+            ]
+          };
+      api.records = (q) async =>
+          q['targetId'] == 'FAR' ? await pending.future : records();
+      await _open(tester, api, now: DateTime.utc(2026, 7, 14, 4));
+      final nearest = find.byKey(ValueKey(source == 'KHOA_RIP_CURRENT'
+          ? 'extra-nearest-$source'
+          : '${source.startsWith('KHOA') ? 'marine' : 'river'}-nearest-target'));
+      expect(tester.getSize(nearest).height, lessThanOrEqualTo(32));
+      final scrollable = find.byType(Scrollable).first;
+      final position = tester.state<ScrollableState>(scrollable).position;
+      tester
+          .widget<DropdownButtonFormField<String>>(
+              find.byType(DropdownButtonFormField<String>))
+          .onChanged!('FAR');
+      await tester.pump();
+      final waitingOffset = position.pixels;
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(position.pixels, waitingOffset);
+      pending.complete(records());
+      await tester.pumpAndSettle();
+      final current = find.byKey(ValueKey(source == 'KHOA_RIP_CURRENT'
+          ? 'extra-current'
+          : '${source.startsWith('KHOA') ? 'marine' : 'river'}-current'));
+      expect(tester.getCenter(current).dy, closeTo(400, 5), reason: source);
+      if (source != 'KHOA_RIP_CURRENT') {
+        final input = find.byKey(const ValueKey('water-target-search-input'));
+        await tester.ensureVisible(input);
+        await tester.enterText(input, '가까운');
+        await tester.pumpAndSettle();
+        final result = find.byKey(const ValueKey('water-search-result-NEAR'));
+        await tester.ensureVisible(result);
+        await tester.tap(result);
+        await tester.pumpAndSettle();
+        expect(tester.getCenter(current).dy, closeTo(400, 5),
+            reason: '$source 검색');
+        expect(api.queries.last['targetId'], 'NEAR');
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('저장한 관측소는 구역별로 구분하고 현재 박스 안에 Week 방식의 최저·최고를 표시한다',
+      (tester) async {
+    _screen(tester);
+    final api = _ExtraApi()
+      ..groups = [
+        {
+          'source': 'HRFCO_RIVER_FLOW',
+          'scope': 'station',
+          'title': '수위/유량',
+          'targets': [
+            {'id': 'FAR', 'name': '먼 관측소', 'distanceKm': 50},
+            {'id': 'NEAR', 'name': '가까운 관측소', 'distanceKm': 1}
+          ]
+        }
+      ];
+    await _open(tester, api);
+    tester
+        .widget<DropdownButtonFormField<String>>(
+            find.byType(DropdownButtonFormField<String>))
+        .onChanged!('FAR');
+    await tester.pumpAndSettle();
+    await _open(tester, api, grid: const KmaGrid(nx: 98, ny: 76));
+    expect(api.queries.last['targetId'], 'NEAR');
+    await _open(tester, api);
+    expect(api.queries.last['targetId'], 'FAR');
+    final current = find.byKey(const ValueKey('river-current'));
+    expect(find.descendant(of: current, matching: find.byType(DataRangeTile)),
+        findsNWidgets(2));
+    final time = tester.widget<Text>(find.text('0시').first);
+    expect(time.style?.fontWeight, FontWeight.w800);
+  });
+
+  testWidgets('만조·간조는 조위의 가까운 기본값·저장·자동선택을 함께 사용한다', (tester) async {
+    _screen(tester);
+    final targets = [
+      {'id': 'DT_0005', 'name': '먼 관측소', 'distanceKm': 100},
+      {'id': 'DT_0001', 'name': '가까운 관측소', 'distanceKm': 1},
+    ];
+    final api = _ExtraApi()
+      ..groups = [
+        {..._groups[1], 'targets': targets},
+        {..._groups[3], 'targets': targets},
+      ];
+    String? selected(String source) =>
+        api.queries.where((q) => q['source'] == source).last['targetId'];
+    await _open(tester, api);
+    expect(selected('KHOA_TIDE_EXTREME'), 'DT_0001');
+    tester
+        .widget<DropdownButtonFormField<String>>(
+            find.byType(DropdownButtonFormField<String>))
+        .onChanged!('DT_0005');
+    await tester.pumpAndSettle();
+    expect(selected('KHOA_TIDE_EXTREME'), 'DT_0005');
+    expect(selected('KHOA_TIDE_OBS'), 'DT_0005');
+    await tester.pumpWidget(const SizedBox());
+    await _open(tester, api);
+    expect(selected('KHOA_TIDE_EXTREME'), 'DT_0005');
+    final button = find.byKey(const ValueKey('marine-nearest-target'));
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(selected('KHOA_TIDE_EXTREME'), 'DT_0001');
+    expect(selected('KHOA_TIDE_OBS'), 'DT_0001');
+    expect(find.byKey(const ValueKey('marine-tide-info')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('K-water 탭 없이 통합 관측소를 이름·코드로 검색하고 선택한다', (tester) async {
+    _screen(tester, width: 320);
+    final api = _ExtraApi()
+      ..groups = [
+        {
+          'source': 'HRFCO_RIVER_FLOW',
+          'scope': 'station',
+          'title': '수위/유량',
+          'targets': [
+            {
+              'id': '1001603',
+              'name': '영월군(판운교)',
+              'codes': ['1001603', '9000265'],
+              'providers': ['한강홍수통제소']
+            },
+            {
+              'id': '9000266',
+              'name': '삼척시(갈밭교)',
+              'providers': ['K-water']
+            },
+            {'id': '9000267', 'name': '결측 관측소', 'hasData': false},
+          ],
+        },
+        {
+          'source': 'KWATER_RIVER_LEVEL',
+          'scope': 'station',
+          'title': 'K-water 하천 수위',
+          'targets': []
+        },
+      ];
+    await _open(tester, api);
+    expect(find.byKey(const ValueKey('extra-source-KWATER_RIVER_LEVEL')),
+        findsNothing);
+    final input = find.byKey(const ValueKey('water-target-search-input'));
+    final combo = find.byType(DropdownButtonFormField<String>);
+    expect(tester.getTopLeft(input).dy, lessThan(tester.getTopLeft(combo).dy));
+    expect(find.byKey(const ValueKey('water-target-search-results')),
+        findsNothing);
+    final requests = api.queries.length;
+    await tester.ensureVisible(input);
+    await tester.enterText(input, '갈 밭');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('water-search-result-9000266')),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('water-search-result-1001603')),
+        findsNothing);
+    expect(api.queries.length, requests);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(
+        tester
+            .getTopLeft(
+                find.byKey(const ValueKey('water-target-search-results')))
+            .dy,
+        greaterThan(tester.getBottomLeft(input).dy));
+    await tester.enterText(input, '관측소');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('water-search-result-9000267')),
+        findsOneWidget);
+    expect(find.textContaining('오늘 관측 자료 없음'), findsOneWidget);
+    await tester.enterText(input, '9000265');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('water-search-result-1001603')),
+        findsOneWidget);
+    await tester.enterText(input, '없는이름');
+    await tester.pumpAndSettle();
+    expect(find.text('검색 결과가 없어요.'), findsOneWidget);
+    await tester.enterText(input, '9000266');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('water-search-result-9000266')));
+    await tester.pumpAndSettle();
+    expect(api.queries.last, containsPair('source', 'HRFCO_RIVER_FLOW'));
+    expect(api.queries.last, containsPair('targetId', '9000266'));
+    expect(find.text('자료 제공 · K-water'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(tester.widget<TextField>(input).controller!.text, isEmpty);
+    expect(find.byKey(const ValueKey('water-target-search-results')),
+        findsNothing);
+    await tester.ensureVisible(input);
+    await tester.enterText(input, '갈밭');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('water-target-search-clear')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('water-target-search-results')),
+        findsNothing);
+    expect(api.queries.last['targetId'], '9000266');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('하천 통합 항목의 지표를 바다와 같은 관측 요약·범위·시간별 그래프로 표시한다', (tester) async {
+    _screen(tester, width: 320);
+    for (final (source, metrics) in [
+      ('HRFCO_RIVER_FLOW', [('levelM', '3m'), ('flowM3PerSec', '12㎥/s')]),
+      (
+        'KWATER_DAM',
+        [
+          ('levelM', '3m'),
+          ('inflowM3PerSec', '21㎥/s'),
+          ('dischargeM3PerSec', '9㎥/s')
+        ]
+      ),
+    ]) {
+      await tester.pumpWidget(const SizedBox());
+      final api = _ExtraApi()
+        ..groups = [
+          {
+            'source': source,
+            'scope': source == 'KWATER_DAM' ? 'dam' : 'station',
+            'title': '하천',
+            'targets': [
+              {'id': 'RIVER_1', 'name': '시험 관측소'}
+            ],
+          }
+        ]
+        ..records = (_) async => {
+              'records': [
+                {
+                  'time': '2026-10-14 12:30',
+                  'values': {
+                    'levelM': 3,
+                    'flowM3PerSec': 12,
+                    'inflowM3PerSec': 21,
+                    'dischargeM3PerSec': 9,
+                  },
+                }
+              ]
+            };
+      await _open(tester, api);
+      expect(
+          find.byKey(const ValueKey('river-combined-panel')), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('extra-description-box')), findsOneWidget);
+      for (final (metric, value) in metrics) {
+        final chip = find.byKey(ValueKey('river-metric-$metric'));
+        await tester.ensureVisible(chip);
+        await tester.tap(chip);
+        await tester.pumpAndSettle();
+        expect(
+            find.descendant(
+                of: find.byKey(const ValueKey('river-current-value')),
+                matching: find.text(value)),
+            findsOneWidget);
+        expect(find.text('기준 시간 · 12:30'), findsOneWidget);
+        expect(
+            find.byKey(const ValueKey('river-observed-range')), findsOneWidget);
+        expect(
+            find.byKey(const ValueKey('river-hourly-scroll')), findsOneWidget);
+      }
+      expect(api.queries.where((q) => q['source'] == source).length, 1);
+      expect(find.text('● 예측'), findsNothing);
+      expect(find.textContaining('예측 기준:'), findsNothing);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('하천의 오늘 관측이 없으면 과거 자료를 현재값이나 오늘 범위로 표시하지 않는다', (tester) async {
+    _screen(tester);
+    final api = _ExtraApi()
+      ..groups = [_groups[2]]
+      ..records = (_) async => {
+            'records': [
+              {
+                'time': '2026-10-13 12:00',
+                'values': {'levelM': 100}
+              }
+            ],
+          };
+    await _open(tester, api);
+    expect(find.text('오늘 관측값이 없어요'), findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최저' &&
+            widget.value == '자료 없음'),
+        findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최고' &&
+            widget.value == '자료 없음'),
+        findsOneWidget);
+    expect(find.text('표시할 시간별 자료가 없어요.'), findsOneWidget);
+    expect(find.text('100m'), findsNothing);
+  });
+
   testWidgets('통합 화면은 예측 조회 실패에도 관측을 유지하고 재시도한다', (tester) async {
     _screen(tester);
     var fail = true;
@@ -187,7 +586,7 @@ void main() {
     expect(find.text('예측 자료를 불러오지 못했어요.'), findsOneWidget);
     expect(
         find.descendant(
-            of: find.byKey(const ValueKey('marine-current')),
+            of: find.byKey(const ValueKey('marine-current-value')),
             matching: find.text('120cm')),
         findsOneWidget);
     fail = false;
@@ -247,7 +646,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
         find.descendant(
-            of: find.byKey(const ValueKey('marine-current')),
+            of: find.byKey(const ValueKey('marine-current-value')),
             matching: find.text('120cm')),
         findsOneWidget);
     expect(find.text('999cm'), findsNothing);
@@ -283,12 +682,66 @@ void main() {
     }
   });
 
-  testWidgets('보고서는 목록이 비었거나 선택한 보고서 내용이 비면 같은 문구를 쓴다', (tester) async {
+  testWidgets('보고서 내용이 비면 콤보박스에 표시하고 예시는 실제 자료와 구분한다', (tester) async {
     _screen(tester);
     final api = _ExtraApi()..records = (_) async => {'records': []};
     await _open(tester, api);
     await _select(tester, 'NIFS_JELLYFISH_DETAIL');
-    expect(find.text('보고된 자료가 없어요'), findsOneWidget);
+    expect(find.text('보고된 자료없음'), findsWidgets);
+    expect(find.text('보고된 자료가 없어요'), findsNothing);
+    final example = find.byKey(const ValueKey('jellyfish-example'));
+    await tester.ensureVisible(example);
+    expect(find.textContaining('실제 관측·특보가 아니에요'), findsOneWidget);
+    expect(find.descendant(of: example, matching: find.byType(ExpansionTile)),
+        findsNothing);
+  });
+
+  testWidgets('바다·하천의 모든 항목 제목 오른쪽에서 용어 설명을 연다', (tester) async {
+    _screen(tester);
+    await _open(tester, _ExtraApi());
+    for (final source in [
+      'KHOA_TIDE_OBS',
+      'KHOA_RIP_CURRENT',
+      'NIFS_JELLYFISH_DETAIL',
+      'KHOA_BUOY_OBS',
+      'HRFCO_RIVER_FLOW',
+      'KWATER_DAM'
+    ]) {
+      if (source == 'HRFCO_RIVER_FLOW') {
+        await tester.ensureVisible(find.text('하천'));
+        await tester.tap(find.text('하천'));
+        await tester.pumpAndSettle();
+      }
+      await _select(tester, source);
+      final help = find.byKey(ValueKey('extra-help-$source'));
+      await tester.ensureVisible(help);
+      await tester.tap(help);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      final dialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+      expect(
+          (dialog.title as Text).data,
+          {
+            'KHOA_TIDE_OBS': '만조·간조/조위란?',
+            'KHOA_RIP_CURRENT': '이안류란?',
+            'NIFS_JELLYFISH_DETAIL': '해파리란?',
+            'KHOA_BUOY_OBS': '수온/유속/유향이란?',
+            'HRFCO_RIVER_FLOW': '수위/유량이란?',
+            'KWATER_DAM': '댐/보란?',
+          }[source]);
+      if ([
+        'KHOA_RIP_CURRENT',
+        'KHOA_BUOY_OBS',
+        'HRFCO_RIVER_FLOW',
+        'KWATER_DAM'
+      ].contains(source)) {
+        final body = (dialog.content as SingleChildScrollView).child! as Text;
+        expect(body.data, contains('\n\n'));
+      }
+      await tester.tap(find.text('확인'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.textContaining('시간별 그래프는'), findsNothing);
   });
 
   testWidgets('해양 통합 화면은 가까운 관측소를 고르고 인근 예측을 함께 읽는다', (tester) async {
@@ -348,7 +801,7 @@ void main() {
         api.queries
             .where((q) => q['source'] == 'KHOA_BUOY_OBS')
             .last['targetId'],
-        'NEAR');
+        'FAR');
   });
 
   testWidgets('바다·하천 칩을 유지하고 낙뢰는 목록·선택·조회에서 제외한다', (tester) async {
@@ -369,13 +822,13 @@ void main() {
             matching: find.byType(ChoiceChip)))
         .map((chip) => (chip.label as Text).data!)
         .toList();
-    expect(topics(), ['조위', '이안류', '해파리', '수온/유속/유향']);
+    expect(topics(), ['만조·간조/조위', '이안류', '해파리', '수온/유속/유향']);
     expect(find.byKey(const ValueKey('marine-tide-summary')), findsOneWidget);
     expect(find.byKey(const ValueKey('extra-source-KHOA_TIDE_EXTREME')),
         findsNothing);
     await tester.tap(find.byKey(const ValueKey('extra-tab-river')));
     await tester.pumpAndSettle();
-    expect(topics(), ['수위 및 유량', 'K-water 하천 수위', '댐 보 운영']);
+    expect(topics(), ['수위/유량', '댐/보']);
     expect(api.queries.last['source'], 'KWATER_DAM');
     await tester.tap(find.byKey(const ValueKey('extra-tab-sea')));
     await tester.pumpAndSettle();
@@ -405,34 +858,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('만조·간조는 다른 바다 칩에서도 최상단 한 행을 유지하고 설명은 팝업으로 표시한다', (tester) async {
+  testWidgets('만조·간조는 조위 현재 박스의 최저·최고 위에만 표시한다', (tester) async {
     _screen(tester);
-    await _open(tester, _ExtraApi());
+    final api = _ExtraApi();
+    await _open(tester, api);
     final summary = find.byKey(const ValueKey('marine-tide-summary'));
-    expect(find.text('만조 11:00'), findsOneWidget);
-    expect(find.text('간조 21:00'), findsOneWidget);
+    final current = find.byKey(const ValueKey('marine-current'));
+    expect(_tideTime('만조 11:00'), findsOneWidget);
+    expect(_tideTime('간조 21:00'), findsOneWidget);
+    expect(find.descendant(of: current, matching: summary), findsOneWidget);
     expect(
         tester.getBottomLeft(summary).dy,
         lessThan(tester
-            .getTopLeft(find.byKey(const ValueKey('extra-topic-chips')))
+            .getTopLeft(find.byKey(const ValueKey('marine-forecast-range')))
             .dy));
+    expect(
+        tester.getTopLeft(summary).dy,
+        greaterThan(tester
+            .getBottomLeft(find.byKey(const ValueKey('extra-topic-chips')))
+            .dy));
+    final count =
+        api.queries.where((q) => q['source'] == 'KHOA_TIDE_EXTREME').length;
     await _select(tester, 'NIFS_JELLYFISH_DETAIL');
-    expect(find.text('만조 11:00'), findsOneWidget);
-    expect(find.text('간조 21:00'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const ValueKey('marine-tide-info')));
-    await tester.tap(find.byKey(const ValueKey('marine-tide-info')));
-    await tester.pumpAndSettle();
-    expect(find.text('만조·간조 안내'), findsOneWidget);
-    expect(find.textContaining('만조는 바닷물 높이가 가장 높아질 때'), findsOneWidget);
-    expect(find.text('기준 관측소'), findsOneWidget);
-    await tester.tap(find.text('닫기'));
-    await tester.pumpAndSettle();
+    expect(summary, findsNothing);
+    expect(api.queries.where((q) => q['source'] == 'KHOA_TIDE_EXTREME').length,
+        count);
     await _select(tester, 'KWATER_DAM');
     expect(summary, findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('만조·간조는 1·3과 2·4를 구분하고 오늘의 다음 시각만 상단에 표시한다', (tester) async {
+  testWidgets('만조·간조는 1·3과 2·4를 구분하고 오늘의 다음 시각을 조위 박스에 표시한다', (tester) async {
     _screen(tester);
     final api = _ExtraApi()
       ..records = (query) async => {
@@ -470,50 +926,84 @@ void main() {
                   ]
           };
     await _open(tester, api);
-    expect(find.text('만조 15:00'), findsOneWidget);
-    expect(find.text('간조 21:30'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('marine-tide-info')));
-    await tester.pumpAndSettle();
-    expect(find.text('만조: 3:00 / 15:00'), findsOneWidget);
-    expect(find.text('간조: 9:30 / 21:30'), findsOneWidget);
+    expect(_tideTime('만조 15:00'), findsOneWidget);
+    expect(_tideTime('간조 21:30'), findsOneWidget);
+    expect(_tideTime('만조 3:00'), findsNothing);
+    expect(_tideTime('간조 9:30'), findsNothing);
   });
 
-  testWidgets('만조·간조 관측소는 설명 팝업에서 변경하며 다른 칩의 자료를 유지한다', (tester) async {
+  testWidgets('관측소 변경 전의 늦은 만조·간조 응답은 새 관측소를 덮어쓰지 않는다', (tester) async {
     _screen(tester);
+    final previous = Completer<Map<String, dynamic>>();
     final api = _ExtraApi()
       ..groups = [
-        ..._groups.where((group) => group['source'] != 'KHOA_TIDE_EXTREME'),
         {
-          ..._groups[1],
+          ..._groups[3],
           'targets': [
             {'id': 'DT_0001', 'name': '인천'},
             {'id': 'DT_0005', 'name': '부산'},
           ]
         },
       ];
+    api.records = (q) async {
+      if (q['source'] != 'KHOA_TIDE_EXTREME') return {'records': []};
+      if (q['targetId'] == 'DT_0001') return previous.future;
+      return {
+        'records': [
+          {
+            'time': '2026-10-14T15:00:00+09:00',
+            'values': {'extremeType': 3}
+          }
+        ]
+      };
+    };
     await _open(tester, api);
-    await _select(tester, 'NIFS_JELLYFISH_DETAIL');
-    await tester.tap(find.byKey(const ValueKey('marine-tide-info')));
-    await tester.pumpAndSettle();
     tester
         .widget<DropdownButtonFormField<String>>(
-            find.byKey(const ValueKey('marine-tide-target-DT_0001')))
+            find.byType(DropdownButtonFormField<String>))
         .onChanged!('DT_0005');
     await tester.pumpAndSettle();
-    expect(api.queries.last['source'], 'KHOA_TIDE_EXTREME');
-    expect(api.queries.last['targetId'], 'DT_0005');
-    await tester.tap(find.text('닫기'));
+    expect(_tideTime('만조 15:00'), findsOneWidget);
+    expect(api.queries.last, containsPair('targetId', 'DT_0005'));
+    previous.complete({
+      'records': [
+        {
+          'time': '2026-10-14T11:00:00+09:00',
+          'values': {'extremeType': 1}
+        }
+      ]
+    });
     await tester.pumpAndSettle();
-    expect(find.text('내용  해파리 출현 해역을 확인해주세요.'), findsOneWidget);
+    expect(_tideTime('만조 15:00'), findsOneWidget);
+    expect(_tideTime('만조 11:00'), findsNothing);
   });
 
-  testWidgets('만조·간조 자료가 없거나 목록 조회에 실패해도 한 행과 설명 버튼은 남는다', (tester) async {
+  testWidgets('만조·간조 조회 실패는 조위를 유지하고 같은 관측소로 재시도한다', (tester) async {
     _screen(tester, width: 320);
-    final api = _ExtraApi()..failCatalog = true;
+    final api = _ExtraApi();
+    var fail = true;
+    api.records = (q) async {
+      if (q['source'] == 'KHOA_TIDE_EXTREME' && fail) throw StateError('실패');
+      return {
+        'records': [
+          {
+            'time': '2026-10-14T11:00:00+09:00',
+            'values': {'tideCm': 100, 'extremeType': 1}
+          }
+        ]
+      };
+    };
     await _open(tester, api);
-    expect(find.text('만조 --:--'), findsOneWidget);
-    expect(find.text('간조 --:--'), findsOneWidget);
-    expect(find.byKey(const ValueKey('marine-tide-info')), findsOneWidget);
+    expect(find.text('100cm'), findsWidgets);
+    expect(_tideTime('만조 --:--'), findsOneWidget);
+    expect(find.text('만조·간조 자료를 불러오지 못했어요.'), findsOneWidget);
+    fail = false;
+    final retry = find.text('만조·간조 다시 시도');
+    await tester.ensureVisible(retry);
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+    expect(_tideTime('만조 11:00'), findsOneWidget);
+    expect(api.queries.last, containsPair('targetId', 'DT_0001'));
     expect(tester.takeException(), isNull);
   });
 
@@ -548,7 +1038,7 @@ void main() {
               now: DateTime.utc(2026, 10, 14))),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('만조 13:00'), findsOneWidget);
+    expect(_tideTime('만조 13:00'), findsOneWidget);
     previous.complete({
       'records': [
         {
@@ -558,8 +1048,8 @@ void main() {
       ]
     });
     await tester.pumpAndSettle();
-    expect(find.text('만조 13:00'), findsOneWidget);
-    expect(find.text('만조 11:00'), findsNothing);
+    expect(_tideTime('만조 13:00'), findsOneWidget);
+    expect(_tideTime('만조 11:00'), findsNothing);
   });
 
   testWidgets('콤보박스에서 구역을 바꾸면 해당 대상의 데이터를 조회한다', (tester) async {
@@ -567,18 +1057,38 @@ void main() {
     final api = _ExtraApi();
     await _open(tester, api);
     await _select(tester, 'KWATER_DAM');
-    expect(find.text('수위  20.5m'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('20.5m')),
+        findsOneWidget);
     final combo = find.byType(DropdownButtonFormField<String>);
     await tester.ensureVisible(combo);
     await tester.tap(combo);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('둘째댐 (2022511)').last);
+    await tester.tap(find.text('둘째댐').last);
     await tester.pumpAndSettle();
     expect(api.queries.last['source'], 'KWATER_DAM');
     expect(api.queries.last['targetId'], '2022511');
-    expect(find.text('수위  30.5m'), findsOneWidget);
-    expect(find.text('수위  20.5m'), findsNothing);
-    expect(find.text('유입량  4.2㎥/s'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('30.5m')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('20.5m')),
+        findsNothing);
+    final inflow = find.byKey(const ValueKey('river-metric-inflowM3PerSec'));
+    await tester.ensureVisible(inflow);
+    await tester.tap(inflow);
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('4.2㎥/s')),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -608,12 +1118,36 @@ void main() {
     await _open(tester, api);
     expect(
         find.descendant(
-            of: find.byKey(const ValueKey('marine-current')),
+            of: find.byKey(const ValueKey('marine-current-value')),
             matching: find.text('120cm')),
         findsOneWidget);
-    expect(find.text('기준 시간 · 10/14 10:00'), findsOneWidget);
-    expect(find.text('최저 230cm'), findsOneWidget);
-    expect(find.text('최고 999cm'), findsOneWidget);
+    expect(find.text('기준 시간 · 10:00'), findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최저' &&
+            widget.value == '230cm'),
+        findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최고' &&
+            widget.value == '999cm'),
+        findsOneWidget);
+    final chart =
+        tester.widget<HourlyValueChart>(find.byType(HourlyValueChart));
+    expect(chart.series.values[10]?.lower, 120);
+    expect(chart.series.values[14], isNull);
+    expect(chart.overlays.single.values[10]?.lower, 999);
+    expect(chart.overlays.single.values[14]?.lower, 230);
+    expect(chart.avoidLineOverlaps, isTrue);
+    expect(
+        tester
+            .getRect(find.byKey(
+                const ValueKey('hourly-value-marine-observed-tideCm-10')))
+            .overlaps(tester.getRect(find.byKey(
+                const ValueKey('hourly-value-marine-forecast-tideCm-10')))),
+        isFalse);
     expect(find.byKey(const ValueKey('marine-metric-chips')), findsNothing);
     expect(find.byKey(const ValueKey('extra-data-modes')), findsNothing);
     expect(find.byKey(const ValueKey('marine-hourly-scroll')), findsOneWidget);
@@ -629,7 +1163,7 @@ void main() {
     await _open(tester, api);
     final queries = api.queries.length;
     await _select(tester, 'KHOA_RIP_CURRENT');
-    expect(find.textContaining('이안류의 위험지수'), findsOneWidget);
+    expect(find.textContaining('이안류 위험지수'), findsOneWidget);
     expect(find.text('이안류 정보 제공 시기가 아니에요. 6~9월에 제공돼요.'), findsOneWidget);
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
     expect(api.queries.length, queries);
@@ -686,7 +1220,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
         find.descendant(
-            of: find.byKey(const ValueKey('marine-current')),
+            of: find.byKey(const ValueKey('marine-current-value')),
             matching: find.text('1.2m/s')),
         findsOneWidget);
     expect(find.textContaining('예측 기준:'), findsNothing);
@@ -701,11 +1235,17 @@ void main() {
           _groups.where((g) => g['source'] != 'NIFS_JELLYFISH_DETAIL').toList();
     await _open(tester, api);
     await _select(tester, 'NIFS_JELLYFISH_DETAIL');
-    expect(find.text('보고된 자료가 없어요'), findsOneWidget);
+    expect(find.text('보고된 자료없음'), findsWidgets);
+    expect(find.text('보고된 자료가 없어요'), findsNothing);
     await _select(tester, 'KHOA_BUOY_OBS');
     expect(find.text('조회 가능한 지점 없음'), findsOneWidget);
     expect(find.text('오늘 관측값이 없어요'), findsOneWidget);
-    expect(find.text('최저 자료 없음'), findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최저' &&
+            widget.value == '자료 없음'),
+        findsOneWidget);
   });
 
   testWidgets('만조·간조가 과거 자료만 받으면 시간 대신 마지막 자료 날짜를 안내한다', (tester) async {
@@ -721,8 +1261,8 @@ void main() {
               now: DateTime.utc(2026, 10, 20))),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('만조 --:--'), findsOneWidget);
-    expect(find.text('간조 --:--'), findsOneWidget);
+    expect(_tideTime('만조 --:--'), findsOneWidget);
+    expect(_tideTime('간조 --:--'), findsOneWidget);
     expect(find.text('오늘 예보가 없어요. 자료 기준일: 2026-10-15'), findsOneWidget);
   });
 
@@ -755,31 +1295,66 @@ void main() {
       ]
     });
     await tester.pumpAndSettle();
-    expect(find.text('수위  30.5m'), findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('30.5m')),
+        findsOneWidget);
     expect(find.textContaining('이전 바다 보고서'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('하천은 실제 시각의 날짜별 타임라인을 유지한다', (tester) async {
+  testWidgets('하천 요약은 오늘 관측만 사용하며 과거 날짜와 미래 시각을 제외한다', (tester) async {
     _screen(tester);
     final api = _ExtraApi()
       ..records = (_) async => {
             'records': [
               {
+                'time': '2026-10-13 23:00',
+                'values': {'levelM': 999}
+              },
+              {
                 'time': '2026-10-14 11:00',
                 'values': {'levelM': 20}
               },
               {
-                'time': '2026-10-15 12:00',
+                'time': '2026-10-14 12:30',
                 'values': {'levelM': 21}
-              }
+              },
+              {
+                'time': '2026-10-14 14:00',
+                'values': {'levelM': 999}
+              },
             ]
           };
     await _open(tester, api);
     await _select(tester, 'KWATER_DAM');
-    expect(find.byKey(const ValueKey('extra-timeline')), findsOneWidget);
-    expect(find.text('2026-10-14'), findsOneWidget);
-    expect(find.text('2026-10-15'), findsOneWidget);
+    expect(find.text('기준 시간 · 12:30'), findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최저' &&
+            widget.value == '20m'),
+        findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최고' &&
+            widget.value == '21m'),
+        findsOneWidget);
+    expect(find.byKey(const ValueKey('river-hourly-scroll')), findsOneWidget);
+    expect(
+        tester
+            .state<ScrollableState>(find.descendant(
+                of: find.byKey(const ValueKey('river-hourly-scroll')),
+                matching: find.byType(Scrollable)))
+            .position
+            .pixels,
+        greaterThan(0));
+    expect(find.text('● 예측'), findsNothing);
+    expect(find.text('시간대별 수위'), findsOneWidget);
+    expect(find.textContaining('오늘 예측'), findsNothing);
+    expect(find.byKey(const ValueKey('extra-timeline')), findsNothing);
   });
 
   testWidgets('보고서는 시각이 있어도 내용 카드로 표시한다', (tester) async {
@@ -795,6 +1370,7 @@ void main() {
   testWidgets('날짜만 있는 자료는 시간을 만들지 않고 일자별 카드로 표시한다', (tester) async {
     _screen(tester);
     final api = _ExtraApi()
+      ..groups = [_groups[4]]
       ..records = (_) async => {
             'records': [
               {
@@ -804,9 +1380,8 @@ void main() {
             ]
           };
     await _open(tester, api);
-    await _select(tester, 'KWATER_DAM');
     expect(find.byKey(const ValueKey('extra-timeline')), findsNothing);
-    expect(find.text('일자별 자료'), findsOneWidget);
+    expect(find.text('보고서 내용'), findsOneWidget);
     expect(find.text('2026-10-14'), findsOneWidget);
     expect(find.text('00:00'), findsNothing);
     expect(find.text('조위  0.009cm'), findsOneWidget);
@@ -875,8 +1450,16 @@ void main() {
       ]
     });
     await tester.pumpAndSettle();
-    expect(find.text('수위  30.5m'), findsOneWidget);
-    expect(find.text('수위  99m'), findsNothing);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('30.5m')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('river-current-value')),
+            matching: find.text('99m')),
+        findsNothing);
   });
 
   testWidgets('320 너비와 큰 글씨에서도 종류 박스·콤보박스·타임라인이 넘치지 않는다', (tester) async {
@@ -904,7 +1487,7 @@ void main() {
     _screen(tester);
     final api = _ExtraApi()
       ..groups = [
-        {..._groups[1], 'source': 'KWATER_RIVER_LEVEL', 'scope': 'station'}
+        {..._groups[1], 'source': 'KMA_LIGHTNING', 'scope': 'grid'}
       ]
       ..records = (_) async => {
             'records': [
@@ -922,7 +1505,24 @@ void main() {
               },
             ]
           };
-    await _open(tester, api);
+    final result = await api.records!({});
+    await tester.pumpWidget(MaterialApp(
+        theme: WeatherCareTheme.light(),
+        home: Scaffold(
+            body: SingleChildScrollView(
+                child: ExtraDataOverview(
+          records: (result['records'] as List).cast<Map<String, dynamic>>(),
+          source: 'GENERIC_OBSERVATION',
+          targetName: '시험 관측소',
+          labelFor: (key) => {'tideCm': '조위', 'waterTempC': '수온'}[key] ?? key,
+          unitFor: (key) => key == 'tideCm' ? 'cm' : '℃',
+          timeFor: marineRecordTime,
+          timeLabel: (raw) => marineRecordTime(raw)!
+              .toIso8601String()
+              .substring(0, 16)
+              .replaceFirst('T', ' '),
+        )))));
+    await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('extra-chart-tideCm')), findsOneWidget);
     expect(find.text('관측 자료'), findsOneWidget);
     final slider = tester
@@ -945,8 +1545,18 @@ void main() {
             .textSpan!
             .toPlainText(),
         '21 ℃');
-    expect(find.text('최저  20℃'), findsOneWidget);
-    expect(find.text('최고  22℃'), findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최저' &&
+            widget.value == '20℃'),
+        findsOneWidget);
+    expect(
+        find.byWidgetPredicate((widget) =>
+            widget is DataRangeTile &&
+            widget.label == '최고' &&
+            widget.value == '22℃'),
+        findsOneWidget);
     final chart =
         tester.getRect(find.byKey(const ValueKey('extra-chart-waterTempC')));
     await tester.tapAt(

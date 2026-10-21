@@ -409,7 +409,7 @@ void main() {
       navigation.destinations
           .whereType<NavigationDestination>()
           .map((destination) => destination.label),
-      ['Today', 'Data', 'Main', 'Week', 'Setting'],
+      ['Today', 'Advanced', 'Main', 'Week', 'Setting'],
     );
     expect(
       navigation.destinations
@@ -417,7 +417,7 @@ void main() {
           .map((destination) => destination.tooltip),
       [
         '오늘 날씨 자세히 보기',
-        '격자와 관측 지점 자료',
+        'Advanced · 바다와 하천 관측 자료',
         '날씨, Check List, 어제 비교와 예상',
         '이번 주 날씨',
         '설정',

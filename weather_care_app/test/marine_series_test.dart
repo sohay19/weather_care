@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/widgets/marine_series.dart';
 
 void main() {
-  test('한국 날짜와 기준 시각으로 과거 관측·미래 예측을 나누며 공백을 메우지 않는다', () {
+  test('관측은 최신 시각까지, 예측은 오늘 0시부터 표시하며 결측과 날짜 경계를 유지한다', () {
     final data = MarineHourlyData(
         now: marineTime(DateTime.utc(2026, 10, 20, 4, 30)),
         observations: marinePoints([
@@ -25,6 +25,14 @@ void main() {
         ]),
         forecasts: marinePoints([
           {
+            'time': '2026-10-19 23:00',
+            'values': {'tideCm': 9999}
+          },
+          {
+            'time': '2026-10-20 00:00',
+            'values': {'tideCm': 50}
+          },
+          {
             'time': '2026-10-20 11:00',
             'values': {'tideCm': 5}
           },
@@ -37,6 +45,10 @@ void main() {
             'values': {'tideCm': 140}
           },
           {
+            'time': '2026-10-20 23:00',
+            'values': {'tideCm': 135}
+          },
+          {
             'time': '2026-10-21 00:00',
             'values': {'tideCm': 9000}
           },
@@ -44,12 +56,16 @@ void main() {
     expect(data.latest('tideCm')!.values['tideCm'], 130);
     expect(data.hourly('tideCm', forecast: false)[12], isNull);
     expect(data.hourly('tideCm', forecast: false)[14], isNull);
-    expect(data.hourly('tideCm', forecast: true)[12], isNull);
+    expect(data.hourly('tideCm', forecast: true)[0], 50);
+    expect(data.hourly('tideCm', forecast: true)[1], isNull);
+    expect(data.hourly('tideCm', forecast: true)[11], 5);
+    expect(data.hourly('tideCm', forecast: true)[12], 60);
     expect(data.hourly('tideCm', forecast: true)[14], 140);
+    expect(data.hourly('tideCm', forecast: true)[23], 135);
     expect(data.range('tideCm'), (5.0, 140.0));
   });
 
-  test('현재 정각은 관측을 사용하고 m/s 단위로 맞추며 유향과 결측을 보존한다', () {
+  test('현재 정각의 관측과 예측을 함께 표시하고 m/s 단위·유향·결측을 보존한다', () {
     final data = MarineHourlyData(
         now: DateTime.utc(2026, 10, 20, 13),
         observations: marinePoints([
@@ -73,7 +89,7 @@ void main() {
           },
         ]));
     expect(data.hourly('currentSpeed', forecast: false)[13], 1.23);
-    expect(data.hourly('currentSpeed', forecast: true)[13], isNull);
+    expect(data.hourly('currentSpeed', forecast: true)[13], 9);
     expect(data.hourly('currentSpeed', forecast: true)[14], 2);
     expect(
         data.latest('currentDirectionDeg')!.values['currentDirectionDeg'], 359);

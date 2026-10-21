@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum NativeAdPlacement { today, main, week }
+enum NativeAdPlacement { today, main, week, extra }
 
 class NativeAdUnitConfig {
   static const androidTestId = 'ca-app-pub-3940256099942544/2247696110';
@@ -19,6 +19,9 @@ class NativeAdUnitConfig {
       'ca-app-pub-6152243173470406/8762698363';
 
   static const current = NativeAdUnitConfig(
+    androidExtraReleaseId:
+        String.fromEnvironment('ADMOB_ANDROID_EXTRA_NATIVE_ID'),
+    iosExtraReleaseId: String.fromEnvironment('ADMOB_IOS_EXTRA_NATIVE_ID'),
     androidTodayReleaseId: String.fromEnvironment(
       'ADMOB_ANDROID_TODAY_NATIVE_ID',
       defaultValue: defaultAndroidTodayReleaseId,
@@ -57,6 +60,8 @@ class NativeAdUnitConfig {
   final String iosMainReleaseId;
   final String androidWeekReleaseId;
   final String iosWeekReleaseId;
+  final String androidExtraReleaseId;
+  final String iosExtraReleaseId;
 
   const NativeAdUnitConfig({
     this.androidTodayReleaseId = '',
@@ -65,6 +70,8 @@ class NativeAdUnitConfig {
     this.iosMainReleaseId = '',
     this.androidWeekReleaseId = '',
     this.iosWeekReleaseId = '',
+    this.androidExtraReleaseId = '',
+    this.iosExtraReleaseId = '',
   });
 
   String? resolve({
@@ -94,6 +101,16 @@ class NativeAdUnitConfig {
       (TargetPlatform.android, NativeAdPlacement.week) =>
         androidWeekReleaseId.trim(),
       (TargetPlatform.iOS, NativeAdPlacement.week) => iosWeekReleaseId.trim(),
+      (TargetPlatform.android, NativeAdPlacement.extra) =>
+        (androidExtraReleaseId.trim().isEmpty
+                ? androidWeekReleaseId
+                : androidExtraReleaseId)
+            .trim(),
+      (TargetPlatform.iOS, NativeAdPlacement.extra) =>
+        (iosExtraReleaseId.trim().isEmpty
+                ? iosWeekReleaseId
+                : iosExtraReleaseId)
+            .trim(),
       _ => '',
     };
     return _validAdMobUnitId(id) ? id : null;

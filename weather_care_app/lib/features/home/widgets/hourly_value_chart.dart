@@ -314,6 +314,7 @@ class HourlyValueChart extends StatelessWidget {
   final (double, double)? sharedBounds;
   final List<String?> conditions;
   final bool showValues;
+  final bool avoidLineOverlaps;
   const HourlyValueChart(
       {super.key,
       required this.series,
@@ -323,6 +324,7 @@ class HourlyValueChart extends StatelessWidget {
       this.height = hourlyChartHeight,
       this.sharedBounds,
       this.conditions = const [],
+      this.avoidLineOverlaps = false,
       this.showValues = false});
 
   @override
@@ -383,8 +385,22 @@ class HourlyValueChart extends StatelessWidget {
         var top = temperature || chart.id.endsWith('-amount')
             ? pointY + 7
             : pointY - scaledLabelHeight - 6;
+        if (avoidLineOverlaps) {
+          // 이 시간과 양옆 시간의 선 범위 밖으로 관측/예측 수치를 나눈다.
+          final nearby = [
+            for (final line in all)
+              for (var i = math.max(0, index - 1);
+                  i <= math.min(line.values.length - 1, index + 1);
+                  i++)
+                if (line.values[i] != null) y(line, i),
+          ];
+          top = chart == series
+              ? nearby.reduce(math.min) - scaledLabelHeight - 8
+              : nearby.reduce(math.max) + 8;
+        }
         final primaryTop = primaryTops[index];
-        if (chart != series &&
+        if (!avoidLineOverlaps &&
+            chart != series &&
             primaryTop != null &&
             (top - primaryTop).abs() < scaledLabelHeight + 4) {
           if (temperature) {
@@ -406,9 +422,19 @@ class HourlyValueChart extends StatelessWidget {
           child: Center(
               child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(text,
-                      key: ValueKey('hourly-value-${chart.id}-$index'),
-                      style: labelStyle.copyWith(color: textColor)))),
+                  child: Container(
+                    padding: avoidLineOverlaps
+                        ? const EdgeInsets.symmetric(horizontal: 3, vertical: 1)
+                        : EdgeInsets.zero,
+                    decoration: avoidLineOverlaps
+                        ? BoxDecoration(
+                            color: palette.surface,
+                            borderRadius: BorderRadius.circular(4))
+                        : null,
+                    child: Text(text,
+                        key: ValueKey('hourly-value-${chart.id}-$index'),
+                        style: labelStyle.copyWith(color: textColor)),
+                  ))),
         ));
       }
     }

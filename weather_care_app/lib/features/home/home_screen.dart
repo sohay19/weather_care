@@ -141,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   WeatherLoadMode? _loadMode;
   late int _selectedIndex;
   late bool _todayAdvertisementActivated;
+  late bool _extraAdvertisementActivated;
   late bool _mainAdvertisementActivated;
   late bool _weekAdvertisementActivated;
   late NotificationTopic? _detailFocusTopic;
@@ -294,6 +295,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ? 4
             : widget.initialIndex;
     _todayAdvertisementActivated = _selectedIndex == 0;
+    _extraAdvertisementActivated = _selectedIndex == 1;
     _mainAdvertisementActivated = _selectedIndex == 2;
     _weekAdvertisementActivated = _selectedIndex == 3;
     _detailFocusTopic = widget.initialNotificationTopic;
@@ -1138,7 +1140,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           _serverDataAccess?.paused == false
                       ? _coordinates
                       : null,
-                  active: _selectedIndex == 1),
+                  active: _selectedIndex == 1,
+                  advertisement: _extraAdvertisementActivated &&
+                          !(widget.adRemoval?.isOwned ?? false)
+                      ? ConsentAwareNativeAdCard(
+                          placement: NativeAdPlacement.extra,
+                          size: NativeAdCardSize.small,
+                          adRemoval: widget.adRemoval,
+                        )
+                      : null),
               today == null
                   ? _statusView('main-tab')
                   : MainTab(
@@ -1249,16 +1259,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               label: 'Today',
             ),
             NavigationDestination(
-              tooltip: '격자와 관측 지점 자료',
+              tooltip: 'Advanced · 바다와 하천 관측 자료',
               icon: Icon(
-                Icons.query_stats_outlined,
+                Icons.sensors_outlined,
                 color: WeatherCareTheme.of(context).textSecondary,
               ),
               selectedIcon: Icon(
-                Icons.query_stats_rounded,
+                Icons.sensors_rounded,
                 color: WeatherCareTheme.of(context).primaryDeep,
               ),
-              label: 'Data',
+              label: 'Advanced',
             ),
             NavigationDestination(
               tooltip: '날씨, Check List, 어제 비교와 예상',
@@ -1461,6 +1471,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
       _selectedIndex = index;
       if (index == 0) _todayAdvertisementActivated = true;
+      if (index == 1) _extraAdvertisementActivated = true;
       if (index == 2) _mainAdvertisementActivated = true;
       if (index == 3) _weekAdvertisementActivated = true;
     });

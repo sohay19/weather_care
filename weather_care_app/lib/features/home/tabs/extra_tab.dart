@@ -1,14 +1,15 @@
 import '../../../utils/weather_number.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../services/api_client.dart';
 import '../../../services/current_location_service.dart';
 import '../../../services/kma_grid.dart';
+import '../../../services/data_station_selection.dart';
 import '../../../theme/weather_theme.dart';
 import '../widgets/extra_data_overview.dart';
 import '../widgets/extra_chip_row.dart';
-import '../widgets/marine_data_panel.dart';
-import '../widgets/marine_tide_summary.dart';
+import '../widgets/water_data_panel.dart';
 import '../widgets/tab_page_header.dart';
 
 class _ExtraTopic {
@@ -24,29 +25,50 @@ class _ExtraTopic {
 
   bool contains(Object? value) =>
       value == source || (alternateSource != null && value == alternateSource);
+
+  String get helpTitle {
+    final last = title.runes.last;
+    final hasFinalConsonant =
+        last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 != 0;
+    return '$title${hasFinalConsonant ? '이란' : '란'}?';
+  }
+
+  String get help => switch (source) {
+        'KHOA_TIDE_OBS' =>
+          '만조는 바닷물 높이가 가장 높아질 때, 간조는 가장 낮아질 때예요. 선택한 관측소의 오늘 남은 첫 만조·간조 시각을 표시하고, 모두 지나면 마지막 시각을 표시해요.\n\n조위는 기준면에서 잰 바닷물 표면의 높이예요. 밀물과 썰물에 따라 달라지며 관측소마다 기준면이 달라요.',
+        'KHOA_RIP_CURRENT' =>
+          '이안류는 해안에서 바다 쪽으로 빠르게 빠져나가는 물의 흐름이에요.\n\n위험지수는 선택한 해수욕장의 이안류 발생 가능성을 나타내요.',
+        'NIFS_JELLYFISH_DETAIL' =>
+          '해파리 정보는 보고서에 기록된 출현 해역과 종류 등을 알려줘요. 보고가 없다는 뜻은 해파리가 없거나 안전하다는 뜻이 아니에요. 현장의 해파리 특보와 입수 안내도 확인해주세요.',
+        'KHOA_BUOY_OBS' =>
+          '수온은 바닷물의 온도예요.\n\n유속은 바닷물이 흐르는 빠르기예요.\n\n유향은 흐르는 방향이에요. 북쪽을 0°, 동쪽을 90°, 남쪽을 180°, 서쪽을 270°로 나타내요.\n\n관측과 예측을 구분해 확인해주세요.',
+        'HRFCO_RIVER_FLOW' =>
+          '한강홍수통제소와 K-water의 하천 관측소를 함께 보여줘요. 같은 관측소 코드는 하나로 합치고, 한강홍수통제소 목록에 없는 K-water 관측소도 포함해요.\n\n수위는 관측소의 기준면에서 잰 물 표면의 높이예요. 관측소마다 기준면이 다를 수 있어요.\n\n유량은 1초 동안 하천의 한 단면을 통과하는 물의 부피예요.',
+        'KWATER_DAM' =>
+          '댐은 물을 모아 저장하고 조절하는 시설이에요.\n\n보는 하천을 가로질러 수위를 조절하는 시설이에요.\n\n유입량은 시설로 들어오는 물의 양이에요.\n\n방류량은 시설에서 내보내는 물의 양이에요.',
+        _ => description,
+      };
 }
 
 const _waterTopics = [
   [
-    _ExtraTopic('KHOA_TIDE_OBS', '조위',
-        '선택한 관측소의 현재 조위와 오늘 예측 최저·최고를 함께 확인해요. 시간별 그래프는 과거 관측과 미래 예측을 보여줘요.',
+    _ExtraTopic('KHOA_TIDE_OBS', '만조·간조/조위',
+        '선택한 관측소의 만조·간조와 현재 조위, 오늘 예측 최저·최고를 함께 확인해요.',
         alternateSource: 'KHOA_TIDE_HOURLY'),
-    _ExtraTopic('KHOA_RIP_CURRENT', '이안류',
-        '해수욕장을 선택해 바다 쪽으로 빠르게 흐르는 이안류의 위험지수와 안내를 확인해요.',
+    _ExtraTopic('KHOA_RIP_CURRENT', '이안류', '해수욕장을 선택해 이안류 위험지수와 안내를 확인해요.',
         scope: 'beach'),
     _ExtraTopic('NIFS_JELLYFISH_DETAIL', '해파리',
         '아래에서 보고서를 선택하면 해당 보고서의 해파리 출현 해역과 내용을 볼 수 있어요.',
         scope: 'report'),
-    _ExtraTopic('KHOA_BUOY_OBS', '수온/유속/유향',
-        '관측부이의 현재 수온·유속·유향과 인근 해역의 예측을 함께 확인해요. 시간별 그래프는 과거 관측과 미래 예측을 보여줘요.',
+    _ExtraTopic(
+        'KHOA_BUOY_OBS', '수온/유속/유향', '관측부이의 현재 수온·유속·유향과 인근 해역의 예측을 함께 확인해요.',
         alternateSource: 'KHOA_ROMS', alternateScope: 'area'),
   ],
   [
+    _ExtraTopic('HRFCO_RIVER_FLOW', '수위/유량',
+        '선택한 하천 지점의 현재 수위·유량과 오늘 관측 최저·최고를 함께 확인해요.'),
     _ExtraTopic(
-        'HRFCO_RIVER_FLOW', '수위 및 유량', '하천 관측 지점의 물 높이와 초당 흐르는 물의 양을 함께 확인해요.'),
-    _ExtraTopic('KWATER_RIVER_LEVEL', 'K-water 하천 수위',
-        'K-water가 제공하는 하천 관측소의 수위와 제공된 우량 자료를 확인해요.'),
-    _ExtraTopic('KWATER_DAM', '댐 보 운영', '댐·보의 수위와 유입량·방류량 등 제공된 운영 자료를 확인해요.',
+        'KWATER_DAM', '댐/보', '댐·보의 현재 수위·유입량·방류량과 오늘 관측 최저·최고를 함께 확인해요.',
         scope: 'dam'),
   ],
 ];
@@ -57,6 +79,7 @@ class ExtraTab extends StatefulWidget {
   final bool active;
   final DateTime? now;
   final DeviceCoordinates? coordinates;
+  final Widget? advertisement;
 
   const ExtraTab(
       {super.key,
@@ -64,6 +87,7 @@ class ExtraTab extends StatefulWidget {
       required this.grid,
       required this.active,
       this.now,
+      this.advertisement,
       this.coordinates});
 
   @override
@@ -75,6 +99,8 @@ class _ExtraTabState extends State<ExtraTab>
   late final TabController _waterTabs;
   final _tabSources = <int, String>{};
   final _marineSelections = <String, String>{};
+  final _stationSelection = const DataStationSelection();
+  final _selectedDataKey = GlobalKey();
   List<Map<String, dynamic>> _groups = [];
   Map<String, dynamic>? _selectedGroup;
   Map<String, dynamic>? _selectedTarget;
@@ -156,6 +182,8 @@ class _ExtraTabState extends State<ExtraTab>
     final targets = _maps(group?['targets']);
     final previous = targets.where((t) => t['id'] == previousId).firstOrNull;
     if (previous != null) return previous;
+    final nearest = nearestDataStation(targets);
+    if (nearest != null) return nearest;
     if (!_isMarine(group?['source'])) return targets.firstOrNull;
     final candidates = targets
         .where((t) => t['id'] != 'GRID' && t['hasData'] != false)
@@ -232,6 +260,7 @@ class _ExtraTabState extends State<ExtraTab>
       _error = null;
     });
     try {
+      final remembered = _stationSelection.load(grid);
       final data = await client.get('/api/v1/weather/extra/catalog', query: {
         'nx': '${grid.nx}',
         'ny': '${grid.ny}',
@@ -240,9 +269,14 @@ class _ExtraTabState extends State<ExtraTab>
           'longitude': '${widget.coordinates!.longitude}',
         }
       });
+      final selections = await remembered;
       if (!mounted || request != _request) return;
+      _marineSelections
+        ..clear()
+        ..addAll(selections);
       final groups = _maps(data['groups'])
-          .where((group) => group['source'] != 'KMA_LIGHTNING')
+          .where((group) => !['KMA_LIGHTNING', 'KWATER_RIVER_LEVEL']
+              .contains(group['source']))
           .toList();
       final selectable = groups
           .where((group) => group['source'] != 'KHOA_TIDE_EXTREME')
@@ -267,9 +301,7 @@ class _ExtraTabState extends State<ExtraTab>
               .firstOrNull ??
           selectable.firstOrNull;
       final target = _defaultTarget(selected,
-          previousId: resetTarget || selected?['source'] != previousSource
-              ? null
-              : _selectedTarget?['id'] as String?);
+          previousId: _marineSelections[selected?['source']]);
       setState(() {
         _groups = groups;
         _selectedGroup = selected;
@@ -295,6 +327,7 @@ class _ExtraTabState extends State<ExtraTab>
     final targetId = _selectedTarget?['id'];
     if (client == null ||
         _topicFor(source)?.alternateSource != null ||
+        _waterTabFor(source) == 1 ||
         _unavailableSeason(_selectedGroup) ||
         grid == null ||
         source is! String ||
@@ -334,11 +367,8 @@ class _ExtraTabState extends State<ExtraTab>
     final sameTopic = _topicFor(_selectedGroup?['source']) != null &&
         _topicFor(_selectedGroup?['source']) == _topicFor(group['source']);
     final target = _defaultTarget(group,
-        previousId: _isMarine(group['source'])
-            ? _marineSelections[group['source']]
-            : sameTopic
-                ? (_selectedTarget?['id'] as String?)
-                : null);
+        previousId: _marineSelections[group['source']] ??
+            (sameTopic ? (_selectedTarget?['id'] as String?) : null));
     setState(() {
       _selectedGroup = group;
       _rememberWaterTab(group);
@@ -353,12 +383,42 @@ class _ExtraTabState extends State<ExtraTab>
   void _selectTarget(String? id) {
     final targets = _maps(_selectedGroup?['targets']);
     final selected = targets.where((item) => item['id'] == id).firstOrNull;
-    if (selected == null || id == _selectedTarget?['id']) return;
-    if (_isMarine(_selectedGroup?['source'])) {
-      _marineSelections[_selectedGroup!['source'] as String] = id!;
+    if (selected == null) return;
+    _rememberStation(_selectedGroup!['source'] as String, id!);
+    if (id == _selectedTarget?['id']) {
+      _scrollToSelectedData();
+      return;
     }
     setState(() => _selectedTarget = selected);
-    _loadRecords();
+    final source = _selectedGroup?['source'];
+    final pending = _loadRecords();
+    final request = _request;
+    pending.then((_) {
+      if (mounted &&
+          request == _request &&
+          _selectedGroup?['source'] == source &&
+          _selectedTarget?['id'] == id) {
+        _scrollToSelectedData();
+      }
+    });
+  }
+
+  void _scrollToSelectedData() {
+    final request = _request;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dataContext = _selectedDataKey.currentContext;
+      if (!mounted || request != _request || dataContext == null) return;
+      Scrollable.ensureVisible(dataContext,
+          alignment: .5,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut);
+    });
+  }
+
+  void _rememberStation(String source, String id) {
+    _marineSelections[source] = id;
+    final grid = widget.grid;
+    if (grid != null) _stationSelection.save(grid, source, id);
   }
 
   String _category(Map<String, dynamic> group) {
@@ -380,7 +440,7 @@ class _ExtraTabState extends State<ExtraTab>
 
   String _emptyTargetMessage(Map<String, dynamic> group) =>
       switch (group['scope']) {
-        'report' => '보고된 자료가 없어요',
+        'report' => '보고된 자료없음',
         'beach' => '현재 조회할 해수욕장 자료가 없어요. 자료가 제공되면 아래 목록에서 해수욕장을 선택할 수 있어요.',
         'area' => '현재 조회할 해역 예측 자료가 없어요. 자료가 제공되면 아래 목록에서 해역을 선택할 수 있어요.',
         _ => '현재 선택할 ${_targetLabel(group).replaceAll(' 선택', '')} 자료가 없어요.',
@@ -615,8 +675,30 @@ class _ExtraTabState extends State<ExtraTab>
         _records.every((entry) => _recordTime(entry['time']) != null);
     return [
       if (group != null) ...[
-        Text(topic?.title ?? '${group['title']}',
-            style: Theme.of(context).textTheme.titleLarge),
+        Row(children: [
+          Expanded(
+              child: Text(topic?.title ?? '${group['title']}',
+                  style: Theme.of(context).textTheme.titleLarge)),
+          if (topic != null)
+            IconButton(
+              key: ValueKey('extra-help-${topic.source}'),
+              tooltip: '${topic.title} 설명',
+              iconSize: 18,
+              icon: const Icon(Icons.error_outline_rounded),
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text(topic.helpTitle),
+                  content: SingleChildScrollView(child: Text(topic.help)),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('확인'))
+                  ],
+                ),
+              ),
+            ),
+        ]),
         if (topic != null) ...[
           const SizedBox(height: 8),
           Container(
@@ -632,22 +714,27 @@ class _ExtraTabState extends State<ExtraTab>
           ),
         ],
         const SizedBox(height: 28),
-        if (topic?.alternateSource != null &&
+        if ((topic?.alternateSource != null ||
+                _waterTabFor(group['source']) == 1) &&
             widget.client != null &&
             widget.grid != null)
-          MarineDataPanel(
-            key: ValueKey('marine-panel-${topic!.source}'),
+          WaterDataPanel(
+            key: ValueKey('water-panel-${topic!.source}'),
             client: widget.client!,
             grid: widget.grid!,
             now: widget.now,
             observationGroup: _groupForSource(topic, topic.source),
-            forecastGroup: _groupForSource(topic, topic.alternateSource!),
+            forecastGroup: topic.alternateSource == null
+                ? const {'targets': <Map<String, dynamic>>[]}
+                : _groupForSource(topic, topic.alternateSource!),
             selectedId: _marineSelections[topic.source],
-            onSelected: (id) => _marineSelections[topic.source] = id,
+            onSelected: (id) => _rememberStation(topic.source, id),
           )
         else ...[
           const SizedBox(height: 12),
-          if ((targets.isEmpty || outOfSeason) && !_loadingCatalog) ...[
+          if ((targets.isEmpty || outOfSeason) &&
+              !_loadingCatalog &&
+              group['scope'] != 'report') ...[
             Text(
                 outOfSeason
                     ? '이안류 정보 제공 시기가 아니에요. 6~9월에 제공돼요.'
@@ -672,7 +759,25 @@ class _ExtraTabState extends State<ExtraTab>
                 prefixIcon: const Icon(Icons.place_outlined),
                 border: const OutlineInputBorder(),
               ),
-              hint: Text('${_targetLabel(group).replaceAll(' 선택', '')} 없음'),
+              hint: Text(group['scope'] == 'report'
+                  ? '보고된 자료없음'
+                  : '${_targetLabel(group).replaceAll(' 선택', '')} 없음'),
+              disabledHint:
+                  group['scope'] == 'report' ? const Text('보고된 자료없음') : null,
+              selectedItemBuilder: group['scope'] == 'report'
+                  ? (context) => [
+                        for (final target in targets)
+                          Text(
+                              !_loadingRecords &&
+                                      _error == null &&
+                                      _records.isEmpty &&
+                                      target['id'] == _selectedTarget?['id']
+                                  ? '보고된 자료없음'
+                                  : '${target['name']}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                      ]
+                  : null,
               items: [
                 for (final target in targets)
                   DropdownMenuItem(
@@ -688,6 +793,26 @@ class _ExtraTabState extends State<ExtraTab>
               ],
               onChanged: targets.isEmpty ? null : _selectTarget,
             ),
+          if (group['scope'] == 'report') const SizedBox(height: 24),
+          if (['station', 'beach', 'dam', 'area'].contains(group['scope']) &&
+              !outOfSeason)
+            Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                    key: ValueKey('extra-nearest-${group['source']}'),
+                    style: TextButton.styleFrom(
+                        textStyle: const TextStyle(fontSize: 12),
+                        iconSize: 16,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: const Size(0, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    onPressed: nearestDataStation(targets) == null
+                        ? null
+                        : () => _selectTarget(
+                            '${nearestDataStation(targets)!['id']}'),
+                    icon: const Icon(Icons.near_me_outlined),
+                    label: Text(
+                        '가장 가까운 ${_targetLabel(group).replaceAll(' 선택', '')} 자동선택'))),
           if (_selectedTarget == null && targets.isNotEmpty && !outOfSeason)
             const Padding(
                 padding: EdgeInsets.only(top: 12),
@@ -699,16 +824,32 @@ class _ExtraTabState extends State<ExtraTab>
           if (!_loadingRecords &&
               _error == null &&
               _selectedTarget != null &&
-              _records.isEmpty)
+              _records.isEmpty &&
+              group['scope'] != 'report')
             Padding(
                 padding: EdgeInsets.only(top: 12),
-                child: Text(group['scope'] == 'report'
-                    ? '보고된 자료가 없어요'
-                    : '아직 저장된 자료가 없어요.')),
+                child: const Text('아직 저장된 자료가 없어요.')),
+          if (kDebugMode && group['source'] == 'NIFS_JELLYFISH_DETAIL')
+            const Card(
+                child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      key: ValueKey('jellyfish-example'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('[예시] 해파리 보고서',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w700)),
+                        SizedBox(height: 16),
+                        Text(
+                            '화면 확인용 가상 자료이며 실제 관측·특보가 아니에요.\n\n출현 해역: 부산 연안(예시)\n해파리 종류: 노무라입깃해파리(예시)\n출현 내용: 일부 해역에서 출현 보고(예시)\n현장 안내: 해파리를 만지지 말고 해수욕장 안내를 확인해주세요.')
+                      ],
+                    ))),
           if (_records.isNotEmpty && !outOfSeason) ...[
             const SizedBox(height: 16),
             if (timeline)
               ExtraDataOverview(
+                currentKey: _selectedDataKey,
                 key: ValueKey(
                     'extra-overview-${group['source']}-${_selectedTarget?['id']}'),
                 records: _records,
@@ -718,7 +859,9 @@ class _ExtraTabState extends State<ExtraTab>
                 unitFor: _unit,
                 timeFor: _recordTime,
                 timeLabel: _timeLabel,
-              ),
+              )
+            else
+              SizedBox(key: _selectedDataKey),
             Text(
                 timeline
                     ? '시간대별 타임라인 · 한국 표준시'
@@ -774,10 +917,10 @@ class _ExtraTabState extends State<ExtraTab>
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           children: [
             const TabPageHeader(
-                eyebrow: 'OBSERVATION & DATA',
-                title: '지역 자료',
-                subtitle: '바다와 하천 자료를 항목별로 확인해요',
-                icon: Icons.query_stats_rounded),
+                eyebrow: 'ADVANCED',
+                title: '심화 날씨 정보',
+                subtitle: '바다와 하천의 전문 관측 정보를 확인해요',
+                icon: Icons.sensors_rounded),
             const SizedBox(height: 20),
             Container(
               key: const ValueKey('extra-water-box'),
@@ -800,22 +943,6 @@ class _ExtraTabState extends State<ExtraTab>
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Offstage(
-                    offstage: _waterTabs.index != 0,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: MarineTideSummary(
-                        client: widget.client,
-                        grid: widget.grid,
-                        group: _groups
-                            .where((group) =>
-                                group['source'] == 'KHOA_TIDE_EXTREME')
-                            .firstOrNull,
-                        loadingCatalog: _loadingCatalog,
-                        now: widget.now,
-                      ),
-                    ),
-                  ),
                   ExtraChipRow(
                       key: const ValueKey('extra-topic-chips'),
                       children: [
@@ -862,6 +989,10 @@ class _ExtraTabState extends State<ExtraTab>
               for (final category in categories.entries)
                 _categoryBox(category.key, category.value),
               if (_selectedGroup != null && !waterSelected) ..._dataContent(),
+            ],
+            if (widget.advertisement != null) ...[
+              const SizedBox(height: 16),
+              widget.advertisement!,
             ],
           ],
         ),

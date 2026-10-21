@@ -135,4 +135,27 @@ void main() {
       isNull,
     );
   });
+
+  test('심화날씨는 전용 ID를 우선하고 미지정 시 Week 단위를 사용한다', () {
+    const config = NativeAdUnitConfig(
+      androidWeekReleaseId: 'ca-app-pub-1234567890123456/1111111111',
+      iosWeekReleaseId: 'ca-app-pub-1234567890123456/2222222222',
+      androidExtraReleaseId: 'ca-app-pub-1234567890123456/3333333333',
+    );
+    String? resolve(TargetPlatform platform) => config.resolve(
+          placement: NativeAdPlacement.extra,
+          platform: platform,
+          releaseMode: true,
+          web: false,
+        );
+    expect(resolve(TargetPlatform.android), endsWith('/3333333333'));
+    expect(resolve(TargetPlatform.iOS), endsWith('/2222222222'));
+    expect(
+        NativeAdUnitConfig.current.resolve(
+            placement: NativeAdPlacement.extra,
+            platform: TargetPlatform.android,
+            releaseMode: false,
+            web: false),
+        NativeAdUnitConfig.androidTestId);
+  });
 }

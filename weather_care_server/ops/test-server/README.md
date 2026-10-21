@@ -51,6 +51,33 @@ SQLite에 저장해 프로세스 재실행과 중복 실행으로 호출이 늘�
 이안류·ROMS·K-water 별도 수위 지점은 수집 설정이 없으면 요청하지 않는다.
 해파리 목록은 기존 수집 코드의 한국 시간 6시간 간격 실행 조건을 따른다.
 
+## 이동에 따른 알림 지역 갱신
+
+2026-10-21 시험 DB에 `0017_background_location.sql`을 적용하고 다음 릴리스로 전환했다.
+
+- 시험 릴리스: `/opt/weather-care/releases/20261021-test-background-location-0017/weather_care_server`
+- 안정 링크: `/opt/weather-care/weather_care_test_server`
+- 이전 릴리스: `/opt/weather-care/releases/20261021-test-lightning-3d11d03/weather_care_server`
+- 백업: `/var/backups/weather-care/test-background-location-20261021`
+
+기존 시험 DB를 온라인 백업한 뒤 시험 API와 시험 수집 타이머를 잠시 중지해 0017만
+적용했다. 기존 설치·인증·알림 설정·발송 이력·활동 자료를 백업과 비교해 보존을
+확인했고 API·타이머를 복구했다. 운영 릴리스와 운영 DB는 변경하지 않았다.
+
+설치 소유자 인증과 시험 접근 키를 모두 사용한다. 앱에서 별도 동의한 GPS 모드·전체
+알림·서버 사용 상태에서 `PUT /api/v1/installations/:id/background-location`으로 감시
+세션을 등록한 뒤 `PUT /api/v1/installations/:id/location`으로 최신 위치를 반영한다.
+토큰·개별 알림 설정은 보존하며 정밀 조건을 충족하지 않으면 지역 격자만 저장한다.
+수동 지역·전체 알림 끄기·감시 해제·삭제는 이전 세션의 갱신을 차단한다.
+
+공개 API의 서울↔부산 이동·지연/중복·중지 조건 12개, 배포된 알림 코드의 새 지역
+선택·이전 지역 제외·중복 방지·전체 알림 끄기 8개, 실제 앱 Dart 서비스의 공개 서버
+왕복 1개를 검증했다. 합성 설치와 임시 인증정보는 제거했다. 기기 GPS·권한 브리지는
+모의 처리했으며 실기기 이동·OS 백그라운드·푸시 수신은 실행하지 않았다.
+알림 대상 생성은 격리 DB와 모의 sender로 확인했고 기기로 실제 푸시는 보내지 않았다.
+
+검증 기록은 [`docs/백그라운드_위치_시험배포_검증_20261021.json`](../../../docs/백그라운드_위치_시험배포_검증_20261021.json)에 있다.
+
 ```bash
 sudo systemctl start weather-care-test-missing.service
 journalctl -u weather-care-test-missing.service -n 100 --no-pager
@@ -73,3 +100,60 @@ systemctl status weather-care-test-api.service weather-care-test-cache-sync.time
 systemctl status weather-care-test-cache-sync.service
 journalctl -u weather-care-test-api.service -n 50 --no-pager
 ```
+
+## 2026-10-21 Data 관측소 이름·오늘 자료
+
+- 최종 시험 릴리스: `/opt/weather-care/releases/20261021-test-data-today-ready/weather_care_server`. 작업 전 릴리스는 `20261021-test-lightning-radius`이고 안정 링크는 기존 경로를 유지한다.
+- 하천 관측소 제원과 K-water 관측소 코드/이름을 일별 스냅샷으로 저장하고 Data 카탈로그에서 코드에 연결한다. 이름이 없는 경우 코드를 유지한다. 오늘 수치 유무를 기본 지점 선택에 사용한다.
+- 오늘 바다·하천 자료는 단발 수집했으며 정기 수집 설정은 변경하지 않았다. 백업·수집 원장·집계는 `/tmp/weather-care-data-today-20261021`에 있다. DB 마이그레이션이나 운영 서버 변경은 없다.
+
+## 2026-10-21 기상특보 해제예고 시간대 해석 복구
+
+- 현재 시험 릴리스: `/opt/weather-care/releases/20261021-test-warning-release-period/weather_care_server`. 이전 릴리스는 `20261021-test-data-today-ready`이며 안정 링크는 기존 경로를 유지한다.
+- 기상청 `ED_TM` 열의 `21일 밤(21시~24시)`·`22일 새벽(03시~06시)` 형식을 지원한다. 실제 응답의 시간대 표현을 읽되 기존 발표·발효·특보수준·해제 판정과 알 수 없는 필드 오류 처리는 유지한다. 배포 파일은 `src/providers/warnings/kmaWarningProvider.ts` 하나이다.
+- 한국시간 11:53:41에 특보 수집을 한 번 실행해 지역 매핑 711개·육상 특보 39건을 저장했다. 공개 시험 Today에서 구로 표본의 확인 불가 안내 해소와 시흥 표본의 강풍주의보 반환, 시험 health HTTP200을 확인했다.
+- 시험 DB 온라인 백업·진단 원문·배포 매니페스트·단발 실행 스크립트는 `/tmp/weather-care-warning-fix-20261021`에 있다. 특보 정기 수집은 기존 30분 주기를 유지하며 운영 소스·DB·서비스 설정과 알림 발송은 변경하지 않았다.
+
+## 2026-10-21 하천 필드·기간 이력 시험 반영
+
+- 안정 릴리스는 `/opt/weather-care/releases/20261021-test-river-fields-history/weather_care_server`이다. 직전 릴리스는 `20261021-test-warning-release-period`이며 기상특보 수정은 유지한다.
+- K-water의 hourwal=수위, flux=유량을 반영하고 시험 저장 자료 4,600행을 교정했다. 백업·원복 스크립트·출처 비교·감사 결과는 `/tmp/weather-care-river-fields-20261021`에 있다.
+- 오늘 하천 934곳에 시간별 이력을 단발 수집했다. API가 관측소별 이력과 전국 최신 관측을 합친다. 운영 서버·정기 수집 타이머·알림 설정은 변경하지 않았다.
+
+## 2026-10-21 하천 통합·검색 시험 반영
+
+- 현재 안정 릴리스는 `/opt/weather-care/releases/20261021-test-river-merged-search-time/weather_care_server`이다. 이전 완성 릴리스는 `20261021-test-river-fields-history`이며 기상특보 등 다른 작업의 변경을 유지한다.
+- 배포 파일은 `src/api/gridExtra.ts`, `src/collection/riverStationLinks.ts`이다. 관측소 제원과 K-water 추가 항목을 통합하고 검증한 서로 다른 코드도 연결한다. 기관별 시간 표기를 한국 표준시로 정규화해 같은 시각의 자료가 중복되지 않게 한다.
+- 원격 비교·배포 자료는 `/tmp/weather-care-river-merge-20261021`에 있다. 스키마·관측 스냅샷·운영 서버·정기 수집 설정은 변경하지 않았다. 시험 API만 재시작했다. 앱에서 K-water 별도 칩을 제거하며 기존 K-water API는 유지한다.
+
+## 2026-10-21 Data 관측소 거리 반영
+
+- 현재 안정 릴리스는 `/opt/weather-care/releases/20261021-test-data-station-distance-v2/weather_care_server`이다. 직전 완성 릴리스는 `20261021-test-river-merged-search-time`이며 기존 기상특보·하천 통합 등의 변경을 유지한다.
+- 변경 배포는 API·수집기와 새 좌표 정규화/기준 위치 모듈 네 파일이다. 시험 HRFCO 제원 1건의 payload에 유효 좌표 1,400개를 보완했다. DB 스키마·관측값·수집 주기·운영 서버는 변경하지 않았다.
+- 원격 `/tmp/weather-care-data-stations-20261021`에 온라인 백업, 변경 전 제원, 배포 해시, 제원 보완·원복 스크립트가 있다. 첫 적용은 좌표 개수 검증 조건에서 중단돼 원복했고, 원본의 유효 좌표가 정확히 1,400개임을 확인해 재적용했다. 운영 API·운영 스케줄러는 유지하며 시험 API만 재시작했다.
+
+### 2026-10-21 누락 관측소 위치 후속 보완
+
+- 1차 보완 릴리스: `/opt/weather-care/releases/20261021-test-station-coordinate-backfill/weather_care_server`. 직전 `20261021-test-data-station-distance-v2`를 복제하고 API와 좌표 보완표 2개만 이전·이후 SHA256 대조 후 배포했다. 시험 API만 재시작하며 DB·정기 수집·운영 서버는 변경하지 않았다.
+- 공식 2026 홍수통제소 CSV의 코드·이름 일치 10곳과 OneClick 코드 확인 2곳, 낙동강하굿둑 시설 위치 1곳, BUOY 예측 코드 연결 3곳을 추가했다. 하천 1,479/1,551개, 댐 59/59개, 해역 예측 27/27개에 거리 제공. 하천 미확인 72곳과 잘못된 제주 공통 좌표 제외 근거는 `docs/관측소_좌표_보완_검증_20261021.json`에 있다.
+- API/수집/좌표 검사 27개와 타입 검사 통과. 실제 시험 API에서 16개 추가 위치·미확인 72개 유지, 보완 하천 2곳·댐 1곳·해역 1곳의 지점 좌표 요청 시 거리 0을 확인했다. 원격 배포 기록·원복 기준은 `/tmp/weather-care-coordinate-backfill-20261021`, 로컬 공개 응답 검증은 `weather_care_app/build/coordinate-backfill-20261021/verification.json`이다. 앱 수정·재설치·사용자 위치 변경은 없다.
+
+### 2026-10-21 WAMIS 재조회·연보 추가 검증
+
+- 재조회 릴리스: `/opt/weather-care/releases/20261021-test-station-coordinate-retry/weather_care_server`. 1차 보완 릴리스를 복제하고 좌표 보완표 1파일만 해시 검사 후 배포했다. DB·정기 수집·운영 서버를 변경하지 않았다. 원격 기록은 `/tmp/weather-care-coordinate-retry-20261021`에 있다.
+- WAMIS 30곳 모두 응답 확보(5곳 등록 제원 공란·25곳 해당 코드 자료 없음), 새 유효 좌표 없음. 2021 XLS·2025 연보의 이름/주소/명칭 변경과 관측 시계열을 추가 대조해 상사4교·청도 당호리/임당리·주암조절지 방수로·덕치 5곳을 보완했다. 위치만 연결하고 관측소 코드는 보존한다.
+- 실제 시험 API에서 기존 1,551개 코드·이름·연결 코드·기존 좌표 유지와 하천 1,484곳 위치 제공·미확인67곳을 확인했다. 추가5곳 모두 해당 위치 요청 시 거리0이다. API/수집/좌표28개·타입 검사 통과. 근거·최신 미확인 목록은 `docs/관측소_좌표_재조회_검증_20261021.json`, 로컬 공개 검증은 `weather_care_app/build/coordinate-retry-20261021/verification.json`이다.
+
+### 2026-10-21 남은 67곳 공식 주소·설치 자료 대조
+
+- 설치 자료 보완 릴리스: `/opt/weather-care/releases/20261021-test-station-installations/weather_care_server`. 직전 재조회 릴리스를 복제하고 좌표표 1파일만 전후 SHA256 검사 후 반영했다. 시험 API만 재시작했으며 시험/운영 API·운영 스케줄러 active를 확인했다. 원격 기록·원복 기준은 `/tmp/weather-care-station-installations-20261021`에 있다.
+- 두평9000242와 주암조절지댐방수로8000020를 공식 관측소명·주소·관리기관·관리댐/유역으로 대조해 위치만 추가했다. 현재 HRFCO 수위관측소 제원3007606/4104625의 좌표를 사용한다. 원 코드별 센서 이력과 측정값 동일성은 확정하지 않으므로 코드·자료 이력은 합치지 않는다.
+- 실제 공개 시험 API3회 조회로 기존1,551개 식별·연결 코드·기존 좌표 유지, 위치1,486개·미확인65개, 신규2곳의 지점 좌표 요청 시 거리0을 확인했다. API/수집/좌표28개 및 타입 검사 통과. 같은 위치의 별도 코드도 각각 남는다. 서버 좌표표 변경이므로 APK 빌드·설치는 없다.
+- 공식 자료 PDF5개와 현재/기존 제원을 대조했다. 2011 보고서를 업로드 연도2022 자료로 오인하지 않으며 두평 개시일 오기는 주소·좌표 근거와 분리했다. 주천교/동정교는 문서 간 위치 차이, 보 하류·보조수위·감지·갑문 등은 센서 설치 대응 부족으로 추정 대입하지 않았다. 최신 근거·미확인65곳은 `docs/관측소_설치자료_위치검증_20261021.json`, 공개 검증은 `weather_care_app/build/station-installations-20261021/verification.json`에 있다.
+
+### 2026-10-21 미확인 65곳 공식 GIS 후속 대조
+
+- 현재 시험 릴리스: `/opt/weather-care/releases/20261021-test-station-official-gis/weather_care_server`. 직전 설치 자료 릴리스를 복제하고 좌표표 1파일만 전후 SHA256 검사 후 교체했다. 원격 배포·원복 기준은 `/tmp/weather-care-station-official-deploy-20261021`, 읽기 전용 수위 대조는 `/tmp/weather-care-station-official-20261021`에 있다. 시험 API만 재시작했고 시험/운영 API·운영 스케줄러 active이다.
+- 공식 GIS 수위627개·20260410 수위1,076개·DIIS356개·상세 제원1,724개 대조 후12곳을 보완했다. 원 코드 위치9곳, 원 코드의 현재 명칭이 확인된 구포/삼랑진/진동3곳이다. DIIS 구좌표는 서버의 명시적 EPSG:4326 반환 geometry를 쓴다. 원코드의 다른 시설명(대아저수지/굴포·경천저수지/시화호) 충돌은 제외한다. 일부 과거 제원의 폐국 표시는 현재 운영/자료 제공 여부와 구분해 기록한다.
+- 공개 시험 API13회로 전체1,551개 코드·명칭·연결 코드·기존 좌표 유지, 위치1,498곳·미확인53곳, 신규12곳 각각 해당 좌표 요청 시 거리0을 확인했다. API/수집/좌표28개·타입 검사 통과. DB·수집·운영 배포·앱 빌드/설치는 변경하지 않았다.
+- 최신 출처·주소·좌표계·명칭 이력·미확인53곳은 `docs/관측소_공식GIS_위치검증_20261021.json`, 로컬 공개 검증은 `weather_care_app/build/station-official-20261021/verification.json`에 있다. 앞선65곳 기록은 당시 조사 이력으로 보존한다.

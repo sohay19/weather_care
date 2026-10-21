@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { ownerForRequest } from '../security/installationAccess';
 import { bodyLimit } from 'hono/body-limit';
 import { minimumAgeAssertionShape } from '../validation/minimumAge';
+import backgroundLocation from './backgroundLocation';
 
 const installationBodySchema = z
   .object({
@@ -20,6 +21,7 @@ const installationBodySchema = z
     timezone: z.string().min(1).max(64).default('Asia/Seoul'),
     latitude: z.number().min(30).max(44).nullable().optional(),
     longitude: z.number().min(120).max(134).nullable().optional(),
+    locationMeasuredAt: z.string().datetime().optional(),
   })
   .strict()
   .refine(
@@ -31,6 +33,7 @@ const installationBodySchema = z
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', bodyLimit({ maxSize: 8192 }));
+router.route('/', backgroundLocation);
 
 router.put('/:installationId', async (c) => {
   const installationId = c.req.param('installationId');
@@ -41,6 +44,14 @@ router.put('/:installationId', async (c) => {
     return c.json({ error: 'INVALID_INSTALLATION' }, 400);
   }
   const body = parsed.data;
+  if (body.locationMeasuredAt) {
+    const age = Date.now() - Date.parse(body.locationMeasuredAt);
+    // A token refresh may carry the last confirmed (old) location. Preserve its
+    // measurement time so the repository keeps any newer background location.
+    if (age < -60_000) {
+      return c.json({ error: 'LOCATION_EXPIRED' }, 422);
+    }
+  }
   const { nx, ny, topic } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
   const payload: Installation = {
     installationId,
@@ -54,6 +65,7 @@ router.put('/:installationId', async (c) => {
     timezone: body.timezone ?? 'Asia/Seoul',
     latitude: body.latitude ?? undefined,
     longitude: body.longitude ?? undefined,
+    locationMeasuredAt: body.locationMeasuredAt,
     minimumAgeConfirmed: body.minimumAgeConfirmed,
     agePolicyVersion: body.agePolicyVersion,
   };

@@ -78,6 +78,8 @@ describe('notification scheduler', () => {
           platform TEXT, app_version TEXT,
           timezone TEXT NOT NULL DEFAULT 'Asia/Seoul',
           latitude REAL, longitude REAL,
+          background_location_revision TEXT,
+          location_measured_at TEXT,
           current_rain_state INTEGER NOT NULL DEFAULT 0,
           current_rain_observed_at TEXT,
           road_ice_level INTEGER NOT NULL DEFAULT 0,

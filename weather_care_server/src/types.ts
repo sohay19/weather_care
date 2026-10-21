@@ -341,6 +341,7 @@ export interface NotificationSettings {
 }
 
 export interface Installation {
+  locationMeasuredAt?: string;
   installationId: string;
   minimumAgeConfirmed: true;
   agePolicyVersion: 1;

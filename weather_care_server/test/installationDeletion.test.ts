@@ -20,6 +20,8 @@ import m6 from '../migrations/0006_road_control_state.sql?raw';
 import m7 from '../migrations/0007_installation_access.sql?raw';
 import m8 from '../migrations/0008_data_retention.sql?raw';
 import m9 from '../migrations/0009_minimum_age_policy.sql?raw';
+import m16 from '../migrations/0016_lightning_alerts.sql?raw';
+import m17 from '../migrations/0017_background_location.sql?raw';
 
 const legacyId = 'wc_legacy_synthetic_fixture_0001';
 const noTokenId = 'wc_legacy_without_token_000001';
@@ -57,6 +59,7 @@ async function count(table: string, id: string) {
 }
 
 beforeEach(async () => {
+  await env.DB.exec('DROP TABLE IF EXISTS lightning_notification_claims; DROP TABLE IF EXISTS lightning_collection_state');
   await env.DB.exec('DROP TABLE IF EXISTS installation_activity');
   // Isolated test binding only. Production data is never used in this suite.
   await env.DB.exec(`DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots;`);
@@ -69,6 +72,8 @@ beforeEach(async () => {
   await apply(m7);
   await apply(m8);
   await apply(m9);
+  await apply(m16);
+  await apply(m17);
   vi.spyOn(fcm, 'sendOwnershipChallenge').mockResolvedValue();
   vi.spyOn(analyticsDeletion, 'submitAnalyticsUserDeletion').mockResolvedValue({
     deletionRequestTime: '2026-09-11T01:02:03Z',

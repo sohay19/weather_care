@@ -6,25 +6,31 @@ export async function upsertInstallation(
   ownerHash?: string,
 ): Promise<boolean> {
   const now = new Date().toISOString();
+  const measuredAt = payload.locationMeasuredAt
+    ? new Date(payload.locationMeasuredAt).toISOString() : now;
+  const keepNewer = `excluded.location_mode = 'GPS' AND installations.location_mode = 'GPS'
+    AND installations.location_measured_at > excluded.location_measured_at`;
   const result = await db
     .prepare(
       `INSERT INTO installations
        (installation_id, fcm_token, nx, ny, region_topic, location_mode, platform, app_version, timezone, latitude, longitude,
-        minimum_age_confirmed_at, age_policy_version, created_at, updated_at)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        minimum_age_confirmed_at, age_policy_version, created_at, updated_at, location_measured_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
        ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
          WHERE installation_id = ? AND secret_hash = ?)`}
        ON CONFLICT(installation_id) DO UPDATE SET
          fcm_token=excluded.fcm_token,
-         nx=excluded.nx,
-         ny=excluded.ny,
-         region_topic=excluded.region_topic,
+         nx=CASE WHEN ${keepNewer} THEN installations.nx ELSE excluded.nx END,
+         ny=CASE WHEN ${keepNewer} THEN installations.ny ELSE excluded.ny END,
+         region_topic=CASE WHEN ${keepNewer} THEN installations.region_topic ELSE excluded.region_topic END,
          location_mode=excluded.location_mode,
          platform=excluded.platform,
          app_version=excluded.app_version,
          timezone=excluded.timezone,
-         latitude=excluded.latitude,
-         longitude=excluded.longitude,
+         latitude=CASE WHEN ${keepNewer} THEN installations.latitude ELSE excluded.latitude END,
+         longitude=CASE WHEN ${keepNewer} THEN installations.longitude ELSE excluded.longitude END,
+         location_measured_at=CASE WHEN ${keepNewer} THEN installations.location_measured_at ELSE excluded.location_measured_at END,
+         background_location_revision=CASE WHEN excluded.location_mode = 'MANUAL' THEN NULL ELSE installations.background_location_revision END,
          minimum_age_confirmed_at=excluded.minimum_age_confirmed_at,
          age_policy_version=excluded.age_policy_version,
          updated_at=excluded.updated_at`,
@@ -45,6 +51,7 @@ export async function upsertInstallation(
       payload.agePolicyVersion,
       now,
       now,
+      measuredAt,
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

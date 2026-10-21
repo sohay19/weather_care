@@ -316,36 +316,43 @@ class WeatherInfoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!showCurrentSummary) ...[
-            Row(
-              key: const ValueKey('weather-metric-일출/일몰'),
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.wb_sunny_outlined,
-                            size: 22,
-                            color: WeatherCareTheme.of(context).primaryDeep),
-                        const SizedBox(width: 10),
-                        Text(
-                            '일출 ${_koreaClock(sunriseAt) ?? dataPhase.missingText()}',
-                            style: sunTimeStyle),
-                        const SizedBox(width: 28),
-                        Icon(Icons.wb_twilight_rounded,
-                            size: 22,
-                            color: WeatherCareTheme.of(context).primaryDeep),
-                        const SizedBox(width: 10),
-                        Text(
-                            '일몰 ${_koreaClock(sunsetAt) ?? dataPhase.missingText()}',
-                            style: sunTimeStyle),
-                      ],
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: WeatherCareTheme.of(context).surfaceMuted,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                key: const ValueKey('weather-metric-일출/일몰'),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.wb_sunny_outlined,
+                              size: 22,
+                              color: WeatherCareTheme.of(context).primaryDeep),
+                          const SizedBox(width: 10),
+                          Text(
+                              '일출 ${_koreaClock(sunriseAt) ?? dataPhase.missingText()}',
+                              style: sunTimeStyle),
+                          const SizedBox(width: 28),
+                          Icon(Icons.wb_twilight_rounded,
+                              size: 22,
+                              color: WeatherCareTheme.of(context).primaryDeep),
+                          const SizedBox(width: 10),
+                          Text(
+                              '일몰 ${_koreaClock(sunsetAt) ?? dataPhase.missingText()}',
+                              style: sunTimeStyle),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 12),
           ],

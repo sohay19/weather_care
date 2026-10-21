@@ -429,10 +429,14 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                 ],
               )
             else
-              HomeSectionHeader(
-                icon: Icons.schedule_rounded,
-                title: '타임라인',
-                subtitle: '항목을 선택해 시간별로 비교해요',
+              Padding(
+                padding:
+                    EdgeInsets.only(left: widget.keyPrefix == 'main' ? 12 : 0),
+                child: const HomeSectionHeader(
+                  icon: Icons.schedule_rounded,
+                  title: '타임라인',
+                  subtitle: '항목을 선택해 시간별로 비교해요',
+                ),
               ),
             if (!widget.inline)
               Padding(

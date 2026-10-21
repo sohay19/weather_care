@@ -1,0 +1,2832 @@
+{
+  "확인일": "2026-10-21",
+  "시작미확인": 65,
+  "추가위치": [
+    {
+      "id": "1005681",
+      "name": "강천보하류",
+      "latitude": 37.283888890123215,
+      "longitude": 127.68472220028876,
+      "출처": "RainWaterheight-points",
+      "공식제원": {
+        "OBJECTID_12": 47,
+        "OBJECTID_1": 47,
+        "OBJECTID": 47,
+        "OBSNM": "강천보(하류)",
+        "WLOBSCD": "1005681",
+        "RIVCD": "1000010",
+        "DAMCD": "1007601",
+        "ETCADDR": " ",
+        "WLOBSOCD": "0",
+        "OBSKDCD": "3",
+        "LAT": 37.283889,
+        "LON": 127.684722,
+        "관할기관": "환경부",
+        "STD_BASIN_CD": "100708",
+        "ADMCD": "4167037000",
+        "EMD_CD": "4167037000"
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "1007601:1005681",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 GIS 수위관측소2의 원 관측소 코드·하류 명칭·관리댐 일치. GIS 서버가 변환해 반환한 EPSG:4326 geometry를 사용한다. 20260410 지도에서도 같은 이름의 하류 위치가 소수점 6자리까지 일치한다.",
+      "좌표방식": "공식 GIS query outSR=4326 응답 geometry. 상류나 댐 대표점 사용 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "1005681",
+        "OBSNM": "강천보(하류)",
+        "DAMCD": "1007601",
+        "LON": null,
+        "LAT": null,
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1621959228000
+      },
+      "주소": "",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2021-05-25T16:13:48+00:00"
+    },
+    {
+      "id": "1005691",
+      "name": "이포보하류",
+      "latitude": 37.408333329593674,
+      "longitude": 127.54138889950524,
+      "출처": "RainWaterheight-points",
+      "공식제원": {
+        "OBJECTID_12": 48,
+        "OBJECTID_1": 48,
+        "OBJECTID": 48,
+        "OBSNM": "이포보(하류)",
+        "WLOBSCD": "1005691",
+        "RIVCD": "1000010",
+        "DAMCD": "1007603",
+        "ETCADDR": " ",
+        "WLOBSOCD": "0",
+        "OBSKDCD": "3",
+        "LAT": 37.408333,
+        "LON": 127.541389,
+        "관할기관": "환경부",
+        "STD_BASIN_CD": "100715",
+        "ADMCD": "4167035000",
+        "EMD_CD": "4167035000"
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "1007603:1005691",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 GIS 수위관측소2의 원 관측소 코드·하류 명칭·관리댐 일치. GIS 서버가 변환해 반환한 EPSG:4326 geometry를 사용한다. 20260410 지도에서도 같은 이름의 하류 위치가 소수점 6자리까지 일치한다.",
+      "좌표방식": "공식 GIS query outSR=4326 응답 geometry. 상류나 댐 대표점 사용 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "1005691",
+        "OBSNM": "이포보(하류)",
+        "DAMCD": "1007603",
+        "LON": null,
+        "LAT": null,
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1621334388000
+      },
+      "주소": "",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2021-05-18T10:39:48+00:00"
+    },
+    {
+      "id": "3001661",
+      "name": "동정교",
+      "latitude": 35.74995222990534,
+      "longitude": 127.5631420301808,
+      "출처": "DIIS-UND-MapServer-4-query-rows",
+      "공식제원": {
+        "OBJECTID": 352,
+        "WLOBSCD": 3001661,
+        "OBSNM": "동정교",
+        "OBSKDCD": 2,
+        "MGGVCD": 2,
+        "WLOBSOCD": 39905,
+        "SBSNCD": 300102,
+        "DAMCD": 3001110,
+        "RIVCD": 3020100,
+        "LON": "127-33-55",
+        "LAT": "35-44-49",
+        "TMCORDX": 250862.6198,
+        "TMCORDY": 250138.9615,
+        "ADMCD": 4574033522,
+        "ETCADDR": " ",
+        "OPNDT": 999302400000,
+        "CLSDT": " ",
+        "CLSDV": 0,
+        "VWPTO": " ",
+        "ZRELM": 324.793,
+        "APMFWL": 0,
+        "TIDEIC": " ",
+        "BMGPELM": 0,
+        "MXDOKCNT": 0,
+        "MRJPDIS": 0,
+        "ODAMBSNA": " ",
+        "ARART": " ",
+        "WSRDIS": 0,
+        "OFC": " ",
+        "BEDSLOPE": " ",
+        "RIVWITH": 0,
+        "CMT": " ",
+        "FLWMYN": "Y",
+        "LUDDT": "2004-11-01 오후 3:39:18",
+        "TVALUE": 0
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "3001110:3001661",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 DIIS 수위관측소 지도의 원 코드·명칭·용담댐 관리 코드 일치. 현재 공개 제원 표의 같은 코드·주소·관리댐과 교차 확인한다. 예전 도분초를 WGS84로 간주하지 않고 지도 서버의 명시적 EPSG:4326 변환 응답을 사용한다.",
+      "좌표방식": "DIIS 원본은 ITRF2000 TM WKT를 명시한다. 반환 geometry의 EPSG:4326 위치 사용. 표의 과거 도분초/Bessel 및 TM 값을 직접 대입하지 않음.",
+      "상세제원대조": {
+        "WLOBSCD": "3001661",
+        "OBSNM": "동정교",
+        "DAMCD": "3001110",
+        "LON": "127-33-55",
+        "LAT": "35-44-49",
+        "ADDR": "전라북도 장수군 장계면 금곡리",
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "Y",
+        "LUDDT": 1536325516000
+      },
+      "주소": "전라북도 장수군 장계면 금곡리",
+      "출처폐국표시": "Y",
+      "상세제원갱신일UTC": "2018-09-07T13:05:16+00:00",
+      "자료상태주의": "상세 제원에 폐국 Y 표시가 있는 과거 위치 자료이다. 현재 관측 재개나 유효 실측을 보장하지 않는다. 기존 카탈로그와 오늘 자료 유무 정책은 유지하며 위치만 보완한다."
+    },
+    {
+      "id": "3001664",
+      "name": "주고교",
+      "latitude": 35.82133340543839,
+      "longitude": 127.62396937507154,
+      "출처": "DIIS-UND-MapServer-4-query-rows",
+      "공식제원": {
+        "OBJECTID": 355,
+        "WLOBSCD": 3001664,
+        "OBSNM": "주고교",
+        "OBSKDCD": 2,
+        "MGGVCD": 2,
+        "WLOBSOCD": 39105,
+        "SBSNCD": 300103,
+        "DAMCD": 3001110,
+        "RIVCD": 3020210,
+        "LON": "127-37-34",
+        "LAT": "35-49-06",
+        "TMCORDX": 256314.1091,
+        "TMCORDY": 258092.4796,
+        "ADMCD": 4574036027,
+        "ETCADDR": " ",
+        "OPNDT": 999302400000,
+        "CLSDT": " ",
+        "CLSDV": 0,
+        "VWPTO": " ",
+        "ZRELM": 409.21000000000004,
+        "APMFWL": 0,
+        "TIDEIC": " ",
+        "BMGPELM": 0,
+        "MXDOKCNT": 0,
+        "MRJPDIS": 0,
+        "ODAMBSNA": " ",
+        "ARART": " ",
+        "WSRDIS": 0,
+        "OFC": " ",
+        "BEDSLOPE": " ",
+        "RIVWITH": 0,
+        "CMT": " ",
+        "FLWMYN": "Y",
+        "LUDDT": "2004-11-01 오후 3:52:48",
+        "TVALUE": 0
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "3001110:3001664",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 DIIS 수위관측소 지도의 원 코드·명칭·용담댐 관리 코드 일치. 현재 공개 제원 표의 같은 코드·주소·관리댐과 교차 확인한다. 예전 도분초를 WGS84로 간주하지 않고 지도 서버의 명시적 EPSG:4326 변환 응답을 사용한다.",
+      "좌표방식": "DIIS 원본은 ITRF2000 TM WKT를 명시한다. 반환 geometry의 EPSG:4326 위치 사용. 표의 과거 도분초/Bessel 및 TM 값을 직접 대입하지 않음.",
+      "상세제원대조": {
+        "WLOBSCD": "3001664",
+        "OBSNM": "주고교",
+        "DAMCD": "3001110",
+        "LON": "127-37-34",
+        "LAT": "35-49-06",
+        "ADDR": "전라북도 장수군 계북면 양악리",
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "Y",
+        "LUDDT": 1536325516000
+      },
+      "주소": "전라북도 장수군 계북면 양악리",
+      "출처폐국표시": "Y",
+      "상세제원갱신일UTC": "2018-09-07T13:05:16+00:00",
+      "자료상태주의": "상세 제원에 폐국 Y 표시가 있는 과거 위치 자료이다. 현재 관측 재개나 유효 실측을 보장하지 않는다. 기존 카탈로그와 오늘 자료 유무 정책은 유지하며 위치만 보완한다."
+    },
+    {
+      "id": "8000119",
+      "name": "충주보조수위",
+      "latitude": 37.00555555555555,
+      "longitude": 127.99194444444444,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "8000119",
+        "OBSNM": "충주보조수위",
+        "OBSKDCD": null,
+        "MGGVCD": "02",
+        "WLOBSOCD": null,
+        "SBSNCD": null,
+        "DAMCD": "1003110",
+        "RIVCD": "1000010",
+        "LON": "127-59-31",
+        "LAT": "37-00-20",
+        "TMCORDX": 287764.4145475081,
+        "TMCORDY": 390095.940115781,
+        "ADMCD": null,
+        "ETCADDR": null,
+        "OPNDT": null,
+        "CLSDT": null,
+        "CLSDV": "Y",
+        "VWPTO": null,
+        "ZRELM": null,
+        "APMFWL": null,
+        "TIDEIC": "N",
+        "BMGPELM": null,
+        "MXDOKCNT": null,
+        "MRJPDIS": null,
+        "ODAMBSNA": null,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "N",
+        "LUDDT": 1536325516000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": null,
+        "ESRI_OID": 340
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "1003110:8000119",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 공개 상세 제원 표에 원 코드·현재 명칭·관리댐·개별 관측소의 유효 도분초가 함께 존재한다. 댐의 좌표를 보조수위 센서에 대신 복사한 값이 아니다.",
+      "좌표방식": "해당 원 코드 제원의 LAT/LON 도분초를 십진도로 변환. 다른 코드의 센서나 시설 대표점 대입 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "8000119",
+        "OBSNM": "충주보조수위",
+        "DAMCD": "1003110",
+        "LON": "127-59-31",
+        "LAT": "37-00-20",
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "Y",
+        "LUDDT": 1536325516000
+      },
+      "주소": "",
+      "출처폐국표시": "Y",
+      "상세제원갱신일UTC": "2018-09-07T13:05:16+00:00",
+      "자료상태주의": "상세 제원에 폐국 Y 표시가 있는 과거 위치 자료이다. 현재 관측 재개나 유효 실측을 보장하지 않는다. 기존 카탈로그와 오늘 자료 유무 정책은 유지하며 위치만 보완한다."
+    },
+    {
+      "id": "3001665",
+      "name": "진안군(주천교)",
+      "latitude": 35.970575000000004,
+      "longitude": 127.43061944444445,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "3001665",
+        "OBSNM": "진안군(주천교)",
+        "OBSKDCD": "Jinangun(Jucheongyo)",
+        "MGGVCD": "02",
+        "WLOBSOCD": "39205",
+        "SBSNCD": "300107",
+        "DAMCD": "3001110",
+        "RIVCD": "3020420",
+        "LON": "127-25-50.23",
+        "LAT": "35-58-14.07",
+        "TMCORDX": 239036.96091075,
+        "TMCORDY": 274525.084459101,
+        "ADMCD": "4572040000",
+        "ETCADDR": "주양리 634-6 주천교",
+        "OPNDT": 999302400000,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": 0.0,
+        "APMFWL": 0.0,
+        "TIDEIC": "N",
+        "BMGPELM": 0.0,
+        "MXDOKCNT": 0.0,
+        "MRJPDIS": 0.0,
+        "ODAMBSNA": 0.0,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "Y",
+        "LUDDT": 1774972677000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": "전북특별자치도 진안군 주천면 ",
+        "ESRI_OID": 1201
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "3001110:3001665",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 공개 상세 제원 표에 원 코드·현재 명칭·관리댐·개별 관측소의 유효 도분초가 함께 존재한다. 댐의 좌표를 보조수위 센서에 대신 복사한 값이 아니다.",
+      "좌표방식": "해당 원 코드 제원의 LAT/LON 도분초를 십진도로 변환. 다른 코드의 센서나 시설 대표점 대입 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "3001665",
+        "OBSNM": "진안군(주천교)",
+        "DAMCD": "3001110",
+        "LON": "127-25-50.23",
+        "LAT": "35-58-14.07",
+        "ADDR": "전북특별자치도 진안군 주천면 ",
+        "ETCADDR": "주양리 634-6 주천교",
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1774972677000
+      },
+      "주소": "전북특별자치도 진안군 주천면 주양리 634-6 주천교",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2026-03-31T15:57:57+00:00"
+    },
+    {
+      "id": "9000274",
+      "name": "진안군(하향교)",
+      "latitude": 35.82918611111111,
+      "longitude": 127.55282777777778,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "9000274",
+        "OBSNM": "진안군(하향교)",
+        "OBSKDCD": "Jinangun(Hahyanggyo)",
+        "MGGVCD": "02",
+        "WLOBSOCD": null,
+        "SBSNCD": "300103",
+        "DAMCD": "3001110",
+        "RIVCD": "3020210",
+        "LON": "127-33-10.18",
+        "LAT": "35-49-45.07",
+        "TMCORDX": 250723.429948157,
+        "TMCORDY": 242128.589406139,
+        "ADMCD": "4572033000",
+        "ETCADDR": "자산리 841 하향교",
+        "OPNDT": 1513728000000,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": 299.152,
+        "APMFWL": 298.72,
+        "TIDEIC": "N",
+        "BMGPELM": 305.874,
+        "MXDOKCNT": 5.5,
+        "MRJPDIS": 380.12,
+        "ODAMBSNA": 0.0,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "Y",
+        "LUDDT": 1774973088000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": "전북특별자치도 진안군 동향면 ",
+        "ESRI_OID": 1321
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "3001110:9000274",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 공개 상세 제원 표에 원 코드·현재 명칭·관리댐·개별 관측소의 유효 도분초가 함께 존재한다. 댐의 좌표를 보조수위 센서에 대신 복사한 값이 아니다.",
+      "좌표방식": "해당 원 코드 제원의 LAT/LON 도분초를 십진도로 변환. 다른 코드의 센서나 시설 대표점 대입 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "9000274",
+        "OBSNM": "진안군(하향교)",
+        "DAMCD": "3001110",
+        "LON": "127-33-10.18",
+        "LAT": "35-49-45.07",
+        "ADDR": "전북특별자치도 진안군 동향면 ",
+        "ETCADDR": "자산리 841 하향교",
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1774973088000
+      },
+      "주소": "전북특별자치도 진안군 동향면 자산리 841 하향교",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2026-03-31T16:04:48+00:00"
+    },
+    {
+      "id": "8000094",
+      "name": "청주시(대청댐보조수위)",
+      "latitude": 36.47841388888889,
+      "longitude": 127.48053055555556,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "8000094",
+        "OBSNM": "청주시(대청댐보조수위)",
+        "OBSKDCD": "Cheongjusi(Daecheongdambojosuwi)",
+        "MGGVCD": "02",
+        "WLOBSOCD": null,
+        "SBSNCD": "300805",
+        "DAMCD": "3008110",
+        "RIVCD": "3000010",
+        "LON": "127-28-49.91",
+        "LAT": "36-28-42.29",
+        "TMCORDX": 243365.758629082,
+        "TMCORDY": 330953.609233634,
+        "ADMCD": "4311135000",
+        "ETCADDR": "덕유리 대청댐",
+        "OPNDT": null,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": 0.0,
+        "APMFWL": 136.7,
+        "TIDEIC": "N",
+        "BMGPELM": 0.0,
+        "MXDOKCNT": 22.0,
+        "MRJPDIS": 136.7,
+        "ODAMBSNA": 4134.0,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "N",
+        "LUDDT": 1572892572000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": "충청북도 청주시 상당구 문의면",
+        "NADDR2": "노산하석로 458",
+        "ADDR": "충청북도 청주시 상당구 문의면 ",
+        "ESRI_OID": 315
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "3008110:8000094",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 공개 상세 제원 표에 원 코드·현재 명칭·관리댐·개별 관측소의 유효 도분초가 함께 존재한다. 댐의 좌표를 보조수위 센서에 대신 복사한 값이 아니다.",
+      "좌표방식": "해당 원 코드 제원의 LAT/LON 도분초를 십진도로 변환. 다른 코드의 센서나 시설 대표점 대입 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "8000094",
+        "OBSNM": "청주시(대청댐보조수위)",
+        "DAMCD": "3008110",
+        "LON": "127-28-49.91",
+        "LAT": "36-28-42.29",
+        "ADDR": "충청북도 청주시 상당구 문의면 ",
+        "ETCADDR": "덕유리 대청댐",
+        "NADDR1": "충청북도 청주시 상당구 문의면",
+        "NADDR2": "노산하석로 458",
+        "CLSDV": "N",
+        "LUDDT": 1572892572000
+      },
+      "주소": "충청북도 청주시 상당구 문의면 덕유리 대청댐",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2019-11-04T18:36:12+00:00"
+    },
+    {
+      "id": "9000259",
+      "name": "부사방조제 외수위",
+      "latitude": 36.18416666666666,
+      "longitude": 126.52,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "9000259",
+        "OBSNM": "부사방조제 외수위",
+        "OBSKDCD": null,
+        "MGGVCD": "07",
+        "WLOBSOCD": null,
+        "SBSNCD": null,
+        "DAMCD": "3203110",
+        "RIVCD": "3000010",
+        "LON": "126-31-12",
+        "LAT": "36-11-03",
+        "TMCORDX": null,
+        "TMCORDY": null,
+        "ADMCD": null,
+        "ETCADDR": null,
+        "OPNDT": null,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": null,
+        "APMFWL": null,
+        "TIDEIC": "N",
+        "BMGPELM": null,
+        "MXDOKCNT": null,
+        "MRJPDIS": null,
+        "ODAMBSNA": null,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "N",
+        "LUDDT": 1575639751000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": null,
+        "ESRI_OID": 121
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "3203110:9000259",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 공개 상세 제원 표에 원 코드·현재 명칭·관리댐·개별 관측소의 유효 도분초가 함께 존재한다. 댐의 좌표를 보조수위 센서에 대신 복사한 값이 아니다.",
+      "좌표방식": "해당 원 코드 제원의 LAT/LON 도분초를 십진도로 변환. 다른 코드의 센서나 시설 대표점 대입 없음.",
+      "상세제원대조": {
+        "WLOBSCD": "9000259",
+        "OBSNM": "부사방조제 외수위",
+        "DAMCD": "3203110",
+        "LON": "126-31-12",
+        "LAT": "36-11-03",
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1575639751000
+      },
+      "주소": "",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2019-12-06T13:42:31+00:00"
+    },
+    {
+      "id": "8000099",
+      "name": "구포(부산)",
+      "latitude": 35.203611111111115,
+      "longitude": 128.9933333333333,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "8000099",
+        "OBSNM": "부산시(구포대교)",
+        "OBSKDCD": null,
+        "MGGVCD": "01",
+        "WLOBSOCD": null,
+        "SBSNCD": "202205",
+        "DAMCD": "2022510",
+        "RIVCD": "2000010",
+        "LON": null,
+        "LAT": null,
+        "TMCORDX": null,
+        "TMCORDY": null,
+        "ADMCD": null,
+        "ETCADDR": null,
+        "OPNDT": null,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": -11.99,
+        "APMFWL": null,
+        "TIDEIC": "N",
+        "BMGPELM": null,
+        "MXDOKCNT": null,
+        "MRJPDIS": null,
+        "ODAMBSNA": null,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "N",
+        "LUDDT": 1775146847000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": null,
+        "ESRI_OID": 320
+      },
+      "참조공식코드": "2022680",
+      "참조공식제원": {
+        "wlobscd": "2022680",
+        "agcnm": "기후에너지환경부",
+        "obsnm": "부산시(구포대교)",
+        "addr": "부산광역시 북구",
+        "etcaddr": "구포동 1065-1 (구포대교)",
+        "lon": "128-59-36",
+        "lat": "35-12-13 ",
+        "gdt": "-11.979",
+        "attwl": "12.92",
+        "wrnwl": "14.4",
+        "almwl": "15.4",
+        "srswl": "17.85",
+        "pfh": "17.85",
+        "fstnyn": "Y",
+        "links": []
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "2022510:8000099",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 상세 제원의 동일 원 코드가 가리키는 현재 관측소명으로 명칭 이력을 확인했다. 현재 공식 HRFCO 제원 및 20260410 수위 GIS의 같은 관측소명·측정 지점 위치를 연결한다. 다른 센서라고 판단할 수 있는 관측 이력/수치는 합치지 않는다.",
+      "좌표방식": "명칭 이력이 확인된 원 코드에 현재 HRFCO의 동일 관측 지점 좌표를 연결. 구포/삼랑진/진동이라는 예전 명칭만으로 교량이나 지역 대표점을 추정하지 않음.",
+      "시계열대조": {
+        "kwaterCode": "8000099",
+        "kwaterName": "구포(부산)",
+        "hrfcoCode": "2022680",
+        "hrfcoName": "부산시(구포대교)",
+        "count": 11,
+        "exactLevel": 9,
+        "distinctLevels": 3,
+        "pairs": [
+          {
+            "time": "202610210100",
+            "kwater": {
+              "levelM": 12.84,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 153.4
+            }
+          },
+          {
+            "time": "202610210200",
+            "kwater": {
+              "levelM": 12.84,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.84,
+              "flowM3PerSec": 253.91
+            }
+          },
+          {
+            "time": "202610210300",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 188.46
+            }
+          },
+          {
+            "time": "202610210400",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 227.91
+            }
+          },
+          {
+            "time": "202610210500",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 298.03
+            }
+          },
+          {
+            "time": "202610210600",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 262.97
+            }
+          },
+          {
+            "time": "202610210700",
+            "kwater": {
+              "levelM": 12.86,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.86,
+              "flowM3PerSec": 289.59
+            }
+          },
+          {
+            "time": "202610210800",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 289.27
+            }
+          },
+          {
+            "time": "202610210900",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 302.41
+            }
+          },
+          {
+            "time": "202610211000",
+            "kwater": {
+              "levelM": 12.84,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 341.86
+            }
+          },
+          {
+            "time": "202610211100",
+            "kwater": {
+              "levelM": 12.85,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 12.85,
+              "flowM3PerSec": 359.39
+            }
+          }
+        ]
+      },
+      "상세제원대조": {
+        "WLOBSCD": "8000099",
+        "OBSNM": "부산시(구포대교)",
+        "DAMCD": "2022510",
+        "LON": null,
+        "LAT": null,
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1775146847000
+      },
+      "주소": "",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2026-04-02T16:20:47+00:00"
+    },
+    {
+      "id": "8000100",
+      "name": "삼랑진(부산)",
+      "latitude": 35.382777777777775,
+      "longitude": 128.82166666666666,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "8000100",
+        "OBSNM": "밀양시(삼랑진교)",
+        "OBSKDCD": null,
+        "MGGVCD": "01",
+        "WLOBSOCD": null,
+        "SBSNCD": "202205",
+        "DAMCD": "2022510",
+        "RIVCD": "2000010",
+        "LON": null,
+        "LAT": null,
+        "TMCORDX": null,
+        "TMCORDY": null,
+        "ADMCD": null,
+        "ETCADDR": null,
+        "OPNDT": null,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": -14.721,
+        "APMFWL": null,
+        "TIDEIC": "N",
+        "BMGPELM": null,
+        "MXDOKCNT": null,
+        "MRJPDIS": null,
+        "ODAMBSNA": null,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "N",
+        "LUDDT": 1777457121000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": null,
+        "ESRI_OID": 321
+      },
+      "참조공식코드": "2022610",
+      "참조공식제원": {
+        "wlobscd": "2022610",
+        "agcnm": "기후에너지환경부",
+        "obsnm": "밀양시(삼랑진교)",
+        "addr": "경상남도 밀양시",
+        "etcaddr": "삼랑진읍 삼랑리 854 (삼랑진교)",
+        "lon": "128-49-18",
+        "lat": "35-22-58 ",
+        "gdt": "-14.721",
+        "attwl": "18.79",
+        "wrnwl": "20.9",
+        "almwl": "22.9",
+        "srswl": "25.2",
+        "pfh": "25.2",
+        "fstnyn": "Y",
+        "links": []
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "2022510:8000100",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 상세 제원의 동일 원 코드가 가리키는 현재 관측소명으로 명칭 이력을 확인했다. 현재 공식 HRFCO 제원 및 20260410 수위 GIS의 같은 관측소명·측정 지점 위치를 연결한다. 다른 센서라고 판단할 수 있는 관측 이력/수치는 합치지 않는다.",
+      "좌표방식": "명칭 이력이 확인된 원 코드에 현재 HRFCO의 동일 관측 지점 좌표를 연결. 구포/삼랑진/진동이라는 예전 명칭만으로 교량이나 지역 대표점을 추정하지 않음.",
+      "시계열대조": {
+        "kwaterCode": "8000100",
+        "kwaterName": "삼랑진(부산)",
+        "hrfcoCode": "2022610",
+        "hrfcoName": "밀양시(삼랑진교)",
+        "count": 11,
+        "exactLevel": 11,
+        "distinctLevels": 2,
+        "pairs": [
+          {
+            "time": "202610210100",
+            "kwater": {
+              "levelM": 15.5,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.5,
+              "flowM3PerSec": 217.34
+            }
+          },
+          {
+            "time": "202610210200",
+            "kwater": {
+              "levelM": 15.5,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.5,
+              "flowM3PerSec": 163.89
+            }
+          },
+          {
+            "time": "202610210300",
+            "kwater": {
+              "levelM": 15.5,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.5,
+              "flowM3PerSec": 199.52
+            }
+          },
+          {
+            "time": "202610210400",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 185.57
+            }
+          },
+          {
+            "time": "202610210500",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 242.66
+            }
+          },
+          {
+            "time": "202610210600",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 192.7
+            }
+          },
+          {
+            "time": "202610210700",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 171.29
+            }
+          },
+          {
+            "time": "202610210800",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 182
+            }
+          },
+          {
+            "time": "202610210900",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 185.57
+            }
+          },
+          {
+            "time": "202610211000",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 235.52
+            }
+          },
+          {
+            "time": "202610211100",
+            "kwater": {
+              "levelM": 15.51,
+              "flowM3PerSec": 0
+            },
+            "hrfco": {
+              "levelM": 15.51,
+              "flowM3PerSec": 310.46
+            }
+          }
+        ]
+      },
+      "상세제원대조": {
+        "WLOBSCD": "8000100",
+        "OBSNM": "밀양시(삼랑진교)",
+        "DAMCD": "2022510",
+        "LON": null,
+        "LAT": null,
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1777457121000
+      },
+      "주소": "",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2026-04-29T10:05:21+00:00"
+    },
+    {
+      "id": "8000101",
+      "name": "진동(부산)",
+      "latitude": 35.38333333333333,
+      "longitude": 128.4836111111111,
+      "출처": "contents-DataView-MapServer-7-query-rows",
+      "공식제원": {
+        "WLOBSCD": "8000101",
+        "OBSNM": "함안군(계내리)",
+        "OBSKDCD": null,
+        "MGGVCD": "01",
+        "WLOBSOCD": null,
+        "SBSNCD": null,
+        "DAMCD": "2022510",
+        "RIVCD": "2000010",
+        "LON": null,
+        "LAT": null,
+        "TMCORDX": null,
+        "TMCORDY": null,
+        "ADMCD": null,
+        "ETCADDR": null,
+        "OPNDT": null,
+        "CLSDT": null,
+        "CLSDV": "N",
+        "VWPTO": null,
+        "ZRELM": 1.78,
+        "APMFWL": null,
+        "TIDEIC": "N",
+        "BMGPELM": null,
+        "MXDOKCNT": null,
+        "MRJPDIS": null,
+        "ODAMBSNA": null,
+        "ARART": null,
+        "WSRDIS": null,
+        "OFC": null,
+        "BEDSLOPE": null,
+        "RIVWITH": null,
+        "CMT": null,
+        "FLWMYN": "N",
+        "LUDDT": 1574691836000,
+        "NZIP1": null,
+        "NZIP2": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "ADDR": null,
+        "ESRI_OID": 322
+      },
+      "참조공식코드": "2020615",
+      "참조공식제원": {
+        "wlobscd": "2020615",
+        "agcnm": "기후에너지환경부",
+        "obsnm": "함안군(계내리)",
+        "addr": "경상남도 함안군",
+        "etcaddr": "칠서면 계내리 343 (진동양수장옆)",
+        "lon": "128-29-01",
+        "lat": "35-23-00 ",
+        "gdt": "-21.356",
+        "attwl": "26.85",
+        "wrnwl": "30.3",
+        "almwl": "32.3",
+        "srswl": "35.24",
+        "pfh": "35.24",
+        "fstnyn": "Y",
+        "links": []
+      },
+      "source": "KWATER_RIVER_LEVEL",
+      "원래조회대상": "2022510:8000101",
+      "제공처": [
+        "K-water"
+      ],
+      "연결근거": "공식 상세 제원의 동일 원 코드가 가리키는 현재 관측소명으로 명칭 이력을 확인했다. 현재 공식 HRFCO 제원 및 20260410 수위 GIS의 같은 관측소명·측정 지점 위치를 연결한다. 다른 센서라고 판단할 수 있는 관측 이력/수치는 합치지 않는다.",
+      "좌표방식": "명칭 이력이 확인된 원 코드에 현재 HRFCO의 동일 관측 지점 좌표를 연결. 구포/삼랑진/진동이라는 예전 명칭만으로 교량이나 지역 대표점을 추정하지 않음.",
+      "시계열대조": {
+        "kwaterCode": "8000101",
+        "kwaterName": "진동(부산)",
+        "hrfcoCode": "2020615",
+        "hrfcoName": "함안군(계내리)",
+        "count": 0,
+        "exactLevel": 0,
+        "distinctLevels": 0,
+        "pairs": []
+      },
+      "상세제원대조": {
+        "WLOBSCD": "8000101",
+        "OBSNM": "함안군(계내리)",
+        "DAMCD": "2022510",
+        "LON": null,
+        "LAT": null,
+        "ADDR": null,
+        "ETCADDR": null,
+        "NADDR1": null,
+        "NADDR2": null,
+        "CLSDV": "N",
+        "LUDDT": 1574691836000
+      },
+      "주소": "",
+      "출처폐국표시": "N",
+      "상세제원갱신일UTC": "2019-11-25T14:23:56+00:00"
+    }
+  ],
+  "남은미확인": [
+    {
+      "id": "8000001",
+      "name": "대아저수지",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "같은 코드가 다른 이름/시설에 쓰이거나 개별 센서 위치를 검증하지 못해 제외. 코드만 일치하는 위치를 대입하지 않음."
+    },
+    {
+      "id": "8000002",
+      "name": "경천저수지",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "같은 코드가 다른 이름/시설에 쓰이거나 개별 센서 위치를 검증하지 못해 제외. 코드만 일치하는 위치를 대입하지 않음."
+    },
+    {
+      "id": "8000005",
+      "name": "수양저수지",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "8888888",
+      "name": "화순군(동복댐하)",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9000307",
+      "name": "고산정수장",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9870001",
+      "name": "곡성군(청계동교)",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9870002",
+      "name": "임실군(물우교)",
+      "providers": [
+        "한강홍수통제소"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "1001633",
+      "name": "테스트123",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9900010",
+      "name": "횡성 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "1005688",
+      "name": "여주보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000306",
+      "name": "오대천",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000302",
+      "name": "필승교(레이더2)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000303",
+      "name": "필승교(부자2)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000304",
+      "name": "필승교_국(부자)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000305",
+      "name": "필승교_국(영상)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000112",
+      "name": "안동댐보조수위",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900009",
+      "name": "안동 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000098",
+      "name": "임하댐하류수위",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2007615",
+      "name": "상주보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2007617",
+      "name": "낙단보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2009615",
+      "name": "구미보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2009617",
+      "name": "칠곡보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2011655",
+      "name": "강정고령보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2014663",
+      "name": "합천창녕보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2015670",
+      "name": "합천댐",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9900008",
+      "name": "합천 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2020662",
+      "name": "창녕함안보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2020698",
+      "name": "남강댐",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900007",
+      "name": "밀양 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022694",
+      "name": "낙동강하굿둑좌안갑문(상)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022698",
+      "name": "낙동강하굿둑좌안갑문(갑실)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022700",
+      "name": "낙동강하굿둑증설갑문(갑실)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022702",
+      "name": "낙동강하굿둑좌안갑문(하)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022704",
+      "name": "낙동강하굿둑증설갑문(하)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022706",
+      "name": "낙동강하굿둑우안상류(부산)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022710",
+      "name": "낙동강하굿둑우안하류(부산)",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000120",
+      "name": "대야교",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000121",
+      "name": "섬티교",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000241",
+      "name": "나성간이",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "3012621",
+      "name": "공주보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "3012677",
+      "name": "백제보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000084",
+      "name": "대창교",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900004",
+      "name": "보령 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900003",
+      "name": "부안 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000097",
+      "name": "섬진강댐보조수위",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000096",
+      "name": "주암댐보조수위",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900005",
+      "name": "주암 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000095",
+      "name": "주암조절지댐보조수위",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900006",
+      "name": "주암조절지 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900001",
+      "name": "여수 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "5004660",
+      "name": "승촌보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "5004635",
+      "name": "죽산보하류",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900002",
+      "name": "장흥 수위감지",
+      "providers": [
+        "K-water"
+      ],
+      "사유": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    }
+  ],
+  "현재범위": {
+    "하천전체": 1551,
+    "위치제공": 1498,
+    "위치미확인": 53
+  },
+  "정책": "코드·현재 카탈로그 이름이 일치할 때만 보완표를 사용한다. 관측소를 새로 병합하거나 코드/이력/수위/유량을 바꾸지 않는다. 과거 위치가 확인돼도 현재 관측 자료를 생성하지 않는다.",
+  "공식GIS출처": {
+    "RainWaterheight-points": {
+      "제원주소": "https://gisportal.water.or.kr/server/rest/services/WR/RainWaterheight/MapServer/1",
+      "조회주소": "https://gisportal.water.or.kr/server/rest/services/WR/RainWaterheight/MapServer/1/query",
+      "조회매개변수": {
+        "f": "pjson",
+        "where": "1=1",
+        "outFields": "*",
+        "outSR": 4326,
+        "returnGeometry": "true",
+        "resultRecordCount": 2000
+      },
+      "응답행": 627,
+      "응답좌표계": {
+        "wkid": 4326,
+        "latestWkid": 4326
+      },
+      "SHA256": "4930806b917a79f6dafd8f124e628bed27ac033aabea6945dd0abb62ce1e5191"
+    },
+    "RainWaterheight2-points": {
+      "제원주소": "https://gisportal.water.or.kr/server/rest/services/WR/RainWaterheight2/MapServer/1",
+      "조회주소": "https://gisportal.water.or.kr/server/rest/services/WR/RainWaterheight2/MapServer/1/query",
+      "조회매개변수": {
+        "f": "pjson",
+        "where": "1=1",
+        "outFields": "*",
+        "outSR": 4326,
+        "returnGeometry": "true",
+        "resultRecordCount": 2000
+      },
+      "응답행": 1076,
+      "응답좌표계": {
+        "wkid": 4326,
+        "latestWkid": 4326
+      },
+      "SHA256": "d76fc742eb7daf0b7944078dae1b6a7b2dde43fec83eec41b282562a9357ac27"
+    },
+    "DIIS-UND-MapServer-4-query-rows": {
+      "제원주소": "https://gisportal.water.or.kr/server/rest/services/DIIS/UND/MapServer/4",
+      "조회주소": "https://gisportal.water.or.kr/server/rest/services/DIIS/UND/MapServer/4/query",
+      "조회매개변수": {
+        "f": "pjson",
+        "where": "1=1",
+        "outFields": "*",
+        "outSR": 4326,
+        "returnGeometry": "true",
+        "resultRecordCount": 2000
+      },
+      "응답행": 356,
+      "응답좌표계": {
+        "wkid": 4326,
+        "latestWkid": 4326
+      },
+      "SHA256": "704f93c4de176fc46234d83972405b5eea865445686c24adedb2841344aac927"
+    },
+    "contents-DataView-MapServer-7-query-rows": {
+      "제원주소": "https://gisportal.water.or.kr/server/rest/services/contents/DataView/MapServer/7",
+      "조회주소": "https://gisportal.water.or.kr/server/rest/services/contents/DataView/MapServer/7/query",
+      "조회매개변수": {
+        "f": "pjson",
+        "where": "1=1",
+        "outFields": "*",
+        "outSR": 4326,
+        "returnGeometry": "true",
+        "resultRecordCount": 2000
+      },
+      "응답행": 1724,
+      "응답좌표계": null,
+      "SHA256": "55e52d294fd667d9c66d1fad358534aca2681c08911d288e2970ca4ffb6cfee3"
+    }
+  },
+  "전체65곳대조": [
+    {
+      "id": "8000001",
+      "name": "대아저수지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "굴포",
+          "코드": "8000001",
+          "관리댐": null,
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "같은 코드가 다른 이름/시설에 쓰이거나 개별 센서 위치를 검증하지 못해 제외. 코드만 일치하는 위치를 대입하지 않음."
+    },
+    {
+      "id": "8000002",
+      "name": "경천저수지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "시화호(내)",
+          "코드": "8000002",
+          "관리댐": "8000002",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "같은 코드가 다른 이름/시설에 쓰이거나 개별 센서 위치를 검증하지 못해 제외. 코드만 일치하는 위치를 대입하지 않음."
+    },
+    {
+      "id": "8000005",
+      "name": "수양저수지",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "8888888",
+      "name": "화순군(동복댐하)",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9000307",
+      "name": "고산정수장",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9870001",
+      "name": "곡성군(청계동교)",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9870002",
+      "name": "임실군(물우교)",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "8000119",
+      "name": "충주보조수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "충주보조수위",
+          "코드": "8000119",
+          "관리댐": "1003110",
+          "경도": "127-59-31",
+          "위도": "37-00-20",
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "1001633",
+      "name": "테스트123",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9900010",
+      "name": "횡성 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "횡성 수위감지",
+          "코드": "9900010",
+          "관리댐": "1006110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "1005681",
+      "name": "강천보하류",
+      "공식일치제원": [
+        {
+          "출처": "RainWaterheight-points",
+          "공식명": "강천보(하류)",
+          "코드": "1005681",
+          "관리댐": "1007601",
+          "경도": 127.684722,
+          "위도": 37.283889,
+          "지도좌표": {
+            "x": 127.68472220028876,
+            "y": 37.283888890123215
+          },
+          "주소": "",
+          "폐국표시": null
+        },
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "강천보(하류)",
+          "코드": "1005681",
+          "관리댐": "1007601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "1005688",
+      "name": "여주보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "여주보(하류)",
+          "코드": "1005688",
+          "관리댐": "1007602",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "1005691",
+      "name": "이포보하류",
+      "공식일치제원": [
+        {
+          "출처": "RainWaterheight-points",
+          "공식명": "이포보(하류)",
+          "코드": "1005691",
+          "관리댐": "1007603",
+          "경도": 127.541389,
+          "위도": 37.408333,
+          "지도좌표": {
+            "x": 127.54138889950524,
+            "y": 37.408333329593674
+          },
+          "주소": "",
+          "폐국표시": null
+        },
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "이포보(하류)",
+          "코드": "1005691",
+          "관리댐": "1007603",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "9000306",
+      "name": "오대천",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "오대천",
+          "코드": "9000306",
+          "관리댐": "1007603",
+          "경도": "--",
+          "위도": "--",
+          "지도좌표": null,
+          "주소": "강원도 평창군 진부면 호명리 1068-3 (댐예정지 임시 유량측정 용도)",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000302",
+      "name": "필승교(레이더2)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "필승교(레이더2)",
+          "코드": "9000302",
+          "관리댐": "1021701",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000303",
+      "name": "필승교(부자2)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "필승교(부자2)",
+          "코드": "9000303",
+          "관리댐": "1021701",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000304",
+      "name": "필승교_국(부자)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "필승교_국(부자)",
+          "코드": "9000304",
+          "관리댐": "1021701",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000305",
+      "name": "필승교_국(영상)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "필승교_국(영상)",
+          "코드": "9000305",
+          "관리댐": "1021701",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000112",
+      "name": "안동댐보조수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "안동댐보조수위",
+          "코드": "8000112",
+          "관리댐": "2001110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900009",
+      "name": "안동 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "안동 수위감지",
+          "코드": "9900009",
+          "관리댐": "2001110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000098",
+      "name": "임하댐하류수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "임하댐하류수위",
+          "코드": "8000098",
+          "관리댐": "2002110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "경북 안동시 임하면 천전리",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2007615",
+      "name": "상주보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "상주보하류",
+          "코드": "2007615",
+          "관리댐": "2007601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2007617",
+      "name": "낙단보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙단보하류",
+          "코드": "2007617",
+          "관리댐": "2009601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2009615",
+      "name": "구미보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "구미보하류",
+          "코드": "2009615",
+          "관리댐": "2009602",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2009617",
+      "name": "칠곡보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "칠곡보하류",
+          "코드": "2009617",
+          "관리댐": "2011601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2011655",
+      "name": "강정고령보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "강정고령보하류",
+          "코드": "2011655",
+          "관리댐": "2011602",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2014663",
+      "name": "합천창녕보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "합천창녕보하류",
+          "코드": "2014663",
+          "관리댐": "2014602",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2015670",
+      "name": "합천댐",
+      "공식일치제원": [],
+      "결과": "새 공식 GIS와 상세 제원에서 현재 코드의 측정 지점 위치를 연결하지 못함. 같은 이름 시설 좌표로 추정하지 않음."
+    },
+    {
+      "id": "9900008",
+      "name": "합천 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "합천 수위감지",
+          "코드": "9900008",
+          "관리댐": "2015110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2020662",
+      "name": "창녕함안보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "창녕함안보하류",
+          "코드": "2020662",
+          "관리댐": "2017601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2020698",
+      "name": "남강댐",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "남강댐",
+          "코드": "2020698",
+          "관리댐": "2018110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900007",
+      "name": "밀양 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "밀양 수위감지",
+          "코드": "9900007",
+          "관리댐": "2021110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022694",
+      "name": "낙동강하굿둑좌안갑문(상)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑좌안갑문(상)",
+          "코드": "2022694",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022698",
+      "name": "낙동강하굿둑좌안갑문(갑실)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑좌안갑문(갑실)",
+          "코드": "2022698",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022700",
+      "name": "낙동강하굿둑증설갑문(갑실)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑증설갑문(갑실)",
+          "코드": "2022700",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022702",
+      "name": "낙동강하굿둑좌안갑문(하)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑좌안갑문(하)",
+          "코드": "2022702",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022704",
+      "name": "낙동강하굿둑증설갑문(하)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑증설갑문(하)",
+          "코드": "2022704",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022706",
+      "name": "낙동강하굿둑우안상류(부산)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑우안상류(부산)",
+          "코드": "2022706",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "2022710",
+      "name": "낙동강하굿둑우안하류(부산)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "낙동강하굿둑우안하류(부산)",
+          "코드": "2022710",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000099",
+      "name": "구포(부산)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "부산시(구포대교)",
+          "코드": "8000099",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "8000100",
+      "name": "삼랑진(부산)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "밀양시(삼랑진교)",
+          "코드": "8000100",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "8000101",
+      "name": "진동(부산)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "함안군(계내리)",
+          "코드": "8000101",
+          "관리댐": "2022510",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "3001661",
+      "name": "동정교",
+      "공식일치제원": [
+        {
+          "출처": "DIIS-UND-MapServer-4-query-rows",
+          "공식명": "동정교",
+          "코드": 3001661,
+          "관리댐": 3001110,
+          "경도": "127-33-55",
+          "위도": "35-44-49",
+          "지도좌표": {
+            "x": 127.5631420301808,
+            "y": 35.74995222990534
+          },
+          "주소": "",
+          "폐국표시": 0
+        },
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "동정교",
+          "코드": "3001661",
+          "관리댐": "3001110",
+          "경도": "127-33-55",
+          "위도": "35-44-49",
+          "지도좌표": null,
+          "주소": "전라북도 장수군 장계면 금곡리",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "3001664",
+      "name": "주고교",
+      "공식일치제원": [
+        {
+          "출처": "DIIS-UND-MapServer-4-query-rows",
+          "공식명": "주고교",
+          "코드": 3001664,
+          "관리댐": 3001110,
+          "경도": "127-37-34",
+          "위도": "35-49-06",
+          "지도좌표": {
+            "x": 127.62396937507154,
+            "y": 35.82133340543839
+          },
+          "주소": "",
+          "폐국표시": 0
+        },
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "주고교",
+          "코드": "3001664",
+          "관리댐": "3001110",
+          "경도": "127-37-34",
+          "위도": "35-49-06",
+          "지도좌표": null,
+          "주소": "전라북도 장수군 계북면 양악리",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "3001665",
+      "name": "진안군(주천교)",
+      "공식일치제원": [
+        {
+          "출처": "DIIS-UND-MapServer-4-query-rows",
+          "공식명": "주천교",
+          "코드": 3001665,
+          "관리댐": 3001110,
+          "경도": "127-25-58",
+          "위도": "35-58-03",
+          "지도좌표": {
+            "x": 127.43065178265005,
+            "y": 35.970482058580416
+          },
+          "주소": "",
+          "폐국표시": 0
+        },
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "진안군(주천교)",
+          "코드": "3001665",
+          "관리댐": "3001110",
+          "경도": "127-25-50.23",
+          "위도": "35-58-14.07",
+          "지도좌표": null,
+          "주소": "전북특별자치도 진안군 주천면 주양리 634-6 주천교",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "8000120",
+      "name": "대야교",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "대야교",
+          "코드": "8000120",
+          "관리댐": "3001110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000121",
+      "name": "섬티교",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "섬티교",
+          "코드": "8000121",
+          "관리댐": "3001110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000274",
+      "name": "진안군(하향교)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "진안군(하향교)",
+          "코드": "9000274",
+          "관리댐": "3001110",
+          "경도": "127-33-10.18",
+          "위도": "35-49-45.07",
+          "지도좌표": null,
+          "주소": "전북특별자치도 진안군 동향면 자산리 841 하향교",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "8000094",
+      "name": "청주시(대청댐보조수위)",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "청주시(대청댐보조수위)",
+          "코드": "8000094",
+          "관리댐": "3008110",
+          "경도": "127-28-49.91",
+          "위도": "36-28-42.29",
+          "지도좌표": null,
+          "주소": "충청북도 청주시 상당구 문의면 덕유리 대청댐 충청북도 청주시 상당구 문의면 노산하석로 458",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "9000241",
+      "name": "나성간이",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "나성간이",
+          "코드": "9000241",
+          "관리댐": "3008110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "3012621",
+      "name": "공주보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "공주보하류",
+          "코드": "3012621",
+          "관리댐": "3012601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "3012677",
+      "name": "백제보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "백제보하류",
+          "코드": "3012677",
+          "관리댐": "3012602",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000084",
+      "name": "대창교",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "대창교",
+          "코드": "8000084",
+          "관리댐": "3203110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9000259",
+      "name": "부사방조제 외수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "부사방조제 외수위",
+          "코드": "9000259",
+          "관리댐": "3203110",
+          "경도": "126-31-12",
+          "위도": "36-11-03",
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "코드별 공식 위치 또는 확인된 명칭 이력으로 위치 보완"
+    },
+    {
+      "id": "9900004",
+      "name": "보령 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "보령 수위감지",
+          "코드": "9900004",
+          "관리댐": "3203110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900003",
+      "name": "부안 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "부안 수위감지",
+          "코드": "9900003",
+          "관리댐": "3303110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000097",
+      "name": "섬진강댐보조수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "섬진강댐보조수위",
+          "코드": "8000097",
+          "관리댐": "4001110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000096",
+      "name": "주암댐보조수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "주암댐보조수위",
+          "코드": "8000096",
+          "관리댐": "4007110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900005",
+      "name": "주암 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "주암 수위감지",
+          "코드": "9900005",
+          "관리댐": "4007110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "8000095",
+      "name": "주암조절지댐보조수위",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "주암조절지댐보조수위",
+          "코드": "8000095",
+          "관리댐": "4104610",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "Y"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900006",
+      "name": "주암조절지 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "주암조절지 수위감지",
+          "코드": "9900006",
+          "관리댐": "4104610",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900001",
+      "name": "여수 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "여수 수위감지",
+          "코드": "9900001",
+          "관리댐": "4105210",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "5004660",
+      "name": "승촌보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "승촌보하류",
+          "코드": "5004660",
+          "관리댐": "5004601",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "5004635",
+      "name": "죽산보하류",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "죽산보하류",
+          "코드": "5004635",
+          "관리댐": "5004602",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    },
+    {
+      "id": "9900002",
+      "name": "장흥 수위감지",
+      "공식일치제원": [
+        {
+          "출처": "contents-DataView-MapServer-7-query-rows",
+          "공식명": "장흥 수위감지",
+          "코드": "9900002",
+          "관리댐": "5101110",
+          "경도": null,
+          "위도": null,
+          "지도좌표": null,
+          "주소": "",
+          "폐국표시": "N"
+        }
+      ],
+      "결과": "공식 상세 제원에서 코드/명칭은 확인했으나 유효 관측 지점 좌표가 공란·--·0이거나 주소만 있어 제외."
+    }
+  ],
+  "좌표계검증": "WR/DIIS 지도 query 응답의 spatialReference=4326을 확인했다. DIIS의 구 도분초는 별도 datum의 값과 일치하므로 그대로 WGS84로 사용하지 않는다. GIS가 반환한 지리 좌표만 사용한다. 주천교는 최신 상세 제원의 2026 갱신 좌표를 사용하며 구 DIIS 지도 지점과 약11m 차이다. 출처별 오래된 TM을 추정 변환하지 않는다.",
+  "명칭이력": {
+    "8000099": "구포(부산) → 부산시(구포대교), 2026 공식 제원명 확인",
+    "8000100": "삼랑진(부산) → 밀양시(삼랑진교), 2026 공식 제원명 확인",
+    "8000101": "진동(부산) → 함안군(계내리), 공식 제원명·진동양수장 옆 주소 확인"
+  },
+  "주의": [
+    "충주보조수위·동정교·주고교는 상세 제원의 폐국 표시 Y가 있는 과거 위치 제원이다. 현재 운영 상태나 오늘 관측값 존재를 뜻하지 않는다. 기존 가까운 지점/결측 표시 정책은 유지한다.",
+    "HRFCO 8000001 대아저수지와 같은 숫자의 K-water 상세 제원은 굴포이며, 8000002 경천저수지와 같은 숫자는 시화호(내)이다. 이런 코드 충돌은 연결하지 않았다.",
+    "오대천9000306의 임시 측정 주소(평창군 진부면 호명리1068-3)는 찾았지만 좌표는 --이며 폐국2017 기록이 있어 주소 대표점으로 채우지 않았다.",
+    "구포 수위11개 중9개 일치, 나머지2개는0.01m 차이. 삼랑진11개는 모두 일치하고2개 값으로 변화한다. 진동은 오늘 공통값이 없어 시계열 동일성 미검증. 위치 이외의 센서/이력 병합에 쓰지 않는다."
+  ],
+  "추가자료확인": [
+    {
+      "주소": "https://www.bigdata-environment.kr/user/data_market/detail.do?id=eb1170d0-38bb-11ea-be28-4fa0eb812a46",
+      "결과": "수위관측소 제원 CSV의 공개 설명/미리보기 항목 확인. 전체 다운로드는 로그인 절차가 있어 확보하지 않았으며 공개 GIS 제원으로 대체 조사."
+    },
+    {
+      "주소": "https://www.codil.or.kr/filebank/original/RK/OTKCRK410264/OTKCRK410264.pdf",
+      "결과": "T/M 관측국 현장 자료 PDF292쪽 확보, 스캔본으로 텍스트 추출이 비어 위치 근거로 사용하지 않음."
+    },
+    {
+      "주소": "https://gisportal.water.or.kr/server/rest/services/contents/DataView/MapServer/9/query",
+      "결과": "제공기관 명칭 보조 표 조회는 HTTP응답 내 ArcGIS400 Failed to execute query. 자료 없음으로 처리하지 않으며 좌표 근거에 사용하지 않음."
+    },
+    {
+      "주소": "https://gisportal.water.or.kr/server/rest/services/Hosted",
+      "결과": "Token Required 응답으로 비공개 서비스는 조회하지 않음."
+    }
+  ],
+  "파일검증": {
+    "additions.json": "0a721b156e10d172d25547356eb4a0f8097a1c4af13db5dcdd82bb893705cd84",
+    "paired-values.json": "4c51b469eddef7901c267e97c5e3b2be6f6432820a5c75b075e046c057e84b21",
+    "env-platform.raw": "c5fc7c179c424eacc084e9d096f0fc17c76f1401dc3779b521697301bb5d63d6",
+    "kwater-old-pdf.raw": "8ec7328576e9b52c44668fb3b4db7e1f4d2b30560d2c6eafd6603396e3dcbcfe"
+  }
+}

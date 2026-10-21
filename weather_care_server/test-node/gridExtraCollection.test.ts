@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { collectGridHourly, collectGridLightning, collectGridRiverFlow, parseLightningText,
+import { collectGridHourly, collectGridLightning, collectGridRiverFlow, collectGridRiverHistory, parseLightningText,
   type GridExtraConfig } from '../src/collection/gridExtraCollection';
 import { getApiHubUsage } from '../src/database/apiUsageRepository';
 import { asD1Database, SqliteD1Database } from '../src/node/sqliteD1';
@@ -29,6 +29,60 @@ beforeEach(() => {
 afterEach(() => sqlite.close());
 
 describe('격자 부가자료 수집', () => {
+  it('K-water 이름 목록은 하루에 한 번 받고 댐의 축약 시각은 요청 날짜로 정규화한다', async () => {
+    const fetcher = vi.fn(async (url: URL) => {
+      const rows = url.pathname.endsWith('/wal/wallist')
+        ? [{ walobsrvtcode: '9000266', obsrvtNm: '삼척시(갈밭교)' }]
+        : url.pathname.endsWith('/damCodelist') ? [{ damcode: '1001210', damnm: '광동댐' }]
+        : url.pathname.endsWith('/hourlist') ? [
+            { obsrdt: '10-21 01시 ', lowlevel: 35.94 },
+            { obsrdt: '10-20 23시 ', lowlevel: 99 },
+            { obsrdt: '잘못된 시각', lowlevel: 100 },
+          ] : [{ obsrdthour: '2026-10-21 01:00', flux: 1, hourwal: 0 }];
+      return new Response(JSON.stringify({ response: { header: { resultCode: '00' },
+        body: { totalCount: rows.length, items: { item: rows } } } }));
+    });
+    const input = { db: asD1Database(sqlite), config: { ...emptyConfig,
+      riverStations: [{ damCode: '1001210', stationCode: '9000266' }] },
+      now: new Date('2026-10-21T02:00:00Z'), kwaterKey: 'test-key', fetcher: fetcher as typeof fetch };
+    await collectGridHourly(input);
+    await collectGridHourly({ ...input, now: new Date('2026-10-21T03:00:00Z') });
+    expect(fetcher.mock.calls.filter(([url]) => url.pathname.endsWith('/wal/wallist'))).toHaveLength(1);
+    const read = (source: string) => JSON.parse((sqlite.sqlite.prepare(
+      'SELECT payload FROM grid_extra_snapshots WHERE source=? ORDER BY slot DESC LIMIT 1')
+      .get(source) as { payload: string }).payload);
+    expect(read('KWATER_RIVER_STATIONS')).toEqual([{ stationCode: '9000266', name: '삼척시(갈밭교)' }]);
+    expect(read('KWATER_DAM')).toEqual([{ observedAt: '2026-10-21T01:00:00+09:00',
+      levelM: 35.94, inflowM3PerSec: null, dischargeM3PerSec: null }]);
+    expect(read('KWATER_RIVER_LEVEL')[0].observedAt).toBe('2026-10-21 01:00');
+    expect(read('KWATER_RIVER_LEVEL')[0]).toMatchObject({ levelM: 0, flowM3PerSec: 1, fieldMappingVersion: 2 });
+    expect(read('KWATER_RIVER_LEVEL')[0]).not.toHaveProperty('rainfallMm');
+  });
+  it('하천 기간 자료는 오늘 0시부터 완료된 정각까지만 관측소별로 저장한다', async () => {
+    const fetcher = vi.fn(async () => Response.json({ content: [
+      { wlobscd: '1001603', ymdhm: '2026102100', wl: '0.93', fw: '7.21' },
+      { wlobscd: '1001603', ymdhm: '202610210100', wl: '0.91', fw: '' },
+      { wlobscd: '1001603', ymdhm: '2026102112', wl: '0.85', fw: '4.89' },
+      { wlobscd: '1001603', ymdhm: '2026102112', wl: '999', fw: '999' },
+      { wlobscd: '1001603', ymdhm: '2026102012', wl: '999', fw: '999' },
+      { wlobscd: '1001603', ymdhm: '2026102113', wl: '999', fw: '999' },
+      { wlobscd: '1001603', ymdhm: '202610210199', wl: '999', fw: '999' },
+      { wlobscd: '1001604', ymdhm: '2026102102', wl: '999', fw: '999' },
+    ] }));
+    const input = { db: asD1Database(sqlite), key: 'test-key', stationCode: '1001603',
+      now: new Date('2026-10-21T03:29:00Z'), fetcher: fetcher as typeof fetch };
+    expect(await collectGridRiverHistory(input)).toBe(true);
+    expect(await collectGridRiverHistory(input)).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(String(fetcher.mock.calls[0][0])).toContain('/1H/1001603/2026102100/2026102112.json');
+    const payload = JSON.parse((sqlite.sqlite.prepare("SELECT payload FROM grid_extra_snapshots WHERE target_id='1001603'")
+      .get() as { payload: string }).payload);
+    expect(payload.stations).toEqual([
+      { stationCode: '1001603', observedAt: '202610210000', levelM: 0.93, flowM3PerSec: 7.21 },
+      { stationCode: '1001603', observedAt: '202610210100', levelM: 0.91, flowM3PerSec: null },
+      { stationCode: '1001603', observedAt: '202610211200', levelM: 0.85, flowM3PerSec: 4.89 },
+    ]);
+  });
   it('조위 관측의 모든 페이지를 저장하고 같은 시간의 재호출을 피한다', async () => {
     const fetcher = vi.fn(async (url: URL) => {
       const page = Number(url.searchParams.get('pageNo'));
@@ -114,7 +168,9 @@ describe('격자 부가자료 수집', () => {
   });
 
   it('한강홍수통제소의 실제 응답 형식에서 유량이 있는 지점만 저장한다', async () => {
-    const fetcher = vi.fn(async () => new Response(JSON.stringify({ links: [], content: [
+    const fetcher = vi.fn(async (url: URL) => new Response(JSON.stringify({ links: [], content: url.pathname.endsWith('info.json') ? [
+      { wlobscd: '1001603', obsnm: '예시교 관측소' },
+    ] : [
       { wlobscd: '1001602', ymdhm: '202610141250', wl: '1.39', fw: '  ' },
       { wlobscd: '1001603', ymdhm: '202610141250', wl: '0.19', fw: '0.12' },
     ] }), { status: 200 }));
@@ -123,7 +179,10 @@ describe('격자 부가자료 수집', () => {
     await collectGridRiverFlow({ db, key: 'test-key', now, fetcher: fetcher as typeof fetch });
     await collectGridRiverFlow({ db, key: 'test-key', now, fetcher: fetcher as typeof fetch });
 
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(JSON.parse((sqlite.sqlite.prepare(`SELECT payload FROM grid_extra_snapshots
+      WHERE source='HRFCO_STATIONS'`).get() as { payload: string }).payload))
+      .toEqual([{ stationCode: '1001603', name: '예시교 관측소' }]);
     const row = sqlite.sqlite.prepare(`SELECT payload FROM grid_extra_snapshots
       WHERE source='HRFCO_RIVER_FLOW'`).get() as { payload: string };
     expect(JSON.parse(row.payload)).toEqual({ stations: [{

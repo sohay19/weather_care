@@ -1,4 +1,5 @@
 import { apiHubBudgetedFetch } from '../services/apiHubFetch';
+import { hrfcoStationCoordinates } from './stationCoordinates';
 import { getGridExtraSnapshot, gridExtraSnapshotExists, reserveGridExtraRequest,
   saveGridExtraSnapshot } from '../database/gridExtraRepository';
 import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
@@ -17,7 +18,7 @@ type Source = 'KHOA_TIDE_OBS' | 'KHOA_BUOY_OBS' | 'KHOA_TIDE_EXTREME'
   | 'KHOA_TIDE_HOURLY' | 'KHOA_ROMS' | 'KHOA_RIP_CURRENT'
   | 'KWATER_RIVER_LEVEL' | 'KWATER_DAM' | 'KWATER_DAM_CODES' | 'NIFS_JELLYFISH'
   | 'NIFS_JELLYFISH_DETAIL'
-  | 'KMA_LIGHTNING' | 'HRFCO_RIVER_FLOW';
+  | 'KMA_LIGHTNING' | 'HRFCO_RIVER_FLOW' | 'HRFCO_STATIONS' | 'KWATER_RIVER_STATIONS';
 
 type RecordValue = Record<string, unknown>;
 
@@ -34,6 +35,14 @@ function compactDate(now: Date): string { return koreanDate(now).replaceAll('-',
 
 function hourSlot(now: Date): string {
   return `${now.toISOString().slice(0, 13)}:00:00.000Z`;
+}
+
+function damObservedAt(value: unknown, date: string): string | null {
+  const text = String(value ?? '').trim();
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(text)) return text;
+  const parts = /^(\d{2}-\d{2})\s+(\d{1,2})시$/.exec(text);
+  if (!parts || parts[1] !== date.slice(5) || Number(parts[2]) > 23) return null;
+  return `${date}T${parts[2].padStart(2, '0')}:00:00+09:00`;
 }
 
 function asRecord(value: unknown): RecordValue {
@@ -227,14 +236,23 @@ export async function collectGridHourly(input: {
     const kwater = (source: Source, path: string, params: Record<string, string>) =>
       fetchAllPages({ db, source, path, params, key: input.kwaterKey!, now, fetcher });
     const isoDate = koreanDate(now);
+    for (const damCode of new Set(config.riverStations.map((station) => station.damCode))) {
+      add('KWATER_RIVER_STATIONS', damCode, isoDate, async () =>
+        (await kwater('KWATER_RIVER_STATIONS', '/B500001/dam/excllncobsrvt/wal/wallist',
+          { damcode: damCode })).map((row) => ({
+            stationCode: String(row.walobsrvtcode ?? ''),
+            name: String(row.obsrvtNm ?? row.walobsrvtcode ?? ''),
+          })).filter((row) => /^\d{7,10}$/.test(row.stationCode)));
+    }
     for (const station of config.riverStations) add('KWATER_RIVER_LEVEL',
       `${station.damCode}:${station.stationCode}`, slot, async () =>
         (await kwater('KWATER_RIVER_LEVEL',
           '/B500001/dam/excllncobsrvt/hourwal/hourwallist',
           { damcode: station.damCode, wal: station.stationCode,
             sdate: isoDate, edate: isoDate, stime: '00', etime: '23' }))
-          .map((row) => ({ observedAt: row.obsrdt ?? null,
-            levelM: numberOrNull(row.flux), rainfallMm: numberOrNull(row.hourwal) })));
+          .map((row) => ({ observedAt: row.obsrdt ?? row.obsrdthour ?? row.obsrdtmnt ?? null,
+            levelM: numberOrNull(row.hourwal), flowM3PerSec: numberOrNull(row.flux),
+            fieldMappingVersion: 2 })));
     const damCodes = new Set(config.dams);
     try {
       const cached = await getGridExtraSnapshot<Array<string | { damcode: string; damnm: string }>>(
@@ -263,9 +281,10 @@ export async function collectGridHourly(input: {
     for (const code of damCodes) add('KWATER_DAM', code, slot, async () =>
       (await kwater('KWATER_DAM', '/B500001/dam/sluicePresentCondition/hourlist',
         { damcode: code, stdt: isoDate, eddt: isoDate }))
-        .map((row) => ({ observedAt: row.obsrdt ?? null,
+        .map((row) => ({ observedAt: damObservedAt(row.obsrdt, isoDate),
           levelM: numberOrNull(row.lowlevel), inflowM3PerSec: numberOrNull(row.inflowqy),
-          dischargeM3PerSec: numberOrNull(row.totdcwtrqy) })));
+          dischargeM3PerSec: numberOrNull(row.totdcwtrqy) }))
+        .filter((row) => row.observedAt !== null));
   }
   if (input.nifsKey && new Date(now.getTime() + 9 * 3_600_000).getUTCHours() % 6 === 0) {
     add('NIFS_JELLYFISH', 'ALL', slot, async () => {
@@ -331,6 +350,22 @@ export async function collectGridRiverFlow(input: {
   db: D1Database; key: string; now: Date; fetcher?: typeof fetch;
 }): Promise<void> {
   if (!input.key) return;
+  await collectOne({ db: input.db, source: 'HRFCO_STATIONS', targetId: 'ALL',
+    slot: koreanDate(input.now), now: input.now, load: async () => {
+      if (!await reserveGridExtraRequest(input.db, 'HRFCO_STATIONS', 10, input.now))
+        throw new Error('GRID_EXTRA_DAILY_BUDGET_EXHAUSTED');
+      const url = new URL(`https://api.hrfco.go.kr/${encodeURIComponent(input.key)}/waterlevel/info.json`);
+      const response = await (input.fetcher ?? fetch)(url, { signal: AbortSignal.timeout(20_000) });
+      if (!response.ok) throw new Error(`GRID_EXTRA_HTTP_${response.status}`);
+      const data = asRecord(JSON.parse(await readText(response, 2_000_000)));
+      if (!Array.isArray(data.content)) throw new Error('GRID_EXTRA_INVALID_RESPONSE');
+      const stations = asItems(data.content).map((row) => ({
+        stationCode: String(row.wlobscd ?? ''), name: String(row.obsnm ?? row.wlobscd ?? ''),
+        ...hrfcoStationCoordinates(row),
+      })).filter((row) => /^\d{7}$/.test(row.stationCode));
+      if (!stations.length) throw new Error('GRID_EXTRA_NO_STATIONS');
+      return stations;
+    } });
   await collectOne({ db: input.db, source: 'HRFCO_RIVER_FLOW', targetId: 'ALL',
     slot: hourSlot(input.now), now: input.now, load: async () => {
       if (!await reserveGridExtraRequest(input.db, 'HRFCO_RIVER_FLOW', 100, input.now))
@@ -352,6 +387,42 @@ export async function collectGridRiverFlow(input: {
         /^\d{12}$/.test(String(row.observedAt)));
       if (stations.length === 0) throw new Error('GRID_EXTRA_NO_FLOW_DATA');
       return { stations };
+    } });
+}
+
+/** 관측소의 오늘 0시부터 완료된 정각까지 실제 시간별 관측을 받는다. */
+export async function collectGridRiverHistory(input: {
+  db: D1Database; key: string; stationCode: string; now: Date; fetcher?: typeof fetch;
+}): Promise<boolean> {
+  if (!input.key || !/^\d{7}$/.test(input.stationCode)) return false;
+  const day = compactDate(input.now);
+  const korea = new Date(input.now.getTime() + 9 * 3_600_000);
+  const end = `${day}${String(korea.getUTCHours()).padStart(2, '0')}`;
+  return collectOne({ db: input.db, source: 'HRFCO_RIVER_FLOW', targetId: input.stationCode,
+    slot: hourSlot(input.now), now: input.now, load: async () => {
+      if (!await reserveGridExtraRequest(input.db, 'HRFCO_RIVER_HISTORY', 1200, input.now))
+        throw new Error('GRID_EXTRA_DAILY_BUDGET_EXHAUSTED');
+      const url = new URL(`https://api.hrfco.go.kr/${encodeURIComponent(input.key)}` +
+        `/waterlevel/list/1H/${input.stationCode}/${day}00/${end}.json`);
+      const response = await (input.fetcher ?? fetch)(url, { signal: AbortSignal.timeout(20_000) });
+      if (!response.ok) throw new Error(`GRID_EXTRA_HTTP_${response.status}`);
+      let payload: RecordValue;
+      try { payload = asRecord(JSON.parse(await readText(response, 2_000_000))); }
+      catch { throw new Error('GRID_EXTRA_INVALID_JSON'); }
+      if (!Array.isArray(payload.content)) throw new Error('GRID_EXTRA_INVALID_RESPONSE');
+      const seen = new Set<string>();
+      const stations = asItems(payload.content).flatMap((row) => {
+        const rawTime = String(row.ymdhm ?? '');
+        const observedAt = /^\d{10}$/.test(rawTime) ? `${rawTime}00` : rawTime;
+        if (String(row.wlobscd) !== input.stationCode || !/^\d{8}(?:[01]\d|2[0-3])00$/.test(observedAt) ||
+            observedAt.slice(0, 8) !== day || observedAt > `${end}00` || seen.has(observedAt)) return [];
+        const levelM = numberOrNull(row.wl);
+        const flowM3PerSec = numberOrNull(row.fw);
+        if (levelM === null && flowM3PerSec === null) return [];
+        seen.add(observedAt);
+        return [{ stationCode: input.stationCode, observedAt, levelM, flowM3PerSec }];
+      });
+      return { stations, interval: '1H', start: `${day}00`, end };
     } });
 }
 

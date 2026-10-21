@@ -4,6 +4,8 @@ import { kmaGridFromCoordinates } from '../regions/kmaGridFromCoordinates';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { KHOA_BUOY_STATIONS, KHOA_TIDE_STATIONS } from '../collection/khoaStationCatalog';
+import { riverStationLinks } from '../collection/riverStationLinks';
+import { WATER_STATION_COORDINATES } from '../collection/waterStationCoordinates';
 import { lightningForGrid, lightningPositionMatchesGrid, readLightningFeed } from '../services/lightning';
 
 type Row = Record<string, unknown>;
@@ -35,6 +37,13 @@ function payload(snapshot: Snapshot): unknown {
   try { return JSON.parse(snapshot.payload) as unknown; } catch { return null; }
 }
 
+function stationNames(snapshots: Snapshot[], source: string): Map<string, string> {
+  return new Map(snapshots.filter((row) => row.source === source)
+    .flatMap((snapshot) => rows(payload(snapshot)))
+    .filter((row) => row.stationCode != null && row.name != null)
+    .map((row) => [String(row.stationCode), String(row.name)]));
+}
+
 function nameFor(snapshot: Snapshot): string {
   const data = payload(snapshot);
   const first = rows(data)[0] ?? record(data);
@@ -47,6 +56,11 @@ function pointFor(row: Row): { latitude: number; longitude: number } | undefined
   const longitude = Number(row.longitude);
   if (Number.isFinite(latitude) && Number.isFinite(longitude) &&
       Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) return { latitude, longitude };
+}
+
+function catalogPoint(source: string, id: string, name: string) {
+  const item = WATER_STATION_COORDINATES[source]?.[id];
+  return item && item[0] === name ? { latitude: item[1], longitude: item[2] } : undefined;
 }
 
 function distanceKm(a: { latitude: number; longitude: number },
@@ -65,6 +79,14 @@ function dateFor(row: Row, slot: string): string {
   return value;
 }
 
+function riverTime(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(value)) return value;
+  const local = value.replace(' ', 'T');
+  const milliseconds = Date.parse(/[Zz]$|[+-]\d{2}:?\d{2}$/.test(local) ? local : `${local}+09:00`);
+  return Number.isFinite(milliseconds)
+    ? new Date(milliseconds + 9 * 3_600_000).toISOString().slice(0, 19) + '+09:00' : value;
+}
+
 function summary(row: Row, source: string): Row {
   const fields: Record<string, string[]> = {
     KHOA_TIDE_OBS: ['tideCm', 'waterTempC', 'currentSpeedMs', 'currentDirectionDeg'],
@@ -74,7 +96,7 @@ function summary(row: Row, source: string): Row {
     KHOA_RIP_CURRENT: ['riskIndex', 'riskMessage'],
     KHOA_ROMS: ['waterTempC', 'currentSpeed', 'currentDirectionDeg', 'latitude', 'longitude'],
     KWATER_DAM: ['levelM', 'inflowM3PerSec', 'dischargeM3PerSec'],
-    KWATER_RIVER_LEVEL: ['levelM', 'rainfallMm'],
+    KWATER_RIVER_LEVEL: ['levelM', 'flowM3PerSec'],
     HRFCO_RIVER_FLOW: ['levelM', 'flowM3PerSec'],
   };
   if (source === 'NIFS_JELLYFISH_DETAIL') {
@@ -162,9 +184,45 @@ app.get('/catalog', async (c) => {
   const damNames = new Map(rows(codeSnapshot ? payload(codeSnapshot) : null)
     .filter((row) => row.damcode != null)
     .map((row) => [String(row.damcode), String(row.damnm ?? row.damcode)]));
-  const latestFlow = snapshots.results.find((row) => row.source === 'HRFCO_RIVER_FLOW');
+  const latestFlow = snapshots.results.find((row) => row.source === 'HRFCO_RIVER_FLOW' && row.target_id === 'ALL');
+  const flowNames = stationNames(snapshots.results, 'HRFCO_STATIONS');
+  const flowPoints = new Map(snapshots.results.filter((s) => s.source === 'HRFCO_STATIONS')
+    .flatMap((s) => rows(payload(s))).map((row) => [String(row.stationCode), pointFor(row) ??
+      catalogPoint('HRFCO_RIVER_FLOW', String(row.stationCode), String(row.name ?? ''))]));
+  const riverNames = stationNames(snapshots.results, 'KWATER_RIVER_STATIONS');
+  const riverLinks = riverStationLinks(flowNames, riverNames);
+  const today = new Date(Date.now() + 9 * 3_600_000).toISOString().slice(0, 10);
+  const hasTodayData = (row: Row, slot: string, fields: string[]) =>
+    dateFor(row, slot).slice(0, 10) === today &&
+    fields.some((field) => typeof row[field] === 'number' && Number.isFinite(row[field]));
   const flowTargets = rows(record(latestFlow ? payload(latestFlow) : null).stations)
-    .map((row) => ({ id: String(row.stationCode), name: String(row.stationCode) }));
+    .map((row) => ({ id: String(row.stationCode),
+      name: flowNames.get(String(row.stationCode)) ?? String(row.name ?? row.stationCode),
+      hasData: hasTodayData(row, latestFlow!.slot, ['levelM', 'flowM3PerSec']) }));
+  // 같은 코드 및 실측으로 검증한 코드 연결만 합친다.
+  const riverTargets = new Map<string, { id: string; name: string; hasData: boolean; providers: string[]; codes: string[];
+    latitude?: number; longitude?: number }>();
+  for (const [id, name] of flowNames) {
+    riverTargets.set(id, { id, name, hasData: false, providers: ['한강홍수통제소'], codes: [id], ...flowPoints.get(id) });
+  }
+  for (const target of flowTargets) {
+    riverTargets.set(target.id, { ...target, providers: ['한강홍수통제소'], codes: [target.id], ...flowPoints.get(target.id) });
+  }
+  for (const snapshot of snapshots.results.filter((s) => s.source === 'KWATER_RIVER_LEVEL')) {
+    const kwaterId = snapshot.target_id.split(':').at(-1)!;
+    const id = riverLinks.get(kwaterId) ?? kwaterId;
+    const existing = riverTargets.get(id);
+    const hasData = rows(payload(snapshot)).some((row) =>
+      hasTodayData(row, snapshot.slot, ['levelM', 'flowM3PerSec']));
+    riverTargets.set(id, { id,
+      name: existing?.name ?? riverNames.get(kwaterId) ?? nameFor(snapshot),
+      hasData: existing?.hasData === true || hasData,
+      providers: [...new Set([...(existing?.providers ?? []), 'K-water'])],
+      codes: [...new Set([...(existing?.codes ?? [id]), kwaterId])],
+      ...(existing && pointFor(existing) ||
+        catalogPoint('KWATER_RIVER_LEVEL', kwaterId, riverNames.get(kwaterId) ?? '')),
+    });
+  }
   const jellyList = snapshots.results.find((row) => row.source === 'NIFS_JELLYFISH');
   const jellyNames = new Map(rows(record(jellyList ? payload(jellyList) : null).items)
     .filter((row) => row.board_idx != null)
@@ -185,8 +243,10 @@ app.get('/catalog', async (c) => {
   const marineTarget = (snapshot: Snapshot) => {
     const data = rows(payload(snapshot));
     const points = data.map(pointFor).filter((p) => p !== undefined);
+    const stationId = snapshot.source === 'KHOA_ROMS'
+      ? snapshot.target_id.replace(/^BUOY_/, '') : snapshot.target_id;
     const buoy = [...KHOA_BUOY_STATIONS, ...KHOA_TIDE_STATIONS]
-      .find(([code]) => code === snapshot.target_id);
+      .find(([code]) => code === stationId);
     const point = points.sort((a, b) => distanceKm(a, position) - distanceKm(b, position))[0] ??
       (buoy ? { latitude: buoy[1], longitude: buoy[2] } : undefined);
     let name = nameFor(snapshot);
@@ -201,18 +261,34 @@ app.get('/catalog', async (c) => {
     return { id: snapshot.target_id, name, hasData: data.length > 0,
       ...(point ? { ...point, distanceKm: distanceKm(position, point) } : {}) };
   };
+  const facilityLocation = (snapshot: Snapshot) => {
+    const code = snapshot.target_id.split(':').at(-1)!;
+    const name = snapshot.source === 'KWATER_DAM'
+      ? damNames.get(code) ?? code : riverNames.get(code) ?? nameFor(snapshot);
+    const point = rows(payload(snapshot)).map(pointFor).find(Boolean) ?? catalogPoint(snapshot.source, code, name);
+    return point ? { ...point, distanceKm: distanceKm(position, point) } : {};
+  };
   return c.json({ grid: { nx: grid.nx, ny: grid.ny }, groups: groups.map((group) => ({
     ...group,
     targets: group.scope === 'grid' ? [{ id: `${grid.nx}_${grid.ny}`, name: `현재 격자 ${grid.nx}, ${grid.ny}` }]
-      : group.source === 'HRFCO_RIVER_FLOW' ? flowTargets
+      : group.source === 'HRFCO_RIVER_FLOW' ? [...riverTargets.values()].map((target) => ({ ...target,
+        ...(pointFor(target) ? { distanceKm: distanceKm(position, pointFor(target)!) } : {}) }))
       : [...(group.source === 'KHOA_ROMS' && snapshots.results.some((row) => row.source === group.source)
         ? [{ id: 'GRID', name: `현재 해양 격자 ${grid.nx}, ${grid.ny}` }] : []),
       ...snapshots.results.filter((row) => row.source === group.source)
-        .map((row) => ['KHOA_ROMS', 'KHOA_BUOY_OBS', 'KHOA_TIDE_OBS', 'KHOA_TIDE_HOURLY'].includes(group.source)
+        .map((row) => ['KHOA_ROMS', 'KHOA_BUOY_OBS', 'KHOA_TIDE_OBS', 'KHOA_TIDE_HOURLY',
+          'KHOA_TIDE_EXTREME', 'KHOA_RIP_CURRENT'].includes(group.source)
           ? marineTarget(row) : ({ id: row.target_id,
           name: group.source === 'KWATER_DAM' ? damNames.get(row.target_id) ?? row.target_id
+            : group.source === 'KWATER_RIVER_LEVEL'
+              ? riverNames.get(row.target_id.split(':').at(-1)!) ?? nameFor(row)
             : group.source === 'NIFS_JELLYFISH_DETAIL'
-              ? jellyNames.get(row.target_id) ?? row.target_id : nameFor(row) }))
+              ? jellyNames.get(row.target_id) ?? row.target_id : nameFor(row),
+          ...(['KWATER_DAM', 'KWATER_RIVER_LEVEL'].includes(group.source) ? {
+            ...facilityLocation(row),
+            hasData: rows(payload(row)).some((item) => hasTodayData(item, row.slot,
+              ['levelM', 'flowM3PerSec', 'inflowM3PerSec', 'dischargeM3PerSec'])),
+          } : {}) }))
         .sort((a, b) => a.name.localeCompare(b.name, 'ko'))],
   })) });
 });
@@ -232,10 +308,30 @@ app.get('/records', async (c) => {
   const snapshots = romsGrid
     ? await c.env.DB.prepare(`SELECT source,target_id,slot,payload FROM grid_extra_snapshots
       WHERE source=? ORDER BY slot DESC LIMIT 96`).bind(group.source).all<Snapshot>()
+    : group.source === 'HRFCO_RIVER_FLOW'
+    ? await c.env.DB.prepare(`SELECT source,target_id,slot,payload FROM grid_extra_snapshots
+      WHERE source=? AND target_id IN ('ALL',?) ORDER BY slot DESC LIMIT 96`)
+      .bind(group.source, requestedTarget).all<Snapshot>()
     : await c.env.DB.prepare(`SELECT source,target_id,slot,payload
       FROM grid_extra_snapshots WHERE source=? AND target_id=?
       ORDER BY slot DESC LIMIT ?`).bind(group.source, targetId,
       group.period === 'daily' ? 8 : 96).all<Snapshot>();
+  if (group.source === 'HRFCO_RIVER_FLOW') {
+    // 같은 코드를 가진 K-water 자료도 조회하되, 같은 시각에는 HRFCO 관측을 우선한다.
+    const metadata = await c.env.DB.prepare(`SELECT s.source,s.target_id,s.slot,s.payload
+      FROM grid_extra_snapshots s JOIN (
+        SELECT source,target_id,MAX(slot) slot FROM grid_extra_snapshots
+        WHERE source IN ('HRFCO_STATIONS','KWATER_RIVER_STATIONS') GROUP BY source,target_id
+      ) latest ON s.source=latest.source AND s.target_id=latest.target_id AND s.slot=latest.slot`).all<Snapshot>();
+    const links = riverStationLinks(stationNames(metadata.results, 'HRFCO_STATIONS'),
+      stationNames(metadata.results, 'KWATER_RIVER_STATIONS'));
+    const codes = [requestedTarget, ...[...links].filter(([, code]) => code === requestedTarget).map(([code]) => code)];
+    const kwater = await c.env.DB.prepare(`SELECT source,target_id,slot,payload
+      FROM grid_extra_snapshots WHERE source='KWATER_RIVER_LEVEL'
+      AND substr(target_id,instr(target_id,':')+1) IN (${codes.map(() => '?').join(',')}) ORDER BY slot DESC LIMIT 96`)
+      .bind(...codes).all<Snapshot>();
+    snapshots.results.push(...kwater.results);
+  }
   if (group.source === 'KMA_LIGHTNING') return c.json({ source: group.source, targetId: `${grid.nx}_${grid.ny}`,
     period: group.period, records: lightningRecords(snapshots.results, grid.nx, grid.ny) });
   const seen = new Set<string>();
@@ -249,16 +345,21 @@ app.get('/records', async (c) => {
       const point = kmaGridFromCoordinates(latitude, longitude);
       return point.nx === grid.nx && point.ny === grid.ny;
     })
-    .map((row) => ({ time: dateFor(row, snapshot.slot), values: summary(row, group.source),
+    .map((row) => ({ time: group.source === 'HRFCO_RIVER_FLOW'
+        ? riverTime(dateFor(row, snapshot.slot)) : dateFor(row, snapshot.slot), values: summary(row, group.source),
+      provider: snapshot.source === 'KWATER_RIVER_LEVEL' ? 'K-water' : '한강홍수통제소',
       distance: center ? (Number(row.latitude) - center.latitude) ** 2 +
         (Number(row.longitude) - center.longitude) ** 2 : 0 })))
-    .sort((a, b) => b.time.localeCompare(a.time) || a.distance - b.distance)
+    .sort((a, b) => b.time.localeCompare(a.time) || a.distance - b.distance ||
+      Number(a.provider === 'K-water') - Number(b.provider === 'K-water'))
     .filter((item) => {
-      const key = romsGrid ? item.time : `${item.time}:${JSON.stringify(item.values)}`;
+      const key = romsGrid || group.source === 'HRFCO_RIVER_FLOW'
+        ? item.time : `${item.time}:${JSON.stringify(item.values)}`;
       if (seen.has(key) || Object.keys(item.values).length === 0) return false;
       seen.add(key);
       return true;
-    }).slice(0, 120).map(({ time, values }) => ({ time, values }));
+    }).slice(0, 120).map(({ time, values, provider }) => ({ time, values,
+      ...(group.source === 'HRFCO_RIVER_FLOW' ? { provider } : {}) }));
   return c.json({ source: group.source, targetId: requestedTarget, period: group.period, records });
 });
 

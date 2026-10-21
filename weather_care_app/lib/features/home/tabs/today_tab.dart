@@ -5,6 +5,7 @@ import '../../../models/lifestyle_message.dart';
 import '../../../services/notification_destination.dart';
 import '../../../services/api_client.dart';
 import '../../../services/kma_grid.dart';
+import '../../../services/current_location_service.dart';
 import '../widgets/lightning_details_card.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_data_phase.dart';
@@ -29,6 +30,7 @@ class TodayTab extends StatefulWidget {
   final int focusRequestId;
   final ApiClient? lightningClient;
   final KmaGrid? lightningGrid;
+  final DeviceCoordinates? lightningCoordinates;
   final bool active;
 
   const TodayTab({
@@ -46,6 +48,7 @@ class TodayTab extends StatefulWidget {
     this.focusRequestId = 0,
     this.lightningClient,
     this.lightningGrid,
+    this.lightningCoordinates,
     this.active = true,
   });
 
@@ -94,7 +97,7 @@ class _TodayTabState extends State<TodayTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final target = (widget.focusTopic == NotificationTopic.lightning
-              ? _lightningKey.currentContext
+              ? _evidenceSectionKey.currentContext
               : _focusedEvidenceKey.currentContext) ??
           _evidenceSectionKey.currentContext;
       if (target == null) return;
@@ -157,27 +160,28 @@ class _TodayTabState extends State<TodayTab> {
               widget.advertisement!,
             ],
             const SizedBox(height: 16),
-            LightningDetailsCard(
-              key: _lightningKey,
-              client: widget.lightningClient,
-              grid: widget.lightningGrid,
-              active: widget.active,
-              focused: widget.focusTopic == NotificationTopic.lightning,
-              refreshId: _lightningRefreshId + widget.focusRequestId,
-              onLoaded: () {
-                if (widget.focusTopic == NotificationTopic.lightning &&
-                    !_lightningFocusLoaded) {
-                  _lightningFocusLoaded = true;
-                  _focusScheduled = false;
-                  _scheduleFocusScroll();
-                }
-              },
-            ),
             if (widget.dataPhase == WeatherDataPhase.loading)
               const Center(child: CircularProgressIndicator())
             else if (widget.serverFeaturesAvailable)
               LifestyleEvidenceChecklistSection(
                 key: _evidenceSectionKey,
+                leadingEvidence: LightningDetailsCard(
+                  key: _lightningKey,
+                  client: widget.lightningClient,
+                  grid: widget.lightningGrid,
+                  coordinates: widget.lightningCoordinates,
+                  active: widget.active,
+                  focused: widget.focusTopic == NotificationTopic.lightning,
+                  refreshId: _lightningRefreshId + widget.focusRequestId,
+                  onLoaded: () {
+                    if (widget.focusTopic == NotificationTopic.lightning &&
+                        !_lightningFocusLoaded) {
+                      _lightningFocusLoaded = true;
+                      _focusScheduled = false;
+                      _scheduleFocusScroll();
+                    }
+                  },
+                ),
                 messages: widget.today.lifestyleMessages,
                 dataStatusMessages: widget.today.dataStatusMessages,
                 focusedTypes: focusedTypes,

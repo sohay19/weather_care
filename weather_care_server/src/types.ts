@@ -409,6 +409,8 @@ export interface RateLimitBinding {
 }
 
 export type ServerEnv = {
+  /** 접근 키와 전용 DB를 사용하는 Node 시험 서버의 샘플 조회만 허용한다. */
+  TEST_DATA_ENABLED?: boolean;
   DB: D1Database;
   INSTALLATION_ENROLL_LIMIT: RateLimitBinding;
   ANALYTICS_DELETION_LIMIT: RateLimitBinding;

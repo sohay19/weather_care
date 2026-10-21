@@ -28,6 +28,8 @@ export function nodeServerEnv(
 ): ServerEnv {
   return {
     DB: asD1Database(database),
+    TEST_DATA_ENABLED: !!environment.TEST_ACCESS_KEY?.trim() &&
+      nodeDatabasePath(environment) === resolve('/var/lib/weather-care/weather-care-test.sqlite'),
     INSTALLATION_ENROLL_LIMIT: new FixedWindowRateLimit(20, 60_000),
     ANALYTICS_DELETION_LIMIT: new FixedWindowRateLimit(3, 60_000),
     APP_ORIGIN: environment.APP_ORIGIN ?? 'http://127.0.0.1:8787',

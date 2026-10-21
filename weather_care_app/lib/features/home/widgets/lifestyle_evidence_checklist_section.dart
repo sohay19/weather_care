@@ -15,6 +15,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
   final int focusRequestId;
+  final Widget? leadingEvidence;
 
   const LifestyleEvidenceChecklistSection({
     super.key,
@@ -27,6 +28,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
     this.onRetryMissingData,
     this.retrying = false,
     this.focusRequestId = 0,
+    this.leadingEvidence,
   });
 
   @override
@@ -72,6 +74,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
             subtitle: '날씨 판단에 사용한 자료를 함께 확인해요',
           ),
           const SizedBox(height: 18),
+          if (leadingEvidence != null) leadingEvidence!,
           if (missingFocus) ...[
             KeyedSubtree(
               key: focusedItemKey,
@@ -94,7 +97,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
             const _EmptyLifestyleChecklist()
           else
             for (var index = 0; index < orderedMessages.length; index++) ...[
-              _LifestyleEvidenceSet(
+              WeatherEvidenceCard(
                 key: ValueKey(
                     'evidence-${orderedMessages[index].type.apiName}-${orderedMessages[index].title}-$index'),
                 message: orderedMessages[index],
@@ -125,27 +128,39 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
   }
 }
 
-class _LifestyleEvidenceSet extends StatefulWidget {
+class WeatherEvidenceCard extends StatefulWidget {
   final LifestyleMessage message;
   final bool focused;
   final String? focusLabel;
   final Key? focusedItemKey;
   final int focusRequestId;
+  final String? id;
+  final String? title;
+  final IconData? icon;
+  final WeatherMessageRole summaryRole;
+  final String? supportingLabel;
+  final Widget? expandedFooter;
 
-  const _LifestyleEvidenceSet({
+  const WeatherEvidenceCard({
     super.key,
     required this.message,
-    required this.focused,
-    required this.focusLabel,
-    required this.focusedItemKey,
-    required this.focusRequestId,
+    this.focused = false,
+    this.focusLabel,
+    this.focusedItemKey,
+    this.focusRequestId = 0,
+    this.id,
+    this.title,
+    this.icon,
+    this.summaryRole = WeatherMessageRole.appSuggestion,
+    this.supportingLabel,
+    this.expandedFooter,
   });
 
   @override
-  State<_LifestyleEvidenceSet> createState() => _LifestyleEvidenceSetState();
+  State<WeatherEvidenceCard> createState() => _WeatherEvidenceCardState();
 }
 
-class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
+class _WeatherEvidenceCardState extends State<WeatherEvidenceCard> {
   late bool _expanded;
 
   @override
@@ -155,7 +170,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
   }
 
   @override
-  void didUpdateWidget(covariant _LifestyleEvidenceSet oldWidget) {
+  void didUpdateWidget(covariant WeatherEvidenceCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusRequestId != widget.focusRequestId ||
         oldWidget.focused != widget.focused) {
@@ -166,6 +181,8 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
   @override
   Widget build(BuildContext context) {
     final message = widget.message;
+    final id = widget.id ?? message.type.apiName.toLowerCase();
+    final title = widget.title ?? message.type.title;
     final focused = widget.focused;
     final focusLabel = widget.focusLabel;
     final focusedItemKey = widget.focusedItemKey;
@@ -183,7 +200,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
 
     final card = AnimatedContainer(
       key: ValueKey(
-        'lifestyle-evidence-set-${message.type.apiName.toLowerCase()}',
+        'lifestyle-evidence-set-$id',
       ),
       duration: const Duration(milliseconds: 250),
       width: double.infinity,
@@ -213,8 +230,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
             const SizedBox(height: 7),
           ],
           InkWell(
-            key: ValueKey(
-                'detail-evidence-toggle-${message.type.apiName.toLowerCase()}'),
+            key: ValueKey('detail-evidence-toggle-$id'),
             borderRadius: BorderRadius.circular(12),
             onTap: () => setState(() => _expanded = !_expanded),
             child: Row(
@@ -228,7 +244,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    _lifestyleIcon(message.type),
+                    widget.icon ?? _lifestyleIcon(message.type),
                     size: 20,
                     color: WeatherCareTheme.of(context).primaryDeep,
                   ),
@@ -239,7 +255,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        message.type.title,
+                        title,
                         style: TextStyle(
                           color: WeatherCareTheme.of(context).textPrimary,
                           fontSize: 15,
@@ -249,7 +265,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
                       ),
                       if (!_expanded &&
                           message.title.trim().isNotEmpty &&
-                          message.title != message.type.title &&
+                          message.title != title &&
                           message.title != action) ...[
                         const SizedBox(height: 2),
                         Text(message.title,
@@ -260,7 +276,7 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
                         Text(
                           validPeriod,
                           key: ValueKey(
-                            'detail-valid-period-${message.type.apiName.toLowerCase()}',
+                            'detail-valid-period-$id',
                           ),
                           style: WeatherCareTheme.of(context).microTextStyle,
                         ),
@@ -279,10 +295,11 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
           ),
           const SizedBox(height: 13),
           _MatchedDetail(
-            icon: Icons.check_circle_outline_rounded,
-            label: '체크할 일',
+            icon: _roleIcon(widget.summaryRole),
+            label: _roleSetLabel(widget.summaryRole),
             text: action,
-            highlighted: true,
+            highlighted: widget.summaryRole == WeatherMessageRole.appSuggestion,
+            muted: widget.summaryRole == WeatherMessageRole.dataStatus,
           ),
           if (_expanded) ...[
             if (supporting.isEmpty) ...[
@@ -298,12 +315,16 @@ class _LifestyleEvidenceSetState extends State<_LifestyleEvidenceSet> {
                 const SizedBox(height: 8),
                 _MatchedDetail(
                   icon: _roleIcon(part.role),
-                  label: _roleSetLabel(part.role),
+                  label: widget.supportingLabel ?? _roleSetLabel(part.role),
                   text: part.text,
                   source: _partSource(part),
                   muted: part.role == WeatherMessageRole.dataStatus,
                 ),
               ],
+            if (widget.expandedFooter != null) ...[
+              const SizedBox(height: 10),
+              widget.expandedFooter!,
+            ],
           ],
         ],
       ),

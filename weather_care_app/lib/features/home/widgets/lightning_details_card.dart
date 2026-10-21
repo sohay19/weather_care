@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../../../services/api_client.dart';
 import '../../../services/kma_grid.dart';
-import '../../../theme/weather_theme.dart';
+import '../../../services/current_location_service.dart';
+import '../../../models/lifestyle_message.dart';
+import 'lifestyle_evidence_checklist_section.dart';
 
 class LightningDetailsCard extends StatefulWidget {
   final ApiClient? client;
   final KmaGrid? grid;
+  final DeviceCoordinates? coordinates;
   final bool active;
   final bool focused;
   final int refreshId;
@@ -20,6 +23,7 @@ class LightningDetailsCard extends StatefulWidget {
       required this.client,
       required this.grid,
       required this.active,
+      this.coordinates,
       this.focused = false,
       this.refreshId = 0,
       this.onLoaded,
@@ -50,8 +54,10 @@ class _LightningDetailsCardState extends State<LightningDetailsCard>
   @override
   void didUpdateWidget(covariant LightningDetailsCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final changed =
-        oldWidget.grid != widget.grid || oldWidget.client != widget.client;
+    final changed = oldWidget.grid != widget.grid ||
+        oldWidget.client != widget.client ||
+        oldWidget.coordinates?.latitude != widget.coordinates?.latitude ||
+        oldWidget.coordinates?.longitude != widget.coordinates?.longitude;
     if (changed || !widget.active) {
       ++_request;
       _timer?.cancel();
@@ -110,8 +116,14 @@ class _LightningDetailsCardState extends State<LightningDetailsCard>
     final request = ++_request;
     setState(() => _loading = true);
     try {
-      final data = await client.get('/api/v1/weather/extra/lightning',
-          query: {'nx': '${grid.nx}', 'ny': '${grid.ny}'});
+      final data = await client.get('/api/v1/weather/extra/lightning', query: {
+        'nx': '${grid.nx}',
+        'ny': '${grid.ny}',
+        if (widget.coordinates != null) ...{
+          'latitude': '${widget.coordinates!.latitude}',
+          'longitude': '${widget.coordinates!.longitude}',
+        },
+      });
       if (!mounted || request != _request) return;
       if (!['AVAILABLE', 'FAILED', 'STALE', 'UNAVAILABLE']
           .contains(data['status'])) {
@@ -158,7 +170,6 @@ class _LightningDetailsCardState extends State<LightningDetailsCard>
 
   @override
   Widget build(BuildContext context) {
-    final palette = WeatherCareTheme.of(context);
     final feedExpiry = _time(_data?['feedExpiresAt']);
     final available = !_failed &&
         _data?['status'] == 'AVAILABLE' &&
@@ -171,50 +182,75 @@ class _LightningDetailsCardState extends State<LightningDetailsCard>
     if (!failed && observations.isEmpty && !widget.focused) {
       return const SizedBox.shrink();
     }
-    final checkedAt = _time(_data?['checkedAt']);
-    return Card(
+    final testSample = _data?['testSample'] == true;
+    final rawDistance = _data?['latestDistanceKm'];
+    final distance =
+        rawDistance is num && rawDistance.isFinite && rawDistance >= 0
+            ? rawDistance.toDouble()
+            : null;
+    final currentLocation =
+        widget.coordinates != null && _data?['distanceBasis'] == 'COORDINATES';
+    final summary = failed
+        ? '낙뢰 자료를 확인하지 못했어요'
+        : observations.isNotEmpty
+            ? testSample
+                ? '화면 확인용 낙뢰 샘플 자료예요'
+                : '최근 30분 이내 낙뢰가 관측됐어요'
+            : _loading
+                ? '낙뢰 자료를 확인하고 있어요'
+                : '표시할 최근 낙뢰 관측이 없어요';
+    final action = observations.isEmpty
+        ? failed
+            ? '잠시 후 다시 시도해 주세요.'
+            : _loading
+                ? '낙뢰 자료 확인이 끝날 때까지 잠시 기다려 주세요.'
+                : '최신 기상정보를 함께 확인해 주세요.'
+        : '${testSample ? '[예시] ' : ''}안전한 건물이나 자동차 안으로 이동하세요. 마지막 번개·천둥 후 최소 30분은 안전한 장소에서 기다리세요.';
+    return Padding(
       key: const ValueKey('lightning-details-card'),
-      child: ExpansionTile(
-        key:
-            ValueKey('lightning-details-${widget.focused}-${widget.refreshId}'),
-        initiallyExpanded: widget.focused,
-        leading: Icon(Icons.bolt_rounded, color: palette.attentionDeep),
-        title: const Text('낙뢰 관측'),
-        subtitle: Text(failed
-            ? '낙뢰 자료를 확인하지 못했어요'
-            : observations.isNotEmpty
-                ? '최근 30분 이내 낙뢰가 관측됐어요'
-                : _loading
-                    ? '낙뢰 자료를 확인하고 있어요'
-                    : '표시할 최근 낙뢰 관측이 없어요'),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        expandedCrossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (observations.isNotEmpty) ...[
-            Text('관측 지역: 선택 지역의 기상 격자'),
-            Text('최근 발생: ${_label(observations.first)} (한국시간)'),
-            Text('최근 30분 수집 자료: ${observations.length}회'),
-            const SizedBox(height: 8),
-            const Text(
-                '안전한 건물이나 자동차 안으로 이동하세요. 마지막 번개·천둥 후 최소 30분은 안전한 장소에서 기다리세요.'),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: WeatherEvidenceCard(
+        id: 'lightning',
+        title: testSample ? '[테스트] 낙뢰 관측' : '낙뢰 관측',
+        icon: Icons.bolt_rounded,
+        focused: widget.focused,
+        focusLabel: '알림에서 선택한 낙뢰 자료',
+        focusRequestId: widget.refreshId,
+        supportingLabel: '관측 내용',
+        message: LifestyleMessage(
+          type: LifestyleMessageType.unknown,
+          title: summary,
+          parts: [
+            WeatherMessagePart(
+                role: WeatherMessageRole.appSuggestion, text: action),
+            WeatherMessagePart(
+              role: WeatherMessageRole.officialFact,
+              text: [
+                if (observations.isNotEmpty) ...[
+                  '발생 일자: ${_label(observations.first)}',
+                  if (distance != null)
+                    '${currentLocation ? '현재 위치로부터' : '지역 기준점으로부터'} 약 ${distance.toStringAsFixed(1)}km',
+                  '최근 30분 발생 횟수: ${observations.length}회',
+                ] else
+                  summary,
+                if (failed)
+                  _data?['status'] == 'STALE' ||
+                          (_data?['status'] == 'AVAILABLE' && !available)
+                      ? '최신 자료 갱신이 지연되고 있어요. 오래된 관측은 표시하지 않아요.'
+                      : '낙뢰 자료 조회에 실패했거나 수집 자료가 아직 준비되지 않았어요.',
+              ].join('\n'),
+              source: testSample ? '테스트 서버 샘플' : '기상청 낙뢰 관측',
+            ),
           ],
-          if (checkedAt != null) Text('자료 확인: ${_label(checkedAt)} (한국시간)'),
-          if (failed) ...[
-            Text(_data?['status'] == 'STALE' ||
-                    (_data?['status'] == 'AVAILABLE' && !available)
-                ? '최신 자료 갱신이 지연되고 있어요. 오래된 관측은 표시하지 않아요.'
-                : '낙뢰 자료 조회에 실패했거나 수집 자료가 아직 준비되지 않았어요.'),
-            TextButton(
+        ),
+        expandedFooter: failed
+            ? TextButton(
                 onPressed:
                     _loading || widget.client == null || widget.grid == null
                         ? null
                         : _load,
-                child: const Text('다시 시도')),
-          ],
-          const SizedBox(height: 8),
-          const Text(
-              '출처: 기상청 낙뢰 관측 · 발생 후 30분 미만 자료만 표시해요. 수집·전송이 지연될 수 있으며, 표시가 없다고 안전을 뜻하지는 않아요.'),
-        ],
+                child: const Text('다시 시도'))
+            : null,
       ),
     );
   }

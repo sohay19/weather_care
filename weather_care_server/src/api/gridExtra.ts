@@ -2,9 +2,9 @@ import { Hono } from 'hono';
 import type { ServerEnv } from '../types';
 import { kmaGridFromCoordinates } from '../regions/kmaGridFromCoordinates';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
-import { regionFromQuery } from '../utils';
+import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { KHOA_BUOY_STATIONS, KHOA_TIDE_STATIONS } from '../collection/khoaStationCatalog';
-import { lightningForGrid, readLightningFeed } from '../services/lightning';
+import { lightningForGrid, lightningPositionMatchesGrid, readLightningFeed } from '../services/lightning';
 
 type Row = Record<string, unknown>;
 type Snapshot = { source: string; target_id: string; slot: string; payload: string };
@@ -126,10 +126,17 @@ const app = new Hono<{ Bindings: ServerEnv }>();
 app.get('/lightning', async (c) => {
   const grid = requestedGrid(c.req.query('nx'), c.req.query('ny'));
   if (!grid) return c.json({ error: 'INVALID_GRID' }, 400);
+  const latitude = c.req.query('latitude');
+  const longitude = c.req.query('longitude');
+  const position = coordinatesFromQuery(latitude, longitude);
+  if ((latitude !== undefined || longitude !== undefined) &&
+      (!position || !lightningPositionMatchesGrid(position, grid.nx, grid.ny)))
+    return c.json({ error: 'INVALID_COORDINATES' }, 400);
   c.header('Cache-Control', 'no-store');
   const now = new Date();
   try {
-    return c.json(lightningForGrid(await readLightningFeed(c.env.DB, now), grid.nx, grid.ny, now));
+    return c.json(lightningForGrid(await readLightningFeed(c.env.DB, now,
+      { includeTestSamples: c.env.TEST_DATA_ENABLED === true }), grid.nx, grid.ny, now, position));
   } catch {
     return c.json({ status: 'FAILED', nx: grid.nx, ny: grid.ny, count: 0 }, 503);
   }

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { collectGridLightning } from '../src/collection/gridExtraCollection';
 import gridExtraRoutes from '../src/api/gridExtra';
-import { lightningForGrid, lightningTime, readLightningFeed } from '../src/services/lightning';
+import { lightningForGrid, lightningTime, readLightningFeed, LIGHTNING_RADIUS_KM } from '../src/services/lightning';
 import { runLightningNotificationJob } from '../src/notification/lightningNotificationJob';
 import { sendBatch, type FcmPayload, type FcmSendResult } from '../src/notification/fcmClient';
 import { getNotificationSettings, upsertNotificationSettings } from '../src/database/notificationSettingsRepository';
@@ -52,6 +52,55 @@ function sender(sent: FcmPayload[], success = true) {
 }
 
 describe('낙뢰 관측 유효성·수집 상태', () => {
+  it('다른 격자도 반경 20km 안이면 포함하고 최신 관측의 거리를 반환한다', async () => {
+    state();
+    const north = (km: number) => ({ ...point, latitude: point.latitude + km / 6371.00877 * 180 / Math.PI });
+    const nearby = north(19.999);
+    expect(kmaGridFromCoordinates(nearby.latitude, nearby.longitude)).not.toEqual(grid);
+    snapshot([], undefined, [
+      { ...north(1), observedAt: '202610201208' },
+      { ...nearby, observedAt: '202610201210' },
+      { ...north(20.001), observedAt: '202610201211' },
+    ]);
+    const feed = await readLightningFeed(env.DB, now);
+    const result = lightningForGrid(feed, grid.nx, grid.ny, now, point);
+    expect(result).toMatchObject({ count: 2, radiusKm: LIGHTNING_RADIUS_KM, distanceBasis: 'COORDINATES',
+      latestObservedAt: '2026-10-20T03:10:00.000Z' });
+    expect(result.latestDistanceKm).toBeCloseTo(19.999, 6);
+    expect(lightningForGrid(feed, grid.nx, grid.ny, now).distanceBasis).toBe('GRID_CENTER');
+  });
+
+  it('API는 정확한 좌표를 사용하고 불완전·비정상·격자 불일치 좌표를 거부한다', async () => {
+    vi.useFakeTimers(); vi.setSystemTime(now);
+    state(); snapshot(['202610201210']);
+    const path = `/lightning?nx=${grid.nx}&ny=${grid.ny}`;
+    const result = await (await gridExtraRoutes.request(
+      `${path}&latitude=${point.latitude}&longitude=${point.longitude}`, {}, env)).json();
+    expect(result).toMatchObject({ count: 1, latestDistanceKm: 0, distanceBasis: 'COORDINATES', radiusKm: 20 });
+    for (const query of ['latitude=37', 'latitude=&longitude=', 'latitude=NaN&longitude=127',
+      'latitude=35.18&longitude=129.07']) {
+      expect((await gridExtraRoutes.request(`${path}&${query}`, {}, env)).status).toBe(400);
+    }
+  });
+  it('시험 샘플은 허용된 조회에서만 표시하고 일반 알림에서는 제외한다', async () => {
+    installation(); state();
+    sqlite.sqlite.prepare('INSERT INTO grid_extra_snapshots VALUES(?,?,?,?,?)')
+      .run('KMA_LIGHTNING_TEST', 'ALL', '2026-10-20T03:00:00Z',
+        JSON.stringify({ events: [{ ...point, observedAt: '202610201210' }] }), now.toISOString());
+    expect((await readLightningFeed(env.DB, now)).events).toEqual([]);
+    const summary = lightningForGrid(await readLightningFeed(env.DB, now,
+      { includeTestSamples: true }), grid.nx, grid.ny, now);
+    expect(summary).toMatchObject({ count: 1, testSample: true });
+    const sent: FcmPayload[] = [];
+    await runLightningNotificationJob(env, { now: () => now, sender: sender(sent) });
+    expect(sent).toEqual([]);
+    vi.useFakeTimers(); vi.setSystemTime(now);
+    const path = `/lightning?nx=${grid.nx}&ny=${grid.ny}`;
+    const normal = await gridExtraRoutes.request(path, {}, env);
+    expect(await normal.json()).toMatchObject({ count: 0 });
+    const testResponse = await gridExtraRoutes.request(path, {}, { ...env, TEST_DATA_ENABLED: true });
+    expect(await testResponse.json()).toMatchObject({ count: 1, testSample: true });
+  });
   it('한국 시각의 12/14자리 발생 시각을 보존하고 시간대 없는 값은 거부한다', () => {
     expect(lightningTime('20261020121001')).toBe('2026-10-20T03:10:01.000Z');
     expect(lightningTime('202610201210')).toBe('2026-10-20T03:10:00.000Z');
@@ -129,6 +178,27 @@ describe('낙뢰 관측 유효성·수집 상태', () => {
 });
 
 describe('낙뢰 전용 알림', () => {
+  it('격자가 다른 가까운 낙뢰도 등록 GPS 위치의 반경으로 알린다', async () => {
+    installation(); state();
+    sqlite.sqlite.prepare('UPDATE installations SET latitude=?,longitude=?').run(point.latitude, point.longitude);
+    snapshot([], undefined, [{ ...point, latitude: point.latitude + 0.1, observedAt: '202610201210' }]);
+    const sent: FcmPayload[] = [];
+    await runLightningNotificationJob(env, { now: () => now, sender: sender(sent) });
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body).toContain('등록 위치로부터 약 11.1km');
+  });
+
+  it('전송 직전에 같은 격자 안에서 GPS 좌표가 바뀌어도 발송을 중지한다', async () => {
+    installation(); state(); snapshot(['202610201210']);
+    sqlite.sqlite.prepare('UPDATE installations SET latitude=?,longitude=?').run(point.latitude, point.longitude);
+    const sent: FcmPayload[] = [];
+    let reads = 0;
+    await runLightningNotificationJob(env, { now: () => {
+      if (++reads === 3) sqlite.sqlite.prepare('UPDATE installations SET latitude=latitude+0.001').run();
+      return now;
+    }, sender: sender(sent) });
+    expect(sent).toEqual([]);
+  });
   it('새 관측을 한 번 보내고 같은 자료·수집 갱신으로 반복 전송하지 않는다', async () => {
     installation(); state(); snapshot(['202610201210']);
     const sent: FcmPayload[] = [];

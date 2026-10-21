@@ -9,6 +9,9 @@ interface LightningInstallation {
   token: string;
   nx: number;
   ny: number;
+  latitude: number | null;
+  longitude: number | null;
+  locationMode: string;
 }
 
 interface Dependencies {
@@ -30,11 +33,14 @@ export async function runLightningNotificationJob(env: ServerEnv, dependencies: 
     AND NOT EXISTS (SELECT 1 FROM installation_activity a WHERE a.installation_id=i.installation_id
       AND ${installationExpirySql}<=julianday(?))`;
   const installations = await env.DB.prepare(`SELECT i.installation_id AS installationId,
-    i.fcm_token AS token,i.nx,i.ny FROM installations i JOIN notification_settings s
+    i.fcm_token AS token,i.nx,i.ny,i.latitude,i.longitude,i.location_mode AS locationMode
+    FROM installations i JOIN notification_settings s
     ON s.installation_id=i.installation_id WHERE ${eligibility}`)
     .bind(now.toISOString()).all<LightningInstallation>();
   for (const installation of installations.results) {
-    const summary = lightningForGrid(feed, installation.nx, installation.ny, clock());
+    const position = installation.locationMode === 'GPS' && installation.latitude != null && installation.longitude != null
+      ? { latitude: installation.latitude, longitude: installation.longitude } : undefined;
+    const summary = lightningForGrid(feed, installation.nx, installation.ny, clock(), position);
     if (!summary.latestObservedAt || !summary.expiresAt || !summary.feedExpiresAt) continue;
     const notificationKey = `LIGHTNING_${installation.nx}_${installation.ny}_${summary.latestObservedAt}`;
     const expiresAt = new Date(Math.min(Date.parse(summary.expiresAt), Date.parse(summary.feedExpiresAt))).toISOString();
@@ -57,15 +63,15 @@ export async function runLightningNotificationJob(env: ServerEnv, dependencies: 
       token: installation.token, notificationKey, notificationTarget: 'WEATHER_DETAILS',
       notificationTopic: 'LIGHTNING', expiresAt,
       title: `${region} 낙뢰 관측`,
-      body: `${localTime} 선택 지역의 기상 격자에서 낙뢰가 관측됐어요. 안전한 건물이나 자동차 안으로 이동하세요.`,
+      body: `${localTime} ${summary.distanceBasis === 'COORDINATES' ? '등록 위치로부터' : '지역 기준점으로부터'} 약 ${summary.latestDistanceKm!.toFixed(1)}km에서 낙뢰가 관측됐어요. 안전한 건물이나 자동차 안으로 이동하세요.`,
     };
     try {
       // 전송 직전에 토큰·설정·위치와 자료 유효성을 다시 확인한다.
       const current = await env.DB.prepare(`SELECT 1 FROM installations i JOIN notification_settings s
         ON s.installation_id=i.installation_id WHERE i.installation_id=? AND i.fcm_token=?
-        AND i.nx=? AND i.ny=? AND ${eligibility}`)
+        AND i.nx=? AND i.ny=? AND i.latitude IS ? AND i.longitude IS ? AND i.location_mode=? AND ${eligibility}`)
         .bind(installation.installationId, installation.token, installation.nx, installation.ny,
-          clock().toISOString()).first();
+          installation.latitude, installation.longitude, installation.locationMode, clock().toISOString()).first();
       if (!current || clock().getTime() >= Date.parse(expiresAt)) {
         await releaseClaim(env.DB, installation.installationId, notificationKey);
         continue;

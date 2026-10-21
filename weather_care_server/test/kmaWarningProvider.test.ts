@@ -7,6 +7,7 @@ import {
 } from '../src/providers/warnings/kmaWarningProvider';
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 import eucKrFixture from './fixtures/kmaWarningEucKr.json';
+import status20261021 from './fixtures/kmaWarningStatus20261021.json';
 
 const NOW = new Date('2026-09-01T01:30:00Z');
 
@@ -66,6 +67,40 @@ describe('KMA warning provider', () => {
     const payload = 'L1014000, 서해5도, L1014200, 백령도.대청도, 202610150630, 202610150630, 강풍, 주의, 발표, 15일 ,=';
     expect(parseActiveWarnings(payload, ['L1014200'], new Date('2026-10-15T02:00:00Z')))
       .toEqual([expect.objectContaining({ type: '강풍', level: '주의보', regionId: 'L1014200' })]);
+  });
+
+  it('실제 특보현황의 날짜·시간대 해제예고를 읽고 육상 활성 특보를 보존한다', () => {
+    const regionIds = status20261021.payload.split(/\r?\n/)
+      .filter((line) => /^L\d{7},/.test(line))
+      .map((line) => line.split(',')[2].trim());
+    const warnings = parseActiveWarnings(
+      status20261021.payload, regionIds, new Date('2026-10-21T02:50:00Z'),
+    );
+    expect(warnings).toHaveLength(39);
+    expect(new Set(warnings.map((warning) => warning.regionId))).toEqual(new Set(regionIds));
+    expect(warnings).toContainEqual(expect.objectContaining({
+      regionId: 'L1010500', regionName: '시흥시', type: '강풍', level: '주의보',
+      validFrom: '2026-10-21T10:30:00+09:00',
+    }));
+    expect(warnings).toContainEqual(expect.objectContaining({
+      regionId: 'L1052500', type: '강풍', level: '경보', commandCode: '6',
+    }));
+  });
+
+  it.each([
+    '22일 새벽(00시~03시)', '22일 새벽(03시~06시)', '22일 아침(06시~09시)',
+    '22일 오전(09시~12시)', '22일 낮(12시~15시)', '22일 늦은 오후(15시~18시)',
+    '22일 저녁(18시~21시)', '22일 밤(21시~24시)', '22일 오전(06시~12시)',
+    '22일 오후(12시~18시)', '22일 새벽(00시~06시)', '22일 밤(18시~24시)',
+  ])('해제예고 %s가 특보 발효·해제·예비·미래 발효 판정을 바꾸지 않는다', (releaseNotice) => {
+    const row = (level: string, command: string, effective = '202609011000') =>
+      `L1010000,경기도,L1011900,수원,202609010900,${effective},강풍,${level},${command},${releaseNotice},=`;
+    expect(parseActiveWarnings([
+      row('주의', '발표'), row('주의', '해제'), row('예비', '발표'),
+      row('주의', '발표', '202609011100'),
+    ].join('\n'), ['L1011900'], NOW)).toEqual([
+      expect.objectContaining({ type: '강풍', level: '주의보', commandCode: '1' }),
+    ]);
   });
 
   it('선택 지역의 알 수 없는 한글 코드나 열은 특보 없음으로 처리하지 않는다', () => {

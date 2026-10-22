@@ -92,6 +92,69 @@ void main() {
         find.byKey(const ValueKey('weather-notification-menu')), findsNothing);
   });
 
+  for (final time in [
+    const TimeOfDay(hour: 22, minute: 35),
+    const TimeOfDay(hour: 0, minute: 0),
+  ]) {
+    testWidgets('${time.hour}:${time.minute} 선택을 저장하고 다시 열어도 유지한다',
+        (tester) async {
+      final initial = AppSettings.fallback('test');
+      final changed = <AppSettings>[];
+      await tester.pumpWidget(MaterialApp(
+        home: SettingsScreen(
+          initialSettings: initial,
+          onSettingsChanged: (settings) async => changed.add(settings),
+        ),
+      ));
+      await openWeatherAlerts(tester);
+      final control = find.byKey(const ValueKey('notification-time-control'));
+      await reveal(tester, control);
+      await tester.tap(control);
+      await tester.pumpAndSettle();
+      expect(
+          tester
+              .widget<TimePickerDialog>(find.byType(TimePickerDialog))
+              .initialTime,
+          const TimeOfDay(hour: 7, minute: 0));
+
+      await tester.tap(find.byIcon(Icons.keyboard_outlined));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find.byType(TextFormField).first, time.hour.toString());
+      await tester.enterText(
+          find.byType(TextFormField).last, time.minute.toString());
+      final labels = MaterialLocalizations.of(
+          tester.element(find.byType(TimePickerDialog)));
+      await tester.tap(find.text(labels.okButtonLabel));
+      await tester.pumpAndSettle();
+
+      final savedTime =
+          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      expect(changed, hasLength(1));
+      expect(changed.single.toJson(), {
+        ...initial.toJson(),
+        'notificationTime': savedTime,
+      });
+      expect(find.text(savedTime), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
+      await tester.pumpAndSettle();
+      await openWeatherAlerts(tester);
+      await reveal(tester, control);
+      await tester.tap(control);
+      await tester.pumpAndSettle();
+      expect(
+          tester
+              .widget<TimePickerDialog>(find.byType(TimePickerDialog))
+              .initialTime,
+          time);
+      await tester.tap(find.text(labels.cancelButtonLabel));
+      await tester.pumpAndSettle();
+      expect(changed, hasLength(1));
+      expect(find.text(savedTime), findsOneWidget);
+    });
+  }
+
   for (final entry in {
     '00:00': '00:00',
     '07:00': '07:00',

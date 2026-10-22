@@ -84,6 +84,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late AppSettings settings;
   late final Future<String?> _appVersion;
+  final _statusChanges = ValueNotifier(0);
 
   @override
   void initState() {
@@ -105,6 +106,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       oldWidget.adRemoval?.removeListener(_onAdRemovalChanged);
       widget.adRemoval?.addListener(_onAdRemovalChanged);
     }
+    if (oldWidget.notificationPermission != widget.notificationPermission ||
+        oldWidget.saveState != widget.saveState ||
+        oldWidget.initialSettings != widget.initialSettings ||
+        oldWidget.serverDataAccess != widget.serverDataAccess) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _statusChanges.value++;
+      });
+    }
   }
 
   void _onAdRemovalChanged() {
@@ -114,6 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     widget.adRemoval?.removeListener(_onAdRemovalChanged);
+    _statusChanges.dispose();
     super.dispose();
   }
 
@@ -170,25 +180,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _SettingsMenuButton(
           key: const ValueKey('notification-status-menu'),
           icon: Icons.sync_rounded,
-          title: '저장·기기 알림 상태',
-          subtitle: '설정 저장과 기기 권한 상태를 확인해요',
+          title: '데이터 저장·기기 권한 상태',
+          subtitle: '데이터 저장과 알림·위치 권한을 확인해요',
           onTap: _openNotificationStatusSettings,
         ),
-        if (widget.backgroundLocation case final service?) ...[
-          const SizedBox(height: 16),
-          BackgroundLocationControl(
-            service: service,
-            enabled: settings.backgroundLocationEnabled,
-            available: settings.locationMode == 'GPS' && _alertsEnabled,
-            onChanged: (value) async {
-              final updated =
-                  settings.copyWith(backgroundLocationEnabled: value);
-              setState(() => settings = updated);
-              await widget.onSettingsChanged?.call(updated);
-            },
-            onPermission: widget.onBackgroundLocationPermission ?? () async {},
-          ),
-        ],
         const SizedBox(height: 16),
         _SettingsMenuButton(
           key: const ValueKey('data-permission-menu'),
@@ -278,15 +273,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _openNotificationStatusSettings() {
     Navigator.of(context).push<void>(MaterialPageRoute(
-      builder: (_) => _NotificationStatusSettingsScreen(
-        alertsEnabled: _alertsEnabled,
-        saveState: widget.saveState,
-        onRetrySave: widget.onRetrySave,
-        notificationPermission: widget.notificationPermission,
-        onRequestNotificationPermission: widget.onRequestNotificationPermission,
-        onRefreshNotificationPermission: widget.onRefreshNotificationPermission,
-        onOpenNotificationSettings: widget.onOpenNotificationSettings,
-        onOpenGuide: () => _openGuide(SettingsGuide.notifications),
+      builder: (_) => ValueListenableBuilder<int>(
+        valueListenable: _statusChanges,
+        builder: (_, __, ___) => _NotificationStatusSettingsScreen(
+          alertsEnabled: _alertsEnabled,
+          saveState: widget.saveState,
+          onRetrySave: widget.onRetrySave,
+          notificationPermission: widget.notificationPermission,
+          onRequestNotificationPermission:
+              widget.onRequestNotificationPermission,
+          onRefreshNotificationPermission:
+              widget.onRefreshNotificationPermission,
+          onOpenNotificationSettings: widget.onOpenNotificationSettings,
+          backgroundLocation: widget.backgroundLocation,
+          backgroundLocationEnabled: settings.backgroundLocationEnabled,
+          backgroundLocationAvailable:
+              settings.locationMode == 'GPS' && _alertsEnabled,
+          onBackgroundLocationChanged: (value) async {
+            final updated = settings.copyWith(backgroundLocationEnabled: value);
+            setState(() => settings = updated);
+            await widget.onSettingsChanged?.call(updated);
+          },
+          onBackgroundLocationPermission: widget.onBackgroundLocationPermission,
+          onOpenGuide: () => _openGuide(SettingsGuide.notifications),
+        ),
       ),
     ));
   }
@@ -468,7 +478,7 @@ class _WeatherAlertsSettingsScreenState
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  '설정 실패 시 저장·기기 알림 상태에서 재시도 해주세요.',
+                  '저장에 실패하면 데이터 저장·기기 권한 상태에서 다시 시도해주세요.',
                   style: WeatherCareTheme.of(context).microTextStyle.copyWith(
                         color: WeatherCareTheme.of(context).attentionDeep,
                         fontSize: 12,
@@ -717,7 +727,7 @@ class _ThemeModeSettingsScreen extends StatelessWidget {
   }
 }
 
-class _NotificationStatusSettingsScreen extends StatelessWidget {
+class _NotificationStatusSettingsScreen extends StatefulWidget {
   final bool alertsEnabled;
   final SettingsSaveState saveState;
   final Future<void> Function()? onRetrySave;
@@ -726,6 +736,11 @@ class _NotificationStatusSettingsScreen extends StatelessWidget {
   final Future<void> Function()? onRefreshNotificationPermission;
   final Future<void> Function()? onOpenNotificationSettings;
   final VoidCallback onOpenGuide;
+  final BackgroundLocationService? backgroundLocation;
+  final bool backgroundLocationEnabled;
+  final bool backgroundLocationAvailable;
+  final Future<void> Function(bool) onBackgroundLocationChanged;
+  final Future<void> Function()? onBackgroundLocationPermission;
 
   const _NotificationStatusSettingsScreen({
     required this.alertsEnabled,
@@ -736,12 +751,43 @@ class _NotificationStatusSettingsScreen extends StatelessWidget {
     required this.onRefreshNotificationPermission,
     required this.onOpenNotificationSettings,
     required this.onOpenGuide,
+    required this.backgroundLocation,
+    required this.backgroundLocationEnabled,
+    required this.backgroundLocationAvailable,
+    required this.onBackgroundLocationChanged,
+    required this.onBackgroundLocationPermission,
   });
 
   @override
+  State<_NotificationStatusSettingsScreen> createState() =>
+      _NotificationStatusSettingsScreenState();
+}
+
+class _NotificationStatusSettingsScreenState
+    extends State<_NotificationStatusSettingsScreen> {
+  late bool _backgroundLocationEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _backgroundLocationEnabled = widget.backgroundLocationEnabled;
+  }
+
+  @override
+  void didUpdateWidget(covariant _NotificationStatusSettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.backgroundLocationEnabled !=
+        widget.backgroundLocationEnabled) {
+      _backgroundLocationEnabled = widget.backgroundLocationEnabled;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final saveState = widget.saveState;
+    final notificationPermission = widget.notificationPermission;
     return _SettingsDetailScaffold(
-      title: '저장·기기 알림 상태',
+      title: '데이터 저장·기기 권한 상태',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -762,7 +808,7 @@ class _NotificationStatusSettingsScreen extends StatelessWidget {
                   const Divider(height: 24),
                   TextButton.icon(
                     key: const ValueKey('settings-save-retry'),
-                    onPressed: onRetrySave,
+                    onPressed: widget.onRetrySave,
                     icon: const Icon(Icons.sync_rounded),
                     label: const Text('설정 저장 다시 시도'),
                   ),
@@ -773,61 +819,90 @@ class _NotificationStatusSettingsScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _SettingsSection(
             icon: Icons.device_unknown_outlined,
-            title: '기기 상태',
-            subtitle: '기기에서 알림을 보낼 수 있는 상태인지 확인해요',
+            title: '기기 권한 상태',
+            subtitle: '기기 권한 상태를 확인해요',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Icon(Icons.notifications_none_rounded,
+                        size: 18,
+                        color: WeatherCareTheme.of(context).primaryDeep),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('앱 알림',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(
+                                  fontSize: 14, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Semantics(
                   liveRegion: true,
                   child: Text(notificationPermission.message,
-                      key: const ValueKey('notification-permission-status')),
+                      key: const ValueKey('notification-permission-status'),
+                      style: Theme.of(context).textTheme.bodySmall),
                 ),
                 const SizedBox(height: 8),
-                if (!alertsEnabled) ...[
+                if (!widget.alertsEnabled) ...[
                   const SizedBox(height: 8),
-                  const Text('날씨 알림이 꺼져 있어요.\n서버에 등록된 정보가 있다면 발송 대상에서 제외돼요.'),
+                  Text('날씨 알림이 꺼져 있어요.\n서버에 등록된 정보가 있다면 발송 대상에서 제외돼요.',
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
-                const Divider(height: 24),
-                Wrap(spacing: 8, runSpacing: 4, children: [
-                  if (notificationPermission ==
-                          NotificationPermissionState.denied ||
-                      notificationPermission ==
-                          NotificationPermissionState.notDetermined)
-                    FilledButton.tonal(
-                      key: const ValueKey('notification-permission-request'),
-                      onPressed: onRequestNotificationPermission,
-                      child: const Text('알림 권한 요청'),
-                    ),
+                if (notificationPermission ==
+                        NotificationPermissionState.notDetermined ||
+                    notificationPermission ==
+                        NotificationPermissionState.denied ||
+                    notificationPermission ==
+                        NotificationPermissionState.deniedPermanently)
                   TextButton(
                     key: const ValueKey('notification-permission-refresh'),
                     onPressed: notificationPermission ==
-                            NotificationPermissionState.checking
-                        ? null
-                        : onRefreshNotificationPermission,
+                            NotificationPermissionState.deniedPermanently
+                        ? widget.onOpenNotificationSettings
+                        : widget.onRequestNotificationPermission ??
+                            widget.onRefreshNotificationPermission,
                     child: const Text('권한 다시 확인'),
                   ),
-                  TextButton(
-                    key: const ValueKey('notification-settings'),
-                    onPressed: notificationPermission ==
-                            NotificationPermissionState.checking
-                        ? null
-                        : onOpenNotificationSettings,
-                    child: const Text('기기 앱 설정 열기'),
+                if (widget.backgroundLocation case final service?) ...[
+                  const SizedBox(height: 12),
+                  BackgroundLocationControl(
+                    service: service,
+                    enabled: _backgroundLocationEnabled,
+                    available: widget.backgroundLocationAvailable,
+                    onChanged: (value) async {
+                      setState(() => _backgroundLocationEnabled = value);
+                      await widget.onBackgroundLocationChanged(value);
+                    },
+                    onPermission: widget.onBackgroundLocationPermission ??
+                        () => service.requestPermission(),
                   ),
-                ]),
+                ],
+                const Divider(height: 24),
+                TextButton(
+                  key: const ValueKey('notification-settings'),
+                  onPressed: notificationPermission ==
+                          NotificationPermissionState.checking
+                      ? null
+                      : widget.onOpenNotificationSettings,
+                  child: const Text('기기 앱 설정 열기'),
+                ),
                 const SizedBox(height: 6),
                 Text(
-                    '기기 앱 설정의 알림 메뉴에서 변경할 수 있어요.\n서버 저장과 권한 허용만으로 실제 수신을 확인할 수는 없어요.',
+                    '기기 앱 설정에서 알림·위치 권한을 변경할 수 있어요.\n백그라운드 위치 갱신에는 위치 권한의 ‘항상 허용’이 필요해요.',
                     style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
           TextButton.icon(
             key: const ValueKey('notification-guide'),
-            onPressed: onOpenGuide,
+            onPressed: widget.onOpenGuide,
             icon: const Icon(Icons.help_outline_rounded, size: 18),
-            label: const Text('알림 권한과 앱 설정은 어떻게 다른가요?'),
+            label: const Text('데이터 저장과 알림·위치 권한은 어떻게 다른가요?'),
           ),
         ],
       ),

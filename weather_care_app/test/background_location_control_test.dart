@@ -152,4 +152,55 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     service.dispose();
   });
+
+  testWidgets('위치 권한이 필요할 때만 재확인하고 허용되면 정상 안내로 바뀐다', (tester) async {
+    final service = BackgroundLocationService()..status = 'permissionRequired';
+    addTearDown(service.dispose);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => {'status': 'active'});
+    var requests = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: BackgroundLocationControl(
+          service: service,
+          enabled: true,
+          available: true,
+          onChanged: (_) async {},
+          onPermission: () async {
+            requests++;
+            await service.refreshStatus();
+          },
+        ),
+      ),
+    ));
+    final button =
+        find.byKey(const ValueKey('background-location-permission-refresh'));
+    expect(button, findsOneWidget);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(requests, 1);
+    expect(button, findsNothing);
+    expect(find.textContaining('정상적으로 백그라운드 위치 권한이 허용되어 있어요.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('위치 갱신이 꺼져 있으면 권한 요청 버튼과 허용 안내를 표시하지 않는다', (tester) async {
+    final service = BackgroundLocationService()..status = 'permissionRequired';
+    addTearDown(service.dispose);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: BackgroundLocationControl(
+          service: service,
+          enabled: false,
+          available: true,
+          onChanged: (_) async {},
+          onPermission: () async => fail('꺼진 기능에서 권한을 요청하면 안 된다'),
+        ),
+      ),
+    ));
+    expect(find.text('현재 꺼져 있어요.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('background-location-permission-refresh')),
+        findsNothing);
+    expect(find.textContaining('정상적으로 백그라운드 위치 권한이 허용되어 있어요.'), findsNothing);
+  });
 }

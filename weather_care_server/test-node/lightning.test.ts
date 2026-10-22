@@ -39,7 +39,7 @@ function installation(id = 'test-installation') {
     location_mode,minimum_age_confirmed_at,age_policy_version,created_at,updated_at)
     VALUES(?,?,?,?,?,'GPS',?,1,?,?)`)
     .run(id, 'synthetic-token', grid.nx, grid.ny, 'synthetic', now.toISOString(), now.toISOString(), now.toISOString());
-  sqlite.sqlite.prepare(`INSERT INTO notification_settings(installation_id,created_at,updated_at) VALUES(?,?,?)`)
+  sqlite.sqlite.prepare(`INSERT INTO notification_settings(installation_id,created_at,updated_at,lightning_supported) VALUES(?,?,?,1)`)
     .run(id, now.toISOString(), now.toISOString());
 }
 
@@ -238,7 +238,18 @@ describe('낙뢰 전용 알림', () => {
     expect(sent).toEqual([]);
   });
 
-  it.each(['notification_enabled', 'lightning_enabled'])('%s 끄기는 발송을 막고 설정 저장에도 유지된다', async (column) => {
+  it('전송 직전에 낙뢰 지원 표시가 해제되면 발송하지 않는다', async () => {
+    installation(); state(); snapshot(['202610201210']);
+    const sent: FcmPayload[] = [];
+    let reads = 0;
+    await runLightningNotificationJob(env, { now: () => {
+      if (++reads === 3) sqlite.sqlite.prepare('UPDATE notification_settings SET lightning_supported=0').run();
+      return now;
+    }, sender: sender(sent) });
+    expect(sent).toEqual([]);
+  });
+
+  it.each(['notification_enabled', 'lightning_enabled', 'lightning_supported'])('%s 끄기는 발송을 막고 설정 저장에도 유지된다', async (column) => {
     installation(); state(); snapshot(['202610201210']);
     sqlite.sqlite.prepare(`UPDATE notification_settings SET ${column}=0`).run();
     const sent: FcmPayload[] = [];

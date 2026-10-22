@@ -493,6 +493,8 @@ export interface TodayWeatherResponse {
   sunriseAt?: string;
   sunsetAt?: string;
   current: WeatherSnapshot;
+  /** 구버전 앱의 미래 예상 날씨 카드와 앱 생성 위젯 계약. */
+  nextForecast?: WeatherSnapshot;
   livingIndices?: TodayLivingIndices;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;

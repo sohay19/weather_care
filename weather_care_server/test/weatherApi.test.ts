@@ -90,6 +90,7 @@ describe('fast Main weather', () => {
         brief: string;
         briefing: CanonicalBriefingIntent;
         current: WeatherSnapshot;
+        nextForecast: WeatherSnapshot;
         hourly: WeatherSnapshot[];
       }>();
 
@@ -125,7 +126,9 @@ describe('fast Main weather', () => {
         observedAt: '2026-08-20T15:20:00+09:00',
       });
       expect(data.brief).toBe(data.briefing.copy.medium);
-      expect(data).not.toHaveProperty('nextForecast');
+      expect(data.nextForecast).toMatchObject({
+        forecastAt: '2026-08-20T18:00:00+09:00', temperature: 28,
+      });
       expect(data.hourly).toEqual([]);
       expect(optional).not.toHaveBeenCalled();
       expect(provider).not.toHaveBeenCalled();
@@ -1007,6 +1010,7 @@ describe('today timeline', () => {
         current: WeatherSnapshot;
         hourly: WeatherSnapshot[];
         timelineHourly: WeatherSnapshot[];
+        nextForecast: WeatherSnapshot;
         timeline: ReturnType<typeof buildTimeline>;
       }>();
 
@@ -1019,7 +1023,9 @@ describe('today timeline', () => {
       expect(data.timelineHourly.map((item) => item.observedAt.slice(11, 13))).toEqual([
         '03', '06', '09', '12', '15', '18', '21', '00',
       ]);
-      expect(data).not.toHaveProperty('nextForecast');
+      expect(data.nextForecast).toMatchObject({
+        forecastAt: '2026-08-20T12:00:00+09:00', temperature: 24,
+      });
       expect(data.timeline[0].detail).toBe('예상기온 24.0℃ / 맑음');
       expect(data.timeline[1].detail).toBe('예상기온 24.0℃ / 맑음');
       await waitOnExecutionContext(ctx);

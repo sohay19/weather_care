@@ -29,7 +29,7 @@ export async function runLightningNotificationJob(env: ServerEnv, dependencies: 
   if (feed.status !== 'AVAILABLE' || feed.events.length === 0) return;
   const eligibility = `i.fcm_token IS NOT NULL AND TRIM(i.fcm_token)<>''
     AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version=1
-    AND s.notification_enabled=1 AND s.lightning_enabled=1
+    AND s.notification_enabled=1 AND s.lightning_enabled=1 AND s.lightning_supported=1
     AND NOT EXISTS (SELECT 1 FROM installation_activity a WHERE a.installation_id=i.installation_id
       AND ${installationExpirySql}<=julianday(?))`;
   const installations = await env.DB.prepare(`SELECT i.installation_id AS installationId,

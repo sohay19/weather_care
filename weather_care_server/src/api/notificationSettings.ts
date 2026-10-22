@@ -38,7 +38,8 @@ router.put('/:installationId', async (c) => {
     ...parsed.data,
     installationId,
   };
-  if (!await upsertNotificationSettings(c.env.DB, settings, ownerHash)) {
+  if (!await upsertNotificationSettings(c.env.DB, settings, ownerHash,
+    parsed.data.lightningEnabled !== undefined)) {
     return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   }
   return c.json(settings);

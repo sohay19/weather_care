@@ -22,6 +22,7 @@ import m8 from '../migrations/0008_data_retention.sql?raw';
 import m9 from '../migrations/0009_minimum_age_policy.sql?raw';
 import m16 from '../migrations/0016_lightning_alerts.sql?raw';
 import m17 from '../migrations/0017_background_location.sql?raw';
+import m18 from '../migrations/0018_lightning_client_support.sql?raw';
 
 const legacyId = 'wc_legacy_synthetic_fixture_0001';
 const noTokenId = 'wc_legacy_without_token_000001';
@@ -74,6 +75,7 @@ beforeEach(async () => {
   await apply(m9);
   await apply(m16);
   await apply(m17);
+  await apply(m18);
   vi.spyOn(fcm, 'sendOwnershipChallenge').mockResolvedValue();
   vi.spyOn(analyticsDeletion, 'submitAnalyticsUserDeletion').mockResolvedValue({
     deletionRequestTime: '2026-09-11T01:02:03Z',

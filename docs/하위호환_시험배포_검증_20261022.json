@@ -1,0 +1,400 @@
+{
+  "검증일시": "2026-10-22T13:23:12.431776+09:00",
+  "범위": "하위 호환 보완 8개 서버 소스 및 0018만 시험 반영. 미배포 준비물 근거 등 다른 로컬 기능은 제외.",
+  "시험릴리스": "/opt/weather-care/releases/20261022-test-legacy-compat-0018/weather_care_server",
+  "이전시험릴리스": "/opt/weather-care/releases/20261021-test-station-official-gis/weather_care_server",
+  "공개시험주소": "https://weather-test-api.codesoha.com",
+  "백업경로": "/var/backups/weather-care/test-legacy-compat-20261022/before.sqlite",
+  "백업크기바이트": 2945126400,
+  "시험마이그레이션": {
+    "이전": 17,
+    "이후": 18,
+    "이번적용": [
+      "0018_lightning_client_support.sql"
+    ]
+  },
+  "DB보존": {
+    "기존사용자테이블12개기존열해시동일": true,
+    "전체기존테이블행수동일": true,
+    "새지원표시기본값": 0,
+    "quick_check": "ok",
+    "foreign_key_check": "위반 없음"
+  },
+  "변경파일": {
+    "src/api/installations.ts": {
+      "previous": "e9596a045723133179bb81308e0b9d1c0c06e10d6debbc1578067d18683f6c2b",
+      "sha256": "4ead8ea6bed7c0b5ed2b1bad26adf754a380dd3ee904796ed01e038e8dfd7dd4"
+    },
+    "src/api/notificationSettings.ts": {
+      "previous": "26be4b22cb77ee7691b737b475b2277326bd161b3a22cc737e63db1eb9bf778d",
+      "sha256": "5543036336957588a7f995926cecd4d43c9fdbd51bce934a795b9c9a6a795d12"
+    },
+    "src/api/weather.ts": {
+      "previous": "38446bc4bc561ba58c10b9e686708d37a8678abee88422c2d8c0145b43cb8356",
+      "sha256": "d260f2c61e0f9b77dc5a465805520d32866b7ab9dbc24de00a5dd4273b5bf25d"
+    },
+    "src/database/notificationSettingsRepository.ts": {
+      "previous": "553a351e18a71bf18fad6de80334bf7d806f0c704e2e01ba325fd13a7d85cf0e",
+      "sha256": "3c2a2bb0be227d9bc029bd8b7327148f06222ee4149b768b226d65a7a73b1b0b"
+    },
+    "src/node/server.ts": {
+      "previous": "95f1c44a31ecba06c15d61b910e4bef30fc2ed27f460189dd4f9a959149facba",
+      "sha256": "05198da3c0eaf99b09c1c71312768c0053cdde821d2df49b0e0ed15268feb424"
+    },
+    "src/notification/lightningNotificationJob.ts": {
+      "previous": "ee82051971de96fe419673d6ebacfab84743344388b4c4aba514b6666b6ea4a3",
+      "sha256": "0cb32519ef83e38b2beac8dff1af4a5c680515b2e6014fdcfb638038a8b18ce9"
+    },
+    "src/presentation/homeWidgetSnapshot.ts": {
+      "previous": "3db77986a39ce474a0eb9923a4aef385c36c6695afed2f1444a5446fc10f3f9a",
+      "sha256": "dac6ee3c851c4addc427f6dc973b35bdc01a94e6cadc3f4398df96fb07e3daf8"
+    },
+    "src/types.ts": {
+      "previous": "f43d84ca5128b206036f3998713b1a85f1ad3100c301b617549d5eac0f9651da",
+      "sha256": "820dc79d5884f92463bfab0ec89bbe6fc40e01839151360dac2e5791291e909d"
+    },
+    "migrations/0018_lightning_client_support.sql": {
+      "previous": null,
+      "sha256": "ccf9828a4446e1bf42a310d79fcec30c545099361f2e5c206e83c788b68b2258"
+    }
+  },
+  "운영보존": {
+    "릴리스": "/opt/weather-care/releases/20261012-juso-202609/weather_care_server",
+    "소스동일": true,
+    "환경동일": true,
+    "API프로세스동일": true,
+    "스케줄러프로세스동일": true,
+    "터널프로세스동일": true,
+    "마이그레이션수": 14
+  },
+  "서비스상태": {
+    "weather-care-test-api.service": "active",
+    "weather-care-api.service": "active",
+    "weather-care-scheduler.service": "active",
+    "weather-care-test-cache-sync.timer": "active",
+    "weather-care-test-weather-refresh.timer": "active",
+    "weather-care-test-uv.timer": "active",
+    "weather-care-test-lightning.timer": "active"
+  },
+  "배포후공개API": {
+    "base": "https://weather-test-api.codesoha.com",
+    "requests": [
+      {
+        "route": "/health",
+        "method": "GET",
+        "status": 403,
+        "elapsedMs": 953,
+        "bytes": 32
+      },
+      {
+        "route": "/health",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 872,
+        "bytes": 2
+      },
+      {
+        "route": "/api/v1/weather/main",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 1236,
+        "bytes": 10451
+      },
+      {
+        "route": "/api/v1/weather/today",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 1125,
+        "bytes": 108163
+      },
+      {
+        "route": "/api/v1/weather/weekly",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 862,
+        "bytes": 12512
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 989,
+        "bytes": 4938
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 995,
+        "bytes": 4938
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 985,
+        "bytes": 9210
+      },
+      {
+        "route": "/api/v1/weather/main",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 1099,
+        "bytes": 11224
+      },
+      {
+        "route": "/api/v1/weather/today",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 895,
+        "bytes": 108395
+      },
+      {
+        "route": "/api/v1/weather/weekly",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 1126,
+        "bytes": 12455
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 992,
+        "bytes": 5518
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 986,
+        "bytes": 5518
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 981,
+        "bytes": 9185
+      },
+      {
+        "route": "/api/v1/weather/main",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 743,
+        "bytes": 15053
+      },
+      {
+        "route": "/api/v1/weather/today",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 903,
+        "bytes": 106849
+      },
+      {
+        "route": "/api/v1/weather/weekly",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 811,
+        "bytes": 13113
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 994,
+        "bytes": 8139
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 977,
+        "bytes": 8139
+      },
+      {
+        "route": "/api/v1/weather/widget",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 982,
+        "bytes": 8824
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "POST",
+        "status": 201,
+        "elapsedMs": 968,
+        "bytes": 60
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "PUT",
+        "status": 200,
+        "elapsedMs": 878,
+        "bytes": 11
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "PUT",
+        "status": 200,
+        "elapsedMs": 858,
+        "bytes": 425
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "PUT",
+        "status": 200,
+        "elapsedMs": 1248,
+        "bytes": 11
+      },
+      {
+        "route": "/api/v1/notification-settings",
+        "method": "GET",
+        "status": 200,
+        "elapsedMs": 616,
+        "bytes": 425
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "PUT",
+        "status": 200,
+        "elapsedMs": 579,
+        "bytes": 426
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "PUT",
+        "status": 200,
+        "elapsedMs": 585,
+        "bytes": 426
+      },
+      {
+        "route": "synthetic-installation",
+        "method": "DELETE",
+        "status": 204,
+        "elapsedMs": 586,
+        "bytes": 0
+      }
+    ],
+    "regions": {
+      "seoul": {
+        "main": {
+          "nextForecastAt": "2026-10-22T14:00:00+09:00",
+          "nextTemperature": 16
+        },
+        "today": {
+          "nextForecastAt": "2026-10-22T14:00:00+09:00",
+          "nextTemperature": 16
+        },
+        "weeklyDays": 7,
+        "widget": {
+          "schemaVersion": 3,
+          "preparationTypes": [
+            "OUTERWEAR"
+          ]
+        },
+        "UNKNOWN": [
+          "OUTERWEAR"
+        ],
+        "PREPARATION_18": [
+          "LIGHT_OUTERWEAR",
+          "SUNSCREEN",
+          "OUTERWEAR"
+        ]
+      },
+      "siheung": {
+        "main": {
+          "nextForecastAt": "2026-10-22T14:00:00+09:00",
+          "nextTemperature": 16
+        },
+        "today": {
+          "nextForecastAt": "2026-10-22T14:00:00+09:00",
+          "nextTemperature": 16
+        },
+        "weeklyDays": 7,
+        "widget": {
+          "schemaVersion": 3,
+          "preparationTypes": [
+            "OUTERWEAR"
+          ]
+        },
+        "UNKNOWN": [
+          "OUTERWEAR"
+        ],
+        "PREPARATION_18": [
+          "OUTERWEAR",
+          "SUNSCREEN",
+          "LIGHT_OUTERWEAR"
+        ]
+      },
+      "busan": {
+        "main": {
+          "nextForecastAt": "2026-10-22T14:00:00+09:00",
+          "nextTemperature": 19
+        },
+        "today": {
+          "nextForecastAt": "2026-10-22T14:00:00+09:00",
+          "nextTemperature": 19
+        },
+        "weeklyDays": 7,
+        "widget": {
+          "schemaVersion": 3,
+          "preparationTypes": [
+            "SUNSCREEN"
+          ]
+        },
+        "UNKNOWN": [
+          "SUNSCREEN"
+        ],
+        "PREPARATION_18": [
+          "SUNSCREEN",
+          "LIGHT_OUTERWEAR",
+          "SUNGLASSES",
+          "SUN_HAT"
+        ]
+      }
+    },
+    "settings": [
+      {
+        "legacyBothRoutes": true,
+        "legacyLightningSupported": false
+      },
+      {
+        "explicitNewSettingsSupported": true,
+        "disabledPreferencePreserved": true
+      }
+    ],
+    "syntheticCleanup": true
+  },
+  "구버전소스검증": {
+    "커밋": [
+      "13ee2af",
+      "72fbd9e"
+    ],
+    "지역": [
+      "서울",
+      "시흥",
+      "부산"
+    ],
+    "실제HTTP테스트": 6,
+    "실제HTTP요청": 24,
+    "기존Main렌더테스트": 6,
+    "통과합계": 12,
+    "전송보조": "기존 ApiClient/WeatherService 요청은 그대로 사용하고 시험 접근 키 헤더만 http.runWithClient로 주입. 운영 주소 호출 없음.",
+    "한계": "APK/IPA 설치, 운영체제 네이티브 위젯, 실제 푸시 수신은 실행하지 않음."
+  },
+  "배포소스사전검증": {
+    "시험기존소스패치사본Node테스트": 46,
+    "타입검사": "통과",
+    "Linux모듈로딩": "통과"
+  },
+  "배포된낙뢰모듈격리검증": {
+    "구버전차단": true,
+    "지원앱만대상": true,
+    "중복차단": true,
+    "실제FCM요청": 0
+  },
+  "운영배포": false,
+  "커밋및푸시": false,
+  "상세자료": "weather_care_app/build/compat-test-deploy-20261022 및 /tmp/weather-care-compat-deploy-20261022"
+}

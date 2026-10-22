@@ -208,6 +208,7 @@ router.get('/main', async (c) => {
       briefingTimeline: brief.timeline,
       ...sunTimes,
       current,
+      nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
       livingIndices: await readTodayLivingIndices(c.env.DB, location, generatedAt),
       hourly: [],
       recommendations: [],
@@ -486,6 +487,7 @@ router.get('/today', async (c) => {
         ...current,
         activeWarnings: warnings,
       },
+      nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
       livingIndices: await readTodayLivingIndices(c.env.DB, location, generatedAt),
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
@@ -767,7 +769,9 @@ router.get('/weekly', async (c) => {
 router.get('/widget', async (c) => {
   const query = new URL(c.req.url).searchParams;
   query.set('includeExtras', 'true');
-  query.set('recommendationCatalog', TIERED_PREPARATION_CATALOG);
+  // 기존 위젯 URL에는 카탈로그가 없다. 새 종류는 지원을 명시한 앱에만 보낸다.
+  query.set('recommendationCatalog', query.get('recommendationCatalog') === TIERED_PREPARATION_CATALOG
+    ? TIERED_PREPARATION_CATALOG : PREPARATION_RECOMMENDATION_CATALOG);
   const suffix = `?${query.toString()}`;
   const headers = new Headers();
   const authorization = c.req.header('Authorization');
@@ -962,6 +966,23 @@ function compactCalendarDate(value: string): string {
 }
 
 export default router;
+
+/** 기존 앱이 별도 필드로 읽는 가장 가까운 미래 예보를 유지한다. */
+export function nextForecastSnapshot(
+  hourly: WeatherSnapshot[],
+  now = new Date(),
+  airQuality: DailyAirQualityForecastAtDate[] = [],
+): WeatherSnapshot | undefined {
+  const reference = now.getTime();
+  const next = hourly
+    .filter((item) => Date.parse(item.forecastAt ?? item.observedAt) > reference)
+    .sort((left, right) => Date.parse(left.forecastAt ?? left.observedAt) -
+      Date.parse(right.forecastAt ?? right.observedAt))[0];
+  if (!next) return undefined;
+  const date = koreaDate(next.forecastAt ?? next.observedAt).replaceAll('-', '');
+  const grade = airQuality.find((item) => item.date.replaceAll('-', '') === date)?.pm25Grade;
+  return grade ? { ...next, pm25ForecastGrade: grade } : next;
+}
 
 export function currentFromUltraShortObservation(
   forecast: WeatherSnapshot,

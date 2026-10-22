@@ -15,6 +15,7 @@ import type { TodayWeatherResponse } from '../src/types';
 import type { EnvironmentalDataBundle } from '../src/providers/environmental/environmentalDataService';
 import { latestAirKoreaForecastIssue } from '../src/collection/sourcePublicationSchedule';
 import { KmaRoadIceProvider } from '../src/providers/road/kmaRoadIceProvider';
+import { UV_OBSERVATIONS_KEY, UV_STATIONS_KEY } from '../src/services/currentUvCache';
 import {
   analysisGridPoint,
   nationwidePrecipitationAtPoint,
@@ -188,7 +189,12 @@ describe('전국 정밀 강수 선수집', () => {
       .not.toMatch(/현재 강수|도로 통제/);
   });
 
-  it('설치 0건의 새 GPS 좌표에 최신 환경·특보·겨울철 도로 자료를 캐시만으로 반환한다', async () => {
+  it.each([
+    { name: '유효 관측', uvIndex: 1.7, observedAt: '2026-12-01T15:20:00+09:00', available: true },
+    { name: '실제 0 관측', uvIndex: 0, observedAt: '2026-12-01T15:20:00+09:00', available: true },
+    { name: '관측 누락', uvIndex: undefined, observedAt: undefined, available: false },
+    { name: '30분 초과 관측', uvIndex: 3.1, observedAt: '2026-12-01T14:59:00+09:00', available: false },
+  ])('설치 0건 GPS의 환경·특보·겨울 도로를 캐시로 반환하고 UV 예보와 $name을 구분한다', async ({ uvIndex, observedAt, available }) => {
     const winter = new Date('2026-12-01T06:30:00Z');
     vi.useFakeTimers();
     vi.setSystemTime(winter);
@@ -220,6 +226,10 @@ describe('전국 정밀 강수 선수집', () => {
       },
     };
     await save(collectedCacheKey.environmental(58, 125), environmental);
+    await save(UV_STATIONS_KEY, [{ stationId: '108', stationName: '시험 관측소', latitude, longitude }]);
+    if (observedAt !== undefined) {
+      await save(UV_OBSERVATIONS_KEY, [{ stationId: '108', observedAt, uvIndex }]);
+    }
     await save(collectedCacheKey.nationwideAir, {
       catalog: { fetchedAt: winter.toISOString(), stations: [{ stationName: '구로', latitude, longitude }] },
       collectedAt: winter.toISOString(), observations: [{ stationName: '구로',
@@ -268,8 +278,17 @@ describe('전국 정밀 강수 선수집', () => {
       ), env);
       const body = await response.json() as TodayWeatherResponse;
       expect(response.status).toBe(200);
-      expect(body.current).toMatchObject({ temperature: 2, uvIndex: 2,
+      expect(body.current).toMatchObject({ temperature: 2,
         pm10: 30, pm25: 12, ozone: 0.03, visibilityMeters: 15_000 });
+      if (available) {
+        expect(body.current).toMatchObject({ uvIndex, uvStatus: 'AVAILABLE', uvProvider: 'KMA_APIHUB_UV',
+          uvStationId: '108', uvStationName: '시험 관측소', uvObservedAt: observedAt });
+      } else {
+        expect(body.current).toMatchObject({ uvStatus: 'UNAVAILABLE', uvProvider: 'KMA_APIHUB_UV' });
+        expect(body.current).not.toHaveProperty('uvIndex');
+      }
+      // 관측 누락을 예보로 채우지 않으며, 예보 자체는 시간별 자료에 보존한다.
+      expect(body.hourly[0]).toMatchObject({ forecastAt: current.forecastAt, uvIndex: 2 });
       expect(body.current.activeWarnings?.[0]?.type).toBe('한파');
       expect(body.currentPrecipitation?.state).toBe('DRY');
       expect(body.currentRoadIce?.level).toBe(2);

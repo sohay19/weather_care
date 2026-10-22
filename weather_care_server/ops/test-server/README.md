@@ -3,6 +3,12 @@
 시험 API는 미니 PC의 `127.0.0.1:8788`에서 실행되고, Cloudflare Tunnel의
 `weather-test-api.codesoha.com`으로 연결한다. 운영 API `8787`과 DB는 변경하지 않는다.
 
+2026-10-22 현재 시험 릴리스는
+`/opt/weather-care/releases/20261022-test-legacy-compat-0018/weather_care_server`이며
+안정 링크 `/opt/weather-care/weather_care_test_server`가 가리킨다. 하위 호환 변경
+8개 소스와 `0018_lightning_client_support.sql`만 기존 시험 릴리스에 추가했다.
+로컬 최신 준비물 근거 기능 등 다른 미배포 변경은 포함하지 않았다.
+
 - API 서비스: `weather-care-test-api.service`
 - 시험 DB: `/var/lib/weather-care/weather-care-test.sqlite`
 - 시험 환경 파일: `/etc/weather-care/weather-care-test.env` (저장소 밖, 0640)
@@ -45,7 +51,7 @@ SQLite에 저장해 프로세스 재실행과 중복 실행으로 호출이 늘�
 누락 수집은 이미 저장된 제공처·대상·시간 슬롯을 건너뛰고, 없는 슬롯에만
 외부 API를 호출한다. 일반 예보 알림과 바다·하천 정기 수집은 실행하지 않는다.
 낙뢰만 별도 타이머로 최근 구간을 수집하고 실제 새 관측이 있는 시험 설치에 알린다.
-서비스는 시험 DB 경로를 실행 전에 검사하며 전체/낙뢰 설정을 따른다.
+서비스는 시험 DB 경로를 실행 전에 검사하며 전체/낙뢰 설정과 앱 지원 표시를 따른다.
 `0016_lightning_alerts.sql` 적용 후 서비스·타이머를 등록한다. 낙뢰의 30분
 표시 유효 시간과 조회 실패 표시는 `docs/격자_부가자료_수집_설정.md`를 참고한다.
 이안류·ROMS·K-water 별도 수위 지점은 수집 설정이 없으면 요청하지 않는다.
@@ -100,6 +106,15 @@ systemctl status weather-care-test-api.service weather-care-test-cache-sync.time
 systemctl status weather-care-test-cache-sync.service
 journalctl -u weather-care-test-api.service -n 50 --no-pager
 ```
+
+## 2026-10-22 구버전 앱 하위 호환 보완 시험 배포
+
+- 시험 DB 온라인 백업 약 2.95GB를 `/var/backups/weather-care/test-legacy-compat-20261022/before.sqlite`에 보관했다. 시험 API·관련 타이머를 잠시 중지하고 0018만 적용했다. 기존 사용자 관련 12개 테이블의 기존 열 해시와 전체 테이블 행 수를 대조해 보존을 확인했고 DB 무결성·외래 키 검사도 통과했다.
+- Main·Today의 `nextForecast`를 복원하고, 위젯의 지원 표시가 없으면 기존 준비물 카탈로그를 사용한다. 새 18종은 명시한 요청에만 제공한다. 구버전의 설정 저장만으로 낙뢰 지원 표시가 켜지지 않는다. 낙뢰 설정을 보낸 새 시험 앱은 지원 표시를 갱신하므로 기존 새 앱도 설정을 한 번 동기화해야 한다.
+- 패치를 적용한 시험 소스 사본에서 Node 46개와 타입 검사, 서버 Linux 모듈 로딩을 통과했다. 공개 시험 API 검사 28회 및 구버전 두 버전의 실제 HTTP 24회로 서울·시흥·부산을 확인했다. 구버전 HTTP·날씨·앱 생성 위젯 6개와 과거 Main 카드 렌더 6개가 모두 통과했다. 구버전 HTTP 코드에는 시험 접근 키 헤더만 주입했으며 요청 계약과 응답 파싱 코드는 그대로 사용했다.
+- 합성 설치로 두 설정 저장 경로·설치 인증·낙뢰 지원 표시를 확인한 뒤 관련 데이터를 삭제했다. 배포된 낙뢰 모듈도 격리 메모리 DB와 모의 sender로 구버전 차단·지원 앱 대상·중복 방지를 확인했다. 실제 FCM은 호출하지 않았다. APK/IPA 설치와 운영체제 네이티브 위젯 실행은 하지 않았다.
+- 운영 릴리스 `20261012-juso-202609`, 전체 소스·환경 파일·API/스케줄러/터널 프로세스와 마이그레이션 0014는 그대로다. 시험 API와 기존 타이머 4개는 active로 복구했다. 운영 배포·커밋·push는 하지 않았다.
+- 배포·복구 자료는 `/tmp/weather-care-compat-deploy-20261022`, 검증 도구·공개 응답·로그는 앱의 Git 제외 `build/compat-test-deploy-20261022`에 있다. [검증 기록](../../../docs/하위호환_시험배포_검증_20261022.json)을 참고한다. 이전 시험 릴리스도 복구용으로 보존한다.
 
 ## 2026-10-21 Data 관측소 이름·오늘 자료
 

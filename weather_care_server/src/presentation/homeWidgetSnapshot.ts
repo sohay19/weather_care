@@ -57,7 +57,7 @@ export function buildHomeWidgetSnapshot(
     ? timeline.flatMap((entry) => entry.recommendedItems)
     : fallbackTypes;
   const daily = todayWidgetDay(weekly.days ?? [], now);
-  const next = today.hourly
+  const next = today.nextForecast ?? today.hourly
     .filter((item) => {
       const at = Date.parse(item.forecastAt ?? item.observedAt);
       return Number.isFinite(at) && at > now.getTime();

@@ -23,6 +23,7 @@ describe('notification settings API', () => {
         cold_wave_enabled INTEGER NOT NULL DEFAULT 1,
         shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
         lightning_enabled INTEGER NOT NULL DEFAULT 1,
+        lightning_supported INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL)`,
     ).run();

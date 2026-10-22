@@ -1392,6 +1392,7 @@ void main() {
     expect(widgetService.published.last.region, '서울 종로구 청운효자동');
     expect(widgetService.gpsModes.last, isTrue);
     var query = Uri.parse(widgetService.refreshUrls.last!).queryParameters;
+    expect(query['recommendationCatalog'], 'PREPARATION_18');
     expect(query['nx'], '60');
     expect(query['ny'], '127');
 

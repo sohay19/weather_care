@@ -90,7 +90,7 @@ router.put('/:installationId/notification-settings', async (c) => {
     ...current,
     ...parsed.data,
     installationId,
-  }, ownerHash);
+  }, ownerHash, parsed.data.lightningEnabled !== undefined);
   if (!saved) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   return c.json({ ok: true });
 });

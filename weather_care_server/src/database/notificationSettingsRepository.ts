@@ -95,6 +95,8 @@ export async function upsertNotificationSettings(
   db: D1Database,
   payload: NotificationSettings,
   ownerHash?: string,
+  // 요청 본문에 낙뢰 설정이 있는 경우만 true. 기본값 1과 앱 지원을 구분한다.
+  lightningSupported = false,
 ): Promise<boolean> {
   const now = new Date().toISOString();
   const result = await db
@@ -104,8 +106,8 @@ export async function upsertNotificationSettings(
        umbrella_enabled, parasol_enabled, heavy_snow_enabled,
        outerwear_enabled, mask_enabled, water_enabled, sunscreen_enabled,
        daily_weather_enabled, heavy_rain_enabled, heatwave_enabled,
-       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
@@ -124,6 +126,7 @@ export async function upsertNotificationSettings(
         cold_wave_enabled=excluded.cold_wave_enabled,
         shower_light_rain_enabled=excluded.shower_light_rain_enabled,
         lightning_enabled=excluded.lightning_enabled,
+        lightning_supported=MAX(notification_settings.lightning_supported, excluded.lightning_supported),
         updated_at=excluded.updated_at`,
     )
     .bind(
@@ -145,6 +148,7 @@ export async function upsertNotificationSettings(
       booleanInteger(payload.lightningEnabled),
       now,
       now,
+      booleanInteger(lightningSupported),
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

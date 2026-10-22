@@ -238,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       'nx': '${grid.nx}',
       'ny': '${grid.ny}',
       'widgetSettings': _homeWidgetSettingsKey(),
+      'recommendationCatalog': 'PREPARATION_18',
       if (coordinates != null) ...{
         'latitude': '${coordinates.latitude}',
         'longitude': '${coordinates.longitude}',

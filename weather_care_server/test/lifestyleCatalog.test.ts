@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runLifestyleWeatherEngine } from '../src/lifestyle/lifestyleWeatherEngine';
-import { lifestyleMessageFor } from '../src/lifestyle/lifestyleTemplates';
+import { lifestyleMessageCatalog, lifestyleMessageFor } from '../src/lifestyle/lifestyleTemplates';
 import { runWeatherRuleEngineForHourly } from '../src/rules/weatherRuleEngine';
 import { runRecommendationEngine } from '../src/recommendations/recommendationEngine';
 import { buildLifestyleMessages } from '../src/presentation/lifestyleMessages';
@@ -383,11 +383,15 @@ describe('Lifestyle v1.1 catalog', () => {
     }
   });
 
-  it('shows high ozone as action, perception caveat, and official measurement', () => {
+  it.each([
+    { value: 0.102, grade: 'Bad', display: '0.1', label: '나쁨' },
+    { value: 0.149, grade: 'Bad', display: '0.1', label: '나쁨' },
+    { value: 0.151, grade: 'Very Bad', display: '0.2', label: '매우 나쁨' },
+  ])('오존 원본 $value의 등급은 유지하고 수치만 공통 표시 규칙을 적용한다', ({ value, grade, display, label }) => {
     const hourly = [
       snapshot(14, {
-        ozone: 0.102,
-        ozoneGrade: 'Bad',
+        ozone: value,
+        ozoneGrade: grade,
         airQualityStationName: '인계동',
         airQualityObservedAt: '2026-08-20T14:00:00+09:00',
       }),
@@ -409,13 +413,15 @@ describe('Lifestyle v1.1 catalog', () => {
       'INTERNAL_POSSIBILITY',
       'OFFICIAL_FACT',
     ]);
-    expect(ozone?.parts[0].text).toContain('야외활동');
+    expect(lifestyleMessageCatalog.OZONE_CAUTION.map((message) => message.title))
+      .toContain(ozone?.parts[0].text);
     expect(sensationMessageCatalog.OZONE_DIRECT_PERCEPTION).toContain(
       ozone?.parts[1].text,
     );
     expect(ozone?.parts[2].text).toBe(
-      '에어코리아는 오후 2시 인계동의 오존 농도를 0.102ppm, 나쁨 단계로 제공했어요',
+      `에어코리아는 오후 2시 인계동의 오존 농도를 ${display}ppm, ${label} 단계로 제공했어요`,
     );
+    expect(hourly[0].ozone).toBe(value);
   });
 
   it('does not assign Korean heat or cold sensation tiers from KMA apparent temperature alone', () => {

@@ -9,7 +9,7 @@ const runtime = createNodeRuntime();
 const hostname = process.env.NODE_HOST?.trim() || '127.0.0.1';
 const port = Number(process.env.NODE_PORT ?? '8787');
 const testAccessKey = process.env.TEST_ACCESS_KEY?.trim();
-if (testAccessKey !== undefined && !/^[0-9a-f]{64}$/.test(testAccessKey)) {
+if (testAccessKey && !/^[0-9a-f]{64}$/.test(testAccessKey)) {
   runtime.close();
   throw new Error('TEST_ACCESS_KEY_INVALID');
 }

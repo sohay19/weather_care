@@ -1,0 +1,151 @@
+{
+  "기준일": "2026-10-22",
+  "화면": "현재 Flutter 코드의 비표시 렌더링",
+  "데이터": "촬영용 예시 날씨와 알림, 실제 현재 관측 아님",
+  "files": [
+    {
+      "path": "screenshots/android/01-main.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "3c3ba89d4ed0109934ffa13efcb0051dca97c6fac386ba49cbae47a4be8fd736"
+    },
+    {
+      "path": "screenshots/android/02-timeline.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "21773a3fe2d696746666b659920481faa4bc2e86f46e341bcb05c99ab85c753d"
+    },
+    {
+      "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "4924d406b95c27c4ca8e066e5e8e1879acd8da09aafd80fa4d3635b3b00dd7d6"
+    },
+    {
+      "path": "screenshots/android/04-dark-mode.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "6614827f5d0fd34f2bbd542a0a22c0d695dc9611f8d1e0819482fb33f9628bef"
+    },
+    {
+      "path": "screenshots/android/05-notifications.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "c0f6536e39c114b9da82978507f58c59f011ff4432400241df61baa0c42ebeae"
+    },
+    {
+      "path": "screenshots/android/06-advanced.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "38b27548cf024bca2e22c8275c61f7b241f499835731158c21980ec8acf84a20"
+    },
+    {
+      "path": "screenshots/android/07-week.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "c607657225e24c21ea787658d084d8682d4138dd4b0fca4de4dfc3af5aab4de3"
+    },
+    {
+      "path": "screenshots/android/08-notification-settings.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "4d814e6b8f1cb6e32ed22e725d0e543162ed2b1043ea2ad67c81d153a69a3421"
+    },
+    {
+      "path": "screenshots/android-tablet/01-main.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "2edeb15dd6fc1e7128ccf6d9ed202c7b885ebc2812a032abe1eb5adc4ba3ce53"
+    },
+    {
+      "path": "screenshots/android-tablet/02-timeline.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "8e94579f5bc7dc6ad8b84ca4eff4213eca3db34ea4525262ce6c1ad969679e84"
+    },
+    {
+      "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "22cb27245f0c3bf574b59bc77c2865137b71b63f632324d3d5b8d1e867f85775"
+    },
+    {
+      "path": "screenshots/android-tablet/04-dark-mode.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "2ca7e21e5ee0676b8693aacf55cf534a183be19aba7651c6e6daab948424dbf6"
+    },
+    {
+      "path": "screenshots/android-tablet/05-notifications.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "2d08c3b51280baece0fd140eca4f006c519042e2b08b02644096892aa0555563"
+    },
+    {
+      "path": "screenshots/android-tablet/06-advanced.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "688179ab5054f5f0f254580741938e4c376911246887a49b389cf3003444ef23"
+    },
+    {
+      "path": "screenshots/android-tablet/07-week.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "c5a68e3f55ccc50dc9b596aabeda7538438a73ef247a6f8e5285e38cede6f4ec"
+    },
+    {
+      "path": "screenshots/android-tablet/08-notification-settings.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "29b5bf79c18818287b921f9b5a837c5b285b2bea46b85068f90b83649aee5760"
+    }
+  ]
+}

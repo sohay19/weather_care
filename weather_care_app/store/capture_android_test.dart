@@ -17,11 +17,11 @@ import 'package:weather_care/services/api_client.dart';
 import 'package:weather_care/services/kma_grid.dart';
 import 'package:weather_care/theme/weather_theme.dart';
 
-final now = DateTime.parse('2026-10-21T08:00:00+09:00');
-String at(int hour, [int day = 21]) =>
+final now = DateTime.parse('2026-10-22T08:00:00+09:00');
+String at(int hour, [int day = 22]) =>
     DateTime.utc(2026, 10, day, hour - 9).toIso8601String();
 final hourlyJson = [
-  for (var day = 21; day <= 27; day++)
+  for (var day = 22; day <= 28; day++)
     for (var h = 0; h < 24; h++)
       {
         'forecastAt': at(h, day),
@@ -90,7 +90,7 @@ final today = TodayWeatherResponse.fromJson({
 }, receivedAt: DateTime.now());
 final comparison = ComparisonResponse.fromJson({
   'comparisonAvailable': true,
-  'targetDate': '2026-10-20',
+  'targetDate': '2026-10-21',
   'current': {'temperature': 18, 'apparentTemperature': 17},
   'comparison': {'temperature': 21, 'apparentTemperature': 20},
 });
@@ -100,16 +100,16 @@ final weekly = WeeklyWeatherResponse.fromJson({
     for (var d = 18; d <= 24; d++)
       {
         'forecastDate': '2026-10-$d',
-        'weatherLabel': d == 21 || d == 23 ? '비' : '맑음',
+        'weatherLabel': d == 22 || d == 24 ? '비' : '맑음',
         'min': [12, 13, 12, 11, 13, 14, 12][d - 18],
         'max': [21, 23, 22, 20, 21, 23, 22][d - 18],
-        'precipitationProbability': d == 21 || d == 23 ? 70 : 10,
-        'precipitationAmount': d == 21 || d == 23 ? 4 : 0,
+        'precipitationProbability': d == 22 || d == 24 ? 70 : 10,
+        'precipitationAmount': d == 22 || d == 24 ? 4 : 0,
         'snowfallAmount': 0,
         'snowProbability': 0,
         'snowProbabilitySource': 'KMA_PRECIPITATION_FORECAST',
         'weatherDataComplete': true,
-        'precipitationDetail': d < 21
+        'precipitationDetail': d < 22
             ? {
                 'kind': 'OBSERVATION',
                 'hours': [],
@@ -122,14 +122,14 @@ final weekly = WeeklyWeatherResponse.fromJson({
                     {
                       'forecastAt': at(h, d),
                       'probability':
-                          (d == 21 || d == 23) && h >= 17 && h <= 20 ? 70 : 10,
-                      'amountText': (d == 21 || d == 23) && h >= 17 && h <= 20
+                          (d == 22 || d == 24) && h >= 17 && h <= 20 ? 70 : 10,
+                      'amountText': (d == 22 || d == 24) && h >= 17 && h <= 20
                           ? '1.5mm'
                           : '강수없음',
                     }
                 ],
               },
-        'recommendations': d == 21 || d == 23
+        'recommendations': d == 22 || d == 24
             ? [
                 {
                   'type': 'UMBRELLA',
@@ -270,7 +270,7 @@ void main() {
           ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf')))
         .load();
     for (final format in ['phone', 'tablet']) {
-      final out = Directory('store/screenshots/source-android-20261021/$format')
+      final out = Directory('store/screenshots/source-20261022/$format')
         ..createSync(recursive: true);
       tester.view.physicalSize =
           format == 'phone' ? const Size(412, 1000) : const Size(800, 1280);
@@ -332,7 +332,7 @@ void main() {
 
       MainTab mainTab() => MainTab(
           today: today,
-          dateLabel: '2026년 10월 21일 수요일',
+          dateLabel: '2026년 10월 22일 목요일',
           mood: 'cloudy',
           serverFeaturesAvailable: true,
           yesterdayComparison: comparison,

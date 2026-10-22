@@ -1,5 +1,9 @@
 # 스토어 스크린샷
 
+## 2026-10-22 Android 스크린샷 갱신
+
+현재 UI 기준으로 Android 휴대전화·태블릿 각8장을 다시 만들었다. 최신 등록 순서·제작 기준·재생성 방법은 [Android 스크린샷 최신 안내](SCREENSHOTS_20261022.md)를 따른다. 스크린샷 전용 묶음은 `../weather-care-screenshots-20261022.zip`이다. 그래픽·iOS 헤더/검색 결과·iOS/iPad 스크린샷은 유지했다. 아래는 이전 제작 이력이다.
+
 ## 2026-10-21 Android 최신 이미지
 
 Android 휴대전화·태블릿은 현재 앱 기준으로 각각 8장과 그래픽 이미지를 새로 제작했다. 구성·원본·재생성 방법은 [Android 최신 안내](ANDROID_20261021.md)를 따른다. 배포 묶음은 `../google-play/weather-care-android-store-20261021.zip`이다. 아래 내용은 이전 제작 이력이며 iOS·iPad는 기존 이미지를 유지한다. Android에는 아래의 옛 9장 순서를 사용하지 않는다.

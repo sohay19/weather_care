@@ -10,7 +10,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "99d88c472d8befd47744f3015fe57bad3827c36b7a9e68dd57f2efd395a165d1"
+      "sha256": "3c3ba89d4ed0109934ffa13efcb0051dca97c6fac386ba49cbae47a4be8fd736",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/02-timeline.png",
@@ -19,7 +20,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "552d5c5d104cc2e9722256de5934ed028c64b016ee2a3ed1382d5ea4360230f7"
+      "sha256": "21773a3fe2d696746666b659920481faa4bc2e86f46e341bcb05c99ab85c753d",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/03-widget.png",
@@ -28,7 +30,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "4924d406b95c27c4ca8e066e5e8e1879acd8da09aafd80fa4d3635b3b00dd7d6"
+      "sha256": "4924d406b95c27c4ca8e066e5e8e1879acd8da09aafd80fa4d3635b3b00dd7d6",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/04-dark-mode.png",
@@ -37,7 +40,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "41b52b5612c92be26c15a36735a3e90d27d0c9667c44bcd0f0c11bf1c2403f51"
+      "sha256": "6614827f5d0fd34f2bbd542a0a22c0d695dc9611f8d1e0819482fb33f9628bef",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/05-notifications.png",
@@ -46,7 +50,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "c0f6536e39c114b9da82978507f58c59f011ff4432400241df61baa0c42ebeae"
+      "sha256": "c0f6536e39c114b9da82978507f58c59f011ff4432400241df61baa0c42ebeae",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/06-advanced.png",
@@ -55,7 +60,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "b8065edc78e1839048930f62955f9d64be7e2686841c782a06a9e02d29f70d02"
+      "sha256": "38b27548cf024bca2e22c8275c61f7b241f499835731158c21980ec8acf84a20",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/07-week.png",
@@ -64,7 +70,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "88df43610be7a47f58259ddae0b33634de9138589d9caf4956bbbdde26d69601"
+      "sha256": "c607657225e24c21ea787658d084d8682d4138dd4b0fca4de4dfc3af5aab4de3",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android/08-notification-settings.png",
@@ -73,7 +80,8 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "4d814e6b8f1cb6e32ed22e725d0e543162ed2b1043ea2ad67c81d153a69a3421"
+      "sha256": "4d814e6b8f1cb6e32ed22e725d0e543162ed2b1043ea2ad67c81d153a69a3421",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/01-main.png",
@@ -82,7 +90,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "6edf9703abb2d22bbeef5f610f5059c5b22528cf1b6328bd4f714a249f8a75d1"
+      "sha256": "2edeb15dd6fc1e7128ccf6d9ed202c7b885ebc2812a032abe1eb5adc4ba3ce53",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/02-timeline.png",
@@ -91,7 +100,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "fc7326b4c0a7e80f6980cb03f7cd8ee8dee649acf0feee702f6a43e604463694"
+      "sha256": "8e94579f5bc7dc6ad8b84ca4eff4213eca3db34ea4525262ce6c1ad969679e84",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/03-widget.png",
@@ -100,7 +110,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "22cb27245f0c3bf574b59bc77c2865137b71b63f632324d3d5b8d1e867f85775"
+      "sha256": "22cb27245f0c3bf574b59bc77c2865137b71b63f632324d3d5b8d1e867f85775",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/04-dark-mode.png",
@@ -109,7 +120,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "a132fd2f5ff21f85e5210e594aa586b57c1277673cde900759a20778fe5fab03"
+      "sha256": "2ca7e21e5ee0676b8693aacf55cf534a183be19aba7651c6e6daab948424dbf6",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/05-notifications.png",
@@ -118,7 +130,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "2d08c3b51280baece0fd140eca4f006c519042e2b08b02644096892aa0555563"
+      "sha256": "2d08c3b51280baece0fd140eca4f006c519042e2b08b02644096892aa0555563",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/06-advanced.png",
@@ -127,7 +140,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "5ec23d307bbc264208ed9ac660b8877f4915e8ed1c914171a0f8f8b485511648"
+      "sha256": "688179ab5054f5f0f254580741938e4c376911246887a49b389cf3003444ef23",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/07-week.png",
@@ -136,7 +150,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "5125e930cd11ca4f3ac40232b31c3586c44f59fa917f3d67ca7ea7ffab40dea2"
+      "sha256": "c5a68e3f55ccc50dc9b596aabeda7538438a73ef247a6f8e5285e38cede6f4ec",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "screenshots/android-tablet/08-notification-settings.png",
@@ -145,7 +160,8 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "ec881ecd8e5411be87755005a2431aacdb2b5a75c7d901ee0d907b268a7e0c67"
+      "sha256": "29b5bf79c18818287b921f9b5a837c5b285b2bea46b85068f90b83649aee5760",
+      "갱신일": "2026-10-22"
     },
     {
       "path": "google-play/feature-graphic.png",

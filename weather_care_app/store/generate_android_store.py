@@ -1,7 +1,8 @@
-"""2026-10-21 Android 전용 스토어 이미지. 앱 코드를 바꾸지 않고 합성한다."""
+"""2026-10-22 Android 스토어 이미지. 스크린샷만 재생성하는 옵션을 제공한다."""
 from __future__ import annotations
 
 import hashlib
+import argparse
 import json
 import shutil
 import sys
@@ -13,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import generate_store_screenshots as previous
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshots/source-android-20261021'
+SOURCE = ROOT / 'screenshots/source-20261022'
 BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
 TOPICS = [
@@ -224,13 +225,15 @@ def preview(paths, target):
     sheet.save(target, optimize=True)
 
 
-def main():
+def main(screenshots_only=False, platforms=None):
     sys.stdout.reconfigure(encoding='utf-8')
     # 이전 최종본만 백업 후 정리한다. 원본/iOS 파일은 건드리지 않는다.
     legacy_names = ['02-today.png', '03-detail.png', '04-widget.png', '05-setting.png',
                     '06-week.png', '07-notification.png', '08-push-notification.png', '09-dark-mode.png']
-    backup = ROOT.parent / 'build/store-backup-20261021'
-    for platform in ['android', 'android-tablet']:
+    platforms = platforms or ['android', 'android-tablet']
+    assert set(platforms) <= {'android', 'android-tablet'}
+    backup = ROOT.parent / 'build/screenshots-backup-20261022'
+    for platform in platforms:
         for name in legacy_names:
             old = ROOT / 'screenshots' / platform / name
             assert old.resolve().is_relative_to(ROOT.resolve())
@@ -241,44 +244,56 @@ def main():
                     shutil.copy2(old, saved)
                 old.unlink()
     generated = []
-    for platform in ['android', 'android-tablet']:
+    for platform in platforms:
         paths = [compose(topic, platform) for topic in TOPICS]
         generated.extend(paths)
         preview(paths, ROOT / f'screenshots/preview-{platform}.png')
-    generated.append(feature_graphic())
+    if not screenshots_only:
+        generated.append(feature_graphic())
     records = []
     for path in generated:
         with Image.open(path) as im:
             im.verify()
         with Image.open(path) as im:
             assert im.mode == 'RGB' and im.format == 'PNG'
-            expected = (1024, 500) if path.name == 'feature-graphic.png' else (1440, 2560) if path.parent.name == 'android-tablet' else (1080, 1920)
+            expected = (1024, 500) if path.name == 'feature-graphic.png' else {
+                'android': (1080, 1920), 'android-tablet': (1440, 2560),
+                'ios': (1320, 2868), 'ipad': (2064, 2752)}[path.parent.name]
             assert im.size == expected, (path, im.size)
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/android-20261021-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-10-21', '화면': '현재 Flutter 코드의 비표시 렌더링',
+    report = ROOT / 'screenshots/screenshots-20261022-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-10-22', '화면': '현재 Flutter 코드의 비표시 렌더링',
         '데이터': '촬영용 예시 날씨와 알림, 실제 현재 관측 아님', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    package = ROOT / 'google-play/weather-care-android-store-20261021.zip'
+    preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
+    guide = ROOT / 'screenshots/SCREENSHOTS_20261022.md'
+    package = ROOT / 'weather-care-screenshots-20261022.zip'
     with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
-        for path in generated + [ROOT / 'screenshots/preview-android.png', ROOT / 'screenshots/preview-android-tablet.png',
-                                 ROOT / 'screenshots/ANDROID_20261021.md', report]:
+        for path in generated + preview_paths + [guide, report]:
             archive.write(path, path.relative_to(ROOT))
     with zipfile.ZipFile(package) as archive:
         assert archive.testzip() is None
     # 이전 통합 묶음도 같은 최종본으로 맞추고 iOS/iPad 항목은 그대로 보존한다.
-    updated = generated + [ROOT / 'screenshots/preview-android.png', ROOT / 'screenshots/preview-android-tablet.png',
-        ROOT / 'screenshots/README.md', ROOT / 'screenshots/ANDROID_20261021.md', report,
+    legacy_report = ROOT / 'screenshots/android-20261021-manifest.json'
+    legacy_data = json.loads(legacy_report.read_text(encoding='utf-8'))
+    by_path = {row['path']: row for row in records}
+    for row in legacy_data['files']:
+        if row['path'] in by_path:
+            row.update(by_path[row['path']], 갱신일='2026-10-22')
+    legacy_report.write_text(json.dumps(legacy_data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    updated = generated + preview_paths + [
+        ROOT / 'screenshots/README.md', guide, legacy_report, report,
         ROOT / 'generate_android_store.py', ROOT / 'capture_android_test.dart', ROOT / 'generate_store_screenshots.py']
     names = {p.relative_to(ROOT).as_posix() for p in updated}
-    for filename in ['weather-care-store-assets.zip', 'weather-care-store-screenshots.zip']:
+    for filename in ['weather-care-store-assets.zip', 'weather-care-store-screenshots.zip',
+                     'google-play/weather-care-android-store-20261021.zip']:
         archive_path = ROOT / filename
         if not archive_path.exists():
             continue
         temporary = archive_path.with_suffix('.tmp.zip')
         with zipfile.ZipFile(archive_path) as old, zipfile.ZipFile(temporary, 'w', zipfile.ZIP_DEFLATED) as new:
             for entry in old.infolist():
-                if entry.filename in names or entry.filename.startswith(('screenshots/android/', 'screenshots/android-tablet/')):
+                if entry.filename in names or entry.filename.startswith(tuple(f'screenshots/{p}/' for p in platforms)):
                     continue
                 new.writestr(entry, old.read(entry.filename))
             for path in updated:
@@ -290,4 +305,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='현재 UI 스토어 스크린샷 생성')
+    parser.add_argument('--screenshots-only', action='store_true', help='그래픽·헤더·검색 결과를 변경하지 않고 스크린샷만 생성')
+    parser.add_argument('--platforms', help='android,android-tablet 중 쉼표로 구분')
+    args = parser.parse_args()
+    selected = args.platforms.split(',') if args.platforms else None
+    main(screenshots_only=args.screenshots_only, platforms=selected)

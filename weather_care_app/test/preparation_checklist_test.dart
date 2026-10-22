@@ -206,7 +206,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('준비물이 3개를 넘으면 남은 목록을 펼쳐 체크할 수 있다', (tester) async {
+  testWidgets('준비물이 3개를 넘어도 앞의 3개만 한 줄로 표시하고 체크한다', (tester) async {
     final now = DateTime.parse('2026-09-10T12:30:00+09:00');
     await tester.pumpWidget(MaterialApp(
       theme: ThemeData(splashFactory: NoSplash.splashFactory),
@@ -245,18 +245,22 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('bag-item-raincoat')), findsNothing);
-    await tester.tap(find.text('외 2개 더 보기'));
+    expect(find.byKey(const ValueKey('bag-item-sunscreen')), findsNothing);
+    expect(find.textContaining('더 보기'), findsNothing);
+    expect(find.text('접기'), findsNothing);
+    final first = find.byKey(const ValueKey('bag-item-umbrella'));
+    for (final type in ['outerwear', 'mask']) {
+      final item = find.byKey(ValueKey('bag-item-$type'));
+      expect(item, findsOneWidget);
+      expect(tester.getTopLeft(item).dy, tester.getTopLeft(first).dy);
+    }
+    await tester.tap(first);
     await tester.pumpAndSettle();
-    expect(find.byKey(const ValueKey('bag-item-raincoat')), findsOneWidget);
-    expect(find.byKey(const ValueKey('bag-item-sunscreen')), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const ValueKey('bag-item-raincoat')));
-    await tester.tap(find.byKey(const ValueKey('bag-item-raincoat')));
-    await tester.pumpAndSettle();
-    expect(await repository.load('2026-09-10'), {RecommendationType.raincoat});
+    expect(await repository.load('2026-09-10'), {RecommendationType.umbrella});
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('좁은 화면의 큰 글씨에서도 준비 시작 시각이 잘리지 않는다', (tester) async {
+  testWidgets('시작 시각은 읽을 크기를 유지하고 챙김 버튼은 모두 같은 높이에 표시한다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -267,36 +271,77 @@ void main() {
       RecommendationType.lightOuterwear,
       RecommendationType.sunHat,
     ];
-    await tester.pumpWidget(MaterialApp(
-      theme: ThemeData(splashFactory: NoSplash.splashFactory),
-      home: MediaQuery(
-        data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-        child: Scaffold(
-          body: SingleChildScrollView(
-            child: RecommendationBagSection(
-              regionName: '서울',
-              now: () => now,
-              recommendations: [
-                for (final type in types)
-                  WeatherRecommendation(
-                    type: type,
-                    recommended: true,
-                    priority: 90,
-                    title: type.title,
-                    description: '준비물 안내',
-                    notificationEligible: false,
-                    validFrom: '2026-09-10T14:00:00+09:00',
-                  ),
-              ],
-              onDetail: (_) {},
+    for (final width in [320.0, 360.0]) {
+      for (final scale in [1.0, 1.3, 2.0]) {
+        tester.view.physicalSize = Size(width, 800);
+        await tester.pumpWidget(MaterialApp(
+          theme: ThemeData(splashFactory: NoSplash.splashFactory),
+          home: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: RecommendationBagSection(
+                  regionName: '서울',
+                  now: () => now,
+                  recommendations: [
+                    for (final type in types)
+                      WeatherRecommendation(
+                        type: type,
+                        recommended: true,
+                        priority: 90,
+                        title: type.title,
+                        description: '준비물 안내',
+                        notificationEligible: false,
+                        validFrom: type == RecommendationType.sunHat
+                            ? null
+                            : '2026-09-10T14:00:00+09:00',
+                      ),
+                  ],
+                  onDetail: (_) {},
+                ),
+              ),
             ),
           ),
-        ),
-      ),
-    ));
-    await tester.pumpAndSettle();
-    expect(find.text('14시부터'), findsNWidgets(3));
-    expect(tester.takeException(), isNull);
+        ));
+        await tester.pumpAndSettle();
+        expect(find.text('14시부터'), findsNWidgets(2));
+        final first = find
+            .byKey(ValueKey('bag-item-${types.first.apiName.toLowerCase()}'));
+        final firstStatus =
+            find.descendant(of: first, matching: find.text('챙길게요'));
+        final statusTop = tester.getTopLeft(firstStatus).dy;
+        for (final type in types.skip(1)) {
+          final item =
+              find.byKey(ValueKey('bag-item-${type.apiName.toLowerCase()}'));
+          expect(tester.getTopLeft(item).dy, tester.getTopLeft(first).dy);
+          expect(tester.getTopLeft(item).dx,
+              greaterThan(tester.getTopLeft(first).dx));
+        }
+        for (final type in types) {
+          final item =
+              find.byKey(ValueKey('bag-item-${type.apiName.toLowerCase()}'));
+          final start = find.descendant(of: item, matching: find.text('14시부터'));
+          final detail =
+              find.byKey(ValueKey('bag-detail-${type.apiName.toLowerCase()}'));
+          final status = find.descendant(of: item, matching: find.text('챙길게요'));
+          if (type != RecommendationType.sunHat) {
+            expect(tester.widget<Text>(start).style?.fontSize, 12);
+            expect(find.ancestor(of: start, matching: find.byType(FittedBox)),
+                findsNothing);
+            expect(
+                tester.getSize(start).height, greaterThanOrEqualTo(12 * scale));
+            expect(tester.getBottomLeft(start).dy,
+                lessThanOrEqualTo(tester.getTopLeft(detail).dy));
+          }
+          expect(tester.getTopLeft(status).dy, statusTop);
+          expect(tester.getBottomLeft(detail).dy,
+              lessThanOrEqualTo(tester.getTopLeft(status).dy));
+          expect(tester.getBottomLeft(status).dy,
+              lessThanOrEqualTo(tester.getBottomLeft(item).dy));
+        }
+        expect(tester.takeException(), isNull);
+      }
+    }
   });
 
   testWidgets('기기 시계가 서버보다 5시간 느려도 응답 후 준비물을 바로 표시한다', (tester) async {

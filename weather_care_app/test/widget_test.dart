@@ -811,8 +811,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('recommendation grid handles empty and full narrow layouts',
-      (tester) async {
+  testWidgets('준비물은 빈 상태와 좁은 화면에서도 최대 3개 한 줄로 표시한다', (tester) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -863,9 +862,11 @@ void main() {
     expect(tester.getSize(first).width, greaterThanOrEqualTo(78));
     expect(
         tester.getTopLeft(second).dx, greaterThan(tester.getTopLeft(first).dx));
-    expect(tester.getTopLeft(third).dx, tester.getTopLeft(first).dx);
+    expect(tester.getTopLeft(second).dy, tester.getTopLeft(first).dy);
     expect(
-        tester.getTopLeft(third).dy, greaterThan(tester.getTopLeft(first).dy));
+        tester.getTopLeft(third).dx, greaterThan(tester.getTopLeft(second).dx));
+    expect(tester.getTopLeft(third).dy, tester.getTopLeft(first).dy);
+    expect(find.textContaining('더 보기'), findsNothing);
     expect(
       tester
           .widget<PreparationIcon>(

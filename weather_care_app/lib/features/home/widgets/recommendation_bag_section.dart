@@ -49,7 +49,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   bool _loading = true;
   bool _saving = false;
   bool _loadFailed = false;
-  bool _expanded = false;
 
   DateTime get _now => responseNow(
         (widget.now ?? DateTime.now)(),
@@ -68,7 +67,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   @override
   void didUpdateWidget(covariant RecommendationBagSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.regionName != widget.regionName) _expanded = false;
     _refreshDate();
     _scheduleBriefingBoundary();
   }
@@ -249,8 +247,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
 
   @override
   Widget build(BuildContext context) {
-    final all = _visibleRecommendations();
-    final visible = _expanded ? all : all.take(3).toList();
+    final visible = _visibleRecommendations().take(3).toList();
     final now = _now;
 
     return Container(
@@ -271,42 +268,40 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
             LayoutBuilder(
               builder: (context, constraints) {
                 const spacing = 6.0;
-                final textScale = MediaQuery.textScalerOf(context).scale(1);
-                final maxColumns = ((constraints.maxWidth + spacing) /
-                        (100 * textScale + spacing))
-                    .floor()
-                    .clamp(1, 3);
-                final columns = visible.length.clamp(1, maxColumns);
+                final columns = visible.length;
                 final itemWidth =
                     (constraints.maxWidth - (columns - 1) * spacing) / columns;
 
-                return Wrap(
-                  spacing: spacing,
-                  runSpacing: spacing,
-                  children: [
-                    for (final recommendation in visible)
-                      SizedBox(
-                        width: itemWidth,
-                        height: 176 + (textScale - 1).clamp(0, 2) * 110,
-                        child: _BagItem(
-                          key: ValueKey(
-                            'bag-item-${recommendation.type.apiName.toLowerCase()}',
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final recommendation in visible) ...[
+                        if (recommendation != visible.first)
+                          const SizedBox(width: spacing),
+                        SizedBox(
+                          width: itemWidth,
+                          child: _BagItem(
+                            key: ValueKey(
+                              'bag-item-${recommendation.type.apiName.toLowerCase()}',
+                            ),
+                            recommendation: recommendation,
+                            now: now,
+                            checked: _checked.contains(recommendation.type),
+                            pendingLabel: _loading
+                                ? '확인 중'
+                                : _loadFailed
+                                    ? '확인 필요'
+                                    : null,
+                            onToggle: _loading || _saving || _loadFailed
+                                ? null
+                                : () => _toggle(recommendation.type),
+                            onDetail: () => widget.onDetail(recommendation.type),
                           ),
-                          recommendation: recommendation,
-                          now: now,
-                          checked: _checked.contains(recommendation.type),
-                          pendingLabel: _loading
-                              ? '확인 중'
-                              : _loadFailed
-                                  ? '확인 필요'
-                                  : null,
-                          onToggle: _loading || _saving || _loadFailed
-                              ? null
-                              : () => _toggle(recommendation.type),
-                          onDetail: () => widget.onDetail(recommendation.type),
                         ),
-                      ),
-                  ],
+                      ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -314,12 +309,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
             TextButton(
               onPressed: () => _refreshDate(retry: true),
               child: const Text('체크 상태를 불러오지 못했어요 · 다시 시도'),
-            ),
-          if (all.length > 3)
-            TextButton.icon(
-              onPressed: () => setState(() => _expanded = !_expanded),
-              icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
-              label: Text(_expanded ? '접기' : '외 ${all.length - 3}개 더 보기'),
             ),
         ],
       ),
@@ -420,10 +409,29 @@ class _BagItem extends StatelessWidget {
                   if (futureStart && koreaStart != null)
                     Text(
                       '${koreaStart.hour}시부터',
+                      maxLines: 2,
                       textAlign: TextAlign.center,
-                      style: WeatherCareTheme.of(context).microTextStyle,
+                      style: WeatherCareTheme.of(context)
+                          .microTextStyle
+                          .copyWith(fontSize: 12),
                     ),
                   const Spacer(),
+                  IconButton(
+                    key: ValueKey(
+                      'bag-detail-${type.apiName.toLowerCase()}',
+                    ),
+                    onPressed: onDetail,
+                    tooltip: '${type.label} 추천 이유 보기',
+                    visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size(30, 30),
+                      maximumSize: const Size(30, 30),
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: type.accentColor(context),
+                    ),
+                    icon: const Icon(Icons.info_outline_rounded, size: 17),
+                  ),
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     height: 32 * textScale.clamp(1, 2),
@@ -434,39 +442,22 @@ class _BagItem extends StatelessWidget {
                           : WeatherCareTheme.of(context).surface,
                       borderRadius: BorderRadius.circular(11),
                     ),
-                    child: Text(
-                      pendingLabel ?? (checked ? '챙겼어요' : '챙길게요'),
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: checked
-                            ? WeatherCareTheme.of(context).onPrimary
-                            : type.accentColor(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        pendingLabel ?? (checked ? '챙겼어요' : '챙길게요'),
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: checked
+                              ? WeatherCareTheme.of(context).onPrimary
+                              : type.accentColor(context),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
                 ],
-              ),
-              Positioned(
-                top: -7,
-                right: -7,
-                child: IconButton(
-                  key: ValueKey(
-                    'bag-detail-${type.apiName.toLowerCase()}',
-                  ),
-                  onPressed: onDetail,
-                  tooltip: '${type.label} 추천 이유 보기',
-                  visualDensity: VisualDensity.compact,
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size(30, 30),
-                    maximumSize: const Size(30, 30),
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: type.accentColor(context),
-                  ),
-                  icon: const Icon(Icons.info_outline_rounded, size: 17),
-                ),
               ),
             ],
           ),

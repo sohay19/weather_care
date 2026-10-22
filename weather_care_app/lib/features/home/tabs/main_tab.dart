@@ -99,6 +99,9 @@ class MainTab extends StatelessWidget {
                         tooltip: '예보 기준 구역 지도 열기',
                         visualDensity: VisualDensity.compact,
                         style: IconButton.styleFrom(
+                          minimumSize: const Size(28, 28),
+                          padding: const EdgeInsets.all(4),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           backgroundColor: Colors.transparent,
                           foregroundColor: WeatherCareTheme.of(context).primary,
                         ),
@@ -108,6 +111,9 @@ class MainTab extends StatelessWidget {
                         key: const ValueKey('main-region-menu'),
                         tooltip: '지역 선택',
                         style: IconButton.styleFrom(
+                          minimumSize: const Size(40, 40),
+                          padding: EdgeInsets.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           backgroundColor: Colors.transparent,
                           foregroundColor: WeatherCareTheme.of(context).primary,
                         ),
@@ -162,7 +168,7 @@ class MainTab extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(height: compact ? 20 : 24),
+                    SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(
                         icon: Icons.playlist_add_check_rounded,

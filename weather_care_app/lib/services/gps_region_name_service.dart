@@ -61,6 +61,16 @@ class PlatformGpsRegionNameService extends GpsRegionNameService {
   }
 }
 
+String gpsRegionDisplayName({String? deviceName, String? serverName}) {
+  // 서버가 좌표·행정경계로 확인한 이름도 사용하고 임시 문구는 제외한다.
+  final administrativeName = koreanAdministrativeDisplayName(
+    administrativeArea: serverName,
+    locality: serverName,
+  );
+  return preferNeighborhoodDisplayName([deviceName, administrativeName]) ??
+      '현재 위치';
+}
+
 String? koreanAdministrativeDisplayName({
   String? administrativeArea,
   String? subAdministrativeArea,
@@ -141,7 +151,10 @@ bool _isDisplayRegion(String value) =>
 
 bool _isNeighborhood(String value) => RegExp(r'(읍|면|동)$').hasMatch(value);
 
+const _metropolitanShortNames = {'서울', '부산', '대구', '인천', '광주', '대전', '울산'};
+
 bool _isTopLevelRegion(String value) =>
+    _metropolitanShortNames.contains(value) ||
     value.endsWith('특별시') ||
     value.endsWith('광역시') ||
     value.endsWith('특별자치시') ||
@@ -149,6 +162,7 @@ bool _isTopLevelRegion(String value) =>
     (value.endsWith('도') && !value.endsWith('동'));
 
 bool _isMetropolitanRegion(String? value) =>
+    _metropolitanShortNames.contains(value) ||
     value?.endsWith('특별시') == true ||
     value?.endsWith('광역시') == true ||
     value?.endsWith('특별자치시') == true;

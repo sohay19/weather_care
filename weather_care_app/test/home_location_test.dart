@@ -87,12 +87,15 @@ class _Location extends CurrentLocationService {
 
 class _GpsRegionName extends GpsRegionNameService {
   String? result;
+  Completer<String?>? pending;
+  Object? error;
   final calls = <DeviceCoordinates>[];
 
   @override
   Future<String?> resolve(DeviceCoordinates coordinates) async {
     calls.add(coordinates);
-    return result;
+    if (error case final error?) throw error;
+    return pending == null ? result : await pending!.future;
   }
 }
 
@@ -1135,6 +1138,69 @@ void main() {
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
     expect(find.text('서울 강남구 역삼동 날씨'), findsOneWidget);
+  });
+
+  testWidgets('기기 지역명 조회가 실패해도 서버 지역명을 Main과 위젯에 유지한다', (tester) async {
+    gpsRegionName.error = PlatformException(code: 'IO_ERROR');
+    weather.response = _weather(60, 127, regionName: '서울특별시 종로구 청운효자동');
+    final widgetService = _WidgetService();
+    await start(tester, initialIndex: 2, widgetService: widgetService);
+
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+    expect(find.text('현재 위치 날씨'), findsNothing);
+    expect(widgetService.published.last.region, '서울 종로구 청운효자동');
+  });
+
+  testWidgets('기기 지역명 조회의 늦은 실패가 먼저 표시한 서버 지역명을 지우지 않는다', (tester) async {
+    final pendingName = Completer<String?>();
+    gpsRegionName.pending = pendingName;
+    weather.response = _weather(60, 127, regionName: '서울특별시 종로구 청운효자동');
+    await start(tester, initialIndex: 2, settle: false);
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+
+    pendingName.completeError(TimeoutException('지역명 조회 시간 초과'));
+    await tester.pumpAndSettle();
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+    expect(find.text('현재 위치 날씨'), findsNothing);
+  });
+
+  testWidgets('경량 Main과 전체 날씨 응답 모두 서버 지역명을 표시한다', (tester) async {
+    final response = _weather(60, 127, regionName: '서울특별시 종로구 청운효자동');
+    weather.mainPreview = response.today;
+    final pendingWeather = Completer<WeatherLoadResult>();
+    weather.pending = pendingWeather;
+    await start(tester, initialIndex: 2, settle: false);
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+
+    pendingWeather.complete(response);
+    await tester.pumpAndSettle();
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+    expect(find.text('현재 위치 날씨'), findsNothing);
+  });
+
+  testWidgets('대략적 위치도 서버가 확인한 상위 지역명은 표시한다', (tester) async {
+    location.result =
+        const LocationResult(LocationState.approximate, coordinates: _seoul);
+    weather.response = _weather(60, 127, regionName: '서울특별시 종로구');
+    await start(tester, initialIndex: 2);
+
+    expect(find.text('서울 종로구 날씨'), findsOneWidget);
+    expect(gpsRegionName.calls, isEmpty);
+    expect(weather.calls.single.coordinates, isNull);
+  });
+
+  testWidgets('새 위치의 이름을 확인하지 못하면 이전 위치의 지역명을 재사용하지 않는다', (tester) async {
+    weather.response = _weather(60, 127, regionName: '서울특별시 종로구 청운효자동');
+    await start(tester, initialIndex: 2);
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _busan);
+    weather.response = _weather(98, 76, regionName: '현재 위치');
+    await screen(tester).onRefresh!();
+    await tester.pumpAndSettle();
+    expect(find.text('현재 위치 날씨'), findsOneWidget);
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsNothing);
   });
   testWidgets('새로고침과 앱 복귀는 위치를 다시 읽고 알림 지역도 갱신한다', (tester) async {
     await start(tester);

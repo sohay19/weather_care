@@ -2,6 +2,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/gps_region_name_service.dart';
 
 void main() {
+  test('기기 지역명이 없으면 서버가 확인한 행정구역명을 표시한다', () {
+    expect(
+      gpsRegionDisplayName(serverName: '서울특별시 종로구 종로1.2.3.4가동'),
+      '서울 종로구 종로1.2.3.4가동',
+    );
+    expect(gpsRegionDisplayName(serverName: '경기도 시흥시 대야동'), '시흥시 대야동');
+    expect(
+      gpsRegionDisplayName(serverName: '서울 종로구 종로1.2.3.4가동'),
+      '서울 종로구 종로1.2.3.4가동',
+    );
+  });
+
+  test('서버 임시 문구는 지역명으로 사용하지 않는다', () {
+    for (final name in [null, '', '현재 위치', '선택 지역', '선택한 지역']) {
+      expect(gpsRegionDisplayName(serverName: name), '현재 위치');
+    }
+  });
+
+  test('확인된 동 이름을 시·구보다 우선하고 기기의 동 이름은 유지한다', () {
+    expect(
+      gpsRegionDisplayName(deviceName: '시흥시', serverName: '경기도 시흥시 대야동'),
+      '시흥시 대야동',
+    );
+    expect(
+      gpsRegionDisplayName(deviceName: '시흥시 대야동', serverName: '경기도 시흥시'),
+      '시흥시 대야동',
+    );
+  });
+
   test('세종의 광역 표기와 시 표기를 중복해서 표시하지 않는다', () {
     expect(
         koreanAdministrativeDisplayName(

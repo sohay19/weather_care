@@ -629,7 +629,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     setState(() {
       _gpsRegionName = name;
-      _today = today.withRegionName(name ?? '현재 위치');
+      _today = today.withRegionName(gpsRegionDisplayName(
+        deviceName: name,
+        serverName: today.region.name,
+      ));
     });
     _publishHomeWidget();
   }
@@ -900,7 +903,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               today.region.ny == selected.ny
           ? today.withRegionName(selected.fullName)
           : _settings.locationMode == 'GPS'
-              ? today.withRegionName(_gpsRegionName ?? '현재 위치')
+              ? today.withRegionName(gpsRegionDisplayName(
+                  deviceName: _gpsRegionName,
+                  serverName: today.region.name,
+                ))
               : today;
       _loadMode = WeatherLoadMode.server;
       _mainDetailsLoading = false;
@@ -931,7 +937,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               preview.region.ny == selected.ny
           ? preview.withRegionName(selected.fullName)
           : _settings.locationMode == 'GPS'
-              ? preview.withRegionName(_gpsRegionName ?? '현재 위치')
+              ? preview.withRegionName(gpsRegionDisplayName(
+                  deviceName: _gpsRegionName,
+                  serverName: preview.region.name,
+                ))
               : preview;
       _loadMode = WeatherLoadMode.server;
       _mainDetailsLoading = true;
@@ -987,7 +996,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           today?.region.ny == selected.ny) {
         _today = today!.withRegionName(selected.fullName);
       } else if (_settings.locationMode == 'GPS' && today != null) {
-        _today = today.withRegionName(_gpsRegionName ?? '현재 위치');
+        _today = today.withRegionName(gpsRegionDisplayName(
+          deviceName: _gpsRegionName,
+          serverName: today.region.name,
+        ));
       } else {
         _today = today;
       }

@@ -276,6 +276,8 @@ void main() {
           format == 'phone' ? const Size(412, 1000) : const Size(800, 1280);
       Future<void> render(Widget screen, int index, String name,
           {bool dark = false, Future<void> Function()? action}) async {
+        const selected = String.fromEnvironment('STORE_CAPTURE_SCREEN');
+        if (selected.isNotEmpty && selected != name) return;
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();
         final boundary = GlobalKey();

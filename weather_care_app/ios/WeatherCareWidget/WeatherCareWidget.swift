@@ -31,8 +31,8 @@ private let widgetDivider = themeColor(0xCEDAE4, 0x40566A)
 private let refreshButtonHitSurface = RadialGradient(
   stops: [
     .init(color: refreshButtonSurface, location: 0),
-    .init(color: refreshButtonSurface, location: 0.499),
-    .init(color: surface.opacity(0.01), location: 0.5),
+    .init(color: refreshButtonSurface, location: 0.408),
+    .init(color: surface.opacity(0.01), location: 0.409),
     .init(color: surface.opacity(0.01), location: 1),
   ],
   center: .center,
@@ -422,7 +422,7 @@ private struct WidgetRefreshButton: View {
     if #available(iOS 17.0, *) {
       Button(intent: RefreshWeatherWidgetIntent()) {
         Image(systemName: "arrow.clockwise")
-          .font(.system(size: 8.8, weight: .semibold))
+          .font(.system(size: 7.2, weight: .semibold))
           .foregroundStyle(refreshButtonInk)
           .frame(width: 44, height: 44)
           .background(refreshButtonHitSurface, in: Circle())
@@ -613,7 +613,8 @@ private struct LargeWeatherWidget: View {
           .font(SuiteFont.extraBold(14))
           .foregroundStyle(ink)
           .lineLimit(2)
-          .frame(maxWidth: .infinity, alignment: .leading)
+          .multilineTextAlignment(.center)
+          .frame(maxWidth: .infinity, alignment: .center)
           .padding(.horizontal, 18)
         if !snapshot.preparations.isEmpty {
           HStack(spacing: 6) {
@@ -625,6 +626,7 @@ private struct LargeWeatherWidget: View {
                   .font(SuiteFont.extraBold(12))
                   .lineLimit(1)
                   .minimumScaleFactor(0.8)
+                  .frame(maxWidth: .infinity, alignment: .center)
               }
               .frame(maxWidth: .infinity)
               .padding(.horizontal, 10)

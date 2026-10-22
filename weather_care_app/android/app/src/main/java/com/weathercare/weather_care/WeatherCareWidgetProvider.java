@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Layout;
 import android.view.View;
 import android.widget.RemoteViews;
 
@@ -282,7 +283,8 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                         regionWidth,
                         size == WidgetSize.SMALL ? 3 : 2,
                         1,
-                        0
+                        0,
+                        Layout.Alignment.ALIGN_NORMAL
                 ),
                 displayRegion
         );
@@ -480,7 +482,8 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                         contentWidth,
                         2,
                         2,
-                        2
+                        2,
+                        Layout.Alignment.ALIGN_CENTER
                 ),
                 snapshot.brief
         );

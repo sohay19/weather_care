@@ -348,6 +348,44 @@ class HourlyValueChart extends StatelessWidget {
         bottomPadding: bottomPadding);
     final labels = <Widget>[];
     final primaryTops = <int, double>{};
+    final temperatureTops = <(HourlyChartSeries, int), double>{};
+    if (temperature && showValues) {
+      // 수치 폭에 들어오는 양옆 선분까지 검사한다. 결측/빠진 시간은 잇지 않는다.
+      (double, double) lineRange(HourlyChartSeries chart, int index) {
+        final center = y(chart, index);
+        final points = [center];
+        for (final neighbor in [index - 1, index + 1]) {
+          if (neighbor >= 0 &&
+              neighbor < hours.length &&
+              (hours[neighbor] - hours[index]).abs() == 1 &&
+              chart.values[neighbor] != null) {
+            final reach = ((pointWidth - 6) / 2 + 6) / pointWidth;
+            points.add(center + (y(chart, neighbor) - center) * reach);
+          }
+        }
+        return (points.reduce(math.min), points.reduce(math.max));
+      }
+
+      for (var index = 0; index < hours.length; index++) {
+        final present =
+            all.where((chart) => chart.values[index] != null).toList();
+        if (present.isEmpty) continue;
+        final ranges = [for (final chart in present) lineRange(chart, index)];
+        final tops = [for (final chart in present) y(chart, index) + 7];
+        final touchesLine = tops.any((top) => ranges.any((range) =>
+            top < range.$2 + 6 && top + scaledLabelHeight > range.$1 - 6));
+        final touchesLabel = tops.length > 1 &&
+            (tops.first - tops.last).abs() < scaledLabelHeight + 4;
+        if (!touchesLine && !touchesLabel) continue;
+        for (final chart in present) {
+          temperatureTops[(chart, index)] = chart == series
+              ? ranges.map((range) => range.$1).reduce(math.min) -
+                  scaledLabelHeight -
+                  8
+              : ranges.map((range) => range.$2).reduce(math.max) + 8;
+        }
+      }
+    }
     for (final chart in all) {
       for (var index = 0; index < chart.values.length; index++) {
         final value = chart.values[index];
@@ -383,9 +421,10 @@ class HourlyValueChart extends StatelessWidget {
           continue;
         }
 
-        var top = temperature || chart.id.endsWith('-amount')
-            ? pointY + 7
-            : pointY - scaledLabelHeight - 6;
+        var top = temperatureTops[(chart, index)] ??
+            (temperature || chart.id.endsWith('-amount')
+                ? pointY + 7
+                : pointY - scaledLabelHeight - 6);
         if (avoidLineOverlaps) {
           // 이 시간과 양옆 시간의 선 범위 밖으로 관측/예측 수치를 나눈다.
           final nearby = [
@@ -465,7 +504,9 @@ class HourlyValueChart extends StatelessWidget {
               if (conditions[index] != null && series.values[index] != null)
                 Positioned(
                     left: x(index) - 12,
-                    top: y(series, index) - 34,
+                    top: math.min(y(series, index),
+                            primaryTops[index] ?? y(series, index)) -
+                        34,
                     child: IgnorePointer(
                         child: WeatherConditionIcon(
                             condition: conditions[index],

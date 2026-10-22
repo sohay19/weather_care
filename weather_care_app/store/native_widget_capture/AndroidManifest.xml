@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.codesoha.weathercare.capture">
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="35" />
+    <application android:label="위젯 촬영 검증" android:debuggable="true" />
+    <instrumentation android:name=".WidgetCapture"
+        android:targetPackage="com.codesoha.weathercare"
+        android:label="실제 Android 홈 위젯 촬영" />
+</manifest>

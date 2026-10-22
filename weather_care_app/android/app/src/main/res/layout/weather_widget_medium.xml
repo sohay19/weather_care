@@ -44,7 +44,7 @@
             android:background="@drawable/weather_widget_refresh_background"
             android:clickable="true"
             android:contentDescription="날씨 새로고침"
-            android:padding="5.5dp"
+            android:padding="6.5dp"
             android:src="@drawable/ic_widget_refresh" />
     </LinearLayout>
 

@@ -62,7 +62,8 @@ final class WidgetTextRenderer {
             int widthDp,
             int maxLines,
             int minLines,
-            float lineSpacingDp
+            float lineSpacingDp,
+            Layout.Alignment alignment
     ) {
         TextPaint paint = textPaint(context, fontResource, textSizeDp, color);
         int edge = Math.max(1, pixels(context, 0.5f));
@@ -70,7 +71,7 @@ final class WidgetTextRenderer {
         int textWidth = Math.max(1, width - edge * 2);
         int lineSpacing = pixels(context, lineSpacingDp);
         StaticLayout layout = StaticLayout.Builder.obtain(text, 0, text.length(), paint, textWidth)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setAlignment(alignment)
                 .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE)
                 .setEllipsize(TextUtils.TruncateAt.END)
                 .setEllipsizedWidth(textWidth)

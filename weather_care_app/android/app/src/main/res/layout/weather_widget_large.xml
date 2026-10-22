@@ -44,7 +44,7 @@
             android:background="@drawable/weather_widget_refresh_background"
             android:clickable="true"
             android:contentDescription="날씨 새로고침"
-            android:padding="5.5dp"
+            android:padding="6.5dp"
             android:src="@drawable/ic_widget_refresh" />
     </LinearLayout>
 
@@ -137,7 +137,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginEnd="18dp"
             android:contentDescription="오전에는 선선하고 오후에는 포근해요. 얇은 겉옷을 챙기면 좋아요."
-            android:scaleType="fitStart" />
+            android:scaleType="centerInside" />
 
         <LinearLayout
             android:id="@+id/widget_preparation_row"
@@ -154,7 +154,7 @@
             android:layout_weight="1"
             android:layout_marginEnd="3dp"
             android:background="@drawable/weather_widget_panel_background"
-            android:gravity="center"
+            android:gravity="start|center_vertical"
             android:orientation="horizontal"
             android:paddingStart="10dp"
             android:paddingTop="5dp"
@@ -172,13 +172,12 @@
             <ImageView
                 android:id="@+id/widget_preparation_label_1"
                 android:tint="@color/weather_widget_text_primary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
                 android:contentDescription="우산"
-                android:maxWidth="48dp"
-                android:scaleType="fitCenter" />
+                android:scaleType="centerInside" />
         </LinearLayout>
 
         <LinearLayout
@@ -189,7 +188,7 @@
             android:layout_marginStart="3dp"
             android:layout_marginEnd="3dp"
             android:background="@drawable/weather_widget_panel_background"
-            android:gravity="center"
+            android:gravity="start|center_vertical"
             android:orientation="horizontal"
             android:paddingStart="10dp"
             android:paddingTop="5dp"
@@ -207,13 +206,12 @@
             <ImageView
                 android:id="@+id/widget_preparation_label_2"
                 android:tint="@color/weather_widget_text_primary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
                 android:contentDescription="두꺼운 겉옷"
-                android:maxWidth="48dp"
-                android:scaleType="fitCenter" />
+                android:scaleType="centerInside" />
         </LinearLayout>
 
         <LinearLayout
@@ -223,7 +221,7 @@
             android:layout_weight="1"
             android:layout_marginStart="3dp"
             android:background="@drawable/weather_widget_panel_background"
-            android:gravity="center"
+            android:gravity="start|center_vertical"
             android:orientation="horizontal"
             android:paddingStart="10dp"
             android:paddingTop="5dp"
@@ -241,13 +239,12 @@
             <ImageView
                 android:id="@+id/widget_preparation_label_3"
                 android:tint="@color/weather_widget_text_primary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:adjustViewBounds="true"
                 android:contentDescription="마스크"
-                android:maxWidth="48dp"
-                android:scaleType="fitCenter" />
+                android:scaleType="centerInside" />
         </LinearLayout>
     </LinearLayout>
     </LinearLayout>

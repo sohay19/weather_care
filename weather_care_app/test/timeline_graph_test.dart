@@ -528,7 +528,7 @@ void main() {
     expect(actual.overlaps(apparent), isFalse);
   });
 
-  testWidgets('2배 글씨의 영하·0도에서도 점 아래 두 온도가 겹치거나 시간 눈금에 닿지 않는다', (tester) async {
+  testWidgets('2배 글씨의 영하·0도에서도 두 온도가 겹치거나 시간 눈금에 닿지 않는다', (tester) async {
     await _pump(tester, scale: 2, data: [
       {'time': '08', 'temperature': 0, 'apparentTemperature': 0},
       {'time': '09', 'temperature': -10, 'apparentTemperature': -10},
@@ -544,6 +544,73 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('기온 수치는 $scale배 글씨에서도 교차하는 두 선·점·날씨 아이콘을 피한다', (tester) async {
+      await _pump(tester, scale: scale, data: [
+        {
+          'time': '08',
+          'temperature': 20,
+          'apparentTemperature': 19,
+          'skyCondition': '맑음'
+        },
+        {'time': '09', 'temperature': 20, 'apparentTemperature': 21},
+        {'time': '10', 'temperature': 30, 'apparentTemperature': 29},
+        {'time': '11', 'temperature': 0, 'apparentTemperature': 0},
+        {'time': '12', 'temperature': -10, 'apparentTemperature': -10},
+        {'time': '13', 'apparentTemperature': -9},
+      ]);
+      final chart =
+          tester.widget<HourlyValueChart>(find.byType(HourlyValueChart));
+      final painter = _graph(tester, 'temperature');
+      final canvas = tester
+          .getRect(find.byKey(const ValueKey('hourly-chart-temperature')));
+      Offset point(HourlyChartSeries series, int index) => Offset(
+          canvas.left +
+              (chart.hours[index] - chart.hours.first + .5) * chart.pointWidth,
+          canvas.top +
+              hourlyChartY(series.values[index]!.lower, chart.sharedBounds!,
+                  chart.height,
+                  bottomPadding: painter.bottomPadding));
+      for (final hour in [8, 9, 10, 11, 12, 13]) {
+        final rects = <Rect>[];
+        for (final id in ['temperature', 'apparent']) {
+          final value = find.byKey(ValueKey('hourly-value-$id-$hour'));
+          if (value.evaluate().isEmpty) continue;
+          final rect = tester.getRect(value);
+          rects.add(rect);
+          for (final line in [chart.series, ...chart.overlays]) {
+            for (var index = 0; index < line.values.length; index++) {
+              if (line.values[index] == null) continue;
+              final start = point(line, index);
+              expect(rect.inflate(3.5).contains(start), isFalse);
+              if (index + 1 >= line.values.length ||
+                  line.values[index + 1] == null ||
+                  chart.hours[index + 1] - chart.hours[index] != 1) {
+                continue;
+              }
+              for (var step = 0; step <= 100; step++) {
+                final sample =
+                    Offset.lerp(start, point(line, index + 1), step / 100)!;
+                expect(rect.inflate(1.25).contains(sample), isFalse,
+                    reason: '$id $hour시 수치와 ${line.id} 선분');
+              }
+            }
+          }
+        }
+        if (rects.length == 2) {
+          expect(rects.first.overlaps(rects.last), isFalse);
+        }
+      }
+      final icon = tester.getRect(find.byWidgetPredicate((widget) =>
+          widget is WeatherConditionIcon && widget.condition == '맑음'));
+      final actual = tester
+          .getRect(find.byKey(const ValueKey('hourly-value-temperature-8')));
+      expect(actual.bottom, lessThan(point(chart.series, 8).dy));
+      expect(icon.bottom, lessThan(actual.top));
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('범례 펼치기 글자의 위쪽 위치는 일반 범례와 같다', (tester) async {
     for (final scale in [1.0, 2.0]) {

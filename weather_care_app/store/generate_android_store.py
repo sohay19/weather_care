@@ -8,7 +8,6 @@ import shutil
 import sys
 import zipfile
 from pathlib import Path
-import xml.etree.ElementTree as ET
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import generate_store_screenshots as previous
@@ -45,7 +44,7 @@ def text(draw, xy, value, size, fill=WHITE, weight='Bold', center=False, spacing
 
 
 def rounded(im, width, radius=24):
-    im = im.convert('RGB').resize((width, round(im.height * width / im.width)), Image.Resampling.LANCZOS)
+    im = im.convert('RGBA').resize((width, round(im.height * width / im.width)), Image.Resampling.LANCZOS)
     mask = Image.new('L', im.size)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, im.width - 1, im.height - 1), radius, fill=255)
     result = Image.new('RGBA', im.size)
@@ -63,80 +62,13 @@ def card(canvas, im, xy, width, radius=24):
     return (x, y, x + im.width, y + im.height)
 
 
-def palette(dark=False):
-    filename = 'values-night/colors.xml' if dark else 'values/colors.xml'
-    tree = ET.parse(ROOT.parent / 'android/app/src/main/res' / filename)
-    return {item.attrib['name'].removeprefix('weather_widget_'): item.text for item in tree.getroot() if item.tag == 'color'}
-
-
 def widget(family, dark=False):
-    """현재 네이티브 XML의 위젯 구성/색/폰트와 공유 준비물 자산으로 재현."""
-    c = palette(dark)
-    previous.WIDGET_SURFACE = c['background']
-    previous.WIDGET_PANEL = c['panel']
-    previous.WIDGET_INK = c['text_primary']
-    previous.WIDGET_SECONDARY = c['text_secondary']
-    previous.WIDGET_REFRESH = c['refresh_surface']
-    previous.WIDGET_DATA.update(region='서울시 중구', refresh='오전 8:00 기준', current='18°', apparent='17°',
-                                minimum='12°', maximum='22°', short='우산을 챙기세요', next_time='오전 9시', next_temperature='19°')
-    sizes = {'small': (170, 170), 'medium': (338, 158), 'large': (338, 354)}
-    w, h = sizes[family]
-    scale = 3
-    im = Image.new('RGBA', (w * scale, h * scale), c['background'])
-    d = ImageDraw.Draw(im)
-    def label(x, y, s, size, color=None, weight='Bold'):
-        text(d, (x * scale, y * scale), s, round(size * scale), color or c['text_primary'], weight)
-    def panel(box):
-        d.rounded_rectangle(tuple(round(v * scale) for v in box), radius=10 * scale, fill=c['panel'])
-    pad = {'small': 14, 'medium': 16, 'large': 18}[family]
-    label(pad, 13, '서울시 중구', 12 if family == 'small' else 13)
-    if family == 'small':
-        label(pad, 32, '오전 8:00 기준', 9, c['text_secondary'], 'Regular')
-    else:
-        label(w - pad - 107, 15, '오전 8:00 기준', 10, c['text_secondary'], 'Regular')
-    x = (w - pad - 24) * scale
-    y = 11 * scale
-    d.ellipse((x, y, x + 24 * scale, y + 24 * scale), fill=c['refresh_surface'])
-    d.arc((x + 6 * scale, y + 6 * scale, x + 18 * scale, y + 18 * scale), 35, 310, fill=c['refresh_ink'], width=2 * scale)
-    d.polygon([(x + 17 * scale, y + 4 * scale), (x + 20 * scale, y + 10 * scale), (x + 14 * scale, y + 9 * scale)], fill=c['refresh_ink'])
-    if family == 'small':
-        previous.draw_weather_icon(d, (pad * scale, 64 * scale, (pad + 58) * scale, 122 * scale), 'partlyCloudy', False)
-        label(79, 72, '18°', 38, c['text_accent'], 'Heavy')
-        panel((pad, h - 39, w - pad, h - 12))
-        label(pad + 12, h - 31, '최저 12°  ·  최고 22°', 10)
-        return im
-    content_y = 49 if family == 'medium' else 67
-    icon_side = 58 if family == 'medium' else 72
-    previous.draw_weather_icon(d, (31 * scale, content_y * scale, (31 + icon_side) * scale, (content_y + icon_side) * scale), 'partlyCloudy', False)
-    label(112, content_y + 2, '현재', 10, c['text_secondary'], 'Regular')
-    label(108, content_y + 20, '18°', 34 if family == 'medium' else 38, c['text_accent'], 'Heavy')
-    d.line((200 * scale, (content_y + 10) * scale, 200 * scale, (content_y + 48) * scale), fill=c['divider'], width=scale)
-    label(224, content_y + 2, '체감', 10, c['text_secondary'], 'Regular')
-    label(218, content_y + 20, '17°', 34 if family == 'medium' else 38, c['text_accent'], 'Heavy')
-    if family == 'medium':
-        panel((pad, h - 39, w - pad, h - 11))
-        label(pad + 9, h - 31, '우산을 챙기세요', 11)
-        label(186, h - 31, '최저 12° · 최고 22°', 10)
-        return im
-    label(pad + 8, 160, '아침에는 선선하고 저녁에는 비가 내려요.', 12)
-    label(pad + 8, 180, '우산과 겉옷을 챙기세요.', 12)
-    for i, (asset, name) in enumerate([('prep_umbrella.png', '우산'), ('prep_outerwear.png', '겉옷')]):
-        left = pad + i * 154
-        panel((left, 217, left + 148, 265))
-        d.ellipse(((left + 10) * scale, 223 * scale, (left + 46) * scale, 259 * scale), fill=c['preparation_surface'])
-        with Image.open(ROOT.parent / 'assets/icons' / asset) as src:
-            icon = Image.new('RGBA', src.size, c['text_accent'])
-            icon.putalpha(src.convert('RGBA').getchannel('A'))
-            icon.thumbnail((25 * scale, 25 * scale), Image.Resampling.LANCZOS)
-        im.alpha_composite(icon, (round((left + 15.5) * scale), round(228.5 * scale)))
-        label(left + 54, 234, name, 12)
-    label(pad + 10, 286, '다음 시간 예보', 11)
-    label(158, 286, '오전 9시', 11, weight='Regular')
-    label(258, 282, '19°', 18, c['text_accent'], 'Heavy')
-    previous.draw_weather_icon(d, (293 * scale, 278 * scale, 320 * scale, 305 * scale), 'clear', True)
-    panel((pad, h - 39, w - pad, h - 12))
-    label(pad + 63, h - 31, '최저 12°    ·    최고 22°', 12)
-    return im
+    """실제 Android Provider를 AppWidgetHost에 연결해 촬영한 원본만 사용한다."""
+    path = ROOT / 'screenshots/native-20261022' / f'{"dark" if dark else "light"}-{family}.png'
+    if not path.exists():
+        raise FileNotFoundError(f'실제 네이티브 위젯 원본이 필요합니다: {path}')
+    with Image.open(path) as source:
+        return source.convert('RGBA')
 
 
 def notification_cards():
@@ -201,7 +133,9 @@ def compose(topic, platform):
         canvas = canvas.resize((width, height), Image.Resampling.LANCZOS)
     destination = ROOT / 'screenshots' / platform / f'{stem}.png'
     destination.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(destination, optimize=True)
+    temporary = destination.with_suffix('.tmp.png')
+    canvas.save(temporary, optimize=True)
+    temporary.replace(destination)
     return destination
 
 
@@ -222,16 +156,20 @@ def preview(paths, target):
             x, y = (i % 4) * 270 + (270 - im.width) // 2, (i // 4) * 500
             sheet.paste(im, (x, y))
         text(d, ((i % 4) * 270 + 135, (i // 4) * 500 + 470), f'{i + 1:02d}  {TOPICS[i][1]}', 16, '#29343D', center=True)
-    sheet.save(target, optimize=True)
+    temporary = target.with_suffix('.tmp.png')
+    sheet.save(temporary, optimize=True)
+    temporary.replace(target)
 
 
-def main(screenshots_only=False, platforms=None):
+def main(screenshots_only=False, platforms=None, topics=None):
     sys.stdout.reconfigure(encoding='utf-8')
     # 이전 최종본만 백업 후 정리한다. 원본/iOS 파일은 건드리지 않는다.
     legacy_names = ['02-today.png', '03-detail.png', '04-widget.png', '05-setting.png',
                     '06-week.png', '07-notification.png', '08-push-notification.png', '09-dark-mode.png']
     platforms = platforms or ['android', 'android-tablet']
     assert set(platforms) <= {'android', 'android-tablet'}
+    if topics and not set(topics) <= {topic[0] for topic in TOPICS}:
+        raise ValueError('지원하지 않는 스크린샷 번호입니다.')
     backup = ROOT.parent / 'build/screenshots-backup-20261022'
     for platform in platforms:
         for name in legacy_names:
@@ -245,7 +183,9 @@ def main(screenshots_only=False, platforms=None):
                 old.unlink()
     generated = []
     for platform in platforms:
-        paths = [compose(topic, platform) for topic in TOPICS]
+        paths = [compose(topic, platform) if not topics or topic[0] in topics
+                 else ROOT / 'screenshots' / platform / f'{topic[0]}.png'
+                 for topic in TOPICS]
         generated.extend(paths)
         preview(paths, ROOT / f'screenshots/preview-{platform}.png')
     if not screenshots_only:
@@ -263,7 +203,7 @@ def main(screenshots_only=False, platforms=None):
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
     report = ROOT / 'screenshots/screenshots-20261022-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-10-22', '화면': '현재 Flutter 코드의 비표시 렌더링',
+    report.write_text(json.dumps({'기준일': '2026-10-22', '화면': 'Flutter 비표시 렌더링 및 실제 Android AppWidgetHost 위젯 촬영',
         '데이터': '촬영용 예시 날씨와 알림, 실제 현재 관측 아님', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
     guide = ROOT / 'screenshots/SCREENSHOTS_20261022.md'
@@ -283,7 +223,9 @@ def main(screenshots_only=False, platforms=None):
     legacy_report.write_text(json.dumps(legacy_data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     updated = generated + preview_paths + [
         ROOT / 'screenshots/README.md', guide, legacy_report, report,
-        ROOT / 'generate_android_store.py', ROOT / 'capture_android_test.dart', ROOT / 'generate_store_screenshots.py']
+        ROOT / 'generate_android_store.py', ROOT / 'capture_android_test.dart', ROOT / 'generate_store_screenshots.py',
+        ROOT / 'capture_native_widgets.py', *sorted((ROOT / 'native_widget_capture').glob('*')),
+        *sorted((ROOT / 'screenshots/native-20261022').glob('*'))]
     names = {p.relative_to(ROOT).as_posix() for p in updated}
     for filename in ['weather-care-store-assets.zip', 'weather-care-store-screenshots.zip',
                      'google-play/weather-care-android-store-20261021.zip']:
@@ -308,6 +250,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='현재 UI 스토어 스크린샷 생성')
     parser.add_argument('--screenshots-only', action='store_true', help='그래픽·헤더·검색 결과를 변경하지 않고 스크린샷만 생성')
     parser.add_argument('--platforms', help='android,android-tablet 중 쉼표로 구분')
+    parser.add_argument('--topics', help='다시 만들 화면 이름을 쉼표로 구분 (예: 03-widget)')
     args = parser.parse_args()
     selected = args.platforms.split(',') if args.platforms else None
-    main(screenshots_only=args.screenshots_only, platforms=selected)
+    main(screenshots_only=args.screenshots_only, platforms=selected,
+         topics=args.topics.split(',') if args.topics else None)

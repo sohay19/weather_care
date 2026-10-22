@@ -1,6 +1,6 @@
 {
   "기준일": "2026-10-22",
-  "화면": "현재 Flutter 코드의 비표시 렌더링",
+  "화면": "Flutter 비표시 렌더링 및 실제 Android AppWidgetHost 위젯 촬영",
   "데이터": "촬영용 예시 날씨와 알림, 실제 현재 관측 아님",
   "files": [
     {
@@ -19,7 +19,7 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "21773a3fe2d696746666b659920481faa4bc2e86f46e341bcb05c99ab85c753d"
+      "sha256": "8240b98b30c9d01263ce884e9ffec085ac1c2f2d98d7f4c0dab50e2323a6fac2"
     },
     {
       "path": "screenshots/android/03-widget.png",
@@ -28,7 +28,7 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "4924d406b95c27c4ca8e066e5e8e1879acd8da09aafd80fa4d3635b3b00dd7d6"
+      "sha256": "480430ed2ec3e70d68762ac208932b42944a180e90da08d7e90e22867037e6a1"
     },
     {
       "path": "screenshots/android/04-dark-mode.png",
@@ -37,7 +37,7 @@
         1920
       ],
       "mode": "RGB",
-      "sha256": "6614827f5d0fd34f2bbd542a0a22c0d695dc9611f8d1e0819482fb33f9628bef"
+      "sha256": "53ffca7f9767fe4f0d7273d89956689b62b32213a7866b3479980d3482df96e2"
     },
     {
       "path": "screenshots/android/05-notifications.png",
@@ -91,7 +91,7 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "8e94579f5bc7dc6ad8b84ca4eff4213eca3db34ea4525262ce6c1ad969679e84"
+      "sha256": "49c0d57f639356f4c740e56e81daf17be5f43b163a0ea828a20ed3177508a67b"
     },
     {
       "path": "screenshots/android-tablet/03-widget.png",
@@ -100,7 +100,7 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "22cb27245f0c3bf574b59bc77c2865137b71b63f632324d3d5b8d1e867f85775"
+      "sha256": "6e75b6cc8e181b2b32f72f28b5be7ecd56ec3f716d8d0cf4ae1f7510a9b13418"
     },
     {
       "path": "screenshots/android-tablet/04-dark-mode.png",
@@ -109,7 +109,7 @@
         2560
       ],
       "mode": "RGB",
-      "sha256": "2ca7e21e5ee0676b8693aacf55cf534a183be19aba7651c6e6daab948424dbf6"
+      "sha256": "b6f30cf722119cbf9e67b986d7ce25a93b30e39d410d014c58aa40ea25540290"
     },
     {
       "path": "screenshots/android-tablet/05-notifications.png",

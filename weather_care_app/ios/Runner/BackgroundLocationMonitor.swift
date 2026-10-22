@@ -173,13 +173,15 @@ final class BackgroundLocationMonitor: NSObject, CLLocationManagerDelegate, URLS
       (30...44).contains(location.coordinate.latitude), (120...134).contains(location.coordinate.longitude),
       Date().timeIntervalSince(location.timestamp) <= 15 * 60,
       Date().timeIntervalSince(location.timestamp) >= -60 else { return }
+    let measuredAt = formatter.string(from: location.timestamp)
     if let previous = configuration?["measuredAt"] as? String,
-      let date = formatter.date(from: previous), date >= location.timestamp { return }
+      let date = formatter.date(from: previous),
+      let measured = formatter.date(from: measuredAt), date >= measured { return }
     cancelWidgetRefresh()
     configuration?.removeValue(forKey: "widgetPending")
-    let measuredAt = formatter.string(from: location.timestamp)
     let precise = manager.accuracyAuthorization == .fullAccuracy && location.horizontalAccuracy <= 500
-    configuration?["pending"] = ["revision": configuration?["revision"] ?? "",
+    let revision = configuration?["revision"] ?? ""
+    configuration?["pending"] = ["revision": revision,
       "latitude": location.coordinate.latitude, "longitude": location.coordinate.longitude,
       "accuracy": location.horizontalAccuracy, "precise": precise, "measuredAt": measuredAt]
     configuration?["measuredAt"] = measuredAt
@@ -371,6 +373,8 @@ final class BackgroundLocationMonitor: NSObject, CLLocationManagerDelegate, URLS
       url.queryItems?.append(URLQueryItem(name: "longitude", value: String(longitude)))
     }
     url.fragment = nil
+    // URLSearchParams 서버가 '+'를 공백으로 해석하지 않도록 보존한다.
+    url.percentEncodedQuery = url.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
     return url.url
   }
 

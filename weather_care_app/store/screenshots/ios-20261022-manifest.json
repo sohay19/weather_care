@@ -1,0 +1,153 @@
+{
+  "기준일": "2026-10-22",
+  "화면": "현재 Flutter UI의 iOS 비표시 렌더링",
+  "데이터": "촬영용 예시 날씨·관측소·알림 설정",
+  "위젯": "실제 WidgetKit 홈 위젯 촬영본",
+  "알림": "지원 알림 종류의 예시 카드 5개(자외선 예시 2026-10-23 추가)",
+  "files": [
+    {
+      "path": "screenshots/ios/01-main.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "626eb690d84600831dbba5cdcfeddc9a8648cf6c8e90f7d0e6843c6da3dd5744"
+    },
+    {
+      "path": "screenshots/ios/02-timeline.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "3ae1b841b718f2521b9dbdb153da5ae8fe3f89606a3b5a1cfba21d4f06cef80c"
+    },
+    {
+      "path": "screenshots/ios/03-widget.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "5ff128817b40f56ff6857afee58fa733a270f948ed6a4c43a68d3607e9907b8a"
+    },
+    {
+      "path": "screenshots/ios/04-dark-mode.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "a3f977bb96da4960582044bc3f8d131023db9e55dcc6955deef374f7026162db"
+    },
+    {
+      "path": "screenshots/ios/05-notifications.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "8310852b1f20b747952df82384e985f0882a32bfbb920f03946ade95b06b4d04"
+    },
+    {
+      "path": "screenshots/ios/06-advanced.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "2236626dae4f01517607ca163c5715ea100224f0745edbed0bb19d2753afc3f5"
+    },
+    {
+      "path": "screenshots/ios/07-week.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "12f4339bf7eed2e90c5e7f4343f64db97fb9726d8673f543bdea26d0e4d465a3"
+    },
+    {
+      "path": "screenshots/ios/08-notification-settings.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "a27156ee72294cb141d6c1b53137c7cbbae08a03a1ba8524462a88a127b7ca0d"
+    },
+    {
+      "path": "screenshots/ipad/01-main.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "10a8028eb776554201d0073260d9a6d62b4e36a39e398219ca8ae1bd59d37809"
+    },
+    {
+      "path": "screenshots/ipad/02-timeline.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "0759fac9552bd508f7a6ed64ad31b6a68982a7a60df1a886bad31a6f91695967"
+    },
+    {
+      "path": "screenshots/ipad/03-widget.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "1eef544e6da9b37b892d3df230911e7b3497a3b76cbcaac3610b4c5d3ce2f43c"
+    },
+    {
+      "path": "screenshots/ipad/04-dark-mode.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "68b18659385f9063f4b8b413e980245371f9598343e87f39a2ed67a30bab0fa2"
+    },
+    {
+      "path": "screenshots/ipad/05-notifications.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "64015a4bbb951bb7fee3a44227e2a28e559cff39b5bef2e74042af995e0aed83"
+    },
+    {
+      "path": "screenshots/ipad/06-advanced.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "fa4f3fbc229757ecf927f20d95ac288b8dd957a7484b01e823f3842b1b41cb2e"
+    },
+    {
+      "path": "screenshots/ipad/07-week.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "b9c8fba2cd246ce54ca7cf1ce4259439f5e71550ec14ed5ff468e0965b03be75"
+    },
+    {
+      "path": "screenshots/ipad/08-notification-settings.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "8ac23f9b1a9c48a51a3746e8d5729f1bd43001cab276b7dd6f9e1560ee2bb0a2"
+    }
+  ]
+}

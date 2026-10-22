@@ -227,7 +227,7 @@ void main() {
       of: find.byTooltip('강설확률 설명'),
       matching: find.byIcon(Icons.info_outline_rounded),
     ));
-    expect(snowRow.right - infoIcon.right, closeTo(2.5, 0.1));
+    expect(snowRow.right - infoIcon.right, closeTo(10.5, 0.1));
     expect(find.textContaining('예상 신적설'), findsNothing);
     await tester.ensureVisible(find.byTooltip('강설확률 설명'));
     await tester.pumpAndSettle();

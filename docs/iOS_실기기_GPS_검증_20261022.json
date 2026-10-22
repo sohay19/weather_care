@@ -1,0 +1,162 @@
+{
+  "검증일": "2026-10-22",
+  "상태": "제자리에서 가능한 실기기 검증 종료. 네이티브20개 통과 및 초기 OS 모의 위치의 백그라운드 수신·저장·전송 HTTP200 확인.7분 연속 가상경로에서 추가 significant-change는 미재현. 사용자 실제 이동은 실시하지 않음.",
+  "환경": {
+    "기기": "실제 iPhone 16 Pro",
+    "iOS": "27.0.1",
+    "Flutter": "3.47.4",
+    "Xcode": "26.4.1",
+    "연결": "유선 신뢰·개발자 모드·개발자 디스크 서비스 확인"
+  },
+  "격리": {
+    "앱이름": "날씨챙겨 QA",
+    "번들": "com.codesoha.weathercare.qa",
+    "위젯": "com.codesoha.weathercare.qa.widget",
+    "AppGroup": "group.com.codesoha.weathercare.qa",
+    "설명": "기존 사용자 앱과 Keychain·App Group·설치 표식을 별도로 사용. QA 복제본만 변경.",
+    "작업사본": "/Users/soha/FlutterProject/weather_care/weather_care_app/build/ios-device-qa-20261022/workspace"
+  },
+  "완료": [
+    {
+      "항목": "서명된 Profile AOT 앱·위젯 실기기 빌드",
+      "결과": "BUILD SUCCEEDED",
+      "로그": "weather_care_app/build/ios-device-20261022-qa-profile-fixed.log"
+    },
+    {
+      "항목": "실기기 설치",
+      "결과": "성공",
+      "증거": "weather_care_app/build/ios-device-20261022-install.json"
+    },
+    {
+      "항목": "디버거 없이 실행",
+      "결과": "성공. devicectl launch 및 후속 프로세스 조회에서 실행 확인",
+      "증거": "weather_care_app/build/ios-device-20261022-launch.json"
+    },
+    {
+      "항목": "개인정보를 제외한 진단 파일 읽기",
+      "결과": "성공. 최초 설치 직후에는 permission raw0이었음. 이후 사용자 설정으로 Always raw3 확인(아래 후속 결과 참조).",
+      "증거": "weather_care_app/build/ios-device-20261022-permission-events.jsonl"
+    },
+    {
+      "항목": "실기기 XCTest 빌드",
+      "결과": "TEST BUILD SUCCEEDED. 테스트 실행은 아직 하지 않음",
+      "로그": "weather_care_app/build/ios-device-20261022-native-build.log"
+    }
+  ],
+  "QA전용변경": [
+    "한 화면에 위치·정확한 위치·항상 위치·로컬 네트워크 권한 안내와 요청 버튼 배치",
+    "로컬 HTTP 시험을 위해 QA 복제본에만 ATS 예외·로컬 네트워크 사용 설명 및 Swift DEBUG 조건 허용",
+    "실제 제품 BackgroundLocationMonitor의 상태·OS 콜백·백그라운드 여부·측정시각·전송 결과를 QA 파일에 추가 기록. 진단 파일에는 실제 좌표를 쓰지 않음",
+    "로컬 수신기는 PUT 좌표를 메모리 기록에서 제거. 공개 API와 실제 알림 토큰 미사용",
+    "Apple 개발용 QA 앱·위젯 프로비저닝 프로필 자동 생성. 실제 서명 배포본 검증과 구분"
+  ],
+  "권한안내": {
+    "현재": "사용자가 새로고침 설정 완료를 알림. 실제 QA 로그에서 authorizedAlways(raw3), backgroundRefresh available(raw2), lowPowerMode false 확인.",
+    "동작": "같은 Wi-Fi에서 1→2→3 버튼으로 위치(정확한 위치·항상 허용)와 로컬 네트워크 설정",
+    "지침": "AGENTS.md: 프로젝트 내에서 받아야하는 모든 권한 관련 안내 화면을 띄운 후 한번에 권한 승인을 요청한다."
+  },
+  "남은검증": [
+    "실제 물리 이동·통신망 전환에 따른 significant-change 콜백과 복귀 전송은 미검증으로 남김. 사용자에게 이동을 다시 요청하지 않음.",
+    "실제 APNs/FCM·구매·광고·공개 시험 서버 알림 지역/위젯 종단 검증은 이번 로컬 QA 범위에 포함하지 않음."
+  ],
+  "한계": [
+    "설치와 프로세스 실행은 실제 백그라운드 이동 감지 성공을 뜻하지 않음",
+    "현재 원래 제품 앱의 전체 화면·실제 푸시·구매·위젯 탭 검증은 미실행",
+    "이전 시뮬레이터 OS significant-change 미통과 이력은 그대로 유지",
+    "초기 OS 모의 위치의 수신·전송 성공과 이후7분 추가 콜백 미재현을 분리한다. 백그라운드 동작 전체 성공으로 표현하지 않음."
+  ],
+  "작업범위": "이번 실제기기 작업에서 제품 원본 소스는 추가 수정하지 않음. 시험/운영 서버·DB·배포·커밋·push 없음.",
+  "실기기네이티브테스트": {
+    "결과": "Passed",
+    "통과": 20,
+    "실패": 0,
+    "skip": 0,
+    "합성위치": "실제 iPhone의 Keychain·URLSession·App Group을 사용하며 동적 측정은 합성 CLLocation 주입. 실제 이동 콜백과 구분.",
+    "실행시간": "2026-10-22 16:50:54~16:51:07 KST",
+    "위치권한": "authorizedAlways(raw3)",
+    "백그라운드앱새로고침": "denied(raw1)",
+    "제외": [
+      "testOSSignificantMovementDeliveryInBackground",
+      "testSimulatorStandardLocationBackgroundControl"
+    ],
+    "제외이유": "두 검사는 simctl 경로를 사용하므로 실제 기기 이동 검증으로 실행하지 않음.20개 실행 결과에 skip은0.",
+    "결과묶음": "weather_care_app/build/ios-device-20261022-native.xcresult",
+    "요약": "weather_care_app/build/ios-device-20261022-native-summary.json",
+    "로그": "weather_care_app/build/ios-device-20261022-native-test.log",
+    "합산기준": "이전 시뮬레이터와 동일 시나리오의 실기기 재실행20개이며, 이전 고유 자동검사 수에 중복 가산하지 않음."
+  },
+  "이동용앱준비": {
+    "빌드": "Profile AOT BUILD SUCCEEDED",
+    "로그": "weather_care_app/build/ios-device-20261022-field-profile.log",
+    "설치": "실기기 설치 성공, 같은 QA 번들로 데이터/권한 유지",
+    "실행": "16:58:30 KST 전경 실행 및 field_configured success. 진단 보강 앱 업데이트 후 17:00:16 KST --no-activate로 잠금 중 백그라운드 실행 성공. 디버거 미연결.",
+    "증거": "weather_care_app/build/ios-device-20261022-field-background-launch.json",
+    "진단보강": "QA에만 콜백 당시 backgroundRefresh·lowPowerMode·protectedDataAvailable, 초기 측정에서 이동 거리·정확도를 기록. 실제 좌표는 진단 파일에 기록하지 않음. 일반 GPS/추가 백그라운드 실행시간은 넣지 않음.",
+    "진단추가": "OS가 받은 원본 측정의 시각·나이·정확도·허용영역 여부·기존측정시각만 기록. 실제 위경도는 진단에 저장하지 않음.",
+    "최종상태": "검증 종료 후 QA 앱과 UI 테스트 러너 제거. 모의 위치 해제. 원래 사용자 앱은 제거/재설치하지 않음."
+  },
+  "초기실제OS위치": {
+    "콜백": "2026-10-22 17:00:16 KST",
+    "applicationState": "background(raw2)",
+    "측정시각": "2026-10-22 08:21:53 KST",
+    "수신시나이초": 31103.253,
+    "정확도미터": 17.824,
+    "허용영역내": true,
+    "저장및전송": "안 함.15분 이상 지난 측정 거부 조건에 부합. 실제 이동 성공으로 세지 않음.",
+    "증거": "weather_care_app/build/ios-device-20261022-field-events.jsonl"
+  },
+  "이동요청": {
+    "상태": "사용자 실제 이동 불가 의사를 반영해 물리 이동 요청 종료. 추가 이동 요청하지 않음.",
+    "후속": "제자리에서 XCTest OS 위치 모의 API로 실기기 가상 이동 검사로 전환. 실제 물리 이동 검증으로 합산하지 않음."
+  },
+  "실기기가상위치초기수신": {
+    "결과": "실제 iPhone 백그라운드 OS 위치 수신·저장·로컬 PUT HTTP200 확인",
+    "시각": "2026-10-22 17:20:51 KST",
+    "위치출처": "XCUIDevice.shared.location / XCUILocation, 제품 delegate 직접 호출 아님",
+    "applicationState": 2,
+    "backgroundRefresh": 2,
+    "lowPowerMode": false,
+    "OS측정정확도미터": 5,
+    "한계": "테스트 도구가 설정한 초기 위치. 실제 이동·추가 significant-change 갱신 성공을 의미하지 않음.",
+    "증거": "weather_care_app/build/ios-device-20261022-virtual-events.jsonl"
+  },
+  "가상경로진행": {
+    "도구": "QA 전용 DeviceLocationUITests/DeviceLocationQA scheme, Profile AOT 대상앱",
+    "경로": "서울→부산 보간84단계·5초간격·7분",
+    "원복": "테스트 defer에서 XCUIDevice.shared.location=nil",
+    "첫시도": "모의 입력의 수평정확도를 명시하기 위해 중단. 이후 로그에서 OS가 원래 0을5m로 정규화한 것을 확인했으므로 제품의 측정거부나 실패로 기록하지 않음.",
+    "현재": "종료",
+    "실행시간초": 444.961,
+    "관찰시간초": 423.51,
+    "경로입력수": 84,
+    "도구결과": "경로 재생·앱 background 유지 검사1개 통과. 제품의 추가 OS 이동 감지 성공을 뜻하지 않음.",
+    "추가OS콜백": 0,
+    "추가측정저장": 0,
+    "추가PUT": 0,
+    "판정": "가상경로의 연속 significant-change 갱신은 미재현/확인 못함. 물리적 이동이 없으므로 실기기 제품 결함으로 단정하지 않음.",
+    "모의위치원복": "XCTest defer의 nil 설정과 Resetting the simulated location 기록 확인",
+    "결과묶음": "weather_care_app/build/ios-device-20261022-virtual-movement-final.xcresult",
+    "로그": "weather_care_app/build/ios-device-20261022-virtual-movement-final.log",
+    "기기진단": "weather_care_app/build/ios-device-20261022-virtual-final-events.jsonl",
+    "집계": "weather_care_app/build/ios-device-20261022-virtual-evidence-summary.json"
+  },
+  "공식근거": [
+    {
+      "제목": "Apple Simulating location in tests",
+      "URL": "https://developer.apple.com/documentation/xcode/simulating-location-in-tests"
+    },
+    {
+      "제목": "Apple XCUIDevice.location",
+      "URL": "https://developer.apple.com/documentation/xcuiautomation/xcuidevice/location"
+    }
+  ],
+  "종료정리": {
+    "모의위치": "nil 복원 기록 확인",
+    "QA앱": "com.codesoha.weathercare.qa 제거 성공",
+    "UI러너": "com.codesoha.weathercare.qa.locationuitests.xctrunner 제거 성공",
+    "로컬수신기": "종료/exec session58877 exit0 확인",
+    "원본앱": "기존 앱·위젯 저장소 직접 변경/재설치 없음",
+    "참고": "앱 제거가 iOS Keychain 전체 삭제를 보장하지는 않음. 잔여 QA Keychain은 합성 측정과 가짜 인증값이며 재설치 표식 검사로 동의가 초기화되는 구조."
+  },
+  "기록기준": "이전 단계의 빌드·설치·권한 상태는 당시 이력. 최신 결론은 상태/종료정리 또는 실기기후속작업 참조."
+}

@@ -71,9 +71,9 @@ def widget(family, dark=False):
         return source.convert('RGBA')
 
 
-def notification_cards():
+def notification_cards(extra_examples=()):
     """실제 지원하는 발송 종류를 소개하는 홍보용 예시 카드. OS 캡처가 아니다."""
-    im = Image.new('RGBA', (880, 1210))
+    im = Image.new('RGBA', (880, 1210 + 293 * len(extra_examples)))
     d = ImageDraw.Draw(im)
     examples = [
         ('준비물 요약', '오늘 준비할 내용', '저녁에는 비가 예상돼요.\n우산과 얇은 겉옷을 챙기세요.'),
@@ -81,6 +81,7 @@ def notification_cards():
         ('기상특보', '호우특보 안내', '발효된 호우특보의 시작과\n단계 변경·해제를 알려드려요.'),
         ('낙뢰', '서울시 중구 낙뢰 관측', '등록 위치로부터 약 2.4km에서 낙뢰가 관측됐어요.\n안전한 건물이나 자동차 안으로 이동하세요.'),
     ]
+    examples.extend(extra_examples)
     for i, (kind, title, body) in enumerate(examples):
         x, y, w = (0 if i % 2 == 0 else 44), i * 293, 836
         d.rounded_rectangle((x, y, x + w, y + 264), radius=34, fill='#F6F8FB')

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/features/home/tabs/week_tab.dart';
-import 'package:weather_care/features/home/widgets/weather_condition_icon.dart';
+import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 import 'package:weather_care/models/weather.dart';
 
 void main() {
@@ -153,15 +153,14 @@ void main() {
     await tester.pumpAndSettle();
     final first = find.byKey(const ValueKey('main-hourly-10'));
     final second = find.byKey(const ValueKey('main-hourly-11'));
-    expect(
-        find.descendant(of: first, matching: find.byType(WeatherConditionIcon)),
-        findsOneWidget);
-    expect(find.descendant(of: first, matching: find.text('19°C')),
-        findsOneWidget);
-    expect(find.descendant(of: first, matching: find.text('(체감 14°C)')),
-        findsOneWidget);
+    final weatherChart = tester.widget<HourlyValueChart>(
+        find.descendant(of: card, matching: find.byType(HourlyValueChart)));
+    final ten = weatherChart.hours.indexOf(10);
+    expect(weatherChart.conditions[ten], '맑음');
+    expect(weatherChart.series.values[ten]?.lower, 19);
+    expect(weatherChart.overlays.single.values[ten]?.lower, 14.4);
     expect(tester.getRect(first).right, tester.getRect(second).left);
-    expect(tester.getSize(first).width, 120);
+    expect(tester.getSize(first).width, 80);
     expect(
         find.byKey(const ValueKey('main-hourly-weather-band')), findsNothing);
     for (final metric in [
@@ -179,15 +178,13 @@ void main() {
             find.byKey(const ValueKey('main-hourly-filter-precipitation')))
         .onSelected!(true);
     await tester.pumpAndSettle();
-    expect(
-        find.descendant(of: first, matching: find.text('1mm')), findsOneWidget);
-    expect(
-        find.descendant(
-            of: first,
-            matching:
-                find.byKey(const ValueKey('today-hourly-precipitation-icon'))),
-        findsOneWidget);
-    expect(find.textContaining('강수량'), findsNothing);
+    final rainChart = tester.widget<HourlyValueChart>(
+        find.descendant(of: card, matching: find.byType(HourlyValueChart)));
+    expect(rainChart.series.id, 'rain-amount');
+    expect(rainChart.series.values[rainChart.hours.indexOf(10)]?.lower, 1);
+    expect(rainChart.overlays.single.id, 'rain-probability');
+    expect(rainChart.overlays.single.values[rainChart.hours.indexOf(10)]?.lower,
+        40);
     expect(tester.takeException(), isNull);
   });
 
@@ -284,8 +281,9 @@ void main() {
         findsOneWidget);
     expect(find.descendant(of: futureCard, matching: find.text('23°C')),
         findsOneWidget);
-    expect(find.descendant(of: futureCard, matching: find.text('(체감 23°C)')),
-        findsOneWidget);
+    final chart = tester.widget<HourlyValueChart>(find.descendant(
+        of: futureCard, matching: find.byType(HourlyValueChart)));
+    expect(chart.overlays.single.values[chart.hours.indexOf(11)]?.lower, 22.5);
     expect(
       find.text('맑은 하늘이 이어지는 날씨예요.'),
       findsOneWidget,

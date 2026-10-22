@@ -1,0 +1,197 @@
+{
+  "검증일": "2026-10-22",
+  "결론": "iOS 공통719개 및 네이티브 합성 검증 통과. 실제 iPhone에서 초기 OS 모의 위치의 백그라운드 수신·전송은 확인했지만, 시뮬레이터/실기기 가상경로의 추가 significant-change는 미재현. 실제 물리 이동은 미실시로 구분.",
+  "환경": {
+    "Flutter": "3.47.4",
+    "Xcode": "26.4.1 (17E202)",
+    "기기": "전용 iPhone 16 Pro / iOS 18.6 시뮬레이터",
+    "사용자화면": "createdesktop 도구 미제공. 앱·시뮬레이터 창을 열지 않고 simctl/XCTest로 실행.",
+    "실제iPhone": "연결 상태만 조회, 설치·실행·설정·권한 변경 없음"
+  },
+  "수정": [
+    {
+      "문제": "Swift 독점 접근 위반으로 iOS 빌드 실패",
+      "해결": "configuration 수정 전에 revision 값을 읽음"
+    },
+    {
+      "문제": "같은 미세 정밀도 GPS 측정을 2회 전송",
+      "재현": "testDuplicateSubmillisecondSampleDoesNotUploadTwice에서 PUT 2회 확인",
+      "해결": "저장한 ISO8601 밀리초 정밀도와 같은 정밀도로 비교, PUT 1회 회귀 검사 통과"
+    },
+    {
+      "문제": "위젯 설정값의 +를 URLSearchParams 서버가 공백으로 해석 가능",
+      "해결": "URLComponents가 남긴 +를 %2B로 인코딩. 실제 URLSession 위젯 갱신 경로에서 보존 확인"
+    },
+    {
+      "문제": "XCTest 최소 버전 15.0과 Runner 최소 버전 15.6 불일치",
+      "해결": "RunnerTests Debug/Release/Profile을 앱과 같은 15.6으로 설정"
+    },
+    {
+      "문제": "Runner Debug에 Swift DEBUG 조건이 없어 로컬 HTTP 시험 구성이 거부됨",
+      "해결": "Debug 설정에 $(inherited) DEBUG 추가. Release의 HTTPS 제한은 유지"
+    },
+    {
+      "문제": "기존 화면 검사 3건이 이전 그래프·버튼 여백을 기대",
+      "해결": "실제 그래프의 기온·체감·강수량·확률 시계열과 현재 버튼 안쪽 여백을 검사. 런타임 UI 변경 없음"
+    }
+  ],
+  "검증결과": {
+    "기존전체최초실행": {
+      "통과": 716,
+      "실패": 3,
+      "실패종류": "이전 화면 기대값",
+      "로그": "weather_care_app/build/ios-parity-20261022-flutter.log"
+    },
+    "iOS공통전체": {
+      "파일": 70,
+      "통과": 719,
+      "실패": 0,
+      "설명": "위젯 테스트의 기본 TargetPlatform을 iOS로 설정하고 파일별 프로세스 격리를 유지. 개별 테스트가 명시한 Android/iOS 플랫폼 변형은 보존. 네이티브 OS 실행과 구분.",
+      "로그": "weather_care_app/build/ios-parity-20261022-ios-flutter-isolated.log"
+    },
+    "화면검사재실행": {
+      "통과": 43,
+      "실패": 0,
+      "로그": "weather_care_app/build/ios-parity-20261022-screen-final.log"
+    },
+    "XCTest전체": {
+      "통과": 19,
+      "실패": 0,
+      "미확인으로건너뜀": 1,
+      "결과묶음": "weather_care_app/build/ios-parity-20261022-native-complete.xcresult",
+      "기준": "최초 합성 네이티브 전체 실행 당시. 후속 OS 검증 결과는 아래 후속재검증 참조."
+    },
+    "실제OS위치권한철회후추가XCTest": {
+      "통과": 1,
+      "실패": 0,
+      "방법": "simctl privacy revoke location-always 및 location 후 권한 상태·위치 미저장 검사",
+      "결과묶음": "weather_care_app/build/ios-parity-20261022-permission-denied.xcresult"
+    },
+    "고유자동검사합계": {
+      "통과": 740,
+      "미통과": 1,
+      "설명": "이전 공통719 + 네이티브20 + 새 일반 위치 OS 대조1. OS significant-change 1건은 7분 검사에서 실패. 같은 검사 재실행·권한 환경 재확인은 중복 가산하지 않음."
+    },
+    "정적분석": "문제 없음",
+    "서명없는실기기Release빌드": {
+      "결과": "성공",
+      "대상": "Runner 및 WeatherCareWidget / Release / iphoneos arm64",
+      "명령": "xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO build",
+      "로그": "weather_care_app/build/ios-parity-20261022-release-device.log",
+      "한계": "서명·실제 iPhone 설치/실행·스토어 배포 검증은 아님"
+    }
+  },
+  "네이티브통과범위": [
+    "실제 CoreLocation 객체·Keychain·URLSession·App Group을 사용. 동적 시나리오는 합성 CLLocation을 delegate로 직접 전달하고 로컬 HTTP 응답 서버 사용.",
+    "인증 헤더·UTF-8 JSON·다른 호스트로 시험 접근키 미전달",
+    "서울→부산 격자 전환, 예전 지역명 제거, 대략적 위치의 위젯 정밀 좌표 제외, 한국어 지역명 구성, 위젯 설정 보존",
+    "위젯 App Group snapshot 새 격자·기온·지역명·수신시각 갱신",
+    "수동 선택 및 더 최신 전경 측정이 백그라운드 응답보다 우선",
+    "오래됨·미래·국외·NaN·무한대·불명확/부정확한 측정 거부",
+    "통신 503/429 최신 측정 보관 및 resume 재시도, 400 폐기, 401/409/410 감시 종료",
+    "동일/과거 측정 중복 억제, 만료된 대기 측정 폐기",
+    "Keychain 재생성 복원과 설치 표식이 사라진 재설치 상황에서 이전 동의 폐기",
+    "끄기 시 Keychain 삭제, 전송 중 끄기·세션 교체 뒤 늦은 응답 차단",
+    "실제 iOS 권한 철회 상태에서 permissionRequired와 측정 미저장"
+  ],
+  "Android항목대응": [
+    {
+      "Android": "5분 자체 GPS 요청·1km 서비스·WorkManager·부팅 receiver",
+      "iOS": "significant-location-change 및 앱 시작 resume 방식. 같은 주기·상시 서비스·receiver 검사를 이식하는 항목은 아님."
+    },
+    {
+      "Android": "실행 알림 채널 숨김",
+      "iOS": "해당 채널 없음. iOS에서 Android 전용 버튼 숨김은 공통 플랫폼 테스트로 검사."
+    },
+    {
+      "Android": "실제 백그라운드 이동→시험 서버 알림 지역·실제 날씨·홈 위젯 왕복",
+      "iOS": "로컬 전송·위젯 저장 경로는 통과. 실제 OS 이동 감지·공개 시험 서버 왕복은 미완료."
+    }
+  ],
+  "아직확인하지못함": [
+    "후속 검증에서 출발 좌표·초기 OS 측정·연속 이동 경로·7분 관찰·전용 테스트 진입점으로 재검사했으나 새 significant-change 콜백이 없어 미통과. 단순 10초 skip 상태를 실제 실패 관찰 기록으로 보완했다. 실기기 이동은 여전히 필요하다.",
+    "실제 iPhone의 잠금·장거리 이동·절전·재부팅/OS 종료 후 복원·실제 오프라인 전환·복구. 정확한 갱신 주기는 보장하지 않음.",
+    "실제 APNs/FCM 수신, 서명된 배포본 entitlement와 토큰 등록 왕복, 스토어 구매·복원·실제 광고 표시·실제 홈 위젯 탭 동작.",
+    "공개 시험 서버의 합성 iOS 설치 위치·알림 토픽 변경 및 실제 날씨 응답 대조. 이번에는 로컬 HTTP fixture 사용."
+  ],
+  "재실행": {
+    "공통": "python3 scripts/run_ios_flutter_tests.py --flutter /Users/soha/flutter_3.47.4/bin/flutter",
+    "로컬응답서버": "WEATHER_CARE_IOS_SIMULATOR=<전용 시뮬레이터 UUID> python3 scripts/ios_parity_fixture.py",
+    "XCTest": "전용 시뮬레이터에 앱 설치 후 simctl privacy grant location-always com.codesoha.weathercare. Runner.xcworkspace / Runner / Debug에서 XCTest 실행. 권한 철회 검사는 testPermissionStateMatchesOSAndUnapprovedLocationIsNotStored를 별도 실행. OS 장시간 검사는 FLUTTER_TARGET=test/native_location_host.dart와 위 후속재검증의 명령 사용. 해당 시뮬레이터에서는 실패가 재현됨.",
+    "자료": "xcrun xcresulttool get test-results summary --path <xcresult 경로>"
+  },
+  "공식근거": [
+    {
+      "제목": "Apple significant-location-change API",
+      "URL": "https://developer.apple.com/documentation/corelocation/cllocationmanager/startmonitoringsignificantlocationchanges()"
+    }
+  ],
+  "범위보존": "사용자 실제 기기·운영/시험 서버 배포·운영/시험 DB·실제 푸시·스토어 업로드·커밋·push 변경 없음. 다른 채팅의 스토어 이미지와 HANDOFF 변경 보존.",
+  "종료정리": "CocoaPods의 버전 변경 없는 SPEC CHECKSUMS만 원래 값으로 복원하고 로컬 Manifest도 정합화. 시험 응답 서버 중지 및 전용 시뮬레이터 종료. 생성한 테스트 기기는 다시 사용할 수 있도록 보존.",
+  "후속재검증": {
+    "사용자요청": "실제 iPhone 연결 시 자동 검사 가능 여부 및 시뮬레이터 백그라운드 이동 감지 재확인",
+    "실기기준비상태": {
+      "기기": "iPhone 16 Pro / iOS 27.0.1",
+      "연결": "유선·신뢰 연결 완료",
+      "개발자모드": "활성화",
+      "개발자디스크서비스": "사용 가능",
+      "수행범위": "상태 조회만. 앱 설치·실행·권한/설정 변경 없음."
+    },
+    "검사방법보완": [
+      "서울 시작 좌표를 명시하고 실제 OS 초기 위치 콜백·PUT 완료 후 홈으로 내림.",
+      "simctl location start로 서울→부산 연속 경로 재생. 속도1000m/s·5초 간격의 합성 경로이며 실제 이동의 모사가 아님. 최대7분 관찰.",
+      "일반 앱 초기화의 기본 꺼짐 동작과 시험용 감시 간섭 가능성을 배제하기 위해 test/native_location_host.dart 전용 진입점도 별도 사용. 설정 삭제 감시 추가.",
+      "CLLocationManager delegate 직접 호출·작업 강제 실행·수동 위치 PUT·다른 GPS 소비자를 주 검사에 사용하지 않음.",
+      "일반 startUpdatingLocation 대조는 별도 시험으로 구분. 실제 OS 콜백과 백그라운드 상태를 검사."
+    ],
+    "일반앱진입점검사": {
+      "결과": "실패",
+      "XCTest실행초": 437.454,
+      "관찰초": 420,
+      "OS위치검사수": 84,
+      "새SLC알림판정수": 0,
+      "최대인식거리m": 324915.29633,
+      "초기위치PUT수": 1,
+      "근거": "weather_care_app/build/ios-movement-20261022-route.xcresult"
+    },
+    "전용진입점재검사": {
+      "결과": "실패",
+      "XCTest실행초": 441.052,
+      "관찰초": 420,
+      "OS위치검사수": 67,
+      "새SLC알림판정수": 0,
+      "최대인식거리m": 324915.29633,
+      "초기위치PUT수": 1,
+      "부가조작": "경로 시작 약329초 뒤 simctl location set으로 부산 좌표를 다시 입력했으나 추가 콜백 없음. 이 조작도 결과 기록에 포함.",
+      "설정보존": "시험 중 Keychain 설정 삭제 없음. 홈 화면 캡처 확인.",
+      "근거": "weather_care_app/build/ios-movement-20261022-isolated.xcresult"
+    },
+    "일반위치백그라운드대조": {
+      "결과": "통과",
+      "실행초": 8.824,
+      "방법": "테스트 전용 CLLocationManager.startUpdatingLocation·정확도100m·background updates 허용. 앱은 홈 화면. OS가 보낸 새 좌표 수신·1km 이상 이동·UIApplication.background 상태 확인.",
+      "한계": "제품의 significant-change 방식 성공이나 저전력·실기기 잠금 동작을 입증하지 않음.",
+      "근거": "weather_care_app/build/ios-movement-20261022-control.xcresult"
+    },
+    "환경재확인": {
+      "결과": "통과",
+      "항상위치권한": "CLAuthorizationStatus.rawValue=3 (authorizedAlways)",
+      "백그라운드앱새로고침": "UIBackgroundRefreshStatus.rawValue=2 (available)",
+      "근거": "weather_care_app/build/ios-movement-20261022-capabilities.log"
+    },
+    "판단": "초기 OS 측정→앱 전송 및 일반 위치 서비스의 백그라운드 OS 콜백은 확인. 현재 환경의 locationd는 연속 합성 이동을 새 SLC로 분류하지 않았다. 제품의 실기기 동작 결함 또는 시뮬레이터 전반의 미지원으로 일반화하지 않는다. 실제 이동 성공으로 기록하지 않는다.",
+    "실기기자동화범위": "연결·서명/빌드·설치·로그·자동 회귀 검사는 진행 가능. 시스템 권한 선택과 실제 이동은 사람의 조작이 필요할 수 있다. 최종 백그라운드 시험은 디버거를 분리한 기기로 이동하며 확인해야 한다.",
+    "공식근거": {
+      "제목": "Apple Engineer: Testing Significant Location Change",
+      "URL": "https://developer.apple.com/forums/thread/814449"
+    },
+    "변경범위": "이번 후속 작업은 XCTest·전용 Dart 테스트 호스트·로컬 fixture·검증 기록만 보완. 제품 코드·운영/시험 서버·실제 iPhone 설정 변경 없음.",
+    "재실행명령": "ios 디렉터리에서 xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Debug -destination platform=iOS Simulator,id=<전용 UUID> CODE_SIGN_IDENTITY=- ONLY_ACTIVE_ARCH=YES FLUTTER_TARGET=test/native_location_host.dart -parallel-testing-enabled NO -only-testing:RunnerTests/RunnerTests/testOSSignificantMovementDeliveryInBackground test. 로컬 fixture를 WEATHER_CARE_IOS_SIMULATOR=<전용 UUID>로 먼저 실행."
+  },
+  "실기기후속작업": {
+    "상태": "종료.실제 iPhone 합성 네이티브20개 통과. 초기 OS 모의 위치는 background 수신·저장·전송200 확인.7분 가상경로 추가SLC콜백0회. 실제 물리 이동은 사용자 제약으로 미실시. 모의위치·QA앱·로컬수신기 정리.",
+    "상세보고서": "docs/iOS_실기기_GPS_검증_20261022.json",
+    "기준": "위 본문의 실기기 미실행 내용은 이전 시뮬레이터 작업 당시 이력이며, 이번 후속에서 QA 앱을 설치·실행함. 실제 OS 이동 성공은 아직 미확인."
+  },
+  "기록기준": "이전 단계의 빌드·설치·권한 상태는 당시 이력. 최신 결론은 상태/종료정리 또는 실기기후속작업 참조."
+}

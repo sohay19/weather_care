@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -242,8 +243,13 @@ class StoreShell extends StatelessWidget {
   }
 }
 
-void main() {
-  testWidgets('현재 Android 스토어 화면을 사용자 창 없이 렌더링한다', (tester) async {
+void main({bool ios = false}) {
+  testWidgets('현재 ${ios ? 'iOS' : 'Android'} 스토어 화면을 사용자 창 없이 렌더링한다',
+      (tester) async {
+    if (ios) {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+    }
     // store 아래에서 직접 실행하는 캡처 전용 테스트다.
     // ignore: invalid_use_of_visible_for_testing_member
     SharedPreferences.setMockInitialValues({});
@@ -270,10 +276,12 @@ void main() {
           ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf')))
         .load();
     for (final format in ['phone', 'tablet']) {
-      final out = Directory('store/screenshots/source-20261022/$format')
+      final source = ios ? 'source-ios-20261022' : 'source-20261022';
+      final out = Directory('store/screenshots/$source/$format')
         ..createSync(recursive: true);
-      tester.view.physicalSize =
-          format == 'phone' ? const Size(412, 1000) : const Size(800, 1280);
+      tester.view.physicalSize = ios
+          ? (format == 'phone' ? const Size(440, 956) : const Size(1032, 1376))
+          : (format == 'phone' ? const Size(412, 1000) : const Size(800, 1280));
       Future<void> render(Widget screen, int index, String name,
           {bool dark = false, Future<void> Function()? action}) async {
         const selected = String.fromEnvironment('STORE_CAPTURE_SCREEN');
@@ -404,5 +412,6 @@ void main() {
     }
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
+    if (ios) debugDefaultTargetPlatformOverride = null;
   });
 }

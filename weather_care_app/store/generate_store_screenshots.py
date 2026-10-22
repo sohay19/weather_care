@@ -508,6 +508,10 @@ WIDGET_SECONDARY = "#60758A"
 WIDGET_SURFACE = "#EAF4FB"
 WIDGET_PANEL = "#F9FCFE"
 WIDGET_REFRESH = "#476F98"
+WIDGET_REFRESH_INK = "#FFFFFF"
+WIDGET_DIVIDER = "#ABC3D6"
+WIDGET_MINMAX = "#475A70"
+WIDGET_PREPARATION = "#E2EFF8"
 
 
 def text_size(draw: ImageDraw.ImageDraw, text: str, text_font: ImageFont.FreeTypeFont) -> tuple[int, int]:
@@ -612,7 +616,7 @@ def paste_preparation_icon(
     left, top, right, bottom = box
     side = min(right - left, bottom - top)
     draw = ImageDraw.Draw(image)
-    draw.ellipse((left, top, left + side, top + side), fill="#E2EFF8")
+    draw.ellipse((left, top, left + side, top + side), fill=WIDGET_PREPARATION)
     if asset_name:
         asset_path = ROOT.parent / "assets" / "icons" / asset_name
         with Image.open(asset_path) as source:
@@ -665,7 +669,7 @@ def draw_refresh_button(
         ),
         start=-70,
         end=250,
-        fill="#FFFFFF",
+        fill=WIDGET_REFRESH_INK,
         width=stroke,
     )
     draw.polygon(
@@ -674,7 +678,7 @@ def draw_refresh_button(
             (round(center_x + diameter * 0.24), round(center_y - diameter * 0.04)),
             (round(center_x + diameter * 0.06), round(center_y - diameter * 0.11)),
         ),
-        fill="#FFFFFF",
+        fill=WIDGET_REFRESH_INK,
     )
 
 
@@ -696,7 +700,7 @@ def draw_min_max_row(
     cursor_x = (box[0] + box[2] - sum(widths)) / 2
     center_y = (box[1] + box[3]) / 2
     for (text, _), text_font, part_width, part_height in zip(parts, fonts, widths, heights):
-        draw_text_top(draw, (cursor_x, center_y - part_height / 2), text, text_font, "#475A70")
+        draw_text_top(draw, (cursor_x, center_y - part_height / 2), text, text_font, WIDGET_MINMAX)
         cursor_x += part_width
 
 
@@ -755,7 +759,7 @@ def draw_temperature_row(
     divider_top = center_y - divider_height * scale / 2
     draw.rectangle(
         (round(cursor_x), round(divider_top), round(cursor_x) + divider_pixels - 1, round(divider_top + divider_height * scale)),
-        fill="#ABC3D6",
+        fill=WIDGET_DIVIDER,
     )
     cursor_x += divider_pixels + spacing_pixels
     apparent_label_width = text_size(draw, "체감", label_font)[0]
@@ -910,7 +914,7 @@ def draw_widget_card(size: tuple[int, int], family: str, platform: str) -> Image
     content_bottom = next_top - round(5 * scale)
     prep_height = round(48 * scale)
     brief_font = font("SUITE-ExtraBold.ttf", max(8, round(14 * scale)))
-    brief_lines = ["오전에는 선선하고 오후에는 포근해요.", "얇은 겉옷을 챙기면 좋아요."]
+    brief_lines = WIDGET_DATA.get("brief_lines", ["오전에는 선선하고 오후에는 포근해요.", "얇은 겉옷을 챙기면 좋아요."])
     brief_line_height = max(text_size(draw, line, brief_font)[1] for line in brief_lines)
     brief_height = brief_line_height * len(brief_lines) + round(2 * scale)
     group_height = round(72 * scale) + round(20 * scale) + brief_height + round(20 * scale) + prep_height
@@ -942,12 +946,12 @@ def draw_widget_card(size: tuple[int, int], family: str, platform: str) -> Image
 
     prep_top = round(brief_top + brief_height + 20 * scale)
     prep_gap = round(6 * scale)
-    prep_width = (right - left - prep_gap * 2) / 3
-    preparations = (
+    preparations = WIDGET_DATA.get("preparations", (
         ("prep_umbrella.png", "우산"),
         ("prep_outerwear.png", "두꺼운 겉옷"),
         (None, "마스크"),
-    )
+    ))
+    prep_width = (right - left - prep_gap * (len(preparations) - 1)) / len(preparations)
     for index, (asset, label) in enumerate(preparations):
         prep_left = round(left + index * (prep_width + prep_gap))
         prep_right = round(prep_left + prep_width)

@@ -12268,3 +12268,102 @@
 
 - 사용자 요청으로 현재 저장소의 수정·신규 파일을 모두 커밋한다. 위젯 준비물/큰 브리핑 정렬과 터치 영역을 유지한 새로고침 표시 축소, 타임라인 수치 겹침 방지 및 테스트, Android 2·3·4번과 실제 위젯 원본·촬영 도구·미리보기·해시·ZIP·안내·작업 기록을 포함한다.
 - 앞선 타임라인 113개 테스트/분석, ARM64 profile 빌드 및 SM-S948U 실제 위젯 검증, PNG/ZIP·보존 해시 검증 통과 기록을 확인했다. 이번 커밋 작업에서는 기능 코드를 추가 수정하거나 동일 테스트를 재실행하지 않고 스테이징 전체 공백 검사를 수행한다. 한글 기반 Conventional Commit 메시지를 사용하며 원격 푸시·배포는 수행하지 않는다.
+
+
+## 2026-10-22 현재 UI 기준 iOS 스크린샷 재제작
+
+- 사용자 요청의 메인 요약·위젯·다크모드·다양한 알림·심화 정보·한주 날씨·항목별 알림 설정을 바탕으로 iPhone1320×2868·iPad2064×2752 각8장을 제작했다. 메인 요약은 준비물/현재 날씨/어제 비교와 별도의 타임라인 이미지2장으로 구성했다. 기존 파란 배경·흰 제목·노란 주제 문구를 이어갔다.
+- capture_android_test.dart의 기존 캡처 경로를 iOS 옵션으로 재사용하고 capture_ios_test.dart 진입점을 추가했다. 현재 MainTab·ExtraTab·WeekTab·SettingsScreen을 iOS 플랫폼으로 창 없이 렌더링했다. 휴대전화440×956@3x·태블릿1032×1376@2x 원본18개를 source-ios-20261022에 저장했다. Flutter3.47.4의 초기 플랫폼 override 종료 검사를 수정한 뒤 캡처 테스트1개 전체 통과, 캡처 Dart2개 분석 이슈 없음.
+- 앱 화면은 최신 실제 Flutter 위젯의 비표시 렌더링이며 실기기/시뮬레이터 촬영이 아니다. 날씨·비교·관측소·설정은 제작용 예시다. 위젯은 현재 WeatherCareWidget.swift의 여백·크기·폰트·라이트/다크 색상과 공유 자산으로 재현했다. 기존 생성기의 기본 출력값을 유지하면서 색상·브리핑·준비물의 선택 지정만 지원하도록 보완했다. 알림은 현재 지원 종류4종을 설명하는 예시 카드로 이미지에도 예시 문구를 표시했다.
+- generate_ios_store.py와 한국어 IOS_20261022.md, 해시 명세, iPhone/iPad 미리보기를 추가했다. 최신 전용ZIP은 store/app-store/weather-care-ios-screenshots-20261022.zip이다. 고정 이름 weather-care-ios-screenshots.zip 및 통합ZIP2개도 최신 iOS/iPad 파일로 갱신했다. 이전9장 구성은8장으로 교체하고 기존 이미지·ZIP은 ignored build/ios-screenshots-backup-20261022에 보관했다. screenshots/README.md에 최신 안내를 추가했다.
+- 검증: PNG16개 크기/RGB/알파·투명도 없음/디코딩/SHA256, 플랫폼별8개, ZIP4개 CRC·중복 없음·로컬 이미지 일치, 전용ZIP각21항목, Python3개 구문 검사, git diff --check 통과. iPhone·iPad 전체 미리보기와 메인/위젯 확대 이미지로 한글·준비물·그래프·모드·배치를 시각 확인했다. Git HEAD와 비교해 대상 외 PNG88개, Android/홍보 전용ZIP4개 바이트 보존을 확인했다. 통합ZIP의 교체 대상 외 항목도 해시 보존을 검사했다. Apple 공식 스크린샷 규격에서1320×2868/2064×2752 및 투명도 금지를 확인했다.
+- createdesktop 도구가 없어 사용자 화면에 앱·시뮬레이터 창을 띄우지 않았다. 실제 사용자 설정·위치·권한 변경, 푸시 발송, 앱/서버 배포, 스토어 업로드, 커밋/push는 수행하지 않았다. Flutter가 자동 변경한 AppFrameworkInfo.plist는 기존 내용으로 복원했고 다른 채팅의 iOS 테스트·Podfile.lock·project.pbxproj 변경은 수정하지 않았다. 로그: ignored build/store-ios-capture-20261022.log·store-ios-analyze-20261022.log·store-ios-export-20261022.log.
+
+
+## 2026-10-22 iOS 전체 플랫폼·백그라운드 GPS 미실행 검증 보완
+- 사용자 요청으로 HANDOFF/AGENTS와 Android 전용 검증 기록을 대조했다. Flutter3.47.4·Xcode26.4.1, 이 작업 전용 iPhone16Pro/iOS18.6 시뮬레이터를 생성해 창 없이 simctl/XCTest로 실행했다. createdesktop 도구는 제공되지 않는다. 연결된 실제 iPhone은 목록만 조회하고 설치·실행·실제 설정/권한 변경은 하지 않았다.
+- iOS 네이티브 빌드에서 BackgroundLocationMonitor.configuration의 읽기/수정 중첩으로 Swift 독점 접근 오류를 재현해 revision을 먼저 읽도록 최소 수정했다. RunnerTests의 최소버전15.0이 Runner15.6보다 낮아 빌드가 막히는 문제를 테스트3구성의15.6명시로 해결했다. Runner Debug에만 $(inherited) DEBUG를 추가해 기존 #if DEBUG 로컬HTTP 시험 구성이 동작하게 했다. 앱 최소지원버전과 Release HTTPS 제한은 유지했다.
+- 실제 네이티브 전송 경로에서 미세 정밀도의 같은 CLLocation이2회PUT되는 것을 회귀검사로 재현했다. 저장 ISO8601과 같은 밀리초 정밀도로 비교해 중복을 막고 PUT1회를 확인했다. URLComponents가 남기는 '+'가 서버에서 공백으로 해석되는 위젯설정 인코딩도 %2B로 보완하고 실제 URLSession/App Group 갱신으로 확인했다. 다른 런타임 기능은 변경하지 않았다.
+- XCTest를 기존3개에서21개로 확장했다. 전체실행19통과/실패0/OS이동감지1skip, 실제 시뮬레이터 위치권한철회 후 별도 권한상태·측정미저장1통과로 고유 네이티브20개 통과다. 실제 CoreLocation/Keychain/URLSession/App Group을 사용하되 동적 측정은 합성 CLLocation delegate주입·로컬HTTP서버를 이용했다. 인증401/409/410정지,400폐기/429·503보관과복구,최신측정/수동선택보호,만료/비정상측정거부,세션교체·끄기경합,재생성복원·재설치동의폐기,격자·한국어지역명·위젯자료갱신을 포함한다. 공개시험서버·실제알림토픽왕복의 재검증은 아니다.
+- 기존 Flutter 전체 최초실행은716통과/3실패였다. 그래프개편 이전의아이콘·별도체감문구와버튼여백을 기대하던3건을 현재그래프의실제시계열·현재안쪽여백검사로갱신했다. 이후 파일별격리를 유지하는 iOS기본위젯플랫폼으로70파일719개 전부통과. 명시적플랫폼변형은보존했다. 변경화면2파일 재실행43개통과, 최종flutter analyze문제없음. 플랫폼래퍼의초기debug변수복원오류/단일isolate공유상태실패는시험도구문제로정정했고최종격리실행로그만최종결과로쓴다.
+- Debug앱·위젯·XCTest빌드와서명없는실기기arm64 Release앱·위젯빌드성공. 고유자동검사총739통과/OS이동감지1미확인. OS시험은앱을background로내리고1초후simctl합성좌표변경,10초관찰에서새significant-change콜백이없어skip했다. 실제iPhone잠금·실제이동·절전·재부팅/OS종료·실제오프라인복구·APNs/FCM수신·서명배포본·구매/실제광고/홈위젯탭은미검증이다. 특정갱신주기나백그라운드종단완료를주장하지않는다.
+- docs/iOS_플랫폼_전체_및_백그라운드_GPS_검증_20261022.json에전체결과·Android대응표·남은검사·재실행방법을기록했다. scripts/run_ios_flutter_tests.py와ios_parity_fixture.py를추가했다. 로그/xcresult/요약JSON/생성래퍼는ignored weather_care_app/build/ios-parity-20261022-* 및ios-parity-derived·ios-parity-suite에있다. CocoaPods자동생성은의존성버전변경없이체크섬만변한것을확인하고기존lock/로컬Manifest로복원했다.
+- 시험용응답서버와전용시뮬레이터를종료한다. 운영/시험서버접속·배포·DB변경·외부기상자료수집·실제푸시·스토어업로드·커밋/push는없다. 다른채팅의스토어이미지/도구/HANDOFF변경과기존AGENTS를보존했다. Python2도구구문/도움말·git diff --check통과.
+
+
+## 2026-10-22 iPhone 연결 준비 확인·시뮬레이터 OS 이동 감지 추가 재검증
+- 사용자 후속 요청으로 HANDOFF/AGENTS를 읽고 실제 iPhone 16 Pro의 유선 신뢰 연결, 개발자 모드 활성화, 개발자 디스크 서비스 사용 가능 상태를 읽기 전용으로 확인했다. iOS27.0.1이며 실제 기기 앱 설치·실행·설정·권한 변경은 하지 않았다. 빌드/설치/로그/자동 검사는 자동화할 수 있으나 실제 이동과 일부 시스템 권한 선택은 사용자 조작이 필요하다.
+- 이전 시험의 출발 좌표 미고정·같은 부산 좌표 재입력 가능성과10초 관찰을 보완했다. 전용 iOS18.6 시뮬레이터에서 서울 좌표를 먼저 고정하고 OS 초기 위치 콜백→로컬 PUT 완료 후 홈으로 내렸다. 서울→부산 합성 경로를1000m/s·5초 간격으로 재생하며7분 관찰했다. 직접 delegate 호출·수동 PUT·강제 Worker·다른 GPS 소비자는 주 검사에 사용하지 않았다.
+- 일반 앱 진입점에서는437.454초 실행 후 실패했다. 주 검사 창의 locationd 검사84회 모두 새SLC판정0, 인식 거리 최대324,915m, 서울 초기PUT1회만 있었다. 일반 앱 HomeScreen의 기본 꺼짐 동작이 별도 네이티브 시험과 간섭할 가능성을 확인하여 test/native_location_host.dart(화면 초기화 없는 main)를 추가했다. 제품 코드는 수정하지 않았다.
+- FLUTTER_TARGET=test/native_location_host.dart로 재빌드한 재검사도441.052초 실행 후 실패했다. Keychain 설정 유지 검사와 홈 화면 캡처로 간섭 가능성/전경 실행을 배제했다. 해당 창의 locationd 검사67회 모두 새SLC판정0, 최대324,915m, 서울 초기PUT1회였다. 약329초 뒤 simctl location set으로 부산을 다시 입력한 추가 조작도 새 콜백을 만들지 못했다. 단순 skip이 아니라 이 환경에서의 종단 시험 실패로 기록한다. 제품 실기기 결함이나 모든 시뮬레이터의 미지원으로 단정하지 않는다.
+- 별도 일반 CoreLocation startUpdatingLocation 대조 시험은8.824초에 통과했다. 테스트 전용100m정확도·background updates 허용 관리자로 OS가 보낸 새 위치·1km 이상 이동·UIApplication.background를 확인했다. 이 대조를 제품의 저전력 significant-change 성공으로 합산하거나 구현을 일반 GPS 추적으로 바꾸지 않았다. 현재 항상 위치권한 raw3와 Background App Refresh raw2(available)도 별도 XCTest 통과로 확인했다.
+- Apple 공식 문서와 엔지니어 답변 https://developer.apple.com/forums/thread/814449 를 확인했다. 최종 실제 백그라운드 검증은 Xcode/디버거에서 분리한 실기기로 이동하며 해야 한다. 기존 공통/합성739통과 이력에 새 일반 OS 대조1통과를 추가하되, OS significant-change1건 미통과를 명확히 표시했다. 같은 검사 재실행과 권한 환경 검사는 고유 개수에 중복 가산하지 않는다.
+- 기존 docs/iOS_플랫폼_전체_및_백그라운드_GPS_검증_20261022.json에 두 실패·대조 통과·실기기 준비상태·환경·정확한 명령을 반영했다. 증거는 ignored weather_care_app/build/ios-movement-20261022-*의 xcresult/요약JSON/요청상태/OS로그/홈화면 캡처다. 최초 상대경로 캡처 실패와 요약 생성 구문 오류는 고쳐 최종 증거를 저장했다. 새 Dart 호스트 분석 이슈 없음, fixture Python 구문·공백 검사 통과.
+- createdesktop 도구가 없어 사용자 화면에 앱/시뮬레이터 창을 띄우지 않고 headless로 진행했다. 시험 서버·위치 로그 스트림·전용 시뮬레이터를 종료한다. 서버 접속/배포·DB·기상자료수집·푸시·스토어 업로드·실제 사용자 기기 변경·커밋/push 없음. 다른 채팅의 스토어 파일과 기존 앱 변경을 보존했다.
+
+
+## 2026-10-22 실제 iPhone QA 설치·실행 및 위치 시험 준비
+- 사용자 요청으로 실제 iPhone16Pro/iOS27.0.1의 신뢰 연결·개발자 모드·개발자 디스크 서비스와 개발 서명을 확인했다. 원래 사용자 앱과 분리한 com.codesoha.weathercare.qa/별도 위젯·Keychain·App Group을 ignored weather_care_app/build/ios-device-qa-20261022/workspace에 준비했다. 제품 원본 소스는 이번 작업에서 추가 수정하지 않았다.
+- QA 첫 화면에 위치·정확한 위치·항상 위치·로컬 네트워크 권한 안내/요청 버튼을 모았다. QA에만 로컬HTTP·ATS예외·사용설명·Swift DEBUG 조건을 적용했다. 기존 Flutter3.47.4 의존성을 그대로 쓰며 AOT Profile 앱·위젯 실기기 서명 빌드 성공, devicectl 실제 설치·디버거 없는 실행과 프로세스 유지/QA 개인 진단파일 읽기 성공. Apple 개발용 QA 앱/위젯 프로비저닝 프로필이 자동 생성됐다.
+- 실기기 XCTest Debug build-for-testing도 TEST BUILD SUCCEEDED. QA UI가 시스템 권한을 기다리는 동안 이를 대체하지 않기 위해 test-without-building은 아직 실행하지 않았다. 현재 진단 permission raw0(요청 전). 아이폰에서 1→2→3 버튼으로 정확한 위치/항상 위치·로컬 네트워크 허용 및 같은Wi-Fi 확인을 비동기 질문으로 요청했고 사용자 응답/권한 변경 대기 중이다. 실제 OS 권한 선택은 사용자 조작이 필요하다.
+- 다음: 권한 확인 후 QA XCTest20개를 실행하되 simctl 의존 OS significant-change/일반 위치 대조2개는 제외한다. 재설치동의삭제 테스트도 QA 저장소만 대상으로 한다. 이후 기존 Profile-iphoneos/Runner.app을 재설치·실행해 버튼4로 감시 시작, 초기측정 확인 후 USB/디버거 분리·홈/잠금 상태에서 사용자가 실제500m이상 이동해야 한다. background OS 콜백의 발생시각과 전송/보관/복귀복구를 진단파일로 확인하며 초기 위치/합성주입을 실제이동 성공으로 합산하지 않는다.
+- 192.168.0.99:18787에 로컬 physical_fixture.py 수신기 실행 중(exec session58877). PUT실제좌표는 메모리기록에서 제거하고 기기 진단파일에는 좌표를 쓰지 않는다. Mac네트워크 밖에서는 업로드 실패/최신값보관을 예상하며 복귀 후 확인한다. 후속작업이 끝나면 수신기 종료 필요. 기기진단파일은 devicectl appDataContainer의 Library/Application Support/device-qa-events.jsonl에서 읽는다.
+- docs/iOS_실기기_GPS_검증_20261022.json과 기존 전체보고서 후속링크에 현재 완료/미실행을 구분했다. 실제기기 GPS 자동테스트·실제이동 성공은 아직 주장하지 않는다. 빌드/설치/실행/권한/프로세스 증거는 ignored weather_care_app/build/ios-device-20261022-*에 있다. 운영/시험서버·DB·실제푸시·배포·커밋/push 없음. 기존 다른채팅의 스토어 변경과 이전 iOS 소스/HANDOFF를 보존했다.
+
+
+## 2026-10-22 실제 iPhone 네이티브20개 통과·이동 시험 설정 대기
+- 사용자가 위치/항상 위치/로컬 네트워크 설정 완료를 알려 재개했다. QA진단 raw4→3(Always) 전환과 actual XCTest 권한3을 확인했다. QA격리 저장소로 실기기 test-without-building 실행:20개 모두통과/실패0/skip0. 합성CLLocation 기반 Keychain·URLSession·App Group·위젯갱신·인증/통신/중복/경합/재설치동의 시나리오다. simctl 의존 OS이동2개는명시적으로제외했다. 실제OS이동완료로세지않으며 이전고유자동수에중복가산하지않는다.
+- 로그:ignored weather_care_app/build/ios-device-20261022-native-test.log, native.xcresult, native-summary.json. XCTest내 UIApplication.backgroundRefreshStatus raw1(denied)이 확인됐다. 저전력모드끄기 및 설정→일반→백그라운드앱새로고침/날씨챙겨QA 켜기를 비동기질문으로 요청했고 응답대기중이다. 현재실기기raw1의원인이저전력인지설정차단인지는아직확정하지않았다.
+- 이동용QA사본에만 이벤트별새로고침/절전/보호자료상태와초기측정이후이동거리·정확도계측을추가했다. 일반GPS나추가background task없이제품significant-change를그대로사용한다. 명시적devicectl 인수 device-qa-start로2초뒤새revision감시시작을자동화했다. Profile AOT 재빌드/동일QA번들업데이트설치성공. 하지만16:54KST launch는아이폰잠금Locked로거부됐다. 앱이현재이동감시중이라고주장하지않는다.
+- 다음:사용자기기잠금해제/새로고침설정후 devicectl process launch --device <기기> --terminate-existing com.codesoha.weathercare.qa device-qa-start로디버거없이실행한다. 로컬수신기 /control 초기화, field-events.jsonl/서버state에서초기OS측정및전송/환경raw2를확인한뒤USB분리·홈/화면잠금·실제500m이상이동을안내한다. 기기를돌려받으면 foreground재실행전기존파일을먼저읽어background콜백과측정/이동거리/전송결과를구분한다.
+- docs실기기/전체보고서후속항목과HANDOFF에결과/미완료를반영했다. 로컬physical_fixture.py수신기(session58877)는후속시험을위해계속실행중이며종료필요. 실제운영/시험서버·DB·푸시·배포·제품원본추가수정·커밋/push없음. 기존다른채팅변경보존.
+
+
+## 2026-10-22 실제 iPhone 이동 감시 시작·사용자 이동 대기
+- 사용자가 저전력/새로고침 설정 완료를 알려 재개했다.16:58:30KST 디버거없이ProfileQA전경실행/2초후field_configured success. 실제로그에서위치Always3·backgroundRefresh available2·lowPowerMode false를확인했다. 위치초기콜백1개가있지만저장되지않아QA사본에측정시각/나이/정확도/허용영역/기존측정시각만기록하도록추가했다. 실제위경도는진단파일에쓰지않는다. 제품가드/감시방식은변경하지않았다.
+- Profile재빌드/업데이트설치성공.16:59:53전경재실행은자동잠금으로Locked거부됐으나17:00:16KST devicectl process launch --no-activate com.codesoha.weathercare.qa 성공. 기존Keychain감시설정으로resume하여background(raw2)OS콜백을받았다. measuredAt08:21:53KST,수신나이31,103.253초(약8시간38분),정확도17.824m,허용영역내true,Always3/설정있음. 따라서15분이상지난측정제외가원인이며업로드없음이정상이다. 초기캐시나백그라운드실행수동재개를실제이동성공으로세지않는다.
+- 이제 실제이동으로새측정을받는지검사해야한다. 사용자에게USB분리·QA강제종료금지·화면잠금·500m~1km이상이동·약10분후복귀후QA열지않고USB재연결을비동기질문으로안내했고응답대기중. 현재감시실행상태이며디버거/일반GPS/추가background task미사용.
+- 다음 사용자이동완료응답시앱을재실행하기전에devicectl appDataContainer에서 Library/Application Support/device-qa-events.jsonl을읽는다. 최근필드구간은UTC07:58:31이후/새진단앱UTC08:00:16이후다. 새로운OSlocation_received/accepted의측정시각/나이,applicationState2,거리/정확도/전송결과를확인한다. 로컬수신기는계속실행중(session58877);MacLAN밖에서는전송실패가능하므로accepted와upload실패후복귀resume성공을구분해검증한다. 원좌표를콘솔/문서에출력하지않는다.
+- 증거:ignored build/ios-device-20261022-field-events.jsonl,field-launch-ready.json,field-metadata-profile.log,field-metadata-install.json,field-metadata-launch.json(잠금실패),field-background-launch.json(성공). docs실기기보고서/전체후속상태업데이트. 이전실기기20개통과유지/실제이동성공아직미확인. 시험종료시QA감시·로컬수신기를중지해야한다. 제품원본추가수정/서버/DB/배포/푸시/커밋/push없음,다른채팅변경보존.
+
+
+## 2026-10-22 원격 master pull 및 로컬 작업 복원
+- 사용자 요청으로 origin/master를 fetch하고77e941f→aafcdf0(위젯 표시·타임라인 겹침 및 Android 스크린샷 갱신)1개 커밋을 fast-forward pull했다. 최종 HEAD와 origin/master는같다.
+- 기존 미커밋/신규74개를 .git/pull-backup-20261022-ios와 임시stash에 보관한 뒤 복원했다. HANDOFF는 양쪽 기록을 모두 보존했고 캡처도구·스크린샷README는 자동병합됐다. 통합ZIP2개는 원격/기존/로컬의 항목별3자비교로 병합해 최신Android와 로컬iOS를 함께보존했다. 양쪽에서 바뀐 캡처Dart·README 항목은 작업트리의 병합결과를 넣었다.
+- 대상외 로컬69개의 원문해시/삭제상태 보존, 통합ZIP2개의4개플랫폼 등록PNG와 작업파일 일치·CRC·중복없음, Python3개 구문과 캡처Dart2개 분석 이슈없음, 공백검사를 확인했다. 사용중인Git프로세스/열린파일이없는 빈index.lock을 확인 후 정리했다. 충돌표시와 임시스테이징을 해제해 원래처럼 미커밋작업상태로 유지했다. 복구용stash/파일백업은보관한다.
+- 스크린샷 재생성·앱실행/설치·실기기시험/위치설정·서버배포·새커밋·push는 수행하지 않았다. 진행중인 실제iPhoneQA 작업과로컬수신기는변경하지않았다.
+
+
+## 2026-10-22 실제 이동 없이 iPhone 백그라운드 위치 검증 종료
+- 사용자가 실제이동불가를알려물리이동요청을종료하고Apple공식XCUIDevice.shared.location/XCUILocation 기반실기기UI자동화로전환했다. 실제이동검증으로합산하지않는다. createdesktop도구미제공상태로Mac앱창은열지않고연결된아이폰과CLI만사용했다.
+- QA복제프로젝트에만DeviceLocationUITests/DeviceLocationQA타깃·scheme을생성해Profile AOT 앱을사용했다. 첫빌드는Profile PRODUCT_NAME 누락으로중복산출물오류가나QA타깃설정만보완,서명빌드성공. Xcode Unlock iPhone to Continue 대기에사용자가잠금해제했다. 첫모의입력의정확도0을명시적100m로보완하려고첫실행을중단/재빌드했으며,뒤늦게OS가원래입력0을5m로정규화함을로그로확인했다. 이중단은도구준비이력이고제품실패로세지않는다. 재시작중자동잠금으로사용자가한번더잠금해제한뒤최종검사는끊지않고완료했다.
+- 첫실행17:20:51KST에는기존QA독립백그라운드프로세스에서OS모의위치수신→저장→로컬PUT HTTP200을실제확인했다(applicationState2/backgroundRefresh2/lowPowerfalse/정확도5m). 제품delegate직접주입이아니다. 초기위치가상입력의종단처리성공이며실제물리이동이나연속갱신성공으로세지않는다.
+- 최종UI드라이버444.961초/1개통과/실패0. 서울→부산84단계·5초간격·관찰423.51초(17:25:14~17:32:18KST),홈이동및앱background유지검사통과. 원본진단은초기캐시중복수신1개뿐이고경로창추가OS콜백/저장/PUT각0이다. 가상연속SLC는미재현으로기록하며제품실기기결함/전체성공으로단정하지않는다. 이전실기기20개네이티브통과는유지한다. 드라이버1개통과는제품갱신통과로합산하지않는다.
+- 최종defer의XCUIDevice.location=nil및t444.64 Resetting기록확인. 기기진단을먼저보관한후QA앱/별도UI러너만제거성공해감시종료,로컬수신기session58877 SIGINT/exit0종료확인. 기존사용자앱은재설치/삭제하지않았다. QA 앱제거가Keychain삭제를보장하지않으나잔여값은합성위치·가짜인증정보다. 실제원좌표는진단/수신기기록에쓰지않았다.
+- docs/iOS_실기기_GPS_검증_20261022.json및전체보고서결론/실기기후속상태를완료/미확인으로갱신했다. 증거:ignored build/ios-device-20261022-virtual-movement-final.{log,xcresult},virtual-movement-final-summary.json,virtual-final-events.jsonl,virtual-evidence-summary.json,qa-cleanup.json,ui-runner-cleanup.json. 드라이버소스/프로젝트는build/ios-device-qa-20261022/workspace/ios에보존했다. 실제물리이동/공개서버왕복/실제푸시/구매/광고는미검증이며이동을다시요청하지않는다. 제품원본추가수정·운영/시험서버/DB·배포·커밋/push없음. 다른채팅변경보존.
+
+
+## 2026-10-22 iOS 실제 WidgetKit 촬영·2번 타임라인 후속 갱신
+- 사용자 요청으로 pull한 aafcdf0의 현재 위젯·그래프를 기준으로 iPhone/iPad의2번 타임라인·3번 위젯·4번 다크모드, 최종PNG6개를 갱신했다. 플랫폼별 나머지5장과 Android/그래픽/헤더/검색결과는 기존 바이트를 보존했다. 앱의 제품 기능 코드는 이번 작업에서 수정하지 않았다.
+- store/native_ios_widget_capture에 독립 촬영용 호스트·XCTest UI·Ruby 프로젝트 생성·명령/자동 촬영·크롭 도구를 추가했다. 현재 WeatherCareWidget.swift/WidgetRefreshIntent.swift와 실제 폰트/아이콘을 직접 빌드하고 WidgetKit 확장을 SpringBoard 홈 화면에 추가했다. 예시서울중구18°/체감17°/최저12°/최고22°/우산·겉옷을 App Group에 저장했으며 실제 사용자 설정/위치/서버 자료를 사용하지 않았다. 생성형 UI·Python 위젯 재현을 iOS 생성 경로에서 제거했다.
+- 최종 실제 촬영은 iPhone15ProMax/iOS17.5(B9311579-BBA3-42E8-9012-BB674A25D3D7), iPadPro13형M4/iOS18.6(F729357C-C8D8-4CDD-BA30-3479C05A10B8)의 전용 시뮬레이터에서 소/중/대×라이트/다크 각6개다. 원본 크롭12개·기기/소스/원본해시/실제프레임 명세는 store/screenshots/native-ios-20261022에 보존했다. iPhone의 실제 논리 크기는170×170/364×170/364×382, iPad는160×160/356×160/356×356이다. 준비물·중앙 브리핑·최저/최고·색상·새로고침을 시각 확인했다. 원의 명목표시18pt와 불투명한 중심 지름16~18.5pt, 확보한 접근성 기록의 약44pt 버튼 프레임을 검사했다. 네트워크 새로고침/44pt 외곽 탭 종단 검증을 주장하지 않는다.
+- iPhone18.6은 위젯 추가 시 SpringBoard의 SBHRippleSimulation EXC_BAD_ACCESS가 발생했고, 촬영기기에서만 동작 줄이기를 켜도 반복됐다.26.3.1에서는 홈 전환 연결 단절과 배경의 비정상 렌더링을 확인해 두 런타임 시도 모두 최종 이미지에서 제외했다.17.5로 전환해 홈 촬영을 완료했다. 초기 도구의 비표시 중복 이름 선택/길게누르기·크기 선택 실패는 isHittable 필터·실제 PageIndicator 선택으로 수정했다. 실패 이미지·검사를 정상 결과로 세지 않는다. 최종 iPhone/iPad 촬영 XCTest가 정상 종료했으며 iPhone 소형의 이전 정상 원본과 최종 중·대형 원본을 합쳐6개를 검증했다.
+- 2번은 STORE_CAPTURE_SCREEN=timeline으로 현재 실제 Flutter 위젯을 iOS 설정에서 휴대전화/태블릿 별도로 렌더링했다. 캡처 테스트1개 통과, 관련Dart2개 분석 이슈 없음. 기온·체감 수치와 선/아이콘의 비겹침을 확대 검수했다. 원본은 source-ios-20261022/{phone,tablet}/timeline.png다.
+- generate_ios_store.py에 --topics를 추가해2·3·4번만 생성했다. 실제 원본의 위젯 바탕색 경계 밖 홈 배경만 투명하게 크롭하고 불투명한 내부 픽셀이 원본과 같음을 검사했다. 최종 미리보기에서 모서리에 남은 홈 배경색을 발견해 경계 추출을 보완한 뒤 다시 내보냈다. UI를 재색칠하거나 수치/글자를 합성하지 않았다. 비율 유지 배치·확대축소·그림자만 적용했다.
+- iPhone1320×2868/iPad2064×2752 등록PNG총16개 RGB/알파·투명도없음/디코딩/SHA256, 실제원본12개·크기 구분·내부픽셀 보존, 교체6개 외 PNG120개 및 Android/홍보 전용ZIP4개 보존, ZIP4개 CRC/중복없음/최신등록PNG·안내·도구·원본명세 일치, Python4개/Ruby구문·git diff --check를 확인했다. 검증 JSON은 ignored build/ios-native-widget-20261022/verification.json이다. 전체미리보기2개와 확대본에서 글자·배치·그래프·모서리를 최종 확인했다.
+- 최신 묶음은 store/app-store/weather-care-ios-screenshots-20261022.zip이며 고정 이름 ZIP과 통합ZIP2개도 갱신했다. IOS_20261022.md/스크린샷README/촬영도구README/해시명세를 맞췄다. 변경 전 스토어파일·해시는 ignored build/ios-native-widget-20261022/before, 전체홈화면·접근성트리·빌드로그·xcresult는 같은 빌드폴더에 있다.
+- createdesktop 도구가 없어 Simulator 창을 직접 열지 않고 simctl/XCTest로 진행했다. 최종 전용시뮬레이터2개는 종료해 보존했고 실패한 전용18.6/26.3.1 기기2개는 삭제했다. 촬영용 동작 줄이기 설정도 복원했다. 실제iPhoneQA·로컬수신기·운영/시험서버·DB·권한·푸시·배포·스토어업로드·커밋/push를 변경하지 않았으며 다른 채팅의 미커밋 변경을 보존했다.
+
+
+## 2026-10-23 iOS 5번 알림 예시 추가
+- 사용자 요청으로 iPhone·iPad의 5번 다양한 날씨 알림 하단에 자외선 예시 1개를 추가했다. 기존 4개와 합쳐 5개이며 상단 종류 설명에도 자외선을 반영했다. iPhone은 카드 크기를 유지하고 iPad는 비율 유지 축소·간격 조정으로 하단 안내까지 잘림 없이 배치했다. 두 최종 이미지와 iPad 전체 미리보기에서 한글·배치를 확인했다.
+- 공통 알림 그리기에 선택적 추가 예시 인수를 넣었다. Android 기본 호출의 픽셀 해시가 이전과 동일함을 확인했으며 Android 이미지는 재생성하지 않았다. iOS 생성기는 --topics 05-notifications로 해당 PNG 2개만 갱신했다. 미리보기 2개·안내·SHA256 명세·등록 ZIP 2개와 통합 ZIP 2개를 갱신했다.
+- 등록 PNG 16개의 규격/RGB/PNG/해시, 나머지 스토어 파일 176개의 해시 보존(다른 iOS 14장·Android·네이티브 원본·전용 ZIP 포함), ZIP 4개 CRC/항목 중복 없음/파일 일치/대상 외 항목 보존, Python 2개 구문·git diff --check를 확인했다. 변경 전 백업·해시 및 검증 JSON은 ignored weather_care_app/build/ios-notifications-20261023에 보관했다.
+- 최신 묶음은 weather_care_app/store/app-store/weather-care-ios-screenshots-20261022.zip이며 고정 이름 묶음도 동일하다. 앱 기능·실제 기기/시뮬레이터·서버·실제 푸시·스토어 업로드·커밋/push는 변경하지 않았다. 다른 채팅의 기존 미커밋 변경을 보존했다.
+
+
+## 2026-10-23 전체 변경사항 커밋·push
+- 사용자가 현재 변경사항 전부의 커밋·push를 명시적으로 요청했다. iOS 위치 처리·네이티브/Flutter 검증 코드·보고서와 iPhone/iPad 스크린샷 8장 구성·실제 WidgetKit 촬영 도구/원본·알림 예시 5개·ZIP 및 HANDOFF를 모두 포함했다. 전송 브랜치는 master, 원격은 origin/master이며 fetch 직후 양쪽 기준 커밋 aafcdf0가 일치했다.
+- Flutter 3.47.4로 수정된 비교/주간 테스트 2개 파일의 43개 검사를 모두 통과했다. 기본 PATH의 Flutter 3.35.6 첫 실행은 SDK 불일치로 검사를 실행하지 못해 종료한 뒤 기존 프로젝트 SDK로 재실행했다. 로그는 ignored weather_care_app/build/commit-validation-20261023.log다.
+- Python/JSON/Ruby 구문, Xcode 프로젝트 형식, 등록 PNG 16개 SHA256, ZIP 4개 CRC·중복 없음·최신 이미지 일치와 git diff --cached --check를 확인했다. 새 대용량 제한 초과 파일은 없다. ignored 빌드/QA 증거·백업은 기존 제외 규칙을 유지했다. 커밋 메시지는「iOS 위치 검증 보완 및 스토어 스크린샷 최신화」로 정했다.
+- 전체 97개 파일 커밋 완료 후 HTTPS push가 GitHub 비밀번호/토큰을 읽을 수 없어 실패했다(Device not configured). macOS 기본 Git도 같은 오류였다. 기본 SSH는 UseKeychain 설정을 지원하지 않았고 macOS 기본 SSH는 publickey 인증이 거부됐다. 원격 변경은 없으며 master가 origin/master보다 1커밋 앞선 상태다. push 완료에는 사용자의 로컬 GitHub 인증 설정이 필요하다. 이 실패 기록을 로컬 커밋에 함께 포함했다.

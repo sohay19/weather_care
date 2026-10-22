@@ -205,20 +205,10 @@ def compose(topic, platform):
 
 
 def feature_graphic():
-    im = Image.new('RGBA', (1024, 500), BG)
-    d = ImageDraw.Draw(im)
-    text(d, (65, 80), '날씨챙겨', 30, YELLOW, 'ExtraBold')
-    text(d, (62, 145), '날씨를 알고,\n하루를 챙겨요', 56, WHITE, 'Heavy', spacing=12)
-    text(d, (65, 320), '준비물부터 바다·하천 정보까지', 22, '#E6F0F7', 'Medium')
-    text(d, (65, 365), '날씨 요약  ·  위젯  ·  맞춤 알림', 21, '#E6F0F7', 'Medium')
-    with Image.open(SOURCE / 'phone/main.png') as source:
-        # Checklist와 현재 날씨/어제 비교는 실제 원본 두 영역으로 분리 배치한다.
-        check = source.crop((48, 450, 1188, 1335))
-        summary = source.crop((48, 1380, 1188, 2715))
-    card(im, summary, (705, 78), 242, 16)
-    card(im, check, (520, 177), 245, 16)
+    # 2026-10-22 확정한 준비물 캠페인 원본. 스크린샷과 독립적으로 내보낸다.
     target = ROOT / 'google-play/feature-graphic.png'
-    im.convert('RGB').save(target, optimize=True)
+    with Image.open(ROOT / 'google-play/source/feature-graphic.png') as source:
+        source.convert('RGB').resize((1024, 500), Image.Resampling.LANCZOS).save(target, optimize=True)
     return target
 
 

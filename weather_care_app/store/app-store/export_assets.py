@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
+import sys
 
 from PIL import Image
 
@@ -14,6 +15,7 @@ ASSETS = (
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding='utf-8')
     for source, filename, size in ASSETS:
         with Image.open(ROOT / "source" / source) as image:
             # 구성·문구는 생성 도구에서 완성했으며 여기서는 크기만 정규화한다.

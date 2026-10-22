@@ -30,6 +30,7 @@ class HourlyForecastSection extends StatefulWidget {
   final bool availableOnly;
   final bool inline;
   final bool contrastFilters;
+  final double? chartHeight;
   final WeatherDataPhase dataPhase;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
@@ -45,6 +46,7 @@ class HourlyForecastSection extends StatefulWidget {
     this.availableOnly = false,
     this.inline = false,
     this.contrastFilters = false,
+    this.chartHeight,
     this.dataPhase = WeatherDataPhase.ready,
     this.onRetryMissingData,
     this.retrying = false,
@@ -341,11 +343,12 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
     final combined = selected == _HourlyMetric.weather || precipitation;
     final tall =
         selected == _HourlyMetric.humidity || selected == _HourlyMetric.uv;
-    final chartHeight = (tall
-            ? 400.0
-            : combined
-                ? 320.0
-                : hourlyChartHeight) *
+    final chartHeight = (widget.chartHeight ??
+            (tall
+                ? 400.0
+                : combined
+                    ? 320.0
+                    : hourlyChartHeight)) *
         math.min(MediaQuery.textScalerOf(context).scale(1), 1.3);
     final sharedBounds = selected == _HourlyMetric.weather
         ? HourlyChartSeries(
@@ -911,6 +914,7 @@ class _HourlyTimeLabel extends StatelessWidget {
                   key: valueKey,
                   maxLines: 1,
                   style: TextStyle(
+                      fontSize: 12,
                       color:
                           isCurrent ? palette.onPrimary : palette.primaryDeep,
                       fontWeight: FontWeight.w900)),

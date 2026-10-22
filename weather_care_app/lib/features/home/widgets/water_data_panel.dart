@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../services/api_client.dart';
 import '../../../services/kma_grid.dart';
 import '../../../services/data_station_selection.dart';
 import '../../../theme/weather_theme.dart';
+import '../../../utils/korea_date.dart';
 import '../../../utils/weather_number.dart';
 import 'extra_chip_row.dart';
 import 'hourly_value_chart.dart';
@@ -150,7 +152,9 @@ class WaterDataPanel extends StatefulWidget {
   State<WaterDataPanel> createState() => _WaterDataPanelState();
 }
 
-class _WaterDataPanelState extends State<WaterDataPanel> {
+class _WaterDataPanelState extends State<WaterDataPanel>
+    with WidgetsBindingObserver {
+  Timer? _hourTimer;
   final _chartScroll = ScrollController();
   final _selectedDataKey = GlobalKey();
   bool _scrollAfterSelection = false;
@@ -236,11 +240,33 @@ class _WaterDataPanelState extends State<WaterDataPanel> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleHour();
     _reset();
+  }
+
+  void _scheduleHour() {
+    _hourTimer?.cancel();
+    if (widget.now != null) return;
+    _hourTimer = Timer(untilNextKoreaHour(DateTime.now()), () {
+      if (!mounted) return;
+      setState(() {});
+      _scheduleHour();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {});
+      _scheduleHour();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _hourTimer?.cancel();
     _chartScroll.dispose();
     super.dispose();
   }
@@ -248,6 +274,7 @@ class _WaterDataPanelState extends State<WaterDataPanel> {
   @override
   void didUpdateWidget(covariant WaterDataPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _scheduleHour();
     if (oldWidget.observationGroup != widget.observationGroup ||
         oldWidget.forecastGroup != widget.forecastGroup ||
         oldWidget.grid != widget.grid ||
@@ -392,7 +419,8 @@ class _WaterDataPanelState extends State<WaterDataPanel> {
   Widget build(BuildContext context) {
     final palette = WeatherCareTheme.of(context);
     final nearest = nearestDataStation(_choices);
-    const chartHeight = 320.0;
+    final chartHeight = detailedHourlyChartHeight *
+        math.min(MediaQuery.textScalerOf(context).scale(1), 1.3);
     final metrics = _metrics;
     final metric = metrics.contains(_metric) ? _metric! : metrics.first;
     final title = _labels[metric]!;
@@ -407,14 +435,35 @@ class _WaterDataPanelState extends State<WaterDataPanel> {
         n == null ? '자료 없음' : '${formatWeatherNumber(n)}$unit';
     String time(DateTime d) =>
         '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+    Widget timeLabel(int hour) {
+      final isCurrent = hour == data.now.hour;
+      return Semantics(
+          label: isCurrent ? '현재 시간 $hour시' : null,
+          child: Container(
+              key: isCurrent ? ValueKey('$_prefix-current-time') : null,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: isCurrent
+                  ? BoxDecoration(
+                      color: palette.primaryDeep,
+                      borderRadius: BorderRadius.circular(8))
+                  : null,
+              child: Text('$hour시',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color:
+                          isCurrent ? palette.onPrimary : palette.primaryDeep,
+                      fontFamily: WeatherCareTheme.fontSuite,
+                      fontWeight: FontWeight.w800))));
+    }
+
     final observed = data.hourly(metric, forecast: false);
     final predicted = _river
         ? List<double?>.filled(24, null)
         : data.hourly(metric, forecast: true);
     final known = [...observed, ...predicted].whereType<double>().toList();
-    // 오늘의 첫 관측 구간부터 보여주고, 한 시점뿐인 자료도 바로 찾을 수 있게 한다.
+    // 자료를 불러온 첫 화면은 현재 시간부터 보여준다.
     final scrollRequest = '$_request';
-    if (_river && known.isNotEmpty && _scrollRequest != scrollRequest) {
+    if (known.isNotEmpty && _scrollRequest != scrollRequest) {
       _scrollRequest = scrollRequest;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted ||
@@ -422,8 +471,7 @@ class _WaterDataPanelState extends State<WaterDataPanel> {
             !_chartScroll.hasClients) {
           return;
         }
-        final firstHour = observed.indexWhere((value) => value != null);
-        final offset = math.max(0, firstHour - 2) * 56.0;
+        final offset = data.now.hour * 56.0;
         _chartScroll
             .jumpTo(offset.clamp(0.0, _chartScroll.position.maxScrollExtent));
       });
@@ -671,16 +719,7 @@ class _WaterDataPanelState extends State<WaterDataPanel> {
                                   child: Padding(
                                       padding: const EdgeInsets.only(
                                           top: 8, bottom: 8),
-                                      child: Text('$h시',
-                                          textAlign: TextAlign.center,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                  fontFamily: WeatherCareTheme
-                                                      .fontSuite,
-                                                  fontWeight:
-                                                      FontWeight.w800))))
+                                      child: Center(child: timeLabel(h))))
                           ]),
                         ]))),
               ]),

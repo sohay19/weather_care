@@ -85,6 +85,7 @@ class HourlyChartSeries {
 }
 
 const hourlyChartHeight = 144.0;
+const detailedHourlyChartHeight = 320.0;
 const hourlyChartTitleHeight = 30.0;
 const hourlyChartGap = 4.0;
 const _plotTop = 48.0;

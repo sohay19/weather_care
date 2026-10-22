@@ -8,6 +8,7 @@ import '../../../theme/weather_theme.dart';
 import '../weather_data_phase.dart';
 import '../widgets/missing_data_retry.dart';
 import '../widgets/hourly_forecast_section.dart';
+import '../widgets/hourly_value_chart.dart';
 import '../widgets/weather_data_notice.dart';
 import '../widgets/recommendation_bag_section.dart';
 import '../widgets/server_feature_unavailable_card.dart';
@@ -209,6 +210,7 @@ class MainTab extends StatelessWidget {
                     SizedBox(height: compact ? 12 : 16),
                     HourlyForecastSection(
                       keyPrefix: 'main',
+                      chartHeight: detailedHourlyChartHeight,
                       items: today.timelineHourly ?? today.hourly,
                       generatedAt: today.generatedAt,
                       receivedAt: today.receivedAt,

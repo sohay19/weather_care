@@ -11,13 +11,12 @@ class DataRangeTile extends StatelessWidget {
 
   static Color backgroundColor(WeatherCarePalette palette) =>
       palette.brightness == Brightness.dark
-          ? const Color(0xFFF3F6F9)
-          : const Color(0xFFFCFDFE);
+          ? palette.surface
+          : palette.primaryBorder;
 
   @override
   Widget build(BuildContext context) {
     final palette = WeatherCareTheme.of(context);
-    final dark = palette.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
       decoration: BoxDecoration(
@@ -25,18 +24,13 @@ class DataRangeTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         if (icon != null) ...[
-          Icon(icon,
-              size: 22,
-              color: dark ? const Color(0xFF315B80) : const Color(0xFF3F6F98)),
+          Icon(icon, size: 22, color: palette.primaryDeep),
           const SizedBox(width: 4),
         ],
         Expanded(
             child: Text(label,
                 style: palette.microTextStyle.copyWith(
-                    color: dark
-                        ? const Color(0xFF315B80)
-                        : const Color(0xFF3F6F98),
-                    fontWeight: FontWeight.w700))),
+                    color: palette.primaryDeep, fontWeight: FontWeight.w700))),
         Flexible(
             child: FittedBox(
                 fit: BoxFit.scaleDown,
@@ -44,9 +38,7 @@ class DataRangeTile extends StatelessWidget {
                 child: Text(value,
                     style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: dark
-                            ? const Color(0xFF1F405E)
-                            : const Color(0xFF244F73))))),
+                        color: palette.primaryDeep)))),
       ]),
     );
   }

@@ -146,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   late bool _weekAdvertisementActivated;
   late NotificationTopic? _detailFocusTopic;
   LifestyleMessageType? _detailFocusLifestyleType;
+  WeatherRecommendation? _detailFocusRecommendation;
   DetailFocusSource _detailFocusSource = DetailFocusSource.notification;
   int _detailFocusRequestId = 0;
   bool _loading = false;
@@ -1134,6 +1135,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       serverFeaturesAvailable: serverFeaturesAvailable,
                       focusTopic: _detailFocusTopic,
                       focusLifestyleType: _detailFocusLifestyleType,
+                      focusedRecommendation: _detailFocusRecommendation,
                       focusSource: _detailFocusSource,
                       focusRequestId: _detailFocusRequestId,
                       advertisement: _todayAdvertisementActivated &&
@@ -1478,6 +1480,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _detailFocusSource == DetailFocusSource.selection) {
         _detailFocusTopic = null;
         _detailFocusLifestyleType = null;
+        _detailFocusRecommendation = null;
         _detailFocusSource = DetailFocusSource.notification;
         _detailFocusRequestId += 1;
       }
@@ -1489,11 +1492,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  void _openRecommendationDetail(RecommendationType type) {
+  void _openRecommendationDetail(WeatherRecommendation recommendation) {
     setState(() {
       _detailFocusTopic = null;
       _detailFocusLifestyleType =
-          detailLifestyleTypeForRecommendationType(type);
+          detailLifestyleTypeForRecommendationType(recommendation.type);
+      _detailFocusRecommendation = recommendation;
       _detailFocusSource = DetailFocusSource.selection;
       _detailFocusRequestId += 1;
       _selectedIndex = 0;

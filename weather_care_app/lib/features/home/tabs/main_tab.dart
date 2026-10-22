@@ -29,7 +29,7 @@ class MainTab extends StatelessWidget {
   final Future<void> Function()? onRetryData;
   final Future<void> Function()? onRetryComparison;
   final bool retryingData;
-  final ValueChanged<RecommendationType> onDetail;
+  final ValueChanged<WeatherRecommendation> onDetail;
   final Widget? advertisement;
   final List<ForecastRegion> savedRegions;
   final String? selectedRegionKey;

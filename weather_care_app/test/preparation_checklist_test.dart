@@ -6,12 +6,62 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/home/widgets/recommendation_bag_section.dart';
 import 'package:weather_care/models/recommendation.dart';
+import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/weather.dart';
 import 'package:weather_care/services/preparation_checklist_repository.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   const repository = PreparationChecklistRepository();
+
+  testWidgets('설명 버튼은 하루 전체 추천보다 현재 브리핑 구간의 근거를 전달한다', (tester) async {
+    const currentEvidence = [
+      WeatherMessagePart(
+          role: WeatherMessageRole.officialFact,
+          text: '12시 기온 8℃',
+          source: '기상청')
+    ];
+    WeatherRecommendation? selected;
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: RecommendationBagSection(
+      regionName: '서울',
+      now: () => DateTime.parse('2026-10-22T12:00:00+09:00'),
+      recommendations: [
+        WeatherRecommendation(
+            type: RecommendationType.outerwear,
+            recommended: true,
+            priority: 90,
+            title: '겉옷',
+            description: '추천 설명',
+            notificationEligible: false,
+            evidence: const [
+              WeatherMessagePart(
+                  role: WeatherMessageRole.officialFact, text: '아침 기온 5℃')
+            ])
+      ],
+      briefingTimeline: const [
+        BriefingTimelineEntry(
+            briefingId: 'cold',
+            sceneId: 'THERMAL_COLD',
+            validFrom: '2026-10-22T12:00:00+09:00',
+            validUntil: '2026-10-22T13:00:00+09:00',
+            recommendedItems: ['OUTERWEAR'],
+            preparationEvidence: {'OUTERWEAR': currentEvidence},
+            copy: BriefingCopy(
+                short: '겉옷',
+                medium: '겉옷',
+                long: '겉옷',
+                notificationTitle: '겉옷',
+                notificationBody: '겉옷'))
+      ],
+      onDetail: (item) => selected = item,
+    ))));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('bag-detail-outerwear')));
+    expect(selected!.evidence, same(currentEvidence));
+    expect(selected!.evidence.single.text, '12시 기온 8℃');
+  });
 
   test('한국시간 날짜와 자정은 기기 시간대에 의존하지 않는다', () {
     final before = DateTime.parse('2026-09-10T23:59:59+09:00');

@@ -769,7 +769,7 @@ void main() {
 
   testWidgets('recommendation chip supports selection and details',
       (tester) async {
-    RecommendationType? openedDetail;
+    WeatherRecommendation? openedDetail;
     final recommendation = WeatherRecommendation(
       type: RecommendationType.umbrella,
       recommended: true,
@@ -807,7 +807,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('bag-detail-umbrella')));
     await tester.pump();
-    expect(openedDetail, RecommendationType.umbrella);
+    expect(openedDetail, same(recommendation));
     expect(tester.takeException(), isNull);
   });
 

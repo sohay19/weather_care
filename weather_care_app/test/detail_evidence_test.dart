@@ -4,10 +4,95 @@ import 'package:weather_care/features/home/tabs/evidence_focus.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 import 'package:weather_care/models/weather.dart';
+import 'package:weather_care/models/recommendation.dart';
 import 'package:weather_care/services/notification_destination.dart';
 import 'package:weather_care/theme/weather_theme.dart';
 
 void main() {
+  testWidgets('생활 근거가 없어도 준비물의 실제 판단 수치와 적용 기준을 표시한다', (tester) async {
+    await _pump(tester,
+        messages: _messages(2),
+        recommendation: WeatherRecommendation(
+          type: RecommendationType.water,
+          recommended: true,
+          priority: 90,
+          title: '물을 챙겨요',
+          description: '건조한 날씨라 마실 물을 준비해요.',
+          evidence: const [
+            WeatherMessagePart(
+                role: WeatherMessageRole.calculatedFact,
+                text: '10월 22일 12시 체감온도 28℃',
+                source: '날씨챙겨 체감온도 계산'),
+            WeatherMessagePart(
+                role: WeatherMessageRole.calculatedFact,
+                text: '적용한 준비물 판단 기준: 체감온도 26℃ 이상',
+                source: '날씨챙겨 준비물 판단'),
+          ],
+          notificationEligible: false,
+        ),
+        focusSource: DetailFocusSource.selection);
+    expect(find.text('물 준비 근거'), findsOneWidget);
+    expect(find.text('10월 22일 12시 체감온도 28℃'), findsOneWidget);
+    expect(find.text('적용한 준비물 판단 기준: 체감온도 26℃ 이상'), findsOneWidget);
+    expect(find.text('건조한 날씨라 마실 물을 준비해요.'), findsNothing);
+    expect(
+        find.byKey(const ValueKey('detail-focus-unavailable')), findsNothing);
+    expect(find.byKey(const ValueKey('detail-preparation-evidence')),
+        findsOneWidget);
+    expect(
+        tester
+            .getTopLeft(
+                find.byKey(const ValueKey('detail-preparation-evidence')))
+            .dy,
+        inInclusiveRange(0, 600));
+    expect(find.text('생활 근거 0'), findsOneWidget);
+  });
+
+  testWidgets('일반 추천 설명만으로 실제 근거가 있다고 표시하지 않는다', (tester) async {
+    await _pump(tester,
+        recommendation: WeatherRecommendation(
+            type: RecommendationType.outerwear,
+            recommended: true,
+            priority: 90,
+            title: '겉옷을 챙겨요',
+            description: '추울 수 있어요.',
+            notificationEligible: false),
+        focusSource: DetailFocusSource.selection);
+    expect(find.byKey(const ValueKey('detail-preparation-evidence')),
+        findsNothing);
+    expect(
+        find.byKey(const ValueKey('detail-focus-unavailable')), findsOneWidget);
+  });
+
+  testWidgets('선크림은 별도 자외선 생활 근거가 있으면 그 실제 자료를 펼친다', (tester) async {
+    await _pump(tester,
+        messages: [
+          LifestyleMessage(
+            type: LifestyleMessageType.strongSunExposure,
+            title: '햇빛에 대비해요',
+            parts: const [
+              WeatherMessagePart(
+                  role: WeatherMessageRole.officialFact,
+                  text: '기상청 자외선 지수는 높음이에요'),
+            ],
+          )
+        ],
+        recommendation: WeatherRecommendation(
+          type: RecommendationType.sunscreen,
+          recommended: true,
+          priority: 90,
+          title: '선크림을 챙겨요',
+          description: '자외선에 대비해요.',
+          notificationEligible: false,
+        ),
+        focusSource: DetailFocusSource.selection);
+    expect(find.text('기상청 자외선 지수는 높음이에요'), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('detail-focus-unavailable')), findsNothing);
+    expect(find.byKey(const ValueKey('detail-preparation-evidence')),
+        findsNothing);
+  });
+
   testWidgets('모든 근거와 자료 상태를 항목 제목별 카드로 표시한다', (tester) async {
     final statuses = List.generate(
         7,
@@ -478,6 +563,7 @@ Future<void> _pump(
   Future<void> Function()? onRetryData,
   int regionNx = 60,
   double scale = 1,
+  WeatherRecommendation? recommendation,
 }) async {
   await tester.pumpWidget(MaterialApp(
     home: Scaffold(
@@ -498,6 +584,7 @@ Future<void> _pump(
           serverFeaturesAvailable: serverAvailable,
           focusTopic: focusTopic,
           focusLifestyleType: focusType,
+          focusedRecommendation: recommendation,
           focusSource: focusSource,
           onRefresh: () async {},
           onRetryData: onRetryData,

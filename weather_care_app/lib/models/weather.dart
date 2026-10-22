@@ -558,6 +558,7 @@ class CanonicalBriefing {
   final String? supportingFact;
   final String? action;
   final List<String> recommendedItems;
+  final Map<String, List<WeatherMessagePart>> preparationEvidence;
   final String? copyVariantKey;
   final BriefingCopy copy;
 
@@ -585,6 +586,7 @@ class CanonicalBriefing {
     this.supportingFact,
     this.action,
     this.recommendedItems = const [],
+    this.preparationEvidence = const {},
     this.copyVariantKey,
     required this.copy,
   });
@@ -616,6 +618,8 @@ class CanonicalBriefing {
       supportingFact: _optionalText(json['supportingFact']),
       action: _optionalText(json['action']),
       recommendedItems: _stringList(json['recommendedItems']),
+      preparationEvidence:
+          parsePreparationEvidence(json['preparationEvidence']),
       copyVariantKey: _optionalText(json['copyVariantKey']),
       copy: BriefingCopy.fromJson(
         json['copy'] is Map
@@ -635,6 +639,7 @@ class BriefingTimelineEntry {
   final String? targetUntil;
   final String? action;
   final List<String> recommendedItems;
+  final Map<String, List<WeatherMessagePart>> preparationEvidence;
   final String? copyVariantKey;
   final BriefingCopy copy;
 
@@ -647,6 +652,7 @@ class BriefingTimelineEntry {
     this.targetUntil,
     this.action,
     this.recommendedItems = const [],
+    this.preparationEvidence = const {},
     this.copyVariantKey,
     required this.copy,
   });
@@ -661,6 +667,8 @@ class BriefingTimelineEntry {
       targetUntil: _optionalText(json['targetUntil']),
       action: _optionalText(json['action']),
       recommendedItems: _stringList(json['recommendedItems']),
+      preparationEvidence:
+          parsePreparationEvidence(json['preparationEvidence']),
       copyVariantKey: _optionalText(json['copyVariantKey']),
       copy: BriefingCopy.fromJson(
         json['copy'] is Map

@@ -81,6 +81,7 @@ export interface CanonicalBriefingIntent {
   supportingFact?: string;
   action?: string;
   recommendedItems: RecommendationType[];
+  preparationEvidence?: Partial<Record<RecommendationType, WeatherMessagePart[]>>;
   copyVariantKey: string;
   copy: BriefingCopy;
 }
@@ -94,6 +95,7 @@ export interface BriefingTimelineEntry {
   targetUntil?: string;
   action?: string;
   recommendedItems: RecommendationType[];
+  preparationEvidence?: Partial<Record<RecommendationType, WeatherMessagePart[]>>;
   copyVariantKey: string;
   copy: BriefingCopy;
 }
@@ -310,6 +312,7 @@ export interface Recommendation {
   title: string;
   description: string;
   reasonCodes: string[];
+  evidence?: WeatherMessagePart[];
   validFrom?: string;
   validUntil?: string;
   notificationEligible: boolean;

@@ -1,12 +1,14 @@
 import { defaultRuleConfig } from '../config/ruleConfig';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import { snapshotTime } from '../rules/timeWindows';
-import type { RecommendationType, WeatherSnapshot } from '../types';
+import type { RecommendationType, WeatherMessagePart, WeatherSnapshot } from '../types';
+import { buildPreparationEvidence, type PreparationReason } from './preparationEvidence';
 
 export interface PreparationCandidate {
   type: RecommendationType;
   reason: string;
   validFrom?: string;
+  evidence: WeatherMessagePart[];
 }
 
 type Category = 'snow' | 'heat' | 'cold' | 'rain' | 'air' | 'uv';
@@ -26,15 +28,19 @@ export function preparationsForSnapshots(
     air: Infinity, uv: Infinity,
   };
   const itemStart = new Map<RecommendationType, number>();
+  const evidence = new Map<RecommendationType, WeatherMessagePart[]>();
   let unsuitableParasol = false;
   for (const item of snapshots) {
     const time = Date.parse(snapshotTime(item));
     const mark = (category: Category, active: boolean) => {
       if (active && Number.isFinite(time)) first[category] = Math.min(first[category], time);
     };
-    const record = (type: RecommendationType, active: boolean) => {
-      if (active && Number.isFinite(time)) {
-        itemStart.set(type, Math.min(itemStart.get(type) ?? Infinity, time));
+    const record = (type: RecommendationType, active: boolean, reason: PreparationReason, criterion: string) => {
+      if (active && Number.isFinite(time) && time < (itemStart.get(type) ?? Infinity)) {
+        const parts = buildPreparationEvidence(item, reason, criterion);
+        if (!parts.length) return;
+        itemStart.set(type, time);
+        evidence.set(type, parts);
       }
     };
     const rainAmount = item.precipitationAmountRange?.min ?? item.precipitationAmount ?? 0;
@@ -50,44 +56,45 @@ export function preparationsForSnapshots(
       : 0;
     levels.rain = Math.max(levels.rain, rainLevel) as Level;
     mark('rain', rain);
-    record('UMBRELLA', rain);
-    record('RAINCOAT', rainLevel >= 2);
-    record('RAIN_BOOTS', rainLevel >= 3);
+    record('UMBRELLA', rain, 'rain', `비·소나기·비/눈 또는 강수확률 ${defaultRuleConfig.rain.minProbability}% 이상 또는 강수량 ${defaultRuleConfig.rain.minAmount}mm 이상`);
+    record('RAINCOAT', rainLevel >= 2, 'rain', '비가 예상되고 1시간 강수량 5mm 이상 또는 강수확률 70% 이상');
+    record('RAIN_BOOTS', rainLevel >= 3, 'rain', '비가 예상되고 1시간 강수량 15mm 이상');
     const snowLevel = snow
       ? snowAmount >= 5 ? 3 : snowAmount >= 1 ? 2 : 1
       : 0;
     levels.snow = Math.max(levels.snow, snowLevel) as Level;
     mark('snow', snow);
-    record('SLIP_RESISTANT_SHOES', snow);
-    record('WINTER_BOOTS', snowLevel >= 2);
-    record('SNOW_CHAINS', snowLevel >= 3);
+    record('SLIP_RESISTANT_SHOES', snow, 'snow', '눈·비/눈 또는 눈 예보·눈 판단 지표 40% 이상 또는 신적설 양수');
+    record('WINTER_BOOTS', snowLevel >= 2, 'snow', '눈이 예상되고 1시간 신적설 1cm 이상');
+    record('SNOW_CHAINS', snowLevel >= 3, 'snow', '눈이 예상되고 1시간 신적설 5cm 이상');
     const uv = item.uvIndex ?? 0;
     levels.uv = Math.max(levels.uv, uv >= 8 ? 3 : uv >= 6 ? 2 : uv >= 3 ? 1 : 0) as Level;
     mark('uv', uv >= 3);
-    record('SUNSCREEN', uv >= 3);
-    record('SUN_HAT', uv >= 6);
-    record('SUNGLASSES', uv >= 6);
-    record('PARASOL', uv >= 8);
+    record('SUNSCREEN', uv >= 3, 'uv', '자외선지수 3 이상');
+    record('SUN_HAT', uv >= 6, 'uv', '자외선지수 6 이상');
+    record('SUNGLASSES', uv >= 6, 'uv', '자외선지수 6 이상');
+    record('PARASOL', uv >= 8, 'uv', '자외선지수 8 이상이며 비·눈·강풍이 없음');
     const thermal = item.kmaApparentTemperature ?? item.apparentTemperature ?? item.temperature;
     if (thermal !== undefined) {
       levels.heat = Math.max(levels.heat, thermal >= 33 ? 3 : thermal >= 30 ? 2 : thermal >= 26 ? 1 : 0) as Level;
       levels.cold = Math.max(levels.cold, thermal <= 0 ? 3 : thermal <= 10 ? 2 : thermal <= 17 ? 1 : 0) as Level;
       mark('heat', thermal >= 26);
       mark('cold', thermal <= 17);
-      record('WATER', thermal >= 26);
-      record('COOLING_ITEM', thermal >= 30);
-      record('PORTABLE_FAN', thermal >= 33);
-      record('LIGHT_OUTERWEAR', thermal <= 17);
-      record('OUTERWEAR', thermal <= 10);
-      record('SCARF', thermal <= 0);
-      record('HAND_WARMER', thermal <= 0);
+      const metric = item.kmaApparentTemperature !== undefined || item.apparentTemperature !== undefined ? '체감온도' : '기온';
+      record('WATER', thermal >= 26, 'heat', `${metric} 26℃ 이상`);
+      record('COOLING_ITEM', thermal >= 30, 'heat', `${metric} 30℃ 이상`);
+      record('PORTABLE_FAN', thermal >= 33, 'heat', `${metric} 33℃ 이상`);
+      record('LIGHT_OUTERWEAR', thermal <= 17, 'cold', `${metric} 17℃ 이하`);
+      record('OUTERWEAR', thermal <= 10, 'cold', `${metric} 10℃ 이하`);
+      record('SCARF', thermal <= 0, 'cold', `${metric} 0℃ 이하`);
+      record('HAND_WARMER', thermal <= 0, 'cold', `${metric} 0℃ 이하`);
     }
     const poorParticles = (item.pm10 ?? 0) >= defaultRuleConfig.airQuality.pm10 ||
       (item.pm25 ?? 0) >= defaultRuleConfig.airQuality.pm25 ||
       /bad|나쁨/i.test(item.pm25ForecastGrade ?? '');
     if (poorParticles) levels.air = 1;
     mark('air', poorParticles);
-    record('MASK', poorParticles);
+    record('MASK', poorParticles, 'air', `미세먼지 ${defaultRuleConfig.airQuality.pm10}㎍/㎥ 이상 또는 초미세먼지 ${defaultRuleConfig.airQuality.pm25}㎍/㎥ 이상 또는 초미세먼지 예보 나쁨`);
     unsuitableParasol ||= rain || snow || (item.windSpeed ?? 0) >= defaultRuleConfig.wind.caution;
   }
 
@@ -126,11 +133,14 @@ export function preparationsForSnapshots(
   const output: PreparationCandidate[] = [];
   const add = (category: Category, type: RecommendationType) => {
     if (output.some((candidate) => candidate.type === type)) return;
+    const parts = evidence.get(type);
+    if (!parts?.length) return;
     output.push({
       type,
       reason: category,
       validFrom: Number.isFinite(itemStart.get(type) ?? first[category])
         ? new Date(itemStart.get(type) ?? first[category]).toISOString() : undefined,
+      evidence: parts,
     });
   };
   // 먼저 각 상황의 필수 물품을 하나씩, 그다음 추가 물품을 배치한다.

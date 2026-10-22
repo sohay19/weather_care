@@ -1,5 +1,6 @@
 import { defaultRuleConfig } from '../config/ruleConfig';
 import { preparationsForWindow } from '../recommendations/preparationPolicy';
+import { buildPreparationEvidence, type PreparationReason } from '../recommendations/preparationEvidence';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import {
   koreaDate,
@@ -132,6 +133,7 @@ export function buildBriefingTimeline(
       targetUntil: intent.targetUntil,
       action: intent.action,
       recommendedItems: intent.recommendedItems,
+      preparationEvidence: intent.preparationEvidence,
       copyVariantKey: intent.copyVariantKey,
       copy: intent.copy,
     };
@@ -184,13 +186,26 @@ function buildIntentAt(
     : meaning.recommendedItems.filter((item) =>
         (selection.scene === 'RAIN' && item === 'UMBRELLA') ||
         context.severityRecommendedItems?.includes(item));
+  const preparations = context.tieredPreparations ? preparationsForWindow(forecast, now) : [];
   const selectedItems = context.tieredPreparations
-    ? preparationsForWindow(forecast, now).map((item) => item.type)
+    ? preparations.map((item) => item.type)
     : severityItems;
-  const recommendedItems = context.allowedRecommendedItems === undefined
+  const intendedItems = context.allowedRecommendedItems === undefined
     ? selectedItems
     : selectedItems.filter((item) =>
         context.allowedRecommendedItems?.includes(item));
+  const reasons: Partial<Record<WeatherBriefScene, PreparationReason>> = {
+    SNOW: 'snow', RAIN: 'rain', UV: 'uv', AIR_QUALITY: 'air',
+    THERMAL_HOT: 'heat', THERMAL_COLD: 'cold', HUMIDITY_LOW: 'humidity',
+  };
+  const reason = reasons[selection.scene];
+  const preparationEvidence = Object.fromEntries(intendedItems.map((type) => {
+    const candidate = preparations.find((item) => item.type === type);
+    const evidence = candidate?.evidence ?? (reason
+      ? buildPreparationEvidence(selection.snapshot, reason, `브리핑 판단: ${meaning.headlineFact}`) : []);
+    return [type, evidence];
+  }));
+  const recommendedItems = intendedItems.filter((type) => preparationEvidence[type]?.length);
   return {
     eventTime,
     intent: {
@@ -223,6 +238,7 @@ function buildIntentAt(
       supportingFact: eventTime,
       action: meaning.action,
       recommendedItems,
+      preparationEvidence,
       copyVariantKey: rendered.variantKey,
       copy: rendered.copy,
     },
@@ -709,6 +725,7 @@ function sameTimelineMeaning(
   right: BriefingTimelineEntry,
 ): boolean {
   return left.sceneId === right.sceneId &&
+    JSON.stringify(left.preparationEvidence ?? {}) === JSON.stringify(right.preparationEvidence ?? {}) &&
     left.recommendedItems.join(',') === right.recommendedItems.join(',') &&
     left.targetFrom === right.targetFrom &&
     left.targetUntil === right.targetUntil &&

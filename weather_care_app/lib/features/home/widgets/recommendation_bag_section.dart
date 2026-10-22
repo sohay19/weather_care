@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/briefing_time.dart';
 import '../../../models/recommendation.dart';
+import '../../../models/lifestyle_message.dart';
 import '../../../models/weather.dart';
 import '../../../services/preparation_checklist_repository.dart';
 import '../../../theme/recommendation_theme.dart';
@@ -17,7 +18,7 @@ class RecommendationBagSection extends StatefulWidget {
   final List<BriefingTimelineEntry> briefingTimeline;
   final String? generatedAt;
   final DateTime? receivedAt;
-  final ValueChanged<RecommendationType> onDetail;
+  final ValueChanged<WeatherRecommendation> onDetail;
   final PreparationChecklistRepository checklistRepository;
   final DateTime Function()? now;
 
@@ -118,6 +119,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
     final now = _now;
     List<String>? intended;
     String description = '';
+    Map<String, List<WeatherMessagePart>> evidence = const {};
     if (widget.briefingTimeline.isNotEmpty) {
       for (final entry in widget.briefingTimeline) {
         final from = DateTime.tryParse(entry.validFrom);
@@ -128,6 +130,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
             now.isBefore(until)) {
           intended = entry.recommendedItems;
           description = entry.copy.medium;
+          evidence = entry.preparationEvidence;
           break;
         }
       }
@@ -142,6 +145,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
           now.isBefore(until);
       intended = active ? widget.briefing!.recommendedItems : const [];
       description = widget.briefing!.copy.medium;
+      evidence = widget.briefing!.preparationEvidence;
     }
     if (intended == null) {
       return widget.recommendations.where((item) => item.recommended).toList();
@@ -156,13 +160,15 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
       final type = recommendationTypeFromApiName(raw);
       if (type == null || !seen.add(type)) continue;
       final item = existing[type];
-      visible.add(item?.copyWith(recommended: true) ??
+      visible.add(item?.copyWith(
+              recommended: true, evidence: evidence[raw] ?? item.evidence) ??
           WeatherRecommendation(
             type: type,
             recommended: true,
             priority: 100 - visible.length,
             title: type.title,
             description: description,
+            evidence: evidence[raw] ?? const [],
             notificationEligible: false,
           ));
     }
@@ -296,7 +302,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
                             onToggle: _loading || _saving || _loadFailed
                                 ? null
                                 : () => _toggle(recommendation.type),
-                            onDetail: () => widget.onDetail(recommendation.type),
+                            onDetail: () => widget.onDetail(recommendation),
                           ),
                         ),
                       ],

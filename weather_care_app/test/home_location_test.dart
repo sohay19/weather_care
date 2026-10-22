@@ -1119,6 +1119,90 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('오후에 비가 예보됐어요'), findsOneWidget);
   });
+  for (final briefingOnly in [false, true]) {
+    testWidgets('준비물 버튼은 ${briefingOnly ? '브리핑' : '추천'}의 실제 판단 근거를 전달한다',
+        (tester) async {
+      const description = '아침에는 쌀쌀하니 외출할 때 겉옷을 챙기세요.';
+      const evidence = [
+        {
+          'role': 'CALCULATED_FACT',
+          'text': '10월 22일 9시 체감온도 8℃',
+          'source': '날씨챙겨 체감온도 계산'
+        },
+        {
+          'role': 'CALCULATED_FACT',
+          'text': '적용한 준비물 판단 기준: 체감온도 10℃ 이하',
+          'source': '날씨챙겨 준비물 판단'
+        },
+      ];
+      weather.response = WeatherLoadResult(
+        today: TodayWeatherResponse.fromJson({
+          'dataSource': 'test',
+          'region': {'nx': 60, 'ny': 127, 'name': '서울'},
+          'current': {'temperature': 10},
+          'brief': description,
+          'recommendations': [
+            if (!briefingOnly)
+              {
+                'type': 'OUTERWEAR',
+                'recommended': true,
+                'priority': 90,
+                'title': '겉옷을 챙겨요',
+                'description': description,
+                'evidence': evidence,
+                'notificationEligible': false,
+              },
+          ],
+          if (briefingOnly)
+            'briefingTimeline': [
+              {
+                'briefingId': 'cold',
+                'sceneId': 'COLD',
+                'validFrom': '2026-10-21T00:00:00+09:00',
+                'validUntil': '2026-10-23T00:00:00+09:00',
+                'recommendedItems': ['OUTERWEAR'],
+                'preparationEvidence': {'OUTERWEAR': evidence},
+                'copy': {
+                  'short': description,
+                  'medium': description,
+                  'long': description
+                },
+              }
+            ],
+          'lifestyleMessages': [],
+        }),
+        weekly: WeeklyWeatherResponse.fromJson({'days': []}),
+        mode: WeatherLoadMode.server,
+        message: 'test',
+      );
+      await start(tester,
+          initialIndex: 2,
+          now: () => DateTime.parse('2026-10-22T09:00:00+09:00'));
+      final detail = find.byKey(const ValueKey('bag-detail-outerwear'));
+      await tester.ensureVisible(detail);
+      await tester.tap(detail);
+      await tester.pumpAndSettle();
+      final explanation =
+          find.byKey(const ValueKey('detail-preparation-evidence'));
+      expect(explanation, findsOneWidget);
+      expect(
+          find.descendant(
+              of: explanation, matching: find.text('10월 22일 9시 체감온도 8℃')),
+          findsOneWidget);
+      expect(find.text('적용한 준비물 판단 기준: 체감온도 10℃ 이하'), findsOneWidget);
+      expect(find.text('두꺼운 겉옷 준비 근거'), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('detail-focus-unavailable')), findsNothing);
+
+      await tester.tap(find.text('Main'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Today'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('detail-preparation-evidence')),
+          findsNothing);
+    });
+  }
+
   testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
     weather.regionName = '선택 지역';
     await start(tester);

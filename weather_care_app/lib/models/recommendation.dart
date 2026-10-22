@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'lifestyle_message.dart';
 
 enum RecommendationType {
   umbrella,
@@ -163,6 +164,7 @@ class WeatherRecommendation {
   final int priority;
   final String title;
   final String description;
+  final List<WeatherMessagePart> evidence;
   final String? validFrom;
   final String? validUntil;
   final bool notificationEligible;
@@ -173,6 +175,7 @@ class WeatherRecommendation {
     required this.priority,
     required this.title,
     required this.description,
+    this.evidence = const [],
     required this.notificationEligible,
     this.validFrom,
     this.validUntil,
@@ -183,6 +186,7 @@ class WeatherRecommendation {
     int? priority,
     String? title,
     String? description,
+    List<WeatherMessagePart>? evidence,
     bool? notificationEligible,
     String? validFrom,
     String? validUntil,
@@ -193,6 +197,7 @@ class WeatherRecommendation {
       priority: priority ?? this.priority,
       title: title ?? this.title,
       description: description ?? this.description,
+      evidence: evidence ?? this.evidence,
       notificationEligible: notificationEligible ?? this.notificationEligible,
       validFrom: validFrom ?? this.validFrom,
       validUntil: validUntil ?? this.validUntil,
@@ -210,12 +215,30 @@ class WeatherRecommendation {
       priority: (json['priority'] as num?)?.toInt() ?? 0,
       title: json['title'] ?? type.title,
       description: json['description'] ?? '',
+      evidence: parseRecommendationEvidence(json['evidence']),
       notificationEligible: json['notificationEligible'] == true,
       validFrom: json['validFrom'] as String?,
       validUntil: json['validUntil'] as String?,
     );
   }
 }
+
+List<WeatherMessagePart> parseRecommendationEvidence(Object? raw) => raw is List
+    ? raw
+        .whereType<Map>()
+        .map((part) =>
+            WeatherMessagePart.fromJson(Map<String, dynamic>.from(part)))
+        .toList(growable: false)
+    : const [];
+
+Map<String, List<WeatherMessagePart>> parsePreparationEvidence(Object? raw) =>
+    raw is Map
+        ? {
+            for (final entry in raw.entries)
+              if (entry.key is String)
+                entry.key as String: parseRecommendationEvidence(entry.value),
+          }
+        : const {};
 
 RecommendationType? recommendationTypeFromApiName(String raw) {
   switch (raw) {

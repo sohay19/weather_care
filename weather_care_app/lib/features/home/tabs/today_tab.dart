@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/weather.dart';
+import '../../../models/recommendation.dart';
 import '../../../models/lifestyle_message.dart';
 import '../../../services/notification_destination.dart';
 import '../../../services/api_client.dart';
@@ -26,6 +27,7 @@ class TodayTab extends StatefulWidget {
   final bool serverFeaturesAvailable;
   final NotificationTopic? focusTopic;
   final LifestyleMessageType? focusLifestyleType;
+  final WeatherRecommendation? focusedRecommendation;
   final DetailFocusSource focusSource;
   final int focusRequestId;
   final ApiClient? lightningClient;
@@ -44,6 +46,7 @@ class TodayTab extends StatefulWidget {
     this.serverFeaturesAvailable = true,
     this.focusTopic,
     this.focusLifestyleType,
+    this.focusedRecommendation,
     this.focusSource = DetailFocusSource.notification,
     this.focusRequestId = 0,
     this.lightningClient,
@@ -90,6 +93,7 @@ class _TodayTabState extends State<TodayTab> {
     if (_focusScheduled ||
         (widget.focusTopic != NotificationTopic.lightning &&
             widget.focusLifestyleType == null &&
+            widget.focusedRecommendation == null &&
             lifestyleTypesForNotificationTopic(widget.focusTopic).isEmpty)) {
       return;
     }
@@ -112,9 +116,12 @@ class _TodayTabState extends State<TodayTab> {
 
   @override
   Widget build(BuildContext context) {
-    final focusedTypes = widget.focusLifestyleType == null
-        ? lifestyleTypesForNotificationTopic(widget.focusTopic)
-        : {widget.focusLifestyleType!};
+    final focusedTypes = widget.focusedRecommendation != null
+        ? detailLifestyleTypesForRecommendationType(
+            widget.focusedRecommendation!.type)
+        : widget.focusLifestyleType == null
+            ? lifestyleTypesForNotificationTopic(widget.focusTopic)
+            : {widget.focusLifestyleType!};
     final focusLabel = widget.focusSource == DetailFocusSource.selection
         ? '선택한 항목의 근거'
         : '알림에서 확인한 항목';
@@ -189,6 +196,7 @@ class _TodayTabState extends State<TodayTab> {
                 focusedItemKey:
                     focusedTypes.isEmpty ? null : _focusedEvidenceKey,
                 focusRequestId: widget.focusRequestId,
+                selectedEvidence: _recommendationEvidence(focusLabel),
                 missingFocusMessage:
                     widget.focusSource == DetailFocusSource.notification
                         ? '이 알림과 연결된 근거가 현재 자료에 없어요.'
@@ -206,6 +214,36 @@ class _TodayTabState extends State<TodayTab> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget? _recommendationEvidence(String focusLabel) {
+    final recommendation = widget.focusedRecommendation;
+    if (widget.focusSource != DetailFocusSource.selection ||
+        recommendation == null ||
+        !recommendation.evidence.any((part) =>
+            part.text.trim().isNotEmpty &&
+            (part.role == WeatherMessageRole.officialFact ||
+                part.role == WeatherMessageRole.calculatedFact))) {
+      return null;
+    }
+    return WeatherEvidenceCard(
+      key: const ValueKey('detail-preparation-evidence'),
+      title: '${recommendation.type.label} 준비 근거',
+      id: 'preparation-${recommendation.type.apiName.toLowerCase()}',
+      focused: true,
+      focusLabel: focusLabel,
+      focusRequestId: widget.focusRequestId,
+      message: LifestyleMessage(
+        type: detailLifestyleTypeForRecommendationType(recommendation.type),
+        title: recommendation.title,
+        parts: [
+          WeatherMessagePart(
+              role: WeatherMessageRole.appSuggestion,
+              text: recommendation.title),
+          ...recommendation.evidence,
+        ],
       ),
     );
   }

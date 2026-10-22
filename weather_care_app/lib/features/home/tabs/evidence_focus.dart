@@ -69,6 +69,43 @@ Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
         const {},
     };
 
+Set<LifestyleMessageType> detailLifestyleTypesForRecommendationType(
+  RecommendationType type,
+) =>
+    switch (type) {
+      RecommendationType.parasol ||
+      RecommendationType.sunHat ||
+      RecommendationType.sunscreen ||
+      RecommendationType.sunglasses =>
+        const {
+          LifestyleMessageType.strongSunExposure,
+          LifestyleMessageType.sunscreenUseful,
+        },
+      RecommendationType.water ||
+      RecommendationType.portableFan ||
+      RecommendationType.coolingItem =>
+        const {
+          LifestyleMessageType.hydrationImportant,
+          LifestyleMessageType.veryHotAndHumid,
+        },
+      RecommendationType.outerwear ||
+      RecommendationType.lightOuterwear ||
+      RecommendationType.scarf ||
+      RecommendationType.handWarmer =>
+        const {
+          LifestyleMessageType.outerwearUseful,
+          LifestyleMessageType.coolerThanTemperature,
+          LifestyleMessageType.largeTemperatureSwing,
+          LifestyleMessageType.rapidTemperatureDrop,
+        },
+      RecommendationType.slipResistantShoes => const {
+          LifestyleMessageType.snowTravelCaution,
+          LifestyleMessageType.wetRoadCaution,
+          LifestyleMessageType.blackIceCaution,
+        },
+      _ => {detailLifestyleTypeForRecommendationType(type)},
+    };
+
 LifestyleMessageType detailLifestyleTypeForRecommendationType(
   RecommendationType type,
 ) =>

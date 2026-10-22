@@ -12,6 +12,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
   final String? focusLabel;
   final Key? focusedItemKey;
   final String? missingFocusMessage;
+  final Widget? selectedEvidence;
   final Future<void> Function()? onRetryMissingData;
   final bool retrying;
   final int focusRequestId;
@@ -25,6 +26,7 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
     this.focusLabel,
     this.focusedItemKey,
     this.missingFocusMessage,
+    this.selectedEvidence,
     this.onRetryMissingData,
     this.retrying = false,
     this.focusRequestId = 0,
@@ -44,10 +46,13 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
       ...visibleMessages
           .where((message) => !focusedTypes.contains(message.type)),
     ];
-    final focusedIndex = orderedMessages.indexWhere(
-      (message) => focusedTypes.contains(message.type),
-    );
-    final missingFocus = focusedTypes.isNotEmpty && focusedIndex < 0;
+    final focusedIndex = selectedEvidence != null
+        ? -1
+        : orderedMessages.indexWhere(
+            (message) => focusedTypes.contains(message.type),
+          );
+    final missingFocus =
+        selectedEvidence == null && focusedTypes.isNotEmpty && focusedIndex < 0;
     final statuses = dataStatusMessages
         .where((part) =>
             part.text.trim().isNotEmpty &&
@@ -75,6 +80,10 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           if (leadingEvidence != null) leadingEvidence!,
+          if (selectedEvidence != null) ...[
+            KeyedSubtree(key: focusedItemKey, child: selectedEvidence!),
+            const SizedBox(height: 12),
+          ],
           if (missingFocus) ...[
             KeyedSubtree(
               key: focusedItemKey,
@@ -93,7 +102,10 @@ class LifestyleEvidenceChecklistSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
           ],
-          if (orderedMessages.isEmpty && !missingFocus && statusGroups.isEmpty)
+          if (orderedMessages.isEmpty &&
+              !missingFocus &&
+              statusGroups.isEmpty &&
+              selectedEvidence == null)
             const _EmptyLifestyleChecklist()
           else
             for (var index = 0; index < orderedMessages.length; index++) ...[

@@ -434,6 +434,7 @@ router.get('/today', async (c) => {
       expandedPreparations,
       tieredPreparations,
       snapshots: decisionHourly,
+      facts: rules,
     });
     const regionLabel = administrativeAreaForLocation(location)?.[1] ?? '현재 위치';
 

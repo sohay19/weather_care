@@ -4,12 +4,14 @@ import {
   Recommendation,
   RecommendationType,
   WeatherRuleFactType,
+  WeatherRuleFact,
 } from '../types';
 import { descriptionFor, titleFor } from './recommendationTemplates';
 import { CATALOG_VERSION } from './recommendationTemplates';
 import { sortRecommendations } from './recommendationPriority';
 import { DECISION_VERSION } from '../rules/weatherRuleEngine';
 import { preparationsForSnapshots } from './preparationPolicy';
+import { buildLifestyleMessages } from '../presentation/lifestyleMessages';
 import type { WeatherSnapshot } from '../types';
 
 export const PREPARATION_RECOMMENDATION_CATALOG = 'PREPARATION_15';
@@ -20,6 +22,7 @@ export interface RecommendationEngineOptions {
   includeLegacyHeavySnowCaution?: boolean;
   tieredPreparations?: boolean;
   snapshots?: WeatherSnapshot[];
+  facts?: WeatherRuleFact[];
 }
 
 export function enabledRecommendationTypes(
@@ -77,6 +80,7 @@ export function runRecommendationEngine(
       title: titleFor(candidate.type),
       description: descriptionFor(candidate.type, []),
       reasonCodes: [candidate.reason.toUpperCase()],
+      evidence: candidate.evidence,
       validFrom: candidate.validFrom,
       notificationEligible: candidate.type !== 'LIGHT_OUTERWEAR' &&
         candidate.type !== 'SNOW_CHAINS',
@@ -101,10 +105,12 @@ export function runRecommendationEngine(
     const validFrom = stringContext(insight, 'validFrom');
     const validUntil = stringContext(insight, 'validUntil');
     const actionDeadline = stringContext(insight, 'actionDeadline');
+    const evidence = buildLifestyleMessages([insight], options.facts, options.snapshots)[0].parts
+      .filter((part) => part.role === 'OFFICIAL_FACT' || part.role === 'CALCULATED_FACT');
     for (const type of types) {
       recs.push({
         type,
-        recommended: enabled[type],
+        recommended: enabled[type] && (options.snapshots === undefined || evidence.length > 0),
         priority: Math.min(
           100,
           Math.max(
@@ -118,6 +124,7 @@ export function runRecommendationEngine(
         title: titleFor(type),
         description: descriptionFor(type, allInsightTypes),
         reasonCodes,
+        evidence,
         validFrom,
         validUntil,
         actionDeadline,

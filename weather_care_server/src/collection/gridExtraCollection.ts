@@ -182,9 +182,14 @@ function normalizeKhoa(rows: RecordValue[], fields: Record<string, string>): Rec
 export async function collectGridHourly(input: {
   db: D1Database; config: GridExtraConfig; now: Date;
   khoaKey?: string; kwaterKey?: string; nifsKey?: string; fetcher?: typeof fetch;
+  requestIntervalMs?: number;
 }): Promise<void> {
   const { db, config, now } = input;
-  const fetcher = input.fetcher ?? fetch;
+  const request = input.fetcher ?? fetch;
+  const fetcher: typeof fetch = async (url, init) => {
+    if (input.requestIntervalMs) await new Promise(resolve => setTimeout(resolve, input.requestIntervalMs));
+    return request(url, init);
+  };
   const date = compactDate(now);
   const slot = hourSlot(now);
   const jobs: Array<() => Promise<unknown>> = [];

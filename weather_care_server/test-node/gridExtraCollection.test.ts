@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { collectGridHourly, collectGridLightning, collectGridRiverFlow, collectGridRiverHistory, parseLightningText,
   type GridExtraConfig } from '../src/collection/gridExtraCollection';
 import { getApiHubUsage } from '../src/database/apiUsageRepository';
+import { collectDailyRiverHistory } from '../src/collection/riverHistoryCollection';
 import { asD1Database, SqliteD1Database } from '../src/node/sqliteD1';
 
 let sqlite: SqliteD1Database;
@@ -29,6 +30,35 @@ beforeEach(() => {
 afterEach(() => sqlite.close());
 
 describe('격자 부가자료 수집', () => {
+  it('정기 하천 수집은 당일 이력을 재사용하고 한국 날짜가 바뀌면 새 자료를 받는다', async () => {
+    const fetcher = vi.fn(async (url: URL) => {
+      const history = url.pathname.includes('/1H/');
+      const day = history ? url.pathname.split('/').at(-2)!.slice(0, 8) : '202610232310';
+      return Response.json({ content: [{ wlobscd: '1001603',
+        ymdhm: history ? `${day}01` : day, wl: '1', fw: '2' }] });
+    });
+    const input = { db: asD1Database(sqlite), key: 'test-key',
+      now: new Date('2026-10-23T14:29:00Z'), fetcher: fetcher as typeof fetch };
+    expect(await collectDailyRiverHistory(input)).toEqual({ targets: 1, succeeded: 1, failed: 0, budgetExhausted: false });
+    await collectDailyRiverHistory({ ...input, now: new Date('2026-10-23T14:39:00Z') });
+    expect(fetcher).toHaveBeenCalledTimes(3); // 제원·전국 최신·지점 이력, 재실행은 모두 재사용.
+    await collectDailyRiverHistory({ ...input, now: new Date('2026-10-24T14:29:00Z') });
+    expect(fetcher).toHaveBeenCalledTimes(6);
+    const historyUrls = fetcher.mock.calls.map(([url]) => String(url)).filter(url => url.includes('/1H/'));
+    expect(historyUrls[1]).toContain('/2026102400/2026102423.json');
+  });
+
+  it('정기 하천 이력 수집이 일일 요청 한도를 소진하면 추가 호출을 중지한다', async () => {
+    sqlite.sqlite.prepare(`INSERT INTO api_usage_daily VALUES(?, 'HRFCO_RIVER_HISTORY', 1200, 0, ?)`)
+      .run('2026-10-23', '2026-10-23T14:29:00Z');
+    const fetcher = vi.fn(async () => Response.json({ content: [{ wlobscd: '1001603',
+      obsnm: '관측소', ymdhm: '202610232310', wl: '1', fw: '2' }] }));
+    const result = await collectDailyRiverHistory({ db: asD1Database(sqlite), key: 'test-key',
+      now: new Date('2026-10-23T14:29:00Z'), fetcher: fetcher as typeof fetch });
+    expect(result).toEqual({ targets: 1, succeeded: 0, failed: 0, budgetExhausted: true });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it('K-water 이름 목록은 하루에 한 번 받고 댐의 축약 시각은 요청 날짜로 정규화한다', async () => {
     const fetcher = vi.fn(async (url: URL) => {
       const rows = url.pathname.endsWith('/wal/wallist')

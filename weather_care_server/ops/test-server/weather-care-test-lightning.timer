@@ -1,8 +1,8 @@
 [Unit]
-Description=날씨챙겨 시험 서버 낙뢰 10분 수집
+Description=날씨챙겨 공용 수집 후 시험 사용자 낙뢰 알림
 
 [Timer]
-OnCalendar=*-*-* *:05/10:00
+OnCalendar=*-*-* *:07/10:00
 AccuracySec=1s
 Persistent=true
 Unit=weather-care-test-lightning.service

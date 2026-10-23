@@ -1,0 +1,1319 @@
+{
+  "tideStations": [
+    "DT_0002",
+    "DT_0003",
+    "DT_0004",
+    "DT_0005",
+    "DT_0006",
+    "DT_0007",
+    "DT_0008",
+    "DT_0010",
+    "DT_0011",
+    "DT_0012",
+    "DT_0013",
+    "DT_0016",
+    "DT_0017",
+    "DT_0018",
+    "DT_0021",
+    "DT_0023",
+    "DT_0028",
+    "DT_0030",
+    "DT_0032",
+    "DT_0019",
+    "DT_0020",
+    "DT_0022",
+    "DT_0024",
+    "DT_0026",
+    "DT_0027",
+    "DT_0029",
+    "DT_0031",
+    "DT_0035",
+    "DT_0044",
+    "DT_0050",
+    "DT_0051",
+    "DT_0049",
+    "DT_0056",
+    "DT_0057",
+    "DT_0055",
+    "DT_0058",
+    "DT_0038",
+    "DT_0025",
+    "DT_0034",
+    "DT_0001",
+    "DT_0052",
+    "DT_0014",
+    "DT_0037",
+    "DT_0009",
+    "DT_0043",
+    "DT_0061",
+    "DT_0901",
+    "DT_0068",
+    "DT_0065",
+    "DT_0066",
+    "DT_0067",
+    "DT_0091",
+    "DT_0063",
+    "DT_0062",
+    "DT_0092",
+    "DT_0094",
+    "DT_0093"
+  ],
+  "buoyStations": [
+    "TW_0095",
+    "TW_0089",
+    "TW_0079",
+    "TW_0080",
+    "TW_0081",
+    "TW_0082",
+    "TW_0083",
+    "TW_0084",
+    "TW_0092",
+    "TW_0078",
+    "TW_0087",
+    "TW_0090",
+    "TW_0074",
+    "TW_0062",
+    "TW_0069",
+    "TW_0070",
+    "TW_0072",
+    "TW_0077",
+    "TW_0075",
+    "TW_0076",
+    "TW_0088",
+    "TW_0085",
+    "TW_0091",
+    "TW_0086",
+    "TW_0093",
+    "TW_0094"
+  ],
+  "forecastStations": [
+    "DT_0002",
+    "DT_0003",
+    "DT_0004",
+    "DT_0005",
+    "DT_0006",
+    "DT_0007",
+    "DT_0008",
+    "DT_0010",
+    "DT_0011",
+    "DT_0012",
+    "DT_0013",
+    "DT_0016",
+    "DT_0017",
+    "DT_0018",
+    "DT_0021",
+    "DT_0023",
+    "DT_0028",
+    "DT_0030",
+    "DT_0032",
+    "DT_0019",
+    "DT_0020",
+    "DT_0022",
+    "DT_0024",
+    "DT_0026",
+    "DT_0027",
+    "DT_0029",
+    "DT_0031",
+    "DT_0035",
+    "DT_0044",
+    "DT_0050",
+    "DT_0051",
+    "DT_0049",
+    "DT_0056",
+    "DT_0057",
+    "DT_0055",
+    "DT_0058",
+    "DT_0038",
+    "DT_0025",
+    "DT_0034",
+    "DT_0001",
+    "DT_0052",
+    "DT_0014",
+    "DT_0037",
+    "DT_0009",
+    "DT_0043",
+    "DT_0061",
+    "DT_0901",
+    "DT_0068",
+    "DT_0065",
+    "DT_0066",
+    "DT_0067",
+    "DT_0091",
+    "DT_0063",
+    "DT_0062",
+    "DT_0092",
+    "DT_0094",
+    "DT_0093"
+  ],
+  "ripCurrentBeaches": [],
+  "romsAreas": [
+    {
+      "id": "INCHEON_COAST",
+      "ymin": 37.51,
+      "ymax": 37.54,
+      "xmin": 126.58,
+      "xmax": 126.61
+    },
+    {
+      "id": "BUOY_TW_0095",
+      "ymin": 36.565,
+      "ymax": 36.595,
+      "xmin": 129.43908,
+      "xmax": 129.46908
+    },
+    {
+      "id": "BUOY_TW_0089",
+      "ymin": 37.79397,
+      "ymax": 37.82397,
+      "xmin": 128.91689,
+      "xmax": 128.94689
+    },
+    {
+      "id": "BUOY_TW_0079",
+      "ymin": 35.63747,
+      "ymax": 35.66747,
+      "xmin": 126.17925,
+      "xmax": 126.20925
+    },
+    {
+      "id": "BUOY_TW_0080",
+      "ymin": 34.52806,
+      "ymax": 34.55806,
+      "xmin": 125.78778,
+      "xmax": 125.81778
+    },
+    {
+      "id": "BUOY_TW_0081",
+      "ymin": 34.24372,
+      "ymax": 34.27372,
+      "xmin": 126.94528,
+      "xmax": 126.97528
+    },
+    {
+      "id": "BUOY_TW_0082",
+      "ymin": 36.99172,
+      "ymax": 37.02172,
+      "xmin": 126.25522,
+      "xmax": 126.28522
+    },
+    {
+      "id": "BUOY_TW_0083",
+      "ymin": 34.77972,
+      "ymax": 34.80972,
+      "xmin": 127.79305,
+      "xmax": 127.82305
+    },
+    {
+      "id": "BUOY_TW_0084",
+      "ymin": 34.75833,
+      "ymax": 34.78833,
+      "xmin": 128.445,
+      "xmax": 128.475
+    },
+    {
+      "id": "BUOY_TW_0092",
+      "ymin": 35.2875,
+      "ymax": 35.3175,
+      "xmin": 129.2775,
+      "xmax": 129.3075
+    },
+    {
+      "id": "BUOY_TW_0078",
+      "ymin": 34.31008,
+      "ymax": 34.34008,
+      "xmin": 126.74819,
+      "xmax": 126.77819
+    },
+    {
+      "id": "BUOY_TW_0087",
+      "ymin": 35.07675,
+      "ymax": 35.10675,
+      "xmin": 129.07025,
+      "xmax": 129.10025
+    },
+    {
+      "id": "BUOY_TW_0090",
+      "ymin": 35.14972,
+      "ymax": 35.17972,
+      "xmin": 129.20444,
+      "xmax": 129.23444
+    },
+    {
+      "id": "BUOY_TW_0074",
+      "ymin": 34.84472,
+      "ymax": 34.87472,
+      "xmin": 127.77778,
+      "xmax": 127.80778
+    },
+    {
+      "id": "BUOY_TW_0062",
+      "ymin": 35.13397,
+      "ymax": 35.16397,
+      "xmin": 129.15517,
+      "xmax": 129.18517
+    },
+    {
+      "id": "BUOY_TW_0069",
+      "ymin": 36.25911,
+      "ymax": 36.28911,
+      "xmin": 126.4428,
+      "xmax": 126.4728
+    },
+    {
+      "id": "BUOY_TW_0070",
+      "ymin": 37.12167,
+      "ymax": 37.15167,
+      "xmin": 126.52583,
+      "xmax": 126.55583
+    },
+    {
+      "id": "BUOY_TW_0072",
+      "ymin": 35.96917,
+      "ymax": 35.99917,
+      "xmin": 126.49375,
+      "xmax": 126.52375
+    },
+    {
+      "id": "BUOY_TW_0077",
+      "ymin": 37.50839,
+      "ymax": 37.53839,
+      "xmin": 126.57708,
+      "xmax": 126.60708
+    },
+    {
+      "id": "BUOY_TW_0075",
+      "ymin": 33.2195,
+      "ymax": 33.2495,
+      "xmin": 126.39455,
+      "xmax": 126.42455
+    },
+    {
+      "id": "BUOY_TW_0076",
+      "ymin": 37.37444,
+      "ymax": 37.40444,
+      "xmin": 126.51806,
+      "xmax": 126.54806
+    },
+    {
+      "id": "BUOY_TW_0088",
+      "ymin": 35.0378,
+      "ymax": 35.0678,
+      "xmin": 128.98808,
+      "xmax": 129.01808
+    },
+    {
+      "id": "BUOY_TW_0085",
+      "ymin": 35.08819,
+      "ymax": 35.11819,
+      "xmin": 128.61683,
+      "xmax": 128.64683
+    },
+    {
+      "id": "BUOY_TW_0091",
+      "ymin": 38.1075,
+      "ymax": 38.1375,
+      "xmin": 128.63556,
+      "xmax": 128.66556
+    },
+    {
+      "id": "BUOY_TW_0086",
+      "ymin": 35.02878,
+      "ymax": 35.05878,
+      "xmin": 128.74675,
+      "xmax": 128.77675
+    },
+    {
+      "id": "BUOY_TW_0093",
+      "ymin": 38.18361,
+      "ymax": 38.21361,
+      "xmin": 128.61639,
+      "xmax": 128.64639
+    },
+    {
+      "id": "BUOY_TW_0094",
+      "ymin": 37.60111,
+      "ymax": 37.63111,
+      "xmin": 129.08806,
+      "xmax": 129.11806
+    }
+  ],
+  "riverStations": [
+    {
+      "damCode": "2011602",
+      "stationCode": "2011602"
+    },
+    {
+      "damCode": "2011602",
+      "stationCode": "2011655"
+    },
+    {
+      "damCode": "1007601",
+      "stationCode": "1007601"
+    },
+    {
+      "damCode": "1007601",
+      "stationCode": "1005681"
+    },
+    {
+      "damCode": "3012601",
+      "stationCode": "3012601"
+    },
+    {
+      "damCode": "3012601",
+      "stationCode": "3012621"
+    },
+    {
+      "damCode": "1001210",
+      "stationCode": "9000266"
+    },
+    {
+      "damCode": "1001210",
+      "stationCode": "9000264"
+    },
+    {
+      "damCode": "1001210",
+      "stationCode": "9000268"
+    },
+    {
+      "damCode": "1001210",
+      "stationCode": "9000265"
+    },
+    {
+      "damCode": "2009602",
+      "stationCode": "2009602"
+    },
+    {
+      "damCode": "2009602",
+      "stationCode": "2009615"
+    },
+    {
+      "damCode": "2503220",
+      "stationCode": "9000256"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "1021615"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "1022664"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "1021701"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "1021612"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "1021606"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "9000300"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "9000302"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "9000301"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "9000303"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "9000304"
+    },
+    {
+      "damCode": "1021701",
+      "stationCode": "9000305"
+    },
+    {
+      "damCode": "2008101",
+      "stationCode": "2008615"
+    },
+    {
+      "damCode": "2008101",
+      "stationCode": "2008620"
+    },
+    {
+      "damCode": "2009601",
+      "stationCode": "2009601"
+    },
+    {
+      "damCode": "2009601",
+      "stationCode": "2007617"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "8000099"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022706"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022710"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022698"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022694"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022702"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022692"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022693"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022700"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022696"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022704"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "8000033"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "2022690"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "8000100"
+    },
+    {
+      "damCode": "2022510",
+      "stationCode": "8000101"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2020698"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018687"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018645"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018646"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "8000019"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018650"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "8000018"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018690"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2019615"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018695"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018685"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018608"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018620"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018630"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018640"
+    },
+    {
+      "damCode": "2018110",
+      "stationCode": "2018647"
+    },
+    {
+      "damCode": "1302210",
+      "stationCode": "9000267"
+    },
+    {
+      "damCode": "2014601",
+      "stationCode": "2014601"
+    },
+    {
+      "damCode": "2014601",
+      "stationCode": "2014650"
+    },
+    {
+      "damCode": "2201230",
+      "stationCode": "9000263"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3012630"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3004620"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "9000241"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3008690"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "9000242"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3005680"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3004650"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3007670"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3006680"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "3008110"
+    },
+    {
+      "damCode": "3008110",
+      "stationCode": "8000094"
+    },
+    {
+      "damCode": "3008611",
+      "stationCode": "3008695"
+    },
+    {
+      "damCode": "2021110",
+      "stationCode": "9900007"
+    },
+    {
+      "damCode": "2021110",
+      "stationCode": "2021630"
+    },
+    {
+      "damCode": "2021110",
+      "stationCode": "2021620"
+    },
+    {
+      "damCode": "3012602",
+      "stationCode": "3012602"
+    },
+    {
+      "damCode": "3012602",
+      "stationCode": "3012677"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "8000084"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "9900004"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "3203110"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "8000083"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "9000258"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "9000259"
+    },
+    {
+      "damCode": "3203110",
+      "stationCode": "3203638"
+    },
+    {
+      "damCode": "3303110",
+      "stationCode": "9900003"
+    },
+    {
+      "damCode": "3303110",
+      "stationCode": "8000024"
+    },
+    {
+      "damCode": "2007601",
+      "stationCode": "2007601"
+    },
+    {
+      "damCode": "2007601",
+      "stationCode": "2007615"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "8000122"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "8000097"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "4001664"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "4001660"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "4002695"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "4001620"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "4002610"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "8000085"
+    },
+    {
+      "damCode": "4001110",
+      "stationCode": "3302680"
+    },
+    {
+      "damCode": "3010601",
+      "stationCode": "3010601"
+    },
+    {
+      "damCode": "3010601",
+      "stationCode": "3012607"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1010640"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "9000272"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1012670"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1011650"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1012650"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1011690"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1012702"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1012110"
+    },
+    {
+      "damCode": "1012110",
+      "stationCode": "1011692"
+    },
+    {
+      "damCode": "4105210",
+      "stationCode": "4009662"
+    },
+    {
+      "damCode": "4105210",
+      "stationCode": "4105210"
+    },
+    {
+      "damCode": "4105210",
+      "stationCode": "4105035"
+    },
+    {
+      "damCode": "4105210",
+      "stationCode": "4105031"
+    },
+    {
+      "damCode": "4105210",
+      "stationCode": "9900001"
+    },
+    {
+      "damCode": "5004601",
+      "stationCode": "5004601"
+    },
+    {
+      "damCode": "5004601",
+      "stationCode": "5004660"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "9000255"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "2001660"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "9000194"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "9000193"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "2001667"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "2001630"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "9000196"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "9900009"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "8000112"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "2003610"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "2001110"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "2001692"
+    },
+    {
+      "damCode": "2001110",
+      "stationCode": "9000195"
+    },
+    {
+      "damCode": "2001611",
+      "stationCode": "2001695"
+    },
+    {
+      "damCode": "1007602",
+      "stationCode": "1007602"
+    },
+    {
+      "damCode": "1007602",
+      "stationCode": "1005688"
+    },
+    {
+      "damCode": "2503210",
+      "stationCode": "9000257"
+    },
+    {
+      "damCode": "2012210",
+      "stationCode": "9000243"
+    },
+    {
+      "damCode": "2012210",
+      "stationCode": "2012631"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "8000120"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001661"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "8000121"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001620"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001664"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001663"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001640"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001662"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3002650"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001660"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3002660"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "3001665"
+    },
+    {
+      "damCode": "3001110",
+      "stationCode": "9000274"
+    },
+    {
+      "damCode": "2021210",
+      "stationCode": "9000262"
+    },
+    {
+      "damCode": "2021210",
+      "stationCode": "9000261"
+    },
+    {
+      "damCode": "2021210",
+      "stationCode": "2021666"
+    },
+    {
+      "damCode": "2021210",
+      "stationCode": "9000260"
+    },
+    {
+      "damCode": "2021210",
+      "stationCode": "2021671"
+    },
+    {
+      "damCode": "1007603",
+      "stationCode": "9000306"
+    },
+    {
+      "damCode": "1007603",
+      "stationCode": "1007603"
+    },
+    {
+      "damCode": "1007603",
+      "stationCode": "1005691"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2005650"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2003630"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002686"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002670"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002675"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002692"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2402620"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002620"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002645"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002640"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2401620"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "8000098"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002630"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002650"
+    },
+    {
+      "damCode": "2002110",
+      "stationCode": "2002660"
+    },
+    {
+      "damCode": "2002610",
+      "stationCode": "2001675"
+    },
+    {
+      "damCode": "5101110",
+      "stationCode": "5101680"
+    },
+    {
+      "damCode": "5101110",
+      "stationCode": "9900002"
+    },
+    {
+      "damCode": "5101110",
+      "stationCode": "5101620"
+    },
+    {
+      "damCode": "5101110",
+      "stationCode": "8000022"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4008694"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4007630"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "3301650"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4008650"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4007670"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4104620"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4007650"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "9900005"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "8000096"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4007660"
+    },
+    {
+      "damCode": "4007110",
+      "stationCode": "4007655"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "4104612"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "9000183"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "4104610"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "4104615"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "9900006"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "8000020"
+    },
+    {
+      "damCode": "4104610",
+      "stationCode": "8000095"
+    },
+    {
+      "damCode": "5004602",
+      "stationCode": "5004602"
+    },
+    {
+      "damCode": "5004602",
+      "stationCode": "5004635"
+    },
+    {
+      "damCode": "2017601",
+      "stationCode": "2017601"
+    },
+    {
+      "damCode": "2017601",
+      "stationCode": "2020662"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "9000251"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "9000252"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1003630"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "9000253"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "9000182"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1001675"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1002695"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1003626"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1002655"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "8000081"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "8000080"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1003655"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "8000119"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "9000181"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1003690"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1003696"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "9000273"
+    },
+    {
+      "damCode": "1003110",
+      "stationCode": "1004690"
+    },
+    {
+      "damCode": "1003611",
+      "stationCode": "1005605"
+    },
+    {
+      "damCode": "1003611",
+      "stationCode": "8000009"
+    },
+    {
+      "damCode": "1003611",
+      "stationCode": "1001633"
+    },
+    {
+      "damCode": "2011601",
+      "stationCode": "2011601"
+    },
+    {
+      "damCode": "2011601",
+      "stationCode": "2009617"
+    },
+    {
+      "damCode": "1009710",
+      "stationCode": "1009650"
+    },
+    {
+      "damCode": "1009710",
+      "stationCode": "8000007"
+    },
+    {
+      "damCode": "1009710",
+      "stationCode": "1009654"
+    },
+    {
+      "damCode": "1009710",
+      "stationCode": "1009710"
+    },
+    {
+      "damCode": "1009710",
+      "stationCode": "8000008"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "2015638"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "2015620"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "2015650"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "9900008"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "2016680"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "2016620"
+    },
+    {
+      "damCode": "2015110",
+      "stationCode": "2015670"
+    },
+    {
+      "damCode": "2018611",
+      "stationCode": "2016640"
+    },
+    {
+      "damCode": "2018611",
+      "stationCode": "8000017"
+    },
+    {
+      "damCode": "2014602",
+      "stationCode": "2014602"
+    },
+    {
+      "damCode": "2014602",
+      "stationCode": "2014663"
+    },
+    {
+      "damCode": "1006110",
+      "stationCode": "9000250"
+    },
+    {
+      "damCode": "1006110",
+      "stationCode": "9900010"
+    },
+    {
+      "damCode": "1006110",
+      "stationCode": "8000093"
+    },
+    {
+      "damCode": "1006110",
+      "stationCode": "1006610"
+    },
+    {
+      "damCode": "1006110",
+      "stationCode": "1006620"
+    }
+  ],
+  "dams": []
+}

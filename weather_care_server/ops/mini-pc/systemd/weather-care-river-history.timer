@@ -1,0 +1,10 @@
+[Unit]
+Description=날씨챙겨 하천 당일 이력 매일 23시 29분 KST 수집
+
+[Timer]
+OnCalendar=*-*-* 14:29:00 UTC
+AccuracySec=1s
+Unit=weather-care-river-history.service
+
+[Install]
+WantedBy=timers.target

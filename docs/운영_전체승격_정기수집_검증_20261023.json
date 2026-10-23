@@ -1,0 +1,862 @@
+{
+  "date": "2026-10-23",
+  "status": "완료",
+  "completedAtKst": "2026-10-23T16:59:48.734173+09:00",
+  "verifiedAtKst": "2026-10-23T17:06:40.581357+09:00",
+  "scope": "실제 테스트 배포본 전체 운영 승격 및 공용 심화 자료 정기 수집 활성화",
+  "previousReleases": {
+    "production": "/opt/weather-care/releases/20261023-shared-db-production/weather_care_server",
+    "test": "/opt/weather-care/releases/20261023-shared-db-test/weather_care_server"
+  },
+  "releases": {
+    "production": "/opt/weather-care/releases/20261023-full-production/weather_care_server",
+    "test": "/opt/weather-care/releases/20261023-full-test/weather_care_server"
+  },
+  "sourceDifferencesPromoted": 138,
+  "sourceArchive": {
+    "path": "/var/backups/weather-care/promote-20261023/source-after.tar.gz",
+    "sha256": "00181fb925b89f503e1de2960c1a6e0755347813cccff1b96c53630e03b54b66"
+  },
+  "privateDataPreserved": true,
+  "privateTables": {
+    "production": {
+      "active_regions": {
+        "count": 0,
+        "identical": true
+      },
+      "d1_migrations": {
+        "count": 1,
+        "identical": true
+      },
+      "installation_activity": {
+        "count": 184,
+        "identical": true
+      },
+      "installation_credentials": {
+        "count": 184,
+        "identical": true
+      },
+      "installation_ownership_challenges": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_warning_state": {
+        "count": 0,
+        "identical": true
+      },
+      "installations": {
+        "count": 70,
+        "identical": true
+      },
+      "legacy_installation_ownership": {
+        "count": 0,
+        "identical": true
+      },
+      "lightning_notification_claims": {
+        "count": 0,
+        "identical": true
+      },
+      "notification_history": {
+        "count": 124,
+        "identical": true
+      },
+      "notification_settings": {
+        "count": 179,
+        "identical": true
+      },
+      "sqlite_sequence": {
+        "count": 1,
+        "identical": true
+      }
+    },
+    "test": {
+      "active_regions": {
+        "count": 0,
+        "identical": true
+      },
+      "d1_migrations": {
+        "count": 1,
+        "identical": true
+      },
+      "installation_activity": {
+        "count": 31,
+        "identical": true
+      },
+      "installation_credentials": {
+        "count": 31,
+        "identical": true
+      },
+      "installation_ownership_challenges": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_warning_state": {
+        "count": 0,
+        "identical": true
+      },
+      "installations": {
+        "count": 21,
+        "identical": true
+      },
+      "legacy_installation_ownership": {
+        "count": 0,
+        "identical": true
+      },
+      "lightning_notification_claims": {
+        "count": 0,
+        "identical": true
+      },
+      "notification_history": {
+        "count": 0,
+        "identical": true
+      },
+      "notification_settings": {
+        "count": 31,
+        "identical": true
+      },
+      "sqlite_sequence": {
+        "count": 1,
+        "identical": true
+      }
+    }
+  },
+  "finalUserSnapshots": "/var/backups/weather-care/promote-20261023/final-users",
+  "backupRoot": "/var/backups/weather-care/promote-20261023",
+  "backups": [
+    {
+      "path": "/var/backups/weather-care/promote-20261023/weather-care-users-production-20261023T075507Z.sqlite",
+      "bytes": 299008,
+      "sha256": "73843a92ba2df6852357049b5b9ea35a09d07e09eebd9807a115316fcfdaae52",
+      "quickCheck": "ok"
+    },
+    {
+      "path": "/var/backups/weather-care/promote-20261023/weather-care-weather-20261023T075507Z.sqlite.gz",
+      "bytes": 850655802,
+      "sha256": "5c289f0124e9a0c110b750f9307d769ca51ce27af795f54162855d488f31d9ab",
+      "gzipCrcValid": true,
+      "uncompressedBytes": 3196104704
+    },
+    {
+      "path": "/var/backups/weather-care/promote-20261023/weather-care-users-test-20261023T075507Z.sqlite",
+      "bytes": 147456,
+      "sha256": "a1df151cbd9ef21815d7d27139221fa624eca1a2646c3f4630ea81245fbdeca8",
+      "quickCheck": "ok"
+    }
+  ],
+  "publicVerification": {
+    "checks": [
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/health",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/main?nx=60&ny=127",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/today?nx=60&ny=127",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/weekly?nx=60&ny=127",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/main?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/today?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/weekly?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/extra/catalog?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "path": "/api/v1/weather/extra/lightning?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "POST",
+        "path": "/api/v1/installations/enroll",
+        "status": 201
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "path": "/api/v1/installations/<temporary-installation>?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "DELETE",
+        "path": "/api/v1/installations/<temporary-installation>",
+        "status": 204
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/health",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/main?nx=60&ny=127",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/today?nx=60&ny=127",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/weekly?nx=60&ny=127",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/main?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/today?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/weekly?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/extra/catalog?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "path": "/api/v1/weather/extra/lightning?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "POST",
+        "path": "/api/v1/installations/enroll",
+        "status": 201
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "path": "/api/v1/installations/<temporary-installation>?nx=98&ny=76",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "DELETE",
+        "path": "/api/v1/installations/<temporary-installation>",
+        "status": 204
+      }
+    ],
+    "sharedCurrentWeatherIdentical": true,
+    "sharedExtraCatalogIdentical": true,
+    "testAuthenticationGuard": 403,
+    "registration": {
+      "production": {
+        "locationMeasuredAtAccepted": true,
+        "nullFcmToken": true,
+        "temporaryInstallationDeleted": true
+      },
+      "test": {
+        "locationMeasuredAtAccepted": true,
+        "nullFcmToken": true,
+        "temporaryInstallationDeleted": true
+      }
+    },
+    "sourceManifestMatches": {
+      "production": true,
+      "test": true
+    },
+    "sourceFileCount": 171,
+    "manualFcmPushSent": false
+  },
+  "extraRecordVerification": [
+    {
+      "role": "production",
+      "source": "KHOA_TIDE_OBS",
+      "targetId": "DT_0063",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "production",
+      "source": "KHOA_TIDE_OBS",
+      "targetId": "DT_0032",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "production",
+      "source": "KHOA_BUOY_OBS",
+      "targetId": "TW_0088",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "production",
+      "source": "KHOA_BUOY_OBS",
+      "targetId": "TW_0077",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "production",
+      "source": "KHOA_TIDE_HOURLY",
+      "targetId": "DT_0063",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "production",
+      "source": "KHOA_TIDE_HOURLY",
+      "targetId": "DT_0032",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "production",
+      "source": "KHOA_TIDE_EXTREME",
+      "targetId": "DT_0063",
+      "status": 200,
+      "todayRecords": 4
+    },
+    {
+      "role": "production",
+      "source": "KHOA_TIDE_EXTREME",
+      "targetId": "DT_0032",
+      "status": 200,
+      "todayRecords": 4
+    },
+    {
+      "role": "production",
+      "source": "KHOA_ROMS",
+      "targetId": "BUOY_TW_0077",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "production",
+      "source": "KHOA_ROMS",
+      "targetId": "INCHEON_COAST",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "production",
+      "source": "KWATER_DAM",
+      "targetId": "2403201",
+      "status": 200,
+      "todayRecords": 13
+    },
+    {
+      "role": "production",
+      "source": "KWATER_DAM",
+      "targetId": "2011602",
+      "status": 200,
+      "todayRecords": 13
+    },
+    {
+      "role": "production",
+      "source": "HRFCO_RIVER_FLOW",
+      "targetId": "1001603",
+      "status": 200,
+      "todayRecords": 19
+    },
+    {
+      "role": "production",
+      "source": "HRFCO_RIVER_FLOW",
+      "targetId": "1001607",
+      "status": 200,
+      "todayRecords": 16
+    },
+    {
+      "role": "test",
+      "source": "KHOA_TIDE_OBS",
+      "targetId": "DT_0063",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "test",
+      "source": "KHOA_TIDE_OBS",
+      "targetId": "DT_0032",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "test",
+      "source": "KHOA_BUOY_OBS",
+      "targetId": "TW_0088",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "test",
+      "source": "KHOA_BUOY_OBS",
+      "targetId": "TW_0077",
+      "status": 200,
+      "todayRecords": 17
+    },
+    {
+      "role": "test",
+      "source": "KHOA_TIDE_HOURLY",
+      "targetId": "DT_0063",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "test",
+      "source": "KHOA_TIDE_HOURLY",
+      "targetId": "DT_0032",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "test",
+      "source": "KHOA_TIDE_EXTREME",
+      "targetId": "DT_0063",
+      "status": 200,
+      "todayRecords": 4
+    },
+    {
+      "role": "test",
+      "source": "KHOA_TIDE_EXTREME",
+      "targetId": "DT_0032",
+      "status": 200,
+      "todayRecords": 4
+    },
+    {
+      "role": "test",
+      "source": "KHOA_ROMS",
+      "targetId": "BUOY_TW_0077",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "test",
+      "source": "KHOA_ROMS",
+      "targetId": "INCHEON_COAST",
+      "status": 200,
+      "todayRecords": 24
+    },
+    {
+      "role": "test",
+      "source": "KWATER_DAM",
+      "targetId": "2403201",
+      "status": 200,
+      "todayRecords": 13
+    },
+    {
+      "role": "test",
+      "source": "KWATER_DAM",
+      "targetId": "2011602",
+      "status": 200,
+      "todayRecords": 13
+    },
+    {
+      "role": "test",
+      "source": "HRFCO_RIVER_FLOW",
+      "targetId": "1001603",
+      "status": 200,
+      "todayRecords": 19
+    },
+    {
+      "role": "test",
+      "source": "HRFCO_RIVER_FLOW",
+      "targetId": "1001607",
+      "status": 200,
+      "todayRecords": 16
+    }
+  ],
+  "collectionConfiguration": {
+    "path": "/etc/weather-care/grid-collection.json",
+    "sha256": "c73a6d84062890ac24b37fa9307a01a1b4d72d1c608f44b52f21866f0814ac8d",
+    "counts": {
+      "tideStations": 57,
+      "buoyStations": 26,
+      "forecastStations": 57,
+      "ripCurrentBeaches": 0,
+      "romsAreas": 27,
+      "riverStations": 244,
+      "dams": 0
+    }
+  },
+  "collectionVerification": {
+    "hourlyNewSnapshots": {
+      "KHOA_TIDE_OBS": 49,
+      "KHOA_BUOY_OBS": 26,
+      "KWATER_RIVER_LEVEL": 244,
+      "KWATER_DAM": 59
+    },
+    "hourlyCompleted": [
+      {
+        "event": "node_job_completed",
+        "job": "grid-hourly",
+        "scheduledAt": "2026-10-23T08:00:34.427Z"
+      }
+    ],
+    "riverLatest": [
+      {
+        "event": "node_job_completed",
+        "job": "grid-river-flow",
+        "scheduledAt": "2026-10-23T08:00:34.413Z"
+      }
+    ],
+    "dailyRiverHistory": [
+      {
+        "event": "daily_river_history_completed",
+        "targets": 935,
+        "succeeded": 935,
+        "failed": 0,
+        "budgetExhausted": false
+      }
+    ],
+    "providerFailures": [
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0009",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0019",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0030",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0034",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0038",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0055",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0058",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      },
+      {
+        "event": "grid_extra_collection_failed",
+        "source": "KHOA_TIDE_OBS",
+        "targetId": "DT_0901",
+        "slot": "2026-10-23T08:00:00.000Z",
+        "reason": "GRID_EXTRA_PROVIDER_40",
+        "error": "Error",
+        "failureReason": "UNKNOWN"
+      }
+    ],
+    "latestSources": [
+      {
+        "source": "HRFCO_RIVER_FLOW",
+        "snapshots": 2809,
+        "latestCollectedAt": "2026-10-23T08:00:34.413Z"
+      },
+      {
+        "source": "HRFCO_STATIONS",
+        "snapshots": 3,
+        "latestCollectedAt": "2026-10-23T04:54:38.318Z"
+      },
+      {
+        "source": "KHOA_BUOY_OBS",
+        "snapshots": 130,
+        "latestCollectedAt": "2026-10-23T08:00:34.427Z"
+      },
+      {
+        "source": "KHOA_ROMS",
+        "snapshots": 107,
+        "latestCollectedAt": "2026-10-23T05:03:41.305Z"
+      },
+      {
+        "source": "KHOA_TIDE_EXTREME",
+        "snapshots": 228,
+        "latestCollectedAt": "2026-10-23T04:54:38.318Z"
+      },
+      {
+        "source": "KHOA_TIDE_HOURLY",
+        "snapshots": 228,
+        "latestCollectedAt": "2026-10-23T04:54:38.318Z"
+      },
+      {
+        "source": "KHOA_TIDE_OBS",
+        "snapshots": 244,
+        "latestCollectedAt": "2026-10-23T08:00:34.427Z"
+      },
+      {
+        "source": "KMA_LIGHTNING",
+        "snapshots": 343,
+        "latestCollectedAt": "2026-10-23T08:05:00.000Z"
+      },
+      {
+        "source": "KWATER_DAM",
+        "snapshots": 295,
+        "latestCollectedAt": "2026-10-23T08:00:34.427Z"
+      },
+      {
+        "source": "KWATER_DAM_CODES",
+        "snapshots": 4,
+        "latestCollectedAt": "2026-10-23T04:54:38.318Z"
+      },
+      {
+        "source": "KWATER_RIVER_LEVEL",
+        "snapshots": 1220,
+        "latestCollectedAt": "2026-10-23T08:00:34.427Z"
+      },
+      {
+        "source": "KWATER_RIVER_STATIONS",
+        "snapshots": 147,
+        "latestCollectedAt": "2026-10-23T04:54:38.318Z"
+      },
+      {
+        "source": "NIFS_JELLYFISH",
+        "snapshots": 4,
+        "latestCollectedAt": "2026-10-23T04:54:38.318Z"
+      }
+    ],
+    "todayRequestCounts": {
+      "DATA_GO_KHOA_BUOY_OBS": 52,
+      "DATA_GO_KHOA_ROMS": 29,
+      "DATA_GO_KHOA_TIDE_EXTREME": 57,
+      "DATA_GO_KHOA_TIDE_HOURLY": 57,
+      "DATA_GO_KHOA_TIDE_OBS": 122,
+      "DATA_GO_KWATER_DAM": 118,
+      "DATA_GO_KWATER_DAM_CODES": 1,
+      "DATA_GO_KWATER_RIVER_LEVEL": 488,
+      "DATA_GO_KWATER_RIVER_STATIONS": 49,
+      "HRFCO_RIVER_FLOW": 2,
+      "HRFCO_RIVER_HISTORY": 936,
+      "HRFCO_STATIONS": 1
+    }
+  },
+  "scheduledJobs": [
+    {
+      "event": "node_scheduler_started"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "core",
+      "scheduledAt": "2026-10-23T08:00:00.000Z"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "radar",
+      "scheduledAt": "2026-10-23T08:02:00.000Z"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "observation",
+      "scheduledAt": "2026-10-23T08:02:00.000Z"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "observation",
+      "scheduledAt": "2026-10-23T08:04:00.000Z"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "grid-lightning",
+      "scheduledAt": "2026-10-23T08:05:00.000Z"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "observation",
+      "scheduledAt": "2026-10-23T08:06:00.000Z"
+    },
+    {
+      "event": "node_scheduled_job_completed",
+      "job": "grid-hourly",
+      "scheduledAt": "2026-10-23T08:06:00.000Z"
+    }
+  ],
+  "serviceStates": {
+    "weather-care-api.service": {
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "weather-care-test-api.service": {
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "weather-care-scheduler.service": {
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "weather-care-shared-uv.timer": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "waiting"
+    },
+    "weather-care-test-weather-refresh.timer": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "waiting"
+    },
+    "weather-care-test-lightning.timer": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "waiting"
+    },
+    "weather-care-river-history.timer": {
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "waiting"
+    },
+    "weather-care-river-history.service": {
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "weather-care-promotion-grid-hourly.service": {
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "weather-care-promotion-river-flow.service": {
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    }
+  },
+  "connections": {
+    "weather-care-api.service": [
+      "/var/lib/weather-care/weather-care-users-production.sqlite",
+      "/var/lib/weather-care/weather-care-users-production.sqlite-shm",
+      "/var/lib/weather-care/weather-care-users-production.sqlite-wal",
+      "/var/lib/weather-care/weather-care-users-test.sqlite",
+      "/var/lib/weather-care/weather-care-users-test.sqlite-shm",
+      "/var/lib/weather-care/weather-care-users-test.sqlite-wal",
+      "/var/lib/weather-care/weather-care-weather.sqlite",
+      "/var/lib/weather-care/weather-care-weather.sqlite-shm",
+      "/var/lib/weather-care/weather-care-weather.sqlite-wal"
+    ],
+    "weather-care-test-api.service": [
+      "/var/lib/weather-care/weather-care-users-test.sqlite",
+      "/var/lib/weather-care/weather-care-users-test.sqlite-shm",
+      "/var/lib/weather-care/weather-care-users-test.sqlite-wal",
+      "/var/lib/weather-care/weather-care-weather.sqlite",
+      "/var/lib/weather-care/weather-care-weather.sqlite-shm",
+      "/var/lib/weather-care/weather-care-weather.sqlite-wal"
+    ],
+    "weather-care-scheduler.service": [
+      "/var/lib/weather-care/weather-care-users-production.sqlite",
+      "/var/lib/weather-care/weather-care-users-production.sqlite-shm",
+      "/var/lib/weather-care/weather-care-users-production.sqlite-wal",
+      "/var/lib/weather-care/weather-care-users-test.sqlite",
+      "/var/lib/weather-care/weather-care-users-test.sqlite-shm",
+      "/var/lib/weather-care/weather-care-users-test.sqlite-wal",
+      "/var/lib/weather-care/weather-care-weather.sqlite",
+      "/var/lib/weather-care/weather-care-weather.sqlite-shm",
+      "/var/lib/weather-care/weather-care-weather.sqlite-wal"
+    ]
+  },
+  "commonContainsNoUsersOrSamples": true,
+  "failedWeatherUnits": 0,
+  "diskFreeBytes": 14145249280,
+  "validation": {
+    "typecheck": "통과",
+    "nodeTests": 295,
+    "workerTests": 466,
+    "actualReleaseNodeTests": 239,
+    "actualReleaseExcluded": "별도 번들 스토어/키갱신 도구 및 실제 테스트 배포본에 없는 준비물 근거 기능",
+    "publicChecks": 24,
+    "extraTodayRecordChecks": 28,
+    "dateRolloverAndBudgetTests": "통과"
+  },
+  "manualFcmPushSent": false,
+  "notes": [
+    "날씨 DB와 사용자 DB 경로·기존 자료는 유지했다.",
+    "일시 스크립트 날짜 고정 없이 실행 시점의 한국 날짜를 사용한다.",
+    "이력 서비스 검증은 당일 기존 935개 지점 이력을 재사용했으며 새 외부 호출이 필요하지 않았다.",
+    "요청 재개 이후 정상 정기 알림만 실행하며 별도 푸시를 수동 발송하지 않았다."
+  ]
+}

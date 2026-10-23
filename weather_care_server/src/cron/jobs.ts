@@ -47,7 +47,7 @@ export async function runScheduledJobs(
     await collectGridHourly({ db: weatherDatabase(env), config, now,
       khoaKey: decodePublicDataKey(env.KHOA_SERVICE_KEY || env.KMA_SERVICE_KEY),
       kwaterKey: decodePublicDataKey(env.KWATER_SERVICE_KEY || env.KMA_SERVICE_KEY),
-      nifsKey: env.NIFS_API_KEY });
+      nifsKey: env.NIFS_API_KEY, requestIntervalMs: 300 });
     return;
   }
   if (cron === GRID_LIGHTNING_CRON) {

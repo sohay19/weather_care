@@ -159,6 +159,12 @@ async function verifyStaticPage(browser, port, target, width) {
       text.includes('Cloudflare, Inc.') &&
       text.includes('네이버클라우드㈜') &&
       text.includes('Google LLC') &&
+      text.includes('주식회사 카카오') &&
+      text.includes('광고 제거 구매와 복원') &&
+      text.includes('대한민국의 자체 서버') &&
+      text.includes('백그라운드 위치 갱신') &&
+      !text.includes('광고 기능 · 운영 비활성') &&
+      !text.includes('광고 ID 접근 권한은 제거') &&
       text.includes('처리 종료 후 1년') &&
       text.includes('날씨 판단 구역 지도'));
   } else {
@@ -167,7 +173,8 @@ async function verifyStaticPage(browser, port, target, width) {
       text.includes('회원 계정 없이 이용하는 앱') &&
       text.includes('데이터 삭제 요청 이메일 보내기') &&
       text.includes('설치 인증키, 비밀번호, FCM 토큰') &&
-      text.includes('최대 7일') &&
+      text.includes('정기 백업은 7일 보관 설정') &&
+      text.includes('이전·수동 백업') &&
       text.includes('날씨 판단 구역 지도'));
     assert.equal(await page.locator('a[href^="mailto:sy40222@gmail.com"]').count() >= 1, true);
   }

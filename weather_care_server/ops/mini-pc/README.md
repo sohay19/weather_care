@@ -1,3 +1,5 @@
+> 2026-10-23 공용 날씨 DB 전환 완료: 운영 릴리스 `/opt/weather-care/releases/20261023-shared-db-production/weather_care_server`. [검증 기록](../../../docs/공용날씨_DB_실서버_전환_검증_20261023.json)을 참고한다.
+
 > 새 Node 코드의 기존 DB 전환은 [공용 날씨 DB 전환 안내](공용_날씨_DB_전환.md)를 먼저 따른다. 아래 통합 DB 이관 기록과 구형 경로를 새 코드에 그대로 적용하지 않는다.
 
 # 미니 PC 이전 기록

@@ -1,0 +1,541 @@
+{
+  "date": "2026-10-23",
+  "completedAtKst": "2026-10-23T16:28:51.332793+09:00",
+  "status": "완료",
+  "deploymentScope": "기존 운영·시험 버전의 기능을 유지하고 DB 분리 변경만 적용",
+  "backupRoot": "/var/backups/weather-care/shared-db-20261023",
+  "finalSnapshots": "/var/backups/weather-care/shared-db-20261023/cutover-final",
+  "databases": {
+    "weather": "/var/lib/weather-care/weather-care-weather.sqlite",
+    "productionUsers": "/var/lib/weather-care/weather-care-users-production.sqlite",
+    "testUsers": "/var/lib/weather-care/weather-care-users-test.sqlite"
+  },
+  "userDataPreserved": {
+    "production": {
+      "installations": {
+        "count": 70,
+        "identical": true
+      },
+      "active_regions": {
+        "count": 0,
+        "identical": true
+      },
+      "notification_settings": {
+        "count": 179,
+        "identical": true
+      },
+      "notification_history": {
+        "count": 124,
+        "identical": true
+      },
+      "installation_warning_state": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_credentials": {
+        "count": 186,
+        "identical": true
+      },
+      "installation_ownership_challenges": {
+        "count": 0,
+        "identical": true
+      },
+      "legacy_installation_ownership": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_activity": {
+        "count": 186,
+        "identical": true
+      }
+    },
+    "test": {
+      "installations": {
+        "count": 21,
+        "identical": true
+      },
+      "active_regions": {
+        "count": 0,
+        "identical": true
+      },
+      "notification_settings": {
+        "count": 31,
+        "identical": true
+      },
+      "notification_history": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_warning_state": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_credentials": {
+        "count": 31,
+        "identical": true
+      },
+      "installation_ownership_challenges": {
+        "count": 0,
+        "identical": true
+      },
+      "legacy_installation_ownership": {
+        "count": 0,
+        "identical": true
+      },
+      "installation_activity": {
+        "count": 31,
+        "identical": true
+      },
+      "lightning_notification_claims": {
+        "count": 0,
+        "identical": true
+      }
+    }
+  },
+  "commonCountsAtCutover": {
+    "administrative_boundary_dataset": 1,
+    "administrative_boundary_features": 3564,
+    "administrative_boundary_grid_regions": 2711,
+    "api_usage_daily": 462,
+    "daily_weather_snapshots": 0,
+    "grid_extra_snapshots": 5446,
+    "grid_observation_snapshots": 1616,
+    "lightning_collection_state": 1,
+    "nationwide_forecast_fields": 31768,
+    "weather_cache": 93793,
+    "weekly_forecast_records": 965
+  },
+  "apiVerification": [
+    {
+      "role": "production",
+      "grid": "nx=60&ny=127",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "role": "production",
+      "grid": "nx=60&ny=127",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "role": "production",
+      "grid": "nx=60&ny=127",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "role": "production",
+      "grid": "nx=98&ny=76",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "role": "production",
+      "grid": "nx=98&ny=76",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "role": "production",
+      "grid": "nx=98&ny=76",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "role": "production",
+      "endpoint": "/health",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "grid": "nx=60&ny=127",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "grid": "nx=60&ny=127",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "grid": "nx=60&ny=127",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "grid": "nx=98&ny=76",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "grid": "nx=98&ny=76",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "grid": "nx=98&ny=76",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "endpoint": "/health",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "endpoint": "extra/catalog",
+      "status": 200
+    },
+    {
+      "role": "test",
+      "endpoint": "extra/lightning",
+      "status": 200
+    }
+  ],
+  "sharedWeatherValuesIdentical": true,
+  "testAuthenticationGuard": 403,
+  "commonContainsNoUsersOrSamples": true,
+  "services": {
+    "weather-care-api.service": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-test-api.service": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-scheduler.service": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-backup.timer": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-test-backup.timer": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-shared-uv.timer": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-test-lightning.timer": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-test-weather-refresh.timer": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-test-store-update.timer": {
+      "is-active": "active",
+      "is-enabled": "enabled"
+    },
+    "weather-care-test-cache-sync.timer": {
+      "is-active": "inactive",
+      "is-enabled": "disabled"
+    },
+    "weather-care-test-uv.timer": {
+      "is-active": "inactive",
+      "is-enabled": "disabled"
+    }
+  },
+  "releases": {
+    "production": {
+      "release": "/opt/weather-care/releases/20261023-shared-db-production/weather_care_server",
+      "previousRelease": "/opt/weather-care/releases/20261012-juso-202609/weather_care_server",
+      "files": {
+        "src/types.ts": {
+          "before": "3d1b2992ad75a6a1ac1886a48bb757be5b66ccaaa094e22b876ff9840b102c5b",
+          "after": "200c428aad1a571cd57319f3f8fbbf58aebcb85daaf94325a7d9c28890fede64"
+        },
+        "src/cron/jobs.ts": {
+          "before": "90e864bc092d4856cdbc9aa4d8a67294f881fe5ae3824c3e157466e0ea0148a3",
+          "after": "bc6e9aa87c4fa77e642d378718e7712ca46d449d8e533060f2d47490b820556c"
+        },
+        "src/notification/notificationScheduler.ts": {
+          "before": "6b973bd8769ce4ff96d2dbbe9367a910207e67753d5fb92e23847ae3ae5ba61a",
+          "after": "0ecffa6d6cfa9a85bf1b81549a9b090c48f8cf2d62417ac6d3b203f125f57d15"
+        },
+        "src/api/weather.ts": {
+          "before": "af02ada651c3f13ae9452bb55ba8629411c9213b632220ae5616e0c4c42693c4",
+          "after": "9a77885d5f53cd2ea98169c8e7ba8d35b867a536a1e8d48fcae26ef6bcf527d1"
+        },
+        "src/api/comparison.ts": {
+          "before": "1b9a808ac5ff03224019151f48c16520c280a3cee01218c4d22687f64ec46ed4",
+          "after": "c925e10f2e5be05435857622f3d313246a886dae893dfd42a31469719d47efdf"
+        },
+        "src/node/backup.ts": {
+          "before": "b5ff5ffdddf24381c4561b740000e60adca471e8db5c362fadc77d8eeb13298a",
+          "after": "af2d4fe45803c37183e3bacfeaaac6859e48991c18f340240156ebe760a8d5dd"
+        },
+        "src/node/runtime.ts": {
+          "before": "82c0885ea1dab1b8f71e592f5be53a9cb72118228c6fac4de8fc1ae3bd4c1b6f",
+          "after": "8c920e072be16a557f7edec909c00471bcebee8278e37756554bfb566e7328a1"
+        },
+        "src/node/importLandForecastGrids.ts": {
+          "before": "e5535bf875976010bcde411104e311301691d6f646fc2e1c7ce19d96d7e837a0",
+          "after": "200cf77fce3d7d4ecc47b3be5af80ccf2481b3942ba4cbd09641820560015260"
+        },
+        "src/node/sqliteD1.ts": {
+          "before": "110444d71c1c332a45a637ddee7e6eeb0491bbba6c07cd6a094e7933a178f071",
+          "after": "20c4fcbedb02fded3c8bd1ccc2925b0f72feaac2ab33ea8f92a737110f7e293d"
+        },
+        "src/node/migrate.ts": {
+          "before": "4b90f00c5902fce8ef2894f29643c2b7b138228e065094f24af182bd26ac04ef",
+          "after": "62d006709b609810e1e53c1fd39d4ba658464a506c80a3e0f1eafbf2ebe77fba"
+        },
+        "src/node/importAdministrativeBoundaries.ts": {
+          "before": "dbd12ba0f7a257790c4ce11c9faa0e2fe310e19fffb1160ec35b0f57f93556dc",
+          "after": "e4d6311a5fc25d9bb254e78a781d807133aaacc738ec771e9693bfb5f7e159ca"
+        },
+        "src/node/prewarmNationwide.ts": {
+          "before": "c94052ddb0d522b6e8d204a47605d51d193c101feb73e11dd511dab43e13ab2a",
+          "after": "5e1d9227737388ad3cbcfe3982d5e5aa123836e8072dd7474ea847cc7a96812f"
+        },
+        "src/node/splitDatabases.ts": {
+          "before": null,
+          "after": "c1c175f5407e37c2989161d1bf5e54a3d0b4b8e6178d034e1ca593e632b5f468"
+        },
+        "src/collection/collectionTargets.ts": {
+          "before": null,
+          "after": "d8f7f2e4e4aa94d6e1c1bebd6ffe59aaba19fc9d4e007e33572cc20f63c00405"
+        },
+        "src/collection/weatherCollectionJob.ts": {
+          "before": "21a14450a2ce84c3060280b2e26ae24160707f18c11559fcf8f1f125b30c5abf",
+          "after": "a810ee2e527e335420912d0139c56b27c06764725f25a3b3060c37f9d3e42e46"
+        },
+        "src/database/weatherDatabase.ts": {
+          "before": null,
+          "after": "45f8a22db04262eb97e1ee0e28be57e4620cd5dc2b49e918c9e7b54fa378634a"
+        },
+        "src/database/dataRetention.ts": {
+          "before": "dc527eb561a12ff99878688dec672d84a186d3cd4bf5b6d2a4f8a4f5a89d505b",
+          "after": "37cff607c276dbf250f973fd48dfa5ddae8339506f0cc40b05326bfd92847df7"
+        },
+        "src/services/nationwideAirCache.ts": {
+          "before": "74613e4ddaf5650c08650ae6405575753947c76d1b325a7f21f66b217a84cff6",
+          "after": "0ef94e08177009c239cb628819e5309c2167ba9489c8f17ee6ce801d41d4ff62"
+        },
+        "src/providers/environmental/environmentalDataService.ts": {
+          "before": "4211d2a6157f486e1b1c9843bac4c51e49c677f199e3f9dfe0553f92353417f4",
+          "after": "d81ae1f96de711ee1366cf7e44809f52186dc2228af95e66aa667c9c9f276158"
+        },
+        "node-migrations/weather/0001_weather.sql": {
+          "before": null,
+          "after": "0a35002d1da98ebce6a41744543b5311d3d928d5ffb399ca375e8b12de4d1e53"
+        },
+        "node-migrations/users/0001_users.sql": {
+          "before": null,
+          "after": "0d3be8c5a8582bab66c91e5a8e3d8563c0c4538596b2b4980b21c9fe6a179baa"
+        }
+      }
+    },
+    "test": {
+      "release": "/opt/weather-care/releases/20261023-shared-db-test/weather_care_server",
+      "previousRelease": "/opt/weather-care/releases/20261022-test-legacy-compat-0018/weather_care_server",
+      "files": {
+        "src/types.ts": {
+          "before": "820dc79d5884f92463bfab0ec89bbe6fc40e01839151360dac2e5791291e909d",
+          "after": "2135655e29e037ad28dfd52710deee3b41ec12233273050b7f3ed273f7bf8147"
+        },
+        "src/cron/jobs.ts": {
+          "before": "1a243fabbc3185d086e1ed4ecae423652728d619e215350d4223477111ec7b42",
+          "after": "8785e7b45b3a776d73f4558073c865580d223bbe68a6f995dcb5f71ff0519970"
+        },
+        "src/notification/lightningNotificationJob.ts": {
+          "before": "0cb32519ef83e38b2beac8dff1af4a5c680515b2e6014fdcfb638038a8b18ce9",
+          "after": "a73cc2b30933d8dba5bea45927b7d2c6d2818e06b4d8ddbda42c0a7c0e8ce655"
+        },
+        "src/notification/notificationScheduler.ts": {
+          "before": "ba566b5baf1eeea15abe63976d539a799e519a23dd78f2a5271f56e8453dfc3f",
+          "after": "0ecffa6d6cfa9a85bf1b81549a9b090c48f8cf2d62417ac6d3b203f125f57d15"
+        },
+        "src/api/gridExtra.ts": {
+          "before": "26e56504f0481621bf784f4e4290e8fe34c10e6162ec7b677ffab5333472d96b",
+          "after": "b6bdddf72bc28ac0c64dcec7a5f230c7d501eca335c40b90025100f1bad45275"
+        },
+        "src/api/weather.ts": {
+          "before": "d260f2c61e0f9b77dc5a465805520d32866b7ab9dbc24de00a5dd4273b5bf25d",
+          "after": "c3c41efa9f7a62472dc1a2b2e32d2bdcf6a0e94437a609fc7f0413d3b280e7f4"
+        },
+        "src/api/comparison.ts": {
+          "before": "8657444e4f4eee9ddef5d4bdf6a78fc1b57abaa095cde70a75b4bb0f0c9cd172",
+          "after": "c925e10f2e5be05435857622f3d313246a886dae893dfd42a31469719d47efdf"
+        },
+        "src/node/backup.ts": {
+          "before": "5a34051374be888350d38ddd42ba974999778a44ebcbfd0564f6190582ee6955",
+          "after": "af2d4fe45803c37183e3bacfeaaac6859e48991c18f340240156ebe760a8d5dd"
+        },
+        "src/node/runtime.ts": {
+          "before": "d5de90c940e6eb9193eb6899f70a67a6f5e338f89f2ce8c905a0cd413530b11c",
+          "after": "8c920e072be16a557f7edec909c00471bcebee8278e37756554bfb566e7328a1"
+        },
+        "src/node/importLandForecastGrids.ts": {
+          "before": "01e6863c356112ac20f835973f557946123171f5a93ecd067323aa62af1ae98d",
+          "after": "200cf77fce3d7d4ecc47b3be5af80ccf2481b3942ba4cbd09641820560015260"
+        },
+        "src/node/sqliteD1.ts": {
+          "before": "3d7e9d6a62f320d192085e71529d886b2715fdbdfe221825c3f2ebd526384411",
+          "after": "20c4fcbedb02fded3c8bd1ccc2925b0f72feaac2ab33ea8f92a737110f7e293d"
+        },
+        "src/node/migrate.ts": {
+          "before": "9f3337986f068c7dde2b24962ced7d15acc2a928be22f0de7de00c229a5491d5",
+          "after": "62d006709b609810e1e53c1fd39d4ba658464a506c80a3e0f1eafbf2ebe77fba"
+        },
+        "src/node/collectTestUv.ts": {
+          "before": "b9531def0479d7b29ec1a649a0f0134e75b96b9e56fd9d2729affec36cb24b94",
+          "after": "66019c8dfbe883a5acdf271b912c2459faaed9830345b12f4015d8b8deb0df56"
+        },
+        "src/node/importAdministrativeBoundaries.ts": {
+          "before": "1f357c4e3cbb4753f6f10d9a69b5fce04169327c9059035867f1d68dd10532d6",
+          "after": "e4d6311a5fc25d9bb254e78a781d807133aaacc738ec771e9693bfb5f7e159ca"
+        },
+        "src/node/collectSharedLightning.ts": {
+          "before": null,
+          "after": "04115b3e1c8b02b4c098122aa9c0e014b45a56517400c6765e5a3b6957e5bd41"
+        },
+        "src/node/prewarmNationwide.ts": {
+          "before": "1776f75a20f4d020d78f463b1af40bbedd0fcaa4e9d4952d73a69a48aa417b6a",
+          "after": "5e1d9227737388ad3cbcfe3982d5e5aa123836e8072dd7474ea847cc7a96812f"
+        },
+        "src/node/collectTestWeather.ts": {
+          "before": "a78f1c0c3b0469917a0978347f4f4658479acceeb79853e3d083fc1d9e6b2a6c",
+          "after": "17dc5d7164264c470f20073dcfccddd7ce6926300e0eb1308e1984275dee5127"
+        },
+        "src/node/splitDatabases.ts": {
+          "before": null,
+          "after": "c1c175f5407e37c2989161d1bf5e54a3d0b4b8e6178d034e1ca593e632b5f468"
+        },
+        "src/collection/gridStationSelection.ts": {
+          "before": "146f2166f9bd07c378e122ab5da58e25ddfb6234211c6e2d7b4924efa4e8739e",
+          "after": "9dcee80ea967cc3793b5dfc4f7e2f2c4f7136e94163a4e7144a5f5617815afa2"
+        },
+        "src/collection/collectionTargets.ts": {
+          "before": null,
+          "after": "d8f7f2e4e4aa94d6e1c1bebd6ffe59aaba19fc9d4e007e33572cc20f63c00405"
+        },
+        "src/collection/weatherCollectionJob.ts": {
+          "before": "9ecb7e5ce5a913f9fb17f553bd1fff3c7ec40716e488776422829a5f8d35c974",
+          "after": "98baf4fa3662ddd6a5609980da63cb8fe3cf49a509f80628b688c8745a6c84b0"
+        },
+        "src/database/weatherDatabase.ts": {
+          "before": null,
+          "after": "45f8a22db04262eb97e1ee0e28be57e4620cd5dc2b49e918c9e7b54fa378634a"
+        },
+        "src/database/dataRetention.ts": {
+          "before": "45ae9d775176d0f4c8461b2cade72349c818ba5a5ccbd510bc21e5b24a14c697",
+          "after": "889c8a2323765cd490d7aa2ffdc78b54e92c8e9a94efb6c9add3a4794f09eceb"
+        },
+        "src/services/nationwideAirCache.ts": {
+          "before": "a8686caeccf6a2819d8246d795a6f8f498178784c8af1d15df7b9b4871094bfe",
+          "after": "b9610b92d43fc19350686be7615eafab0794e530282528444d7b8b99fb1de1ee"
+        },
+        "src/providers/environmental/environmentalDataService.ts": {
+          "before": "21a861bb7138b63a9ae28bf100513897965380302683fab898ac26347e3cffed",
+          "after": "0f2672d9030a0e7e3ee96048f209c193761b669ef6570b327fbb634706e58f7d"
+        },
+        "node-migrations/weather/0001_weather.sql": {
+          "before": null,
+          "after": "0a35002d1da98ebce6a41744543b5311d3d928d5ffb399ca375e8b12de4d1e53"
+        },
+        "node-migrations/users/0001_users.sql": {
+          "before": null,
+          "after": "0d3be8c5a8582bab66c91e5a8e3d8563c0c4538596b2b4980b21c9fe6a179baa"
+        }
+      }
+    }
+  },
+  "rolloutNotes": [
+    "관리자 검사로 생성된 WAL/SHM 소유권을 보완하고 서비스 계정 검증으로 변경",
+    "프로세스 시작 후 HTTP 수신 준비 대기를 추가",
+    "두 사전 시작 실패는 사용자 요청 재개 전에 원본으로 복구한 뒤 재전환",
+    "최종 재개 이후 새 사용자 DB를 유지하며 원본 통합 DB와 설정 백업을 보존"
+  ],
+  "validation": {
+    "typecheck": "통과",
+    "nodeTests": 293,
+    "workerTests": 466,
+    "stagedDbTests": 11,
+    "stagedCacheApiChecks": 12,
+    "publicApiChecks": 16
+  },
+  "manualTestPushSent": false,
+  "sourceArchives": {
+    "production": {
+      "path": "/var/backups/weather-care/shared-db-20261023/deployed-source-production.tar.gz",
+      "sha256": "acaa4ba3a4613244dbd1c717a510cb25325bb324762f934bf94dab114494fd3f"
+    },
+    "test": {
+      "path": "/var/backups/weather-care/shared-db-20261023/deployed-source-test.tar.gz",
+      "sha256": "ac6815907c1f98dec4121040a4d234cffeeb48822203ca0438ae4f52aa760400"
+    }
+  },
+  "scheduledCollectionChecks": {
+    "weather-care-shared-uv.service": {
+      "Result": "success",
+      "ExecMainStartTimestamp": "Fri 2026-10-23 07:30:31 UTC",
+      "ExecMainStatus": "0"
+    },
+    "weather-care-test-weather-refresh.service": {
+      "Result": "success",
+      "ExecMainStartTimestamp": "Fri 2026-10-23 07:30:05 UTC",
+      "ExecMainStatus": "0"
+    },
+    "weather-care-test-lightning.service": {
+      "Result": "success",
+      "ExecMainStartTimestamp": "Fri 2026-10-23 07:35:01 UTC",
+      "ExecMainStatus": "0"
+    }
+  },
+  "verifiedAtKst": "2026-10-23T16:39:35.947472+09:00",
+  "backupVerification": {
+    "publicBackup": "/var/backups/weather-care/weather-care-weather-20261023T073102Z.sqlite.gz",
+    "publicBackupCompressedBytes": 850700796,
+    "publicBackupUncompressedBytes": 3196104704,
+    "gzipCrcValid": true,
+    "userBackups": [
+      {
+        "path": "/var/backups/weather-care/weather-care-users-production-20261023T073102Z.sqlite",
+        "quickCheck": "ok"
+      },
+      {
+        "path": "/var/backups/weather-care/test/weather-care-users-test-20261023T073102Z.sqlite",
+        "quickCheck": "ok"
+      }
+    ],
+    "originalBackupCompressionVerified": true,
+    "originalCompressedSnapshots": [
+      {
+        "path": "/var/backups/weather-care/shared-db-20261023/production.sqlite.gz",
+        "uncompressedSha256": "41cab1b375e61a308bbb914dcebfd7a3d565791125c041343f4604eec5d5e0ed",
+        "gzipVerified": true
+      },
+      {
+        "path": "/var/backups/weather-care/shared-db-20261023/test.sqlite.gz",
+        "uncompressedSha256": "f628957731699eac9e16434cd7ee95e30aabe64f051ee8b77f62c5021625d60d",
+        "gzipVerified": true
+      },
+      {
+        "path": "/var/backups/weather-care/shared-db-20261023/cutover/production.sqlite.gz",
+        "uncompressedSha256": "f38086549825fa63288406e5b0deec954c6610658856577ef9819d22f869fef2",
+        "gzipVerified": true
+      },
+      {
+        "path": "/var/backups/weather-care/shared-db-20261023/cutover/test.sqlite.gz",
+        "uncompressedSha256": "175ef0ca7714ca924f0f63ab4f162ed994985d3ca8e33b812df0829738c4fad0",
+        "gzipVerified": true
+      }
+    ]
+  },
+  "failedWeatherUnits": 0,
+  "diskFreeBytes": 15004262400
+}

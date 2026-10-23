@@ -1,4 +1,5 @@
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tmpdir } from 'node:os';
@@ -214,6 +215,23 @@ describe('공용 날씨 DB와 환경별 사용자 DB', () => {
         expect(db.sqlite.prepare(`SELECT COUNT(*) AS count FROM ${file.startsWith('production-') ? 'installations' : 'weather_cache'}`)
           .get()).toEqual({ count: 1 });
       } finally { db.close(); }
+    }
+  });
+
+  it.each([true, false])('공용 백업 압축·환경별 중복 제외 설정을 적용한다 (공용 포함: %s)', async includeWeather => {
+    const root = directory();
+    const value = runtime(root, 'production'); seedUser(value.database, '운영');
+    await seedWeather(weatherDatabase(value.env));
+    const output = join(root, 'backups');
+    await execute(process.execPath, ['--import', 'tsx', 'src/node/backup.ts'], { windowsHide: true, env: {
+      ...process.env, NODE_DATABASE_PATH: join(root, 'production.sqlite'), NODE_WEATHER_DATABASE_PATH: join(root, 'weather.sqlite'),
+      NODE_COLLECTION_USER_DATABASE_PATHS: '[]', NODE_BACKUP_DIR: output,
+      NODE_BACKUP_COMPRESS_WEATHER: 'true', NODE_BACKUP_WEATHER_ENABLED: String(includeWeather),
+    } });
+    const files = readdirSync(output); expect(files).toHaveLength(includeWeather ? 2 : 1);
+    if (includeWeather) {
+      const bytes = gunzipSync(readFileSync(join(output, files.find(file => file.endsWith('.gz'))!)));
+      expect(bytes.subarray(0, 16).toString()).toBe('SQLite format 3\0');
     }
   });
 });

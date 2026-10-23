@@ -12,6 +12,7 @@ WorkingDirectory=/opt/weather-care/weather_care_test_server
 EnvironmentFile=/etc/weather-care/weather-care.env
 EnvironmentFile=/etc/weather-care/weather-care-test.env
 ExecStartPre=/bin/sh -c 'test "$$NODE_DATABASE_PATH" = /var/lib/weather-care/weather-care-users-test.sqlite'
+ExecStartPre=/usr/bin/env WEATHER_COLLECTION_ENABLED=true /opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/collectSharedLightning.ts
 ExecStart=/opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/runJob.ts grid-lightning
 TimeoutStartSec=5min
 UMask=0077

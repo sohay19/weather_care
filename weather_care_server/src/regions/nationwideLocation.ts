@@ -51,14 +51,16 @@ function administrativeNameAlias(name: string): string {
     // 옛 중구의 섬 지역은 영종구로 개편됐다. 동 분할이 불명확하면 공식 상위 구까지 연결한다.
     .replace(/^(인천(?:광역시)?)\s+중구\s+(?=(?:운서(?:[12])?동|용유동|영종(?:[12])?동|운남동)(?:\s|$))/, '$1 영종구 ');
 }
+export function displayAdministrativeName(name: string): string {
+  return name.replace(/제(?=\d+(?:[.·ㆍ]\d+)*동(?![가-힣0-9]))/g,
+    (match, offset, text) => /(?:거|홍)$/.test(text.slice(0, offset)) ? match : '');
+}
 function normalizeAdministrativeName(name: string): string {
-  return name.replace(/세종(?:특별자치시|시)/g, '세종').replace(/^(?:세종\s+)+세종(?=\s|$)/, '세종')
+  return displayAdministrativeName(name).replace(/세종(?:특별자치시|시)/g, '세종').replace(/^(?:세종\s+)+세종(?=\s|$)/, '세종')
     .replace(/특별자치도|특별자치시|특별시|광역시/g, '')
     .replace('경기도', '경기').replace('강원도', '강원').replace('충청남도', '충남')
     .replace('충청북도', '충북').replace('전라남도', '전남').replace('전라북도', '전북')
     .replace('경상남도', '경남').replace('경상북도', '경북')
-    // 거제·홍제의 고유명사 '제'는 보존하고 '제1동'의 서수만 제거한다.
-    .replace(/제(\d+[.·ㆍ\d]*동)/g, (match, suffix, offset, text) => /(?:거|홍)$/.test(text.slice(0, offset)) ? match : suffix)
     .replace(/[,\.·ㆍ]/g, '').replace(/\s+/g, '');
 }
 export function coordinatesForLocation(location: NationwideLocation) {

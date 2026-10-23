@@ -101,7 +101,7 @@ import type {
   CollectedWeeklyBundle,
 } from '../collection/collectionTypes';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
-import { administrativeAreaForLocation, type NationwideLocation } from '../regions/nationwideLocation';
+import { administrativeAreaForLocation, displayAdministrativeName, type NationwideLocation } from '../regions/nationwideLocation';
 import { resolveSavedLocation } from '../regions/resolvedLocation';
 import { enrichForecastWithVisibility } from '../providers/weather/visibility';
 import { calculateApparentTemperatureForConditions, weatherLabel } from '../providers/weather/kmaWeatherProvider';
@@ -438,7 +438,7 @@ router.get('/today', async (c) => {
       snapshots: decisionHourly,
       facts: rules,
     });
-    const regionLabel = administrativeAreaForLocation(location)?.[1] ?? '현재 위치';
+    const regionLabel = displayAdministrativeName(administrativeAreaForLocation(location)?.[1] ?? '현재 위치');
 
     const forecastLifestyleMessages = buildLifestyleMessages(
       lifestyle,

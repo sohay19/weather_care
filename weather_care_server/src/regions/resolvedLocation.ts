@@ -1,5 +1,5 @@
 import { getCollectedCache, saveCollectedCache, cacheRecordIsFresh } from '../database/collectedWeatherRepository';
-import { administrativeAreaForLocation, type NationwideLocation } from './nationwideLocation';
+import { administrativeAreaForLocation, displayAdministrativeName, type NationwideLocation } from './nationwideLocation';
 import { administrativeBoundaryVersion, resolveAdministrativeBoundary } from './administrativeBoundaries';
 
 interface LocationIdentity {
@@ -9,6 +9,12 @@ interface LocationIdentity {
 
 // 확정 지역을 위치별로 저장하고 경계 자료의 버전이 바뀌면 다시 판정한다.
 export async function resolveSavedLocation(db: D1Database | undefined, location: NationwideLocation, now: Date): Promise<NationwideLocation> {
+  const resolved = await resolveLocationIdentity(db, location, now);
+  return resolved.regionName
+    ? { ...resolved, regionName: displayAdministrativeName(resolved.regionName) } : resolved;
+}
+
+async function resolveLocationIdentity(db: D1Database | undefined, location: NationwideLocation, now: Date): Promise<NationwideLocation> {
   if (!db || location.boundaryChecked) return location;
   const coordinateKey = location.coordinates
     ? `GPS:${location.coordinates.latitude}:${location.coordinates.longitude}` : `GRID:${location.nx}:${location.ny}`;

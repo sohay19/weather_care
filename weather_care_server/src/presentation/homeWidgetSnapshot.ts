@@ -1,3 +1,4 @@
+import { displayAdministrativeName } from '../regions/nationwideLocation';
 import type {
   BriefingTimelineEntry,
   CanonicalBriefingIntent,
@@ -248,7 +249,7 @@ function weatherCondition(value?: string): string {
 }
 
 function compactRegionName(value: string): string {
-  const parts = value.trim().split(/\s+/).filter(Boolean);
+  const parts = displayAdministrativeName(value).trim().split(/\s+/).filter(Boolean);
   if (parts.length >= 3 && /(특별시|광역시|특별자치시|특별자치도|도)$/.test(parts[0])) {
     return parts.slice(1).join(' ');
   }

@@ -265,7 +265,7 @@ router.get('/today', async (c) => {
       roadControlSnapshotRecord, snowFields, uvFields] = await Promise.all([
       readNationwideRegion(weatherDatabase(c.env), location, generatedAt),
       settingsForRequest(
-      weatherDatabase(c.env),
+      c.env.DB,
       c.req.query('installationId'),
       c.req.header('Authorization'),
       c.req.query('widgetSettings'),
@@ -569,7 +569,7 @@ router.get('/weekly', async (c) => {
     const [collected, settings] = await Promise.all([
       readNationwideWeekly(weatherDatabase(c.env), nationwideLocation, now),
       settingsForRequest(
-        weatherDatabase(c.env),
+        c.env.DB,
         c.req.query('installationId'),
         c.req.header('Authorization'),
         c.req.query('widgetSettings'),

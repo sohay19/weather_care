@@ -10,6 +10,7 @@ import { loadCollectionTargets } from '../src/collection/collectionTargets';
 import { runWeatherCollectionJob } from '../src/collection/weatherCollectionJob';
 import { saveCollectedCache } from '../src/database/collectedWeatherRepository';
 import { weatherDatabase } from '../src/database/weatherDatabase';
+import { secretHash } from '../src/security/installationAccess';
 import { createNodeRuntime, type NodeRuntime } from '../src/node/runtime';
 import { splitLegacyDatabases, type SplitDatabasePaths } from '../src/node/splitDatabases';
 import { runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
@@ -77,6 +78,34 @@ async function seedWeather(db: D1Database, rainy = false): Promise<void> {
 }
 
 describe('공용 날씨 DB와 환경별 사용자 DB', () => {
+  it('인증된 오늘·주간 조회는 사용자 DB의 인증·설정을 읽고 공용 날씨를 반환한다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('외부 호출 금지'));
+    const root = directory();
+    const production = runtime(root, 'production');
+    const test = runtime(root, 'test');
+    const secret = 'a'.repeat(64);
+    for (const value of [production, test]) {
+      seedUser(value.database, '토큰');
+      value.database.sqlite.prepare('UPDATE installation_credentials SET secret_hash=?').run(await secretHash(secret));
+    }
+    await seedWeather(weatherDatabase(production.env), true);
+    for (const env of [production.env, test.env]) {
+      for (const endpoint of ['today', 'weekly']) {
+        for (const token of [secret, 'b'.repeat(64)]) {
+          const response = await app.fetch(new Request(
+            `http://localhost/api/v1/weather/${endpoint}?nx=60&ny=127&installationId=same-id`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          ), env);
+          expect(response.status).toBe(200);
+          expect(await response.json()).toHaveProperty('region.nx', 60);
+        }
+      }
+    }
+    expect(tables(production.weatherDatabase!)).not.toContain('installation_credentials');
+    expect(tables(production.weatherDatabase!)).not.toContain('notification_settings');
+  });
+
   it('한 번 저장한 날씨를 두 API가 즉시 읽고 사용자 테이블은 공용 DB에 만들지 않는다', async () => {
     vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
     const external = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('외부 호출 금지'));

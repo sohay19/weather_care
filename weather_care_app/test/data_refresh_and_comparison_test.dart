@@ -291,6 +291,12 @@ void main() {
     final currentWeatherRow = tester.getRect(
       find.byKey(const ValueKey('main-current-forecast-row')),
     );
+    expect(
+      tester
+          .getBottomLeft(find.byKey(const ValueKey('main-weather-feeling')))
+          .dy,
+      lessThan(currentWeatherRow.top),
+    );
     final forecastWeatherRow = tester.getRect(futureCard);
     expect(forecastWeatherRow.top, greaterThan(currentWeatherRow.bottom));
     expect(find.text('어제와 비교'), findsOneWidget);

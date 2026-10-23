@@ -261,6 +261,9 @@ class _TodaySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final phase = WeatherDataPhaseScope.of(context);
+    final feelingText = current.sky == null && phase != WeatherDataPhase.ready
+        ? phase.explanation
+        : _weatherSummaryMessage(sky: current.sky);
     final feelingStyle = TextStyle(
       color: WeatherCareTheme.of(context).textPrimary,
       fontSize: 13,
@@ -289,17 +292,19 @@ class _TodaySection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 13),
-        Padding(
-          padding: const EdgeInsets.only(left: 10, right: 10),
-          child: Row(
+        _TemperatureLine(
+          lineKey: const ValueKey('main-current-forecast-row'),
+          temperatureLabel: '현재 기온',
+          temperature: current.temperature,
+          apparentLabel: '현재 체감온도',
+          apparentTemperature: current.displayedApparentTemperature,
+          weatherSummary: Row(
             key: const ValueKey('main-weather-feeling'),
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
-                  current.sky == null && phase != WeatherDataPhase.ready
-                      ? phase.explanation
-                      : _weatherSummaryMessage(sky: current.sky),
+                  feelingText,
                   style: feelingStyle,
                 ),
               ),
@@ -311,14 +316,6 @@ class _TodaySection extends StatelessWidget {
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        _TemperatureLine(
-          lineKey: const ValueKey('main-current-forecast-row'),
-          temperatureLabel: '현재 기온',
-          temperature: current.temperature,
-          apparentLabel: '현재 체감온도',
-          apparentTemperature: current.displayedApparentTemperature,
         ),
         const SizedBox(height: 20),
         Row(
@@ -401,6 +398,7 @@ class _TodaySection extends StatelessWidget {
       ],
     );
   }
+
   String dailyTemperature({required bool maximum}) {
     final forecast = todayForecast;
     final value = forecast == null || weeklyDataPhase != WeatherDataPhase.ready
@@ -828,6 +826,7 @@ class _TopWeatherCard extends StatelessWidget {
 
 class _TemperatureLine extends StatelessWidget {
   final Key lineKey;
+  final Widget weatherSummary;
   final String temperatureLabel;
   final double? temperature;
   final String apparentLabel;
@@ -835,6 +834,7 @@ class _TemperatureLine extends StatelessWidget {
 
   const _TemperatureLine({
     required this.lineKey,
+    required this.weatherSummary,
     required this.temperatureLabel,
     required this.temperature,
     required this.apparentLabel,
@@ -850,20 +850,59 @@ class _TemperatureLine extends StatelessWidget {
         color: WeatherCareTheme.of(context).primarySoft,
         borderRadius: BorderRadius.circular(13),
       ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: weatherSummary,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            key: lineKey,
+            children: [
+              Expanded(
+                child: _CurrentTemperatureTile(
+                  label: temperatureLabel,
+                  value: temperature,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CurrentTemperatureTile(
+                  label: apparentLabel,
+                  value: apparentTemperature,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrentTemperatureTile extends StatelessWidget {
+  final String label;
+  final double? value;
+
+  const _CurrentTemperatureTile({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: WeatherCareTheme.of(context).surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: FittedBox(
-        key: lineKey,
         fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _TemperatureLabel(temperatureLabel),
+            _TemperatureLabel(label),
             const SizedBox(width: 8),
-            _TemperatureValue(value: temperature),
-            const SizedBox(width: 16),
-            _TemperatureLabel(apparentLabel),
-            const SizedBox(width: 8),
-            _TemperatureValue(value: apparentTemperature),
+            _TemperatureValue(value: value),
           ],
         ),
       ),

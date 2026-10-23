@@ -1,0 +1,78 @@
+{
+  "bundleSha256": "2a52bca0d0985c54d7a9f6db6b80001b4d3b40d51b779eb3a0e61b29ec11e6e0",
+  "stateMode": "0o600",
+  "health": {
+    "production": 200,
+    "test": 200
+  },
+  "productionPathGuardExit": 1,
+  "checkedAtKst": "2026-10-23T10:07:08.337682+09:00",
+  "releases": [
+    {
+      "platform": "android",
+      "release": {
+        "platform": "android",
+        "build": 26101200,
+        "version": "26101200 (1.0.1)",
+        "url": "https://play.google.com/store/apps/details?id=com.codesoha.weathercare"
+      },
+      "notify": 0
+    },
+    {
+      "platform": "ios",
+      "release": {
+        "platform": "ios",
+        "version": "1.0.1",
+        "url": "https://apps.apple.com/kr/app/%EB%82%A0%EC%94%A8%EC%B1%99%EA%B2%A8/id6813007678?uo=4"
+      },
+      "notify": 0
+    }
+  ],
+  "deliveryRecords": 0,
+  "stateIntegrity": "ok",
+  "services": {
+    "weather-care-api": {
+      "MainPID": "459315",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "weather-care-scheduler": {
+      "MainPID": "459316",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "weather-care-test-api": {
+      "MainPID": "613937",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "cloudflared": {
+      "MainPID": "8358",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "weather-care-test-store-update.timer": {
+      "NextElapseUSecRealtime": "Sat 2026-10-24 00:00:00 UTC",
+      "Result": "success",
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "weather-care-test-store-update.service": {
+      "MainPID": "0",
+      "Result": "success",
+      "ExecMainStatus": "0",
+      "ActiveState": "inactive",
+      "UnitFileState": "static"
+    }
+  },
+  "androidStatus": "READY_READ_ONLY_ACCESS",
+  "actualPushesSent": 0
+}

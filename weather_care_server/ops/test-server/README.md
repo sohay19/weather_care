@@ -2,7 +2,7 @@
 
 스토어 신규 버전의 매일 오전 9시 OS별 업데이트 푸시는
 [스토어 업데이트 운영 안내](STORE_UPDATE.md)를 참고한다. 별도 서비스로 배치하며
-Android는 Google Play Developer API 연결 설정이 필요하다.
+Google Play Developer API 연결 설정 절차와 현재 가동 상태도 함께 기록했다.
 
 시험 API는 미니 PC의 `127.0.0.1:8788`에서 실행되고, Cloudflare Tunnel의
 `weather-test-api.codesoha.com`으로 연결한다. 운영 API `8787`과 DB는 변경하지 않는다.

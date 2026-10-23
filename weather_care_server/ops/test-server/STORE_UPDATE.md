@@ -60,9 +60,10 @@ journalctl -u weather-care-test-store-update.service -n 30 --no-pager
 
 ## Android 연결에 필요한 설정
 
-2026-10-23 미니 PC에서 확인한 응답은 HTTP 403 / `SERVICE_DISABLED`다.
-FCM 계정과 GA 관리 계정 모두 같은 Google Cloud 프로젝트에서 API가 비활성 상태다.
-현재 Android 자동 조회/최초 기준 등록은 미완료이며 코드 구현 완료와 구분한다.
+2026-10-23 최초 응답은 HTTP 403 / `SERVICE_DISABLED`였다. 사용자가 Google Cloud
+API 사용 설정을 완료한 뒤 재조회해 `SERVICE_DISABLED`가 사라진 것을 확인했다.
+이후 사용자가 Play Console 앱 정보 보기(읽기 전용)를 부여해 정상 조회와
+Android 최초 기준 등록까지 완료했다. 아래는 최초 연결 또는 재설정 절차다.
 
 1. [Google Cloud API 설정](https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com?project=753467123768)에서
    프로젝트 `753467123768`의 Google Play Android Developer API를 사용 설정한다.
@@ -83,9 +84,12 @@ Android 조회는 공식 API로 조회용 임시 edit를 생성해 production �
 실제 미니 PC에 번들·서비스·타이머를 배치했다. 타이머는 enabled/active이며 다음
 점검은 **2026-10-24 오전 9시 한국시간**이다. iOS 최초 기준은 실제 한국 스토어의
 `1.0.1`로 등록했다. 수동 서비스 실행에서 iOS 점검 정상·발송 0을 확인했다.
-Android는 `PLAY_EDIT_HTTP_403`으로 실패하여 서비스 전체 결과는 exit-code 1이다.
-Android 가동 완료로 취급하지 않는다. 매일 예약은 계속 실행되고 iOS와 Android
-오류를 별도로 처리하므로 Android 실패가 iOS 점검을 막지는 않는다.
+최초 Android 조회는 권한 설정 전 `PLAY_EDIT_HTTP_403`이었으나, 사용자 설정 뒤
+10:06 한국시간에 Android 조회·기준 등록·서비스 재실행이 모두 성공했다.
+Android 공개 버전은 `1.0.1`, 빌드 번호는 `26101200`이다. Play 릴리스 이름은
+`26101200 (1.0.1)`로 반환됐다. 현재 서비스 Result=success/ExecMainStatus=0이다.
+iOS와 Android 모두 최초 기준이므로 아직 발송하지 않는다. OS별 오류를 분리해
+한 스토어 조회 실패가 다른 스토어 점검을 막지 않도록 한다.
 
 번들 SHA256은 `2a52bca0d0985c54d7a9f6db6b80001b4d3b40d51b779eb3a0e61b29ec11e6e0`이다.
 시험 서버 기존 설치 16개는 모두 Android이며 버전 미보고 상태다. 이번 작업에서

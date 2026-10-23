@@ -12472,3 +12472,34 @@
 - 커밋 직전 원격 weather_care를 fetch해 HEAD와 weather_care/master가 동일함을 확인했다. 앱 업데이트·푸시·등록·탐색 관련 48개 테스트, 서버 스토어 알림 15개 테스트와 npm run typecheck가 통과했다. 앞선 APK 빌드와 문서 렌더 검증 기록을 보존하며 동일 빌드·문서 생성은 반복하지 않았다.
 - 한글 기반 메시지로 전체 변경을 커밋한 뒤 weather_care/master로 일반 push하고 원격 커밋 및 작업 트리 상태를 최종 확인한다. 이번 커밋 작업에서 운영/시험 서버 배포·예약 활성화·실제 푸시·앱 설치·스토어 제출은 수행하지 않았다.
 - 최종 스테이징 공백 검사에서 새 systemd 서비스 파일 끝의 불필요한 빈 줄 1개를 제거했다.
+
+## 2026-10-23 스토어 신규 버전 OS별 1회 푸시 시험 배치
+
+- 사용자 요청으로 확정 문구(제목: 날씨챙겨 새 버전이 나왔어요 / 본문: 최신버전 업데이트가 준비됐어요. 새로운 버전을 다운받아보세요.)와 한국시간 매일09시 점검을 구현했다. 루트 AGENTS와 HANDOFF 최근 기록을 읽고 기존 다른 작업의 앱 시작 업데이트 팝업·스토어 원고/Word·의존성과 인계 기록을 보존했다. 운영 배포·커밋/push는 없다.
+- src/node/storeRelease.ts·storeUpdateNotifier.ts·runStoreUpdateNotifier.ts를 추가했다. iOS는 한국 App Store 공개 버전/자기 번들/HTTPS 상세주소를 검증한다. Android는 공식 Google Play API의 조회용 임시 edit→production 트랙 조회→폐기를 사용하며 commit/트랙수정/출시는 호출하지 않는다. completed 전체 공개만 포함하고 초안·단계적·중지 릴리스는 제외한다. 릴리스명은 임의 문자열이어서 Android 비교는 빌드번호를 우선한다.
+- OS별 최초 성공 조회는 현재 공개 버전의 기준만 등록해 활성화 직후 과거 버전 알림이 나가지 않는다. 이후 더 높은 버전부터 OS별 알림허용·유효토큰·구버전 설치본만 선택한다. 사용자 지시에 따라 버전 미보고(null/빈값)의 기존1.0.0·1.0.1 설치본은 포함한다. 최신·미래 보고 버전은 제외하며 발송직전 버전/토큰/알림허용을 다시 읽는다. 새 버전별 설치ID·토큰해시 발송이력/서비스flock으로 중복을 막는다. 확실한 실패응답은 다음 점검 재시도, 접수불명/중단pending은 중복방지를 위해 자동재전송하지 않아 누락 가능성이 있음을 문서화했다. FCM접수와 기기수신을 구분한다.
+- 고정 시험 DB 실제경로와 TEST_ACCESS_KEY를 검사하는 시험전용 번들이다. 설치 DB는읽기전용이며 이력은 /var/lib/weather-care/store-update-test.sqlite에 따로 보존한다. 기존 날씨 API/DB마이그레이션·수집기를 교체하지 않는다. ops/test-server/STORE_UPDATE.md에 동작·앱구버전한계·설정권한·운영절차를 한글로작성했다.
+- 새 앱은 기존appVersion 필드로 버전명+빌드번호를 보낸다. 버전조회 실패도 FCM/위치등록을 막지 않는다. STORE_UPDATE 대상·storeUrl을 추가해 Android전경·백그라운드클릭·종료상태진입에서 자기OS의 HTTPS스토어상세로 외부이동하고 실패시재시도/앱복귀를 제공한다. 기존날씨이동을 유지했다. 종료상태의 업데이트푸시는 기존AppUpdateGate 일반업데이트팝업을 건너뛰어 이중안내/이중스토어열기를 방지한다. 기존1.0.0·1.0.1설치본은 이처리가없어 클릭시메인으로간다. 소스변경만으로 기존설치앱을변경할수없으며 APK/IPA빌드·기기설치·스토어배포는 하지않았다.
+- Node전체28파일280테스트·타입검사·번들통과. 새서버15테스트는버전미보고/최신제외/OS분리/중복실행/토큰중복/부분실패/접수불명/권한변경/역행/공식응답검증과FCM원문전달을검증했다. 앱관련7파일57테스트통과후 시작게이트우회1테스트를추가해영향2파일14테스트통과(고유관련총58개). 앱전체정적분석과마지막변경4경로분석도통과했다. 최초새위젯5테스트실패는테스트의플랫폼override복원시점문제로본문끝에서복원해해결했다. UI창/에뮬레이터를띄우지않았다. 로그는ignored weather_care_app/build/store-update*-20261023-*.log다.
+- 실제미니PC ubuntu@100.105.212.26에기존SSH키로접속해 /opt/weather-care/store-update-test/notifier.cjs·기존시험node_modules링크·weather-care-test-store-update.{service,timer}를신규설치했다. 로컬/원격번들SHA256 2a52bca0d0985c54d7a9f6db6b80001b4d3b40d51b779eb3a0e61b29ec11e6e0일치, Node구문/systemd-analyze verify·calendar확인. 서버Node실제경로 /usr/local/bin/node를반영했다. 최초transient초기화의EnvironmentFile목록해석실패후 비밀출력없이기존환경을읽는Python실행기로weather-care계정초기화를완료했다. 키값/토큰/비밀환경원문을출력하지않았다.
+- 10:03KST확인: 타이머enabled/active·다음2026-10-24 09:00KST, iOS실제공개1.0.1을notify=0기준으로등록·서비스점검정상·발송0. 상태DB600/quick_checkok/발송이력0. 시험설치16개모두Android버전미보고임을확인했다. 실제FCM푸시는보내지않았다.
+- Android는HTTP403/SERVICE_DISABLED: 프로젝트753467123768의androidpublisher.googleapis.com이비활성이다. 기존FCM·GA계정모두같은응답이며 FCM계정의서비스활성화권한조회결과도없었다. 따라서Android조회/최초기준등록/실제자동발송가동은미완료다. 서비스전체Result=exit-code1을숨기지않고OS별로오류분리해iOS점검/매일예약은계속한다. Google Cloud사용설정과Play Console에서 firebase-adminsdk-fbsvc@weather-care-2aaa8.iam.gserviceaccount.com의앱조회접근을한번에안내하고비동기입력으로설정완료회신을요청했다. 안내문서를Codex패널열기로요청했으나queued였다. 권한을임의상향하지않았다. 설정후--initialize와실제조회재확인이남았다.
+- 마지막운영API/스케줄러·시험API·cloudflared MainPID(459315/459316/613937/8358)는시작전과동일하며health양쪽200. 운영DB경로를실행기에넣으면DB오픈/네트워크호출전에실패하는가드도확인했다. docs/스토어_업데이트_시험배포_검증_20261023.json에비밀없는증거를보존했다. 스테이징/복구자료는 /tmp/weather-care-store-update-20261023-1005, 로컬번들/진단기는ignored weather_care_server/build/store-update에있다. 중단시새타이머만disable --now하면되며기존날씨서비스복원은필요없다.
+
+### Android API 사용 설정 후 재확인
+
+- 사용자가 Google Play Android Developer API 사용 설정을 완료했다고 알려 실제 미니 PC에서 다시 조회했다. FCM/GA 계정 응답에서 SERVICE_DISABLED는 사라졌고 HTTP403 PERMISSION_DENIED만 남았다. Google Cloud 활성화 완료와 Play Console 접근 미완료를 구분한다.
+- Play Console→사용자 및 권한→새 사용자 초대에서 firebase-adminsdk-fbsvc@weather-care-2aaa8.iam.gserviceaccount.com을 추가하고 날씨챙겨 앱에 앱 정보 보기(읽기 전용)를 부여하는 절차를 공식 Google 도움말로 확인했다. 기존 계정이 있으면 해당 사용자의 앱 접근/권한을 수정하도록 안내한다. 출시·결제·관리자 권한을 요구하지 않는다. 아직 Android 기준 등록과 정상 서비스 재검증은 남았다.
+
+### 2026-10-23 10:07 KST Android 연결·시험 예약 최종 완료
+
+- 사용자가 Play Console에서 앱정보만 볼 수 있게 설정했다고 알려 동일한 실제 실행기의 --initialize를 weather-care 계정/시험환경으로 다시 실행했다. 읽기전용 권한으로 조회용 edit생성→production조회→폐기까지 정상통과했다. 더넓은 출시/결제/관리자권한은요구하지않았다.
+- iOS공개1.0.1과Android공개1.0.1(Play릴리스명26101200 (1.0.1),빌드26101200)을최초기준notify=0으로등록했다. 실제weather-care-test-store-update.service재실행결과양OS점검정상/sent0/failed0/uncertain0,Result=success·ExecMainStatus=0을확인했다. 이전API비활성/Play접근차단과서비스실패상태는이최종결과로대체한다.
+- 10:07KST확인: 타이머enabled/active,다음2026-10-24 09:00KST;독립상태DBquick_checkok·발송이력0·양OS기준2개. 실제푸시없음. 운영API/스케줄러·시험API·cloudflared프로세스는기존PID와동일/active를유지한다. 추가서버코드교체·기존서비스재시작·운영DB수정없음.
+- STORE_UPDATE.md·시험README·docs/스토어_업데이트_시험배포_검증_20261023.json을최종정상가동상태로갱신했다. 다음더높은공개버전부터OS별구버전/버전미보고시험기기에1회안내한다. 신규앱의버전보고/클릭스토어이동소스는검증완료이나기존1.0.0·1.0.1의클릭은메인진입이며새앱배포전까지이한계는남는다. 앱빌드/설치·스토어배포·실제FCM·커밋/push는없다.
+
+## 2026-10-23 스토어 업데이트 시험 가동 기록 커밋·push
+
+- 사용자 요청으로 남아 있는 시험 서버 최종 정상 가동 기록을 커밋·push한다. 기능 코드와 앱/스토어 원고는 앞선 56f68fc 커밋에 포함되어 weather_care/master까지 반영된 것을 fetch로 확인했다.
+- 이번 대상은 HANDOFF.md, 시험 README·STORE_UPDATE.md, 스토어_업데이트_시험배포_검증_20261023.json 네 파일이다. Android 읽기전용 접근과 양OS 기준등록·서비스성공·다음09시예약의 최종증거를 포함하며 인증키/토큰/비밀환경파일은 포함하지 않는다.
+- 문서/기존실행결과만 추가하므로 통과한 기능 테스트는 반복하지 않는다. JSON 파싱·Git 공백 검사를 확인하고 한글 메시지로 커밋한 뒤 일반 push와 원격HEAD·작업트리 정합성을 확인한다. 이번 작업은 앱/서버 기능 수정·추가 배포·실제 푸시를 수행하지 않는다.

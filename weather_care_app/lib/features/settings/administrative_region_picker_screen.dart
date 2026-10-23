@@ -173,7 +173,7 @@ class _AdministrativeRegionPickerScreenState
                                       size: 18),
                                   TextButton(
                                     onPressed: () => _goToLevel(i + 1),
-                                    child: Text(_path[i].name),
+                                    child: Text(_path[i].displayName),
                                   ),
                                 ],
                               ],
@@ -202,7 +202,7 @@ class _AdministrativeRegionPickerScreenState
                               key: ValueKey('admin-region-${region.key}'),
                               title: Text(searching || !hasChildren
                                   ? region.fullName
-                                  : region.name),
+                                  : region.displayName),
                               trailing: Icon(hasChildren
                                   ? Icons.chevron_right_rounded
                                   : selected

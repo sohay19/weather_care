@@ -8,6 +8,7 @@ import '../../models/postal_address.dart';
 import '../../services/address_search_service.dart';
 import '../../services/region_catalog.dart';
 import '../../theme/weather_theme.dart';
+import '../../utils/region_name.dart';
 import 'postal_address_picker_screen.dart';
 import 'region_selection_notice.dart';
 
@@ -307,7 +308,7 @@ class _PostalAddressText extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.bold)),
           Text(address.roadAddress.isEmpty
               ? '제공된 도로명주소 없음'
-              : address.roadAddress),
+              : displayRegionName(address.roadAddress)),
           const SizedBox(height: 8),
           Text(address.jibunEstimated ? '지번주소 · 예상' : '지번주소',
               style: Theme.of(context)
@@ -316,7 +317,7 @@ class _PostalAddressText extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.bold)),
           Text(address.jibunAddress.isEmpty
               ? '제공된 지번주소 없음'
-              : address.jibunAddress),
+              : displayRegionName(address.jibunAddress)),
         ],
       );
 }

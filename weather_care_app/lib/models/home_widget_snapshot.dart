@@ -2,6 +2,7 @@ import '../utils/weather_number.dart';
 import 'dart:convert';
 
 import '../utils/korea_date.dart';
+import '../utils/region_name.dart';
 import 'briefing_time.dart';
 import 'recommendation.dart';
 import 'weather.dart';
@@ -297,7 +298,7 @@ List<HomeWidgetPreparation> _preparationsFromTypes(
 }
 
 String compactWidgetRegionName(String value) {
-  final parts = value.trim().split(RegExp(r'\s+'));
+  final parts = displayRegionName(value).trim().split(RegExp(r'\s+'));
   if (parts.length >= 3 && _isProvinceLevel(parts.first)) {
     return parts.skip(1).join(' ');
   }

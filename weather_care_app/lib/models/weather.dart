@@ -1,4 +1,5 @@
 import '../utils/weather_number.dart';
+import '../utils/region_name.dart';
 import 'recommendation.dart';
 import 'lifestyle_message.dart';
 import 'precipitation.dart';
@@ -20,7 +21,7 @@ class WeatherRegion {
     return WeatherRegion(
       nx: (json['nx'] as num?)?.toInt() ?? 60,
       ny: (json['ny'] as num?)?.toInt() ?? 121,
-      name: json['name']?.toString() ?? '수원',
+      name: displayRegionName(json['name']?.toString() ?? '수원'),
     );
   }
 }

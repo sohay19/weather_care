@@ -29,10 +29,14 @@ void main() {
   test('제숫자동은 원본 키를 유지하고 표시할 때만 제를 생략한다', () {
     final region = catalog.search('서울 구로 구로1동').single;
     expect(region.name, '구로제1동');
+    expect(region.displayName, '구로1동');
     expect(region.fullName, '서울특별시 구로구 구로1동');
     expect(region.key, '1153052000|구로제1동|58|125');
     expect(catalog.find(region.key), same(region));
     expect(catalog.search('서울 구로 구로제1동').single, same(region));
+    expect(catalog.search('서울 구로 구로제1').single, same(region));
+    expect(catalog.search('부산 연제 거제1동').single.fullName, '부산광역시 연제구 거제1동');
+    expect(catalog.search('서울 서대문 홍제1동').single.fullName, '서울특별시 서대문구 홍제1동');
   });
   test('시군구와 동 이름을 함께 검색하고 흔한 약칭도 찾는다', () {
     expect(catalog.search('  부산시  해운대 좌동 '), hasLength(4));

@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
 
 import 'current_location_service.dart';
+import '../utils/region_name.dart';
 
 abstract class GpsRegionNameService {
   const GpsRegionNameService();
@@ -117,7 +118,8 @@ String? koreanAdministrativeDisplayName({
 String? preferNeighborhoodDisplayName(Iterable<String?> candidates) {
   String? firstAdministrativeName;
   for (final candidate in candidates) {
-    final value = candidate?.trim();
+    final value =
+        candidate == null ? null : displayRegionName(candidate.trim());
     if (value == null || value.isEmpty) continue;
     firstAdministrativeName ??= value;
     if (_administrativeTokens(value).any(_isNeighborhood)) return value;
@@ -127,7 +129,7 @@ String? preferNeighborhoodDisplayName(Iterable<String?> candidates) {
 
 Iterable<String> _administrativeTokens(String? value) sync* {
   if (value == null) return;
-  final normalized = value
+  final normalized = displayRegionName(value)
       .trim()
       .replaceAll(RegExp(r'[,()]'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ');

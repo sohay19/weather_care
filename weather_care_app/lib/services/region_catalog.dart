@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import '../models/selectable_region.dart';
+import '../utils/region_name.dart';
 
 class RegionCatalog {
   final List<ForecastRegion> regions;
@@ -63,7 +64,7 @@ class RegionCatalog {
           name: row[2],
           nx: row[3],
           ny: row[4],
-          fullName: _displayName(parts.join(' ')));
+          fullName: displayRegionName(parts.join(' ')));
       if (!keys.add(region.key)) {
         throw const FormatException('Duplicate region');
       }
@@ -99,10 +100,9 @@ class RegionCatalog {
     }).toList();
   }
 
-  static String _normalize(String value) => value
+  static String _normalize(String value) => regionSearchName(value)
       .toLowerCase()
       .replaceAll(RegExp(r'\s+'), '')
-      .replaceAll(RegExp(r'제(?=\d)'), '')
       .replaceAll('서울시', '서울')
       .replaceAll('부산시', '부산')
       .replaceAll('대구시', '대구')
@@ -120,7 +120,4 @@ class RegionCatalog {
       .replaceAll('강원도', '강원')
       .replaceAll('전북도', '전북')
       .replaceAll('제주도', '제주');
-
-  static String _displayName(String value) =>
-      value.replaceAll(RegExp(r'제(?=\d+동(?:\s|$))'), '');
 }

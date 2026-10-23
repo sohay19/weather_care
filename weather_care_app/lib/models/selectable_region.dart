@@ -1,3 +1,5 @@
+import '../utils/region_name.dart';
+
 class ForecastRegion {
   final String code;
   final String parentCode;
@@ -17,6 +19,7 @@ class ForecastRegion {
   // KMA's source reuses some dong codes. Preserve name and grid as well.
   String get key => '$code|$name|$nx|$ny';
   String get gridId => '${nx}_$ny';
+  String get displayName => displayRegionName(name);
 }
 
 class ForecastGridSelection {

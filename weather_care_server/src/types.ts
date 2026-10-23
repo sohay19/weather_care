@@ -415,6 +415,12 @@ export type ServerEnv = {
   /** 접근 키와 전용 DB를 사용하는 Node 시험 서버의 샘플 조회만 허용한다. */
   TEST_DATA_ENABLED?: boolean;
   DB: D1Database;
+  /** 외부 API 원본·수집 상태·호출 예산을 저장하는 공용 DB. */
+  WEATHER_DB?: D1Database;
+  /** 중앙 수집기가 조회할 환경별 사용자 DB(사용자 자료는 복제하지 않는다). */
+  COLLECTION_USER_DATABASES?: D1Database[];
+  /** false인 환경은 수집 없이 공용 자료로 조회·알림만 처리한다. */
+  WEATHER_COLLECTION_ENABLED?: string;
   INSTALLATION_ENROLL_LIMIT: RateLimitBinding;
   ANALYTICS_DELETION_LIMIT: RateLimitBinding;
   APP_ORIGIN: string;

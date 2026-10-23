@@ -4,6 +4,21 @@ import { dirname, resolve } from 'node:path';
 
 type SqlValue = string | number | bigint | Buffer | null;
 
+function enableWal(database: Database.Database): void {
+  const deadline = performance.now() + 5_000;
+  const pause = new Int32Array(new SharedArrayBuffer(4));
+  while (true) {
+    try {
+      database.pragma('journal_mode = WAL');
+      return;
+    } catch (error) {
+      // 최초 WAL 전환은 SQLite busy_timeout을 적용하지 않는 경우가 있다.
+      if ((error as { code?: string }).code !== 'SQLITE_BUSY' || performance.now() >= deadline) throw error;
+      Atomics.wait(pause, 0, 0, 25);
+    }
+  }
+}
+
 function sqliteValue(value: unknown): SqlValue {
   if (value === undefined) return null;
   if (typeof value === 'boolean') return value ? 1 : 0;
@@ -102,14 +117,21 @@ class SqliteD1PreparedStatement {
 export class SqliteD1Database {
   readonly sqlite: Database.Database;
 
-  constructor(databasePath: string) {
+  constructor(databasePath: string, options: { readonly?: boolean } = {}) {
     const resolvedPath = databasePath === ':memory:' ? databasePath : resolve(databasePath);
-    if (resolvedPath !== ':memory:') mkdirSync(dirname(resolvedPath), { recursive: true });
-    this.sqlite = new Database(resolvedPath, { timeout: 5_000 });
-    this.sqlite.pragma('foreign_keys = ON');
-    this.sqlite.pragma('busy_timeout = 5000');
-    this.sqlite.pragma('journal_mode = WAL');
-    this.sqlite.pragma('synchronous = NORMAL');
+    if (resolvedPath !== ':memory:' && !options.readonly) mkdirSync(dirname(resolvedPath), { recursive: true });
+    this.sqlite = new Database(resolvedPath, { timeout: 5_000, ...options, fileMustExist: !!options.readonly });
+    try {
+      this.sqlite.pragma('foreign_keys = ON');
+      this.sqlite.pragma('busy_timeout = 5000');
+      if (!options.readonly) {
+        enableWal(this.sqlite);
+        this.sqlite.pragma('synchronous = NORMAL');
+      }
+    } catch (error) {
+      this.sqlite.close();
+      throw error;
+    }
   }
 
   prepare(query: string): D1PreparedStatement {
@@ -181,14 +203,19 @@ export function runSqliteMigrations(
     .filter((name) => /^\d+_.+\.sql$/.test(name) && !applied.has(name))
     .sort((left, right) => left.localeCompare(right));
 
+  const completed: string[] = [];
   for (const name of pending) {
     const sql = readFileSync(resolve(directory, name), 'utf8');
-    database.sqlite.transaction(() => {
+    const migrated = database.sqlite.transaction(() => {
+      // 두 환경이 같은 공용 DB로 동시에 시작해도 잠금 획득 뒤 다시 확인한다.
+      if (database.sqlite.prepare('SELECT 1 FROM d1_migrations WHERE name = ?').get(name)) return false;
       database.sqlite.exec(sql);
       database.sqlite.prepare('INSERT INTO d1_migrations (name) VALUES (?)').run(name);
-    })();
+      return true;
+    }).immediate();
+    if (migrated) completed.push(name);
   }
-  return pending;
+  return completed;
 }
 
 export function databaseSize(databasePath: string): number {

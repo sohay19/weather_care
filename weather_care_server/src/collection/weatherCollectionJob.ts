@@ -1,3 +1,5 @@
+import { loadCollectionTargets } from './collectionTargets';
+import { weatherDatabase } from '../database/weatherDatabase';
 import { archiveSnowProbabilityForecasts } from '../services/snowProbabilityHistory';
 import { collectNationwideAirQuality } from '../services/nationwideAirCache';
 import { collectNationwideForecast } from '../services/nationwideForecastCache';
@@ -123,32 +125,32 @@ export async function runWeatherCollectionJob(
   env: ServerEnv,
   options: WeatherCollectionOptions = {},
 ): Promise<void> {
-  if (!env.DB) return;
+  if (!weatherDatabase(env) || env.WEATHER_COLLECTION_ENABLED === 'false') return;
   const now = options.now ?? new Date();
-  const targets = await loadActiveCollectionTargets(env.DB);
+  const targets = await loadCollectionTargets(env);
   const activeRegions = distinctRegions(targets);
   // 수집 단위는 전국 원본이다. 등록된 설치나 대표 격자 목록의 유무와 무관하다.
   if (options.collectCore !== false) {
     await collectUltraShortObservations(env, activeRegions, now, activeRegions);
-    await backfillGridObservationHistory(env.DB, env.KMA_APIHUB_KEY, now);
-    await archiveActiveDailyHumidity(env.DB, now, activeRegions).catch(error =>
+    await backfillGridObservationHistory(weatherDatabase(env), env.KMA_APIHUB_KEY, now);
+    await archiveActiveDailyHumidity(weatherDatabase(env), now, activeRegions).catch(error =>
       logCollectionFailure('daily_humidity_archive', error));
     await collectNationwideAirQuality(env, now);
     await collectNationwideAirForecast(env, now);
-    try { await collectNationwideUv(env.DB, env.KMA_SERVICE_KEY, now); }
+    try { await collectNationwideUv(weatherDatabase(env), env.KMA_SERVICE_KEY, now); }
     catch (error) { logCollectionFailure('national_uv', error); }
-    try { await collectNationwideLivingIndices(env.DB, env.KMA_SERVICE_KEY, now); }
+    try { await collectNationwideLivingIndices(weatherDatabase(env), env.KMA_SERVICE_KEY, now); }
     catch (error) { logCollectionFailure('national_living_indices', error); }
     await collectSupportedMidTermForecasts(env, now);
     await collectWarnings(env, [], now);
     await collectRoadControls(env, [], now);
     await collectCurrentVisibility(env, [], now);
-    if (env.KMA_APIHUB_KEY) await collectCurrentSnow(env.DB, env.KMA_APIHUB_KEY, now);
+    if (env.KMA_APIHUB_KEY) await collectCurrentSnow(weatherDatabase(env), env.KMA_APIHUB_KEY, now);
     await collectNationalDailyObservations(env, now, options.dailyObservationLookbackDays ?? 7);
-    await collectNationwideForecast(env.DB, env.KMA_APIHUB_KEY, now);
-    try { await collectPointForecasts(env.DB, env.KMA_SERVICE_KEY, now); }
+    await collectNationwideForecast(weatherDatabase(env), env.KMA_APIHUB_KEY, now);
+    try { await collectPointForecasts(weatherDatabase(env), env.KMA_SERVICE_KEY, now); }
     catch (error) { logCollectionFailure('point_forecast', error); }
-    await archiveSnowProbabilityForecasts(env.DB, now, activeRegions).catch(error =>
+    await archiveSnowProbabilityForecasts(weatherDatabase(env), now, activeRegions).catch(error =>
       logCollectionFailure('snow_probability_archive', error));
   } else {
     if (options.collectHourlyObservations) await collectCurrentVisibility(env, [], now);
@@ -162,8 +164,8 @@ export async function runCurrentObservationCollectionJob(
   env: ServerEnv,
   now = new Date(),
 ): Promise<void> {
-  if (!env.DB) return;
-  const activeRegions = distinctRegions(await loadActiveCollectionTargets(env.DB));
+  if (!weatherDatabase(env) || env.WEATHER_COLLECTION_ENABLED === 'false') return;
+  const activeRegions = distinctRegions(await loadCollectionTargets(env));
   await collectUltraShortObservations(env, activeRegions, now, activeRegions, true);
 }
 
@@ -174,7 +176,7 @@ export async function collectSupportedMidTermForecasts(
   const expectedIssue = latestMidTermIssueTimes(now, 1)[0];
   const sourceVersion = `DATA_GO_KR:${expectedIssue}`;
   if (!expectedIssue || await collectedSourceVersionIsCurrent(
-    env.DB,
+    weatherDatabase(env),
     'KMA_MID_TERM_SUPPORTED_REGIONS',
     sourceVersion,
   )) return;
@@ -186,7 +188,7 @@ export async function collectSupportedMidTermForecasts(
     if (stopped) return;
     try {
       const hydrated = await hydrateResolvedMidTermForecast({
-        db: env.DB,
+        db: weatherDatabase(env),
         serviceKey: env.KMA_SERVICE_KEY,
         region,
         now,
@@ -211,7 +213,7 @@ export async function collectSupportedMidTermForecasts(
   }));
   if (completed === regions.length) {
     await saveCollectedSourceVersion(
-      env.DB,
+      weatherDatabase(env),
       'KMA_MID_TERM_SUPPORTED_REGIONS',
       sourceVersion,
       now,
@@ -219,24 +221,6 @@ export async function collectSupportedMidTermForecasts(
   }
 }
 
-async function loadActiveCollectionTargets(db: D1Database): Promise<CollectionTarget[]> {
-  const result = await db.prepare(
-    `SELECT nx, ny, latitude, longitude
-     FROM installations
-     GROUP BY nx, ny, latitude, longitude`,
-  ).all<{
-    nx: number;
-    ny: number;
-    latitude: number | null;
-    longitude: number | null;
-  }>();
-  return result.results.map((row) => ({
-    nx: Number(row.nx),
-    ny: Number(row.ny),
-    latitude: row.latitude ?? undefined,
-    longitude: row.longitude ?? undefined,
-  }));
-}
 
 async function collectNationwideAirForecast(
   env: ServerEnv,
@@ -244,7 +228,7 @@ async function collectNationwideAirForecast(
   forceRefresh = false,
 ): Promise<NationwideAirForecast | null> {
   const key = collectedCacheKey.nationwideAirForecast;
-  const cached = await getCollectedCache<NationwideAirForecast>(env.DB, key);
+  const cached = await getCollectedCache<NationwideAirForecast>(weatherDatabase(env), key);
   const issue = latestAirKoreaForecastIssue(now);
   if (!forceRefresh && cached?.status === 'AVAILABLE' &&
       nationwideAirForecastIsUsable(cached.value, now)) return cached.value;
@@ -256,7 +240,7 @@ async function collectNationwideAirForecast(
       throw new Error('AirKorea returned no nationwide forecast');
     }
     const snapshot = { issue, areas };
-    await saveCollectedCache(env.DB, {
+    await saveCollectedCache(weatherDatabase(env), {
       key, type: 'COLLECTED_NATIONWIDE_AIR_FORECAST',
       value: snapshot, updatedAt: now,
     });
@@ -292,19 +276,19 @@ export async function collectWarnings(
   if (!env.KMA_APIHUB_KEY) return;
   const sourceVersion = pollingWindowVersion(now, 30);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
-    env.DB, 'WARNING_30_MINUTES', sourceVersion,
+    weatherDatabase(env), 'WARNING_30_MINUTES', sourceVersion,
   )) return;
 
   const provider = new KmaWarningProvider({ serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
-    fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'WARNING', now, maxBytes: 1_000_000, sourceVersion }) });
+    fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: weatherDatabase(env), provider: 'WARNING', now, maxBytes: 1_000_000, sourceVersion }) });
   try {
     const cachedStations = await getCollectedCache<KmaWarningRegionStation[]>(
-      env.DB, collectedCacheKey.warningStations,
+      weatherDatabase(env), collectedCacheKey.warningStations,
     );
     let stations = cachedStations?.value;
     if (!cacheRecordIsFresh(cachedStations, 24 * 60 * 60 * 1000, now)) {
       stations = await provider.getRegionStations();
-      await saveCollectedCache(env.DB, {
+      await saveCollectedCache(weatherDatabase(env), {
         key: collectedCacheKey.warningStations,
         type: 'COLLECTED_WARNING_STATIONS',
         value: stations,
@@ -314,7 +298,7 @@ export async function collectWarnings(
     if (!stations?.length) throw new Error('KMA warning region mapping is empty');
     const ids = [...new Set(stations.map((station) => station.regionId))];
     const warnings = await provider.getActiveForRegions(ids);
-    await saveCollectedCache(env.DB, {
+    await saveCollectedCache(weatherDatabase(env), {
       key: collectedCacheKey.warningSnapshot,
       type: 'COLLECTED_WARNING_SNAPSHOT',
       value: { stations, warnings },
@@ -328,7 +312,7 @@ export async function collectWarnings(
       const match = nearestWarningRegion(
         stations, coordinates.latitude, coordinates.longitude,
       );
-      await saveCollectedCache(env.DB, {
+      await saveCollectedCache(weatherDatabase(env), {
         key: collectedCacheKey.warning(region.nx, region.ny),
         type: 'COLLECTED_WARNING',
         value: {
@@ -341,7 +325,7 @@ export async function collectWarnings(
       });
     });
     await saveCollectedSourceVersion(
-      env.DB, 'WARNING_30_MINUTES', sourceVersion, now,
+      weatherDatabase(env), 'WARNING_30_MINUTES', sourceVersion, now,
     );
   } catch (error) {
     logCollectionFailure('warning', error);
@@ -359,14 +343,14 @@ async function collectUltraShortObservations(
   const targetClock = latestGridObservationTime(now);
   const expectedObservedAt = gridObservationKoreanIso(targetClock);
   const latest = await collectGridObservationSnapshot({
-    db: env.DB, serviceKey: env.KMA_APIHUB_KEY, clock: targetClock, now,
+    db: weatherDatabase(env), serviceKey: env.KMA_APIHUB_KEY, clock: targetClock, now,
     requiredOnly: fastRetry, fastRetry,
   });
   const exact = latest ? observationsFromGridSnapshot(latest, regions) : new Map<string, UltraShortObservation>();
   const pending = regions.filter(({ nx, ny }) => !exact.has(`${nx}:${ny}`));
   // 원본/핵심값이 없으면 이전 회차의 같은 격자만 쓴다. 관측소 대체는 하지 않는다.
   const previous = pending.length > 0 || !latest ? await collectGridObservationSnapshot({
-    db: env.DB, serviceKey: env.KMA_APIHUB_KEY,
+    db: weatherDatabase(env), serviceKey: env.KMA_APIHUB_KEY,
     clock: new Date(targetClock.getTime() - 10 * 60 * 1000), now,
     requiredOnly: fastRetry, fastRetry,
   }) : null;
@@ -380,14 +364,14 @@ async function collectUltraShortObservations(
     const key = `${region.nx}:${region.ny}`;
     const value = exact.get(key) ?? previousValues.get(key);
     const record = value ? { value, status: 'AVAILABLE' as const, updatedAt: now.toISOString() }
-      : await readCurrentGridObservation(env.DB, region.nx, region.ny, now);
+      : await readCurrentGridObservation(weatherDatabase(env), region.nx, region.ny, now);
     if (!record) {
       missing.push(key);
       if (activeKeys.has(key)) expiredActive.push(key);
       continue;
     }
     // 기존 키는 알림·프리워밍과의 호환용이다. 모든 GPS 조회의 원본은 전국 스냅샷이다.
-    await saveCollectedCache(env.DB, {
+    await saveCollectedCache(weatherDatabase(env), {
       key: collectedCacheKey.ultraShortObservation(region.nx, region.ny),
       type: 'COLLECTED_ULTRA_SHORT', value: record.value,
       nx: region.nx, ny: region.ny, updatedAt: now,
@@ -398,7 +382,7 @@ async function collectUltraShortObservations(
   if (latest) historicalClocks.add(Date.parse(latest.observedAt) - 24 * 60 * 60 * 1000);
   // 어제 원본은 중앙에서 회차당 한 번만 보충한다. 앱 요청에서는 외부 API를 호출하지 않는다.
   for (const instant of historicalClocks) {
-    await collectGridObservationSnapshot({ db: env.DB, serviceKey: env.KMA_APIHUB_KEY,
+    await collectGridObservationSnapshot({ db: weatherDatabase(env), serviceKey: env.KMA_APIHUB_KEY,
       clock: new Date(instant + 9 * 60 * 60 * 1000), now, requiredOnly: true, historical: true });
   }
   console.log(JSON.stringify({ event: 'current_observation_collection_completed',
@@ -420,25 +404,25 @@ async function collectNationwidePrecipitation(
   // Winter road-ice archives share the same daily APIHub byte allowance.
   if (!forceSourceRefresh &&
       now.getUTCMinutes() % 30 < 15 &&
-      await getNationwidePrecipitation(env.DB, now) !== null) return true;
+      await getNationwidePrecipitation(weatherDatabase(env), now) !== null) return true;
   const sourceVersion = latestRadarProductVersion(
     new Date(now.getTime() - 5 * 60 * 1000),
   );
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
-    env.DB,
+    weatherDatabase(env),
     'NATIONWIDE_PRECIPITATION_15_MINUTES',
     sourceVersion,
-  )) return await getNationwidePrecipitation(env.DB, now) !== null;
+  )) return await getNationwidePrecipitation(weatherDatabase(env), now) !== null;
   try {
     const snapshot = await new KmaPrecipitationObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY!,
-      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'NATIONWIDE_ANALYSIS_AND_RADAR', now, sourceVersion,
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: weatherDatabase(env), provider: 'NATIONWIDE_ANALYSIS_AND_RADAR', now, sourceVersion,
         maxBytes: NATIONWIDE_ANALYSIS_BYTES + RADAR_BYTES }),
       now: () => now,
       timeoutMs: 30_000,
       attempts: 1,
     }).getNationwideSnapshot(new Date(compactIssueToIso(sourceVersion)));
-    await saveNationwidePrecipitation(env.DB, snapshot, now);
+    await saveNationwidePrecipitation(weatherDatabase(env), snapshot, now);
     for (const location of locations) {
       try {
         const value = nationwidePrecipitationAtPoint(
@@ -446,7 +430,7 @@ async function collectNationwidePrecipitation(
           location.latitude,
           location.longitude,
         );
-        await saveCollectedCache(env.DB, {
+        await saveCollectedCache(weatherDatabase(env), {
           key: collectedCacheKey.precipitation(location.latitude, location.longitude),
           type: 'COLLECTED_PRECIPITATION',
           value,
@@ -457,7 +441,7 @@ async function collectNationwidePrecipitation(
       }
     }
     await saveCollectedSourceVersion(
-      env.DB,
+      weatherDatabase(env),
       'NATIONWIDE_PRECIPITATION_15_MINUTES',
       sourceVersion,
       now,
@@ -478,24 +462,24 @@ async function collectRoadIce(
   if (!env.KMA_APIHUB_KEY || !isRoadIceSeason(now)) return;
   const sourceVersion = pollingWindowVersion(now, 30);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
-    env.DB,
+    weatherDatabase(env),
     'ROAD_ICE_30_MINUTES',
     sourceVersion,
   )) return;
   try {
     const segments = await new KmaRoadIceProvider({
       serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
-      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'ROAD_ICE', now, sourceVersion, maxBytes: 2_100_000 }),
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: weatherDatabase(env), provider: 'ROAD_ICE', now, sourceVersion, maxBytes: 2_100_000 }),
       now: () => now,
     }).getRiskSegments();
-    await saveCollectedCache<RoadIceSegment[]>(env.DB, {
+    await saveCollectedCache<RoadIceSegment[]>(weatherDatabase(env), {
       key: collectedCacheKey.roadIceSnapshot,
       type: 'COLLECTED_ROAD_ICE_SNAPSHOT',
       value: segments,
       updatedAt: now,
     });
     await Promise.all(locations.map((location, index) => saveCollectedCache<RoadIceRisk | null>(
-      env.DB,
+      weatherDatabase(env),
       {
         key: collectedCacheKey.roadIce(location.latitude, location.longitude),
         type: 'COLLECTED_ROAD_ICE',
@@ -504,7 +488,7 @@ async function collectRoadIce(
       },
     )));
     await saveCollectedSourceVersion(
-      env.DB,
+      weatherDatabase(env),
       'ROAD_ICE_30_MINUTES',
       sourceVersion,
       now,
@@ -524,12 +508,12 @@ async function collectRoadControls(
   if (!provider) return;
   const sourceVersion = pollingWindowVersion(now, 10);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
-    env.DB,
+    weatherDatabase(env),
     'ROAD_CONTROL_10_MINUTES',
     sourceVersion,
   )) return;
   if (!await reserveMonthlyRequestBudget(
-    env.DB,
+    weatherDatabase(env),
     'ITS_ROAD_CONTROL',
     1,
     ITS_MONTHLY_REQUEST_LIMIT,
@@ -537,7 +521,7 @@ async function collectRoadControls(
   )) return;
   try {
     const snapshot = await provider.getActiveControlSnapshot();
-    await saveCollectedCache<RoadControlSnapshotItem[]>(env.DB, {
+    await saveCollectedCache<RoadControlSnapshotItem[]>(weatherDatabase(env), {
       key: collectedCacheKey.roadControlSnapshot,
       type: 'COLLECTED_ROAD_CONTROL_SNAPSHOT',
       value: snapshot,
@@ -545,7 +529,7 @@ async function collectRoadControls(
     });
     await Promise.all(locations.map((location) => {
       const value = nearestRoadControl(snapshot, location);
-      return saveCollectedCache<OfficialRoadControl | null>(env.DB, {
+      return saveCollectedCache<OfficialRoadControl | null>(weatherDatabase(env), {
         key: collectedCacheKey.roadControl(location.latitude, location.longitude),
         type: 'COLLECTED_ROAD_CONTROL',
         value: value ?? null,
@@ -553,7 +537,7 @@ async function collectRoadControls(
       });
     }));
     await saveCollectedSourceVersion(
-      env.DB,
+      weatherDatabase(env),
       'ROAD_CONTROL_10_MINUTES',
       sourceVersion,
       now,
@@ -573,7 +557,7 @@ async function collectCurrentVisibility(
   const currentHour = latestVisibilityKoreanHour(now);
   const sourceVersion = ultraShortKoreanIso(currentHour);
   if (!forceSourceRefresh && await collectedSourceVersionIsCurrent(
-    env.DB,
+    weatherDatabase(env),
     'ASOS_VISIBILITY_HOURLY',
     sourceVersion,
   )) return;
@@ -581,16 +565,16 @@ async function collectCurrentVisibility(
     const provider = new KmaHourlyObservationProvider({
       serviceKey: env.KMA_APIHUB_KEY,
       timeoutMs: 30_000,
-      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'ASOS_VISIBILITY', now, sourceVersion, maxBytes: 512_000 }),
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: weatherDatabase(env), provider: 'ASOS_VISIBILITY', now, sourceVersion, maxBytes: 512_000 }),
       now: () => now,
     });
     const current = await provider.getObservationsAt(currentHour, {
       includeVisibility: true,
     });
-    await saveCollectedCache(env.DB, { key: NATIONAL_VISIBILITY_KEY,
+    await saveCollectedCache(weatherDatabase(env), { key: NATIONAL_VISIBILITY_KEY,
       type: 'COLLECTED_NATIONWIDE_VISIBILITY', value: current, updatedAt: now });
     await saveCollectedSourceVersion(
-      env.DB,
+      weatherDatabase(env),
       'ASOS_VISIBILITY_HOURLY',
       sourceVersion,
       now,
@@ -606,15 +590,15 @@ async function collectNationalDailyObservations(env: ServerEnv, now: Date, lookb
   if (!dates.length) return;
   const end = dates[dates.length - 1];
   try {
-    const cached = await getCollectedCache<import('../providers/weather/kmaDailyObservationProvider').NationwideDailySnapshot>(env.DB, NATIONAL_DAILY_KEY);
-    if (await collectedSourceVersionIsCurrent(env.DB, 'AWS_DAILY', end) &&
+    const cached = await getCollectedCache<import('../providers/weather/kmaDailyObservationProvider').NationwideDailySnapshot>(weatherDatabase(env), NATIONAL_DAILY_KEY);
+    if (await collectedSourceVersionIsCurrent(weatherDatabase(env), 'AWS_DAILY', end) &&
         dates.every(date => cached?.value.metricAvailability?.[date]?.ws_max)) return;
     const knownDates = new Set(cached?.value.settledDates ?? cached?.value.completedDates ?? []);
     const missingDates = dates.filter((date) => !knownDates.has(date) ||
       !cached?.value.metricAvailability?.[date]?.ws_max);
     if (!missingDates.length) return;
     const dailyProvider = new KmaDailyObservationProvider({ serviceKey: env.KMA_APIHUB_KEY, timeoutMs: 30_000,
-      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: env.DB, provider: 'AWS_DAILY', now, sourceVersion: end, maxBytes: 2_048_000 })
+      fetcher: apiHubBudgetedFetch({ clock: () => new Date(), db: weatherDatabase(env), provider: 'AWS_DAILY', now, sourceVersion: end, maxBytes: 2_048_000 })
     });
     const startDate = compactCalendarDate(missingDates[0]);
     const endDate = compactCalendarDate(end);
@@ -631,9 +615,9 @@ async function collectNationalDailyObservations(env: ServerEnv, now: Date, lookb
     const settledDates = [...new Set([...knownDates,...(incoming.settledDates ?? incoming.completedDates ?? [])])].filter(date => dates.includes(date));
     const metricAvailability = {...cached?.value.metricAvailability,...incoming.metricAvailability};
     const value = { ...incoming, stations: [...stations.values()], completedDates,settledDates,metricAvailability };
-    await saveCollectedCache(env.DB, { key: NATIONAL_DAILY_KEY, type: 'COLLECTED_NATIONWIDE_DAILY', value, updatedAt: now });
+    await saveCollectedCache(weatherDatabase(env), { key: NATIONAL_DAILY_KEY, type: 'COLLECTED_NATIONWIDE_DAILY', value, updatedAt: now });
     if (dates.every((date) => settledDates.includes(compactCalendarDate(date)))) {
-      await saveCollectedSourceVersion(env.DB, 'AWS_DAILY', end, now);
+      await saveCollectedSourceVersion(weatherDatabase(env), 'AWS_DAILY', end, now);
     }
   } catch (error) { logCollectionFailure('national_daily_observation', error); }
 }

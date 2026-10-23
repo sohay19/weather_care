@@ -89,7 +89,8 @@ Firebase 프로젝트 ID는 공개 설정값
 ### 운영 서버: 미니 PC Node.js + SQLite
 
 Node.js 22 이상에서 SQLite 마이그레이션과 Hono 앱을 사용합니다. 운영
-환경변수는 저장소 밖에서 주입하며 기본 DB 경로는 `./data/weather-care.sqlite`, API
+환경변수는 저장소 밖에서 주입하며 기본 DB 경로는 사용자 `./data/weather-care-users.sqlite`,
+공용 날씨 `./data/weather-care-weather.sqlite`입니다. API
 바인딩은 `127.0.0.1:8787`입니다.
 
 ```bash
@@ -256,3 +257,9 @@ Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합�
 확장 준비물 추천을 받습니다. 이 값이 없으면 구버전 앱 호환을 위해 기존 추천 타입만
 반환합니다. 새 준비물은 DB 컬럼을 늘리지 않고 같은 날씨군의 기존 설정을 함께
 따릅니다.
+
+## 날씨 DB 공용화
+
+Node 서버는 `NODE_WEATHER_DATABASE_PATH`의 공용 날씨 DB와 `NODE_DATABASE_PATH`의 환경별 사용자 DB를 사용합니다.
+관측·예보·수집 사용량은 공용이며 사용자·인증·위치·알림 설정·발송 상태는 환경별로 분리합니다.
+기존 통합 DB는 자동 변경하지 않습니다. 새 코드 적용 시 [공용 날씨 DB 전환 안내](ops/mini-pc/공용_날씨_DB_전환.md)에 따라 자료를 옮기고 두 환경을 함께 전환합니다.

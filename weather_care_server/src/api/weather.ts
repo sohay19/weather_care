@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { formatWeatherNumber } from '../utils/weatherNumber';
 import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } from '../services/nationwideWeatherCache';
 import { currentSnowFields } from '../services/currentSnowCache';
@@ -160,15 +161,15 @@ router.get('/main', async (c) => {
 
   try {
     const generatedAt = new Date();
-    location = await resolveSavedLocation(c.env.DB, location, generatedAt);
+    location = await resolveSavedLocation(weatherDatabase(c.env), location, generatedAt);
     const [collected, weekly, visibilityRecord, ultraShortRecord] = await Promise.all([
-      readNationwideRegion(c.env.DB, location, generatedAt),
+      readNationwideRegion(weatherDatabase(c.env), location, generatedAt),
       getCollectedCache<CollectedWeeklyBundle>(
-        c.env.DB,
+        weatherDatabase(c.env),
         collectedCacheKey.weekly(nx, ny),
       ),
-      readNationwideVisibility(c.env.DB, location, generatedAt).then((value) => value ? { value } : null),
-      readCurrentGridObservation(c.env.DB, nx, ny, generatedAt, requestedCoordinates),
+      readNationwideVisibility(weatherDatabase(c.env), location, generatedAt).then((value) => value ? { value } : null),
+      readCurrentGridObservation(weatherDatabase(c.env), nx, ny, generatedAt, requestedCoordinates),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
@@ -188,7 +189,7 @@ router.get('/main', async (c) => {
       generatedAt,
     );
     const responseForecast = { ...forecast, current };
-    const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
+    const airForecast = await readCollectedAirForecast(weatherDatabase(c.env), nx, ny,
       weekly?.status === 'AVAILABLE' ? weekly.value.airQuality : [], generatedAt,
       location.adminCode, location.regionName);
     const sunTimes = sunTimesForRequest(generatedAt, nx, ny, coordinates);
@@ -209,7 +210,7 @@ router.get('/main', async (c) => {
       ...sunTimes,
       current,
       nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
-      livingIndices: await readTodayLivingIndices(c.env.DB, location, generatedAt),
+      livingIndices: await readTodayLivingIndices(weatherDatabase(c.env), location, generatedAt),
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
@@ -254,7 +255,7 @@ router.get('/today', async (c) => {
   let location: NationwideLocation = { nx, ny, adminCode, regionName: requestedRegionName, coordinates: requestedCoordinates };
   try {
     const generatedAt = new Date();
-    location = await resolveSavedLocation(c.env.DB, location, generatedAt);
+    location = await resolveSavedLocation(weatherDatabase(c.env), location, generatedAt);
     const roadIceInSeason = isRoadIceSeason(generatedAt);
     const region = regionMetadataForGrid(nx, ny);
     const [regionRecord, settings, precisePrecipitationRecord, warningRecord,
@@ -262,63 +263,63 @@ router.get('/today', async (c) => {
       roadIceRecord, roadIceSnapshotRecord, preciseRoadControlRecord, weeklyRecord,
       visibilityRecord, ultraShortRecord, nationwidePrecipitation,
       roadControlSnapshotRecord, snowFields, uvFields] = await Promise.all([
-      readNationwideRegion(c.env.DB, location, generatedAt),
+      readNationwideRegion(weatherDatabase(c.env), location, generatedAt),
       settingsForRequest(
-      c.env.DB,
+      weatherDatabase(c.env),
       c.req.query('installationId'),
       c.req.header('Authorization'),
       c.req.query('widgetSettings'),
       ),
       coordinates
         ? getCollectedCache<CurrentPrecipitationObservation>(
-            c.env.DB,
+            weatherDatabase(c.env),
             collectedCacheKey.precipitation(coordinates.latitude, coordinates.longitude),
           )
         : Promise.resolve(null),
       getCollectedCache<CollectedWarningBundle>(
-        c.env.DB,
+        weatherDatabase(c.env),
         collectedCacheKey.warning(nx, ny),
       ),
       coordinates
         ? getCollectedCache<{
             stations: KmaWarningRegionStation[];
             warnings: OfficialWeatherWarning[];
-          }>(c.env.DB, collectedCacheKey.warningSnapshot)
+          }>(weatherDatabase(c.env), collectedCacheKey.warningSnapshot)
         : Promise.resolve(null),
       coordinates
         ? getCollectedCache<RoadIceRisk | null>(
-            c.env.DB,
+            weatherDatabase(c.env),
             collectedCacheKey.roadIce(coordinates.latitude, coordinates.longitude),
           )
         : Promise.resolve(null),
       coordinates && roadIceInSeason
         ? getCollectedCache<RoadIceSegment[]>(
-            c.env.DB, collectedCacheKey.roadIceSnapshot,
+            weatherDatabase(c.env), collectedCacheKey.roadIceSnapshot,
           )
         : Promise.resolve(null),
       coordinates
         ? getCollectedCache<OfficialRoadControl | null>(
-            c.env.DB,
+            weatherDatabase(c.env),
             collectedCacheKey.roadControl(coordinates.latitude, coordinates.longitude),
           )
         : Promise.resolve(null),
       getCollectedCache<CollectedWeeklyBundle>(
-        c.env.DB,
+        weatherDatabase(c.env),
         collectedCacheKey.weekly(nx, ny),
       ),
-      readNationwideVisibility(c.env.DB, location, generatedAt).then((value) => value ? { value } : null),
-      readCurrentGridObservation(c.env.DB, nx, ny, generatedAt, requestedCoordinates),
+      readNationwideVisibility(weatherDatabase(c.env), location, generatedAt).then((value) => value ? { value } : null),
+      readCurrentGridObservation(weatherDatabase(c.env), nx, ny, generatedAt, requestedCoordinates),
       coordinates
-        ? getNationwidePrecipitation(c.env.DB, generatedAt)
+        ? getNationwidePrecipitation(weatherDatabase(c.env), generatedAt)
         : Promise.resolve(null),
       coordinates
         ? getCollectedCache<RoadControlSnapshotItem[]>(
-            c.env.DB,
+            weatherDatabase(c.env),
             collectedCacheKey.roadControlSnapshot,
           )
         : Promise.resolve(null),
-      currentSnowFields(c.env.DB, location, generatedAt),
-      currentUvFields(c.env.DB, location, generatedAt),
+      currentSnowFields(weatherDatabase(c.env), location, generatedAt),
+      currentUvFields(weatherDatabase(c.env), location, generatedAt),
     ]);
     if (!regionRecord || regionRecord.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
@@ -338,7 +339,7 @@ router.get('/today', async (c) => {
       ...uvFields,
     };
     const responseForecast = { ...forecast, current };
-    const airForecast = await readCollectedAirForecast(c.env.DB, nx, ny,
+    const airForecast = await readCollectedAirForecast(weatherDatabase(c.env), nx, ny,
       weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,
       location.adminCode, location.regionName);
     let nationwidePrecipitationValue: CurrentPrecipitationObservation | undefined;
@@ -488,7 +489,7 @@ router.get('/today', async (c) => {
         activeWarnings: warnings,
       },
       nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
-      livingIndices: await readTodayLivingIndices(c.env.DB, location, generatedAt),
+      livingIndices: await readTodayLivingIndices(weatherDatabase(c.env), location, generatedAt),
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
@@ -563,12 +564,12 @@ router.get('/weekly', async (c) => {
     const regionId = `${nx}_${ny}`;
     const calendarWeek = currentKoreanCalendarWeek(now);
     const today = koreanCalendarDate(now);
-    const nationwideLocation = await resolveSavedLocation(c.env.DB, { nx, ny, adminCode, regionName: requestedRegionName,
+    const nationwideLocation = await resolveSavedLocation(weatherDatabase(c.env), { nx, ny, adminCode, regionName: requestedRegionName,
       coordinates: coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude')) }, now);
     const [collected, settings] = await Promise.all([
-      readNationwideWeekly(c.env.DB, nationwideLocation, now),
+      readNationwideWeekly(weatherDatabase(c.env), nationwideLocation, now),
       settingsForRequest(
-        c.env.DB,
+        weatherDatabase(c.env),
         c.req.query('installationId'),
         c.req.header('Authorization'),
         c.req.query('widgetSettings'),
@@ -586,7 +587,7 @@ router.get('/weekly', async (c) => {
       airQuality: cachedAirQuality,
     } = collected.value;
     const airQuality = await readCollectedAirForecast(
-      c.env.DB, nx, ny, cachedAirQuality, now, nationwideLocation.adminCode, nationwideLocation.regionName,
+      weatherDatabase(c.env), nx, ny, cachedAirQuality, now, nationwideLocation.adminCode, nationwideLocation.regionName,
     );
     const location = {
       ...nationwideLocation,
@@ -618,12 +619,12 @@ router.get('/weekly', async (c) => {
     if (hasLocationIdentity && requiredMidTermDates.length > 0 &&
         (!cachedRegionMatches ||
           !coversDates(midTermDays, requiredMidTermDates))) {
-      const hydrated = await readCachedMidTermForecast({ db: c.env.DB, location, now });
+      const hydrated = await readCachedMidTermForecast({ db: weatherDatabase(c.env), location, now });
       midTermCacheStatus = hydrated.cacheStatus;
       if (hydrated.days.length > 0) {
         resolvedMidTermDays = hydrated.days;
         midTermIssuedAt = hydrated.issuedAt;
-        await saveCollectedCache(c.env.DB, {
+        await saveCollectedCache(weatherDatabase(c.env), {
           key: collectedCacheKey.weekly(nx, ny),
           type: 'COLLECTED_WEEKLY',
           value: {
@@ -650,10 +651,10 @@ router.get('/weekly', async (c) => {
       uv,
       airQuality,
     );
-    await saveWeeklyForecastRecords(c.env.DB, regionId,
+    await saveWeeklyForecastRecords(weatherDatabase(c.env), regionId,
       liveDays.filter(day => day.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'), now)
       .catch(error => console.warn(JSON.stringify({ event: 'snow_probability_history_save_failed', error: safeErrorName(error) })));
-    const history = await getWeeklyForecastRecords(c.env.DB, regionId,
+    const history = await getWeeklyForecastRecords(weatherDatabase(c.env), regionId,
       calendarWeek.startDate, calendarWeek.endDate).catch(error => {
         console.warn(JSON.stringify({ event: 'snow_probability_history_read_failed', error: safeErrorName(error) }));
         return [] as DailyWeatherForecast[];
@@ -666,9 +667,9 @@ router.get('/weekly', async (c) => {
       today,
     );
     const airHistory = await getCollectedCache<NationwideAirQualitySnapshot>(
-      c.env.DB, collectedCacheKey.nationwideAir);
+      weatherDatabase(c.env), collectedCacheKey.nationwideAir);
     const airCatalog = airHistory?.value.catalog ??
-      (await getCollectedCache<AirStationCatalog>(c.env.DB, 'AIR_STATION_CATALOG'))?.value;
+      (await getCollectedCache<AirStationCatalog>(weatherDatabase(c.env), 'AIR_STATION_CATALOG'))?.value;
     const coordinates = nationwideLocation.coordinates ?? kmaGridCoordinates(nx, ny);
     const displayedDays = await Promise.all(calendarDays.map(async day => {
       if (day.forecastSource !== 'KMA_OBSERVATION') {
@@ -676,9 +677,9 @@ router.get('/weekly', async (c) => {
       }
       const date = `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`;
       const [averageHumidity, airQualityObservation] = await Promise.all([
-        readObservedDailyHumidity(c.env.DB, date, nx, ny, now),
+        readObservedDailyHumidity(weatherDatabase(c.env), date, nx, ny, now),
         airCatalog && coordinates
-          ? readDailyAirQualityObservation(c.env.DB, date, airCatalog, coordinates)
+          ? readDailyAirQualityObservation(weatherDatabase(c.env), date, airCatalog, coordinates)
           : Promise.resolve(undefined),
       ]);
       const previousForecast = historyByDate.get(day.date);

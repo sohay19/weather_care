@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { createNodeRuntime } from './runtime';
@@ -23,7 +24,7 @@ export async function importLandForecastGrids(db: D1Database, path: string, now 
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const runtime = createNodeRuntime();
-  void importLandForecastGrids(runtime.env.DB, process.argv[2]).then((count) => {
+  void importLandForecastGrids(weatherDatabase(runtime.env), process.argv[2]).then((count) => {
     console.log(JSON.stringify({ event: 'national_land_grids_imported', count }));
   }).catch(() => { console.error(JSON.stringify({ event: 'national_land_grids_import_failed' })); process.exitCode = 1; })
     .finally(() => runtime.close());

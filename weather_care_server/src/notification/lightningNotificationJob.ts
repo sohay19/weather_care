@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { installationExpirySql } from '../database/dataRetention';
 import { regionName } from '../regions/regionCatalog';
 import { lightningForGrid, readLightningFeed } from '../services/lightning';
@@ -25,7 +26,7 @@ export async function runLightningNotificationJob(env: ServerEnv, dependencies: 
   const now = clock();
   await env.DB.prepare('DELETE FROM lightning_notification_claims WHERE expires_at<=?')
     .bind(now.toISOString()).run();
-  const feed = await readLightningFeed(env.DB, now);
+  const feed = await readLightningFeed(weatherDatabase(env), now);
   if (feed.status !== 'AVAILABLE' || feed.events.length === 0) return;
   const eligibility = `i.fcm_token IS NOT NULL AND TRIM(i.fcm_token)<>''
     AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version=1

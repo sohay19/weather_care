@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { NATIONAL_UV_KEY, NATIONAL_VISIBILITY_KEY, NATIONAL_DAILY_KEY } from '../services/nationwideWeatherCache';
 import { NATIONAL_FORECAST_REQUIRED_VARIABLES } from '../providers/weather/kmaNationwideForecastProvider';
 import { currentGridObservationIsUsable, isValidGridObservationSnapshot } from '../database/gridObservationRepository';
@@ -64,8 +65,9 @@ export async function prewarmNationwideInRuntime(
 ): Promise<OperationalPrewarmSummary> {
   runtime.env.NATIONWIDE_PRECOLLECT_ENABLED = 'true';
   let summary = inspectOperationalPrewarm(runtime, now);
+  if (runtime.env.WEATHER_COLLECTION_ENABLED === 'false') return summary;
   const recentPrewarm = await getCollectedCache<{ completedAt: string }>(
-    runtime.env.DB,
+    weatherDatabase(runtime.env),
     OPERATIONAL_PREWARM_KEY,
   );
   if (summary.missingCaches === 0 &&
@@ -94,7 +96,7 @@ export async function prewarmNationwideInRuntime(
     }));
     if (summary.missingCaches === 0) {
       const completedAt = new Date();
-      await saveCollectedCache(runtime.env.DB, {
+      await saveCollectedCache(weatherDatabase(runtime.env), {
         key: OPERATIONAL_PREWARM_KEY,
         type: 'COLLECTED_OPERATIONAL_PREWARM',
         value: { completedAt: completedAt.toISOString() },
@@ -124,7 +126,8 @@ export function inspectOperationalPrewarm(
   now = new Date(),
   grids: readonly ForecastGrid[] = KMA_NATIVE_FORECAST_GRIDS,
 ): OperationalPrewarmSummary {
-  const cacheRows = runtime.database.sqlite.prepare(
+  const weather = runtime.weatherDatabase ?? runtime.database;
+  const cacheRows = weather.sqlite.prepare(
     `SELECT cache_key AS cacheKey, payload, status, updated_at AS updatedAt
        FROM weather_cache`,
   ).all() as Array<{
@@ -143,7 +146,7 @@ export function inspectOperationalPrewarm(
       .filter((row) => cacheRowHasUsablePayload(row, requiredObservationDates, now, nationwideAir))
       .map(({ cacheKey }) => cacheKey),
   );
-  const nativeRows = runtime.database.sqlite.prepare(
+  const nativeRows = weather.sqlite.prepare(
     'SELECT payload, observed_at AS observedAt FROM grid_observation_snapshots WHERE observed_at BETWEEN ? AND ? ORDER BY observed_at DESC',
   ).all(new Date(now.getTime() - 30 * 60 * 1000).toISOString(),
     new Date(gridObservationKoreanIso(latestGridObservationTime(now))).toISOString()) as Array<{ payload: string; observedAt: string }>;
@@ -184,7 +187,7 @@ export function inspectOperationalPrewarm(
   required.add(NATIONAL_VISIBILITY_KEY);
   required.add(NATIONAL_DAILY_KEY);
   required.add('NATIONAL_FORECAST_SOURCE');
-  const completeHours = runtime.database.sqlite.prepare(`SELECT COUNT(*) AS count FROM (
+  const completeHours = weather.sqlite.prepare(`SELECT COUNT(*) AS count FROM (
     SELECT valid_time,issue_time FROM nationwide_forecast_fields
     WHERE valid_time >= ? AND json_valid(payload)
     AND json_extract(payload,'$.encoding')='F64LE_GZIP_BLOCK512'

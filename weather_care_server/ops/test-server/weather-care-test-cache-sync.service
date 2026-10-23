@@ -1,5 +1,6 @@
 [Unit]
 Description=날씨챙겨 시험 DB 날씨 캐시 동기화
+ConditionPathExists=!/var/lib/weather-care/weather-care-weather.sqlite
 
 [Service]
 Type=oneshot

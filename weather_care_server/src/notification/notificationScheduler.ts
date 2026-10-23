@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { readNationwideRegion } from '../services/nationwideWeatherCache';
 import { getNationwidePrecipitation } from '../database/nationwidePrecipitationRepository';
 import { nationwidePrecipitationAtPoint } from '../providers/precipitation/precipitationObservationProvider';
@@ -382,7 +383,7 @@ async function defaultForecastLoader(
   ny: number,
   coordinates?: { latitude: number; longitude: number },
 ): Promise<WeatherForecast> {
-  const cached = await readNationwideRegion(env.DB, { nx, ny, coordinates }, new Date());
+  const cached = await readNationwideRegion(weatherDatabase(env), { nx, ny, coordinates }, new Date());
   if (!cached) throw new Error('COLLECTED_FORECAST_NOT_READY');
   return cached.value.forecast;
 }
@@ -406,10 +407,10 @@ async function defaultPrecipitationLoader(
   latitude: number,
   longitude: number,
 ): Promise<CurrentPrecipitationObservation> {
-  const snapshot = await getNationwidePrecipitation(env.DB, new Date());
+  const snapshot = await getNationwidePrecipitation(weatherDatabase(env), new Date());
   if (snapshot) return nationwidePrecipitationAtPoint(snapshot, latitude, longitude);
   const cached = await getCollectedCache<CurrentPrecipitationObservation>(
-    env.DB,
+    weatherDatabase(env),
     collectedCacheKey.precipitation(latitude, longitude),
   );
   if (!cached || cached.status !== 'AVAILABLE') {
@@ -422,7 +423,7 @@ async function defaultWarningLoader(
   env: ServerEnv,
   regionIds: readonly string[],
 ): Promise<OfficialWeatherWarning[]> {
-  const snapshot = await getCollectedCache<{ warnings: OfficialWeatherWarning[] }>(env.DB, collectedCacheKey.warningSnapshot);
+  const snapshot = await getCollectedCache<{ warnings: OfficialWeatherWarning[] }>(weatherDatabase(env), collectedCacheKey.warningSnapshot);
   if (!snapshot || !cacheRecordIsFresh(snapshot, 45 * 60_000)) throw new Error('COLLECTED_WARNING_SNAPSHOT_NOT_READY');
   const requested = new Set(regionIds);
   return snapshot.value.warnings.filter((warning) => requested.has(warning.regionId));
@@ -435,10 +436,10 @@ async function defaultWarningRegionResolver(
   nx: number,
   ny: number,
 ): Promise<KmaWarningRegionMatch> {
-  const stations = await getCollectedCache<KmaWarningRegionStation[]>(env.DB, collectedCacheKey.warningStations);
+  const stations = await getCollectedCache<KmaWarningRegionStation[]>(weatherDatabase(env), collectedCacheKey.warningStations);
   if (stations?.status === 'AVAILABLE') return nearestWarningRegion(stations.value, _latitude, _longitude);
   const cached = await getCollectedCache<KmaWarningRegionMatch>(
-    env.DB,
+    weatherDatabase(env),
     collectedCacheKey.warningRegion(nx, ny),
   );
   if (cached?.status === 'AVAILABLE') return cached.value;
@@ -451,10 +452,10 @@ async function defaultRoadIceLoader(
   longitude: number,
   roadNumbers: readonly string[],
 ): Promise<RoadIceRisk | undefined> {
-  const snapshot = await getCollectedCache<RoadIceSegment[]>(env.DB, collectedCacheKey.roadIceSnapshot);
+  const snapshot = await getCollectedCache<RoadIceSegment[]>(weatherDatabase(env), collectedCacheKey.roadIceSnapshot);
   if (snapshot?.status === 'AVAILABLE' && cacheRecordIsFresh(snapshot, 45 * 60_000)) return nearestRoadIceRisk(snapshot.value, latitude, longitude);
   const cached = await getCollectedCache<RoadIceRisk | null>(
-    env.DB,
+    weatherDatabase(env),
     collectedCacheKey.roadIce(latitude, longitude),
   );
   return cached?.value ?? undefined;
@@ -465,10 +466,10 @@ async function defaultRoadControlLoader(
   latitude: number,
   longitude: number,
 ): Promise<OfficialRoadControl | undefined> {
-  const snapshot = await getCollectedCache<RoadControlSnapshotItem[]>(env.DB, collectedCacheKey.roadControlSnapshot);
+  const snapshot = await getCollectedCache<RoadControlSnapshotItem[]>(weatherDatabase(env), collectedCacheKey.roadControlSnapshot);
   if (snapshot?.status === 'AVAILABLE' && cacheRecordIsFresh(snapshot, 30 * 60_000)) return nearestRoadControl(snapshot.value, { latitude, longitude });
   const cached = await getCollectedCache<OfficialRoadControl | null>(
-    env.DB,
+    weatherDatabase(env),
     collectedCacheKey.roadControl(latitude, longitude),
   );
   return cached?.value ?? undefined;

@@ -38,8 +38,8 @@ production 트랙의 전체 공개 버전을 확인한다. 운영 서버의 사�
 
 - 번들: `/opt/weather-care/store-update-test/notifier.cjs`
 - 의존성: 기존 시험 릴리스의 `node_modules`를 링크한다.
-- 설치 DB: `/var/lib/weather-care/weather-care-test.sqlite` (읽기 전용)
-- 상태 DB: `/var/lib/weather-care/store-update-test.sqlite` (운영/시험 날씨 DB와 별개)
+- 설치 DB: `/var/lib/weather-care/weather-care-users-test.sqlite` (공용 DB 전환 후, 읽기 전용)
+- 상태 DB: `/var/lib/weather-care/store-update-test.sqlite` (공용 날씨·환경별 사용자 DB와 별개)
 - 서비스: `weather-care-test-store-update.service`
 - 타이머: `weather-care-test-store-update.timer`
 - 환경: 기존 `/etc/weather-care/weather-care.env` 다음 `weather-care-test.env`를 읽는다.

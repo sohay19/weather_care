@@ -13,6 +13,7 @@
     "db:migrate": "wrangler d1 migrations apply weather_care_db --local",
     "db:push": "wrangler d1 execute weather_care_db --file=./migrations/0001_init.sql --local",
     "node:db:migrate": "tsx src/node/migrate.ts",
+    "node:db:split": "tsx src/node/splitDatabases.ts",
     "node:db:import": "tsx src/node/importD1.ts",
     "node:boundaries:import": "tsx src/node/importAdministrativeBoundaries.ts",
     "node:server": "tsx src/node/server.ts",

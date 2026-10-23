@@ -10,8 +10,8 @@ async function main(): Promise<void> {
   if (args.some((arg) => !['--preview', '--initialize'].includes(arg))) throw new Error('STORE_UPDATE_ARGUMENT_INVALID');
   const path = process.env.NODE_DATABASE_PATH ?? '';
   // 시험 배포 전용 실행기: 운영 DB·사용자에게는 발송할 수 없다.
-  if (!process.env.TEST_ACCESS_KEY?.trim() || resolve(path) !== '/var/lib/weather-care/weather-care-test.sqlite' ||
-      realpathSync(path) !== '/var/lib/weather-care/weather-care-test.sqlite') {
+  if (!process.env.TEST_ACCESS_KEY?.trim() || resolve(path) !== '/var/lib/weather-care/weather-care-users-test.sqlite' ||
+      realpathSync(path) !== '/var/lib/weather-care/weather-care-users-test.sqlite') {
     throw new Error('STORE_UPDATE_TEST_DATABASE_REQUIRED');
   }
   const installations = new Database(path, { readonly: true, fileMustExist: true });

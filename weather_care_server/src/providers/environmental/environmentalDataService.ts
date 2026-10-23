@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../../database/weatherDatabase';
 import {
   getEnvironmentalCache,
   saveEnvironmentalCache,
@@ -222,7 +223,7 @@ export async function loadEnvironmentalData(
   const uvPromise =
     uvAreaNo !== undefined && nx !== undefined && ny !== undefined
       ? resolveEnvironmentalValue<UvForecast>({
-          db: env.DB,
+          db: weatherDatabase(env),
           cacheKey: `UV_${nx}_${ny}`,
           cacheType: 'UV',
           nx,
@@ -345,7 +346,7 @@ async function loadAirQuality(
   // One validated national catalog shared across grids; never cache portal error bodies.
   // Coordinates here belong to official stations, not to an installation/user.
   const catalog = await resolveEnvironmentalValue<AirStationCatalog>({
-    db: env.DB, cacheKey: 'AIR_STATIONS_V1', cacheType: 'AIR_STATIONS', nx: 0, ny: 0,
+    db: weatherDatabase(env), cacheKey: 'AIR_STATIONS_V1', cacheType: 'AIR_STATIONS', nx: 0, ny: 0,
     provider: 'AIRKOREA', freshMs: AIR_STATIONS_FRESH_MS, maxStaleMs: AIR_STATIONS_FRESH_MS,
     observedAt: (value) => value.fetchedAt,
     usableCachedValue: (value) => airStationCatalogSchema.safeParse(value).success,
@@ -356,10 +357,10 @@ async function loadAirQuality(
   try {
     for (const station of nearestAirStations(catalog.value, target.latitude, target.longitude)) {
       if (signal.aborted) {
-        if (!env.DB) break;
+        if (!weatherDatabase(env)) break;
         try {
           const cached = await getEnvironmentalCache<AirQualitySnapshot>(
-            env.DB, `AIR_STATION_V1_${station.stationName}`,
+            weatherDatabase(env), `AIR_STATION_V1_${station.stationName}`,
           );
           if (cached && cached.value.stationName === station.stationName &&
               isRecentAirObservation(cached.value.observedAt, now) &&
@@ -380,7 +381,7 @@ async function loadAirQuality(
         continue;
       }
       const observation = await resolveEnvironmentalValue<AirQualitySnapshot>({
-        db: env.DB, cacheKey: `AIR_STATION_V1_${station.stationName}`,
+        db: weatherDatabase(env), cacheKey: `AIR_STATION_V1_${station.stationName}`,
         cacheType: 'AIR_QUALITY', nx, ny, provider: 'AIRKOREA',
         freshMs: AIR_FRESH_MS, maxStaleMs: AIR_MAX_STALE_MS,
         observedAt: (value) => value.observedAt,

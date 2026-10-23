@@ -1,7 +1,7 @@
 import { mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createNodeRuntime, nodeDatabasePath } from './runtime';
+import { createNodeRuntime, nodeDatabasePath, nodeWeatherDatabasePath } from './runtime';
 
 export function backupTimestamp(date: Date): string {
   return date.toISOString().replaceAll(':', '').replaceAll('-', '').replace(/\.\d{3}Z$/, 'Z');
@@ -18,21 +18,25 @@ async function main(): Promise<void> {
     throw new Error('NODE_BACKUP_RETENTION_INVALID');
   }
   mkdirSync(backupDirectory, { recursive: true });
-  const destination = resolve(backupDirectory, `weather-care-${backupTimestamp(now)}.sqlite`);
+  const prefixes = [databasePath, nodeWeatherDatabasePath()].map(path => basename(path, '.sqlite'));
+  if (new Set(prefixes).size !== prefixes.length) throw new Error('NODE_BACKUP_FILENAME_CONFLICT');
+  const destinations = prefixes.map(prefix => resolve(backupDirectory, `${prefix}-${backupTimestamp(now)}.sqlite`));
   const runtime = createNodeRuntime();
   try {
-    await runtime.database.backup(destination);
+    await runtime.database.backup(destinations[0]);
+    await runtime.weatherDatabase!.backup(destinations[1]);
   } finally {
     runtime.close();
   }
 
   const cutoff = now.getTime() - retentionDays * 24 * 60 * 60 * 1000;
   for (const name of readdirSync(backupDirectory)) {
-    if (!/^weather-care-\d{8}T\d{6}Z\.sqlite$/.test(name)) continue;
+    if (!prefixes.some(prefix => name.startsWith(`${prefix}-`) &&
+      /^\d{8}T\d{6}Z\.sqlite$/.test(name.slice(prefix.length + 1)))) continue;
     const path = resolve(backupDirectory, name);
     if (statSync(path).mtimeMs < cutoff) rmSync(path);
   }
-  console.log(JSON.stringify({ event: 'sqlite_backup_completed', destination, retentionDays }));
+  console.log(JSON.stringify({ event: 'sqlite_backup_completed', destinations, retentionDays }));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

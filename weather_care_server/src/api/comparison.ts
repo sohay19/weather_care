@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { Hono } from 'hono';
 import { safeErrorName } from '../observability/providerErrorDiagnostics';
 import { ServerEnv } from '../types';
@@ -23,10 +24,10 @@ export function createComparisonRouter(
     const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
     try {
       const coordinates = coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude'));
-      const current = await readCurrentGridObservation(c.env.DB, nx, ny, now, coordinates);
+      const current = await readCurrentGridObservation(weatherDatabase(c.env), nx, ny, now, coordinates);
       if (!current) return unavailableYesterday(targetDate, 'CURRENT_GRID_OBSERVATION_UNAVAILABLE');
       const yesterdayAt = new Date(Date.parse(current.value.observedAt) - 24 * 60 * 60 * 1000).toISOString();
-      const snapshot = await getGridObservationSnapshot(c.env.DB, yesterdayAt);
+      const snapshot = await getGridObservationSnapshot(weatherDatabase(c.env), yesterdayAt);
       const source = { nx: current.value.sourceLocation?.nx ?? nx, ny: current.value.sourceLocation?.ny ?? ny };
       const comparison = snapshot && observationsFromGridSnapshot(snapshot.value, [source]).get(`${source.nx}:${source.ny}`);
       if (!comparison) return unavailableYesterday(yesterdayAtKoreanDate(yesterdayAt), 'HISTORICAL_GRID_OBSERVATION_UNAVAILABLE');

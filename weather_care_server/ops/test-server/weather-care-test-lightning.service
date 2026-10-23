@@ -1,5 +1,5 @@
 [Unit]
-Description=날씨챙겨 시험 서버 낙뢰 수집·감지 알림
+Description=날씨챙겨 시험 서버 공용 낙뢰 감지 알림
 After=network-online.target
 Wants=network-online.target
 ConditionPathExists=/etc/weather-care/weather-care-test.env
@@ -11,7 +11,7 @@ Group=weather-care
 WorkingDirectory=/opt/weather-care/weather_care_test_server
 EnvironmentFile=/etc/weather-care/weather-care.env
 EnvironmentFile=/etc/weather-care/weather-care-test.env
-ExecStartPre=/bin/sh -c 'test "$$NODE_DATABASE_PATH" = /var/lib/weather-care/weather-care-test.sqlite'
+ExecStartPre=/bin/sh -c 'test "$$NODE_DATABASE_PATH" = /var/lib/weather-care/weather-care-users-test.sqlite'
 ExecStart=/opt/weather-care/weather_care_test_server/node_modules/.bin/tsx src/node/runJob.ts grid-lightning
 TimeoutStartSec=5min
 UMask=0077

@@ -6,7 +6,7 @@ async function main() {
   if (!path || process.argv.length !== 3) throw new Error('BOUNDARY_IMPORT_PATH_REQUIRED');
   const runtime = createNodeRuntime();
   try {
-    const result = await importAdministrativeBoundaries(runtime.database, path);
+    const result = await importAdministrativeBoundaries(runtime.weatherDatabase!, path);
     console.log(JSON.stringify({ event: 'administrative_boundaries_imported', ...result }));
   } finally { runtime.close(); }
 }

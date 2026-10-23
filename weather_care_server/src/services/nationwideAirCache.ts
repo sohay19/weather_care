@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { collectedCacheKey, getCollectedCache, saveCollectedCache } from '../database/collectedWeatherRepository';
 import { AIRKOREA_PROVINCES, AirKoreaAirQualityProvider, AirKoreaAirQualityProviderError,
   isRecentAirObservation, type AirStationCatalog } from '../providers/air/airKoreaAirQualityProvider';
@@ -16,36 +17,36 @@ const GLOBAL = 'GLOBAL';
 export async function collectNationwideAirQuality(env:ServerEnv, now:Date):Promise<NationwideAirQualitySnapshot|null> {
   const owner=crypto.randomUUID();
   const key='AIR_COLLECTOR_LEASE';
-  const acquired=await env.DB.prepare(`INSERT INTO weather_cache(cache_key,region_id,nx,ny,cache_type,payload,status,updated_at)
+  const acquired=await weatherDatabase(env).prepare(`INSERT INTO weather_cache(cache_key,region_id,nx,ny,cache_type,payload,status,updated_at)
     VALUES(?,?,0,0,'AIR_COLLECTOR_LEASE',?,'AVAILABLE',?) ON CONFLICT(cache_key) DO UPDATE SET
     payload=excluded.payload,updated_at=excluded.updated_at WHERE weather_cache.updated_at <= ?`)
     .bind(key,key,owner,now.toISOString(),new Date(now.getTime()-10*60_000).toISOString()).run();
-  if (!acquired.meta.changes) return (await getCollectedCache<NationwideAirQualitySnapshot>(env.DB,collectedCacheKey.nationwideAir))?.value ?? null;
+  if (!acquired.meta.changes) return (await getCollectedCache<NationwideAirQualitySnapshot>(weatherDatabase(env),collectedCacheKey.nationwideAir))?.value ?? null;
   try { return await collectAir(env,now); }
-  finally { await env.DB.prepare('DELETE FROM weather_cache WHERE cache_key=? AND payload=?').bind(key,owner).run(); }
+  finally { await weatherDatabase(env).prepare('DELETE FROM weather_cache WHERE cache_key=? AND payload=?').bind(key,owner).run(); }
 }
 
 async function collectAir(env:ServerEnv, now:Date):Promise<NationwideAirQualitySnapshot|null> {
-  const cached = await getCollectedCache<NationwideAirQualitySnapshot>(env.DB,collectedCacheKey.nationwideAir);
-  const control = await getCollectedCache<AirRetry>(env.DB,retryKey(GLOBAL));
+  const cached = await getCollectedCache<NationwideAirQualitySnapshot>(weatherDatabase(env),collectedCacheKey.nationwideAir);
+  const control = await getCollectedCache<AirRetry>(weatherDatabase(env),retryKey(GLOBAL));
   if (control?.value.blocked || Date.parse(control?.value.nextRetryAt ?? '') > now.getTime()) return cached?.value ?? null;
   // 기존 배포 캐시도 최초 1시간은 재사용한다. 부분 갱신에서는 각 도의 수집 시각을 판정한다.
-  const states = await env.DB.prepare("SELECT cache_key FROM weather_cache WHERE cache_type='AIR_PROVINCE'").all();
+  const states = await weatherDatabase(env).prepare("SELECT cache_key FROM weather_cache WHERE cache_type='AIR_PROVINCE'").all();
   if (!states.results.length && cached && now.getTime()-Date.parse(cached.updatedAt) < 3_600_000) return cached.value;
   let actualCalls = 0;
   const provider = new AirKoreaAirQualityProvider({serviceKey:env.KMA_SERVICE_KEY,now:()=>now,timeoutMs:30_000,
     fetcher:async (input,init) => { actualCalls++; return globalThis.fetch(input,init); }});
-  const catalogCache = await getCollectedCache<AirStationCatalog>(env.DB,'AIR_STATION_CATALOG');
+  const catalogCache = await getCollectedCache<AirStationCatalog>(weatherDatabase(env),'AIR_STATION_CATALOG');
   let catalog = catalogCache?.value ?? cached?.value.catalog;
   if (!catalog || now.getTime()-Date.parse(catalog.fetchedAt) >= 86_400_000) {
-    const status = await getCollectedCache<AirRetry>(env.DB,retryKey('CATALOG'));
+    const status = await getCollectedCache<AirRetry>(weatherDatabase(env),retryKey('CATALOG'));
     if (!status?.value.blocked && !(Date.parse(status?.value.nextRetryAt ?? '') > now.getTime())) {
       try {
         catalog = await provider.getStationCatalog();
-        await saveCollectedCache(env.DB,{key:'AIR_STATION_CATALOG',type:'AIR_STATION_CATALOG',value:catalog,updatedAt:now});
-        await clearRetry(env.DB,'CATALOG');
+        await saveCollectedCache(weatherDatabase(env),{key:'AIR_STATION_CATALOG',type:'AIR_STATION_CATALOG',value:catalog,updatedAt:now});
+        await clearRetry(weatherDatabase(env),'CATALOG');
       } catch (error) {
-        const stop = await failed(env.DB,'CATALOG',error,now);
+        const stop = await failed(weatherDatabase(env),'CATALOG',error,now);
         if (stop) return cached?.value ?? null;
         // 유효한 이전 좌표 목록으로 실측 수집을 계속한다. 신규 미등록 지점은 채택되지 않는다.
       }
@@ -59,22 +60,22 @@ async function collectAir(env:ServerEnv, now:Date):Promise<NationwideAirQualityS
     while (!stopped && cursor < AIRKOREA_PROVINCES.length) {
       const province = AIRKOREA_PROVINCES[cursor++];
       const [record,state] = await Promise.all([
-        getCollectedCache<AirQualitySnapshot[]>(env.DB,provinceKey(province)),
-        getCollectedCache<AirRetry>(env.DB,retryKey(province)),
+        getCollectedCache<AirQualitySnapshot[]>(weatherDatabase(env),provinceKey(province)),
+        getCollectedCache<AirRetry>(weatherDatabase(env),retryKey(province)),
       ]);
       if (stopped || state?.value.blocked || Date.parse(state?.value.nextRetryAt ?? '') > now.getTime() ||
           record && now.getTime()-Date.parse(record.updatedAt) < 3_600_000) { skipped++; continue; }
       try {
         const observations = await provider.getProvinceMeasurements(province);
-        await saveCollectedCache(env.DB,{key:provinceKey(province),type:'AIR_PROVINCE',value:observations,updatedAt:now});
-        await saveAirQualityHistory(env.DB, province, observations, now);
-        await clearRetry(env.DB,province);
+        await saveCollectedCache(weatherDatabase(env),{key:provinceKey(province),type:'AIR_PROVINCE',value:observations,updatedAt:now});
+        await saveAirQualityHistory(weatherDatabase(env), province, observations, now);
+        await clearRetry(weatherDatabase(env),province);
         succeeded++;
       } catch (error) {
         const reason=providerErrorDiagnostic(error).failureReason;
         const code=error instanceof AirKoreaAirQualityProviderError ? error.resultCode : undefined;
         if (['RATE_LIMITED','AUTHORIZATION_FAILED','NOT_CONFIGURED'].includes(reason) || ['20','22','30','31','32'].includes(code ?? '')) stopped=true;
-        failureWrites=failureWrites.then(async()=>{if (await failed(env.DB,province,error,now)) stopped=true;});
+        failureWrites=failureWrites.then(async()=>{if (await failed(weatherDatabase(env),province,error,now)) stopped=true;});
         await failureWrites;
       }
     }
@@ -82,15 +83,15 @@ async function collectAir(env:ServerEnv, now:Date):Promise<NationwideAirQualityS
   const byStation = new Map<string,AirQualitySnapshot>();
   for (const item of cached?.value.observations ?? []) if (usable(item,now)) byStation.set(item.stationName!,item);
   for (const province of AIRKOREA_PROVINCES) {
-    const record = await getCollectedCache<AirQualitySnapshot[]>(env.DB,provinceKey(province));
+    const record = await getCollectedCache<AirQualitySnapshot[]>(weatherDatabase(env),provinceKey(province));
     for (const item of record?.value ?? []) if (usable(item,now)) {
       const old = byStation.get(item.stationName!);
       if (!old || Date.parse(item.observedAt) >= Date.parse(old.observedAt)) byStation.set(item.stationName!,item);
     }
   }
   const snapshot = {catalog,observations:[...byStation.values()],collectedAt:succeeded ? now.toISOString() : cached?.value.collectedAt ?? now.toISOString()};
-  if (succeeded && !stopped) await clearRetry(env.DB,GLOBAL);
-  if (succeeded || catalog !== cached?.value.catalog) await saveCollectedCache(env.DB,{
+  if (succeeded && !stopped) await clearRetry(weatherDatabase(env),GLOBAL);
+  if (succeeded || catalog !== cached?.value.catalog) await saveCollectedCache(weatherDatabase(env),{
     key:collectedCacheKey.nationwideAir,type:'COLLECTED_NATIONWIDE_AIR',value:snapshot,updatedAt:now});
   console.log(JSON.stringify({event:'nationwide_air_collection_completed',actualCalls,succeeded,skipped,stopped,
     observations:snapshot.observations.length,catalogFetchedAt:catalog.fetchedAt}));

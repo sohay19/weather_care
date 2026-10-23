@@ -16,7 +16,7 @@ export async function recordInstallationActivity(
     .bind(id, now.toISOString(), id, hash).run();
 }
 
-export async function runDataRetentionJob(db: D1Database, now = new Date()) {
+export async function runDataRetentionJob(db: D1Database, now = new Date(), weatherDb: D1Database | null = db) {
   const timestamp = now.toISOString(); // Reject invalid time before any writes.
   // App removal has no reliable server callback. FCM removes known-invalid
   // tokens on send; this also clears tokens that receive no notifications.
@@ -43,23 +43,25 @@ export async function runDataRetentionJob(db: D1Database, now = new Date()) {
     db.prepare(`DELETE FROM notification_history WHERE rowid IN (
       SELECT rowid FROM notification_history WHERE ${historyExpirySql} <= julianday(?)
       ORDER BY ${historyExpirySql}, rowid LIMIT 1000)`).bind(timestamp),
-    db.prepare('DELETE FROM grid_observation_snapshots WHERE observed_at < ?')
+  ]);
+  if (weatherDb) await weatherDb.batch([
+    weatherDb.prepare('DELETE FROM grid_observation_snapshots WHERE observed_at < ?')
       .bind(new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString()),
-    db.prepare(`DELETE FROM weather_cache WHERE cache_type IN ('GRID_OBSERVATION_PARTIAL','GRID_OBSERVATION_RETRY')
+    weatherDb.prepare(`DELETE FROM weather_cache WHERE cache_type IN ('GRID_OBSERVATION_PARTIAL','GRID_OBSERVATION_RETRY')
       AND julianday(json_extract(payload,'$.observedAt')) < julianday(?, '-3 days')`).bind(timestamp),
-    db.prepare(`DELETE FROM weekly_forecast_records
+    weatherDb.prepare(`DELETE FROM weekly_forecast_records
       WHERE forecast_date < date(?, '+9 hours', '-8 days')
         AND json_extract(forecast_payload, '$.snowProbabilitySource') = 'KMA_PRECIPITATION_FORECAST'`).bind(timestamp),
-    db.prepare(`DELETE FROM api_usage_daily
+    weatherDb.prepare(`DELETE FROM api_usage_daily
       WHERE usage_date < date(?, '-31 days')`).bind(timestamp),
-    db.prepare(`DELETE FROM grid_extra_snapshots
+    weatherDb.prepare(`DELETE FROM grid_extra_snapshots
       WHERE collected_at < ?`).bind(new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString()),
-    db.prepare(`DELETE FROM weather_cache
+    weatherDb.prepare(`DELETE FROM weather_cache
       WHERE cache_type IN ('COLLECTED_PRECIPITATION', 'COLLECTED_ROAD_ICE', 'COLLECTED_ROAD_CONTROL', 'COLLECTED_ROAD_CONTROL_SNAPSHOT', 'COLLECTED_HOURLY_OBSERVATION', 'GRID_OBSERVATION_FETCH_LEASE', 'NATIONAL_SOURCE_LEASE', 'NATIONAL_APIHUB_ATTEMPT', 'POINT_FORECAST_TARGETS', 'POINT_FORECAST_ATTEMPT', 'COLLECTED_POINT_FORECAST')
         AND julianday(updated_at) < julianday(?, '-2 days')`).bind(timestamp),
-    db.prepare(`DELETE FROM weather_cache WHERE cache_type = 'COLLECTED_LOCATION_IDENTITY'
+    weatherDb.prepare(`DELETE FROM weather_cache WHERE cache_type = 'COLLECTED_LOCATION_IDENTITY'
       AND julianday(updated_at) < julianday(?, '-365 days')`).bind(timestamp),
-    db.prepare(`DELETE FROM weather_cache WHERE cache_type = 'OBSERVED_DAILY_HUMIDITY'
+    weatherDb.prepare(`DELETE FROM weather_cache WHERE cache_type = 'OBSERVED_DAILY_HUMIDITY'
       AND cache_key < ?`).bind(`OBSERVED_DAILY_HUMIDITY_${new Date(now.getTime() + 9 * 3_600_000 - 8 * 86_400_000).toISOString().slice(0, 10)}_`),
   ]);
   return {

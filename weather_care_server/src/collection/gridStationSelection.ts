@@ -48,16 +48,16 @@ function coordinatesForInstallation(row: {
 }
 
 export async function selectGridCollectionStations(
-  db: D1Database, config: GridExtraConfig,
+  db: D1Database, config: GridExtraConfig, databases: D1Database[] = [db],
 ): Promise<GridExtraConfig> {
-  const rows = await db.prepare(`SELECT nx, ny, latitude, longitude FROM installations
+  const groups = await Promise.all(databases.map(database => database.prepare(`SELECT nx, ny, latitude, longitude FROM installations
     GROUP BY nx, ny, latitude, longitude`).all<{
     nx: number; ny: number; latitude: number | null; longitude: number | null;
-  }>();
+  }>()));
   const tide = new Set(config.tideStations);
   const buoy = new Set(config.buoyStations);
   const forecast = new Set(config.forecastStations);
-  for (const row of rows.results) {
+  for (const row of groups.flatMap(group => group.results)) {
     const coordinates = coordinatesForInstallation(row);
     if (!coordinates) continue;
     const tideCode = nearestStation(coordinates, tideStations, TIDE_MAX_KM);

@@ -1,0 +1,10 @@
+[Unit]
+Description=날씨챙겨 시험 사용자 DB 일일 백업
+
+[Timer]
+OnCalendar=*-*-* 03:25:00
+Persistent=true
+Unit=weather-care-test-backup.service
+
+[Install]
+WantedBy=timers.target

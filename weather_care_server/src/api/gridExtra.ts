@@ -1,3 +1,4 @@
+import { weatherDatabase } from '../database/weatherDatabase';
 import { Hono } from 'hono';
 import type { ServerEnv } from '../types';
 import { kmaGridFromCoordinates } from '../regions/kmaGridFromCoordinates';
@@ -157,7 +158,7 @@ app.get('/lightning', async (c) => {
   c.header('Cache-Control', 'no-store');
   const now = new Date();
   try {
-    return c.json(lightningForGrid(await readLightningFeed(c.env.DB, now,
+    return c.json(lightningForGrid(await readLightningFeed(weatherDatabase(c.env), now,
       { includeTestSamples: c.env.TEST_DATA_ENABLED === true }), grid.nx, grid.ny, now, position));
   } catch {
     return c.json({ status: 'FAILED', nx: grid.nx, ny: grid.ny, count: 0 }, 503);
@@ -175,7 +176,7 @@ app.get('/catalog', async (c) => {
   const query = c.req.query();
   const grid = requestedGrid(query.nx, query.ny);
   if (!grid) return c.json({ error: 'INVALID_GRID' }, 400);
-  const snapshots = await c.env.DB.prepare(`SELECT s.source,s.target_id,s.slot,s.payload
+  const snapshots = await weatherDatabase(c.env).prepare(`SELECT s.source,s.target_id,s.slot,s.payload
     FROM grid_extra_snapshots s JOIN (
       SELECT source,target_id,MAX(slot) AS slot FROM grid_extra_snapshots
       GROUP BY source,target_id
@@ -306,19 +307,19 @@ app.get('/records', async (c) => {
   const targetId = group.scope === 'grid' || group.source === 'HRFCO_RIVER_FLOW'
     ? 'ALL' : requestedTarget;
   const snapshots = romsGrid
-    ? await c.env.DB.prepare(`SELECT source,target_id,slot,payload FROM grid_extra_snapshots
+    ? await weatherDatabase(c.env).prepare(`SELECT source,target_id,slot,payload FROM grid_extra_snapshots
       WHERE source=? ORDER BY slot DESC LIMIT 96`).bind(group.source).all<Snapshot>()
     : group.source === 'HRFCO_RIVER_FLOW'
-    ? await c.env.DB.prepare(`SELECT source,target_id,slot,payload FROM grid_extra_snapshots
+    ? await weatherDatabase(c.env).prepare(`SELECT source,target_id,slot,payload FROM grid_extra_snapshots
       WHERE source=? AND target_id IN ('ALL',?) ORDER BY slot DESC LIMIT 96`)
       .bind(group.source, requestedTarget).all<Snapshot>()
-    : await c.env.DB.prepare(`SELECT source,target_id,slot,payload
+    : await weatherDatabase(c.env).prepare(`SELECT source,target_id,slot,payload
       FROM grid_extra_snapshots WHERE source=? AND target_id=?
       ORDER BY slot DESC LIMIT ?`).bind(group.source, targetId,
       group.period === 'daily' ? 8 : 96).all<Snapshot>();
   if (group.source === 'HRFCO_RIVER_FLOW') {
     // 같은 코드를 가진 K-water 자료도 조회하되, 같은 시각에는 HRFCO 관측을 우선한다.
-    const metadata = await c.env.DB.prepare(`SELECT s.source,s.target_id,s.slot,s.payload
+    const metadata = await weatherDatabase(c.env).prepare(`SELECT s.source,s.target_id,s.slot,s.payload
       FROM grid_extra_snapshots s JOIN (
         SELECT source,target_id,MAX(slot) slot FROM grid_extra_snapshots
         WHERE source IN ('HRFCO_STATIONS','KWATER_RIVER_STATIONS') GROUP BY source,target_id
@@ -326,7 +327,7 @@ app.get('/records', async (c) => {
     const links = riverStationLinks(stationNames(metadata.results, 'HRFCO_STATIONS'),
       stationNames(metadata.results, 'KWATER_RIVER_STATIONS'));
     const codes = [requestedTarget, ...[...links].filter(([, code]) => code === requestedTarget).map(([code]) => code)];
-    const kwater = await c.env.DB.prepare(`SELECT source,target_id,slot,payload
+    const kwater = await weatherDatabase(c.env).prepare(`SELECT source,target_id,slot,payload
       FROM grid_extra_snapshots WHERE source='KWATER_RIVER_LEVEL'
       AND substr(target_id,instr(target_id,':')+1) IN (${codes.map(() => '?').join(',')}) ORDER BY slot DESC LIMIT 96`)
       .bind(...codes).all<Snapshot>();

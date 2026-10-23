@@ -1,4 +1,5 @@
-import { resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
+import { existsSync, realpathSync, statSync } from 'node:fs';
 import type { ServerEnv } from '../types';
 import { FixedWindowRateLimit } from './rateLimit';
 import { asD1Database, runSqliteMigrations, SqliteD1Database } from './sqliteD1';
@@ -14,22 +15,53 @@ const REQUIRED_SECRET_NAMES = [
 
 export interface NodeRuntime {
   database: SqliteD1Database;
+  weatherDatabase?: SqliteD1Database;
   env: ServerEnv;
   close(): void;
 }
 
 export function nodeDatabasePath(environment = process.env): string {
-  return resolve(environment.NODE_DATABASE_PATH ?? './data/weather-care.sqlite');
+  return resolve(environment.NODE_DATABASE_PATH ?? './data/weather-care-users.sqlite');
+}
+
+export function nodeWeatherDatabasePath(environment = process.env): string {
+  return resolve(environment.NODE_WEATHER_DATABASE_PATH ??
+    resolve(dirname(nodeDatabasePath(environment)), 'weather-care-weather.sqlite'));
+}
+
+export function assertDistinctDatabasePaths(paths: string[]): void {
+  const normalized = paths.map(path => {
+    const absolute = resolve(path);
+    let ancestor = absolute;
+    while (!existsSync(ancestor)) {
+      const parent = dirname(ancestor);
+      if (parent === ancestor) throw new Error('NODE_DATABASE_DIRECTORY_MISSING');
+      ancestor = parent;
+    }
+    const value = resolve(realpathSync(ancestor), relative(ancestor, absolute));
+    return process.platform === 'win32' ? value.toLowerCase() : value;
+  });
+  if (new Set(normalized).size !== paths.length) throw new Error('NODE_DATABASE_PATH_CONFLICT');
+  const files = paths.filter(path => existsSync(path)).map(path => statSync(path));
+  if (files.some((file, i) => files.slice(i + 1).some(other =>
+    file.dev === other.dev && file.ino === other.ino))) throw new Error('NODE_DATABASE_PATH_CONFLICT');
+}
+
+export function nodeMigrationDirectory(scope: 'users' | 'weather'): string {
+  return resolve(process.cwd(), 'node-migrations', scope);
 }
 
 export function nodeServerEnv(
   database: SqliteD1Database,
   environment: NodeJS.ProcessEnv = process.env,
+  weatherDatabase: SqliteD1Database = database,
 ): ServerEnv {
   return {
     DB: asD1Database(database),
+    WEATHER_DB: asD1Database(weatherDatabase),
+    WEATHER_COLLECTION_ENABLED: environment.WEATHER_COLLECTION_ENABLED ?? 'true',
     TEST_DATA_ENABLED: !!environment.TEST_ACCESS_KEY?.trim() &&
-      nodeDatabasePath(environment) === resolve('/var/lib/weather-care/weather-care-test.sqlite'),
+      nodeDatabasePath(environment) === resolve('/var/lib/weather-care/weather-care-users-test.sqlite'),
     INSTALLATION_ENROLL_LIMIT: new FixedWindowRateLimit(20, 60_000),
     ANALYTICS_DELETION_LIMIT: new FixedWindowRateLimit(3, 60_000),
     APP_ORIGIN: environment.APP_ORIGIN ?? 'http://127.0.0.1:8787',
@@ -65,11 +97,42 @@ export function createNodeRuntime(options: {
   migrate?: boolean;
 } = {}): NodeRuntime {
   const environment = options.environment ?? process.env;
-  const database = new SqliteD1Database(nodeDatabasePath(environment));
-  if (options.migrate !== false) runSqliteMigrations(database);
-  return {
-    database,
-    env: nodeServerEnv(database, environment),
-    close: () => database.close(),
-  };
+  const userPath = nodeDatabasePath(environment);
+  const weatherPath = nodeWeatherDatabasePath(environment);
+  const peers: string[] = JSON.parse(environment.NODE_COLLECTION_USER_DATABASE_PATHS ?? '[]');
+  if (!Array.isArray(peers) || peers.some(path => typeof path !== 'string' || !path.trim())) {
+    throw new Error('NODE_COLLECTION_USER_DATABASE_PATHS_INVALID');
+  }
+  assertDistinctDatabasePaths([userPath, weatherPath, ...peers]);
+  const opened: SqliteD1Database[] = [];
+  try {
+    const database = new SqliteD1Database(userPath);
+    opened.push(database);
+    if (database.sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='weather_cache'").get()) {
+      throw new Error('NODE_LEGACY_DATABASE_REQUIRES_SPLIT');
+    }
+    const weatherDatabase = new SqliteD1Database(weatherPath);
+    opened.push(weatherDatabase);
+    if (weatherDatabase.sqlite.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='installations'").get()) {
+      throw new Error('NODE_WEATHER_DATABASE_CONTAINS_USER_TABLES');
+    }
+    if (options.migrate !== false) {
+      runSqliteMigrations(database, nodeMigrationDirectory('users'));
+      runSqliteMigrations(weatherDatabase, nodeMigrationDirectory('weather'));
+    }
+    const env = nodeServerEnv(database, environment, weatherDatabase);
+    env.COLLECTION_USER_DATABASES = [env.DB, ...peers.map(path => {
+      const peer = new SqliteD1Database(path, { readonly: true });
+      opened.push(peer);
+      peer.sqlite.prepare('SELECT nx, ny, latitude, longitude FROM installations LIMIT 0').all();
+      return asD1Database(peer);
+    })];
+    return { database, weatherDatabase, env, close: () => {
+      for (const db of opened.reverse()) db.close();
+      opened.length = 0;
+    } };
+  } catch (error) {
+    for (const db of opened.reverse()) db.close();
+    throw error;
+  }
 }

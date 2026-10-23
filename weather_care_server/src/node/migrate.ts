@@ -1,10 +1,13 @@
-import { createNodeRuntime } from './runtime';
+import { createNodeRuntime, nodeMigrationDirectory } from './runtime';
 import { runSqliteMigrations } from './sqliteD1';
 
 function main(): void {
   const runtime = createNodeRuntime({ migrate: false });
   try {
-    const applied = runSqliteMigrations(runtime.database);
+    const applied = {
+      users: runSqliteMigrations(runtime.database, nodeMigrationDirectory('users')),
+      weather: runSqliteMigrations(runtime.weatherDatabase!, nodeMigrationDirectory('weather')),
+    };
     console.log(JSON.stringify({ event: 'sqlite_migrations_completed', applied }));
   } finally {
     runtime.close();

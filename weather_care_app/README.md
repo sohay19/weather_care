@@ -39,7 +39,7 @@ flutter run --dart-define=SERVER_URL=http://localhost:8787
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-시험폰에서 별도 시험 API를 쓸 때는 Git 제외 파일
+시험폰에서 별도 시험 API를 쓸 때는 Git 추적 파일
 `config/kma.config.json`의 `SERVER_URL`을 코드 편집기에서 수정합니다.
 이 파일에는 시험 접근 키도 저장되어 있습니다. 현재 설정은 아래 주소를 사용하므로
 별도 실행 인자 없이 IDE에서 실행할 수 있습니다.
@@ -51,7 +51,8 @@ flutter run -d <기기 ID>
 시험 서버는 접근 키가 없는 요청을 거부합니다. 시험 빌드는 운영 서버의 설치
 인증 정보와 다른 저장 키를 사용합니다. 운영 서버로 되돌릴 때는 같은 파일의
 `SERVER_URL`을 `https://weather-api.codesoha.com`으로 바꾸고
-`TEST_ACCESS_KEY`를 지웁니다. 접근 키가 담긴 APK와 설정 파일은 공개하지 않습니다.
+`TEST_ACCESS_KEY`를 지웁니다. 사용자 요청에 따라 이 설정 파일은 시험 접근 키를 포함한
+원본 그대로 저장소에서 관리합니다. 접근 키가 담긴 APK는 공개하지 않습니다.
 기존 `config/test-server.define.json`을 사용하는 빌드 명령도 계속 지원합니다.
 
 현재 로컬 `config/kma.config.json`은 시험 서버로 설정되어 있습니다.

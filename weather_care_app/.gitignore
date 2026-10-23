@@ -6,9 +6,8 @@
 .pub/
 build/
 
-# Local API credentials
+# Local API credentials (kma.config.json is tracked by request)
 kma.debug.json
-config/kma.config.json
 config/test-server.define.json
 
 # IDE

@@ -1,0 +1,11 @@
+[Unit]
+Description=날씨챙겨 API 갱신 기한 매일 오전 9시 확인
+
+[Timer]
+OnCalendar=*-*-* 09:00:00 Asia/Seoul
+Persistent=true
+AccuracySec=1min
+Unit=weather-care-api-renewal.service
+
+[Install]
+WantedBy=timers.target

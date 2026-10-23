@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "recipient": "sy40222@gmail.com",
+  "leadDays": 7,
+  "services": [
+    { "id": "kma-midterm", "name": "기상청_중기예보 조회서비스", "account": "운영", "requestedOn": "2026-10-10", "expiresOn": "2028-10-10" },
+    { "id": "kma-living", "name": "기상청_생활기상지수 조회서비스(4.0)", "account": "운영", "requestedOn": "2026-10-10", "expiresOn": "2028-10-10" },
+    { "id": "kma-shortterm", "name": "기상청_단기예보 조회서비스", "account": "운영", "requestedOn": "2026-10-10", "expiresOn": "2028-10-10" },
+    { "id": "kma-pollen", "name": "기상청_꽃가루농도위험지수 조회서비스(3.0)", "account": "개발", "requestedOn": "2026-10-13", "expiresOn": "2028-10-13" },
+    { "id": "kwater-operation", "name": "한국수자원공사_수문 운영 정보", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "kwater-dam-codes", "name": "한국수자원공사_댐코드 조회", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "kwater-waterlevel", "name": "한국수자원공사_우량수위 관측소 운영 정보", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "khoa-tide-observation", "name": "해양수산부 국립해양조사원_조위관측소 최신 관측데이터", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "khoa-buoy-observation", "name": "해양수산부 국립해양조사원_해양관측부이 최신 관측데이터", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "khoa-tide-extremes", "name": "해양수산부 국립해양조사원_조석예보(고, 저조)", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "khoa-tide-series", "name": "해양수산부 국립해양조사원_조석예보(시계열)", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "khoa-roms", "name": "해양수산부 국립해양조사원_ROMS 수치예측모델 조회", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "khoa-rip-current", "name": "해양수산부 국립해양조사원_이안류 지수 조회", "account": "개발", "requestedOn": "2026-10-14", "expiresOn": "2028-10-14" },
+    { "id": "airkorea-stations", "name": "한국환경공단_에어코리아_측정소정보", "account": "운영", "requestedOn": "2026-10-20", "expiresOn": "2028-10-20" },
+    { "id": "airkorea-air-quality", "name": "한국환경공단_에어코리아_대기오염정보", "account": "운영", "requestedOn": "2026-10-20", "expiresOn": "2028-10-20" }
+  ]
+}

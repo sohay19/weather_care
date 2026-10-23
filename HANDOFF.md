@@ -12367,3 +12367,52 @@
 - Flutter 3.47.4로 수정된 비교/주간 테스트 2개 파일의 43개 검사를 모두 통과했다. 기본 PATH의 Flutter 3.35.6 첫 실행은 SDK 불일치로 검사를 실행하지 못해 종료한 뒤 기존 프로젝트 SDK로 재실행했다. 로그는 ignored weather_care_app/build/commit-validation-20261023.log다.
 - Python/JSON/Ruby 구문, Xcode 프로젝트 형식, 등록 PNG 16개 SHA256, ZIP 4개 CRC·중복 없음·최신 이미지 일치와 git diff --cached --check를 확인했다. 새 대용량 제한 초과 파일은 없다. ignored 빌드/QA 증거·백업은 기존 제외 규칙을 유지했다. 커밋 메시지는「iOS 위치 검증 보완 및 스토어 스크린샷 최신화」로 정했다.
 - 전체 97개 파일 커밋 완료 후 HTTPS push가 GitHub 비밀번호/토큰을 읽을 수 없어 실패했다(Device not configured). macOS 기본 Git도 같은 오류였다. 기본 SSH는 UseKeychain 설정을 지원하지 않았고 macOS 기본 SSH는 publickey 인증이 거부됐다. 원격 변경은 없으며 master가 origin/master보다 1커밋 앞선 상태다. push 완료에는 사용자의 로컬 GitHub 인증 설정이 필요하다. 이 실패 기록을 로컬 커밋에 함께 포함했다.
+
+## 2026-10-23 API 키 갱신 시점 확인
+
+- 사용자 요청으로 루트 AGENTS.md, HANDOFF.md의 최근 기록과 관련 이력, 서버 runtime.ts·환경 예시·README·격자 부가자료 설정, Google OAuth/FCM 구현을 확인했다. 기존 루트 AGENTS.md가 지침을 포함하므로 유지했다.
+- 서버에서 참조하는 외부 자료 인증은 KMA_SERVICE_KEY(공공데이터포털), KMA_APIHUB_KEY, ITS_API_KEY, NIFS_API_KEY, HRFCO_API_KEY이다. KHOA_SERVICE_KEY·KWATER_SERVICE_KEY는 별도 지정 가능하며 미지정 시 KMA_SERVICE_KEY를 사용한다. 이 조사에서 실제 운영 환경을 원격 재조회하지는 않았다.
+- 기상청 API허브 이용약관 제5조4항: 인증키는 발급일부터 1년간 유효하며 운영기관 또는 이용자의 별도 의사표시가 없으면 1년 단위 자동 갱신. 따라서 정기 수동 재발급 기한으로 안내하지 않는다. 제5조10항의 3개월 이상 미사용 시 중단 가능 조건은 별개이다. 실제 계정의 발급일·현재 제한 상태는 미확인이다. 출처: https://apihub.kma.go.kr/policy.do
+- 공공데이터포털: 저장소에 서비스별 활용 종료일이 없다. 기상·생활지수·에어코리아·해양·K-water 등 각 활용신청의 실제 기간을 로그인 후 확인해야 한다. 일괄 1년/2년 또는 자동 연장으로 단정하지 않았다. 비표시 브라우저에서 로그인 링크가 표시돼 계정별 종료일을 확인하지 못했다. 출처: https://www.data.go.kr/ugs/selectPublicDataUseGuideMetView.do
+- 한강홍수통제소: 공식 인증키 안내는 1년 이상 미사용 시 휴면 전환과 인증키 관리에서의 해제 절차를 명시한다. 같은 페이지 약관 제6조2항은 이용기간 지정 가능성을 명시하므로 무기한이라고 판정하지 않았다. 실제 키의 개별 이용기간·마지막 사용일은 미확인이다. 출처: https://www.hrfco.go.kr/web/openapiPage/certifyKey.do
+- ITS: 공식 오픈데이터 안내·매뉴얼 및 공개 가입 약관에서 고정된 인증키 갱신 주기를 확보하지 못했다. 실제 인증키 신청현황의 종료일은 로그인 후 확인이 필요하다. 출처: https://www.its.go.kr/opendata/intro 및 https://www.its.go.kr/user/signUp
+- 국립수산과학원: 공식 OPENAPI 목록·해파리 안내에 고정 갱신 주기가 확인되지 않았다. 나의 신청내역의 실제 기간은 미확인이며 무기한으로 단정하지 않았다. 출처: https://www.nifs.go.kr/openApi/actionOpenapiInfoList.do
+- Google FCM·GA 서비스 계정 키: 공식 문서는 기본적으로 만료되지 않되 조직 정책으로 만료기간을 지정할 수 있다고 설명한다. 실제 IAM 키 메타데이터·조직 정책은 미조회. 서버 googleServiceAccount.ts의 JWT exp=발급시각+3600은 단기 인증용이며, FCM은 전송 시 OAuth 토큰을 코드로 발급하므로 서비스 계정 개인키의 수동 갱신일과 구분한다. 출처: https://docs.cloud.google.com/iam/docs/keys-create-delete
+- 공식 웹 문서와 비표시 인앱 브라우저만 사용했다. 사용자 화면 창·계정 로그인·신청/갱신·키 값 출력·운영 서버 접속/변경·외부 원천 API 수집·배포·커밋/push 없이 조회와 이 기록만 수행했다. 정확한 달력 날짜와 현재 만료 여부는 확인 불가로 남긴다.
+
+## 2026-10-23 API 만료 7일 전 이메일 안내 구현·미니 PC 배치
+
+- 사용자가 제공한 공공데이터포털 승인15개를 ops/api-renewal/api-renewals.json에 신청일·개발/운영계정·실제 만료예정일과 함께 등록했다. 앞선 미확인 날짜를 사용자 제공 근거로 보완했다. 수신자는 sy40222@gmail.com이고 사용자가 Gmail SMTP 사용을 명시적으로 선택했다. 알림/확인 메일 이외의 제3자 발송은 없다.
+- 한국시간 매일09시 확인하며 안내일은2028-10-03(기상청운영3개),10-06(꽃가루개발1개),10-07(K-water3개·해양6개 개발9개),10-13(에어코리아운영2개)이다. 같은 만료일을1통으로 묶고 서버 중지로 놓쳤으면 재개시 보충한다. 갱신후 새 만료일을 관리 JSON에 실제 값으로 바꾸며 자동2년연장은 하지 않는다.
+- src/node/apiRenewalReminder.ts·apiRenewalSmtp.ts·runApiRenewalReminder.ts를 추가했다. 전용 SQLite에 서비스ID/만료일/수신자별 성공이력을 저장하고 전송중 쓰기잠금으로 동시발송을 막는다. 실패는 롤백·시간당 재시도한다. SMTP접수 직후 DB커밋전 종료/응답유실의 중복가능성과 안정된Message-ID의 한계를 문서화했다. SMTP접수와 실제수신함도착을 구분한다.
+- TLS SMTP, 접속/읽기시간제한, URL/파일접근금지, 안전한 오류코드 로깅을 적용했다. 인증키·앱비밀번호·SMTP원문은 로그/메일에 없다. 미니PC의 기존 SMTP서비스/메일명령·25/465/587리스너·날씨환경의SMTP설정은 없었다. Gmail465 TLS/EHLO250을 실제확인했다.
+- Node전용 독립oneshot서비스·매일09시Asia/Seoul타이머(Persistent=true), 입력비표시 configure-gmail.py와 최초설치 install.sh를 추가했다. 설정도구는16자Gmail앱비밀번호를 서버0640환경파일에만 저장하고 SMTP인증·설정확인메일접수 검증→현재점검→타이머활성화를 수행한다. 인증/발송실패시 기존환경파일을 복원한다. 사용자가 앱비밀번호를 채팅에 보낼 필요없으며 도구에서 직접입력해야 한다.
+- 실제미니PC ubuntu@100.105.212.26에 기존상시SSH키 C:/Users/idp20/.ssh/id_ed25519_weather_care로 접속했다. 문서의옛weather-care별칭은이PC에없어 실패후 기존키/대상IP로복구했다. /opt/weather-care-api-renewal/reminder.cjs·configure-gmail.py, /etc/weather-care/api-renewals.json·api-renewal.env, /etc/systemd/system/weather-care-api-renewal.{service,timer}, /var/lib/weather-care-api-renewal을 신규설치했다. 기존경로가없음을사전확인했으며 원래날씨릴리스·환경·DB·서비스를교체/재시작하지않았다. systemctl daemon-reload만수행했다.
+- 전달아카이브 /tmp/weather-care-api-renewal-20261023.tar SHA256 e02c1d38dd6fca2d1c2d7aaa5b10e5f044c24d97359449685d05abdda281232b, 번들SHA256 ccdd18de99a9bfe5558208ddedf0dd6dec4975cc7a3d43a7cb6984aa94c6079b를로컬/서버대조했다. 원격설치전Python구문/bash-n·systemd-analyze verify, 설치후weather-care계정실제번들preview15개/4날짜/640권한·SMTP미설정시안전한실패를검증했다. systemd-analyze calendar로다음09시해석도확인했다.
+- 최종상태: Gmail앱비밀번호 미입력으로 SMTP인증·실제메일발송은 미완료, 타이머disabled/inactive이다. 가동완료로 보고하지 않는다. WindowsPowerShell에서 ssh -t -i "$env:USERPROFILE\.ssh\id_ed25519_weather_care" ubuntu@100.105.212.26 'sudo /opt/weather-care-api-renewal/configure-gmail.py' 실행이남았다. 이후SMTP접수와timer상태/최근실행·실제수신여부를확인해야 한다. 기존api/scheduler/cloudflared는active,로컬health200.
+- npm타입검사·전용15개포함Node전체27파일265개테스트·번들성공. 첫전체병렬실행의기존serverCompatibility2개5초기동timeout은maxWorkers=2재실행에서265/265통과했으며테스트제한시간·기존코드는변경하지않았다. npm run node:api-renewal -- --preview와번들preview모두15개/4날짜확인. nodemailer10.2.1·@types/nodemailer8.0.2추가, 기존전이의존esbuild0.28.1을직접dev명시해lock최소22줄추가로유지했다. esbuild최신.28.2설치시발생했던광범위hoist는.28.1로복원해기존패키지버전변경을남기지않았다.
+- 호출시만료질문에는공공데이터포털31/DEADLINE_HAS_EXPIRED_ERROR는이미만료된상태를뜻하고정상응답에는만료예정일이없어사전안내는등록표로한다는점을설명했다. HTTP401/403만으로만료를확정하지않는다. 기존단기/중기Provider의31인증실패처리는보존했으며모든Provider실패를메일로구독하는별도기능은추가하지않았다. 공식근거 https://www.data.go.kr/data/15061362/openapi.do 및 Google앱비밀번호안내 https://support.google.com/accounts/answer/185833?hl=ko 를확인했다.
+- ops/api-renewal/README.md와서버README에설정/갱신/중복한계/현재배치·미활성상태를한글로기록했다. 기존AGENTS.md와이전HANDOFF기록을보존했다. 앱수정/빌드·원천날씨API추가호출·실제메일·푸시·커밋/push는수행하지않았다.
+
+## 2026-10-23 09:20 KST Gmail 발송 확인·API 갱신 예약 최종 활성화
+
+- 사용자가 앱비밀번호 입력후 실제메일발송과 예약활성화 확인을 요청했다. 루트AGENTS/HANDOFF최근기록을 읽고 기존상시SSH키로 미니PC를 조회했다. 비밀번호/인증키/SMTP원문은 출력하지 않았다.
+- 초기상태는SMTP비밀번호설정됨·예상발신/수신주소일치·15서비스/7일전설정·환경0640이지만 timerdisabled/inactive·기존실행기록없음이었다. 사용자의입력완료와 실제예약활성화를구분했다.
+- 배치된실제번들을weather-care계정으로 --verify-smtp와 --test-email 실행: api_renewal_smtp_verified 및 api_renewal_test_email_accepted를확인했다. 이번확인에서sy40222@gmail.com으로설정확인메일1통을Gmail서버에접수했다. 받은편지함/스팸함실제도착은미조회이며메일서버접수와구분한다.
+- 최초가동전 systemctl reset-failed가 미로드oneshot단위에대해실패해설정도구의다음활성화단계를막는문제를확인했다. 이전에만든configure-gmail.py의불필요한reset-failed1줄을제거하고미니PC에반영했다. Python구문검사통과·로컬/원격SHA25651ad2b1d5f51ea3ae00b35eb379e0fbfd9a7409ae2a5277da2817858c5110ac9일치. 비밀환경파일·Node번들·원래날씨서버코드는변경하지않았다.
+- systemctl start weather-care-api-renewal.service와enable --now weather-care-api-renewal.timer완료. journal의2026-10-23 09:20:11KST api_renewal_check_completed(messages0/services0)확인. 전용SQLite읽기전용조회로발송이력0·quick_checkok. 안내일전이므로정기메일0은정상이고설정확인메일은정기이력에쓰지않는다.
+- 09:20:44KST최종확인: timerenabled/active(waiting), 다음점검2026-10-24 09:00KST(서버표기00:00UTC). 기존api/scheduler/cloudflaredactive·127.0.0.1:8787/health HTTP200. 기존날씨서비스재시작/원천API추가수집/실제푸시없음. 현재상태는앞선앱비밀번호미입력·timer미활성기록을대체한다.
+- ops/api-renewal/README.md에최종발송접수/예약상태와최초활성화수정을기록했다. 이번변경은설정도구1줄제거·문서/HANDOFF이며기존Node전체265개통과기록을보존하고동일테스트는재실행하지않았다. git diff --check통과. 다른작업변경을보존했으며커밋/push없음.
+
+## 2026-10-23 원격 변경 pull
+
+- 사용자 요청으로 master를 weather_care/master의 78619d6 커밋까지 fast-forward pull했다. iOS 위치 검증 및 스토어 스크린샷 변경 1개 커밋을 반영했다.
+- 기존 API 만료 알림 작업의 수정·신규 파일을 임시 보관 후 복원하고 Git 내용 해시를 대조했다. HANDOFF.md의 양쪽 추가 기록을 모두 보존해 충돌을 해결했다. Git의 줄바꿈 정규화로 일부 파일의 원시 바이트 해시는 달라졌으나 보관본과 Git 내용은 모두 일치한다.
+- 원격과 HEAD 일치 및 미해결 충돌 없음 확인. 기능 코드 추가 변경·테스트·커밋·push는 수행하지 않았다.
+
+## 2026-10-23 로컬 변경 전체 커밋·push
+
+- 사용자 요청으로 남아 있는 API 만료 7일 전 이메일 안내 기능, 전용 테스트, 의존성, systemd 설치·Gmail 설정 도구 및 문서/HANDOFF 기록 전체를 커밋 대상으로 정리했다.
+- 앞선 Node 전체 265개 테스트·타입 검사·번들·설정 도구 Python 구문 검사 통과 기록을 확인했다. 기능 코드는 추가 수정하지 않았으며 동일 테스트는 재실행하지 않는다. 최종 스테이징 변경 공백 검사 후 한글 메시지로 master에 커밋하고 weather_care/master로 push한다.
+- SMTP 환경 예시의 인증정보는 빈 값이며 실제 비밀 환경 파일은 커밋 대상에 포함되지 않았다.
+- 최종 검사에서 systemd 서비스 파일 끝의 불필요한 빈 줄 1개를 제거했다.

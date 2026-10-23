@@ -19,13 +19,16 @@
     "node:scheduler": "tsx src/node/scheduler.ts",
     "node:job": "tsx src/node/runJob.ts",
     "node:prewarm": "tsx src/node/prewarmNationwide.ts",
-    "node:backup": "tsx src/node/backup.ts"
+    "node:backup": "tsx src/node/backup.ts",
+    "node:api-renewal": "tsx src/node/runApiRenewalReminder.ts",
+    "build:api-renewal": "esbuild src/node/runApiRenewalReminder.ts --bundle --platform=node --target=node24 --format=cjs --external:better-sqlite3 --outfile=build/api-renewal/reminder.cjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "better-sqlite3": "^13.0.3",
     "fflate": "^0.8.3",
     "hono": "^4.13.8",
+    "nodemailer": "10.2.1",
     "tsx": "^4.23.13",
     "zod": "^3.22.4"
   },
@@ -34,6 +37,8 @@
     "@cloudflare/workers-types": "^5.20260915.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^22.5.2",
+    "@types/nodemailer": "8.0.2",
+    "esbuild": "0.28.1",
     "typescript": "^5.5.4",
     "vitest": "^4.1.11",
     "wrangler": "^4.133.0"

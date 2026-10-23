@@ -868,7 +868,7 @@ void main() {
         ),
       ),
     ));
-    expect(find.textContaining('하늘 상태 자료가 없어'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('하늘 상태 자료가 없어')), findsOneWidget);
     expect(find.textContaining('맑은 하늘'), findsNothing);
     expect(find.text('0.0℃'), findsNothing);
     await tester.dragUntilVisible(
@@ -937,7 +937,8 @@ void main() {
     ));
 
     expect(
-      find.text('맑은 하늘이 이어지는 날씨예요.'),
+      find.byWidgetPredicate((widget) =>
+          widget is Text && widget.semanticsLabel == '맑은 하늘이 이어지는 날씨예요.'),
       findsOneWidget,
     );
     expect(find.textContaining('실제 기온보다 2.0℃'), findsNothing);

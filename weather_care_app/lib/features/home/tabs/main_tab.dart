@@ -304,7 +304,11 @@ class _TodaySection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  feelingText,
+                  feelingText.replaceAllMapped(
+                    RegExp(r'\S+'),
+                    (match) => match[0]!.characters.join('\u2060'),
+                  ),
+                  semanticsLabel: feelingText,
                   style: feelingStyle,
                 ),
               ),

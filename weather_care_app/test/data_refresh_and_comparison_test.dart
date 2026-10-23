@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/home/tabs/main_tab.dart';
 import 'package:weather_care/features/home/tabs/today_tab.dart';
@@ -17,6 +18,53 @@ void main() {
     timeline: [],
     hourly: [],
   );
+
+  testWidgets('지금 날씨는 두 줄에서도 단어 중간을 나누지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: const TextScaler.linear(1.3)),
+        child: child!,
+      ),
+      home: Scaffold(
+          body: MainTab(
+        today: const TodayWeatherResponse(
+          dataSource: 'test',
+          region: WeatherRegion(nx: 60, ny: 127, name: '서울'),
+          brief: '날씨 확인',
+          current: CurrentWeather(temperature: 18, sky: '맑음'),
+          recommendations: [],
+          lifestyleMessages: [],
+          timeline: [],
+          hourly: [],
+        ),
+        dateLabel: '오늘',
+        mood: 'clear',
+        serverFeaturesAvailable: true,
+        onRefresh: () async {},
+        onDetail: (_) {},
+      )),
+    ));
+    final finder = find.byWidgetPredicate((widget) =>
+        widget is Text && widget.semanticsLabel == '맑은 하늘이 이어지는 날씨예요.');
+    final paragraph = tester.renderObject<RenderParagraph>(
+        find.descendant(of: finder, matching: find.byType(RichText)));
+    final text = tester.widget<Text>(finder).data!;
+    final boxes = paragraph.getBoxesForSelection(
+        TextSelection(baseOffset: 0, extentOffset: text.length));
+    expect(boxes.map((box) => box.top).toSet().length, 2);
+    for (final word in RegExp(r'\S+').allMatches(text)) {
+      final wordBoxes = paragraph.getBoxesForSelection(
+          TextSelection(baseOffset: word.start, extentOffset: word.end));
+      expect(wordBoxes.map((box) => box.top).toSet().length, 1,
+          reason: word[0]!.replaceAll('\u2060', ''));
+    }
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('일부 자료가 없으면 별도 공통 안내 없이 해당 카드 안에 항목을 표시한다', (tester) async {
     const removedHint = '옆의 새로고침 아이콘을 누르거나 화면을 아래로 당기면 데이터를 다시 요청할 수 있어요.';
@@ -285,7 +333,8 @@ void main() {
         of: futureCard, matching: find.byType(HourlyValueChart)));
     expect(chart.overlays.single.values[chart.hours.indexOf(11)]?.lower, 22.5);
     expect(
-      find.text('맑은 하늘이 이어지는 날씨예요.'),
+      find.byWidgetPredicate((widget) =>
+          widget is Text && widget.semanticsLabel == '맑은 하늘이 이어지는 날씨예요.'),
       findsOneWidget,
     );
     final currentWeatherRow = tester.getRect(

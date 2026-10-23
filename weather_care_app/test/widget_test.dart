@@ -531,9 +531,16 @@ void main() {
     }
     expect(find.text('어제와 비교'), findsOneWidget);
     const weatherFeeling = '구름이 많은 날씨예요.';
-    expect(find.text(weatherFeeling), findsOneWidget);
     expect(
-      tester.widget<Text>(find.text(weatherFeeling)).style?.fontSize,
+        find.byWidgetPredicate((widget) =>
+            widget is Text && widget.semanticsLabel == weatherFeeling),
+        findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byWidgetPredicate((widget) =>
+              widget is Text && widget.semanticsLabel == weatherFeeling))
+          .style
+          ?.fontSize,
       13,
     );
     expect(find.byTooltip('날씨 새로고침'), findsNothing);

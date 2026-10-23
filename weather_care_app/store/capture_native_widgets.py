@@ -20,11 +20,14 @@ def main():
     parser.add_argument('--serial', required=True, help='사용자가 지정한 Android 촬영 대상 일련번호')
     parser.add_argument('--apk', type=Path, required=True, help='최신 소스로 빌드하고 디버그 키로 서명한 APK')
     parser.add_argument('--build-only', action='store_true', help='촬영 도구 APK만 빌드')
+    parser.add_argument('--real-weather', action='store_true', help='예시 주입 없이 현재 앱의 실제 날씨로 촬영')
+    parser.add_argument('--output', type=Path, help='원본 저장 폴더')
+    parser.add_argument('--skip-app-install', action='store_true', help='최신 APK가 이미 설치된 기기에서 앱 재설치 생략')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
     sdk = Path(os.environ['ANDROID_HOME'])
     build = ROOT.parent / 'build/widget-alignment-20261022/instrumentation'
-    output = ROOT / 'screenshots/native-20261022'
+    output = args.output or ROOT / 'screenshots/native-20261022'
     for folder in [build / 'classes', build / 'dex', output]:
         folder.mkdir(parents=True, exist_ok=True)
     android = sdk / 'platforms/android-35/android.jar'
@@ -59,7 +62,8 @@ def main():
     if args.build_only:
         print(f'네이티브 촬영 도구 빌드 완료: {signed}')
         return
-    device('install', '-r', str(args.apk.resolve()))
+    if not args.skip_app_install:
+        device('install', '-r', str(args.apk.resolve()))
     device('install', '-r', str(signed))
     original_mode = device('shell', 'cmd', 'uimode', 'night').split(':')[-1].strip()
     if original_mode not in ['auto', 'no', 'yes', 'custom']:
@@ -69,6 +73,7 @@ def main():
             device('shell', 'cmd', 'uimode', 'night', night)
             device('shell', 'am', 'force-stop', 'com.codesoha.weathercare')
             log = device('shell', 'am', 'instrument', '-w', '-r', '-e', 'theme', theme,
+                         '-e', 'realWeather', str(args.real_weather).lower(),
                          'com.codesoha.weathercare.capture/.WidgetCapture')
             (build / f'{theme}.log').write_text(log, encoding='utf-8')
             if 'INSTRUMENTATION_CODE: -1' not in log:
@@ -95,8 +100,8 @@ def main():
                for name in ['WeatherCareWidgetProvider.java', 'WidgetTextRenderer.java', 'WidgetIconRenderer.java']]
     sources += sorted((ROOT.parent / 'android/app/src/main/res/layout').glob('weather_widget_*.xml'))
     sources += sorted((ROOT.parent / 'android/app/src/main/res/drawable').glob('*widget_refresh*.xml'))
-    report = {'제작일': '2026-10-22', '방식': '실제 Android Provider를 AppWidgetHost에 바인딩한 네이티브 화면',
-              '데이터': '촬영용 예시 날씨, 실제 현재 관측 아님',
+    report = {'제작일': '2026-10-23' if args.real_weather else '2026-10-22', '방식': '실제 Android Provider를 AppWidgetHost에 바인딩한 네이티브 화면',
+              '데이터': '현재 앱의 운영 서버 실제 날씨' if args.real_weather else '촬영용 예시 날씨, 실제 현재 관측 아님',
               '모델': device('shell', 'getprop', 'ro.product.model').strip(),
               'Android_API': device('shell', 'getprop', 'ro.build.version.sdk').strip(),
               '표시_밀도': device('shell', 'wm', 'density').strip(),

@@ -1,4 +1,4 @@
-"""2026-10-22 Android 스토어 이미지. 스크린샷만 재생성하는 옵션을 제공한다."""
+"""실제 Android 기기의 앱·위젯 캡처로 스토어 이미지를 구성한다."""
 from __future__ import annotations
 
 import hashlib
@@ -13,16 +13,17 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import generate_store_screenshots as previous
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshots/source-20261022'
+SOURCE = ROOT / 'screenshots/source-android-20261023'
+NATIVE = ROOT / 'screenshots/native-android-20261023'
 BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
 TOPICS = [
-    ('01-main', '오늘의 날씨 요약', '나가기 전 필요한 정보,\n한눈에 챙겨요', '준비물 체크리스트 · 지금 날씨 · 어제와 비교', 'main'),
+    ('01-main', '오늘의 날씨 요약', '나가기 전 필요한 정보,\n한눈에 챙겨요', '지금 날씨 · 오늘 최저·최고 · 어제와 비교', 'main'),
     ('02-timeline', '시간별 타임라인', '오늘의 날씨를\n시간 따라 확인해요', '기온 · 강수 · 습도 · 자외선 · 바람 · 강설', 'timeline'),
     ('03-widget', '홈 화면 위젯', '앱을 열지 않아도\n날씨가 보여요', '작게, 넓게, 자세하게 · 세 가지 크기', None),
     ('04-dark-mode', '편안한 다크모드', '앱도 위젯도\n눈이 편안하게', '라이트 · 다크 · 시스템 설정에 맞춰', 'dark-main'),
-    ('05-notifications', '다양한 날씨 알림', '챙겨야 할 날씨,\n알림으로 알려드려요', '준비물 요약 · 현재 비 · 기상특보 · 낙뢰', None),
-    ('06-advanced', '심화 날씨 정보', '바다와 하천까지\n더 깊이 살펴요', '만조·간조/조위 · 수온 · 수위·유량 · 댐·보', 'advanced'),
+    ('05-notifications', '다양한 날씨 알림', '챙겨야 할 날씨,\n알림으로 알려드려요', '준비물 요약 · 현재 비 · 기상특보 · 낙뢰 · 자외선', None),
+    ('06-advanced', '심화 날씨 정보', '바다와 하천까지\n더 깊이 살펴요', '만조·간조/조위 · 수온 · 수위·유량 · 댐·보', 'advanced-values'),
     ('07-week', '한주 날씨', '한 주의 흐름을 보고\n하루를 계획해요', '주간 요약 · 날짜별 예보 · 시간별 날씨', 'week'),
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
 ]
@@ -64,11 +65,28 @@ def card(canvas, im, xy, width, radius=24):
 
 def widget(family, dark=False):
     """실제 Android Provider를 AppWidgetHost에 연결해 촬영한 원본만 사용한다."""
-    path = ROOT / 'screenshots/native-20261022' / f'{"dark" if dark else "light"}-{family}.png'
+    path = NATIVE / f'{"dark" if dark else "light"}-{family}.png'
     if not path.exists():
         raise FileNotFoundError(f'실제 네이티브 위젯 원본이 필요합니다: {path}')
     with Image.open(path) as source:
         return source.convert('RGBA')
+
+
+def app_screen(name):
+    """실제 앱 전체 화면에서 상단 상태바와 하단 시스템 내비게이션바를 제외한다."""
+    manifest = json.loads((SOURCE / 'capture-manifest.json').read_text(encoding='utf-8'))
+    row = next(row for row in manifest['files'] if row['path'] == f'{name}.png')
+    path = SOURCE / row['path']
+    if hashlib.sha256(path.read_bytes()).hexdigest() != row['sha256']:
+        raise ValueError(f'촬영 원본 해시가 다릅니다: {path}')
+    with Image.open(path) as source:
+        left, top, right, bottom = row['system_navigation_bar']
+        if (left, right, bottom) != (0, source.width, source.height) or not 0 < top < bottom:
+            raise ValueError(f'시스템 내비게이션바 영역을 확인할 수 없습니다: {path}')
+        status_left, status_top, status_right, status_bottom = row['system_status_bar']
+        if (status_left, status_top, status_right) != (0, 0, source.width) or not 0 < status_bottom < top:
+            raise ValueError(f'상단 시스템 상태바 영역을 확인할 수 없습니다: {path}')
+        return source.crop((0, status_bottom, source.width, top)).convert('RGB')
 
 
 def notification_cards(extra_examples=()):
@@ -97,25 +115,17 @@ def compose(topic, platform):
     stem, eyebrow, headline, caption, source = topic
     tablet = platform == 'android-tablet'
     width, height = (1440, 2560) if tablet else (1080, 1920)
-    # 동일한 1080×1920 디자인 좌표를 사용하며 태블릿 화면 자체는 별도 렌더링한다.
+    # 두 등록 규격에 같은 실기기 촬영본을 비율 유지해 배치한다.
     canvas = Image.new('RGBA', (1080, 1920), BG)
     d = ImageDraw.Draw(canvas)
     text(d, (540, 72), eyebrow, 30, YELLOW, center=True)
     text(d, (540, 134), headline, 65, WHITE, 'Heavy', center=True, spacing=11)
     text(d, (540, 307), caption, 25, '#E6F0F7', 'Medium', center=True)
-    family = 'tablet' if tablet else 'phone'
     if source:
-        with Image.open(SOURCE / family / f'{source}.png') as im:
-            sw = 860 if tablet else 610
-            sh = round(im.height * sw / im.width)
-            card(canvas, im, ((1080 - sw) / 2, 397 if not tablet else 420), sw, 22)
+        im = app_screen(source)
+        card(canvas, im, (215, 397), 650, 0)
         if stem == '04-dark-mode':
-            card(canvas, widget('large', True), (480, 1110), 530, 32)
-        elif stem == '06-advanced':
-            with Image.open(SOURCE / family / 'advanced-chart.png') as chart:
-                # 그래프는 별도 스크롤 위치의 실제 렌더링 원본에서 크롭한다.
-                crop = chart.crop((round(chart.width * .04), round(chart.height * .27), round(chart.width * .96), round(chart.height * .91)))
-                card(canvas, crop, (540, 1055), 480, 25)
+            card(canvas, widget('large', True), (530, 1350), 480, 32)
     elif stem == '03-widget':
         y = 409
         for kind, label, sw in [('small', '작은 위젯', 260), ('medium', '중간 위젯', 660), ('large', '큰 위젯', 570)]:
@@ -126,9 +136,12 @@ def compose(topic, platform):
             y = box[3] + 39
         # 세 크기는 모두 비율 유지. 위젯 합계가 1920px를 넘지 않도록 축소 배치.
     else:
-        alerts = notification_cards()
-        canvas.alpha_composite(alerts, (100, 440))
-        text(ImageDraw.Draw(canvas), (540, 1740), '이해를 돕기 위한 알림 예시예요', 23, '#E6F0F7', 'Regular', center=True)
+        alerts = notification_cards([
+            ('자외선', '낮 자외선이 강해요',
+             '낮 동안 자외선이 높을 것으로 보여요.\n외출한다면 선크림이나 양산을 챙기세요.'),
+        ])
+        alerts = alerts.resize((800, round(alerts.height * 800 / alerts.width)), Image.Resampling.LANCZOS)
+        canvas.alpha_composite(alerts, (140, 440))
     canvas = canvas.convert('RGB')
     if tablet:
         canvas = canvas.resize((width, height), Image.Resampling.LANCZOS)
@@ -184,7 +197,8 @@ def main(screenshots_only=False, platforms=None, topics=None):
                 old.unlink()
     generated = []
     for platform in platforms:
-        paths = [compose(topic, platform) if not topics or topic[0] in topics
+        paths = [compose(topic, platform) if (not topics or topic[0] in topics)
+                 and (topic[0] != '05-notifications' or topics is not None)
                  else ROOT / 'screenshots' / platform / f'{topic[0]}.png'
                  for topic in TOPICS]
         generated.extend(paths)
@@ -203,30 +217,36 @@ def main(screenshots_only=False, platforms=None, topics=None):
             assert im.size == expected, (path, im.size)
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/screenshots-20261022-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-10-22', '화면': 'Flutter 비표시 렌더링 및 실제 Android AppWidgetHost 위젯 촬영',
-        '데이터': '촬영용 예시 날씨와 알림, 실제 현재 관측 아님', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    report = ROOT / 'screenshots/screenshots-20261023-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-10-23', '화면': 'SM-S948U 실제 앱 screencap 및 Android AppWidgetHost 촬영',
+        '데이터': 'Main·Week·타임라인·위젯은 운영 서버, 심화 정보는 테스트 서버에 수집한 2026-10-23 실제 관측·예측. 5번은 알림 예시 5개.',
+        '태블릿': '같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치',
+        '구성': '앱 1·2·4·6·7·8번은 상단 상태바·하단 시스템 내비게이션바를 제외한 앱 전체 화면을 사용. 앱 탭 메뉴는 유지하며 4번은 실제 다크 위젯도 함께 배치. 3번 위젯과 5번 알림 소개는 기존 구성.',
+        'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
-    guide = ROOT / 'screenshots/SCREENSHOTS_20261022.md'
-    package = ROOT / 'weather-care-screenshots-20261022.zip'
+    guide = ROOT / 'screenshots/SCREENSHOTS_20261023.md'
+    package = ROOT / 'weather-care-screenshots-20261023.zip'
     with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
         for path in generated + preview_paths + [guide, report]:
             archive.write(path, path.relative_to(ROOT))
     with zipfile.ZipFile(package) as archive:
         assert archive.testzip() is None
+    shutil.copy2(package, ROOT / 'weather-care-screenshots-20261022.zip')
+    shutil.copy2(report, ROOT / 'screenshots/screenshots-20261022-manifest.json')
     # 이전 통합 묶음도 같은 최종본으로 맞추고 iOS/iPad 항목은 그대로 보존한다.
     legacy_report = ROOT / 'screenshots/android-20261021-manifest.json'
     legacy_data = json.loads(legacy_report.read_text(encoding='utf-8'))
     by_path = {row['path']: row for row in records}
     for row in legacy_data['files']:
         if row['path'] in by_path:
-            row.update(by_path[row['path']], 갱신일='2026-10-22')
+            row.update(by_path[row['path']], 갱신일='2026-10-23')
     legacy_report.write_text(json.dumps(legacy_data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     updated = generated + preview_paths + [
         ROOT / 'screenshots/README.md', guide, legacy_report, report,
+        ROOT / 'screenshots/screenshots-20261022-manifest.json',
         ROOT / 'generate_android_store.py', ROOT / 'capture_android_test.dart', ROOT / 'generate_store_screenshots.py',
         ROOT / 'capture_native_widgets.py', *sorted((ROOT / 'native_widget_capture').glob('*')),
-        *sorted((ROOT / 'screenshots/native-20261022').glob('*'))]
+        *sorted(NATIVE.glob('*')), *sorted(SOURCE.glob('*'))]
     names = {p.relative_to(ROOT).as_posix() for p in updated}
     for filename in ['weather-care-store-assets.zip', 'weather-care-store-screenshots.zip',
                      'google-play/weather-care-android-store-20261021.zip']:

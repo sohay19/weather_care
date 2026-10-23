@@ -23,15 +23,17 @@ import java.util.Set;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** 별도 Android 환경에서 실제 Provider와 AppWidgetHost를 연결해 예시 날씨를 촬영한다. */
+/** 실제 Provider와 AppWidgetHost를 연결한다. realWeather는 앱의 실자료를 그대로 사용한다. */
 public final class WidgetCapture extends Instrumentation {
     private AppWidgetHost host;
     private AppWidgetHostView view;
     private int widgetId;
     private Bundle arguments;
+    private boolean realWeather;
 
     @Override public void onCreate(Bundle args) {
         arguments = args;
+        realWeather = "true".equals(args.getString("realWeather"));
         start();
     }
 
@@ -50,8 +52,10 @@ public final class WidgetCapture extends Instrumentation {
                 capture(context, family, theme, 2, true);
             }
             // 1·2·3개 준비물과 긴 이름에서 남은 영역 정렬/잘림을 확인한다.
-            for (int count : new int[]{1, 3}) capture(context, "large", theme, count, false);
-            result.putString("stream", "실제 AppWidgetHost 촬영 및 준비물 1·2·3개 정렬 검증 통과\n");
+            if (!realWeather) {
+                for (int count : new int[]{1, 3}) capture(context, "large", theme, count, false);
+            }
+            result.putString("stream", "실제 AppWidgetHost 촬영 완료\n");
         } catch (Throwable failure) {
             result.putString("stream", android.util.Log.getStackTraceString(failure));
             status = 0;
@@ -95,9 +99,20 @@ public final class WidgetCapture extends Instrumentation {
         if (count == 3) names[1] = "두꺼운 겉옷";
         for (int i = 0; i < count; i++) items.put(new JSONObject().put("type", types[i]).put("label", names[i]));
         snapshot.put("preparations", items);
-        context.getSharedPreferences("weather_care_widget", Context.MODE_PRIVATE).edit()
+        if (realWeather) {
+            String saved = context.getSharedPreferences("weather_care_widget", Context.MODE_PRIVATE)
+                    .getString("snapshot", null);
+            check(saved != null, "실제 앱 날씨 자료 존재");
+            snapshot = new JSONObject(saved);
+            count = snapshot.optJSONArray("preparations") == null ? 0 : snapshot.getJSONArray("preparations").length();
+        } else {
+            context.getSharedPreferences("weather_care_widget", Context.MODE_PRIVATE).edit()
                 .clear().putString("snapshot", snapshot.toString())
                 .putString("refresh_url", "https://example.invalid/widget").commit();
+        }
+        final int preparationCount = count;
+        final String expectedMinMax = "최저 " + snapshot.getString("minimumTemperature")
+                + "   최고 " + snapshot.getString("maximumTemperature");
         Class<?> provider = Class.forName("com.codesoha.weathercare.WeatherCareWidgetProvider");
         Method update = provider.getDeclaredMethod("updateWidget", Context.class, AppWidgetManager.class, int.class);
         update.setAccessible(true);
@@ -129,7 +144,7 @@ public final class WidgetCapture extends Instrumentation {
                     View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY));
             view.layout(0, 0, w, h);
             View minimumMaximum = find(context, "widget_min_max");
-            check("최저 12°   최고 22°".contentEquals(minimumMaximum.getContentDescription()), "실제 최저/최고 표시");
+            check(expectedMinMax.contentEquals(minimumMaximum.getContentDescription()), "실제 최저/최고 표시");
             ImageView refresh = (ImageView) find(context, "widget_refresh_button");
             int touchSize = Math.round(24 * density);
             check(refresh.getWidth() == touchSize && refresh.getHeight() == touchSize && refresh.isClickable(),
@@ -144,7 +159,7 @@ public final class WidgetCapture extends Instrumentation {
                         "짧은 브리핑 기존 왼쪽 정렬 유지");
             }
             if (family.equals("large")) {
-                for (int i = 1; i <= count; i++) {
+                for (int i = 1; i <= preparationCount; i++) {
                     ImageView label = (ImageView) find(context, "widget_preparation_label_" + i);
                     View icon = find(context, "widget_preparation_icon_" + i);
                     View parent = (View) icon.getParent();
@@ -160,7 +175,7 @@ public final class WidgetCapture extends Instrumentation {
             view.draw(new Canvas(bitmap));
             File directory = new File(context.getExternalFilesDir(null), "store-native-widget");
             check(directory.mkdirs() || directory.isDirectory(), "촬영 폴더 생성");
-            String name = publish ? theme + "-" + family : theme + "-preparations-" + count;
+            String name = publish ? theme + "-" + family : theme + "-preparations-" + preparationCount;
             try (FileOutputStream output = new FileOutputStream(new File(directory, name + ".png"))) {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
             } catch (Exception e) { throw new RuntimeException(e); }

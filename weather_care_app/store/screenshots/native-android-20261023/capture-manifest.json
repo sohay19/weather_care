@@ -1,0 +1,108 @@
+{
+  "제작일": "2026-10-23",
+  "방식": "실제 Android Provider를 AppWidgetHost에 바인딩한 네이티브 화면",
+  "데이터": "현재 앱의 운영 서버 실제 날씨",
+  "모델": "SM-S948U",
+  "Android_API": "36",
+  "표시_밀도": "Physical density: 600\nOverride density: 560",
+  "APK_SHA256": "14e68587d2699e373957b966644962cb10ec11b044ac2e98e33b3594fa842401",
+  "소스_SHA256": {
+    "android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java": "903928b23b7079412dc3c9cd291b94933ae077b1e013d9fd3c7fb55cc49c72a1",
+    "android/app/src/main/java/com/weathercare/weather_care/WidgetTextRenderer.java": "125b5d4333e52d2334d4d3fc44580d1567493ba706b4a6b1ae9d8cee7e701e77",
+    "android/app/src/main/java/com/weathercare/weather_care/WidgetIconRenderer.java": "567e470eb92ef27242ac7e247fcdbd695f78acd5771d14a21b3d9b420eecbcd4",
+    "android/app/src/main/res/layout/weather_widget_large.xml": "316bbb78c9e92d8ebe90ea12c8bd7caff12c30073db3169edf63e2bb0ba8d473",
+    "android/app/src/main/res/layout/weather_widget_medium.xml": "7c47ee9b2704ab8aa1277534b8be27154d5acfb8784d28502b1d9b3ed2c88329",
+    "android/app/src/main/res/layout/weather_widget_preview.xml": "5772b3222297fe4cd7d6564ea4137415c8caaeaa0a42be433027ee0fac259df3",
+    "android/app/src/main/res/layout/weather_widget_small.xml": "085b71a602958357105d16099823874be707ec62f3941cffd12b3c7c589cdc2e",
+    "android/app/src/main/res/drawable/ic_widget_refresh.xml": "5d6d563818d696a7fe5f133a18d67b73d2bb43e7f4b628e5d44215bcc49997ea",
+    "android/app/src/main/res/drawable/ic_widget_refresh_loading.xml": "0bd1ab53f26971c116845215439a8d9994fc5c71f6b4d5f6e95b32c921d118fb",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background.xml": "41c8cdc7aba8193adf8b2681cb7972bd52aa92f7dd793ee072999dc303c29249",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background_loading.xml": "1f0267fa592141c8fa5cb0d46b1f7ade637a95a71a961f3c7ad79907b90064ff"
+  },
+  "files": [
+    {
+      "path": "dark-large.png",
+      "size": [
+        1183,
+        1239
+      ],
+      "sha256": "02d3e195809f3a89900cb1000a1ded316b340a6b568ad6fcd5e4479d0fac3590",
+      "터치영역_px": [
+        1036,
+        49,
+        1120,
+        133
+      ]
+    },
+    {
+      "path": "dark-medium.png",
+      "size": [
+        1183,
+        455
+      ],
+      "sha256": "90a315b9ec2ff9af46667a0eaa70ce210c5dc01b524106c3e83cce7d9d32f3e0",
+      "터치영역_px": [
+        1043,
+        39,
+        1127,
+        123
+      ]
+    },
+    {
+      "path": "dark-small.png",
+      "size": [
+        595,
+        595
+      ],
+      "sha256": "0b6f376a2588dfaa5e7800bfab6f0b07fb028543ea61cb7c700b15d6459f025e",
+      "터치영역_px": [
+        462,
+        42,
+        546,
+        126
+      ]
+    },
+    {
+      "path": "light-large.png",
+      "size": [
+        1183,
+        1239
+      ],
+      "sha256": "6f91ae1cdd99a682aeb61fdd98ebd3af99751189f920e664e62c032e187cf5a0",
+      "터치영역_px": [
+        1036,
+        49,
+        1120,
+        133
+      ]
+    },
+    {
+      "path": "light-medium.png",
+      "size": [
+        1183,
+        455
+      ],
+      "sha256": "cf639a8f65f12244aec68531541245b36bb49fe6de31b59ea36c5a9fdfed3304",
+      "터치영역_px": [
+        1043,
+        39,
+        1127,
+        123
+      ]
+    },
+    {
+      "path": "light-small.png",
+      "size": [
+        595,
+        595
+      ],
+      "sha256": "1980b0f426ae036e19a75a1fccf21393254122228b39cfffc90f6dee5a644376",
+      "터치영역_px": [
+        462,
+        42,
+        546,
+        126
+      ]
+    }
+  ]
+}

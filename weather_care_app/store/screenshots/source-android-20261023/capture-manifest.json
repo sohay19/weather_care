@@ -1,0 +1,298 @@
+{
+  "제작일": "2026-10-23",
+  "모델": "SM-S948U",
+  "Android_API": 36,
+  "화면크기": [
+    1440,
+    3120
+  ],
+  "physical_density": 600,
+  "기존_override_density": 560,
+  "시스템_글자배율": 1.0,
+  "앱_실효_글자배율": 1.1,
+  "데이터": "운영 서버 실제 응답. 심화탭은 테스트 DB에 2026-10-23 제공처 실자료를 수집한 뒤 실제 앱에서 부산 조위 13:00 45cm·만조18:38·간조12:09·시간별 그래프를 표시했다.",
+  "가공": "원본 PNG를 보존하며 상단 시스템 상태바140px·하단 시스템 내비게이션바168px만 제외한다. 앱 탭 메뉴를 포함한 앱 전체 화면을 비율 유지 축소하고 4번에는 실제 다크 대형 위젯을 함께 배치한다.",
+  "APK_SHA256": {
+    "production": "14e68587d2699e373957b966644962cb10ec11b044ac2e98e33b3594fa842401",
+    "test": "9fa8750c90be8f4644ad55fa830080459aac90fe73c004bd5cb16747ccc8ee1f"
+  },
+  "files": [
+    {
+      "path": "dark-main-top.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "31cd3eee1500a5bb12712df992529c6d7910a9c47bd91e7d907e60ffb52b733a",
+      "captured_at": "2026-10-23T13:32:27.772484+09:00",
+      "crop": [
+        0,
+        0,
+        1440,
+        3120
+      ],
+      "server": "production",
+      "capture": "ADB exec-out screencap -p 원본"
+    },
+    {
+      "path": "main-top.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "2187ed3a6bada64d79aa49bf9f8a86e925f10c398ab5a266b5325464050eed72",
+      "captured_at": "2026-10-23T13:38:16.022530+09:00",
+      "crop": [
+        0,
+        0,
+        1440,
+        3120
+      ],
+      "server": "production",
+      "capture": "ADB exec-out screencap -p 원본"
+    },
+    {
+      "path": "notification-settings.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "717f0230ff545a3cb43be6f8615d559fab53d4bae34188f31b5f83f3030bad48",
+      "captured_at": "2026-10-23T13:35:43.542195+09:00",
+      "crop": [
+        0,
+        140,
+        1440,
+        2952
+      ],
+      "server": "production",
+      "capture": "ADB exec-out screencap -p 원본",
+      "system_navigation_bar": [
+        0,
+        2952,
+        1440,
+        3120
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1440,
+        140
+      ]
+    },
+    {
+      "path": "today.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "0b197aa3a017046bd11602ad9c388cf2207a42d32a6269ec017318a5f42312cb",
+      "captured_at": "2026-10-23T13:37:35.014963+09:00",
+      "crop": [
+        0,
+        0,
+        1440,
+        3120
+      ],
+      "server": "production",
+      "capture": "ADB exec-out screencap -p 원본"
+    },
+    {
+      "path": "week-day.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "3374d4b44395c7c098d89d6de23cb9138088a2eedaa5e585119f979093de2db9",
+      "captured_at": "2026-10-23T13:40:10.220280+09:00",
+      "crop": [
+        0,
+        0,
+        1440,
+        3120
+      ],
+      "server": "production",
+      "capture": "ADB exec-out screencap -p 원본"
+    },
+    {
+      "path": "advanced.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "8547a707b741059cc6560a8dbf458a2199d26a8972287388135526fc617f0cd4",
+      "captured_at": "2026-10-23T13:56:36.599058+09:00",
+      "crop": [
+        0,
+        0,
+        1440,
+        3120
+      ],
+      "server": "test",
+      "capture": "ADB exec-out screencap -p 원본"
+    },
+    {
+      "path": "advanced-chart.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "ec81ad17da6a61132ee6cf492df381a1b16f663a2e399199e478c0d1d536341a",
+      "captured_at": "2026-10-23T13:57:25.898654+09:00",
+      "crop": [
+        0,
+        0,
+        1440,
+        3120
+      ],
+      "server": "test",
+      "capture": "ADB exec-out screencap -p 원본"
+    },
+    {
+      "path": "advanced-values.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "24baaeee3d628878b6ae0005c53c8d02f67067f82787b1c08fef8792f771f46f",
+      "captured_at": "2026-10-23T13:57:20.044487+09:00",
+      "crop": [
+        0,
+        140,
+        1440,
+        2952
+      ],
+      "server": "test",
+      "capture": "ADB exec-out screencap -p 원본",
+      "system_navigation_bar": [
+        0,
+        2952,
+        1440,
+        3120
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1440,
+        140
+      ]
+    },
+    {
+      "path": "main.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "a8a7312420128466ab83d9b0f4cf931a12812fda1d872454452ada6662b46954",
+      "captured_at": "2026-10-23T14:09:27.908155+09:00",
+      "crop": [
+        0,
+        140,
+        1440,
+        2952
+      ],
+      "server": "production",
+      "capture": "실제 기기에서 해당 부분으로 스크롤 후 ADB exec-out screencap -p 전체 화면 원본",
+      "system_navigation_bar": [
+        0,
+        2952,
+        1440,
+        3120
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1440,
+        140
+      ]
+    },
+    {
+      "path": "timeline.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "5e41f09f7d75db1ffc70e082d8c486e24ac39b9596f34d81a705b6f1a05e83d1",
+      "captured_at": "2026-10-23T14:09:34.094010+09:00",
+      "crop": [
+        0,
+        140,
+        1440,
+        2952
+      ],
+      "server": "production",
+      "capture": "실제 기기에서 해당 부분으로 스크롤 후 ADB exec-out screencap -p 전체 화면 원본",
+      "system_navigation_bar": [
+        0,
+        2952,
+        1440,
+        3120
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1440,
+        140
+      ]
+    },
+    {
+      "path": "dark-main.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "4117c0198bbc4a6e82315a32182bc2e8cabcc7de33f2e41607c1c570dbd98cfe",
+      "captured_at": "2026-10-23T14:08:28.480825+09:00",
+      "crop": [
+        0,
+        140,
+        1440,
+        2952
+      ],
+      "server": "production",
+      "capture": "실제 기기에서 해당 부분으로 스크롤 후 ADB exec-out screencap -p 전체 화면 원본",
+      "system_navigation_bar": [
+        0,
+        2952,
+        1440,
+        3120
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1440,
+        140
+      ]
+    },
+    {
+      "path": "week.png",
+      "size": [
+        1440,
+        3120
+      ],
+      "sha256": "f4eaf394e9d6aff6ec4ee0cab972a0851fcbd95a30aab8121f3be166a0f37235",
+      "captured_at": "2026-10-23T14:09:43.191214+09:00",
+      "crop": [
+        0,
+        140,
+        1440,
+        2952
+      ],
+      "server": "production",
+      "capture": "실제 기기에서 해당 부분으로 스크롤 후 ADB exec-out screencap -p 전체 화면 원본",
+      "system_navigation_bar": [
+        0,
+        2952,
+        1440,
+        3120
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1440,
+        140
+      ]
+    }
+  ],
+  "시스템바_근거": "SM-S948U WindowManager Insets statusBars [0,0][1440,140], navigationBars [0,2952][1440,3120] 및 보존 UI XML"
+}

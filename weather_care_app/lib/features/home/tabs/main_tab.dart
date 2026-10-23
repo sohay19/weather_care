@@ -427,13 +427,13 @@ class _YesterdayComparisonSection extends StatelessWidget {
         ? const <_ComparisonMetricData>[]
         : [
             _ComparisonMetricData(
-              subject: '기온은',
+              subject: '기온',
               current: todayObservation.temperature,
               previous: yesterdayObservation.temperature,
               unit: '℃',
             ),
             _ComparisonMetricData(
-              subject: '체감온도는',
+              subject: '체감온도',
               current: todayObservation.apparentTemperature,
               previous: yesterdayObservation.apparentTemperature,
               unit: '℃',
@@ -441,7 +441,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
             if (todayObservation.pm25 != null &&
                 yesterdayObservation.pm25 != null)
               _ComparisonMetricData(
-                subject: '초미세먼지는',
+                subject: '초미세먼지',
                 current: todayObservation.pm25?.toDouble(),
                 previous: yesterdayObservation.pm25?.toDouble(),
                 unit: '㎍/㎥',
@@ -449,7 +449,7 @@ class _YesterdayComparisonSection extends StatelessWidget {
             else if (todayObservation.pm10 != null &&
                 yesterdayObservation.pm10 != null)
               _ComparisonMetricData(
-                subject: '미세먼지는',
+                subject: '미세먼지',
                 current: todayObservation.pm10?.toDouble(),
                 previous: yesterdayObservation.pm10?.toDouble(),
                 unit: '㎍/㎥',
@@ -464,15 +464,6 @@ class _YesterdayComparisonSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _singleLineComparisonText(
-          _comparisonSubtitle(basis),
-          style: TextStyle(
-            color: WeatherCareTheme.of(context).textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
         if (loading) ...[
           const LinearProgressIndicator(minHeight: 3),
           const SizedBox(height: 10),
@@ -521,10 +512,30 @@ class _YesterdayComparisonSection extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           if (skyComparable && metrics.isNotEmpty) const SizedBox(height: 10),
-          for (var index = 0; index < metrics.length; index++) ...[
-            _ComparisonMetric(metric: metrics[index]),
-            if (index < metrics.length - 1) const SizedBox(height: 9),
-          ],
+          if (metrics.isNotEmpty)
+            Container(
+              key: const ValueKey('yesterday-comparison-card'),
+              decoration: BoxDecoration(
+                color: WeatherCareTheme.of(context).dailyTemperatureBackground,
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Column(
+                children: [
+                  for (var index = 0; index < metrics.length; index++) ...[
+                    _ComparisonMetric(metric: metrics[index]),
+                    if (index < metrics.length - 1)
+                      Divider(
+                        key: ValueKey('yesterday-comparison-divider-$index'),
+                        height: 1,
+                        thickness: 1,
+                        indent: 12,
+                        endIndent: 12,
+                        color: WeatherCareTheme.of(context).outline,
+                      ),
+                  ],
+                ],
+              ),
+            ),
         ],
       ],
     );
@@ -547,13 +558,8 @@ class _ComparisonMetric extends StatelessWidget {
             '${difference > 0 ? '높아요' : '낮아요'}';
     String value(double value) =>
         '${formatWeatherNumber(value, keepDecimal: metric.unit == '℃')}${metric.unit}';
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: WeatherCareTheme.of(context).surfaceMuted,
-        borderRadius: BorderRadius.circular(13),
-      ),
       child: Row(
         key: ValueKey('yesterday-comparison-row-${metric.subject}'),
         children: [
@@ -562,8 +568,18 @@ class _ComparisonMetric extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
-                '${metric.subject} $change.',
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: metric.subject,
+                      style: metric.unit == '℃'
+                          ? const TextStyle(fontWeight: FontWeight.w400)
+                          : null,
+                    ),
+                    TextSpan(text: ' · $change.'),
+                  ],
+                ),
                 style: const TextStyle(fontWeight: FontWeight.w700),
                 maxLines: 1,
                 softWrap: false,
@@ -573,7 +589,12 @@ class _ComparisonMetric extends StatelessWidget {
           const Spacer(),
           Text(
             '어제 ${value(metric.previous!)}',
-            style: WeatherCareTheme.of(context).microTextStyle,
+            style: WeatherCareTheme.of(context).microTextStyle.copyWith(
+                  fontFamily:
+                      metric.unit == '℃' ? WeatherCareTheme.fontSuite : null,
+                  fontWeight: metric.unit == '℃' ? FontWeight.w600 : null,
+                  color: WeatherCareTheme.of(context).textSecondary,
+                ),
             maxLines: 1,
             softWrap: false,
           ),
@@ -607,7 +628,7 @@ class _ComparisonMetricData {
   final String unit;
 
   const _ComparisonMetricData({
-    this.subject = '기온은',
+    this.subject = '기온',
     required this.current,
     required this.previous,
     required this.unit,
@@ -656,34 +677,6 @@ String? _comparisonBasisLabel(ComparisonBasis? basis) {
   if (current != null) source.add(current);
   if (previous != null) source.add(previous);
   return source.isEmpty ? null : source.join(' · ');
-}
-
-String _comparisonSubtitle(ComparisonBasis? basis) {
-  if (basis?.provider == 'KMA_FORECAST_VS_ULTRA_SHORT_OBSERVATION') {
-    final time = _comparisonTimeLabel(basis?.currentForecastAt);
-    return time == null
-        ? '다음 시간 기온 예보를 어제 같은 시간 실황과 비교해요'
-        : '$time 기준, 다음 시간 기온 예보를 어제 실황과 비교해요';
-  }
-  if (basis?.provider == 'KMA_ULTRA_SHORT_OBSERVATION') {
-    return '선택지역 동네예보 격자의 오늘·어제 같은 시각을 비교해요';
-  }
-  if (basis?.provider == 'KMA_ASOS') {
-    return '인근 ASOS 관측소의 오늘·어제 같은 시각을 비교해요';
-  }
-  return '같은 지역의 같은 기준시각 자료만 비교해요';
-}
-
-String? _comparisonTimeLabel(String? raw) {
-  if (raw == null || !RegExp(r'(Z|[+-]\d{2}:\d{2})$').hasMatch(raw)) {
-    return null;
-  }
-  final parsed = DateTime.tryParse(raw);
-  if (parsed == null) return null;
-  final inKorea = parsed.toUtc().add(const Duration(hours: 9));
-  final period = inKorea.hour < 12 ? '오전' : '오후';
-  final hour = inKorea.hour % 12 == 0 ? 12 : inKorea.hour % 12;
-  return '$period $hour시';
 }
 
 String? _comparisonObservationClock(String prefix, String? raw) {

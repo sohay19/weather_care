@@ -816,7 +816,7 @@ void main() {
       const Offset(0, -300),
     );
     await tester.pumpAndSettle();
-    expect(find.text('기온은 어제보다 2.0℃ 높아요.'), findsOneWidget);
+    expect(find.text('기온 · 어제보다 2.0℃ 높아요.'), findsOneWidget);
   });
 
   testWidgets('경량 자료가 먼저 오면 전체 Today 전에 Main 핵심 카드를 표시한다', (tester) async {

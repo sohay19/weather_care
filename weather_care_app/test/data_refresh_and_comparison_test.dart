@@ -302,7 +302,7 @@ void main() {
     expect(find.text('어제와 비교'), findsOneWidget);
     expect(
       find.text('오전 10시 기준, 다음 시간 기온 예보를 어제 실황과 비교해요'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.text('선택 격자 57/124'),
@@ -313,13 +313,32 @@ void main() {
       findsNothing,
     );
     expect(
-      find.text('기온은 어제보다 2.3℃ 높아요.'),
+      find.text('기온 · 어제보다 2.3℃ 높아요.'),
       findsOneWidget,
     );
     expect(find.text('어제 20.0℃'), findsOneWidget);
     expect(find.text('어제 19.5℃'), findsOneWidget);
+    final combinedComparison =
+        find.byKey(const ValueKey('yesterday-comparison-card'));
+    expect(combinedComparison, findsOneWidget);
+    for (final subject in ['기온', '체감온도']) {
+      expect(
+        find.descendant(
+          of: combinedComparison,
+          matching: find.byKey(ValueKey('yesterday-comparison-row-$subject')),
+        ),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.descendant(
+        of: combinedComparison,
+        matching: find.byKey(const ValueKey('yesterday-comparison-divider-0')),
+      ),
+      findsOneWidget,
+    );
     final temperatureRow =
-        find.byKey(const ValueKey('yesterday-comparison-row-기온은'));
+        find.byKey(const ValueKey('yesterday-comparison-row-기온'));
     expect(tester.getRect(find.text('어제 20.0℃')).right,
         closeTo(tester.getRect(temperatureRow).right, 1));
     expect(find.textContaining('오늘 예보 22.3℃ · 어제 실황'), findsNothing);
@@ -346,9 +365,8 @@ void main() {
     expect(future.dy, greaterThan(comparison.dy));
 
     for (final text in [
-      '오전 10시 기준, 다음 시간 기온 예보를 어제 실황과 비교해요',
       '하늘 상태는 오늘 맑음, 어제 구름 많음이었어요.',
-      '기온은 어제보다 2.3℃ 높아요.',
+      '기온 · 어제보다 2.3℃ 높아요.',
       '어제 20.0℃',
     ]) {
       final widget = tester.widget<Text>(find.text(text));

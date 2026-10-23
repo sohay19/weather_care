@@ -15,9 +15,13 @@ import '../widgets/server_feature_unavailable_card.dart';
 import '../widgets/tab_page_header.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/weather_brief_text.dart';
+import '../widgets/week_presentation.dart';
+import '../widgets/temperature_period.dart';
 
 class MainTab extends StatelessWidget {
   final TodayWeatherResponse today;
+  final WeeklyForecastItem? todayForecast;
+  final WeatherDataPhase weeklyDataPhase;
   final WeatherDataPhase dataPhase;
   final String dateLabel;
   final String mood;
@@ -42,6 +46,8 @@ class MainTab extends StatelessWidget {
   const MainTab({
     super.key,
     required this.today,
+    this.todayForecast,
+    this.weeklyDataPhase = WeatherDataPhase.ready,
     this.dataPhase = WeatherDataPhase.ready,
     required this.dateLabel,
     required this.mood,
@@ -199,6 +205,8 @@ class MainTab extends StatelessWidget {
                     ],
                     _TopWeatherCard(
                       today: today,
+                      todayForecast: todayForecast,
+                      weeklyDataPhase: weeklyDataPhase,
                       yesterday: yesterdayComparison,
                       mood: mood,
                       compact: compact,
@@ -236,12 +244,16 @@ class MainTab extends StatelessWidget {
 class _TodaySection extends StatelessWidget {
   final ComparisonResponse? yesterday;
   final CurrentWeather current;
+  final WeeklyForecastItem? todayForecast;
+  final WeatherDataPhase weeklyDataPhase;
   final Future<void> Function()? onRetryComparison;
   final bool comparisonLoading;
 
   const _TodaySection({
     required this.yesterday,
     required this.current,
+    required this.todayForecast,
+    required this.weeklyDataPhase,
     required this.comparisonLoading,
     this.onRetryComparison,
   });
@@ -312,6 +324,58 @@ class _TodaySection extends StatelessWidget {
         Row(
           children: [
             Icon(
+              Icons.thermostat_rounded,
+              size: 18,
+              color: WeatherCareTheme.of(context).primaryDeep,
+            ),
+            const SizedBox(width: 9),
+            const Expanded(
+              child: Text(
+                '오늘의 기온',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          key: const ValueKey('main-daily-temperature-row'),
+          children: [
+            for (final maximum in [false, true]) ...[
+              if (maximum) const SizedBox(width: 8),
+              Expanded(
+                child: TemperaturePeriod(
+                  label: maximum ? '최고' : '최저',
+                  value: dailyTemperature(maximum: maximum),
+                  backgroundColor:
+                      WeatherCareTheme.of(context).dailyTemperatureBackground,
+                  labelStyle: TextStyle(
+                    color: WeatherCareTheme.of(context).textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  valueStyle: TextStyle(
+                    color: WeatherCareTheme.of(context).textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        if (weeklyDataPhase == WeatherDataPhase.ready &&
+            (todayForecast?.minTemperatureSource == 'HOURLY' ||
+                todayForecast?.maxTemperatureSource == 'HOURLY'))
+          Text('받은 시간대 기준 최저·최고',
+              style: WeatherCareTheme.of(context).microTextStyle),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Icon(
               Icons.call_missed,
               size: 18,
               color: WeatherCareTheme.of(context).primaryDeep,
@@ -336,6 +400,13 @@ class _TodaySection extends StatelessWidget {
         ),
       ],
     );
+  }
+  String dailyTemperature({required bool maximum}) {
+    final forecast = todayForecast;
+    final value = forecast == null || weeklyDataPhase != WeatherDataPhase.ready
+        ? null
+        : weekTemperature(forecast, maximum: maximum);
+    return value == null ? weeklyDataPhase.missingText() : weekDegrees(value);
   }
 }
 
@@ -666,6 +737,8 @@ class _ProgressiveLoadingCard extends StatelessWidget {
 
 class _TopWeatherCard extends StatelessWidget {
   final TodayWeatherResponse today;
+  final WeeklyForecastItem? todayForecast;
+  final WeatherDataPhase weeklyDataPhase;
   final ComparisonResponse? yesterday;
   final String mood;
   final bool compact;
@@ -676,6 +749,8 @@ class _TopWeatherCard extends StatelessWidget {
 
   const _TopWeatherCard({
     required this.today,
+    required this.todayForecast,
+    required this.weeklyDataPhase,
     required this.yesterday,
     required this.mood,
     required this.compact,
@@ -727,6 +802,8 @@ class _TopWeatherCard extends StatelessWidget {
           _TodaySection(
             yesterday: yesterday,
             current: current,
+            todayForecast: todayForecast,
+            weeklyDataPhase: weeklyDataPhase,
             onRetryComparison: onRetryComparison,
             comparisonLoading: comparisonLoading,
           ),

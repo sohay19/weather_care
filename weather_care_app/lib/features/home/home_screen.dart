@@ -1168,6 +1168,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? _statusView('main-tab')
                   : MainTab(
                       today: visibleToday!,
+                      todayForecast: visibleWeekly?.days
+                          .where(
+                              (day) => day.forecastDate == dateInKorea(_now()))
+                          .singleOrNull,
+                      weeklyDataPhase: weeklyPhase,
                       dataPhase: todayPhase,
                       dateLabel: _dateLabel,
                       mood: todayPhase == WeatherDataPhase.loading

@@ -38,6 +38,11 @@ class NotificationNavigationService {
     }
 
     _pendingDestination = null;
+    if (destination.target == NotificationTarget.storeUpdate) {
+      unawaited(
+          navigator.pushNamed(destination.routeName, arguments: destination));
+      return;
+    }
     unawaited(
       navigator.pushNamedAndRemoveUntil(
         destination.routeName,

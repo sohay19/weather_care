@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:weather_care/firebase_options.dart';
 
 import 'app.dart';
+import 'features/update/app_update_gate.dart';
 import 'services/analytics_consent.dart';
 import 'services/ad_removal_service.dart';
 import 'services/ads_consent.dart';
@@ -18,6 +19,7 @@ import 'services/native_ad_unit_config.dart';
 import 'services/theme_mode_settings.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/notification_navigation_service.dart';
+import 'services/notification_destination.dart';
 import 'startup.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
@@ -43,7 +45,6 @@ Future<void> main() async {
   runApp(
     WeatherCareStartup(
       initializeApp: _initializeApp,
-      onAppMounted: _startAdsAfterAppFrame,
     ),
   );
 }
@@ -91,11 +92,18 @@ Future<Widget> _initializeApp() async {
     FirebaseMessaging.onMessageOpenedApp.map((message) => message.data),
   );
 
-  return WeatherCareApp(
-    navigatorKey: _appNavigatorKey,
-    initialNotificationData: initialNotificationData,
-    onHomeReady: _appOpenAds.markHomeReady,
-    adRemoval: AdRemovalService.instance,
+  return AppUpdateGate(
+    skipCheck: initialNotificationData != null &&
+        NotificationDestination.fromMessageData(initialNotificationData)
+                .target ==
+            NotificationTarget.storeUpdate,
+    onComplete: _startAdsAfterAppFrame,
+    child: WeatherCareApp(
+      navigatorKey: _appNavigatorKey,
+      initialNotificationData: initialNotificationData,
+      onHomeReady: _appOpenAds.markHomeReady,
+      adRemoval: AdRemovalService.instance,
+    ),
   );
 }
 

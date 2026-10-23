@@ -49,7 +49,9 @@ class ForegroundNotificationContent {
       title: notification.title,
       body: notification.body == null
           ? null
-          : _sentenceLineBreaks(notification.body!),
+          : message.data['notificationTarget'] == 'STORE_UPDATE'
+              ? notification.body
+              : _sentenceLineBreaks(notification.body!),
       payload: encodeForegroundNotificationData(message.data),
     );
   }

@@ -1,0 +1,11 @@
+[Unit]
+Description=날씨챙겨 시험 스토어 업데이트 매일 오전 9시 확인
+
+[Timer]
+OnCalendar=*-*-* 09:00:00 Asia/Seoul
+AccuracySec=1s
+Persistent=true
+Unit=weather-care-test-store-update.service
+
+[Install]
+WantedBy=timers.target

@@ -104,9 +104,12 @@ void main() {
     apnsRegistrationRequests = 0;
     service = NotificationRegistrationService(client,
         messaging: messaging,
-        diagnosticLog: events.add, registerForRemoteNotifications: () async {
-      apnsRegistrationRequests++;
-    }, apnsRetryDelay: Duration.zero);
+        diagnosticLog: events.add,
+        readAppVersion: () async => '1.2.0+120',
+        registerForRemoteNotifications: () async {
+          apnsRegistrationRequests++;
+        },
+        apnsRetryDelay: Duration.zero);
   });
   tearDown(() async {
     debugDefaultTargetPlatformOverride = null;
@@ -142,6 +145,18 @@ void main() {
     expect(client.calls.last.body['fcmToken'], 'refreshed-token');
     expect(client.calls.last.body['minimumAgeConfirmed'], isTrue);
     expect(client.calls.last.body['agePolicyVersion'], 1);
+    expect(client.calls.last.body['appVersion'], '1.2.0+120');
+  });
+
+  test('버전 조회 실패도 FCM·위치 등록을 막지 않는다', () async {
+    await service.dispose();
+    service = NotificationRegistrationService(client,
+        messaging: messaging,
+        readAppVersion: () async => throw StateError('unavailable'));
+    await initialize();
+    expect(client.calls, hasLength(1));
+    expect(client.calls.single.body.containsKey('appVersion'), isFalse);
+    expect(client.calls.single.body['fcmToken'], 'test-token');
   });
 
   test('서버 삭제 중지 상태면 토큰 갱신·앱 복귀로 다시 등록하지 않는다', () async {

@@ -65,6 +65,7 @@ Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
       NotificationTopic.lightning ||
       NotificationTopic.weatherWarning ||
       NotificationTopic.unknown ||
+      NotificationTopic.appUpdate ||
       null =>
         const {},
     };

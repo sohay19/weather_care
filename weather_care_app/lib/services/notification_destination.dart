@@ -1,6 +1,7 @@
 enum NotificationTarget {
   main,
   weatherDetails,
+  storeUpdate,
 }
 
 enum NotificationTopic {
@@ -20,26 +21,48 @@ enum NotificationTopic {
   heat,
   weatherWarning,
   unknown,
+  appUpdate,
 }
 
 class NotificationDestination {
   final NotificationTarget target;
   final NotificationTopic topic;
+  final Uri? storeUrl;
 
   const NotificationDestination({
     required this.target,
     required this.topic,
+    this.storeUrl,
   });
 
   String get routeName => switch (target) {
         NotificationTarget.main => '/',
         NotificationTarget.weatherDetails => '/weather-details',
+        NotificationTarget.storeUpdate => '/store-update',
       };
 
   static NotificationDestination fromMessageData(
     Map<String, dynamic> data,
   ) {
     final target = _targetFromWireValue(data['notificationTarget']);
+    if (target == NotificationTarget.storeUpdate) {
+      final url = Uri.tryParse(data['storeUrl']?.toString() ?? '');
+      final valid = url != null &&
+          url.scheme == 'https' &&
+          url.userInfo.isEmpty &&
+          (!url.hasPort || url.port == 443) &&
+          ((url.host == 'play.google.com' &&
+                  url.path == '/store/apps/details' &&
+                  url.queryParameters['id'] == 'com.codesoha.weathercare') ||
+              (url.host == 'apps.apple.com' &&
+                  RegExp(r'/id\d+(?:/|$)').hasMatch(url.path)));
+      return NotificationDestination(
+        target:
+            valid ? NotificationTarget.storeUpdate : NotificationTarget.main,
+        topic: valid ? NotificationTopic.appUpdate : NotificationTopic.unknown,
+        storeUrl: valid ? url : null,
+      );
+    }
     if (target != null) {
       return NotificationDestination(
         target: target,
@@ -55,6 +78,7 @@ NotificationTarget? _targetFromWireValue(Object? value) {
   return switch (value?.toString()) {
     'MAIN' => NotificationTarget.main,
     'WEATHER_DETAILS' => NotificationTarget.weatherDetails,
+    'STORE_UPDATE' => NotificationTarget.storeUpdate,
     _ => null,
   };
 }
@@ -62,6 +86,7 @@ NotificationTarget? _targetFromWireValue(Object? value) {
 NotificationTopic _topicFromWireValue(Object? value) {
   return switch (value?.toString()) {
     'OVERVIEW' => NotificationTopic.overview,
+    'APP_UPDATE' => NotificationTopic.appUpdate,
     'STRONG_WIND' => NotificationTopic.strongWind,
     'ROAD_ICE' => NotificationTopic.roadIce,
     'LIGHTNING' => NotificationTopic.lightning,

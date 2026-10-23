@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'api_client.dart';
 import 'current_location_service.dart';
@@ -19,6 +20,7 @@ class NotificationRegistrationService {
   final void Function(String)? diagnosticLog;
   final Future<void> Function()? registerForRemoteNotifications;
   final Duration apnsRetryDelay;
+  final Future<String?> Function()? readAppVersion;
   FirebaseMessaging get messaging => _messaging ?? FirebaseMessaging.instance;
   StreamSubscription<String>? _tokenSubscription;
   _RegistrationTarget? _target;
@@ -32,6 +34,7 @@ class NotificationRegistrationService {
     this.diagnosticLog,
     this.registerForRemoteNotifications,
     this.apnsRetryDelay = const Duration(milliseconds: 500),
+    this.readAppVersion,
   }) : _messaging = messaging {
     _record('service:ready');
   }
@@ -187,6 +190,23 @@ class NotificationRegistrationService {
           return;
         }
         stage = 'server';
+        String? appVersion;
+        try {
+          if (readAppVersion != null) {
+            appVersion = await readAppVersion!();
+          } else {
+            final info = await PackageInfo.fromPlatform()
+                .timeout(const Duration(seconds: 3));
+            appVersion = info.buildNumber.isEmpty
+                ? info.version
+                : '${info.version}+${info.buildNumber}';
+          }
+        } catch (_) {
+          // 버전 조회에 실패해도 기존 등록 처리는 계속한다.
+        }
+        if (_disposed || _target != target || !(canRegister?.call() ?? true)) {
+          return;
+        }
         _record('server:request');
         await client.putJson(
           '/api/v1/installations/${target.installationId}',
@@ -195,6 +215,8 @@ class NotificationRegistrationService {
             'fcmToken': token,
             'locationMode': target.locationMode,
             'platform': defaultTargetPlatform.name,
+            if (appVersion != null && appVersion.trim().isNotEmpty)
+              'appVersion': appVersion,
             'timezone': 'Asia/Seoul',
             'latitude': target.coordinates?.latitude,
             'longitude': target.coordinates?.longitude,

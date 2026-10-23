@@ -21,6 +21,8 @@
     "node:prewarm": "tsx src/node/prewarmNationwide.ts",
     "node:backup": "tsx src/node/backup.ts",
     "node:api-renewal": "tsx src/node/runApiRenewalReminder.ts",
+    "node:store-update": "tsx src/node/runStoreUpdateNotifier.ts",
+    "build:store-update": "esbuild src/node/runStoreUpdateNotifier.ts --bundle --platform=node --target=node24 --format=cjs --external:better-sqlite3 --outfile=build/store-update/notifier.cjs",
     "build:api-renewal": "esbuild src/node/runApiRenewalReminder.ts --bundle --platform=node --target=node24 --format=cjs --external:better-sqlite3 --outfile=build/api-renewal/reminder.cjs"
   },
   "dependencies": {

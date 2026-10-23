@@ -1,8 +1,9 @@
 import { RecommendationType } from '../types';
 
-export type NotificationTarget = 'MAIN' | 'WEATHER_DETAILS';
+export type NotificationTarget = 'MAIN' | 'WEATHER_DETAILS' | 'STORE_UPDATE';
 
 export type NotificationTopic =
+  | 'APP_UPDATE'
   | 'OVERVIEW'
   | 'STRONG_WIND'
   | 'ROAD_ICE'

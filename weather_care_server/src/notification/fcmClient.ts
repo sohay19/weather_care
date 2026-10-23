@@ -14,6 +14,7 @@ export interface FcmPayload {
   notificationTarget: NotificationTarget;
   notificationTopic: NotificationTopic;
   expiresAt?: string;
+  storeUrl?: string;
 }
 
 export interface FcmCredentials {
@@ -127,12 +128,13 @@ async function sendFcmMessage(
           token: payload.token,
           notification: {
             title: payload.title,
-            body: sentenceLineBreaks(payload.body),
+            body: payload.notificationTarget === 'STORE_UPDATE' ? payload.body : sentenceLineBreaks(payload.body),
           },
           data: {
             notificationKey: payload.notificationKey,
             notificationTarget: payload.notificationTarget,
             notificationTopic: payload.notificationTopic,
+            ...(payload.storeUrl ? { storeUrl: payload.storeUrl } : {}),
             ...(payload.expiresAt ? { expiresAt: payload.expiresAt } : {}),
           },
           android: {

@@ -286,12 +286,20 @@ def build_document() -> None:
         if in_code:
             if stripped:
                 add_plain_paragraph(doc, raw, code_block=True)
+                if (index + 1 < len(lines) and lines[index + 1].strip()
+                        and not lines[index + 1].strip().startswith("```")
+                        and not stripped.startswith("•")):
+                    doc.paragraphs[-1].paragraph_format.keep_with_next = True
             else:
                 spacer = doc.add_paragraph()
                 spacer.paragraph_format.space_after = Pt(2)
             index += 1
             continue
         if not stripped:
+            index += 1
+            continue
+        if stripped.startswith("> "):
+            add_plain_paragraph(doc, stripped[2:])
             index += 1
             continue
         if stripped.startswith("|"):

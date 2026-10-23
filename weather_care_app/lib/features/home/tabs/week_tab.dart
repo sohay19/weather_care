@@ -19,6 +19,7 @@ import '../widgets/preparation_icon.dart';
 import '../widgets/weather_condition_icon.dart';
 import '../widgets/hourly_forecast_section.dart';
 import '../widgets/week_presentation.dart';
+import '../widgets/temperature_period.dart';
 import '../widgets/week_precipitation.dart';
 
 class WeekTab extends StatefulWidget {
@@ -627,7 +628,7 @@ class _WeekDayCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _WeekTemperaturePeriod(
+                child: TemperaturePeriod(
                   label: '최저',
                   value: minimumTemperature == null
                       ? dataPhase.missingText()
@@ -638,7 +639,7 @@ class _WeekDayCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _WeekTemperaturePeriod(
+                child: TemperaturePeriod(
                   label: '최고',
                   value: maximumTemperature == null
                       ? dataPhase.missingText()
@@ -789,63 +790,6 @@ class _WeekDayCard extends StatelessWidget {
       ),
     );
     return card;
-  }
-}
-
-class _WeekTemperaturePeriod extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isPast;
-  final bool isFuture;
-
-  const _WeekTemperaturePeriod({
-    required this.label,
-    required this.value,
-    required this.isPast,
-    required this.isFuture,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-      decoration: BoxDecoration(
-        color: isFuture
-            ? WeatherCareTheme.of(context).primarySoft.withValues(alpha: 0.35)
-            : WeatherCareTheme.of(context).surface.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: WeatherCareTheme.of(context).microTextStyle.copyWith(
-                    color: isPast
-                        ? WeatherCareTheme.of(context).textSecondary
-                        : null,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: isPast
-                      ? WeatherCareTheme.of(context).textSecondary
-                      : null,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

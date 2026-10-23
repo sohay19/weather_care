@@ -126,7 +126,7 @@ void main() {
   };
 
   for (final entry in screens.entries) {
-    testWidgets('320x568·1.3 ${entry.key} 시각 점검', (tester) async {
+    testWidgets('320x568·앱1.1 ${entry.key} 시각 점검', (tester) async {
       tester.view.physicalSize = const Size(320, 568);
       tester.view.devicePixelRatio = 1;
       tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -141,7 +141,7 @@ void main() {
         MediaQuery.textScalerOf(
           tester.element(find.byType(screen.runtimeType)),
         ).scale(10),
-        13,
+        11,
       );
       expect(tester.takeException(), isNull, reason: entry.key);
 

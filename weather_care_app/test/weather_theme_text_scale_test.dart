@@ -11,19 +11,20 @@ void main() {
     expect(data.textScaler.scale(10), 11);
   });
 
-  test('시스템 글자 배율은 1.3까지만 반영한다', () {
-    final data = WeatherCareTheme.scaledMediaQuery(
-      const MediaQueryData(textScaler: TextScaler.linear(2)),
-    );
-
-    expect(data.textScaler.scale(10), 13);
+  test('시스템 글자 배율은 1.1까지만 반영한다', () {
+    for (final scale in [1.2, 1.3, 2.0, 3.0]) {
+      final data = WeatherCareTheme.scaledMediaQuery(
+        MediaQueryData(textScaler: TextScaler.linear(scale)),
+      );
+      expect(data.textScaler.scale(10), 11);
+    }
   });
 
-  test('1.1과 1.3 사이의 시스템 글자 배율은 유지한다', () {
+  test('시스템 1.1배는 그대로 유지한다', () {
     final data = WeatherCareTheme.scaledMediaQuery(
-      const MediaQueryData(textScaler: TextScaler.linear(1.2)),
+      const MediaQueryData(textScaler: TextScaler.linear(1.1)),
     );
 
-    expect(data.textScaler.scale(10), 12);
+    expect(data.textScaler.scale(10), 11);
   });
 }

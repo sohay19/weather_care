@@ -1138,6 +1138,7 @@ void main() {
       weather.response = WeatherLoadResult(
         today: TodayWeatherResponse.fromJson({
           'dataSource': 'test',
+          'generatedAt': '2026-10-22T09:00:00+09:00',
           'region': {'nx': 60, 'ny': 127, 'name': '서울'},
           'current': {'temperature': 10},
           'brief': description,
@@ -1170,7 +1171,7 @@ void main() {
               }
             ],
           'lifestyleMessages': [],
-        }),
+        }, receivedAt: DateTime.now()),
         weekly: WeeklyWeatherResponse.fromJson({'days': []}),
         mode: WeatherLoadMode.server,
         message: 'test',

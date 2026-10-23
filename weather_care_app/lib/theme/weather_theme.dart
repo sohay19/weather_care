@@ -342,6 +342,12 @@ class WeatherCarePalette extends ThemeExtension<WeatherCarePalette> {
       Color.lerp(primarySoft, surface, 0.45)!;
   Color get comparisonBackground =>
       Color.lerp(primarySoft, primaryBorder, 0.35)!;
+  Color get minimumTemperatureText => brightness == Brightness.dark
+      ? const Color(0xFF9EBAD2)
+      : const Color(0xFF50799B);
+  Color get maximumTemperatureText => brightness == Brightness.dark
+      ? const Color(0xFFD5A3A5)
+      : const Color(0xFFA85E62);
 
   TextStyle get specialLabelStyle =>
       WeatherCareTheme.specialLabelStyle.copyWith(color: primaryDeep);

@@ -450,7 +450,13 @@ class _SummaryMetric extends StatelessWidget {
                         .value
                         .replaceAll('자료 없음', dataPhase.missingText()),
                     style: TextStyle(
-                      color: WeatherCareTheme.of(context).primaryDeep,
+                      color: switch (details[index].$1) {
+                        '최저' =>
+                          WeatherCareTheme.of(context).minimumTemperatureText,
+                        '최고' =>
+                          WeatherCareTheme.of(context).maximumTemperatureText,
+                        _ => WeatherCareTheme.of(context).primaryDeep,
+                      },
                       fontFamily: WeatherCareTheme.fontSuite,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -633,6 +639,10 @@ class _WeekDayCard extends StatelessWidget {
                   value: minimumTemperature == null
                       ? dataPhase.missingText()
                       : weekDegrees(minimumTemperature),
+                  valueStyle: TextStyle(
+                    color: WeatherCareTheme.of(context).minimumTemperatureText,
+                    fontWeight: FontWeight.w900,
+                  ),
                   isPast: isPast,
                   isFuture: !isToday && !isPast,
                 ),
@@ -644,6 +654,10 @@ class _WeekDayCard extends StatelessWidget {
                   value: maximumTemperature == null
                       ? dataPhase.missingText()
                       : weekDegrees(maximumTemperature),
+                  valueStyle: TextStyle(
+                    color: WeatherCareTheme.of(context).maximumTemperatureText,
+                    fontWeight: FontWeight.w900,
+                  ),
                   isPast: isPast,
                   isFuture: !isToday && !isPast,
                 ),

@@ -359,7 +359,9 @@ class _TodaySection extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                   valueStyle: TextStyle(
-                    color: WeatherCareTheme.of(context).textPrimary,
+                    color: maximum
+                        ? WeatherCareTheme.of(context).maximumTemperatureText
+                        : WeatherCareTheme.of(context).minimumTemperatureText,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),

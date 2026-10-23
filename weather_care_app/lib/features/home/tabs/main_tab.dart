@@ -284,14 +284,14 @@ class _TodaySection extends StatelessWidget {
               child: Text(
                 '지금 날씨',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 13),
+        const SizedBox(height: 8),
         _TemperatureLine(
           lineKey: const ValueKey('main-current-forecast-row'),
           temperatureLabel: '현재 기온',
@@ -334,7 +334,7 @@ class _TodaySection extends StatelessWidget {
               child: Text(
                 '오늘의 기온',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -386,14 +386,14 @@ class _TodaySection extends StatelessWidget {
               child: Text(
                 '어제와 비교',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         _YesterdayComparisonSection(
           comparison: yesterday,
           loading: comparisonLoading,

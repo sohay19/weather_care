@@ -8,6 +8,6 @@ export default defineConfig({
     }),
   ],
   test: {
-    exclude: ['test-node/**', 'node_modules/**'],
+    include: ['test/**/*.test.ts'],
   },
 });

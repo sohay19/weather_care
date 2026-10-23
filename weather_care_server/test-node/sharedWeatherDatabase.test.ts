@@ -46,14 +46,14 @@ function runtime(root: string, kind: string, extra: NodeJS.ProcessEnv = {}): Nod
   return value;
 }
 
-function seedUser(db: SqliteD1Database, token: string, nx = 60): void {
+function seedUser(db: SqliteD1Database, token: string, nx = 60, id = 'same-id'): void {
   const stamp = now.toISOString();
-  db.sqlite.prepare('INSERT INTO installation_credentials VALUES(?,?,?)').run('same-id', `secret-${token}`, stamp);
+  db.sqlite.prepare('INSERT INTO installation_credentials VALUES(?,?,?)').run(id, `secret-${token}`, stamp);
   db.sqlite.prepare(`INSERT INTO installations(installation_id,fcm_token,nx,ny,region_topic,
     location_mode,minimum_age_confirmed_at,age_policy_version,created_at,updated_at)
-    VALUES('same-id',?,?,127,'weather','MANUAL',?,1,?,?)`).run(token, nx, stamp, stamp, stamp);
+    VALUES(?,?,?,127,'weather','MANUAL',?,1,?,?)`).run(id, token, nx, stamp, stamp, stamp);
   db.sqlite.prepare(`INSERT INTO notification_settings(installation_id,lightning_supported,created_at,updated_at)
-    VALUES('same-id',1,?,?)`).run(stamp, stamp);
+    VALUES(?,1,?,?)`).run(id, stamp, stamp);
 }
 
 function tables(db: SqliteD1Database): string[] {
@@ -78,6 +78,54 @@ async function seedWeather(db: D1Database, rainy = false): Promise<void> {
 }
 
 describe('공용 날씨 DB와 환경별 사용자 DB', () => {
+  it('분리 DB에서 모든 날씨 조회와 사용자 상태·설정 조회가 인증 유무별로 동작한다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
+    const external = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('외부 호출 금지'));
+    const root = directory();
+    const production = runtime(root, 'production');
+    const test = runtime(root, 'test');
+    const secret = 'c'.repeat(64);
+    const id = 'wc_split_database_query_test';
+    for (const [value, umbrella] of [[production, 0], [test, 1]] as const) {
+      seedUser(value.database, '토큰', 60, id);
+      value.database.sqlite.prepare('UPDATE installation_credentials SET secret_hash=?').run(await secretHash(secret));
+      value.database.sqlite.prepare('UPDATE notification_settings SET umbrella_enabled=?').run(umbrella);
+    }
+    await seedWeather(weatherDatabase(production.env), true);
+    const sources = ['KMA_LIGHTNING', 'KHOA_TIDE_OBS', 'KHOA_TIDE_HOURLY', 'KHOA_TIDE_EXTREME',
+      'KHOA_BUOY_OBS', 'KHOA_RIP_CURRENT', 'KHOA_ROMS', 'KWATER_DAM', 'KWATER_RIVER_LEVEL',
+      'HRFCO_RIVER_FLOW', 'NIFS_JELLYFISH_DETAIL'];
+    const routes = ['main', 'today', 'weekly', 'widget', 'comparison/yesterday', 'comparison/last-year',
+      'extra/catalog', 'extra/lightning', ...sources.map(source => `extra/records?source=${source}&targetId=diagnostic`)];
+    for (const value of [production, test]) {
+      for (const authorization of ['', `Bearer ${secret}`, `Bearer ${'d'.repeat(64)}`]) {
+        for (const route of routes) {
+          const suffix = `${route.includes('?') ? '&' : '?'}nx=60&ny=127&installationId=${id}&includeExtras=true&recommendationCatalog=PREPARATION_18`;
+          const response = await app.fetch(new Request(`http://localhost/api/v1/weather/${route}${suffix}`,
+            { headers: { Authorization: authorization } }), value.env);
+          expect(response.status, route).toBe(200);
+          expect(await response.json(), route).not.toHaveProperty('error');
+        }
+      }
+      const headers = { Authorization: `Bearer ${secret}` };
+      const status = await app.fetch(new Request(`http://localhost/api/v1/installations/${id}/status`, { headers }), value.env);
+      expect(await status.json()).toEqual({ registered: true });
+      const settings = await app.fetch(new Request(`http://localhost/api/v1/notification-settings?installationId=${id}`, { headers }), value.env);
+      expect(settings.status).toBe(200);
+      expect(await settings.json()).toHaveProperty('umbrellaEnabled', value === test);
+      const rejected = await app.fetch(new Request(`http://localhost/api/v1/notification-settings?installationId=${id}`), value.env);
+      expect(rejected.status).toBe(401);
+      for (const endpoint of ['main', 'today', 'weekly', 'widget']) {
+        const response = await app.fetch(new Request(`http://localhost/api/v1/weather/${endpoint}?nx=60&ny=127&regionName=` +
+          encodeURIComponent('서울특별시 구로구 구로제3동')), value.env);
+        expect(response.status).toBe(200);
+        expect(await response.json()).toHaveProperty(endpoint === 'widget' ? 'region' : 'region.name',
+          endpoint === 'widget' ? '구로구 구로3동' : '서울특별시 구로구 구로3동');
+      }
+    }
+    expect(external).not.toHaveBeenCalled();
+  });
+
   it('인증된 오늘·주간 조회는 사용자 DB의 인증·설정을 읽고 공용 날씨를 반환한다', async () => {
     vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('외부 호출 금지'));

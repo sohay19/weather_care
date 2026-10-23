@@ -1,0 +1,1207 @@
+{
+  "점검일": "2026-10-23",
+  "배포와실제조회": {
+    "startedAt": "20261023T083402Z",
+    "backup": "/var/backups/weather-care/region-names-20261023T083402Z",
+    "deployment": {
+      "production": {
+        "root": "/opt/weather-care/releases/20261023-full-production/weather_care_server",
+        "manifest": {
+          "src/api/weather.ts": {
+            "before": "fbae31cbc04a5b7b69cb83c56af3fc1941964fe2ef9431c4eb45e928eb977f16",
+            "after": "130a06cad57255809e6086a53be1795b81de2a4823e7fb87ffd585649af5d576"
+          },
+          "src/regions/nationwideLocation.ts": {
+            "before": "0823f3f9323f4b086e732962a3663ac95c8fda55e6d97a5b7734bd6c4da0baeb",
+            "after": "4d53f5001b5a258a38b2fa8f5fea996f88b2b896d21c5b8cc7716fe6c91d486f"
+          },
+          "src/regions/resolvedLocation.ts": {
+            "before": "a2bb24f707c53c1d989ed874dea4cf3a7adb949f7c6ac6c8b58e6668e4da99bc",
+            "after": "fcd9323005e8318185cc92bb47e4d89bd2483196ae728d36622b176ef90db31a"
+          },
+          "src/presentation/homeWidgetSnapshot.ts": {
+            "before": "e183d1b6cdb9f2d0a43d5c58ed3bd4cc89d88205da88ef9eba6d825b43970433",
+            "after": "600b086c35b825abd497e0cbc8e6914bd1846fda4a0df8f654bcfc49dc174c70"
+          }
+        },
+        "nameEndpointsVerified": 4,
+        "serviceActive": "active"
+      },
+      "test": {
+        "root": "/opt/weather-care/releases/20261023-full-test/weather_care_server",
+        "manifest": {
+          "src/api/weather.ts": {
+            "before": "fbae31cbc04a5b7b69cb83c56af3fc1941964fe2ef9431c4eb45e928eb977f16",
+            "after": "130a06cad57255809e6086a53be1795b81de2a4823e7fb87ffd585649af5d576"
+          },
+          "src/regions/nationwideLocation.ts": {
+            "before": "0823f3f9323f4b086e732962a3663ac95c8fda55e6d97a5b7734bd6c4da0baeb",
+            "after": "4d53f5001b5a258a38b2fa8f5fea996f88b2b896d21c5b8cc7716fe6c91d486f"
+          },
+          "src/regions/resolvedLocation.ts": {
+            "before": "a2bb24f707c53c1d989ed874dea4cf3a7adb949f7c6ac6c8b58e6668e4da99bc",
+            "after": "fcd9323005e8318185cc92bb47e4d89bd2483196ae728d36622b176ef90db31a"
+          },
+          "src/presentation/homeWidgetSnapshot.ts": {
+            "before": "e183d1b6cdb9f2d0a43d5c58ed3bd4cc89d88205da88ef9eba6d825b43970433",
+            "after": "600b086c35b825abd497e0cbc8e6914bd1846fda4a0df8f654bcfc49dc174c70"
+          }
+        },
+        "nameEndpointsVerified": 4,
+        "serviceActive": "active"
+      }
+    },
+    "checks": [
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/health",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "POST",
+        "route": "/api/v1/installations/enroll",
+        "status": 201
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/notification-settings/<temporary>",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/notification-settings",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/notification-settings",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/notification-settings",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/installations/<temporary>/status",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/notification-settings",
+        "status": 401
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/catalog",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/background-location",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/location",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/background-location",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>",
+        "status": 200
+      },
+      {
+        "role": "production",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/background-location",
+        "status": 409
+      },
+      {
+        "role": "production",
+        "method": "DELETE",
+        "route": "/api/v1/installations/<temporary>",
+        "status": 204
+      },
+      {
+        "role": "production",
+        "method": "GET",
+        "route": "/api/v1/installations/<temporary>/status",
+        "status": 410
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/health",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "POST",
+        "route": "/api/v1/installations/enroll",
+        "status": 201
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/notification-settings/<temporary>",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/notification-settings",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/notification-settings",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/notification-settings",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/installations/<temporary>/status",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/notification-settings",
+        "status": 401
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/main",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/today",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/weekly",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/widget",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/yesterday",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/comparison/last-year",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/lightning",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/catalog",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/weather/extra/records",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/background-location",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/location",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/background-location",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>",
+        "status": 200
+      },
+      {
+        "role": "test",
+        "method": "PUT",
+        "route": "/api/v1/installations/<temporary>/background-location",
+        "status": 409
+      },
+      {
+        "role": "test",
+        "method": "DELETE",
+        "route": "/api/v1/installations/<temporary>",
+        "status": 204
+      },
+      {
+        "role": "test",
+        "method": "GET",
+        "route": "/api/v1/installations/<temporary>/status",
+        "status": 410
+      }
+    ],
+    "schemaChanged": false,
+    "manualPushSent": false,
+    "comparisons": [
+      {
+        "role": "production",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          58,
+          125
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          58,
+          125
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          58,
+          125
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          58,
+          125
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          98,
+          76
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          98,
+          76
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          98,
+          76
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "production",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          98,
+          76
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          58,
+          125
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          58,
+          125
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          58,
+          125
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          58,
+          125
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          98,
+          76
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          98,
+          76
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/yesterday",
+        "grid": [
+          98,
+          76
+        ],
+        "available": true,
+        "reason": null
+      },
+      {
+        "role": "test",
+        "endpoint": "comparison/last-year",
+        "grid": [
+          98,
+          76
+        ],
+        "available": false,
+        "reason": "COMPARISON_PROVENANCE_UNAVAILABLE"
+      }
+    ],
+    "extraData": {
+      "production": [
+        {
+          "source": "KMA_LIGHTNING",
+          "catalogTargets": 1,
+          "records": 0
+        },
+        {
+          "source": "KHOA_TIDE_OBS",
+          "catalogTargets": 49,
+          "records": 54
+        },
+        {
+          "source": "KHOA_TIDE_HOURLY",
+          "catalogTargets": 57,
+          "records": 96
+        },
+        {
+          "source": "KHOA_TIDE_EXTREME",
+          "catalogTargets": 57,
+          "records": 15
+        },
+        {
+          "source": "KHOA_BUOY_OBS",
+          "catalogTargets": 26,
+          "records": 54
+        },
+        {
+          "source": "KHOA_RIP_CURRENT",
+          "catalogTargets": 0,
+          "records": 0
+        },
+        {
+          "source": "KHOA_ROMS",
+          "catalogTargets": 28,
+          "records": 96
+        },
+        {
+          "source": "KWATER_DAM",
+          "catalogTargets": 59,
+          "records": 51
+        },
+        {
+          "source": "KWATER_RIVER_LEVEL",
+          "catalogTargets": 244,
+          "records": 50
+        },
+        {
+          "source": "HRFCO_RIVER_FLOW",
+          "catalogTargets": 1551,
+          "records": 60
+        },
+        {
+          "source": "NIFS_JELLYFISH_DETAIL",
+          "catalogTargets": 0,
+          "records": 0
+        }
+      ],
+      "test": [
+        {
+          "source": "KMA_LIGHTNING",
+          "catalogTargets": 1,
+          "records": 0
+        },
+        {
+          "source": "KHOA_TIDE_OBS",
+          "catalogTargets": 49,
+          "records": 54
+        },
+        {
+          "source": "KHOA_TIDE_HOURLY",
+          "catalogTargets": 57,
+          "records": 96
+        },
+        {
+          "source": "KHOA_TIDE_EXTREME",
+          "catalogTargets": 57,
+          "records": 15
+        },
+        {
+          "source": "KHOA_BUOY_OBS",
+          "catalogTargets": 26,
+          "records": 54
+        },
+        {
+          "source": "KHOA_RIP_CURRENT",
+          "catalogTargets": 0,
+          "records": 0
+        },
+        {
+          "source": "KHOA_ROMS",
+          "catalogTargets": 28,
+          "records": 96
+        },
+        {
+          "source": "KWATER_DAM",
+          "catalogTargets": 59,
+          "records": 51
+        },
+        {
+          "source": "KWATER_RIVER_LEVEL",
+          "catalogTargets": 244,
+          "records": 50
+        },
+        {
+          "source": "HRFCO_RIVER_FLOW",
+          "catalogTargets": 1551,
+          "records": 60
+        },
+        {
+          "source": "NIFS_JELLYFISH_DETAIL",
+          "catalogTargets": 0,
+          "records": 0
+        }
+      ]
+    },
+    "temporaryEnrollmentsDeleted": {
+      "production": true,
+      "test": true
+    },
+    "completedAt": "2026-10-23T08:35:23.846076+00:00"
+  },
+  "실제DB와프로세스": {
+    "at": "2026-10-23T08:35:20.233795+00:00",
+    "databases": {
+      "production": {
+        "path": "weather-care-users-production.sqlite",
+        "requiredTablesPresent": true,
+        "foreignScopeTablesAbsent": true,
+        "quickCheck": "ok"
+      },
+      "test": {
+        "path": "weather-care-users-test.sqlite",
+        "requiredTablesPresent": true,
+        "foreignScopeTablesAbsent": true,
+        "quickCheck": "ok"
+      },
+      "weather": {
+        "path": "weather-care-weather.sqlite",
+        "requiredTablesPresent": true,
+        "foreignScopeTablesAbsent": true
+      }
+    },
+    "services": {
+      "weather-care-api": {
+        "state": "active",
+        "NODE_DATABASE_PATH": "/var/lib/weather-care/weather-care-users-production.sqlite",
+        "NODE_WEATHER_DATABASE_PATH": "/var/lib/weather-care/weather-care-weather.sqlite"
+      },
+      "weather-care-test-api": {
+        "state": "active",
+        "NODE_DATABASE_PATH": "/var/lib/weather-care/weather-care-users-test.sqlite",
+        "NODE_WEATHER_DATABASE_PATH": "/var/lib/weather-care/weather-care-weather.sqlite"
+      },
+      "weather-care-scheduler": {
+        "state": "active",
+        "NODE_DATABASE_PATH": "/var/lib/weather-care/weather-care-users-production.sqlite",
+        "NODE_WEATHER_DATABASE_PATH": "/var/lib/weather-care/weather-care-weather.sqlite"
+      }
+    },
+    "sourceFreshness": {
+      "gridObservation": [
+        "2026-10-23T08:20:00.000Z",
+        "2026-10-23T08:30:00.000Z"
+      ],
+      "forecast": [
+        "2026102317",
+        "2026-10-23T08:30:00.000Z"
+      ],
+      "extras": [
+        {
+          "source": "HRFCO_RIVER_FLOW",
+          "latestSlot": "2026-10-23T08:00:00.000Z"
+        },
+        {
+          "source": "HRFCO_STATIONS",
+          "latestSlot": "2026-10-23"
+        },
+        {
+          "source": "KHOA_BUOY_OBS",
+          "latestSlot": "2026-10-23T08:00:00.000Z"
+        },
+        {
+          "source": "KHOA_ROMS",
+          "latestSlot": "20261023"
+        },
+        {
+          "source": "KHOA_TIDE_EXTREME",
+          "latestSlot": "20261023"
+        },
+        {
+          "source": "KHOA_TIDE_HOURLY",
+          "latestSlot": "20261023"
+        },
+        {
+          "source": "KHOA_TIDE_OBS",
+          "latestSlot": "2026-10-23T08:00:00.000Z"
+        },
+        {
+          "source": "KMA_LIGHTNING",
+          "latestSlot": "2026-10-23T08:20:00.000Z"
+        },
+        {
+          "source": "KWATER_DAM",
+          "latestSlot": "2026-10-23T08:00:00.000Z"
+        },
+        {
+          "source": "KWATER_DAM_CODES",
+          "latestSlot": "2026-10-23"
+        },
+        {
+          "source": "KWATER_RIVER_LEVEL",
+          "latestSlot": "2026-10-23T08:00:00.000Z"
+        },
+        {
+          "source": "KWATER_RIVER_STATIONS",
+          "latestSlot": "2026-10-23"
+        },
+        {
+          "source": "NIFS_JELLYFISH",
+          "latestSlot": "2026-10-23T04:00:00.000Z"
+        }
+      ]
+    },
+    "accessSummary": [
+      {
+        "route": "/api/v1/weather/main",
+        "status": 200,
+        "count": 6
+      },
+      {
+        "route": "/api/v1/weather/today",
+        "status": 200,
+        "count": 12
+      },
+      {
+        "route": "/api/v1/weather/weekly",
+        "status": 200,
+        "count": 12
+      }
+    ]
+  },
+  "로컬검증": {
+    "Node": {
+      "passed": 305,
+      "failed": 0
+    },
+    "Worker": {
+      "passed": 466,
+      "failed": 0
+    },
+    "TypeScript": "통과",
+    "앱관련회귀": {
+      "passed": 106,
+      "failed": 0
+    },
+    "앱최종검색회귀": {
+      "passed": 23,
+      "failed": 0
+    },
+    "FlutterAnalyze": "통과",
+    "앱전체": {
+      "passed": 759,
+      "failed": 1,
+      "기존실패": "native_startup_defaults_test.dart의 iOS 위젯 폰트 기대8.8과 기존 Swift7.2 불일치. 두 파일은 작업 전 HEAD와 동일."
+    }
+  }
+}

@@ -1,3 +1,4 @@
 {
-  "SERVER_URL": "https://weather-api.codesoha.com"
+  "SERVER_URL": "https://weather-test-api.codesoha.com",
+  "TEST_ACCESS_KEY": "발급받은 시험 접근 키"
 }

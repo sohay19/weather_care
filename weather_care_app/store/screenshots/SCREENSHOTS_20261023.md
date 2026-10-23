@@ -47,10 +47,10 @@ python store/generate_android_store.py --screenshots-only
 
 앱 화면을 갱신하려면 `adb devices -l`로 현재 대상 연결을 확인하고, 실제 앱에서 해당 부분이 잘 보이도록 스크롤한 뒤 `adb -s <연결ID> exec-out screencap -p`의 바이너리 출력을 파일로 저장한다. PowerShell의 텍스트 리다이렉션으로 PNG를 저장하지 않는다. 원본·UI XML과 촬영 명세의 SHA256을 함께 갱신한다. 최종 이미지에서는 실제 시스템 경계로 확인한 `system_status_bar`와 `system_navigation_bar`만 제외한다. 예시 데이터를 주입하는 `capture_android_test.dart`는 이번 실제 촬영 원본 생성에 사용하지 않는다.
 
-심화탭용 APK는 다음 명령으로 빌드하며 로컬 제외 파일의 인증 정보를 사용한다. 촬영 후 원래 APK를 업데이트 설치해 운영 서버로 복원한다.
+심화탭용 APK는 다음 명령으로 빌드하며 Debug 설정의 시험 서버와 인증 정보를 사용한다. 촬영 후 운영 서버용 Release APK를 업데이트 설치해 복원한다.
 
 ```powershell
-& D:\flutter_3.47.4\bin\flutter.bat build apk --debug --dart-define-from-file=config/test-server.define.json
+& D:\flutter_3.47.4\bin\flutter.bat build apk --debug
 ```
 
 실자료 위젯을 다시 촬영하려면 최신 APK가 설치된 대상과 그 APK 경로를 지정한다. 앱에서 날씨 조회를 완료한 뒤 실행해야 한다. 촬영 도구는 별도 화면 창 없이 실행되며 시스템 테마와 위젯 저장값은 종료 시 복원한다.

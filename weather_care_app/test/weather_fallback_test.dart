@@ -27,9 +27,9 @@ void main() {
         containsPair('longitude', '126.803'));
     name.completeError(StateError('GEOCODER_FAILED'));
   });
-  test('별도 설정이 없으면 미니 PC 운영 서버를 사용한다', () async {
+  test('Debug는 별도 설정이 없으면 시험 서버를 사용한다', () async {
     final config = await AppConfig.load(bundle: _JsonAssetBundle({}));
-    expect(config.serverUrl, 'https://weather-api.codesoha.com');
+    expect(config.serverUrl, 'https://weather-test-api.codesoha.com');
   });
 
   test('앱 설정에서는 서버 주소와 시험 접근 키를 로드한다', () async {

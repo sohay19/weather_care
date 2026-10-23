@@ -46,7 +46,9 @@ flutter:
     enable-swift-package-manager: false
   uses-material-design: true
   assets:
-    - config/
+    - path: config/kma.config.json
+      transformers:
+        - package: tool/build_app_config.dart
     - assets/data/kma_regions.json
     - assets/icons/
   fonts:

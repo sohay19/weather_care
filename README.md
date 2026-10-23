@@ -84,12 +84,14 @@ flowchart LR
 
 서버의 공공데이터포털 일반 인증키는 로컬 `.dev.vars` 또는 운영 Worker Secret의 `KMA_SERVICE_KEY`로 주입합니다. 같은 키를 사용하더라도 공공데이터포털에서 단기예보, 생활기상지수(5.0), 에어코리아 대기오염정보 세 서비스를 각각 활용신청해야 전체 지표가 제공됩니다.
 현재 위치 강수 알림은 사용자가 GPS 모드를 선택하고 위치 권한을 허용한 경우에만 위·경도를 서버에 전달합니다. 서버는 같은 500m 기준시각의 기상청 관측분석자료와 레이더가 모두 강수를 나타낼 때만 가능성형 알림을 만들며, 이를 위해 Worker Secret `KMA_APIHUB_KEY`와 API허브의 고해상도 격자자료·레이더 활용 권한이 필요합니다.
-앱의 Git 제외 대상 `config/kma.config.json`에는 운영 서버 주소만 저장합니다.
+앱의 Git 추적 파일 `config/kma.config.json`에는 Debug용 시험 서버 주소와 시험 접근 키를 저장합니다.
+Release / Profile은 운영 서버로 자동 연결하며 빌드 과정에서 자산의 시험 키를 제거합니다.
 기상청 인증키는 서버 Secret으로 관리하며 앱 바이너리에 포함하지 않습니다.
 
 ## 서버 연결
 
-앱은 별도 실행 인자 없이 Cloudflare Tunnel로 공개한 다음 미니 PC 운영 서버를 기본으로 사용합니다.
+앱은 빌드 모드에 따라 서버를 자동으로 선택합니다. Debug는 시험 서버를 사용합니다.
+Release / Profile은 Cloudflare Tunnel로 공개한 다음 미니 PC 운영 서버를 사용합니다.
 
 ```text
 https://weather-api.codesoha.com
@@ -98,25 +100,26 @@ https://weather-api.codesoha.com
 로컬 Workers 서버를 사용할 때 Android 에뮬레이터에서는 호스트 PC의 `localhost`가
 아니라 `10.0.2.2`로 접근해야 합니다.
 
-기본 운영 서버 대신 로컬 서버를 사용할 때만 `SERVER_URL`을 지정합니다.
+Debug에서 시험 서버 대신 로컬 서버를 사용할 때만 `SERVER_URL`을 지정합니다.
 
 ```bash
 cd weather_care_app
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-운영 주소를 자산 설정으로 지정하려면 `weather_care_app/config/kma.config.json`에
-서버 주소만 입력합니다. 앱이 설정 파일을 자산으로 읽으므로 IntelliJ Debug와
-Release 빌드에 모두 자동 적용됩니다.
+`weather_care_app/config/kma.config.json`은 Debug용 설정입니다.
+Release / Profile은 아래 설정이나 빌드 인자와 관계없이 운영 서버에 연결합니다.
 
 ```json
 {
-  "SERVER_URL": "https://weather-api.codesoha.com"
+  "SERVER_URL": "https://weather-test-api.codesoha.com",
+  "TEST_ACCESS_KEY": "발급받은 시험 접근 키"
 }
 ```
 
-실제 파일은 Git에서 제외되며 저장소에는 `config/kma.config.example.json`만
-포함됩니다.
+실제 설정 원본은 사용자 요청에 따라 저장소에서 관리합니다.
+빌드 시 설정 자산을 변환해 Release / Profile에는 운영 주소만 포함하고 시험 키는 제거합니다.
+배포할 때 JSON을 수정할 필요가 없으며 `config/test-server.define.json`은 사용하지 않습니다.
 
 각 프로젝트의 실행 방법과 API 목록은 다음 문서를 참고합니다.
 

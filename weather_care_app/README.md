@@ -23,13 +23,13 @@ flutter run
 
 ## 환경 변수
 
-설정 파일이 없으면 Cloudflare Tunnel로 공개한 미니 PC 운영 서버를 사용합니다.
+빌드 모드에 따라 서버를 자동으로 선택합니다. 배포할 때 설정 파일을 바꿀 필요가 없습니다.
 
-```text
-https://weather-api.codesoha.com
-```
+- Debug: `https://weather-test-api.codesoha.com`
+- Release / Profile: `https://weather-api.codesoha.com`
 
-로컬 서버나 다른 환경을 사용할 때만 `--dart-define`으로 덮어쓸 수 있습니다.
+Debug에서 로컬 서버나 다른 환경을 사용할 때만 `--dart-define`으로 덮어쓸 수 있습니다.
+Release / Profile은 실행 인자와 설정 파일의 서버 주소·시험 키를 무시하고 운영 서버를 사용합니다.
 
 ```bash
 # Windows/macOS/Linux 데스크톱
@@ -39,21 +39,23 @@ flutter run --dart-define=SERVER_URL=http://localhost:8787
 flutter run -d emulator-5554 --dart-define=SERVER_URL=http://10.0.2.2:8787
 ```
 
-시험폰에서 별도 시험 API를 쓸 때는 Git 추적 파일
-`config/kma.config.json`의 `SERVER_URL`을 코드 편집기에서 수정합니다.
-이 파일에는 시험 접근 키도 저장되어 있습니다. 현재 설정은 아래 주소를 사용하므로
-별도 실행 인자 없이 IDE에서 실행할 수 있습니다.
+Git 추적 파일 `config/kma.config.json`은 Debug용 서버 주소와 시험 접근 키를 저장합니다.
+별도 실행 인자 없이 IDE에서 Debug를 실행하면 시험 서버에 연결합니다.
 
 ```powershell
 flutter run -d <기기 ID>
 ```
 
 시험 서버는 접근 키가 없는 요청을 거부합니다. 시험 빌드는 운영 서버의 설치
-인증 정보와 다른 저장 키를 사용합니다. 운영 서버로 되돌릴 때는 같은 파일의
-`SERVER_URL`을 `https://weather-api.codesoha.com`으로 바꾸고
-`TEST_ACCESS_KEY`를 지웁니다. 사용자 요청에 따라 이 설정 파일은 시험 접근 키를 포함한
-원본 그대로 저장소에서 관리합니다. 접근 키가 담긴 APK는 공개하지 않습니다.
-기존 `config/test-server.define.json`을 사용하는 빌드 명령도 계속 지원합니다.
+인증 정보와 다른 저장 키를 사용합니다. 사용자 요청에 따라 설정 원본은 시험 접근 키를
+포함해 저장소에서 관리합니다. 접근 키가 담긴 Debug APK는 공개하지 않습니다.
+`config/test-server.define.json`은 삭제했으며 더 이상 사용하지 않습니다.
+빌드 시 `tool/build_app_config.dart`가 Release / Profile 자산에서 시험 키를 제거하고
+운영 서버 주소만 기록합니다. 원본 JSON은 변경하지 않습니다.
+
+```bash
+flutter build appbundle --release
+```
 
 현재 로컬 `config/kma.config.json`은 시험 서버로 설정되어 있습니다.
 앱은 최초 실행 시 기기별 설치 ID를 생성해 보관하고, 알림 권한이 허용되면 FCM
@@ -70,16 +72,17 @@ flutter run -d <기기 ID>
 운영 응답에서는 서버가 기상청 단기예보에 생활기상지수 자외선과 에어코리아 PM10·PM2.5를 병합합니다. 앱은 `current.uvIndex`, `current.pm10`, `current.pm25`를 파싱하고, 결측시 `--`를 표시합니다.
 
 앱은 외부 날씨 API를 직접 호출하지 않습니다. `config/kma.config.json`에는
-연결할 서버 주소와 시험 서버 접근 키만 저장합니다. 기상청 인증키는 앱에 넣지 않습니다.
+Debug에서 연결할 서버 주소와 시험 서버 접근 키만 저장합니다. 기상청 인증키는 앱에 넣지 않습니다.
 
 ```json
 {
-  "SERVER_URL": "https://weather-api.codesoha.com"
+  "SERVER_URL": "https://weather-test-api.codesoha.com",
+  "TEST_ACCESS_KEY": "발급받은 시험 접근 키"
 }
 ```
 
-시험 서버를 사용할 때는 같은 파일에 `TEST_ACCESS_KEY`도 넣습니다. 앱이 이 파일을
-Flutter 자산으로 읽기 때문에 별도 실행 인자 없이 Debug와 Release에 자동 적용됩니다.
+Debug는 빌드 인자 → JSON → 시험 서버 기본값 순으로 설정을 적용합니다.
+Release / Profile은 항상 운영 서버에 연결하며 패키징된 설정에도 운영 주소만 포함합니다.
 IntelliJ 실행 구성도 다시 수정할 필요가 없습니다.
 
 첫 날씨 조회에서는 저장된 최근 위치를 먼저 확인하고, 운영 서버의 경량 Main 응답으로

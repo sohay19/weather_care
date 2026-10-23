@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-const _defaultServerUrl = 'https://weather-api.codesoha.com';
+const _productionServerUrl = 'https://weather-api.codesoha.com';
+const _defaultServerUrl = 'https://weather-test-api.codesoha.com';
 const _configAssetPath = 'config/kma.config.json';
 
 class AppConfig {
@@ -16,6 +18,10 @@ class AppConfig {
   });
 
   static Future<AppConfig> load({AssetBundle? bundle}) async {
+    if (!kDebugMode) {
+      return const AppConfig(serverUrl: _productionServerUrl);
+    }
+
     const definedServerUrl = String.fromEnvironment('SERVER_URL');
     const definedTestAccessKey = String.fromEnvironment('TEST_ACCESS_KEY');
     var serverUrl =

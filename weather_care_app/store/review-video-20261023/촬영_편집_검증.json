@@ -1,0 +1,48 @@
+{
+  "device": "Samsung Remote Test Lab SM-S741N",
+  "date": "2026-10-23",
+  "duration_seconds": 30,
+  "source": "actual Android screenrecord",
+  "app_build": "Debug 1.1.0+26102302 (시험 서버)",
+  "test_conditions": [
+    "GPS 시험 위치 입력",
+    "수동 발송한 실제 FCM 시연 알림 1회",
+    "자연 발생 기상 알림이나 실제 물리 이동을 촬영한 영상이 아님"
+  ],
+  "segments": [
+    {
+      "source": "disclosure-original.mp4",
+      "start_seconds": 0.1,
+      "duration_seconds": 8,
+      "caption": "1. 위치 권한 요청 전에 사용 목적을 공개",
+      "description": "앱 미사용 중 위치 수집 · 알림 지역 갱신 · 서버 전송"
+    },
+    {
+      "source": "grant-original.mp4",
+      "start_seconds": 8,
+      "duration_seconds": 8,
+      "caption": "2. 백그라운드 위치 ‘항상 허용’ 선택",
+      "description": "앱의 안내 후 시스템 화면에서 사용자가 허용합니다."
+    },
+    {
+      "source": "background-original.mp4",
+      "start_seconds": 4,
+      "duration_seconds": 6,
+      "caption": "3. 앱을 홈으로 내린 상태에서 위치 갱신",
+      "description": "GPS 시험 위치 사용 · 실제 백그라운드 실행 알림"
+    },
+    {
+      "source": "background-original.mp4",
+      "start_seconds": 54,
+      "duration_seconds": 8,
+      "caption": "4. 갱신된 지역으로 실제 푸시 알림 수신",
+      "description": "시험 서버 → FCM → 실제 앱 · 시연 알림 1회"
+    }
+  ],
+  "source_sha256": {
+    "disclosure-original.mp4": "33dc12693642068831c429a98ccbdc1e7a1aef8727ab9279f337e9da87c31c5f",
+    "grant-original.mp4": "fffb5c2189a6c46a078d268573d2d1c916b5b27b51e7f059ccd48e44432979b2",
+    "background-original.mp4": "24d9e1671aa7261339215596b0504ae570bc1f2f2a1c915a56839547b94a7532"
+  },
+  "output_sha256": "2a54b364ebb0a7d7aeb90cbd1de37a0b21e0447de18975e2d79abdf50c4d09bb"
+}

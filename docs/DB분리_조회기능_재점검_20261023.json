@@ -1203,5 +1203,15 @@
       "failed": 1,
       "기존실패": "native_startup_defaults_test.dart의 iOS 위젯 폰트 기대8.8과 기존 Swift7.2 불일치. 두 파일은 작업 전 HEAD와 동일."
     }
+  },
+  "iOS위젯불일치후속확인": {
+    "원인": "2026-10-22 aafcdf0에서 아이콘 크기를8.8→7.2로 변경했지만 테스트 기대값 갱신이 누락됨",
+    "수정": "native_startup_defaults_test.dart 기대값만7.2로 갱신",
+    "위젯구현변경": false,
+    "앱전체재검사": {
+      "passed": 760,
+      "failed": 0
+    },
+    "네이티브iOS빌드": "수행하지 않음"
   }
 }

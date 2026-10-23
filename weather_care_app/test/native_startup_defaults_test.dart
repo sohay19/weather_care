@@ -169,7 +169,7 @@ void main() {
     expect(widget, contains('widgetContent.widgetURL(weatherCareHomeURL)'));
     expect(widget, contains('Button(intent: RefreshWeatherWidgetIntent())'));
     expect(widget, contains('Image(systemName: "arrow.clockwise")'));
-    expect(widget, contains('.font(.system(size: 8.8, weight: .semibold))'));
+    expect(widget, contains('.font(.system(size: 7.2, weight: .semibold))'));
     expect(widget, contains('refreshButtonHitSurface = RadialGradient('));
     expect(widget, contains('endRadius: 22'));
     expect(widget, contains('.frame(width: 44, height: 44)'));

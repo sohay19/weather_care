@@ -1,4 +1,4 @@
-"""2026-10-22 현재 UI로 iPhone·iPad 스토어 스크린샷을 만든다."""
+"""2026-10-23 실제 iOS 앱·홈 위젯 촬영본으로 스토어 스크린샷을 만든다."""
 from __future__ import annotations
 
 import hashlib
@@ -12,11 +12,11 @@ from PIL import Image, ImageDraw, ImageFilter
 import generate_android_store as common
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshots/source-ios-20261022'
-NATIVE = ROOT / 'screenshots/native-ios-20261022'
+SOURCE = ROOT / 'screenshots/source-ios-20261023'
+NATIVE = ROOT / 'screenshots/native-ios-20261023'
 TOPICS = common.TOPICS
 SIZES = {'ios': (1320, 2868), 'ipad': (2064, 2752)}
-BACKUP = ROOT.parent / 'build/ios-screenshots-backup-20261022'
+BACKUP = ROOT.parent / 'build/ios-live-store-20261023/before'
 
 
 def backup(path):
@@ -30,8 +30,23 @@ def widget(family, platform, dark=False):
     """실제 WidgetKit 홈 위젯의 촬영 원본만 사용한다."""
     device = 'tablet' if platform == 'ipad' else 'phone'
     path = NATIVE / device / f'{"dark" if dark else "light"}-{family}.png'
+    records = json.loads((NATIVE / device / 'capture-manifest.json').read_text(encoding='utf-8'))
+    record = next(row for row in records if row['path'] == f'{device}/{path.name}')
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == record['sha256'], path
     with Image.open(path) as image:
         return image.convert('RGBA')
+
+
+def app_screen(name):
+    """시스템 바만 제외한 실제 전체 화면 촬영본의 해시·크롭 범위를 확인한다."""
+    path = SOURCE / 'phone' / f'{name}.png'
+    records = json.loads((SOURCE / 'phone/capture-manifest.json').read_text(encoding='utf-8'))['files']
+    record = next(row for row in records if row['name'] == name)
+    assert record['source_size'] == [1290, 2796] and record['crop'] == [0, 177, 1290, 2694]
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == record['sha256'], path
+    with Image.open(path) as image:
+        assert image.size == (1290, 2517), path
+        return image.convert('RGB')
 
 
 def native_card(canvas, image, xy, width):
@@ -48,29 +63,22 @@ def native_card(canvas, image, xy, width):
 
 def compose(topic, platform):
     stem, eyebrow, headline, caption, source = topic
-    if stem == '05-notifications':
-        caption += ' · 자외선'
     tablet = platform == 'ipad'
     height = 1440 if tablet else round(2868 * 1080 / 1320)
-    canvas = Image.new('RGBA', (1080, height), common.BG)
+    canvas = Image.new('RGBA', (1080, height))
     draw = ImageDraw.Draw(canvas)
     common.text(draw, (540, 60), eyebrow, 30, common.YELLOW, center=True)
     common.text(draw, (540, 120), headline, 65, common.WHITE, 'Heavy', center=True, spacing=11)
     common.text(draw, (540, 293), caption, 25, '#E6F0F7', 'Medium', center=True)
     if source:
-        width, y = (720, 380) if tablet else (820, 410)
-        with Image.open(SOURCE / ('tablet' if tablet else 'phone') / f'{source}.png') as im:
-            x = 80 if stem in ['04-dark-mode', '06-advanced'] else (1080 - width) // 2
-            common.card(canvas, im, (x, y), width, 24)
+        width, y = (500, 380) if tablet else (820, 410)
+        with app_screen(source) as im:
+            x = 80 if stem == '04-dark-mode' else (1080 - width) // 2
+            bounds = common.card(canvas, im, (x, y), width, 24)
+            assert bounds[3] < height, (platform, stem, bounds)
         if stem == '04-dark-mode':
             native_card(canvas, widget('large', platform, True),
                         (555, 860) if tablet else (510, 1490), 460 if tablet else 510)
-        elif stem == '06-advanced':
-            with Image.open(SOURCE / ('tablet' if tablet else 'phone') / 'advanced-chart.png') as im:
-                crop = im.crop((round(im.width * .04), round(im.height * .27),
-                                round(im.width * .96), round(im.height * .91)))
-                common.card(canvas, crop, (555, 850) if tablet else (505, 1380),
-                            465 if tablet else 515, 25)
     elif stem == '03-widget':
         y = 365 if tablet else 430
         widths = [180, 500, 420] if tablet else [300, 740, 660]
@@ -92,12 +100,14 @@ def compose(topic, platform):
         y = 365 if tablet else 510
         assert y + alerts.height + 75 < height, (platform, alerts.height, height)
         canvas.alpha_composite(alerts, ((1080 - alerts.width) // 2, y))
-        common.text(ImageDraw.Draw(canvas), (540, y + alerts.height + 45),
-                    '이해를 돕기 위한 알림 예시예요', 21 if tablet else 25,
-                    '#E6F0F7', 'Regular', center=True)
+    # 제목·앱 화면·위젯을 한 묶음으로 세로 중앙에 맞춘다.
+    bounds = canvas.getchannel('A').getbbox()
+    offset = (height - (bounds[3] - bounds[1])) // 2 - bounds[1]
+    centered = Image.new('RGBA', canvas.size, common.BG)
+    centered.alpha_composite(canvas, (0, offset))
     destination = ROOT / 'screenshots' / platform / f'{stem}.png'
     destination.parent.mkdir(parents=True, exist_ok=True)
-    canvas.convert('RGB').resize(SIZES[platform], Image.Resampling.LANCZOS).save(destination, optimize=True)
+    centered.convert('RGB').resize(SIZES[platform], Image.Resampling.LANCZOS).save(destination, optimize=True)
     return destination
 
 
@@ -166,23 +176,25 @@ def main(topics=None):
             assert im.size == SIZES[path.parent.name] and im.mode == 'RGB' and im.format == 'PNG'
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/ios-20261022-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-10-22', '화면': '현재 Flutter UI의 iOS 비표시 렌더링',
-        '데이터': '촬영용 예시 날씨·관측소·알림 설정', '위젯': '실제 WidgetKit 홈 위젯 촬영본',
+    report = ROOT / 'screenshots/ios-20261023-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-10-23', '화면': '실제 iPhone 앱 전체 화면 촬영, iPad 등록 규격에도 동일 원본 사용',
+        '배치': '제목·앱 화면·위젯·알림 예시 전체 묶음을 이미지의 세로 중앙에 정렬',
+        '데이터': '운영 서버 실자료, 심화 날씨는 테스트 서버 실관측, 실제 촬영용 기기 설정', '위젯': '제품 앱 자료를 표시한 실제 WidgetKit 홈 위젯 촬영본',
         '알림': '지원 알림 종류의 예시 카드 5개(자외선 예시 2026-10-23 추가)', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    docs = [ROOT / 'screenshots/IOS_20261022.md', ROOT / 'screenshots/README.md', report]
+    docs = [ROOT / 'screenshots/IOS_20261023.md', ROOT / 'screenshots/README.md', report]
     files = images + previews + docs
-    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261022.zip']:
+    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261023.zip']:
         package(ROOT / name, files)
-    sources = list(SOURCE.rglob('*.png')) + list(NATIVE.rglob('*'))
+    sources = list(SOURCE.rglob('*')) + list(NATIVE.rglob('*'))
     sources = [path for path in sources if path.is_file()]
-    sources += [path for path in (ROOT / 'native_ios_widget_capture').iterdir() if path.is_file()]
+    for folder in ['native_ios_widget_capture', 'native_ios_app_capture']:
+        sources += [path for path in (ROOT / folder).iterdir() if path.is_file()]
     for name in ['weather-care-store-assets.zip', 'weather-care-store-screenshots.zip']:
         package(ROOT / name, files + sources + [Path(__file__).resolve(),
                 ROOT / 'capture_ios_test.dart', ROOT / 'capture_android_test.dart',
                 ROOT / 'generate_store_screenshots.py', ROOT / 'generate_android_store.py'], preserve=True)
     print(json.dumps({'검증완료': len(records), '플랫폼': list(SIZES),
-                     '묶음': 'app-store/weather-care-ios-screenshots-20261022.zip'}, ensure_ascii=False))
+                     '묶음': 'app-store/weather-care-ios-screenshots-20261023.zip'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

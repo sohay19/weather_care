@@ -1,0 +1,146 @@
+[
+  {
+    "device": "tablet",
+    "theme": "light",
+    "family": "small",
+    "source": "tablet-light-small-home.png",
+    "source_sha256": "2e5b26bd2d3c6a51ac0e3bd35f70ca816a3b0a7595fd24f73c7806d527a564cd",
+    "crop": [
+      284,
+      108,
+      604,
+      428
+    ],
+    "logical_size": [
+      160.0,
+      160.0
+    ],
+    "scale": 2,
+    "path": "tablet/light-small.png",
+    "size": [
+      320,
+      320
+    ],
+    "sha256": "fe6ffdfead4aad46630570759e5b5bdb29ec0107e99e6718084097f39e9ec387"
+  },
+  {
+    "device": "tablet",
+    "theme": "light",
+    "family": "medium",
+    "source": "tablet-light-medium-home.png",
+    "source_sha256": "afd82b85db0e190bb8ce56b3d63061c5925ae7c9a7cb5fe85dd4eab392c8e0ca",
+    "crop": [
+      284,
+      108,
+      996,
+      428
+    ],
+    "logical_size": [
+      356.0,
+      160.0
+    ],
+    "scale": 2,
+    "path": "tablet/light-medium.png",
+    "size": [
+      712,
+      320
+    ],
+    "sha256": "11f0aad255cf61a21d46c2c12eb0c96a4378579dc986d4e2043cddd312d90c13"
+  },
+  {
+    "device": "tablet",
+    "theme": "light",
+    "family": "large",
+    "source": "tablet-light-large-home.png",
+    "source_sha256": "253fb813bfb0b4b4b647255976f6639e3beb8b7dc27c38223b3955d23357f2db",
+    "crop": [
+      284,
+      108,
+      996,
+      820
+    ],
+    "logical_size": [
+      356.0,
+      356.0
+    ],
+    "scale": 2,
+    "path": "tablet/light-large.png",
+    "size": [
+      712,
+      712
+    ],
+    "sha256": "57ac515e20879a866f7242eb58918e2a55718a5db42ae0261042356cf03c21d8"
+  },
+  {
+    "device": "tablet",
+    "theme": "dark",
+    "family": "small",
+    "source": "tablet-dark-small-home.png",
+    "source_sha256": "7b093e861d4199085a367ed1dec0959fe2881efcf236e9f9a92cd21a6b220099",
+    "crop": [
+      284,
+      108,
+      604,
+      428
+    ],
+    "logical_size": [
+      160.0,
+      160.0
+    ],
+    "scale": 2,
+    "path": "tablet/dark-small.png",
+    "size": [
+      320,
+      320
+    ],
+    "sha256": "01ba79c9bc4145c0c19ee05dc1f643e429b0e15551ac1b01b30e019772e1847c"
+  },
+  {
+    "device": "tablet",
+    "theme": "dark",
+    "family": "medium",
+    "source": "tablet-dark-medium-home.png",
+    "source_sha256": "aea977f9baa991d3bf9b3c0ddc8929e3eb595346bb93168514d4c064d48634d1",
+    "crop": [
+      284,
+      108,
+      996,
+      428
+    ],
+    "logical_size": [
+      356.0,
+      160.0
+    ],
+    "scale": 2,
+    "path": "tablet/dark-medium.png",
+    "size": [
+      712,
+      320
+    ],
+    "sha256": "4a621fac0e78c3d90144897546c7eb039f89b0bd548042ef78699dc0caa47e01"
+  },
+  {
+    "device": "tablet",
+    "theme": "dark",
+    "family": "large",
+    "source": "tablet-dark-large-home.png",
+    "source_sha256": "97be830b9e4b72db04076fdc6f563841e91c0ea971473bc17adf56b083072901",
+    "crop": [
+      284,
+      108,
+      996,
+      820
+    ],
+    "logical_size": [
+      356.0,
+      356.0
+    ],
+    "scale": 2,
+    "path": "tablet/dark-large.png",
+    "size": [
+      712,
+      712
+    ],
+    "sha256": "069700c1cef34ed3644d5a6c45f4c034b5ddc1a5b9dcbcb610cd09a604aa29b9"
+  }
+]

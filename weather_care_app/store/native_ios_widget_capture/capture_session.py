@@ -14,13 +14,19 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--legacy', action='store_true', help='iOS 17에서 크기별로 홈 위젯을 추가·촬영')
     parser.add_argument('--families', default='small,medium,large')
+    parser.add_argument('--real-app', action='store_true', help='제품 앱의 실제 저장 자료로 홈 위젯 촬영')
+    parser.add_argument('--keep-session', action='store_true', help='촬영 후 앱 조작 세션 유지')
     args = parser.parse_args()
-    control = Path(__file__).with_name('control.py')
+    control = (Path(__file__).parent.parent / 'native_ios_app_capture/control.py'
+               if args.real_app else Path(__file__).with_name('control.py'))
+    widget_name = '날씨챙겨' if args.real_app else '날씨챙겨 촬영'
     tree = ''
 
     def command(action, name, **kwargs):
         nonlocal tree
         payload = dict(action=action, name=name, **kwargs)
+        if args.real_app:
+            payload['system'] = True
         result = subprocess.run([sys.executable, str(control), '--device', args.device,
             '--command', json.dumps(payload, ensure_ascii=False)], capture_output=True, text=True)
         if result.returncode:
@@ -39,13 +45,13 @@ def main():
         subprocess.run(['xcrun', 'simctl', 'ui', args.device, 'appearance', mode], check=True)
 
     def press_widget(name):
-        widget_tree = tree.split("label: '날씨챙겨 촬영', value: 위젯", 1)[-1]
+        widget_tree = tree.split(f"label: '{widget_name}', value: 위젯", 1)[-1]
         match = re.search(r'ScrollView, .*?\{\{([\d.]+), ([\d.]+)\}, \{([\d.]+), ([\d.]+)\}\}', widget_tree)
         screen = re.search(r'Window, .*?\{\{0.0, 0.0\}, \{([\d.]+), ([\d.]+)\}\}', tree)
         assert match and screen, '실제 홈 위젯 프레임을 확인하지 못했습니다.'
         x, y, w, h = map(float, match.groups())
         sw, sh = map(float, screen.groups())
-        command('press', name, label='날씨챙겨 촬영', duration=1.2)
+        command('press', name, label=widget_name, duration=1.2)
 
     def add_widget(family='small'):
         command('press', 'edit-ready', x=.5, y=.7)
@@ -57,7 +63,7 @@ def main():
         if "label: '위젯 검색'" in tree or "label: 'Search Widgets'" in tree:
             label = '위젯 검색' if "label: '위젯 검색'" in tree else 'Search Widgets'
             command('type', 'search-widget', label=label, text='날씨')
-        tap('날씨챙겨 촬영', name='widget-preview')
+        tap(widget_name, name='widget-preview')
         for index in range(['small', 'medium', 'large'].index(family)):
             indicators = re.findall(r'PageIndicator, .*?\{\{([\d.]+), ([\d.]+)\}, \{([\d.]+), ([\d.]+)\}\}.*?value: (\d+)페이지', tree)
             screen = re.search(r'Window, .*?\{\{0.0, 0.0\}, \{([\d.]+), ([\d.]+)\}\}', tree)
@@ -84,7 +90,7 @@ def main():
                 tap('위젯 제거', 'Remove Widget', name='remove-widget')
                 tap('제거', 'Remove', name='confirm-remove')
         subprocess.run([sys.executable, str(control), '--device', args.device,
-            '--command', '{"action":"finish"}', '--output', str(args.output)],
+            '--command', '{"action":"dump"}' if args.keep_session else '{"action":"finish"}', '--output', str(args.output)],
             check=True, stdout=subprocess.DEVNULL)
         appearance('light')
         print('홈 위젯 6개 촬영 완료', flush=True)
@@ -102,9 +108,10 @@ def main():
     tap('큰 위젯', 'Large Widget', name=f'{args.kind}-light-large-home')
     appearance('dark')
     command('dump', f'{args.kind}-dark-large-home', wait=2)
-    assert '최저 12°' in tree and '우산' in tree and '겉옷' in tree
+    if not args.real_app:
+        assert '최저 12°' in tree and '우산' in tree and '겉옷' in tree
     subprocess.run([sys.executable, str(control), '--device', args.device,
-        '--command', '{"action":"finish"}', '--output', str(args.output)],
+        '--command', '{"action":"dump"}' if args.keep_session else '{"action":"finish"}', '--output', str(args.output)],
         check=True, stdout=subprocess.DEVNULL)
     appearance('light')
     print('홈 위젯 6개 촬영 완료', flush=True)

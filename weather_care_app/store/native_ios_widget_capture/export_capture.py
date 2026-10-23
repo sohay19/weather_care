@@ -12,9 +12,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--kind', choices=['phone', 'tablet'], required=True)
     parser.add_argument('--raw', type=Path, required=True)
+    parser.add_argument('--output', type=Path)
+    parser.add_argument('--widget-name', default='날씨챙겨 촬영')
     args = parser.parse_args()
     app = Path(__file__).resolve().parents[2]
-    output = app / 'store/screenshots/native-ios-20261022' / args.kind
+    output = args.output or app / 'store/screenshots/native-ios-20261022' / args.kind
     output.mkdir(parents=True, exist_ok=True)
     records = []
     scale = 3 if args.kind == 'phone' else 2
@@ -25,7 +27,7 @@ def main():
             tree = args.raw / f'{name}.txt'
             if tree.exists():
                 text = tree.read_text(encoding='utf-8')
-                widget_tree = text.split("label: '날씨챙겨 촬영', value: 위젯", 1)[-1]
+                widget_tree = text.split(f"label: '{args.widget_name}', value: 위젯", 1)[-1]
                 match = re.search(r'ScrollView, .*?\{\{([\d.]+), ([\d.]+)\}, \{([\d.]+), ([\d.]+)\}\}', widget_tree)
                 assert match, name
                 x, y, w, h = map(float, match.groups())

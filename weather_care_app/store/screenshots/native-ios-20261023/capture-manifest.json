@@ -1,0 +1,353 @@
+{
+  "제작일": "2026-10-23",
+  "방식": "제품 앱의 실제 자료를 표시한 WidgetKit 홈 위젯을 SpringBoard에서 촬영",
+  "데이터": "운영 서버 부산광역시 남구 감만1동 실자료, 촬영 시각별 수치 차이 유지",
+  "기기": {
+    "phone": {
+      "모델": "iPhone 15 Pro Max",
+      "iOS": "17.5",
+      "UUID": "71087354-633A-42B1-AD48-60A603FE411F"
+    },
+    "tablet": {
+      "모델": "iPad Pro 13-inch M4",
+      "iOS": "18.6",
+      "UUID": "BBBBA718-F40F-4CF1-B752-4713B04E839A"
+    }
+  },
+  "기준커밋": "4f3389c2855d066a3ba2091f45aa7cd28ccd9f33",
+  "처리": "실제 위젯 프레임 크롭, 바탕색 경계 밖 홈 배경만 투명 처리, 불투명 내부 픽셀 보존 검사",
+  "원본위치": "build/ios-live-store-20261023/raw/{phone,tablet}-widgets",
+  "검증": {
+    "위젯원본": 12,
+    "소형중형대형프레임": true,
+    "불투명내부픽셀보존": true
+  },
+  "소스_SHA256": {
+    "ios/WeatherCareWidget/Fonts/SUITE-Bold.ttf": "3361fbf4606be2e92b511ae22b6b1071248f68cada68ddbf11c601fc6e16bf20",
+    "ios/WeatherCareWidget/Fonts/SUITE-ExtraBold.ttf": "7f0cc5fd9400102d15cc34efec7f628683fe2689a468f9cfebdb060ad0ec541c",
+    "ios/WeatherCareWidget/Fonts/SUITE-Heavy.ttf": "2faba391890dc5327a593e928fb4aa507d9facffc8ab59628fdacb0550b1b2d3",
+    "ios/WeatherCareWidget/Fonts/SUITE-Regular.ttf": "eed7b5dbca7b0ada6f35982a522058085b234e57220628bc44a8cbd61ffb7e13",
+    "ios/WeatherCareWidget/Fonts/SUITE-SemiBold.ttf": "32c45a2f2074bf2eb1457c3e4300a2386984ee8872e259ff1c4b9e9bf63dc772",
+    "ios/WeatherCareWidget/Icons/prep_cooling_item.png": "d309f09f52619d305df33a21584fd2bb0f23eb8febcfc384f6a989da0182455d",
+    "ios/WeatherCareWidget/Icons/prep_hand_warmer.png": "7b1c6a6dc379e58631b66659f455e2d3e706beb187c8d44194b5779b2bf9713c",
+    "ios/WeatherCareWidget/Icons/prep_outerwear.png": "c9f69c3a5299251d5689938bf4493c27710db411dd0afcf17b213e1ce8c8b0d9",
+    "ios/WeatherCareWidget/Icons/prep_parasol.png": "2c175286d55916c46af9654c3d6789f1e59602ba5091edcde25ac62842c7c859",
+    "ios/WeatherCareWidget/Icons/prep_portable_fan.png": "2295fb715e0434c41eb889b914bcf4d510508c5a267601713d02f117b4d53d9b",
+    "ios/WeatherCareWidget/Icons/prep_power_bank.png": "1717fd2dd1828fb80fb156945a677a253ea84828b095da379a8a366510362053",
+    "ios/WeatherCareWidget/Icons/prep_rain_boots.png": "67657b550604533501e3d551d7ccd0b56deea441163355c204160fd3bc48b998",
+    "ios/WeatherCareWidget/Icons/prep_raincoat.png": "de8bfb9bf8a87af7f414d3b341dcd0ec02278d0a1515a1bc44e2234ff5826482",
+    "ios/WeatherCareWidget/Icons/prep_scarf.png": "d186063084f60abcbcea36dd2b2c689100279a268da37c06dc41d0881d58d119",
+    "ios/WeatherCareWidget/Icons/prep_snow_chains.png": "6573bec3e0d83d64bd90edca63d9861e11d7a2bba010b308665c0b5503058d4c",
+    "ios/WeatherCareWidget/Icons/prep_sunglasses.png": "1429f9d44855c05d074eb50306a6f1cf3633845495af2e56ef950ec0aab76057",
+    "ios/WeatherCareWidget/Icons/prep_sunscreen.png": "a483e4c1f6b782d6469214037b8b2f8834ca92a39226c093ca6c68bb45089168",
+    "ios/WeatherCareWidget/Icons/prep_umbrella.png": "77ceb7b4a7f1af03c2c7e8f750cd09c9f30fffd81202e0bace1a26e02f8fabcf",
+    "ios/WeatherCareWidget/Icons/prep_water.png": "484f6f570d48f4d9cba895cedf172d1dfdd71f2d81dc41c8196445f2abd581e8",
+    "ios/WeatherCareWidget/Icons/prep_winter_boots.png": "70c757afc9ed436965e15ad6c3beda2e9fdd3c9963005f52b47c0f640d4052c6",
+    "ios/WeatherCareWidget/Info.plist": "9fec6545503b9fe9b95eccb5db9081f866885121befd175b13850c4e0d648bbe",
+    "ios/WeatherCareWidget/WeatherCareWidget.entitlements": "2c533f6b53e12d543949a0a09f75deab74a843462f437cb54cb0d5f2cbc29033",
+    "ios/WeatherCareWidget/WeatherCareWidget.swift": "2a50ba2182d74de8fcaae153e13989053db9a104dd2cb659a2c18594fca11089",
+    "ios/WeatherCareWidget/WidgetRefreshIntent.swift": "6c1d64f69b72fce8d27252b299c505f8cee93beea4e052426da47d2c78b98fbe",
+    "store/native_ios_app_capture/CaptureTests.swift": "895515f9094ca6635c116eaf88ca1d17843664f9b153bad2f74742a53f341561",
+    "store/native_ios_app_capture/README.md": "1a50e9c6d924e426abee154f798291b321cfffe9d6c57857ca89796b4107872b",
+    "store/native_ios_app_capture/build_capture.rb": "5d9566df7208a19212b7857086ca56bf02b361e7dfc2043e2edb8e2dd793c112",
+    "store/native_ios_app_capture/control.py": "d72b278b2d27d81c8bfc64da2768067c3d9b1aa69aa0591c2f711008d6684363",
+    "store/native_ios_app_capture/export_capture.py": "e4469048500ceb90f0c4c500e83592def1dea58070e5bbc7098b349dccdff0e9",
+    "store/native_ios_widget_capture/CaptureTests.swift": "c44446cc1b458ab9eb711a77b0c97faa98804c3e8832ad02732b333e58bada6a",
+    "store/native_ios_widget_capture/Host.swift": "c29c74c8aa90a5785652ce01613e0067612729cae01b8dcba376f90dda8bcb76",
+    "store/native_ios_widget_capture/README.md": "3aa38e99fb86a732ae6f5f0b3da433bee7f153d5ae7246b01923b6bc17750b8a",
+    "store/native_ios_widget_capture/build_capture.rb": "1f6fd832d550ca89d7eb2bbded7db28957dc8ac70b431560d84dba4228d23580",
+    "store/native_ios_widget_capture/capture_session.py": "e90ca84394dd1a8ff885db2d796d20c73df460d920c4528b310d5be7eedf152b",
+    "store/native_ios_widget_capture/control.py": "530ea6da7856906f5880d7eb8de5b48d02a6997f1d1411ec77a8723fc8003ed1",
+    "store/native_ios_widget_capture/export_capture.py": "655bb39ff8807539f906a6a757bb6afe7389da99d1998c0d4387ef3682de211a"
+  },
+  "files": [
+    {
+      "device": "phone",
+      "theme": "light",
+      "family": "small",
+      "source": "phone-light-small-home.png",
+      "source_sha256": "845143fbf571ffc75324ef4491adaefca185e3fed4139f5ef7f85b0ea80de8d0",
+      "crop": [
+        93,
+        282,
+        603,
+        792
+      ],
+      "logical_size": [
+        170.0,
+        170.0
+      ],
+      "scale": 3,
+      "path": "phone/light-small.png",
+      "size": [
+        510,
+        510
+      ],
+      "sha256": "3c453a16b75477de57fa0ecc6cccd55ec6a9ffac5bb4c9ea1df5f964f8b9f6f5"
+    },
+    {
+      "device": "phone",
+      "theme": "light",
+      "family": "medium",
+      "source": "phone-light-medium-home.png",
+      "source_sha256": "028f9b25ba36de2d77bcb1474f084a5497265304cbf3b0caec891b5a80babd82",
+      "crop": [
+        99,
+        282,
+        1191,
+        792
+      ],
+      "logical_size": [
+        364.0,
+        170.0
+      ],
+      "scale": 3,
+      "path": "phone/light-medium.png",
+      "size": [
+        1092,
+        510
+      ],
+      "sha256": "786551b6877bd3a20448aead63666703722b6c87339c0bc2bd2c246137cf0910"
+    },
+    {
+      "device": "phone",
+      "theme": "light",
+      "family": "large",
+      "source": "phone-light-large-home.png",
+      "source_sha256": "317d96e5a4fa77f48bce51f88efea9508b4a96cb92b22756661e3e5c89612695",
+      "crop": [
+        99,
+        282,
+        1191,
+        1428
+      ],
+      "logical_size": [
+        364.0,
+        382.0
+      ],
+      "scale": 3,
+      "path": "phone/light-large.png",
+      "size": [
+        1092,
+        1146
+      ],
+      "sha256": "1634ca032b1badcfc9711f408845b052b7a0628475dffd9ff7c5bfdfa671c19f"
+    },
+    {
+      "device": "phone",
+      "theme": "dark",
+      "family": "small",
+      "source": "phone-dark-small-home.png",
+      "source_sha256": "e134a529d7286f865a772a3913f3074dc3a549eaa802626f3c891ef69a6015b8",
+      "crop": [
+        93,
+        282,
+        603,
+        792
+      ],
+      "logical_size": [
+        170.0,
+        170.0
+      ],
+      "scale": 3,
+      "path": "phone/dark-small.png",
+      "size": [
+        510,
+        510
+      ],
+      "sha256": "cf29e738a995c96ae5bf021c83432e54ab0428b218f645ffab2d2d4f45d9fb53"
+    },
+    {
+      "device": "phone",
+      "theme": "dark",
+      "family": "medium",
+      "source": "phone-dark-medium-home.png",
+      "source_sha256": "e449f307f0178e73a5e089973efc1cbf8c104c947130f689b2fd85c6d972f11f",
+      "crop": [
+        99,
+        282,
+        1191,
+        792
+      ],
+      "logical_size": [
+        364.0,
+        170.0
+      ],
+      "scale": 3,
+      "path": "phone/dark-medium.png",
+      "size": [
+        1092,
+        510
+      ],
+      "sha256": "ef9168898aec0ff3787502659099867732e692af6d7bc9146d1b02f8d074ebbb"
+    },
+    {
+      "device": "phone",
+      "theme": "dark",
+      "family": "large",
+      "source": "phone-dark-large-home.png",
+      "source_sha256": "6cf47088dd0ac772b09ede76d00e28e5b0692be8817fb8f9f76d34cf64039b17",
+      "crop": [
+        99,
+        282,
+        1191,
+        1428
+      ],
+      "logical_size": [
+        364.0,
+        382.0
+      ],
+      "scale": 3,
+      "path": "phone/dark-large.png",
+      "size": [
+        1092,
+        1146
+      ],
+      "sha256": "f0b4163d249060cf73d9fe048fd6fa6f01468907986f9bf3a905dff8b9453ab5"
+    },
+    {
+      "device": "tablet",
+      "theme": "light",
+      "family": "small",
+      "source": "tablet-light-small-home.png",
+      "source_sha256": "2e5b26bd2d3c6a51ac0e3bd35f70ca816a3b0a7595fd24f73c7806d527a564cd",
+      "crop": [
+        284,
+        108,
+        604,
+        428
+      ],
+      "logical_size": [
+        160.0,
+        160.0
+      ],
+      "scale": 2,
+      "path": "tablet/light-small.png",
+      "size": [
+        320,
+        320
+      ],
+      "sha256": "fe6ffdfead4aad46630570759e5b5bdb29ec0107e99e6718084097f39e9ec387"
+    },
+    {
+      "device": "tablet",
+      "theme": "light",
+      "family": "medium",
+      "source": "tablet-light-medium-home.png",
+      "source_sha256": "afd82b85db0e190bb8ce56b3d63061c5925ae7c9a7cb5fe85dd4eab392c8e0ca",
+      "crop": [
+        284,
+        108,
+        996,
+        428
+      ],
+      "logical_size": [
+        356.0,
+        160.0
+      ],
+      "scale": 2,
+      "path": "tablet/light-medium.png",
+      "size": [
+        712,
+        320
+      ],
+      "sha256": "11f0aad255cf61a21d46c2c12eb0c96a4378579dc986d4e2043cddd312d90c13"
+    },
+    {
+      "device": "tablet",
+      "theme": "light",
+      "family": "large",
+      "source": "tablet-light-large-home.png",
+      "source_sha256": "253fb813bfb0b4b4b647255976f6639e3beb8b7dc27c38223b3955d23357f2db",
+      "crop": [
+        284,
+        108,
+        996,
+        820
+      ],
+      "logical_size": [
+        356.0,
+        356.0
+      ],
+      "scale": 2,
+      "path": "tablet/light-large.png",
+      "size": [
+        712,
+        712
+      ],
+      "sha256": "57ac515e20879a866f7242eb58918e2a55718a5db42ae0261042356cf03c21d8"
+    },
+    {
+      "device": "tablet",
+      "theme": "dark",
+      "family": "small",
+      "source": "tablet-dark-small-home.png",
+      "source_sha256": "7b093e861d4199085a367ed1dec0959fe2881efcf236e9f9a92cd21a6b220099",
+      "crop": [
+        284,
+        108,
+        604,
+        428
+      ],
+      "logical_size": [
+        160.0,
+        160.0
+      ],
+      "scale": 2,
+      "path": "tablet/dark-small.png",
+      "size": [
+        320,
+        320
+      ],
+      "sha256": "01ba79c9bc4145c0c19ee05dc1f643e429b0e15551ac1b01b30e019772e1847c"
+    },
+    {
+      "device": "tablet",
+      "theme": "dark",
+      "family": "medium",
+      "source": "tablet-dark-medium-home.png",
+      "source_sha256": "aea977f9baa991d3bf9b3c0ddc8929e3eb595346bb93168514d4c064d48634d1",
+      "crop": [
+        284,
+        108,
+        996,
+        428
+      ],
+      "logical_size": [
+        356.0,
+        160.0
+      ],
+      "scale": 2,
+      "path": "tablet/dark-medium.png",
+      "size": [
+        712,
+        320
+      ],
+      "sha256": "4a621fac0e78c3d90144897546c7eb039f89b0bd548042ef78699dc0caa47e01"
+    },
+    {
+      "device": "tablet",
+      "theme": "dark",
+      "family": "large",
+      "source": "tablet-dark-large-home.png",
+      "source_sha256": "97be830b9e4b72db04076fdc6f563841e91c0ea971473bc17adf56b083072901",
+      "crop": [
+        284,
+        108,
+        996,
+        820
+      ],
+      "logical_size": [
+        356.0,
+        356.0
+      ],
+      "scale": 2,
+      "path": "tablet/dark-large.png",
+      "size": [
+        712,
+        712
+      ],
+      "sha256": "069700c1cef34ed3644d5a6c45f4c034b5ddc1a5b9dcbcb610cd09a604aa29b9"
+    }
+  ]
+}

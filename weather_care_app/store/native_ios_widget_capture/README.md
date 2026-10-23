@@ -1,5 +1,22 @@
 # iOS 실제 위젯 촬영 도구
 
+## 2026-10-23 제품 앱 실자료 촬영
+
+최신 촬영은 [실제 앱 촬영 도구](../native_ios_app_capture/README.md)의 XCTest와 설치된 제품 앱을 사용한다. 앱에서 운영 서버 자료를 불러온 뒤 아래 명령으로 실제 ‘날씨챙겨’ 홈 위젯을 촬영한다. iOS 17은 `--legacy`, 앱 촬영을 계속할 경우 `--keep-session`을 추가한다. iPad는 `--kind tablet`을 사용한다.
+
+```sh
+python3 store/native_ios_widget_capture/capture_session.py --device <촬영용 UUID> \
+  --kind phone --real-app --legacy --keep-session \
+  --output build/ios-live-store-20261023/raw/phone-widgets
+python3 store/native_ios_widget_capture/export_capture.py --kind phone \
+  --raw build/ios-live-store-20261023/raw/phone-widgets \
+  --output store/screenshots/native-ios-20261023/phone --widget-name 날씨챙겨
+```
+
+`--real-app`에서는 아래 예시 호스트를 빌드·실행하거나 예시 날씨를 주입하지 않는다. 소형·중형·대형과 내부 불투명 픽셀 보존 검사는 동일하게 수행한다.
+
+## 이전 예시 호스트 촬영
+
 현재 WidgetKit 확장 소스와 폰트·아이콘을 그대로 컴파일해 전용 시뮬레이터의 SpringBoard 홈 화면에서 촬영한다. Flutter 앱·사용자의 실제 iPhone·운영 서버와 분리된 촬영용 호스트를 사용한다. 호스트는 서울시 중구 18°/체감17°/최저12°/최고22°와 우산·겉옷의 예시 자료를 App Group에 저장한다. 실제 위젯 확장을 재구현하지 않는다.
 
 ## 구성

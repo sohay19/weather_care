@@ -96,6 +96,7 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/widget_temperature_divider"
                 android:layout_width="1dp"
                 android:layout_height="38dp"
                 android:layout_marginStart="18dp"

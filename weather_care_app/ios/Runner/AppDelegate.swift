@@ -134,6 +134,19 @@ import WidgetKit
         return
       }
       switch call.method {
+      case "setThemeMode":
+        guard let mode = call.arguments as? String,
+              ["system", "light", "dark"].contains(mode) else {
+          result(FlutterError(
+            code: "INVALID_WIDGET_THEME",
+            message: "위젯 테마가 올바르지 않습니다.",
+            details: nil
+          ))
+          return
+        }
+        defaults.set(mode, forKey: "theme_mode")
+        WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
+        result(nil)
       case "save":
         let values = call.arguments as? [String: Any]
         let snapshot = values?["snapshot"] as? String ?? call.arguments as? String

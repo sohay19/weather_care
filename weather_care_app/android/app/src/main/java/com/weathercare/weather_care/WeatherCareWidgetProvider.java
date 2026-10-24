@@ -8,6 +8,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -100,10 +101,14 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110);
         int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
         WidgetSize size = widgetSizeFor(minWidth, minHeight);
+        String mode = context.getSharedPreferences(MainActivity.WIDGET_PREFERENCES, Context.MODE_PRIVATE)
+                .getString(MainActivity.THEME_MODE_KEY, "system");
+        boolean manualTheme = "light".equals(mode) || "dark".equals(mode);
+        // 시스템 모드로 돌아갈 때 런처가 기존 색상 필터를 재사용하지 않게 레이아웃 ID를 구분한다.
         int layout = switch (size) {
-            case SMALL -> R.layout.weather_widget_small;
-            case MEDIUM -> R.layout.weather_widget_medium;
-            case LARGE -> R.layout.weather_widget_large;
+            case SMALL -> manualTheme ? R.layout.weather_widget_small_manual_theme : R.layout.weather_widget_small;
+            case MEDIUM -> manualTheme ? R.layout.weather_widget_medium_manual_theme : R.layout.weather_widget_medium;
+            case LARGE -> manualTheme ? R.layout.weather_widget_large_manual_theme : R.layout.weather_widget_large;
         };
         RemoteViews views = new RemoteViews(context.getPackageName(), layout);
         Snapshot stored = readSnapshot(context);
@@ -161,8 +166,69 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
             bindLargeContent(context, views, snapshot, minWidth);
         }
 
+        bindTheme(context, views, size, refreshing, mode);
         manager.updateAppWidget(appWidgetId, views);
         scheduleBriefingBoundary(context, stored.nextBoundaryAfter(now));
+    }
+
+    private static void bindTheme(Context context, RemoteViews views, WidgetSize size, boolean refreshing, String mode) {
+        // 시스템 모드는 런처가 주간/야간 리소스를 다시 적용할 수 있도록 재정의하지 않는다.
+        if (!"light".equals(mode) && !"dark".equals(mode)) return;
+        boolean dark = "dark".equals(mode);
+        Configuration configuration = new Configuration(context.getResources().getConfiguration());
+        configuration.uiMode = (configuration.uiMode & ~Configuration.UI_MODE_NIGHT_MASK)
+                | (dark ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
+        Context themed = context.createConfigurationContext(configuration);
+        int primary = themed.getColor(R.color.weather_widget_text_primary);
+        int secondary = themed.getColor(R.color.weather_widget_text_secondary);
+        int accent = themed.getColor(R.color.weather_widget_text_accent);
+        views.setInt(R.id.widget_root, "setBackgroundResource", dark
+                ? R.drawable.weather_widget_background_dark : R.drawable.weather_widget_background_light);
+        int panel = dark ? R.drawable.weather_widget_panel_background_dark
+                : R.drawable.weather_widget_panel_background_light;
+        views.setInt(size == WidgetSize.MEDIUM ? R.id.widget_info_panel : R.id.widget_min_max,
+                "setBackgroundResource", panel);
+        views.setInt(R.id.widget_region, "setColorFilter", primary);
+        views.setInt(R.id.widget_refresh_time, "setColorFilter", secondary);
+        views.setInt(R.id.widget_current_temperature, "setColorFilter", accent);
+        views.setInt(R.id.widget_min_max, "setColorFilter", accent);
+        views.setInt(R.id.widget_refresh_button, "setBackgroundResource", refreshing
+                ? (dark ? R.drawable.weather_widget_refresh_background_loading_dark
+                        : R.drawable.weather_widget_refresh_background_loading_light)
+                : (dark ? R.drawable.weather_widget_refresh_background_dark
+                        : R.drawable.weather_widget_refresh_background_light));
+        views.setInt(R.id.widget_refresh_button, "setColorFilter", themed.getColor(refreshing
+                ? R.color.weather_widget_refresh_loading_ink : R.color.weather_widget_refresh_ink));
+        if (size != WidgetSize.SMALL) {
+            views.setInt(R.id.widget_current_label, "setColorFilter", secondary);
+            views.setInt(R.id.widget_apparent_label, "setColorFilter", secondary);
+            views.setInt(R.id.widget_apparent_temperature, "setColorFilter", accent);
+            views.setInt(R.id.widget_temperature_divider, "setBackgroundColor",
+                    themed.getColor(R.color.weather_widget_divider));
+        }
+        if (size == WidgetSize.MEDIUM) {
+            views.setInt(R.id.widget_short_message, "setColorFilter", primary);
+        }
+        if (size == WidgetSize.LARGE) {
+            for (int id : new int[] {R.id.widget_brief, R.id.widget_next_title,
+                    R.id.widget_next_time, R.id.widget_next_temperature,
+                    R.id.widget_preparation_label_1, R.id.widget_preparation_label_2,
+                    R.id.widget_preparation_label_3}) {
+                views.setInt(id, "setColorFilter", primary);
+            }
+            views.setInt(R.id.widget_next_icon, "setColorFilter", accent);
+            for (int id : new int[] {R.id.widget_preparation_1, R.id.widget_preparation_2,
+                    R.id.widget_preparation_3}) {
+                views.setInt(id, "setBackgroundResource", panel);
+            }
+            for (int id : new int[] {R.id.widget_preparation_icon_1, R.id.widget_preparation_icon_2,
+                    R.id.widget_preparation_icon_3}) {
+                views.setInt(id, "setColorFilter", accent);
+                views.setInt(id, "setBackgroundResource", dark
+                        ? R.drawable.weather_widget_preparation_background_dark
+                        : R.drawable.weather_widget_preparation_background_light);
+            }
+        }
     }
 
     private static WidgetSize widgetSizeFor(int minWidth, int minHeight) {

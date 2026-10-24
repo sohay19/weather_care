@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/services.dart';
 
 import '../models/home_widget_snapshot.dart';
@@ -8,6 +9,17 @@ class HomeWidgetService {
       MethodChannel('com.codesoha.weathercare/home-widget');
 
   const HomeWidgetService();
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    if (!_isSupportedPlatform) return;
+    try {
+      await _channel.invokeMethod<void>('setThemeMode', mode.name);
+    } on MissingPluginException {
+      // Widget extensions are not available in unit/widget test hosts.
+    } on PlatformException catch (error) {
+      debugPrint('위젯 테마를 갱신하지 못했어요: ${error.code}');
+    }
+  }
 
   Future<void> publish(
     HomeWidgetSnapshot snapshot, {

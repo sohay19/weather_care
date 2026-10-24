@@ -18,6 +18,7 @@ public class MainActivity extends FlutterActivity {
     private static final String CHANNEL = "com.codesoha.weathercare/home-widget";
     static final String WIDGET_PREFERENCES = "weather_care_widget";
     static final String SNAPSHOT_KEY = "snapshot";
+    static final String THEME_MODE_KEY = "theme_mode";
     static final String REFRESH_URL_KEY = "refresh_url";
     static final String WIDGET_TEST_ACCESS_KEY = "test_access_key";
     static final String GPS_ENABLED_KEY = "gps_enabled";
@@ -80,6 +81,17 @@ public class MainActivity extends FlutterActivity {
                         WIDGET_PREFERENCES,
                         Context.MODE_PRIVATE
                 );
+                if ("setThemeMode".equals(call.method)) {
+                    if (!(call.arguments instanceof String mode) ||
+                            !("system".equals(mode) || "light".equals(mode) || "dark".equals(mode))) {
+                        result.error("INVALID_WIDGET_THEME", "위젯 테마가 올바르지 않습니다.", null);
+                        return;
+                    }
+                    preferences.edit().putString(THEME_MODE_KEY, mode).apply();
+                    WeatherCareWidgetProvider.updateAll(this);
+                    result.success(null);
+                    return;
+                }
                 if ("save".equals(call.method)) {
                     String snapshot = null;
                     String refreshUrl = null;

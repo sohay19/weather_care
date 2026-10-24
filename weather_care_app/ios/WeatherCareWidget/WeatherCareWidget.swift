@@ -9,7 +9,7 @@ private let appGroup = "group.com.codesoha.weathercare"
 private let snapshotKey = "snapshot"
 private let refreshStatusKey = "refresh_status"
 private let weatherCareHomeURL = URL(string: "weathercare://home")!
-// WidgetKit의 시스템 모드를 따라가며 별도의 모드 설정을 저장하지 않는다.
+// 앱에서 선택한 모드는 위젯 루트의 colorScheme 환경으로 적용한다.
 private func themeColor(_ light: UInt32, _ dark: UInt32) -> Color {
   Color(uiColor: UIColor { traits in
     let hex = traits.userInterfaceStyle == .dark ? dark : light
@@ -54,30 +54,37 @@ private enum SuiteFont {
 struct WeatherCareEntry: TimelineEntry {
   let date: Date
   let snapshot: WidgetSnapshot
+  let themeMode: String
 }
 
 struct WeatherCareProvider: TimelineProvider {
   func placeholder(in context: Context) -> WeatherCareEntry {
-    WeatherCareEntry(date: Date(), snapshot: .placeholder)
+    WeatherCareEntry(date: Date(), snapshot: .placeholder, themeMode: "system")
   }
 
   func getSnapshot(in context: Context, completion: @escaping (WeatherCareEntry) -> Void) {
     let now = Date()
-    completion(WeatherCareEntry(date: now, snapshot: WidgetSnapshot.load().at(now)))
+    completion(WeatherCareEntry(date: now, snapshot: WidgetSnapshot.load().at(now),
+                               themeMode: themeMode))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherCareEntry>) -> Void) {
     let now = Date()
     let snapshot = WidgetSnapshot.load()
     let dates = snapshot.timelineDates(after: now)
+    let mode = themeMode
     let entries = dates.map { date in
-      WeatherCareEntry(date: date, snapshot: snapshot.at(date))
+      WeatherCareEntry(date: date, snapshot: snapshot.at(date), themeMode: mode)
     }
     let refresh = snapshot.nextRefresh(after: dates.last ?? now)
     completion(Timeline(
       entries: entries,
       policy: refresh.map(TimelineReloadPolicy.after) ?? .atEnd
     ))
+  }
+
+  private var themeMode: String {
+    UserDefaults(suiteName: appGroup)?.string(forKey: "theme_mode") ?? "system"
   }
 }
 
@@ -325,12 +332,22 @@ private func widgetDate(_ value: String) -> Date? {
 
 struct WeatherCareWidgetView: View {
   @Environment(\.widgetFamily) private var family
+  @Environment(\.colorScheme) private var systemColorScheme
   let entry: WeatherCareEntry
 
   var body: some View {
     interactiveContent
       .reducedWidgetContentMargins()
       .weatherWidgetBackground()
+      .environment(\.colorScheme, colorScheme)
+  }
+
+  private var colorScheme: ColorScheme {
+    switch entry.themeMode {
+    case "light": return .light
+    case "dark": return .dark
+    default: return systemColorScheme
+    }
   }
 
   @ViewBuilder

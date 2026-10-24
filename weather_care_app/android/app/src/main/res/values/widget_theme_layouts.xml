@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 테마 적용 여부가 바뀌면 위젯을 새로 구성하되 기존 레이아웃 정의를 공유한다. -->
+    <item name="weather_widget_small_manual_theme" type="layout">@layout/weather_widget_small</item>
+    <item name="weather_widget_medium_manual_theme" type="layout">@layout/weather_widget_medium</item>
+    <item name="weather_widget_large_manual_theme" type="layout">@layout/weather_widget_large</item>
+</resources>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
@@ -8,7 +9,16 @@ import 'package:weather_care/theme/weather_theme.dart';
 import 'package:weather_care/services/theme_mode_settings.dart';
 
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  const widgetChannel = MethodChannel('com.codesoha.weathercare/home-widget');
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(widgetChannel, (_) async => null);
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(widgetChannel, null);
+  });
 
   test('신규 설치에 저장된 테마가 없으면 시스템 설정을 따른다', () async {
     await ThemeModeSettings.instance.load();

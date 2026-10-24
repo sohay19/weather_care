@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home_widget_service.dart';
+
 class ThemeModeSettings extends ValueNotifier<ThemeMode> {
   static final instance = ThemeModeSettings._();
   static const _storageKey = 'weather_care_theme_mode';
@@ -14,6 +16,7 @@ class ThemeModeSettings extends ValueNotifier<ThemeMode> {
       (mode) => mode.name == saved,
       orElse: () => ThemeMode.system,
     );
+    await const HomeWidgetService().setThemeMode(value);
   }
 
   Future<void> save(ThemeMode mode) async {
@@ -29,5 +32,6 @@ class ThemeModeSettings extends ValueNotifier<ThemeMode> {
       value = previous;
       rethrow;
     }
+    await const HomeWidgetService().setThemeMode(mode);
   }
 }

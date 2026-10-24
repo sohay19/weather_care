@@ -58,8 +58,7 @@ class WeekTab extends StatefulWidget {
 
 class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
   Timer? _midnightTimer;
-  DateTime? _selectedWeekStart;
-  DateTime? _lastToday;
+  DateTime? _windowStart;
   int _selectedDayIndex = 0;
   double _horizontalDragDistance = 0;
 
@@ -116,16 +115,16 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
     final weekly = widget.weekly;
     final now = _now();
     final today = dateInKorea(now);
-    final calendarDays = currentCalendarWeek(weekly.days, now);
-    if (_selectedWeekStart != calendarDays.first.date) {
-      _selectedWeekStart = calendarDays.first.date;
-      _selectedDayIndex = parseForecastDate(today)!.weekday % 7;
-    } else if (_lastToday != null && _lastToday != parseForecastDate(today)) {
-      if (calendarDays[_selectedDayIndex].date == _lastToday) {
-        _selectedDayIndex = parseForecastDate(today)!.weekday % 7;
-      }
+    final calendarDays = upcomingCalendarWeek(
+      weekly.upcomingDays ?? weekly.days,
+      now,
+    );
+    if (_windowStart != calendarDays.first.date) {
+      final selectedDate = _windowStart?.add(Duration(days: _selectedDayIndex));
+      final index = calendarDays.indexWhere((day) => day.date == selectedDate);
+      _selectedDayIndex = index < 0 ? 0 : index;
+      _windowStart = calendarDays.first.date;
     }
-    _lastToday = parseForecastDate(today);
     final selectedDay = calendarDays[_selectedDayIndex];
     final selectedHourly = _weekTimelineItems(
       selectedDay,
@@ -149,7 +148,7 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
           children: [
             TabPageHeader(
               eyebrow: 'WEEK',
-              title: '이번 주',
+              title: '앞으로 7일',
               subtitle: calendarWeekPeriodLabel(calendarDays),
               icon: Icons.calendar_month_outlined,
             ),

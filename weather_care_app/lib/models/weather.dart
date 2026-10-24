@@ -869,21 +869,27 @@ class TodayWeatherResponse {
 
 class WeeklyWeatherResponse {
   final List<WeeklyForecastItem> days;
+  final List<WeeklyForecastItem>? upcomingDays;
   final String? generatedAt;
   final DateTime? receivedAt;
 
   const WeeklyWeatherResponse(
-      {required this.days, this.generatedAt, this.receivedAt});
+      {required this.days,
+      this.upcomingDays,
+      this.generatedAt,
+      this.receivedAt});
 
   factory WeeklyWeatherResponse.fromJson(Map<String, dynamic> json,
       {DateTime? receivedAt}) {
-    final raw = json['days'];
-    final days = (raw is List ? raw : const [])
-        .whereType<Map<String, dynamic>>()
-        .map(WeeklyForecastItem.fromJson)
-        .toList();
+    List<WeeklyForecastItem> parseDays(Object? raw) =>
+        (raw is List ? raw : const [])
+            .whereType<Map<String, dynamic>>()
+            .map(WeeklyForecastItem.fromJson)
+            .toList();
     return WeeklyWeatherResponse(
-      days: days,
+      days: parseDays(json['days']),
+      upcomingDays:
+          json['upcomingDays'] is List ? parseDays(json['upcomingDays']) : null,
       generatedAt: _optionalText(json['generatedAt']),
       receivedAt: receivedAt,
     );

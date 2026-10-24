@@ -564,6 +564,12 @@ router.get('/weekly', async (c) => {
     const regionId = `${nx}_${ny}`;
     const calendarWeek = currentKoreanCalendarWeek(now);
     const today = koreanCalendarDate(now);
+    const todayStart = Date.parse(`${today}T00:00:00Z`);
+    const upcomingDates = Array.from({ length: 7 }, (_, index) =>
+      new Date(todayStart + index * 86_400_000).toISOString().slice(0, 10),
+    );
+    // 기존 앱의 일~토 자료와 새 앱의 오늘부터 7일 자료를 함께 유지한다.
+    const responseDates = [...new Set([...calendarWeek.dates, ...upcomingDates])];
     const nationwideLocation = await resolveSavedLocation(weatherDatabase(c.env), { nx, ny, adminCode, regionName: requestedRegionName,
       coordinates: coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude')) }, now);
     const [collected, settings] = await Promise.all([
@@ -604,7 +610,7 @@ router.get('/weekly', async (c) => {
       adminCode: area?.[0] ?? adminCode, regionName: area?.[1] ?? requestedRegionName });
     const requiredMidTermDates = datesMissingUsableShortTermForecast(
       forecast?.daily ?? [],
-      calendarWeek.dates,
+      responseDates,
       today,
     );
     const cachedRegionMatches = !hasLocationIdentity || (
@@ -663,7 +669,7 @@ router.get('/weekly', async (c) => {
     const calendarDays = weeklyCalendarDays(
       liveDays,
       observedDays,
-      calendarWeek.dates,
+      responseDates,
       today,
     );
     const airHistory = await getCollectedCache<NationwideAirQualitySnapshot>(
@@ -691,6 +697,51 @@ router.get('/weekly', async (c) => {
         snowProbabilityIssuedAt: savedProbability?.issuedAt };
 
     }));
+    const serializedDays = displayedDays.map((day) => ({
+      date: weekdayLabel(day.date),
+      forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
+      weatherLabel: day.skyCondition,
+      weatherDataComplete: day.weatherDataComplete,
+      observationAvailability: day.observationAvailability,
+      precipitationDetail: day.precipitationDetail,
+      min: formatTemperature(day.minTemperature),
+      max: formatTemperature(day.maxTemperature),
+      minTemperatureSource: day.minTemperatureSource,
+      maxTemperatureSource: day.maxTemperatureSource,
+      averageHumidity: roundOptional(day.averageHumidity),
+      airQualityObservation: day.airQualityObservation,
+      maximumWindSpeed: roundOptional(day.maximumWindSpeed),
+      maximumUvIndex: roundOptional(day.maximumUvIndex),
+      snowProbability: day.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'
+        ? roundOptional(day.snowProbability) : undefined,
+      snowProbabilitySource: day.snowProbabilitySource,
+      snowProbabilityIssuedAt: 'snowProbabilityIssuedAt' in day
+        ? day.snowProbabilityIssuedAt : day.issuedAt,
+      snowfallAmount: day.forecastSource !== 'KMA_MID_TERM' && day.snowfallDataAvailable
+        ? roundOptional(day.snowfallAmount)
+        : undefined,
+      airQualityForecast: day.airQualityForecast,
+      forecastSource: day.forecastSource,
+      source: day.forecastSource === 'KMA_OBSERVATION'
+        ? 'OBSERVATION'
+        : day.forecastSource === 'KMA_MID_TERM'
+          ? 'MID_TERM'
+          : 'SHORT_TERM',
+      issuedAt: day.issuedAt,
+      recordedAt: day.recordedAt,
+      historical: day.historical === true,
+      observationStationId: day.observationStationId,
+      observationDistanceKm: day.observationDistanceKm,
+      recommendations: day.forecastSource === 'KMA_OBSERVATION'
+        ? []
+        : recommendationsForDay(
+            day,
+            forecast?.hourly ?? [],
+            settings,
+            expandedPreparations,
+            tieredPreparations,
+          ).filter((item) => item.recommended).slice(0, tieredPreparations ? undefined : 3),
+    }));
     const response = {
       dataSource: weeklyDataSource(forecast, resolvedMidTermDays, observedDays),
       generatedAt: now.toISOString(),
@@ -708,51 +759,8 @@ router.get('/weekly', async (c) => {
         midTermIssuedAt,
         midTermCacheStatus,
       },
-      days: displayedDays.map((day) => ({
-        date: weekdayLabel(day.date),
-        forecastDate: `${day.date.slice(0, 4)}-${day.date.slice(4, 6)}-${day.date.slice(6, 8)}`,
-        weatherLabel: day.skyCondition,
-        weatherDataComplete: day.weatherDataComplete,
-        observationAvailability: day.observationAvailability,
-        precipitationDetail: day.precipitationDetail,
-        min: formatTemperature(day.minTemperature),
-        max: formatTemperature(day.maxTemperature),
-        minTemperatureSource: day.minTemperatureSource,
-        maxTemperatureSource: day.maxTemperatureSource,
-        averageHumidity: roundOptional(day.averageHumidity),
-        airQualityObservation: day.airQualityObservation,
-        maximumWindSpeed: roundOptional(day.maximumWindSpeed),
-        maximumUvIndex: roundOptional(day.maximumUvIndex),
-        snowProbability: day.snowProbabilitySource === 'KMA_PRECIPITATION_FORECAST'
-          ? roundOptional(day.snowProbability) : undefined,
-        snowProbabilitySource: day.snowProbabilitySource,
-        snowProbabilityIssuedAt: 'snowProbabilityIssuedAt' in day
-          ? day.snowProbabilityIssuedAt : day.issuedAt,
-        snowfallAmount: day.forecastSource !== 'KMA_MID_TERM' && day.snowfallDataAvailable
-          ? roundOptional(day.snowfallAmount)
-          : undefined,
-        airQualityForecast: day.airQualityForecast,
-        forecastSource: day.forecastSource,
-        source: day.forecastSource === 'KMA_OBSERVATION'
-          ? 'OBSERVATION'
-          : day.forecastSource === 'KMA_MID_TERM'
-            ? 'MID_TERM'
-            : 'SHORT_TERM',
-        issuedAt: day.issuedAt,
-        recordedAt: day.recordedAt,
-        historical: day.historical === true,
-        observationStationId: day.observationStationId,
-        observationDistanceKm: day.observationDistanceKm,
-        recommendations: day.forecastSource === 'KMA_OBSERVATION'
-          ? []
-          : recommendationsForDay(
-              day,
-              forecast?.hourly ?? [],
-              settings,
-              expandedPreparations,
-              tieredPreparations,
-            ).filter((item) => item.recommended).slice(0, tieredPreparations ? undefined : 3),
-      })),
+      days: serializedDays.filter((day) => calendarWeek.dates.includes(day.forecastDate)),
+      upcomingDays: serializedDays.filter((day) => upcomingDates.includes(day.forecastDate)),
     };
     c.set('weatherAccessFields', {
       cacheUpdatedAt: collected.updatedAt,

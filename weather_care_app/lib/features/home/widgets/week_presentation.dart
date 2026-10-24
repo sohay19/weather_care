@@ -11,12 +11,11 @@ class WeekCalendarDay {
   const WeekCalendarDay({required this.date, required this.forecast});
 }
 
-List<WeekCalendarDay> currentCalendarWeek(
+List<WeekCalendarDay> upcomingCalendarWeek(
   List<WeeklyForecastItem> forecasts,
   DateTime now,
 ) {
   final today = parseForecastDate(dateInKorea(now))!;
-  final sunday = today.subtract(Duration(days: today.weekday % 7));
   final grouped = <String, List<WeeklyForecastItem>>{};
   for (final forecast in forecasts) {
     if (parseForecastDate(forecast.forecastDate) == null) continue;
@@ -24,28 +23,25 @@ List<WeekCalendarDay> currentCalendarWeek(
   }
 
   return List.generate(7, (index) {
-    final date = sunday.add(Duration(days: index));
+    final date = today.add(Duration(days: index));
     final key = _calendarDateKey(date);
     final matches = grouped[key] ?? const <WeeklyForecastItem>[];
     final forecast = matches.length == 1 ? matches.single : null;
     return WeekCalendarDay(
       date: date,
-      forecast:
-          date.isBefore(today) && forecast?.forecastSource != 'KMA_OBSERVATION'
-              ? null
-              : forecast,
+      forecast: forecast,
     );
   });
 }
 
 String calendarWeekPeriodLabel(List<WeekCalendarDay> days) {
-  if (days.length != 7) return '일요일부터 토요일까지 표시해요';
+  if (days.length != 7) return '오늘부터 7일을 표시해요';
   final first = days.first.date;
   final last = days.last.date;
   final year = first.year == last.year ? '' : '${first.year}년 ';
   return '$year${first.month}월 ${first.day}일~'
       '${last.year != first.year ? '${last.year}년 ' : ''}'
-      '${last.month}월 ${last.day}일 · 일~토';
+      '${last.month}월 ${last.day}일 · 7일 예보';
 }
 
 String calendarDayLabel(DateTime date) {

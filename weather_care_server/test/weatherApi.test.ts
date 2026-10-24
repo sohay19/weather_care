@@ -650,6 +650,57 @@ describe('weekly calendar date contract', () => {
 });
 
 describe('weekly provider independence', () => {
+  it.each([
+    ['2026-09-10T14:59:59Z', '2026-09-10', '2026-09-06'],
+    ['2026-09-10T15:00:00Z', '2026-09-11', '2026-09-06'],
+    ['2026-09-12T01:00:00Z', '2026-09-12', '2026-09-06'],
+    ['2026-09-13T01:00:00Z', '2026-09-13', '2026-09-13'],
+    ['2026-12-31T01:00:00Z', '2026-12-31', '2026-12-27'],
+    ['2028-02-27T01:00:00Z', '2028-02-27', '2028-02-27'],
+  ])('preserves legacy calendar days and adds seven upcoming days at %s', async (instant, today, weekStart) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(instant));
+    const datesFrom = (start: string, length: number) => Array.from({ length }, (_, index) =>
+      new Date(Date.parse(`${start}T00:00:00Z`) + index * 86_400_000).toISOString().slice(0, 10));
+    const upcomingDates = datesFrom(today, 7);
+    const legacyDates = datesFrom(weekStart, 7);
+    const daily = datesFrom(today, 8).map((date, index) => ({
+      ...day(25),
+      date: date.replaceAll('-', ''),
+      forecastSource: index < 3 ? 'KMA_SHORT_TERM' as const : 'KMA_MID_TERM' as const,
+      minTemperatureSource: 'DAILY' as const,
+      maxTemperatureSource: 'DAILY' as const,
+      weatherDataComplete: true,
+    }));
+    const observations = legacyDates.filter(date => date < today).map(date => ({
+      ...day(20), date: date.replaceAll('-', ''), forecastSource: 'KMA_OBSERVATION' as const,
+    }));
+    try {
+      await seedCollectedWeekly(58, 124, {
+        forecast: { current: snapshot(14), hourly: [], daily: daily.slice(0, 3),
+          baseDate: today.replaceAll('-', ''), baseTime: '0500', dataSource: '기상청 단기예보' },
+        midTermDays: daily.slice(3), observedDays: observations, airQuality: [],
+      });
+      const response = await router.request('/weekly?nx=58&ny=124', {}, { DB: env.DB });
+      expect(response.status).toBe(200);
+      const body = await response.json<{
+        days: Array<{ forecastDate: string; historical: boolean; recommendations: unknown[] }>;
+        upcomingDays: Array<{ forecastDate: string; historical: boolean; recommendations: unknown[] }>;
+      }>();
+      expect(body.days.map(day => day.forecastDate)).toEqual(legacyDates);
+      expect(body.upcomingDays.map(day => day.forecastDate)).toEqual(upcomingDates);
+      expect(body.days.filter(day => day.historical).map(day => day.forecastDate))
+        .toEqual(legacyDates.filter(date => date < today));
+      expect(body.days.filter(day => day.historical).every(day => day.recommendations.length === 0)).toBe(true);
+      expect(body.upcomingDays.every(day => !day.historical)).toBe(true);
+      for (const legacy of body.days.filter(day => !day.historical)) {
+        expect(body.upcomingDays.find(day => day.forecastDate === legacy.forecastDate)).toEqual(legacy);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('returns mid-term days even when the short-term provider fails', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-13T03:00:00Z'));
@@ -715,6 +766,7 @@ describe('weekly provider independence', () => {
       expect(await response.json()).toMatchObject({
         dataSource: '기상청 자료 없음',
         days: [],
+        upcomingDays: [],
       });
     } finally {
       short.mockRestore();
@@ -814,6 +866,7 @@ describe('/weekly Hangdong mid-term hydration', () => {
           weatherLabel: string;
           source: string;
         }>;
+        upcomingDays: Array<{ forecastDate: string; source: string }>;
       }>();
 
       expect(first.status).toBe(200);
@@ -833,6 +886,12 @@ describe('/weekly Hangdong mid-term hydration', () => {
           weatherLabel: '구름많음',
           source: 'MID_TERM',
         });
+      expect(firstData.upcomingDays.map(day => day.forecastDate)).toEqual([
+        '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24',
+        '2026-09-25', '2026-09-26', '2026-09-27',
+      ]);
+      expect(firstData.upcomingDays.at(-1)?.source).toBe('MID_TERM');
+      expect(firstData.days.some(day => day.forecastDate === '2026-09-27')).toBe(false);
       expect(getTemperature).not.toHaveBeenCalled();
       expect(getLandForecast).not.toHaveBeenCalled();
 

@@ -1,0 +1,189 @@
+{
+  "검증일시KST": "2026-10-24 15:14:04 KST",
+  "범위": "Week의 오늘부터 7일 응답만 시험 API에 배포. 앞선 지역명 배포를 보존하며 운영 배포는 하지 않음.",
+  "시험주소": "https://weather-test-api.codesoha.com",
+  "시험릴리스": "/opt/weather-care/releases/20261023-full-test/weather_care_server",
+  "변경파일": [
+    "src/api/weather.ts"
+  ],
+  "변경전SHA256": "3fc1d3b86e24552a2628fbec4c389208480a2a8f7cf1706eff599c14ad4d772e",
+  "변경후SHA256": "89b01cdad97fda37b92d18b6072b06224b919de068131cf9ebae5c6a270517b8",
+  "백업": "/var/backups/weather-care/week-test-20261024T061357Z/weather.ts",
+  "운영변경없음": true,
+  "운영전": {
+    "root": "/opt/weather-care/releases/20261023-full-production/weather_care_server",
+    "sourceSha256": "3fc1d3b86e24552a2628fbec4c389208480a2a8f7cf1706eff599c14ad4d772e",
+    "pid": "671974",
+    "schedulerPid": "654827",
+    "active": "active"
+  },
+  "운영후": {
+    "root": "/opt/weather-care/releases/20261023-full-production/weather_care_server",
+    "sourceSha256": "3fc1d3b86e24552a2628fbec4c389208480a2a8f7cf1706eff599c14ad4d772e",
+    "pid": "671974",
+    "schedulerPid": "654827",
+    "active": "active"
+  },
+  "시험프로세스": {
+    "before": "671884",
+    "after": "673866"
+  },
+  "DB": {
+    "user": "/var/lib/weather-care/weather-care-users-test.sqlite",
+    "weather": "/var/lib/weather-care/weather-care-weather.sqlite",
+    "스키마변경": false,
+    "사용자자료수정": false
+  },
+  "후보검사": {
+    "실제배포소스171파일로컬타입검사": true,
+    "서버구문검사": true
+  },
+  "공개검사": {
+    "배포전주간요청": 5,
+    "배포후요청": 9,
+    "추가항목": [
+      "health",
+      "main",
+      "today",
+      "widget"
+    ],
+    "기존위젯지역명": "종로구 청운효자동",
+    "위젯스키마": 3
+  },
+  "주간응답": [
+    {
+      "case": "seoul_legacy",
+      "legacyResponseUnchanged": true,
+      "legacyDates": [
+        "2026-10-18",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21",
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24"
+      ],
+      "upcomingDates": [
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28"
+      ],
+      "missingDates": [
+        "2026-10-29",
+        "2026-10-30"
+      ],
+      "legacyObservationCount": 6,
+      "lastForecastSource": "KMA_SHORT_TERM"
+    },
+    {
+      "case": "guro_named",
+      "legacyResponseUnchanged": true,
+      "legacyDates": [
+        "2026-10-18",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21",
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24"
+      ],
+      "upcomingDates": [
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28",
+        "2026-10-29",
+        "2026-10-30"
+      ],
+      "missingDates": [],
+      "legacyObservationCount": 6,
+      "lastForecastSource": "KMA_MID_TERM"
+    },
+    {
+      "case": "busan",
+      "legacyResponseUnchanged": true,
+      "legacyDates": [
+        "2026-10-18",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21",
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24"
+      ],
+      "upcomingDates": [
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28",
+        "2026-10-29",
+        "2026-10-30"
+      ],
+      "missingDates": [],
+      "legacyObservationCount": 6,
+      "lastForecastSource": "KMA_MID_TERM"
+    },
+    {
+      "case": "hangdong_midterm",
+      "legacyResponseUnchanged": true,
+      "legacyDates": [
+        "2026-10-18",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21",
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24"
+      ],
+      "upcomingDates": [
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28",
+        "2026-10-29",
+        "2026-10-30"
+      ],
+      "missingDates": [],
+      "legacyObservationCount": 6,
+      "lastForecastSource": "KMA_MID_TERM"
+    },
+    {
+      "case": "new_catalog",
+      "legacyResponseUnchanged": true,
+      "legacyDates": [
+        "2026-10-18",
+        "2026-10-19",
+        "2026-10-20",
+        "2026-10-21",
+        "2026-10-22",
+        "2026-10-23",
+        "2026-10-24"
+      ],
+      "upcomingDates": [
+        "2026-10-24",
+        "2026-10-25",
+        "2026-10-26",
+        "2026-10-27",
+        "2026-10-28"
+      ],
+      "missingDates": [
+        "2026-10-29",
+        "2026-10-30"
+      ],
+      "legacyObservationCount": 6,
+      "lastForecastSource": "KMA_SHORT_TERM"
+    }
+  ],
+  "결측설명": "서울 60/127 격자만 지정한 두 요청은 중기 지역을 특정하지 못해 10월29~30일 예보가 없다. 행정지역을 지정한 구로/항동과 부산은 7일 전부 확인했다. 응답 배열은 확보된 날짜만 반환하고 앱은 결측일도 포함한 7일 자리를 유지한다.",
+  "초기시도": "health의 문자열 ok를 JSON으로 읽던 검증 스크립트 오류로 자동 원복했다. 다음 시도는 격자만 지정한 요청의 결측을 전부 오류로 판단해 자동 원복했다. 두 경우 모두 시험 소스가 기존 지역명 배포 해시로 복구되고 API active임을 확인했다. 문서화된 결측 계약에 맞게 검사한 최종 배포는 통과했다.",
+  "자료위치": {
+    "원격": "/tmp/weather-care-week-20261024-01a16c7d",
+    "로컬": "weather_care_server/build/week-deploy-20261024"
+  },
+  "앱설치배포": false
+}

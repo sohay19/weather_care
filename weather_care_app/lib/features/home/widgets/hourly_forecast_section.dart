@@ -358,8 +358,10 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                 values: series.expand((chart) => chart.values).toList())
             .bounds
         : null;
-    final bottomPadding = hourlyChartBottomPadding(series, sharedBounds,
-        chartHeight, MediaQuery.textScalerOf(context).scale(18));
+    final labelHeight = MediaQuery.textScalerOf(context).scale(18);
+    final topPadding = hourlyChartTopPadding(sharedBounds, labelHeight);
+    final bottomPadding = hourlyChartBottomPadding(
+        series, sharedBounds, chartHeight, labelHeight);
     final currentHour = today == dateInKorea(currentTime)
         ? currentTime.toUtc().add(const Duration(hours: 9)).hour
         : 0;
@@ -538,6 +540,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                         series: series.first,
                         height: chartHeight,
                         sharedBounds: sharedBounds,
+                        topPadding: topPadding,
                         bottomPadding: bottomPadding)),
               Expanded(child: LayoutBuilder(builder: (context, viewport) {
                 final contentWidth = math.max(viewport.maxWidth, timelineWidth);
@@ -647,6 +650,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                         series: series.last,
                         height: chartHeight,
                         right: true,
+                        topPadding: topPadding,
                         bottomPadding: bottomPadding)),
             ]),
             if (itemsFor(selected).isEmpty) ...[

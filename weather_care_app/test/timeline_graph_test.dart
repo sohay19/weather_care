@@ -240,7 +240,7 @@ void main() {
         section.right - tester.getTopRight(icon).dx, inInclusiveRange(8, 20));
   });
 
-  testWidgets('기온·체감은 같은 차트에서 각 점 아래에 수치를 상시 표시한다', (tester) async {
+  testWidgets('기온·체감은 같은 차트에서 높은 선 위·낮은 선 아래에 수치를 상시 표시한다', (tester) async {
     await _pump(tester, data: [
       {
         'time': '08',
@@ -268,16 +268,18 @@ void main() {
     final painter = _graph(tester, 'temperature');
     final pointY = canvas.top +
         hourlyChartY(20, chart.sharedBounds!, chart.height,
+            topPadding: painter.topPadding,
             bottomPadding: painter.bottomPadding);
     final apparentY = canvas.top +
         hourlyChartY(10, chart.sharedBounds!, chart.height,
+            topPadding: painter.topPadding,
             bottomPadding: painter.bottomPadding);
     expect(
         tester
-            .getTopLeft(
+            .getBottomLeft(
                 find.byKey(const ValueKey('hourly-value-temperature-8')))
             .dy,
-        greaterThan(pointY));
+        lessThan(pointY));
     expect(
         tester
             .getTopLeft(find.byKey(const ValueKey('hourly-value-apparent-8')))
@@ -285,7 +287,12 @@ void main() {
         greaterThan(apparentY));
     final icon = find.byWidgetPredicate(
         (widget) => widget is WeatherConditionIcon && widget.condition == '맑음');
-    expect(pointY - tester.getCenter(icon).dy, inInclusiveRange(10, 40));
+    expect(
+        tester.getBottomLeft(icon).dy,
+        lessThan(tester
+            .getTopLeft(
+                find.byKey(const ValueKey('hourly-value-temperature-8')))
+            .dy));
     expect(
         find.descendant(
             of: find.byType(HourlyValueChart), matching: find.byType(Tooltip)),
@@ -546,6 +553,88 @@ void main() {
   });
 
   for (final scale in [1.0, 2.0]) {
+    testWidgets('두 온도는 $scale배 글씨에서 높은 선 위·낮은 선 아래로 수치와 기온 아이콘을 표시한다',
+        (tester) async {
+      await _pump(tester, scale: scale, data: [
+        {
+          'time': '08',
+          'temperature': -10,
+          'apparentTemperature': 20,
+          'skyCondition': '맑음'
+        },
+        {
+          'time': '09',
+          'temperature': 30,
+          'apparentTemperature': 11,
+          'skyCondition': '흐림'
+        },
+        {
+          'time': '10',
+          'temperature': 10,
+          'apparentTemperature': 11,
+          'skyCondition': '구름많음'
+        },
+        {
+          'time': '11',
+          'temperature': 12,
+          'apparentTemperature': 12,
+          'skyCondition': '비'
+        },
+        {'time': '12', 'temperature': 14, 'skyCondition': '눈'},
+        {'time': '13', 'apparentTemperature': 15},
+      ]);
+      final chart =
+          tester.widget<HourlyValueChart>(find.byType(HourlyValueChart));
+      final painter = _graph(tester, 'temperature');
+      final canvas = tester
+          .getRect(find.byKey(const ValueKey('hourly-chart-temperature')));
+      final icons = find.descendant(
+          of: find.byType(HourlyValueChart),
+          matching: find.byType(WeatherConditionIcon));
+      for (final hour in [8, 9, 10, 11]) {
+        final temperature = chart.series.values[hour]!.lower;
+        final apparent = chart.overlays.single.values[hour]!.lower;
+        double point(double value) =>
+            canvas.top +
+            hourlyChartY(value, chart.sharedBounds!, chart.height,
+                topPadding: painter.topPadding,
+                bottomPadding: painter.bottomPadding);
+        final actualRect = tester
+            .getRect(find.byKey(ValueKey('hourly-value-temperature-$hour')));
+        final apparentRect =
+            tester.getRect(find.byKey(ValueKey('hourly-value-apparent-$hour')));
+        final icon = tester.getRect(icons.at(hour - 8));
+        expect(icon.top, greaterThanOrEqualTo(canvas.top));
+        if (temperature >= apparent) {
+          expect(actualRect.bottom, lessThan(point(temperature)),
+              reason: '$hour시 기온 수치는 높은 기온 선 위');
+          expect(icon.bottom, lessThan(actualRect.top));
+          expect(apparentRect.top, greaterThan(point(apparent)));
+        } else {
+          expect(apparentRect.bottom, lessThan(point(apparent)),
+              reason: '$hour시 체감 수치는 높은 체감 선 위');
+          expect(icon.top, greaterThan(point(temperature)),
+              reason: '$hour시 기온 아이콘도 낮은 기온 선 아래');
+          expect(actualRect.top, greaterThan(icon.bottom));
+        }
+        expect(actualRect.overlaps(apparentRect), isFalse);
+        expect(icon.overlaps(apparentRect), isFalse);
+        final clock =
+            tester.getRect(find.byKey(ValueKey('today-hourly-$hour')));
+        expect(actualRect.bottom, lessThan(clock.top));
+        expect(apparentRect.bottom, lessThan(clock.top));
+      }
+      expect(find.byKey(const ValueKey('hourly-value-temperature-12')),
+          findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('hourly-value-apparent-12')), findsNothing);
+      expect(find.byKey(const ValueKey('hourly-value-temperature-13')),
+          findsNothing);
+      expect(find.byKey(const ValueKey('hourly-value-apparent-13')),
+          findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('기온 수치는 $scale배 글씨에서도 교차하는 두 선·점·날씨 아이콘을 피한다', (tester) async {
       await _pump(tester, scale: scale, data: [
         {
@@ -571,6 +660,7 @@ void main() {
           canvas.top +
               hourlyChartY(series.values[index]!.lower, chart.sharedBounds!,
                   chart.height,
+                  topPadding: painter.topPadding,
                   bottomPadding: painter.bottomPadding));
       for (final hour in [8, 9, 10, 11, 12, 13]) {
         final rects = <Rect>[];
@@ -855,9 +945,11 @@ void main() {
       final bounds = chart.sharedBounds ?? chart.series.bounds;
       final top = canvas.top +
           hourlyChartY(bounds.$2, bounds, chart.height,
+              topPadding: painter.topPadding,
               bottomPadding: painter.bottomPadding);
       final bottom = canvas.top +
           hourlyChartY(bounds.$1, bounds, chart.height,
+              topPadding: painter.topPadding,
               bottomPadding: painter.bottomPadding);
       final title = find.descendant(
           of: axis,

@@ -100,11 +100,15 @@ double hourlyChartWidth(
     pointWidth;
 
 double hourlyChartY(double value, (double, double) bounds, double height,
-        {double bottomPadding = _plotBottom}) =>
-    _plotTop +
+        {double topPadding = _plotTop, double bottomPadding = _plotBottom}) =>
+    topPadding +
     (bounds.$2 - value) /
         (bounds.$2 - bounds.$1) *
-        (height - _plotTop - bottomPadding);
+        (height - topPadding - bottomPadding);
+
+// 점 간격 8 + 날씨 아이콘 24 + 아이콘/수치 간격 10을 확보한다.
+double hourlyChartTopPadding((double, double)? bounds, double labelHeight) =>
+    bounds == null ? _plotTop : math.max(_plotTop, labelHeight + 42);
 
 /// 점 아래 수치가 시간 눈금과 겹치지 않도록 필요한 공간만 남긴다.
 double hourlyChartBottomPadding(List<HourlyChartSeries> series,
@@ -125,8 +129,15 @@ double hourlyChartBottomPadding(List<HourlyChartSeries> series,
       .reduce(math.min)
       .clamp(0.0, 1.0);
   if (fraction >= 1) return _plotBottom;
-  return math.max(_plotBottom,
-      (labelHeight * 2 + 12 - fraction * (height - _plotTop)) / (1 - fraction));
+  final belowHeight = series.length > 1
+      ? math.max(labelHeight * 2 + 12, labelHeight + 42)
+      : labelHeight * 2 + 12;
+  return math.max(
+      _plotBottom,
+      (belowHeight -
+              fraction *
+                  (height - hourlyChartTopPadding(bounds, labelHeight))) /
+          (1 - fraction));
 }
 
 List<double> _axisTicks(HourlyChartSeries series, (double, double) bounds) =>
@@ -148,6 +159,7 @@ class HourlyChartAxis extends StatelessWidget {
   final double height;
   final (double, double)? sharedBounds;
   final bool right;
+  final double topPadding;
   final double bottomPadding;
   const HourlyChartAxis(
       {super.key,
@@ -156,6 +168,7 @@ class HourlyChartAxis extends StatelessWidget {
       this.height = hourlyChartHeight,
       this.sharedBounds,
       this.right = false,
+      this.topPadding = _plotTop,
       this.bottomPadding = _plotBottom});
 
   @override
@@ -178,7 +191,7 @@ class HourlyChartAxis extends StatelessWidget {
           height: height,
           child: Stack(children: [
             Positioned(
-                top: _plotTop - hourlyChartTitleHeight - 16,
+                top: topPadding - hourlyChartTitleHeight - 16,
                 left: 0,
                 right: 0,
                 height: hourlyChartTitleHeight,
@@ -197,6 +210,7 @@ class HourlyChartAxis extends StatelessWidget {
             for (final value in ticks)
               Positioned(
                   top: hourlyChartY(value, bounds, height,
+                          topPadding: topPadding,
                           bottomPadding: bottomPadding) -
                       12,
                   left: right ? 6 : 0,
@@ -338,6 +352,7 @@ class HourlyValueChart extends StatelessWidget {
         fontSize: 12,
         fontWeight: FontWeight.w900);
     final temperature = sharedBounds != null;
+    final topPadding = hourlyChartTopPadding(sharedBounds, scaledLabelHeight);
     final bottomPadding =
         hourlyChartBottomPadding(all, sharedBounds, height, scaledLabelHeight);
     double x(int index) => (hours[index] - hours.first + .5) * pointWidth;
@@ -345,10 +360,12 @@ class HourlyValueChart extends StatelessWidget {
         chart.values[index]!.upper ?? chart.values[index]!.lower,
         sharedBounds ?? chart.bounds,
         height,
+        topPadding: topPadding,
         bottomPadding: bottomPadding);
     final labels = <Widget>[];
     final primaryTops = <int, double>{};
     final temperatureTops = <(HourlyChartSeries, int), double>{};
+    final temperatureIconTops = <int, double>{};
     if (temperature && showValues) {
       // 수치 폭에 들어오는 양옆 선분까지 검사한다. 결측/빠진 시간은 잇지 않는다.
       (double, double) lineRange(HourlyChartSeries chart, int index) {
@@ -371,18 +388,33 @@ class HourlyValueChart extends StatelessWidget {
             all.where((chart) => chart.values[index] != null).toList();
         if (present.isEmpty) continue;
         final ranges = [for (final chart in present) lineRange(chart, index)];
-        final tops = [for (final chart in present) y(chart, index) + 7];
-        final touchesLine = tops.any((top) => ranges.any((range) =>
-            top < range.$2 + 6 && top + scaledLabelHeight > range.$1 - 6));
-        final touchesLabel = tops.length > 1 &&
-            (tops.first - tops.last).abs() < scaledLabelHeight + 4;
-        if (!touchesLine && !touchesLabel) continue;
+        if (present.length == 1) {
+          final top = y(present.first, index) + 7;
+          final range = ranges.single;
+          final touchesLine =
+              top < range.$2 + 6 && top + scaledLabelHeight > range.$1 - 6;
+          if (!touchesLine) continue;
+        }
+        present.sort((a, b) {
+          final order = y(a, index).compareTo(y(b, index));
+          return order != 0 ? order : all.indexOf(a).compareTo(all.indexOf(b));
+        });
         for (final chart in present) {
-          temperatureTops[(chart, index)] = chart == series
+          final above =
+              present.length == 1 ? chart == series : chart == present.first;
+          var top = above
               ? ranges.map((range) => range.$1).reduce(math.min) -
                   scaledLabelHeight -
                   8
               : ranges.map((range) => range.$2).reduce(math.max) + 8;
+          if (chart == series &&
+              index < conditions.length &&
+              conditions[index] != null) {
+            // 기온 아이콘과 수치를 한 묶음으로 두 선의 같은 바깥쪽에 둔다.
+            temperatureIconTops[index] = above ? top - 34 : top;
+            if (!above) top += 34;
+          }
+          temperatureTops[(chart, index)] = top;
         }
       }
     }
@@ -441,6 +473,7 @@ class HourlyValueChart extends StatelessWidget {
         final primaryTop = primaryTops[index];
         if (!avoidLineOverlaps &&
             chart != series &&
+            !temperatureTops.containsKey((chart, index)) &&
             primaryTop != null &&
             (top - primaryTop).abs() < scaledLabelHeight + 4) {
           if (temperature) {
@@ -495,6 +528,7 @@ class HourlyValueChart extends StatelessWidget {
                         overlays: overlays,
                         hours: hours,
                         pointWidth: pointWidth,
+                        topPadding: topPadding,
                         bottomPadding: bottomPadding,
                         sharedBounds: sharedBounds,
                         color: palette.primaryDeep,
@@ -504,9 +538,10 @@ class HourlyValueChart extends StatelessWidget {
               if (conditions[index] != null && series.values[index] != null)
                 Positioned(
                     left: x(index) - 12,
-                    top: math.min(y(series, index),
-                            primaryTops[index] ?? y(series, index)) -
-                        34,
+                    top: temperatureIconTops[index] ??
+                        math.min(y(series, index),
+                                primaryTops[index] ?? y(series, index)) -
+                            34,
                     child: IgnorePointer(
                         child: WeatherConditionIcon(
                             condition: conditions[index],
@@ -525,6 +560,7 @@ class HourlyValueChartPainter extends CustomPainter {
   final Color color;
   final Color gridColor;
   final (double, double)? sharedBounds;
+  final double topPadding;
   final double bottomPadding;
   const HourlyValueChartPainter(
       {required this.series,
@@ -534,13 +570,14 @@ class HourlyValueChartPainter extends CustomPainter {
       required this.gridColor,
       this.overlays = const [],
       this.sharedBounds,
+      this.topPadding = _plotTop,
       this.bottomPadding = _plotBottom});
 
   @override
   void paint(Canvas canvas, Size size) {
     final bounds = sharedBounds ?? series.bounds;
-    double y(double value) =>
-        hourlyChartY(value, bounds, size.height, bottomPadding: bottomPadding);
+    double y(double value) => hourlyChartY(value, bounds, size.height,
+        topPadding: topPadding, bottomPadding: bottomPadding);
     double x(int index) => (hours[index] - hours.first + .5) * pointWidth;
     for (final band in series.bands) {
       canvas.drawRect(
@@ -562,8 +599,8 @@ class HourlyValueChartPainter extends CustomPainter {
         hour++) {
       final at =
           (hour - hours.first + (intervalTimeline ? 0 : .5)) * pointWidth;
-      canvas.drawLine(
-          Offset(at, _plotTop), Offset(at, size.height - bottomPadding), grid);
+      canvas.drawLine(Offset(at, topPadding),
+          Offset(at, size.height - bottomPadding), grid);
     }
     // 확률 막대를 먼저 그리고 정량 선을 위에 올린다.
     final charts = [
@@ -575,7 +612,7 @@ class HourlyValueChartPainter extends CustomPainter {
       final chartBounds = sharedBounds ?? chart.bounds;
       double chartY(double value) =>
           hourlyChartY(value, chartBounds, size.height,
-              bottomPadding: bottomPadding);
+              topPadding: topPadding, bottomPadding: bottomPadding);
       final chartColor = chart.color ?? color;
       final stroke = Paint()
         ..color = chartColor
@@ -638,5 +675,6 @@ class HourlyValueChartPainter extends CustomPainter {
       color != oldDelegate.color ||
       gridColor != oldDelegate.gridColor ||
       sharedBounds != oldDelegate.sharedBounds ||
+      topPadding != oldDelegate.topPadding ||
       bottomPadding != oldDelegate.bottomPadding;
 }

@@ -62,14 +62,18 @@ class PlatformGpsRegionNameService extends GpsRegionNameService {
   }
 }
 
-String gpsRegionDisplayName({String? deviceName, String? serverName}) {
+String gpsRegionDisplayName({
+  String? deviceName,
+  String? serverName,
+  bool loading = false,
+}) {
   // 서버가 좌표·행정경계로 확인한 이름도 사용하고 임시 문구는 제외한다.
   final administrativeName = koreanAdministrativeDisplayName(
     administrativeArea: serverName,
     locality: serverName,
   );
   return preferNeighborhoodDisplayName([deviceName, administrativeName]) ??
-      '현재 위치';
+      (loading ? regionNameLoading : regionNameFailed);
 }
 
 String? koreanAdministrativeDisplayName({
@@ -118,6 +122,7 @@ String? koreanAdministrativeDisplayName({
 String? preferNeighborhoodDisplayName(Iterable<String?> candidates) {
   String? firstAdministrativeName;
   for (final candidate in candidates) {
+    if (isRegionNamePlaceholder(candidate)) continue;
     final value =
         candidate == null ? null : displayRegionName(candidate.trim());
     if (value == null || value.isEmpty) continue;

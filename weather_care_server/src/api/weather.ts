@@ -792,11 +792,18 @@ router.get('/widget', async (c) => {
     max?: string | number;
   }[] }>();
   const requestedRegionName = query.get('regionName')?.trim();
+  // /today가 좌표·행정경계로 확인한 이름을 위젯에서도 그대로 사용한다.
+  const widgetRegionName = [requestedRegionName, today.region.name,
+    administrativeAreaForLocation({ nx: today.region.nx, ny: today.region.ny })?.[1]]
+    .find(name => name?.trim() && !['현재 위치', '선택 지역', '선택한 지역',
+      '지역을 설정해주세요', '지역명 조회 중...', '지역명 조회 실패'].includes(name.trim()));
   return c.json(buildHomeWidgetSnapshot(
     today,
     weekly,
     new Date(),
-    requestedRegionName || administrativeAreaForLocation({ nx: today.region.nx, ny: today.region.ny })?.[1] || '현재 위치',
+    // 이전 앱의 구체 지역명 보존 규칙과 호환되도록 미확인 대체값은 유지한다.
+    // 새 앱·위젯은 이 값을 조회 중/실패 상태로 변환한다.
+    widgetRegionName ?? '현재 위치',
   ));
 });
 

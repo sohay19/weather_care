@@ -15,8 +15,19 @@ void main() {
   });
 
   test('서버 임시 문구는 지역명으로 사용하지 않는다', () {
-    for (final name in [null, '', '현재 위치', '선택 지역', '선택한 지역']) {
-      expect(gpsRegionDisplayName(serverName: name), '현재 위치');
+    for (final name in [
+      null,
+      '',
+      '현재 위치',
+      '선택 지역',
+      '선택한 지역',
+      '지역명 조회 중...',
+      '지역명 조회 실패'
+    ]) {
+      expect(gpsRegionDisplayName(serverName: name), '지역명 조회 실패');
+      expect(
+          gpsRegionDisplayName(serverName: name, loading: true), '지역명 조회 중...');
+      expect(gpsRegionDisplayName(deviceName: name), '지역명 조회 실패');
     }
   });
 

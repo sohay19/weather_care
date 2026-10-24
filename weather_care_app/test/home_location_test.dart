@@ -115,6 +115,7 @@ WeatherLoadResult _weather(int nx, int ny,
 
 class _Weather extends WeatherService {
   final calls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
+  final mainCalls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   final comparisonCalls = <({int nx, int ny})>[];
   final weeklyCalls = <({int nx, int ny, DeviceCoordinates? coordinates})>[];
   Completer<WeatherLoadResult>? pending;
@@ -134,8 +135,10 @@ class _Weather extends WeatherService {
     String? regionName,
     DeviceCoordinates? coordinates,
     Future<String?>? regionNameFuture,
-  }) async =>
-      mainPreview;
+  }) async {
+    mainCalls.add((nx: nx, ny: ny, coordinates: coordinates));
+    return mainPreview;
+  }
 
   @override
   Future<WeeklyWeatherResponse> fetchWeeklyWeather({
@@ -174,7 +177,8 @@ class _Weather extends WeatherService {
       void Function(TodayWeatherResponse today)? onToday,
       void Function(WeeklyWeatherResponse weekly)? onWeekly}) async {
     calls.add((nx: nx, ny: ny, coordinates: coordinates));
-    final result = response ?? _weather(nx, ny, regionName: regionName);
+    final result =
+        response ?? _weather(nx, ny, regionName: regionName ?? this.regionName);
     if (pending != null) {
       pendingWeeklyCallback = onWeekly;
       if (emitTodayWhilePending) onToday?.call(result.today!);
@@ -359,6 +363,13 @@ void main() {
 
   SettingsScreen screen(WidgetTester tester) => tester
       .widget<SettingsScreen>(find.byType(SettingsScreen, skipOffstage: false));
+
+  Future<void> finishRegionRetries(WidgetTester tester) async {
+    for (var attempt = 0; attempt < 5; attempt++) {
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+    }
+  }
 
   testWidgets('주간 개별 재조회에도 현재 정밀 GPS와 격자를 전달한다', (tester) async {
     location.result =
@@ -677,7 +688,7 @@ void main() {
 
   testWidgets('탭 스와이프 새로고침이 서버 실패하면 기존 자료와 팝업을 유지한다', (tester) async {
     await start(tester, initialIndex: 2);
-    final originalRegion = find.text('현재 위치 날씨');
+    final originalRegion = find.text('지역명 조회 중...');
     expect(originalRegion, findsOneWidget);
     weather.response = const WeatherLoadResult(
       today: null,
@@ -1204,15 +1215,78 @@ void main() {
     });
   }
 
-  testWidgets('GPS 응답의 선택 지역 임시명은 현재 위치로 표시한다', (tester) async {
+  testWidgets('GPS 임시명은 조회 중으로 표시하고 5회 추가 실패하면 실패로 표시한다', (tester) async {
     weather.regionName = '선택 지역';
     await start(tester);
-    expect(screen(tester).regionName, '현재 위치');
+    expect(screen(tester).regionName, '지역명 조회 중...');
+    await finishRegionRetries(tester);
+    expect(screen(tester).regionName, '지역명 조회 실패');
+    expect(gpsRegionName.calls, hasLength(6));
+    expect(weather.mainCalls, hasLength(6));
 
     await tester.tap(find.text('Main'));
     await tester.pumpAndSettle();
-    expect(find.text('현재 위치 날씨'), findsOneWidget);
+    expect(find.text('지역명 조회 실패'), findsOneWidget);
     expect(find.text('선택 지역 날씨'), findsNothing);
+  });
+
+  testWidgets('기기 지역명을 기다리는 동안 조회 중을 표시하고 날씨와 위젯은 유지한다', (tester) async {
+    gpsRegionName.pending = Completer<String?>();
+    weather.response = _weather(60, 127, regionName: '현재 위치');
+    final widgetService = _WidgetService();
+    await start(tester,
+        initialIndex: 2, settle: false, widgetService: widgetService);
+    expect(find.text('지역명 조회 중...'), findsOneWidget);
+    expect(find.text('지역명 조회 중... 날씨'), findsNothing);
+    gpsRegionName.pending!.complete(null);
+    await tester.pumpAndSettle();
+    expect(widgetService.published.last.region, '지역명 조회 중...');
+    await finishRegionRetries(tester);
+    expect(widgetService.published.last.region, '지역명 조회 실패');
+    expect(widgetService.published.last.currentTemperature, '20°');
+  });
+
+  testWidgets('기기 지역명이 추가 재시도에서 복구되면 나머지 시도는 중단한다', (tester) async {
+    await start(tester, initialIndex: 2);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(gpsRegionName.calls, hasLength(2));
+    gpsRegionName.result = '서울 종로구 청운효자동';
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    expect(gpsRegionName.calls, hasLength(3));
+  });
+
+  testWidgets('대략적 위치의 지역명 실패도 서버로 5회 더 시도하고 정밀 좌표를 보내지 않는다', (tester) async {
+    location.result =
+        const LocationResult(LocationState.approximate, coordinates: _seoul);
+    await start(tester, initialIndex: 2);
+    expect(screen(tester).regionName, '지역명 조회 중...');
+    await finishRegionRetries(tester);
+    expect(screen(tester).regionName, '지역명 조회 실패');
+    expect(weather.mainCalls, hasLength(6));
+    expect(weather.mainCalls.every((call) => call.coordinates == null), isTrue);
+    expect(gpsRegionName.calls, isEmpty);
+  });
+
+  testWidgets('대략적 위치의 서버 지역명이 복구되면 앱과 위젯에 반영한다', (tester) async {
+    location.result =
+        const LocationResult(LocationState.approximate, coordinates: _seoul);
+    final widgetService = _WidgetService();
+    await start(tester, initialIndex: 2, widgetService: widgetService);
+    weather.mainPreview = _weather(60, 127, regionName: '서울특별시 종로구').today;
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+    expect(find.text('서울 종로구 날씨'), findsOneWidget);
+    expect(widgetService.published.last.region, '서울 종로구');
+    expect(
+        Uri.parse(widgetService.refreshUrls.last!)
+            .queryParameters['regionName'],
+        '서울 종로구');
+    await tester.pump(const Duration(seconds: 5));
+    expect(weather.mainCalls, hasLength(2));
   });
   testWidgets('정밀 GPS 역지오코딩 지역명을 동까지 표시한다', (tester) async {
     gpsRegionName.result = '서울 강남구 역삼동';
@@ -1234,6 +1308,50 @@ void main() {
     expect(find.text('서울 종로구 청운효자동 날씨'), findsOneWidget);
     expect(find.text('현재 위치 날씨'), findsNothing);
     expect(widgetService.published.last.region, '서울 종로구 청운효자동');
+    expect(
+        Uri.parse(widgetService.refreshUrls.last!)
+            .queryParameters['regionName'],
+        '서울 종로구 청운효자동');
+    await tester.pump(const Duration(seconds: 5));
+    expect(gpsRegionName.calls, hasLength(1));
+  });
+
+  testWidgets('이전 GPS의 늦은 지역명 재시도 결과는 새 위치를 덮어쓰지 않는다', (tester) async {
+    await start(tester, initialIndex: 2);
+    final oldName = Completer<String?>();
+    gpsRegionName.pending = oldName;
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(gpsRegionName.calls, hasLength(2));
+    gpsRegionName.pending = null;
+    gpsRegionName.result = '부산 해운대구 우동';
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _busan);
+    weather.response = _weather(98, 76, regionName: '현재 위치');
+    await screen(tester).onRefresh!();
+    await tester.pumpAndSettle();
+    oldName.complete('서울 종로구 청운효자동');
+    await tester.pumpAndSettle();
+    expect(find.text('부산 해운대구 우동 날씨'), findsOneWidget);
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+    expect(gpsRegionName.calls, hasLength(3));
+  });
+
+  testWidgets('같은 격자 안에서 이동해도 새 지역명을 못 얻으면 이전 이름을 재사용하지 않는다', (tester) async {
+    gpsRegionName.result = '서울 종로구 청운효자동';
+    await start(tester, initialIndex: 2);
+    gpsRegionName.result = null;
+    location.result = const LocationResult(LocationState.ready,
+        coordinates: DeviceCoordinates(latitude: 37.57, longitude: 126.98));
+    weather.response = _weather(60, 127, regionName: '현재 위치');
+    await screen(tester).onRefresh!();
+    await tester.pumpAndSettle();
+    expect(find.text('지역명 조회 중...'), findsOneWidget);
+    expect(find.text('서울 종로구 청운효자동 날씨'), findsNothing);
+    await finishRegionRetries(tester);
+    expect(find.text('지역명 조회 실패'), findsOneWidget);
+    expect(gpsRegionName.calls, hasLength(7));
   });
 
   testWidgets('기기 지역명 조회의 늦은 실패가 먼저 표시한 서버 지역명을 지우지 않는다', (tester) async {
@@ -1284,8 +1402,12 @@ void main() {
     weather.response = _weather(98, 76, regionName: '현재 위치');
     await screen(tester).onRefresh!();
     await tester.pumpAndSettle();
-    expect(find.text('현재 위치 날씨'), findsOneWidget);
+    expect(find.text('지역명 조회 중...'), findsOneWidget);
     expect(find.text('서울 종로구 청운효자동 날씨'), findsNothing);
+    final callsBeforeRetries = gpsRegionName.calls.length;
+    await finishRegionRetries(tester);
+    expect(find.text('지역명 조회 실패'), findsOneWidget);
+    expect(gpsRegionName.calls.length - callsBeforeRetries, 5);
   });
   testWidgets('새로고침과 앱 복귀는 위치를 다시 읽고 알림 지역도 갱신한다', (tester) async {
     await start(tester);
@@ -1337,7 +1459,7 @@ void main() {
     expect(weather.calls.single.coordinates, isNull);
     expect(registration.calls.single.coordinates, isNull);
     expect(gpsRegionName.calls, isEmpty);
-    expect(screen(tester).regionName, '현재 위치');
+    expect(screen(tester).regionName, '지역명 조회 중...');
     expect(screen(tester).location.hasLocation, isTrue);
   });
   testWidgets('서버 설정 저장 실패가 GPS와 지역 변경을 막지 않는다', (tester) async {

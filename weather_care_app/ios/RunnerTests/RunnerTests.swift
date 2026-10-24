@@ -91,7 +91,7 @@ class RunnerTests: XCTestCase {
         ["locationKey": key, "region": region]), encoding: .utf8)!
     }
     let previous = try snapshot("60:127:name:서울 중구 소공동", "서울 중구 소공동")
-    for name in ["현재 위치", "서울 중구"] {
+    for name in ["현재 위치", "서울 중구", "지역명 조회 중...", "지역명 조회 실패"] {
       let merged = weatherWidgetSnapshotPreservingSpecificRegion(
         try snapshot("60:127", name), previous: previous)
       let object = try JSONSerialization.jsonObject(with: Data(merged.utf8)) as! [String: String]
@@ -99,6 +99,12 @@ class RunnerTests: XCTestCase {
     }
     let moved = try snapshot("98:76", "부산")
     XCTAssertEqual(weatherWidgetSnapshotPreservingSpecificRegion(moved, previous: previous), moved)
+    for name in ["지역명 조회 중...", "지역명 조회 실패"] {
+      let failed = try snapshot("98:76", name)
+      XCTAssertEqual(weatherWidgetSnapshotPreservingSpecificRegion(failed, previous: previous), failed)
+      let recovered = try snapshot("98:76", "부산 중구 중앙동")
+      XCTAssertEqual(weatherWidgetSnapshotPreservingSpecificRegion(recovered, previous: failed), recovered)
+    }
   }
 
   @MainActor

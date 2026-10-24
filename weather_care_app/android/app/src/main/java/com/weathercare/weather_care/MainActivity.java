@@ -184,9 +184,12 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
-    private static boolean isSpecificWidgetRegion(String value) {
+    static boolean isSpecificWidgetRegion(String value) {
         return !value.isBlank() &&
                 !"현재 위치".equals(value) &&
+                !"지역명 조회 중...".equals(value) &&
+                !"지역명 조회 실패".equals(value) &&
+                !"선택한 지역".equals(value) &&
                 !"선택 지역".equals(value) &&
                 !"지역을 설정해주세요".equals(value);
     }

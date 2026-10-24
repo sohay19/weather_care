@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -78,6 +79,49 @@ async function seedWeather(db: D1Database, rainy = false): Promise<void> {
 }
 
 describe('공용 날씨 DB와 환경별 사용자 DB', () => {
+  it('위젯 요청에 지역명이 없어도 내부 날씨 조회에서 확인한 지역명을 전달한다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
+    const value = runtime(directory(), 'production');
+    await seedWeather(weatherDatabase(value.env));
+    const query = '?nx=60&ny=127&regionCode=1111051500';
+    const today = await app.fetch(new Request(`http://localhost/api/v1/weather/today${query}`), value.env);
+    expect(await today.json()).toHaveProperty('region.name', '서울특별시 종로구 청운효자동');
+    const widget = await app.fetch(new Request(`http://localhost/api/v1/weather/widget${query}`), value.env);
+    expect(widget.status).toBe(200);
+    expect(await widget.json()).toHaveProperty('region', '종로구 청운효자동');
+  });
+
+  it('지역명 없는 GPS·대략적 위치 요청도 서버가 확인한 동·상위 지역명을 위젯에 전달한다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
+    const value = runtime(directory(), 'production');
+    const db = weatherDatabase(value.env) as SqliteD1Database;
+    await seedWeather(db);
+    db.sqlite.prepare('INSERT INTO administrative_boundary_dataset VALUES(1,?,?,?)')
+      .run('widget-boundary-test', '{}', now.toISOString());
+    db.sqlite.prepare('INSERT INTO administrative_boundary_grid_regions VALUES(60,127,?)')
+      .run('1111000000');
+    const hash = createHash('sha256').update('GPS:37.58:126.97').digest('hex');
+    await saveCollectedCache(db, { key: `COLLECTED_LOCATION_IDENTITY_${hash}`,
+      type: 'COLLECTED_LOCATION_IDENTITY', updatedAt: now,
+      value: { adminCode: '1111051500', regionName: '서울특별시 종로구 청운효자동',
+        source: 'BOUNDARY', boundaryVersion: 'widget-boundary-test' } });
+    for (const [suffix, region] of [['&latitude=37.58&longitude=126.97', '종로구 청운효자동'],
+      ['', '서울특별시 종로구']]) {
+      const response = await app.fetch(new Request(`http://localhost/api/v1/weather/widget?nx=60&ny=127${suffix}`), value.env);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toHaveProperty('region', region);
+    }
+  });
+
+  it('미확인 위젯 지역명은 이전 앱이 정상 이름을 보존할 수 있는 기존 대체값을 유지한다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
+    const value = runtime(directory(), 'production');
+    await seedWeather(weatherDatabase(value.env));
+    const response = await app.fetch(new Request('http://localhost/api/v1/weather/widget?nx=60&ny=127'), value.env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toHaveProperty('region', '현재 위치');
+  });
+
   it('분리 DB에서 모든 날씨 조회와 사용자 상태·설정 조회가 인증 유무별로 동작한다', async () => {
     vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now);
     const external = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('외부 호출 금지'));

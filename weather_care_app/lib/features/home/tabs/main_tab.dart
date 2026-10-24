@@ -1,4 +1,5 @@
 import '../../../utils/weather_number.dart';
+import '../../../utils/region_name.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
@@ -98,7 +99,9 @@ class MainTab extends StatelessWidget {
                   children: [
                     TabPageHeader(
                       eyebrow: dateLabel,
-                      title: '${today.region.name} 날씨',
+                      title: isRegionNamePlaceholder(today.region.name)
+                          ? today.region.name
+                          : '${today.region.name} 날씨',
                       subtitle: '예보 기준 구역 지도를 확인할 수 있어요',
                       subtitleTrailing: IconButton(
                         key: const ValueKey('main-weather-map-info'),

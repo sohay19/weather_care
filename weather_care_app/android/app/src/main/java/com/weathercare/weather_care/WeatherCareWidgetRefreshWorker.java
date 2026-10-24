@@ -47,7 +47,17 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
             WeatherCareWidgetProvider.setRefreshInProgress(context, true);
         }
         try {
-            int status = refresh(context, preferences, rawUrl, revision);
+            int status = 0;
+            for (int attempt = 0; attempt <= 5; attempt++) {
+                if (isStopped() || !isCurrentSelection(preferences, rawUrl, revision)) return Result.success();
+                status = refresh(context, preferences, rawUrl, revision, attempt == 5);
+                if (status < 200 || status >= 300) break;
+                if (!isCurrentSelection(preferences, rawUrl, revision)) return Result.success();
+                JSONObject snapshot = new JSONObject(preferences.getString(MainActivity.SNAPSHOT_KEY, "{}"));
+                if (MainActivity.isSpecificWidgetRegion(snapshot.optString("region", "").trim())) break;
+                WeatherCareWidgetProvider.updateAll(context);
+                if (attempt < 5) Thread.sleep(1000);
+            }
             synchronized (MainActivity.WIDGET_LOCK) {
                 if (!isCurrentSelection(preferences, rawUrl, revision) ||
                         (status >= 200 && status < 300)) return Result.success();
@@ -80,7 +90,8 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
     }
 
     private static int refresh(
-            Context context, SharedPreferences preferences, String rawUrl, String revision
+            Context context, SharedPreferences preferences, String rawUrl, String revision,
+            boolean lastRegionAttempt
     ) throws Exception {
         if (!isAllowedUrl(rawUrl)) throw new IOException("Invalid widget refresh URL");
         HttpURLConnection connection = (HttpURLConnection) new URL(rawUrl).openConnection();
@@ -100,6 +111,9 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                 throw new IOException("Invalid widget snapshot");
             }
             snapshot.put("receivedAt", Instant.now().toString());
+            if (!MainActivity.isSpecificWidgetRegion(snapshot.optString("region", "").trim())) {
+                snapshot.put("region", lastRegionAttempt ? "지역명 조회 실패" : "지역명 조회 중...");
+            }
             synchronized (MainActivity.WIDGET_LOCK) {
                 // 구역 전환/삭제/앱 갱신 전의 늦은 응답은 저장하지 않는다.
                 if (!isCurrentSelection(preferences, rawUrl, revision)) return status;

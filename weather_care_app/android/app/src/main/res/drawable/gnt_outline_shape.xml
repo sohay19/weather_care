@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 광고 템플릿 자체의 선만 제거한다. 바깥 Flutter 카드 테두리는 유지한다. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/gnt_white" />
+</shape>

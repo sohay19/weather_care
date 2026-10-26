@@ -14,6 +14,95 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   const repository = PreparationChecklistRepository();
 
+  testWidgets('아침부터 저녁 준비물과 시작 시각을 표시하고 종료 시 다음 항목을 당긴다', (tester) async {
+    var now = DateTime.parse('2026-09-10T07:00:00+09:00');
+    final timeline = [
+      BriefingTimelineEntry.fromJson({
+        'briefingId': 'day',
+        'sceneId': 'VISIBILITY',
+        'validFrom': '2026-09-10T07:00:00+09:00',
+        'validUntil': '2026-09-10T19:00:00+09:00',
+        'recommendedItems': ['UMBRELLA', 'HAND_WARMER', 'MASK', 'PARASOL'],
+        'preparationPeriods': {
+          'UMBRELLA': {
+            'validFrom': '2026-09-10T18:00:00+09:00',
+            'validUntil': '2026-09-10T19:00:00+09:00'
+          },
+          'HAND_WARMER': {
+            'validFrom': '2026-09-10T20:00:00+09:00',
+            'validUntil': '2026-09-10T21:00:00+09:00'
+          },
+        },
+        'copy': {},
+      }),
+      BriefingTimelineEntry.fromJson({
+        'briefingId': 'after-rain',
+        'sceneId': 'THERMAL_COLD',
+        'validFrom': '2026-09-10T19:00:00+09:00',
+        'validUntil': '2026-09-11T00:00:00+09:00',
+        'recommendedItems': ['HAND_WARMER', 'MASK', 'PARASOL'],
+        'preparationPeriods': {
+          'HAND_WARMER': {
+            'validFrom': '2026-09-10T20:00:00+09:00',
+            'validUntil': '2026-09-10T21:00:00+09:00'
+          },
+        },
+        'copy': {},
+      }),
+    ];
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: RecommendationBagSection(
+      regionName: '서울',
+      now: () => now,
+      recommendations: const [],
+      briefingTimeline: timeline,
+      onDetail: (_) {},
+    ))));
+    await tester.pumpAndSettle();
+    expect(find.text('18시부터'), findsOneWidget);
+    expect(find.text('20시부터'), findsOneWidget);
+    expect(find.byKey(const ValueKey('bag-item-umbrella')), findsOneWidget);
+    expect(find.byKey(const ValueKey('bag-item-parasol')), findsNothing);
+    now = DateTime.parse('2026-09-10T19:00:00+09:00');
+    await tester.pump(const Duration(minutes: 1));
+    expect(find.byKey(const ValueKey('bag-item-umbrella')), findsNothing);
+    expect(find.byKey(const ValueKey('bag-item-parasol')), findsOneWidget);
+    now = DateTime.parse('2026-09-10T21:00:00+09:00');
+    await tester.pump(const Duration(minutes: 1));
+    expect(find.byKey(const ValueKey('bag-item-hand_warmer')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('진행 중인 준비물도 시작 시각을 표시하고 브리핑 없는 응답은 종료 시 제거한다', (tester) async {
+    var now = DateTime.parse('2026-09-10T18:10:00+09:00');
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: RecommendationBagSection(
+      regionName: '서울',
+      now: () => now,
+      recommendations: [
+        WeatherRecommendation(
+          type: RecommendationType.umbrella,
+          recommended: true,
+          priority: 100,
+          title: '우산',
+          description: '',
+          notificationEligible: true,
+          validFrom: '2026-09-10T18:00:00+09:00',
+          validUntil: '2026-09-10T19:00:00+09:00',
+        )
+      ],
+      onDetail: (_) {},
+    ))));
+    await tester.pumpAndSettle();
+    expect(find.text('18시부터'), findsOneWidget);
+    now = DateTime.parse('2026-09-10T19:00:00+09:00');
+    await tester.pump(const Duration(minutes: 1));
+    expect(find.byKey(const ValueKey('bag-item-umbrella')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('설명 버튼은 하루 전체 추천보다 현재 브리핑 구간의 근거를 전달한다', (tester) async {
     const currentEvidence = [
       WeatherMessagePart(

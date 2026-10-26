@@ -45,11 +45,17 @@ export const lifestyleMessageCatalog: Record<
     },
   ],
   MASK_USEFUL: [
+    { contextKey: 'POLLEN', title: '꽃가루에 대비해 외출 시 마스크를 준비하세요',
+      description: '공식 꽃가루농도위험지수의 예측이 높음 이상이에요.' },
+    { contextKey: 'AIR_AND_POLLEN', title: '미세먼지와 꽃가루에 대비해 마스크를 준비하세요',
+      description: '대기질 자료와 꽃가루 예측을 함께 확인했어요.' },
     {
       title: '미세먼지나 초미세먼지가 나쁠 수 있으니, 외출한다면 보건용 마스크를 준비하세요',
       description: '대기질 등급은 몸의 느낌만으로 판단하기 어려울 수 있어요.',
     },
   ],
+  VENTILATION_GUIDANCE: [{ title: '환기 전에 대기질과 대기정체를 확인하세요',
+    description: '대기정체는 실제 미세먼지 농도와 별개로 해석해요.' }],
   OZONE_CAUTION: [
     {
       title: '오존 농도가 높으니, 야외활동을 계획한다면 시간이나 강도를 줄이세요',

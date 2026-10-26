@@ -2,6 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 
 void main() {
+  test('환기 안내는 전용 생활 항목으로 표시한다', () {
+    final message = LifestyleMessage.fromJson({
+      'type': 'VENTILATION_GUIDANCE',
+      'title': '환기 전에 최신 대기질을 확인하세요',
+    });
+    expect(message.type, LifestyleMessageType.ventilationGuidance);
+    expect(message.type.title, '대기질·대기정체와 환기');
+  });
   test('블랙아이스 API 항목을 공식 앱 명칭으로 표시한다', () {
     final message = LifestyleMessage.fromJson({
       'type': 'BLACK_ICE_CAUTION',

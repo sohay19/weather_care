@@ -6,6 +6,8 @@ import {
   recommendationDestination,
 } from './notificationDestination';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
+import { preparationsForWindow } from '../recommendations/preparationPolicy';
+import { titleFor } from '../recommendations/recommendationTemplates';
 import {
   buildWeatherBriefResult,
   type WeatherBriefContext,
@@ -44,13 +46,25 @@ export function buildNotification(
       : normal.some((item) => briefing.recommendedItems.includes(item.type))
   );
   const summaryBriefing = briefingMatchesPreferences ? briefing : undefined;
+  const fallbackItems = briefContext.tieredPreparations ? [] : normal;
+  const preparations = forecast && briefContext.tieredPreparations
+    ? preparationsForWindow(forecast, now ?? new Date(), briefContext)
+    : [];
+  const preparationBody = preparations.slice(0, 3).map((item) => {
+    const time = item.validFrom && item.validUntil
+      ? `${periodLabel(item.validFrom, item.validUntil)} ` : '';
+    const reason = { rain: '비 대비', snow: '눈 대비', cold: '추위 대비',
+      heat: '더위 대비', air: '미세먼지 대비', pollen: '꽃가루 대비',
+      'air+pollen': '미세먼지·꽃가루 대비', uv: '자외선 대비' }[item.reason] ?? '';
+    return `${time}${reason} · ${titleFor(item.type)}`;
+  }).join('\n');
 
   const payloads: BuiltNotification[] = [];
-  if (normal.length > 0 || summaryBriefing) {
+  if (preparations.length > 0 || fallbackItems.length > 0 || summaryBriefing) {
     payloads.push({
       notification_key: 'MORNING_BRIEF',
-      title: summaryBriefing?.copy.notificationTitle ?? '오늘 준비할 내용',
-      body: summaryBriefing?.copy.notificationBody ?? composeBody(normal, now),
+      title: preparationBody ? '오늘 준비할 내용' : summaryBriefing?.copy.notificationTitle ?? '오늘 준비할 내용',
+      body: preparationBody || summaryBriefing?.copy.notificationBody || composeBody(fallbackItems, now),
       destination: morningBriefDestination,
     });
   }

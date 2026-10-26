@@ -35,6 +35,8 @@ class WeekTab extends StatefulWidget {
   final Widget? advertisement;
   final List<HourlyWeatherItem> hourly;
   final List<HourlyWeatherItem> timelineHourly;
+  final List<SnowDepthObservation> snowDepthHistory;
+  final CurrentWeather? currentSnow;
 
   const WeekTab({
     super.key,
@@ -50,6 +52,8 @@ class WeekTab extends StatefulWidget {
     this.advertisement,
     this.hourly = const [],
     this.timelineHourly = const [],
+    this.snowDepthHistory = const [],
+    this.currentSnow,
   });
 
   @override
@@ -228,6 +232,8 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
                       ),
                       today: parseForecastDate(today)!,
                       hourly: selectedHourly,
+                      snowDepthHistory: widget.snowDepthHistory,
+                      currentSnow: widget.currentSnow,
                       serverFeaturesAvailable: widget.serverFeaturesAvailable,
                       onRetry: widget.onRetryData,
                       retrying: widget.retrying,
@@ -480,6 +486,8 @@ class _WeekDayCard extends StatelessWidget {
   final bool isPast;
   final DateTime today;
   final List<HourlyWeatherItem> hourly;
+  final List<SnowDepthObservation> snowDepthHistory;
+  final CurrentWeather? currentSnow;
   final bool serverFeaturesAvailable;
   final Future<void> Function()? onRetry;
   final bool retrying;
@@ -491,6 +499,8 @@ class _WeekDayCard extends StatelessWidget {
     required this.isPast,
     required this.today,
     required this.hourly,
+    required this.snowDepthHistory,
+    this.currentSnow,
     required this.serverFeaturesAvailable,
     this.onRetry,
     this.retrying = false,
@@ -506,6 +516,8 @@ class _WeekDayCard extends StatelessWidget {
         isToday: isToday,
         today: today,
         hourly: hourly,
+        snowDepthHistory: snowDepthHistory,
+        currentSnow: currentSnow,
         onRetry: onRetry,
         retrying: retrying,
       );
@@ -772,6 +784,8 @@ class _WeekDayCard extends StatelessWidget {
               key: ValueKey('week-hourly-${day.forecastDate}'),
               keyPrefix: 'week-${day.forecastDate}',
               items: hourly,
+              snowDepthHistory: snowDepthHistory,
+              currentSnow: currentSnow,
               targetDate: day.forecastDate,
               availableOnly: true,
               inline: true,
@@ -1066,6 +1080,8 @@ class _UnavailableWeekDayCard extends StatelessWidget {
   final bool isToday;
   final DateTime today;
   final List<HourlyWeatherItem> hourly;
+  final List<SnowDepthObservation> snowDepthHistory;
+  final CurrentWeather? currentSnow;
   final Future<void> Function()? onRetry;
   final bool retrying;
 
@@ -1075,6 +1091,8 @@ class _UnavailableWeekDayCard extends StatelessWidget {
     required this.isToday,
     required this.today,
     required this.hourly,
+    required this.snowDepthHistory,
+    this.currentSnow,
     this.onRetry,
     this.retrying = false,
   });
@@ -1220,6 +1238,8 @@ class _UnavailableWeekDayCard extends StatelessWidget {
                 key: ValueKey('week-hourly-${dateInKorea(date)}'),
                 keyPrefix: 'week-${dateInKorea(date)}',
                 items: hourly,
+                snowDepthHistory: snowDepthHistory,
+                currentSnow: currentSnow,
                 targetDate: dateInKorea(date),
                 availableOnly: true,
                 inline: true,

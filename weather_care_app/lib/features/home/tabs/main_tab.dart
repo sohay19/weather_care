@@ -223,6 +223,8 @@ class MainTab extends StatelessWidget {
                       keyPrefix: 'main',
                       chartHeight: detailedHourlyChartHeight,
                       items: today.timelineHourly ?? today.hourly,
+                      snowDepthHistory: today.snowDepthHistory,
+                      currentSnow: today.current,
                       generatedAt: today.generatedAt,
                       receivedAt: today.receivedAt,
                       dataPhase: dataPhase,

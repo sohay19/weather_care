@@ -4,6 +4,8 @@ import { readNationwideRegion, readNationwideWeekly, readNationwideVisibility } 
 import { currentSnowFields } from '../services/currentSnowCache';
 import { currentUvFields } from '../services/currentUvCache';
 import { readTodayLivingIndices } from '../services/livingIndices';
+import { withLivingIndexAdvice, ventilationAdvice } from '../services/livingIndexAdvice';
+import { readSnowDepthHistory } from '../services/snowDepthHistory';
 import { readCachedMidTermForecast } from '../services/midTermForecastCache';
 import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
 import { Hono } from 'hono';
@@ -40,6 +42,7 @@ import {
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import { CATALOG_VERSION } from '../recommendations/recommendationTemplates';
 import { buildWeatherBriefResult } from '../presentation/weatherBrief';
+import { preparationsForWindow } from '../recommendations/preparationPolicy';
 import {
   buildEnvironmentalDataStatusMessages,
   buildLifestyleMessages,
@@ -188,7 +191,8 @@ router.get('/main', async (c) => {
       ultraShortRecord,
       generatedAt,
     );
-    const responseForecast = { ...forecast, current };
+    const livingIndices = await readTodayLivingIndices(weatherDatabase(c.env), location, generatedAt);
+    const responseForecast = withLivingIndexAdvice({ ...forecast, current }, livingIndices, generatedAt);
     const airForecast = await readCollectedAirForecast(weatherDatabase(c.env), nx, ny,
       weekly?.status === 'AVAILABLE' ? weekly.value.airQuality : [], generatedAt,
       location.adminCode, location.regionName);
@@ -210,7 +214,7 @@ router.get('/main', async (c) => {
       ...sunTimes,
       current,
       nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
-      livingIndices: await readTodayLivingIndices(weatherDatabase(c.env), location, generatedAt),
+      livingIndices,
       hourly: [],
       recommendations: [],
       lifestyleMessages: [],
@@ -338,7 +342,8 @@ router.get('/today', async (c) => {
       ...snowFields,
       ...uvFields,
     };
-    const responseForecast = { ...forecast, current };
+    const livingIndices = await readTodayLivingIndices(weatherDatabase(c.env), location, generatedAt);
+    const responseForecast = withLivingIndexAdvice({ ...forecast, current }, livingIndices, generatedAt);
     const airForecast = await readCollectedAirForecast(weatherDatabase(c.env), nx, ny,
       weeklyRecord?.status === 'AVAILABLE' ? weeklyRecord.value.airQuality : [], generatedAt,
       location.adminCode, location.regionName);
@@ -436,6 +441,10 @@ router.get('/today', async (c) => {
       expandedPreparations,
       tieredPreparations,
       snapshots: decisionHourly,
+      preparations: tieredPreparations ? preparationsForWindow(responseForecast, generatedAt, {
+        ...sunTimesForRequest(generatedAt, nx, ny, coordinates),
+        allowedRecommendedItems: enabledRecommendationTypes(settings),
+      }) : undefined,
       facts: rules,
     });
     const regionLabel = displayAdministrativeName(administrativeAreaForLocation(location)?.[1] ?? '현재 위치');
@@ -489,7 +498,8 @@ router.get('/today', async (c) => {
         activeWarnings: warnings,
       },
       nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
-      livingIndices: await readTodayLivingIndices(weatherDatabase(c.env), location, generatedAt),
+      livingIndices,
+      snowDepthHistory: await readSnowDepthHistory(weatherDatabase(c.env), location, generatedAt),
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
@@ -497,6 +507,7 @@ router.get('/today', async (c) => {
       timelineHourly: responseForecast.timelineHourly ?? responseForecast.hourly,
       recommendations,
       lifestyleMessages: [
+        ...ventilationAdvice(current, livingIndices, generatedAt),
         ...warningMessages,
         ...(roadControlMessage ? [roadControlMessage] : []),
         ...(roadIceMessage ? [roadIceMessage] : []),

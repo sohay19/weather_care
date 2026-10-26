@@ -240,6 +240,29 @@ Map<String, List<WeatherMessagePart>> parsePreparationEvidence(Object? raw) =>
           }
         : const {};
 
+class PreparationPeriod {
+  final String? validFrom;
+  final String? validUntil;
+
+  const PreparationPeriod({this.validFrom, this.validUntil});
+}
+
+Map<String, PreparationPeriod> parsePreparationPeriods(Object? raw) =>
+    raw is Map
+        ? {
+            for (final entry in raw.entries)
+              if (entry.key is String && entry.value is Map)
+                entry.key as String: PreparationPeriod(
+                  validFrom: entry.value['validFrom'] is String
+                      ? entry.value['validFrom'] as String
+                      : null,
+                  validUntil: entry.value['validUntil'] is String
+                      ? entry.value['validUntil'] as String
+                      : null,
+                ),
+          }
+        : const {};
+
 RecommendationType? recommendationTypeFromApiName(String raw) {
   switch (raw) {
     case 'UMBRELLA':

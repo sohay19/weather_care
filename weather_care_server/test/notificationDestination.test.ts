@@ -138,6 +138,17 @@ describe('notification destinations', () => {
 
     expect(notification.body).not.toMatch(/자외선|선크림|양산|햇볕/);
   });
+
+  it('새 요약은 내일 준비물을 오늘 준비물로 되돌려 넣지 않는다', () => {
+    const forecast = sampleForecast();
+    forecast.current = { observedAt: '2026-09-20T08:00:00+09:00' };
+    forecast.hourly = [{ observedAt: '2026-09-22T05:00:00+09:00',
+      precipitationType: 'RAIN', precipitationProbability: 80 }];
+    expect(buildNotification([recommendation('UMBRELLA')],
+      new Date('2026-09-21T07:00:00+09:00'), forecast, {
+        tieredPreparations: true, allowedRecommendedItems: ['UMBRELLA'],
+      })).toEqual([]);
+  });
 });
 
 function recommendation(type: RecommendationType): Recommendation {

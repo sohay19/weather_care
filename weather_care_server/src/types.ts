@@ -82,6 +82,7 @@ export interface CanonicalBriefingIntent {
   action?: string;
   recommendedItems: RecommendationType[];
   preparationEvidence?: Partial<Record<RecommendationType, WeatherMessagePart[]>>;
+  preparationPeriods?: Partial<Record<RecommendationType, { validFrom?: string; validUntil?: string }>>;
   copyVariantKey: string;
   copy: BriefingCopy;
 }
@@ -96,6 +97,7 @@ export interface BriefingTimelineEntry {
   action?: string;
   recommendedItems: RecommendationType[];
   preparationEvidence?: Partial<Record<RecommendationType, WeatherMessagePart[]>>;
+  preparationPeriods?: CanonicalBriefingIntent['preparationPeriods'];
   copyVariantKey: string;
   copy: BriefingCopy;
 }
@@ -128,6 +130,7 @@ export enum LifestyleInsightType {
   STRONG_SUN_EXPOSURE = 'STRONG_SUN_EXPOSURE',
   OUTERWEAR_USEFUL = 'OUTERWEAR_USEFUL',
   MASK_USEFUL = 'MASK_USEFUL',
+  VENTILATION_GUIDANCE = 'VENTILATION_GUIDANCE',
   OZONE_CAUTION = 'OZONE_CAUTION',
   HYDRATION_IMPORTANT = 'HYDRATION_IMPORTANT',
   SUNSCREEN_USEFUL = 'SUNSCREEN_USEFUL',
@@ -282,6 +285,8 @@ export interface WeatherSnapshot {
   ozoneGrade?: string;
   airStagnationIndex?: number;
   pollenRisk?: string;
+  /** 해당 한국 날짜의 공식 꽃가루 예측. 시간별 관측값으로 해석하지 않는다. */
+  pollenForecast?: { date: string; risks: TodayLivingIndices['pollen'] };
   freezeRisk?: string;
   activeWarnings?: WeatherWarning[];
   provider?: string;
@@ -480,6 +485,14 @@ export interface WeatherMessagePart {
   retryable?: boolean;
 }
 
+export interface SnowDepthObservation {
+  observedAt: string;
+  depthCm: number;
+  stationId: string;
+  stationName: string;
+  distanceKm: number;
+}
+
 export interface TodayLivingIndices {
   pollenStatus: 'AVAILABLE' | 'UNAVAILABLE' | 'OUT_OF_SEASON';
   pollen: { species: string; level: string; issuedAt: string }[];
@@ -502,6 +515,7 @@ export interface TodayWeatherResponse {
   /** 구버전 앱의 미래 예상 날씨 카드와 앱 생성 위젯 계약. */
   nextForecast?: WeatherSnapshot;
   livingIndices?: TodayLivingIndices;
+  snowDepthHistory?: SnowDepthObservation[];
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;
   currentRoadControl?: OfficialRoadControl;

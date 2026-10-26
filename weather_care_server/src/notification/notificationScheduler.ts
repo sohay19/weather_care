@@ -14,7 +14,7 @@ import {
 } from '../providers/warnings/kmaWarningProvider';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
-import { runRecommendationEngine } from '../recommendations/recommendationEngine';
+import { enabledRecommendationTypes, runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
 import {
   CurrentPrecipitationObservation,
@@ -248,6 +248,8 @@ export async function runRecommendationNotificationJob(
         forecast,
         {
           regionKey,
+          tieredPreparations: true,
+          allowedRecommendedItems: enabledRecommendationTypes(settingsFromRow(row)),
           ...(briefingCoordinates
             ? calculateSunTimes(
                 now,
@@ -383,9 +385,15 @@ async function defaultForecastLoader(
   ny: number,
   coordinates?: { latitude: number; longitude: number },
 ): Promise<WeatherForecast> {
-  const cached = await readNationwideRegion(weatherDatabase(env), { nx, ny, coordinates }, new Date());
+  const now = new Date();
+  const { resolveSavedLocation } = await import('../regions/resolvedLocation');
+  const location = await resolveSavedLocation(weatherDatabase(env), { nx, ny, coordinates }, now);
+  const cached = await readNationwideRegion(weatherDatabase(env), location, now);
   if (!cached) throw new Error('COLLECTED_FORECAST_NOT_READY');
-  return cached.value.forecast;
+  const { readTodayLivingIndices } = await import('../services/livingIndices');
+  const { withLivingIndexAdvice } = await import('../services/livingIndexAdvice');
+  const indices = await readTodayLivingIndices(weatherDatabase(env), location, now);
+  return withLivingIndexAdvice(cached.value.forecast, indices, now);
 }
 
 async function defaultSender(

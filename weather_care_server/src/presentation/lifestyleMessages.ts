@@ -55,6 +55,9 @@ export function buildLifestyleMessages(
     }
     const grounding = groundingPartFor(item, facts, hourly, regionName);
     if (grounding) parts.push(grounding);
+    if (item.type === LifestyleInsightType.MASK_USEFUL && Array.isArray(item.context?.pollenEvidence)) {
+      parts.push(...item.context.pollenEvidence as WeatherMessagePart[]);
+    }
     const dataStatus = dataStatusPartFor(item, hourly);
     if (dataStatus) parts.push(dataStatus);
 
@@ -256,6 +259,9 @@ function impactTextFor(
     return sensationMessage('UV_DIRECT_PERCEPTION', variant);
   }
   if (insight.type === LifestyleInsightType.MASK_USEFUL) {
+    if (insight.context?.pollenEvidence) return insight.context.messageContext === 'AIR_AND_POLLEN'
+      ? '미세먼지와 꽃가루 예측을 함께 고려한 마스크 안내예요.'
+      : '꽃가루 예측이 높음 이상이에요. 꽃가루에 민감하다면 외출 시 마스크를 준비하세요.';
     return sensationMessage('PM_DIRECT_PERCEPTION', variant);
   }
   if (insight.type === LifestyleInsightType.OZONE_CAUTION) {

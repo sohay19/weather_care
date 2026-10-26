@@ -134,6 +134,7 @@ export function buildBriefingTimeline(
       action: intent.action,
       recommendedItems: intent.recommendedItems,
       preparationEvidence: intent.preparationEvidence,
+      preparationPeriods: intent.preparationPeriods,
       copyVariantKey: intent.copyVariantKey,
       copy: intent.copy,
     };
@@ -186,7 +187,7 @@ function buildIntentAt(
     : meaning.recommendedItems.filter((item) =>
         (selection.scene === 'RAIN' && item === 'UMBRELLA') ||
         context.severityRecommendedItems?.includes(item));
-  const preparations = context.tieredPreparations ? preparationsForWindow(forecast, now) : [];
+  const preparations = context.tieredPreparations ? preparationsForWindow(forecast, now, context) : [];
   const selectedItems = context.tieredPreparations
     ? preparations.map((item) => item.type)
     : severityItems;
@@ -239,6 +240,11 @@ function buildIntentAt(
       action: meaning.action,
       recommendedItems,
       preparationEvidence,
+      ...(context.tieredPreparations ? {
+        preparationPeriods: Object.fromEntries(preparations.map((item) => [item.type, {
+          validFrom: item.validFrom, validUntil: item.validUntil,
+        }])),
+      } : {}),
       copyVariantKey: rendered.variantKey,
       copy: rendered.copy,
     },
@@ -710,10 +716,12 @@ function briefingBoundaries(
     const value = timestamp(raw);
     if (value !== undefined && value > start && value < horizon) values.add(value);
   }
-  for (const snapshot of [forecast.current, ...forecast.hourly.slice(0, 24)]) {
+  for (const snapshot of [forecast.current, ...forecast.hourly]) {
     const normal = snapshotInterval(snapshot, false);
     const wet = snapshotInterval(snapshot, true);
-    for (const value of [normal?.start, normal?.end, wet?.start, wet?.end]) {
+    const preparationEnd = context.tieredPreparations && normal && normal.end % HOUR >= HOUR - 1_000
+      ? Math.ceil((normal.end + 1) / HOUR) * HOUR : undefined;
+    for (const value of [normal?.start, normal?.end, preparationEnd, wet?.start, wet?.end]) {
       if (value !== undefined && value > start && value < horizon) values.add(value);
     }
   }
@@ -726,6 +734,7 @@ function sameTimelineMeaning(
 ): boolean {
   return left.sceneId === right.sceneId &&
     JSON.stringify(left.preparationEvidence ?? {}) === JSON.stringify(right.preparationEvidence ?? {}) &&
+    JSON.stringify(left.preparationPeriods ?? {}) === JSON.stringify(right.preparationPeriods ?? {}) &&
     left.recommendedItems.join(',') === right.recommendedItems.join(',') &&
     left.targetFrom === right.targetFrom &&
     left.targetUntil === right.targetUntil &&

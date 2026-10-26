@@ -1,10 +1,84 @@
 import { describe, expect, it } from 'vitest';
-import { preparationsForSnapshots } from '../src/recommendations/preparationPolicy';
+import { preparationsForSnapshots, preparationsForWindow } from '../src/recommendations/preparationPolicy';
+import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import type { WeatherSnapshot } from '../src/types';
 
 const snapshot = (changes: Partial<WeatherSnapshot>): WeatherSnapshot => ({
   observedAt: '2026-10-13T12:00:00+09:00',
   ...changes,
+});
+
+describe('오늘 남은 하루 준비물', () => {
+  const now = new Date('2026-10-13T07:00:00+09:00');
+  const at = (hour: number, changes: Partial<WeatherSnapshot> = {}) => snapshot({
+    observedAt: `2026-10-13T${String(hour).padStart(2, '0')}:00:00+09:00`,
+    dataRole: 'FORECAST', ...changes,
+  });
+  const forecast = (hourly: WeatherSnapshot[]): WeatherForecast => ({
+    current: at(7), hourly, daily: [], baseDate: '20261013', baseTime: '0500', dataSource: '검증 자료',
+  });
+  const rain = { precipitationType: 'RAIN', precipitationAmount: 15 } as const;
+  const selected = (hourly: WeatherSnapshot[]) => preparationsForWindow(forecast(hourly), now)
+    .slice(0, 3).map((item) => item.type);
+
+  it('항목이 하나면 그 항목의 물품 3개, 둘이면 2개와 1개, 셋이면 하나씩 배분한다', () => {
+    expect(selected([at(18, rain)])).toEqual(['UMBRELLA', 'RAIN_BOOTS', 'RAINCOAT']);
+    expect(selected([at(18, { ...rain, temperature: 0 })]))
+      .toEqual(['UMBRELLA', 'HAND_WARMER', 'RAIN_BOOTS']);
+    expect(selected([at(18, { ...rain, temperature: 0, pm25: 40 })]))
+      .toEqual(['UMBRELLA', 'HAND_WARMER', 'MASK']);
+  });
+
+  it('아침에 저녁 비를 포함하고 실제 강수 구간 시작부터 종료까지 전달한다', () => {
+    const input = forecast([at(19, { ...rain, precipitationPeriod: {
+      start: '2026-10-13T18:00:00+09:00', end: '2026-10-13T19:00:00+09:00',
+    } })]);
+    expect(preparationsForWindow(input, now)[0]).toMatchObject({
+      type: 'UMBRELLA', validFrom: '2026-10-13T09:00:00.000Z', validUntil: '2026-10-13T10:00:00.000Z',
+    });
+    expect(preparationsForWindow(input, new Date('2026-10-13T18:59:59+09:00')).length).toBeGreaterThan(0);
+    expect(preparationsForWindow(input, new Date('2026-10-13T19:00:00+09:00'))).toEqual([]);
+  });
+
+  it('세 항목을 넘으면 강수와 강한 위험을 먼저 표시하고 약한 위험은 뒤에 둔다', () => {
+    expect(selected([at(18, rain), at(12, { temperature: 33, pm25: 40 }), at(22, { temperature: 16 })]))
+      .toEqual(['UMBRELLA', 'PORTABLE_FAN', 'MASK']);
+  });
+
+  it('눈에도 우산을 우선하고 눈길 대비 물품을 남는 칸에 배치한다', () => {
+    expect(selected([at(18, { precipitationType: 'SNOW', snowfallAmount: 5 })]))
+      .toEqual(['UMBRELLA', 'SNOW_CHAINS', 'WINTER_BOOTS']);
+  });
+
+  it('오늘 마지막 강수 구간은 포함하고 내일만 필요한 물품과 종료된 관측은 제외한다', () => {
+    const midnight = '2026-10-14T00:00:00+09:00';
+    const input = forecast([
+      snapshot({ observedAt: midnight, forecastAt: midnight, ...rain,
+        precipitationPeriod: { start: '2026-10-13T23:00:00+09:00', end: midnight },
+        temperature: 0 }),
+      snapshot({ observedAt: '2026-10-14T01:00:00+09:00', pm25: 40 }),
+    ]);
+    expect(selected(input.hourly)).toEqual(['UMBRELLA', 'RAIN_BOOTS', 'RAINCOAT']);
+    expect(preparationsForWindow(input, now)[0].validUntil).toBe('2026-10-13T15:00:00.000Z');
+    input.current = at(7, { dataRole: 'OBSERVATION', temperature: 0 });
+    expect(preparationsForWindow(input, new Date('2026-10-13T08:00:00+09:00'))
+      .map((item) => item.type)).not.toContain('HAND_WARMER');
+  });
+
+  it('일몰 뒤 UV를 제거하고 남은 낮은 단계로 다시 추천한다', () => {
+    const input = forecast([at(15, { temperature: 0 }), at(18, { temperature: 15, uvIndex: 8 })]);
+    expect(preparationsForWindow(input, new Date('2026-10-13T17:00:00+09:00')).map((item) => item.type))
+      .toContain('LIGHT_OUTERWEAR');
+    expect(preparationsForWindow(input, new Date('2026-10-13T18:30:00+09:00'), {
+      sunsetAt: '2026-10-13T18:30:00+09:00',
+    }).map((item) => item.type)).toEqual(['LIGHT_OUTERWEAR']);
+  });
+
+  it('꺼 둔 항목을 제외한 뒤 남은 칸을 배분한다', () => {
+    expect(preparationsForWindow(forecast([at(18, { ...rain, temperature: 0 })]), now, {
+      allowedRecommendedItems: ['OUTERWEAR', 'HAND_WARMER', 'SCARF'],
+    }).map((item) => item.type)).toEqual(['HAND_WARMER', 'OUTERWEAR', 'SCARF']);
+  });
 });
 const types = (changes: Partial<WeatherSnapshot>) =>
   preparationsForSnapshots([snapshot(changes)]).map((item) => item.type);

@@ -560,6 +560,7 @@ class CanonicalBriefing {
   final String? action;
   final List<String> recommendedItems;
   final Map<String, List<WeatherMessagePart>> preparationEvidence;
+  final Map<String, PreparationPeriod> preparationPeriods;
   final String? copyVariantKey;
   final BriefingCopy copy;
 
@@ -588,6 +589,7 @@ class CanonicalBriefing {
     this.action,
     this.recommendedItems = const [],
     this.preparationEvidence = const {},
+    this.preparationPeriods = const {},
     this.copyVariantKey,
     required this.copy,
   });
@@ -621,6 +623,7 @@ class CanonicalBriefing {
       recommendedItems: _stringList(json['recommendedItems']),
       preparationEvidence:
           parsePreparationEvidence(json['preparationEvidence']),
+      preparationPeriods: parsePreparationPeriods(json['preparationPeriods']),
       copyVariantKey: _optionalText(json['copyVariantKey']),
       copy: BriefingCopy.fromJson(
         json['copy'] is Map
@@ -641,6 +644,7 @@ class BriefingTimelineEntry {
   final String? action;
   final List<String> recommendedItems;
   final Map<String, List<WeatherMessagePart>> preparationEvidence;
+  final Map<String, PreparationPeriod> preparationPeriods;
   final String? copyVariantKey;
   final BriefingCopy copy;
 
@@ -654,6 +658,7 @@ class BriefingTimelineEntry {
     this.action,
     this.recommendedItems = const [],
     this.preparationEvidence = const {},
+    this.preparationPeriods = const {},
     this.copyVariantKey,
     required this.copy,
   });
@@ -670,6 +675,7 @@ class BriefingTimelineEntry {
       recommendedItems: _stringList(json['recommendedItems']),
       preparationEvidence:
           parsePreparationEvidence(json['preparationEvidence']),
+      preparationPeriods: parsePreparationPeriods(json['preparationPeriods']),
       copyVariantKey: _optionalText(json['copyVariantKey']),
       copy: BriefingCopy.fromJson(
         json['copy'] is Map
@@ -723,6 +729,41 @@ class PollenRisk {
       );
 }
 
+class SnowDepthObservation {
+  final DateTime observedAt;
+  final double depthCm;
+  final String stationId;
+  final String? stationName;
+  final double? distanceKm;
+
+  const SnowDepthObservation(
+      {required this.observedAt,
+      required this.depthCm,
+      required this.stationId,
+      this.stationName,
+      this.distanceKm});
+
+  static SnowDepthObservation? fromJson(Map<String, dynamic> json) {
+    final time = DateTime.tryParse(json['observedAt']?.toString() ?? '');
+    final depth = _optionalNumber(json['depthCm']);
+    final station = json['stationId']?.toString().trim() ?? '';
+    if (time == null ||
+        depth == null ||
+        !depth.isFinite ||
+        depth < 0 ||
+        depth > 1000 ||
+        station.isEmpty) {
+      return null;
+    }
+    return SnowDepthObservation(
+        observedAt: time,
+        depthCm: depth,
+        stationId: station,
+        stationName: _optionalText(json['stationName']),
+        distanceKm: _optionalNumber(json['distanceKm']));
+  }
+}
+
 class TodayWeatherResponse {
   final String dataSource;
   final String? generatedAt;
@@ -736,6 +777,7 @@ class TodayWeatherResponse {
   final String? sunsetAt;
   final CurrentWeather current;
   final TodayLivingIndices? livingIndices;
+  final List<SnowDepthObservation> snowDepthHistory;
   final List<WeatherRecommendation> recommendations;
   final List<LifestyleMessage> lifestyleMessages;
   final List<WeatherMessagePart> dataStatusMessages;
@@ -756,6 +798,7 @@ class TodayWeatherResponse {
     this.sunsetAt,
     required this.current,
     this.livingIndices,
+    this.snowDepthHistory = const [],
     required this.recommendations,
     required this.lifestyleMessages,
     this.dataStatusMessages = const [],
@@ -777,6 +820,7 @@ class TodayWeatherResponse {
         sunsetAt: sunsetAt,
         current: current,
         livingIndices: livingIndices,
+        snowDepthHistory: snowDepthHistory,
         recommendations: recommendations,
         lifestyleMessages: lifestyleMessages,
         dataStatusMessages: dataStatusMessages,
@@ -857,6 +901,11 @@ class TodayWeatherResponse {
               json['livingIndices'] as Map<String, dynamic>)
           : null,
       current: CurrentWeather.fromJson(json),
+      snowDepthHistory: (json['snowDepthHistory'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(SnowDepthObservation.fromJson)
+          .whereType<SnowDepthObservation>()
+          .toList(),
       recommendations: recs,
       lifestyleMessages: lifestyles,
       dataStatusMessages: dataStatusMessages,

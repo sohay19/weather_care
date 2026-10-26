@@ -1,6 +1,7 @@
 import type { WeatherMessagePart, WeatherSnapshot } from '../types';
 import { snapshotTime } from '../rules/timeWindows';
 import { formatWeatherNumber as number } from '../utils/weatherNumber';
+import { pollenEvidence } from '../services/livingIndexAdvice';
 
 export type PreparationReason = 'snow' | 'heat' | 'cold' | 'rain' | 'air' | 'uv' | 'humidity';
 
@@ -66,7 +67,8 @@ export function buildPreparationEvidence(
       break;
     }
   }
-  if (values.length === 0) return [];
+  const pollen = reason === 'air' ? pollenEvidence(snapshot) : [];
+  if (values.length === 0) return pollen;
   const validFrom = snapshotTime(snapshot);
   const date = new Date(Date.parse(validFrom) + 9 * 60 * 60 * 1000);
   if (!Number.isFinite(date.getTime())) return [];
@@ -76,6 +78,7 @@ export function buildPreparationEvidence(
   return [
     { role: calculated ? 'CALCULATED_FACT' : 'OFFICIAL_FACT',
       text: `${time} ${role}: ${values.join(' · ')}`, source, validFrom, validUntil: snapshot.validTo },
+    ...pollen,
     { role: 'CALCULATED_FACT', text: `적용한 준비물 판단 기준: ${criterion}`,
       source: '날씨챙겨 준비물 판단', validFrom, validUntil: snapshot.validTo },
   ];

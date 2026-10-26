@@ -17,6 +17,36 @@ import { seedCollectedRegion } from './collectedWeatherFixture';
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe('Today brief display deadline', () => {
+  it('새 Today 응답은 오전에 저녁 비 준비물과 시작·종료 시각을 전달하고 내일 추위는 제외한다', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-10T07:00:00+09:00'));
+    await seedCollectedRegion(60, 121, {
+      current: { observedAt: '2026-09-10T07:00:00+09:00', dataRole: 'OBSERVATION', temperature: 22 },
+      hourly: [
+        { observedAt: '2026-09-10T19:00:00+09:00', forecastAt: '2026-09-10T19:00:00+09:00',
+          precipitationType: 'RAIN', precipitationProbability: 60, precipitationAmount: 1,
+          precipitationPeriod: { start: '2026-09-10T18:00:00+09:00', end: '2026-09-10T19:00:00+09:00' } },
+        { observedAt: '2026-09-11T01:00:00+09:00', temperature: -5 },
+      ], daily: [], baseDate: '20260910', baseTime: '0500', dataSource: '기상청',
+    });
+    vi.spyOn(environmental, 'loadEnvironmentalData').mockResolvedValue({ sources: {
+      uv: { provider: 'KMA_LIVING_INDEX_V5', state: 'UNAVAILABLE' },
+      airQuality: { provider: 'AIRKOREA', state: 'UNAVAILABLE' },
+    } });
+    vi.spyOn(environmental, 'enrichForecastWithEnvironmentalData').mockImplementation((input) => input);
+    const ctx = createExecutionContext();
+    const response = await router.request('/today?nx=60&ny=121&recommendationCatalog=PREPARATION_18', {}, { DB: env.DB }, ctx);
+    const data = await response.json<{ briefing: CanonicalBriefingIntent; recommendations: { type: string; validFrom: string; validUntil: string }[] }>();
+    expect(response.status).toBe(200);
+    expect(data.recommendations).toMatchObject([{ type: 'UMBRELLA',
+      validFrom: '2026-09-10T09:00:00.000Z', validUntil: '2026-09-10T10:00:00.000Z' }]);
+    expect(data.briefing.recommendedItems).toEqual(['UMBRELLA']);
+    expect(data.briefing.preparationPeriods?.UMBRELLA).toMatchObject({
+      validFrom: data.recommendations[0].validFrom, validUntil: data.recommendations[0].validUntil,
+    });
+    await waitOnExecutionContext(ctx);
+  });
+
   it('같은 57/125에서도 항동 행정구역 context를 briefingId에 반영한다', () => {
     expect(briefingLocationKey(
       57,

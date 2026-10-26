@@ -437,23 +437,26 @@ void main() {
       final prefix = metric == 'precipitation' ? 'rain' : 'snow';
       final chart =
           tester.widget<HourlyValueChart>(find.byType(HourlyValueChart));
-      expect(chart.overlays.single.bars, isTrue);
+      final probabilitySeries =
+          chart.overlays.singleWhere((series) => series.bars);
+      expect(probabilitySeries.bars, isTrue);
       final canvas =
           tester.getRect(find.byKey(ValueKey('hourly-chart-$prefix-amount')));
       final padding = _graph(tester, '$prefix-amount').bottomPadding;
+      final topPadding = _graph(tester, '$prefix-amount').topPadding;
       for (var index = 8; index <= 11; index++) {
         final amount =
             find.byKey(ValueKey('hourly-value-$prefix-amount-$index'));
         final probability =
             find.byKey(ValueKey('hourly-value-$prefix-probability-$index'));
         final amountY = canvas.top +
-            hourlyChartY(chart.series.values[index]!.lower, chart.series.bounds,
-                chart.height,
-                bottomPadding: padding);
+            hourlyChartY(chart.series.values[index]!.lower,
+                chart.sharedBounds ?? chart.series.bounds, chart.height,
+                topPadding: topPadding, bottomPadding: padding);
         final probabilityY = canvas.top +
-            hourlyChartY(chart.overlays.single.values[index]!.lower,
-                chart.overlays.single.bounds, chart.height,
-                bottomPadding: padding);
+            hourlyChartY(probabilitySeries.values[index]!.lower,
+                probabilitySeries.bounds, chart.height,
+                topPadding: topPadding, bottomPadding: padding);
         expect(tester.getTopLeft(amount).dy, greaterThan(amountY));
         expect(
             tester.getBottomLeft(amount).dy,

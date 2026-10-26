@@ -18,7 +18,7 @@ import router, {
 import { KmaWeatherProvider } from '../src/providers/weather/kmaWeatherProvider';
 import * as settingsRepository from '../src/database/notificationSettingsRepository';
 import type { DailyWeatherForecast } from '../src/providers/weather/weatherProvider';
-import type { CanonicalBriefingIntent, WeatherSnapshot } from '../src/types';
+import type { CanonicalBriefingIntent, SnowDepthObservation, WeatherSnapshot } from '../src/types';
 import {
   createExecutionContext,
   env,
@@ -335,11 +335,13 @@ describe('fast Main weather', () => {
       const main=await router.request('/main?nx=58&ny=124',{}, {DB:env.DB});
       expect(Object.keys((await main.json<{current:WeatherSnapshot}>()).current).filter(key=>key.startsWith('snowDepth'))).toEqual([]);
       const today=await router.request('/today?nx=58&ny=124',{}, {DB:env.DB});
-      const body=await today.json<{current:WeatherSnapshot;hourly:WeatherSnapshot[]}>();
+      const body=await today.json<{current:WeatherSnapshot;hourly:WeatherSnapshot[];snowDepthHistory:SnowDepthObservation[]}>();
       expect(today.status).toBe(200);
       expect(body.current).toMatchObject({snowDepthCm:0,snowDepthStatus:'AVAILABLE',
         snowDepthStationName:'서울 관측소',snowDepthObservedAt:'2026-10-10T12:00:00+09:00'});
       expect(body.hourly.every(slot=>slot.snowDepthCm===undefined)).toBe(true);
+      expect(body.snowDepthHistory).toMatchObject([{stationId:'42',depthCm:0,
+        observedAt:'2026-10-10T12:00:00+09:00'}]);
       await saveCollectedCache(env.DB,{key:CURRENT_SNOW_CACHE_KEY,type:'COLLECTED_NATIONWIDE_SNOW_TOTAL',
         value:{requestedAt:'202610100900',stations:[{stationId:'42',stationName:'서울 관측소',stationKind:'000-----',
           latitude:37,longitude:127,depthCm:4,observedAt:'2026-10-10T09:00:00+09:00'}]}});

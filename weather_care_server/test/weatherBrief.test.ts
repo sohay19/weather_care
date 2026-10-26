@@ -264,9 +264,33 @@ describe('Canonical Briefing Intent v2', () => {
     });
 
     expect(result.intent.recommendedItems).toEqual([
-      'UMBRELLA', 'OUTERWEAR', 'MASK', 'RAINCOAT', 'RAIN_BOOTS',
+      'UMBRELLA', 'OUTERWEAR', 'MASK', 'RAIN_BOOTS', 'RAINCOAT',
     ]);
     expect(result.timeline[0].recommendedItems).toEqual(result.intent.recommendedItems);
+  });
+
+  it('새 카탈로그는 아침부터 저녁 준비물을 표시하고 종료 경계에서 재조회 없이 교체한다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(19, { precipitationType: 'RAIN', precipitationProbability: 60,
+        precipitationPeriod: { start: '2026-08-21T18:00:00+09:00', end: '2026-08-21T19:00:00+09:00' } }),
+      snapshot(20, { pm25: 40 }),
+    ]), { now: new Date('2026-08-21T07:00:00+09:00'), tieredPreparations: true });
+    expect(result.timeline[0].recommendedItems).toEqual(['UMBRELLA', 'MASK']);
+    expect(result.timeline[0].preparationPeriods?.UMBRELLA).toEqual({
+      validFrom: '2026-08-21T09:00:00.000Z', validUntil: '2026-08-21T10:00:00.000Z',
+    });
+    const after = result.timeline.find((entry) => Date.parse(entry.validFrom) === Date.parse('2026-08-21T19:00:00+09:00'));
+    expect(after?.recommendedItems).toEqual(['MASK']);
+  });
+
+  it('xx:59:59가 끝인 추위 예보도 정각에 물품을 낮은 단계로 교체한다', () => {
+    const result = buildWeatherBriefResult(forecast([
+      snapshot(15, { temperature: 0, apparentTemperature: 0, validTo: '2026-08-21T15:59:59+09:00' }),
+      snapshot(18, { temperature: 15, apparentTemperature: 15 }),
+    ]), { now: new Date('2026-08-21T07:00:00+09:00'), tieredPreparations: true });
+    expect(result.timeline[0].recommendedItems[0]).toBe('HAND_WARMER');
+    const after = result.timeline.find((entry) => entry.validFrom === '2026-08-21T07:00:00.000Z');
+    expect(after?.recommendedItems).toEqual(['LIGHT_OUTERWEAR']);
   });
 
   it('비 브리핑이 우산을 권하면 추천 엔진 결과가 비어도 준비물에 우산을 넣는다', () => {

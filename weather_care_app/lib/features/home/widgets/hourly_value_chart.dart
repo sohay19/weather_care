@@ -51,6 +51,7 @@ class HourlyChartSeries {
   final Color? color;
   final List<String?> labels;
   final bool intervals;
+  final List<double> xOffsets;
 
   const HourlyChartSeries({
     required this.id,
@@ -63,6 +64,7 @@ class HourlyChartSeries {
     this.color,
     this.labels = const [],
     this.intervals = false,
+    this.xOffsets = const [],
   });
 
   (double, double) get bounds {
@@ -351,14 +353,21 @@ class HourlyValueChart extends StatelessWidget {
         fontFamily: WeatherCareTheme.fontSuite,
         fontSize: 12,
         fontWeight: FontWeight.w900);
-    final temperature = sharedBounds != null;
+    final temperature = sharedBounds != null && series.unit == '°C';
     final topPadding = hourlyChartTopPadding(sharedBounds, scaledLabelHeight);
     final bottomPadding =
         hourlyChartBottomPadding(all, sharedBounds, height, scaledLabelHeight);
-    double x(int index) => (hours[index] - hours.first + .5) * pointWidth;
+    double x(HourlyChartSeries chart, int index) =>
+        (hours[index] -
+            hours.first +
+            .5 +
+            (chart.xOffsets.elementAtOrNull(index) ?? 0)) *
+        pointWidth;
     double y(HourlyChartSeries chart, int index) => hourlyChartY(
         chart.values[index]!.upper ?? chart.values[index]!.lower,
-        sharedBounds ?? chart.bounds,
+        sharedBounds != null && chart.unit == series.unit
+            ? sharedBounds!
+            : chart.bounds,
         height,
         topPadding: topPadding,
         bottomPadding: bottomPadding);
@@ -384,8 +393,12 @@ class HourlyValueChart extends StatelessWidget {
       }
 
       for (var index = 0; index < hours.length; index++) {
-        final present =
-            all.where((chart) => chart.values[index] != null).toList();
+        final present = all
+            .where((chart) =>
+                !chart.bars &&
+                chart.unit == series.unit &&
+                chart.values[index] != null)
+            .toList();
         if (present.isEmpty) continue;
         final ranges = [for (final chart in present) lineRange(chart, index)];
         if (present.length == 1) {
@@ -418,6 +431,42 @@ class HourlyValueChart extends StatelessWidget {
         }
       }
     }
+    final snow = series.id == 'snow-amount' &&
+        overlays.any((chart) =>
+            chart.id == 'snow-depth' &&
+            chart.values.any((value) => value != null));
+    final occupied = <Rect>[];
+    // 신적설 구간과 실제 적설 관측의 가로 위치가 달라도 선과 수치를 가리지 않는다.
+    List<(double, double)> snowLineRanges(double left, double right) {
+      final ranges = <(double, double)>[];
+      for (final line in all.where((chart) => !chart.bars)) {
+        for (var i = 0; i < line.values.length; i++) {
+          if (line.values[i] == null) continue;
+          final at = x(line, i);
+          if (at >= left && at <= right) {
+            final lowerY = hourlyChartY(
+                line.values[i]!.lower, sharedBounds ?? line.bounds, height,
+                topPadding: topPadding, bottomPadding: bottomPadding);
+            ranges.add(
+                (math.min(y(line, i), lowerY), math.max(y(line, i), lowerY)));
+          }
+          if (i == 0 ||
+              line.values[i - 1] == null ||
+              hours[i] - hours[i - 1] != 1) {
+            continue;
+          }
+          final previous = x(line, i - 1);
+          if (at <= previous || at < left || previous > right) continue;
+          final low = math.max(previous, left), high = math.min(at, right);
+          final firstY = y(line, i - 1), delta = y(line, i) - firstY;
+          final a = firstY + delta * (low - previous) / (at - previous);
+          final b = firstY + delta * (high - previous) / (at - previous);
+          ranges.add((math.min(a, b), math.max(a, b)));
+        }
+      }
+      return ranges;
+    }
+
     for (final chart in all) {
       for (var index = 0; index < chart.values.length; index++) {
         final value = chart.values[index];
@@ -442,7 +491,7 @@ class HourlyValueChart extends StatelessWidget {
           final badgeHeight = 44 * scale;
           labels.add(Positioned(
               key: ValueKey('hourly-label-${chart.id}-$index'),
-              left: x(index) - width / 2,
+              left: x(chart, index) - width / 2,
               top: pointY - badgeHeight / 2,
               width: width,
               height: badgeHeight,
@@ -483,12 +532,46 @@ class HourlyValueChart extends StatelessWidget {
                 primaryTop - scaledLabelHeight - 4);
           }
         }
+        final width = pointWidth - 6;
+        final left = snow
+            ? (x(chart, index) - width / 2)
+                .clamp(0.0, hourlyChartWidth(hours, pointWidth, all) - width)
+            : x(chart, index) - width / 2;
+        if (snow) {
+          final ranges = snowLineRanges(left - 4, left + width + 4);
+          final candidates = [
+            top,
+            if (ranges.isNotEmpty)
+              ranges.map((range) => range.$1).reduce(math.min) -
+                  scaledLabelHeight -
+                  8,
+            if (ranges.isNotEmpty)
+              ranges.map((range) => range.$2).reduce(math.max) + 8,
+            for (var lane = 1; lane <= 12; lane++) ...[
+              top - lane * (scaledLabelHeight + 5),
+              top + lane * (scaledLabelHeight + 5),
+            ]
+          ];
+          top = candidates.firstWhere((candidate) {
+            if (candidate < 0 || candidate + scaledLabelHeight > height) {
+              return false;
+            }
+            final rect =
+                Rect.fromLTWH(left, candidate, width, scaledLabelHeight)
+                    .inflate(2);
+            return occupied.every((other) => !rect.overlaps(other)) &&
+                ranges.every((range) =>
+                    candidate + scaledLabelHeight < range.$1 - 4 ||
+                    candidate > range.$2 + 4);
+          }, orElse: () => top);
+          occupied.add(
+              Rect.fromLTWH(left, top, width, scaledLabelHeight).inflate(2));
+        }
         top = top.clamp(0, height - scaledLabelHeight);
         if (chart == series) primaryTops[index] = top;
-        final width = pointWidth - 6;
         labels.add(Positioned(
           key: ValueKey('hourly-label-${chart.id}-$index'),
-          left: x(index) - width / 2,
+          left: left,
           top: top,
           width: width,
           height: scaledLabelHeight,
@@ -537,7 +620,7 @@ class HourlyValueChart extends StatelessWidget {
             for (var index = 0; index < conditions.length; index++)
               if (conditions[index] != null && series.values[index] != null)
                 Positioned(
-                    left: x(index) - 12,
+                    left: x(series, index) - 12,
                     top: temperatureIconTops[index] ??
                         math.min(y(series, index),
                                 primaryTops[index] ?? y(series, index)) -
@@ -578,7 +661,12 @@ class HourlyValueChartPainter extends CustomPainter {
     final bounds = sharedBounds ?? series.bounds;
     double y(double value) => hourlyChartY(value, bounds, size.height,
         topPadding: topPadding, bottomPadding: bottomPadding);
-    double x(int index) => (hours[index] - hours.first + .5) * pointWidth;
+    double x(HourlyChartSeries chart, int index) =>
+        (hours[index] -
+            hours.first +
+            .5 +
+            (chart.xOffsets.elementAtOrNull(index) ?? 0)) *
+        pointWidth;
     for (final band in series.bands) {
       canvas.drawRect(
           Rect.fromLTRB(0, y(band.to.clamp(bounds.$1, bounds.$2)), size.width,
@@ -609,7 +697,9 @@ class HourlyValueChartPainter extends CustomPainter {
       ...overlays.where((chart) => !chart.bars)
     ];
     for (final chart in charts) {
-      final chartBounds = sharedBounds ?? chart.bounds;
+      final chartBounds = sharedBounds != null && chart.unit == series.unit
+          ? sharedBounds!
+          : chart.bounds;
       double chartY(double value) =>
           hourlyChartY(value, chartBounds, size.height,
               topPadding: topPadding, bottomPadding: bottomPadding);
@@ -626,7 +716,7 @@ class HourlyValueChartPainter extends CustomPainter {
           previousHour = null;
           continue;
         }
-        final at = Offset(x(index), chartY(value.lower));
+        final at = Offset(x(chart, index), chartY(value.lower));
         if (value.range) {
           previous = null;
           previousHour = null;

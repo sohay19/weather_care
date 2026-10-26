@@ -87,8 +87,17 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
     _briefingTimer?.cancel();
     final now = _now;
     final boundaries = <DateTime>[];
+    for (final item in widget.recommendations) {
+      final until = DateTime.tryParse(item.validUntil ?? '');
+      if (until != null && until.isAfter(now)) boundaries.add(until);
+    }
     for (final entry in widget.briefingTimeline) {
-      for (final raw in [entry.validFrom, entry.validUntil]) {
+      for (final raw in [
+        entry.validFrom,
+        entry.validUntil,
+        ...entry.preparationPeriods.values
+            .map((period) => period.validUntil ?? ''),
+      ]) {
         final value = DateTime.tryParse(raw);
         if (value != null && value.isAfter(now)) boundaries.add(value);
       }
@@ -97,6 +106,8 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
       for (final raw in [
         widget.briefing!.validFrom,
         widget.briefing!.validUntil,
+        ...widget.briefing!.preparationPeriods.values
+            .map((period) => period.validUntil ?? ''),
       ]) {
         final value = DateTime.tryParse(raw);
         if (value != null && value.isAfter(now)) boundaries.add(value);
@@ -120,6 +131,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
     List<String>? intended;
     String description = '';
     Map<String, List<WeatherMessagePart>> evidence = const {};
+    Map<String, PreparationPeriod> periods = const {};
     if (widget.briefingTimeline.isNotEmpty) {
       for (final entry in widget.briefingTimeline) {
         final from = DateTime.tryParse(entry.validFrom);
@@ -131,6 +143,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
           intended = entry.recommendedItems;
           description = entry.copy.medium;
           evidence = entry.preparationEvidence;
+          periods = entry.preparationPeriods;
           break;
         }
       }
@@ -146,9 +159,13 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
       intended = active ? widget.briefing!.recommendedItems : const [];
       description = widget.briefing!.copy.medium;
       evidence = widget.briefing!.preparationEvidence;
+      periods = widget.briefing!.preparationPeriods;
     }
     if (intended == null) {
-      return widget.recommendations.where((item) => item.recommended).toList();
+      return widget.recommendations
+          .where(
+              (item) => item.recommended && _hasNotEnded(item.validUntil, now))
+          .toList();
     }
 
     final existing = {
@@ -160,8 +177,14 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
       final type = recommendationTypeFromApiName(raw);
       if (type == null || !seen.add(type)) continue;
       final item = existing[type];
+      final period = periods[raw];
+      final validUntil = period?.validUntil ?? item?.validUntil;
+      if (!_hasNotEnded(validUntil, now)) continue;
       visible.add(item?.copyWith(
-              recommended: true, evidence: evidence[raw] ?? item.evidence) ??
+              recommended: true,
+              evidence: evidence[raw] ?? item.evidence,
+              validFrom: period?.validFrom,
+              validUntil: validUntil) ??
           WeatherRecommendation(
             type: type,
             recommended: true,
@@ -169,10 +192,17 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
             title: type.title,
             description: description,
             evidence: evidence[raw] ?? const [],
+            validFrom: period?.validFrom,
+            validUntil: validUntil,
             notificationEligible: false,
           ));
     }
     return visible;
+  }
+
+  bool _hasNotEnded(String? raw, DateTime now) {
+    final until = DateTime.tryParse(raw ?? '');
+    return until == null || now.isBefore(until);
   }
 
   void _refreshDate({bool retry = false}) {
@@ -254,7 +284,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
   @override
   Widget build(BuildContext context) {
     final visible = _visibleRecommendations().take(3).toList();
-    final now = _now;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -292,7 +321,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
                               'bag-item-${recommendation.type.apiName.toLowerCase()}',
                             ),
                             recommendation: recommendation,
-                            now: now,
                             checked: _checked.contains(recommendation.type),
                             pendingLabel: _loading
                                 ? '확인 중'
@@ -324,7 +352,6 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
 
 class _BagItem extends StatelessWidget {
   final WeatherRecommendation recommendation;
-  final DateTime now;
   final bool checked;
   final VoidCallback? onToggle;
   final String? pendingLabel;
@@ -333,7 +360,6 @@ class _BagItem extends StatelessWidget {
   const _BagItem({
     super.key,
     required this.recommendation,
-    required this.now,
     required this.checked,
     required this.onToggle,
     required this.onDetail,
@@ -345,8 +371,6 @@ class _BagItem extends StatelessWidget {
     final type = recommendation.type;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final startsAt = DateTime.tryParse(recommendation.validFrom ?? '');
-    final futureStart = startsAt != null &&
-        startsAt.isAfter(now.add(const Duration(minutes: 10)));
     final koreaStart = startsAt?.toUtc().add(const Duration(hours: 9));
 
     return Material(
@@ -412,7 +436,7 @@ class _BagItem extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  if (futureStart && koreaStart != null)
+                  if (koreaStart != null)
                     Text(
                       '${koreaStart.hour}시부터',
                       maxLines: 2,

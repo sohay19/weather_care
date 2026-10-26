@@ -1326,6 +1326,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       fallbackReceivedAt: today?.receivedAt,
                       hourly: visibleToday?.hourly ?? const [],
                       timelineHourly: visibleToday?.timelineHourly ?? const [],
+                      snowDepthHistory:
+                          visibleToday?.snowDepthHistory ?? const [],
+                      currentSnow: visibleToday?.current,
                       advertisement: _weekAdvertisementActivated &&
                               !(widget.adRemoval?.isOwned ?? false)
                           ? ConsentAwareNativeAdCard(

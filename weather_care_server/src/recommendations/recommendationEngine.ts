@@ -10,7 +10,7 @@ import { descriptionFor, titleFor } from './recommendationTemplates';
 import { CATALOG_VERSION } from './recommendationTemplates';
 import { sortRecommendations } from './recommendationPriority';
 import { DECISION_VERSION } from '../rules/weatherRuleEngine';
-import { preparationsForSnapshots } from './preparationPolicy';
+import { preparationsForSnapshots, type PreparationCandidate } from './preparationPolicy';
 import { buildLifestyleMessages } from '../presentation/lifestyleMessages';
 import type { WeatherSnapshot } from '../types';
 
@@ -23,6 +23,7 @@ export interface RecommendationEngineOptions {
   tieredPreparations?: boolean;
   snapshots?: WeatherSnapshot[];
   facts?: WeatherRuleFact[];
+  preparations?: PreparationCandidate[];
 }
 
 export function enabledRecommendationTypes(
@@ -73,20 +74,23 @@ export function runRecommendationEngine(
   const enabled = recommendationTypeSettings(settings);
 
   if (options.tieredPreparations && options.snapshots) {
-    return preparationsForSnapshots(options.snapshots).map((candidate, index) => ({
+    return (options.preparations ?? preparationsForSnapshots(options.snapshots)).map((candidate, index) => ({
       type: candidate.type,
       recommended: enabled[candidate.type],
       priority: 100 - index,
       title: titleFor(candidate.type),
-      description: descriptionFor(candidate.type, []),
+      description: candidate.reason.includes('pollen')
+        ? '꽃가루 예측이 높음 이상이에요. 외출 시 마스크를 준비하세요.' : descriptionFor(candidate.type, []),
       reasonCodes: [candidate.reason.toUpperCase()],
       evidence: candidate.evidence,
       validFrom: candidate.validFrom,
+      validUntil: candidate.validUntil,
       notificationEligible: candidate.type !== 'LIGHT_OUTERWEAR' &&
         candidate.type !== 'SNOW_CHAINS',
       reasons: [{
         snow: '눈길 대비', heat: '더위 대비', cold: '추위 대비',
-        rain: '비 대비', air: '미세먼지 대비', uv: '자외선 대비',
+        rain: '비 대비', air: '미세먼지 대비', pollen: '꽃가루 대비',
+        'air+pollen': '미세먼지·꽃가루 대비', uv: '자외선 대비',
       }[candidate.reason] ?? candidate.reason],
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
@@ -122,7 +126,9 @@ export function runRecommendationEngine(
           ),
         ),
         title: titleFor(type),
-        description: descriptionFor(type, allInsightTypes),
+        description: insight.context?.pollenEvidence
+          ? '꽃가루 예측이 높음 이상이에요. 외출 시 마스크를 준비하세요.'
+          : descriptionFor(type, allInsightTypes),
         reasonCodes,
         evidence,
         validFrom,
@@ -133,7 +139,9 @@ export function runRecommendationEngine(
         notificationEligible:
           !['OUTERWEAR', 'SCARF', 'HAND_WARMER'].includes(type) ||
           insight.score >= 70,
-        reasons: [reasonLabel(insight.type)],
+        reasons: insight.context?.pollenEvidence
+          ? [insight.context.messageContext === 'AIR_AND_POLLEN' ? '미세먼지·꽃가루 대비' : '꽃가루 대비']
+          : [reasonLabel(insight.type)],
         decisionVersion: DECISION_VERSION,
         catalogVersion: CATALOG_VERSION,
       });

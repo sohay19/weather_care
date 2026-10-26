@@ -23,6 +23,8 @@ const _timeDotGap = 3.0;
 class HourlyForecastSection extends StatefulWidget {
   final String keyPrefix;
   final List<HourlyWeatherItem> items;
+  final List<SnowDepthObservation> snowDepthHistory;
+  final CurrentWeather? currentSnow;
   final String? generatedAt;
   final DateTime? receivedAt;
   final DateTime? now;
@@ -39,6 +41,8 @@ class HourlyForecastSection extends StatefulWidget {
     super.key,
     this.keyPrefix = 'today',
     required this.items,
+    this.snowDepthHistory = const [],
+    this.currentSnow,
     this.generatedAt,
     this.receivedAt,
     this.now,
@@ -301,6 +305,50 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
           _HourlyMetric.snowfall => snowfallByHour,
           _ => hourlyByHour,
         };
+    final observations = <int, SnowDepthObservation>{};
+    final snowHistory = widget.snowDepthHistory
+        .where((observation) =>
+            !observation.observedAt.isAfter(currentTime) &&
+            dateInKorea(observation.observedAt) == today &&
+            observation.depthCm.isFinite &&
+            observation.depthCm >= 0 &&
+            observation.depthCm <= 1000)
+        .toList();
+    final currentSnow = widget.currentSnow;
+    final observedAt =
+        DateTime.tryParse(currentSnow?.snowDepthObservedAt ?? '');
+    if (snowHistory.isEmpty &&
+        observedAt != null &&
+        !observedAt.isAfter(currentTime) &&
+        currentTime.difference(observedAt) <= const Duration(hours: 3) &&
+        dateInKorea(observedAt) == today &&
+        currentSnow?.snowDepthCm != null &&
+        currentSnow!.snowDepthCm!.isFinite &&
+        currentSnow.snowDepthCm! >= 0 &&
+        currentSnow.snowDepthCm! <= 1000 &&
+        currentSnow.snowDepthStatus != 'UNAVAILABLE') {
+      snowHistory.add(SnowDepthObservation(
+          observedAt: observedAt,
+          depthCm: currentSnow.snowDepthCm!,
+          stationId: currentSnow.snowDepthStationName ?? 'current',
+          stationName: currentSnow.snowDepthStationName,
+          distanceKm: currentSnow.snowDepthStationDistanceKm));
+    }
+    snowHistory.sort((a, b) => a.observedAt.compareTo(b.observedAt));
+    // 같은 관측소의 실제 관측만 연결한다. 미래·다른 날짜·결측은 채우지 않는다.
+    final stationId = snowHistory.lastOrNull?.stationId;
+    for (final observation in snowHistory) {
+      if (observation.observedAt.isAfter(currentTime) ||
+          dateInKorea(observation.observedAt) != today ||
+          !observation.depthCm.isFinite ||
+          observation.depthCm < 0 ||
+          (stationId != null && observation.stationId != stationId)) {
+        continue;
+      }
+      final hour =
+          observation.observedAt.toUtc().add(const Duration(hours: 9)).hour;
+      observations[hour] = observation;
+    }
     final month = int.tryParse(referenceDate.substring(5, 7)) ?? 1;
     final metricOrder =
         TimelineOrderStore.order.value ?? TimelineOrderStore.defaults(month);
@@ -308,7 +356,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
       for (final name in metricOrder)
         for (final metric in [_HourlyMetric.values.byName(name)])
           if (!widget.availableOnly ||
-              itemsFor(metric).values.any((item) => _hasValue(metric, item)))
+              itemsFor(metric).values.any((item) => _hasValue(metric, item)) ||
+              (metric == _HourlyMetric.snowfall && observations.isNotEmpty))
             metric,
     ];
     if (availableMetrics.isEmpty) return const SizedBox.shrink();
@@ -320,8 +369,10 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
     for (var hour = 0; hour < 24; hour++) {
       final item = itemsFor(selected)[hour];
       if (widget.availableOnly) {
-        if (item != null && _hasValue(selected, item)) {
-          selectedItems.add(item);
+        if ((item != null && _hasValue(selected, item)) ||
+            (selected == _HourlyMetric.snowfall &&
+                observations.containsKey(hour))) {
+          selectedItems.add(item ?? emptySlots[hour]);
           selectedHours.add(hour);
         }
       } else {
@@ -336,8 +387,9 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
               ? 80.0
               : 72.0,
     );
-    final series =
-        _chartSeries(selected, selectedItems, WeatherCareTheme.of(context));
+    final series = _chartSeries(
+        selected, selectedItems, WeatherCareTheme.of(context),
+        hours: selectedHours, snowObservations: observations);
     final precipitation = selected == _HourlyMetric.precipitation ||
         selected == _HourlyMetric.snowfall;
     final combined = selected == _HourlyMetric.weather || precipitation;
@@ -350,14 +402,18 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                     ? 320.0
                     : hourlyChartHeight)) *
         math.min(MediaQuery.textScalerOf(context).scale(1), 1.3);
-    final sharedBounds = selected == _HourlyMetric.weather
-        ? HourlyChartSeries(
-                id: 'temperature-axis',
-                title: '온도',
-                unit: '°C',
-                values: series.expand((chart) => chart.values).toList())
-            .bounds
-        : null;
+    final sharedBounds =
+        selected == _HourlyMetric.weather || selected == _HourlyMetric.snowfall
+            ? HourlyChartSeries(
+                    id: 'temperature-axis',
+                    title: '온도',
+                    unit: series.first.unit,
+                    values: series
+                        .where((chart) => chart.unit == series.first.unit)
+                        .expand((chart) => chart.values)
+                        .toList())
+                .bounds
+            : null;
     final labelHeight = MediaQuery.textScalerOf(context).scale(18);
     final topPadding = hourlyChartTopPadding(sharedBounds, labelHeight);
     final bottomPadding = hourlyChartBottomPadding(
@@ -538,6 +594,8 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                             MediaQuery.textScalerOf(context).scale(1), 1.3),
                     child: HourlyChartAxis(
                         series: series.first,
+                        title:
+                            selected == _HourlyMetric.snowfall ? '눈 깊이' : null,
                         height: chartHeight,
                         sharedBounds: sharedBounds,
                         topPadding: topPadding,
@@ -653,7 +711,20 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                         topPadding: topPadding,
                         bottomPadding: bottomPadding)),
             ]),
-            if (itemsFor(selected).isEmpty) ...[
+            if (selected == _HourlyMetric.snowfall)
+              Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                      today != referenceDate
+                          ? '현재 적설량은 실제 관측이 있는 당일에만 표시해요.'
+                          : observations.isEmpty
+                              ? '현재 적설량 관측 자료가 없어요. 신적설 예보와는 별개예요.'
+                              : '현재 적설량은 ${observations.values.first.stationName ?? '관측소'}의 관측 이력이에요. '
+                                  '각 시간의 마지막 관측값만 표시하며 미래 값은 만들지 않아요.',
+                      style: Theme.of(context).textTheme.bodySmall)),
+            if (itemsFor(selected).isEmpty &&
+                !(selected == _HourlyMetric.snowfall &&
+                    observations.isNotEmpty)) ...[
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -727,7 +798,7 @@ void _showHourlyInfo(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                '기온·바람은 정시 값이에요. 강수와 강설의 양·확률은 정시 눈금 사이의 1시간 구간 가운데에 표시해요. 구간 시간 문구는 따로 쓰지 않으며, 확률은 시간별로 더하지 않아요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
+                '기온·바람은 정시 값이에요. 강수와 강설의 양·확률은 정시 눈금 사이의 1시간 구간 가운데에 표시해요. 구간 시간 문구는 따로 쓰지 않으며, 확률은 시간별로 더하지 않아요.\n강설의 현재 적설량은 지면에 남은 눈의 실제 관측이에요. 신적설 예보와 다른 색으로 관측 시각에 표시하며, 같은 시간 안에서는 마지막 관측만 사용해요. 미래나 결측은 채우지 않아요.\n자외선은 자료가 있는 경우에만 표시해요. 자외선지수 0도 실제 값이며, 자료가 없으면 —로 표시해요.'),
             SizedBox(height: 8),
             Text(
               '가시거리는 현재 관측자료만 제공돼 시간별 예보에는 표시하지 않아요.',
@@ -783,7 +854,9 @@ const _humidityBands = [
 ];
 
 List<HourlyChartSeries> _chartSeries(_HourlyMetric metric,
-    List<HourlyWeatherItem> items, WeatherCarePalette palette) {
+    List<HourlyWeatherItem> items, WeatherCarePalette palette,
+    {List<int> hours = const [],
+    Map<int, SnowDepthObservation> snowObservations = const {}}) {
   HourlyChartSeries chart(String id, String title, String unit,
           HourlyChartValue? Function(HourlyWeatherItem) value,
           {bool bars = false,
@@ -862,6 +935,29 @@ List<HourlyChartSeries> _chartSeries(_HourlyMetric metric,
                 (item.snowfallAmount == null
                     ? null
                     : '${formatWeatherNumber(item.snowfallAmount!)}cm')),
+        HourlyChartSeries(
+            id: 'snow-depth',
+            title: '현재 적설량',
+            unit: 'cm',
+            values: [
+              for (final hour in hours)
+                HourlyChartValue.number(snowObservations[hour]?.depthCm)
+            ],
+            labels: [
+              for (final hour in hours)
+                snowObservations[hour] == null
+                    ? null
+                    : '${formatWeatherNumber(snowObservations[hour]!.depthCm)}cm'
+            ],
+            xOffsets: [
+              for (final hour in hours)
+                snowObservations[hour] == null
+                    ? 0
+                    : snowObservations[hour]!.observedAt.minute / 60 - .5
+            ],
+            color: palette.brightness == Brightness.dark
+                ? const Color(0xFFFFC078)
+                : const Color(0xFFAB541B)),
         chart('snow-probability', '강설확률', '%',
             (item) => number(_snowProbability(item)),
             bars: true,

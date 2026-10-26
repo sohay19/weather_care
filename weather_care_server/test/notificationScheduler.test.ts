@@ -14,6 +14,31 @@ import {
 } from '../src/database/collectedWeatherRepository';
 
 describe('notification scheduler', () => {
+  it('아침 안개가 있어도 저녁 한 시간 비와 다른 항목 준비물을 우선 알린다', async () => {
+    await insertInstallation('device-token');
+    const forecast = rainyForecast();
+    forecast.current = { observedAt: '2026-09-02T07:00:00+09:00', dataRole: 'OBSERVATION',
+      temperature: 22, visibilityMeters: 500 };
+    forecast.hourly = [{ observedAt: '2026-09-02T19:00:00+09:00',
+      forecastAt: '2026-09-02T19:00:00+09:00', precipitationType: 'RAIN',
+      precipitationProbability: 60, precipitationAmount: 1,
+      precipitationPeriod: { start: '2026-09-02T18:00:00+09:00', end: '2026-09-02T19:00:00+09:00' },
+      temperature: 10, pm25: 40 }];
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'), forecastLoader: async () => forecast,
+      sender: collectingSender(sent),
+    });
+    expect(sent).toHaveLength(1);
+    expect(sent[0].notificationKey).toBe('MORNING_BRIEF');
+    const lines = sent[0].body.split('\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain('오후 6시~7시 비 대비');
+    expect(lines[0]).toContain('우산');
+    expect(lines[1]).toContain('겉옷');
+    expect(lines[2]).toContain('마스크');
+  });
+
   it('does not send to a new registration without explicit notification settings', async () => {
     await insertInstallation('private-token');
     await env.DB.prepare('DELETE FROM notification_settings WHERE installation_id = ?').bind('installation-1').run();
@@ -187,7 +212,7 @@ describe('notification scheduler', () => {
   });
 
   it.each([
-    ['umbrellaEnabled', '우산'], ['parasolEnabled', '양산'],
+    ['umbrellaEnabled', '우산'], ['parasolEnabled', '모자'],
     ['outerwearEnabled', '겉옷'], ['maskEnabled', '마스크'],
     ['waterEnabled', '물'], ['sunscreenEnabled', '선크림'],
   ] as const)('%s는 해당 준비물 요약을 실제로 제어한다', async (field, word) => {
@@ -324,11 +349,12 @@ describe('notification scheduler', () => {
     expect(sent.map((item) => item.notificationKey)).toEqual(['MORNING_BRIEF']);
   });
 
-  it('요약은 유효한 scene이 없으면 발송하지 않고 있으면 1~3개 scene을 쓴다', async () => {
+  it('유효한 날씨 자료가 없으면 발송하지 않고 준비물이 있으면 최대 3개를 쓴다', async () => {
     await insertInstallation('device-token');
     const sent: FcmPayload[] = [];
     const forecast = rainyForecast();
     forecast.hourly = [];
+    forecast.current = { observedAt: '2026-09-01T07:00:00+09:00' };
     const dependencies = { now: new Date('2026-09-02T07:00:00+09:00'),
       forecastLoader: async () => forecast, sender: collectingSender(sent) };
     await runRecommendationNotificationJob(testBindings(), dependencies);
@@ -336,7 +362,7 @@ describe('notification scheduler', () => {
     forecast.hourly = preparationForecast(false).hourly;
     await runRecommendationNotificationJob(testBindings(), dependencies);
     expect(sent).toHaveLength(1);
-    const sentences = sent[0].body.split('.').filter((part) => part.trim());
+    const sentences = sent[0].body.split('\n').filter((part) => part.trim());
     expect(sentences.length).toBeGreaterThanOrEqual(1);
     expect(sentences.length).toBeLessThanOrEqual(3);
   });

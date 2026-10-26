@@ -7,6 +7,7 @@ import { greatCircleDistanceKm } from './nearbyGridObservation';
 import { apiHubBudgetedFetch } from './apiHubFetch';
 import { providerErrorDiagnostic } from '../observability/providerErrorDiagnostics';
 import type { WeatherSnapshot } from '../types';
+import { archiveSnowDepth } from './snowDepthHistory';
 
 export const CURRENT_SNOW_CACHE_KEY = 'COLLECTED_NATIONWIDE_SNOW_TOTAL';
 const ATTEMPT_KEY = 'CURRENT_SNOW_COLLECTION_ATTEMPT';
@@ -27,6 +28,8 @@ export async function collectCurrentSnow(db: D1Database, key: string, now: Date)
       clock:()=>new Date(), maxBytes:SNOW_RESPONSE_MAX_BYTES, sourceVersion:snowRequestTime(now)})).getSnapshot(now);
     if (!snapshot.stations.some((s) => snowStationIsFresh(s,now))) throw new Error('KMA snow has no usable fresh data');
     await saveCollectedCache(db,{key:CURRENT_SNOW_CACHE_KEY,type:'COLLECTED_NATIONWIDE_SNOW_TOTAL',value:snapshot,updatedAt:now});
+    try { await archiveSnowDepth(db, snapshot, now); }
+    catch { console.error(JSON.stringify({event:'snow_depth_history_archive_failed'})); }
     await db.prepare('UPDATE weather_cache SET payload=? WHERE cache_key=? AND json_extract(payload,\'$.owner\')=?')
       .bind(JSON.stringify({owner,failures:0}),ATTEMPT_KEY,owner).run();
     console.log(JSON.stringify({event:'current_snow_collected',requestedAt:snapshot.requestedAt,

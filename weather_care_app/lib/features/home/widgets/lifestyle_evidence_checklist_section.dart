@@ -630,6 +630,7 @@ IconData _lifestyleIcon(LifestyleMessageType type) => switch (type) {
       LifestyleMessageType.strongSunExposure => Icons.wb_sunny_outlined,
       LifestyleMessageType.outerwearUseful => Icons.checkroom_rounded,
       LifestyleMessageType.maskUseful => Icons.masks_outlined,
+      LifestyleMessageType.ventilationGuidance => Icons.air_rounded,
       LifestyleMessageType.ozoneCaution => Icons.air_rounded,
       LifestyleMessageType.hydrationImportant => Icons.local_drink_outlined,
       LifestyleMessageType.sunscreenUseful => Icons.spa_outlined,

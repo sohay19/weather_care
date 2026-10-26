@@ -1,0 +1,825 @@
+{
+  "status": "complete",
+  "commit": "3e2c7e8",
+  "scope": "수도관 동파 대비 안내·선택 알림과 사용자DB 열 추가만",
+  "startedAt": "2026-10-26T10:49:13.732347+09:00",
+  "completedAt": "2026-10-26T10:49:47.049096+09:00",
+  "schedulerReady": true,
+  "sharedWeatherSchemaPreserved": true,
+  "settingsPreserved": true,
+  "sourceManifestsVerified": true,
+  "services": {
+    "weather-care-api.service": {
+      "active": "active",
+      "pid": 703332
+    },
+    "weather-care-test-api.service": {
+      "active": "active",
+      "pid": 703232
+    },
+    "weather-care-scheduler.service": {
+      "active": "active",
+      "pid": 703395
+    }
+  },
+  "checks": [
+    {
+      "environment": "production",
+      "phase": "before",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "hasPreparationPeriods": false
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "hasPreparationPeriods": true
+        },
+        {
+          "request": "widget",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ]
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days"
+          ],
+          "hasUpcomingDays": false
+        }
+      ]
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "hasPreparationPeriods": false
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "hasPreparationPeriods": true
+        },
+        {
+          "request": "widget",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ]
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days",
+            "upcomingDays"
+          ],
+          "hasUpcomingDays": true
+        }
+      ]
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "pipeFreeze",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "pipeFreeze": {
+            "status": "AVAILABLE",
+            "level": "CHECK",
+            "levelLabel": "보온 점검",
+            "periodStart": "2026-10-26T01:00:00.000Z",
+            "periodEnd": "2026-10-28T01:00:00.000Z",
+            "availableHours": 48,
+            "expectedHours": 48,
+            "minimumTemperature": 3,
+            "minimumAt": "2026-10-27T21:00:00.000Z",
+            "forecastIssuedAt": "2026-10-25T20:00:00.000Z",
+            "freezingHours": 0,
+            "belowMinus10Hours": 0,
+            "belowMinus15Hours": 0,
+            "validUntil": "2026-10-26T02:00:00.000Z",
+            "ruleVersion": "pipe-freeze-1",
+            "referenceUrl": "https://news.seoul.go.kr/env/archives/565606?listPage=1"
+          },
+          "hasPreparationPeriods": false
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "pipeFreeze",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "pipeFreeze": {
+            "status": "AVAILABLE",
+            "level": "CHECK",
+            "levelLabel": "보온 점검",
+            "periodStart": "2026-10-26T01:00:00.000Z",
+            "periodEnd": "2026-10-28T01:00:00.000Z",
+            "availableHours": 48,
+            "expectedHours": 48,
+            "minimumTemperature": 3,
+            "minimumAt": "2026-10-27T21:00:00.000Z",
+            "forecastIssuedAt": "2026-10-25T20:00:00.000Z",
+            "freezingHours": 0,
+            "belowMinus10Hours": 0,
+            "belowMinus15Hours": 0,
+            "validUntil": "2026-10-26T02:00:00.000Z",
+            "ruleVersion": "pipe-freeze-1",
+            "referenceUrl": "https://news.seoul.go.kr/env/archives/565606?listPage=1"
+          },
+          "hasPreparationPeriods": true
+        },
+        {
+          "request": "widget",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ]
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days",
+            "upcomingDays"
+          ],
+          "hasUpcomingDays": true
+        }
+      ]
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "pipeFreeze",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "pipeFreeze": {
+            "status": "AVAILABLE",
+            "level": "CHECK",
+            "levelLabel": "보온 점검",
+            "periodStart": "2026-10-26T01:00:00.000Z",
+            "periodEnd": "2026-10-28T01:00:00.000Z",
+            "availableHours": 48,
+            "expectedHours": 48,
+            "minimumTemperature": 3,
+            "minimumAt": "2026-10-27T21:00:00.000Z",
+            "forecastIssuedAt": "2026-10-25T20:00:00.000Z",
+            "freezingHours": 0,
+            "belowMinus10Hours": 0,
+            "belowMinus15Hours": 0,
+            "validUntil": "2026-10-26T02:00:00.000Z",
+            "ruleVersion": "pipe-freeze-1",
+            "referenceUrl": "https://news.seoul.go.kr/env/archives/565606?listPage=1"
+          },
+          "hasPreparationPeriods": false
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "pipeFreeze",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "pipeFreeze": {
+            "status": "AVAILABLE",
+            "level": "CHECK",
+            "levelLabel": "보온 점검",
+            "periodStart": "2026-10-26T01:00:00.000Z",
+            "periodEnd": "2026-10-28T01:00:00.000Z",
+            "availableHours": 48,
+            "expectedHours": 48,
+            "minimumTemperature": 3,
+            "minimumAt": "2026-10-27T21:00:00.000Z",
+            "forecastIssuedAt": "2026-10-25T20:00:00.000Z",
+            "freezingHours": 0,
+            "belowMinus10Hours": 0,
+            "belowMinus15Hours": 0,
+            "validUntil": "2026-10-26T02:00:00.000Z",
+            "ruleVersion": "pipe-freeze-1",
+            "referenceUrl": "https://news.seoul.go.kr/env/archives/565606?listPage=1"
+          },
+          "hasPreparationPeriods": true
+        },
+        {
+          "request": "widget",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ]
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days"
+          ],
+          "hasUpcomingDays": false
+        }
+      ]
+    }
+  ],
+  "migrationResults": {
+    "test": {
+      "path": "/var/lib/weather-care/weather-care-users-test.sqlite",
+      "backup": "/var/backups/weather-care/pipe-freeze-20261026T014913Z/test/users-before.sqlite",
+      "migration": "0002_pipe_freeze_alert.sql",
+      "settingsCount": 31,
+      "defaultOff": true,
+      "allPreviousRowsPreserved": true,
+      "quickCheck": "ok",
+      "schemaAfter": "58391cbfaf6e3aa00926fe88392e26fcc19d7ca8a826dc1fb6017b58bcfeecfe"
+    },
+    "production": {
+      "path": "/var/lib/weather-care/weather-care-users-production.sqlite",
+      "backup": "/var/backups/weather-care/pipe-freeze-20261026T014913Z/production/users-before.sqlite",
+      "migration": "0002_pipe_freeze_alert.sql",
+      "settingsCount": 189,
+      "defaultOff": true,
+      "allPreviousRowsPreserved": true,
+      "quickCheck": "ok",
+      "schemaAfter": "58391cbfaf6e3aa00926fe88392e26fcc19d7ca8a826dc1fb6017b58bcfeecfe"
+    }
+  },
+  "changes": {
+    "test": [
+      {
+        "path": "src/api/weather.ts",
+        "beforeSha256": "f3139987b7fb8b1ac6dc9cc673a965f43d03d5ff8dea5f78ad8844100c36bf43",
+        "afterSha256": "43edcaf0cb3e83ed190945c6fe1da9c08b210c33520d78d60cc0eb220c40d184"
+      },
+      {
+        "path": "src/database/notificationSettingsRepository.ts",
+        "beforeSha256": "3c2a2bb0be227d9bc029bd8b7327148f06222ee4149b768b226d65a7a73b1b0b",
+        "afterSha256": "6ba1f0fe4c50125ecbb76b5c57f99387d2a68a1c41a692346e0b18fa73d6462b"
+      },
+      {
+        "path": "src/lifestyle/lifestyleTemplates.ts",
+        "beforeSha256": "71c67ae0e1b431875708482e6baad9cc812dc1d6c69b823c4a7331d671d3b3eb",
+        "afterSha256": "26cef2f7d0946211aa9c87bb8ba27203568396f593817c880583df7707fdd779"
+      },
+      {
+        "path": "src/notification/notificationDestination.ts",
+        "beforeSha256": "5f60d51b8e368afc80e66a7fe78b7f67261877c084335b76e7a2889a6c178561",
+        "afterSha256": "561ba17f8850d69941fc841ba502e4323ecefac595ace6638023b4980f026a3e"
+      },
+      {
+        "path": "src/notification/notificationScheduler.ts",
+        "beforeSha256": "6b4a0805db243c167595f5f7ed52b5292718c8fafb44825b6ffdb9cbfcf252f0",
+        "afterSha256": "3de3dbf0a4a64ca135491be288433383da109fcc1cb3fe9fad2d3254d947043d"
+      },
+      {
+        "path": "src/services/pipeFreezeAdvice.ts",
+        "beforeSha256": null,
+        "afterSha256": "34af30244c55b9efbba3ec3da505477a2912c9ae21c6ddc2c0c4685319ab2966"
+      },
+      {
+        "path": "src/types.ts",
+        "beforeSha256": "3c69b695fe7815a8f1d062f064ffe195e376b85f8a2bdfa511523c33eaaf46ba",
+        "afterSha256": "07133fc6cba6e765eec1ceb0a073693ec9087d72a827f55d1852e28091032bd1"
+      },
+      {
+        "path": "src/validation/notificationSettings.ts",
+        "beforeSha256": "0ba757fd4739adf94cce3c90a1b181ec8d03d65da703cea702e0ff314181c9f9",
+        "afterSha256": "c6b70d5a28a09b33fa4106386b296636a33de9efc2f53d09302adb1548e4b77e"
+      },
+      {
+        "path": "node-migrations/users/0002_pipe_freeze_alert.sql",
+        "beforeSha256": null,
+        "afterSha256": "c34596f58b7a116920bb39b25c3b1d325d0c32f253edc5d8f2857779ade07592"
+      }
+    ],
+    "production": [
+      {
+        "path": "src/api/weather.ts",
+        "beforeSha256": "6cbf215fb6e30b4981517b4594890164b7e8d2c0c860f993ac62b6c28afa212a",
+        "afterSha256": "313a6e02220753cc8eb12d26b56ec269ac77dbcb2c4a8067e20a9b6cc5421710"
+      },
+      {
+        "path": "src/database/notificationSettingsRepository.ts",
+        "beforeSha256": "3c2a2bb0be227d9bc029bd8b7327148f06222ee4149b768b226d65a7a73b1b0b",
+        "afterSha256": "6ba1f0fe4c50125ecbb76b5c57f99387d2a68a1c41a692346e0b18fa73d6462b"
+      },
+      {
+        "path": "src/lifestyle/lifestyleTemplates.ts",
+        "beforeSha256": "71c67ae0e1b431875708482e6baad9cc812dc1d6c69b823c4a7331d671d3b3eb",
+        "afterSha256": "26cef2f7d0946211aa9c87bb8ba27203568396f593817c880583df7707fdd779"
+      },
+      {
+        "path": "src/notification/notificationDestination.ts",
+        "beforeSha256": "5f60d51b8e368afc80e66a7fe78b7f67261877c084335b76e7a2889a6c178561",
+        "afterSha256": "561ba17f8850d69941fc841ba502e4323ecefac595ace6638023b4980f026a3e"
+      },
+      {
+        "path": "src/notification/notificationScheduler.ts",
+        "beforeSha256": "6b4a0805db243c167595f5f7ed52b5292718c8fafb44825b6ffdb9cbfcf252f0",
+        "afterSha256": "3de3dbf0a4a64ca135491be288433383da109fcc1cb3fe9fad2d3254d947043d"
+      },
+      {
+        "path": "src/services/pipeFreezeAdvice.ts",
+        "beforeSha256": null,
+        "afterSha256": "34af30244c55b9efbba3ec3da505477a2912c9ae21c6ddc2c0c4685319ab2966"
+      },
+      {
+        "path": "src/types.ts",
+        "beforeSha256": "3c69b695fe7815a8f1d062f064ffe195e376b85f8a2bdfa511523c33eaaf46ba",
+        "afterSha256": "07133fc6cba6e765eec1ceb0a073693ec9087d72a827f55d1852e28091032bd1"
+      },
+      {
+        "path": "src/validation/notificationSettings.ts",
+        "beforeSha256": "0ba757fd4739adf94cce3c90a1b181ec8d03d65da703cea702e0ff314181c9f9",
+        "afterSha256": "c6b70d5a28a09b33fa4106386b296636a33de9efc2f53d09302adb1548e4b77e"
+      },
+      {
+        "path": "node-migrations/users/0002_pipe_freeze_alert.sql",
+        "beforeSha256": null,
+        "afterSha256": "c34596f58b7a116920bb39b25c3b1d325d0c32f253edc5d8f2857779ade07592"
+      }
+    ]
+  },
+  "deployments": {
+    "test": {
+      "backup": "/var/backups/weather-care/pipe-freeze-20261026T014913Z/test",
+      "apiPID": 703232,
+      "pureProbe": {
+        "passed": true,
+        "checks": [
+          "cold48h",
+          "partial",
+          "recovery",
+          "stale",
+          "guidance",
+          "defaultOff",
+          "oldClientPreserve",
+          "migrationOnce"
+        ],
+        "externalCalls": 0,
+        "actualUserWrites": 0
+      },
+      "sourceManifestVerified": true
+    },
+    "production": {
+      "backup": "/var/backups/weather-care/pipe-freeze-20261026T014913Z/production",
+      "apiPID": 703332,
+      "pureProbe": {
+        "passed": true,
+        "checks": [
+          "cold48h",
+          "partial",
+          "recovery",
+          "stale",
+          "guidance",
+          "defaultOff",
+          "oldClientPreserve",
+          "migrationOnce"
+        ],
+        "externalCalls": 0,
+        "actualUserWrites": 0
+      },
+      "sourceManifestVerified": true
+    }
+  },
+  "validation": {
+    "candidateTypeScript": [
+      "production",
+      "test"
+    ],
+    "candidateWorkerTests": 59,
+    "serverRuntimePureChecksPerEnvironment": 8,
+    "oldAppModelActualResponseTests": 1,
+    "publicHttpRequests": 24,
+    "appUpdated": false,
+    "manualPushSent": false
+  }
+}

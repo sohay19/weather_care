@@ -13059,6 +13059,12 @@
 - 사용자 요청에 따라 Android 광고 배경 리소스, iOS Podfile/템플릿 빌드 보조 스크립트와 이번 광고 테두리 확인·수정·커밋 인수인계 기록만 커밋한다. 배경 카드 테두리와 기존 여백은 유지한다.
 - 앞선 광고 관련 Flutter 16개 검사, iOS 스크립트/Xcodeproj 참조 교체 검증, Android 리소스 컴파일·덮어쓰기 링크 통과 기록을 확인했다. 제품 코드 추가 수정이 없어 재실행하지 않는다. 전체 앱 빌드·실기기 검증의 기존 한계는 유지한다.
 - 스테이징 범위와 diff 공백을 확인하고 ‘fix(app): 광고 템플릿 자체 테두리 제거’로 커밋한다. 원격 푸시는 수행하지 않는다.
+## 2026-10-26 App Review 2.5.4 위치 백그라운드 선언 및 대체 방식 검토
+
+- 사용자의 significant-change/region monitoring 전환 영향 질문에 따라 현재 iOS 소스와 Apple 공식 문서를 확인했다. BackgroundLocationMonitor.resume은 이미 startMonitoringSignificantLocationChanges를 사용하며 제품 네이티브 모니터에는 startUpdatingLocation 및 allowsBackgroundLocationUpdates=true가 없다. 반면 Runner/Info.plist의 UIBackgroundModes에는 location이 남아 있다. 심사 제출 바이너리는 대조하지 않았다.
+- significant-change는 큰 이동 시 좌표를 전달하는 저전력 방식이며 500m 수준 이동 및 5분보다 잦은 알림을 기대하지 말라는 Apple 안내는 고정 거리/주기 보장이 아니다. 좌표 오차와 감지 지연을 구분해야 한다. region monitoring은 등록한 원형 영역의 진입/이탈 이벤트로, 행정구역 변경이나 새 좌표 획득 자체를 보장하지 않는다. 이동 지역 날씨 갱신에는 현재 significant-change 유지가 자연스럽다.
+- 현재 소스 기준 location 선언 정리는 새로운 위치 알고리즘 전환이 아니므로 이 변경 자체가 좌표 정확도를 낮추는 것은 아니다. 다만 기존 significant-change의 지연/좌표 오차, 항상 허용 및 시스템 백그라운드 실행 조건, 위젯 갱신 시점 제한은 유지된다. 앱 전면의 고정밀 위치 요청은 별도 경로다. 모니터는 정확도 500m 이하와 fullAccuracy일 때만 precise로 분류하고 최대 5km의 유효 좌표를 수용한다.
+- 실제 수정 시 RunnerTests의 SimulatorLocationProbe가 allowsBackgroundLocationUpdates=true를 설정하는 점도 함께 정리해야 한다. Apple 문서상 location 선언 없이 해당 값을 true로 설정하면 종료 오류가 발생할 수 있다. 제품 코드/설정 수정·테스트 실행·빌드·실기기 검증·스토어 제출·커밋/배포는 수행하지 않았으며 이번에는 검토 기록만 추가했다. 다른 채팅의 설정/권한 안내 수정은 보존했다.
 
 ## 2026-10-26 OS별 권한 안내 분리 및 진행 버튼 통일
 
@@ -13071,3 +13077,15 @@
 
 - 사용자 요청으로 첫 실행/백그라운드 위치 안내의 OS별 문구 선택, ‘계속’ 진행 버튼, 구매·복원/데이터 사용 도움말의 공통 표현과 관련 회귀 테스트 및 해당 인수인계 기록만 커밋한다. 다른 채팅의 App Review 2.5.4 검토 기록은 작업 트리에 보존하고 커밋에서 제외한다.
 - 앞선 고유 115개 관련 검사와 변경 Dart 정적 분석 통과 기록을 확인했다. 제품 코드 추가 수정이 없어 재실행하지 않는다. 스테이징 범위와 공백을 확인한 뒤 ‘fix(app): OS별 안내 분리 및 권한 버튼 통일’로 커밋하며 원격 푸시는 하지 않는다.
+## 2026-10-26 App Review 2.5.4 대응: 불필요한 location 백그라운드 모드 제거
+
+- 사용자 요청대로 ios/Runner/Info.plist의 UIBackgroundModes에서 location 항목만 제거했다. remote-notification/fetch 및 항상 허용·사용 중 위치 권한 설명은 유지한다. BackgroundLocationMonitor의 significant-change 감지, 서버 위치 전송, 위젯 갱신과 앱 전면 위치 조회 코드는 변경하지 않았다.
+- ios/RunnerTests/RunnerTests.swift에서 연속 백그라운드 위치를 켜는 SimulatorLocationProbe와 이를 사용하는 testSimulatorStandardLocationBackgroundControl 대조 시험을 제거했다. location 선언 없이 allowsBackgroundLocationUpdates=true를 설정하는 종료 위험을 없앴으며 기존 significant-change OS 이동 시험 및 나머지 XCTest 21개는 유지했다.
+- 검증: Python plistlib으로 XML/자료 구조를 읽어 기존 plist와 비교해 location 항목만 제거됐음을 확인했다. 제품 모니터가 HEAD와 줄바꿈 정규화 후 동일함, iOS 앱/위젯/시험 Swift 소스에 allowsBackgroundLocationUpdates=true 및 startUpdatingLocation 호출이 남지 않음, 기존 XCTest 중 해당 대조 시험만 제거됨을 확인했다. D:/flutter_3.47.4의 관련 Flutter background_location_service/current_location_service/home_widget_service 3개 파일 32개 검사와 diff 공백 검사 통과. 로그는 ignored weather_care_app/build/ios-location-mode-tests-20261026.log다.
+- Windows 환경으로 iOS 네이티브 빌드·XCTest 실행·실기기 검증은 수행하지 못했다. 앱 설치·버전 변경·스토어 제출·서버 변경/배포·Git 커밋/푸시는 하지 않았다. 다른 채팅의 설정/권한 안내 소스·시험 및 인수인계 변경은 보존했다.
+
+## 2026-10-26 위치 백그라운드 선언·연속 위치 대조 시험 제거 단독 커밋
+
+- 사용자 요청에 따라 Info.plist의 location 백그라운드 모드 제거, 연속 위치 추적용 시험 보조 클래스/대조 시험 제거와 이번 위치 검토·수정·커밋 인수인계만 커밋한다. significant-change 감지 및 나머지 위치/위젯 시험은 유지한다.
+- 앞선 관련 Flutter 32개 검사 및 plist 구조/변경 범위/남은 참조 검증 통과를 확인했다. 추가 제품 코드 변경이 없어 재실행하지 않는다. iOS 네이티브 빌드·XCTest·실기기 검증 미수행 한계는 유지한다.
+- 변경 범위와 diff 공백을 확인하고 ‘fix(ios): 불필요한 위치 백그라운드 선언 제거’로 커밋한다. 원격 푸시는 수행하지 않는다.

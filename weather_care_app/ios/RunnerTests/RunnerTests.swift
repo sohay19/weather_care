@@ -5,23 +5,6 @@ import UIKit
 import XCTest
 @testable import Runner
 
-private final class SimulatorLocationProbe: NSObject, CLLocationManagerDelegate {
-  let manager = CLLocationManager()
-  var locations: [CLLocation] = []
-
-  override init() {
-    super.init()
-    manager.delegate = self
-    manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-    manager.allowsBackgroundLocationUpdates = true
-    manager.pausesLocationUpdatesAutomatically = false
-  }
-
-  func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-    self.locations.append(contentsOf: locations)
-  }
-}
-
 class RunnerTests: XCTestCase {
 
   func testMovementChangesWidgetGridAndRemovesPreviousRegion() throws {
@@ -453,32 +436,6 @@ class RunnerTests: XCTestCase {
       try await Task.sleep(nanoseconds: 1_000_000_000)
     }
     XCTFail("서울 초기 OS 측정은 확인했으나 7분 이동 경로에서 새 significant-change 콜백을 받지 못함")
-  }
-
-  @MainActor
-  func testSimulatorStandardLocationBackgroundControl() async throws {
-    try await control()
-    let (_, prepared) = try await URLSession.shared.data(from: URL(string: fixture + "/prepare-simulation")!)
-    XCTAssertEqual((prepared as? HTTPURLResponse)?.statusCode, 200)
-    let probe = SimulatorLocationProbe()
-    probe.manager.startUpdatingLocation()
-    defer { probe.manager.stopUpdatingLocation() }
-    try await waitUntil { !probe.locations.isEmpty }
-    let baseline = Date()
-    let (_, simulation) = try await URLSession.shared.data(from: URL(string: fixture + "/simulate")!)
-    XCTAssertEqual((simulation as? HTTPURLResponse)?.statusCode, 200)
-    UIApplication.shared.perform(NSSelectorFromString("suspend"))
-    for _ in 0..<20 {
-      if let location = probe.locations.last,
-        location.timestamp > baseline.addingTimeInterval(0.8),
-        location.distance(from: CLLocation(latitude: 37.5665, longitude: 126.978)) > 1000 {
-        XCTAssertEqual(UIApplication.shared.applicationState, .background)
-        print("대조 시험: 일반 CoreLocation OS 콜백으로 백그라운드 이동 좌표 수신, 직접 delegate 호출 없음")
-        return
-      }
-      try await Task.sleep(nanoseconds: 1_000_000_000)
-    }
-    XCTFail("일반 위치 서비스도 시뮬레이터 이동을 받지 못함")
   }
 
 }

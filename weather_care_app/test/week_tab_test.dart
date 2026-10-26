@@ -390,10 +390,12 @@ void main() {
     final day =
         tester.getTopLeft(find.byKey(const ValueKey('week-day-2026-09-10'))).dy;
     final heading = find.byKey(const ValueKey('week-selected-date'));
+    final calendar =
+        tester.getRect(find.byKey(const ValueKey('week-calendar')));
     expect(advertisement, greaterThan(summary));
     expect(advertisement, lessThan(day));
-    expect(
-        tester.getTopLeft(heading).dy - (advertisement + 50), closeTo(24, 1));
+    expect(calendar.top - (advertisement + 50), closeTo(32, 1));
+    expect(tester.getTopLeft(heading).dy - calendar.bottom, closeTo(36, 1));
     expect(find.text('5 / 7'), findsNothing);
     expect(tester.widget<Text>(heading).data, '9월 10일 (목)');
     expect(tester.getTopLeft(heading).dy, greaterThan(advertisement));
@@ -413,6 +415,116 @@ void main() {
           matching: find.text('9월 10일 (목)'),
         ),
         findsNothing);
+  });
+
+  testWidgets('달력 선택·좌우 이동·오늘 버튼은 같은 날짜 카드와 원형 표시를 갱신한다', (tester) async {
+    await _pump(tester, [
+      for (var day = 10; day <= 16; day++) _day('2026-09-$day'),
+    ]);
+    BoxDecoration circle(String date) => tester
+        .widget<Container>(find.byKey(ValueKey('week-calendar-circle-$date')))
+        .decoration! as BoxDecoration;
+
+    expect(circle('2026-09-10').shape, BoxShape.circle);
+    expect(circle('2026-09-10').color, isNotNull);
+    expect(circle('2026-09-10').border, isNotNull);
+    expect(circle('2026-09-11').color, isNull);
+
+    final sunday = find.byKey(const ValueKey('week-calendar-2026-09-13'));
+    await tester.ensureVisible(sunday);
+    await tester.tap(sunday);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-day-2026-09-13')), findsOneWidget);
+    expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('week-selected-date')))
+            .data,
+        '9월 13일 (일)');
+    expect(circle('2026-09-13').border, isNotNull);
+    expect(circle('2026-09-10').color, isNotNull);
+    expect(circle('2026-09-10').border, isNull);
+
+    await _moveDays(tester, 1);
+    expect(circle('2026-09-14').border, isNotNull);
+    expect(circle('2026-09-13').color, isNull);
+    await tester
+        .ensureVisible(find.byKey(const ValueKey('week-day-swipe-area')));
+    await tester.drag(find.byKey(const ValueKey('week-day-swipe-area')),
+        const Offset(-180, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-day-2026-09-15')), findsOneWidget);
+    expect(circle('2026-09-15').border, isNotNull);
+
+    final today = find.byKey(const ValueKey('week-go-today'));
+    await tester.ensureVisible(today);
+    await tester.tap(today);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsOneWidget);
+    expect(circle('2026-09-10').border, isNotNull);
+    expect(circle('2026-09-15').color, isNull);
+  });
+
+  testWidgets('달력 숫자와 하단 날짜에 일요일 빨강·토요일 primary·평일 검정을 적용한다', (tester) async {
+    await _pump(tester, []);
+    Color? numberColor(String date) => tester
+        .widget<Text>(find.byKey(ValueKey('week-calendar-number-$date')))
+        .style
+        ?.color;
+    expect(numberColor('2026-09-12'), WeatherCareTheme.primary);
+    expect(numberColor('2026-09-13'), Colors.red);
+    expect(numberColor('2026-09-14'), Colors.black);
+
+    for (final (date, color) in [
+      ('2026-09-12', WeatherCareTheme.primary),
+      ('2026-09-13', Colors.red),
+      ('2026-09-14', Colors.black),
+    ]) {
+      final item = find.byKey(ValueKey('week-calendar-$date'));
+      await tester.ensureVisible(item);
+      await tester.tap(item);
+      await tester.pumpAndSettle();
+      expect(find.byKey(ValueKey('week-unavailable-$date')), findsOneWidget);
+      expect(
+          tester
+              .widget<Text>(find.byKey(const ValueKey('week-selected-date')))
+              .style
+              ?.color,
+          color);
+    }
+  });
+
+  testWidgets('월·연도 경계와 다크 모드에서도 한 행을 유지하고 오늘로 복귀한다', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _pump(tester, [],
+        textScale: 2,
+        now: () => DateTime.parse('2026-12-31T01:00:00Z'),
+        theme: WeatherCareTheme.dark());
+    final calendar =
+        tester.getRect(find.byKey(const ValueKey('week-calendar')));
+    final today = tester.getRect(find.byKey(const ValueKey('week-go-today')));
+    expect(today.right, lessThanOrEqualTo(calendar.right));
+    expect(today.center.dy, closeTo(calendar.center.dy, 0.1));
+    expect(
+        tester
+            .widget<Text>(
+                find.byKey(const ValueKey('week-calendar-number-2027-01-01')))
+            .style
+            ?.color,
+        WeatherCarePalette.dark.textPrimary);
+    final nextYear = find.byKey(const ValueKey('week-calendar-2027-01-01'));
+    await tester.ensureVisible(nextYear);
+    await tester.tap(nextYear);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-unavailable-2027-01-01')),
+        findsOneWidget);
+    final button = find.byKey(const ValueKey('week-go-today'));
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-unavailable-2026-12-31')),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('시간 자료가 없으면 기존 일별 칩만 표시한다', (tester) async {
@@ -833,7 +945,8 @@ void main() {
     expect(nextRect.width, 32);
     expect(previousRect.right, lessThan(cardRect.left));
     expect(nextRect.left, greaterThan(cardRect.right));
-    expect(previousRect.center.dy, closeTo(cardRect.center.dy, 1));
+    expect(previousRect.top - cardRect.top, closeTo(120, 1));
+    expect(nextRect.top - cardRect.top, closeTo(120, 1));
     expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsOneWidget);
     expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsNothing);
     await _moveDays(tester, 1);
@@ -953,10 +1066,12 @@ Future<void> _pump(
   Widget? advertisement,
   List<HourlyWeatherItem> hourly = const [],
   List<HourlyWeatherItem> timelineHourly = const [],
+  ThemeData? theme,
 }) async {
   addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   await tester.pumpWidget(MaterialApp(
-    theme: ThemeData(splashFactory: NoSplash.splashFactory),
+    theme:
+        (theme ?? ThemeData()).copyWith(splashFactory: NoSplash.splashFactory),
     home: MediaQuery(
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
       child: Scaffold(

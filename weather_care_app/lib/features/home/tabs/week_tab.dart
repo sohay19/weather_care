@@ -175,36 +175,53 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
             const SizedBox(height: 16),
             if (widget.advertisement != null) ...[
               widget.advertisement!,
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
+            _WeekCalendarStrip(
+              days: calendarDays,
+              selectedIndex: _selectedDayIndex,
+              today: today,
+              onSelected: _showDay,
+              onToday: () => _showDay(0),
+            ),
+            Divider(
+              height: 12,
+              thickness: 0.5,
+              color: WeatherCareTheme.of(context).primaryBorder,
+            ),
+            const SizedBox(height: 24),
             Center(
               child: Text(
                 calendarDayLabel(selectedDay.date),
                 key: const ValueKey('week-selected-date'),
                 style: TextStyle(
-                  color: WeatherCareTheme.of(context).primaryDeep,
+                  color: _weekDateColor(context, selectedDay.date),
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  key: const ValueKey('week-previous-day'),
-                  tooltip: '이전 날짜',
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints.tightFor(width: 32, height: 40),
-                  style: const ButtonStyle(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                Padding(
+                  padding: const EdgeInsets.only(top: 120),
+                  child: IconButton(
+                    key: const ValueKey('week-previous-day'),
+                    tooltip: '이전 날짜',
+                    iconSize: 20,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints.tightFor(width: 32, height: 40),
+                    style: const ButtonStyle(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: _selectedDayIndex == 0
+                        ? null
+                        : () => _showDay(_selectedDayIndex - 1),
+                    icon: const Icon(Icons.chevron_left),
                   ),
-                  onPressed: _selectedDayIndex == 0
-                      ? null
-                      : () => _showDay(_selectedDayIndex - 1),
-                  icon: const Icon(Icons.chevron_left),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -241,26 +258,168 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
                   ),
                 ),
                 const SizedBox(width: 4),
-                IconButton(
-                  key: const ValueKey('week-next-day'),
-                  tooltip: '다음 날짜',
-                  iconSize: 20,
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints.tightFor(width: 32, height: 40),
-                  style: const ButtonStyle(
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                Padding(
+                  padding: const EdgeInsets.only(top: 120),
+                  child: IconButton(
+                    key: const ValueKey('week-next-day'),
+                    tooltip: '다음 날짜',
+                    iconSize: 20,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints.tightFor(width: 32, height: 40),
+                    style: const ButtonStyle(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: _selectedDayIndex == calendarDays.length - 1
+                        ? null
+                        : () => _showDay(_selectedDayIndex + 1),
+                    icon: const Icon(Icons.chevron_right),
                   ),
-                  onPressed: _selectedDayIndex == calendarDays.length - 1
-                      ? null
-                      : () => _showDay(_selectedDayIndex + 1),
-                  icon: const Icon(Icons.chevron_right),
                 ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+Color _weekDateColor(BuildContext context, DateTime date) {
+  final palette = WeatherCareTheme.of(context);
+  return switch (date.weekday) {
+    DateTime.sunday => Colors.red,
+    DateTime.saturday => palette.primary,
+    _ => palette.brightness == Brightness.dark
+        ? palette.textPrimary
+        : Colors.black,
+  };
+}
+
+class _WeekCalendarStrip extends StatelessWidget {
+  final List<WeekCalendarDay> days;
+  final int selectedIndex;
+  final String today;
+  final ValueChanged<int> onSelected;
+  final VoidCallback onToday;
+
+  const _WeekCalendarStrip({
+    required this.days,
+    required this.selectedIndex,
+    required this.today,
+    required this.onSelected,
+    required this.onToday,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = WeatherCareTheme.of(context);
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    return Row(
+      key: const ValueKey('week-calendar'),
+      children: [
+        for (var index = 0; index < days.length; index++)
+          Expanded(
+            child: Builder(builder: (context) {
+              final date = days[index].date;
+              final dateKey = dateInKorea(date);
+              final selected = index == selectedIndex;
+              final isToday = dateKey == today;
+              final color = _weekDateColor(context, date);
+              void select() => onSelected(index);
+              return Semantics(
+                button: true,
+                selected: selected,
+                label: '${calendarDayLabel(date)}${isToday ? ', 오늘' : ''}',
+                excludeSemantics: true,
+                onTap: select,
+                child: GestureDetector(
+                  key: ValueKey('week-calendar-$dateKey'),
+                  onTap: select,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          weekdays[date.weekday - 1],
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 32),
+                          child: AspectRatio(
+                            aspectRatio: 1,
+                            child: Container(
+                              key: ValueKey('week-calendar-circle-$dateKey'),
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: selected
+                                    ? palette.primarySoft
+                                    : isToday
+                                        ? palette.surfaceMuted
+                                        : null,
+                                border: selected
+                                    ? Border.all(
+                                        color: palette.primary, width: 1.5)
+                                    : null,
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '${date.day}',
+                                  key:
+                                      ValueKey('week-calendar-number-$dateKey'),
+                                  style: TextStyle(
+                                    color: color,
+                                    fontFamily: WeatherCareTheme.fontSuite,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        const SizedBox(width: 4),
+        Tooltip(
+          message: '오늘로 이동',
+          child: TextButton(
+            key: const ValueKey('week-go-today'),
+            onPressed: onToday,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(44, 28),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              tapTargetSize: MaterialTapTargetSize.padded,
+              foregroundColor: palette.primary,
+              backgroundColor: palette.primarySoft,
+              side: BorderSide(color: palette.primary, width: 1),
+              shape: const StadiumBorder(),
+            ),
+            child: const Text(
+              '오늘',
+              style: TextStyle(
+                fontFamily: WeatherCareTheme.fontSuite,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,0 +1,753 @@
+{
+  "startedAt": "2026-10-26T10:24:36.041726+09:00",
+  "scope": "하루 준비물·아침 알림 7개 소스만",
+  "changed": {
+    "production": [
+      "src/api/weather.ts",
+      "src/notification/notificationBuilder.ts",
+      "src/notification/notificationScheduler.ts",
+      "src/presentation/weatherBrief.ts",
+      "src/recommendations/preparationPolicy.ts",
+      "src/recommendations/recommendationEngine.ts",
+      "src/types.ts"
+    ],
+    "test": [
+      "src/api/weather.ts",
+      "src/notification/notificationBuilder.ts",
+      "src/notification/notificationScheduler.ts",
+      "src/presentation/weatherBrief.ts",
+      "src/recommendations/preparationPolicy.ts",
+      "src/recommendations/recommendationEngine.ts",
+      "src/types.ts"
+    ]
+  },
+  "checks": [
+    {
+      "environment": "production",
+      "phase": "before",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "recommendations": [
+            {
+              "type": "OUTERWEAR",
+              "validFrom": "2026-10-26T19:00:00.000Z",
+              "validUntil": null
+            },
+            {
+              "type": "SUNSCREEN",
+              "validFrom": "2026-10-26T01:00:00.000Z",
+              "validUntil": null
+            }
+          ],
+          "timelineCount": 13,
+          "hasPreparationPeriods": false
+        },
+        {
+          "request": "widget-18",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ],
+          "regionName": null,
+          "schemaVersion": 3
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days"
+          ],
+          "hasUpcomingDays": false
+        }
+      ]
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "recommendations": [
+            {
+              "type": "OUTERWEAR",
+              "validFrom": "2026-10-26T19:00:00.000Z",
+              "validUntil": null
+            },
+            {
+              "type": "SUNSCREEN",
+              "validFrom": "2026-10-26T01:00:00.000Z",
+              "validUntil": null
+            }
+          ],
+          "timelineCount": 13,
+          "hasPreparationPeriods": false
+        },
+        {
+          "request": "widget-18",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ],
+          "regionName": null,
+          "schemaVersion": 3
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days",
+            "upcomingDays"
+          ],
+          "hasUpcomingDays": true
+        }
+      ]
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "recommendations": [
+            {
+              "type": "LIGHT_OUTERWEAR",
+              "validFrom": "2026-10-26T01:00:00.000Z",
+              "validUntil": "2026-10-26T15:00:00.000Z"
+            },
+            {
+              "type": "SUNSCREEN",
+              "validFrom": "2026-10-26T01:00:00.000Z",
+              "validUntil": "2026-10-26T06:00:00.000Z"
+            }
+          ],
+          "timelineCount": 20,
+          "hasPreparationPeriods": true
+        },
+        {
+          "request": "widget-18",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ],
+          "regionName": null,
+          "schemaVersion": 3
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days",
+            "upcomingDays"
+          ],
+          "hasUpcomingDays": true
+        }
+      ]
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "http": [
+        {
+          "request": "health",
+          "status": 200
+        },
+        {
+          "request": "main",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "hourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-legacy",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ]
+        },
+        {
+          "request": "today-18",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "region",
+            "brief",
+            "briefExpiresAt",
+            "briefing",
+            "briefingTimeline",
+            "sunriseAt",
+            "sunsetAt",
+            "current",
+            "nextForecast",
+            "livingIndices",
+            "currentPrecipitation",
+            "hourly",
+            "timelineHourly",
+            "recommendations",
+            "lifestyleMessages",
+            "dataStatusMessages",
+            "timeline",
+            "environmentalSources",
+            "decisionVersion",
+            "catalogVersion",
+            "generatedAt"
+          ],
+          "recommendations": [
+            {
+              "type": "LIGHT_OUTERWEAR",
+              "validFrom": "2026-10-26T01:00:00.000Z",
+              "validUntil": "2026-10-26T15:00:00.000Z"
+            },
+            {
+              "type": "SUNSCREEN",
+              "validFrom": "2026-10-26T01:00:00.000Z",
+              "validUntil": "2026-10-26T06:00:00.000Z"
+            }
+          ],
+          "timelineCount": 20,
+          "hasPreparationPeriods": true
+        },
+        {
+          "request": "widget-18",
+          "status": 200,
+          "fields": [
+            "schemaVersion",
+            "generatedAt",
+            "locationKey",
+            "briefingId",
+            "sceneId",
+            "validFrom",
+            "validUntil",
+            "nextBriefingBoundary",
+            "dataFreshUntil",
+            "briefingTimeline",
+            "region",
+            "refreshTime",
+            "condition",
+            "currentTemperature",
+            "apparentTemperature",
+            "minimumTemperature",
+            "maximumTemperature",
+            "shortMessage",
+            "brief",
+            "nextTime",
+            "nextCondition",
+            "nextTemperature",
+            "preparations",
+            "preparationCatalog"
+          ],
+          "regionName": null,
+          "schemaVersion": 3
+        },
+        {
+          "request": "weekly",
+          "status": 200,
+          "fields": [
+            "dataSource",
+            "generatedAt",
+            "regionId",
+            "region",
+            "weeklyCoverage",
+            "days"
+          ],
+          "hasUpcomingDays": false
+        }
+      ]
+    }
+  ],
+  "deployments": {
+    "test": {
+      "backup": "/var/backups/weather-care/daily-prep-20261026T012436Z/test",
+      "changedFiles": 7,
+      "apiPID": 701329,
+      "pureProbe": {
+        "passed": true,
+        "scenarios": 6,
+        "notificationsSent": 0
+      }
+    },
+    "production": {
+      "backup": "/var/backups/weather-care/daily-prep-20261026T012436Z/production",
+      "changedFiles": 7,
+      "apiPID": 701484,
+      "pureProbe": {
+        "passed": true,
+        "scenarios": 6,
+        "notificationsSent": 0
+      }
+    }
+  },
+  "status": "complete",
+  "databaseSchemasBefore": {
+    "/var/lib/weather-care/weather-care-users-test.sqlite": "1b92114f82973c18cd00141cd53b965a43eb06451993759670f206aa3b018071",
+    "/var/lib/weather-care/weather-care-weather.sqlite": "fe413dff4c8e5b83f88b121b1702e1a299c97fe85134833f2cef5e15646fc27a",
+    "/var/lib/weather-care/weather-care-users-production.sqlite": "1b92114f82973c18cd00141cd53b965a43eb06451993759670f206aa3b018071"
+  },
+  "schedulerReady": true,
+  "sourceManifestsVerified": true,
+  "services": {
+    "weather-care-test-api.service": {
+      "active": "active",
+      "pid": 701329
+    },
+    "weather-care-api.service": {
+      "active": "active",
+      "pid": 701484
+    },
+    "weather-care-scheduler.service": {
+      "active": "active",
+      "pid": 701547
+    }
+  },
+  "schedulerPIDBefore": "654827",
+  "settingsPreserved": true,
+  "databaseSchemasPreserved": true,
+  "completedAt": "2026-10-26T10:25:13.682412+09:00",
+  "verification": {
+    "candidateTypecheck": [
+      "production",
+      "test"
+    ],
+    "candidateTests": 102,
+    "oldAppCompatibilityTests": 1,
+    "publicHttpRequests": 24,
+    "manualPushSent": false
+  },
+  "sourceHashes": {
+    "production": {
+      "src/api/weather.ts": {
+        "before": "3fc1d3b86e24552a2628fbec4c389208480a2a8f7cf1706eff599c14ad4d772e",
+        "after": "6cbf215fb6e30b4981517b4594890164b7e8d2c0c860f993ac62b6c28afa212a"
+      },
+      "src/notification/notificationBuilder.ts": {
+        "before": "abc2436005e8425b11d1725a289c9243f4e517655719a8edff9be9e5e822cee0",
+        "after": "1efc0400591281054d1441e3d2ab0f4e04dee7b109487d9629444cffea7f7827"
+      },
+      "src/notification/notificationScheduler.ts": {
+        "before": "0ecffa6d6cfa9a85bf1b81549a9b090c48f8cf2d62417ac6d3b203f125f57d15",
+        "after": "6b4a0805db243c167595f5f7ed52b5292718c8fafb44825b6ffdb9cbfcf252f0"
+      },
+      "src/presentation/weatherBrief.ts": {
+        "before": "60454e406a6fcf78e97a3142404e7a1bc0cf52b6b8d5d802116c59dd7ee3357e",
+        "after": "34182751da158eff9ec20fd48bdbdbb97bbff800540c7d75b76a5fe8202b6135"
+      },
+      "src/recommendations/preparationPolicy.ts": {
+        "before": "6691474053a3aab5b10f5680df6b0587ae4275514bb75a7db4c561a7ef324570",
+        "after": "8eb2418dd64409e18d6da1ef14099815f07790cb24ae7bff5346fd34169f4580"
+      },
+      "src/recommendations/recommendationEngine.ts": {
+        "before": "25715bfaf410b28712348b5e19d94b58a1f45d19263a9a4c4797836965036e19",
+        "after": "e5c8443e334d5750c709e97e51ce4be1f4868ff0ce3141e9abd8daf11ab14557"
+      },
+      "src/types.ts": {
+        "before": "2135655e29e037ad28dfd52710deee3b41ec12233273050b7f3ed273f7bf8147",
+        "after": "3c69b695fe7815a8f1d062f064ffe195e376b85f8a2bdfa511523c33eaaf46ba"
+      }
+    },
+    "test": {
+      "src/api/weather.ts": {
+        "before": "89b01cdad97fda37b92d18b6072b06224b919de068131cf9ebae5c6a270517b8",
+        "after": "f3139987b7fb8b1ac6dc9cc673a965f43d03d5ff8dea5f78ad8844100c36bf43"
+      },
+      "src/notification/notificationBuilder.ts": {
+        "before": "abc2436005e8425b11d1725a289c9243f4e517655719a8edff9be9e5e822cee0",
+        "after": "1efc0400591281054d1441e3d2ab0f4e04dee7b109487d9629444cffea7f7827"
+      },
+      "src/notification/notificationScheduler.ts": {
+        "before": "0ecffa6d6cfa9a85bf1b81549a9b090c48f8cf2d62417ac6d3b203f125f57d15",
+        "after": "6b4a0805db243c167595f5f7ed52b5292718c8fafb44825b6ffdb9cbfcf252f0"
+      },
+      "src/presentation/weatherBrief.ts": {
+        "before": "60454e406a6fcf78e97a3142404e7a1bc0cf52b6b8d5d802116c59dd7ee3357e",
+        "after": "34182751da158eff9ec20fd48bdbdbb97bbff800540c7d75b76a5fe8202b6135"
+      },
+      "src/recommendations/preparationPolicy.ts": {
+        "before": "6691474053a3aab5b10f5680df6b0587ae4275514bb75a7db4c561a7ef324570",
+        "after": "8eb2418dd64409e18d6da1ef14099815f07790cb24ae7bff5346fd34169f4580"
+      },
+      "src/recommendations/recommendationEngine.ts": {
+        "before": "25715bfaf410b28712348b5e19d94b58a1f45d19263a9a4c4797836965036e19",
+        "after": "e5c8443e334d5750c709e97e51ce4be1f4868ff0ce3141e9abd8daf11ab14557"
+      },
+      "src/types.ts": {
+        "before": "2135655e29e037ad28dfd52710deee3b41ec12233273050b7f3ed273f7bf8147",
+        "after": "3c69b695fe7815a8f1d062f064ffe195e376b85f8a2bdfa511523c33eaaf46ba"
+      }
+    }
+  },
+  "remoteWorkDirectory": "/tmp/weather-care-daily-prep-20261026-4ne9rG"
+}

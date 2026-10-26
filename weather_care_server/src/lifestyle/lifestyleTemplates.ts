@@ -54,6 +54,8 @@ export const lifestyleMessageCatalog: Record<
       description: '대기질 등급은 몸의 느낌만으로 판단하기 어려울 수 있어요.',
     },
   ],
+  PIPE_FREEZE_GUIDANCE: [{ title: '수도관 동파 대비를 위해 보온 상태를 점검하세요',
+    description: '실제 기온 예보를 참고한 앱의 보온 점검 안내예요.' }],
   VENTILATION_GUIDANCE: [{ title: '환기 전에 대기질과 대기정체를 확인하세요',
     description: '대기정체는 실제 미세먼지 농도와 별개로 해석해요.' }],
   OZONE_CAUTION: [

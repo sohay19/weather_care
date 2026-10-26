@@ -19,5 +19,6 @@ export const notificationSettingsBodySchema = z
     coldWaveEnabled: z.boolean().optional(),
     showerAndLightRainEnabled: z.boolean().optional(),
     lightningEnabled: z.boolean().optional(),
+    pipeFreezeEnabled: z.boolean().optional(),
   })
   .strict();

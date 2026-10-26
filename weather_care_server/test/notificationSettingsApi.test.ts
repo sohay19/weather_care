@@ -24,6 +24,7 @@ describe('notification settings API', () => {
         shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
         lightning_enabled INTEGER NOT NULL DEFAULT 1,
         lightning_supported INTEGER NOT NULL DEFAULT 0,
+          pipe_freeze_enabled INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL)`,
     ).run();
@@ -58,7 +59,18 @@ describe('notification settings API', () => {
       heavyRainEnabled: false,
       lightningEnabled: false,
       parasolEnabled: true,
+      pipeFreezeEnabled: false,
     });
+  });
+
+  it('동파 알림 선택을 저장하고 구 앱의 필드 없는 부분 갱신에도 유지한다', async () => {
+    for (const body of [{pipeFreezeEnabled: true}, {notificationTime: '08:00'}]) {
+      const response = await SELF.fetch('https://example.com/api/v1/notification-settings/device-1', {
+        method: 'PUT', headers: testAuthHeaders, body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({pipeFreezeEnabled: true});
+    }
   });
 
   it('rejects invalid times and unknown fields', async () => {

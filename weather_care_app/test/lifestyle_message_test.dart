@@ -2,6 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/models/lifestyle_message.dart';
 
 void main() {
+  test('수도관 동파 안내를 도로살얼음과 별도 항목으로 표시한다', () {
+    final message = LifestyleMessage.fromJson(
+        {'type': 'PIPE_FREEZE_GUIDANCE', 'title': '동파 대비'});
+    expect(message.type, LifestyleMessageType.pipeFreezeGuidance);
+    expect(message.type.title, '수도관 동파 대비');
+    expect(message.type, isNot(LifestyleMessageType.blackIceCaution));
+  });
   test('환기 안내는 전용 생활 항목으로 표시한다', () {
     final message = LifestyleMessage.fromJson({
       'type': 'VENTILATION_GUIDANCE',

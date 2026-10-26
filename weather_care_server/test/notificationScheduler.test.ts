@@ -14,6 +14,63 @@ import {
 } from '../src/database/collectedWeatherRepository';
 
 describe('notification scheduler', () => {
+  it('동파 알림은 기본 OFF이며 선택하면 하루 한 번만 상세 화면으로 보낸다', async () => {
+    await insertInstallation('device-token');
+    const now = new Date('2026-12-01T12:00:00+09:00');
+    const sent: FcmPayload[] = [];
+    const dependencies = { now, forecastLoader: async () => freezingForecast(now), sender: collectingSender(sent) };
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    expect(sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toHaveLength(0);
+    await savePreferences({pipeFreezeEnabled: true});
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    await runRecommendationNotificationJob(testBindings(), dependencies);
+    const alerts = sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION');
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toMatchObject({notificationTarget:'WEATHER_DETAILS', notificationTopic:'PIPE_FREEZE'});
+    expect(alerts[0].body).toContain('최저 -20℃');
+    expect(alerts[0].body).toContain('앱의 참고 안내');
+  });
+
+  it('부분·오래된 예보와 기온 회복은 동파 알림을 만들지 않는다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({pipeFreezeEnabled: true});
+    const now = new Date('2026-12-01T12:00:00+09:00');
+    const partial = freezingForecast(now); partial.hourly.pop();
+    const stale = freezingForecast(new Date(now.getTime() - 9 * 3_600_000));
+    for (const forecast of [partial, stale, freezingForecast(now, 5)]) {
+      const sent: FcmPayload[] = [];
+      await runRecommendationNotificationJob(testBindings(), {now,
+        forecastLoader: async () => forecast, sender: collectingSender(sent)});
+      expect(sent.some((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toBe(false);
+    }
+  });
+
+  it('동파 자료 조회 중 개별 알림을 끄면 발송 직전에 제외한다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({pipeFreezeEnabled: true});
+    const now = new Date('2026-12-01T12:00:00+09:00');
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {now, forecastLoader: async () => {
+      await savePreferences({pipeFreezeEnabled: false}); return freezingForecast(now);
+    }, sender: collectingSender(sent)});
+    expect(sent.some((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toBe(false);
+  });
+
+  it('실패한 동파 발송은 성공 이력으로 저장하지 않으며 다음 날 새 판단은 다시 보낸다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({pipeFreezeEnabled: true});
+    const now = new Date('2026-12-01T12:00:00+09:00');
+    await runRecommendationNotificationJob(testBindings(), {now,
+      forecastLoader: async () => freezingForecast(now), sender: async (_env, payloads) => payloads.map((item) =>
+        ({...successResult(item), success:false, status:503}))});
+    const sent: FcmPayload[] = [];
+    for (const at of [now, new Date(now.getTime() + 24 * 3_600_000)]) {
+      await runRecommendationNotificationJob(testBindings(), {now:at,
+        forecastLoader: async () => freezingForecast(at), sender: collectingSender(sent)});
+    }
+    expect(sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toHaveLength(2);
+  });
+
   it('아침 안개가 있어도 저녁 한 시간 비와 다른 항목 준비물을 우선 알린다', async () => {
     await insertInstallation('device-token');
     const forecast = rainyForecast();
@@ -136,6 +193,7 @@ describe('notification scheduler', () => {
           shower_light_rain_enabled INTEGER NOT NULL DEFAULT 1,
           lightning_enabled INTEGER NOT NULL DEFAULT 1,
           lightning_supported INTEGER NOT NULL DEFAULT 0,
+          pipe_freeze_enabled INTEGER NOT NULL DEFAULT 0,
           created_at TEXT NOT NULL, updated_at TEXT NOT NULL)`,
       ),
       env.DB.prepare(
@@ -864,6 +922,15 @@ function rainyForecast(): WeatherForecast {
     baseTime: '0500',
     dataSource: '기상청 단기예보',
   };
+}
+
+function freezingForecast(now: Date, temperature = -20): WeatherForecast {
+  const hourly = Array.from({length:48}, (_, hour) => ({
+    observedAt: new Date(now.getTime() + hour * 3_600_000).toISOString(),
+    forecastAt: new Date(now.getTime() + hour * 3_600_000).toISOString(),
+    issuedAt: now.toISOString(), temperature,
+  }));
+  return {current:hourly[0],hourly,daily:[],baseDate:'20261201',baseTime:'1100',dataSource:'기상청'};
 }
 
 function snapshot(hour: number): WeatherSnapshot {

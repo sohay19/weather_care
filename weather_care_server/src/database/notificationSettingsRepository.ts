@@ -17,6 +17,7 @@ interface NotificationSettingsRow {
   coldWaveEnabled: number;
   showerAndLightRainEnabled: number;
   lightningEnabled: number;
+  pipeFreezeEnabled: number;
 }
 
 export function defaultNotificationSettings(
@@ -39,6 +40,7 @@ export function defaultNotificationSettings(
     coldWaveEnabled: true,
     showerAndLightRainEnabled: true,
     lightningEnabled: true,
+    pipeFreezeEnabled: false,
   };
 }
 
@@ -64,7 +66,8 @@ export async function getNotificationSettings(
          heatwave_enabled AS heatwaveEnabled,
          cold_wave_enabled AS coldWaveEnabled,
          shower_light_rain_enabled AS showerAndLightRainEnabled,
-         lightning_enabled AS lightningEnabled
+         lightning_enabled AS lightningEnabled,
+         pipe_freeze_enabled AS pipeFreezeEnabled
        FROM notification_settings
        WHERE installation_id = ?`,
     )
@@ -88,6 +91,7 @@ export async function getNotificationSettings(
     coldWaveEnabled: row.coldWaveEnabled === 1,
     showerAndLightRainEnabled: row.showerAndLightRainEnabled === 1,
     lightningEnabled: row.lightningEnabled === 1,
+    pipeFreezeEnabled: row.pipeFreezeEnabled === 1,
   };
 }
 
@@ -106,8 +110,8 @@ export async function upsertNotificationSettings(
        umbrella_enabled, parasol_enabled, heavy_snow_enabled,
        outerwear_enabled, mask_enabled, water_enabled, sunscreen_enabled,
        daily_weather_enabled, heavy_rain_enabled, heatwave_enabled,
-       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported, pipe_freeze_enabled)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
@@ -126,6 +130,7 @@ export async function upsertNotificationSettings(
         cold_wave_enabled=excluded.cold_wave_enabled,
         shower_light_rain_enabled=excluded.shower_light_rain_enabled,
         lightning_enabled=excluded.lightning_enabled,
+        pipe_freeze_enabled=${payload.pipeFreezeEnabled === undefined ? 'notification_settings.pipe_freeze_enabled' : 'excluded.pipe_freeze_enabled'},
         lightning_supported=MAX(notification_settings.lightning_supported, excluded.lightning_supported),
         updated_at=excluded.updated_at`,
     )
@@ -149,6 +154,7 @@ export async function upsertNotificationSettings(
       now,
       now,
       booleanInteger(lightningSupported),
+      booleanInteger(payload.pipeFreezeEnabled === true),
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

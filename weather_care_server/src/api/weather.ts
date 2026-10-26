@@ -6,6 +6,7 @@ import { currentUvFields } from '../services/currentUvCache';
 import { readTodayLivingIndices } from '../services/livingIndices';
 import { withLivingIndexAdvice, ventilationAdvice } from '../services/livingIndexAdvice';
 import { readSnowDepthHistory } from '../services/snowDepthHistory';
+import { assessPipeFreeze, pipeFreezeMessage } from '../services/pipeFreezeAdvice';
 import { readCachedMidTermForecast } from '../services/midTermForecastCache';
 import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
 import { Hono } from 'hono';
@@ -448,6 +449,7 @@ router.get('/today', async (c) => {
       facts: rules,
     });
     const regionLabel = displayAdministrativeName(administrativeAreaForLocation(location)?.[1] ?? '현재 위치');
+    const pipeFreeze = assessPipeFreeze(responseForecast, generatedAt);
 
     const forecastLifestyleMessages = buildLifestyleMessages(
       lifestyle,
@@ -500,6 +502,7 @@ router.get('/today', async (c) => {
       nextForecast: nextForecastSnapshot(responseForecast.hourly, generatedAt, airForecast) ?? forecast.current,
       livingIndices,
       snowDepthHistory: await readSnowDepthHistory(weatherDatabase(c.env), location, generatedAt),
+      pipeFreeze,
       currentPrecipitation: precipitation,
       currentRoadIce: roadIce,
       currentRoadControl: roadControl,
@@ -512,6 +515,7 @@ router.get('/today', async (c) => {
         ...(roadControlMessage ? [roadControlMessage] : []),
         ...(roadIceMessage ? [roadIceMessage] : []),
         ...(currentPrecipitationMessage ? [currentPrecipitationMessage] : []),
+        pipeFreezeMessage(pipeFreeze, regionLabel, generatedAt),
         ...forecastLifestyleMessages,
       ],
       dataStatusMessages: [

@@ -9,6 +9,34 @@ import 'package:weather_care/services/notification_destination.dart';
 import 'package:weather_care/theme/weather_theme.dart';
 
 void main() {
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('동파 알림은 $scale배 글씨에서도 전용 근거를 먼저 펼친다', (tester) async {
+      await _pump(tester,
+          focusTopic: NotificationTopic.pipeFreeze,
+          scale: scale,
+          messages: [
+            LifestyleMessage(
+                type: LifestyleMessageType.pipeFreezeGuidance,
+                title: '수도관 동파 대비 · 경계',
+                parts: const [
+                  WeatherMessagePart(
+                      role: WeatherMessageRole.appSuggestion,
+                      text: '계량기함의 보온재와 틈새·노출 수도관을 점검하세요.',
+                      source: '날씨챙겨'),
+                  WeatherMessagePart(
+                      role: WeatherMessageRole.calculatedFact,
+                      text:
+                          '향후 48시간 최저 -12℃ · 영하 최장 36시간. 공식 동파 예보가 아닌 앱 참고 안내예요.',
+                      source: '날씨챙겨')
+                ]),
+          ]);
+      expect(find.textContaining('계량기함의 보온재'), findsOneWidget);
+      expect(find.textContaining('공식 동파 예보가 아닌'), findsOneWidget);
+      expect(
+          find.byKey(const ValueKey('detail-focus-unavailable')), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('생활 근거가 없어도 준비물의 실제 판단 수치와 적용 기준을 표시한다', (tester) async {
     await _pump(tester,
         messages: _messages(2),

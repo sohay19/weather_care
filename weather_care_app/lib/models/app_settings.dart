@@ -14,6 +14,7 @@ class AppSettings {
   final bool heavySnowEnabled;
   final bool heatwaveEnabled;
   final bool coldWaveEnabled;
+  final bool pipeFreezeEnabled;
   final bool showerAndLightRainEnabled;
   final bool lightningEnabled;
   final bool outerwearEnabled;
@@ -38,6 +39,7 @@ class AppSettings {
     required this.heavySnowEnabled,
     required this.heatwaveEnabled,
     required this.coldWaveEnabled,
+    this.pipeFreezeEnabled = false,
     required this.showerAndLightRainEnabled,
     this.lightningEnabled = true,
     required this.outerwearEnabled,
@@ -63,6 +65,7 @@ class AppSettings {
     bool? heavySnowEnabled,
     bool? heatwaveEnabled,
     bool? coldWaveEnabled,
+    bool? pipeFreezeEnabled,
     bool? showerAndLightRainEnabled,
     bool? lightningEnabled,
     bool? outerwearEnabled,
@@ -89,6 +92,7 @@ class AppSettings {
       heavySnowEnabled: heavySnowEnabled ?? this.heavySnowEnabled,
       heatwaveEnabled: heatwaveEnabled ?? this.heatwaveEnabled,
       coldWaveEnabled: coldWaveEnabled ?? this.coldWaveEnabled,
+      pipeFreezeEnabled: pipeFreezeEnabled ?? this.pipeFreezeEnabled,
       showerAndLightRainEnabled:
           showerAndLightRainEnabled ?? this.showerAndLightRainEnabled,
       lightningEnabled: lightningEnabled ?? this.lightningEnabled,
@@ -163,6 +167,7 @@ class AppSettings {
           json['heatwaveEnabled'] as bool? ?? fallbackSettings.heatwaveEnabled,
       coldWaveEnabled:
           json['coldWaveEnabled'] as bool? ?? fallbackSettings.coldWaveEnabled,
+      pipeFreezeEnabled: json['pipeFreezeEnabled'] == true,
       showerAndLightRainEnabled: json['showerAndLightRainEnabled'] as bool? ??
           fallbackSettings.showerAndLightRainEnabled,
       lightningEnabled: json['lightningEnabled'] as bool? ?? true,
@@ -195,6 +200,7 @@ class AppSettings {
       'heavySnowEnabled': heavySnowEnabled,
       'heatwaveEnabled': heatwaveEnabled,
       'coldWaveEnabled': coldWaveEnabled,
+      'pipeFreezeEnabled': pipeFreezeEnabled,
       'showerAndLightRainEnabled': showerAndLightRainEnabled,
       'lightningEnabled': lightningEnabled,
       'outerwearEnabled': outerwearEnabled,

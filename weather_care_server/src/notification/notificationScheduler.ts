@@ -44,6 +44,8 @@ import {
   getCollectedCache,
 } from '../database/collectedWeatherRepository';
 import { calculateSunTimes } from '../presentation/sunTimes';
+import { assessPipeFreeze } from '../services/pipeFreezeAdvice';
+import { formatWeatherNumber } from '../utils/weatherNumber';
 
 interface NotificationInstallationRow {
   installationId: string;
@@ -63,6 +65,7 @@ interface NotificationInstallationRow {
   heavyRainEnabled: number;
   heatwaveEnabled: number;
   coldWaveEnabled: number;
+  pipeFreezeEnabled: number;
   showerAndLightRainEnabled: number;
   latitude: number | null;
   longitude: number | null;
@@ -239,6 +242,16 @@ export async function runRecommendationNotificationJob(
         row.installationId,
         local.date,
       );
+      if (row.pipeFreezeEnabled === 1 && !alreadySent.has('PIPE_FREEZE_CAUTION')) {
+        const assessment = assessPipeFreeze(forecast, now);
+        if (assessment.status === 'AVAILABLE' && assessment.level !== 'CHECK') {
+          pending.push({ installationId: row.installationId, targetDate: local.date, token: row.token,
+            built: { notification_key: 'PIPE_FREEZE_CAUTION',
+              title: '수도관 동파 대비 · ' + assessment.levelLabel,
+              body: `향후 48시간 기온 예보 최저 ${formatWeatherNumber(assessment.minimumTemperature!)}℃. 계량기함 보온재·틈새와 노출 수도관을 점검하세요. 앱의 참고 안내예요.`,
+              destination: weatherDetailsDestination('PIPE_FREEZE') } });
+        }
+      }
       const briefingCoordinates = row.latitude !== null && row.longitude !== null
         ? { latitude: row.latitude, longitude: row.longitude }
         : kmaGridCoordinates(row.nx, row.ny);
@@ -291,9 +304,10 @@ export async function runRecommendationNotificationJob(
     LEFT JOIN notification_settings s ON s.installation_id = i.installation_id
     WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 0) = 1
       AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version = 1
+      AND (? <> 'PIPE_FREEZE_CAUTION' OR COALESCE(s.pipe_freeze_enabled, 0) = 1)
       AND NOT EXISTS (SELECT 1 FROM installation_activity a
         WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
-    .bind(item.installationId, item.token,
+    .bind(item.installationId, item.token, item.built.notification_key,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendable = pending.filter((_, index) => eligible[index].results.length > 0);
   if (!sendable.length) return;
@@ -339,6 +353,7 @@ async function notificationInstallations(
          COALESCE(s.heavy_rain_enabled, 1) AS heavyRainEnabled,
          COALESCE(s.heatwave_enabled, 1) AS heatwaveEnabled,
          COALESCE(s.cold_wave_enabled, 1) AS coldWaveEnabled,
+         COALESCE(s.pipe_freeze_enabled, 0) AS pipeFreezeEnabled,
          COALESCE(s.shower_light_rain_enabled, 1) AS showerAndLightRainEnabled,
          i.latitude,
          i.longitude,

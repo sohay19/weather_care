@@ -18,7 +18,7 @@ class _Client extends ApiClient {
 }
 
 void main() {
-  test('알림 설정 API에는 허용된 알림 필드 15개만 전송한다', () async {
+  test('알림 설정 API에는 허용된 알림 필드 16개만 전송한다', () async {
     final settings = AppSettings.fallback('test').copyWith(
         locationMode: 'MANUAL',
         currentRegionId: '100_76',
@@ -40,6 +40,7 @@ void main() {
       'heavySnowEnabled': true,
       'heatwaveEnabled': true,
       'coldWaveEnabled': true,
+      'pipeFreezeEnabled': false,
       'showerAndLightRainEnabled': true,
       'lightningEnabled': true,
       'dailyWeatherEnabled': true,

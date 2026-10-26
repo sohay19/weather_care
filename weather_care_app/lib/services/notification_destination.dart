@@ -8,6 +8,7 @@ enum NotificationTopic {
   overview,
   strongWind,
   roadIce,
+  pipeFreeze,
   lightning,
   uv,
   precipitation,
@@ -89,6 +90,7 @@ NotificationTopic _topicFromWireValue(Object? value) {
     'APP_UPDATE' => NotificationTopic.appUpdate,
     'STRONG_WIND' => NotificationTopic.strongWind,
     'ROAD_ICE' => NotificationTopic.roadIce,
+    'PIPE_FREEZE' => NotificationTopic.pipeFreeze,
     'LIGHTNING' => NotificationTopic.lightning,
     'UV' => NotificationTopic.uv,
     'PRECIPITATION' => NotificationTopic.precipitation,
@@ -124,6 +126,11 @@ NotificationDestination _legacyDestination(String notificationKey) {
       target: NotificationTarget.weatherDetails,
       topic: NotificationTopic.precipitation,
     );
+  }
+  if (notificationKey == 'PIPE_FREEZE_CAUTION') {
+    return const NotificationDestination(
+        target: NotificationTarget.weatherDetails,
+        topic: NotificationTopic.pipeFreeze);
   }
   if (notificationKey.startsWith('ROAD_ICE_')) {
     return const NotificationDestination(

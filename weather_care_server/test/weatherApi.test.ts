@@ -35,6 +35,28 @@ import {
 } from './collectedWeatherFixture';
 
 describe('fast Main weather', () => {
+  it('Today는 동파 판단과 근거를 제공하되 외출 준비물은 추가하지 않는다', async () => {
+    vi.useFakeTimers();
+    const now = new Date('2026-12-01T07:00:00+09:00');
+    vi.setSystemTime(now);
+    try {
+      const hourly = Array.from({length:48}, (_, hour) => ({
+        observedAt:new Date(now.getTime() + hour * 3_600_000).toISOString(),
+        forecastAt:new Date(now.getTime() + hour * 3_600_000).toISOString(),
+        issuedAt:'2026-12-01T05:00:00+09:00',temperature:-20,
+      }));
+      await seedCollectedRegion(58,124,{current:hourly[0],hourly,daily:[],
+        baseDate:'20261201',baseTime:'0500',dataSource:'기상청'});
+      const response = await router.request('/today?nx=58&ny=124',{}, {DB:env.DB});
+      const body = await response.json<any>();
+      expect(response.status).toBe(200);
+      expect(body.pipeFreeze).toMatchObject({status:'AVAILABLE',level:'DANGER',minimumTemperature:-20,availableHours:48});
+      expect(body.lifestyleMessages.some((item:any) => item.type === 'PIPE_FREEZE_GUIDANCE')).toBe(true);
+      expect(body.recommendations.some((item:any) => /PIPE|FREEZE/.test(item.type))).toBe(false);
+      const main = await router.request('/main?nx=58&ny=124',{}, {DB:env.DB});
+      expect(await main.json()).not.toHaveProperty('pipeFreeze');
+    } finally { vi.useRealTimers(); }
+  });
   it('returns KMA core weather without waiting for optional providers', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T15:35:00+09:00'));

@@ -14,6 +14,9 @@ Set<LifestyleMessageType> lifestyleTypesForNotificationTopic(
       NotificationTopic.strongWind => const {
           LifestyleMessageType.outdoorCaution,
         },
+      NotificationTopic.pipeFreeze => const {
+          LifestyleMessageType.pipeFreezeGuidance,
+        },
       NotificationTopic.roadIce => const {
           LifestyleMessageType.blackIceCaution,
           LifestyleMessageType.wetRoadCaution,

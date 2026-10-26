@@ -612,6 +612,17 @@ class _WeatherAlertsSettingsScreenState
                   _update(settings.copyWith(coldWaveEnabled: value)),
             ),
             _SettingsToggleTile(
+              icon: Icons.plumbing_rounded,
+              settingId: 'pipeFreezeEnabled',
+              title: '수도관 동파 대비 안내',
+              subtitle:
+                  '향후 48시간 기온 예보로 보온 점검이 필요할 때 하루 한 번 안내해요. 공식 동파 예보가 아닌 앱 참고 안내예요',
+              value: settings.pipeFreezeEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(pipeFreezeEnabled: value)),
+            ),
+            _SettingsToggleTile(
               icon: Icons.water_drop_outlined,
               settingId: 'showerAndLightRainEnabled',
               title: '현재 비 안내',

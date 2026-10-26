@@ -22,6 +22,7 @@ class SettingsSyncService {
       'heavySnowEnabled': settings.heavySnowEnabled,
       'heatwaveEnabled': settings.heatwaveEnabled,
       'coldWaveEnabled': settings.coldWaveEnabled,
+      'pipeFreezeEnabled': settings.pipeFreezeEnabled,
       'showerAndLightRainEnabled': settings.showerAndLightRainEnabled,
       'lightningEnabled': settings.lightningEnabled,
       'dailyWeatherEnabled': settings.dailyWeatherEnabled,

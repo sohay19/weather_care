@@ -33,6 +33,7 @@ void main() {
     'heavySnowEnabled': '대설·많은 눈 안내',
     'heatwaveEnabled': '폭염특보 안내',
     'coldWaveEnabled': '한파특보 안내',
+    'pipeFreezeEnabled': '수도관 동파 대비 안내',
     'showerAndLightRainEnabled': '현재 비 안내',
     'lightningEnabled': '낙뢰 감지 알림',
     'dailyWeatherEnabled': '준비물 요약 알림',
@@ -53,7 +54,8 @@ void main() {
       await tester.tap(toggle);
       await tester.pumpAndSettle();
       expect(changed, hasLength(1));
-      expect(changed.single.toJson(), {...initial.toJson(), entry.key: false});
+      expect(changed.single.toJson(),
+          {...initial.toJson(), entry.key: !initial.toJson()[entry.key]});
     });
   }
 

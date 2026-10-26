@@ -19,6 +19,7 @@ void main() {
       'SNOW': NotificationTopic.snow,
       'STRONG_WIND': NotificationTopic.strongWind,
       'ROAD_ICE': NotificationTopic.roadIce,
+      'PIPE_FREEZE': NotificationTopic.pipeFreeze,
       'LIGHTNING': NotificationTopic.lightning,
       'UV': NotificationTopic.uv,
       'LAUNDRY': NotificationTopic.laundry,
@@ -43,6 +44,7 @@ void main() {
   test('이전 서버에서 받은 알림 키도 같은 대상으로 이동한다', () {
     final cases = {
       'CURRENT_RAIN': NotificationTopic.precipitation,
+      'PIPE_FREEZE_CAUTION': NotificationTopic.pipeFreeze,
       'ROAD_ICE_100_2_202609101200': NotificationTopic.roadIce,
       'LIGHTNING_60_121_202610200300': NotificationTopic.lightning,
       'ROAD_CONTROL_event_FULL': NotificationTopic.commute,

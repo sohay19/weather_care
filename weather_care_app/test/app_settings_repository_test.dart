@@ -27,6 +27,7 @@ void main() {
       notificationTime: '06:35',
       umbrellaEnabled: false,
       heavyRainEnabled: false,
+      pipeFreezeEnabled: true,
       savedRegionKeys: ['부산|100|76', '제주|80|40'],
     );
 
@@ -37,6 +38,7 @@ void main() {
     expect(loaded.notificationTime, '06:35');
     expect(loaded.umbrellaEnabled, false);
     expect(loaded.heavyRainEnabled, false);
+    expect(loaded.pipeFreezeEnabled, true);
     expect(loaded.savedRegionKeys, ['부산|100|76', '제주|80|40']);
   });
 
@@ -47,5 +49,6 @@ void main() {
       'currentRegion': '60_121',
     }, 'device-1');
     expect(loaded.savedRegionKeys, ['이전 구역']);
+    expect(loaded.pipeFreezeEnabled, false);
   });
 }

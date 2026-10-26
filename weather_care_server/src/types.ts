@@ -131,6 +131,7 @@ export enum LifestyleInsightType {
   OUTERWEAR_USEFUL = 'OUTERWEAR_USEFUL',
   MASK_USEFUL = 'MASK_USEFUL',
   VENTILATION_GUIDANCE = 'VENTILATION_GUIDANCE',
+  PIPE_FREEZE_GUIDANCE = 'PIPE_FREEZE_GUIDANCE',
   OZONE_CAUTION = 'OZONE_CAUTION',
   HYDRATION_IMPORTANT = 'HYDRATION_IMPORTANT',
   SUNSCREEN_USEFUL = 'SUNSCREEN_USEFUL',
@@ -346,6 +347,7 @@ export interface NotificationSettings {
   coldWaveEnabled: boolean;
   showerAndLightRainEnabled: boolean;
   lightningEnabled: boolean;
+  pipeFreezeEnabled?: boolean;
 }
 
 export interface Installation {
@@ -485,6 +487,25 @@ export interface WeatherMessagePart {
   retryable?: boolean;
 }
 
+export interface PipeFreezeAssessment {
+  status: 'AVAILABLE' | 'PARTIAL' | 'UNAVAILABLE';
+  level?: 'CHECK' | 'CAUTION' | 'WARNING' | 'DANGER';
+  levelLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  availableHours: number;
+  expectedHours: 48;
+  minimumTemperature?: number;
+  minimumAt?: string;
+  forecastIssuedAt?: string;
+  freezingHours: number;
+  belowMinus10Hours: number;
+  belowMinus15Hours: number;
+  validUntil: string;
+  ruleVersion: 'pipe-freeze-1';
+  referenceUrl: string;
+}
+
 export interface SnowDepthObservation {
   observedAt: string;
   depthCm: number;
@@ -516,6 +537,7 @@ export interface TodayWeatherResponse {
   nextForecast?: WeatherSnapshot;
   livingIndices?: TodayLivingIndices;
   snowDepthHistory?: SnowDepthObservation[];
+  pipeFreeze?: PipeFreezeAssessment;
   currentPrecipitation?: CurrentPrecipitationObservation;
   currentRoadIce?: RoadIceRisk;
   currentRoadControl?: OfficialRoadControl;

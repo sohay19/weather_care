@@ -13335,3 +13335,17 @@
 - 최종 소스에서 사용자가 양쪽 화살표 top을120으로 수동 조정한 것을 확인해 보존하고 기존 위치 시험도120으로 맞췄다. Android 설정은 versionCode만 변경되었으며 비밀번호/서명키 항목 변경은 없다. ignored APK/캡처/임시 로그는 커밋 대상에서 제외된다.
 - 최종 Week39개 시험·전체 정적 분석 이슈 없음·diff 공백 검사 통과다. 로그는 앱 build/week-final-commit-{tests,analyze}-20261026.log다. 직전 빌드/기기 검증 이후 최종 수동120 위치는 위젯 시험으로 확인했으며 추가 빌드/설치는 하지 않았다.
 - 커밋 메시지는 ‘feat(week): 7일 달력과 날짜 이동 UI 개선’이다. 푸시 전 원격 master가 로컬 부모2fc2cc1과 같은 것을 확인했다. 서버 배포·스토어 업데이트는 수행하지 않는다.
+
+## 2026-10-23 백그라운드 위치·App Store 제출 준비 확인
+
+- 사용자 질문에 따라 iOS Info.plist의 사용 중/항상 위치 목적 문구·UIBackgroundModes(location), BackgroundLocationMonitor의 단계별 권한 요청·authorizedAlways 검사·significant-change 감시·철회 시 중단·서버 전송, Flutter 선택 동의·GPS/전체 알림 조건과 서버의 최신 좌표 저장을 읽기 전용 점검했다. Podfile의 geolocator Always 우회 설정과 별개로 자체 Swift 코드가 항상 허용 요청을 담당함을 확인했다. 두 plist의 XML 파싱을 통과했다.
+- 기본 구현과 제출 완료를 구분해 안내한다. App Store 개인정보에 정확한/대략적 위치의 앱 기능 목적·설치 식별자 연결을 실제 처리에 맞춰 공개하고, 공개 개인정보처리방침의 백그라운드 전송·보관·철회·역지오코딩 및 광고 SDK 설명을 최신 구현과 대조해야 한다. 기존 store/스토어_등록정보.md의 개인정보 초안·심사 메모 경로를 안내한다. App Store Connect 실제 입력값·배포 Archive는 이번에 확인하지 않았다.
+- 기존 iOS QA 기록상 초기 OS 모의 위치의 백그라운드 수신·저장·로컬 PUT 200과 네이티브20개 통과는 있으나 연속 이동 감지·실제 물리 이동·공개 서버 왕복·실제 푸시는 확인되지 않았다. 전체 기능 검증 완료로 표시하지 않으며 사용자에게 실제 이동을 다시 요청하지 않는다.
+- Apple 공식 App Review Guidelines 2.5.4/5.1.1/5.1.5, App Privacy Details 및 심사 첨부 자료 안내를 웹에서 확인했다. 공개 방침 https://weather-care.pages.dev/는 이번 도구 조회가 HTTP403으로 차단되어 현재 공개 본문 변경 여부를 확정하지 않았다. 기존 점검 문서의 미완료 항목을 현재 완료로 간주하지 않는다.
+- 제품 소스·기기 권한·서버·공개 정책·스토어 콘솔은 변경하지 않았다. 작업 시작 시 존재한 ios/Runner.xcodeproj/project.pbxproj 변경은 보존한다. 이번 변경은 HANDOFF 기록뿐이며 커밋·push·배포·스토어 제출은 수행하지 않았다.
+
+## 2026-10-26 원격 master pull
+
+- 사용자 요청으로 origin/master를 fetch하고 master를 da31156에서 0fbb707까지 24개 커밋 fast-forward pull했다.
+- 기존 HANDOFF.md 추가 기록과 iOS Runner.xcodeproj/project.pbxproj 변경을 stash로 보존한 뒤 복원했다. 인계 문서의 끝부분 충돌은 원격 기록과 로컬 추가 기록을 모두 보존해 해결했다.
+- 로컬과 origin/master의 커밋 일치, 충돌 해소 및 기존 iOS 설정의 바이트 일치를 확인했다. 별도 빌드·테스트·커밋·push는 수행하지 않았다. 보존용 stash 983f4c745b8de2b1af5bd615dea997cf9a3fb1f0은 유지한다.

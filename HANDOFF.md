@@ -13349,3 +13349,17 @@
 - 사용자 요청으로 origin/master를 fetch하고 master를 da31156에서 0fbb707까지 24개 커밋 fast-forward pull했다.
 - 기존 HANDOFF.md 추가 기록과 iOS Runner.xcodeproj/project.pbxproj 변경을 stash로 보존한 뒤 복원했다. 인계 문서의 끝부분 충돌은 원격 기록과 로컬 추가 기록을 모두 보존해 해결했다.
 - 로컬과 origin/master의 커밋 일치, 충돌 해소 및 기존 iOS 설정의 바이트 일치를 확인했다. 별도 빌드·테스트·커밋·push는 수행하지 않았다. 보존용 stash 983f4c745b8de2b1af5bd615dea997cf9a3fb1f0은 유지한다.
+
+## 2026-10-26 시험 주간 7일 예보 운영 승격
+
+- 사용자 요청으로 시험에만 반영했던 주간 `upcomingDays`를 운영에도 배포했다. 실제 운영/시험의 소스·사용자 마이그레이션177개 manifest를 대조해 차이가 src/api/weather.ts의 주간 라우트뿐임을 확인했다. 운영 원본에 실제 시험 파일만 적용한 후보를 검사한 뒤 해당1파일만 원자 교체했다. 기존 동파·꽃가루·환기·적설 이력 등은 보존했다.
+- 후보 전체 TypeScript 검사·주간/API/강수 관련3파일56개 및 Linux 구문 검사 통과다. 16:33:24~16:33:57 KST 배포 전후 운영/시험 공개 HTTPS 총40요청 모두200, 운영 주간5종의 기존 days 값과 최상위 필드/자료형 보존을 확인했다. 서울 청운효자동·항동·부산 및 PREPARATION_18 항동에서10월26일~11월1일7일 전부를 확인했다. 서울60/127 격자만 지정한 요청의 마지막2일은 중기 지역을 특정하지 못한 기존 결측 계약대로 유지한다.
+- 운영 API PID704598→708773만 재시작했다. 시험 API704480·운영 스케줄러704661은 동일 PID/active이며 환경 설정·사용자/공용 날씨 DB 스키마·다른 소스 전체 manifest 보존을 확인했다. DB 마이그레이션·수동 수집·사용자 설정/푸시·앱 빌드/설치·스토어 업데이트는 하지 않았다.
+- 운영 릴리스는 /opt/weather-care/releases/20261023-full-production/weather_care_server, 백업은 /var/backups/weather-care/week-production-20261026T073334Z/weather.ts다. 배포 전69e9fc4d…→후b5082833…이며 시험 파일과 같다. 잠금·변경 감지·소스만 자동 원복을 준비해 원복 없이 완료했다.
+- 기록은 docs/주간7일_운영배포_20261026.md와 검증 JSON, 서버 README/시험 운영 README에 반영했다. 원본/후보/응답/도구/로그는 ignored 서버 build/week-production-20261026이며 원격 작업 폴더는 그 안 remote-dir.txt로 확인한다. 이번 요청은 서버 배포 범위이므로 추가 커밋·push는 하지 않았다.
+
+## 2026-10-26 주간 운영 배포 기록 커밋·푸시
+
+- 사용자 후속 요청으로 운영 배포 문서·검증 JSON·서버/시험 README·HANDOFF 총5개 파일을 커밋하고 weather_care 원격 master에 푸시한다. 커밋 메시지는 ‘docs: 주간 7일 예보 운영 배포 기록’이다.
+- 검증 JSON의 배포 완료·56개 후보 시험·HTTP40개 정상·서비스3개 active·설정/스키마/소스 manifest 보존을 재확인하고 공백 검사를 통과했다. 문서 변경만 있어 실행 시험과 실제 배포는 반복하지 않는다. 원본 응답·스크립트·로그 등 ignored build 파일은 포함하지 않는다.
+- 첫 일반 푸시는 원격 선행 커밋9db0ba0(ios update)으로 거절됐다. fetch 후 해당 커밋 위에 배포 기록을 rebase하고 HANDOFF 끝부분 충돌은 양쪽 기록을 모두 보존해 해결했다. 원격 iOS 설정은 그대로 유지하고 일반 푸시로 진행한다.

@@ -1,0 +1,419 @@
+{
+  "검증시작KST": "2026-10-26T16:33:24.623635+09:00",
+  "검증완료KST": "2026-10-26T16:33:57.248648+09:00",
+  "범위": "시험 서버에 먼저 반영한 주간 upcomingDays 응답을 운영 API에 승격",
+  "변경파일": [
+    "src/api/weather.ts"
+  ],
+  "검증후보": "현재 운영 소스 전체에서 weather.ts만 실제 시험 서버 파일로 교체",
+  "후보타입검사": true,
+  "후보시험": {
+    "파일": 3,
+    "통과": 56
+  },
+  "DB마이그레이션": false,
+  "앱업데이트수행": false,
+  "설명": "days는 이전 앱용 일요일~토요일 자료 유지. upcomingDays는 오늘부터6일 뒤까지 확보된 예보만 반환. 격자만 지정해 중기 지역을 특정하지 못한 요청의 마지막2일 결측은 기존 계약대로 유지.",
+  "실행결과": {
+    "startedAt": "2026-10-26T16:33:24.623635+09:00",
+    "scope": "주간 upcomingDays 운영 승격",
+    "status": "complete",
+    "checks": [
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "seoul_legacy",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "seoul_named",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "hangdong",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "busan",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "hangdong_18",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "health",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "main",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "today",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "today_18",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "production",
+        "request": "widget",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "seoul_legacy",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "seoul_named",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "hangdong",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "busan",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "hangdong_18",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "health",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "main",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "today",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "today_18",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "environment": "test",
+        "request": "widget",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "seoul_legacy",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "seoul_named",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "hangdong",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "busan",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "hangdong_18",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "health",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "main",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "today",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "today_18",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "production",
+        "request": "widget",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "seoul_legacy",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "seoul_named",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "hangdong",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "busan",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "hangdong_18",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "health",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "main",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "today",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "today_18",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "environment": "test",
+        "request": "widget",
+        "status": 200
+      }
+    ],
+    "productionAlreadyHasUpcomingDays": false,
+    "backup": "/var/backups/weather-care/week-production-20261026T073334Z/weather.ts",
+    "root": "/opt/weather-care/releases/20261023-full-production/weather_care_server",
+    "beforeSha256": "69e9fc4dd3124839ae76d9c827968a30ab4c86461adaae797ffe0e9b7652def4",
+    "afterSha256": "b50828339eef5e094a1ac30d24699ac001b9668975b0f5bf9282c766f89e60d8",
+    "serviceBefore": {
+      "weather-care-api.service": {
+        "pid": "704598",
+        "active": "active"
+      },
+      "weather-care-test-api.service": {
+        "pid": "704480",
+        "active": "active"
+      },
+      "weather-care-scheduler.service": {
+        "pid": "704661",
+        "active": "active"
+      }
+    },
+    "weekly": [
+      {
+        "case": "seoul_legacy",
+        "legacyDaysUnchanged": true,
+        "legacyDates": [
+          "2026-10-25",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "upcomingDates": [
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30"
+        ],
+        "missingDates": [
+          "2026-10-31",
+          "2026-11-01"
+        ]
+      },
+      {
+        "case": "seoul_named",
+        "legacyDaysUnchanged": true,
+        "legacyDates": [
+          "2026-10-25",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31"
+        ],
+        "upcomingDates": [
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31",
+          "2026-11-01"
+        ],
+        "missingDates": []
+      },
+      {
+        "case": "hangdong",
+        "legacyDaysUnchanged": true,
+        "legacyDates": [
+          "2026-10-25",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31"
+        ],
+        "upcomingDates": [
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31",
+          "2026-11-01"
+        ],
+        "missingDates": []
+      },
+      {
+        "case": "busan",
+        "legacyDaysUnchanged": true,
+        "legacyDates": [
+          "2026-10-25",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31"
+        ],
+        "upcomingDates": [
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31",
+          "2026-11-01"
+        ],
+        "missingDates": []
+      },
+      {
+        "case": "hangdong_18",
+        "legacyDaysUnchanged": true,
+        "legacyDates": [
+          "2026-10-25",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31"
+        ],
+        "upcomingDates": [
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29",
+          "2026-10-30",
+          "2026-10-31",
+          "2026-11-01"
+        ],
+        "missingDates": []
+      }
+    ],
+    "servicesAfter": {
+      "weather-care-api.service": {
+        "pid": "708773",
+        "active": "active"
+      },
+      "weather-care-test-api.service": {
+        "pid": "704480",
+        "active": "active"
+      },
+      "weather-care-scheduler.service": {
+        "pid": "704661",
+        "active": "active"
+      }
+    },
+    "onlyProductionApiRestarted": true,
+    "sourceManifestsVerified": true,
+    "settingsPreserved": true,
+    "databaseSchemasPreserved": true,
+    "completedAt": "2026-10-26T16:33:57.248648+09:00"
+  }
+}

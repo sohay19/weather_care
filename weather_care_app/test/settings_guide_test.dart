@@ -146,6 +146,13 @@ void main() {
   }
 
   test('출처 안내가 모든 운영 자료 종류와 내부 판단의 한계를 포함한다', () {
+    final allGuides = SettingsGuide.values
+        .expand((guide) => guide.sections)
+        .expand((section) => [section.title, ...section.paragraphs])
+        .join('\n');
+    expect(allGuides, isNot(contains('Android')));
+    expect(allGuides, isNot(contains('iOS')));
+    expect(allGuides, isNot(contains('집중 모드')));
     final sources = SettingsGuide.sources.sections
         .expand((section) => [section.title, ...section.paragraphs])
         .join('\n');

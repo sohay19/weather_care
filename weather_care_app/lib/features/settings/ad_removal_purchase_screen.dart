@@ -108,7 +108,7 @@ class _AdRemovalPurchaseScreenState extends State<AdRemovalPurchaseScreen> {
             ),
             SizedBox(height: 6),
             Text(
-              '구매와 복원은 현재 기기의 플랫폼 스토어 계정을 기준으로 처리돼요. Android와 iOS의 구매 내역은 서로 복원되지 않아요.',
+              '구매와 복원은 현재 기기의 플랫폼 스토어 계정을 기준으로 처리돼요. 다른 플랫폼 스토어의 구매 내역은 이 기기에서 복원되지 않아요.',
             ),
             SizedBox(height: 16),
             Text(

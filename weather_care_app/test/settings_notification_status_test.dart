@@ -133,7 +133,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(changes, isEmpty);
     expect(locationRequests, 0);
-    await tester.tap(find.text('동의하고 설정'));
+    await tester.tap(find.text('계속'));
     await tester.pumpAndSettle();
     expect(changes.single.backgroundLocationEnabled, isTrue);
     expect(locationRequests, 1);

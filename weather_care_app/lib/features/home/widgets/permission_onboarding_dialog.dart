@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/weather_theme.dart';
@@ -7,6 +8,13 @@ class PermissionOnboardingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundPermissionGuide = switch (defaultTargetPlatform) {
+      TargetPlatform.android =>
+        'Android 11 이상은 권한 화면에서 ‘항상 허용’을 선택해주세요. 감시 중에는 실행 알림이 표시돼요.',
+      TargetPlatform.iOS =>
+        'iOS는 ‘앱을 사용하는 동안 허용’ 뒤 추가 요청에서 ‘항상 허용’이 필요해요. 표시 시점은 운영체제가 정해요.',
+      _ => '백그라운드 위치 갱신에는 위치 권한의 ‘항상 허용’이 필요해요.',
+    };
     return AlertDialog(
       key: const ValueKey('permission-onboarding-dialog'),
       title: const Text('\'날씨 챙겨\'에서 필요한 권한이에요'),
@@ -35,7 +43,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            '동의하고 계속을 누르면 알림 → 사용 중 위치 → 백그라운드 위치 순서로 요청해요.\nAndroid 11 이상은 권한 화면에서 ‘항상 허용’을 선택해주세요. iOS는 ‘앱을 사용하는 동안 허용’ 뒤 추가 요청에서 ‘항상 허용’이 필요해요. 표시 시점은 운영체제가 정해요. Android는 감시 중 알림을 표시하며 GPS 사용으로 배터리를 더 사용할 수 있어요.\nGPS 모드·전체 알림·서버 사용이 켜진 동안 동작하며 기능을 끄거나 지역을 직접 선택하면 감시를 중지해요.\n권한을 거부해도 직접 선택한 지역의 날씨를 볼 수 있어요.',
+            '계속을 누르면 알림 → 사용 중 위치 → 백그라운드 위치 순서로 요청해요.\n$backgroundPermissionGuide\nGPS 사용으로 배터리를 더 사용할 수 있어요.\nGPS 모드·전체 알림·서버 사용이 켜진 동안 동작하며 기능을 끄거나 지역을 직접 선택하면 감시를 중지해요.\n권한을 거부해도 직접 선택한 지역의 날씨를 볼 수 있어요.',
             style: TextStyle(
               color: WeatherCareTheme.of(context).textSecondary,
               fontSize: 12,
@@ -53,7 +61,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
         FilledButton(
           key: const ValueKey('permission-onboarding-confirm'),
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('동의하고 계속'),
+          child: const Text('계속'),
         ),
       ],
     );

@@ -111,8 +111,10 @@ void main() {
     expect(find.textContaining('추가 결제 없이 구매 권한을 다시 적용'), findsOneWidget);
     expect(find.textContaining('같은 플랫폼의 같은 스토어 계정'), findsOneWidget);
     expect(find.textContaining('구매와 복원은 현재 기기의 플랫폼 스토어 계정'), findsOneWidget);
-    expect(find.textContaining('Android와 iOS의 구매 내역은 서로 복원되지 않아요'),
+    expect(find.textContaining('다른 플랫폼 스토어의 구매 내역은 이 기기에서 복원되지 않아요'),
         findsOneWidget);
+    expect(find.textContaining('Android'), findsNothing);
+    expect(find.textContaining('iOS'), findsNothing);
     expect(find.textContaining('실제 가격은 현재 기기의 스토어에서 불러와'), findsOneWidget);
 
     await tester
@@ -120,7 +122,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('ad-removal-purchase-help-dialog')),
         findsNothing);
-  });
+  }, variant: TargetPlatformVariant.mobile());
 
   testWidgets('360px 큰 글씨에서도 구매 화면에 overflow가 없다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);

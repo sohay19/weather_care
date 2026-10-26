@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -103,11 +104,27 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('background-location-switch')));
     await tester.pumpAndSettle();
     expect(find.text('백그라운드 위치 사용 안내'), findsOneWidget);
+    final dialog = find.byType(AlertDialog);
+    final ownPlatform = switch (defaultTargetPlatform) {
+      TargetPlatform.android => 'Android',
+      TargetPlatform.iOS => 'iOS',
+      _ => null,
+    };
+    for (final platform in ['Android', 'iOS']) {
+      expect(
+          find.descendant(of: dialog, matching: find.textContaining(platform)),
+          platform == ownPlatform ? findsOneWidget : findsNothing);
+    }
+    expect(find.text('계속'), findsOneWidget);
+    expect(find.text('동의하고 설정'), findsNothing);
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      expect(find.textContaining('실행 알림'), findsNothing);
+    }
     expect(tester.takeException(), isNull);
     await tester.tap(find.text('취소'));
     await tester.pumpAndSettle();
     service.dispose();
-  });
+  }, variant: TargetPlatformVariant.mobile());
   testWidgets('사용 안내에 동의한 다음에만 저장하고 권한을 요청한다', (tester) async {
     final service = BackgroundLocationService();
     final events = <String>[];
@@ -129,7 +146,7 @@ void main() {
     expect(events, isEmpty);
     await tester.tap(find.byKey(const ValueKey('background-location-switch')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('동의하고 설정'));
+    await tester.tap(find.text('계속'));
     await tester.pumpAndSettle();
     expect(events, ['save:true', 'permission']);
     service.dispose();

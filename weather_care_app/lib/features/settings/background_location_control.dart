@@ -19,6 +19,14 @@ class BackgroundLocationControl extends StatelessWidget {
       required this.onChanged,
       required this.onPermission});
 
+  String get _backgroundPermissionGuide => switch (defaultTargetPlatform) {
+        TargetPlatform.android =>
+          'Android는 앱 설정의 위치 권한에서 변경할 수 있어요. 감시 중에는 실행 알림이 표시돼요.',
+        TargetPlatform.iOS =>
+          'iOS는 ‘앱을 사용하는 동안 허용’ 뒤 추가 요청에서 ‘항상 허용’을 선택해주세요. 표시 시점은 운영체제가 정해요.',
+        _ => '기기 앱 설정의 위치 권한에서 변경할 수 있어요.',
+      };
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
         listenable: service,
@@ -53,11 +61,11 @@ class BackgroundLocationControl extends StatelessWidget {
                             context: context,
                             builder: (context) => AlertDialog(
                                   title: const Text('백그라운드 위치 사용 안내'),
-                                  content: const SingleChildScrollView(
+                                  content: SingleChildScrollView(
                                       child: Text(
                                           '앱을 사용하지 않을 때도 이동을 감지해 새 지역의 날씨·낙뢰 알림과 홈 위젯 위치·날씨를 갱신하도록 위치를 서버에 보내요. '
                                           '최신 위치만 사용하며 이동 경로는 저장하지 않아요.\n\n'
-                                          '기기 위치 권한을 ‘항상 허용’으로 설정해주세요. Android는 앱 설정의 위치 권한에서 변경할 수 있어요. 감시 중에는 실행 알림이 표시되고 GPS 사용으로 배터리를 더 사용할 수 있어요.\n\n'
+                                          '기기 위치 권한을 ‘항상 허용’으로 설정해주세요. $_backgroundPermissionGuide GPS 사용으로 배터리를 더 사용할 수 있어요.\n\n'
                                           'GPS 모드와 전체 알림이 켜져 있을 때 동작해요. 기능을 끄거나 직접 지역을 선택하면 감시를 중지해요. '
                                           '기기의 절전 상태와 강제 종료에 따라 갱신이 지연되거나 멈출 수 있어요.')),
                                   actions: [
@@ -68,7 +76,7 @@ class BackgroundLocationControl extends StatelessWidget {
                                     FilledButton(
                                         onPressed: () =>
                                             Navigator.pop(context, true),
-                                        child: const Text('동의하고 설정')),
+                                        child: const Text('계속')),
                                   ],
                                 ));
                         if (confirmed != true) return;

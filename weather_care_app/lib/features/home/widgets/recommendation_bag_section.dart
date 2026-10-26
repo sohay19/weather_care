@@ -292,7 +292,7 @@ class _RecommendationBagSectionState extends State<RecommendationBagSection>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const HomeSectionHeader(
-            icon: Icons.playlist_add_check_rounded,
+            icon: Icons.check_rounded,
             title: 'Check List',
             subtitle: '외출 전 준비할 물건을 확인해요',
           ),

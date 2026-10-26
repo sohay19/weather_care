@@ -1059,6 +1059,9 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('manual-location-action')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('region-add-button')));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.text('행정지역명으로 선택'), findsOneWidget);
     await tester.tap(find.text('지도에서 구역 선택'));
     await tester.pumpAndSettle();
@@ -1730,6 +1733,16 @@ void main() {
     );
     await tester.tap(find.byKey(const ValueKey('main-region-menu')));
     await tester.pumpAndSettle();
+    final drawer = find.byKey(const ValueKey('region-drawer'));
+    expect(find.text('구역 선택'), findsOneWidget);
+    expect(find.text('지역 선택'), findsNothing);
+    final addButton = find.byKey(const ValueKey('region-add-button'));
+    expect(tester.getTopLeft(drawer).dx, 0);
+    expect(
+        tester.getBottomRight(drawer).dy - tester.getBottomRight(addButton).dy,
+        lessThan(32));
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.text('행정지역명으로 선택'), findsNothing);
     expect(find.text('현재 위치'), findsOneWidget);
     expect(find.text(first.fullName), findsOneWidget);
     await tester.tap(find.text('구역 추가'));

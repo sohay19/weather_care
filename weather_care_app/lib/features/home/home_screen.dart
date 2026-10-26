@@ -102,6 +102,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   late AppSettings _settings;
   final AppSettingsRepository _settingsRepository =
       const AppSettingsRepository();
@@ -1193,6 +1194,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 : Brightness.dark,
       ),
       child: Scaffold(
+        key: _scaffoldKey,
+        drawer: _regionDrawer(),
+        drawerEnableOpenDragGesture: false,
         body: SafeArea(
           bottom: false,
           child: IndexedStack(
@@ -1271,27 +1275,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onRetryComparison: _retryYesterdayComparison,
                       retryingData: _todayRetrying,
                       onDetail: _openRecommendationDetail,
-                      savedRegions: [
-                        for (final key in _settings.savedRegionKeys)
-                          if (_regionCatalog?.find(key) case final region?)
-                            region,
-                      ],
-                      selectedRegionKey: _settings.manualRegionKey,
-                      gpsSelected: _settings.locationMode == 'GPS',
-                      onSelectGps: () {
-                        if (_settings.locationMode != 'GPS') {
-                          unawaited(_handleSettingsChanged(
-                              _settings.copyWith(locationMode: 'GPS')));
-                        }
-                      },
-                      onSelectRegion: (region) => unawaited(
-                        _handleSettingsChanged(_settings.copyWith(
-                          locationMode: 'MANUAL',
-                          currentRegionId: region.gridId,
-                          manualRegionKey: region.key,
-                        )),
-                      ),
-                      onAddRegion: () => unawaited(_addRegion()),
+                      onOpenRegionMenu: _openManualRegionMenu,
                       onOpenWeatherMap: () => unawaited(_openWeatherMap()),
                       advertisement: _mainAdvertisementActivated &&
                               !(widget.adRemoval?.isOwned ?? false)
@@ -1459,7 +1443,97 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _openManualRegionMenu() {
-    unawaited(_addRegion());
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  Widget _regionDrawer() {
+    final colors = WeatherCareTheme.of(context);
+    final gpsSelected = _settings.locationMode == 'GPS';
+    return Drawer(
+      key: const ValueKey('region-drawer'),
+      backgroundColor: colors.surface,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(left: 20, right: 8, bottom: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text('구역 선택',
+                              style: Theme.of(context).textTheme.titleLarge),
+                        ),
+                        IconButton(
+                          tooltip: '구역 메뉴 닫기',
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () =>
+                              _scaffoldKey.currentState?.closeDrawer(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.my_location_rounded),
+                    title: const Text('현재 위치'),
+                    selected: gpsSelected,
+                    trailing:
+                        gpsSelected ? const Icon(Icons.check_rounded) : null,
+                    onTap: () {
+                      _scaffoldKey.currentState?.closeDrawer();
+                      if (!gpsSelected) {
+                        unawaited(_handleSettingsChanged(
+                            _settings.copyWith(locationMode: 'GPS')));
+                      }
+                    },
+                  ),
+                  for (final key in _settings.savedRegionKeys)
+                    if (_regionCatalog?.find(key) case final region?)
+                      ListTile(
+                        leading: const Icon(Icons.location_on_outlined),
+                        title: Text(region.fullName),
+                        selected: !gpsSelected &&
+                            _settings.manualRegionKey == region.key,
+                        trailing: !gpsSelected &&
+                                _settings.manualRegionKey == region.key
+                            ? const Icon(Icons.check_rounded)
+                            : null,
+                        onTap: () {
+                          _scaffoldKey.currentState?.closeDrawer();
+                          unawaited(_handleSettingsChanged(_settings.copyWith(
+                            locationMode: 'MANUAL',
+                            currentRegionId: region.gridId,
+                            manualRegionKey: region.key,
+                          )));
+                        },
+                      ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: FilledButton.icon(
+                key: const ValueKey('region-add-button'),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text(
+                  '구역 추가',
+                  style: TextStyle(fontFamily: WeatherCareTheme.fontSuite),
+                ),
+                onPressed: () {
+                  _scaffoldKey.currentState?.closeDrawer();
+                  unawaited(_addRegion());
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _addRegion() async {

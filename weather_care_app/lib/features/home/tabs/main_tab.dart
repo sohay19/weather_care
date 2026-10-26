@@ -3,7 +3,6 @@ import '../../../utils/region_name.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/recommendation.dart';
-import '../../../models/selectable_region.dart';
 import '../../../models/weather.dart';
 import '../../../theme/weather_theme.dart';
 import '../weather_data_phase.dart';
@@ -36,12 +35,7 @@ class MainTab extends StatelessWidget {
   final bool retryingData;
   final ValueChanged<WeatherRecommendation> onDetail;
   final Widget? advertisement;
-  final List<ForecastRegion> savedRegions;
-  final String? selectedRegionKey;
-  final bool gpsSelected;
-  final VoidCallback? onSelectGps;
-  final ValueChanged<ForecastRegion>? onSelectRegion;
-  final VoidCallback? onAddRegion;
+  final VoidCallback? onOpenRegionMenu;
   final VoidCallback? onOpenWeatherMap;
 
   const MainTab({
@@ -62,12 +56,7 @@ class MainTab extends StatelessWidget {
     this.retryingData = false,
     required this.onDetail,
     this.advertisement,
-    this.savedRegions = const [],
-    this.selectedRegionKey,
-    this.gpsSelected = true,
-    this.onSelectGps,
-    this.onSelectRegion,
-    this.onAddRegion,
+    this.onOpenRegionMenu,
     this.onOpenWeatherMap,
   });
 
@@ -89,99 +78,47 @@ class MainTab extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverPadding(
+                padding: EdgeInsets.fromLTRB(4, compact ? 8 : 12, 16, 0),
+                sliver: SliverToBoxAdapter(
+                  child: TabPageHeader(
+                    eyebrow: dateLabel,
+                    title: isRegionNamePlaceholder(today.region.name)
+                        ? today.region.name
+                        : '${today.region.name} 날씨',
+                    subtitle: '예보 기준 구역 지도를 확인할 수 있어요',
+                    subtitleTrailing: IconButton(
+                      key: const ValueKey('main-weather-map-info'),
+                      icon: const Icon(Icons.info_outline_rounded, size: 18),
+                      tooltip: '예보 기준 구역 지도 열기',
+                      visualDensity: VisualDensity.compact,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(28, 28),
+                        padding: const EdgeInsets.all(4),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: WeatherCareTheme.of(context).primary,
+                      ),
+                      onPressed: onOpenWeatherMap,
+                    ),
+                    showRegionMenu: true,
+                    onOpenRegionMenu: onOpenRegionMenu,
+                    singleLineTitle: true,
+                  ),
+                ),
+              ),
+              SliverPadding(
                 padding: EdgeInsets.fromLTRB(
                   16,
-                  compact ? 8 : 12,
+                  0,
                   16,
                   24,
                 ),
                 sliver: SliverList.list(
                   children: [
-                    TabPageHeader(
-                      eyebrow: dateLabel,
-                      title: isRegionNamePlaceholder(today.region.name)
-                          ? today.region.name
-                          : '${today.region.name} 날씨',
-                      subtitle: '예보 기준 구역 지도를 확인할 수 있어요',
-                      subtitleTrailing: IconButton(
-                        key: const ValueKey('main-weather-map-info'),
-                        icon: const Icon(Icons.info_outline_rounded, size: 18),
-                        tooltip: '예보 기준 구역 지도 열기',
-                        visualDensity: VisualDensity.compact,
-                        style: IconButton.styleFrom(
-                          minimumSize: const Size(28, 28),
-                          padding: const EdgeInsets.all(4),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: WeatherCareTheme.of(context).primary,
-                        ),
-                        onPressed: onOpenWeatherMap,
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        key: const ValueKey('main-region-menu'),
-                        tooltip: '지역 선택',
-                        style: IconButton.styleFrom(
-                          minimumSize: const Size(40, 40),
-                          padding: EdgeInsets.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          backgroundColor: Colors.transparent,
-                          foregroundColor: WeatherCareTheme.of(context).primary,
-                        ),
-                        icon: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: WeatherCareTheme.of(context).primary,
-                          size: 36,
-                        ),
-                        onSelected: (value) {
-                          if (value == 'gps') {
-                            onSelectGps?.call();
-                          } else if (value == 'add') {
-                            onAddRegion?.call();
-                          } else {
-                            for (final region in savedRegions) {
-                              if (region.key == value) {
-                                onSelectRegion?.call(region);
-                                break;
-                              }
-                            }
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'gps',
-                            child: Row(children: [
-                              if (gpsSelected)
-                                const Icon(Icons.check_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              const Text('현재 위치'),
-                            ]),
-                          ),
-                          for (final region in savedRegions)
-                            PopupMenuItem(
-                              value: region.key,
-                              child: Row(children: [
-                                if (!gpsSelected &&
-                                    selectedRegionKey == region.key)
-                                  const Icon(Icons.check_rounded, size: 18),
-                                const SizedBox(width: 8),
-                                Flexible(child: Text(region.fullName)),
-                              ]),
-                            ),
-                          const PopupMenuItem(
-                            value: 'add',
-                            child: Row(children: [
-                              Icon(Icons.add_rounded, size: 18),
-                              SizedBox(width: 8),
-                              Text('구역 추가'),
-                            ]),
-                          ),
-                        ],
-                      ),
-                    ),
                     SizedBox(height: compact ? 12 : 16),
                     if (detailsLoading)
                       const _ProgressiveLoadingCard(
-                        icon: Icons.playlist_add_check_rounded,
+                        icon: Icons.check_rounded,
                         title: 'Check List를 불러오고 있어요',
                       )
                     else if (serverFeaturesAvailable)
@@ -196,7 +133,7 @@ class MainTab extends StatelessWidget {
                       )
                     else
                       ServerFeatureUnavailableCard(
-                        icon: Icons.playlist_add_check_rounded,
+                        icon: Icons.check_rounded,
                         title: 'Check List',
                         onRetry: onRetryData,
                         retrying: retryingData,

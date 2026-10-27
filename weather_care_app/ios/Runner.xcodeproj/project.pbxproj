@@ -19,11 +19,11 @@
 		A10000000000000000000002 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* WidgetKit.framework */; };
 		A10000000000000000000003 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* SwiftUI.framework */; };
 		A10000000000000000000004 /* WeatherCareWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* WeatherCareWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A10000000000000000000005 /* Fonts/SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */; };
-		A10000000000000000000006 /* Fonts/SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */; };
-		A10000000000000000000007 /* Fonts/SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */; };
-		A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */; };
-		A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */; };
+		A10000000000000000000005 /* SUITE-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* SUITE-Regular.ttf */; };
+		A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* SUITE-SemiBold.ttf */; };
+		A10000000000000000000007 /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* SUITE-Bold.ttf */; };
+		A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000A /* SUITE-ExtraBold.ttf */; };
+		A10000000000000000000009 /* SUITE-Heavy.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000B /* SUITE-Heavy.ttf */; };
 		A1000000000000000000000A /* Icons in Resources */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000C /* Icons */; };
 		B10000000000000000000001 /* WidgetRefreshIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* WidgetRefreshIntent.swift */; };
 		B10000000000000000000002 /* WidgetRefreshIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* WidgetRefreshIntent.swift */; };
@@ -104,11 +104,11 @@
 		A20000000000000000000004 /* WeatherCareWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WeatherCareWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A20000000000000000000005 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A20000000000000000000006 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
-		A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
-		A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
-		A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
-		A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000007 /* SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Regular.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000008 /* SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
+		A20000000000000000000009 /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Bold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000A /* SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
+		A2000000000000000000000B /* SUITE-Heavy.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/SUITE-Heavy.ttf"; sourceTree = "<group>"; };
 		A2000000000000000000000C /* Icons */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Icons; sourceTree = "<group>"; };
 		A63F90F5FDDEFBACB5A29F7D /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B20000000000000000000001 /* WidgetRefreshIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshIntent.swift; sourceTree = "<group>"; };
@@ -239,11 +239,11 @@
 				B20000000000000000000001 /* WidgetRefreshIntent.swift */,
 				A20000000000000000000002 /* Info.plist */,
 				A20000000000000000000003 /* WeatherCareWidget.entitlements */,
-				A20000000000000000000007 /* Fonts/SUITE-Regular.ttf */,
-				A20000000000000000000008 /* Fonts/SUITE-SemiBold.ttf */,
-				A20000000000000000000009 /* Fonts/SUITE-Bold.ttf */,
-				A2000000000000000000000A /* Fonts/SUITE-ExtraBold.ttf */,
-				A2000000000000000000000B /* Fonts/SUITE-Heavy.ttf */,
+				A20000000000000000000007 /* SUITE-Regular.ttf */,
+				A20000000000000000000008 /* SUITE-SemiBold.ttf */,
+				A20000000000000000000009 /* SUITE-Bold.ttf */,
+				A2000000000000000000000A /* SUITE-ExtraBold.ttf */,
+				A2000000000000000000000B /* SUITE-Heavy.ttf */,
 				A2000000000000000000000C /* Icons */,
 			);
 			path = WeatherCareWidget;
@@ -390,11 +390,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000005 /* Fonts/SUITE-Regular.ttf in Resources */,
-				A10000000000000000000006 /* Fonts/SUITE-SemiBold.ttf in Resources */,
-				A10000000000000000000007 /* Fonts/SUITE-Bold.ttf in Resources */,
-				A10000000000000000000008 /* Fonts/SUITE-ExtraBold.ttf in Resources */,
-				A10000000000000000000009 /* Fonts/SUITE-Heavy.ttf in Resources */,
+				A10000000000000000000005 /* SUITE-Regular.ttf in Resources */,
+				A10000000000000000000006 /* SUITE-SemiBold.ttf in Resources */,
+				A10000000000000000000007 /* SUITE-Bold.ttf in Resources */,
+				A10000000000000000000008 /* SUITE-ExtraBold.ttf in Resources */,
+				A10000000000000000000009 /* SUITE-Heavy.ttf in Resources */,
 				A1000000000000000000000A /* Icons in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -426,13 +426,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -447,13 +443,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

@@ -45,20 +45,19 @@ class StoreUpdateService {
     if (target != TargetPlatform.android && target != TargetPlatform.iOS) {
       return null;
     }
-    try {
-      return await _check(target).timeout(timeout);
-    } catch (_) {
-      // 스토어 미등록·Play 미설치·오프라인이어도 앱 시작은 계속한다.
-      return null;
-    }
+    // 조회 실패와 업데이트 불필요를 구분해 확인 실패로 강제 안내를 우회하지 못하게 한다.
+    return _check(target).timeout(timeout);
   }
 
   Future<StoreUpdate?> _check(TargetPlatform target) async {
     final package = await (readPackageInfo ?? PackageInfo.fromPlatform)();
     if (target == TargetPlatform.android) {
       final update = await (readPlayUpdate ?? InAppUpdate.checkForUpdate)();
-      if (update.updateAvailability != UpdateAvailability.updateAvailable ||
-          update.packageName != package.packageName) {
+      if (update.packageName != package.packageName ||
+          update.updateAvailability == UpdateAvailability.unknown) {
+        throw StateError('Google Play 버전 확인 실패');
+      }
+      if (update.updateAvailability == UpdateAvailability.updateNotAvailable) {
         return null;
       }
       return StoreUpdate(
@@ -81,19 +80,25 @@ class StoreUpdateService {
                 : country.toLowerCase(),
           }))
           .timeout(timeout);
-      if (response.statusCode != 200) return null;
+      if (response.statusCode != 200) throw StateError('App Store 조회 실패');
       final data =
           jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       for (final item in (data['results'] as List)) {
         if (item['bundleId'] != package.packageName) continue;
         final version = item['version'] as String;
+        if (!_isValidVersion(version) || !_isValidVersion(package.version)) {
+          throw StateError('앱 버전 형식 확인 실패');
+        }
         if (!_isNewer(version, package.version)) return null;
         final minimumOs = item['minimumOsVersion'] as String?;
         if (minimumOs != null) {
           final os = (readOperatingSystemVersion ??
               () => Platform.operatingSystemVersion)();
           final installedOs = RegExp(r'\d+(?:\.\d+)*').firstMatch(os)?.group(0);
-          if (installedOs == null || _isNewer(minimumOs, installedOs)) {
+          if (installedOs == null || !_isValidVersion(minimumOs)) {
+            throw StateError('iOS 버전 확인 실패');
+          }
+          if (_isNewer(minimumOs, installedOs)) {
             return null;
           }
         }
@@ -101,7 +106,7 @@ class StoreUpdateService {
         if (url == null ||
             url.scheme != 'https' ||
             url.host != 'apps.apple.com') {
-          return null;
+          throw StateError('App Store 주소 확인 실패');
         }
         return StoreUpdate(
           currentVersion: package.version,
@@ -110,11 +115,14 @@ class StoreUpdateService {
           storeUrl: url,
         );
       }
-      return null;
+      throw StateError('App Store 앱 등록 정보 확인 실패');
     } finally {
       if (client == null) connection.close();
     }
   }
+
+  static bool _isValidVersion(String value) =>
+      RegExp(r'^\d+(?:\.\d+)*$').hasMatch(value.trim().split('+').first);
 
   static bool _isNewer(String latest, String current) {
     List<int>? parse(String value) {

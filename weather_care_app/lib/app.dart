@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'features/home/home_screen.dart';
+import 'features/update/app_update_gate.dart';
 import 'features/update/store_update_notification_screen.dart';
 import 'services/ad_removal_service.dart';
 import 'services/notification_destination.dart';
@@ -48,7 +49,10 @@ class WeatherCareApp extends StatelessWidget {
           final destination = arguments is NotificationDestination
               ? arguments
               : initialDestination;
-          return StoreUpdateNotificationScreen(storeUrl: destination?.storeUrl);
+          return AppUpdateGate(
+            child:
+                StoreUpdateNotificationScreen(storeUrl: destination?.storeUrl),
+          );
         },
         '/': (_) => HomeScreen(
               onHomeReady: onHomeReady,

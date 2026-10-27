@@ -11,7 +11,6 @@ class AppUpdateGate extends StatefulWidget {
   final StoreUpdateService service;
   final VoidCallback? onComplete;
   final Future<bool> Function(Uri)? openStore;
-  final bool skipCheck;
 
   const AppUpdateGate({
     super.key,
@@ -19,7 +18,6 @@ class AppUpdateGate extends StatefulWidget {
     this.service = const StoreUpdateService(),
     this.onComplete,
     this.openStore,
-    this.skipCheck = false,
   });
 
   @override
@@ -29,6 +27,8 @@ class AppUpdateGate extends StatefulWidget {
 class _AppUpdateGateState extends State<AppUpdateGate> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   bool _complete = false;
+  bool _checking = false;
+  bool _failed = false;
 
   @override
   void initState() {
@@ -37,16 +37,41 @@ class _AppUpdateGateState extends State<AppUpdateGate> {
   }
 
   Future<void> _checkForUpdate() async {
-    final update =
-        widget.skipCheck ? null : await widget.service.checkForUpdate();
+    if (_checking || _complete) return;
+    setState(() {
+      _checking = true;
+      _failed = false;
+    });
+    StoreUpdate? update;
+    try {
+      update = await widget.service.checkForUpdate();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _checking = false;
+        _failed = true;
+      });
+      return;
+    }
     if (!mounted) return;
     if (update != null) {
-      await showDialog<void>(
+      final confirmed = await showDialog<bool>(
         context: _navigatorKey.currentContext!,
         barrierDismissible: false,
-        builder: (_) =>
-            AppUpdateDialog(update: update, openStore: widget.openStore),
+        builder: (_) => AppUpdateDialog(
+          update: update!,
+          openStore: widget.openStore,
+          checkForUpdate: widget.service.checkForUpdate,
+        ),
       );
+      if (!mounted) return;
+      if (confirmed != true) {
+        setState(() {
+          _checking = false;
+          _failed = true;
+        });
+        return;
+      }
     }
     if (!mounted) return;
     setState(() => _complete = true);
@@ -58,32 +83,46 @@ class _AppUpdateGateState extends State<AppUpdateGate> {
   @override
   Widget build(BuildContext context) {
     if (_complete) return widget.child;
-    return MaterialApp(
-      navigatorKey: _navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: WeatherCareTheme.light(),
-      darkTheme: WeatherCareTheme.dark(),
-      themeMode: ThemeModeSettings.instance.value,
-      builder: WeatherCareTheme.textScaleBuilder,
-      home: Scaffold(
-        body: Center(
-          child: Builder(builder: (context) {
-            final colors = WeatherCareTheme.of(context);
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.wb_sunny_rounded,
-                    size: 56, color: colors.primaryDeep),
-                const SizedBox(height: 18),
-                const Text('날씨챙겨',
-                    style:
-                        TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
-                Text('새 버전을 확인하고 있어요',
-                    style: TextStyle(color: colors.textSecondary)),
-              ],
-            );
-          }),
+    return PopScope(
+      canPop: false,
+      child: MaterialApp(
+        navigatorKey: _navigatorKey,
+        debugShowCheckedModeBanner: false,
+        theme: WeatherCareTheme.light(),
+        darkTheme: WeatherCareTheme.dark(),
+        themeMode: ThemeModeSettings.instance.value,
+        builder: WeatherCareTheme.textScaleBuilder,
+        home: Scaffold(
+          body: Center(
+            child: Builder(builder: (context) {
+              final colors = WeatherCareTheme.of(context);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.wb_sunny_rounded,
+                      size: 56, color: colors.primaryDeep),
+                  const SizedBox(height: 18),
+                  const Text('날씨챙겨',
+                      style:
+                          TextStyle(fontSize: 30, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 12),
+                  Text(
+                      _failed
+                          ? '버전을 확인하지 못했어요.\n인터넷 연결을 확인하고 다시 시도해 주세요.'
+                          : '새 버전을 확인하고 있어요',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: colors.textSecondary)),
+                  if (_failed) ...[
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: _checkForUpdate,
+                      child: const Text('다시 확인'),
+                    ),
+                  ],
+                ],
+              );
+            }),
+          ),
         ),
       ),
     );

@@ -19,7 +19,6 @@ import 'services/native_ad_unit_config.dart';
 import 'services/theme_mode_settings.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/notification_navigation_service.dart';
-import 'services/notification_destination.dart';
 import 'startup.dart';
 
 final _appNavigatorKey = GlobalKey<NavigatorState>();
@@ -93,10 +92,6 @@ Future<Widget> _initializeApp() async {
   );
 
   return AppUpdateGate(
-    skipCheck: initialNotificationData != null &&
-        NotificationDestination.fromMessageData(initialNotificationData)
-                .target ==
-            NotificationTarget.storeUpdate,
     onComplete: _startAdsAfterAppFrame,
     child: WeatherCareApp(
       navigatorKey: _appNavigatorKey,

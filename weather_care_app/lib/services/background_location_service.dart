@@ -82,16 +82,6 @@ class BackgroundLocationService extends ChangeNotifier {
     await refreshStatus();
   }
 
-  Future<bool> openNotificationSettings() async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return false;
-    try {
-      return await channel.invokeMethod<bool>('openNotificationSettings') ??
-          false;
-    } catch (_) {
-      return false;
-    }
-  }
-
   Future<void> refreshStatus() async {
     try {
       final data = await channel.invokeMapMethod<String, dynamic>('status');

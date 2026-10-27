@@ -10,7 +10,7 @@ class PermissionOnboardingDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final backgroundPermissionGuide = switch (defaultTargetPlatform) {
       TargetPlatform.android =>
-        'Android 11 이상은 권한 화면에서 ‘항상 허용’을 선택해주세요. 감시 중에는 실행 알림이 표시돼요.',
+        'Android 11 이상은 위치를 ‘항상 허용’하고 ‘정확한 위치 사용’을 켜주세요. 약 1km 영역을 벗어나면 이동을 감지하며 갱신이 늦어질 수 있어요.',
       TargetPlatform.iOS =>
         'iOS는 ‘앱을 사용하는 동안 허용’ 뒤 추가 요청에서 ‘항상 허용’이 필요해요. 표시 시점은 운영체제가 정해요.',
       _ => '백그라운드 위치 갱신에는 위치 권한의 ‘항상 허용’이 필요해요.',

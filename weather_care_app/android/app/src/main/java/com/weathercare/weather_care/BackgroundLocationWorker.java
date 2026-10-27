@@ -28,6 +28,7 @@ public final class BackgroundLocationWorker extends Worker {
             long age = System.currentTimeMillis() - Instant.parse(pending.getString("measuredAt")).toEpochMilli();
             if (age > 15 * 60_000 || age < -60_000) {
                 finish(context, config, pending, false);
+                BackgroundLocationManager.resume(context);
                 return Result.success();
             }
             connection = (HttpURLConnection) new URL(config.getString("url")).openConnection();

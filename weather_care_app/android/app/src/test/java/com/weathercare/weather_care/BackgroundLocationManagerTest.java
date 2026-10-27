@@ -4,27 +4,31 @@ import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.Priority;
-import com.google.android.gms.location.CurrentLocationRequest;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
 
 public class BackgroundLocationManagerTest {
     private static final long NOW = 1_800_000_000_000L;
 
-    @Test public void monitorCanRequestGpsWithoutAnotherLocationConsumer() {
-        LocationRequest request = BackgroundLocationManager.monitoringRequest();
-        assertEquals(Priority.PRIORITY_HIGH_ACCURACY, request.getPriority());
-        assertEquals(300_000, request.getIntervalMillis());
-        assertEquals(60_000, request.getMinUpdateIntervalMillis());
-        assertEquals(1000, request.getMinUpdateDistanceMeters(), 0);
-        assertFalse(request.isWaitForAccurateLocation());
+    @Test public void movementFenceOnlyReportsExitAndRecoversAnAlreadyExitedRegion() {
+        GeofencingRequest request = BackgroundLocationManager.geofenceRequest("session-a", 37.5665, 126.978);
+        assertEquals(GeofencingRequest.INITIAL_TRIGGER_EXIT, request.getInitialTrigger());
+        assertEquals(1, request.getGeofences().size());
+        Geofence fence = request.getGeofences().get(0);
+        assertEquals("session-a", fence.getRequestId());
+        assertEquals(1000, fence.getRadius(), 0);
+        assertEquals(Geofence.GEOFENCE_TRANSITION_EXIT, fence.getTransitionTypes());
+        assertEquals(Geofence.NEVER_EXPIRE, fence.getExpirationTime());
     }
 
-    @Test public void ownFreshMeasurementIsBoundedAndDoesNotUseCachedFixes() {
-        CurrentLocationRequest request = BackgroundLocationManager.freshLocationRequest();
-        assertEquals(Priority.PRIORITY_HIGH_ACCURACY, request.getPriority());
-        assertEquals(0, request.getMaxUpdateAgeMillis());
-        assertEquals(20_000, request.getDurationMillis());
+    @Test public void movementRecentersTheSameFenceInsteadOfAccumulatingRegions() {
+        Geofence previous = BackgroundLocationManager.geofenceRequest("session-a", 37.5665, 126.978).getGeofences().get(0);
+        Geofence next = BackgroundLocationManager.geofenceRequest("session-a", 35.1796, 129.0756).getGeofences().get(0);
+        assertEquals(previous.getRequestId(), next.getRequestId());
+        assertEquals(35.1796, next.getLatitude(), 0);
+        assertEquals(129.0756, next.getLongitude(), 0);
+        assertFalse(next.getRequestId().equals(BackgroundLocationManager.geofenceRequest("session-b", 35.1796, 129.0756)
+                .getGeofences().get(0).getRequestId()));
     }
 
     @Test public void stationarySamplesAndShortMovesDoNotUploadAgain() {

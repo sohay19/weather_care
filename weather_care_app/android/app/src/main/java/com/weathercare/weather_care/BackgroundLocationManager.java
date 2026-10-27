@@ -2,6 +2,7 @@ package com.codesoha.weathercare;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -17,15 +18,15 @@ import android.util.AtomicFile;
 
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
+import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.CurrentLocationRequest;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.Priority;
 
 import org.json.JSONObject;
 import java.io.File;
@@ -41,22 +42,23 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-/** GPS-capable monitoring owned by a visible, user-controlled location service. */
+/** Opt-in movement monitoring without a continuously running service. */
 final class BackgroundLocationManager {
     static final Object LOCK = new Object();
     static final String WORK = "weather-care-background-location";
+    static final String GEOFENCE_WORK = WORK + "-geofence";
     private static final String KEY = "weather_care_background_location_v1";
 
-    private static PendingIntent intent(Context context) {
+    private static PendingIntent intent(Context context, boolean geofence) {
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= 31) flags |= PendingIntent.FLAG_MUTABLE;
-        return PendingIntent.getBroadcast(context, 731,
-                new Intent(context, BackgroundLocationReceiver.class).setAction(WORK), flags);
+        return PendingIntent.getBroadcast(context, geofence ? 732 : 731,
+                new Intent(context, BackgroundLocationReceiver.class)
+                        .setAction(geofence ? GEOFENCE_WORK : WORK), flags);
     }
 
     static boolean permitted(Context context) {
-        boolean foreground = context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED || context.checkSelfPermission(
+        boolean foreground = context.checkSelfPermission(
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         return foreground && (Build.VERSION.SDK_INT < 29 || context.checkSelfPermission(
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED);
@@ -66,6 +68,18 @@ final class BackgroundLocationManager {
         boolean foreground = activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (permitted(activity) || (initial && !foreground)) return false;
+        if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            boolean requestedFine = activity.getPreferences(Context.MODE_PRIVATE).getBoolean("geofence_fine_requested", false);
+            if (!requestedFine || activity.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                activity.getPreferences(Context.MODE_PRIVATE).edit().putBoolean("geofence_fine_requested", true).apply();
+                activity.requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION}, 731);
+                return true;
+            }
+            if (!initial) activity.startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.parse("package:" + activity.getPackageName())));
+            return false;
+        }
         boolean requested = activity.getPreferences(Context.MODE_PRIVATE).getBoolean("background_location_requested", false);
         if (foreground && Build.VERSION.SDK_INT >= 29 &&
                 (!requested || activity.shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION))) {
@@ -92,58 +106,88 @@ final class BackgroundLocationManager {
                 !config.getString("revision").matches("[0-9a-fA-F-]{36}")) {
             throw new IllegalArgumentException("Invalid background location configuration");
         }
-        synchronized (LOCK) { write(context, config); }
+        synchronized (LOCK) {
+            JSONObject previous = read(context);
+            if (previous != null && config.optString("url").equals(previous.optString("url")) &&
+                    config.optString("authorization").equals(previous.optString("authorization")) &&
+                    previous.has("geofenceLatitude") && previous.has("geofenceLongitude")) {
+                config.put("geofenceLatitude", previous.getDouble("geofenceLatitude"))
+                        .put("geofenceLongitude", previous.getDouble("geofenceLongitude"));
+            }
+            unregister(context);
+            WorkManager.getInstance(context).cancelUniqueWork(GEOFENCE_WORK);
+            write(context, config);
+        }
         resume(context);
     }
 
     static void resume(Context context) {
+        // Remove the old service channel only; the weather push channel is separate.
+        NotificationManager notifications = context.getSystemService(NotificationManager.class);
+        if (notifications != null) {
+            notifications.cancel(1731);
+            notifications.deleteNotificationChannel("weather_care_background_location");
+        }
+        LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(intent(context, false));
         synchronized (LOCK) {
             JSONObject config = read(context);
             if (config == null || !permitted(context)) return;
-            try { context.startForegroundService(new Intent(context, BackgroundLocationService.class)); }
-            catch (RuntimeException error) { setError(context, config.optString("revision"), true); }
+            scheduleGeofence(context, config, ExistingWorkPolicy.KEEP);
+            if (config.has("pending")) enqueue(context);
         }
     }
 
-    static void register(Context context) {
+    static void exit(Context context, String revision, Location location) {
         synchronized (LOCK) {
             JSONObject config = read(context);
-            if (config == null || !permitted(context)) return;
-            LocationRequest request = monitoringRequest();
+            if (config == null || !revision.equals(config.optString("revision")) || !permitted(context)) return;
             try {
-                LocationServices.getFusedLocationProviderClient(context)
-                        .requestLocationUpdates(request, intent(context))
-                        .addOnSuccessListener(unused -> setError(context, config.optString("revision"), false))
-                        .addOnFailureListener(error -> setError(context, config.optString("revision"), true));
-                if (config.has("pending")) enqueue(context);
-            } catch (SecurityException error) { setError(context, config.optString("revision"), true); }
+                if (usable(location, System.currentTimeMillis())) {
+                    JSONObject event = config.optJSONObject("geofenceEvent");
+                    if (event == null || event.optLong("measuredAt") < location.getTime()) {
+                        config.put("geofenceEvent", new JSONObject().put("latitude", location.getLatitude())
+                                .put("longitude", location.getLongitude()).put("accuracy", location.getAccuracy())
+                                .put("measuredAt", location.getTime()));
+                        write(context, config);
+                    }
+                }
+                scheduleGeofence(context, config, ExistingWorkPolicy.APPEND_OR_REPLACE);
+            } catch (Exception error) {
+                setError(context, revision, true);
+            }
         }
     }
 
-    static LocationRequest monitoringRequest() {
-        // Balanced mode may never activate GNSS when network fixes are unavailable.
-        return new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, TimeUnit.MINUTES.toMillis(5))
-                .setMinUpdateIntervalMillis(TimeUnit.MINUTES.toMillis(1))
-                .setMinUpdateDistanceMeters(1000).setMaxUpdateAgeMillis(0)
-                .setWaitForAccurateLocation(false).build();
+    private static void scheduleGeofence(Context context, JSONObject config, ExistingWorkPolicy policy) {
+        WorkManager.getInstance(context).enqueueUniqueWork(GEOFENCE_WORK, policy,
+                new OneTimeWorkRequest.Builder(BackgroundGeofenceWorker.class)
+                        .setInputData(new Data.Builder().putString("revision", config.optString("revision")).build())
+                        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS).build());
     }
 
-    static CurrentLocationRequest freshLocationRequest() {
-        return new CurrentLocationRequest.Builder().setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .setMaxUpdateAgeMillis(0).setDurationMillis(20_000).build();
+    static GeofencingRequest geofenceRequest(String revision, double latitude, double longitude) {
+        return new GeofencingRequest.Builder().setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_EXIT)
+                .addGeofence(new Geofence.Builder().setRequestId(revision)
+                        .setCircularRegion(latitude, longitude, 1000)
+                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
+                        .setNotificationResponsiveness(120_000).setExpirationDuration(Geofence.NEVER_EXPIRE).build())
+                .build();
     }
+
+    static PendingIntent geofenceIntent(Context context) { return intent(context, true); }
 
     static void stop(Context context) {
         synchronized (LOCK) {
             store(context).delete();
             unregister(context);
-            context.stopService(new Intent(context, BackgroundLocationService.class));
+            WorkManager.getInstance(context).cancelUniqueWork(GEOFENCE_WORK);
             WorkManager.getInstance(context).cancelUniqueWork(WORK);
         }
     }
 
     static void unregister(Context context) {
-        LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(intent(context));
+        LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(intent(context, false));
+        LocationServices.getGeofencingClient(context).removeGeofences(geofenceIntent(context));
     }
 
     static void receive(Context context, Location location) {
@@ -210,7 +254,8 @@ final class BackgroundLocationManager {
             LocationManager manager = context.getSystemService(LocationManager.class);
             String state = config == null ? "disabled" : !permitted(context) ? "permissionRequired" :
                     manager != null && !androidx.core.location.LocationManagerCompat.isLocationEnabled(manager)
-                            ? "locationDisabled" : config.optBoolean("error") ? "error" : "active";
+                            ? "locationDisabled" : config.optBoolean("error") ? "error" :
+                            config.has("geofenceLatitude") ? "active" : "starting";
             result.put("status", state);
             if (config != null) {
                 if (config.has("measuredMillis")) result.put("measuredAt", Instant.ofEpochMilli(config.optLong("measuredMillis")).toString());

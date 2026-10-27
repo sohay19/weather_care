@@ -13411,3 +13411,53 @@
 - 최종 제품 소스 SHA256이 시뮬레이터 검증 기록과 같고 실제 홈 위젯24개·Flutter17개·정적 분석·제품 iOS 빌드·네이티브 XCTest 통과 기록을 확인했다. 소스 변경이 없어 해당 실행 검증은 반복하지 않으며 공백/포함 범위와 원격 선행 여부를 확인한다. ignored 빌드/캡처·앱 버전·서버·스토어는 포함하거나 변경하지 않는다.
 
 - 일반 HTTPS 푸시는 키체인 GitHub 인증값 부재로 실패했고 기존 SSH 키도 publickey 인증에 실패했다. 별도 로그인/키/원격 설정을 변경하지 않고 이미 연결된 GitHub 앱의 인증 계정과 blob 쓰기 권한을 확인했다. 동일한 7개 파일을 GitHub Git 객체 API로 전송하고 부모 SHA 일치 조건의 일반 ref 갱신으로 반영한다. API가 생성한 커밋의 트리가 검증된 로컬 커밋과 같은 것을 확인한 후 로컬 브랜치를 그 원격 커밋으로 맞추며, 빌드나 제품 소스는 바꾸지 않는다.
+
+## 2026-10-27 iOS·Android 백그라운드 위치 갱신 비교
+
+- 사용자 질문에 따라 Apple/Android 공식 문서와 현재 네이티브 구현을 읽기 전용으로 비교했다. iOS는 Always 권한과 significant-change 이벤트 기반이며 고정 주기를 설정하지 않는다. Apple의 약500m 이상 이동·5분보다 잦은 이벤트를 기대하지 말라는 안내를 확정 거리/주기 보장과 구분한다.
+- Android는 위치 foreground service에서 최초 측정 후 각 측정 완료5분 뒤 새 고정밀 위치를 요청한다. 별도로 FLP에 희망5분·최소1분·최소이동1000m의 PendingIntent 갱신을 등록한다. WorkManager는 주기 측정이 아니라 최신 좌표 업로드/재시도를 담당한다. 이 구현은 iOS보다 적극적으로 위치를 요청하지만 실제 수신·서버 갱신 간격을 보장하지 않는다.
+- 일반 Android 백그라운드 위치의 시간당 수회 제한과 foreground service 방식을 구분하며, iOS도 연속 위치 추적 API/백그라운드 세션을 지원하므로 플랫폼 자체가 이동 감지만 가능하다고 설명하지 않는다. 권한·배터리·OS 실행 제한과 서버 알림 시점의 위치 최신성을 함께 안내한다.
+- 참고: https://developer.apple.com/documentation/corelocation/cllocationmanager/startmonitoringsignificantlocationchanges(), https://developer.apple.com/documentation/corelocation/handling-location-updates-in-the-background, https://developer.android.com/about/versions/oreo/background-location-limits, https://developer.android.com/develop/background-work/services/fgs/service-types, https://developer.android.com/develop/sensors-and-location/location/permissions/background
+- 이번 작업은 비교 설명과 HANDOFF 기록만 수행했다. 제품 코드·설정 변경, 실행 시험·기기 조작·배포·커밋·push는 수행하지 않았다. 기존 인계의 iOS 실제 이동·공개 서버 왕복 검증 한계는 그대로다.
+## 2026-10-27 Android 상시 위치 알림 없는 이동 기반 갱신 가능 여부
+
+- 사용자 후속 질문에 대해 공식 Android/Google Play services 문서와 기존 Receiver/Manifest를 확인했다. foreground service를 종료하고 FLP PendingIntent 백그라운드 수신을 독립 등록하면 서비스 상시 알림 없이 위치를 받을 수 있지만 일반 백그라운드의 시간당 수회 제한을 받는다. 서비스 시작 안의 register 호출·재부팅 복구·해제 경로도 분리해야 하므로 알림 생성 코드만 삭제하는 변경은 아니다.
+- iOS 큰 이동 감지와 유사한 사용자 경험은 현재 위치 주변 지오펜스(예: 반경1km) 이탈 시 좌표 확보·서버 전송·감시 중심 재등록으로 설계할 수 있다. 이는 제안이며 구현/확정 사양이 아니다. 지오펜스에는 정확한 위치 및 Android10 이상 백그라운드 위치 권한이 필요하며 수분 이상 지연·위치 확보 실패가 가능하다. 서비스 알림 제거와 시스템 권한 안내/위치 사용 표시 제거는 구분한다.
+- 현재 foreground service 방식에서는 알림 생성이 필수이므로 알림 코드만 빼는 방식을 권하지 않는다. 기존 위치 채널을 사용자가 차단하는 대안과도 구분하며 전체 알림 권한 차단으로 날씨 알림까지 끄도록 안내하지 않는다.
+- 참고: https://developer.android.com/develop/sensors-and-location/location/geofencing, https://developers.google.com/android/reference/com/google/android/gms/location/FusedLocationProviderClient, https://developer.android.com/develop/background-work/services/fgs
+- 이번 요청은 가능 여부에 대한 후속 질문으로 해석해 제품 소스·설정 변경 없이 설명과 인계만 추가했다. 실행 시험·기기 조작·배포·커밋·push는 수행하지 않았다.
+## 2026-10-27 Android 지오펜스 제공 주체 설명
+
+- 사용자 후속 질문에 앞서 확인한 공식 문서를 바탕으로 지오펜스는 Google Play services의 GeofencingClient가 제공하는 공식 위치 기능이라고 설명한다. Android 프레임워크 자체 API와 구분하며 Google Play 서비스가 없는 기기에서는 같은 구현을 그대로 사용할 수 없다는 한계를 안내한다. 영역 이탈 감지는 제공 API가 담당하고 좌표 전송·감시 중심 갱신은 앱 구현이다.
+- 제품 코드·설정 변경이나 실행 시험·배포·커밋·push는 수행하지 않았다.
+## 2026-10-27 Android 지오펜스 전환·상시 위치 알림 메뉴 제거
+
+- 사용자 요청으로 Android의 BackgroundLocationService와 Manifest 등록을 제거하고 Google Play services GeofencingClient의 반경1km·EXIT 지오펜스로 전환했다. 최초 설정/앱 복귀/BOOT_COMPLETED/MY_PACKAGE_REPLACED에는 짧은 BackgroundGeofenceWorker를 실행하고 이탈 좌표 또는 최대20초의 새 측정으로 감시 중심을 갱신한다. 등록 시 INITIAL_TRIGGER_EXIT로 전원이 꺼진 동안 영역을 벗어난 경우도 감지하도록 한다. 실제 감지 거리·시간은 보장하지 않는다.
+- 기존 GPS PendingIntent 감시는 해제하고 위치 서비스 전용 weather_care_background_location 채널과 알림1731만 정리한다. weather_care_alerts·POST_NOTIFICATIONS·FCM 서비스·토큰/날씨 알림 선택값은 유지했다. 설정의 ‘실행 알림 표시 설정’ 메뉴와 Dart/Android 전용 채널 설정 메서드를 제거했다. 위치 갱신 자체의 선택 동의/켜기·끄기와 날씨 알림 설정은 유지한다.
+- 지오펜스에 필요한 정확한 위치 및 백그라운드 위치 권한을 검사하고, 대략적 위치만 허용된 경우 정밀 위치 승격 후 별도로 백그라운드 권한을 요청한다. 설정·초기 권한 안내의 기존 실행 알림 문구를 정확한 위치 사용·약1km 감지·지연 가능 안내로 교체했다. iOS 네이티브 동작은 수정하지 않았다.
+- 감시 등록/측정 실패는 WorkManager 지수 백오프로 재시도한다. 재부팅 때 새 측정이 실패해도 같은 설치의 기존 감시 중심으로 복원하며, 위치 전송은 기존 BackgroundLocationWorker와 세션 revision/15분 만료 계약을 재사용한다. 만료된 미전송 좌표는 새 측정을 예약한다. opt-out/세션 교체 뒤 늦은 등록 완료가 감시를 다시 켜지 않도록 해당 이전 revision의 지오펜스를 제거한다. 전체 감시 해제 때 등록/측정·전송 작업도 취소한다.
+- 좌표/감시 중심/최신 이탈 이벤트는 기존 Keystore 암호화 파일 안에 저장하고 WorkManager 입력에는 revision만 넣는다. 감시 중심에는 오차1km 이하의 유효한 국내 좌표만 허용하며 최신 이벤트만 보관한다. 같은 설치/서버의 재설정은 기존 감시 중심을 보존해 위치 확보 실패 때 복원한다.
+- Flutter 관련6파일111개 시험 통과, 전체 flutter analyze 이슈 없음, Android app:testDebugUnitTest 5클래스25개 통과(8분31초). 병합 Manifest에서 상시 위치 서비스 부재와 FCM 서비스·날씨 채널·알림 권한 유지를 확인했다. 최초 기본 PATH의 Flutter3.35.6은 현재 의존성의 Dart 버전 요구에 맞지 않아 프로젝트 지정 D:/flutter_3.47.4로 재검증했다. 메뉴 시험 정리 중 남은 channel 참조1건을 수정 후111개 전부 통과했다. 검증 로그는 앱 build/geofence-{flutter-tests,analyze,native-tests,apk}-20261027.log다.
+- 앱 README를 새 구현과 일치하도록 수정했다. 실기기 실제 이동·Doze·재부팅 시 이벤트 수신과 실제 FCM 전송은 이번에 실행하지 않았으며 자동 시험 통과를 실기기 전체 검증으로 간주하지 않는다. 기기 조작·설치·권한 변경·서버 배포·스토어 배포·커밋·push는 수행하지 않았다. APK 결과는 후속 기록에 추가한다.
+## 2026-10-27 원격 변경 pull
+
+- 사용자 요청으로 weather_care/master의 58a909e(위젯 배경과 앱 테마 일치)를 fast-forward로 반영했다.
+- 기존 Android 지오펜스 작업과 미추적 파일을 보존하고, 로컬 및 원격 HANDOFF 추가 기록을 모두 유지했다. 제품 코드 추가 수정·커밋·push·배포는 수행하지 않았다.
+
+- 최종 debug APK 빌드304.3초 성공: weather_care_app/build/app/outputs/flutter-apk/app-debug.apk. APK ZIP 무결성·Manifest/classes.dex 존재를 확인했다. 크기209794910바이트, SHA256 3c2b40632e7f0cc970e8d4c6e11c28df54ed14553adc4166bb83752969e2cec5이며 ignored build/geofence-verification-20261027.json에 시험 결과와 함께 기록했다. 빌드 중 생성된 Kotlin .salive 임시 파일은 종료 뒤 사라진 것을 확인했다. 실기기에는 설치하지 않았다.
+
+## 2026-10-27 연결 Android 업데이트 설치·상시 위치 알림/날씨 설정 확인
+
+- 사용자 요청으로 현재 ADB에 유일하게 연결된 SM-S942N(localhost:33606)에 지오펜스 debug APK를 adb install -r로 업데이트 설치해 Success를 확인했다. 설치 전 실제 BackgroundLocationService와 foreground 알림1731(weather_care_background_location)이 실행 중이었으며 전체 날씨 알림·백그라운드 위치 갱신은 켜짐, 지정 시간은07:00이었다.
+- 설치 완료09:59:04 KST. 설치 후 base.apk SHA256이 빌드 APK의 3c2b40632e7f0cc970e8d4c6e11c28df54ed14553adc4166bb83752969e2cec5와 일치한다. 버전1.1.1/26102601 유지, firstInstallTime08:49:53 보존 및 lastUpdateTime 갱신으로 삭제/초기화 없이 업데이트됐음을 확인했다. 직전 원격 pull은 iOS 위젯/시험/인계만 바꾼 커밋이므로 Android APK 재빌드는 하지 않았다.
+- 설치 전후 Flutter 저장 AppSettings 전체 JSON의 정규화 SHA256이 동일하다. 전체 날씨 알림 true, 알림 시간07:00, 개별 준비물/주의 알림 선택값(동파 false 포함), backgroundLocationEnabled true 및 GPS 모드가 모두 보존됐다. Flutter 저장 설치 정보의 지문도 일치한다. 실제 FCM 토큰 값을 출력하거나 토큰 변경을 강제하지 않았다.
+- 설치 직후와10:01:18 KST 재조회에서 알림1731/상시 위치 서비스가 없고 위치 서비스 채널은 mDeleted=true다. 날씨 채널 weather_care_alerts는 기존 문자열 전체와 일치하며 importance4·mDeleted=false를 유지한다. POST_NOTIFICATIONS·정확한 위치·백그라운드 위치 권한도 모두 granted=true로 보존됐다. 알림을 차단하거나 기존 날씨 알림을 삭제한 방식이 아니다.
+- WorkManager SQLite 사본의 quick_check 정상 및 BackgroundGeofenceWorker/BackgroundLocationWorker의 SUCCEEDED(state2) 완료를 확인했다. 작업 완료만으로 실제 이동 감지나 PUT200/실제 푸시 도착을 단정하지 않는다. 암호화 위치 설정 파일도 보존됐다. 앱 관련 crash 로그가 없었으며 테스트 푸시 발송·모의 위치·물리 이동·기기 권한 변경·재부팅은 수행하지 않았다.
+- 별도 Windows UI나 기기 앱 화면을 띄우지 않고 ADB의 실제 시스템 알림/서비스/권한과 앱 저장 설정으로 검증했다. 확인 전후 전면 화면은 동일한 Samsung Launcher로 유지해 사용자 화면을 방해하지 않았다. 설정 메뉴 제거의 화면 회귀는 직전 Flutter 시험 결과를 유지한다.
+- 검증 요약은 ignored weather_care_app/build/geofence-device-20261027/{before,after,workers,verification}.json에 있고 원본 시스템 기록은 build/geofence-device-{package,notifications,services,jobs}-*-20261027.txt다. 앱 데이터/설정 초기화·제품 소스 변경·서버 배포·스토어 배포·커밋·push는 수행하지 않았다. 이번 변경은 HANDOFF 기록뿐이다.
+
+## 2026-10-27 Android 지오펜스 변경 전체 커밋·푸시
+
+- 사용자 요청으로 Android 지오펜스 구현/기존 상시 서비스 제거·Manifest/권한 처리·설정 UI/서비스 채널 정리·관련 시험·README·이번 비교/설치 검증 인계까지 총16개 파일을 한글 커밋 ‘feat(android): 백그라운드 위치를 지오펜스로 전환’에 포함한다. ignored APK·기기 설정/WorkManager 사본·시스템 로그·임시 검증 자료는 포함하지 않는다.
+- 기존 Flutter111개/Android25개 시험·정적 분석·APK 빌드와 SM-S942N 업데이트 후 상시 위치 알림 제거/날씨 설정 보존 결과를 재확인했다. 이후 제품 소스 변경이 없어 시험·빌드·기기 설치를 반복하지 않는다. 실제 이동·Doze·재부팅·실제 날씨 푸시 도착의 미검증 한계는 유지한다.
+- fetch로 로컬 master와 weather_care/master가 모두58a909e이고 ahead/behind0/0임을 확인했다. 포함 파일과 공백 검사를 확인한 뒤 현재 master에서 커밋하고 weather_care 원격 master에 일반 푸시로 진행한다. 서버/스토어 배포나 추가 기기 설정 변경은 없다.

@@ -21,7 +21,9 @@ void main() {
     expect(find.textContaining('홈 위젯 날씨'), findsOneWidget);
     if (defaultTargetPlatform == TargetPlatform.android) {
       expect(find.textContaining('Android 11'), findsOneWidget);
-      expect(find.textContaining('실행 알림'), findsOneWidget);
+      expect(find.textContaining('실행 알림'), findsNothing);
+      expect(find.textContaining('정확한 위치 사용'), findsOneWidget);
+      expect(find.textContaining('약 1km'), findsOneWidget);
       expect(find.textContaining('iOS'), findsNothing);
       expect(find.textContaining('앱을 사용하는 동안 허용'), findsNothing);
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {

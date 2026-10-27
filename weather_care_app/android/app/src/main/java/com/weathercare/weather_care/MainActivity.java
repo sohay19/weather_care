@@ -3,7 +3,6 @@ package com.codesoha.weathercare;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.provider.Settings;
 
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
@@ -31,6 +30,12 @@ public class MainActivity extends FlutterActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 731) {
+            // Request background access only after the precise foreground permission is granted.
+            for (int index = 0; index < permissions.length; index++) {
+                if (android.Manifest.permission.ACCESS_FINE_LOCATION.equals(permissions[index]) &&
+                        index < grantResults.length && grantResults[index] == android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                        BackgroundLocationManager.requestPermission(this, true)) return;
+            }
             BackgroundLocationManager.resume(this);
             if (backgroundPermissionResult != null) {
                 backgroundPermissionResult.success(null);
@@ -49,13 +54,6 @@ public class MainActivity extends FlutterActivity {
                     case "configure": BackgroundLocationManager.configure(this, (Map<?, ?>) call.arguments); break;
                     case "stop": BackgroundLocationManager.stop(this); break;
                     case "resume": BackgroundLocationManager.resume(this); break;
-                    case "openNotificationSettings":
-                        BackgroundLocationService.ensureNotificationChannel(this);
-                        startActivity(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())
-                                .putExtra(Settings.EXTRA_CHANNEL_ID, BackgroundLocationService.CHANNEL));
-                        result.success(true);
-                        return;
                     case "requestPermission":
                         if (backgroundPermissionResult != null) { result.success(null); return; }
                         boolean initial = call.arguments instanceof Map<?, ?> args && Boolean.TRUE.equals(args.get("initial"));

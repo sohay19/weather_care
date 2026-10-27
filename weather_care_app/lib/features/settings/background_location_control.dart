@@ -21,7 +21,7 @@ class BackgroundLocationControl extends StatelessWidget {
 
   String get _backgroundPermissionGuide => switch (defaultTargetPlatform) {
         TargetPlatform.android =>
-          'Android는 앱 설정의 위치 권한에서 변경할 수 있어요. 감시 중에는 실행 알림이 표시돼요.',
+          'Android는 앱 설정에서 위치를 ‘항상 허용’하고 ‘정확한 위치 사용’을 켜주세요. 약 1km 영역을 벗어나면 이동을 감지하며 갱신이 늦어질 수 있어요.',
         TargetPlatform.iOS =>
           'iOS는 ‘앱을 사용하는 동안 허용’ 뒤 추가 요청에서 ‘항상 허용’을 선택해주세요. 표시 시점은 운영체제가 정해요.',
         _ => '기기 앱 설정의 위치 권한에서 변경할 수 있어요.',
@@ -97,7 +97,9 @@ class BackgroundLocationControl extends StatelessWidget {
                               'active' =>
                                 '정상적으로 백그라운드 위치 권한이 허용되어 있어요.\n이동 감지 중 · 기기 상황에 따라 갱신이 늦어질 수 있어요.',
                               'permissionRequired' =>
-                                '위치 권한을 ‘항상 허용’으로 설정해주세요.',
+                                defaultTargetPlatform == TargetPlatform.android
+                                    ? '위치를 ‘항상 허용’하고 ‘정확한 위치 사용’을 켜주세요.'
+                                    : '위치 권한을 ‘항상 허용’으로 설정해주세요.',
                               'locationDisabled' => '기기의 위치 기능을 켜주세요.',
                               'unsupported' => '이 기기에서는 백그라운드 이동 감지를 지원하지 않아요.',
                               'error' =>
@@ -106,41 +108,6 @@ class BackgroundLocationControl extends StatelessWidget {
                             },
                   style: Theme.of(context).textTheme.bodySmall,
                 )),
-            if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-              Padding(
-                padding: const EdgeInsets.only(left: 8, top: 8),
-                child: Material(
-                  color: WeatherCareTheme.of(context).surfaceMuted,
-                  borderRadius: BorderRadius.circular(12),
-                  clipBehavior: Clip.antiAlias,
-                  child: ListTile(
-                    dense: true,
-                    visualDensity: VisualDensity.compact,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    key: const ValueKey(
-                        'background-location-notification-settings'),
-                    title: Text('실행 알림 표시 설정',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: 11, fontWeight: FontWeight.w600)),
-                    subtitle: Text(
-                        '시스템 설정에서 이 알림만 숨길 수 있어요. 백그라운드 위치 갱신과 날씨 알림은 유지돼요.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(fontSize: 10, height: 1.4)),
-                    trailing: const Icon(Icons.open_in_new_rounded, size: 16),
-                    onTap: () async {
-                      final opened = await service.openNotificationSettings();
-                      if (!opened && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                            content: Text(
-                                '실행 알림 설정을 열지 못했어요. 기기의 앱 알림 설정에서 변경해주세요.')));
-                      }
-                    },
-                  ),
-                ),
-              ),
             if (enabled && available && service.status == 'permissionRequired')
               TextButton(
                 key: const ValueKey('background-location-permission-refresh'),

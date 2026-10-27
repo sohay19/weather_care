@@ -58,3 +58,17 @@ python3 store/native_ios_widget_capture/export_capture.py --kind phone \
 ```
 
 실제 위젯 바탕색이 시작하는 경계 밖의 홈 배경만 투명하게 제거하며 불투명한 위젯 내부 픽셀은 그대로 유지한다. 전체 화면 원본의 SHA256·크롭 좌표·논리 크기·배율과 결과 해시를 기록한다. PNG의 수치나 한글·색상을 합성하지 않는다. 촬영 후 테스트를 완료하고 전용 시뮬레이터를 종료한다.
+
+
+## 앱·시스템 테마 회귀 검증
+
+전용 iPhone/iOS 17 촬영 XCTest를 실행한 상태에서 다음을 실행한다. 촬영 호스트가 앱과 동일한 App Group의 `theme_mode`를 저장하고 실제 WidgetCenter 타임라인을 갱신한다. 제품 앱의 설정 저장·네이티브 전달은 `test/theme_mode_widget_sync_test.dart`에서 별도로 검사한다.
+
+```sh
+python3 store/native_ios_widget_capture/capture_session.py --device <검증용 UUID> \
+  --kind phone --legacy --theme-matrix --output build/ios-widget-theme/raw
+python3 store/native_ios_widget_capture/verify_theme.py \
+  --raw build/ios-widget-theme/raw --output build/ios-widget-theme/verified
+```
+
+소형·중형·대형 각각 기기 라이트/다크 × 앱 다크/라이트/시스템 6조합과 앱을 재실행하지 않는 시스템 전환 2회를 촬영한다. 총 24개의 실제 홈 위젯에서 배경·패널·본문·보조 글자·새로고침 버튼·구분선 색상 및 프레임을 검사한다. 픽셀은 재색칠하지 않으며 원본 SHA256·크롭·검사 결과를 `verification.json`에 보존한다. `verify_theme.py`는 Pillow가 있는 Python을 사용한다.

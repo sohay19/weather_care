@@ -14,6 +14,13 @@ struct CaptureHost: App {
       "preparations": [["type": "UMBRELLA", "label": "우산"], ["type": "OUTERWEAR", "label": "겉옷"]]
     ]
     let defaults = UserDefaults(suiteName: "group.com.codesoha.weathercare")!
+    let arguments = ProcessInfo.processInfo.arguments
+    if let index = arguments.firstIndex(of: "--theme"), index + 1 < arguments.count {
+      let mode = arguments[index + 1]
+      if ["system", "light", "dark"].contains(mode) {
+        defaults.set(mode, forKey: "theme_mode")
+      }
+    }
     let data = try! JSONSerialization.data(withJSONObject: snapshot)
     defaults.set(String(data: data, encoding: .utf8)!, forKey: "snapshot")
     defaults.removeObject(forKey: "refresh_url")

@@ -338,7 +338,7 @@ struct WeatherCareWidgetView: View {
   var body: some View {
     interactiveContent
       .reducedWidgetContentMargins()
-      .weatherWidgetBackground()
+      .weatherWidgetBackground(colorScheme: colorScheme)
       .environment(\.colorScheme, colorScheme)
   }
 
@@ -1218,7 +1218,12 @@ private extension View {
   }
 
   @ViewBuilder
-  func weatherWidgetBackground() -> some View {
+  func weatherWidgetBackground(colorScheme: ColorScheme) -> some View {
+    // WidgetKit은 컨테이너 배경을 별도로 렌더링하므로 루트의 colorScheme 재정의가
+    // 동적 UIColor에 전달되지 않는다. 앱/시스템에서 결정한 모드로 배경을 고정한다.
+    let surface = colorScheme == .dark
+      ? Color(.sRGB, red: 37 / 255, green: 55 / 255, blue: 71 / 255, opacity: 1)
+      : Color(.sRGB, red: 234 / 255, green: 240 / 255, blue: 245 / 255, opacity: 1)
     if #available(iOSApplicationExtension 17.0, *) {
       containerBackground(for: .widget) { surface }
     } else {

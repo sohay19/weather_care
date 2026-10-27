@@ -16,7 +16,12 @@ def main():
     parser.add_argument('--families', default='small,medium,large')
     parser.add_argument('--real-app', action='store_true', help='제품 앱의 실제 저장 자료로 홈 위젯 촬영')
     parser.add_argument('--keep-session', action='store_true', help='촬영 후 앱 조작 세션 유지')
+    parser.add_argument('--theme-matrix', action='store_true', help='촬영 호스트의 기기 2모드 × 앱 3모드와 시스템 전환 검증')
     args = parser.parse_args()
+    if args.theme_matrix and args.real_app:
+        parser.error('--theme-matrix는 예시 촬영 호스트에서만 사용합니다.')
+    if args.theme_matrix and not args.legacy:
+        parser.error('--theme-matrix는 --legacy와 함께 사용합니다.')
     control = (Path(__file__).parent.parent / 'native_ios_app_capture/control.py'
                if args.real_app else Path(__file__).with_name('control.py'))
     widget_name = '날씨챙겨' if args.real_app else '날씨챙겨 촬영'
@@ -43,6 +48,23 @@ def main():
 
     def appearance(mode):
         subprocess.run(['xcrun', 'simctl', 'ui', args.device, 'appearance', mode], check=True)
+
+    def capture_themes(family):
+        if args.theme_matrix:
+            for system in ['light', 'dark']:
+                appearance(system)
+                for mode in ['dark', 'light', 'system']:
+                    command('theme', f'{args.kind}-{system}-{mode}-{family}-home', mode=mode, wait=3)
+            # 앱을 다시 열거나 타임라인을 갱신하지 않고 시스템 설정만 전환한다.
+            appearance('light')
+            command('dump', f'{args.kind}-system-transition-light-{family}-home', wait=3)
+            appearance('dark')
+            command('dump', f'{args.kind}-system-transition-dark-{family}-home', wait=3)
+        else:
+            appearance('light')
+            command('dump', f'{args.kind}-light-{family}-home', wait=2)
+            appearance('dark')
+            command('dump', f'{args.kind}-dark-{family}-home', wait=2)
 
     def press_widget(name):
         widget_tree = tree.split(f"label: '{widget_name}', value: 위젯", 1)[-1]
@@ -82,9 +104,7 @@ def main():
         for family in families:
             appearance('light')
             add_widget(family)
-            command('dump', f'{args.kind}-light-{family}-home', wait=2)
-            appearance('dark')
-            command('dump', f'{args.kind}-dark-{family}-home', wait=2)
+            capture_themes(family)
             if family != families[-1]:
                 press_widget(f'{family}-remove-menu')
                 tap('위젯 제거', 'Remove Widget', name='remove-widget')
@@ -93,7 +113,7 @@ def main():
             '--command', '{"action":"dump"}' if args.keep_session else '{"action":"finish"}', '--output', str(args.output)],
             check=True, stdout=subprocess.DEVNULL)
         appearance('light')
-        print('홈 위젯 6개 촬영 완료', flush=True)
+        print('요청한 크기·테마의 홈 위젯 촬영 완료', flush=True)
         return
     add_widget()
     appearance('light')

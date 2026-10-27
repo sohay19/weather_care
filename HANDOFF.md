@@ -13393,3 +13393,21 @@
 - 첫 시도는 서버 개발용tsc 부재로 파일 교체 전 중단됐다. 로컬의 실제 서버 후보 전체 타입 검사 통과를 확인하고 Linux 검증을 설치된esbuild·모듈 실행 검사로 바꿔 재시도해 정상 완료했다. 원복은 없었다. 원본 백업은 /var/backups/weather-care/notification-copy-20261027T000424Z이며 원격 작업은 /tmp/weather-care-notification-copy-20261027-Hf6qKX다.
 - docs/준비물_알림문구_서버배포_20261027.md와 검증JSON, 서버/시험README에 기록했다. 원본·후보·로그·스크립트는 ignored 서버 build/notification-copy-deploy-20261027에 있다. 사용자 설정/DB 직접 수정·수동 수집·검증용 실제FCM·기존 알림 재발송·앱/스토어 배포는 하지 않았다. 다음 정상 지정시간 알림부터 새 문구를 사용한다.
 - 후속 사용자 요청으로 이번 변경 전체(알림 소스·시험3개·배포 문서/JSON·README2개·HANDOFF 총9개)를 한글 커밋 ‘feat(notification): 준비물 알림 문구 개선’으로 커밋하고 weather_care 원격 master에 일반 푸시한다. 푸시 직전 원격 선행 여부와 최종 포함 범위·공백 검사를 확인한다.
+
+
+## 2026-10-27 iOS 위젯 테마 배경 불일치 수정·시뮬레이터 검증
+
+- 사용자 요청으로 iOS 위젯의 앱/시스템 테마 적용과 색상을 점검했다. 기존 SwiftUI 루트의 colorScheme 재정의는 글자·패널·아이콘에 적용되지만, WidgetKit이 별도로 렌더링하는 containerBackground의 동적 UIColor에는 기기 모드가 남는 문제를 실제 홈 화면에서 재현했다. 기기 라이트/앱 다크에서 바깥 배경은 밝고 글자는 밝은 다크용 색으로 겹쳤다. 수정 전 원본 크롭의 라이트 배경 픽셀은 954,487개였다.
+- 제품 소스는 ios/WeatherCareWidget/WeatherCareWidget.swift 한 파일의 배경 적용만 최소 변경했다. 기존 앱 설정·App Group 저장·타임라인 갱신·콘텐츠 동적 색상은 유지하고, 위젯 루트에서 결정한 ColorScheme을 배경 함수에 전달해 기존 라이트 EAF0F5/다크253747을 정적인 sRGB 색상으로 선택한다. 앱의 고정 라이트/다크를 우선하고 system에서는 실제 환경 모드를 따른다. 레이아웃·날씨·Android·서버·버전은 변경하지 않았다.
+- 기존 독립 네이티브 촬영 도구에 --theme 실행 인자와 theme 명령·--theme-matrix 및 verify_theme.py를 추가하고 한국어 사용법을 기록했다. 제품 위젯 소스/폰트/아이콘을 그대로 컴파일하며 호스트의 예시 날씨만 사용한다. 실제 제품 앱 설정 저장/네이티브 채널 전달은 기존 Flutter 검사로 별도 확인했다. 실제 제공처 날씨나 실기기 검증으로 표시하지 않는다.
+- createdesktop 도구가 제공되지 않아 사용자 화면에 Simulator 창을 띄우지 않고 전용 iPhone15ProMax/iOS17.5 시뮬레이터0699C304-95E4-4C89-AECE-ABC69962A042와 simctl/XCTest로 검증했다. 소/중/대 × 기기2모드 × 앱3모드18개와 앱 재실행/명시적 타임라인 갱신 없는 시스템 라이트↔다크 전환6개, 총24개의 실제 SpringBoard 홈 위젯 캡처가 모두 통과했다. 배경·패널·본문·보조 글자·구분선·새로고침 배경/아이콘·실제 프레임을 픽셀로 검사했으며 모드가 반대인 중형/대형 화면의 한글·준비물·다음 시간 예보도 직접 확인했다. 수정 후 동일 조건의 다크 배경 픽셀979,209개와 라이트 배경0개를 확인했다.
+- Flutter3.47.4 관련4파일17개 검사·전체 Dart 정적 분석 이슈 없음·최종 제품 앱/위젯 iOS 시뮬레이터 Debug 빌드·독립 네이티브 XCTest·Python 구문·diff 공백 검사가 통과했다. 빌드가 자동 변경한 AppFrameworkInfo.plist/Podfile.lock/project.pbxproj는 작업 시작 원본으로 복원했다. 초기 팔레트 전체 변경안은 원인 재현 후 제거하고 배경만 고치는 최종 최소 변경으로 다시 빌드/촬영했다.
+- 원본·해시·검사 JSON/로그·라이트/다크 비교 PNG는 ignored weather_care_app/build/ios-widget-theme-20261027에 보존했다. summary.json, reproduction.json, verified/verification.json, flutter-tests-final.log, analyze.log, product-build-final.log, fixed-test-final.log를 참조한다. 전용 시뮬레이터만 종료했고 기존 실행 iPhone16Pro/iOS26.3.1은 유지했다. 실제 사용자 기기·권한·운영 서버·스토어·커밋/push는 변경하지 않았다. 기존 설치에 적용하려면 수정한 iOS 앱/위젯의 새 빌드 설치가 필요하다.
+
+
+## 2026-10-27 iOS 위젯 테마 수정 커밋·푸시
+
+- 사용자 후속 요청으로 이번 iOS 위젯 배경 수정·촬영 호스트/명령·24조합 픽셀 검증 도구·한국어 사용법·HANDOFF 총7개 파일만 커밋하고 origin/master에 일반 푸시한다. 커밋 메시지는 ‘fix(ios): 위젯 배경과 앱 테마 일치’다.
+- 최종 제품 소스 SHA256이 시뮬레이터 검증 기록과 같고 실제 홈 위젯24개·Flutter17개·정적 분석·제품 iOS 빌드·네이티브 XCTest 통과 기록을 확인했다. 소스 변경이 없어 해당 실행 검증은 반복하지 않으며 공백/포함 범위와 원격 선행 여부를 확인한다. ignored 빌드/캡처·앱 버전·서버·스토어는 포함하거나 변경하지 않는다.
+
+- 일반 HTTPS 푸시는 키체인 GitHub 인증값 부재로 실패했고 기존 SSH 키도 publickey 인증에 실패했다. 별도 로그인/키/원격 설정을 변경하지 않고 이미 연결된 GitHub 앱의 인증 계정과 blob 쓰기 권한을 확인했다. 동일한 7개 파일을 GitHub Git 객체 API로 전송하고 부모 SHA 일치 조건의 일반 ref 갱신으로 반영한다. API가 생성한 커밋의 트리가 검증된 로컬 커밋과 같은 것을 확인한 후 로컬 브랜치를 그 원격 커밋으로 맞추며, 빌드나 제품 소스는 바꾸지 않는다.

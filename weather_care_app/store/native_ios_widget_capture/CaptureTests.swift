@@ -34,6 +34,16 @@ final class CaptureTests: XCTestCase {
       lastID = id
       let action = command["action"] as? String ?? "dump"
       if action == "finish" { break }
+      if action == "theme", let mode = command["mode"] as? String {
+        app.terminate()
+        app.launchArguments = ["--theme", mode]
+        app.launch()
+        XCUIDevice.shared.press(.home)
+        // 호스트 아이콘이 있는 페이지에서 위젯을 추가한 첫 페이지로 복귀한다.
+        let widget = springboard.icons.matching(NSPredicate(
+          format: "label == %@ AND value == %@", "날씨챙겨 촬영", "위젯")).firstMatch
+        if !widget.isHittable { springboard.swipeRight() }
+      }
       if action == "home" { XCUIDevice.shared.press(.home) }
       if let label = command["label"] as? String {
         let matches = springboard.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label))

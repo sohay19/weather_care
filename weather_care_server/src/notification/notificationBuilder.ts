@@ -1,12 +1,12 @@
 import { Recommendation } from '../types';
-import { periodLabel, otherDatePrefix } from '../rules/precipitationWindows';
+import { koreanHour, periodLabel, otherDatePrefix } from '../rules/precipitationWindows';
 import {
   morningBriefDestination,
   NotificationDestination,
   recommendationDestination,
 } from './notificationDestination';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
-import { preparationsForWindow } from '../recommendations/preparationPolicy';
+import { preparationsForSnapshots, preparationsForWindow, type PreparationCandidate } from '../recommendations/preparationPolicy';
 import { titleFor } from '../recommendations/recommendationTemplates';
 import {
   buildWeatherBriefResult,
@@ -50,20 +50,15 @@ export function buildNotification(
   const preparations = forecast && briefContext.tieredPreparations
     ? preparationsForWindow(forecast, now ?? new Date(), briefContext)
     : [];
-  const preparationBody = preparations.slice(0, 3).map((item) => {
-    const time = item.validFrom && item.validUntil
-      ? `${periodLabel(item.validFrom, item.validUntil)} ` : '';
-    const reason = { rain: '비 대비', snow: '눈 대비', cold: '추위 대비',
-      heat: '더위 대비', air: '미세먼지 대비', pollen: '꽃가루 대비',
-      'air+pollen': '미세먼지·꽃가루 대비', uv: '자외선 대비' }[item.reason] ?? '';
-    return `${time}${reason} · ${titleFor(item.type)}`;
-  }).join('\n');
+  const preparationBody = forecast
+    ? preparationMessage(preparations.slice(0, 3), forecast, now ?? new Date(), briefContext)
+    : '';
 
   const payloads: BuiltNotification[] = [];
   if (preparations.length > 0 || fallbackItems.length > 0 || summaryBriefing) {
     payloads.push({
       notification_key: 'MORNING_BRIEF',
-      title: preparationBody ? '오늘 준비할 내용' : summaryBriefing?.copy.notificationTitle ?? '오늘 준비할 내용',
+      title: '오늘자 준비물 😊',
       body: preparationBody || summaryBriefing?.copy.notificationBody || composeBody(fallbackItems, now),
       destination: morningBriefDestination,
     });
@@ -77,6 +72,64 @@ export function buildNotification(
     });
   }
   return payloads;
+}
+
+function preparationMessage(
+  items: PreparationCandidate[],
+  forecast: WeatherForecast,
+  now: Date,
+  context: Omit<WeatherBriefContext, 'now'>,
+): string {
+  const groups: PreparationCandidate[][] = [];
+  for (const item of items) {
+    const group = groups.find(([first]) => first.reason === item.reason &&
+      first.validFrom === item.validFrom && first.validUntil === item.validUntil);
+    if (group) group.push(item);
+    else groups.push([item]);
+  }
+  return groups.map((group, index) => {
+    const item = group[0];
+    let time = '오늘은 ';
+    if (item.validFrom && item.validUntil) {
+      const end = new Date(now.getTime() + 9 * 3_600_000);
+      end.setUTCHours(24, 0, 0, 0);
+      const midnight = end.getTime() - 9 * 3_600_000;
+      // 시작·종료 사이에 자료가 없거나 조건이 풀린 구간이 있으면 종일로 표현하지 않는다.
+      const periods = [forecast.current, ...forecast.hourly].flatMap((snapshot) =>
+        preparationsForSnapshots([snapshot], { now, end: midnight, ...context, includeSnowUmbrella: true })
+          .filter((candidate) => candidate.type === item.type)
+          .map((candidate) => [Date.parse(candidate.validFrom!), Date.parse(candidate.validUntil!)]))
+        .sort((left, right) => left[0] - right[0]);
+      let coveredUntil = now.getTime();
+      for (const [start, finish] of periods) {
+        if (start > coveredUntil) break;
+        coveredUntil = Math.max(coveredUntil, finish);
+      }
+      const hour = new Date(now.getTime() + 9 * 3_600_000).getUTCHours();
+      time = coveredUntil >= midnight && hour <= 9 ? '오늘은 하루 종일 '
+        : coveredUntil >= midnight ? '지금부터 밤까지 '
+        : `${koreanHour(item.validFrom)}~${Date.parse(item.validUntil) === midnight
+          ? '밤 12시' : koreanHour(item.validUntil)}${item.reason === 'rain'
+          ? '에는 ' : item.reason === 'uv' ? '까지 ' : '까지는 '}`;
+    }
+    const names = group.map((candidate) => titleFor(candidate.type)).join(', ');
+    const object = names + ((names.charCodeAt(names.length - 1) - 0xac00) % 28 === 0 ? '를' : '을');
+    switch (item.reason) {
+      case 'cold':
+        return `${time}쌀쌀해요. ${object} ${group.every((candidate) =>
+          candidate.type === 'OUTERWEAR' || candidate.type === 'LIGHT_OUTERWEAR')
+          ? groups[index + 1]?.[0].reason === 'uv' ? '챙겨 입고,' : '챙겨 입으세요.'
+          : '챙겨 따뜻하게 다니세요.'}`;
+      case 'rain': return `${time}비 소식이 있어요. ${object} 챙겨 나가세요.`;
+      case 'snow': return `${time}눈 소식이 있어요. ${names} 준비하여 미끄러지지 않도록 조심하세요.`;
+      case 'heat': return `${time}더위에 대비해요. ${object} 챙기고 틈틈이 쉬어 가세요.`;
+      case 'air': return `${time}미세먼지가 심하니 ${object} 챙겨 쓰세요.`;
+      case 'pollen': return `${time}꽃가루에 대비해요. ${object} 챙겨 쓰세요.`;
+      case 'air+pollen': return `${time}미세먼지와 꽃가루에 대비해요. ${object} 챙겨 쓰세요.`;
+      case 'uv': return `${time}자외선이 강하니 ${object} 잊지 마세요.`;
+      default: return `${time}${object} 챙겨 주세요.`;
+    }
+  }).join('\n');
 }
 
 function composeBody(

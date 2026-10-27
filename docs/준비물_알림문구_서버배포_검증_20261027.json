@@ -1,0 +1,304 @@
+{
+  "startedAt": "2026-10-27T09:04:18.448567+09:00",
+  "status": "complete",
+  "scope": "지정시간 준비물 알림 문구 운영·시험 배포",
+  "changedFiles": [
+    "src/notification/notificationBuilder.ts"
+  ],
+  "checks": [
+    {
+      "environment": "production",
+      "phase": "before",
+      "request": "health",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "before",
+      "request": "main",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "before",
+      "request": "today",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "before",
+      "request": "weekly",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "before",
+      "request": "widget",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "request": "health",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "request": "main",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "request": "today",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "request": "weekly",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "before",
+      "request": "widget",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "request": "health",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "request": "main",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "request": "today",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "request": "weekly",
+      "status": 200
+    },
+    {
+      "environment": "test",
+      "phase": "after",
+      "request": "widget",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "request": "health",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "request": "main",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "request": "today",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "request": "weekly",
+      "status": 200
+    },
+    {
+      "environment": "production",
+      "phase": "after",
+      "request": "widget",
+      "status": 200
+    }
+  ],
+  "probes": [
+    {
+      "environment": "test",
+      "phase": "candidate",
+      "passed": true,
+      "scenarios": 5,
+      "notificationsSent": 0,
+      "messages": [
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오늘은 하루 종일 쌀쌀해요. 두꺼운 겉옷을 챙겨 입고,\n오전 9시~오후 3시까지 자외선이 강하니 선크림을 잊지 마세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오후 6시~오후 7시에는 비 소식이 있어요. 우산을 챙겨 나가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 11시~오후 4시까지는 더위에 대비해요. 물을 챙기고 틈틈이 쉬어 가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 11시까지는 미세먼지가 심하니 마스크를 챙겨 쓰세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 10시까지는 눈 소식이 있어요. 우산, 미끄럼 방지 신발 준비하여 미끄러지지 않도록 조심하세요."
+        }
+      ]
+    },
+    {
+      "environment": "production",
+      "phase": "candidate",
+      "passed": true,
+      "scenarios": 5,
+      "notificationsSent": 0,
+      "messages": [
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오늘은 하루 종일 쌀쌀해요. 두꺼운 겉옷을 챙겨 입고,\n오전 9시~오후 3시까지 자외선이 강하니 선크림을 잊지 마세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오후 6시~오후 7시에는 비 소식이 있어요. 우산을 챙겨 나가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 11시~오후 4시까지는 더위에 대비해요. 물을 챙기고 틈틈이 쉬어 가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 11시까지는 미세먼지가 심하니 마스크를 챙겨 쓰세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 10시까지는 눈 소식이 있어요. 우산, 미끄럼 방지 신발 준비하여 미끄러지지 않도록 조심하세요."
+        }
+      ]
+    },
+    {
+      "environment": "test",
+      "phase": "installed",
+      "passed": true,
+      "scenarios": 5,
+      "notificationsSent": 0,
+      "messages": [
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오늘은 하루 종일 쌀쌀해요. 두꺼운 겉옷을 챙겨 입고,\n오전 9시~오후 3시까지 자외선이 강하니 선크림을 잊지 마세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오후 6시~오후 7시에는 비 소식이 있어요. 우산을 챙겨 나가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 11시~오후 4시까지는 더위에 대비해요. 물을 챙기고 틈틈이 쉬어 가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 11시까지는 미세먼지가 심하니 마스크를 챙겨 쓰세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 10시까지는 눈 소식이 있어요. 우산, 미끄럼 방지 신발 준비하여 미끄러지지 않도록 조심하세요."
+        }
+      ]
+    },
+    {
+      "environment": "production",
+      "phase": "installed",
+      "passed": true,
+      "scenarios": 5,
+      "notificationsSent": 0,
+      "messages": [
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오늘은 하루 종일 쌀쌀해요. 두꺼운 겉옷을 챙겨 입고,\n오전 9시~오후 3시까지 자외선이 강하니 선크림을 잊지 마세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오후 6시~오후 7시에는 비 소식이 있어요. 우산을 챙겨 나가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 11시~오후 4시까지는 더위에 대비해요. 물을 챙기고 틈틈이 쉬어 가세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 11시까지는 미세먼지가 심하니 마스크를 챙겨 쓰세요."
+        },
+        {
+          "title": "오늘자 준비물 😊",
+          "body": "오전 8시~오전 10시까지는 눈 소식이 있어요. 우산, 미끄럼 방지 신발 준비하여 미끄러지지 않도록 조심하세요."
+        }
+      ]
+    }
+  ],
+  "verificationNotificationsSent": 0,
+  "serviceBefore": {
+    "weather-care-api.service": {
+      "pid": "708773",
+      "active": "active"
+    },
+    "weather-care-test-api.service": {
+      "pid": "704480",
+      "active": "active"
+    },
+    "weather-care-scheduler.service": {
+      "pid": "704661",
+      "active": "active"
+    }
+  },
+  "roots": {
+    "production": "/opt/weather-care/releases/20261023-full-production/weather_care_server",
+    "test": "/opt/weather-care/releases/20261023-full-test/weather_care_server"
+  },
+  "beforeSha256": {
+    "production": "29ef91ba744422ad27adeacc36ed214f78a68240cf9c8a1ad7e9f5812f158f0f",
+    "test": "29ef91ba744422ad27adeacc36ed214f78a68240cf9c8a1ad7e9f5812f158f0f"
+  },
+  "afterSha256": "97bd99a1e31b548be8593293970625ce35443fa72fbda7d68281fd6b0f82c2fd",
+  "backup": "/var/backups/weather-care/notification-copy-20261027T000424Z",
+  "completedAt": "2026-10-27T09:04:50.612071+09:00",
+  "serviceAfter": {
+    "weather-care-api.service": {
+      "pid": "719710",
+      "active": "active"
+    },
+    "weather-care-test-api.service": {
+      "pid": "719616",
+      "active": "active"
+    },
+    "weather-care-scheduler.service": {
+      "pid": "719777",
+      "active": "active"
+    }
+  },
+  "sourceManifestsVerified": true,
+  "databaseSchemasPreserved": true,
+  "configurationPreserved": true,
+  "schedulerStarted": true,
+  "candidateValidation": {
+    "test": {
+      "tests": 84,
+      "typecheck": "passed"
+    },
+    "linuxSyntax": "passed",
+    "production": {
+      "tests": 84,
+      "typecheck": "passed"
+    },
+    "deploymentFileCountPerEnvironment": 1
+  }
+}

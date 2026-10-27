@@ -90,7 +90,8 @@ describe('notification scheduler', () => {
     expect(sent[0].notificationKey).toBe('MORNING_BRIEF');
     const lines = sent[0].body.split('\n');
     expect(lines).toHaveLength(3);
-    expect(lines[0]).toContain('오후 6시~7시 비 대비');
+    expect(sent[0].title).toBe('오늘자 준비물 😊');
+    expect(lines[0]).toContain('오후 6시~오후 7시에는 비 소식이 있어요.');
     expect(lines[0]).toContain('우산');
     expect(lines[1]).toContain('겉옷');
     expect(lines[2]).toContain('마스크');
@@ -507,7 +508,7 @@ describe('notification scheduler', () => {
       sender: collectingSender(sent),
     });
     expect(sent).toHaveLength(1);
-    expect(sent[0].body).toContain('오전 7시~9시');
+    expect(sent[0].body).toContain('오전 7시~오전 9시에는');
   });
 
   it('removes an unregistered token without writing send history', async () => {

@@ -1,0 +1,447 @@
+{
+  "status": "complete",
+  "commit": "e917458",
+  "startedAt": "2026-10-28T14:09:27.039382+09:00",
+  "scope": "운영 사용자DB 출퇴근 구간 추가 및 관련 서버8파일 배포",
+  "checks": [
+    {
+      "phase": "before",
+      "region": "all",
+      "endpoint": "health",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "seoul",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "seoul",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "seoul",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "seoul",
+      "endpoint": "widget",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "siheung",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "siheung",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "siheung",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "siheung",
+      "endpoint": "widget",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "busan",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "busan",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "busan",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "phase": "before",
+      "region": "busan",
+      "endpoint": "widget",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "all",
+      "endpoint": "health",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "seoul",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "seoul",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "seoul",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "seoul",
+      "endpoint": "widget",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "siheung",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "siheung",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "siheung",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "siheung",
+      "endpoint": "widget",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "busan",
+      "endpoint": "main",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "busan",
+      "endpoint": "today",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "busan",
+      "endpoint": "weekly",
+      "status": 200
+    },
+    {
+      "phase": "after",
+      "region": "busan",
+      "endpoint": "widget",
+      "status": 200
+    }
+  ],
+  "changedFiles": [
+    "src/api/installations.ts",
+    "src/api/notificationSettings.ts",
+    "src/database/notificationSettingsRepository.ts",
+    "src/notification/commuteSchedule.ts",
+    "src/notification/notificationScheduler.ts",
+    "src/types.ts",
+    "src/validation/notificationSettings.ts",
+    "node-migrations/users/0003_commute_notification_schedule.sql"
+  ],
+  "verificationNotificationsSent": 0,
+  "testEnvironmentModified": false,
+  "serviceBefore": {
+    "weather-care-api.service": {
+      "active": "active",
+      "pid": 719710
+    },
+    "weather-care-scheduler.service": {
+      "active": "active",
+      "pid": 719777
+    },
+    "weather-care-test-api.service": {
+      "active": "active",
+      "pid": 719616
+    }
+  },
+  "candidateProbe": {
+    "passed": true,
+    "checks": [
+      "migrationOnce",
+      "oldSettingsEndpoint",
+      "oldInstallationEndpoint",
+      "defaultWindows",
+      "startEndBoundaries",
+      "overnightWindow",
+      "oldClientPreservesSchedule",
+      "existingPreferences"
+    ],
+    "externalCalls": 0,
+    "actualUserWrites": 0
+  },
+  "backup": "/var/backups/weather-care/commute-20261028T050934Z",
+  "migration": {
+    "database": "/var/lib/weather-care/weather-care-users-production.sqlite",
+    "backup": "/var/backups/weather-care/commute-20261028T050934Z/users-before.sqlite",
+    "name": "0003_commute_notification_schedule.sql",
+    "quickCheck": "ok",
+    "existingTablesPreserved": {
+      "installations": {
+        "count": 80,
+        "sha256": "098e658620c9487fd90577ff2e30d12a606b02b3ef722ed5be9095f75ab32f3c"
+      },
+      "active_regions": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "notification_settings": {
+        "count": 216,
+        "sha256": "cbe49dc469c00c045f2448a667325f035ad77268019e7eacc0e6bd48a19ce191"
+      },
+      "notification_history": {
+        "count": 170,
+        "sha256": "01799ff1e5738055d5280b3798fa5e9749f969c53d0cca3eecebbbb681b91f97"
+      },
+      "installation_warning_state": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "installation_credentials": {
+        "count": 220,
+        "sha256": "6e53b92ba8eb4b6927912a3223d1884def9e118033f00fe97da492dbf649c855"
+      },
+      "installation_ownership_challenges": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "legacy_installation_ownership": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "installation_activity": {
+        "count": 220,
+        "sha256": "9e4e48b1533646997742ea5279a0b32bb4a0fed31501e5538d3bfa8081c5754c"
+      },
+      "lightning_notification_claims": {
+        "count": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "settingsCount": 216,
+    "defaults": [
+      "07:00",
+      "10:00",
+      "17:00",
+      "20:00"
+    ],
+    "schemaAfter": "f8c7e55d2f15c7c05cdcb3c2dd0445cb55adf28d4c522ae9d2973e93c16eca98"
+  },
+  "installedProbe": {
+    "passed": true,
+    "checks": [
+      "migrationOnce",
+      "oldSettingsEndpoint",
+      "oldInstallationEndpoint",
+      "defaultWindows",
+      "startEndBoundaries",
+      "overnightWindow",
+      "oldClientPreservesSchedule",
+      "existingPreferences"
+    ],
+    "externalCalls": 0,
+    "actualUserWrites": 0
+  },
+  "previousApiFieldsPreserved": true,
+  "completedAt": "2026-10-28T14:10:00.067491+09:00",
+  "serviceAfter": {
+    "weather-care-api.service": {
+      "active": "active",
+      "pid": 739807
+    },
+    "weather-care-scheduler.service": {
+      "active": "active",
+      "pid": 739870
+    },
+    "weather-care-test-api.service": {
+      "active": "active",
+      "pid": 719616
+    }
+  },
+  "schedulerStarted": true,
+  "sourceManifestsVerified": true,
+  "configurationPreserved": true,
+  "sharedWeatherSchemaPreserved": true,
+  "testSourceSchemaAndProcessPreserved": true,
+  "legacyCompatibility": {
+    "revisions": [
+      "v1.1.1",
+      "78770c0"
+    ],
+    "liveReadTestsPassed": 6,
+    "authenticatedSettingsTestsPassed": 2,
+    "renderTestsPassed": 8,
+    "actualStoreBinariesTested": false,
+    "actualPushSent": false,
+    "temporaryRegistrationsRemaining": 0
+  },
+  "postverification": {
+    "sourceManifestMatches": true,
+    "services": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 739807
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 739870
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 719616
+      }
+    },
+    "migrationAppliedOnce": true,
+    "temporaryCompatibilityInstallationsRemaining": 0,
+    "settingsCount": 216,
+    "commuteAlertsSinceDeployment": 0,
+    "quickCheck": "ok",
+    "events": {
+      "weather_location_unresolved": 23,
+      "weather_access": 44,
+      "node_scheduler_stopped": 1,
+      "node_server_stopped": 1,
+      "node_server_started": 1,
+      "operational_prewarm_reused": 1,
+      "node_operational_prewarm_finished": 1,
+      "node_scheduler_started": 1,
+      "apihub_response_accounted": 7,
+      "grid_observation_field_preserved": 6,
+      "grid_observation_snapshot_saved": 1,
+      "current_observation_collection_completed": 2,
+      "nationwide_air_collection_completed": 1,
+      "current_snow_collected": 1,
+      "national_forecast_collection_completed": 1,
+      "weather_collection_failed": 1,
+      "data_retention_completed": 1,
+      "node_scheduled_job_completed": 2
+    },
+    "failedEvents": {
+      "weather_collection_failed": 1
+    },
+    "checkedAt": "2026-10-28T14:14:00.959086+09:00"
+  },
+  "existingCollectionFailureDiagnostics": [
+    {
+      "phase": "before",
+      "time": "2026-10-28T12:20:08.219486+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T12:30:18.765756+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T12:40:10.097174+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T12:50:09.492169+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T13:00:12.097984+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T13:10:09.409963+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T13:20:09.400006+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T13:30:09.502221+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T13:40:11.014646+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T13:50:10.990660+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "before",
+      "time": "2026-10-28T14:00:16.458008+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    },
+    {
+      "phase": "after",
+      "time": "2026-10-28T14:10:16.358294+09:00",
+      "source": "point_forecast",
+      "error": "Error",
+      "failureReason": "UNKNOWN"
+    }
+  ],
+  "candidateTests": {
+    "worker": 54,
+    "node": 34,
+    "typecheck": true
+  }
+}

@@ -9,6 +9,7 @@ import 'app_update_dialog.dart';
 class AppUpdateGate extends StatefulWidget {
   final Widget child;
   final StoreUpdateService service;
+  final bool checkVersion;
   final VoidCallback? onComplete;
   final Future<bool> Function(Uri)? openStore;
 
@@ -16,6 +17,7 @@ class AppUpdateGate extends StatefulWidget {
     super.key,
     required this.child,
     this.service = const StoreUpdateService(),
+    this.checkVersion = true,
     this.onComplete,
     this.openStore,
   });
@@ -33,7 +35,15 @@ class _AppUpdateGateState extends State<AppUpdateGate> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+    _complete = !widget.checkVersion;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_complete) {
+        widget.onComplete?.call();
+      } else {
+        _checkForUpdate();
+      }
+    });
   }
 
   Future<void> _checkForUpdate() async {

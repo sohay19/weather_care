@@ -1,3 +1,4 @@
+import { expandNotificationRegions, regionHistoryKey, regionPushData, regionStateStatement, regionStillEnabled, regionTitle, type RegionTarget } from './notificationRegions';
 import { weatherDatabase } from '../database/weatherDatabase';
 import { readNationwideRegion } from '../services/nationwideWeatherCache';
 import { getNationwidePrecipitation } from '../database/nationwidePrecipitationRepository';
@@ -48,7 +49,7 @@ import { assessPipeFreeze } from '../services/pipeFreezeAdvice';
 import { formatWeatherNumber } from '../utils/weatherNumber';
 import { type CommuteSchedule, isCommuteNotificationTime } from './commuteSchedule';
 
-interface NotificationInstallationRow extends CommuteSchedule {
+interface NotificationInstallationRow extends CommuteSchedule, RegionTarget {
   installationId: string;
   token: string;
   nx: number;
@@ -82,6 +83,7 @@ interface PendingNotification {
   targetDate: string;
   token: string;
   built: BuiltNotification;
+  region?: NotificationInstallationRow;
   rainObservedAt?: string;
   warningStateMutation?: WarningStateMutation;
   roadIceRisk?: RoadIceRisk;
@@ -109,6 +111,7 @@ interface SchedulerDependencies {
     nx: number,
     ny: number,
     coordinates?: { latitude: number; longitude: number },
+    regionName?: string,
   ) => Promise<WeatherForecast>;
   sender?: (
     env: ServerEnv,
@@ -148,7 +151,8 @@ export async function runRecommendationNotificationJob(
   dependencies: SchedulerDependencies = {},
 ): Promise<void> {
   const now = dependencies.now ?? new Date();
-  const rows = await notificationInstallations(env.DB, dependencies.retentionNow ?? now);
+  const rows = await expandNotificationRegions(env,
+    await notificationInstallations(env.DB, dependencies.retentionNow ?? now), now);
   if (rows.length === 0) return;
 
   const loadForecast = dependencies.forecastLoader ?? defaultForecastLoader;
@@ -173,6 +177,7 @@ export async function runRecommendationNotificationJob(
   const pending: PendingNotification[] = [];
 
   for (const row of rows) {
+    const pendingStart = pending.length;
     const local = localNotificationTime(now, row.timezone);
     await collectCurrentRainNotification(
       env,
@@ -210,7 +215,7 @@ export async function runRecommendationNotificationJob(
         dependencies.roadControlLoader ?? defaultRoadControlLoader,
       );
     }
-    const regionKey = `${row.nx}:${row.ny}:${row.latitude}:${row.longitude}`;
+    const regionKey = `${row.nx}:${row.ny}:${row.latitude}:${row.longitude}:${row.regionName ?? ''}`;
     let forecastPromise = forecastByRegion.get(regionKey);
     if (!forecastPromise) {
       forecastPromise = loadForecast(
@@ -220,6 +225,7 @@ export async function runRecommendationNotificationJob(
         row.latitude !== null && row.longitude !== null
           ? { latitude: row.latitude, longitude: row.longitude }
           : undefined,
+        row.regionName,
       );
       forecastByRegion.set(regionKey, forecastPromise);
     }
@@ -244,6 +250,7 @@ export async function runRecommendationNotificationJob(
         env.DB,
         row.installationId,
         local.date,
+        row.scopeId,
       );
       if (row.pipeFreezeEnabled === 1 && !alreadySent.has('PIPE_FREEZE_CAUTION')) {
         const assessment = assessPipeFreeze(forecast, now);
@@ -297,6 +304,8 @@ export async function runRecommendationNotificationJob(
       }
     } catch (error) {
       logNotificationError('recommendation_build_failed', error);
+    } finally {
+      for (const item of pending.slice(pendingStart)) item.region = row;
     }
   }
 
@@ -319,20 +328,22 @@ export async function runRecommendationNotificationJob(
     .bind(item.installationId, item.token, item.built.notification_key,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendAt = dependencies.now ?? new Date();
+  const regionEligible = await Promise.all(pending.map(item => regionStillEnabled(env.DB, item.installationId, item.region!)));
   const sendable = pending.filter((item, index) => {
     const current = eligible[index].results[0];
-    if (!current) return false;
+    if (!current || !regionEligible[index]) return false;
     return !item.roadControl ||
       isCommuteNotificationTime(localNotificationTime(sendAt, current.timezone).time, current);
   });
   if (!sendable.length) return;
   const payloads = sendable.map<FcmPayload>((item) => ({
     token: item.token,
-    title: item.built.title,
+    title: regionTitle(item.built.title, item.region!),
     body: item.built.body,
     notificationKey: item.built.notification_key,
     notificationTarget: item.built.destination.target,
     notificationTopic: item.built.destination.topic,
+    ...regionPushData(item.region!),
   }));
   let results: FcmSendResult[];
   try {
@@ -401,6 +412,7 @@ async function sentNotificationKeys(
   db: D1Database,
   installationId: string,
   targetDate: string,
+  scopeId?: string,
 ): Promise<Set<string>> {
   const result = await db
     .prepare(
@@ -410,7 +422,8 @@ async function sentNotificationKeys(
     )
     .bind(installationId, targetDate)
     .all<{ notificationKey: string }>();
-  return new Set(result.results.map((row) => row.notificationKey));
+  return new Set(result.results.filter(row => scopeId ? row.notificationKey.endsWith(`@${scopeId}`) : !row.notificationKey.includes('@'))
+    .map(row => scopeId ? row.notificationKey.slice(0, -scopeId.length - 1) : row.notificationKey));
 }
 
 async function defaultForecastLoader(
@@ -418,10 +431,11 @@ async function defaultForecastLoader(
   nx: number,
   ny: number,
   coordinates?: { latitude: number; longitude: number },
+  regionName?: string,
 ): Promise<WeatherForecast> {
   const now = new Date();
   const { resolveSavedLocation } = await import('../regions/resolvedLocation');
-  const location = await resolveSavedLocation(weatherDatabase(env), { nx, ny, coordinates }, now);
+  const location = await resolveSavedLocation(weatherDatabase(env), { nx, ny, coordinates, regionName }, now);
   const cached = await readNationwideRegion(weatherDatabase(env), location, now);
   if (!cached) throw new Error('COLLECTED_FORECAST_NOT_READY');
   const { readTodayLivingIndices } = await import('../services/livingIndices');
@@ -552,7 +566,7 @@ async function collectRoadIceNotification(
     const risk = await riskPromise;
     if (!risk) {
       if (row.roadIceLevel > 0) {
-        await resetRoadIceState(env.DB, row.installationId);
+        await resetRoadIceState(env.DB, row.installationId, row.scopeId);
       }
       return;
     }
@@ -583,7 +597,9 @@ async function collectRoadIceNotification(
 async function resetRoadIceState(
   db: D1Database,
   installationId: string,
+  scopeId?: string,
 ): Promise<void> {
+  if (scopeId) { await regionStateStatement(db, installationId, scopeId, {road_ice_level:0,road_ice_link_id:null}).run(); return; }
   await db
     .prepare(
       `UPDATE installations
@@ -624,7 +640,7 @@ async function collectRoadControlNotification(
     const control = await controlPromise;
     if (!control) {
       if (row.roadControlEventKey) {
-        await resetRoadControlState(env.DB, row.installationId);
+        await resetRoadControlState(env.DB, row.installationId, row.scopeId);
       }
       return;
     }
@@ -655,7 +671,9 @@ async function collectRoadControlNotification(
 async function resetRoadControlState(
   db: D1Database,
   installationId: string,
+  scopeId?: string,
 ): Promise<void> {
+  if (scopeId) { await regionStateStatement(db, installationId, scopeId, {road_control_event_key:null,road_control_kind:null}).run(); return; }
   await db
     .prepare(
       `UPDATE installations
@@ -700,7 +718,7 @@ async function collectOfficialWarningNotifications(
   let regionKey = `${row.nx}:${row.ny}`;
 
   try {
-    const catalogRegion = regionMetadataForGrid(row.nx, row.ny);
+    const catalogRegion = row.scopeId ? undefined : regionMetadataForGrid(row.nx, row.ny);
     let regionIds: readonly string[];
     let displayRegionName: string;
     if (catalogRegion) {
@@ -736,7 +754,7 @@ async function collectOfficialWarningNotifications(
     }
 
     const current = highestWarningByType(await warningsPromise);
-    const previous = await warningStates(env.DB, row.installationId);
+    const previous = await warningStates(env.DB, row.installationId, row.scopeId);
     const previousByType = new Map(previous.map((item) => [item.typeCode, item]));
 
     for (const warning of current.values()) {
@@ -772,7 +790,7 @@ async function collectOfficialWarningNotifications(
         await applyWarningStateMutation(env.DB, row.installationId, {
           operation: 'UPSERT',
           warning,
-        });
+        }, row.scopeId);
       }
       previousByType.delete(warning.typeCode);
     }
@@ -810,7 +828,7 @@ async function queueOrApplyWarningTransition(
       ? mutation.warning.typeCode
       : mutation.typeCode;
   if (!isWarningNotificationEnabled(row, typeCode)) {
-    await applyWarningStateMutation(db, row.installationId, mutation);
+    await applyWarningStateMutation(db, row.installationId, mutation, row.scopeId);
     return;
   }
   pending.push({
@@ -843,6 +861,7 @@ function highestWarningByType(
 async function warningStates(
   db: D1Database,
   installationId: string,
+  scopeId?: string,
 ): Promise<WarningStateRow[]> {
   const result = await db
     .prepare(
@@ -852,10 +871,10 @@ async function warningStates(
               level_name AS levelName,
               region_name AS regionName,
               effective_at AS effectiveAt
-       FROM installation_warning_state
-       WHERE installation_id = ?`,
+       FROM ${scopeId ? 'notification_region_warning_state' : 'installation_warning_state'}
+       WHERE installation_id = ? ${scopeId ? 'AND scope_id = ?' : ''}`,
     )
-    .bind(installationId)
+    .bind(installationId, ...(scopeId ? [scopeId] : []))
     .all<WarningStateRow>();
   return result.results;
 }
@@ -864,7 +883,12 @@ async function applyWarningStateMutation(
   db: D1Database,
   installationId: string,
   mutation: WarningStateMutation,
+  scopeId?: string,
 ): Promise<void> {
+  if (scopeId) {
+    await regionWarningStatement(db, installationId, scopeId, mutation).run();
+    return;
+  }
   if (mutation.operation === 'DELETE') {
     await db
       .prepare(
@@ -904,6 +928,19 @@ async function applyWarningStateMutation(
       installationId,
     )
     .run();
+}
+
+function regionWarningStatement(db: D1Database, id: string, scope: string, mutation: WarningStateMutation) {
+  if (mutation.operation === 'DELETE') return db.prepare(`DELETE FROM notification_region_warning_state
+    WHERE installation_id=? AND scope_id=? AND warning_type=?`).bind(id, scope, mutation.typeCode);
+  const w = mutation.warning;
+  return db.prepare(`INSERT INTO notification_region_warning_state
+    (installation_id,scope_id,warning_type,warning_name,level_code,level_name,region_name,effective_at,updated_at)
+    SELECT ?,?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM notification_regions WHERE installation_id=? AND scope_id=?)
+    ON CONFLICT(installation_id,scope_id,warning_type) DO UPDATE SET warning_name=excluded.warning_name,
+      level_code=excluded.level_code,level_name=excluded.level_name,region_name=excluded.region_name,
+      effective_at=excluded.effective_at,updated_at=excluded.updated_at`)
+    .bind(id, scope, w.typeCode, w.type, w.levelCode, w.level, w.regionName, w.validFrom, new Date().toISOString(), id, scope);
 }
 
 function isWarningNotificationEnabled(
@@ -958,6 +995,7 @@ async function collectCurrentRainNotification(
           row.installationId,
           false,
           observation.observedAt,
+          row.scopeId,
         );
       }
       return;
@@ -969,6 +1007,7 @@ async function collectCurrentRainNotification(
         row.installationId,
         true,
         observation.observedAt,
+        row.scopeId,
       );
       return;
     }
@@ -994,7 +1033,11 @@ async function updateCurrentRainState(
   installationId: string,
   raining: boolean,
   observedAt: string,
+  scopeId?: string,
 ): Promise<void> {
+  if (scopeId) {
+    await regionStateStatement(db, installationId, scopeId, {current_rain_state:raining ? 1 : 0}).run(); return;
+  }
   await db
     .prepare(
       `UPDATE installations
@@ -1032,12 +1075,20 @@ async function recordResults(
           .bind(
             item.installationId,
             item.targetDate,
-            item.built.notification_key,
+            regionHistoryKey(item.built.notification_key, item.region?.scopeId),
             sentAt,
             `${item.built.title}\n${item.built.body}`.slice(0, 160),
             item.installationId,
           ),
       );
+      if (item.region?.scopeId) {
+        const fields: Record<string, string | number | null> = {};
+        if (item.rainObservedAt) fields.current_rain_state = 1;
+        if (item.roadIceRisk) { fields.road_ice_level = item.roadIceRisk.level; fields.road_ice_link_id = item.roadIceRisk.linkId; }
+        if (item.roadControl) { fields.road_control_event_key = item.roadControl.eventKey; fields.road_control_kind = item.roadControl.controlKind; }
+        if (Object.keys(fields).length) statements.push(regionStateStatement(db,item.installationId,item.region.scopeId,fields));
+        if (item.warningStateMutation) statements.push(regionWarningStatement(db,item.installationId,item.region.scopeId,item.warningStateMutation));
+      } else {
       if (item.rainObservedAt) {
         statements.push(
           db
@@ -1133,6 +1184,7 @@ async function recordResults(
               item.installationId,
             ),
         );
+      }
       }
     } else {
       logNotificationError('fcm_send_failed', undefined, result.status);

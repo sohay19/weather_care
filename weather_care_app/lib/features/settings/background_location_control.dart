@@ -51,7 +51,7 @@ class BackgroundLocationControl extends StatelessWidget {
                 ],
               ),
               subtitle: Text(
-                  '앱을 사용하지 않을 때도 이동을 감지하면 현재 위치·날씨 알림 지역·홈 위젯 날씨를 갱신해요.',
+                  '앱을 사용하지 않을 때도 이동을 감지하면 현재 위치 알림을 갱신해요. 홈 위젯은 현재 위치를 선택했을 때 함께 갱신해요.',
                   style: Theme.of(context).textTheme.bodySmall),
               value: enabled,
               onChanged: available || enabled
@@ -66,7 +66,7 @@ class BackgroundLocationControl extends StatelessWidget {
                                           '앱을 사용하지 않을 때도 이동을 감지해 새 지역의 날씨·낙뢰 알림과 홈 위젯 위치·날씨를 갱신하도록 위치를 서버에 보내요. '
                                           '최신 위치만 사용하며 이동 경로는 저장하지 않아요.\n\n'
                                           '기기 위치 권한을 ‘항상 허용’으로 설정해주세요. $_backgroundPermissionGuide GPS 사용으로 배터리를 더 사용할 수 있어요.\n\n'
-                                          'GPS 모드와 전체 알림이 켜져 있을 때 동작해요. 기능을 끄거나 직접 지역을 선택하면 감시를 중지해요. '
+                                          '현재 위치의 지역별 알림과 전체 알림이 켜져 있을 때 동작해요. 다른 지역을 보고 있어도 현재 위치 알림을 갱신하며, 현재 위치 알림이나 이 기능을 끄면 감시를 중지해요. '
                                           '기기의 절전 상태와 강제 종료에 따라 갱신이 지연되거나 멈출 수 있어요.')),
                                   actions: [
                                     TextButton(
@@ -90,7 +90,7 @@ class BackgroundLocationControl extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 child: Text(
                   !available
-                      ? 'GPS 모드와 전체 알림, 서버 데이터 사용을 켜면 사용할 수 있어요.'
+                      ? '현재 위치 알림과 전체 알림, 서버 데이터 사용을 켜면 사용할 수 있어요.'
                       : !enabled
                           ? '현재 꺼져 있어요.'
                           : switch (service.status) {

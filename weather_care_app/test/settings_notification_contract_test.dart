@@ -239,7 +239,7 @@ void main() {
         find.byKey(
             const ValueKey('notification-toggle-showerAndLightRainEnabled')));
     expect(find.textContaining('소나기 예보 알림은 아니에요'), findsOneWidget);
-    expect(find.textContaining('우산도 켜고 GPS 정밀 위치'), findsOneWidget);
+    expect(find.textContaining('우산도 켜야 하며, 저장 지역은 예보 격자 기준'), findsOneWidget);
     expect(find.textContaining('안내해요.\n우산도'), findsOneWidget);
     expect(find.textContaining('가랑비'), findsNothing);
     await reveal(

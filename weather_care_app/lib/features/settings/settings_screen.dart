@@ -289,7 +289,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundLocation: widget.backgroundLocation,
           backgroundLocationEnabled: settings.backgroundLocationEnabled,
           backgroundLocationAvailable:
-              settings.locationMode == 'GPS' && _alertsEnabled,
+              settings.enabledNotificationRegionKeys.contains('GPS') &&
+                  _alertsEnabled,
           onBackgroundLocationChanged: (value) async {
             final updated = settings.copyWith(backgroundLocationEnabled: value);
             setState(() => settings = updated);
@@ -658,7 +659,7 @@ class _WeatherAlertsSettingsScreenState
               settingId: 'showerAndLightRainEnabled',
               title: '현재 비 안내',
               subtitle:
-                  '관측분석·레이더가 일치한 현재 비를 안내해요.\n우산도 켜고 GPS 정밀 위치를 확인해야 해요.\n소나기 예보 알림은 아니에요',
+                  '관측분석·레이더가 일치한 현재 비를 안내해요.\n우산도 켜야 하며, 저장 지역은 예보 격자 기준으로 확인해요.\n소나기 예보 알림은 아니에요',
               value: settings.showerAndLightRainEnabled,
               enabled: enabled,
               onChanged: (value) =>

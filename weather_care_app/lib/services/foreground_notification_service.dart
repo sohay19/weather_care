@@ -42,7 +42,9 @@ class ForegroundNotificationContent {
 
     final semanticKey = message.data['notificationKey']?.toString();
     final idSource = _hasText(semanticKey)
-        ? semanticKey!
+        ? message.data['notificationRegionId'] == null
+            ? semanticKey!
+            : '$semanticKey|${message.data['notificationRegionId']}'
         : message.messageId ?? '${notification.title}|${notification.body}';
     return ForegroundNotificationContent(
       id: foregroundNotificationId(idSource),

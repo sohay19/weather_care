@@ -56,6 +56,7 @@ enum _RegionSelectionMethod { administrative, address, map }
 class HomeScreen extends StatefulWidget {
   final int initialIndex;
   final NotificationTopic? initialNotificationTopic;
+  final NotificationRegion? initialNotificationRegion;
   final CurrentLocationService locationService;
   final GpsRegionNameService gpsRegionNameService;
   final WeatherService? weatherService;
@@ -78,6 +79,7 @@ class HomeScreen extends StatefulWidget {
     super.key,
     this.initialIndex = 2,
     this.initialNotificationTopic,
+    this.initialNotificationRegion,
     this.locationService = const CurrentLocationService(),
     this.gpsRegionNameService = const PlatformGpsRegionNameService(),
     this.weatherService,
@@ -129,9 +131,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _initialized = false;
   bool _leftApp = false;
   bool _registrationInitialized = false;
+  Future<void>? _gpsNotificationRegistrationFuture;
   RegionCatalog? _regionCatalog;
   ForecastRegion? get _manualRegion =>
-      _regionCatalog?.find(_settings.manualRegionKey);
+      _regionCatalog?.find(_settings.manualRegionKey) ??
+      (_settings.manualRegionKey == null &&
+              _settings.manualRegionName != null &&
+              _settings.currentRegionId != null
+          ? _notificationSnapshotRegion()
+          : null);
+
+  ForecastRegion? _notificationSnapshotRegion() {
+    final grid = _settings.currentRegionId!.split('_');
+    if (grid.length != 2) return null;
+    final nx = int.tryParse(grid[0]);
+    final ny = int.tryParse(grid[1]);
+    if (nx == null || ny == null || nx < 1 || nx > 149 || ny < 1 || ny > 253) {
+      return null;
+    }
+    return ForecastRegion(
+        code: '',
+        parentCode: '',
+        name: _settings.manualRegionName!,
+        nx: nx,
+        ny: ny,
+        fullName: _settings.manualRegionName!);
+  }
+
   int _locationRevision = 0;
   SettingsSaveController? _settingsSave;
   late final NotificationPermissionService _notificationPermission =
@@ -338,7 +364,42 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     _widgetServerUrl = config.serverUrl;
-    _settings = savedSettings;
+    // 첫 업데이트에서는 기존 알림 대상 한 곳만 유지한다.
+    _settings = savedSettings.copyWith(
+        notificationRegionKeys: savedSettings.enabledNotificationRegionKeys);
+    final notificationRegion = widget.initialNotificationRegion;
+    if (notificationRegion != null) {
+      var selected = _regionCatalog?.find(notificationRegion.key);
+      if (selected == null &&
+          notificationRegion.key == 'GPS' &&
+          notificationRegion.name != null) {
+        for (final region in _regionCatalog?.regions ?? <ForecastRegion>[]) {
+          if (region.nx == notificationRegion.nx &&
+              region.ny == notificationRegion.ny &&
+              region.fullName == notificationRegion.name) {
+            selected = region;
+            break;
+          }
+        }
+      }
+      if (selected != null &&
+          (selected.nx != notificationRegion.nx ||
+              selected.ny != notificationRegion.ny)) {
+        selected = null;
+      }
+      _settings = _settings.copyWith(
+          locationMode: 'MANUAL',
+          currentRegionId: '${notificationRegion.nx}_${notificationRegion.ny}',
+          manualRegionKey: selected?.key,
+          clearManualRegionKey: selected == null,
+          manualRegionName: notificationRegion.name,
+          savedRegionKeys: [
+            ..._settings.savedRegionKeys,
+            if (selected != null &&
+                !_settings.savedRegionKeys.contains(selected.key))
+              selected.key
+          ]);
+    }
     final access = widget.serverDataAccess ??
         ServerDataAccess(
             api: ApiClient(
@@ -596,20 +657,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 : null;
         final registration = _notificationRegistration;
         if (registration != null && !(_serverDataAccess?.paused ?? true)) {
-          final register = _registrationInitialized
-              ? registration.syncInstallation
-              : registration.initialize;
-          _registrationInitialized = true;
-          unawaited(register(
-                  installationId: _settings.installationId,
-                  nx: grid.nx,
-                  ny: grid.ny,
-                  locationMode: _settings.locationMode,
-                  coordinates: preciseCoordinates,
-                  locationMeasuredAt: _settings.locationMode == 'GPS'
-                      ? _location.measuredAt
-                      : null)
-              .then((_) => _syncBackgroundLocation()));
+          if (_settings.notificationEnabled &&
+              _settings.locationMode != 'GPS' &&
+              _settings.enabledNotificationRegionKeys.contains('GPS')) {
+            unawaited(_syncGpsNotificationRegistration());
+          } else {
+            final register = _registrationInitialized
+                ? registration.syncInstallation
+                : registration.initialize;
+            _registrationInitialized = true;
+            unawaited(register(
+                    installationId: _settings.installationId,
+                    nx: grid.nx,
+                    ny: grid.ny,
+                    locationMode: _settings.locationMode,
+                    coordinates: preciseCoordinates,
+                    locationMeasuredAt: _settings.locationMode == 'GPS'
+                        ? _location.measuredAt
+                        : null)
+                .then((_) => _syncBackgroundLocation()));
+          }
         }
         await _fetchWeather(
           revision,
@@ -1446,8 +1513,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _scaffoldKey.currentState?.openDrawer();
   }
 
+  Widget _regionNotificationSwitch(String key, String name) {
+    return Semantics(
+        label: '$name 알림',
+        child: Switch(
+          key: ValueKey('region-notification-$key'),
+          value: _settings.enabledNotificationRegionKeys.contains(key),
+          onChanged: (_serverDataAccess?.paused ?? true)
+              ? null
+              : (enabled) {
+                  final keys = _settings.enabledNotificationRegionKeys.toSet();
+                  if (enabled) {
+                    keys.add(key);
+                  } else {
+                    keys.remove(key);
+                  }
+                  unawaited(_handleSettingsChanged(_settings.copyWith(
+                      notificationRegionKeys: keys.toList())));
+                },
+        ));
+  }
+
   Widget _regionDrawer() {
     final colors = WeatherCareTheme.of(context);
+    final tilePadding = ListTileTheme.of(context).contentPadding ??
+        const EdgeInsetsDirectional.only(start: 16, end: 24);
     final gpsSelected = _settings.locationMode == 'GPS';
     return Drawer(
       key: const ValueKey('region-drawer'),
@@ -1461,8 +1551,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 children: [
                   Padding(
-                    padding:
-                        const EdgeInsets.only(left: 20, right: 8, bottom: 12),
+                    padding: const EdgeInsets.only(left: 20, right: 8),
                     child: Row(
                       children: [
                         Expanded(
@@ -1478,12 +1567,64 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ],
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    child: Text(
+                        _settings.notificationEnabled
+                            ? '지역별로 알림을 켜고 끌 수 있어요'
+                            : '전체 알림이 꺼져 있어요. 지역별 선택은 유지돼요.',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ),
+                  if (_settingsSave?.state.canRetry ?? false)
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_settingsSave!.state.message,
+                                  style: Theme.of(context).textTheme.bodySmall),
+                              TextButton(
+                                  onPressed: () => _saveSettings(_settings,
+                                      refreshWeather: false),
+                                  child: const Text('저장 다시 시도')),
+                            ])),
+                  Padding(
+                    padding: EdgeInsets.only(
+                        right: tilePadding
+                                .resolve(Directionality.of(context))
+                                .right -
+                            12,
+                        bottom: 2),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: SizedBox(
+                        width: 84,
+                        child: Transform.translate(
+                          offset: const Offset(-8, 12),
+                          child: Text('알림 ON/OFF',
+                            key: const ValueKey(
+                                'region-notification-column-label'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontFamily: WeatherCareTheme.fontSuite,
+                                color: colors.primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   ListTile(
-                    leading: const Icon(Icons.my_location_rounded),
+                    leading: Icon(gpsSelected
+                        ? Icons.check_circle_rounded
+                        : Icons.my_location_rounded),
                     title: const Text('현재 위치'),
                     selected: gpsSelected,
-                    trailing:
-                        gpsSelected ? const Icon(Icons.check_rounded) : null,
+                    subtitle: gpsSelected && _hasGpsRegionName
+                        ? Text(_gpsDisplayName)
+                        : null,
+                    trailing: _regionNotificationSwitch('GPS', '현재 위치'),
                     onTap: () {
                       _scaffoldKey.currentState?.closeDrawer();
                       if (!gpsSelected) {
@@ -1492,17 +1633,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       }
                     },
                   ),
+                  if (_settings.legacyNotificationRegionAvailable ||
+                      _settings.enabledNotificationRegionKeys
+                          .contains('LEGACY'))
+                    ListTile(
+                        leading: const Icon(Icons.notifications_outlined),
+                        title: const Text('이전에 설정한 지역'),
+                        subtitle: const Text('새 구역을 추가해 알림을 선택할 수 있어요.'),
+                        trailing:
+                            _regionNotificationSwitch('LEGACY', '이전에 설정한 지역')),
                   for (final key in _settings.savedRegionKeys)
                     if (_regionCatalog?.find(key) case final region?)
                       ListTile(
-                        leading: const Icon(Icons.location_on_outlined),
-                        title: Text(region.fullName),
+                        leading: Icon(!gpsSelected &&
+                                _settings.manualRegionKey == region.key
+                            ? Icons.check_circle_rounded
+                            : Icons.location_on_outlined),
+                        title: Text(region.displayName),
+                        subtitle: region.fullName == region.displayName
+                            ? null
+                            : Text(region.fullName
+                                .substring(
+                                    0,
+                                    region.fullName.length -
+                                        region.displayName.length)
+                                .trim()),
                         selected: !gpsSelected &&
                             _settings.manualRegionKey == region.key,
-                        trailing: !gpsSelected &&
-                                _settings.manualRegionKey == region.key
-                            ? const Icon(Icons.check_rounded)
-                            : null,
+                        trailing: _regionNotificationSwitch(
+                            region.key, region.fullName),
                         onTap: () {
                           _scaffoldKey.currentState?.closeDrawer();
                           unawaited(_handleSettingsChanged(_settings.copyWith(
@@ -1537,6 +1696,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _addRegion() async {
+    if (_settings.savedRegionKeys.length >= 49) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('구역은 최대 49개까지 추가할 수 있어요.')));
+      return;
+    }
     final method = await showModalBottomSheet<_RegionSelectionMethod>(
       context: context,
       showDragHandle: true,
@@ -1675,6 +1839,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (_serverDataAccess?.paused ?? true) {
       updated = updated.copyWith(notificationEnabled: false);
     }
+    final onlyRegionNotificationsChanged =
+        updated.notificationRegionKeys != _settings.notificationRegionKeys &&
+            updated.locationMode == _settings.locationMode &&
+            updated.manualRegionKey == _settings.manualRegionKey;
     final locationChanged = _settings.locationMode != updated.locationMode ||
         _settings.currentRegionId != updated.currentRegionId ||
         _settings.manualRegionKey != updated.manualRegionKey;
@@ -1702,14 +1870,65 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           forceLocationRefresh: updated.locationMode == 'GPS'));
     }
     if (!_backgroundLocationWanted) unawaited(_syncBackgroundLocation());
-    return _saveSettings(updated, refreshWeather: !locationChanged).then((_) {
-      unawaited(_syncBackgroundLocation());
+    return _saveSettings(updated,
+            refreshWeather: !locationChanged && !onlyRegionNotificationsChanged)
+        .then((_) {
+      if (onlyRegionNotificationsChanged &&
+          _settings.notificationEnabled &&
+          _settings.locationMode != 'GPS' &&
+          _settings.enabledNotificationRegionKeys.contains('GPS')) {
+        unawaited(_syncGpsNotificationRegistration());
+      } else {
+        unawaited(_syncBackgroundLocation());
+      }
     });
+  }
+
+  Future<void> _syncGpsNotificationRegistration() {
+    return _gpsNotificationRegistrationFuture ??=
+        _registerGpsNotificationLocation().catchError((Object _) {
+      /* 위치 실패가 수동 지역 예보를 막지 않는다. */
+    }).whenComplete(() => _gpsNotificationRegistrationFuture = null);
+  }
+
+  Future<void> _registerGpsNotificationLocation() async {
+    final registration = _notificationRegistration;
+    if (registration == null ||
+        !_settings.notificationEnabled ||
+        (_serverDataAccess?.paused ?? true)) {
+      return;
+    }
+    final result = await _locationService.locate(requestPermission: false);
+    if (!mounted ||
+        _settings.locationMode == 'GPS' ||
+        !_settings.notificationEnabled ||
+        !_settings.enabledNotificationRegionKeys.contains('GPS') ||
+        (_serverDataAccess?.paused ?? true)) {
+      return;
+    }
+    final coordinates = result.hasLocation ? result.coordinates : null;
+    final grid = coordinates == null
+        ? _weatherGrid
+        : KmaGrid.fromCoordinates(
+            latitude: coordinates.latitude, longitude: coordinates.longitude);
+    if (grid == null) return;
+    final register = _registrationInitialized
+        ? registration.syncInstallation
+        : registration.initialize;
+    _registrationInitialized = true;
+    await register(
+        installationId: _settings.installationId,
+        nx: grid.nx,
+        ny: grid.ny,
+        locationMode: coordinates == null ? 'MANUAL' : 'GPS',
+        coordinates: result.canUseLocalAnalysis ? coordinates : null,
+        locationMeasuredAt: coordinates == null ? null : result.measuredAt);
+    await _syncBackgroundLocation();
   }
 
   bool get _backgroundLocationWanted =>
       _settings.backgroundLocationEnabled &&
-      _settings.locationMode == 'GPS' &&
+      _settings.enabledNotificationRegionKeys.contains('GPS') &&
       _settings.notificationEnabled &&
       !(_serverDataAccess?.paused ?? true) &&
       _settingsSave?.state != SettingsSaveState.localFailed;
@@ -1779,6 +1998,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _syncNotificationPermission() {
     if (_serverDataAccess?.paused ?? true) return;
+    if (_settings.notificationEnabled &&
+        _settings.locationMode != 'GPS' &&
+        _settings.enabledNotificationRegionKeys.contains('GPS')) {
+      unawaited(_syncGpsNotificationRegistration());
+      return;
+    }
     final grid = _weatherGrid;
     if (grid == null) return;
     unawaited(_notificationRegistration?.syncInstallation(

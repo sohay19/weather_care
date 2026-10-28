@@ -13,6 +13,11 @@ export interface FcmPayload {
   notificationKey: string;
   notificationTarget: NotificationTarget;
   notificationTopic: NotificationTopic;
+  notificationRegionKey?: string;
+  notificationRegionId?: string;
+  notificationRegionName?: string;
+  notificationRegionNx?: string;
+  notificationRegionNy?: string;
   expiresAt?: string;
   storeUrl?: string;
 }
@@ -134,6 +139,13 @@ async function sendFcmMessage(
             notificationKey: payload.notificationKey,
             notificationTarget: payload.notificationTarget,
             notificationTopic: payload.notificationTopic,
+            ...(payload.notificationRegionKey ? {
+              notificationRegionKey: payload.notificationRegionKey,
+              notificationRegionId: payload.notificationRegionId!,
+              notificationRegionName: payload.notificationRegionName ?? '',
+              notificationRegionNx: payload.notificationRegionNx!,
+              notificationRegionNy: payload.notificationRegionNy!,
+            } : {}),
             ...(payload.storeUrl ? { storeUrl: payload.storeUrl } : {}),
             ...(payload.expiresAt ? { expiresAt: payload.expiresAt } : {}),
           },

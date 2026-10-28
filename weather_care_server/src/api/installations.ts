@@ -10,6 +10,7 @@ import { ownerForRequest } from '../security/installationAccess';
 import { bodyLimit } from 'hono/body-limit';
 import { minimumAgeAssertionShape } from '../validation/minimumAge';
 import backgroundLocation from './backgroundLocation';
+import notificationRegions from './notificationRegions';
 import { isValidCommuteSchedule } from '../notification/commuteSchedule';
 
 const installationBodySchema = z
@@ -35,6 +36,7 @@ const installationBodySchema = z
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', bodyLimit({ maxSize: 8192 }));
 router.route('/', backgroundLocation);
+router.route('/', notificationRegions);
 
 router.put('/:installationId', async (c) => {
   const installationId = c.req.param('installationId');

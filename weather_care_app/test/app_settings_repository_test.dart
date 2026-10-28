@@ -5,6 +5,29 @@ import 'package:weather_care/services/app_settings_repository.dart';
 import 'package:weather_care/services/installation_identity.dart';
 
 void main() {
+  test('구역 구독과 발송 당시 위치 이름을 기기 저장에서 보존한다', () async {
+    SharedPreferences.setMockInitialValues({});
+    const repository = AppSettingsRepository();
+    final settings = AppSettings.fallback('test').copyWith(
+        notificationRegionKeys: ['GPS', 'manual'],
+        manualRegionName: '서울 구로구 구로3동',
+        legacyNotificationRegionAvailable: true);
+    await repository.save(settings);
+    final restored = await repository.load('test');
+    expect(restored.notificationRegionKeys, ['GPS', 'manual']);
+    expect(restored.manualRegionName, '서울 구로구 구로3동');
+    expect(restored.legacyNotificationRegionAvailable, isTrue);
+  });
+  test('구역 키가 없던 과거 수동 설정도 이전 지역만 유지하고 OFF 후 다시 선택할 수 있다', () {
+    final old = AppSettings.fromJson(
+        {'locationMode': 'MANUAL', 'currentRegion': '98_76'}, 'test');
+    expect(old.enabledNotificationRegionKeys, ['LEGACY']);
+    final disabled = old.copyWith(notificationRegionKeys: []);
+    final restored = AppSettings.fromJson(disabled.toJson(), 'test');
+    expect(restored.enabledNotificationRegionKeys, isEmpty);
+    expect(restored.legacyNotificationRegionAvailable, isTrue);
+  });
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });

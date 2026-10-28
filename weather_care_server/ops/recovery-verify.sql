@@ -15,5 +15,11 @@ AND name NOT IN ('_cf_KV', '_cf_METADATA', 'd1_migrations', 'installations', 'no
 'installation_activity', 'installation_ownership_challenges', 'legacy_installation_ownership',
 'active_regions', 'weather_cache', 'daily_weather_snapshots', 'weekly_forecast_records',
 'api_usage_daily', 'grid_observation_snapshots', 'grid_extra_snapshots', 'nationwide_forecast_fields',
+'notification_region_preferences', 'notification_regions', 'notification_region_state', 'notification_region_warning_state',
 'administrative_boundary_dataset', 'administrative_boundary_features', 'administrative_boundary_grid_regions');
 PRAGMA foreign_key_check;
+
+SELECT 'notification_region_preferences' AS table_name, COUNT(*) AS remaining FROM notification_region_preferences;
+SELECT 'notification_regions' AS table_name, COUNT(*) AS remaining FROM notification_regions;
+SELECT 'notification_region_state' AS table_name, COUNT(*) AS remaining FROM notification_region_state;
+SELECT 'notification_region_warning_state' AS table_name, COUNT(*) AS remaining FROM notification_region_warning_state;

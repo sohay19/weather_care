@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +25,7 @@ import 'package:weather_care/services/gps_region_name_service.dart';
 import 'package:weather_care/services/home_widget_service.dart';
 import 'package:weather_care/services/kma_grid.dart';
 import 'package:weather_care/services/notification_registration_service.dart';
+import 'package:weather_care/services/notification_destination.dart';
 import 'package:weather_care/services/settings_sync_service.dart';
 import 'package:weather_care/services/weather_service.dart';
 import 'package:weather_care/services/region_catalog.dart';
@@ -329,31 +332,42 @@ void main() {
       AddressSearchService? addressSearchService,
       Future<bool> Function(Uri)? openExternalLink,
       int initialIndex = 4,
+      NotificationRegion? notificationRegion,
+      GlobalKey? captureKey,
+      bool dark = false,
       VoidCallback? onHomeReady,
       DateTime Function()? now}) async {
-    await tester.pumpWidget(MaterialApp(
-        theme: ThemeData(splashFactory: NoSplash.splashFactory),
-        home: HomeScreen(
-            serverDataAccess: access,
-            initialIndex: initialIndex,
-            locationService: location,
-            gpsRegionNameService: gpsRegionName,
-            weatherService: weather,
-            homeWidgetService: widgetService ?? const HomeWidgetService(),
-            settingsSync: sync,
-            regionCatalog: catalog,
-            regionMapBuilder: regionMapBuilder,
-            addressSearchService:
-                addressSearchService ?? const PlatformAddressSearchService(),
-            postalAddressPicker: (_, query) async => const PostalAddress(
-                  roadAddress: '서울특별시 종로구 세종대로 175',
-                  jibunAddress: '서울특별시 종로구 세종로 1-68',
-                ),
-            openExternalLink: openExternalLink,
-            onHomeReady: onHomeReady,
-            now: now,
-            notificationPermission: notificationPermission,
-            notificationRegistration: registration)));
+    await tester.pumpWidget(RepaintBoundary(
+        key: captureKey,
+        child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: captureKey == null
+                ? ThemeData(splashFactory: NoSplash.splashFactory)
+                : dark
+                    ? WeatherCareTheme.dark()
+                    : WeatherCareTheme.light(),
+            home: HomeScreen(
+                serverDataAccess: access,
+                initialIndex: initialIndex,
+                initialNotificationRegion: notificationRegion,
+                locationService: location,
+                gpsRegionNameService: gpsRegionName,
+                weatherService: weather,
+                homeWidgetService: widgetService ?? const HomeWidgetService(),
+                settingsSync: sync,
+                regionCatalog: catalog,
+                regionMapBuilder: regionMapBuilder,
+                addressSearchService: addressSearchService ??
+                    const PlatformAddressSearchService(),
+                postalAddressPicker: (_, query) async => const PostalAddress(
+                      roadAddress: '서울특별시 종로구 세종대로 175',
+                      jibunAddress: '서울특별시 종로구 세종로 1-68',
+                    ),
+                openExternalLink: openExternalLink,
+                onHomeReady: onHomeReady,
+                now: now,
+                notificationPermission: notificationPermission,
+                notificationRegistration: registration))));
     // Asset loading and SharedPreferences initialization are asynchronous.
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 20));
@@ -1504,7 +1518,9 @@ void main() {
     pending.complete(_weather(60, 127));
     await tester.pumpAndSettle();
     expect(screen(tester).regionName, '검증 지역 98/76');
-    expect(registration.calls.last.coordinates, isNull);
+    // 현재 위치 알림은 GPS를 유지하고, 수동 지역 예보에는 좌표를 보내지 않는다.
+    expect(registration.calls.last.coordinates, _seoul);
+    expect(weather.calls.last.coordinates, isNull);
     expect(widgetService.published, hasLength(1));
     expect(widgetService.published.single.region, '검증 지역 98/76');
     expect(Uri.parse(widgetService.refreshUrls.single!).queryParameters,
@@ -1709,6 +1725,166 @@ void main() {
     expect(screen(tester).regionName, second.fullName);
   });
 
+  if (const bool.fromEnvironment('CAPTURE_REGION_MENU')) {
+    testWidgets('구역 알림 메뉴 캡처', (tester) async {
+      tester.view.physicalSize = const Size(412, 892);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      for (final entry in <String, List<String>>{
+        'Ahem': ['SUITE-Regular.ttf'],
+        'Roboto': ['SUITE-Regular.ttf'],
+        'sans-serif': ['SUITE-Regular.ttf'],
+        'SUITE': ['SUITE-Regular.ttf', 'SUITE-Bold.ttf', 'SUITE-Heavy.ttf'],
+        'NeoHyundai': ['NeoHyundai R.ttf', 'NeoHyundai B.ttf'],
+        'ChosunSg': ['ChosunSg.TTF', 'ChosunKg.TTF', 'ChosunBg.TTF'],
+        'Mona': ['Mona10.ttf', 'Mona10-Bold.ttf'],
+      }.entries) {
+        final loader = FontLoader(entry.key);
+        for (final font in entry.value) {
+          loader.addFont(Future.value(ByteData.sublistView(
+              File('assets/fonts/$font').readAsBytesSync())));
+        }
+        await loader.load();
+      }
+      await (FontLoader('MaterialIcons')
+            ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf')))
+          .load();
+      final first = catalog.search('서울 구로 구로3동').single;
+      final second = catalog.search('부산 해운대 좌1동').single;
+      final third = catalog.search('경기 시흥 배곧1동').single;
+      final output = Directory('build/previews')..createSync(recursive: true);
+      for (final dark in [false, true]) {
+        final boundary = GlobalKey();
+        await const AppSettingsRepository().save(AppSettings.fallback('capture')
+            .copyWith(
+                locationMode: 'MANUAL',
+                manualRegionKey: first.key,
+                currentRegionId: first.gridId,
+                savedRegionKeys: [first.key, second.key, third.key],
+                notificationRegionKeys: [first.key, second.key]));
+        await start(tester, initialIndex: 2, captureKey: boundary, dark: dark);
+        await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+        await tester.pumpAndSettle();
+        await tester.runAsync(() async {
+          final image = await (boundary.currentContext!.findRenderObject()
+                  as RenderRepaintBoundary)
+              .toImage(pixelRatio: 2);
+          final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+          File('${output.path}/region-notifications-${dark ? 'dark' : 'light'}.png')
+              .writeAsBytesSync(bytes!.buffer.asUint8List());
+          image.dispose();
+        });
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpAndSettle();
+      }
+    });
+  }
+
+  testWidgets('구역 알림 토글은 화면 선택과 다른 지역 알림을 바꾸지 않고 저장한다', (tester) async {
+    final first = catalog.search('서울 구로 구로3동').single;
+    final second = catalog.search('부산 해운대 좌1동').single;
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(
+            locationMode: 'MANUAL',
+            manualRegionKey: first.key,
+            currentRegionId: first.gridId,
+            savedRegionKeys: [first.key, second.key]));
+    await start(tester, initialIndex: 2);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    final firstSwitch =
+        find.byKey(ValueKey('region-notification-${first.key}'));
+    final secondSwitch =
+        find.byKey(ValueKey('region-notification-${second.key}'));
+    expect(tester.widget<Switch>(firstSwitch).value, isTrue);
+    expect(tester.widget<Switch>(secondSwitch).value, isFalse);
+    expect(find.text('지역별로 알림을 켜고 끌 수 있어요'), findsOneWidget);
+    final columnLabel =
+        find.byKey(const ValueKey('region-notification-column-label'));
+    final labelStyle = tester.widget<Text>(columnLabel).style!;
+    expect(labelStyle.fontFamily, WeatherCareTheme.fontSuite);
+    expect(labelStyle.fontSize, 12);
+    expect(labelStyle.fontWeight, FontWeight.w700);
+    expect(labelStyle.color,
+        WeatherCareTheme.of(tester.element(columnLabel)).primary);
+    final gpsSwitch = find.byKey(const ValueKey('region-notification-GPS'));
+    expect(tester.getCenter(columnLabel).dx,
+        closeTo(tester.getCenter(gpsSwitch).dx, 1));
+    expect(tester.getBottomRight(columnLabel).dy,
+        lessThan(tester.getCenter(gpsSwitch).dy - 16));
+    final calls = weather.calls.length;
+    await tester.tap(secondSwitch);
+    await tester.pumpAndSettle();
+    expect(weather.calls.length, calls);
+    expect(find.text('구역 선택'), findsOneWidget);
+    expect(sync.calls.last.manualRegionKey, first.key);
+    expect(sync.calls.last.enabledNotificationRegionKeys,
+        containsAll([first.key, second.key]));
+    await tester.tap(firstSwitch);
+    await tester.pumpAndSettle();
+    final stored = await const AppSettingsRepository().load('test');
+    expect(stored.enabledNotificationRegionKeys, [second.key]);
+    expect(stored.manualRegionKey, first.key);
+  });
+
+  testWidgets('구역 토글은 작은 화면과 큰 글씨에서 표시되고 전체 OFF 선택도 보존한다', (tester) async {
+    tester.view.physicalSize = const Size(320, 800);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final region = catalog.search('서울 구로 구로3동').single;
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(notificationEnabled: false, savedRegionKeys: [region.key]));
+    await start(tester, initialIndex: 2);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('전체 알림이 꺼져'), findsOneWidget);
+    await tester.tap(find.byKey(ValueKey('region-notification-${region.key}')));
+    await tester.pumpAndSettle();
+    expect(sync.calls.last.notificationEnabled, isFalse);
+    expect(sync.calls.last.enabledNotificationRegionKeys, contains(region.key));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('알림의 저장 구역을 열어도 기존 구독을 켜거나 끄지 않는다', (tester) async {
+    final region = catalog.search('서울 구로 구로3동').single;
+    await const AppSettingsRepository().save(
+        AppSettings.fallback('test').copyWith(notificationRegionKeys: ['GPS']));
+    await start(tester,
+        initialIndex: 0,
+        notificationRegion: NotificationRegion(
+            key: region.key,
+            nx: region.nx,
+            ny: region.ny,
+            name: region.fullName));
+    expect(weather.calls.last.nx, region.nx);
+    expect(weather.calls.last.ny, region.ny);
+    expect(screen(tester).initialSettings!.manualRegionKey, region.key);
+    expect(
+        screen(tester).initialSettings!.enabledNotificationRegionKeys, ['GPS']);
+    expect(
+        screen(tester).initialSettings!.savedRegionKeys, contains(region.key));
+  });
+
+  testWidgets('GPS 알림은 클릭 당시 위치 대신 발송 당시 격자를 열고 앱 재시작 후 유지한다', (tester) async {
+    const target =
+        NotificationRegion(key: 'GPS', nx: 58, ny: 125, name: '서울 구로구 구로3동');
+    await start(tester, initialIndex: 2, notificationRegion: target);
+    expect(weather.calls.last.nx, 58);
+    expect(weather.calls.last.ny, 125);
+    expect(weather.calls.last.coordinates, isNull);
+    expect(screen(tester).initialSettings!.locationMode, 'MANUAL');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await start(tester, initialIndex: 2);
+    expect(weather.calls.last.nx, 58);
+    expect(weather.calls.last.ny, 125);
+  });
+
   testWidgets('Main에서 구역을 추가하고 저장 구역과 GPS를 전환한다', (tester) async {
     final first = catalog.search('부산 해운대 좌1동').single;
     final second = catalog.search('제주 우도면').single;
@@ -1744,7 +1920,7 @@ void main() {
     expect(find.byType(BottomSheet), findsNothing);
     expect(find.text('행정지역명으로 선택'), findsNothing);
     expect(find.text('현재 위치'), findsOneWidget);
-    expect(find.text(first.fullName), findsOneWidget);
+    expect(find.text(first.displayName), findsOneWidget);
     await tester.tap(find.text('구역 추가'));
     await tester.pumpAndSettle();
     expect(find.text('행정지역명으로 선택'), findsOneWidget);
@@ -1758,7 +1934,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('main-region-menu')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(first.fullName));
+    await tester.tap(find.text(first.displayName));
     await tester.pumpAndSettle();
     expect(weather.calls.last.nx, first.nx);
     expect(weather.calls.last.coordinates, isNull);
@@ -1774,6 +1950,8 @@ void main() {
 
   testWidgets('행정지역명을 선택하면 기존 격자로 조회하고 저장하며 중복 추가하지 않는다', (tester) async {
     final region = catalog.search('서울 구로 구로3동').single;
+    await const AppSettingsRepository().save(
+        AppSettings.fallback('test').copyWith(notificationRegionKeys: []));
     await start(tester, initialIndex: 2);
     final gpsRequests = location.requests.length;
     for (var i = 0; i < 2; i++) {
@@ -1879,6 +2057,8 @@ void main() {
 
   testWidgets('주소로 구역을 추가하면 기존 격자만 저장·조회하고 GPS는 요청하지 않는다', (tester) async {
     final addresses = _AddressSearch();
+    await const AppSettingsRepository().save(
+        AppSettings.fallback('test').copyWith(notificationRegionKeys: []));
     await start(tester, initialIndex: 2, addressSearchService: addresses);
     final gpsRequests = location.requests.length;
     await tester.tap(find.byKey(const ValueKey('main-region-menu')));

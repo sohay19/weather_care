@@ -92,6 +92,7 @@ Future<Widget> _initializeApp() async {
   );
 
   return AppUpdateGate(
+    checkVersion: !kDebugMode,
     onComplete: _startAdsAfterAppFrame,
     child: WeatherCareApp(
       navigatorKey: _appNavigatorKey,

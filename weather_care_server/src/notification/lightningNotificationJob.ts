@@ -1,3 +1,4 @@
+import { expandNotificationRegions, regionHistoryKey, regionPushData, regionStillEnabled, regionTitle, type RegionTarget } from './notificationRegions';
 import { weatherDatabase } from '../database/weatherDatabase';
 import { installationExpirySql } from '../database/dataRetention';
 import { regionName } from '../regions/regionCatalog';
@@ -5,7 +6,7 @@ import { lightningForGrid, readLightningFeed } from '../services/lightning';
 import type { ServerEnv } from '../types';
 import { sendBatch, type FcmPayload, type FcmSendResult } from './fcmClient';
 
-interface LightningInstallation {
+interface LightningInstallation extends RegionTarget {
   installationId: string;
   token: string;
   nx: number;
@@ -38,12 +39,13 @@ export async function runLightningNotificationJob(env: ServerEnv, dependencies: 
     FROM installations i JOIN notification_settings s
     ON s.installation_id=i.installation_id WHERE ${eligibility}`)
     .bind(now.toISOString()).all<LightningInstallation>();
-  for (const installation of installations.results) {
-    const position = installation.locationMode === 'GPS' && installation.latitude != null && installation.longitude != null
+  for (const installation of await expandNotificationRegions(env, installations.results, now)) {
+    const position = (installation.scopeId ? installation.regionKey === 'GPS' : installation.locationMode === 'GPS') && installation.latitude != null && installation.longitude != null
       ? { latitude: installation.latitude, longitude: installation.longitude } : undefined;
     const summary = lightningForGrid(feed, installation.nx, installation.ny, clock(), position);
     if (!summary.latestObservedAt || !summary.expiresAt || !summary.feedExpiresAt) continue;
-    const notificationKey = `LIGHTNING_${installation.nx}_${installation.ny}_${summary.latestObservedAt}`;
+    const wireKey = `LIGHTNING_${installation.nx}_${installation.ny}_${summary.latestObservedAt}`;
+    const notificationKey = regionHistoryKey(wireKey, installation.scopeId);
     const expiresAt = new Date(Math.min(Date.parse(summary.expiresAt), Date.parse(summary.feedExpiresAt))).toISOString();
     const claimedAt = clock();
     if (Date.parse(expiresAt) <= claimedAt.getTime()) continue;
@@ -61,19 +63,23 @@ export async function runLightningNotificationJob(env: ServerEnv, dependencies: 
     const region = regionName(installation.nx, installation.ny);
     const localTime = new Date(Date.parse(summary.latestObservedAt) + 9 * 3_600_000).toISOString().slice(11, 16);
     const payload: FcmPayload = {
-      token: installation.token, notificationKey, notificationTarget: 'WEATHER_DETAILS',
+      token: installation.token, notificationKey: wireKey, ...regionPushData(installation), notificationTarget: 'WEATHER_DETAILS',
       notificationTopic: 'LIGHTNING', expiresAt,
-      title: `${region} 낙뢰 관측`,
+      title: installation.regionName ? regionTitle('낙뢰 관측', installation) : `${region} 낙뢰 관측`,
       body: `${localTime} ${summary.distanceBasis === 'COORDINATES' ? '등록 위치로부터' : '지역 기준점으로부터'} 약 ${summary.latestDistanceKm!.toFixed(1)}km에서 낙뢰가 관측됐어요. 안전한 건물이나 자동차 안으로 이동하세요.`,
     };
     try {
       // 전송 직전에 토큰·설정·위치와 자료 유효성을 다시 확인한다.
-      const current = await env.DB.prepare(`SELECT 1 FROM installations i JOIN notification_settings s
+      const current = installation.scopeId
+        ? await env.DB.prepare(`SELECT 1 FROM installations i JOIN notification_settings s ON s.installation_id=i.installation_id
+          WHERE i.installation_id=? AND i.fcm_token=? AND ${eligibility}`)
+          .bind(installation.installationId, installation.token, clock().toISOString()).first()
+        : await env.DB.prepare(`SELECT 1 FROM installations i JOIN notification_settings s
         ON s.installation_id=i.installation_id WHERE i.installation_id=? AND i.fcm_token=?
         AND i.nx=? AND i.ny=? AND i.latitude IS ? AND i.longitude IS ? AND i.location_mode=? AND ${eligibility}`)
         .bind(installation.installationId, installation.token, installation.nx, installation.ny,
           installation.latitude, installation.longitude, installation.locationMode, clock().toISOString()).first();
-      if (!current || clock().getTime() >= Date.parse(expiresAt)) {
+      if (!current || !await regionStillEnabled(env.DB, installation.installationId, installation) || clock().getTime() >= Date.parse(expiresAt)) {
         await releaseClaim(env.DB, installation.installationId, notificationKey);
         continue;
       }

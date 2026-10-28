@@ -2,6 +2,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/notification_destination.dart';
 
 void main() {
+  test('지역 정보는 기존 알림 목적지와 함께 읽고 손상된 지역만 무시한다', () {
+    final data = <String, dynamic>{
+      'notificationKey': 'MORNING_BRIEF',
+      'notificationTarget': 'MAIN',
+      'notificationTopic': 'OVERVIEW',
+      'notificationRegionKey': 'GPS',
+      'notificationRegionNx': '58',
+      'notificationRegionNy': '125',
+      'notificationRegionName': '서울 구로구 구로3동'
+    };
+    final destination = NotificationDestination.fromMessageData(data);
+    expect(destination.target, NotificationTarget.main);
+    expect(destination.region!.nx, 58);
+    expect(destination.region!.name, '서울 구로구 구로3동');
+    for (final value in ['0', '150', 'bad']) {
+      expect(
+          NotificationDestination.fromMessageData(
+              {...data, 'notificationRegionNx': value}).region,
+          isNull);
+    }
+    expect(
+        NotificationDestination.fromMessageData(
+            {'notificationKey': 'MORNING_BRIEF'}).region,
+        isNull);
+  });
+
   test('서버가 지정한 오전 브리핑은 메인으로 이동한다', () {
     final destination = NotificationDestination.fromMessageData({
       'notificationTarget': 'MAIN',

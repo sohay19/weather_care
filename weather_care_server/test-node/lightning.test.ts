@@ -1,3 +1,5 @@
+import { saveNotificationRegions } from '../src/notification/notificationRegions';
+import { KMA_ADMINISTRATIVE_AREAS } from '../src/regions/kmaAdministrativeAreas';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { collectGridLightning } from '../src/collection/gridExtraCollection';
 import gridExtraRoutes from '../src/api/gridExtra';
@@ -50,6 +52,22 @@ function sender(sent: FcmPayload[], success = true) {
       success, unregistered: false, status: success ? 200 : 503 }));
   };
 }
+
+it('여러 동의 낙뢰 알림은 지역별로 발송·중복 방지하고 전체 구역 OFF를 따른다', async () => {
+  installation(); state(); snapshot(['2026-10-20T03:10:00Z']);
+  const keys=KMA_ADMINISTRATIVE_AREAS.filter(r=>r[2]===grid.nx && r[3]===grid.ny && !r[0].endsWith('00000')).slice(0,2)
+    .map(r=>`${r[0]}|${r[1].split(' ').at(-1)}|${r[2]}|${r[3]}`);
+  expect(keys).toHaveLength(2);
+  await saveNotificationRegions(env.DB,'test-installation','synthetic',keys.map(key=>({key,enabled:true})));
+  const sent:FcmPayload[]=[];
+  await runLightningNotificationJob(env,{now:()=>now,sender:sender(sent)});
+  await runLightningNotificationJob(env,{now:()=>now,sender:sender(sent)});
+  expect(sent).toHaveLength(2); expect(new Set(sent.map(p=>p.notificationRegionId)).size).toBe(2);
+  expect(sent.every(p=>p.title.startsWith('[') && p.title.endsWith('] 낙뢰 관측'))).toBe(true);
+  expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM lightning_notification_claims').get()).toEqual({n:2});
+  await saveNotificationRegions(env.DB,'test-installation','synthetic',keys.map(key=>({key,enabled:false})));
+  await runLightningNotificationJob(env,{now:()=>now,sender:sender(sent)}); expect(sent).toHaveLength(2);
+});
 
 describe('낙뢰 관측 유효성·수집 상태', () => {
   it('다른 격자도 반경 20km 안이면 포함하고 최신 관측의 거리를 반환한다', async () => {

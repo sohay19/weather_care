@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'features/home/home_screen.dart';
@@ -50,14 +51,21 @@ class WeatherCareApp extends StatelessWidget {
               ? arguments
               : initialDestination;
           return AppUpdateGate(
+            checkVersion: !kDebugMode,
             child:
                 StoreUpdateNotificationScreen(storeUrl: destination?.storeUrl),
           );
         },
-        '/': (_) => HomeScreen(
+        '/': (context) {
+          final arguments = ModalRoute.of(context)?.settings.arguments;
+          final destination = arguments is NotificationDestination
+              ? arguments
+              : initialDestination;
+          return HomeScreen(
+              initialNotificationRegion: destination?.region,
               onHomeReady: onHomeReady,
-              adRemoval: adRemoval,
-            ),
+              adRemoval: adRemoval);
+        },
         '/settings': (_) => HomeScreen(
               initialIndex: 4,
               onHomeReady: onHomeReady,
@@ -71,6 +79,7 @@ class WeatherCareApp extends StatelessWidget {
           return HomeScreen(
             initialIndex: 0,
             initialNotificationTopic: destination?.topic,
+            initialNotificationRegion: destination?.region,
             onHomeReady: onHomeReady,
             adRemoval: adRemoval,
           );

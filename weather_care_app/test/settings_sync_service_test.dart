@@ -7,17 +7,39 @@ class _Client extends ApiClient {
   Map<String, dynamic>? body;
   String? path;
   bool fail = false;
+  final calls = <({String path, Map<String, dynamic> body})>[];
   _Client() : super(baseUrl: '');
   @override
   Future<void> putJson(String path, Map<String, dynamic> body,
       {Map<String, String>? query}) async {
     this.body = body;
     this.path = path;
+    calls.add((path: path, body: body));
     if (fail) throw StateError('HTTP 400');
   }
 }
 
 void main() {
+  test('새 앱 구역 구독은 기존 설정 필드와 분리하고 OFF 지역도 명시한다', () async {
+    final client = _Client();
+    await SettingsSyncService(client).save(AppSettings.fallback('test')
+        .copyWith(
+            savedRegionKeys: ['region1', 'region2'],
+            notificationRegionKeys: ['GPS', 'region2']));
+    expect(client.calls, hasLength(2));
+    expect(client.calls.first.path, '/api/v1/notification-settings/test');
+    expect(client.calls.first.body.containsKey('regions'), isFalse);
+    expect(client.calls.last.path,
+        '/api/v1/installations/test/notification-regions');
+    expect(client.calls.last.body, {
+      'regions': [
+        {'key': 'GPS', 'enabled': true},
+        {'key': 'region1', 'enabled': false},
+        {'key': 'region2', 'enabled': true}
+      ]
+    });
+  });
+
   test('알림 설정 API에는 출퇴근 시간을 포함한 허용 필드만 전송한다', () async {
     final settings = AppSettings.fallback('test').copyWith(
         locationMode: 'MANUAL',

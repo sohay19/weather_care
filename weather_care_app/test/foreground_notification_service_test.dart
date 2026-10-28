@@ -3,6 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/services/foreground_notification_service.dart';
 
 void main() {
+  test('같은 종류의 다른 지역 알림은 덮어쓰지 않고 지역 클릭 데이터를 유지한다', () {
+    ForegroundNotificationContent content(String region) =>
+        ForegroundNotificationContent.fromRemoteMessage(RemoteMessage(data: {
+          'notificationKey': 'MORNING_BRIEF',
+          'notificationRegionId': region,
+          'notificationRegionKey': region
+        }, notification: const RemoteNotification(title: '지역별 준비물')))!;
+    expect(content('a').id, isNot(content('b').id));
+    expect(content('a').id, content('a').id);
+    expect(
+        decodeForegroundNotificationData(
+            content('a').payload)!['notificationRegionKey'],
+        'a');
+  });
+
   test('유효 시간이 지난 낙뢰 전경 알림은 표시하지 않는다', () {
     expect(
         ForegroundNotificationContent.fromRemoteMessage(const RemoteMessage(

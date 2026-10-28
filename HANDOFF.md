@@ -13585,3 +13585,132 @@
 - 최종 서버 코드와 기존 시험 결과를 확인했다. 기존 두 알림 설정 API 경로/인증/위치 등록/알림 시간은 유지되고, 출퇴근 필드 없는 구 앱 요청은 현재 설정과 병합하므로 저장된 구간을 덮어쓰지 않는다. 합성0014·0017·0019→0020 마이그레이션 데이터 보존과 새 기본값 및 기존 알림 경로 시험은 최종 Worker54개·Node34개 통과 기록을 확인했다. 이후 서버 소스 변경이 없어 시험은 반복하지 않았다. 앱은 최종 여백 추가 후 관련24개 시험·실기기 확인·일반 제품 APK 빌드 통과 기록을 근거로 한다.
 - 운영 배포 시 운영/시험 사용자 DB 각각 node-migrations/users/0003_commute_notification_schedule.sql을 먼저 적용해야 한다. 새 서버만 먼저 올리고 컬럼이 없으면 설정 조회·스케줄러에 SQL 오류가 발생할 수 있다. 새 서버는 구 앱과 호환되며 구 앱에도 기본07:00~10:00/17:00~20:00 출퇴근 푸시 제한이 적용된다. 개인 시간 변경 UI는 새 앱에만 있다. 실제 운영 배포/기존 스토어 설치본의 운영 왕복 검증을 수행한 것으로 단정하지 않는다.
 - fetch 후 master HEAD와 weather_care/master가78770c0으로 ahead/behind0/0임을 확인했다. git diff --check 통과 및 포함 범위를 확인한 뒤 현재 master에서 전체 변경을 커밋하고 weather_care/master로 일반 푸시한다. 이번 사용자 요청은 커밋·푸시와 호환성 질문이므로 운영 서버/DB/스토어 배포는 하지 않는다.
+## 2026-10-28 운영 출퇴근 알림 사용자 DB 마이그레이션·서버 배포 및 기존 앱 검증
+
+- 사용자 요청으로 구현e917458의 운영 배포를 완료했다. 완료14:10:00 KST. 운영 설치본 실제 소스에 이번 diff만 적용한 후보로 기존6파일 수정+신규모듈1개+사용자마이그레이션1개만 배포했다. 운영 경로는 /opt/weather-care/releases/20261023-full-production/weather_care_server다. 나머지171개 소스/사용자 마이그레이션 해시는 그대로며 기존 운영 전용 변경을 보존했다.
+- 스케줄러를 잠시 중지한 뒤 운영 사용자 DB를 서버 안에 온라인 백업하고 0003_commute_notification_schedule.sql을 BEGIN IMMEDIATE 트랜잭션으로 먼저 적용했다. 기존 모든 사용자 테이블/열/행의 해시·건수를 비교해 알림 설정216건과 설치/인증/토큰/설정/이력을 보존했다. 추가4열은07:00/10:00/17:00/20:00 기본값이며 단일 마이그레이션, quick_check정상/외래키오류0을 확인했다.
+- 백업은 /var/backups/weather-care/commute-20261028T050934Z이며 users-before.sqlite는 서버에만0600으로 보관했다(디렉터리0700). 실제 사용자 DB는 내려받지 않았다. 실패 시 소스만 되돌리고 추가열을 보존하는 복구 절차를 준비했으며 이번 배포에서 원복하지 않았다.
+- API PID719710→739807, 운영 스케줄러719777→739870으로 active다. node_scheduler_started 및 정상 정기 작업 완료를 확인했다. 환경파일/서비스정의/패키지/잠금/TS설정과 공용날씨DB 스키마를 보존했다. 시험 서버는 이번 요청 범위에서 수정하지 않아 기존177개 소스/사용자DB 스키마/API PID719616을 유지했다.
+- 실제 운영 설치본 기반 후보 전체 타입검사와 Worker54개·Node34개 시험 통과. Linux 후보/설치본 각각 메모리DB의8항목(마이그레이션1회,구형2경로,기본값,경계,야간,구앱시간보존,기존설정)도 통과했다. 서울/시흥/부산의 Main/Today/Weekly/Widget와health를 배포 전후26건 확인해200 및 기존 최상위 필드·자료형을 보존했다.
+- 실제 과거 앱 소스 v1.1.1/ac45f1c 및 출퇴근 변경 전78770c0을 Git에서 추출해 새 운영 서버에 연결했다. 기존 ApiClient/WeatherService/모델/앱 생성 위젯3지역×2버전6개 읽기 검사와 실제 ServerDataAccess/InstallationApiClient/SettingsSyncService의 인증·등록·설정저장2개 검사가 통과했다. 별도 임시 설치는FCM토큰 없이 알림OFF로 만들고 구형 전체 설정 및 다른설정경로의 저장/개인시간보존을 확인한 뒤 인증된삭제API로 모두 제거했다. 삭제후410을 확인했고 최종 임시등록잔여0/실제설정216건이다. 실제사용자 설정을 검증용으로 변경하지 않았다.
+- 새 운영 JSON으로 과거2버전의 Main/Today/Week/Setting을360px에 렌더링한8개 검사도 통과했다. 합계 구앱 관련16개 고유 검사를 확인했다. 기존 스토어APK/IPA·OS네이티브위젯·실제푸시수신을 검사한 것으로 확대하지 않는다. 검증용 실제FCM은0건이며 기기/앱/스토어배포는 수행하지 않았다.
+- 배포후지점예보수집 weather_collection_failed/point_forecast/UNKNOWN1건이 관찰됐다. 같은종류가 배포전2시간동안11건 반복됐고 해당수집소스는해시불변이다. 새런타임/SQL오류나스케줄러기동실패로분류하지않으며,원인해소를단정하지않고별도조사사항으로기록했다. 검증한기존앱조회·설정은통과했다.
+- 초기배포도구가/health정상텍스트ok를JSON으로읽어DB/서비스변경전에중단됐다. 텍스트검사로정정후배포완료했다. 구앱첫검사의임시설치삭제확인은기존정상계약410을예상하도록정정했고관련인증2개만재실행해통과했다. 제품기능의오류수정이나추가배포는아니다.
+- docs/출퇴근_알림_운영배포_20261028.md 및 검증JSON과서버README에기록했다. 원본/후보/도구/보고서/로그는ignored서버build/commute-deploy-20261028, 구앱코드/실운영응답/시험은앱build/commute-deploy-compat-20261028, 원격작업경로는/tmp/weather-care-commute-20261028-mgYkmS다. 이번로컬변경은배포문서/서버README/HANDOFF뿐이며커밋·push는추가수행하지않았다.
+## 2026-10-28 구역별 알림 ON/OFF 및 지역명 표시 사전 검토
+
+- 사용자 요청은 구역 메뉴의 지역별 알림 수신 토글과 알림 지역명 표시이며, 먼저 예시를 보여달라는 조건에 따라 이번에는 구현 가능 여부와 텍스트 배치/알림 문구 예시만 제시한다.
+- 현재 HomeScreen._regionDrawer는 현재 위치와 savedRegionKeys의 날씨 조회 지역을 선택하고, AppSettings에는 전체 notificationEnabled만 있다. 서버 notificationScheduler는 installations의 단일 nx/ny를 기준으로 발송한다. 여러 지역을 독립 구독하려면 앱 저장·서버 구독 API/DB·스케줄러와 지역별 중복/상태 관리까지 확장해야 한다.
+- 제안 예시: 현재 위치(서울 종로구) ON, 서울 강남구 ON, 경기 시흥시 OFF. 화면 조회 지역 선택과 알림 토글은 별개이며 전체 알림 OFF가 우선한다. 알림 제목은 ‘[서울 강남구] 오늘자 준비물 😊’처럼 지역을 먼저 표기한다. 알림을 누르면 해당 지역의 관련 화면을 여는 동작도 함께 설계한다.
+- 호환 제안은 기존 알림 대상만 유지하고 추가 구역은 기본 OFF로 두는 방식이다. 사용자 확정 사항이나 실제 구현으로 간주하지 않는다. 제품 코드/DB/운영/기기/커밋·push는 변경하지 않았고 기존 배포 문서와 미커밋 기록을 보존했다.
+
+## 2026-10-28 동 단위 지역명 기반 알림 표시 예시 보완
+
+- 사용자 정정에 따라 시·구까지만 쓴 앞선 예시를 보완한다. 앱의 실제 displayRegionName 규칙(예: 서울 구로구 구로제3동 → 서울 구로구 구로3동)을 기준으로 제목에 동까지 포함한 지역명을 표시하는 안을 제시한다.
+- notificationBuilder/Scheduler, 낙뢰 알림, 공식 특보/도로살얼음/도로통제 메시지 코드를 확인했다. 오늘자 준비물, 현재 강수, 특보 종류별 발효·변경·해제, 동파, 낙뢰, 블랙아이스, 출퇴근 경로의 제목·본문 예시를 설명한다. 예시 수치·시각·특보·통제는 실제 현재 상황이 아니며 표시 제안이다.
+- 제목의 동은 사용자가 알림을 신청한 지역을 가리키며, 공식 특보의 실제 발표 구역 및 도로 통제의 실제 도로·방향은 본문에 보존하는 방향으로 설명한다. 동별 공식 특보나 동 전체 도로통제가 발표된 것처럼 바꾸지 않는다. 이번에도 제품 코드·운영 변경 없이 인계만 추가했다.
+
+## 2026-10-28 구역별 알림 변경의 기존 앱 호환성 설명
+
+- 사용자 질문은 서버 반영 시 기존 앱 영향 확인이며 구현·배포 요청으로 확대하지 않았다. FCM 전송, 앱 전경 알림 표시/클릭 목적지 해석, 서버 알림 설정 검증 코드를 확인했다.
+- 제목/본문만 바꾸고 notificationKey/notificationTarget/notificationTopic 및 기존 API 계약을 유지하면 확인한 앱 코드는 서버 문자열을 그대로 표시하므로 지역명 추가 자체는 호환 가능하다. 서버에서 동 이름을 정확히 식별하는 작업은 별도로 필요하다.
+- 여러 지역 수신을 구 앱에도 일괄 적용하면 구역별 수신 설정 UI가 없고 알림 클릭 시 지역을 해석하지 않아 기존 선택 지역이 열릴 수 있다. 현재 전경 알림 ID도 notificationKey 기반이므로 여러 지역이 같은 키를 쓰면 알림이 덮어써질 수 있다. 지역별 키는 레거시 클릭 해석에 영향을 줄 수 있어 기존 키 계약을 보존하고 새 기능을 구분해야 한다.
+- 권장 호환 설계는 기존 설치의 단일 지역/전체 알림/시간 설정 유지, 새 앱에서 기능 지원 및 구역 구독을 명시 등록한 경우에만 여러 지역 처리, 구독 API 분리와 기존 설정 저장 시 구독 보존, DB 추가 마이그레이션 후 서버→앱 순서다. 과거 스토어 바이너리/실제 푸시의 검증 완료를 주장하지 않는다. 이번에는 코드·DB·운영 변경 없이 인계만 기록했다.
+
+## 2026-10-28 구역별 알림 ON/OFF·동 단위 지역명·알림 클릭 지역 이동 구현
+
+- 사용자 요청으로 앱/서버 구현을 완료했다. 운영 배포나 커밋·push 요청으로 확대하지 않았다. 기존 AGENTS.md와 HANDOFF를 확인했고 다른 채팅의 출퇴근 운영 배포 문서·서버 README 기존 추가 내용은 보존했다.
+- 기존 두 알림 설정 API와 FCM notificationKey/notificationTarget/notificationTopic 계약을 유지했다. 새 구독 설정이 없는 설치는 이전처럼 installations의 단일 지역을 사용한다. 새 앱만 별도 인증 PUT /api/v1/installations/:installationId/notification-regions에 전체 구독 목록을 저장한다. 기존 앱의 설정 저장이 구독 목록을 지우지 않는다. 빈 목록/모든 OFF도 기존 단일 지역 발송으로 돌아가지 않는다.
+- 새 API는 설치 소유권을 확인하고 카탈로그 키(행정코드|원본 지역명|nx|ny)·중복·형식·개수를 검증한다. 앱 카탈로그 3838개 키 전체와 서버 연결을 시험했다. 기상청 중복 코드의 인천 영종구 용유동/운서2동은 이름·격자로 구분하고 창원 상위 구의 복합 이름도 허용한다.
+- 새 사용자 스키마는 notification_region_preferences/notification_regions/notification_region_state/notification_region_warning_state다. 마이그레이션은 Node 사용자 DB node-migrations/users/0004_notification_regions.sql, 통합 D1 migrations/0021_notification_regions.sql이다. FK·설치 삭제 트리거로 구독·상태를 함께 삭제한다. 만료 정리와 복구 검증 SQL에도 새 개인 데이터 테이블을 반영했다. 실제 DB에는 적용하지 않았다.
+- 구역 메뉴에 지역별 스위치와 전체 알림 OFF 안내, 저장 실패 안내/재시도를 추가했다. 조회 지역 선택은 체크 아이콘, 알림 수신은 스위치로 구분한다. 동 이름을 제목, 시·구를 보조 줄로 표시해 동 이름이 중간에 잘리지 않게 했다. 새로운 구역은 OFF다. 첫 업데이트에는 이전 알림 대상 한 곳만 유지하며, 행정키가 없는 옛 수동 설정은 LEGACY 구독으로 유지하고 OFF 후 다시 선택할 수도 있다.
+- AppSettings에 구독 키와 알림을 눌러 선택한 위치 이름을 UTF-8 JSON으로 저장한다. 기존 엄격한 알림 설정 API에는 새 필드를 섞지 않는다. 기기 저장 후 서버 저장 실패는 기존 SettingsSaveController 상태와 구역 메뉴에서 안내한다.
+- 일반 알림과 낙뢰 알림을 지역별로 확장하고 확인된 이름을 제목 앞에 붙인다(예: [서울특별시 구로구 구로3동] 오늘자 준비물 😊). 제3동→3동 표시 규칙을 적용한다. GPS의 동이 확인되지 않으면 임의의 대표 동을 붙이지 않는다. 특보의 실제 발표 구역·도로명·방향은 본문에 보존한다. 일반 앱 업데이트 알림은 지역 알림으로 바꾸지 않았다.
+- 강수·특보·도로 상태와 발송 이력, 낙뢰 임대 키를 지역별 scope ID로 분리했다. FCM의 기존 의미 키는 유지하고 선택적인 notificationRegionKey/Id/Name/Nx/Ny를 추가했다. 앱 전경 알림 ID는 의미 키+지역 ID로 만들어 다른 지역 알림이 덮어써지지 않는다. 서버는 발송 직전 전체 알림/토큰/연령/보존 기간과 지역 ON·동일 scope를 확인하고 출퇴근 구간도 유지한다. 최초 단일 지역 이전에는 기존 위치와 같은 지역의 이력·상태를 이어 받아 같은 날 재발송을 줄인다.
+- 알림 클릭은 앱 실행 중·첫 화면 준비 전·종료 후 초기 라우트에서 같은 지역 정보를 전달한다. 발송 당시 지역/격자를 수동 조회 대상으로 열고 기존 알림 구독은 바꾸지 않는다. GPS 알림도 클릭 때의 다른 GPS 위치로 바꾸지 않으며, 카탈로그 이름을 연결할 수 없는 경우 발송 격자·이름을 복원한다.
+- 현재 위치 구독의 GPS 등록은 수동 조회 지역과 분리했다. 수동 화면에서도 이미 허용된 GPS를 확인해 알림 위치를 갱신하고, 복귀/알림 권한 재확인이 수동 조회 지역으로 GPS 등록을 덮어쓰지 않게 했다. 전체 알림이나 GPS 구독이 OFF면 별도 GPS 확인·백그라운드 감시를 중지한다. 기존 백그라운드 위치 동의/권한을 유지하고 수동 홈 위젯을 GPS로 덮어쓰지 않는다. 관련 설정 설명·가이드와 앱/서버 README를 갱신했다.
+- 알림 ON인 저장 지역을 자료 수집 대상에 포함했다. 수동 지역의 강수/도로는 해당 예보 격자 기준 좌표를 사용한다. 지점 예보 수집에는 사용자 DB에서 모은 활성 격자를 전달해 공용 날씨 DB에서 installations를 조회하지 않게 했다. 운영에서 기존 point_forecast UNKNOWN이 해결됐다고 단정하지 않으며 이번 작업은 운영에 배포하지 않았다.
+- 검증: 서버 전체 Node 32파일 348개 통과, Worker 관련 6파일 99개 통과, npm run typecheck 통과. 실제 이전 통합/Node 사용자 스키마의 설치·인증·설정·이력 보존, 구형 두 설정 경로, 새 구독 D1 발송, 카탈로그 전체, 두 지역별 강수/특보 발효·변경·해제/도로/낙뢰, OFF/삭제/실패/발송 직전 변경을 포함한다. 기존 마이그레이션 수·목록 시험은 0021까지 반영했다.
+- 앱 관련 12파일은 최종 157개 통과했고 이후 기기 저장/초기·실행 중 클릭 시험 4개를 추가해 해당 두 파일 9개가 통과했다(관련 고유 시험 합계 161개). 전체 정적 분석은 최종 No issues found. 기존 Flutter 기본 경로 3.35.6과 현재 패키지 구성의 불일치로 최초 검사가 실패해 이후 검증은 D:/flutter_3.47.4/bin을 명시했다. 기존 Kotlin Gradle Plugin 향후 지원 경고는 남아 있으나 APK 빌드는 성공했다.
+- 창/기기 UI를 열지 않고 실제 HomeScreen의 구역 메뉴를 Flutter 테스트로 밝은/어두운 테마 렌더링했다. build/previews/region-notifications-{light,dark}.png 각 824×1784를 직접 확인했다. 캡처 전용 글꼴 로딩과 runAsync를 보완했으며 OS/실기기 캡처로 표시하지 않는다. 재생성: Flutter 3.47.4 test --no-pub --dart-define=CAPTURE_REGION_MENU=true test/home_location_test.dart --plain-name '구역 알림 메뉴 캡처'.
+- 증거: 서버 build/notification-regions-node-final.log, notification-regions-worker-final.log; 앱 build/notification-regions-tests-final.log, notification-regions-click-storage-tests.log, notification-regions-guide-tests.log, notification-regions-analyze.log, notification-regions-capture.log, notification-regions-apk.log. 일반 main.dart Android arm64 Debug APK는 build/app/outputs/flutter-apk/app-debug.apk다. 기기에 설치하거나 실제 FCM을 보내지 않았다. iOS 빌드/실제 푸시 수신 검증은 수행하지 않았다.
+- 배포 순서: 운영/시험 사용자 DB 각각 0004 적용 → API·일반/낙뢰 스케줄러·수집기 배포 → 앱 배포. 공용 날씨 DB에 사용자 마이그레이션을 적용하면 안 된다. 운영 DB/서비스·연결 기기·스토어·커밋·push는 이번에 변경하지 않았다.
+
+## 2026-10-28 구역별 알림 운영 DB 마이그레이션·서버 배포 및 구역 메뉴 문구 보완
+
+- 사용자 요청으로 운영 DB·서버 배포를 진행했고, 도중 추가 요청한 구역 메뉴 문구/스위치 열 제목 수정도 함께 완료했다. 운영 배포 완료는 15:18:33 KST, 최종 서비스·DB·로그 확인은 15:22:19 KST다. 앱/스토어 배포·기기 설치·커밋·push는 요청하지 않아 수행하지 않았다.
+- 운영 설치본은 /opt/weather-care/releases/20261023-full-production/weather_care_server다. 실제 설치본에 이번 기능의 런타임/사용자 마이그레이션 10파일만 적용했고 나머지 172파일의 해시는 유지했다. 운영 FCM 구현에 아직 없던 저장소의 storeUrl/스토어 알림 관련 처리를 함께 배포하지 않았다. 환경파일·서비스 정의·패키지·잠금·TS설정을 보존했다.
+- 공용 수집기가 시험 사용자 DB도 읽으므로 collectionTargets.ts에서 notification_regions 테이블 존재 여부를 확인하고 구버전 DB는 기존 설치 위치만 읽도록 보완했다. 로컬 제품 코드와 배포 후보에 같은 보완을 적용하고 신·구 DB를 섞은 수집 회귀시험을 추가했다. 시험 API/소스·사용자 DB 스키마·공용 날씨 DB 스키마는 변경하지 않았다.
+- 운영 사용자 DB /var/lib/weather-care/weather-care-users-production.sqlite에 0004_notification_regions.sql을 한 번 적용했다. 새 테이블4개·트리거4개만 추가했으며 기존 테이블·열·행을 변경하지 않았다. SQLite 온라인 백업, BEGIN IMMEDIATE 트랜잭션 안의 기존 모든 행/열 해시·건수 대조, quick_check정상/외래키오류0을 확인했다. 기존 알림 설정216건·설치/인증/토큰/출퇴근 개인시간/이력을 보존했다. 기존 사용자에게 구역별 구독을 자동 생성하지 않았다.
+- 최초 마이그레이션 전 백업은 /var/backups/weather-care/regions-20261028T061316Z/users-before.sqlite, 최종 재배포 전 백업은 /var/backups/weather-care/regions-20261028T061816Z/users-before.sqlite다. 서버 안에만 보관했고 디렉터리0700/DB0600을 검증했다. 실제 사용자 DB를 내려받지 않았다.
+- 첫 배포의 새 API 인증 검사에서 검증 도구가 User-Agent를 누락해 Python 기본 요청이 기존 Cloudflare Browser Integrity Check에서403/1010으로 차단됐다. 검사 실패 시 자동 복구가 동작해 서버 소스를 이전 버전으로 되돌렸고 추가 테이블은 보존했다. 기존 API도 같은 헤더에서403, 기존 검증용 User-Agent에서401을 반환함을 확인했다. 검사 헤더와 이미 완료된 마이그레이션의 재검사 처리를 보완한 뒤 재배포했다. 사용자 DB를 과거 백업으로 덮어쓰거나 마이그레이션을 중복 적용하지 않았고 Cloudflare 보안 설정도 바꾸지 않았다. 재시작은 기존 선수집 서비스 의존성을 유지했다.
+- 배포 후보는 실제 운영 설치본 기준 전체 타입 검사, 관련 Node6파일100개·Worker6파일99개 시험이 통과했다. Linux 후보와 설치본의 메모리 DB에서 각12항목(한 번의 마이그레이션, 기존 단일 지역, 두 구형 설정 경로, 개인 시간·구독 보존, 두 동 제목/클릭 메타데이터, 중복 방지·OFF·소유권·삭제·무결성)이 통과했다. 이 검사에서 외부 요청·실제 사용자 DB 쓰기·실제 FCM은0건이다.
+- 배포 전후 서울/시흥/부산 Main/Today/Weekly/Widget 및 health26건이200이고 기존 최상위 필드·자료형을 보존했다. 공개 새 구독 API의 무인증 요청401도 확인했다. 과거 실제 앱 소스 v1.1.1/ac45f1c와 출퇴근 변경 전78770c0의 기존 ApiClient/WeatherService/모델/위젯 데이터 생성 3지역씩6개, ServerDataAccess/InstallationApiClient/SettingsSyncService 인증·등록·저장 각1개로 총8개 운영 왕복 검사가 통과했다. 기존 스토어 APK/IPA 실행·OS 네이티브 위젯·실제 푸시 도착을 검사한 것으로 확대하지 않는다.
+- 별도 임시 설치를 FCM토큰 없이 전체알림OFF로 생성해 실제 운영 새 구역 API에서 두 동의 ON/OFF·정규화 지역명·서버 저장을 확인했다. 기존 두 설정 API의 저장이 구역 목록/scope와 개인 출퇴근 시간을 보존하고 전체OFF가 유지됨도 확인했다. 인증 삭제 후410과 새/기존 관련 테이블 잔여0을 확인했다. 구 앱 검증 임시 설치도 모두 정리했으며 실제 사용자 설정을 검증용으로 변경하지 않았다. 검증용 실제 FCM은0건이다.
+- 최종 운영 API PID742759, 스케줄러742823은 active이며 스케줄러 시작·정상 작업4건·지점예보 수집 완료를 확인했다. 최종 검사 구간 실패 이벤트/런타임 오류0이다. 시험 API PID719616은 그대로이고 시험 소스/DB·공용 날씨 DB 스키마가 같음을 다시 확인했다. 기존 알림 설정216건, 신규 구독/지역상태4테이블0건, 검증 임시 등록잔여0건, 마이그레이션 적용1회를 확인했다.
+- 구역 메뉴 설명을 ‘지역별로 알림을 켜고 끌 수 있어요’로 수정했다. 설명과 현재 위치 사이의 스위치 열 위에 ‘알림’을 textPrimary(기본 글자색),12px,bold로 추가했다. ListTile 테마의 실제 끝 여백을 읽어 스위치 중앙에 맞춘다. 표준 테스트 테마와 앱 테마의 여백 차이로 최초 정렬 검사8px차이가 나와 테마 기준으로 수정 후 통과했다. 기존 전체알림OFF 안내는 유지했다. 과거 LEGACY 구역은 OFF 후에도 다시 켤 수 있도록 저장된 가용 표시도 메뉴에 반영했다.
+- UI 문구/색/굵기/정렬·독립 토글 시험과320px큰글씨 시험이 통과했다. 실제 HomeScreen의 밝은/어두운 구역 메뉴를 창 없이 Flutter 위젯 렌더링해 build/previews/region-notifications-{light,dark}.png에서 확인했다. OS/실기기 캡처가 아니다. Flutter3.47.4 전체분석No issues found, 최종 일반 main.dart Android arm64 Debug APK 빌드17.2초 성공했다. 기기에 설치하지 않았다.
+- 문서는 docs/구역별_알림_운영배포_20261028.md, docs/구역별_알림_운영배포_검증_20261028.json 및 서버README에 기록했다. 서버 후보/스냅샷/도구/로그는 ignored weather_care_server/build/regions-deploy-20261028, 원격 작업은 /tmp/weather-care-regions-20261028-szmz3in8다. 구 앱 운영 검증은 앱 build/region-deploy-legacy-apps-20261028.log, 메뉴 검증/분석/빌드는 build/region-menu-copy-{tests,small-tests,capture,analyze,apk}-20261028.log다. 기존 다른 채팅의 출퇴근 배포 문서·인계와 미커밋 변경을 보존했다.
+
+## 2026-10-28 구역 메뉴 설명 간격 및 알림 제목 색상 조정
+
+- 사용자 요청에 따라 ‘구역 선택’ 제목 행의 아래 여백 12를 제거해 설명 문구를 제목에 더 가깝게 붙였다.
+- 스위치 열 위 ‘알림’의 글자색을 textPrimary에서 테마 primary로 변경했다. 12px·bold와 스위치 중앙 정렬은 유지했다.
+- 기존 색상 검증을 primary 기준으로 갱신했다. Flutter 3.47.4의 구역 메뉴 캡처 및 독립 토글 시험 2개가 통과했고, 실제 HomeScreen 밝은/어두운 위젯 렌더링을 재생성해 직접 확인했다. 별도 앱 창·기기 설치·서버 변경 없이 UI 소스와 미리보기를 갱신했다.
+## 2026-10-28 구역 메뉴 알림 제목과 스위치 간격 축소
+
+- 사용자 요청에 따라 ‘알림’ 제목만 아래로 4 논리 픽셀 옮겨 첫 스위치에 더 가깝게 배치했다. primary 색상·작은 bold·가로 중앙 정렬과 다른 행 위치는 유지했다.
+- 최초 8 픽셀 이동은 기존 겹침 방지 검사에서 스위치 터치 영역과 2 픽셀 겹쳐, 4 픽셀로 조정했다. Flutter 3.47.4의 메뉴 캡처·독립 토글·320px 큰 글씨 검사 3개가 모두 통과했다. 밝은/어두운 위젯 미리보기를 갱신하고 밝은 화면을 직접 확인했다.
+## 2026-10-28 구역 메뉴 알림 제목 굵기 및 위치 추가 조정
+
+- 사용자 요청에 따라 ‘알림’ 글자를 bold(700)에서 Heavy(900)로 변경하고 기존 위치보다 8 논리 픽셀 더 내렸다(원래 배치 기준 이동량 12). primary 색상·12px·가로 정렬과 나머지 메뉴 행은 유지했다.
+- 기존 시험을 900 굵기와 실제 32px 스위치 트랙 위 비겹침 기준으로 갱신했다. 스위치의 보이지 않는 터치 영역 상단을 기준으로 제목 이동을 제한하던 검증을 보완했다. 캡처 글꼴에 SUITE-Heavy도 로드했다.
+- Flutter 3.47.4 메뉴 캡처·독립 토글·320px 큰 글씨 검사 3개가 통과했다. 밝은/어두운 위젯 미리보기를 다시 생성하고 밝은 화면을 직접 확인했다. 서버·기기 배포는 수행하지 않았다.
+- 미리보기에도 실제 900 굵기가 표시되도록 본문 글꼴 ChosunSg의 ChosunBg.TTF를 추가 로드했다. 재생성 후 같은 검사 3개가 통과했고 최종 이미지를 확인했다.
+
+## 2026-10-28 알림 제목 fontFamily 명시로 굵기 표시 수정
+
+- 사용자 지적을 확인했다. 앞선 변경은 bodySmall의 ChosunSg 글꼴을 상속한 상태에서 fontWeight만 변경해 사용자가 요청한 굵은 모양이 표시되지 않았다. 이전에 구역 추가/어제 비교 라벨에서 fontFamily를 명시해 해결한 기록을 확인했다.
+- ‘알림’ TextStyle에 WeatherCareTheme.fontSuite를 직접 지정했다. 900 굵기·primary 색상·12px·내려 둔 위치는 유지했다. pubspec에 SUITE-Heavy.ttf가 900으로 등록돼 있음을 확인했다.
+- 기존 검사에 fontFamily=SUITE 조건을 추가했다. Flutter 3.47.4 메뉴 캡처·독립 토글·320px 큰 글씨 검사 3개가 통과했고, 밝은/어두운 위젯 미리보기를 갱신했다. 밝은 화면에서 ‘알림’이 실제 두꺼워진 것을 직접 확인했다. 이전의 굵기 적용 완료 안내를 이 결과로 정정한다.
+## 2026-10-28 알림 제목 굵기를 700으로 완화
+
+- 사용자 요청에 따라 ‘알림’의 굵기를 SUITE 900에서 700으로 낮췄다. 명시한 SUITE fontFamily와 primary 색상·12px·위치 및 정렬은 유지했다.
+- 기존 굵기 기대값을 700으로 갱신했다. Flutter 3.47.4 메뉴 캡처·독립 토글·320px 큰 글씨 검사 3개가 통과했다. 밝은/어두운 위젯 미리보기를 재생성하고 밝은 화면을 확인했다.
+## 2026-10-28 구역 메뉴 알림 ON/OFF 문구 변경
+
+- 사용자 요청대로 스위치 열 제목을 ‘알림 ON/OFF’로 변경했다. 기본 배율에서 한 줄로 표시되도록 제목 영역을 60에서 84로 넓히고 오른쪽 여백을 12 줄여 스위치 중앙 정렬을 유지했다. SUITE 700·primary 색상·12px·세로 위치는 유지했다.
+- Flutter 3.47.4 메뉴 캡처·독립 토글·320px 큰 글씨 검사 3개가 통과했다. 밝은/어두운 위젯 미리보기를 갱신하고 밝은 화면에서 문구와 정렬을 확인했다.
+## 2026-10-28 최신 구역 메뉴 연결 기기 반영 및 터치 무응답 복구
+
+- 사용자 요청으로 연결된 SM-S948U(localhost:48721)의 최신 수정사항 반영과 터치 무응답을 확인했다. 시작 시 ADB는 정상 연결됐지만 weathercare 제품/확인용 앱이 모두 설치돼 있지 않아 기존 분리 확인용 com.codesoha.weathercare.uiverify를 최신 소스로 빌드·설치했다. 제품 진입점·사용자 시스템 설정·권한·스토어는 변경하지 않았다.
+- 화면에 실제 운영 날씨가 로드됐지만 일반 좌표 터치가 먹지 않았다. InputDispatcher TouchStates는 비어 있어도 Verifier on 0에 DeviceId(-1)의 포인터2가 남아 있었다. 예전 포인터1/2 CANCEL 도구는 이번 단일 포인터 상태를 해제하지 못했다. ignored recover_pointer2.py로 동일 deviceId=-1·포인터2만 CANCEL하는 임시 instrumentation을 만들어 적용했다. injectInputEvent 반환값은 false였지만 Verifier가 {}로 정리되고 일반 ADB 터치로 Week→Main→구역 메뉴가 정상 동작했다. 원래 입력이 남은 발생 주체는 확정하지 않았다. 임시 uicapture 도구는 제거했다. 데이터 초기화·기기 재부팅·앱 제품 코드 변경은 하지 않았다.
+- 첫 확인용 Debug 빌드는 기본 config/kma.config.json의 시험 서버를 사용해 새 구역 API 저장 실패 안내가 표시됐다. 시험 서버에는 이번 구역별 기능을 배포하지 않은 상태다. 확인용 빌드에만 SERVER_URL=https://weather-api.codesoha.com을 명시해 재빌드·업데이트 설치했다. 기존 config/시험 서버·DB를 변경하지 않았다. 운영 주소 빌드 후 등록 성공과 실제 날씨 로드, 저장 실패 안내가 사라짐을 확인했다. 확인용 앱은 기존 촬영 진입점의 서울 종로구 수동 지역/전체 알림OFF/백그라운드 위치OFF를 유지하므로 실제 FCM을 신청하지 않았다.
+- 최종 설치 Success, Activity 실행Status ok. Week의 ‘일주일 예보’→Main 복귀→구역 메뉴 열기를 일반 좌표 터치와 실제 UI XML로 확인했다. 최종 ‘알림 ON/OFF’·SUITE700·primary 색상·내린 위치를 실제1080×2340 기기 PNG로 확인했으며 메뉴를 열린 상태로 남겼다. 최종 검사에서 잔류 터치/Verifier는 비었고 앱 E/flutter·ANR·FATAL 로그는 관찰되지 않았다. 전체 알림OFF 안내가 표시되는 것은 확인용 앱의 기존 설정이다.
+- 파일: ignored build/tab-header-device-20261028/region-menu-current.apk, region-menu-device.png/xml, region-menu-week-final.xml, build_regions.py, pointer2-recovery/ 및 recover_pointer2.py. 빌드 로그 build/region-menu-device-build-20261028.log. 마지막에 일반 main.dart Android arm64 Debug APK도 재빌드11.3초 성공해 표준 APK 결과를 제품 앱으로 복구했다(기기에는 설치하지 않음). 로그 build/region-menu-product-build-20261028.log. 추적 변경은 HANDOFF 인계만 추가했고 기존 다른 작업 변경을 보존했다.
+## 2026-10-28 현재 기기 디버깅 이슈 조사
+
+- 사용자 요청에 따라 현재 실행 앱·입력·logcat·IDE 실행 설정을 읽기 전용으로 확인했다. 앞선 확인용 앱이 아니라 제품 패키지 com.codesoha.weathercare 1.1.2(26102701) Debug가 전면 실행 중(PID27859)이다. 설치 시각17:07:21, initiatingPackageName=com.android.shell, installerPackageName=null로 확인했다. 확인용 앱도 설치돼 있으나 현재 프로세스는 없다.
+- 실제 UI XML에는 ‘버전을 확인하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.’와 ‘다시 확인’이 표시된다. main.dart가 Debug에서도 AppUpdateGate를 사용하며 StoreUpdateService의 Android Play 업데이트 확인 실패/unknown/패키지 불일치/5초 시간 초과 중 하나가 Gate의 catch(_)로 전달되면 홈을 열지 않는 구조다. 현재 PlayCore requestUpdateInfo/onRequestInfo 로그는 있지만 catch가 원인을 기록하지 않아 정확한 예외 종류·Play 오류코드는 현재 로그만으로 확정할 수 없다. 네트워크 장애라고 단정하지 않는다. ADB 설치·Debug 환경과 스토어 검증 연관성은 원인 후보이며 확정 진단과 구분한다.
+- 현재 앱 PID 로그에 E/flutter/FATAL EXCEPTION/ANR가 없고, InputDispatcher 활성/동결OFF·TouchStates 비어 있음·Verifier{}·PendingEvent없음으로 앞선 터치 잔류는 재발하지 않았다. crash 버퍼의 삼성 RTL StreamService NullPointerException은13:50/14:29 등의 과거 원격 서비스 기록이며 현재 앱 충돌로 간주하지 않는다.
+- ADB는정상연결, 포워드61876/56351은 adb Listen 상태이고 활성 연결은 관찰되지 않았다. 현재 Dart프로세스에는 Flutter run/attach가 없고 daemon/분석 프로세스가 있다. IDE Dart 라이브러리 경로는 Flutter3.47.4이며 기본 main.dart 실행 구성에는 별도 인자가 없다. 제품 Debug 기본 config는 시험 서버이므로 스토어 단계를 통과해도 구역 API를 확인하려면 배포 환경과 맞춰 실행해야 한다(앞선 화면 확인용 빌드에만 운영 주소를 지정했음).
+- 조사 결과만 기록했다. 제품 코드 수정·재빌드·재설치·재시작·터치 입력·데이터/권한/IDE/운영 서버 변경은 하지 않았다. 현재 실제 UI XML은 ignored build/tab-header-device-20261028/debug-current.xml이다.
+## 2026-10-28 디버깅 차단 현상의 앱 자체 처리 책임 확인
+
+- 사용자 ‘우리 자체 오류아냐?’ 질문에 코드와 설치된 in_app_update4.2.5의 실제 Kotlin/Dart 반환 처리를 추가 확인했다. 플러그인은 packageName을 실제 반환하므로 필드 누락을 원인으로 추정하지 않는다.
+- 확인된 앱 측 문제는 Debug 실행에도 제품과 동일한 AppUpdateGate를 적용해 스토어 조회 실패로 홈 진입을 차단하는 실행 경로, 모든 예외를 인터넷 연결 안내로 표시하는 부정확한 오류 문구, catch(_)에서 원인·스택을 기록하지 않아 진단 근거가 사라지는 처리다. 운영용 필수 업데이트 정책 자체가 오류라고 확대하지 않는다.
+- Play 조회가 처음 실패한 정확한 예외/코드는 아직 미확정이므로 외부 서비스 장애 또는 앱 내부 오류 한 가지로 단정하지 않는다. Debug 실행 경로 분리와 안전한 진단 로그가 수정 대상임을 설명한다. 이번 답변은 원인·책임 범위 확인이며 제품 코드/기기/서버는 변경하지 않았다.
+## 2026-10-28 Debug 실행 버전 검사 생략
+
+- 사용자 요청에 따라 AppUpdateGate에 checkVersion(기본true)을 추가했다. false이면 스토어 조회 없이 child를 즉시 표시하고 첫 프레임 후 기존 onComplete를 한 번 호출한다. main.dart 시작 경로와 app.dart의 업데이트 알림 진입 경로에서 checkVersion: !kDebugMode를 전달했다. Debug에만 적용되며 Release/Profile 및 기본 Gate의 필수 업데이트·조회 실패 처리 정책은 유지한다.
+- 검사를 끈 상태에서 조회 함수가 호출되지 않고 홈/후속 시작이 한 번 실행되며 앱 복귀에도 조회하지 않는 시험을 추가했다. 기존 업데이트 Gate/스토어 서비스/Startup/업데이트 알림 4파일 총39개 시험 통과, 수정4파일 정적 분석 이슈 없음. 로그 build/debug-version-skip-{tests,analyze}-20261028.log다.
+- Flutter3.47.4로 일반 main.dart Android arm64 Debug APK를 빌드18.7초 성공했다. 구역 기능을 배포한 운영 서버와 맞추기 위해 해당 빌드에만 --dart-define=SERVER_URL=https://weather-api.codesoha.com을 전달했다. 기본 config/IDE 설정/서버·DB는 변경하지 않았다. 로그 build/debug-version-skip-apk-20261028.log다.
+- 연결 SM-S948U(localhost:48721)의 기존 제품 com.codesoha.weathercare에 adb install -r로 데이터 보존 업데이트 설치 Success, 실행Status ok/PID3189를 확인했다. 버전 실패 화면 대신 실제 첫 권한 안내까지 진입했고 현재 PID에서 Play 버전 조회 requestUpdateInfo는0건, E/flutter/FATAL/ANR도0건이다. 기기의 입력 잔류도 없다. 권한 안내의 계속/백그라운드 제외를 선택하거나 시스템 권한을 변경하지 않고 그대로 남겼다. 실제 UI XML은 ignored build/tab-header-device-20261028/debug-version-skip.xml이다.
+- 버전번호/스토어 배포/서버 배포/커밋·push는 하지 않았다. 이전 다른 작업의 미커밋 변경은 보존했다.
+## 2026-10-28 serverFailed 안내의 실제 실행 환경·404 원인 확인
+
+- 사용자 ‘서버 반영 실패가 뜨는데 운영 배포하지 않았나’ 질문에 재검증했다. 운영 배포는15:18:33 KST에 완료돼 있으며 현재 공개 health200, 새 notification-regions API의 무인증 PUT은JSON401(INSTALLATION_AUTH_REQUIRED)로 라우트 존재를 확인했다. 시험 health200이지만 같은 신규 경로는 text/plain404(404 Not Found)다. 확인용 무인증/더미ID 요청만 사용해 사용자 설정을 변경하지 않았다.
+- 사용자 IDE 재실행으로 설치 시각17:31:45/PID5331이었던 제품 앱을 확인했다. 도중 앱이 종료돼 제품 앱을 다시 실행(PID7160)해 읽기 전용 VM Service getVM/getIsolate/getObject/getInstances로 HomeScreenState→ServerDataAccess→ApiClient의 실제 baseUrl을 확인했다. 값은 https://weather-test-api.codesoha.com, SettingsSaveState는 serverFailed다. ApiException 메모리에 status502/codeINVALID_RESPONSE도 확인했다. VM 임시 포워드는 검사 후 제거했고 인증정보·설정/토큰 값은 조회하거나 출력하지 않았다.
+- 시험 서버의 신규 API404 본문은JSON이 아니어서 ApiClient.requestJson이 HTTP 상태 분기 전에 jsonDecode에서502 INVALID_RESPONSE로 변환하고 SettingsSaveController가 serverFailed를 표시한다. 운영 배포 누락이 아니라 새 API가 없는 시험 서버로 접속한 것이 이번 원인이다.
+- 직전 설치 APK에는 빌드 인자로 운영 주소를 지정했으나, IDE main.dart 실행 구성에는 추가 인자가 없고 config/kma.config.json도 시험 서버이므로 IDE 재실행 때 시험 서버로 돌아간다. 임시 설치 빌드와 IDE 실행 환경 차이를 끝까지 고정하지 않은 부분을 설명한다. Debug 운영 확인에는 --dart-define=SERVER_URL=https://weather-api.codesoha.com을 실행 인자로 지정하거나 시험 서버에도 기능을 별도로 배포해야 한다. 이번 질문만으로 기본 개발/운영 환경 정책·IDE설정·시험 서버·DB를 변경하지 않았다.
+- 도구·실측 JSON은 ignored build/tab-header-device-20261028/check_runtime_server.py, runtime-server-check.json, check_region_routes.py다. 정확한 런타임 주소·실패 상태 확인을 위해 VM 표현식 평가를 시도했지만 compilation service 부재로 실패해 객체 필드 읽기로 확인했다. 제품 소스 변경·재설치·커밋·push는 하지 않았다.

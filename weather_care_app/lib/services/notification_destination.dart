@@ -29,11 +29,13 @@ class NotificationDestination {
   final NotificationTarget target;
   final NotificationTopic topic;
   final Uri? storeUrl;
+  final NotificationRegion? region;
 
   const NotificationDestination({
     required this.target,
     required this.topic,
     this.storeUrl,
+    this.region,
   });
 
   String get routeName => switch (target) {
@@ -68,10 +70,16 @@ class NotificationDestination {
       return NotificationDestination(
         target: target,
         topic: _topicFromWireValue(data['notificationTopic']),
+        region: NotificationRegion.fromMessageData(data),
       );
     }
 
-    return _legacyDestination((data['notificationKey'] ?? '').toString());
+    final legacy =
+        _legacyDestination((data['notificationKey'] ?? '').toString());
+    return NotificationDestination(
+        target: legacy.target,
+        topic: legacy.topic,
+        region: NotificationRegion.fromMessageData(data));
   }
 }
 
@@ -204,4 +212,39 @@ NotificationTopic _warningTopic(String typeCode) {
     'K' => NotificationTopic.sleep,
     _ => NotificationTopic.weatherWarning,
   };
+}
+
+/// 알림 발송 당시의 구역. GPS 알림도 클릭할 때 다른 위치로 바뀌지 않는다.
+class NotificationRegion {
+  final String key;
+  final int nx;
+  final int ny;
+  final String? name;
+  const NotificationRegion(
+      {required this.key, required this.nx, required this.ny, this.name});
+
+  static NotificationRegion? fromMessageData(Map<String, dynamic> data) {
+    final key = data['notificationRegionKey'];
+    final nx = int.tryParse('${data['notificationRegionNx']}');
+    final ny = int.tryParse('${data['notificationRegionNy']}');
+    if (key is! String ||
+        key.isEmpty ||
+        key.length > 200 ||
+        nx == null ||
+        nx < 1 ||
+        nx > 149 ||
+        ny == null ||
+        ny < 1 ||
+        ny > 253) {
+      return null;
+    }
+    final rawName = data['notificationRegionName'];
+    final name = rawName is String &&
+            rawName.trim().isNotEmpty &&
+            rawName.length <= 120 &&
+            !RegExp(r'[\x00-\x1F]').hasMatch(rawName)
+        ? rawName.trim()
+        : null;
+    return NotificationRegion(key: key, nx: nx, ny: ny, name: name);
+  }
 }

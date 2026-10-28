@@ -148,7 +148,7 @@ export async function runWeatherCollectionJob(
     if (env.KMA_APIHUB_KEY) await collectCurrentSnow(weatherDatabase(env), env.KMA_APIHUB_KEY, now);
     await collectNationalDailyObservations(env, now, options.dailyObservationLookbackDays ?? 7);
     await collectNationwideForecast(weatherDatabase(env), env.KMA_APIHUB_KEY, now);
-    try { await collectPointForecasts(weatherDatabase(env), env.KMA_SERVICE_KEY, now); }
+    try { await collectPointForecasts(weatherDatabase(env), env.KMA_SERVICE_KEY, now, activeRegions); }
     catch (error) { logCollectionFailure('point_forecast', error); }
     await archiveSnowProbabilityForecasts(weatherDatabase(env), now, activeRegions).catch(error =>
       logCollectionFailure('snow_probability_archive', error));

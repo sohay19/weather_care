@@ -1,3 +1,5 @@
+import m20 from '../migrations/0020_commute_notification_schedule.sql?raw';
+import m21 from '../migrations/0021_notification_regions.sql?raw';
 import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
 import { Hono } from 'hono';
@@ -30,7 +32,7 @@ const id = 'wc_retention_synthetic_install_01';
 const other = 'wc_retention_synthetic_install_02';
 const tables = ['installations', 'notification_settings', 'notification_history',
   'installation_warning_state', 'installation_credentials', 'installation_activity',
-  'installation_ownership_challenges', 'legacy_installation_ownership'];
+  'installation_ownership_challenges', 'legacy_installation_ownership', 'notification_region_preferences', 'notification_regions'];
 const app = new Hono<{ Bindings: ServerEnv }>();
 app.route('/api/v1/installations', ownership);
 const apply = (sql: string) => env.DB.exec(sql.replace(/--[^\n]*/g, '').replace(/\r?\n/g, ' '));
@@ -52,6 +54,8 @@ async function seed(target: string, activeAt: string) {
       .bind(target, '2026-09-11', 'TEST', now.toISOString(), 'synthetic'),
     env.DB.prepare('INSERT INTO installation_warning_state VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .bind(target, 'R', '호우', '2', '경보', '테스트', activeAt, activeAt),
+    env.DB.prepare('INSERT INTO notification_region_preferences VALUES (?,?)').bind(target,activeAt),
+    env.DB.prepare("INSERT INTO notification_regions(installation_id,region_key,scope_id,enabled,nx,ny) VALUES (?,'GPS',?,1,60,121)").bind(target,target),
     env.DB.prepare('INSERT INTO legacy_installation_ownership VALUES (?, NULL)').bind(target),
     env.DB.prepare('INSERT INTO installation_ownership_challenges VALUES (?, ?, ?, ?, ?, ?)')
       .bind(target, 'request', 'hash', 'proof', activeAt, activeAt),
@@ -60,8 +64,8 @@ async function seed(target: string, activeAt: string) {
 
 beforeEach(async () => {
   // This suite uses only an isolated local test binding, never production D1.
-  await env.DB.exec('DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots; DROP TABLE IF EXISTS weekly_forecast_records; DROP TABLE IF EXISTS grid_observation_snapshots; DROP TABLE IF EXISTS grid_extra_snapshots;');
-  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m15, m19]) await apply(sql);
+  await env.DB.exec('DROP TABLE IF EXISTS notification_region_warning_state; DROP TABLE IF EXISTS notification_region_state; DROP TABLE IF EXISTS notification_regions; DROP TABLE IF EXISTS notification_region_preferences; DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots; DROP TABLE IF EXISTS weekly_forecast_records; DROP TABLE IF EXISTS grid_observation_snapshots; DROP TABLE IF EXISTS grid_extra_snapshots;');
+  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m15, m19, m20, m21]) await apply(sql);
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -120,6 +124,7 @@ describe('one-year data retention', () => {
       }
       expect((await env.DB.prepare(checks[9]).all()).results).toEqual([]);
       expect((await env.DB.prepare(checks[10]).all()).results).toEqual([]);
+      for (const check of checks.slice(11)) expect(await env.DB.prepare(check).first('remaining')).toBe(0);
       expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM weather_cache').first('n')).toBe(1);
       expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM daily_weather_snapshots').first('n')).toBe(1);
       expect(await env.DB.prepare('SELECT COUNT(*) AS n FROM weekly_forecast_records').first('n')).toBe(1);

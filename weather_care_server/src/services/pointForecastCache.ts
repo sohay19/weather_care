@@ -26,7 +26,7 @@ export async function readPointForecast(db: D1Database | undefined, nx: number, 
   return forecast;
 }
 
-export async function collectPointForecasts(db: D1Database, serviceKey: string, now: Date): Promise<void> {
+export async function collectPointForecasts(db: D1Database, serviceKey: string, now: Date, activeTargets?: Grid[]): Promise<void> {
   if (!serviceKey.trim()) throw new Error('KMA service key is not configured');
   const base = latestBaseDateTimes(now, 1)[0];
   const issue = base.baseDate + base.baseTime;
@@ -37,7 +37,7 @@ export async function collectPointForecasts(db: D1Database, serviceKey: string, 
   if (!grids || !cachedTargets?.value.forecastChecked) {
     const land = await getCollectedCache<{ boundaryVersion: string; grids: Grid[] }>(db, 'COLLECTED_NATIONWIDE_LAND_GRIDS');
     if (version && (land?.status !== 'AVAILABLE' || land.value.boundaryVersion !== version.version)) throw new Error('NATIONWIDE_LAND_GRIDS_NOT_READY');
-    const active = await db.prepare('SELECT DISTINCT nx,ny FROM installations').all<Grid>();
+    const active = activeTargets ? {results: activeTargets} : await db.prepare('SELECT DISTINCT nx,ny FROM installations').all<Grid>();
     const targets = [...new Map([...(land?.value.grids ?? []), ...active.results].map((grid) => [`${grid.nx}:${grid.ny}`,grid])).values()];
     const missing = await missingLandForecastGrids(db, targets, now);
     // 지속적인 실황 공간 결측 격자도 정확한 지점 예보를 미리 확보한다.

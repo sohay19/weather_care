@@ -36,6 +36,26 @@ void resumeApp(WidgetTester tester) {
 }
 
 void main() {
+  testWidgets('버전 검사를 끄면 스토어 조회 없이 홈과 후속 시작 처리를 한 번 실행한다',
+      (tester) async {
+    var completed = 0;
+    final service = _Updates(() async => throw StateError('조회하면 안 됨'));
+    final gate = AppUpdateGate(
+        checkVersion: false,
+        service: service,
+        onComplete: () => completed++,
+        child: home);
+    await tester.pumpWidget(gate);
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(gate);
+    await tester.pumpAndSettle();
+    resumeApp(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('날씨 홈'), findsOneWidget);
+    expect(service.calls, 0);
+    expect(completed, 1);
+  });
+
   testWidgets('업데이트가 없으면 홈과 후속 시작 처리를 한 번 실행한다', (tester) async {
     var completed = 0;
     final service = _Updates(() async => null);

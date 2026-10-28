@@ -35,5 +35,26 @@ class SettingsSyncService {
       '/api/v1/notification-settings/${settings.installationId}',
       payload,
     );
+    if (settings.notificationRegionKeys != null) {
+      final available = {
+        'GPS',
+        ...settings.savedRegionKeys,
+        if (settings.legacyNotificationRegionAvailable ||
+            settings.enabledNotificationRegionKeys.contains('LEGACY'))
+          'LEGACY'
+      };
+      await client.putJson(
+        '/api/v1/installations/${settings.installationId}/notification-regions',
+        {
+          'regions': [
+            for (final key in available)
+              {
+                'key': key,
+                'enabled': settings.enabledNotificationRegionKeys.contains(key)
+              }
+          ]
+        },
+      );
+    }
   }
 }

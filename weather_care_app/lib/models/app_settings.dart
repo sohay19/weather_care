@@ -4,6 +4,20 @@ class AppSettings {
   final String? currentRegionId;
   final String? manualRegionKey;
   final List<String> savedRegionKeys;
+  final List<String>? notificationRegionKeys;
+  final String? manualRegionName;
+  final bool legacyNotificationRegionAvailable;
+
+  List<String> get enabledNotificationRegionKeys =>
+      notificationRegionKeys ??
+      [
+        if (locationMode == 'GPS')
+          'GPS'
+        else if (manualRegionKey != null)
+          manualRegionKey!
+        else if (currentRegionId != null)
+          'LEGACY'
+      ];
   final bool onboardingCompleted;
   final bool notificationEnabled;
   final bool backgroundLocationEnabled;
@@ -33,6 +47,9 @@ class AppSettings {
     this.currentRegionId,
     this.manualRegionKey,
     this.savedRegionKeys = const [],
+    this.notificationRegionKeys,
+    this.manualRegionName,
+    this.legacyNotificationRegionAvailable = false,
     required this.onboardingCompleted,
     required this.notificationEnabled,
     this.backgroundLocationEnabled = false,
@@ -62,6 +79,9 @@ class AppSettings {
     String? currentRegionId,
     String? manualRegionKey,
     List<String>? savedRegionKeys,
+    List<String>? notificationRegionKeys,
+    String? manualRegionName,
+    bool? legacyNotificationRegionAvailable,
     bool clearManualRegionKey = false,
     bool? onboardingCompleted,
     bool? notificationEnabled,
@@ -93,6 +113,11 @@ class AppSettings {
       manualRegionKey:
           clearManualRegionKey ? null : manualRegionKey ?? this.manualRegionKey,
       savedRegionKeys: savedRegionKeys ?? this.savedRegionKeys,
+      notificationRegionKeys:
+          notificationRegionKeys ?? this.notificationRegionKeys,
+      manualRegionName: manualRegionName ?? this.manualRegionName,
+      legacyNotificationRegionAvailable: legacyNotificationRegionAvailable ??
+          this.legacyNotificationRegionAvailable,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       notificationEnabled: notificationEnabled ?? this.notificationEnabled,
       backgroundLocationEnabled:
@@ -164,6 +189,19 @@ class AppSettings {
           json['currentRegion'] as String? ?? fallbackSettings.currentRegionId,
       manualRegionKey: manualRegionKey is String ? manualRegionKey : null,
       savedRegionKeys: savedRegionKeys,
+      notificationRegionKeys: json['notificationRegionKeys'] is List
+          ? (json['notificationRegionKeys'] as List)
+              .whereType<String>()
+              .toSet()
+              .toList()
+          : null,
+      manualRegionName: json['manualRegionName'] as String?,
+      legacyNotificationRegionAvailable:
+          json['legacyNotificationRegionAvailable'] == true ||
+              (json['notificationRegionKeys'] == null &&
+                  json['locationMode'] == 'MANUAL' &&
+                  manualRegionKey == null &&
+                  json['currentRegion'] != null),
       onboardingCompleted: json['onboardingCompleted'] as bool? ??
           fallbackSettings.onboardingCompleted,
       notificationEnabled: json['notificationEnabled'] as bool? ??
@@ -210,6 +248,11 @@ class AppSettings {
       'currentRegion': currentRegionId,
       'manualRegionKey': manualRegionKey,
       'savedRegionKeys': savedRegionKeys,
+      if (notificationRegionKeys != null)
+        'notificationRegionKeys': notificationRegionKeys,
+      if (manualRegionName != null) 'manualRegionName': manualRegionName,
+      if (legacyNotificationRegionAvailable)
+        'legacyNotificationRegionAvailable': true,
       'onboardingCompleted': onboardingCompleted,
       'notificationEnabled': notificationEnabled,
       'backgroundLocationEnabled': backgroundLocationEnabled,

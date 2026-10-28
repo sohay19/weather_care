@@ -1,3 +1,5 @@
+import { KMA_ADMINISTRATIVE_AREAS } from '../src/regions/kmaAdministrativeAreas';
+import regionSchema from '../migrations/0021_notification_regions.sql?raw';
 import { SELF, env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -217,12 +219,31 @@ describe('notification scheduler', () => {
           PRIMARY KEY (installation_id, warning_type))`,
       ),
     ]);
+    for (const statement of regionSchema.slice(0, regionSchema.indexOf('-- 앱')).split(';').filter(part => part.trim())) {
+      await env.DB.prepare(statement.replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS ')).run();
+    }
+    await env.DB.prepare('DELETE FROM notification_region_preferences').run();
     await env.DB.batch([
       env.DB.prepare('DELETE FROM installation_warning_state'),
       env.DB.prepare('DELETE FROM notification_history'),
       env.DB.prepare('DELETE FROM notification_settings'),
       env.DB.prepare('DELETE FROM installations'),
     ]);
+  });
+
+  it('새 구역 API는 D1에서도 두 동의 알림을 따로 발송한다', async () => {
+    await insertInstallation('device-token');
+    const areas=KMA_ADMINISTRATIVE_AREAS.filter(r=>r[1].includes('구로구 구로') && r[1].endsWith('동')).slice(0,2);
+    const response=await SELF.fetch('https://example.com/api/v1/installations/installation-1/notification-regions',{
+      method:'PUT',headers:testAuthHeaders,body:JSON.stringify({regions:areas.map(r=>({key:`${r[0]}|${r[1].split(' ').at(-1)}|${r[2]}|${r[3]}`,enabled:true}))})});
+    expect(response.status).toBe(200);
+    const sent:FcmPayload[]=[];
+    const dependencies={now:new Date('2026-09-02T07:00:00+09:00'),forecastLoader:async()=>rainyForecast(),
+      warningLoader:async()=>[],warningRegionResolver:async()=>({regionId:'L1010100',regionName:'서울서남권'}),sender:collectingSender(sent)};
+    await runRecommendationNotificationJob(testBindings(),dependencies);
+    await runRecommendationNotificationJob(testBindings(),dependencies);
+    expect(sent.filter(p=>p.notificationKey==='MORNING_BRIEF')).toHaveLength(2);
+    expect(new Set(sent.map(p=>p.notificationRegionId)).size).toBe(2);
   });
 
   it('전체 알림을 끄면 모든 발송 경로와 외부 자료 조회를 건너뛴다', async () => {

@@ -181,7 +181,7 @@ describe('구버전 설치와 낙뢰 알림 지원 확인', () => {
 });
 
 describe('운영 DB 대신 합성 구버전 DB로 검증하는 마이그레이션', () => {
-  it.each([14, 17, 19])('00%s에서 설치·인증·설정·이력·캐시를 유지하며 0020까지 한 번만 적용한다', async (version) => {
+  it.each([14, 17, 19])('00%s에서 설치·인증·설정·이력·캐시를 유지하며 0021까지 한 번만 적용한다', async (version) => {
     database.close();
     database = new SqliteD1Database(':memory:');
     const directory = mkdtempSync(join(tmpdir(), 'weather-care-legacy-migrations-'));
@@ -203,7 +203,7 @@ describe('운영 DB 대신 합성 구버전 DB로 검증하는 마이그레이�
       }));
       const pending = ['0015_grid_extra_snapshots.sql', '0016_lightning_alerts.sql',
         '0017_background_location.sql', '0018_lightning_client_support.sql', '0019_pipe_freeze_alert.sql',
-        '0020_commute_notification_schedule.sql'];
+        '0020_commute_notification_schedule.sql', '0021_notification_regions.sql'];
       expect(runSqliteMigrations(database)).toEqual(pending.filter((name) => Number(name.slice(0, 4)) > version));
       expect(runSqliteMigrations(database)).toEqual([]);
       for (const { table, columns, rows } of before) {

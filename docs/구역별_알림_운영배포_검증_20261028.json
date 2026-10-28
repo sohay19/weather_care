@@ -1,0 +1,442 @@
+{
+  "작업": "구역별 알림 운영 DB 마이그레이션 및 서버 배포",
+  "배포": {
+    "status": "complete",
+    "source": "regions-working-tree",
+    "startedAt": "2026-10-28T15:18:08.432847+09:00",
+    "scope": "구역별 알림 운영 사용자 DB 추가 테이블 및 서버10파일 배포",
+    "checks": [
+      {
+        "phase": "before",
+        "region": "all",
+        "endpoint": "health",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "seoul",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "seoul",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "seoul",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "seoul",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "siheung",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "siheung",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "siheung",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "siheung",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "busan",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "busan",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "busan",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "phase": "before",
+        "region": "busan",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "all",
+        "endpoint": "health",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "seoul",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "seoul",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "seoul",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "seoul",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "siheung",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "siheung",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "siheung",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "siheung",
+        "endpoint": "widget",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "busan",
+        "endpoint": "main",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "busan",
+        "endpoint": "today",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "busan",
+        "endpoint": "weekly",
+        "status": 200
+      },
+      {
+        "phase": "after",
+        "region": "busan",
+        "endpoint": "widget",
+        "status": 200
+      }
+    ],
+    "changedFiles": [
+      "src/api/installations.ts",
+      "src/api/notificationRegions.ts",
+      "src/collection/collectionTargets.ts",
+      "src/collection/weatherCollectionJob.ts",
+      "src/notification/fcmClient.ts",
+      "src/notification/lightningNotificationJob.ts",
+      "src/notification/notificationRegions.ts",
+      "src/notification/notificationScheduler.ts",
+      "src/services/pointForecastCache.ts",
+      "node-migrations/users/0004_notification_regions.sql"
+    ],
+    "verificationNotificationsSent": 0,
+    "testEnvironmentModified": false,
+    "originalMigrationBackup": "/var/backups/weather-care/regions-20261028T061316Z/users-before.sqlite",
+    "serviceBefore": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 742153
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 742216
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 719616
+      }
+    },
+    "candidateProbe": {
+      "passed": true,
+      "checks": [
+        "migrationOnce",
+        "legacySingleRegion",
+        "bothOldSettingsAPIs",
+        "commutePreserved",
+        "regionSubscriptionsPreserved",
+        "twoDongTitles",
+        "regionClickMetadata",
+        "regionDeduplication",
+        "allRegionsOff",
+        "ownershipRequired",
+        "deleteCascade",
+        "databaseIntegrity"
+      ],
+      "externalCalls": 0,
+      "actualUserWrites": 0,
+      "actualFcmSent": 0
+    },
+    "backup": "/var/backups/weather-care/regions-20261028T061816Z",
+    "migration": {
+      "database": "/var/lib/weather-care/weather-care-users-production.sqlite",
+      "backup": "/var/backups/weather-care/regions-20261028T061816Z/users-before.sqlite",
+      "name": "0004_notification_regions.sql",
+      "quickCheck": "ok",
+      "existingTablesPreserved": {
+        "installations": {
+          "count": 80,
+          "sha256": "4783c43b84d7aa56679363bdc09ca2f7fbd63a3b90651baa9347e1fd7b555e6a"
+        },
+        "active_regions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "notification_settings": {
+          "count": 216,
+          "sha256": "ab0e2ad08e62ca8619dc46f5567e193aafc57206a64061c0e95bb56670a65aae"
+        },
+        "notification_history": {
+          "count": 170,
+          "sha256": "01799ff1e5738055d5280b3798fa5e9749f969c53d0cca3eecebbbb681b91f97"
+        },
+        "installation_warning_state": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "installation_credentials": {
+          "count": 220,
+          "sha256": "6e53b92ba8eb4b6927912a3223d1884def9e118033f00fe97da492dbf649c855"
+        },
+        "installation_ownership_challenges": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "legacy_installation_ownership": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "installation_activity": {
+          "count": 220,
+          "sha256": "6ff259280d8f996b4fcc4e0f7f5d57c299103b12e2391923e938e55a41c1aee2"
+        },
+        "lightning_notification_claims": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "notification_region_preferences": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "notification_regions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "notification_region_state": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "notification_region_warning_state": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "settingsCount": 216,
+      "newTablesEmpty": [
+        "notification_region_preferences",
+        "notification_regions",
+        "notification_region_state",
+        "notification_region_warning_state"
+      ],
+      "oldUsersRemainSingleRegion": true,
+      "appliedThisAttempt": false,
+      "schemaAfter": "f83843ad8fd6add87ab34ad8d1bb4eac9ee25f74a0934a72af59e7f77f2993bb"
+    },
+    "installedProbe": {
+      "passed": true,
+      "checks": [
+        "migrationOnce",
+        "legacySingleRegion",
+        "bothOldSettingsAPIs",
+        "commutePreserved",
+        "regionSubscriptionsPreserved",
+        "twoDongTitles",
+        "regionClickMetadata",
+        "regionDeduplication",
+        "allRegionsOff",
+        "ownershipRequired",
+        "deleteCascade",
+        "databaseIntegrity"
+      ],
+      "externalCalls": 0,
+      "actualUserWrites": 0,
+      "actualFcmSent": 0
+    },
+    "previousApiFieldsPreserved": true,
+    "regionEndpointRequiresAuthentication": true,
+    "completedAt": "2026-10-28T15:18:33.272802+09:00",
+    "serviceAfter": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 742759
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 742823
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 719616
+      }
+    },
+    "schedulerStarted": true,
+    "sourceManifestsVerified": true,
+    "configurationPreserved": true,
+    "sharedWeatherSchemaPreserved": true,
+    "testSourceSchemaAndProcessPreserved": true
+  },
+  "최종확인": {
+    "sourceManifestMatches": true,
+    "unchangedRuntimeFiles": 172,
+    "services": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 742759
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 742823
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 719616
+      }
+    },
+    "migrationAppliedOnce": true,
+    "settingsCount": 216,
+    "temporaryCompatibilityInstallationsRemaining": 0,
+    "newTableCounts": {
+      "notification_region_preferences": 0,
+      "notification_regions": 0,
+      "notification_region_state": 0,
+      "notification_region_warning_state": 0
+    },
+    "quickCheck": "ok",
+    "foreignKeyErrors": 0,
+    "backupPermissionsVerified": true,
+    "testAndSharedWeatherSchemasPreserved": true,
+    "events": {
+      "weather_location_unresolved": 23,
+      "weather_access": 36,
+      "node_scheduler_stopped": 1,
+      "node_server_stopped": 1,
+      "node_server_started": 1,
+      "operational_prewarm_reused": 1,
+      "node_operational_prewarm_finished": 1,
+      "node_scheduler_started": 1,
+      "current_observation_collection_completed": 3,
+      "node_scheduled_job_completed": 4,
+      "grid_extra_collected": 1,
+      "apihub_response_accounted": 6,
+      "grid_observation_field_preserved": 6,
+      "grid_observation_snapshot_saved": 1,
+      "nationwide_air_collection_completed": 1,
+      "national_forecast_collection_completed": 1,
+      "point_forecast_collection_completed": 1,
+      "data_retention_completed": 1
+    },
+    "failedEvents": {},
+    "runtimeErrors": {},
+    "checkedAt": "2026-10-28T15:22:19.246679+09:00"
+  },
+  "실제구역설정API": {
+    "passed": true,
+    "actualFcmSent": 0,
+    "actualUserSettingsModified": 0,
+    "temporaryInstallationRemoved": true,
+    "checks": [
+      "actualEnrollment",
+      "legacyRegistration",
+      "twoDongNames",
+      "regionOnOffPersistence",
+      "bothOldSettingsPathsPreserveSubscriptions",
+      "commuteSchedulePreserved",
+      "globalOffPreserved",
+      "allRegionsOff"
+    ],
+    "regionRowsVerified": 2,
+    "checkedAt": "2026-10-28T15:20:16.762513+09:00"
+  },
+  "기존앱검증": {
+    "versions": [
+      "v1.1.1/ac45f1c",
+      "출퇴근 변경 전/78770c0"
+    ],
+    "passed": 8,
+    "regions": [
+      "서울",
+      "시흥",
+      "부산"
+    ],
+    "scope": "과거 실제 소스의 조회·모델·위젯 데이터 생성·인증·등록·설정 저장",
+    "log": "weather_care_app/build/region-deploy-legacy-apps-20261028.log",
+    "nativeStoreBinaryTested": false
+  },
+  "배포후보검증": {
+    "nodePassed": 100,
+    "workerPassed": 99,
+    "typecheck": "passed",
+    "linuxMemoryDatabaseChecks": 12
+  },
+  "첫검증실패및복구": {
+    "failure": {
+      "type": "AssertionError",
+      "message": "REGION_ENDPOINT_NOT_READY"
+    },
+    "rollback": "source_restored_if_needed_additive_DB_preserved",
+    "cause": "검증 요청에서 누락된 User-Agent로 Cloudflare Browser Integrity Check 1010 응답. 검사 헤더 보완 후 재배포. 보안 설정은 변경하지 않음.",
+    "databaseOverwritten": false
+  },
+  "앱문구수정": {
+    "description": "지역별로 알림을 켜고 끌 수 있어요",
+    "columnTitle": "알림",
+    "style": "textPrimary·12px·bold",
+    "columnAlignment": "스위치 열 중앙",
+    "nativeAppInstalled": false
+  }
+}

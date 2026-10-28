@@ -180,6 +180,10 @@ describe('notification scheduler', () => {
           installation_id TEXT PRIMARY KEY,
           notification_enabled INTEGER NOT NULL DEFAULT 1,
           notification_time TEXT NOT NULL DEFAULT '07:00',
+          commute_to_work_start TEXT NOT NULL DEFAULT '07:00',
+          commute_to_work_end TEXT NOT NULL DEFAULT '10:00',
+          commute_from_work_start TEXT NOT NULL DEFAULT '17:00',
+          commute_from_work_end TEXT NOT NULL DEFAULT '20:00',
           umbrella_enabled INTEGER NOT NULL DEFAULT 1,
           parasol_enabled INTEGER NOT NULL DEFAULT 1,
           heavy_snow_enabled INTEGER NOT NULL DEFAULT 1,
@@ -780,8 +784,62 @@ describe('notification scheduler', () => {
     expect(state).toEqual({ level: 0, linkId: null });
   });
 
+  it('출퇴근 구간 밖에서는 조회·발송·이력 갱신을 하지 않고 구간 시작에 현재 통제를 한 번 보낸다', async () => {
+    await insertInstallation('device-token', true);
+    await savePreferences({ commuteToWorkStart: '10:00', commuteToWorkEnd: '11:00',
+      commuteFromWorkStart: '21:00', commuteFromWorkEnd: '22:00' });
+    const sent: FcmPayload[] = [];
+    const loader = vi.fn(async () => roadControl());
+    const dependencies = { forecastLoader: async () => rainyForecast(),
+      roadControlLoader: loader, sender: collectingSender(sent) };
+    for (const time of ['07:00', '09:59', '11:00', '18:00', '22:00']) {
+      await runRecommendationNotificationJob(testBindings(), { ...dependencies,
+        now: new Date(`2026-09-02T${time}:00+09:00`) });
+    }
+    expect(loader).not.toHaveBeenCalled();
+    expect(sent.some((item) => item.notificationKey.startsWith('ROAD_CONTROL_'))).toBe(false);
+    const state = await env.DB.prepare('SELECT road_control_event_key AS eventKey FROM installations').first();
+    expect(state).toMatchObject({ eventKey: null });
+    for (const time of ['10:00', '10:10']) {
+      await runRecommendationNotificationJob(testBindings(), { ...dependencies,
+        now: new Date(`2026-09-02T${time}:00+09:00`) });
+    }
+    expect(sent.filter((item) => item.notificationKey.startsWith('ROAD_CONTROL_'))).toHaveLength(1);
+  });
+
+  it('자료를 읽는 중 시간 설정을 바꾸면 발송 직전에 새 시간으로 제외한다', async () => {
+    await insertInstallation('device-token', true);
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T07:00:00+09:00'),
+      roadControlLoader: async () => roadControl(),
+      forecastLoader: async () => {
+        await savePreferences({ commuteToWorkStart: '10:00', commuteToWorkEnd: '11:00' });
+        return rainyForecast();
+      },
+      sender: collectingSender(sent),
+    });
+    expect(sent.some((item) => item.notificationKey.startsWith('ROAD_CONTROL_'))).toBe(false);
+    const state = await env.DB.prepare('SELECT road_control_event_key AS eventKey FROM installations').first();
+    expect(state).toMatchObject({ eventKey: null });
+  });
+
+  it('설치별 시간대와 야간 출근 구간을 적용한다', async () => {
+    await insertInstallation('device-token', true);
+    await env.DB.prepare("UPDATE installations SET timezone = 'UTC'").run();
+    await savePreferences({ commuteToWorkStart: '23:00', commuteToWorkEnd: '01:00' });
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {
+      now: new Date('2026-09-02T00:30:00Z'),
+      roadControlLoader: async () => roadControl(),
+      forecastLoader: async () => rainyForecast(), sender: collectingSender(sent),
+    });
+    expect(sent.filter((item) => item.notificationKey.startsWith('ROAD_CONTROL_'))).toHaveLength(1);
+  });
+
   it('sends an active official road control once and resets after it ends', async () => {
     await insertInstallation('device-token', true);
+    await savePreferences({ commuteToWorkStart: '14:00', commuteToWorkEnd: '15:00' });
     const sent: FcmPayload[] = [];
     const bindings = testBindings('', 'its-key');
     const dependencies = {

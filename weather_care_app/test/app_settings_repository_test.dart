@@ -25,6 +25,10 @@ void main() {
     final changed = AppSettings.fallback('device-1').copyWith(
       notificationEnabled: false,
       notificationTime: '06:35',
+      commuteToWorkStart: '23:00',
+      commuteToWorkEnd: '01:30',
+      commuteFromWorkStart: '10:00',
+      commuteFromWorkEnd: '11:00',
       umbrellaEnabled: false,
       heavyRainEnabled: false,
       pipeFreezeEnabled: true,
@@ -36,6 +40,10 @@ void main() {
 
     expect(loaded.notificationEnabled, false);
     expect(loaded.notificationTime, '06:35');
+    expect(loaded.commuteToWorkStart, '23:00');
+    expect(loaded.commuteToWorkEnd, '01:30');
+    expect(loaded.commuteFromWorkStart, '10:00');
+    expect(loaded.commuteFromWorkEnd, '11:00');
     expect(loaded.umbrellaEnabled, false);
     expect(loaded.heavyRainEnabled, false);
     expect(loaded.pipeFreezeEnabled, true);
@@ -50,5 +58,9 @@ void main() {
     }, 'device-1');
     expect(loaded.savedRegionKeys, ['이전 구역']);
     expect(loaded.pipeFreezeEnabled, false);
+    expect(loaded.commuteToWorkStart, '07:00');
+    expect(loaded.commuteToWorkEnd, '10:00');
+    expect(loaded.commuteFromWorkStart, '17:00');
+    expect(loaded.commuteFromWorkEnd, '20:00');
   });
 }

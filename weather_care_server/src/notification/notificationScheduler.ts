@@ -46,8 +46,9 @@ import {
 import { calculateSunTimes } from '../presentation/sunTimes';
 import { assessPipeFreeze } from '../services/pipeFreezeAdvice';
 import { formatWeatherNumber } from '../utils/weatherNumber';
+import { type CommuteSchedule, isCommuteNotificationTime } from './commuteSchedule';
 
-interface NotificationInstallationRow {
+interface NotificationInstallationRow extends CommuteSchedule {
   installationId: string;
   token: string;
   nx: number;
@@ -199,14 +200,16 @@ export async function runRecommendationNotificationJob(
       roadIceByLocation,
       dependencies.roadIceLoader ?? defaultRoadIceLoader,
     );
-    await collectRoadControlNotification(
-      env,
-      row,
-      local.date,
-      pending,
-      roadControlByLocation,
-      dependencies.roadControlLoader ?? defaultRoadControlLoader,
-    );
+    if (isCommuteNotificationTime(local.time, row)) {
+      await collectRoadControlNotification(
+        env,
+        row,
+        local.date,
+        pending,
+        roadControlByLocation,
+        dependencies.roadControlLoader ?? defaultRoadControlLoader,
+      );
+    }
     const regionKey = `${row.nx}:${row.ny}:${row.latitude}:${row.longitude}`;
     let forecastPromise = forecastByRegion.get(regionKey);
     if (!forecastPromise) {
@@ -300,7 +303,13 @@ export async function runRecommendationNotificationJob(
   if (pending.length === 0) return;
   // The job can spend seconds loading providers. Recheck the installation and
   // current token immediately before sending; deletion may have happened meanwhile.
-  const eligible = await env.DB.batch(pending.map((item) => env.DB.prepare(`SELECT 1 FROM installations i
+  const eligible = await env.DB.batch<CommuteSchedule & { timezone: string }>(pending.map((item) => env.DB.prepare(`SELECT
+      i.timezone,
+      s.commute_to_work_start AS commuteToWorkStart,
+      s.commute_to_work_end AS commuteToWorkEnd,
+      s.commute_from_work_start AS commuteFromWorkStart,
+      s.commute_from_work_end AS commuteFromWorkEnd
+    FROM installations i
     LEFT JOIN notification_settings s ON s.installation_id = i.installation_id
     WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 0) = 1
       AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version = 1
@@ -309,7 +318,13 @@ export async function runRecommendationNotificationJob(
         WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
     .bind(item.installationId, item.token, item.built.notification_key,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
-  const sendable = pending.filter((_, index) => eligible[index].results.length > 0);
+  const sendAt = dependencies.now ?? new Date();
+  const sendable = pending.filter((item, index) => {
+    const current = eligible[index].results[0];
+    if (!current) return false;
+    return !item.roadControl ||
+      isCommuteNotificationTime(localNotificationTime(sendAt, current.timezone).time, current);
+  });
   if (!sendable.length) return;
   const payloads = sendable.map<FcmPayload>((item) => ({
     token: item.token,
@@ -342,6 +357,10 @@ async function notificationInstallations(
          i.ny,
          i.timezone,
          COALESCE(s.notification_time, '07:00') AS notificationTime,
+         s.commute_to_work_start AS commuteToWorkStart,
+         s.commute_to_work_end AS commuteToWorkEnd,
+         s.commute_from_work_start AS commuteFromWorkStart,
+         s.commute_from_work_end AS commuteFromWorkEnd,
          COALESCE(s.umbrella_enabled, 1) AS umbrellaEnabled,
          COALESCE(s.parasol_enabled, 1) AS parasolEnabled,
          COALESCE(s.heavy_snow_enabled, 1) AS heavySnowEnabled,

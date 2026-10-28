@@ -334,6 +334,10 @@ export interface NotificationSettings {
   installationId: string;
   notificationEnabled: boolean;
   notificationTime: string;
+  commuteToWorkStart?: string;
+  commuteToWorkEnd?: string;
+  commuteFromWorkStart?: string;
+  commuteFromWorkEnd?: string;
   umbrellaEnabled: boolean;
   parasolEnabled: boolean;
   heavySnowEnabled: boolean;

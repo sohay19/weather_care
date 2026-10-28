@@ -7,6 +7,7 @@ import { NotificationSettings, ServerEnv } from '../types';
 import { notificationSettingsBodySchema } from '../validation/notificationSettings';
 import { ownerForRequest } from '../security/installationAccess';
 import { bodyLimit } from 'hono/body-limit';
+import { isValidCommuteSchedule } from '../notification/commuteSchedule';
 
 const router = new Hono<{ Bindings: ServerEnv }>();
 router.use('*', bodyLimit({ maxSize: 8192 }));
@@ -38,6 +39,9 @@ router.put('/:installationId', async (c) => {
     ...parsed.data,
     installationId,
   };
+  if (!isValidCommuteSchedule(settings)) {
+    return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
+  }
   if (!await upsertNotificationSettings(c.env.DB, settings, ownerHash,
     parsed.data.lightningEnabled !== undefined)) {
     return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);

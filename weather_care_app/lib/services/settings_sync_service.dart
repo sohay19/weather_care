@@ -12,6 +12,10 @@ class SettingsSyncService {
     final payload = {
       'notificationEnabled': settings.notificationEnabled,
       'notificationTime': settings.notificationTime,
+      'commuteToWorkStart': settings.commuteToWorkStart,
+      'commuteToWorkEnd': settings.commuteToWorkEnd,
+      'commuteFromWorkStart': settings.commuteFromWorkStart,
+      'commuteFromWorkEnd': settings.commuteFromWorkEnd,
       'umbrellaEnabled': settings.umbrellaEnabled,
       'parasolEnabled': settings.parasolEnabled,
       'outerwearEnabled': settings.outerwearEnabled,

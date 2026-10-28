@@ -6,6 +6,10 @@ export const notificationSettingsBodySchema = z
   .object({
     notificationEnabled: z.boolean().optional(),
     notificationTime: notificationTimeSchema.optional(),
+    commuteToWorkStart: notificationTimeSchema.optional(),
+    commuteToWorkEnd: notificationTimeSchema.optional(),
+    commuteFromWorkStart: notificationTimeSchema.optional(),
+    commuteFromWorkEnd: notificationTimeSchema.optional(),
     umbrellaEnabled: z.boolean().optional(),
     parasolEnabled: z.boolean().optional(),
     heavySnowEnabled: z.boolean().optional(),

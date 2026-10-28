@@ -8,6 +8,10 @@ class AppSettings {
   final bool notificationEnabled;
   final bool backgroundLocationEnabled;
   final String notificationTime;
+  final String commuteToWorkStart;
+  final String commuteToWorkEnd;
+  final String commuteFromWorkStart;
+  final String commuteFromWorkEnd;
   final bool umbrellaEnabled;
   final bool parasolEnabled;
   final bool heavyRainEnabled;
@@ -33,6 +37,10 @@ class AppSettings {
     required this.notificationEnabled,
     this.backgroundLocationEnabled = false,
     required this.notificationTime,
+    this.commuteToWorkStart = '07:00',
+    this.commuteToWorkEnd = '10:00',
+    this.commuteFromWorkStart = '17:00',
+    this.commuteFromWorkEnd = '20:00',
     required this.umbrellaEnabled,
     required this.parasolEnabled,
     required this.heavyRainEnabled,
@@ -59,6 +67,10 @@ class AppSettings {
     bool? notificationEnabled,
     bool? backgroundLocationEnabled,
     String? notificationTime,
+    String? commuteToWorkStart,
+    String? commuteToWorkEnd,
+    String? commuteFromWorkStart,
+    String? commuteFromWorkEnd,
     bool? umbrellaEnabled,
     bool? parasolEnabled,
     bool? heavyRainEnabled,
@@ -86,6 +98,10 @@ class AppSettings {
       backgroundLocationEnabled:
           backgroundLocationEnabled ?? this.backgroundLocationEnabled,
       notificationTime: notificationTime ?? this.notificationTime,
+      commuteToWorkStart: commuteToWorkStart ?? this.commuteToWorkStart,
+      commuteToWorkEnd: commuteToWorkEnd ?? this.commuteToWorkEnd,
+      commuteFromWorkStart: commuteFromWorkStart ?? this.commuteFromWorkStart,
+      commuteFromWorkEnd: commuteFromWorkEnd ?? this.commuteFromWorkEnd,
       umbrellaEnabled: umbrellaEnabled ?? this.umbrellaEnabled,
       parasolEnabled: parasolEnabled ?? this.parasolEnabled,
       heavyRainEnabled: heavyRainEnabled ?? this.heavyRainEnabled,
@@ -155,6 +171,10 @@ class AppSettings {
       backgroundLocationEnabled: json['backgroundLocationEnabled'] == true,
       notificationTime: json['notificationTime'] as String? ??
           fallbackSettings.notificationTime,
+      commuteToWorkStart: json['commuteToWorkStart'] as String? ?? '07:00',
+      commuteToWorkEnd: json['commuteToWorkEnd'] as String? ?? '10:00',
+      commuteFromWorkStart: json['commuteFromWorkStart'] as String? ?? '17:00',
+      commuteFromWorkEnd: json['commuteFromWorkEnd'] as String? ?? '20:00',
       umbrellaEnabled:
           json['umbrellaEnabled'] as bool? ?? fallbackSettings.umbrellaEnabled,
       parasolEnabled:
@@ -194,6 +214,10 @@ class AppSettings {
       'notificationEnabled': notificationEnabled,
       'backgroundLocationEnabled': backgroundLocationEnabled,
       'notificationTime': notificationTime,
+      'commuteToWorkStart': commuteToWorkStart,
+      'commuteToWorkEnd': commuteToWorkEnd,
+      'commuteFromWorkStart': commuteFromWorkStart,
+      'commuteFromWorkEnd': commuteFromWorkEnd,
       'umbrellaEnabled': umbrellaEnabled,
       'parasolEnabled': parasolEnabled,
       'heavyRainEnabled': heavyRainEnabled,

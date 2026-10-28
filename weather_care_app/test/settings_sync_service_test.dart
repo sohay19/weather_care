@@ -18,7 +18,7 @@ class _Client extends ApiClient {
 }
 
 void main() {
-  test('알림 설정 API에는 허용된 알림 필드 16개만 전송한다', () async {
+  test('알림 설정 API에는 출퇴근 시간을 포함한 허용 필드만 전송한다', () async {
     final settings = AppSettings.fallback('test').copyWith(
         locationMode: 'MANUAL',
         currentRegionId: '100_76',
@@ -30,6 +30,10 @@ void main() {
     expect(client.body, {
       'notificationEnabled': true,
       'notificationTime': '07:00',
+      'commuteToWorkStart': '07:00',
+      'commuteToWorkEnd': '10:00',
+      'commuteFromWorkStart': '17:00',
+      'commuteFromWorkEnd': '20:00',
       'umbrellaEnabled': true,
       'parasolEnabled': true,
       'outerwearEnabled': true,
@@ -50,6 +54,10 @@ void main() {
     final settings = AppSettings.fallback('test').copyWith(
         notificationEnabled: false,
         notificationTime: '22:35',
+        commuteToWorkStart: '23:00',
+        commuteToWorkEnd: '01:00',
+        commuteFromWorkStart: '08:30',
+        commuteFromWorkEnd: '09:30',
         umbrellaEnabled: false,
         parasolEnabled: false,
         outerwearEnabled: false,
@@ -67,9 +75,13 @@ void main() {
     await expectLater(
         SettingsSyncService(client).save(settings), throwsStateError);
     expect(client.body!['notificationTime'], '22:35');
+    expect(client.body!['commuteToWorkStart'], '23:00');
+    expect(client.body!['commuteToWorkEnd'], '01:00');
+    expect(client.body!['commuteFromWorkStart'], '08:30');
+    expect(client.body!['commuteFromWorkEnd'], '09:30');
     expect(
         client.body!.entries
-            .where((entry) => entry.key != 'notificationTime')
+            .where((entry) => entry.value is bool)
             .every((entry) => entry.value == false),
         isTrue);
   });

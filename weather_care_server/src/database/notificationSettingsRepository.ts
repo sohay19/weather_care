@@ -1,9 +1,14 @@
 import { NotificationSettings } from '../types';
+import { defaultCommuteSchedule } from '../notification/commuteSchedule';
 
 interface NotificationSettingsRow {
   installationId: string;
   notificationEnabled: number;
   notificationTime: string;
+  commuteToWorkStart: string;
+  commuteToWorkEnd: string;
+  commuteFromWorkStart: string;
+  commuteFromWorkEnd: string;
   umbrellaEnabled: number;
   parasolEnabled: number;
   heavySnowEnabled: number;
@@ -27,6 +32,7 @@ export function defaultNotificationSettings(
     installationId,
     notificationEnabled: true,
     notificationTime: '07:00',
+    ...defaultCommuteSchedule,
     umbrellaEnabled: true,
     parasolEnabled: true,
     heavySnowEnabled: true,
@@ -54,6 +60,10 @@ export async function getNotificationSettings(
          installation_id AS installationId,
          notification_enabled AS notificationEnabled,
          notification_time AS notificationTime,
+         commute_to_work_start AS commuteToWorkStart,
+         commute_to_work_end AS commuteToWorkEnd,
+         commute_from_work_start AS commuteFromWorkStart,
+         commute_from_work_end AS commuteFromWorkEnd,
          umbrella_enabled AS umbrellaEnabled,
          parasol_enabled AS parasolEnabled,
          heavy_snow_enabled AS heavySnowEnabled,
@@ -78,6 +88,10 @@ export async function getNotificationSettings(
     installationId: row.installationId,
     notificationEnabled: row.notificationEnabled === 1,
     notificationTime: row.notificationTime,
+    commuteToWorkStart: row.commuteToWorkStart,
+    commuteToWorkEnd: row.commuteToWorkEnd,
+    commuteFromWorkStart: row.commuteFromWorkStart,
+    commuteFromWorkEnd: row.commuteFromWorkEnd,
     umbrellaEnabled: row.umbrellaEnabled === 1,
     parasolEnabled: row.parasolEnabled === 1,
     heavySnowEnabled: row.heavySnowEnabled === 1,
@@ -110,13 +124,18 @@ export async function upsertNotificationSettings(
        umbrella_enabled, parasol_enabled, heavy_snow_enabled,
        outerwear_enabled, mask_enabled, water_enabled, sunscreen_enabled,
        daily_weather_enabled, heavy_rain_enabled, heatwave_enabled,
-       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported, pipe_freeze_enabled)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported, pipe_freeze_enabled,
+       commute_to_work_start, commute_to_work_end, commute_from_work_start, commute_from_work_end)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
         notification_enabled=excluded.notification_enabled,
         notification_time=excluded.notification_time,
+        commute_to_work_start=${payload.commuteToWorkStart === undefined ? 'notification_settings.commute_to_work_start' : 'excluded.commute_to_work_start'},
+        commute_to_work_end=${payload.commuteToWorkEnd === undefined ? 'notification_settings.commute_to_work_end' : 'excluded.commute_to_work_end'},
+        commute_from_work_start=${payload.commuteFromWorkStart === undefined ? 'notification_settings.commute_from_work_start' : 'excluded.commute_from_work_start'},
+        commute_from_work_end=${payload.commuteFromWorkEnd === undefined ? 'notification_settings.commute_from_work_end' : 'excluded.commute_from_work_end'},
         umbrella_enabled=excluded.umbrella_enabled,
         parasol_enabled=excluded.parasol_enabled,
         heavy_snow_enabled=excluded.heavy_snow_enabled,
@@ -155,6 +174,10 @@ export async function upsertNotificationSettings(
       now,
       booleanInteger(lightningSupported),
       booleanInteger(payload.pipeFreezeEnabled === true),
+      payload.commuteToWorkStart ?? defaultCommuteSchedule.commuteToWorkStart,
+      payload.commuteToWorkEnd ?? defaultCommuteSchedule.commuteToWorkEnd,
+      payload.commuteFromWorkStart ?? defaultCommuteSchedule.commuteFromWorkStart,
+      payload.commuteFromWorkEnd ?? defaultCommuteSchedule.commuteFromWorkEnd,
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

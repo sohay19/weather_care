@@ -288,3 +288,10 @@ Firebase가 `UNREGISTERED`로 응답한 토큰은 설치 정보에서 제거합�
 Node 서버는 `NODE_WEATHER_DATABASE_PATH`의 공용 날씨 DB와 `NODE_DATABASE_PATH`의 환경별 사용자 DB를 사용합니다.
 관측·예보·수집 사용량은 공용이며 사용자·인증·위치·알림 설정·발송 상태는 환경별로 분리합니다.
 기존 통합 DB는 자동 변경하지 않습니다. 새 코드 적용 시 [공용 날씨 DB 전환 안내](ops/mini-pc/공용_날씨_DB_전환.md)에 따라 자료를 옮기고 두 환경을 함께 전환합니다.
+
+## 출퇴근 경로 알림 시간 제한
+
+- 알림 설정 API의 `commuteToWorkStart`/`commuteToWorkEnd`는 출근, `commuteFromWorkStart`/`commuteFromWorkEnd`는 퇴근 알림 구간이며 `HH:mm` 형식이다. 기본값은 각각 `07:00`/`10:00`, `17:00`/`20:00`이다. 구 앱의 필드 없는 부분 갱신은 저장된 구간을 유지한다.
+- 설치의 시간대로 시작 포함·종료 제외를 판단한다. 자정을 넘는 구간을 지원하고 같은 시작·종료는 두 설정 API 모두 거부한다. 평일 여부는 이번 제한에 포함하지 않는다.
+- 도로통제의 ‘출퇴근 경로’ 푸시만 제한하며, 앱 내 도로통제 표시와 다른 알림 종류는 기존 조건을 유지한다. 구간 밖에서는 출퇴근 푸시를 만들거나 발송 상태를 갱신하지 않으며, 발송 직전에도 최신 시간 설정과 현재 시각을 다시 확인한다. 같은 통제의 기존 중복 방지도 유지한다.
+- Node 운영/시험 사용자 DB에 각각 `node-migrations/users/0003_commute_notification_schedule.sql`을 적용한 뒤 새 API·스케줄러를 사용한다. 공용 날씨 DB 변경은 없다. 기존 통합 D1용 마이그레이션은 `migrations/0020_commute_notification_schedule.sql`이다. DB와 서버를 먼저 배포한 뒤 새 앱을 배포한다.

@@ -13,6 +13,7 @@ import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
 import 'ad_removal_purchase_screen.dart';
 import 'notification_schedule.dart';
+import 'commute_notification_settings_screen.dart';
 import 'region_picker_screen.dart' show RegionMapBuilder;
 import 'settings_guide.dart';
 import 'settings_guide_screen.dart';
@@ -379,10 +380,35 @@ class _WeatherAlertsSettingsScreenState
     return _SettingsDetailScaffold(
       title: '알림',
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('알림 시간과 받을 날씨·생활 알림을 영역별로 설정해요',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: WeatherCareTheme.of(context).textSecondary,
-                )),
+        Container(
+          key: const ValueKey('notification-save-notice'),
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: WeatherCareTheme.of(context).surfaceMuted,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 18,
+                color: WeatherCareTheme.of(context).textSecondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '저장에 실패하면 데이터 저장·기기 권한 상태에서 다시 시도해주세요.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: WeatherCareTheme.of(context).textSecondary,
+                        fontSize: 12,
+                        height: 1.45,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 16),
         _SettingsSection(
           key: const ValueKey('weather-alerts-master-section'),
@@ -449,9 +475,27 @@ class _WeatherAlertsSettingsScreenState
               ),
             ),
             const SizedBox(height: 10),
-            Text(
-              notificationScheduleDescription(settings.notificationTime),
-              key: const ValueKey('notification-schedule-description'),
+            Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    notificationScheduleDescription(settings.notificationTime),
+                    key: const ValueKey('notification-schedule-description'),
+                    maxLines: 1,
+                    softWrap: false,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: WeatherCareTheme.of(context)
+                              .textSecondary
+                              .withValues(alpha: 0.7),
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
+              ),
             ),
             if (!settings.dailyWeatherEnabled)
               const Padding(
@@ -461,33 +505,20 @@ class _WeatherAlertsSettingsScreenState
           ]),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: WeatherCareTheme.of(context).attentionSoft,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                size: 19,
-                color: WeatherCareTheme.of(context).attention,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '저장에 실패하면 데이터 저장·기기 권한 상태에서 다시 시도해주세요.',
-                  style: WeatherCareTheme.of(context).microTextStyle.copyWith(
-                        color: WeatherCareTheme.of(context).attentionDeep,
-                        fontSize: 12,
-                        height: 1.45,
-                      ),
-                ),
-              ),
-            ],
-          ),
+        _SettingsMenuButton(
+          key: const ValueKey('commute-notification-menu'),
+          icon: Icons.commute_rounded,
+          title: '출퇴근 알림 시간',
+          subtitle:
+              '출근 ${settings.commuteToWorkStart}~${settings.commuteToWorkEnd}\n'
+              '퇴근 ${settings.commuteFromWorkStart}~${settings.commuteFromWorkEnd}',
+          onTap: () => Navigator.of(context).push<void>(MaterialPageRoute(
+            builder: (_) => CommuteNotificationSettingsScreen(
+              initialSettings: settings,
+              enabled: enabled,
+              onSettingsChanged: _update,
+            ),
+          )),
         ),
         const SizedBox(height: 12),
         _SettingsSection(
@@ -645,7 +676,7 @@ class _WeatherAlertsSettingsScreenState
             ),
             const Divider(height: 24),
             const Text(
-              '블랙아이스(도로살얼음)·도로통제·그 밖의 공식 특보는 개별 스위치 없이 전체 날씨 알림 설정을 따라요.\n블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.',
+              '블랙아이스(도로살얼음)·도로통제·그 밖의 공식 특보는 개별 스위치 없이 전체 날씨 알림 설정을 따라요.\n도로통제 알림은 설정한 출퇴근 시간 안에서만 보내요.\n블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.',
               key: ValueKey('additional-notification-contract'),
             ),
           ]),

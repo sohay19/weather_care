@@ -10,6 +10,7 @@ import { ownerForRequest } from '../security/installationAccess';
 import { bodyLimit } from 'hono/body-limit';
 import { minimumAgeAssertionShape } from '../validation/minimumAge';
 import backgroundLocation from './backgroundLocation';
+import { isValidCommuteSchedule } from '../notification/commuteSchedule';
 
 const installationBodySchema = z
   .object({
@@ -86,11 +87,16 @@ router.put('/:installationId/notification-settings', async (c) => {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }
   const current = await getNotificationSettings(c.env.DB, installationId);
-  const saved = await upsertNotificationSettings(c.env.DB, {
+  const settings = {
     ...current,
     ...parsed.data,
     installationId,
-  }, ownerHash, parsed.data.lightningEnabled !== undefined);
+  };
+  if (!isValidCommuteSchedule(settings)) {
+    return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
+  }
+  const saved = await upsertNotificationSettings(c.env.DB, settings,
+    ownerHash, parsed.data.lightningEnabled !== undefined);
   if (!saved) return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   return c.json({ ok: true });
 });

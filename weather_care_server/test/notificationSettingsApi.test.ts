@@ -10,6 +10,10 @@ describe('notification settings API', () => {
         installation_id TEXT PRIMARY KEY,
         notification_enabled INTEGER NOT NULL DEFAULT 1,
         notification_time TEXT NOT NULL DEFAULT '07:00',
+        commute_to_work_start TEXT NOT NULL DEFAULT '07:00',
+        commute_to_work_end TEXT NOT NULL DEFAULT '10:00',
+        commute_from_work_start TEXT NOT NULL DEFAULT '17:00',
+        commute_from_work_end TEXT NOT NULL DEFAULT '20:00',
         umbrella_enabled INTEGER NOT NULL DEFAULT 1,
         parasol_enabled INTEGER NOT NULL DEFAULT 1,
         heavy_snow_enabled INTEGER NOT NULL DEFAULT 1,
@@ -73,9 +77,41 @@ describe('notification settings API', () => {
     }
   });
 
+  it('출퇴근 시간과 야간 구간을 저장하고 구 앱의 부분 갱신에도 유지한다', async () => {
+    const schedule = { commuteToWorkStart: '23:00', commuteToWorkEnd: '01:00',
+      commuteFromWorkStart: '10:00', commuteFromWorkEnd: '11:00' };
+    for (const body of [schedule, { notificationTime: '08:30' }]) {
+      const response = await SELF.fetch('https://example.com/api/v1/notification-settings/device-1', {
+        method: 'PUT', headers: testAuthHeaders, body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject(schedule);
+    }
+    const response = await SELF.fetch('https://example.com/api/v1/notification-settings?installationId=device-1',
+      { headers: testAuthHeaders });
+    expect(await response.json()).toMatchObject(schedule);
+  });
+
+  it.each(['/api/v1/notification-settings/device-1', '/api/v1/installations/device-1/notification-settings'])(
+    '%s는 기존 종료와 같아지는 부분 변경을 거부한다', async (path) => {
+      const response = await SELF.fetch(`https://example.com${path}`, {
+        method: 'PUT', headers: testAuthHeaders,
+        body: JSON.stringify({ commuteToWorkStart: '10:00' }),
+      });
+      expect(response.status).toBe(400);
+      const current = await SELF.fetch('https://example.com/api/v1/notification-settings?installationId=device-1',
+        { headers: testAuthHeaders });
+      expect(await current.json()).toMatchObject({ commuteToWorkStart: '07:00', commuteToWorkEnd: '10:00' });
+    });
+
   it('rejects invalid times and unknown fields', async () => {
     for (const body of [
       { notificationTime: '25:00' },
+      { commuteToWorkStart: '24:00' },
+      { commuteFromWorkEnd: '18:60' },
+      { commuteFromWorkStart: '8:00' },
+      { commuteToWorkStart: null },
+      { commuteFromWorkStart: '20:00' },
       { unsupportedSetting: true },
     ]) {
       const response = await SELF.fetch(

@@ -45,6 +45,7 @@ class TabPageHeader extends StatelessWidget {
               size: 23,
             ),
           ),
+          const SizedBox(width: 12),
         ],
         Expanded(
           child: Stack(
@@ -107,7 +108,7 @@ class TabPageHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Padding(
-                    padding: const EdgeInsets.only(left: 50),
+                    padding: EdgeInsets.only(left: showRegionMenu ? 50 : 0),
                     child: Row(
                       children: [
                         Flexible(

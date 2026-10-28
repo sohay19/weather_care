@@ -152,7 +152,7 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
           children: [
             TabPageHeader(
               eyebrow: 'WEEK',
-              title: '앞으로 7일',
+              title: '일주일 예보',
               subtitle: calendarWeekPeriodLabel(calendarDays),
               icon: Icons.calendar_month_outlined,
             ),
@@ -190,93 +190,83 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               color: WeatherCareTheme.of(context).primaryBorder,
             ),
             const SizedBox(height: 24),
-            Center(
-              child: Text(
-                calendarDayLabel(selectedDay.date),
-                key: const ValueKey('week-selected-date'),
-                style: TextStyle(
-                  color: _weekDateColor(context, selectedDay.date),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 120),
-                  child: IconButton(
-                    key: const ValueKey('week-previous-day'),
-                    tooltip: '이전 날짜',
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints.tightFor(width: 32, height: 40),
-                    style: const ButtonStyle(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: _selectedDayIndex == 0
-                        ? null
-                        : () => _showDay(_selectedDayIndex - 1),
-                    icon: const Icon(Icons.chevron_left),
+                IconButton(
+                  key: const ValueKey('week-previous-day'),
+                  tooltip: '이전 날짜',
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints.tightFor(width: 32, height: 40),
+                  style: const ButtonStyle(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
+                  onPressed: _selectedDayIndex == 0
+                      ? null
+                      : () => _showDay(_selectedDayIndex - 1),
+                  icon: const Icon(Icons.chevron_left),
                 ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: GestureDetector(
-                    key: const ValueKey('week-day-swipe-area'),
-                    behavior: HitTestBehavior.translucent,
-                    onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
-                    onHorizontalDragUpdate: (details) =>
-                        _horizontalDragDistance += details.delta.dx,
-                    onHorizontalDragEnd: (details) {
-                      final velocity = details.primaryVelocity ?? 0;
-                      if (_horizontalDragDistance < -50 || velocity < -300) {
-                        _showDay(_selectedDayIndex + 1);
-                      } else if (_horizontalDragDistance > 50 ||
-                          velocity > 300) {
-                        _showDay(_selectedDayIndex - 1);
-                      }
-                    },
-                    child: _WeekDayCard(
-                      calendarDay: selectedDay,
-                      dataPhase: widget.dataPhase,
-                      isToday: dateInKorea(selectedDay.date) == today,
-                      isPast: selectedDay.date.isBefore(
-                        parseForecastDate(today)!,
-                      ),
-                      today: parseForecastDate(today)!,
-                      hourly: selectedHourly,
-                      snowDepthHistory: widget.snowDepthHistory,
-                      currentSnow: widget.currentSnow,
-                      serverFeaturesAvailable: widget.serverFeaturesAvailable,
-                      onRetry: widget.onRetryData,
-                      retrying: widget.retrying,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    calendarDayLabel(selectedDay.date),
+                    key: const ValueKey('week-selected-date'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _weekDateColor(context, selectedDay.date),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(top: 120),
-                  child: IconButton(
-                    key: const ValueKey('week-next-day'),
-                    tooltip: '다음 날짜',
-                    iconSize: 20,
-                    padding: EdgeInsets.zero,
-                    constraints:
-                        const BoxConstraints.tightFor(width: 32, height: 40),
-                    style: const ButtonStyle(
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: _selectedDayIndex == calendarDays.length - 1
-                        ? null
-                        : () => _showDay(_selectedDayIndex + 1),
-                    icon: const Icon(Icons.chevron_right),
+                const SizedBox(width: 8),
+                IconButton(
+                  key: const ValueKey('week-next-day'),
+                  tooltip: '다음 날짜',
+                  iconSize: 20,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints.tightFor(width: 32, height: 40),
+                  style: const ButtonStyle(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
+                  onPressed: _selectedDayIndex == calendarDays.length - 1
+                      ? null
+                      : () => _showDay(_selectedDayIndex + 1),
+                  icon: const Icon(Icons.chevron_right),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              key: const ValueKey('week-day-swipe-area'),
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
+              onHorizontalDragUpdate: (details) =>
+                  _horizontalDragDistance += details.delta.dx,
+              onHorizontalDragEnd: (details) {
+                final velocity = details.primaryVelocity ?? 0;
+                if (_horizontalDragDistance < -50 || velocity < -300) {
+                  _showDay(_selectedDayIndex + 1);
+                } else if (_horizontalDragDistance > 50 || velocity > 300) {
+                  _showDay(_selectedDayIndex - 1);
+                }
+              },
+              child: _WeekDayCard(
+                calendarDay: selectedDay,
+                dataPhase: widget.dataPhase,
+                isToday: dateInKorea(selectedDay.date) == today,
+                isPast: selectedDay.date.isBefore(parseForecastDate(today)!),
+                today: parseForecastDate(today)!,
+                hourly: selectedHourly,
+                snowDepthHistory: widget.snowDepthHistory,
+                currentSnow: widget.currentSnow,
+                serverFeaturesAvailable: widget.serverFeaturesAvailable,
+                onRetry: widget.onRetryData,
+                retrying: widget.retrying,
+              ),
             ),
           ],
         ),

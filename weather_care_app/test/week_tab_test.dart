@@ -178,7 +178,7 @@ void main() {
       false,
       false,
     ]);
-    expect(calendarWeekPeriodLabel(days), '9월 10일~9월 16일 · 7일 예보');
+    expect(calendarWeekPeriodLabel(days), '9월 10일~9월 16일');
   });
 
   test('주말·월말·연말·윤년에도 오늘부터 연속 7일을 유지한다', () {
@@ -201,7 +201,7 @@ void main() {
           [],
           DateTime.parse('2026-12-31T01:00:00Z'),
         )),
-        '2026년 12월 31일~2027년 1월 6일 · 7일 예보');
+        '2026년 12월 31일~2027년 1월 6일');
   });
 
   test('중복 날짜는 임의로 고르지 않고 7일 범위 밖의 예보는 제외한다', () {
@@ -219,7 +219,7 @@ void main() {
 
   testWidgets('첫 예보가 내일이어도 오늘부터 7일 자리를 유지한다', (tester) async {
     await _pump(tester, [_day('2026-09-11')]);
-    expect(find.text('앞으로 7일'), findsOneWidget);
+    expect(find.text('일주일 예보'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-today-2026-09-10')), findsOneWidget);
     expect(find.byKey(const ValueKey('week-precipitation-2026-09-10')),
         findsOneWidget);
@@ -273,7 +273,7 @@ void main() {
 
   testWidgets('빈 목록도 오늘부터 7일 자리를 유지하고 정상 날씨를 만들지 않는다', (tester) async {
     await _pump(tester, []);
-    expect(find.text('9월 10일~9월 16일 · 7일 예보'), findsOneWidget);
+    expect(find.text('9월 10일~9월 16일'), findsOneWidget);
     await _moveDays(tester, -4);
     expect(find.text('9월 10일 (목)'), findsOneWidget);
     await _moveDays(tester, 6);
@@ -395,7 +395,9 @@ void main() {
     expect(advertisement, greaterThan(summary));
     expect(advertisement, lessThan(day));
     expect(calendar.top - (advertisement + 50), closeTo(32, 1));
-    expect(tester.getTopLeft(heading).dy - calendar.bottom, closeTo(36, 1));
+    final dateNavigation =
+        tester.getRect(find.byKey(const ValueKey('week-previous-day')));
+    expect(dateNavigation.top - calendar.bottom, closeTo(36, 1));
     expect(find.text('5 / 7'), findsNothing);
     expect(tester.widget<Text>(heading).data, '9월 10일 (목)');
     expect(tester.getTopLeft(heading).dy, greaterThan(advertisement));
@@ -927,7 +929,7 @@ void main() {
     now = now.add(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('9월 14일 (월)'), findsOneWidget);
-    expect(find.text('9월 13일~9월 19일 · 7일 예보'), findsOneWidget);
+    expect(find.text('9월 13일~9월 19일'), findsOneWidget);
     await _moveDays(tester, -1);
     expect(find.byKey(const ValueKey('week-today-2026-09-13')), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -937,16 +939,20 @@ void main() {
     await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
     final cardRect =
         tester.getRect(find.byKey(const ValueKey('week-day-2026-09-10')));
+    final dateRect =
+        tester.getRect(find.byKey(const ValueKey('week-selected-date')));
     final previousRect =
         tester.getRect(find.byKey(const ValueKey('week-previous-day')));
     final nextRect =
         tester.getRect(find.byKey(const ValueKey('week-next-day')));
     expect(previousRect.width, 32);
     expect(nextRect.width, 32);
-    expect(previousRect.right, lessThan(cardRect.left));
-    expect(nextRect.left, greaterThan(cardRect.right));
-    expect(previousRect.top - cardRect.top, closeTo(120, 1));
-    expect(nextRect.top - cardRect.top, closeTo(120, 1));
+    expect(previousRect.right, lessThan(dateRect.left));
+    expect(nextRect.left, greaterThan(dateRect.right));
+    expect(previousRect.center.dy, closeTo(dateRect.center.dy, 1));
+    expect(nextRect.center.dy, closeTo(dateRect.center.dy, 1));
+    expect(previousRect.bottom, lessThan(cardRect.top));
+    expect(nextRect.bottom, lessThan(cardRect.top));
     expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsOneWidget);
     expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsNothing);
     await _moveDays(tester, 1);

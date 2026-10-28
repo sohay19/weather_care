@@ -41,7 +41,7 @@ String calendarWeekPeriodLabel(List<WeekCalendarDay> days) {
   final year = first.year == last.year ? '' : '${first.year}년 ';
   return '$year${first.month}월 ${first.day}일~'
       '${last.year != first.year ? '${last.year}년 ' : ''}'
-      '${last.month}월 ${last.day}일 · 7일 예보';
+      '${last.month}월 ${last.day}일';
 }
 
 String calendarDayLabel(DateTime date) {

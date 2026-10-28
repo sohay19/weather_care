@@ -13495,3 +13495,39 @@
 - 사용자 요청으로 현재 추적 변경과 신규 예시 진입점 전부(총11파일)를 커밋·푸시 대상으로 확인했다. 필수 업데이트 차단/복귀 자동 확인/업데이트 단일 버튼, 관련 시험·README·HANDOFF, 별도 디버그 예시와 Android keystore.properties의 versionCode 26102700→26102701 변경을 포함한다. 버전 설정 파일의 다른 값은 변경되지 않았다. ignored APK/로그/기기 XML/캡처·임시 빌드 스크립트는 포함하지 않는다.
 - 기존 관련 시험36개·정적 분석·제품 Android APK 빌드 통과 기록과 git diff --check를 확인했다. 마지막 검증 이후 제품 Dart 코드 변경이 없어 시험·빌드를 반복하지 않았다. 새 실제 스토어 배포나 설치 완료 검증은 이번 범위에 없다.
 - fetch 후 HEAD b2bfc52와 weather_care/master의 ahead/behind 0/0을 확인했다. 현재 master에서 한글 메시지 ‘feat(update): 필수 업데이트와 복귀 자동 확인 적용’으로 전체 변경을 커밋하고 weather_care/master에 일반 푸시한다. 완료 후 로컬/원격 커밋 일치와 작업 트리 정리를 확인한다.
+
+## 2026-10-28 메인 구역 버튼으로 틀어진 다른 탭 타이틀 간격 복구·실기기 촬영
+
+- 사용자 요청으로 공통 TabPageHeader를 확인했다. 메인 구역 버튼 변경 시 일반 탭 아이콘 뒤 12px 간격이 제거되고 설명문의 왼쪽 50px 여백이 모든 탭에 적용된 것이 원인이었다. 제품 코드는 아이콘 뒤 12px 간격 복원, 설명문 50px 여백을 showRegionMenu일 때만 적용하는 두 곳만 수정했다. 메인의 구역 버튼 터치 영역과 긴 지역명 한 줄 배치는 유지했다.
+- Today·Advanced·Week·Setting의 세 텍스트 행 정렬/아이콘 간격을 300px 폭·글자 1/1.3/2배로 확인하는 회귀 시험을 추가하고 기존 메인 시험에 50px 세 행 정렬 검증을 보강했다. 관련 Flutter 시험 30개 통과, 전체 flutter analyze 이슈 없음(55.2초), 일반 main.dart Android arm64 Debug APK 빌드 성공(23.9초). 최종 build/app/outputs/flutter-apk/app-debug.apk는 제품 패키지 com.codesoha.weathercare이며 임시 촬영 진입점이 아니다.
+- 연결된 SM-S948U(localhost:48721, Android API36, 1080×2340)에 제품 앱이 없어 제품과 분리한 Debug 확인용 com.codesoha.weathercare.uiverify(‘날씨챙겨 화면 확인’) 및 촬영 instrumentation com.codesoha.weathercare.uicapture를 설치했다. ignored build/tab-header-device-20261028/capture.dart에서 제품 WeatherCareApp/HomeScreen을 그대로 실행한다. 스토어 확인 단계만 제외하고 별도 앱에 서울 종로구 수동 지역·알림/백그라운드 위치 끔을 설정해 권한 변경 없이 운영 서버의 실제 날씨를 표시했다. 고정 날씨나 예시 위젯/스토어 합성 이미지는 사용하지 않았다. 제품 앱·사용자 권한·기기 시스템 테마는 변경하지 않았다.
+- 단순 ADB 좌표 탭으로 선택 상태가 바뀌지 않아 촬영 instrumentation의 접근성 ACTION_CLICK으로 전환했다. UiAutomation 연결 직후 Flutter 접근성 트리 준비를 기다리도록 고친 뒤 Main/Today/Advanced/Week/Setting 모두 실제 선택 상태를 검증하고 원본 PNG를 저장해 타이틀 간격·한글·잘림 여부를 직접 검토했다(INSTRUMENTATION_CODE -1). Main 구역 버튼 배치도 기존대로다. 일반 제품 앱 시작/업데이트 차단이나 실제 위치 이동/푸시는 이번 UI 촬영 검증 대상이 아니다.
+- 5개 원본은 weather_care_app/build/tab-header-device-20261028/{main,today,advanced,week,setting}.png이며 verification.json에 크기·SHA256·확인용 빌드 구분을 기록했다. 시험/분석/제품 빌드 로그는 build/tab-header-{tests,analyze,product-build}-20261028.log, 촬영 소스/APK/로그는 같은 촬영 폴더에 있다. 불필요한 초기 잠금화면/전환 중 캡처와 잘못된 탭명의 초기 사본/XML은 제거했다. Windows 창을 띄우지 않고 연결 Android와 ADB/instrumentation으로 진행했다. 다른 채팅이 추가한 HANDOFF 기록을 보존했고 커밋·push·서버/스토어 배포는 하지 않았다.
+
+## 2026-10-28 Week 탭 이름을 일주일 예보로 변경
+
+- 사용자 요청에 따라 하단 NavigationDestination의 Week 표시 이름을 ‘일주일 예보’로 변경했다. 광고 제거 혜택 안내의 탭 참조와 기존 위젯/위치 시험 및 촬영용 화면의 라벨도 같은 이름으로 맞췄다. 상단 ‘WEEK’ 장식 문구와 ‘앞으로 7일’ 제목, 주간 예보 동작은 유지했다.
+- 기존 widget_test.dart/home_location_test.dart 총92개 시험 통과(360px 화면·하단 탭 라벨·예보 탭 전환 포함), git diff --check 통과. 신규 시험 추가나 기기 재설치·재촬영·APK 재빌드·배포·커밋·push는 하지 않았다. 직전 실기기 캡처와 APK는 탭 이름 변경 전 결과이며 소스에는 새 이름이 적용됐다. 기존 타이틀 간격 수정과 다른 채팅의 HANDOFF 기록을 보존했다.
+
+## 2026-10-28 일주일 예보 탭 기기 적용·재촬영
+
+- 사용자 요청으로 최신 소스의 확인용 Debug APK를 빌드(31초)해 연결 SM-S948U(localhost:48721)의 기존 com.codesoha.weathercare.uiverify에 adb install -r로 업데이트 설치했다(Success). 앞선 촬영과 동일한 제품 WeatherCareApp/HomeScreen 및 실제 운영 서버 날씨를 사용하는 별도 확인용 앱이며 제품 스토어 확인/권한 설정은 변경하지 않았다.
+- 촬영 도구를 자체 패키지 대상으로 실행하도록 조정해 제품 화면 프로세스를 종료하지 않고 접근성 ACTION_CLICK으로 ‘일주일 예보’ 탭을 선택했다. 실제 선택 상태와 새 접근성 라벨을 검증하고 UiAutomation/ADB로 1080×2340 원본 화면을 저장했다. 하단 이름이 한 줄로 잘림 없이 표시되고 타이틀 간격도 유지됨을 직접 확인했으며 기기는 해당 탭을 연 상태로 남겼다.
+- 원본은 weather_care_app/build/tab-header-device-20261028/week-renamed-device.png(ADB) 및 week-renamed.png(UiAutomation)이며 week-renamed.xml, week-renamed-verification.json, week-label-capture.log에 실제 탭 선택/크기/소스·APK·PNG 해시를 기록했다. 일반 main.dart Android arm64 Debug APK도 재빌드 성공(15.2초)해 표준 빌드 결과를 제품 앱으로 복구했다. 기존 관련 시험92개 통과 후 제품 코드 추가 변경이 없어 시험을 반복하지 않았다.
+- HANDOFF 외 추적 파일은 이번에 추가 변경하지 않았으며 커밋·push·서버/스토어 배포는 하지 않았다. Windows 창을 열지 않고 연결 Android에서만 설치·촬영했다.
+
+## 2026-10-28 터치 무응답 복구·Week 제목/설명/날짜 이동 버튼 수정
+
+- 사용자 ‘앱 멈췄어’ 보고 당시 확인용 앱 프로세스10065와 전면 Activity는 살아 있고 시스템에 ANR/AndroidRuntime 충돌 기록은 없었다. InputDispatcher에 가상 입력 기기 -1의 포인터1/2가 배경화면 대상으로 계속 눌린 상태로 남아 있어 일반 좌표 터치가 앱에 전달되지 않았다. 기본 input motionevent CANCEL은 해당 가상 기기를 해제하지 못해 ignored TouchRecovery instrumentation으로 동일 deviceId=-1·포인터1/2의 ACTION_CANCEL을 전달했다. 이후 TouchStatesByDisplay가 no displays touched, Verifier가 빈 상태로 바뀌었고 앱 재시작 없이 일반 ADB 터치로 Today→Main→주간 탭 및 세로 스크롤이 정상 동작했다. 입력이 남은 최초 발생 주체는 확정하지 않았다. 앱 데이터 초기화·권한/시스템 설정 변경·기기 재부팅은 하지 않았다.
+- 사용자가 명확히 정정한 최종 요구에 따라 하단 탭 버튼은 Week로 원복하고 WeekTab 상단 제목만 ‘일주일 예보’로 바꿨다. 날짜 범위 설명의 ‘ · 7일 예보’ 꼬리표를 제거했다. 기존에 잘못 바꾼 하단 라벨·광고 안내·촬영용 화면·관련 시험의 이름 변경은 모두 원복했다. 상단 장식 WEEK 표시는 유지한다.
+- 이전/다음 날짜 IconButton을 날짜 카드 양옆에서 선택 날짜 제목의 좌우로 옮겨 같은 중앙 행에 배치했다. 날짜는 Flexible+가운데 정렬로 좁은 화면/큰 글씨에 대응하며 카드의 불필요해진 좌우 버튼 자리는 제거했다. 첫날/마지막날 비활성화와 가로 스와이프 전환 동작은 유지했다. 기존 배치 시험을 새 날짜 행 기준으로 수정했다.
+- 관련 Flutter4파일 총137개 시험 통과(20초), 변경 UI/시험4파일 정적 분석 이슈 없음(26.1초). 최초 실행 중 다른 채팅의 새 commute_notification_settings_screen.dart에서 colors.border 컴파일 오류가 관찰됐으나 해당 작업자가 colors.outline으로 수정한 뒤 최종 시험을 재실행했다. 이번 작업은 그 파일/앱 설정/서버/출퇴근 기능 코드를 수정하지 않았다. 날짜 행 높이 변경에 따른 기존 간격 시험1개는 날짜 행 상단을 검사하도록 정합화했다.
+- 최신 확인용 APK 빌드20초 후 SM-S948U(localhost:48721)의 com.codesoha.weathercare.uiverify에 업데이트 설치 Success. 제품 화면 코드와 운영 서버 실제 날씨를 사용한다. 일반 좌표 터치로 Week를 선택하고 상단 제목/설명 및 날짜 양옆 버튼의 실제 좌표·중앙 정렬을 확인했다. 오른쪽/왼쪽 버튼으로 10월28일→29일→28일 왕복했고 최종 입력 상태에 잔류 터치가 없음을 확인했다. 앱은 Week 화면에 남겼다. 이번에 설치했던 임시 com.codesoha.weathercare.uicapture 도구는 제거했다(Success).
+- 최종 원본은 weather_care_app/build/tab-header-device-20261028/week-final.png이며 week-final.xml 및 week-final-verification.json에 라벨/버튼 좌표/날짜 왕복/PNG·APK·제품 소스 해시를 기록했다. 터치 복구 기록은 touch-recovery.log, touch-recovery-verification.json, touch-recovered-input.txt와 관련 캡처/XML이다. 일반 main.dart Android arm64 Debug APK도 재빌드 성공(14.7초)해 표준 제품 빌드 결과로 복구했다. 최종 로그는 build/week-title-arrows-{tests,analyze}-20261028.log, build/week-title-product-build-20261028.log 및 촬영 폴더의 week-title-build.log다.
+- Windows UI를 열지 않고 연결 Android에서만 진행했으며 다른 채팅의 앱/서버/시험/인계 변경을 보존했다. 커밋·push·서버/스토어 배포는 하지 않았다.
+
+## 2026-10-28 타이틀 간격·Week 화면 수정 커밋·푸시
+
+- 사용자 요청으로 이번 채팅에서 수정한 공통 타이틀 간격, Week의 ‘일주일 예보’ 제목/날짜 범위 설명/날짜 양옆 이동 버튼과 관련 시험·인계만 커밋 범위로 확정했다. 대상은 제품 Dart3파일, 시험2파일, HANDOFF의 이 채팅 작업 기록으로 총6파일이다. 다른 채팅의 출퇴근 알림 기능 및 그 인계 기록은 작업 트리에 보존하며 이번 커밋에 포함하지 않는다. ignored APK·기기 캡처·촬영 도구·로그도 포함하지 않는다.
+- 기존 관련137개 시험·변경4파일 정적 분석·제품 APK 빌드 성공 기록을 확인했고, 최종 실기기 검증 JSON의 Week 제품 소스 SHA256이 현재 파일과 같음을 확인했다. 이후 UI 제품 소스 변경이 없어 시험/빌드/기기 검증을 반복하지 않는다.
+- fetch 후 HEAD와 weather_care/master의 ahead/behind0/0을 확인했다. 현재 master에서 한글 메시지 ‘fix(ui): 타이틀 간격과 주간 예보 화면 정리’를 사용한다. 강제 푸시나 서버/스토어 배포는 범위에 없다.

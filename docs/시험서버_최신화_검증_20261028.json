@@ -1,0 +1,232 @@
+{
+  "deployment": {
+    "status": "complete",
+    "startedAt": "2026-10-28T17:48:22.294680+09:00",
+    "changedFiles": [
+      "src/api/installations.ts",
+      "src/api/notificationRegions.ts",
+      "src/api/notificationSettings.ts",
+      "src/collection/collectionTargets.ts",
+      "src/collection/weatherCollectionJob.ts",
+      "src/database/notificationSettingsRepository.ts",
+      "src/notification/commuteSchedule.ts",
+      "src/notification/fcmClient.ts",
+      "src/notification/lightningNotificationJob.ts",
+      "src/notification/notificationRegions.ts",
+      "src/notification/notificationScheduler.ts",
+      "src/services/pointForecastCache.ts",
+      "src/types.ts",
+      "src/validation/notificationSettings.ts",
+      "node-migrations/users/0003_commute_notification_schedule.sql",
+      "node-migrations/users/0004_notification_regions.sql"
+    ],
+    "verificationFcmSent": 0,
+    "servicesBefore": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 742759
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 742823
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 719616
+      },
+      "weather-care-test-scheduler.service": {
+        "active": "inactive",
+        "pid": 0
+      }
+    },
+    "candidateTypecheck": "passed_local_exact_production_snapshot",
+    "candidateProbe": {
+      "passed": true,
+      "checks": [
+        "migrationOnce",
+        "legacySingleRegion",
+        "bothOldSettingsAPIs",
+        "commutePreserved",
+        "regionSubscriptionsPreserved",
+        "twoDongTitles",
+        "regionClickMetadata",
+        "regionDeduplication",
+        "allRegionsOff",
+        "ownershipRequired",
+        "deleteCascade",
+        "databaseIntegrity"
+      ],
+      "externalCalls": 0,
+      "actualUserWrites": 0,
+      "actualFcmSent": 0
+    },
+    "baselineRequests": 13,
+    "backup": "/var/backups/weather-care/test-latest-20261028T084831Z",
+    "migration": {
+      "applied": [
+        "0003_commute_notification_schedule.sql",
+        "0004_notification_regions.sql"
+      ],
+      "backup": "/var/backups/weather-care/test-latest-20261028T084831Z/users-before.sqlite",
+      "existingTablesPreserved": {
+        "installations": {
+          "count": 27,
+          "sha256": "5d4a1e009b42025b9b6e9cd0b54d6541974bbeed077b7df41d31da4714e9ccb2"
+        },
+        "active_regions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "notification_settings": {
+          "count": 34,
+          "sha256": "9ba131e76fca588afe774090802fdec0874fe0498d9f2b8f47806b77db4e7511"
+        },
+        "notification_history": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "installation_warning_state": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "installation_credentials": {
+          "count": 37,
+          "sha256": "8002f97ebf01905bbf5ca47cec324127a52de8361ea85c7ade6285a19f28ab33"
+        },
+        "installation_ownership_challenges": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "legacy_installation_ownership": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "installation_activity": {
+          "count": 37,
+          "sha256": "93a97e35607bfd3e452e9be1a8a887c225dd0d5915feb28d636e52cf628430bf"
+        },
+        "lightning_notification_claims": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "settingsCount": 34,
+      "quickCheck": "ok",
+      "foreignKeyErrors": 0,
+      "newUsersNotOptedIn": true
+    },
+    "installedProbe": {
+      "passed": true,
+      "checks": [
+        "migrationOnce",
+        "legacySingleRegion",
+        "bothOldSettingsAPIs",
+        "commutePreserved",
+        "regionSubscriptionsPreserved",
+        "twoDongTitles",
+        "regionClickMetadata",
+        "regionDeduplication",
+        "allRegionsOff",
+        "ownershipRequired",
+        "deleteCascade",
+        "databaseIntegrity"
+      ],
+      "externalCalls": 0,
+      "actualUserWrites": 0,
+      "actualFcmSent": 0
+    },
+    "completedAt": "2026-10-28T17:48:40.641111+09:00",
+    "servicesAfter": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 742759
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 742823
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 745839
+      },
+      "weather-care-test-scheduler.service": {
+        "active": "inactive",
+        "pid": 0
+      }
+    },
+    "sourceMatchesProduction": true,
+    "allOldApiTopLevelFieldsPreserved": true,
+    "publicRequests": 26,
+    "newEndpointStatus": 401,
+    "testAccessKeyRequired": true,
+    "productionAndSharedWeatherUnchanged": true,
+    "configurationPreserved": true,
+    "testSchedulerStillInactive": true
+  },
+  "postVerification": {
+    "sourceMatchesProduction": true,
+    "runtimeAndMigrationFileCount": 182,
+    "services": {
+      "weather-care-api.service": {
+        "active": "active",
+        "pid": 742759
+      },
+      "weather-care-scheduler.service": {
+        "active": "active",
+        "pid": 742823
+      },
+      "weather-care-test-api.service": {
+        "active": "active",
+        "pid": 745839
+      },
+      "weather-care-test-scheduler.service": {
+        "active": "inactive",
+        "pid": 0
+      }
+    },
+    "migrations": {
+      "0001_users.sql": 1,
+      "0002_pipe_freeze_alert.sql": 1,
+      "0003_commute_notification_schedule.sql": 1,
+      "0004_notification_regions.sql": 1
+    },
+    "settingsCount": 34,
+    "temporaryInstallationsRemaining": 0,
+    "quickCheck": "ok",
+    "foreignKeyErrors": 0,
+    "backupPermissionsVerified": true,
+    "events": {
+      "weather_location_unresolved": 10,
+      "weather_access": 18,
+      "node_server_stopped": 1,
+      "node_server_started": 1
+    },
+    "errors": {},
+    "productionAndSharedWeatherSchemasUnchanged": true,
+    "checkedAt": "2026-10-28T17:50:07.380827+09:00"
+  },
+  "authenticatedLiveApi": {
+    "passed": true,
+    "actualFcmSent": 0,
+    "actualUserSettingsModified": 0,
+    "temporaryInstallationRemoved": true,
+    "checks": [
+      "actualEnrollment",
+      "legacyRegistration",
+      "twoDongNames",
+      "regionOnOffPersistence",
+      "bothOldSettingsPathsPreserveSubscriptions",
+      "commuteSchedulePreserved",
+      "globalOffPreserved",
+      "allRegionsOff"
+    ],
+    "regionRowsVerified": 2,
+    "checkedAt": "2026-10-28T17:49:38.962168+09:00"
+  },
+  "connectedApp": {
+    "hostBeforeDeployment": "weather-test-api.codesoha.com",
+    "failureBeforeDeployment": "502 INVALID_RESPONSE caused by plain-text 404",
+    "afterDeployment": "구역 메뉴에 저장 실패 안내가 표시되지 않음을 확인",
+    "screenshotIsNative": false
+  }
+}

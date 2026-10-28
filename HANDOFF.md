@@ -13714,3 +13714,15 @@
 - 시험 서버의 신규 API404 본문은JSON이 아니어서 ApiClient.requestJson이 HTTP 상태 분기 전에 jsonDecode에서502 INVALID_RESPONSE로 변환하고 SettingsSaveController가 serverFailed를 표시한다. 운영 배포 누락이 아니라 새 API가 없는 시험 서버로 접속한 것이 이번 원인이다.
 - 직전 설치 APK에는 빌드 인자로 운영 주소를 지정했으나, IDE main.dart 실행 구성에는 추가 인자가 없고 config/kma.config.json도 시험 서버이므로 IDE 재실행 때 시험 서버로 돌아간다. 임시 설치 빌드와 IDE 실행 환경 차이를 끝까지 고정하지 않은 부분을 설명한다. Debug 운영 확인에는 --dart-define=SERVER_URL=https://weather-api.codesoha.com을 실행 인자로 지정하거나 시험 서버에도 기능을 별도로 배포해야 한다. 이번 질문만으로 기본 개발/운영 환경 정책·IDE설정·시험 서버·DB를 변경하지 않았다.
 - 도구·실측 JSON은 ignored build/tab-header-device-20261028/check_runtime_server.py, runtime-server-check.json, check_region_routes.py다. 정확한 런타임 주소·실패 상태 확인을 위해 VM 표현식 평가를 시도했지만 compilation service 부재로 실패해 객체 필드 읽기로 확인했다. 제품 소스 변경·재설치·커밋·push는 하지 않았다.
+## 2026-10-28 시험 서버 운영 기능 최신화 및 항목별 커밋 준비
+
+- 사용자 요청으로 시험 서버도 운영과 같은 기능으로 최신화했다. 새 사용자 요청 ‘끝나면 수정내역 모두 항목별로 커밋하고 푸시’를 이번 배포 뒤 수행 범위에 추가했다. 커밋 메시지는 caveman-commit 지침을 읽고 한글 기반 Conventional Commits로 작성한다.
+- 실제 운영/시험 소스 스냅샷을 새로 확인했다. 시험에는 출퇴근·구역별 기능의 런타임/사용자 마이그레이션16파일과 사용자DB0003·0004가 빠져 있었다. 2026-10-28 17:48:40 KST 시험 사용자DB 마이그레이션·서버 배포 완료, 17:50:07 최종 검증 완료다.
+- 설치 경로 /opt/weather-care/releases/20261023-full-test/weather_care_server, 대상DB /var/lib/weather-care/weather-care-users-test.sqlite. 운영 실제 설치본의 소스만 기준으로16파일을 반영했다. 최종 src/node-migrations/users182파일의 해시가 운영과 일치한다. package/config/env/서비스 정의/공용 날씨 마이그레이션은 유지했다.
+- 백업 /var/backups/weather-care/test-latest-20261028T084831Z/users-before.sqlite(디렉터리0700·DB0600)은 서버 안에만 보관했다. 온라인 백업 후 BEGIN IMMEDIATE에서0003/0004를 각각1회 적용하고 기존 모든 테이블의 원래 열·행 해시와 건수 일치, 기존알림설정34건 보존, 출퇴근 기본값·구역 구독 자동생성없음·quick_check정상·FK오류0을 확인했다. 최종 시험/운영 사용자DB 스키마가 일치한다. 실제DB 다운로드나 데이터 초기화는 하지 않았다.
+- 사전 검사에서 원격 시험 node_modules에 개발용tsc가 없어 DB/소스 변경 전에 중단됐다. 개발 의존성을 추가하지 않고 실제 운영 스냅샷을 로컬tsc로 검증한 뒤 Linux후보/설치본의 메모리DB 검증 각12항목을 통과했다. 공개 Main/Today/Weekly/Widget 3지역+health 배포전후26건 성공 및 기존최상위필드/자료형 보존, 시험접근키없는요청403·새API인증없는요청JSON401도 확인했다.
+- 실제 시험API에 FCM없음/전체알림OFF 임시설치로 인증·등록·2개동 ON/OFF·지역명·scope저장, 구형2설정경로의 구역목록/개인출퇴근시간 보존, 전체OFF·삭제후410·연관잔여0을 확인했다. 검증용 FCM은0건이고 실제 사용자 설정을 시험값으로 바꾸지 않았다.
+- 시험API PID745839 active. 운영API742759·스케줄러742823 프로세스 및 운영소스·운영사용자DB스키마/공용날씨DB스키마는 보존했다. 시험스케줄러는 기존inactive를 유지했다. 최종 시험API 로그에 서버시작1회, 실패이벤트/런타임오류0을 확인했다.
+- 연결 앱 실제 구역메뉴XML에 ‘지역별로 알림을 켜고 끌 수 있어요’/‘알림 ON/OFF’가 표시되고 serverFailed 안내·재시도 버튼은 사라졌다. 앱 기동/서버 저장 성공 상태의 추가VM읽기는 VM서비스 시작로그가 현재버퍼에 없어 수행하지 못해 명시적saved 상태를 확인했다고 확대하지 않는다. 추가 권한·앱 재설치·토글 설정 변경은 하지 않았다.
+- 기록은 docs/시험서버_최신화_20261028.md 및 검증JSON, 서버README에 작성했다. 앱README에는 Debug버전검사생략 정책도 반영했다. 상세도구/로그는 ignored weather_care_server/build/test-latest-deploy-20261028, 원격은 /tmp/weather-care-test-latest-20261028-i7cmn52k다.
+- 작업 중17:49:49에 구역 기능·UI·Debug검사생략 소스가0302815(구역별 알림 기능 추가)로 다른 작업에서 이미커밋·원격반영된 것을 확인했다. 공개된 커밋은 다시 쓰지 않고 남은 기존운영배포기록/새시험배포기록/문서수정을 항목별로추가커밋한다. 이후 생긴 별도진행중 store 스크린샷/캡처도구 변경은 건드리거나 함께스테이징하지 않는다.

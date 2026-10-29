@@ -9,6 +9,141 @@ import 'package:weather_care/theme/weather_theme.dart';
 import 'package:weather_care/utils/korea_date.dart';
 
 void main() {
+  double dragOffset(WidgetTester tester) => tester
+      .widget<FractionalTranslation>(
+          find.byKey(const ValueKey('week-day-drag-position')))
+      .translation
+      .dx;
+
+  testWidgets('누른 동안 카드는 손가락 거리를 따르고 짧게 놓으면 원위치로 돌아온다', (tester) async {
+    await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
+    final card = find.byKey(const ValueKey('week-day-2026-09-10'));
+    await tester.ensureVisible(card);
+    final rect = tester.getRect(card);
+    final start = Offset(rect.center.dx, rect.top + 40);
+    final gesture = await tester.startGesture(start);
+    await gesture.moveBy(const Offset(-40, 0));
+    await tester.pump();
+    expect(tester.getTopLeft(card).dx, closeTo(rect.left - 40, .01));
+    expect(dragOffset(tester), closeTo(-40 / rect.width, .001));
+    expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('week-selected-date')))
+            .data,
+        '9월 10일 (목)');
+    expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsOneWidget);
+    expect(
+        tester.getRect(find.byKey(const ValueKey('week-day-2026-09-11'))).left -
+            tester.getRect(card).right,
+        closeTo(12, .01));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(tester.getTopLeft(card).dx, closeTo(rect.left - 40, .01));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(card, findsOneWidget);
+    expect(dragOffset(tester), 0);
+    expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('충분히 끌어 놓으면 남은 거리만 이동하고 날짜를 한 번 바꾼다', (tester) async {
+    await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
+    final card = find.byKey(const ValueKey('week-day-2026-09-10'));
+    await tester.ensureVisible(card);
+    final rect = tester.getRect(card);
+    final gesture =
+        await tester.startGesture(Offset(rect.center.dx, rect.top + 40));
+    await gesture.moveBy(Offset(-rect.width * .4, 0));
+    await tester.pump();
+    expect(dragOffset(tester), closeTo(-.4, .001));
+    await tester.pump(const Duration(milliseconds: 250));
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(dragOffset(tester), lessThan(-.4));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsOneWidget);
+    expect(card, findsNothing);
+    expect(dragOffset(tester), 0);
+    expect(
+        tester
+            .widget<AnimatedSwitcher>(
+                find.byKey(const ValueKey('week-day-transition')))
+            .duration,
+        Duration.zero);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('짧아도 빠른 플릭이면 넘기고 취소된 드래그는 복원한다', (tester) async {
+    await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
+    var card = find.byKey(const ValueKey('week-day-2026-09-10'));
+    await tester.ensureVisible(card);
+    var rect = tester.getRect(card);
+    await tester.flingFrom(
+        Offset(rect.center.dx, rect.top + 40), const Offset(-100, 0), 900);
+    await tester.pumpAndSettle();
+    card = find.byKey(const ValueKey('week-day-2026-09-11'));
+    expect(card, findsOneWidget);
+    await tester.ensureVisible(card);
+    rect = tester.getRect(card);
+    final gesture =
+        await tester.startGesture(Offset(rect.center.dx, rect.top + 40));
+    await gesture.moveBy(Offset(rect.width * .4, 0));
+    await tester.pump();
+    expect(dragOffset(tester), greaterThan(0));
+    await gesture.cancel();
+    await tester.pumpAndSettle();
+    expect(card, findsOneWidget);
+    expect(dragOffset(tester), 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('첫날과 마지막 날 바깥은 저항을 주고 놓으면 돌아온다', (tester) async {
+    await _pump(tester, [
+      _day('2026-09-10'),
+      _day('2026-09-16'),
+    ]);
+    for (final last in [false, true]) {
+      if (last) await _moveDays(tester, 6);
+      final date = last ? '2026-09-16' : '2026-09-10';
+      final card = find.byKey(ValueKey('week-day-$date'));
+      await tester.ensureVisible(card);
+      final rect = tester.getRect(card);
+      final distance = last ? -100.0 : 100.0;
+      final gesture =
+          await tester.startGesture(Offset(rect.center.dx, rect.top + 40));
+      await gesture.moveBy(Offset(distance, 0));
+      await tester.pump();
+      expect(dragOffset(tester), closeTo(distance / rect.width * .18, .001));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(card, findsOneWidget);
+      expect(dragOffset(tester), 0);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('드래그 중 달력으로 날짜를 바꾸면 이전 손동작을 정리한다', (tester) async {
+    await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
+    final card = find.byKey(const ValueKey('week-day-2026-09-10'));
+    await tester.ensureVisible(card);
+    final rect = tester.getRect(card);
+    final gesture =
+        await tester.startGesture(Offset(rect.center.dx, rect.top + 40));
+    await gesture.moveBy(Offset(-rect.width * .4, 0));
+    await tester.pump();
+    tester
+        .widget<GestureDetector>(
+            find.byKey(const ValueKey('week-calendar-2026-09-11')))
+        .onTap!();
+    await tester.pumpAndSettle();
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsOneWidget);
+    expect(dragOffset(tester), 0);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('날짜 전환은 방향대로 카드가 들어오고 이전 카드는 입력에서 제외한다', (tester) async {
     await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
     Finder card(String date) => find.byKey(ValueKey('week-day-$date'));
@@ -30,6 +165,10 @@ void main() {
     await transition('week-next-day');
     expect(offset('2026-09-11'), inExclusiveRange(0, 1));
     expect(offset('2026-09-10'), inExclusiveRange(-1, 0));
+    expect(
+        tester.getRect(card('2026-09-11')).left -
+            tester.getRect(card('2026-09-10')).right,
+        closeTo(12, .01));
     expect(
         tester
             .widget<IgnorePointer>(find
@@ -56,6 +195,10 @@ void main() {
     await transition('week-previous-day');
     expect(offset('2026-09-10'), inExclusiveRange(-1, 0));
     expect(offset('2026-09-11'), inExclusiveRange(0, 1));
+    expect(
+        tester.getRect(card('2026-09-11')).left -
+            tester.getRect(card('2026-09-10')).right,
+        closeTo(12, .01));
     await tester.pumpAndSettle();
     expect(card('2026-09-11'), findsNothing);
     expect(offset('2026-09-10'), 0);
@@ -105,6 +248,19 @@ void main() {
         Duration.zero);
     expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsNothing);
     expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsOneWidget);
+    final card = find.byKey(const ValueKey('week-day-2026-09-11'));
+    await tester.ensureVisible(card);
+    final rect = tester.getRect(card);
+    final gesture =
+        await tester.startGesture(Offset(rect.center.dx, rect.top + 40));
+    await gesture.moveBy(Offset(rect.width * .4, 0));
+    await tester.pump();
+    expect(dragOffset(tester), closeTo(.4, .001));
+    await gesture.up();
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsOneWidget);
+    expect(dragOffset(tester), 0);
     expect(tester.takeException(), isNull);
   });
 

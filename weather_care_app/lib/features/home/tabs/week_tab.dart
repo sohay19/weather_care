@@ -1,6 +1,7 @@
 import '../../../utils/weather_number.dart';
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/briefing_time.dart';
@@ -21,6 +22,8 @@ import '../widgets/hourly_forecast_section.dart';
 import '../widgets/week_presentation.dart';
 import '../widgets/temperature_period.dart';
 import '../widgets/week_precipitation.dart';
+
+const _weekCardGap = 12.0;
 
 class WeekTab extends StatefulWidget {
   final WeeklyWeatherResponse weekly;
@@ -65,12 +68,13 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
   DateTime? _windowStart;
   int _selectedDayIndex = 0;
   double _dayTransitionDirection = 1;
-  double _horizontalDragDistance = 0;
+  bool _animateDayChange = true;
 
-  void _showDay(int index) {
+  void _showDay(int index, {bool animate = true}) {
     if (index < 0 || index > 6 || index == _selectedDayIndex) return;
     setState(() {
       _dayTransitionDirection = index > _selectedDayIndex ? 1 : -1;
+      _animateDayChange = animate;
       _selectedDayIndex = index;
     });
   }
@@ -143,6 +147,26 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
       widget.hourly,
       widget.timelineHourly,
     );
+    Widget buildDayCard(int index) {
+      final day = calendarDays[index];
+      return _WeekDayCard(
+        calendarDay: day,
+        dataPhase: widget.dataPhase,
+        isToday: dateInKorea(day.date) == today,
+        isPast: day.date.isBefore(parseForecastDate(today)!),
+        today: parseForecastDate(today)!,
+        hourly: index == _selectedDayIndex
+            ? selectedHourly
+            : _weekTimelineItems(
+                day, today, widget.hourly, widget.timelineHourly),
+        snowDepthHistory: widget.snowDepthHistory,
+        currentSnow: widget.currentSnow,
+        serverFeaturesAvailable: widget.serverFeaturesAvailable,
+        onRetry: widget.onRetryData,
+        retrying: widget.retrying,
+      );
+    }
+
     final calendarForecasts = calendarDays
         .map((day) => day.forecast)
         .whereType<WeeklyForecastItem>()
@@ -247,61 +271,42 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
               ],
             ),
             const SizedBox(height: 12),
-            GestureDetector(
-              key: const ValueKey('week-day-swipe-area'),
-              behavior: HitTestBehavior.translucent,
-              onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
-              onHorizontalDragUpdate: (details) =>
-                  _horizontalDragDistance += details.delta.dx,
-              onHorizontalDragEnd: (details) {
-                final velocity = details.primaryVelocity ?? 0;
-                if (_horizontalDragDistance < -50 || velocity < -300) {
-                  _showDay(_selectedDayIndex + 1);
-                } else if (_horizontalDragDistance > 50 || velocity > 300) {
-                  _showDay(_selectedDayIndex - 1);
-                }
-              },
-              child: ClipRect(
-                child: _animateWeekCardSize(
-                  transitionDuration,
-                  AnimatedSwitcher(
-                    key: const ValueKey('week-day-transition'),
-                    duration: transitionDuration,
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    layoutBuilder: _layoutWeekCards,
-                    transitionBuilder: (child, animation) {
-                      final direction = child.key == ValueKey(selectedDay.date)
-                          ? _dayTransitionDirection
-                          : -_dayTransitionDirection;
+            _WeekDayDragArea(
+              selectedDate: selectedDay.date,
+              selectedIndex: _selectedDayIndex,
+              itemCount: calendarDays.length,
+              buildCard: buildDayCard,
+              onSelected: (index) => _showDay(index, animate: false),
+              child: _animateWeekCardSize(
+                transitionDuration,
+                AnimatedSwitcher(
+                  key: const ValueKey('week-day-transition'),
+                  duration:
+                      _animateDayChange ? transitionDuration : Duration.zero,
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
+                  layoutBuilder: _layoutWeekCards,
+                  transitionBuilder: (child, animation) {
+                    final direction = child.key == ValueKey(selectedDay.date)
+                        ? _dayTransitionDirection
+                        : -_dayTransitionDirection;
+                    return LayoutBuilder(builder: (context, constraints) {
+                      final travel = 1 + _weekCardGap / constraints.maxWidth;
                       return FadeTransition(
                         opacity: animation,
                         child: SlideTransition(
                           position: Tween<Offset>(
-                            begin: Offset(direction, 0),
+                            begin: Offset(direction * travel, 0),
                             end: Offset.zero,
                           ).animate(animation),
                           child: child,
                         ),
                       );
-                    },
-                    child: KeyedSubtree(
-                      key: ValueKey(selectedDay.date),
-                      child: _WeekDayCard(
-                        calendarDay: selectedDay,
-                        dataPhase: widget.dataPhase,
-                        isToday: dateInKorea(selectedDay.date) == today,
-                        isPast: selectedDay.date
-                            .isBefore(parseForecastDate(today)!),
-                        today: parseForecastDate(today)!,
-                        hourly: selectedHourly,
-                        snowDepthHistory: widget.snowDepthHistory,
-                        currentSnow: widget.currentSnow,
-                        serverFeaturesAvailable: widget.serverFeaturesAvailable,
-                        onRetry: widget.onRetryData,
-                        retrying: widget.retrying,
-                      ),
-                    ),
+                    });
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey(selectedDay.date),
+                    child: buildDayCard(_selectedDayIndex),
                   ),
                 ),
               ),
@@ -311,6 +316,188 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
       ),
     );
   }
+}
+
+class _WeekDayDragArea extends StatefulWidget {
+  final DateTime selectedDate;
+  final int selectedIndex;
+  final int itemCount;
+  final Widget Function(int index) buildCard;
+  final ValueChanged<int> onSelected;
+  final Widget child;
+
+  const _WeekDayDragArea({
+    required this.selectedDate,
+    required this.selectedIndex,
+    required this.itemCount,
+    required this.buildCard,
+    required this.onSelected,
+    required this.child,
+  });
+
+  @override
+  State<_WeekDayDragArea> createState() => _WeekDayDragAreaState();
+}
+
+class _WeekDayDragAreaState extends State<_WeekDayDragArea>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _position = AnimationController(
+    vsync: this,
+    lowerBound: -1,
+    upperBound: 1,
+    value: 0,
+  );
+  double _distance = 0;
+  bool _dragging = false;
+  bool _settling = false;
+  int? _previewIndex;
+  Widget? _preview;
+
+  bool _available(int index) => index >= 0 && index < widget.itemCount;
+
+  @override
+  void didUpdateWidget(covariant _WeekDayDragArea oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedDate != widget.selectedDate ||
+        oldWidget.selectedIndex != widget.selectedIndex) {
+      _position.stop();
+      _position.value = 0;
+      _dragging = false;
+      _settling = false;
+      _previewIndex = null;
+      _preview = null;
+    } else if (_previewIndex != null) {
+      _preview = widget.buildCard(_previewIndex!);
+    }
+  }
+
+  void _startDrag(DragStartDetails details) {
+    if (_settling) return;
+    _dragging = true;
+    _distance = 0;
+  }
+
+  void _updateDrag(DragUpdateDetails details, double width) {
+    if (!_dragging || width <= 0) return;
+    _distance += details.delta.dx;
+    final index = widget.selectedIndex + (_distance < 0 ? 1 : -1);
+    final available = _available(index);
+    if (_previewIndex != (available ? index : null)) {
+      _previewIndex = available ? index : null;
+      // 이웃 카드는 방향이 바뀔 때만 만들어 그래프를 매 프레임 다시 만들지 않는다.
+      _preview = available ? widget.buildCard(index) : null;
+    }
+    _position.value =
+        (_distance / (width + _weekCardGap) * (available ? 1 : .18))
+            .clamp(-1.0, 1.0);
+  }
+
+  void _endDrag(DragEndDetails details) {
+    if (!_dragging) return;
+    final offset = _position.value;
+    final velocity = details.primaryVelocity ?? 0;
+    final sameDirection = velocity * offset >= 0;
+    final fast = velocity.abs() >= 500;
+    final index = widget.selectedIndex - offset.sign.toInt();
+    final advance = offset != 0 &&
+        _available(index) &&
+        (offset.abs() >= .22 || fast) &&
+        (!fast || sameDirection);
+    unawaited(_settle(advance ? offset.sign : 0));
+  }
+
+  void _cancelDrag() {
+    if (_dragging) unawaited(_settle(0));
+  }
+
+  Future<void> _settle(double target) async {
+    _dragging = false;
+    setState(() => _settling = true);
+    final targetIndex = widget.selectedIndex - target.toInt();
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : Duration(
+            milliseconds: (280 * (target - _position.value).abs())
+                .clamp(100, 280)
+                .round());
+    try {
+      await _position
+          .animateTo(target, duration: duration, curve: Curves.easeOutCubic)
+          .orCancel;
+    } on TickerCanceled {
+      return;
+    }
+    if (!mounted) return;
+    if (target != 0) widget.onSelected(targetIndex);
+    setState(() {
+      _position.value = 0;
+      _settling = false;
+      _previewIndex = null;
+      _preview = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _position.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) => Listener(
+          // 인정된 드래그의 PointerCancel도 날짜 전환 없이 되돌린다.
+          onPointerCancel: (_) => _cancelDrag(),
+          child: GestureDetector(
+            key: const ValueKey('week-day-swipe-area'),
+            behavior: HitTestBehavior.translucent,
+            dragStartBehavior: DragStartBehavior.down,
+            onHorizontalDragStart: _startDrag,
+            onHorizontalDragUpdate: (details) =>
+                _updateDrag(details, constraints.maxWidth),
+            onHorizontalDragEnd: _endDrag,
+            onHorizontalDragCancel: _cancelDrag,
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _position,
+                child: widget.child,
+                builder: (context, child) {
+                  final offset = _position.value;
+                  final travel = 1 + _weekCardGap / constraints.maxWidth;
+                  return Stack(alignment: Alignment.topCenter, children: [
+                    if (_preview != null && offset != 0)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: ExcludeSemantics(
+                            child: OverflowBox(
+                              alignment: Alignment.topCenter,
+                              minHeight: 0,
+                              maxHeight: double.infinity,
+                              child: FractionalTranslation(
+                                translation: Offset(
+                                    (offset + (offset < 0 ? 1 : -1)) * travel,
+                                    0),
+                                child: _preview,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    IgnorePointer(
+                      ignoring: _settling,
+                      child: FractionalTranslation(
+                        key: const ValueKey('week-day-drag-position'),
+                        translation: Offset(offset * travel, 0),
+                        child: child,
+                      ),
+                    ),
+                  ]);
+                },
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 Widget _animateWeekCardSize(Duration duration, Widget child) =>

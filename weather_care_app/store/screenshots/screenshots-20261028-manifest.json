@@ -1,0 +1,153 @@
+{
+  "기준일": "2026-10-28",
+  "화면": "연결 SM-S948U에서 최신 제품 화면을 실행한 별도 Debug 촬영 패키지의 ADB screencap 및 실제 Android AppWidgetHost",
+  "데이터": "실제 운영 서버 자료. 지역 저장 및 알림 선택 상태는 촬영용 별도 설정. 5번은 지원 기능 소개용 알림 예시.",
+  "태블릿": "같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.",
+  "구성": "2번을 지역별 알림으로 교체. 앱 화면은 시스템 상태바·내비게이션바만 제외. 4번은 실제 다크 대형 위젯을 함께 배치.",
+  "files": [
+    {
+      "path": "screenshots/android/01-main.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "6fbc6bca964eae2f00ea768c20fbb51fc9163a7b537621da3290c25894c022a8"
+    },
+    {
+      "path": "screenshots/android/02-region-notifications.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "9cbd79aa0a624bacf812853869af016d4fb78732d5d0c13170991e5d76ec25fc"
+    },
+    {
+      "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "ee2b1dc0f6ea8238e11af85346727ae6d4c8b049c46a99d5c28be0fa398c7a60"
+    },
+    {
+      "path": "screenshots/android/04-dark-mode.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "f8cc542a214d9142df80c74b2214f278a84df7b3e6a65abcdc809f04e3fe848d"
+    },
+    {
+      "path": "screenshots/android/05-notifications.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "01e059772c999ecb4467af24a218edd0f4944edd6b6097ef3c6f8e4fb67e9794"
+    },
+    {
+      "path": "screenshots/android/06-advanced.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "604c0a29f719ea512f6ffa3600df1526f61ce2e275b2af7cd5fec2405279c236"
+    },
+    {
+      "path": "screenshots/android/07-week.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "d60e0db3635c65c8466688809e6204b1873b8a38a6ade5446901d76189891797"
+    },
+    {
+      "path": "screenshots/android/08-notification-settings.png",
+      "size": [
+        1080,
+        1920
+      ],
+      "mode": "RGB",
+      "sha256": "e7727a611dae523d12f6ecafd1839fc363d96d701bcca585da0b4deaa5d875ae"
+    },
+    {
+      "path": "screenshots/android-tablet/01-main.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "61512c9b9cb1da33b4078e149fd5926a380451c18c9f8f6d99494ffba549357b"
+    },
+    {
+      "path": "screenshots/android-tablet/02-region-notifications.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "2e3c4ec7335ae8b5777920da6edf61d5ab5a154e1e0f0ab3ff69096df6ee0420"
+    },
+    {
+      "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "c78d98dc161280e1484215f255ff1b51d59643f604edafebcd59b249384dadf9"
+    },
+    {
+      "path": "screenshots/android-tablet/04-dark-mode.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "f34f5be9dc14e0b70939d5b5f2ac33dc2fa5fae3cd1cf67f9a0945efb1ecf8c4"
+    },
+    {
+      "path": "screenshots/android-tablet/05-notifications.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "e6a1ee6aaad3be33bb434477c3e009ac750e9b96f4a2ef1ec259fec16e283c8d"
+    },
+    {
+      "path": "screenshots/android-tablet/06-advanced.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "0e37b9abc55d777ce7a6967db67f9db1a37a33d4c4cb5d0d420d22b927c3b793"
+    },
+    {
+      "path": "screenshots/android-tablet/07-week.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "0eed9deffcfacd38fd235b3d4207a1576b3f318b0da0af6c9bf1971789aa8cff"
+    },
+    {
+      "path": "screenshots/android-tablet/08-notification-settings.png",
+      "size": [
+        1440,
+        2560
+      ],
+      "mode": "RGB",
+      "sha256": "8cb70ab044153328a16126969bc668ddd1b31029fbed3fa375adc7a48d9d906c"
+    }
+  ]
+}

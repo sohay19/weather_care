@@ -1,0 +1,258 @@
+{
+  "촬영일": "2026-10-28",
+  "모델": "SM-S948U",
+  "Android_API": 36,
+  "패키지": "com.codesoha.weathercare.storecapture",
+  "빌드": "Debug, 최신 제품 WeatherCareApp/HomeScreen, 스토어 촬영 전용 초기 설정",
+  "서버": "https://weather-api.codesoha.com",
+  "원본": "ADB exec-out screencap -p",
+  "시스템바": "WindowManager Insets 실측. 원본 PNG는 자르지 않음.",
+  "설정": "감만1동·종로구 알림 선택, 정왕1동·GPS 미선택. 실제 FCM 등록·수신 검증 아님.",
+  "APK_SHA256": "be19c0717c5e9d7ebd796454c08b955fd4ad33abf8acd46228c4c114eae22e0f",
+  "제품소스_SHA256": {
+    "lib/app.dart": "4d8ba270504723d7cd9615afcdd8221ddae2316b34bc4e724c7e6c65bf05372c",
+    "lib/features/ads/consent_aware_native_ad_card.dart": "863b06f08002098772742f880ffa6fc36bbc4131c971485d8e37b3a1c76140a2",
+    "lib/features/home/home_screen.dart": "290f82bcd226c50aaf2954e8a14e18dbfc3d0acc9ff0fd4eace46b1a3ce8f3bc",
+    "lib/features/home/tabs/evidence_focus.dart": "4ea5fd6b683119bf3951870033b990142ec1b44634951826bf8e8f60966d91c2",
+    "lib/features/home/tabs/extra_tab.dart": "a6fc0d852e554bcbef77bd18252abf971d0271efa957369059670350f67e7e20",
+    "lib/features/home/tabs/main_tab.dart": "9ccecd15934b946587bfeacad748ce55fbfc443bcf3f32aa48f1bbbf63ff1bf0",
+    "lib/features/home/tabs/today_tab.dart": "6bc7a413eb021f374dc16b608627df60cf11f8c5981f30d691430bb6bf794c2d",
+    "lib/features/home/tabs/week_tab.dart": "e6e6b7ad5a385e3177ff95e9a7e7e3c8345f9a0bb7a3d03bff7676625d866a53",
+    "lib/features/home/weather_data_phase.dart": "668074c9eeade63255a22f220daa98e0d42a5cb3ce6442d65841e3be01205c73",
+    "lib/features/home/weather_labels.dart": "34fdbbc6b8b91d9268eced4f65620805c15136a2f7d6e10bbf89ec038657b2f8",
+    "lib/features/home/widgets/data_range_tile.dart": "bdf19fa8b138bb3ae2d0f3da6edefd4f14ab2d17cf1c535a45234e9345a06eb3",
+    "lib/features/home/widgets/extra_chip_row.dart": "de36fbbbfc00c520653035fc091db2bd231ab67835f8b972255dd381fc31aa1c",
+    "lib/features/home/widgets/extra_data_overview.dart": "2cc2ef873196243cfd55c8e28dd2f1bd927ba114bdf7280068e0acc76f874671",
+    "lib/features/home/widgets/home_section_header.dart": "c1364b2c918364ecf85992395c309221096d634b5d71cb49da25010b0aabc918",
+    "lib/features/home/widgets/hourly_forecast_section.dart": "8ddd0201f1c6b5646ed0e435ac395f864058d58188fb1bea14399bb0703936df",
+    "lib/features/home/widgets/hourly_value_chart.dart": "b965b2ca171cc9734dbe7993acd3ad4ef5955ce8896dd4206a129e07b26f3cf4",
+    "lib/features/home/widgets/lifestyle_evidence_checklist_section.dart": "6fd0ef250530e40c3dc38e87fda1f720f75d65bba6748144e2c859d17942fec2",
+    "lib/features/home/widgets/lifestyle_section.dart": "1d3292a0f0f89675e01062b6546b0d4e6655f9f76bc74cebb92d71975640108b",
+    "lib/features/home/widgets/lightning_details_card.dart": "37b85faaac1ce0ca4f13bb4c581cbbb76a276a3a393d47d3f7a6ee74abd19c57",
+    "lib/features/home/widgets/marine_series.dart": "227cbc672775e9a94e1789ae4e604adb3760f8641bfbf4d074c9c5254e1cd051",
+    "lib/features/home/widgets/marine_tide_summary.dart": "7dc11ad01eebfd50c5e593bf9c71365c89dbe19342835c7e0241e2647f96f514",
+    "lib/features/home/widgets/missing_data_retry.dart": "103b56adcb7035d85e502b59ac66e95fc0f513ea83879c55358c152844f80ec8",
+    "lib/features/home/widgets/permission_onboarding_dialog.dart": "25c709b3b9e9ae2d07187eedff608ef5e6e2371b18d9fafe0f3034e6cbbb65f6",
+    "lib/features/home/widgets/preparation_icon.dart": "9d1ec5f1bac16b1aeb5c7434ddeda436730fcf1c4ee0b3740acc4ae69353c541",
+    "lib/features/home/widgets/recommendation_bag_section.dart": "b81134e4a5ae6db87f28f8521cc8713400f749e52c28a92bbe4e808d07423d73",
+    "lib/features/home/widgets/server_connection_failure_dialog.dart": "fdc63fef5fb8ad29dc39c3d97445bdb33cfce6fd2969bab38861c40983ded488",
+    "lib/features/home/widgets/server_feature_unavailable_card.dart": "901f35a373615f847b0382973ef4fef630038416ae88f4db434ae10f9203de3c",
+    "lib/features/home/widgets/tab_page_header.dart": "8e19ebaec02bfa8e28bd5560cb00caa07cb9f8624176e1eac8328afce308ce01",
+    "lib/features/home/widgets/temperature_period.dart": "d6c770064e2b9c8a2fdb14c9bacb389f9c48db120f85be79ff4e19a3f8371f6d",
+    "lib/features/home/widgets/water_data_panel.dart": "777b09c3098391cefeb75ea749d256c255012acaf329a50adb7b8c6a88617d1f",
+    "lib/features/home/widgets/weather_brief_text.dart": "a29bc038995d2ac01b19760704939c7ab5f9ef3b87900c0a53bbb94a5ab80846",
+    "lib/features/home/widgets/weather_card.dart": "d01144bf671745d8991746381ee2ea72c91853c25f9688ac178b16ef8c9b223b",
+    "lib/features/home/widgets/weather_condition_icon.dart": "3b78553c972f450e13040ac307a974bcc54da41a1476f00f574925fd4d2fe113",
+    "lib/features/home/widgets/weather_data_notice.dart": "791527a9f20b58d9f7b79a4ecc53ef89ec1e7b92b9225414fb510245b61cb71d",
+    "lib/features/home/widgets/weather_status_view.dart": "3529fb7059102fc5b7eecf16d94f4acf4f8454bcbfce06613d81a56ffb09bfca",
+    "lib/features/home/widgets/week_precipitation.dart": "3b309f40fd5caeb429719de0f638da285f6faf344feff21841eae4a9776bea59",
+    "lib/features/home/widgets/week_presentation.dart": "099be2a818121915a9c056baa72e22245aaa43ee09a56967fa5f4857f06050b7",
+    "lib/features/settings/ad_removal_purchase_screen.dart": "d8406eefc0fd7fa02ccabfb160a7a404d9f5c05048f85dfc58bb1f60d85745cd",
+    "lib/features/settings/address_region_picker_screen.dart": "28706be9c1fa86cbe87a6757c5a1ccddf4a76a9074a1a969de3d59a0c3edbd13",
+    "lib/features/settings/administrative_region_picker_screen.dart": "4d08a09662c02d66f1cecbff4a6c2a42c4eb42258376cc399696151ceb55341b",
+    "lib/features/settings/ads_privacy_control.dart": "f88f5d6af39bfeb76d76788c3c7fedb3d04c32603afcdd9a743d77885511c642",
+    "lib/features/settings/analytics_consent_control.dart": "ddeb1a6ced83ee078207b317f9e55604f4eb6f687a425cfe39ac244723f7b717",
+    "lib/features/settings/background_location_control.dart": "ad901fc9b1037246da2f2009bb2dc485cf7d537f992194657f5d7b433e1ddf3a",
+    "lib/features/settings/commute_notification_settings_screen.dart": "79935b61b9026700c320d52819b2b7fa471b1645d189ba06abfb26742709dc64",
+    "lib/features/settings/location_mode.dart": "1851ae66868891334d33ae67e7f5eb1cc481118fff7ba391fb564f23dcdb2d49",
+    "lib/features/settings/notification_schedule.dart": "a873539e34ef36eecb91021577385e6d1214febd066d1b5dddd8c00a1db9b257",
+    "lib/features/settings/postal_address_picker_screen.dart": "5c33b6aee8c4199b1e1dd52d575d3bb69efdc15603441965fde6c8575af26627",
+    "lib/features/settings/region_picker_screen.dart": "b6474b8bb60d7b52e38a3d3d49c332debd8b5b002a53047cac39bb98e034ee07",
+    "lib/features/settings/region_selection_notice.dart": "b8febc02a20e0c162e907671a22cad4e9d75c6a93980c42f0d2bca1f18600865",
+    "lib/features/settings/settings_guide.dart": "9ac88ce06ac21662723c5187bf936b194d7cc269ba18cd18034e6c4cecbf321d",
+    "lib/features/settings/settings_guide_screen.dart": "f50273d0a2498c496e48d6119ed36053b42f650c44fd5ab85975d21018f3e3e4",
+    "lib/features/settings/settings_screen.dart": "afce27efacc3a77b3221008634e612c5dfec029902239812d2866f161b0cf1c1",
+    "lib/features/update/app_update_dialog.dart": "5fa56e9b171a3c752afc60e1843763910f0f5e03dd3474f9dbc843cd7651bd30",
+    "lib/features/update/app_update_gate.dart": "d5e90e64cf2477e68d549ad492f998d6c1e8eaf4230f53c43012288dfdf0adcc",
+    "lib/features/update/store_update_notification_screen.dart": "5e822b6c6c75943e464c6d2d4e6c1f60f3d5b3898a88e3a02b7b1a0b1f327e2e",
+    "lib/firebase_options.dart": "15110489013154784b3312a76e3fe7f45949a0c211b8e7476eba9ab99450ee30",
+    "lib/main.dart": "9e415da6f18470b61b411ae58804d74aec3ed1417d514889ddec0638263f8b23",
+    "lib/models/app_settings.dart": "e9f097e835fae5690c50715a68c6a6b7b32fde0b88ff24a03f5b73a2d18619d1",
+    "lib/models/briefing_time.dart": "f65f926f0fe2a6558d28d2a4a4957fc658f0e9b9387e9c56f701bfee29263f72",
+    "lib/models/home_widget_snapshot.dart": "b9a6d945c04143caed85eb115a0a558e79f28987cfb413444b0fd632c92fc807",
+    "lib/models/lifestyle_message.dart": "0df62979627555efcebe8061de0c2c70e0334b209c9e5e783c494cb42bd6c139",
+    "lib/models/postal_address.dart": "f637ce1548e0419149007236d26aee82f3359d99e3b7074dc7448e4b73d2ceff",
+    "lib/models/precipitation.dart": "f73dc294d61356954ce333fd2bdfce3119c4133f53be436408f3adeac3c3028f",
+    "lib/models/recommendation.dart": "f7450acec46fc8b35f6d1fd900e47786e730794bbe7d8d25b95fb5224a31c00f",
+    "lib/models/selectable_region.dart": "caa30a88c510ee43a109396261734f3c14739e0df2fdca25d81b0adda09d7df8",
+    "lib/models/weather.dart": "7be94f0b21f7ed6b7953fed7f1bb2a850b46af9f263097bf70fd4c07726f71dd",
+    "lib/services/ad_removal_service.dart": "3abea5ea02ba418d3847e64c469bdb1fe06b3ea49c5e6f6909f5e386addff05b",
+    "lib/services/address_search_service.dart": "b0cf830fcb648d05d2f5457570df414b7d36397c48708e796d8aedb7a7ee554d",
+    "lib/services/ads_consent.dart": "c2462fed7a70802acfccfcc567d8c6d38a3f174d138d17bae04f1a798c05d923",
+    "lib/services/analytics_consent.dart": "6f36786558852d64685f6dbbccfc1a59f8ab6a85c2d2f943f15ce05cd0a54190",
+    "lib/services/analytics_consent_store.dart": "9ec6273ec5cae01478dc642d2374dc503e72566812668efdf88ddf11ce140866",
+    "lib/services/analytics_deletion_store.dart": "67ae26b737fe0060974db4800cd7941001b3dafea04cba3f40ba3a4b13e3cae1",
+    "lib/services/api_client.dart": "6939550a94b857b1ddbcf8b69feb073197f9717fcae10e4e1bb6f0e4886c1d92",
+    "lib/services/app_config.dart": "5228e33b5f75e1976c9483fe32cb82578a202daa70d788fb294bab56647d72c0",
+    "lib/services/app_open_ad_controller.dart": "3adf786c6aeca2a6d5fa56f3a7423c9108be8ee04af821ceb6691794de688f58",
+    "lib/services/app_open_ad_display_store.dart": "47996eda139c371124ee3d73b2e2d26a654e7f393e6f25f2e27ae4bb2a8c90d0",
+    "lib/services/app_open_ad_unit_config.dart": "08a87f30146690edd550df32daa3b3ef197894165d23d7741d9791b3aae7eed6",
+    "lib/services/app_open_launch_store.dart": "d3dfddbc8fe65d14571e3a4c26d477037dcb3d21ff0a090597b18d6d82387100",
+    "lib/services/app_settings_repository.dart": "93b3e03c8cf01e3a4e72445b16a3697efa7b500cfd408d958a14ba4a7ef93abd",
+    "lib/services/background_location_service.dart": "1cd595aa6d01037e254e34b1059bec0152664bcb4c0c6588e3f9b7d50b8ef21c",
+    "lib/services/current_location_service.dart": "e1c5ceb8be876a0c1c9a6dc16f38588c9d60e5989dd9db8f04117b5ed7277be0",
+    "lib/services/data_station_selection.dart": "31dbf9cea7a76dd6639136cd9c628d6668c0022accc7f8d887ff80cc8832c5e1",
+    "lib/services/foreground_notification_service.dart": "3de946baa57568f798d2511eec8e046e4990dcaceec8d6e98828f2f6d7c7620a",
+    "lib/services/gps_region_name_service.dart": "9b404510bd0573eddcfea0d28656e64a84b83e6e8f3e2ab4157c84043588d4dd",
+    "lib/services/home_widget_service.dart": "fa63ed72fd412947bb3f8f32bdc2c057d7c95b15cc9407b0f2fde2a9e4a5e9d7",
+    "lib/services/installation_identity.dart": "cd547cb8853e5dfc796704c4674494138baccada9e346d36fa86d9dd63c43ba1",
+    "lib/services/kma_grid.dart": "b7acdd7244132a23d5e5f26edcc677cabbd9c84309a149eeb4e5e2ae729ff9aa",
+    "lib/services/minimum_age_policy.dart": "221e53b81136f2a0277622614767f54e866de3cee0e6e1592d3ba04fec38c90b",
+    "lib/services/native_ad_unit_config.dart": "137fe7d5026e415bf5ee68676ab5f4232c832120b78d204909a9cc00ecb362ae",
+    "lib/services/notification_destination.dart": "9a227a9322310e8dd186ce79a1fdc6bbe25ed04a60464e34f91c90b37cd33f73",
+    "lib/services/notification_navigation_service.dart": "070e7ce3e77630a2be5230a3bafecacbe3e965f348073aaf52f0387d6da79d3f",
+    "lib/services/notification_permission_service.dart": "459798c8fa365394e93f62e083a6f4c5262ebf94224c8cb4f6cc7cd6588c90ab",
+    "lib/services/notification_registration_service.dart": "c9d738e0d4f400169fab950a1300401ed48b85eaafdd69906cf1736860ac03c8",
+    "lib/services/permission_onboarding_store.dart": "b574bdae53cd31ce1111b2bd298412fd52592b3400091492f82a094bda150dd4",
+    "lib/services/preparation_checklist_repository.dart": "1f822ffde0d6f7da21b320d22ede378481c816b5fc3f6da136a7257dd88c5ab9",
+    "lib/services/region_catalog.dart": "e89330af0b1821b3261628f5e5fdc00c6c245e310c6af48afc5a7d2b668acd45",
+    "lib/services/server_data_access.dart": "190672e84fb18a21b022e2f244f92da38426ff4bbe69ada057f0ed5d27d017e9",
+    "lib/services/settings_save_controller.dart": "7cf13a264acfe148e36438e9bb8ce289cec4023a4b33f439dfeb1a066038bf81",
+    "lib/services/settings_sync_service.dart": "1b865de82ae3ce0e33d5074415bc32cd95d175a51ca47fc81bf6ad1c849a6126",
+    "lib/services/store_update_service.dart": "eb9b5aa8651e2241e78203fdd3623ba37a99fe54ee2f876256277e817e6691b1",
+    "lib/services/theme_mode_settings.dart": "a4fb61bf853096696a5da76d69a286dfc852f21550f5c06a239f38ea00e75cfd",
+    "lib/services/timeline_order_store.dart": "0f5112e86c741b7d5ce3b8c6bb5395f712d7a96e5676de8e4d37582b4dcb3430",
+    "lib/services/weather_service.dart": "d1f20b99a085299738a0dcb2d5fe9d9b8e42be7f5fffa385a890b6742126333b",
+    "lib/startup.dart": "a16202fdd5a1a062ceaaebe01b3ef4ba44040ca922f255a348ca4f02b3f8c5c5",
+    "lib/theme/recommendation_theme.dart": "f0031a9065610f62307ce8a95498d4ded344c00fbcd5c9b0a99f952b5c6d195c",
+    "lib/theme/weather_theme.dart": "e7579dcd11c2ca839d01f2fe8d04feb24e9aeebcacf54105d3ebbdc27814c864",
+    "lib/utils/korea_date.dart": "1663995b308dda80695fe2cb713b477cbeda45c08db4800dc3e43192e83af2f5",
+    "lib/utils/region_name.dart": "8556b1530e1055992175b0f3e7d0b2c94ca7ed91da3c98cf33c57762d05fb939",
+    "lib/utils/weather_number.dart": "5f2523575db8b62148fb2408ef77d9440bead1daec36d477c46cac13be4a7d42",
+    "store/capture_device.dart": "68455b79fdf677e8e96eca1d529c983359618c9d09eef4ce151643063fe436f5"
+  },
+  "files": [
+    {
+      "path": "main.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "8f80d79bce46aa07608e597137f7536e0249e5aea91490ab5ccb8bc55cd03ab8",
+      "ui_xml": "main.xml",
+      "ui_xml_sha256": "989dfbb6c3a30abed419a990b1e427f627742cef3fbc098e7c5c71f420bbd42f",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2295,
+        1080,
+        2340
+      ]
+    },
+    {
+      "path": "region-notifications.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "22abc5edf3dfe8404b7944fa444c8b42de849e0d23adf7f267fedbd0f4348743",
+      "ui_xml": "region-notifications.xml",
+      "ui_xml_sha256": "00fb205f9aa3dd5916eeac6acc60842ff596fed4a1bee3e52db9446fb545ac25",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2295,
+        1080,
+        2340
+      ]
+    },
+    {
+      "path": "dark-main.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "7d833a814a9151727dd425848be85964a5971cf750713cb144a3930d6e78c666",
+      "ui_xml": "dark-main.xml",
+      "ui_xml_sha256": "989dfbb6c3a30abed419a990b1e427f627742cef3fbc098e7c5c71f420bbd42f",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2295,
+        1080,
+        2340
+      ]
+    },
+    {
+      "path": "advanced-values.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "5394a3f6d359d511474d6ec101adcb8a1d54084f7e57c6ccb0838bf81992426b",
+      "ui_xml": "advanced-values.xml",
+      "ui_xml_sha256": "11eaf294a95dc900c44a09efd8136cd956504b59abe8fe820e392c06c553d674",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2295,
+        1080,
+        2340
+      ]
+    },
+    {
+      "path": "week.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "cf37cb78fe6de3cb1729b5fd16dc512039b6207c89c8914f02b2f88da89c91b6",
+      "ui_xml": "week.xml",
+      "ui_xml_sha256": "5111763108c12de8430f2c46ec3157c3a5173dacb16ec063ffec5ba007a7bf44",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2295,
+        1080,
+        2340
+      ]
+    },
+    {
+      "path": "notification-settings.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "49c437a897f89144b63a94d77bf5931793e799c43c0c03a39ca682ca265c3300",
+      "ui_xml": "notification-settings.xml",
+      "ui_xml_sha256": "8fc1a4f95aa35fa9f9f062648fdf1d85917d4a3f71a0df6fabc34f8dacd9dadf",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2295,
+        1080,
+        2340
+      ]
+    }
+  ]
+}

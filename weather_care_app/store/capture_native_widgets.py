@@ -1,6 +1,6 @@
 """사용자가 지정한 촬영 대상에서 실제 Android Provider·AppWidgetHost 화면을 촬영한다.
 
-촬영 중 예시 날씨를 표시하며 종료 시 기존 위젯 설정과 시스템 테마를 복원한다.
+--real-weather는 앱에 저장된 실자료를 사용한다. 종료 시 위젯 설정과 시스템 테마를 복원한다.
 """
 from pathlib import Path
 import argparse
@@ -23,6 +23,8 @@ def main():
     parser.add_argument('--real-weather', action='store_true', help='예시 주입 없이 현재 앱의 실제 날씨로 촬영')
     parser.add_argument('--output', type=Path, help='원본 저장 폴더')
     parser.add_argument('--skip-app-install', action='store_true', help='최신 APK가 이미 설치된 기기에서 앱 재설치 생략')
+    parser.add_argument('--package', default='com.codesoha.weathercare', help='별도 촬영용 앱의 패키지 이름')
+    parser.add_argument('--capture-date', default='2026-10-28', help='촬영 기준일')
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
     sdk = Path(os.environ['ANDROID_HOME'])
@@ -50,8 +52,11 @@ def main():
     run([binaries / 'd8.bat', '--min-api', '27', '--lib', android,
          '--output', build / 'dex', *sorted((build / 'classes').rglob('*.class'))])
     unsigned = build / 'capture-unsigned.apk'
-    run([binaries / 'aapt2.exe', 'link', '-I', android, '--manifest',
-         ROOT / 'native_widget_capture/AndroidManifest.xml', '-o', unsigned])
+    manifest = build / 'AndroidManifest.xml'
+    manifest.write_text((ROOT / 'native_widget_capture/AndroidManifest.xml').read_text(encoding='utf-8')
+                        .replace('android:targetPackage="com.codesoha.weathercare"',
+                                 f'android:targetPackage="{args.package}"'), encoding='utf-8')
+    run([binaries / 'aapt2.exe', 'link', '-I', android, '--manifest', manifest, '-o', unsigned])
     with zipfile.ZipFile(unsigned, 'a', zipfile.ZIP_DEFLATED) as archive:
         archive.write(build / 'dex/classes.dex', 'classes.dex')
     keystore = Path(os.environ['ANDROID_USER_HOME']) / 'debug.keystore'
@@ -71,7 +76,7 @@ def main():
     try:
         for theme, night in [('light', 'no'), ('dark', 'yes')]:
             device('shell', 'cmd', 'uimode', 'night', night)
-            device('shell', 'am', 'force-stop', 'com.codesoha.weathercare')
+            device('shell', 'am', 'force-stop', args.package)
             log = device('shell', 'am', 'instrument', '-w', '-r', '-e', 'theme', theme,
                          '-e', 'realWeather', str(args.real_weather).lower(),
                          'com.codesoha.weathercare.capture/.WidgetCapture')
@@ -83,7 +88,7 @@ def main():
         device('shell', 'cmd', 'uimode', 'night', original_mode)
     raw = build / 'raw'
     raw.mkdir(exist_ok=True)
-    device('pull', '/sdcard/Android/data/com.codesoha.weathercare/files/store-native-widget/.', str(raw))
+    device('pull', f'/sdcard/Android/data/{args.package}/files/store-native-widget/.', str(raw))
     for theme in ['light', 'dark']:
         for family in ['small', 'medium', 'large']:
             name = f'{theme}-{family}.png'
@@ -100,7 +105,7 @@ def main():
                for name in ['WeatherCareWidgetProvider.java', 'WidgetTextRenderer.java', 'WidgetIconRenderer.java']]
     sources += sorted((ROOT.parent / 'android/app/src/main/res/layout').glob('weather_widget_*.xml'))
     sources += sorted((ROOT.parent / 'android/app/src/main/res/drawable').glob('*widget_refresh*.xml'))
-    report = {'제작일': '2026-10-23' if args.real_weather else '2026-10-22', '방식': '실제 Android Provider를 AppWidgetHost에 바인딩한 네이티브 화면',
+    report = {'제작일': args.capture_date, '패키지': args.package, '방식': '실제 Android Provider를 AppWidgetHost에 바인딩한 네이티브 화면',
               '데이터': '현재 앱의 운영 서버 실제 날씨' if args.real_weather else '촬영용 예시 날씨, 실제 현재 관측 아님',
               '모델': device('shell', 'getprop', 'ro.product.model').strip(),
               'Android_API': device('shell', 'getprop', 'ro.build.version.sdk').strip(),

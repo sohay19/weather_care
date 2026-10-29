@@ -1,0 +1,155 @@
+{
+  "기준일": "2026-10-28",
+  "편집일": "2026-10-29",
+  "배치": "상단 제목 60px 두 줄, 줄간격 16px. 바깥 사방 및 제목·본문 사이 간격 모두 72px(태블릿 96px). 이미지는 남은 높이에 비율 유지 배치. 작은 분류명·부연 설명·위젯 크기 라벨 생략.",
+  "화면": "연결 SM-S948U에서 최신 제품 화면을 실행한 별도 Debug 촬영 패키지의 ADB screencap 및 실제 Android AppWidgetHost",
+  "데이터": "실제 운영 서버 자료. 지역 저장 및 알림 선택 상태는 촬영용 별도 설정. 5번은 지원 기능 소개용 알림 예시.",
+  "태블릿": "같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.",
+  "구성": "2번을 지역별 알림으로 교체. 앱 화면은 시스템 상태바·내비게이션바만 제외. 4번은 실제 다크 대형 위젯을 함께 배치.",
+  "files": [
+    {
+      "path": "screenshots/android/01-main.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "e308af7cd921b4efa311368b5d11cab944eca5aab12bdd67030d00bc9cbc21b8"
+    },
+    {
+      "path": "screenshots/android/02-region-notifications.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "0e4a68537a523f73bd7a45f6529077772a8e54d06a683e108616519260e1c5dd"
+    },
+    {
+      "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "22fd08a147456ea9587238fd819bd7dfdba7eb2e676724a33bcba7f11101406a"
+    },
+    {
+      "path": "screenshots/android/04-dark-mode.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "d30e0073d01eb3e6b81e69e12db507b68bd7427b577d073f268f8d3ea1ed4ab2"
+    },
+    {
+      "path": "screenshots/android/05-notifications.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "ce55bca75ce9cd8e8c221671a09ef5f6523ffaf3466d3fff3eaa1778aef19d0f"
+    },
+    {
+      "path": "screenshots/android/06-advanced.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "0b20ce3ccc129b2986d13965bf5eec066cb2e63b7d7fee3e27b112ab24bb40c8"
+    },
+    {
+      "path": "screenshots/android/07-week.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "35e1cbeb8c125577531fa88b880302d90766d74ea2a90507ca9fd12e4b2f0b70"
+    },
+    {
+      "path": "screenshots/android/08-notification-settings.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "24cd0a3fbeed988e1caf3bfc47a1d6cc3a26728bc633a2dbb6b706a6729e779d"
+    },
+    {
+      "path": "screenshots/android-tablet/01-main.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "30b11c6c9c26bb7fc0c85db3e7ca3538a230854cf815cee61d5cbe86ca7a195d"
+    },
+    {
+      "path": "screenshots/android-tablet/02-region-notifications.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "260dccce96b30aa128d6aec915818546934d62bfdd2842d694a49fd0da7dd84e"
+    },
+    {
+      "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "b1e116185cf6ccd56aec5c74f2e6020eaf0f21477bff12c3c114516325933955"
+    },
+    {
+      "path": "screenshots/android-tablet/04-dark-mode.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "b049feee68302848273c40fba648613d1068a4656b726a38daf8810c09bdd883"
+    },
+    {
+      "path": "screenshots/android-tablet/05-notifications.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "26274ce5dc7d949672fc738135509b907108f720dbb7ceeb225ff6d679eba3fa"
+    },
+    {
+      "path": "screenshots/android-tablet/06-advanced.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "49311517346c6cabeb52aa11c3f523519d81939c1acdd1a365676fdc3abb8793"
+    },
+    {
+      "path": "screenshots/android-tablet/07-week.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "6ed48ac5351632f5959bc2f7d5747c5c0746883c8397d5e30b1f8b1806a34ba3"
+    },
+    {
+      "path": "screenshots/android-tablet/08-notification-settings.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "25029713958bcfe7ae6c254cb02ec31f10ccaeeeedbeb88416b5cfcd6430931a"
+    }
+  ]
+}

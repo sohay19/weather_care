@@ -1,0 +1,113 @@
+{
+  "제작일": "2026-10-28",
+  "패키지": "com.codesoha.weathercare.storecapture",
+  "방식": "실제 Android Provider를 AppWidgetHost에 바인딩한 네이티브 화면",
+  "데이터": "현재 앱의 운영 서버 실제 날씨",
+  "모델": "SM-S948U",
+  "Android_API": "36",
+  "표시_밀도": "Physical density: 450\nOverride density: 480",
+  "APK_SHA256": "be19c0717c5e9d7ebd796454c08b955fd4ad33abf8acd46228c4c114eae22e0f",
+  "소스_SHA256": {
+    "android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java": "089b8db4d6c31eba9df587f077659b99cb7d69fe46fe6d4358c1473bbb0795f9",
+    "android/app/src/main/java/com/weathercare/weather_care/WidgetTextRenderer.java": "125b5d4333e52d2334d4d3fc44580d1567493ba706b4a6b1ae9d8cee7e701e77",
+    "android/app/src/main/java/com/weathercare/weather_care/WidgetIconRenderer.java": "567e470eb92ef27242ac7e247fcdbd695f78acd5771d14a21b3d9b420eecbcd4",
+    "android/app/src/main/res/layout/weather_widget_large.xml": "b71b3fcd4fea98fb5eed1c71b67da16bd43ff543ef1358214f7b5c42641d6b45",
+    "android/app/src/main/res/layout/weather_widget_medium.xml": "f933b6c4dd38e337544c694d0a0d7ac077e1cdfb536dde655bff1be459e9e094",
+    "android/app/src/main/res/layout/weather_widget_preview.xml": "5772b3222297fe4cd7d6564ea4137415c8caaeaa0a42be433027ee0fac259df3",
+    "android/app/src/main/res/layout/weather_widget_small.xml": "085b71a602958357105d16099823874be707ec62f3941cffd12b3c7c589cdc2e",
+    "android/app/src/main/res/drawable/ic_widget_refresh.xml": "5d6d563818d696a7fe5f133a18d67b73d2bb43e7f4b628e5d44215bcc49997ea",
+    "android/app/src/main/res/drawable/ic_widget_refresh_loading.xml": "0bd1ab53f26971c116845215439a8d9994fc5c71f6b4d5f6e95b32c921d118fb",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background.xml": "41c8cdc7aba8193adf8b2681cb7972bd52aa92f7dd793ee072999dc303c29249",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background_dark.xml": "31fbe4feab56b58d397894175c83fe14fe83d60d3fd1bc9038062bef9cdb4cb7",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background_light.xml": "751a45019f229d33eadd3e27928ab76d85f7957ff70baaaf94d68ad186340466",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background_loading.xml": "1f0267fa592141c8fa5cb0d46b1f7ade637a95a71a961f3c7ad79907b90064ff",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background_loading_dark.xml": "90f9b6da06f3ebd7fe9b9b8ea703af1bd463cd3d1b5368fd2c7604dee7b9345b",
+    "android/app/src/main/res/drawable/weather_widget_refresh_background_loading_light.xml": "712cf4d8074bd4120aa53c06fd3b9ce761bffb0da1b92c417aa264c853f2096f"
+  },
+  "files": [
+    {
+      "path": "dark-large.png",
+      "size": [
+        1014,
+        1062
+      ],
+      "sha256": "d0631b101d072e001361ab651232de1fa6a0476bca67b4d081e2260b39d321e1",
+      "터치영역_px": [
+        888,
+        42,
+        960,
+        114
+      ]
+    },
+    {
+      "path": "dark-medium.png",
+      "size": [
+        1014,
+        390
+      ],
+      "sha256": "1d4a41076af339c5a5c715d20474225f12d55dd7877d8c79040edf55ef797d5b",
+      "터치영역_px": [
+        894,
+        33,
+        966,
+        105
+      ]
+    },
+    {
+      "path": "dark-small.png",
+      "size": [
+        510,
+        510
+      ],
+      "sha256": "48c6ef361349b2c2df505cf57735585659541c5bff79c329c404d35ea273f9e3",
+      "터치영역_px": [
+        396,
+        36,
+        468,
+        108
+      ]
+    },
+    {
+      "path": "light-large.png",
+      "size": [
+        1014,
+        1062
+      ],
+      "sha256": "6034843098593a3ffe0b598ee6fae3499ebe56e36d8a13c3171fafb820c2e33e",
+      "터치영역_px": [
+        888,
+        42,
+        960,
+        114
+      ]
+    },
+    {
+      "path": "light-medium.png",
+      "size": [
+        1014,
+        390
+      ],
+      "sha256": "9b34ea4caee65101f62e928f7c6f5f3b7cc40ba49848c4e24dc0811859a23256",
+      "터치영역_px": [
+        894,
+        33,
+        966,
+        105
+      ]
+    },
+    {
+      "path": "light-small.png",
+      "size": [
+        510,
+        510
+      ],
+      "sha256": "9802a08f68dd4815b4983485cffd616bfe4162cf537cf704044750054a94851b",
+      "터치영역_px": [
+        396,
+        36,
+        468,
+        108
+      ]
+    }
+  ]
+}

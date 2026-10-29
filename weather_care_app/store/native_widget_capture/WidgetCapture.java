@@ -46,6 +46,8 @@ public final class WidgetCapture extends Instrumentation {
             Context context = getTargetContext();
             getUiAutomation().adoptShellPermissionIdentity("android.permission.BIND_APPWIDGET");
             String theme = arguments.getString("theme", "light");
+            // 앱의 수동 테마 설정도 촬영 테마에 맞추고 finally에서 원래 값으로 복원한다.
+            preferences.edit().putString("theme_mode", theme).commit();
             int night = context.getResources().getConfiguration().uiMode & 48;
             check(night == (theme.equals("dark") ? 32 : 16), "시스템 테마 일치");
             for (String family : new String[]{"small", "medium", "large"}) {

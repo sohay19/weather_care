@@ -3,7 +3,7 @@ require 'xcodeproj'
 require 'fileutils'
 
 source = File.expand_path(__dir__)
-output = File.expand_path('../../build/ios-live-store-20261023/project', source)
+output = File.expand_path('../../build/ios-live-store-20261029/project', source)
 FileUtils.mkdir_p(output)
 host_source = File.join(output, 'Host.swift')
 File.write(host_source, "import SwiftUI\n@main struct CaptureHost: App { var body: some Scene { WindowGroup { Text(\"촬영 제어\") } } }\n")

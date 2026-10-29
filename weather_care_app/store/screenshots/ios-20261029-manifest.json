@@ -1,0 +1,154 @@
+{
+  "기준일": "2026-10-29",
+  "화면": "실제 iPhone 앱 전체 화면 촬영, iPad 등록 규격에도 동일 원본 사용",
+  "배치": "Android 2026-10-29 참고: 큰 두 줄 제목, 줄간격 16px, 바깥 최소 여백과 제목·이미지 간격 72px(1080px 너비 기준). 분류명·부연 설명·위젯 크기 라벨 생략. 원본 비율 유지.",
+  "데이터": "최신 제품 앱의 실제 서버 응답과 촬영용 설정. 앱 화면은 2026-10-29 재촬영.",
+  "위젯": "제품 위젯 소스 변경이 없어 2026-10-28 실제 WidgetKit 촬영본 재사용. 두 등록 규격에 같은 원본 사용.",
+  "알림": "5번은 지원 알림 종류의 예시 카드 5개, 2번은 실제 지역별 알림 설정 화면",
+  "files": [
+    {
+      "path": "screenshots/ios/01-main.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "0f774ea14cd89ad18a6ff3cb3b688191d18a66e38e07d2e483a0aef3c8a92e61"
+    },
+    {
+      "path": "screenshots/ios/02-region-notifications.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "0fa4e34ff22bd61ffe928eade6b043e8c20775e193001cc8d34c8818ce21a2fb"
+    },
+    {
+      "path": "screenshots/ios/03-widget.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "8389cca43e01e3180ce9d659a269b4d17d23cc30c41c2256774c2b559b689498"
+    },
+    {
+      "path": "screenshots/ios/04-dark-mode.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "a5c0d8defb7ba6bf215df8b7422ca67b5245804c299dd66db4d2225688d495fa"
+    },
+    {
+      "path": "screenshots/ios/05-notifications.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "268e3b332d73c02a2c62ccdf5f57bb1b57873fdfc1eedba6090cf1cf4e518a3f"
+    },
+    {
+      "path": "screenshots/ios/06-advanced.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "ca05fb53389a75ba0712a3be508875eaedc55149c8522f85ad29de3a2a9b70e1"
+    },
+    {
+      "path": "screenshots/ios/07-week.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "4d03149056fb252a87645dcba9fbbade65ebb295907a8789c68622de55eec327"
+    },
+    {
+      "path": "screenshots/ios/08-notification-settings.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "258c4883bc447a181c2def9f071523dc9d9ec47b6b7c78859177220b76853b57"
+    },
+    {
+      "path": "screenshots/ipad/01-main.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "012f0ee0d257a4543a1f72263edea8f6338a04384990df3eee628b3c1ac6e2fc"
+    },
+    {
+      "path": "screenshots/ipad/02-region-notifications.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "c84c745f851c9d1a6a3a47e5b4830c829a046316d329b15ab98a060718da9559"
+    },
+    {
+      "path": "screenshots/ipad/03-widget.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "0f438b2266b27de961877fd5f130ccf56bad61e9bc9eec32f851d4a48c111ddf"
+    },
+    {
+      "path": "screenshots/ipad/04-dark-mode.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "ae78ccc9dcbaad6c21b209ef56e9eb1cedc44106ff26d0eb162d54c2f01a5602"
+    },
+    {
+      "path": "screenshots/ipad/05-notifications.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "c810f1f794e299ada42054d603b24b773f5ddf4bcaf22bdd1b086f272a9605c6"
+    },
+    {
+      "path": "screenshots/ipad/06-advanced.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "0bee72a21eba44dd1d3f69eeac44aa051b294a7b7bf710ff7f81e59a89e9c075"
+    },
+    {
+      "path": "screenshots/ipad/07-week.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "1ddb1b8152de8b3d4cdec1b2cd6c81548ffa837ac5bb22d91e92459657d0c02c"
+    },
+    {
+      "path": "screenshots/ipad/08-notification-settings.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "29e995fd92aa4fee0b169bf7472b289a2e048fe66a8392cad5129314b2d647c9"
+    }
+  ]
+}

@@ -13903,3 +13903,35 @@
 - 사용자가 직접 확인을 완료하고 카드 스와이프와 카드 사이 여백 수정의 커밋·푸시를 요청했다. 손가락 추적 및 놓았을 때 전환/복원, 카드 사이 12dp 간격을 반영한 week_tab.dart와 week_tab_test.dart 및 이번 작업 인계만 커밋 대상으로 정했다.
 - 기존 관련 147개 검사 통과와 전체 flutter analyze 이슈 없음 로그, 변경 범위 공백 검사를 확인했다. 사용자 직접 확인 지시에 따라 추가 기기 조작이나 재촬영은 수행하지 않았다.
 - 별도 Android 위젯 코드·검사·인계와 이전 전환 영상 자료는 작업 트리에 보존한다. 한글 커밋 메시지로 master에 커밋하고 weather_care 원격 master에 일반 푸시한 후 원격 커밋 일치를 확인한다.
+
+## 2026-10-28 iOS 스토어 스크린샷 최신 제품 코드 재촬영·2번 지역별 알림 교체
+
+- 사용자 요청으로 iOS만 진행했다. 현재 HEAD 03028154a577bf5565e3f004625e4e995aabf7dd의 작업 트리와 기존 제작 지침을 확인하고 Flutter 3.47.4의 일반 lib/main.dart를 iOS Simulator Debug로 빌드했다. source-build.json의 lib Dart·Widget Swift SHA256을 촬영 종료 시 비교해 제품 소스 변경이 없음을 확인했다. 별도 예시 Flutter 화면·고정 날씨 주입·제품 UI 수정은 하지 않았다. 기존 Debug 버전 검사 생략 동작을 그대로 사용했다.
+- 기존 전용 iPhone 15 Pro Max/iOS17.5(71087354-633A-42B1-AD48-60A603FE411F)만 창 없이 부팅·설치·XCTest로 조작했다. 사용자 기기 및 이미 실행 중이던 iOS26 시뮬레이터는 변경하지 않았다. 촬영 제어 앱의 오래된 ready/명령 때문에 최초 제어 명령이 건너뛰어졌고, 이전 제어 자료를 ignored 폴더에 백업·정리한 뒤 새 명령으로 재개했다. 제품 앱 데이터는 삭제하지 않았다.
+- Main·다크 Main·Week 날짜별 예보·알림 설정·지역 메뉴와 실제 SpringBoard 홈 위젯을 재촬영했다. 운영 서버 실자료를 사용하고 심화 날씨만 기존 제작 기준대로 시험 서버가 제공하는 관측 자료를 표시한 실제 앱을 촬영했다. 지역 메뉴에 기존 부산 감만1동과 UI로 추가한 서울 대치1동을 표시하고 각각 알림 ON/OFF가 보이도록 했다. 실제 사용자 푸시 발송은 수행하지 않았다.
+- 2번 시간별 타임라인을 02-region-notifications.png로 교체했다. 제목은 ‘자주 가는 지역마다 / 날씨 알림을 챙겨요’, 설명은 ‘구역을 추가하고 · 지역별 알림 ON/OFF’다. 기존 02-timeline.png는 두 등록 폴더에서 백업 후 제거했다. 5번 기존 알림 예시 카드 구성은 유지하며 실제 푸시 수신 화면으로 설명하지 않는다.
+- 소형·중형·대형 WidgetKit 홈 위젯의 라이트/다크 총6개를 같은 제품 앱의 실제 저장 날씨로 촬영했다. 1290×2796 앱 원본은 상태바177px·홈 표시102px만 제외해 1290×2517로 보관하고, 앱 안의 문구·수치·UI 픽셀은 수정하지 않았다. 위젯은 홈 배경만 제거하며 불투명 내부 픽셀 보존 검사를 통과했다. 복귀 시 테스트 앱 오프닝 광고가 표시돼 잘못된 중간 캡처가 생긴 것은 제외하고, 앱을 다시 실행해 Main·다크·Week 최종본을 정상 상태에서 재촬영했다.
+- iPhone1320×2868·iPad등록2064×2752 RGB PNG 각각8장과 전체 미리보기를 갱신했다. iPad 규격도 동일한 iPhone 앱·홈 위젯 촬영본을 비율 유지해 배치한 소개 이미지이며 iPad 직접 촬영본이 아니다. 기존 파란 배경·SUITE 글꼴·제목/콘텐츠 묶음 세로 중앙 정렬을 유지했다. 최종 두 미리보기와 주요 원본을 직접 열어 한글·정렬·잘림·다크모드·위젯 배치를 확인했다.
+- 결과: weather_care_app/store/app-store/weather-care-ios-screenshots-20261028.zip 및 고정명 weather-care-ios-screenshots.zip(각21파일, 약7.4MB). 실제 앱 크롭은 store/screenshots/source-ios-20261028/phone, 위젯은 native-ios-20261028/phone, 검증 명세는 ios-20261028-manifest.json, 안내는 IOS_20261028.md다. 이미지16장 규격/PNG/RGB/SHA256·폴더별 정확히8장·이전2번 제거·ZIP 무결성/파일21개/중복없음을 검사했다.
+- iOS 생성기의 주제 목록을 Android와 분리하고 iOS 전용 ZIP만 갱신하게 했다. Android 이미지·Android 도구·Google Play 소재·공용 통합ZIP은 변경하지 않았다. 실제 앱 내보내기에 --date 옵션을 추가하고 촬영 도구 기본 경로·안내를 이번 날짜로 맞췄다. Python 문법 검사와 git diff --check를 통과했다.
+- 제품 iOS 운영 빌드161.3초·시험 빌드56.6초·최종 운영 복구 빌드26.5초 성공. XCTest 촬영 세션을 finish로 정상 종료하고 최종 운영용 Runner.app을 전용 시뮬레이터에 복구 설치한 뒤 해당 기기만 종료했다. Flutter/Pods가 자동 변경한 AppFrameworkInfo.plist 및 project.pbxproj는 작업 전 상태로 복구했다. 최종 build/ios/iphonesimulator/Runner.app은 운영 서버용이다. 원본·접근성 트리·명령·XCTest/빌드 로그·변경 전 백업은 ignored build/ios-live-store-20261028에 있다. 서버 배포·스토어 제출·커밋·push는 수행하지 않았다.
+
+## 2026-10-29 pull 후 Android 배치 기준 iOS 스크린샷 재제작
+
+- 사용자 요청으로 origin/master를 fetch한 뒤 로컬 iOS 변경·신규 원본을 include-untracked stash ‘iOS 스크린샷 재제작 전 로컬 변경 보관 20261029’에 안전 보관하고 git pull --ff-only origin master로 0302815→761b0e8을 반영했다. stash apply 후 HANDOFF.md와 screenshots/README.md의 문서 충돌은 원격 Android/검증 기록과 기존 로컬 iOS 기록을 모두 보존해 해결했다. 복구용 stash는 유지하며 미해결 충돌과 스테이징 변경은 남기지 않았다. 사용자 요청 없는 커밋·push는 하지 않았다.
+- 최신 Android SCREENSHOTS_20261029.md·generate_android_store.py·preview-android.png를 읽고 직접 검토했다. 큰 두 줄 제목60px/줄간격16px·작은 분류명/부연 설명/위젯 라벨 생략·최소바깥여백 및 제목/이미지 간격72px(너비1080 기준)·커진 알림 예시 카드를 iOS에 반영했다. 2번 문구도 Android와 같은 ‘관심 있는 지역의 / 날씨 알림을 골라요’로 맞췄다.
+- iPhone1320×2868에는88px, iPad2064×2752에는138px의 최소바깥여백/제목간격을 적용했다. iOS 등록 종횡비에서 앱 화면 원본 비율을 유지하므로 iPhone 아래쪽과 iPad 좌우에는 추가여백이 생긴다. 늘리거나 화면 일부를 잘라 여백을 채우지 않았다. 실제 iOS 소형/중형/대형 위젯을 가용 높이에 맞춰 확대하고 다크 Main에 실제 다크 대형 위젯을 함께 배치했다.
+- 최신 제품 일반 lib/main.dart를 Flutter3.47.4 iOS Simulator Debug/운영 SERVER_URL로 빌드45.2초 성공. 기존 전용 iPhone15 Pro Max/iOS17.5(71087354-633A-42B1-AD48-60A603FE411F)만 창 없이 부팅·설치하고 독립 XCTest로 실제 앱을 조작해 Main/다크 Main/지역별 알림/Week/알림 설정/심화 조위 6개를 10월29일 다시 촬영했다. 소스 SHA256 스냅샷과 최종 소스가 같음을 확인했다. 화면·수치·날짜·서버 응답을 합성/주입하거나 제품 UI를 수정하지 않았다.
+- 모든 새 앱 화면은 운영 서버의 실제 응답이다. 심화 날씨도 운영 서버에서 부산 조위129cm·09:00기준과 만조22:17/간조16:06 등의 값을 표시해 시험 서버 빌드 없이 촬영했다. Main/Week는 오늘 자료가 로드된 것을 확인했다. 주간 날짜이동 버튼, 설정시각07:00/출퇴근 시간, 지역별 독립 ON/OFF가 보이는 위치를 사용했다. 시스템바만177px/102px 제외한1290×2517 화면을 보존했다.
+- WidgetKit 제품 소스는 0302815..761b0e8 및 작업 트리에서 변경0임을 확인해 native-ios-20261028/phone의 실제 홈 위젯6개와 원본 해시를 재사용했다. 위젯은 10월28일 촬영, 앱은 10월29일 촬영임을 안내/명세에 구분했다. 5번은 실제 푸시가 아닌 기능소개 예시5개다. iPad규격도 같은 iPhone 앱/위젯 원본을 사용한 소개 이미지이며 iPad직접촬영이 아니다.
+- 결과: store/screenshots/ios·ipad 각8장, preview-ios.png·preview-ipad.png, ios-20261029-manifest.json, IOS_20261029.md 및 store/app-store/weather-care-ios-screenshots-20261029.zip/고정명 weather-care-ios-screenshots.zip(각21파일, 약5.0MB). 앱원본은 source-ios-20261029/phone에 새로 보관했다. 기존 날짜 ZIP·앱/위젯 원본을 보존했다.
+- 전체 두 미리보기와 중간 배치를 직접 열어 한글/원본/정렬/앱 하단탭/위젯/알림 줄바꿈을 확인했다. PNG16장 크기/RGB·정확히8장씩·SHA256·사방 최소여백 전체픽셀·ZIP2개 CRC/21파일/중복없음/내부PNG해시·제품 소스 안정성 검사를 통과했다. git diff --check 통과. Android 생성기·android/android-tablet 이미지·10월29일 Android ZIP은 pull한 HEAD 대비 변경0이다. 공용 통합ZIP/Google Play 소재도 이번에 수정하지 않았다.
+- XCTest 촬영 세션을 finish로 정상 종료(실패0)하고 촬영용 시뮬레이터만 종료했다. 사용자 실기기·실행 중인 iOS26 시뮬레이터·권한·제품 데이터는 변경하지 않았다. Flutter/Pods 자동변경 AppFrameworkInfo.plist/project.pbxproj는 작업 전 상태로 복구했다. 최종 표준 Runner.app은 최신 제품 코드의 운영 서버 빌드다. 원본/접근성/명령/소스해시/빌드/XCTest로그/이전 제어 자료는 ignored weather_care_app/build/ios-live-store-20261029에 보관한다. 실제 푸시·서버/스토어 배포는 수행하지 않았다.
+
+## 2026-10-29 iOS 스크린샷 변경 전체 커밋·푸시
+
+- 사용자 요청으로 현재 추적 변경과 신규 파일 전체를 포함한다. 10월28일/29일 iOS 앱·위젯 촬영 원본/해시·두 날짜 ZIP·최신 고정명 ZIP·iPhone/iPad16장·미리보기·지역별 알림2번 교체·촬영/생성 도구·한글 안내와 기존 인계 기록을 함께 반영한다. ignored build/시뮬레이터 앱/로그/원본 제어 자료는 포함하지 않는다.
+- 두 날짜 ZIP 각21항목의 CRC·중복없음, 최신16장 PNG규격/RGB/SHA256, 두 날짜 앱 원본 및 실제 위젯 원본 해시, Python 도구 문법과 git diff --check를 다시 확인해 모두 통과했다. 제품 코드는 수정하지 않았으므로 기존 iOS 빌드/XCTest 결과를 유지하고 재촬영·재빌드는 반복하지 않는다.
+- fetch 후 로컬761b0e8, 원격origin/master에 a5914be(주간 카드 드래그 추적/전환 여백)가 한 커밋 추가됨을 확인했다. iOS 변경을 한글 커밋 ‘chore(store): iOS 스크린샷과 실제 촬영 자료 갱신’으로 기록한 뒤 최신 원격 위로 rebase하고 일반 푸시한다. 다른 작업의 제품 변경과 모든 HANDOFF 기록을 보존한다. 강제푸시·서버/스토어 배포는 하지 않는다.
+- rebase 중 HANDOFF.md의 추가 기록만 충돌했으며 원격 Week 사용자 확인/푸시 기록과 로컬 iOS 인계를 모두 보존해 해결했다. 제품 코드와 스크린샷 바이너리의 충돌은 없다.
+- 로컬 HTTPS 푸시는 GitHub 자격 증명 부재로 실패했고 macOS 기본 SSH도 publickey 인증을 통과하지 못했다. 연결된 GitHub 도구에서 저장소 push 권한을 확인해 동일한 파일 트리를 Git 데이터 API로 게시하고 master를 기존 원격 커밋에서 fast-forward하는 방법으로 진행한다. 인증정보를 출력하거나 Git 전역 인증 설정을 변경하지 않는다.

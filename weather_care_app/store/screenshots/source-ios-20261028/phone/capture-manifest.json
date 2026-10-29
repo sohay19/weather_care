@@ -1,0 +1,138 @@
+{
+  "기준일": "2026-10-28",
+  "방식": "실제 iPhone 앱 전체 화면·시스템 바만 제외·iPad 규격에도 같은 원본 사용",
+  "files": [
+    {
+      "name": "main",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "main.png",
+      "source_sha256": "fd07d0d2ec342a0bea978a2e6e519d7c17879d90a2c009635b9dbce73c97bb0a",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261028/phone/main.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "4fbb3a8d6fabba55d35b343dd0f64983dc7136a8dd2d6ae259c9e05e56c8ed6f"
+    },
+    {
+      "name": "region-notifications",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "region-notifications.png",
+      "source_sha256": "8e993299e7966108eefd26634c478eedb6cb8e6736f30e275be52131f8c722ab",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261028/phone/region-notifications.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "952275c506ff0ff564d6a72705d26f9fe7b13514dd48a0c88a9b5833ca18c420"
+    },
+    {
+      "name": "dark-main",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "dark-main.png",
+      "source_sha256": "f8e6ec48d9878b4b068808477089cfe2b2b56f6685a5a6a6e6a9cf300238da1c",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261028/phone/dark-main.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "cc6b7d320a1ce3c20bffcc5cac2654fe1708ecf7f75d1218f7141e92a22776a8"
+    },
+    {
+      "name": "advanced-values",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "advanced-values.png",
+      "source_sha256": "0dc37359bdd20b794c903cac12fe6f37830d3a957c92486c3578fb92c0daafb2",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261028/phone/advanced-values.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "6096653a980553abf26ea2dd076694f3e67815753911230caff1ef228e198361"
+    },
+    {
+      "name": "week",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "week-detail.png",
+      "source_sha256": "d9c74e061abaeba3ce09e18953df3e59a41ca3e1780fe56db473e28a754044a7",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261028/phone/week.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "443a56a9a4d2c05b85d96dec02fa2698f4c686cd016099757c0fb8ddd4443f62"
+    },
+    {
+      "name": "notification-settings",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "notification-settings.png",
+      "source_sha256": "8d70f5278f23affeca89228b670f22e41424cda58392d67549f071d9b7dd6007",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261028/phone/notification-settings.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "2a63d249fe5fdbe098c69330284bd4c597e5962822f7da619cf0b4143ae0fe88"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+[
+  {
+    "device": "phone",
+    "theme": "light",
+    "family": "small",
+    "source": "phone-light-small-home.png",
+    "source_sha256": "85bb19c32744ded8586444ba14a08219247f96c7ad6291dae5f00754612b4e44",
+    "crop": [
+      93,
+      282,
+      603,
+      792
+    ],
+    "logical_size": [
+      170.0,
+      170.0
+    ],
+    "scale": 3,
+    "path": "phone/light-small.png",
+    "size": [
+      510,
+      510
+    ],
+    "sha256": "68537ac825dbd4ae310dd5b0875ec09baca6c71f7d9173fd3c6a7ad13922c378"
+  },
+  {
+    "device": "phone",
+    "theme": "light",
+    "family": "medium",
+    "source": "phone-light-medium-home.png",
+    "source_sha256": "53a1ff8441171566e9d679bde0be33ebf25d82254d2ba30704503e0697cd7230",
+    "crop": [
+      99,
+      282,
+      1191,
+      792
+    ],
+    "logical_size": [
+      364.0,
+      170.0
+    ],
+    "scale": 3,
+    "path": "phone/light-medium.png",
+    "size": [
+      1092,
+      510
+    ],
+    "sha256": "37e8fbcfe6a3deb9aa6b3621dd6e861ca48ff3ee31c98eb11f28bef34819a831"
+  },
+  {
+    "device": "phone",
+    "theme": "light",
+    "family": "large",
+    "source": "phone-light-large-home.png",
+    "source_sha256": "12d3372011d64257fc9b06d1a9e6446f0ebf2dabdf1d88ee8576fad6cddbeb31",
+    "crop": [
+      99,
+      282,
+      1191,
+      1428
+    ],
+    "logical_size": [
+      364.0,
+      382.0
+    ],
+    "scale": 3,
+    "path": "phone/light-large.png",
+    "size": [
+      1092,
+      1146
+    ],
+    "sha256": "82cd835e4591677cd5410b22785341beeaefbf51e1d5db56ac4e87832b46bab6"
+  },
+  {
+    "device": "phone",
+    "theme": "dark",
+    "family": "small",
+    "source": "phone-dark-small-home.png",
+    "source_sha256": "c49866e57927840e79e1a2a72047209ba9b9f3e9d4e7c0d7ebe8cdf04517e6d1",
+    "crop": [
+      93,
+      282,
+      603,
+      792
+    ],
+    "logical_size": [
+      170.0,
+      170.0
+    ],
+    "scale": 3,
+    "path": "phone/dark-small.png",
+    "size": [
+      510,
+      510
+    ],
+    "sha256": "0965c344fa32c82491dbc37ab5f954becb455cbef70cbf50c889de04e86b237e"
+  },
+  {
+    "device": "phone",
+    "theme": "dark",
+    "family": "medium",
+    "source": "phone-dark-medium-home.png",
+    "source_sha256": "ad2de9cfb66401e91297f2cea5103dc8cc7c5832f439044f8ce246ad74449dcf",
+    "crop": [
+      99,
+      282,
+      1191,
+      792
+    ],
+    "logical_size": [
+      364.0,
+      170.0
+    ],
+    "scale": 3,
+    "path": "phone/dark-medium.png",
+    "size": [
+      1092,
+      510
+    ],
+    "sha256": "675314637c30f3fb92f62be294a41bbdd6a84fcd79bb19d29d0e1509df2d822b"
+  },
+  {
+    "device": "phone",
+    "theme": "dark",
+    "family": "large",
+    "source": "phone-dark-large-home.png",
+    "source_sha256": "24e07935ad5873959ff5a8793e224fe048084f2d702f0c2777b695e0aef08e81",
+    "crop": [
+      99,
+      282,
+      1191,
+      1428
+    ],
+    "logical_size": [
+      364.0,
+      382.0
+    ],
+    "scale": 3,
+    "path": "phone/dark-large.png",
+    "size": [
+      1092,
+      1146
+    ],
+    "sha256": "cc5046c93e168dbe10a706efbb123ce76b13fb054806883ae35e88a105bde4f1"
+  }
+]

@@ -1,0 +1,110 @@
+[
+  {
+    "검사": "01-graph-body",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 0.0
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 246.9498421063339
+    },
+    "통과": true
+  },
+  {
+    "검사": "02-left-axis-backward",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 246.9498421063339
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 92.21185303206197
+    },
+    "통과": true
+  },
+  {
+    "검사": "03-left-axis-forward",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 92.21185303206197
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 117.61289469872858
+    },
+    "통과": true
+  },
+  {
+    "검사": "04-time-labels",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 117.61289469872858
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 364.5627947703014
+    },
+    "통과": true
+  },
+  {
+    "검사": "05-filter-left-edge",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 364.5627947703014
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 364.5627947703014
+    },
+    "통과": true
+  },
+  {
+    "검사": "06-filter-right-edge",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 364.5627947703014
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 364.5627947703014
+    },
+    "통과": true
+  },
+  {
+    "검사": "07-card-bottom-next-day",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 364.5627947703014
+    },
+    "이후": {
+      "selectedDayIndex": 2,
+      "timelinePixels": 0.0
+    },
+    "통과": true
+  },
+  {
+    "검사": "08-card-bottom-previous-day",
+    "이전": {
+      "selectedDayIndex": 2,
+      "timelinePixels": 0.0
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 0.0
+    },
+    "통과": true
+  },
+  {
+    "검사": "09-rain-right-axis",
+    "이전": {
+      "selectedDayIndex": 0,
+      "timelinePixels": 673.2
+    },
+    "이후": {
+      "selectedDayIndex": 0,
+      "timelinePixels": 874.3558771664292
+    },
+    "통과": true
+  }
+]

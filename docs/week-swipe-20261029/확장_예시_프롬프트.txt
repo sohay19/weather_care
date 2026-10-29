@@ -1,0 +1,13 @@
+imagegen 내장 도구로 만든 사용자 검토용 가정 이미지입니다. 앱에 반영한 결과가 아닙니다.
+출력: week-swipe-expanded-example.png
+
+Use case: precise-object-edit. Edit target: the attached two-panel annotated Week-tab screenshot. User asks for a HYPOTHETICAL EXAMPLE of expanding the orange horizontal gesture regions, not an implementation or a redesigned chart. Preserve both screenshot panels, every app label, value, plot, chip, and green/gray annotation as faithfully as possible. Change ONLY orange region outlines and relevant explanatory annotations plus overall title.
+IMPORTANT: expand the HIT/GESTURE AREA outlines, do not stretch or reposition the actual chart, its y-axis, or the filter chips.
+Target modifications in image coordinates (input approximately1183x1330):
+1) RIGHT PANEL: current orange graph rectangle left edge around707, right1055, top619,bottom1108. Extend its LEFT edge to653, including ALL fixed y-axis labels '온도 °C',20,16.1,12.3,8.4,4.5. Keep right edge1055. The green day-card borders are647 and1061, so orange chart gesture rectangle must have equal6px margins on BOTH sides. Keep top and bottom and dashed bottom. All axis labels remain visibly inside expanded orange rectangle. No second old inner rectangle. Give enlarged graph region a very subtle orange fill so newly included left axis area is clear. Keep data perfectly readable. Orange horizontal arrow remains across region without obscuring data.
+2) RIGHT PANEL filter strip rectangle current x657..1054, y484..548: expand it to FULL CARD width x647..1061, flush with both green card boundaries. Keep y span and readable chips. Very subtle orange fill.
+3) LEFT PANEL filter strip rectangle current x51..474,y1011..1082: expand to FULL CARD width x39..481, flush with both green day-card boundaries. Keep y span. Very subtle orange fill.
+4) Change main title to exact Korean "스와이프 영역 확장 예시". Add a visible small subtitle below: "가정 이미지 · 앱 반영 전".
+5) Right graph orange callout text: "세로축 포함\n좌우 여백 동일". Right filter orange callout: "필터 영역\n카드 양끝까지". Left filter callout same "필터 영역\n카드 양끝까지".
+6) Bottom right orange explanatory box text: "필터·그래프 영역을 넓힌 가정 예시". Existing bottom-left green gesture direction explanation remains unchanged.
+Do not add new features, change chart scale, remove axes or imply already implemented behavior. Clean technical example, crisp Korean sans-serif, retain existing two-column layout and all original content. Only output the edited example image.

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 실제 위젯 내용의 높이 대신 런처의 칸 환산용 최소 길이를 사용한다.
+     2칸은 110dp, 3칸은 180dp이며 다른 런처/격자에서는 대응 칸 수가 달라질 수 있다. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/weather_widget_medium_description"
+    android:initialLayout="@layout/weather_widget_medium"
+    android:minWidth="320dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="320dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeHeight="180dp"
+    android:previewLayout="@layout/weather_widget_preview"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

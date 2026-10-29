@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -42,13 +43,14 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     static final String REFRESH_STATUS_KEY = "refresh_status";
     private static final int BRIEFING_ALARM_REQUEST = 1702;
     private static final int REFRESH_REQUEST = 1703;
-    // Pixel Launcher 4열 구성의 2열 위젯(약 179dp)을 작은 위젯에 포함한다.
-    private static final int MEDIUM_MIN_WIDTH_DP = 200;
     private static final int TEXT_PRIMARY = Color.rgb(37, 55, 78);
     private static final int TEXT_SECONDARY = Color.rgb(96, 117, 138);
     private static final int TEXT_MIN_MAX = Color.rgb(66, 90, 114);
-    // Pixel Launcher 측정값(2칸 108dp, 3칸 169dp)의 중간값이다.
-    private static final int LARGE_MIN_HEIGHT_DP = 140;
+    private static final Class<?>[] PROVIDERS = {
+            WeatherCareWidgetProvider.class,
+            WeatherCareMediumWidgetProvider.class,
+            WeatherCareLargeWidgetProvider.class
+    };
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -87,9 +89,10 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
 
     static void updateAll(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        ComponentName provider = new ComponentName(context, WeatherCareWidgetProvider.class);
-        int[] ids = manager.getAppWidgetIds(provider);
-        for (int id : ids) updateWidget(context, manager, id);
+        for (Class<?> provider : PROVIDERS) {
+            int[] ids = manager.getAppWidgetIds(new ComponentName(context, provider));
+            for (int id : ids) updateWidget(context, manager, id);
+        }
     }
 
     private static void updateWidget(
@@ -99,8 +102,9 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
     ) {
         Bundle options = manager.getAppWidgetOptions(appWidgetId);
         int minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110);
-        int minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
-        WidgetSize size = widgetSizeFor(minWidth, minHeight);
+        AppWidgetProviderInfo info = manager.getAppWidgetInfo(appWidgetId);
+        if (info == null) return;
+        WidgetSize size = widgetSizeFor(info.provider.getClassName());
         String mode = context.getSharedPreferences(MainActivity.WIDGET_PREFERENCES, Context.MODE_PRIVATE)
                 .getString(MainActivity.THEME_MODE_KEY, "system");
         boolean manualTheme = "light".equals(mode) || "dark".equals(mode);
@@ -231,10 +235,15 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    private static WidgetSize widgetSizeFor(int minWidth, int minHeight) {
-        // Android 가로 2열은 높이와 관계없이 iOS systemSmall처럼 처리한다.
-        if (minWidth < MEDIUM_MIN_WIDTH_DP) return WidgetSize.SMALL;
-        return minHeight >= LARGE_MIN_HEIGHT_DP ? WidgetSize.LARGE : WidgetSize.MEDIUM;
+    private static WidgetSize widgetSizeFor(String providerClassName) {
+        // 크기가 바뀌어도 사용자가 추가한 위젯 종류를 유지한다.
+        if (WeatherCareMediumWidgetProvider.class.getName().equals(providerClassName)) {
+            return WidgetSize.MEDIUM;
+        }
+        if (WeatherCareLargeWidgetProvider.class.getName().equals(providerClassName)) {
+            return WidgetSize.LARGE;
+        }
+        return WidgetSize.SMALL;
     }
 
     private static PendingIntent refreshIntent(Context context) {

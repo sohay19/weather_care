@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="weather_widget_description">현재 날씨와 외출 준비물을 보여줍니다.</string>
+    <string name="weather_widget_small_name">날씨챙겨 소형</string>
+    <string name="weather_widget_medium_name">날씨챙겨 중형</string>
+    <string name="weather_widget_large_name">날씨챙겨 대형</string>
+    <string name="weather_widget_small_description">현재 날씨를 보여주는 2×2 고정 위젯입니다.</string>
+    <string name="weather_widget_medium_description">현재·체감 날씨와 짧은 안내를 보여주는 4×2 위젯입니다.</string>
+    <string name="weather_widget_large_description">날씨와 외출 준비물을 보여주는 4×4 위젯입니다.</string>
     <string name="weather_widget_icon_description">날씨 아이콘</string>
     <string name="weather_widget_preparation_description">준비물 아이콘</string>
 </resources>

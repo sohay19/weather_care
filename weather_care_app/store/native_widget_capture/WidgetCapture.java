@@ -50,6 +50,7 @@ public final class WidgetCapture extends Instrumentation {
             preferences.edit().putString("theme_mode", theme).commit();
             int night = context.getResources().getConfiguration().uiMode & 48;
             check(night == (theme.equals("dark") ? 32 : 16), "시스템 테마 일치");
+            if ("true".equals(arguments.getString("familyChecks"))) verifyFamilies(context);
             for (String family : new String[]{"small", "medium", "large"}) {
                 capture(context, family, theme, 2, true);
             }
@@ -83,10 +84,92 @@ public final class WidgetCapture extends Instrumentation {
         finish(status, result);
     }
 
+    /** 화면에 띄우지 않은 실제 호스트에서 세 종류를 함께 갱신하고 확장한다. */
+    private void verifyFamilies(Context context) throws Exception {
+        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        SharedPreferences preferences = context.getSharedPreferences("weather_care_widget", Context.MODE_PRIVATE);
+        String originalSnapshot = preferences.getString("snapshot", null);
+        check(manager.getInstalledProviders().stream()
+                .filter(item -> context.getPackageName().equals(item.provider.getPackageName())).count() == 3,
+                "선택 가능한 위젯은 정확히 3종");
+        String[] names = {"WeatherCareWidgetProvider", "WeatherCareMediumWidgetProvider", "WeatherCareLargeWidgetProvider"};
+        AppWidgetHostView[] views = new AppWidgetHostView[3];
+        int[] ids = new int[3];
+        Method updateAll = Class.forName("com.codesoha.weathercare.WeatherCareWidgetProvider")
+                .getDeclaredMethod("updateAll", Context.class);
+        updateAll.setAccessible(true);
+        onMain(() -> host = new AppWidgetHost(context, 7022));
+        try {
+            for (int i = 0; i < names.length; i++) {
+                final int index = i;
+                ComponentName component = new ComponentName(context.getPackageName(), "com.codesoha.weathercare." + names[i]);
+                AppWidgetProviderInfo info = manager.getInstalledProviders().stream()
+                        .filter(item -> item.provider.equals(component)).findFirst().orElseThrow();
+                check(info.targetCellWidth == (i == 0 ? 2 : 4), "기본 가로 칸 수");
+                check(info.targetCellHeight == (i == 2 ? 4 : 2), "기본 세로 칸 수");
+                check(info.resizeMode == (i == 0 ? 0 : 3), "종류별 크기 조절 모드");
+                check(info.maxResizeWidth == 0, "가로 최대값 없음");
+                if (i == 1) {
+                    float density = context.getResources().getDisplayMetrics().density;
+                    check(Math.abs(info.maxResizeHeight - Math.round(180 * density)) <= 1, "중형 최대 높이 적용");
+                } else check(info.maxResizeHeight == 0, "소형/대형 별도 최대 높이 없음");
+                Bundle options = sizeOptions(i == 0 ? 156 : 334, i == 2 ? 398 : 180);
+                onMain(() -> {
+                    ids[index] = host.allocateAppWidgetId();
+                    check(manager.bindAppWidgetIdIfAllowed(ids[index], component, options), "3종 동시 바인딩");
+                    views[index] = host.createView(context, ids[index], info);
+                });
+            }
+            onMain(() -> host.startListening());
+            JSONObject snapshot = new JSONObject(preferences.getString("snapshot", "{}"));
+            snapshot.put("region", "한글 갱신 확인");
+            preferences.edit().putString("snapshot", snapshot.toString()).commit();
+            updateAll.invoke(null, context);
+            waitForIdleSync();
+            Thread.sleep(500);
+            for (int i = 0; i < names.length; i++) {
+                final int index = i;
+                onMain(() -> {
+                    View region = views[index].findViewById(context.getResources().getIdentifier("widget_region", "id", context.getPackageName()));
+                    check(region != null && "한글 갱신 확인".contentEquals(region.getContentDescription()), "전체 종류의 실제 자료 갱신");
+                });
+                if (i > 0) {
+                    Bundle expanded = sizeOptions(i == 1 ? 540 : 700, i == 1 ? 289 : 650);
+                    manager.updateAppWidgetOptions(ids[i], expanded);
+                    android.appwidget.AppWidgetProvider receiver = (android.appwidget.AppWidgetProvider)
+                            Class.forName("com.codesoha.weathercare." + names[i]).getConstructor().newInstance();
+                    receiver.onAppWidgetOptionsChanged(context, manager, ids[i], expanded);
+                    waitForIdleSync();
+                    Thread.sleep(300);
+                }
+                onMain(() -> {
+                    int mediumId = context.getResources().getIdentifier("widget_short_message", "id", context.getPackageName());
+                    int largeId = context.getResources().getIdentifier("widget_brief", "id", context.getPackageName());
+                    check((views[index].findViewById(mediumId) != null) == (index == 1), "확장 후 중형 종류 유지");
+                    check((views[index].findViewById(largeId) != null) == (index == 2), "확장 후 대형 종류 유지");
+                });
+            }
+            android.util.Log.i("WidgetFamilyVerification", "3종 등록·크기 조건·전체 갱신·확장 후 종류 유지 통과");
+        } finally {
+            onMain(() -> { host.stopListening(); host.deleteHost(); host = null; });
+            if (originalSnapshot == null) preferences.edit().remove("snapshot").commit();
+            else preferences.edit().putString("snapshot", originalSnapshot).commit();
+        }
+    }
+
+    private static Bundle sizeOptions(int width, int height) {
+        Bundle options = new Bundle();
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, width);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, width);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, height);
+        options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height);
+        return options;
+    }
+
     private void capture(Context context, String family, String theme, int count, boolean publish)
             throws Exception {
-        int width = family.equals("small") ? 170 : 338;
-        int height = family.equals("small") ? 170 : family.equals("medium") ? 130 : 354;
+        int width = family.equals("small") ? 156 : 334;
+        int height = family.equals("large") ? 398 : 180;
         JSONObject snapshot = new JSONObject()
                 .put("region", "서울시 중구").put("refreshTime", "오전 8:00 기준")
                 .put("condition", "partlyCloudy").put("currentTemperature", "18°")
@@ -124,7 +207,9 @@ public final class WidgetCapture extends Instrumentation {
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, height);
         options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, height);
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        ComponentName component = new ComponentName(context, provider);
+        String providerName = family.equals("medium") ? "WeatherCareMediumWidgetProvider"
+                : family.equals("large") ? "WeatherCareLargeWidgetProvider" : "WeatherCareWidgetProvider";
+        ComponentName component = new ComponentName(context.getPackageName(), "com.codesoha.weathercare." + providerName);
         AppWidgetProviderInfo info = manager.getInstalledProviders().stream()
                 .filter(item -> item.provider.equals(component)).findFirst().orElseThrow();
         onMain(() -> {

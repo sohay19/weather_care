@@ -68,12 +68,11 @@ void main() {
     expect(plist, isNot(contains('NSUserTrackingUsageDescription')));
   });
 
-  test('Android 3-column medium widget renders the short briefing', () {
+  test('Android medium widget renders the short briefing', () {
     final provider = File(
       'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java',
     ).readAsStringSync();
 
-    expect(provider, contains('MEDIUM_MIN_WIDTH_DP = 200'));
     expect(
       RegExp(r'WidgetSize\.MEDIUM[\s\S]*?snapshot\.shortMessage')
           .hasMatch(provider),
@@ -82,7 +81,7 @@ void main() {
     expect(provider, contains('json.optJSONArray("preparationCatalog")'));
   });
 
-  test('Android 2-column widget always matches the iOS small header', () {
+  test('Android widget keeps the selected family and the small header', () {
     final provider = File(
       'android/app/src/main/java/com/weathercare/weather_care/WeatherCareWidgetProvider.java',
     ).readAsStringSync();
@@ -93,15 +92,11 @@ void main() {
     expect(
       provider,
       contains(
-        'if (minWidth < MEDIUM_MIN_WIDTH_DP) return WidgetSize.SMALL;',
+        'widgetSizeFor(info.provider.getClassName())',
       ),
     );
-    expect(
-      RegExp(
-        r'if \(minWidth < MEDIUM_MIN_WIDTH_DP\) return WidgetSize\.SMALL;\s*return minHeight >= LARGE_MIN_HEIGHT_DP',
-      ).hasMatch(provider),
-      isTrue,
-    );
+    expect(provider, isNot(contains('MEDIUM_MIN_WIDTH_DP')));
+    expect(provider, isNot(contains('LARGE_MIN_HEIGHT_DP')));
     expect(
       RegExp(
         r'<LinearLayout[\s\S]*?android:layout_weight="1"[\s\S]*?widget_region[\s\S]*?widget_refresh_time[\s\S]*?</LinearLayout>[\s\S]*?widget_refresh_button',

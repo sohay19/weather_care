@@ -73,6 +73,7 @@
         </receiver>
         <receiver
             android:name=".WeatherCareWidgetProvider"
+            android:label="@string/weather_widget_small_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -80,6 +81,28 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/weather_care_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".WeatherCareMediumWidgetProvider"
+            android:label="@string/weather_widget_medium_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/weather_care_medium_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".WeatherCareLargeWidgetProvider"
+            android:label="@string/weather_widget_large_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/weather_care_large_widget_info" />
         </receiver>
         <service
             android:name=".WeatherCareWidgetRefreshService"

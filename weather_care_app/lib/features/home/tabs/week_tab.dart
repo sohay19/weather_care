@@ -64,11 +64,15 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
   Timer? _midnightTimer;
   DateTime? _windowStart;
   int _selectedDayIndex = 0;
+  double _dayTransitionDirection = 1;
   double _horizontalDragDistance = 0;
 
   void _showDay(int index) {
     if (index < 0 || index > 6 || index == _selectedDayIndex) return;
-    setState(() => _selectedDayIndex = index);
+    setState(() {
+      _dayTransitionDirection = index > _selectedDayIndex ? 1 : -1;
+      _selectedDayIndex = index;
+    });
   }
 
   DateTime _now() => responseNow(
@@ -130,6 +134,9 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
       _windowStart = calendarDays.first.date;
     }
     final selectedDay = calendarDays[_selectedDayIndex];
+    final transitionDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 280);
     final selectedHourly = _weekTimelineItems(
       selectedDay,
       today,
@@ -254,18 +261,49 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
                   _showDay(_selectedDayIndex - 1);
                 }
               },
-              child: _WeekDayCard(
-                calendarDay: selectedDay,
-                dataPhase: widget.dataPhase,
-                isToday: dateInKorea(selectedDay.date) == today,
-                isPast: selectedDay.date.isBefore(parseForecastDate(today)!),
-                today: parseForecastDate(today)!,
-                hourly: selectedHourly,
-                snowDepthHistory: widget.snowDepthHistory,
-                currentSnow: widget.currentSnow,
-                serverFeaturesAvailable: widget.serverFeaturesAvailable,
-                onRetry: widget.onRetryData,
-                retrying: widget.retrying,
+              child: ClipRect(
+                child: _animateWeekCardSize(
+                  transitionDuration,
+                  AnimatedSwitcher(
+                    key: const ValueKey('week-day-transition'),
+                    duration: transitionDuration,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    layoutBuilder: _layoutWeekCards,
+                    transitionBuilder: (child, animation) {
+                      final direction = child.key == ValueKey(selectedDay.date)
+                          ? _dayTransitionDirection
+                          : -_dayTransitionDirection;
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: Offset(direction, 0),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: KeyedSubtree(
+                      key: ValueKey(selectedDay.date),
+                      child: _WeekDayCard(
+                        calendarDay: selectedDay,
+                        dataPhase: widget.dataPhase,
+                        isToday: dateInKorea(selectedDay.date) == today,
+                        isPast: selectedDay.date
+                            .isBefore(parseForecastDate(today)!),
+                        today: parseForecastDate(today)!,
+                        hourly: selectedHourly,
+                        snowDepthHistory: widget.snowDepthHistory,
+                        currentSnow: widget.currentSnow,
+                        serverFeaturesAvailable: widget.serverFeaturesAvailable,
+                        onRetry: widget.onRetryData,
+                        retrying: widget.retrying,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -274,6 +312,36 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
     );
   }
 }
+
+Widget _animateWeekCardSize(Duration duration, Widget child) =>
+    duration == Duration.zero
+        ? child
+        : AnimatedSize(
+            duration: duration,
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: child,
+          );
+
+Widget _layoutWeekCards(Widget? current, List<Widget> previous) => Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        for (final child in previous)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ExcludeSemantics(
+                child: OverflowBox(
+                  alignment: Alignment.topCenter,
+                  minHeight: 0,
+                  maxHeight: double.infinity,
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        if (current != null) current,
+      ],
+    );
 
 Color _weekDateColor(BuildContext context, DateTime date) {
   final palette = WeatherCareTheme.of(context);
@@ -694,7 +762,7 @@ class _WeekDayCard extends StatelessWidget {
     ];
     final card = Container(
       key: ValueKey('week-day-${day.forecastDate}'),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 17),
+      padding: const EdgeInsets.symmetric(vertical: 17),
       decoration: BoxDecoration(
         color: isPast
             ? WeatherCareTheme.of(context).surfaceMuted
@@ -954,12 +1022,12 @@ class _WeekDayCard extends StatelessWidget {
               retrying: retrying,
             ),
           ],
-          // 시간별 예보는 Main처럼 좌우 8px, 나머지 내용은 기존 17px을 유지한다.
+          // 시간별 예보는 내부에서 여백을 두어 필터 영역을 카드 끝까지 넓힌다.
         ]
             .map((child) => child is HourlyForecastSection
                 ? child
                 : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 9),
+                    padding: const EdgeInsets.symmetric(horizontal: 17),
                     child: child,
                   ))
             .toList(),
@@ -1381,19 +1449,16 @@ class _UnavailableWeekDayCard extends StatelessWidget {
             ),
           ),
           if (hourly.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: HourlyForecastSection(
-                key: ValueKey('week-hourly-${dateInKorea(date)}'),
-                keyPrefix: 'week-${dateInKorea(date)}',
-                items: hourly,
-                snowDepthHistory: snowDepthHistory,
-                currentSnow: currentSnow,
-                targetDate: dateInKorea(date),
-                availableOnly: true,
-                inline: true,
-                contrastFilters: isToday,
-              ),
+            HourlyForecastSection(
+              key: ValueKey('week-hourly-${dateInKorea(date)}'),
+              keyPrefix: 'week-${dateInKorea(date)}',
+              items: hourly,
+              snowDepthHistory: snowDepthHistory,
+              currentSnow: currentSnow,
+              targetDate: dateInKorea(date),
+              availableOnly: true,
+              inline: true,
+              contrastFilters: isToday,
             ),
         ],
       ),

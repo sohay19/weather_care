@@ -2,6 +2,7 @@ import '../../../utils/weather_number.dart';
 import 'dart:math' as math;
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/briefing_time.dart';
@@ -64,10 +65,26 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
     with WidgetsBindingObserver {
   _HourlyMetric _selected = _HourlyMetric.weather;
   final ScrollController _timelineController = ScrollController();
+  Drag? _timelineDrag;
   Object? _scrolledItems;
   String? _scrolledSelection;
   final _contentKey = GlobalKey();
   Timer? _hourTimer;
+
+  void _cancelTimelineDrag() {
+    _timelineDrag?.cancel();
+    _timelineDrag = null;
+  }
+
+  void _startTimelineDrag(DragStartDetails details) {
+    _cancelTimelineDrag();
+    if (!_timelineController.hasClients) return;
+    // 고정 세로축에서도 그래프 본문과 같은 스크롤 물리 동작을 사용한다.
+    _timelineDrag = _timelineController.position.drag(
+      details,
+      () => _timelineDrag = null,
+    );
+  }
 
   DateTime get _now => responseNow(widget.now ?? DateTime.now(),
       generatedAt: widget.generatedAt, receivedAt: widget.receivedAt);
@@ -97,6 +114,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
   }
 
   void _selectMetric(_HourlyMetric metric) {
+    _cancelTimelineDrag();
     setState(() => _selected = metric);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -242,6 +260,7 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
     WidgetsBinding.instance.removeObserver(this);
     _hourTimer?.cancel();
     TimelineOrderStore.order.removeListener(_orderChanged);
+    _cancelTimelineDrag();
     _timelineController.dispose();
     super.dispose();
   }
@@ -285,6 +304,14 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
         snowfallByHour.putIfAbsent(hour, () => item);
       }
     }
+    // 지난 예보는 관측값으로 취급하지 않는다. 진행 중인 시간 구간도
+    // 전체가 미래인 구간은 아니므로 실제 적설 관측만 표시한다.
+    snowfallByHour.removeWhere((hour, item) {
+      final start = item.precipitationPeriod?.start ??
+          DateTime.parse(
+              '${today}T${hour.toString().padLeft(2, '0')}:00:00+09:00');
+      return start.isBefore(currentTime);
+    });
     final emptySlots = [
       for (var hour = 0; hour < 24; hour++)
         HourlyWeatherItem(
@@ -471,7 +498,9 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
             ? null
             : WeatherCareTheme.of(context).surfaceDecoration(),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: widget.inline
+              ? CrossAxisAlignment.stretch
+              : CrossAxisAlignment.start,
           children: [
             if (widget.inline)
               Row(
@@ -544,7 +573,11 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
             SingleChildScrollView(
               key: ValueKey('${widget.keyPrefix}-hourly-filters'),
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.only(left: 10, right: 3),
+              physics:
+                  widget.inline ? const AlwaysScrollableScrollPhysics() : null,
+              // Week의 필터 터치 영역은 카드 끝까지, 칩 위치는 기존대로 둔다.
+              padding: EdgeInsets.only(
+                  left: widget.inline ? 18 : 10, right: widget.inline ? 11 : 3),
               child: Row(
                 children: [
                   for (final metric in availableMetrics)
@@ -586,141 +619,156 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                       key: ValueKey(
                           '${widget.keyPrefix}-hourly-legend-${selected.name}'),
                       series: series)),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              if (series.isNotEmpty)
-                SizedBox(
-                    width: 44 *
-                        math.min(
-                            MediaQuery.textScalerOf(context).scale(1), 1.3),
-                    child: HourlyChartAxis(
-                        series: series.first,
-                        title:
-                            selected == _HourlyMetric.snowfall ? '눈 깊이' : null,
-                        height: chartHeight,
-                        sharedBounds: sharedBounds,
-                        topPadding: topPadding,
-                        bottomPadding: bottomPadding)),
-              Expanded(child: LayoutBuilder(builder: (context, viewport) {
-                final contentWidth = math.max(viewport.maxWidth, timelineWidth);
-                return SingleChildScrollView(
-                  key: ValueKey('${widget.keyPrefix}-hourly-timeline'),
-                  controller: _timelineController,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                      width: contentWidth,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final chart
-                                in combined ? series.take(1) : series)
-                              HourlyValueChart(
-                                series: chart,
-                                hours: selectedHours,
-                                pointWidth: pointWidth,
-                                height: chartHeight,
-                                sharedBounds: sharedBounds,
-                                overlays: combined
-                                    ? series.skip(1).toList()
-                                    : const [],
-                                showValues: true,
-                                conditions: selected == _HourlyMetric.weather
-                                    ? selectedItems
-                                        .map((item) => item.skyCondition)
-                                        .toList()
-                                    : const [],
-                              ),
-                            if (precipitation) const SizedBox(height: 8),
-                            if (intervalTimeline)
-                              SizedBox(
-                                width: timelineWidth,
-                                height: MediaQuery.textScalerOf(context)
-                                        .scale(_timeLabelHeight) +
-                                    _timeDotGap,
-                                child: Stack(children: [
-                                  for (var hour = selectedHours.first;
-                                      hour <= selectedHours.last + 1;
-                                      hour++)
-                                    Positioned(
-                                      key: ValueKey(selectedHours
-                                              .contains(hour - 1)
-                                          ? '${widget.keyPrefix}-hourly-${selectedHours.indexOf(hour - 1)}'
-                                          : '${widget.keyPrefix}-hourly-clock-$hour'),
-                                      left: math.max(
-                                          0,
-                                          (hour - selectedHours.first - .5) *
-                                              pointWidth),
-                                      width: pointWidth,
-                                      child: _HourlyTimeLabel(
-                                        label:
-                                            '${hour.toString().padLeft(2, '0')}시',
-                                        valueKey: const ValueKey(
-                                            'hourly-probability-time'),
-                                        alignment: hour == selectedHours.first
-                                            ? Alignment.centerLeft
-                                            : Alignment.center,
-                                        isCurrent:
-                                            today == dateInKorea(currentTime) &&
-                                                hour == currentHour,
+            GestureDetector(
+              key: ValueKey('${widget.keyPrefix}-hourly-graph-swipe-area'),
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragStart: widget.inline ? _startTimelineDrag : null,
+              onHorizontalDragUpdate: widget.inline
+                  ? (details) => _timelineDrag?.update(details)
+                  : null,
+              onHorizontalDragEnd: widget.inline
+                  ? (details) {
+                      _timelineDrag?.end(details);
+                      _timelineDrag = null;
+                    }
+                  : null,
+              onHorizontalDragCancel:
+                  widget.inline ? _cancelTimelineDrag : null,
+              child:
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (series.isNotEmpty)
+                  SizedBox(
+                      width: 44 *
+                          math.min(
+                              MediaQuery.textScalerOf(context).scale(1), 1.3),
+                      child: HourlyChartAxis(
+                          series: series.first,
+                          title: selected == _HourlyMetric.snowfall
+                              ? '눈 깊이'
+                              : null,
+                          height: chartHeight,
+                          sharedBounds: sharedBounds,
+                          topPadding: topPadding,
+                          bottomPadding: bottomPadding)),
+                Expanded(child: LayoutBuilder(builder: (context, viewport) {
+                  final contentWidth =
+                      math.max(viewport.maxWidth, timelineWidth);
+                  return SingleChildScrollView(
+                    key: ValueKey('${widget.keyPrefix}-hourly-timeline'),
+                    controller: _timelineController,
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                        width: contentWidth,
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final chart
+                                  in combined ? series.take(1) : series)
+                                HourlyValueChart(
+                                  series: chart,
+                                  hours: selectedHours,
+                                  pointWidth: pointWidth,
+                                  height: chartHeight,
+                                  sharedBounds: sharedBounds,
+                                  overlays: combined
+                                      ? series.skip(1).toList()
+                                      : const [],
+                                  showValues: true,
+                                  conditions: selected == _HourlyMetric.weather
+                                      ? selectedItems
+                                          .map((item) => item.skyCondition)
+                                          .toList()
+                                      : const [],
+                                ),
+                              if (precipitation) const SizedBox(height: 8),
+                              if (intervalTimeline)
+                                SizedBox(
+                                  width: timelineWidth,
+                                  height: MediaQuery.textScalerOf(context)
+                                          .scale(_timeLabelHeight) +
+                                      _timeDotGap,
+                                  child: Stack(children: [
+                                    for (var hour = selectedHours.first;
+                                        hour <= selectedHours.last + 1;
+                                        hour++)
+                                      Positioned(
+                                        key: ValueKey(selectedHours
+                                                .contains(hour - 1)
+                                            ? '${widget.keyPrefix}-hourly-${selectedHours.indexOf(hour - 1)}'
+                                            : '${widget.keyPrefix}-hourly-clock-$hour'),
+                                        left: math.max(
+                                            0,
+                                            (hour - selectedHours.first - .5) *
+                                                pointWidth),
+                                        width: pointWidth,
+                                        child: _HourlyTimeLabel(
+                                          label:
+                                              '${hour.toString().padLeft(2, '0')}시',
+                                          valueKey: const ValueKey(
+                                              'hourly-probability-time'),
+                                          alignment: hour == selectedHours.first
+                                              ? Alignment.centerLeft
+                                              : Alignment.center,
+                                          isCurrent: today ==
+                                                  dateInKorea(currentTime) &&
+                                              hour == currentHour,
+                                        ),
                                       ),
-                                    ),
-                                ]),
-                              )
-                            else
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  for (var index = 0;
-                                      index < selectedItems.length;
-                                      index++) ...[
-                                    if (index > 0 &&
-                                        selectedHours[index] -
-                                                selectedHours[index - 1] >
-                                            1)
-                                      SizedBox(
-                                          width: (selectedHours[index] -
-                                                  selectedHours[index - 1] -
-                                                  1) *
-                                              pointWidth),
-                                    _HourlyPoint(
-                                      key: ValueKey(
-                                          '${widget.keyPrefix}-hourly-$index'),
-                                      item: selectedItems[index],
-                                      metric: selected,
-                                      dataPhase: widget.dataPhase,
-                                      today: today,
-                                      pointWidth: pointWidth,
-                                      now: currentTime,
-                                    ),
+                                  ]),
+                                )
+                              else
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (var index = 0;
+                                        index < selectedItems.length;
+                                        index++) ...[
+                                      if (index > 0 &&
+                                          selectedHours[index] -
+                                                  selectedHours[index - 1] >
+                                              1)
+                                        SizedBox(
+                                            width: (selectedHours[index] -
+                                                    selectedHours[index - 1] -
+                                                    1) *
+                                                pointWidth),
+                                      _HourlyPoint(
+                                        key: ValueKey(
+                                            '${widget.keyPrefix}-hourly-$index'),
+                                        item: selectedItems[index],
+                                        metric: selected,
+                                        dataPhase: widget.dataPhase,
+                                        today: today,
+                                        pointWidth: pointWidth,
+                                        now: currentTime,
+                                      ),
+                                    ],
+                                    if (timelineEndPadding > 0)
+                                      SizedBox(width: timelineEndPadding),
                                   ],
-                                  if (timelineEndPadding > 0)
-                                    SizedBox(width: timelineEndPadding),
-                                ],
-                              ),
-                          ])),
-                );
-              })),
-              if (precipitation)
-                SizedBox(
-                    width: 40 *
-                        math.min(
-                            MediaQuery.textScalerOf(context).scale(1), 1.3),
-                    child: HourlyChartAxis(
-                        series: series.last,
-                        height: chartHeight,
-                        right: true,
-                        topPadding: topPadding,
-                        bottomPadding: bottomPadding)),
-            ]),
+                                ),
+                            ])),
+                  );
+                })),
+                if (precipitation)
+                  SizedBox(
+                      width: 40 *
+                          math.min(
+                              MediaQuery.textScalerOf(context).scale(1), 1.3),
+                      child: HourlyChartAxis(
+                          series: series.last,
+                          height: chartHeight,
+                          right: true,
+                          topPadding: topPadding,
+                          bottomPadding: bottomPadding)),
+              ]),
+            ),
             if (selected == _HourlyMetric.snowfall)
               Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                      today != referenceDate
-                          ? '현재 적설량은 실제 관측이 있는 당일에만 표시해요.'
-                          : observations.isEmpty
-                              ? '현재 적설량 관측 자료가 없어요. 신적설 예보와는 별개예요.'
-                              : '현재 적설량은 ${observations.values.first.stationName ?? '관측소'}의 관측 이력이에요. '
-                                  '각 시간의 마지막 관측값만 표시하며 미래 값은 만들지 않아요.',
+                      '지난 시각에는 실제 관측 적설량만, 앞으로 시작하는 구간에는 신적설·강설확률 예보를 표시해요. '
+                      '${observations.isEmpty ? '관측 없는 시각은 비워 두어요.' : '${observations.values.first.stationName ?? '관측소'}의 시간별 마지막 관측값을 사용해요.'}',
                       style: Theme.of(context).textTheme.bodySmall)),
             if (itemsFor(selected).isEmpty &&
                 !(selected == _HourlyMetric.snowfall &&
@@ -760,7 +808,16 @@ class _HourlyForecastSectionState extends State<HourlyForecastSection>
                 retrying: widget.retrying,
               ),
             ],
-          ],
+          ]
+              .map((child) => widget.inline &&
+                      child.key !=
+                          ValueKey('${widget.keyPrefix}-hourly-filters')
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: child,
+                    )
+                  : child)
+              .toList(),
         ),
       );
       final measuredContent = KeyedSubtree(key: _contentKey, child: content);

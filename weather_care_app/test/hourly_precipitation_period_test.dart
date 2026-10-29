@@ -22,7 +22,7 @@ void main() {
                     child: SingleChildScrollView(
                         child: HourlyForecastSection(
                             targetDate: '2026-12-31',
-                            now: DateTime.parse('2026-12-31T15:00:00+09:00'),
+                            now: DateTime.parse('2026-12-31T14:00:00+09:00'),
                             inline: inline,
                             availableOnly: inline,
                             items: [
@@ -47,15 +47,29 @@ void main() {
               .getRect(find.byKey(ValueKey('hourly-value-$id-amount-$index')));
           final probabilityRect = tester.getRect(
               find.byKey(ValueKey('hourly-value-$id-probability-$index')));
-          expect(
-              probabilityRect.center.dx - amountRect.center.dx, closeTo(0, .1));
+          final paintFinder = find.byKey(ValueKey('hourly-chart-$id-amount'));
+          final origin = tester.getTopLeft(paintFinder);
+          final painter = tester.widget<CustomPaint>(paintFinder).painter!
+              as HourlyValueChartPainter;
+          final anchorX = origin.dx +
+              (chart.hours[index] - chart.hours.first + .5) * chart.pointWidth;
+          for (final rect in [amountRect, probabilityRect]) {
+            expect((rect.center.dx - anchorX).abs(),
+                lessThanOrEqualTo(chart.pointWidth / 2));
+            if ((rect.center.dx - anchorX).abs() > 1) {
+              expect(
+                  painter.leaders.any((leader) =>
+                      (leader.$1.dx + origin.dx - anchorX).abs() < .1),
+                  isTrue);
+            }
+          }
           final point = find.byKey(ValueKey('today-hourly-$index'));
           final clock = find.descendant(
               of: point,
               matching: find.byKey(const ValueKey('hourly-probability-time')));
           expect(tester.widget<Text>(clock).data, '15시');
           expect(tester.getCenter(clock).dx,
-              closeTo(probabilityRect.center.dx + chart.pointWidth / 2, .1));
+              closeTo(anchorX + chart.pointWidth / 2, .1));
           expect(find.text('14~15시'), findsNothing);
           final midnight = find.descendant(
               of: find.byKey(ValueKey('today-hourly-$last')),

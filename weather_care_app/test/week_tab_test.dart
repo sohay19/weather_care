@@ -9,6 +9,269 @@ import 'package:weather_care/theme/weather_theme.dart';
 import 'package:weather_care/utils/korea_date.dart';
 
 void main() {
+  testWidgets('날짜 전환은 방향대로 카드가 들어오고 이전 카드는 입력에서 제외한다', (tester) async {
+    await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')]);
+    Finder card(String date) => find.byKey(ValueKey('week-day-$date'));
+    double offset(String date) => tester
+        .widget<SlideTransition>(find
+            .ancestor(of: card(date), matching: find.byType(SlideTransition))
+            .first)
+        .position
+        .value
+        .dx;
+    Future<void> transition(String arrow) async {
+      final button = find.byKey(ValueKey(arrow));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    await transition('week-next-day');
+    expect(offset('2026-09-11'), inExclusiveRange(0, 1));
+    expect(offset('2026-09-10'), inExclusiveRange(-1, 0));
+    expect(
+        tester
+            .widget<IgnorePointer>(find
+                .ancestor(
+                  of: card('2026-09-10'),
+                  matching: find.byType(IgnorePointer),
+                )
+                .first)
+            .ignoring,
+        isTrue);
+    expect(
+        tester
+            .widget<ExcludeSemantics>(find
+                .ancestor(
+                  of: card('2026-09-10'),
+                  matching: find.byType(ExcludeSemantics),
+                )
+                .first)
+            .excluding,
+        isTrue);
+    await tester.pumpAndSettle();
+    expect(card('2026-09-10'), findsNothing);
+    expect(offset('2026-09-11'), 0);
+    await transition('week-previous-day');
+    expect(offset('2026-09-10'), inExclusiveRange(-1, 0));
+    expect(offset('2026-09-11'), inExclusiveRange(0, 1));
+    await tester.pumpAndSettle();
+    expect(card('2026-09-11'), findsNothing);
+    expect(offset('2026-09-10'), 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('높이가 다른 카드와 빠른 날짜 재선택도 마지막 날짜 한 장으로 정리한다', (tester) async {
+    await _pump(tester, [
+      _day('2026-09-10')
+    ], timelineHourly: [
+      for (var hour = 8; hour < 24; hour++) _hourly('2026-09-10', '$hour'),
+    ]);
+    for (final date in ['2026-09-11', '2026-09-12', '2026-09-10']) {
+      final item = find.byKey(ValueKey('week-calendar-$date'));
+      await tester.ensureVisible(item);
+      await tester.tap(item);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(tester.takeException(), isNull);
+    }
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsOneWidget);
+    expect(find.byKey(const ValueKey('week-unavailable-2026-09-11')),
+        findsNothing);
+    expect(find.byKey(const ValueKey('week-unavailable-2026-09-12')),
+        findsNothing);
+    final switcher = find.byKey(const ValueKey('week-day-transition'));
+    expect(
+        find.descendant(of: switcher, matching: find.byType(SlideTransition)),
+        findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('애니메이션 줄이기 설정이면 날짜 카드를 즉시 교체한다', (tester) async {
+    await _pump(tester, [_day('2026-09-10'), _day('2026-09-11')],
+        disableAnimations: true);
+    final button = find.byKey(const ValueKey('week-next-day'));
+    await tester.ensureVisible(button);
+    await tester.tap(button);
+    await tester.pump();
+    await tester.pump();
+    expect(
+        tester
+            .widget<AnimatedSwitcher>(
+                find.byKey(const ValueKey('week-day-transition')))
+            .duration,
+        Duration.zero);
+    expect(find.byKey(const ValueKey('week-day-2026-09-10')), findsNothing);
+    expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final scale in [1.0, 2.0]) {
+    for (final available in [true, false]) {
+      testWidgets('가로 영역 가장자리와 하단 여백의 제스처를 분리한다: 배율 $scale 예보 $available',
+          (tester) async {
+        await tester.binding.setSurfaceSize(const Size(384, 1000));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await _pump(
+            tester,
+            [
+              if (available) _day('2026-09-11'),
+            ],
+            textScale: scale,
+            hourly: [
+              for (var hour = 8; hour < 24; hour++)
+                HourlyWeatherItem.fromJson({
+                  'forecastDate': '2026-09-11',
+                  'forecastAt':
+                      '2026-09-${hour == 23 ? '12' : '11'}T${((hour + 1) % 24).toString().padLeft(2, '0')}:00:00+09:00',
+                  'time': '$hour',
+                  'temperature': 20,
+                  'apparentTemperature': 19,
+                  'humidity': 60,
+                  'uvIndex': 5,
+                  'windSpeed': 2,
+                  'skyCondition': '맑음',
+                  'snowfallAmount': 0,
+                  'precipitationProbability': 30,
+                  'precipitationAmount': 1,
+                  'precipitationPeriod': {
+                    'start':
+                        '2026-09-11T${hour.toString().padLeft(2, '0')}:00:00+09:00',
+                    'end':
+                        '2026-09-${hour == 23 ? '12' : '11'}T${((hour + 1) % 24).toString().padLeft(2, '0')}:00:00+09:00',
+                  },
+                }),
+            ]);
+        await _moveDays(tester, 1);
+        const prefix = 'week-2026-09-11';
+        final card = find.byKey(ValueKey(
+            available ? 'week-day-2026-09-11' : 'week-unavailable-2026-09-11'));
+        final filters = find.byKey(const ValueKey('$prefix-hourly-filters'));
+        final graph =
+            find.byKey(const ValueKey('$prefix-hourly-graph-swipe-area'));
+        final timeline = find.byKey(const ValueKey('$prefix-hourly-timeline'));
+        final vertical = tester
+            .state<ScrollableState>(find
+                .descendant(
+                  of: find.byKey(const ValueKey('week-tab')),
+                  matching: find.byType(Scrollable),
+                )
+                .first)
+            .position;
+        Future<void> bottom() async {
+          vertical.jumpTo(vertical.maxScrollExtent);
+          await tester.pumpAndSettle();
+        }
+
+        void sameDay() => expect(card, findsOneWidget);
+        ScrollPosition timelinePosition() =>
+            tester.widget<SingleChildScrollView>(timeline).controller!.position;
+        await bottom();
+        final cardRect = tester.getRect(card);
+        final filterRect = tester.getRect(filters);
+        final graphRect = tester.getRect(graph);
+        // 카드의 1px 테두리 안쪽 끝까지 필터 영역을 채운다.
+        expect(filterRect.left, cardRect.left + 1);
+        expect(filterRect.right, cardRect.right - 1);
+        expect(graphRect.left - cardRect.left, 9);
+        expect(cardRect.right - graphRect.right, 9);
+        expect(graphRect.bottom, lessThan(cardRect.bottom));
+        final filterPosition = tester
+            .state<ScrollableState>(find.descendant(
+              of: filters,
+              matching: find.byType(Scrollable),
+            ))
+            .position;
+        for (final left in [true, false]) {
+          filterPosition.jumpTo(filterPosition.maxScrollExtent / 2);
+          final before = filterPosition.pixels;
+          await tester.dragFrom(
+              Offset(left ? filterRect.left + 1 : filterRect.right - 1,
+                  filterRect.center.dy),
+              Offset(left ? 100 : -100, 0));
+          await tester.pumpAndSettle();
+          sameDay();
+          if (filterPosition.maxScrollExtent > 0) {
+            expect(filterPosition.pixels,
+                left ? lessThan(before) : greaterThan(before));
+          }
+        }
+        // 고정 세로축, 시간 라벨, 그래프 본문에서 같은 타임라인을 이동한다.
+        for (final start in [
+          Offset(graphRect.left + 1, graphRect.top + 40),
+          Offset(graphRect.center.dx, graphRect.bottom - 1),
+          graphRect.center,
+        ]) {
+          timelinePosition().jumpTo(200);
+          await tester.dragFrom(start, const Offset(100, 0));
+          await tester.pumpAndSettle();
+          sameDay();
+          expect(timelinePosition().pixels, lessThan(200));
+        }
+        // 스크롤 양끝에서도 날짜 전환으로 넘겨주지 않는다.
+        for (final atEnd in [false, true]) {
+          final position = timelinePosition();
+          position.jumpTo(atEnd ? position.maxScrollExtent : 0);
+          await tester.dragFrom(Offset(graphRect.left + 1, graphRect.top + 40),
+              Offset(atEnd ? -100 : 100, 0));
+          await tester.pumpAndSettle();
+          sameDay();
+        }
+        filterPosition.jumpTo(0);
+        await tester.ensureVisible(
+            find.byKey(const ValueKey('$prefix-hourly-filter-precipitation')));
+        await tester.tap(
+            find.byKey(const ValueKey('$prefix-hourly-filter-precipitation')));
+        await tester.pumpAndSettle();
+        await bottom();
+        final rainRect = tester.getRect(graph);
+        // 강수 그래프의 오른쪽 확률축에서도 본문이 함께 이동한다.
+        for (final x in [rainRect.left + 1, rainRect.right - 1]) {
+          timelinePosition().jumpTo(200);
+          await tester.dragFrom(
+              Offset(x, rainRect.top + 40), const Offset(100, 0));
+          await tester.pumpAndSettle();
+          sameDay();
+          expect(timelinePosition().pixels, lessThan(200));
+        }
+        // 세로 스크롤은 가로 영역 위에서도 동작한다.
+        final beforeVertical = vertical.pixels;
+        await tester.dragFrom(rainRect.center, const Offset(0, 120));
+        await tester.pumpAndSettle();
+        expect(vertical.pixels, lessThan(beforeVertical));
+        sameDay();
+        await bottom();
+        final padding = tester.getRect(card);
+        await tester.dragFrom(Offset(padding.center.dx, padding.bottom - 8),
+            const Offset(-120, 0));
+        await tester.pumpAndSettle();
+        expect(
+            tester
+                .widget<Text>(find.byKey(const ValueKey('week-selected-date')))
+                .data,
+            '9월 12일 (토)');
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
+
+  testWidgets('시간 자료가 한 건이어도 그래프 스와이프가 날짜를 바꾸지 않는다', (tester) async {
+    await _pump(tester, [_day('2026-09-11')],
+        hourly: [_hourly('2026-09-11', '10')]);
+    await _moveDays(tester, 1);
+    final graph =
+        find.byKey(const ValueKey('week-2026-09-11-hourly-graph-swipe-area'));
+    await tester.ensureVisible(graph);
+    for (final direction in [-100.0, 100.0]) {
+      await tester.dragFrom(tester.getCenter(graph), Offset(direction, 0));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('week-day-2026-09-11')), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Week에는 현재 관측 가시거리를 표시하지 않는다', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -643,7 +906,7 @@ void main() {
         findsNothing);
   });
 
-  testWidgets('시간별 신적설과 자외선이 있어도 일별 행과 칩을 표시한다', (tester) async {
+  testWidgets('지나간 시간별 신적설은 제외하고 일별 행과 자외선 칩을 표시한다', (tester) async {
     final day = WeeklyForecastItem.fromJson({
       'forecastDate': '2026-09-10',
       'weatherLabel': '맑음',
@@ -675,7 +938,7 @@ void main() {
     expect(find.textContaining('예상 신적설 0cm'), findsOneWidget);
     expect(find.textContaining('자외선 높음'), findsOneWidget);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-snowfall')),
-        findsOneWidget);
+        findsNothing);
     expect(find.byKey(const ValueKey('week-2026-09-10-hourly-filter-uv')),
         findsOneWidget);
   });
@@ -1069,6 +1332,7 @@ Future<void> _pump(
   List<WeeklyForecastItem> days, {
   DateTime Function()? now,
   double textScale = 1,
+  bool disableAnimations = false,
   Widget? advertisement,
   List<HourlyWeatherItem> hourly = const [],
   List<HourlyWeatherItem> timelineHourly = const [],
@@ -1079,7 +1343,9 @@ Future<void> _pump(
     theme:
         (theme ?? ThemeData()).copyWith(splashFactory: NoSplash.splashFactory),
     home: MediaQuery(
-      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+      data: MediaQueryData(
+          textScaler: TextScaler.linear(textScale),
+          disableAnimations: disableAnimations),
       child: Scaffold(
           body: WeekTab(
         weekly: WeeklyWeatherResponse(days: days),

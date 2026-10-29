@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show ClipOp;
 
 import 'package:flutter/material.dart';
 
@@ -92,6 +93,10 @@ const hourlyChartTitleHeight = 30.0;
 const hourlyChartGap = 4.0;
 const _plotTop = 48.0;
 const _plotBottom = 20.0;
+
+// 상한 없는 신적설은 수직 범위 표시 대신 하한 위치의 점을 사용한다.
+bool _snowLowerBoundPoint(HourlyChartSeries chart, HourlyChartValue value) =>
+    chart.id == 'snow-amount' && value.range && value.upper == null;
 
 double hourlyChartWidth(
         List<int> hours, double pointWidth, List<HourlyChartSeries> series) =>
@@ -372,102 +377,54 @@ class HourlyValueChart extends StatelessWidget {
         topPadding: topPadding,
         bottomPadding: bottomPadding);
     final labels = <Widget>[];
-    final primaryTops = <int, double>{};
-    final temperatureTops = <(HourlyChartSeries, int), double>{};
-    final temperatureIconTops = <int, double>{};
-    if (temperature && showValues) {
-      // 수치 폭에 들어오는 양옆 선분까지 검사한다. 결측/빠진 시간은 잇지 않는다.
-      (double, double) lineRange(HourlyChartSeries chart, int index) {
-        final center = y(chart, index);
-        final points = [center];
-        for (final neighbor in [index - 1, index + 1]) {
-          if (neighbor >= 0 &&
-              neighbor < hours.length &&
-              (hours[neighbor] - hours[index]).abs() == 1 &&
-              chart.values[neighbor] != null) {
-            final reach = ((pointWidth - 6) / 2 + 6) / pointWidth;
-            points.add(center + (y(chart, neighbor) - center) * reach);
-          }
-        }
-        return (points.reduce(math.min), points.reduce(math.max));
-      }
-
-      for (var index = 0; index < hours.length; index++) {
-        final present = all
-            .where((chart) =>
-                !chart.bars &&
-                chart.unit == series.unit &&
-                chart.values[index] != null)
-            .toList();
-        if (present.isEmpty) continue;
-        final ranges = [for (final chart in present) lineRange(chart, index)];
-        if (present.length == 1) {
-          final top = y(present.first, index) + 7;
-          final range = ranges.single;
-          final touchesLine =
-              top < range.$2 + 6 && top + scaledLabelHeight > range.$1 - 6;
-          if (!touchesLine) continue;
-        }
-        present.sort((a, b) {
-          final order = y(a, index).compareTo(y(b, index));
-          return order != 0 ? order : all.indexOf(a).compareTo(all.indexOf(b));
-        });
-        for (final chart in present) {
-          final above =
-              present.length == 1 ? chart == series : chart == present.first;
-          var top = above
-              ? ranges.map((range) => range.$1).reduce(math.min) -
-                  scaledLabelHeight -
-                  8
-              : ranges.map((range) => range.$2).reduce(math.max) + 8;
-          if (chart == series &&
-              index < conditions.length &&
-              conditions[index] != null) {
-            // 기온 아이콘과 수치를 한 묶음으로 두 선의 같은 바깥쪽에 둔다.
-            temperatureIconTops[index] = above ? top - 34 : top;
-            if (!above) top += 34;
-          }
-          temperatureTops[(chart, index)] = top;
-        }
-      }
-    }
-    final snow = series.id == 'snow-amount' &&
-        overlays.any((chart) =>
-            chart.id == 'snow-depth' &&
-            chart.values.any((value) => value != null));
     final occupied = <Rect>[];
-    // 신적설 구간과 실제 적설 관측의 가로 위치가 달라도 선과 수치를 가리지 않는다.
-    List<(double, double)> snowLineRanges(double left, double right) {
-      final ranges = <(double, double)>[];
-      for (final line in all.where((chart) => !chart.bars)) {
-        for (var i = 0; i < line.values.length; i++) {
-          if (line.values[i] == null) continue;
-          final at = x(line, i);
-          if (at >= left && at <= right) {
-            final lowerY = hourlyChartY(
-                line.values[i]!.lower, sharedBounds ?? line.bounds, height,
-                topPadding: topPadding, bottomPadding: bottomPadding);
-            ranges.add(
-                (math.min(y(line, i), lowerY), math.max(y(line, i), lowerY)));
+    final geometry = _ChartGeometry();
+    final barRects = <(HourlyChartSeries, int), Rect>{};
+    final leaders = <(Offset, Offset, Color)>[];
+    final chartWidth = hourlyChartWidth(hours, pointWidth, all);
+    final iconRects = <int, Rect>{};
+    final barHalfWidth = pointWidth * .28;
+    // 페인터와 같은 좌표로 점·선분·범위·막대 전체를 검사한다.
+    for (final chart in all) {
+      final bounds = sharedBounds != null && chart.unit == series.unit
+          ? sharedBounds!
+          : chart.bounds;
+      double chartY(double value) => hourlyChartY(value, bounds, height,
+          topPadding: topPadding, bottomPadding: bottomPadding);
+      for (var i = 0; i < chart.values.length; i++) {
+        final value = chart.values[i];
+        if (value == null) continue;
+        final at = Offset(x(chart, i), chartY(value.lower));
+        if (value.range && !_snowLowerBoundPoint(chart, value)) {
+          geometry.rects.add(Rect.fromLTRB(
+              at.dx - 8, chartY(value.upper ?? bounds.$2), at.dx + 8, at.dy));
+        } else if (chart.bars) {
+          final bar = Rect.fromLTRB(at.dx - barHalfWidth, at.dy,
+              at.dx + barHalfWidth, math.max(at.dy + 2, chartY(0)));
+          geometry.bars.add(bar);
+          barRects[(chart, i)] = bar;
+        } else {
+          geometry.rects.add(Rect.fromCircle(center: at, radius: 3.5));
+          if (i > 0 &&
+              (!value.range || _snowLowerBoundPoint(chart, value)) &&
+              chart.values[i - 1] != null &&
+              (!chart.values[i - 1]!.range ||
+                  _snowLowerBoundPoint(chart, chart.values[i - 1]!)) &&
+              hours[i] - hours[i - 1] == 1) {
+            geometry.lines.add((
+              Offset(x(chart, i - 1), chartY(chart.values[i - 1]!.lower)),
+              at
+            ));
           }
-          if (i == 0 ||
-              line.values[i - 1] == null ||
-              hours[i] - hours[i - 1] != 1) {
-            continue;
-          }
-          final previous = x(line, i - 1);
-          if (at <= previous || at < left || previous > right) continue;
-          final low = math.max(previous, left), high = math.min(at, right);
-          final firstY = y(line, i - 1), delta = y(line, i) - firstY;
-          final a = firstY + delta * (low - previous) / (at - previous);
-          final b = firstY + delta * (high - previous) / (at - previous);
-          ranges.add((math.min(a, b), math.max(a, b)));
         }
       }
-      return ranges;
     }
 
-    for (final chart in all) {
+    // 확률은 막대 위에 놓고 충돌할 때만 자기 막대 내부를 찾는다.
+    for (final chart in [
+      ...all.where((chart) => !chart.bars),
+      ...all.where((chart) => chart.bars)
+    ]) {
       for (var index = 0; index < chart.values.length; index++) {
         final value = chart.values[index];
         if (!showValues || value == null) continue;
@@ -502,102 +459,104 @@ class HourlyValueChart extends StatelessWidget {
           continue;
         }
 
-        var top = temperatureTops[(chart, index)] ??
-            (temperature || chart.id.endsWith('-amount')
-                ? pointY + 7
-                : pointY - scaledLabelHeight - 6);
+        final hasIcon = chart == series &&
+            index < conditions.length &&
+            conditions[index] != null;
+        final iconHeight = hasIcon ? 34.0 : 0.0;
+        final groupHeight = scaledLabelHeight + iconHeight;
+        final ownBar =
+            chart.bars && all.length > 1 ? barRects[(chart, index)] : null;
+        final insideOwnBar =
+            ownBar != null && ownBar.height >= groupHeight + 12;
+        bool? above = chart.bars && !insideOwnBar ? true : null;
+        if (temperature) {
+          final present =
+              all.where((other) => other.values[index] != null).toList()
+                ..sort((a, b) {
+                  final order = y(a, index).compareTo(y(b, index));
+                  return order != 0
+                      ? order
+                      : all.indexOf(a).compareTo(all.indexOf(b));
+                });
+          above = present.length > 1 ? chart == present.first : chart == series;
+        }
+        var top = chart.bars ||
+                above == true ||
+                (above == null && !chart.id.endsWith('-amount'))
+            ? pointY - groupHeight - 8
+            : pointY + 8;
         if (avoidLineOverlaps) {
-          // 이 시간과 양옆 시간의 선 범위 밖으로 관측/예측 수치를 나눈다.
-          final nearby = [
-            for (final line in all)
-              for (var i = math.max(0, index - 1);
-                  i <= math.min(line.values.length - 1, index + 1);
-                  i++)
-                if (line.values[i] != null) y(line, i),
-          ];
-          top = chart == series
-              ? nearby.reduce(math.min) - scaledLabelHeight - 8
-              : nearby.reduce(math.max) + 8;
+          top = chart == series ? pointY - groupHeight - 8 : pointY + 8;
         }
-        final primaryTop = primaryTops[index];
-        if (!avoidLineOverlaps &&
-            chart != series &&
-            !temperatureTops.containsKey((chart, index)) &&
-            primaryTop != null &&
-            (top - primaryTop).abs() < scaledLabelHeight + 4) {
-          if (temperature) {
-            top = math.max(top, primaryTop + scaledLabelHeight + 4);
-          } else {
-            top = math.min(pointY - scaledLabelHeight - 6,
-                primaryTop - scaledLabelHeight - 4);
-          }
+        final measure = TextPainter(
+            text: TextSpan(text: text, style: labelStyle),
+            textDirection: Directionality.of(context),
+            textScaler: MediaQuery.textScalerOf(context))
+          ..layout();
+        final width = math.max(
+            hasIcon ? 24.0 : 0.0, math.min(pointWidth - 6, measure.width + 2));
+        measure.dispose();
+        final anchor = Offset(x(chart, index), pointY);
+        final group = geometry.place(
+            anchor: anchor,
+            preferredTop: top,
+            labelSize: Size(width, groupHeight),
+            above: above,
+            allowBarInterior: !chart.bars,
+            ownBar: ownBar,
+            canvasSize: Size(chartWidth, height),
+            pointWidth: pointWidth,
+            occupied: occupied);
+        occupied.add(group);
+        if (hasIcon) {
+          iconRects[index] =
+              Rect.fromLTWH(group.center.dx - 12, group.top, 24, 24);
         }
-        final width = pointWidth - 6;
-        final left = snow
-            ? (x(chart, index) - width / 2)
-                .clamp(0.0, hourlyChartWidth(hours, pointWidth, all) - width)
-            : x(chart, index) - width / 2;
-        if (snow) {
-          final ranges = snowLineRanges(left - 4, left + width + 4);
-          final candidates = [
-            top,
-            if (ranges.isNotEmpty)
-              ranges.map((range) => range.$1).reduce(math.min) -
-                  scaledLabelHeight -
-                  8,
-            if (ranges.isNotEmpty)
-              ranges.map((range) => range.$2).reduce(math.max) + 8,
-            for (var lane = 1; lane <= 12; lane++) ...[
-              top - lane * (scaledLabelHeight + 5),
-              top + lane * (scaledLabelHeight + 5),
-            ]
-          ];
-          top = candidates.firstWhere((candidate) {
-            if (candidate < 0 || candidate + scaledLabelHeight > height) {
-              return false;
-            }
-            final rect =
-                Rect.fromLTWH(left, candidate, width, scaledLabelHeight)
-                    .inflate(2);
-            return occupied.every((other) => !rect.overlaps(other)) &&
-                ranges.every((range) =>
-                    candidate + scaledLabelHeight < range.$1 - 4 ||
-                    candidate > range.$2 + 4);
-          }, orElse: () => top);
-          occupied.add(
-              Rect.fromLTWH(left, top, width, scaledLabelHeight).inflate(2));
+        final rect = Rect.fromLTWH(
+            group.left, group.top + iconHeight, width, scaledLabelHeight);
+        final insideBar = geometry.bars.any((bar) => rect.overlaps(bar));
+        top = rect.top;
+        final end = Offset(anchor.dx.clamp(rect.left, rect.right),
+            anchor.dy.clamp(rect.top, rect.bottom));
+        if ((anchor - end).distance > 12) {
+          leaders.add((anchor, end, textColor));
         }
-        top = top.clamp(0, height - scaledLabelHeight);
-        if (chart == series) primaryTops[index] = top;
         labels.add(Positioned(
           key: ValueKey('hourly-label-${chart.id}-$index'),
-          left: left,
+          left: rect.left,
           top: top,
           width: width,
           height: scaledLabelHeight,
           child: Center(
               child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Container(
-                    padding: avoidLineOverlaps
-                        ? const EdgeInsets.symmetric(horizontal: 3, vertical: 1)
-                        : EdgeInsets.zero,
-                    decoration: avoidLineOverlaps
-                        ? BoxDecoration(
-                            color: palette.surface,
-                            borderRadius: BorderRadius.circular(4))
-                        : null,
-                    child: Text(text,
-                        key: ValueKey('hourly-value-${chart.id}-$index'),
-                        style: labelStyle.copyWith(color: textColor)),
-                  ))),
+                  child: Text(text,
+                      key: ValueKey('hourly-value-${chart.id}-$index'),
+                      style: labelStyle.copyWith(
+                          color: textColor,
+                          // 계열 색은 유지하고 글자 둘레만 대비를 높인다.
+                          shadows: insideBar
+                              ? [
+                                  for (final offset in const [
+                                    Offset(-1, 0),
+                                    Offset(1, 0),
+                                    Offset(0, -1),
+                                    Offset(0, 1)
+                                  ])
+                                    Shadow(
+                                        color: palette.surface,
+                                        blurRadius: 2,
+                                        offset: offset)
+                                ]
+                              : null)))),
         ));
       }
     }
     return Column(children: [
       SizedBox(
           width: hourlyChartWidth(hours, pointWidth, all),
-          height: height,
+          height: occupied.fold<double>(
+              height, (bottom, rect) => math.max(bottom, rect.bottom)),
           child: Stack(clipBehavior: Clip.none, children: [
             Semantics(
                 label:
@@ -613,6 +572,8 @@ class HourlyValueChart extends StatelessWidget {
                         pointWidth: pointWidth,
                         topPadding: topPadding,
                         bottomPadding: bottomPadding,
+                        leaders: leaders,
+                        labelRects: occupied,
                         sharedBounds: sharedBounds,
                         color: palette.primaryDeep,
                         gridColor: palette.primaryBorder))),
@@ -620,11 +581,8 @@ class HourlyValueChart extends StatelessWidget {
             for (var index = 0; index < conditions.length; index++)
               if (conditions[index] != null && series.values[index] != null)
                 Positioned(
-                    left: x(series, index) - 12,
-                    top: temperatureIconTops[index] ??
-                        math.min(y(series, index),
-                                primaryTops[index] ?? y(series, index)) -
-                            34,
+                    left: iconRects[index]?.left ?? x(series, index) - 12,
+                    top: iconRects[index]?.top ?? y(series, index) - 34,
                     child: IgnorePointer(
                         child: WeatherConditionIcon(
                             condition: conditions[index],
@@ -632,6 +590,128 @@ class HourlyValueChart extends StatelessWidget {
                             color: palette.primaryDeep))),
           ])),
     ]);
+  }
+}
+
+/// 수치는 같은 시간 열 안에서만 옮긴다. 배경으로 그래프를 지우지 않는다.
+class _ChartGeometry {
+  final rects = <Rect>[];
+  final bars = <Rect>[];
+  final lines = <(Offset, Offset)>[];
+
+  bool clear(Rect rect, {required bool allowBarInterior, Rect? ownBar}) {
+    final padded = rect.inflate(4);
+    return (allowBarInterior ||
+            bars.every(
+                (bar) => identical(bar, ownBar) || !padded.overlaps(bar))) &&
+        rects.every((obstacle) => !padded.overlaps(obstacle)) &&
+        lines.every((line) => !_crosses(padded, line.$1, line.$2));
+  }
+
+  static bool _crosses(Rect rect, Offset a, Offset b) {
+    if (math.max(a.dx, b.dx) < rect.left ||
+        math.min(a.dx, b.dx) > rect.right ||
+        math.max(a.dy, b.dy) < rect.top ||
+        math.min(a.dy, b.dy) > rect.bottom) {
+      return false;
+    }
+    var start = 0.0, end = 1.0;
+    for (final axis in [
+      (a.dx, b.dx - a.dx, rect.left, rect.right),
+      (a.dy, b.dy - a.dy, rect.top, rect.bottom)
+    ]) {
+      if (axis.$2.abs() < .0001) {
+        if (axis.$1 < axis.$3 || axis.$1 > axis.$4) return false;
+      } else {
+        final first = (axis.$3 - axis.$1) / axis.$2;
+        final last = (axis.$4 - axis.$1) / axis.$2;
+        start = math.max(start, math.min(first, last));
+        end = math.min(end, math.max(first, last));
+        if (start > end) return false;
+      }
+    }
+    return true;
+  }
+
+  Rect place({
+    required Offset anchor,
+    required double preferredTop,
+    required Size labelSize,
+    required Size canvasSize,
+    required double pointWidth,
+    required List<Rect> occupied,
+    bool? above,
+    bool allowBarInterior = false,
+    Rect? ownBar,
+  }) {
+    Rect rectAt(double dx, double top) => Rect.fromLTWH(
+        (anchor.dx + dx - labelSize.width / 2)
+            .clamp(0, canvasSize.width - labelSize.width),
+        top,
+        labelSize.width,
+        labelSize.height);
+    bool fits(Rect rect) =>
+        rect.top >= 0 &&
+        rect.bottom <= canvasSize.height &&
+        (above == null ||
+            (above ? rect.bottom < anchor.dy - 4 : rect.top > anchor.dy + 4)) &&
+        (ownBar == null ||
+            !rect.overlaps(ownBar) ||
+            ownBar.contains(rect.topLeft) &&
+                ownBar.contains(rect.bottomRight)) &&
+        clear(rect, allowBarInterior: allowBarInterior, ownBar: ownBar) &&
+        occupied.every((other) => !rect.inflate(3).overlaps(other));
+
+    final preferred = rectAt(0, preferredTop);
+    if ((preferred.center - anchor).distance <= labelSize.height / 2 + 12 &&
+        fits(preferred)) {
+      return preferred;
+    }
+    Rect? best;
+    Rect? bestInside;
+    var bestDistance = double.infinity;
+    var bestInsideDistance = double.infinity;
+    // 작은 가로 이동으로 막대를 피할 수 있으면 멀리 위아래로 보내지 않는다.
+    for (final dx in [
+      0.0,
+      -pointWidth * .25,
+      pointWidth * .25,
+      -pointWidth * .46,
+      pointWidth * .46
+    ]) {
+      for (var top = 0.0;
+          top <= canvasSize.height - labelSize.height;
+          top += 2) {
+        final rect = rectAt(dx, top);
+        final distance = (rect.center - anchor).distanceSquared +
+            (top - preferredTop).abs() * 2;
+        final inside = ownBar != null &&
+            ownBar.contains(rect.topLeft) &&
+            ownBar.contains(rect.bottomRight);
+        if (distance >= bestDistance &&
+            (!inside || distance >= bestInsideDistance)) {
+          continue;
+        }
+        if (!fits(rect)) continue;
+        if (distance < bestDistance) {
+          best = rect;
+          bestDistance = distance;
+        }
+        if (inside && distance < bestInsideDistance) {
+          bestInside = rect;
+          bestInsideDistance = distance;
+        }
+      }
+    }
+    if (bestInside != null) return bestInside;
+    if (best != null) return best;
+    // 열 안이 모두 찬 경우 같은 시각 아래에 공간을 추가한다. 값을 숨기거나
+    // 기존 그래프 위에 강제로 겹쳐 그리지 않고 연결선으로 원점을 표시한다.
+    var footer = rectAt(0, canvasSize.height + 4);
+    while (occupied.any((other) => footer.inflate(3).overlaps(other))) {
+      footer = footer.shift(Offset(0, labelSize.height + 6));
+    }
+    return footer;
   }
 }
 
@@ -645,6 +725,8 @@ class HourlyValueChartPainter extends CustomPainter {
   final (double, double)? sharedBounds;
   final double topPadding;
   final double bottomPadding;
+  final List<(Offset, Offset, Color)> leaders;
+  final List<Rect> labelRects;
   const HourlyValueChartPainter(
       {required this.series,
       required this.hours,
@@ -653,11 +735,34 @@ class HourlyValueChartPainter extends CustomPainter {
       required this.gridColor,
       this.overlays = const [],
       this.sharedBounds,
+      this.leaders = const [],
+      this.labelRects = const [],
       this.topPadding = _plotTop,
       this.bottomPadding = _plotBottom});
 
+  double get barHalfWidth => pointWidth * .28;
+
   @override
   void paint(Canvas canvas, Size size) {
+    // 안내선은 원본 그래프 뒤에 그려 선·점·막대를 가리지 않는다.
+    canvas.save();
+    for (final rect in labelRects) {
+      canvas.clipRect(rect.inflate(2), clipOp: ClipOp.difference);
+    }
+    for (final leader in leaders) {
+      final delta = leader.$2 - leader.$1;
+      final distance = delta.distance;
+      final paint = Paint()
+        ..color = leader.$3.withValues(alpha: .65)
+        ..strokeWidth = 1;
+      for (var start = 4.0; start < distance; start += 5) {
+        canvas.drawLine(
+            leader.$1 + delta * (start / distance),
+            leader.$1 + delta * (math.min(start + 2, distance) / distance),
+            paint);
+      }
+    }
+    canvas.restore();
     final bounds = sharedBounds ?? series.bounds;
     double y(double value) => hourlyChartY(value, bounds, size.height,
         topPadding: topPadding, bottomPadding: bottomPadding);
@@ -717,7 +822,7 @@ class HourlyValueChartPainter extends CustomPainter {
           continue;
         }
         final at = Offset(x(chart, index), chartY(value.lower));
-        if (value.range) {
+        if (value.range && !_snowLowerBoundPoint(chart, value)) {
           previous = null;
           previousHour = null;
           final top = chartY(value.upper ?? chartBounds.$2);
@@ -739,8 +844,8 @@ class HourlyValueChartPainter extends CustomPainter {
                   ?.color ??
               chartColor;
           canvas.drawRect(
-              Rect.fromLTRB(at.dx - pointWidth * .28, at.dy,
-                  at.dx + pointWidth * .28, math.max(at.dy + 2, chartY(0))),
+              Rect.fromLTRB(at.dx - barHalfWidth, at.dy, at.dx + barHalfWidth,
+                  math.max(at.dy + 2, chartY(0))),
               Paint()
                 ..color =
                     barColor.withValues(alpha: overlays.isEmpty ? 1 : .65));
@@ -766,5 +871,7 @@ class HourlyValueChartPainter extends CustomPainter {
       gridColor != oldDelegate.gridColor ||
       sharedBounds != oldDelegate.sharedBounds ||
       topPadding != oldDelegate.topPadding ||
-      bottomPadding != oldDelegate.bottomPadding;
+      bottomPadding != oldDelegate.bottomPadding ||
+      leaders != oldDelegate.leaders ||
+      labelRects != oldDelegate.labelRects;
 }

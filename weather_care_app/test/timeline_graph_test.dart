@@ -128,7 +128,7 @@ void main() {
   });
 
   testWidgets('강설은 한 차트에서 양·확률을 구분하고 결측 확률을 만들지 않는다', (tester) async {
-    await _pump(tester, data: [
+    await _pump(tester, now: DateTime.utc(2026, 10, 15, 22), data: [
       {
         'time': '08',
         'snowExpected': true,
@@ -400,8 +400,8 @@ void main() {
   });
 
   for (final metric in ['precipitation', 'snowfall']) {
-    testWidgets('$metric 확률은 모든 막대 위, 양은 선의 점 아래에 표시한다', (tester) async {
-      await _pump(tester, scale: 2, data: [
+    testWidgets('$metric 수치는 선·막대와 시간 눈금을 피해서 표시한다', (tester) async {
+      await _pump(tester, scale: 2, now: DateTime.utc(2026, 10, 15, 22), data: [
         {
           'time': '08',
           'precipitationAmount': 3,
@@ -457,13 +457,26 @@ void main() {
             hourlyChartY(probabilitySeries.values[index]!.lower,
                 probabilitySeries.bounds, chart.height,
                 topPadding: topPadding, bottomPadding: padding);
-        expect(tester.getTopLeft(amount).dy, greaterThan(amountY));
+        final amountRect = tester.getRect(amount);
+        final amountX = canvas.left + (index + .5) * chart.pointWidth;
+        expect(
+            amountRect.inflate(2).contains(Offset(amountX, amountY)), isFalse);
         expect(
             tester.getBottomLeft(amount).dy,
             lessThan(tester
                 .getTopLeft(find.byKey(ValueKey('today-hourly-$index')))
                 .dy));
-        expect(tester.getBottomLeft(probability).dy, lessThan(probabilityY));
+        final bar = Rect.fromLTRB(
+            amountX - _graph(tester, '$prefix-amount').barHalfWidth,
+            probabilityY,
+            amountX + _graph(tester, '$prefix-amount').barHalfWidth,
+            canvas.bottom - padding + 2);
+        final probabilityRect = tester.getRect(probability);
+        expect(
+            !probabilityRect.overlaps(bar) ||
+                bar.contains(probabilityRect.topLeft) &&
+                    bar.contains(probabilityRect.bottomRight),
+            isTrue);
         expect(tester.getTopLeft(probability).dy,
             greaterThanOrEqualTo(canvas.top));
         expect(tester.getRect(amount).overlaps(tester.getRect(probability)),
@@ -854,6 +867,14 @@ void main() {
       for (final time in ['11:00:00', '11:59:59', '12:00:00']) {
         await show(time);
         for (final metric in TimelineOrderStore.metrics) {
+          if (find
+              .byKey(ValueKey('today-hourly-filter-$metric'))
+              .evaluate()
+              .isEmpty) {
+            expect(metric, 'snowfall');
+            expect(inline, isTrue);
+            continue;
+          }
           await _select(tester, metric);
           final current = find.byKey(const ValueKey('hourly-current-time'));
           expect(current, findsOneWidget);
@@ -1180,6 +1201,7 @@ Future<void> _pump(WidgetTester tester,
     {int month = 10,
     double scale = 1,
     bool availableOnly = false,
+    DateTime? now,
     List<Map<String, dynamic>> data = const []}) async {
   await tester.pumpWidget(MaterialApp(
     builder: (context, child) => MediaQuery(
@@ -1191,7 +1213,7 @@ Future<void> _pump(WidgetTester tester,
         body: SingleChildScrollView(
             child: HourlyForecastSection(
       items: data.map(HourlyWeatherItem.fromJson).toList(),
-      now: DateTime.utc(2026, month, 16),
+      now: now ?? DateTime.utc(2026, month, 16),
       availableOnly: availableOnly,
     ))),
   ));

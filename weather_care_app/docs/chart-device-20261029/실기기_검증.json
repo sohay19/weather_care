@@ -1,0 +1,512 @@
+{
+  "date": "2026-10-29",
+  "device": {
+    "model": "SM-S948U",
+    "android": "16",
+    "sdk": "36",
+    "package": "com.codesoha.weathercare.storecapture",
+    "installed_product_apk_hash_matches": true,
+    "installed_sha256": "6627f04a33e7e749e65a2cb15ef2627bf980d7dfb8e1943a6ede0e76674eff0b",
+    "changed_product_sources": [],
+    "checked_source_files": 110,
+    "product_pid": "18419",
+    "product_errors": []
+  },
+  "case_count": 8,
+  "checked_value_count": 58,
+  "layout_errors": 0,
+  "runtime_errors": [],
+  "cases": [
+    {
+      "case": 0,
+      "data": "rain",
+      "week": false,
+      "dark": false,
+      "scale": 1.1,
+      "devicePixels": 2.8125,
+      "labels": 8,
+      "primaryPoints": 4,
+      "errors": [],
+      "rects": {
+        "hourly-label-rain-amount-17": [
+          1369.6828308105469,
+          170.0,
+          1402.3171691894531,
+          189.8
+        ],
+        "hourly-label-rain-amount-18": [
+          1447.194842529297,
+          326.20000000000005,
+          1483.2051574707032,
+          346.0
+        ],
+        "hourly-label-rain-amount-19": [
+          1526.394842529297,
+          326.20000000000005,
+          1562.4051574707032,
+          346.0
+        ],
+        "hourly-label-rain-amount-20": [
+          1606.6102691650392,
+          48.0,
+          1640.589730834961,
+          67.80000000000001
+        ],
+        "hourly-label-rain-probability-17": [
+          1368.8256454467773,
+          128.27999999999997,
+          1403.1743545532227,
+          148.07999999999998
+        ],
+        "hourly-label-rain-probability-18": [
+          1448.0256454467774,
+          128.27999999999997,
+          1482.3743545532227,
+          148.07999999999998
+        ],
+        "hourly-label-rain-probability-19": [
+          1527.2256454467774,
+          128.27999999999997,
+          1561.5743545532227,
+          148.07999999999998
+        ],
+        "hourly-label-rain-probability-20": [
+          1606.4256454467775,
+          158.0,
+          1640.7743545532228,
+          177.8
+        ]
+      }
+    },
+    {
+      "case": 1,
+      "data": "rain-near",
+      "week": false,
+      "dark": true,
+      "scale": 1.1,
+      "devicePixels": 2.8125,
+      "labels": 8,
+      "primaryPoints": 4,
+      "errors": [],
+      "rects": {
+        "hourly-label-rain-amount-17": [
+          1367.9948425292969,
+          326.20000000000005,
+          1404.0051574707031,
+          346.0
+        ],
+        "hourly-label-rain-amount-18": [
+          1443.9177734375,
+          48.0,
+          1486.4822265625,
+          67.80000000000001
+        ],
+        "hourly-label-rain-amount-19": [
+          1521.462744140625,
+          164.5625,
+          1567.337255859375,
+          184.3625
+        ],
+        "hourly-label-rain-amount-20": [
+          1602.3177734375001,
+          48.0,
+          1644.8822265625001,
+          67.80000000000001
+        ],
+        "hourly-label-rain-probability-17": [
+          1353.1335250854493,
+          290.0,
+          1379.2664749145508,
+          309.79999999999995
+        ],
+        "hourly-label-rain-probability-18": [
+          1448.0256454467774,
+          146.0,
+          1482.3743545532227,
+          165.8
+        ],
+        "hourly-label-rain-probability-19": [
+          1527.2256454467774,
+          188.0,
+          1561.5743545532227,
+          207.8
+        ],
+        "hourly-label-rain-probability-20": [
+          1602.2913986206056,
+          20.19999999999999,
+          1644.9086013793947,
+          40.0
+        ]
+      }
+    },
+    {
+      "case": 2,
+      "data": "snow",
+      "week": false,
+      "dark": false,
+      "scale": 1.1,
+      "devicePixels": 2.8125,
+      "labels": 6,
+      "primaryPoints": 2,
+      "errors": [],
+      "rects": {
+        "hourly-label-snow-amount-19": [
+          1529.2762893676759,
+          298.19999999999993,
+          1559.5237106323243,
+          317.9999999999999
+        ],
+        "hourly-label-snow-amount-20": [
+          1596.4493576049806,
+          126.00000000000003,
+          1650.7506423950197,
+          145.80000000000004
+        ],
+        "hourly-label-snow-depth-17": [
+          1352.7642776489258,
+          230.00000000000003,
+          1379.6357223510743,
+          249.80000000000004
+        ],
+        "hourly-label-snow-depth-18": [
+          1443.0200588989258,
+          58.47142857142856,
+          1471.5399411010742,
+          78.27142857142857
+        ],
+        "hourly-label-snow-probability-19": [
+          1511.5335250854494,
+          262.0,
+          1537.666474914551,
+          281.80000000000007
+        ],
+        "hourly-label-snow-probability-20": [
+          1602.2913986206056,
+          34.00000000000003,
+          1644.9086013793947,
+          53.80000000000004
+        ]
+      }
+    },
+    {
+      "case": 3,
+      "data": "snow",
+      "week": true,
+      "dark": true,
+      "scale": 1.1,
+      "devicePixels": 2.8125,
+      "labels": 6,
+      "primaryPoints": 2,
+      "errors": [],
+      "rects": {
+        "hourly-label-snow-amount-2": [
+          182.87628936767578,
+          298.19999999999993,
+          213.1237106323242,
+          317.9999999999999
+        ],
+        "hourly-label-snow-amount-3": [
+          250.0493576049805,
+          126.00000000000003,
+          304.3506423950196,
+          145.80000000000004
+        ],
+        "hourly-label-snow-depth-0": [
+          6.364277648925778,
+          230.00000000000003,
+          33.235722351074216,
+          249.80000000000004
+        ],
+        "hourly-label-snow-depth-1": [
+          96.62005889892578,
+          58.47142857142856,
+          125.13994110107421,
+          78.27142857142857
+        ],
+        "hourly-label-snow-probability-2": [
+          165.1335250854492,
+          262.0,
+          191.26647491455077,
+          281.79999999999995
+        ],
+        "hourly-label-snow-probability-3": [
+          255.8913986206055,
+          34.00000000000003,
+          298.5086013793946,
+          53.80000000000004
+        ]
+      }
+    },
+    {
+      "case": 4,
+      "data": "rain",
+      "week": true,
+      "dark": false,
+      "scale": 1.1,
+      "devicePixels": 2.8125,
+      "labels": 8,
+      "primaryPoints": 4,
+      "errors": [],
+      "rects": {
+        "hourly-label-rain-amount-0": [
+          23.28283081054687,
+          170.0,
+          55.91716918945312,
+          189.8
+        ],
+        "hourly-label-rain-amount-1": [
+          100.79484252929689,
+          326.19999999999993,
+          136.80515747070314,
+          345.9999999999999
+        ],
+        "hourly-label-rain-amount-2": [
+          179.99484252929688,
+          326.19999999999993,
+          216.0051574707031,
+          345.9999999999999
+        ],
+        "hourly-label-rain-amount-3": [
+          260.2102691650391,
+          48.0,
+          294.189730834961,
+          67.80000000000001
+        ],
+        "hourly-label-rain-probability-0": [
+          22.425645446777338,
+          128.27999999999997,
+          56.77435455322265,
+          148.07999999999998
+        ],
+        "hourly-label-rain-probability-1": [
+          101.62564544677736,
+          128.27999999999997,
+          135.97435455322267,
+          148.07999999999998
+        ],
+        "hourly-label-rain-probability-2": [
+          180.82564544677734,
+          128.27999999999997,
+          215.17435455322263,
+          148.07999999999998
+        ],
+        "hourly-label-rain-probability-3": [
+          260.0256454467774,
+          158.0,
+          294.3743545532227,
+          177.8
+        ]
+      }
+    },
+    {
+      "case": 5,
+      "data": "rain-near",
+      "week": true,
+      "dark": true,
+      "scale": 1.1,
+      "devicePixels": 2.8125,
+      "labels": 8,
+      "primaryPoints": 4,
+      "errors": [],
+      "rects": {
+        "hourly-label-rain-amount-0": [
+          21.59484252929687,
+          326.19999999999993,
+          57.60515747070312,
+          345.9999999999999
+        ],
+        "hourly-label-rain-amount-1": [
+          97.51777343750001,
+          48.0,
+          140.0822265625,
+          67.80000000000001
+        ],
+        "hourly-label-rain-amount-2": [
+          175.062744140625,
+          164.5625,
+          220.93725585937497,
+          184.3625
+        ],
+        "hourly-label-rain-amount-3": [
+          255.91777343750002,
+          48.0,
+          298.48222656250005,
+          67.80000000000001
+        ],
+        "hourly-label-rain-probability-0": [
+          6.733525085449216,
+          290.0,
+          32.86647491455078,
+          309.79999999999995
+        ],
+        "hourly-label-rain-probability-1": [
+          101.62564544677736,
+          146.0,
+          135.97435455322267,
+          165.8
+        ],
+        "hourly-label-rain-probability-2": [
+          180.82564544677734,
+          188.0,
+          215.17435455322263,
+          207.79999999999995
+        ],
+        "hourly-label-rain-probability-3": [
+          255.8913986206055,
+          20.19999999999999,
+          298.5086013793946,
+          40.0
+        ]
+      }
+    },
+    {
+      "case": 6,
+      "data": "rain",
+      "week": false,
+      "dark": true,
+      "scale": 2.0,
+      "devicePixels": 2.8125,
+      "labels": 8,
+      "primaryPoints": 4,
+      "errors": [],
+      "rects": {
+        "hourly-label-rain-amount-17": [
+          2491.1240768432617,
+          180.00000000000003,
+          2548.8759231567383,
+          216.00000000000003
+        ],
+        "hourly-label-rain-amount-18": [
+          2632.052085876465,
+          374.0,
+          2695.947914123535,
+          410.0
+        ],
+        "hourly-label-rain-amount-19": [
+          2776.052085876465,
+          374.0,
+          2839.947914123535,
+          410.0
+        ],
+        "hourly-label-rain-amount-20": [
+          2921.900077819824,
+          38.0,
+          2982.099922180176,
+          74.00000000000003
+        ],
+        "hourly-label-rain-probability-17": [
+          2489.5640869140625,
+          131.19999999999996,
+          2550.4359130859375,
+          167.19999999999996
+        ],
+        "hourly-label-rain-probability-18": [
+          2633.5640869140625,
+          131.19999999999996,
+          2694.4359130859375,
+          167.19999999999996
+        ],
+        "hourly-label-rain-probability-19": [
+          2777.5640869140625,
+          131.19999999999996,
+          2838.4359130859375,
+          167.19999999999996
+        ],
+        "hourly-label-rain-probability-20": [
+          2921.5640869140625,
+          176.00000000000003,
+          2982.4359130859375,
+          212.00000000000003
+        ]
+      }
+    },
+    {
+      "case": 7,
+      "data": "snow",
+      "week": true,
+      "dark": false,
+      "scale": 2.0,
+      "devicePixels": 2.8125,
+      "labels": 6,
+      "primaryPoints": 2,
+      "errors": [],
+      "rects": {
+        "hourly-label-snow-amount-2": [
+          333.2960739135742,
+          340.0,
+          386.7039260864258,
+          376.0
+        ],
+        "hourly-label-snow-amount-3": [
+          455.4081344604493,
+          136.00000000000003,
+          552.5918655395508,
+          172.00000000000003
+        ],
+        "hourly-label-snow-depth-0": [
+          12.368064880371094,
+          264.0,
+          59.63193511962889,
+          300.0
+        ],
+        "hourly-label-snow-depth-1": [
+          176.46806488037112,
+          61.214285714285694,
+          226.73193511962893,
+          97.2142857142857
+        ],
+        "hourly-label-snow-probability-2": [
+          301.0400619506836,
+          290.0,
+          346.9599380493164,
+          326.0
+        ],
+        "hourly-label-snow-probability-3": [
+          466.04010772705084,
+          34.0,
+          541.9598922729492,
+          70.0
+        ]
+      }
+    }
+  ],
+  "source_hashes": {
+    "lib\\features\\home\\tabs\\week_tab.dart": "ab6588a39b082774ffc2877f8cc45e7afe7de0198a1a133b38542b842b913aae",
+    "lib\\features\\home\\widgets\\hourly_forecast_section.dart": "70a164ba03284ca3bca5a7b314f42c93527025f0b38ba76705c528d30261dd29",
+    "lib\\features\\home\\widgets\\hourly_value_chart.dart": "33eb3fee60c272c08796b94aa1c561a37abc1081075bc9aa0a43a7d5a7c3c090"
+  },
+  "images": {
+    "product-main-rain.png": {
+      "original": "product-final-main-rain.png",
+      "sha256": "34e4b80787da6dccd5fedf6d02eb42e454000461bbe107c821de22d71dd1b08c"
+    },
+    "product-main-snow.png": {
+      "original": "product-main-snow.png",
+      "sha256": "610a40cc2aa16d702d4eb4e6abd8f09c42418c1c2a25bf8617de8afc7a64af6f"
+    },
+    "product-week-rain.png": {
+      "original": "product-week-rain.png",
+      "sha256": "d5d6ef43ccf57994b0fa673f88fd7f5fa80ae529d84397d1f53670d80ea94852"
+    },
+    "product-week-snow.png": {
+      "original": "product-week-snow.png",
+      "sha256": "6279db2552fb4c514a3871c01de361a1326b72d67b38b5818317b1959076edf5"
+    },
+    "device-rain-light.png": {
+      "original": "validation-01-right.png",
+      "sha256": "6e2c9a228309d0592d3cbe871cd3d4703a0816d1409735934305ffe1e02872c2"
+    },
+    "device-rain-dark-near.png": {
+      "original": "validation-02-right.png",
+      "sha256": "754e35d085f412fac003cfbf924323a915c3be7fb9bd0cbc50fb400fe0bf5adb"
+    },
+    "device-snow-dark.png": {
+      "original": "validation-04-right.png",
+      "sha256": "7031539c329451920bb804c65b5d4496d79933b065cba2150b1ac5f670bcef0b"
+    },
+    "device-snow-large-text.png": {
+      "original": "validation-08-centered.png",
+      "sha256": "be9a9b5455de499ab359dfad256a4f5ab82fde8bf8cef73fc0ffaa1bf3514394"
+    }
+  }
+}

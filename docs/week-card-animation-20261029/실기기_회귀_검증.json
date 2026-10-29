@@ -1,0 +1,62 @@
+[
+  {
+    "검사": "01-left-axis",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 0.0
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 25.401041666666618
+    },
+    "통과": true
+  },
+  {
+    "검사": "02-filter-right-edge",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 25.401041666666618
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 25.401041666666618
+    },
+    "통과": true
+  },
+  {
+    "검사": "03-filter-left-edge",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 25.401041666666618
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 25.401041666666618
+    },
+    "통과": true
+  },
+  {
+    "검사": "04-card-bottom-next-day",
+    "이전": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 25.401041666666618
+    },
+    "이후": {
+      "selectedDayIndex": 2,
+      "timelinePixels": 0.0
+    },
+    "통과": true
+  },
+  {
+    "검사": "05-card-bottom-previous-day",
+    "이전": {
+      "selectedDayIndex": 2,
+      "timelinePixels": 0.0
+    },
+    "이후": {
+      "selectedDayIndex": 1,
+      "timelinePixels": 0.0
+    },
+    "통과": true
+  }
+]

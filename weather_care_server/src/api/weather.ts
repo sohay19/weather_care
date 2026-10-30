@@ -38,6 +38,7 @@ import {
   enabledRecommendationTypes,
   PREPARATION_RECOMMENDATION_CATALOG,
   TIERED_PREPARATION_CATALOG,
+  DRYNESS_PREPARATION_CATALOG,
   runRecommendationEngine,
 } from '../recommendations/recommendationEngine';
 import { coordinatesFromQuery, regionFromQuery } from '../utils';
@@ -81,6 +82,7 @@ import {
   todayWeatherAccessFields,
   type WeatherAccessEnv,
 } from '../observability/weatherAccessLog';
+import { buildDrynessMessages } from '../presentation/drynessMessage';
 import { defaultRuleConfig } from '../config/ruleConfig';
 import { precipitationPeriod, precipitationLabel, koreaDate, precipitationOnlySnapshot,
   withoutPrecipitation } from '../rules/precipitationWindows';
@@ -249,7 +251,8 @@ router.get('/today', async (c) => {
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
-  const tieredPreparations = c.req.query('recommendationCatalog') === TIERED_PREPARATION_CATALOG;
+  const drynessPreparations = c.req.query('recommendationCatalog') === DRYNESS_PREPARATION_CATALOG;
+  const tieredPreparations = drynessPreparations || c.req.query('recommendationCatalog') === TIERED_PREPARATION_CATALOG;
   const requestedCoordinates = coordinatesFromQuery(
     c.req.query('latitude'),
     c.req.query('longitude'),
@@ -441,10 +444,13 @@ router.get('/today', async (c) => {
     const recommendations = runRecommendationEngine(lifestyle, settings, {
       expandedPreparations,
       tieredPreparations,
+      drynessPreparations,
       snapshots: decisionHourly,
       preparations: tieredPreparations ? preparationsForWindow(responseForecast, generatedAt, {
         ...sunTimesForRequest(generatedAt, nx, ny, coordinates),
-        allowedRecommendedItems: enabledRecommendationTypes(settings),
+        allowedRecommendedItems: enabledRecommendationTypes(settings, drynessPreparations),
+        preparationSettings: settings,
+        drynessPreparations,
       }) : undefined,
       facts: rules,
     });
@@ -477,7 +483,9 @@ router.get('/today', async (c) => {
     const brief = buildWeatherBriefResult(responseForecast, {
       regionKey: locationKey,
       now: generatedAt,
-      allowedRecommendedItems: enabledRecommendationTypes(settings),
+      allowedRecommendedItems: enabledRecommendationTypes(settings, drynessPreparations),
+        preparationSettings: settings,
+      drynessPreparations,
       severityRecommendedItems: recommendations
         .filter((item) => item.recommended)
         .map((item) => item.type),
@@ -510,6 +518,7 @@ router.get('/today', async (c) => {
       timelineHourly: responseForecast.timelineHourly ?? responseForecast.hourly,
       recommendations,
       lifestyleMessages: [
+        ...(drynessPreparations ? buildDrynessMessages(responseForecast, generatedAt) : []),
         ...ventilationAdvice(current, livingIndices, generatedAt),
         ...warningMessages,
         ...(roadControlMessage ? [roadControlMessage] : []),
@@ -535,6 +544,7 @@ router.get('/today', async (c) => {
         generatedAt.toISOString(),
         expandedPreparations,
         tieredPreparations,
+        drynessPreparations,
       ),
       environmentalSources: environmentalData.sources,
       decisionVersion: DECISION_VERSION,
@@ -572,7 +582,8 @@ router.get('/weekly', async (c) => {
   const expandedPreparations = supportsExpandedPreparations(
     c.req.query('recommendationCatalog'),
   );
-  const tieredPreparations = c.req.query('recommendationCatalog') === TIERED_PREPARATION_CATALOG;
+  const drynessPreparations = c.req.query('recommendationCatalog') === DRYNESS_PREPARATION_CATALOG;
+  const tieredPreparations = drynessPreparations || c.req.query('recommendationCatalog') === TIERED_PREPARATION_CATALOG;
 
   try {
     const now = new Date();
@@ -755,6 +766,7 @@ router.get('/weekly', async (c) => {
             settings,
             expandedPreparations,
             tieredPreparations,
+            drynessPreparations,
           ).filter((item) => item.recommended).slice(0, tieredPreparations ? undefined : 3),
     }));
     const response = {
@@ -794,7 +806,8 @@ router.get('/widget', async (c) => {
   const query = new URL(c.req.url).searchParams;
   query.set('includeExtras', 'true');
   // 기존 위젯 URL에는 카탈로그가 없다. 새 종류는 지원을 명시한 앱에만 보낸다.
-  query.set('recommendationCatalog', query.get('recommendationCatalog') === TIERED_PREPARATION_CATALOG
+  query.set('recommendationCatalog', query.get('recommendationCatalog') === DRYNESS_PREPARATION_CATALOG
+    ? DRYNESS_PREPARATION_CATALOG : query.get('recommendationCatalog') === TIERED_PREPARATION_CATALOG
     ? TIERED_PREPARATION_CATALOG : PREPARATION_RECOMMENDATION_CATALOG);
   const suffix = `?${query.toString()}`;
   const headers = new Headers();
@@ -1255,6 +1268,7 @@ export function buildTimeline(
   referenceTime?: string,
   expandedPreparations = false,
   tieredPreparations = false,
+  drynessPreparations = false,
 ) {
   const firstTime = hourly[0]?.forecastAt ?? hourly[0]?.observedAt;
   const targetDate = referenceTime
@@ -1306,6 +1320,7 @@ export function buildTimeline(
       settings,
       expandedPreparations,
       tieredPreparations,
+      drynessPreparations,
     );
     const topRecommendation = recommendations[0]?.type;
     const previousTemperature = slots
@@ -1537,11 +1552,12 @@ function recommendationsForSnapshot(
   settings: Partial<NotificationSettings>,
   expandedPreparations = false,
   tieredPreparations = false,
+  drynessPreparations = false,
 ): Recommendation[] {
   return runRecommendationEngine(
     runLifestyleWeatherEngine(runWeatherRuleEngine(snapshot)),
     settings,
-    { expandedPreparations, tieredPreparations, snapshots: [snapshot] },
+    { expandedPreparations, tieredPreparations, drynessPreparations, snapshots: [snapshot] },
   );
 }
 
@@ -1552,6 +1568,7 @@ export function recommendationsForDay(
     defaultNotificationSettings('anonymous'),
   expandedPreparations = false,
   tieredPreparations = false,
+  drynessPreparations = false,
 ): Recommendation[] {
   const dayHourly = hourly.flatMap((item) => {
     const pointDate = koreaDate(item.forecastAt ?? item.observedAt).replaceAll('-', '');
@@ -1566,7 +1583,7 @@ export function recommendationsForDay(
     return runRecommendationEngine(
       runLifestyleWeatherEngine(facts, dayHourly),
       settings,
-      { expandedPreparations, tieredPreparations, snapshots: dayHourly },
+      { expandedPreparations, tieredPreparations, drynessPreparations, snapshots: dayHourly },
     );
   }
 
@@ -1581,12 +1598,12 @@ export function recommendationsForDay(
     snowfallAmount: day.snowfallAmount,
     skyCondition: day.skyCondition,
   };
-  return recommendationsForSnapshot(snapshot, settings, expandedPreparations, tieredPreparations);
+  return recommendationsForSnapshot(snapshot, settings, expandedPreparations, tieredPreparations, drynessPreparations);
 }
 
 function supportsExpandedPreparations(catalog: string | undefined): boolean {
   return catalog === PREPARATION_RECOMMENDATION_CATALOG ||
-    catalog === TIERED_PREPARATION_CATALOG;
+    catalog === TIERED_PREPARATION_CATALOG || catalog === DRYNESS_PREPARATION_CATALOG;
 }
 
 async function settingsForRequest(
@@ -1608,7 +1625,7 @@ export function withWidgetSettings(
   settings: NotificationSettings,
   encoded?: string,
 ): NotificationSettings {
-  const match = /^u([01])p([01])s([01])o([01])m([01])w([01])c([01])$/.exec(
+  const match = /^u([01])p([01])s([01])o([01])m([01])w([01])c([01])(?:d([01]))?(?:n([01])v([01])f([01]))?$/.exec(
     encoded ?? '',
   );
   if (!match) return settings;
@@ -1621,6 +1638,10 @@ export function withWidgetSettings(
     maskEnabled: match[5] === '1',
     waterEnabled: match[6] === '1',
     sunscreenEnabled: match[7] === '1',
+    drynessEnabled: match[8] === undefined ? settings.drynessEnabled : match[8] === '1',
+    snowPreparationEnabled: match[9] === undefined ? settings.snowPreparationEnabled : match[9] === '1',
+    uvPreparationEnabled: match[10] === undefined ? settings.uvPreparationEnabled : match[10] === '1',
+    pollenEnabled: match[11] === undefined ? settings.pollenEnabled : match[11] === '1',
   };
 }
 

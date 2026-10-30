@@ -16,6 +16,9 @@ export type RecommendationType =
   | 'PORTABLE_FAN'
   | 'COOLING_ITEM'
   | 'SUNSCREEN'
+  | 'LIP_BALM'
+  | 'HAND_CREAM'
+  | 'PORTABLE_HUMIDIFIER'
   | 'SNOW_CHAINS'
   | 'POWER_BANK'
   | 'WINTER_BOOTS';
@@ -126,6 +129,7 @@ export enum WeatherRuleFactType {
 }
 
 export enum LifestyleInsightType {
+  DRYNESS_GUIDANCE = 'DRYNESS_GUIDANCE',
   RAIN_GEAR_USEFUL = 'RAIN_GEAR_USEFUL',
   STRONG_SUN_EXPOSURE = 'STRONG_SUN_EXPOSURE',
   OUTERWEAR_USEFUL = 'OUTERWEAR_USEFUL',
@@ -345,6 +349,16 @@ export interface NotificationSettings {
   maskEnabled: boolean;
   waterEnabled: boolean;
   sunscreenEnabled: boolean;
+  drynessEnabled?: boolean;
+  todayVisibilityEnabled?: boolean;
+  todayOzoneEnabled?: boolean;
+  todayWindEnabled?: boolean;
+  todayHumidityEnabled?: boolean;
+  todayApparentTemperatureEnabled?: boolean;
+  snowPreparationEnabled?: boolean;
+  uvPreparationEnabled?: boolean;
+  pollenEnabled?: boolean;
+  blackIceEnabled?: boolean;
   dailyWeatherEnabled: boolean;
   heavyRainEnabled: boolean;
   heatwaveEnabled: boolean;

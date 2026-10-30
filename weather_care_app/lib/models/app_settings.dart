@@ -39,6 +39,16 @@ class AppSettings {
   final bool maskEnabled;
   final bool waterEnabled;
   final bool sunscreenEnabled;
+  final bool drynessEnabled;
+  final bool todayVisibilityEnabled;
+  final bool todayOzoneEnabled;
+  final bool todayWindEnabled;
+  final bool todayHumidityEnabled;
+  final bool todayApparentTemperatureEnabled;
+  final bool snowPreparationEnabled;
+  final bool uvPreparationEnabled;
+  final bool pollenEnabled;
+  final bool blackIceEnabled;
   final bool dailyWeatherEnabled;
 
   AppSettings({
@@ -71,8 +81,22 @@ class AppSettings {
     required this.maskEnabled,
     required this.waterEnabled,
     required this.sunscreenEnabled,
+    this.drynessEnabled = true,
+    this.todayVisibilityEnabled = true,
+    this.todayOzoneEnabled = true,
+    this.todayWindEnabled = true,
+    this.todayHumidityEnabled = true,
+    this.todayApparentTemperatureEnabled = true,
+    bool? snowPreparationEnabled,
+    bool? uvPreparationEnabled,
+    bool? pollenEnabled,
+    bool? blackIceEnabled,
     required this.dailyWeatherEnabled,
-  });
+  })  : snowPreparationEnabled = snowPreparationEnabled ?? (heavySnowEnabled),
+        uvPreparationEnabled =
+            uvPreparationEnabled ?? (parasolEnabled || sunscreenEnabled),
+        pollenEnabled = pollenEnabled ?? (maskEnabled),
+        blackIceEnabled = blackIceEnabled ?? (true);
 
   AppSettings copyWith({
     String? locationMode,
@@ -104,6 +128,16 @@ class AppSettings {
     bool? maskEnabled,
     bool? waterEnabled,
     bool? sunscreenEnabled,
+    bool? drynessEnabled,
+    bool? todayVisibilityEnabled,
+    bool? todayOzoneEnabled,
+    bool? todayWindEnabled,
+    bool? todayHumidityEnabled,
+    bool? todayApparentTemperatureEnabled,
+    bool? snowPreparationEnabled,
+    bool? uvPreparationEnabled,
+    bool? pollenEnabled,
+    bool? blackIceEnabled,
     bool? dailyWeatherEnabled,
   }) {
     return AppSettings(
@@ -141,6 +175,19 @@ class AppSettings {
       maskEnabled: maskEnabled ?? this.maskEnabled,
       waterEnabled: waterEnabled ?? this.waterEnabled,
       sunscreenEnabled: sunscreenEnabled ?? this.sunscreenEnabled,
+      drynessEnabled: drynessEnabled ?? this.drynessEnabled,
+      todayVisibilityEnabled:
+          todayVisibilityEnabled ?? this.todayVisibilityEnabled,
+      todayOzoneEnabled: todayOzoneEnabled ?? this.todayOzoneEnabled,
+      todayWindEnabled: todayWindEnabled ?? this.todayWindEnabled,
+      todayHumidityEnabled: todayHumidityEnabled ?? this.todayHumidityEnabled,
+      todayApparentTemperatureEnabled: todayApparentTemperatureEnabled ??
+          this.todayApparentTemperatureEnabled,
+      snowPreparationEnabled:
+          snowPreparationEnabled ?? this.snowPreparationEnabled,
+      uvPreparationEnabled: uvPreparationEnabled ?? this.uvPreparationEnabled,
+      pollenEnabled: pollenEnabled ?? this.pollenEnabled,
+      blackIceEnabled: blackIceEnabled ?? this.blackIceEnabled,
       dailyWeatherEnabled: dailyWeatherEnabled ?? this.dailyWeatherEnabled,
     );
   }
@@ -234,8 +281,24 @@ class AppSettings {
       maskEnabled: json['maskEnabled'] as bool? ?? fallbackSettings.maskEnabled,
       waterEnabled:
           json['waterEnabled'] as bool? ?? fallbackSettings.waterEnabled,
+      drynessEnabled:
+          json['drynessEnabled'] as bool? ?? fallbackSettings.drynessEnabled,
       sunscreenEnabled: json['sunscreenEnabled'] as bool? ??
           fallbackSettings.sunscreenEnabled,
+      todayVisibilityEnabled: json['todayVisibilityEnabled'] as bool? ?? true,
+      todayOzoneEnabled: json['todayOzoneEnabled'] as bool? ?? true,
+      todayWindEnabled: json['todayWindEnabled'] as bool? ?? true,
+      todayHumidityEnabled: json['todayHumidityEnabled'] as bool? ?? true,
+      todayApparentTemperatureEnabled:
+          json['todayApparentTemperatureEnabled'] as bool? ?? true,
+      snowPreparationEnabled: json['snowPreparationEnabled'] as bool? ??
+          ((json['heavySnowEnabled'] as bool? ?? true)),
+      uvPreparationEnabled: json['uvPreparationEnabled'] as bool? ??
+          ((json['parasolEnabled'] as bool? ?? true) ||
+              (json['sunscreenEnabled'] as bool? ?? true)),
+      pollenEnabled: json['pollenEnabled'] as bool? ??
+          ((json['maskEnabled'] as bool? ?? true)),
+      blackIceEnabled: json['blackIceEnabled'] as bool? ?? (true),
       dailyWeatherEnabled: json['dailyWeatherEnabled'] as bool? ??
           fallbackSettings.dailyWeatherEnabled,
     );
@@ -274,6 +337,16 @@ class AppSettings {
       'maskEnabled': maskEnabled,
       'waterEnabled': waterEnabled,
       'sunscreenEnabled': sunscreenEnabled,
+      'drynessEnabled': drynessEnabled,
+      'todayVisibilityEnabled': todayVisibilityEnabled,
+      'todayOzoneEnabled': todayOzoneEnabled,
+      'todayWindEnabled': todayWindEnabled,
+      'todayHumidityEnabled': todayHumidityEnabled,
+      'todayApparentTemperatureEnabled': todayApparentTemperatureEnabled,
+      'snowPreparationEnabled': snowPreparationEnabled,
+      'uvPreparationEnabled': uvPreparationEnabled,
+      'pollenEnabled': pollenEnabled,
+      'blackIceEnabled': blackIceEnabled,
       'dailyWeatherEnabled': dailyWeatherEnabled,
     };
   }

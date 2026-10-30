@@ -1,0 +1,163 @@
+{
+  "checkedAt": "2026-10-30T16:23:34.086259+09:00",
+  "initialSchedulerDifferences": [
+    {
+      "variant": "heavySnowEnabledOff",
+      "scenario": "snow",
+      "production": [
+        {
+          "key": "MORNING_BRIEF",
+          "title": "오늘자 준비물 😊",
+          "body": "오전 7시~오전 8시까지는 눈 소식이 있어요. 우산 준비하여 미끄러지지 않도록 조심하세요.",
+          "target": "MAIN",
+          "topic": "OVERVIEW"
+        }
+      ],
+      "test": []
+    },
+    {
+      "variant": "snowOffUmbrellaOn",
+      "scenario": "snow",
+      "production": [
+        {
+          "key": "MORNING_BRIEF",
+          "title": "오늘자 준비물 😊",
+          "body": "오전 7시~오전 8시까지는 눈 소식이 있어요. 우산 준비하여 미끄러지지 않도록 조심하세요.",
+          "target": "MAIN",
+          "topic": "OVERVIEW"
+        }
+      ],
+      "test": []
+    }
+  ],
+  "fixedCompatibilityCase": "구버전 우산 ON·대설 OFF에서 눈 대비 우산 요약 유지",
+  "fix": {
+    "status": "complete",
+    "startedAt": "2026-10-30T16:22:06.474494+09:00",
+    "completedAt": "2026-10-30T16:22:14.670976+09:00",
+    "changedFiles": [
+      "src/recommendations/preparationPolicy.ts"
+    ],
+    "backup": "/var/backups/weather-care/legacy-compat-test-20261030T072210Z",
+    "onlyOneSourceFileChanged": true,
+    "databaseMigrationNeeded": false,
+    "productionAndDatabaseSchemasUnchanged": true,
+    "actualUserWrites": 0,
+    "actualFcmSent": 0
+  },
+  "deployedSchedulerCases": 180,
+  "deployedSchedulerMatches": 180,
+  "deployedSchedulerDifferences": [],
+  "legacyApiChecks": 20,
+  "productionSchemaMigrationCheck": true,
+  "newFeatureChecks": 59,
+  "publicRequests": 32,
+  "publicChecks": [
+    {
+      "catalog": "미지정",
+      "route": "main",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "미지정",
+      "route": "today",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "미지정",
+      "route": "weekly",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "미지정",
+      "route": "widget",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_15",
+      "route": "main",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_15",
+      "route": "today",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_15",
+      "route": "weekly",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_15",
+      "route": "widget",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_18",
+      "route": "main",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_18",
+      "route": "today",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_18",
+      "route": "weekly",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "PREPARATION_18",
+      "route": "widget",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "UNKNOWN",
+      "route": "main",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "UNKNOWN",
+      "route": "today",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "UNKNOWN",
+      "route": "weekly",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    },
+    {
+      "catalog": "UNKNOWN",
+      "route": "widget",
+      "oldFieldsPreserved": true,
+      "newTypesExcluded": true
+    }
+  ],
+  "healthStatuses": {
+    "test": 200,
+    "testWithoutKey": 403,
+    "production": 200
+  },
+  "localNodeTests": 90,
+  "localSettingsAndSchedulerTests": 58,
+  "actualFcmSent": 0,
+  "actualUserWrites": 0,
+  "legacyApkRun": false
+}

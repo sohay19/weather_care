@@ -32,7 +32,7 @@ describe('Lifestyle v1.1 catalog', () => {
     expect(umbrella).toEqual(
       expect.objectContaining({
         decisionVersion: 'weather-rules-1.2.0',
-        catalogVersion: 'ko-KR-2026.09.3',
+        catalogVersion: 'ko-KR-2026.10.30',
         reasonCodes: expect.arrayContaining(['RAIN_LIKELY']),
         sourceFields: expect.arrayContaining(['precipitationType']),
       }),

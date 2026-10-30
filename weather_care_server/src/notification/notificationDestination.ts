@@ -63,6 +63,10 @@ export function recommendationDestination(
       return weatherDetailsDestination('TEMPERATURE');
     case 'MASK':
       return weatherDetailsDestination('AIR_QUALITY');
+    case 'LIP_BALM':
+    case 'HAND_CREAM':
+    case 'PORTABLE_HUMIDIFIER':
+      return weatherDetailsDestination('OVERVIEW');
     case 'WATER':
     case 'PORTABLE_FAN':
     case 'COOLING_ITEM':

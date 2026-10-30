@@ -1,3 +1,4 @@
+import { drynessLabel, drynessPreparation, drynessLevel } from '../rules/dryness';
 import { defaultRuleConfig } from '../config/ruleConfig';
 import { preparationsForWindow } from '../recommendations/preparationPolicy';
 import { buildPreparationEvidence, type PreparationReason } from '../recommendations/preparationEvidence';
@@ -15,6 +16,7 @@ import type {
   BriefingTimelineEntry,
   CanonicalBriefingIntent,
   RecommendationType,
+  NotificationSettings,
   WeatherSnapshot,
 } from '../types';
 
@@ -38,6 +40,10 @@ export interface WeatherBriefContext {
   /** 새 앱의 확장 준비물 카탈로그를 브리핑과 함께 사용한다. */
   expandedPreparations?: boolean;
   tieredPreparations?: boolean;
+  drynessPreparations?: boolean;
+  /** 정기 알림에서만 사용하며 앱 Today 화면의 브리핑에는 적용하지 않는다. */
+  todayNotificationSettings?: Partial<NotificationSettings>;
+  preparationSettings?: Partial<NotificationSettings>;
 }
 
 export interface WeatherBriefResult {
@@ -164,7 +170,7 @@ function buildIntentAt(
     selection.snapshot.kmaApparentTemperature ??
       selection.snapshot.apparentTemperature ?? '',
   ].join(':');
-  const rendered = renderCopy(selection, seed, context.tieredPreparations ?? false);
+  const rendered = renderCopy(selection, seed, context.tieredPreparations ?? false, context.drynessPreparations ?? false);
   const sourceTime = selection.snapshot.forecastAt ??
     selection.snapshot.validFrom ?? selection.snapshot.observedAt;
   const validFrom = now.toISOString();
@@ -182,6 +188,12 @@ function buildIntentAt(
     selection.scene,
     context.expandedPreparations ?? false,
   );
+  if (selection.scene === 'HUMIDITY_LOW' && context.drynessPreparations) {
+    meaning.topic = '건조도';
+    meaning.action = 'CHECK_MOISTURIZING';
+    const item = drynessPreparation(selection.snapshot.humidity);
+    meaning.recommendedItems = item ? [item] : [];
+  }
   const severityItems = context.severityRecommendedItems === undefined
     ? meaning.recommendedItems
     : meaning.recommendedItems.filter((item) =>
@@ -306,7 +318,9 @@ function selectScene(
   add('HUMIDITY_HIGH', 44, (item) =>
     (item.humidity ?? -Infinity) >= defaultRuleConfig.humidity.high);
   add('HUMIDITY_LOW', 44, (item) =>
-    (item.humidity ?? Infinity) <= defaultRuleConfig.humidity.low);
+    context.drynessPreparations
+      ? (drynessLevel(item.humidity) ?? 0) > 0
+      : (item.humidity ?? Infinity) <= defaultRuleConfig.humidity.low);
   add('THERMAL_COMFORTABLE', 30, isComfortable);
 
   if (selections.length > 0) {
@@ -333,7 +347,8 @@ function selectScene(
     nextKoreanMidnight(fallbackStart),
   );
   return {
-    scene: currentIsUsable && (current.visibilityMeters ?? 0) >= 20_000
+    scene: currentIsUsable && (current.visibilityMeters ?? 0) >= 20_000 &&
+      sceneAllowedByContext('CLEAR_COMFORTABLE', context)
       ? 'CLEAR_COMFORTABLE'
       : 'DEFAULT',
     snapshot: fallbackSnapshot,
@@ -349,11 +364,34 @@ function sceneAllowedByContext(
   scene: WeatherBriefScene,
   context: WeatherBriefContext,
 ): boolean {
+  const preparations = context.preparationSettings;
+  const preparationEnabled: Partial<Record<WeatherBriefScene, boolean>> = {
+    RAIN: preparations?.umbrellaEnabled,
+    SNOW: preparations?.snowPreparationEnabled ?? preparations?.heavySnowEnabled,
+    UV: preparations?.uvPreparationEnabled,
+    AIR_QUALITY: preparations?.maskEnabled,
+    THERMAL_COLD: preparations?.outerwearEnabled,
+    THERMAL_HOT: preparations?.waterEnabled,
+    HUMIDITY_LOW: context.drynessPreparations ? preparations?.drynessEnabled : preparations?.waterEnabled,
+  };
+  if (preparationEnabled[scene] === false) return false;
+  const today = context.todayNotificationSettings;
+  const enabled = {
+    VISIBILITY: today?.todayVisibilityEnabled,
+    CLEAR_COMFORTABLE: today?.todayVisibilityEnabled,
+    OZONE: today?.todayOzoneEnabled,
+    WIND: today?.todayWindEnabled,
+    HUMIDITY_HIGH: today?.todayHumidityEnabled,
+    THERMAL_COMFORTABLE: today?.todayApparentTemperatureEnabled,
+  } as Partial<Record<WeatherBriefScene, boolean>>;
+  if (enabled[scene] === false) return false;
   if (context.allowedRecommendedItems === undefined) return true;
   if (scene === 'RAIN') {
     return context.allowedRecommendedItems.includes('UMBRELLA');
   }
-  const required = sceneMeaning(
+  const required = scene === 'HUMIDITY_LOW' && context.drynessPreparations
+    ? ['LIP_BALM', 'HAND_CREAM', 'PORTABLE_HUMIDIFIER'] as RecommendationType[]
+    : sceneMeaning(
     scene,
     context.expandedPreparations ?? false,
   ).recommendedItems;
@@ -458,6 +496,7 @@ function renderCopy(
   selection: SceneSelection,
   seed: string,
   tieredPreparations = false,
+  drynessPreparations = false,
 ): { variantKey: string; copy: BriefingCopy } {
   const eventStart = koreanHour(new Date(selection.start).toISOString());
   const eventRange = periodLabel(
@@ -471,7 +510,7 @@ function renderCopy(
     eventRange,
     period,
     observed,
-  }, tieredPreparations);
+  }, tieredPreparations, drynessPreparations);
   const index = deterministicIndex(seed, variants.length);
   return {
     variantKey: `${selection.scene.toLowerCase()}-${index + 1}`,
@@ -488,6 +527,7 @@ function copyVariants(
     observed: boolean;
   },
   tieredPreparations = false,
+  drynessPreparations = false,
 ): BriefingCopy[] {
   switch (selection.scene) {
     case 'SNOW':
@@ -613,7 +653,17 @@ function copyVariants(
           ? '공기가 후텁지근해요. 움직이면 더 덥게 느껴질 수 있어요.'
           : '실외 공기가 눅눅해요. 빨래가 더디게 마를 수 있어요.',
       )];
-    case 'HUMIDITY_LOW':
+    case 'HUMIDITY_LOW': {
+      if (drynessPreparations) {
+        const label = drynessLabel(selection.snapshot.humidity);
+        return [copy(
+          `공기가 ${label === '약한 건조' ? '약하게 건조' : label}해요.`,
+          `상대습도 ${selection.snapshot.humidity}%로 ${label} 단계예요. 보습 준비물을 확인하세요.`,
+          '실외 상대습도에 따른 건조도예요. 실내 습도도 확인하고 낮다면 가습기 사용을 고려하세요.',
+          '건조도와 보습 준비 안내',
+          `상대습도 ${selection.snapshot.humidity}%로 ${label} 단계예요.`,
+        )];
+      }
       return [copy(
         '공기가 건조해요.',
         '실외 공기가 건조해 코나 목이 마르게 느껴질 수 있어요.',
@@ -621,6 +671,7 @@ function copyVariants(
         '공기가 건조해요',
         '실외 공기가 건조해요. 물을 자주 마셔주세요.',
       )];
+    }
     case 'CLEAR_COMFORTABLE':
       return [copy(
         '시야가 맑고 편안한 날씨예요.',

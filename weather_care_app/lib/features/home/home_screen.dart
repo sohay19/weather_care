@@ -287,7 +287,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       'o${_settings.outerwearEnabled ? 1 : 0}'
       'm${_settings.maskEnabled ? 1 : 0}'
       'w${_settings.waterEnabled ? 1 : 0}'
-      'c${_settings.sunscreenEnabled ? 1 : 0}';
+      'c${_settings.sunscreenEnabled ? 1 : 0}'
+      'd${_settings.drynessEnabled ? 1 : 0}'
+      'n${_settings.snowPreparationEnabled ? 1 : 0}'
+      'v${_settings.uvPreparationEnabled ? 1 : 0}'
+      'f${_settings.pollenEnabled ? 1 : 0}';
 
   void _clearHomeWidget() => unawaited(widget.homeWidgetService.clear());
 

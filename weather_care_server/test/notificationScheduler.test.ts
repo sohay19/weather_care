@@ -193,6 +193,16 @@ describe('notification scheduler', () => {
           mask_enabled INTEGER NOT NULL DEFAULT 1,
           water_enabled INTEGER NOT NULL DEFAULT 1,
           sunscreen_enabled INTEGER NOT NULL DEFAULT 1,
+        dryness_enabled INTEGER,
+        snow_preparation_enabled INTEGER,
+        uv_preparation_enabled INTEGER,
+        pollen_enabled INTEGER,
+        black_ice_enabled INTEGER,
+        today_visibility_enabled INTEGER NOT NULL DEFAULT 1,
+        today_ozone_enabled INTEGER NOT NULL DEFAULT 1,
+        today_wind_enabled INTEGER NOT NULL DEFAULT 1,
+        today_humidity_enabled INTEGER NOT NULL DEFAULT 1,
+        today_apparent_temperature_enabled INTEGER NOT NULL DEFAULT 1,
           daily_weather_enabled INTEGER NOT NULL DEFAULT 1,
           heavy_rain_enabled INTEGER NOT NULL DEFAULT 1,
           heatwave_enabled INTEGER NOT NULL DEFAULT 1,
@@ -753,6 +763,35 @@ describe('notification scheduler', () => {
     });
     expect(sent.find((item) => item.notificationKey.includes('RELEASED'))?.body)
       .toBe('수원의 호우경보가 해제됐어요');
+  });
+
+  it.each([false, true])('블랙아이스 선택 %s가 실제 발송을 제어한다', async (blackIceEnabled) => {
+    await insertInstallation('device-token', true);
+    await savePreferences({ blackIceEnabled });
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings('test-apihub-key'), {
+      now: new Date('2026-01-15T01:00:00Z'), forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [], roadIceLoader: async () => roadIceRisk(),
+      sender: collectingSender(sent),
+    });
+    expect(sent.filter((item) => item.notificationKey.startsWith('ROAD_ICE_')))
+      .toHaveLength(blackIceEnabled ? 1 : 0);
+  });
+
+  it('블랙아이스 조회 중 OFF로 바뀌면 발송 직전에 제외하고 상태를 소비하지 않는다', async () => {
+    await insertInstallation('device-token', true);
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings('test-apihub-key'), {
+      now: new Date('2026-01-15T01:00:00Z'), forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [], roadIceLoader: async () => {
+        await savePreferences({ blackIceEnabled: false });
+        return roadIceRisk();
+      }, sender: collectingSender(sent),
+    });
+    expect(sent.filter((item) => item.notificationKey.startsWith('ROAD_ICE_'))).toEqual([]);
+    const row = await env.DB.prepare('SELECT road_ice_level AS level FROM installations WHERE installation_id=?')
+      .bind('installation-1').first<{ level: number }>();
+    expect(row?.level).toBe(0);
   });
 
   it('sends a nearby official road-ice stage once and resets after it clears', async () => {

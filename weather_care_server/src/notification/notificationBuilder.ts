@@ -7,6 +7,7 @@ import {
 } from './notificationDestination';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import { preparationsForSnapshots, preparationsForWindow, type PreparationCandidate } from '../recommendations/preparationPolicy';
+import { isDrynessPreparation } from '../rules/dryness';
 import { titleFor } from '../recommendations/recommendationTemplates';
 import {
   buildWeatherBriefResult,
@@ -34,7 +35,11 @@ export function buildNotification(
     ? buildWeatherBriefResult(forecast, {
         ...briefContext,
         now,
-        allowedRecommendedItems: normal.map((item) => item.type),
+        allowedRecommendedItems: [
+          ...normal.map((item) => item.type),
+          ...(briefContext.drynessPreparations
+            ? briefContext.allowedRecommendedItems?.filter(isDrynessPreparation) ?? [] : []),
+        ],
         severityRecommendedItems: normal
           .filter((item) => item.recommended)
           .map((item) => item.type),
@@ -126,6 +131,9 @@ function preparationMessage(
       case 'air': return `${time}미세먼지가 심하니 ${object} 챙겨 쓰세요.`;
       case 'pollen': return `${time}꽃가루에 대비해요. ${object} 챙겨 쓰세요.`;
       case 'air+pollen': return `${time}미세먼지와 꽃가루에 대비해요. ${object} 챙겨 쓰세요.`;
+      case 'humidity': return item.type === 'PORTABLE_HUMIDIFIER'
+        ? `${time}공기가 매우 건조해요. ${object} 준비하고 실내 습도가 낮을 때 사용하세요.`
+        : `${time}공기가 건조해요. ${object} 준비하세요.`;
       case 'uv': return `${time}자외선이 강하니 ${object} 잊지 마세요.`;
       default: return `${time}${object} 챙겨 주세요.`;
     }

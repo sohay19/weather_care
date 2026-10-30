@@ -6,6 +6,7 @@ import {
   WeatherRuleFactType,
   WeatherRuleFact,
 } from '../types';
+import { isDrynessPreparation } from '../rules/dryness';
 import { descriptionFor, titleFor } from './recommendationTemplates';
 import { CATALOG_VERSION } from './recommendationTemplates';
 import { sortRecommendations } from './recommendationPriority';
@@ -16,8 +17,10 @@ import type { WeatherSnapshot } from '../types';
 
 export const PREPARATION_RECOMMENDATION_CATALOG = 'PREPARATION_15';
 export const TIERED_PREPARATION_CATALOG = 'PREPARATION_18';
+export const DRYNESS_PREPARATION_CATALOG = 'PREPARATION_21';
 
 export interface RecommendationEngineOptions {
+  drynessPreparations?: boolean;
   expandedPreparations?: boolean;
   includeLegacyHeavySnowCaution?: boolean;
   tieredPreparations?: boolean;
@@ -28,9 +31,11 @@ export interface RecommendationEngineOptions {
 
 export function enabledRecommendationTypes(
   settings?: Partial<NotificationSettings>,
+  drynessPreparations = false,
 ): RecommendationType[] {
   return (Object.entries(recommendationTypeSettings(settings)) as
     [RecommendationType, boolean][])
+    .filter(([type]) => drynessPreparations || !isDrynessPreparation(type))
     .filter(([, enabled]) => enabled)
     .map(([type]) => type);
 }
@@ -74,7 +79,8 @@ export function runRecommendationEngine(
   const enabled = recommendationTypeSettings(settings);
 
   if (options.tieredPreparations && options.snapshots) {
-    return (options.preparations ?? preparationsForSnapshots(options.snapshots)).map((candidate, index) => ({
+    return (options.preparations ?? preparationsForSnapshots(options.snapshots, { drynessPreparations: options.drynessPreparations, preparationSettings: settings }))
+      .filter((candidate) => options.drynessPreparations || !isDrynessPreparation(candidate.type)).map((candidate, index) => ({
       type: candidate.type,
       recommended: enabled[candidate.type],
       priority: 100 - index,
@@ -90,7 +96,7 @@ export function runRecommendationEngine(
       reasons: [{
         snow: '눈길 대비', heat: '더위 대비', cold: '추위 대비',
         rain: '비 대비', air: '미세먼지 대비', pollen: '꽃가루 대비',
-        'air+pollen': '미세먼지·꽃가루 대비', uv: '자외선 대비',
+        'air+pollen': '미세먼지·꽃가루 대비', uv: '자외선 대비', humidity: '건조 대비',
       }[candidate.reason] ?? candidate.reason],
       decisionVersion: DECISION_VERSION,
       catalogVersion: CATALOG_VERSION,
@@ -157,26 +163,29 @@ function recommendationTypeSettings(
   settings?: Partial<NotificationSettings>,
 ): Record<RecommendationType, boolean> {
   return {
-    UMBRELLA: settings?.umbrellaEnabled ?? true,
+    UMBRELLA: (settings?.umbrellaEnabled ?? true) || settings?.snowPreparationEnabled === true,
     RAINCOAT: settings?.umbrellaEnabled ?? true,
     RAIN_BOOTS: settings?.umbrellaEnabled ?? true,
-    SLIP_RESISTANT_SHOES: settings?.heavySnowEnabled ?? true,
-    PARASOL: settings?.parasolEnabled ?? true,
-    SUN_HAT: settings?.parasolEnabled ?? true,
-    SUNGLASSES: settings?.parasolEnabled ?? true,
+    SLIP_RESISTANT_SHOES: settings?.snowPreparationEnabled ?? settings?.heavySnowEnabled ?? true,
+    PARASOL: settings?.uvPreparationEnabled ?? settings?.parasolEnabled ?? true,
+    SUN_HAT: settings?.uvPreparationEnabled ?? settings?.parasolEnabled ?? true,
+    SUNGLASSES: settings?.uvPreparationEnabled ?? settings?.parasolEnabled ?? true,
     HEAVY_SNOW_CAUTION: settings?.heavySnowEnabled ?? true,
     OUTERWEAR: settings?.outerwearEnabled ?? true,
     LIGHT_OUTERWEAR: settings?.outerwearEnabled ?? true,
     SCARF: settings?.outerwearEnabled ?? true,
     HAND_WARMER: settings?.outerwearEnabled ?? true,
-    MASK: settings?.maskEnabled ?? true,
+    MASK: (settings?.maskEnabled ?? true) || (settings?.pollenEnabled ?? settings?.maskEnabled ?? true),
     WATER: settings?.waterEnabled ?? true,
     PORTABLE_FAN: settings?.waterEnabled ?? true,
     COOLING_ITEM: settings?.waterEnabled ?? true,
-    SUNSCREEN: settings?.sunscreenEnabled ?? true,
-    SNOW_CHAINS: settings?.heavySnowEnabled ?? true,
+    SUNSCREEN: settings?.uvPreparationEnabled ?? settings?.sunscreenEnabled ?? true,
+    LIP_BALM: settings?.drynessEnabled ?? true,
+    HAND_CREAM: settings?.drynessEnabled ?? true,
+    PORTABLE_HUMIDIFIER: settings?.drynessEnabled ?? true,
+    SNOW_CHAINS: settings?.snowPreparationEnabled ?? settings?.heavySnowEnabled ?? true,
     POWER_BANK: settings?.heavySnowEnabled ?? true,
-    WINTER_BOOTS: settings?.heavySnowEnabled ?? true,
+    WINTER_BOOTS: settings?.snowPreparationEnabled ?? settings?.heavySnowEnabled ?? true,
   };
 }
 

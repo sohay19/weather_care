@@ -147,8 +147,14 @@ class _NotificationTimePickerDialogState
                   child: Text('~')),
               Expanded(child: _endpoint(end: true)),
             ]),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: WeatherCareTheme.of(context).outline,
+            ),
           ],
+          const SizedBox(height: 20),
           if (_typing)
             Form(
               key: _form,

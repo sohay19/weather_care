@@ -14140,3 +14140,63 @@
 
 - 사용자 요청으로 ‘알림’ 행 이름 변경, 출근/퇴근 범위 단일 팝업, 시작/끝 선택 편집 및 관련 검사와 인계를 커밋한다. 공유 settings_screen.dart는 행 이름 한 줄만, HANDOFF는 이번 범위 팝업 작업과 Git 반영 기록만 골라 스테이징한다. 건조 대비 관련 다른 작업은 그대로 보존한다.
 - 기존 관련47개 검사 통과·정적 분석 이슈없음·전체 APK13초 빌드 기록을 재확인했다. 이후 제품 변경이 없어 검사를 반복하지 않는다. fetch 후 시작 HEAD97eae1a와 원격 master의 일치를 확인했다. 스테이징 공백 검사 후 한글 메시지로 커밋하고 일반 푸시 및 원격 HEAD 일치를 확인한다. 임시 도구·APK·로그·캡처는 제외하며 서버/스토어 배포는 수행하지 않는다.
+
+## 2026-10-30 챙겨요 알림 시간 명칭·팝업 간격 및 항목명 사전 목록
+
+- 사용자 요청으로 일반 시간 섹션과 선택 팝업 제목을 ‘챙겨요 알림 시간’으로 변경했다. 기존 행의 ‘알림’ 표기는 유지했다. 공통 시간 선택기에서 시·분부터 숫자로 입력 버튼까지의 영역 위에20px 간격을 추가했다. 출퇴근 범위에서는 시작/끝 박스 아래12px·1px 구분선·20px 간격으로 배치해 기존16px 간격보다 조정 영역을17px 아래로 내렸다. 단일 시간 팝업에는 구분선을 넣지 않았다.
+- 관련 시간 선택·출퇴근·설정 계약47개 모두 통과(320px·글자2배·스크롤/숫자 전환·취소/범위 저장 포함), 수정 제품2파일 정적 분석 No issues found 및 git diff --check 통과다. 신규 테스트 추가·실기기 설치/화면 확인·서버 변경·배포·커밋·푸시는 수행하지 않았다. 기존 건조 대비 앱/서버/위젯/문서 변경은 보존했다.
+- ‘챙겨요 알림’을 준비물명 대신 판단 항목별로 선택하도록 바꾸는 요청은 ‘항목명 리스트를 미리 보여 달라’는 순서를 따라 먼저 목록을 제안했다. 현 추천 이유 기반8개는 비·눈·추위·더위·자외선·대기질·꽃가루·건조도다. Today 상세 지표 전체와는 구분하며 범위 선택 질문을 보냈다. 이 시점에는 사용자 답변이 없어 항목별 설정 모델/서버 필터/기존 설정 이관은 변경하지 않았다. 대기질·꽃가루가 동일 MASK 품목을 공유하고 자외선이 기존 양산/선크림 선택으로 나뉘어 있어, 표시 문구만 바꿔서 독립 제어가 된다고 처리하면 안 된다. 다음 작업에서 목록 확정 후 준비물 생성 이유별 필터·기존 사용자 선택 보존을 함께 구현해야 한다.
+- 로그: ignored weather_care_app/build/notification-time-20261030/popup-spacing-tests.log, popup-spacing-analyze.log. 변경 제품은 lib/features/settings/settings_screen.dart와 notification_time_picker.dart다.
+
+## 2026-10-30 준비물 없는 Today 지표 정기 알림 발송 조건 확인
+
+- 사용자가 항목명 제안에 앞서 실제 챙겨요 설정 시간에 준비물 없는 Today 지표도 알림이 가는지 질문했다. 제품 소스 변경 없이 로컬 서버의 notificationScheduler.ts·notificationBuilder.ts·weatherBrief.ts를 확인했다. MORNING_BRIEF는 준비물 또는 비DEFAULT 요약 브리핑이 있으면 생성되며 dailyWeatherEnabled와 설정 시각 도달 조건으로 필터된다. 따라서 준비물이 없다고 정기 알림이 항상 생략되는 구조가 아니다.
+- 합성 예보·빈 추천/허용 준비물 목록으로 실제 메시지 생성 함수를 실행해 가시거리 저하·오존·강풍·높은 습도·쾌적한 체감온도·좋은 가시거리6사례에서 recommendedItems=[]인데 MORNING_BRIEF 생성됨을 확인했다. 판단 자료 없는 DEFAULT는 생성0건이다. 프로브 최초 상대 import 경로 오류를 수정한 뒤7사례 정상 실행했다. ignored 서버build/notification-time-20261030-brief-probe.ts에 재현 도구가 있다. 외부 요청·FCM 전송·운영 DB/발송 이력 조회는 하지 않았으므로 특정 사용자의 실제 수신 내역을 확인한 것으로 설명하면 안 된다.
+- 앞서 제안한8개는 준비물 추천 기준만 포함해 기존 정기 브리핑 범위보다 좁았음을 바로잡는다. Today 지표 전체가 각각 수치 알림으로 발송되는 것은 아니며, 유효한 브리핑 장면 선택과 우선순위를 따른다. 항목명 최종 목록/설정 모델/이관·서버 제어는 아직 변경하지 않았고 사용자 범위 선택도 미확정이다. 이전 시간 팝업 UI 수정 및 다른 건조 대비 작업은 보존한다. 커밋·푸시·배포 없음.
+
+## 2026-10-30 Today 알림 5항목 선택·안내 문구 재배치
+
+- 사용자 확정 요청대로 ‘챙겨요 알림’ 박스 바로 다음에 ‘Today 알림’을 추가했다. 설명은 정확히 ‘챙겨요 알림과 발송되는 시각은 같아요’이며 가시거리·오존·바람·습도·체감온도 순으로5개 ON/OFF를 배치했다. 기본값은 모두ON으로 기존 발송 동작을 보존한다. 전체 날씨 알림 OFF/서버 사용 중지 시 기존과 같이 비활성화한다. 앞서 제안했던 챙겨요8개 항목명 전환은 확정 요청이 아니므로 기존 준비물 선택을 유지한다.
+- todayVisibilityEnabled/todayOzoneEnabled/todayWindEnabled/todayHumidityEnabled/todayApparentTemperatureEnabled를 AppSettings 생성·copyWith·구버전 기본값·직렬화·기기 저장·설정 동기화 및 서버 타입/두 API 검증/저장/스케줄러에 연결했다. 새 필드를 누락한 구버전 부분 갱신과 직접 저장에서도 기존 OFF 값이 초기화되지 않는다. 서버 DB 열은 모두 NOT NULL DEFAULT1/CHECK0·1이며 migrations/0023_today_notifications.sql와 실제 Node 사용자 DB용 node-migrations/users/0006_today_notifications.sql을 추가했다. 운영/시험 DB에는 적용하지 않았다.
+- Today 선택값은 스케줄러가 정기 MORNING_BRIEF를 생성할 때만 WeatherBriefContext.todayNotificationSettings로 전달한다. 가시거리 저하와 좋은 가시거리는 가시거리 선택값, OZONE/WIND/HUMIDITY_HIGH/THERMAL_COMFORTABLE은 각 항목 선택값을 따른다. 높은 우선순위의 항목을 끄면 다음 허용 항목을 고르며, 좋은 가시거리 fallback도 OFF를 우회하지 않는다. 준비물 추천·더위/추위·건조도 준비물·앱 Today 화면의 브리핑은 영향받지 않는다. 기존 공통 설정 시각/하루1회/지역·전체ON 조건을 유지한다. 공통 dailyWeatherEnabled 표시명은 ‘챙겨요·Today 알림’으로 보완했다.
+- 후속 요청대로 ‘도로통제 알림은 설정한 출퇴근 시간 안에서만 보내요.’를 기상·생활 알림 하단에서 출퇴근 알림 시간 박스의 시간 행들 아래로 옮겼다. ‘블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.’ 문장은 삭제했다. 나머지 전체 날씨 알림을 따른다는 설명은 보존했다.
+- 검증: Flutter5파일63개 모두 통과.5개 독립 변경·표시 순서/정확한 설명·전체OFF 비활성화·기기 재로딩/구 저장값·서버 허용 필드·좁은 화면/큰 글자·시간 팝업 회귀를 포함한다. Node Today/SQLite/건조도/구버전4파일57개, 기존 설정API/스케줄러2파일55개로 서버112개 통과다. 실제 메모리SQLite/두 API·스케줄러 수집용 sender로6브리핑 장면의ON/OFF·다음 항목 선택·준비물 유지·공통 시간과 중복 방지·구 앱 선택 보존·구버전 마이그레이션 데이터 보존을 확인했다. 실제 FCM 전송/외부 요청/운영 사용자 DB 쓰기 없음.
+- 최초 Node 검사의 구버전 마이그레이션 기대 목록3건은 신규0023을 포함하도록 갱신했다. 더위+건조 검사1건은 기존 최대3개 정책에서 물 대신 휴대용 선풍기가 선택되는 실제 동작에 맞춰 기대 준비물을 수정했고 제품 정책은 바꾸지 않았다. 이후57개 전부 재통과했다. 생성 보조 스크립트의 완료 출력만 Windows 콘솔 인코딩 오류가 있었으며 UTF-8 파일 수정은 모두 끝난 상태였다. 재실행하지 않고 결과를 확인했다.
+- 관련 앱7파일 정적 분석 이슈없음, 서버 tsc --noEmit 통과, 공백 검사 통과. 정상 lib/main.dart 전체 QA APK13초 빌드 성공. ignored 앱build/notification-time-20261030/today-tests.log·today-analyze.log, build/today-notifications-20261030/build.log·full-app.apk 및 서버build/today-notifications-node-tests.log·today-notifications-worker-tests.log·today-notifications-typecheck.log에 증거가 있다.
+- 실기기 설치/화면 조작·iOS 빌드·서버/스토어 배포·커밋·푸시는 하지 않았다. 실제 서버에서 새 선택값을 사용하려면 새5열 마이그레이션과 서버 코드 배포가 먼저 필요하다. 현재 서버의 엄격한 API 검증은 미지원 신규 필드를 거부할 수 있으므로 서버 반영 전에 새 앱을 배포하면 안 된다. 건조 대비 관련 다른 미커밋 변경과 앞선 시간 UI 수정은 모두 보존했다. 이후 커밋 시 새 Today 변경과 기존 건조도 변경이 모델/동기화/API저장/스케줄러/브리핑/테스트/HANDOFF 파일을 공유하므로 범위를 확인해 선별해야 한다.
+
+## 2026-10-30 알림 항목 최종 UI·블랙아이스·건조도 브리핑 수정 및 시험 서버 배포
+
+- 사용자가 시험 서버 DB/코드 반영을 요청한 뒤 같은 진행 중에 알림 화면 개편, 챙겨요8항목, 블랙아이스 개별 선택, 물OFF·건조대비ON 브리핑 불일치 수정을 추가 요청했다. 전부 이번 최종 변경과 시험 서버 배포에 포함했다. 이전 ‘도로통제 문장을 출퇴근 박스 아래로 이동’ 요청은 후속 ‘시간 하단 설명 아예 제거’로 대체했다.
+- 앱 Setting→알림 최상단 설정 행은 ‘알림 사용여부’와 스위치만 한 줄로 표시한다. 저장 실패 안내 박스는 그 아래에 유지했다. 챙겨요는 비·눈·추위·더위·자외선·대기질·꽃가루·건조도 순서이며 항목별 설명은 없다. Today 박스/5스위치/‘챙겨요 알림과 발송되는 시각은 같아요’는 유지한다. 출퇴근 시간 하단 설명과 기상·생활 맨 아래 설명을 제거하고 ‘블랙아이스 안내’ 스위치를 추가했다. 현재 비 안내의 참조 문구도 ‘우산’ 대신 새 이름인 ‘비 항목’으로 맞췄다.
+- 기존 umbrellaEnabled/outerwearEnabled/waterEnabled/maskEnabled/drynessEnabled는 각각 비/추위/더위/대기질/건조도로 사용한다. 새 snowPreparationEnabled·uvPreparationEnabled·pollenEnabled를 별도로 저장해 눈과 대설특보, 자외선과 예전 개별 물품, 대기질과 꽃가루를 구분한다. 앱 구 저장값에서는 기존 선택을 기본으로 이관한다. 서버 신규4열(위3개+blackIceEnabled)은 nullable이며 미지원 구 앱은 기존 선택과 블랙아이스 기존ON 동작을 유지한다. 두 API의 필드 없는 부분 갱신에서도 OFF를 보존한다. 앱 저장·동기화·위젯 설정 키 n/v/f 확장 및 서버 해독/구버전 키 호환을 연결했다.
+- preparationsForSnapshots/Window에 preparationSettings를 전달해 추천 물품을 합치기 전에 원인별로 제어한다. 비OFF·눈ON에서도 눈 대비 우산을 허용하고 눈 준비물과 대설특보는 별개다. 자외선 스위치 하나가 관련 물품을 제어하고 마스크는 대기질·꽃가루 각각 원인을 남긴다. 물/더위OFF가 건조도 준비물을 끄지 않는다. 서버 앱 API와 정기 발송에 같은 필터를 적용했다. 새 임계값/기상 판정 범위를 만들지는 않았다.
+- 블랙아이스는 collectRoadIceNotification 진입 시 OFF를 제외하고 실제 sender 직전 DB 재검사에서도 OFF를 제외한다. 조회 중 끄면 발송 이력/위험 상태를 소비하지 않는다. 도로통제·기타 특보·현재 비는 각 기존 설정과 경로를 유지한다.
+- 사용자 지적의 브리핑 불일치를 수정했다. weatherBrief.ts sceneAllowedByContext에서 HUMIDITY_LOW+drynessPreparations의 허용 물품을 WATER 대신 LIP_BALM/HAND_CREAM/PORTABLE_HUMIDIFIER로 검사한다. 물OFF·건조도ON에서 습도40/30/20%의 세 경우 모두 HUMIDITY_LOW와 해당 준비물이 선택되고 ‘특별한 예보’ 문구가 사라지는 회귀 검사를 통과했다. 앞 HANDOFF와 건조도 배포 문서의 미해결 기록은 당시 상태이며, 시험 서버에서는 이번 후속 배포로 해결했다. 운영은 아직 미승격이다.
+- 검증: Flutter 설정/시간/저장5파일67개, 홈·건조도2파일79개로 앱146개 통과. Node Today/챙겨요/건조도/SQLite/구버전5파일72개, 기존 설정API·스케줄러2파일58개로 서버130개 통과. 앱 정적 분석 이슈없음, 서버 타입 검사·최종 배포 후보 타입 검사·git diff --check 통과. 최종 정상 main.dart 전체 QA APK13초 빌드 성공. 새 꽃가루 합성 검사 최초2건의 날짜를 실제 ISO 형식으로 수정한 뒤72개 재통과했으며 제품 기준은 바꾸지 않았다.
+- 시험 배포: 최초 Today 단독 시도에서 0006_today_notifications.sql은 온라인 백업/트랜잭션/기존 데이터 해시 비교 후 적용됐지만, 설치본 프로브를 /home/ubuntu에서 실행해 tsx를 찾지 못하는 검사 도구 오류로 소스가 자동 복구됐다. DB 추가 열은 보존했다. 이후 실행 cwd를 설치 경로로 수정하고 최종 요청까지 포함해 재배포했다. 시험 서버에는 개발용 typescript가 없어 정확한 설치본 기반 후보를 로컬 개발 의존성으로 타입 검사하고 그 소스 매니페스트를 Linux에서 대조했으며 런타임 검사는 Linux에서 실행했다.
+- 최종 시험 배포는2026-10-30 16:08:13 KST 완료,16:10:03 KST 최종 점검 통과다. 서버 소스8파일(database/notificationSettingsRepository.ts, notification/notificationScheduler.ts, presentation/weatherBrief.ts, types.ts, validation/notificationSettings.ts, api/weather.ts, recommendations/preparationPolicy.ts, recommendations/recommendationEngine.ts)과 사용자 마이그레이션0006/0007의10파일만 반영했다. 최종0007_carry_categories_black_ice.sql 적용 시 기존 설정40건과 모든 기존 테이블의 원래 열·행 해시를 트랜잭션 안에서 비교해 보존했다. 기본/D1용0024_carry_categories_black_ice.sql도 저장소에 추가했지만 운영/공용 날씨 DB에는 적용하지 않았다.
+- 백업: 최초 /var/backups/weather-care/today-test-20261030T065653Z/users-before.sqlite, 최종 /var/backups/weather-care/today-test-20261030T070803Z/users-before.sqlite. 디렉터리0700/DB0600 확인. 실제 사용자 DB 다운로드 없음. 원격 시험 설치 경로 /opt/weather-care/releases/20261023-full-test/weather_care_server, 작업 경로 /tmp/weather-care-today-test-20261030-LzF3qFCE.
+- Linux 후보·설치본 격리 메모리DB 프로브 각59개 통과(실제 외부요청/FCM0). 공개 서울·시흥·부산4경로 배포 전후24요청에서 기존 응답 필드·자료형 보존. 실제 시험 API의 FCM없는 전체OFF 임시 설치로48요청·27검사를 수행해 두 API의 신규9선택값과 기존 설정 보존을 확인하고 인증 삭제로 임시 설치/연관 설정 잔여0건을 확인했다. 검증 도구가 두 설정 경로의 반환 형식을 동일하게 취급한 최초 실패는 GET 조회로 재확인하도록 수정했고 실패 시에도 임시 설치는 정리했다. 기존 사용자 설정에 시험값을 쓰지 않았다.
+- 최종 시험 API PID784896 active, 시험 스케줄러는 원래 inactive 유지. 운영 API742759·스케줄러742823 유지, 운영 소스/사용자 DB 스키마·공용 날씨 DB 스키마·환경·서비스 정의 보존. 시험health200/키없는요청403/운영health200, DB무결성ok·외래키오류0·배포구간 런타임오류0을 확인했다. 시험 서버 코드는 반영됐지만 실제 자동 FCM을 위해 비활성 스케줄러를 임의로 켜지는 않았다.
+- 기록: docs/Today_챙겨요_시험서버_배포_20261030.md 및 검증 JSON, 기존 건조도 배포 문서의 후속 해결 기록. ignored 서버build/today-carry-test-deploy-20261030에 snapshot/plan/report/probe/live-probe/postverify와 실행 도구/로그, build/categories-node-tests.log·categories-worker-tests.log·categories-typecheck.log. 앱build/notification-time-20261030/categories-tests.log·categories-home-tests.log·categories-analyze.log 및 build/categories-20261030/build.log·full-app.apk.
+- 실기기 설치/화면 조작·iOS 빌드·운영/스토어 배포·커밋·푸시는 하지 않았다. 기존 건조도 관련 미커밋 작업과 앞선 시간 UI 수정은 보존했다. 이후 Git 반영 요청 시 현재 여러 기능이 같은 파일을 공유하므로 범위를 확인해야 한다.
+
+## 2026-10-30 최종 시험 배포본 구버전 호환성 비교·보완
+
+- 사용자 요청 ‘서버 배포 시 구 버전 호환성 확인’을 실제 운영/시험 설치 모듈과 공개 API로 검증했다. 기존 여러 로컬 작업과 앱 변경은 보존했다. 이번 제품 변경은 preparationPolicy.ts의 구버전 눈 대비 우산 예외4줄과 carryCategories.test.ts 회귀 검사1개다. 운영 배포는 수행하지 않았다.
+- 실제 Linux 운영·시험 소스의 정기 스케줄러를 각각 격리 메모리SQLite에서 실행해 구버전 설정12조합×날씨15종=180쌍을 비교했다. 제목·본문·알림 키·이동 목적지를 비교했으며 실제 외부요청/FCM/사용자DB쓰기0이다. 최초178쌍 일치, 같은 원인2쌍 차이를 재현했다: 우산ON·대설OFF인 구버전에서 운영은 눈 대비 우산 요약을 생성하지만 새 시험은 snow fallback으로 모든 눈 준비물을 차단해 요약을 생략했다.
+- 최소 보완: preparationSettings.snowPreparationEnabled가 undefined인 구버전만 눈의 UMBRELLA를 기존 umbrellaEnabled로 제어한다. 명시적으로 새 눈 항목을OFF한 앱은 계속 차단한다. 임계값·기존 특보 설정·새눈ON/비OFF 동작은 바꾸지 않았다. 구버전 우산ON·대설OFF 유지와 새눈OFF 제외를 회귀 검사로 추가했다.
+- 로컬 Node 준비물/구버전/Today/구역/SQLite/건조도6파일90개, 기존 설정API/스케줄러2파일58개로148개 통과. 타입 검사 및 git diff --check 통과. 구버전 두 설정 API의 기존 필드 저장/부분 갱신/잘못된 시각/인증20검사 통과. 실제 운영 사용자 스키마0001~0004를 합성한 메모리DB에0005~0007을 적용해 기존 열·값 보존, 새 선택값NULL/Today기본ON, 재적용 안전성을 확인했다.
+- 시험 재반영: 기존 설치본과 정확히 일치하는 소스에서4줄 보완만 허용하는 패치 검사를 했다. Linux 배포 후보의180구버전 비교가 전부 일치하고 새기능59개를 통과한 뒤 preparationPolicy.ts 한 파일만 백업/원자 교체하고 시험API를 재시작했다. 설치본에서도180/180일치·신규기능59개 재통과. DB 변경/마이그레이션/실사용자 설정 쓰기 없음. 소스 백업 /var/backups/weather-care/legacy-compat-test-20261030T072210Z/preparationPolicy.ts, 디렉터리0700. 실패시 원복 도구를 준비했으며 최종 성공했다.
+- 시험 보완 반영16:22:14 KST, 최종 공개 API 재검증16:23:34 KST 완료다. 미지정/15/18/UNKNOWN 카탈로그×Main/Today/Weekly/Widget을 운영·시험32요청으로 비교해 기존 응답 최상위 필드/자료형·위젯schemaVersion과 새 건조도 준비물/메시지 미노출을 확인했다. 시험health200/키없는요청403/운영health200이다. 검증 전후 소스·서비스·DB스키마 일치를 확인했다.
+- 최종 시험API PID787518 active, 시험스케줄러 inactive 유지. 운영API742759/스케줄러742823과 운영 소스/DB 스키마·공용날씨 스키마·환경/서비스 정의 보존. 실제 구버전APK/IPA 설치·실행 검사는 아니며 모든 과거 앱을 검증한 것으로 확대하지 않는다. 향후 운영 승격 시에는 기존 운영 DB가0004 상태이므로 백업→사용자마이그레이션0005/0006/0007→이번 호환성 보완 포함 코드→API/스케줄러 검증 순서가 필요하다. 현재 운영은 수정하지 않았다.
+- 기록: docs/서버_구버전_호환성_검증_20261030.md/json, 기존 Today·챙겨요 배포 문서 후속 보완 기록. ignored 서버build/compat-after-deploy-20261030의 before-fix-runtime/audit.json, compat-runtime/audit/fix.json, local-tests/worker-tests/typecheck.log 및 실행 도구에 증거가 있다. 원격 작업폴더는 /tmp/weather-care-today-test-20261030-LzF3qFCE이며 최초배포plan 이후 preparationPolicy.ts만 바뀌었으므로 compat-fixed-plan.json이 최종 매니페스트다. 최초 배포문서의 PID784896/plan은 당시 상태다. 앱 수정·실기기 조작·커밋·푸시 없음.
+
+## 2026-10-30 알림 개편·구버전 호환성 수정 커밋 및 푸시
+
+- 사용자 요청으로 챙겨요 시간 명칭/팝업 간격/구분선, 최상단 알림 사용여부 한 행, 준비물 원인별8항목, Today5항목, 블랙아이스 개별 선택, 설명 정리, 서버 저장/스케줄러/브리핑과 구버전 눈 대비 우산 호환성 보완 및 시험 배포/검증 기록을 Git 반영한다.
+- 서버 기능이 의존하는 건조도 규칙·카탈로그·응답 및 사용자0005~0007/기본0022~0024 마이그레이션도 포함해 독립 실행 가능한 서버를 구성한다. 별도 작업인 앱 건조도 상세 UI·준비물 enum/아이콘·PREPARATION_21 요청 전환·기준 조사 문서·그 배포/조사 기록은 미커밋으로 보존한다. 공유 홈 화면은 알림 선택값 위젯 전달 부분만 선별하고 HANDOFF는 이번 채팅의 시간/알림/호환성 및 Git 반영 기록만 고른다. 작업 파일은 되돌리지 않는다.
+- 시작 HEADd0c56df와 fetch 후 원격master 일치를 확인했고 기존 인덱스는 비어 있었다. 기존 앱146개·서버148개·180구버전조합·설치본 신규59개·타입/분석/빌드/공백 검사 기록을 확인했다. 앱 별도 변경을 제외하므로 인덱스 후보만 복제해 설정/홈 회귀와 서버 검사를 추가 확인한 뒤 한글 메시지로 커밋하고 일반 푸시 및 원격HEAD 일치를 확인한다. 새 배포/실기기 조작은 수행하지 않는다.
+
+- 최종 인덱스 후보 검증: 별도 앱 변경을 포함하지 않은 후보에서 Flutter6파일142개, Node6파일90개·기존 설정/스케줄러/카탈로그3파일74개(서버164개) 모두 통과했다. 앱8파일 정적 분석 이슈없음·서버타입검사·스테이징 공백 검사 통과. ignored 앱build/alerts-commit-20261030에 후보 및 pub-get/flutter-tests/node-tests/worker-tests/analyze/typecheck 로그를 보관한다. 커밋 대상은42파일이며 별도 미커밋 변경은 보존했다.

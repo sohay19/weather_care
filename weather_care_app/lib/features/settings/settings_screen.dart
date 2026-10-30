@@ -365,7 +365,7 @@ class _WeatherAlertsSettingsScreenState
         hour: int.tryParse(pieces.first) ?? 7,
         minute: int.tryParse(pieces.length > 1 ? pieces[1] : '') ?? 0,
       ),
-      title: '알림 시간 선택',
+      title: '챙겨요 알림 시간',
     );
     if (selected == null || !mounted) return;
     final time =
@@ -379,6 +379,22 @@ class _WeatherAlertsSettingsScreenState
     return _SettingsDetailScaffold(
       title: '알림',
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          key: const ValueKey('weather-alerts-master-section'),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          decoration:
+              WeatherCareTheme.of(context).surfaceDecoration(radius: 24),
+          child: _SettingsToggleTile(
+            icon: Icons.notifications_active_outlined,
+            settingId: 'notificationEnabled',
+            title: '알림 사용여부',
+            value: settings.notificationEnabled,
+            enabled: !widget.paused,
+            onChanged: (value) =>
+                _update(settings.copyWith(notificationEnabled: value)),
+          ),
+        ),
+        const SizedBox(height: 12),
         Container(
           key: const ValueKey('notification-save-notice'),
           padding: const EdgeInsets.all(15),
@@ -409,22 +425,6 @@ class _WeatherAlertsSettingsScreenState
           ),
         ),
         const SizedBox(height: 16),
-        _SettingsSection(
-          key: const ValueKey('weather-alerts-master-section'),
-          icon: Icons.cloud,
-          title: '날씨 알림',
-          subtitle: '모든 날씨 알림의 사용 여부를 설정해요',
-          child: _SettingsToggleTile(
-            icon: Icons.notifications_active_outlined,
-            settingId: 'notificationEnabled',
-            title: '사용 여부',
-            subtitle: enabled ? '알림이 켜져 있어요' : '알림이 꺼져 있어요',
-            value: settings.notificationEnabled,
-            enabled: !widget.paused,
-            onChanged: (value) =>
-                _update(settings.copyWith(notificationEnabled: value)),
-          ),
-        ),
         if (widget.paused) ...[
           const SizedBox(height: 8),
           const Text('서버 데이터 사용이 중지돼 있어 알림 설정을 변경할 수 없어요.'),
@@ -433,8 +433,8 @@ class _WeatherAlertsSettingsScreenState
         _SettingsSection(
           key: const ValueKey('notification-time-section'),
           icon: Icons.schedule_outlined,
-          title: '알림 시간',
-          subtitle: '준비물 요약 알림 시간을 설정해요',
+          title: '챙겨요 알림 시간',
+          subtitle: '챙겨요·Today 알림 시간을 설정해요',
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             SettingsTimeControl(
@@ -469,7 +469,7 @@ class _WeatherAlertsSettingsScreenState
             if (!settings.dailyWeatherEnabled)
               const Padding(
                 padding: EdgeInsets.only(top: 8),
-                child: Text('준비물 요약 알림을 켜야 설정한 시간이 적용돼요.'),
+                child: Text('챙겨요·Today 알림을 켜야 설정한 시간이 적용돼요.'),
               ),
           ]),
         ),
@@ -496,57 +496,128 @@ class _WeatherAlertsSettingsScreenState
             _SettingsToggleTile(
               icon: Icons.umbrella_outlined,
               settingId: 'umbrellaEnabled',
-              title: '우산',
-              subtitle: '준비물 요약과 현재 비 안내에 함께 적용돼요',
+              title: '비',
               value: settings.umbrellaEnabled,
               enabled: enabled,
               onChanged: (value) =>
                   _update(settings.copyWith(umbrellaEnabled: value)),
             ),
             _SettingsToggleTile(
-              icon: Icons.wb_sunny_outlined,
-              settingId: 'parasolEnabled',
-              title: '양산',
-              value: settings.parasolEnabled,
+              icon: Icons.ac_unit_rounded,
+              settingId: 'snowPreparationEnabled',
+              title: '눈',
+              value: settings.snowPreparationEnabled,
               enabled: enabled,
               onChanged: (value) =>
-                  _update(settings.copyWith(parasolEnabled: value)),
+                  _update(settings.copyWith(snowPreparationEnabled: value)),
             ),
             _SettingsToggleTile(
               icon: Icons.checkroom_rounded,
               settingId: 'outerwearEnabled',
-              title: '겉옷',
+              title: '추위',
               value: settings.outerwearEnabled,
               enabled: enabled,
               onChanged: (value) =>
                   _update(settings.copyWith(outerwearEnabled: value)),
             ),
             _SettingsToggleTile(
-              icon: Icons.face_outlined,
-              settingId: 'maskEnabled',
-              title: '마스크',
-              value: settings.maskEnabled,
-              enabled: enabled,
-              onChanged: (value) =>
-                  _update(settings.copyWith(maskEnabled: value)),
-            ),
-            _SettingsToggleTile(
               icon: Icons.local_drink_outlined,
               settingId: 'waterEnabled',
-              title: '물',
+              title: '더위',
               value: settings.waterEnabled,
               enabled: enabled,
               onChanged: (value) =>
                   _update(settings.copyWith(waterEnabled: value)),
             ),
             _SettingsToggleTile(
-              icon: Icons.spa_outlined,
-              settingId: 'sunscreenEnabled',
-              title: '선크림',
-              value: settings.sunscreenEnabled,
+              icon: Icons.wb_sunny_outlined,
+              settingId: 'uvPreparationEnabled',
+              title: '자외선',
+              value: settings.uvPreparationEnabled,
               enabled: enabled,
               onChanged: (value) =>
-                  _update(settings.copyWith(sunscreenEnabled: value)),
+                  _update(settings.copyWith(uvPreparationEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.face_outlined,
+              settingId: 'maskEnabled',
+              title: '대기질',
+              value: settings.maskEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(maskEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.local_florist_outlined,
+              settingId: 'pollenEnabled',
+              title: '꽃가루',
+              value: settings.pollenEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(pollenEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.water_drop_outlined,
+              settingId: 'drynessEnabled',
+              title: '건조도',
+              value: settings.drynessEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(drynessEnabled: value)),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        _SettingsSection(
+          key: const ValueKey('today-notification-section'),
+          icon: Icons.today_outlined,
+          title: 'Today 알림',
+          subtitle: '챙겨요 알림과 발송되는 시각은 같아요',
+          child: Column(children: [
+            _SettingsToggleTile(
+              icon: Icons.visibility_outlined,
+              settingId: 'todayVisibilityEnabled',
+              title: '가시거리',
+              value: settings.todayVisibilityEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(todayVisibilityEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.blur_on_rounded,
+              settingId: 'todayOzoneEnabled',
+              title: '오존',
+              value: settings.todayOzoneEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(todayOzoneEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.air_rounded,
+              settingId: 'todayWindEnabled',
+              title: '바람',
+              value: settings.todayWindEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(todayWindEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.water_drop_outlined,
+              settingId: 'todayHumidityEnabled',
+              title: '습도',
+              value: settings.todayHumidityEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(todayHumidityEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.thermostat_rounded,
+              settingId: 'todayApparentTemperatureEnabled',
+              title: '체감온도',
+              value: settings.todayApparentTemperatureEnabled,
+              enabled: enabled,
+              onChanged: (value) => _update(
+                  settings.copyWith(todayApparentTemperatureEnabled: value)),
             ),
           ]),
         ),
@@ -608,6 +679,15 @@ class _WeatherAlertsSettingsScreenState
                   _update(settings.copyWith(coldWaveEnabled: value)),
             ),
             _SettingsToggleTile(
+              icon: Icons.severe_cold_rounded,
+              settingId: 'blackIceEnabled',
+              title: '블랙아이스 안내',
+              value: settings.blackIceEnabled,
+              enabled: enabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(blackIceEnabled: value)),
+            ),
+            _SettingsToggleTile(
               icon: Icons.plumbing_rounded,
               settingId: 'pipeFreezeEnabled',
               title: '수도관 동파 대비 안내',
@@ -623,7 +703,7 @@ class _WeatherAlertsSettingsScreenState
               settingId: 'showerAndLightRainEnabled',
               title: '현재 비 안내',
               subtitle:
-                  '관측분석·레이더가 일치한 현재 비를 안내해요.\n우산도 켜야 하며, 저장 지역은 예보 격자 기준으로 확인해요.\n소나기 예보 알림은 아니에요',
+                  '관측분석·레이더가 일치한 현재 비를 안내해요.\n비 항목도 켜야 하며, 저장 지역은 예보 격자 기준으로 확인해요.\n소나기 예보 알림은 아니에요',
               value: settings.showerAndLightRainEnabled,
               enabled: enabled,
               onChanged: (value) =>
@@ -632,17 +712,12 @@ class _WeatherAlertsSettingsScreenState
             _SettingsToggleTile(
               icon: Icons.wb_cloudy_outlined,
               settingId: 'dailyWeatherEnabled',
-              title: '준비물 요약 알림',
-              subtitle: '추천할 준비물이 있을 때만 설정한 시간에 하루 한 번, 선택한 항목 중 최대 3개를 안내해요',
+              title: '챙겨요·Today 알림',
+              subtitle: '선택한 준비물이나 Today 안내가 있을 때 설정한 시간에 하루 한 번 알려요',
               value: settings.dailyWeatherEnabled,
               enabled: enabled,
               onChanged: (value) =>
                   _update(settings.copyWith(dailyWeatherEnabled: value)),
-            ),
-            const Divider(height: 24),
-            const Text(
-              '블랙아이스(도로살얼음)·도로통제·그 밖의 공식 특보는 개별 스위치 없이 전체 날씨 알림 설정을 따라요.\n도로통제 알림은 설정한 출퇴근 시간 안에서만 보내요.\n블랙아이스·도로통제는 서버에 등록된 정밀 위치와 해당 자료가 있어야 해요.',
-              key: ValueKey('additional-notification-contract'),
             ),
           ]),
         ),

@@ -10,6 +10,10 @@ export const lifestyleMessageCatalog: Record<
   LifestyleInsightType,
   LifestyleMessageTemplate[]
 > = {
+  DRYNESS_GUIDANCE: [{
+    title: '건조도와 보습 준비물을 확인하세요',
+    description: '실내 습도도 확인하고 낮다면 가습기 사용을 고려하세요.',
+  }],
   RAIN_GEAR_USEFUL: [
     {
       title: '비가 올 수 있으니, 외출한다면 우산을 챙기세요',

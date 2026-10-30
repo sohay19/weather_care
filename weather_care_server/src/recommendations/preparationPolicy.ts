@@ -2,9 +2,10 @@ import { defaultRuleConfig } from '../config/ruleConfig';
 import type { WeatherForecast } from '../providers/weather/weatherProvider';
 import { snapshotTime } from '../rules/timeWindows';
 import { precipitationDecisionSnapshot, precipitationPeriod } from '../rules/precipitationWindows';
-import type { RecommendationType, WeatherMessagePart, WeatherSnapshot } from '../types';
+import type { NotificationSettings, RecommendationType, WeatherMessagePart, WeatherSnapshot } from '../types';
 import { buildPreparationEvidence, type PreparationReason } from './preparationEvidence';
 import { pollenEvidence } from '../services/livingIndexAdvice';
+import { drynessLevel, drynessPreparation } from '../rules/dryness';
 
 export interface PreparationCandidate {
   type: RecommendationType;
@@ -15,13 +16,15 @@ export interface PreparationCandidate {
   evidence: WeatherMessagePart[];
 }
 
-type Category = 'snow' | 'heat' | 'cold' | 'rain' | 'air' | 'uv';
+type Category = 'snow' | 'heat' | 'cold' | 'rain' | 'air' | 'uv' | 'humidity';
 type Level = 0 | 1 | 2 | 3;
 
-const categoryPriority: Category[] = ['snow', 'heat', 'cold', 'rain', 'air', 'uv'];
+const categoryPriority: Category[] = ['snow', 'heat', 'cold', 'rain', 'air', 'uv', 'humidity'];
 const HOUR = 3_600_000;
 
 interface PreparationWindow {
+  preparationSettings?: Partial<NotificationSettings>;
+  drynessPreparations?: boolean;
   now?: Date;
   end?: number;
   sunriseAt?: string;
@@ -34,12 +37,21 @@ export function preparationsForSnapshots(
   snapshots: WeatherSnapshot[],
   window: PreparationWindow = {},
 ): PreparationCandidate[] {
+  const settings = window.preparationSettings;
+  const enabledReasons: Partial<Record<PreparationReason, boolean>> = {
+    rain: settings?.umbrellaEnabled,
+    snow: settings?.snowPreparationEnabled ?? settings?.heavySnowEnabled,
+    cold: settings?.outerwearEnabled,
+    heat: settings?.waterEnabled,
+    uv: settings?.uvPreparationEnabled,
+    humidity: settings?.drynessEnabled,
+  };
   const levels: Record<Category, Level> = {
-    snow: 0, heat: 0, cold: 0, rain: 0, air: 0, uv: 0,
+    snow: 0, heat: 0, cold: 0, rain: 0, air: 0, uv: 0, humidity: 0,
   };
   const first: Record<Category, number> = {
     snow: Infinity, heat: Infinity, cold: Infinity, rain: Infinity,
-    air: Infinity, uv: Infinity,
+    air: Infinity, uv: Infinity, humidity: Infinity,
   };
   const itemStart = new Map<RecommendationType, number>();
   const itemEnd = new Map<RecommendationType, number>();
@@ -79,6 +91,10 @@ export function preparationsForSnapshots(
       if (active && Number.isFinite(time)) first[category] = Math.min(first[category], time);
     };
     const record = (type: RecommendationType, active: boolean, reason: PreparationReason, criterion: string) => {
+      // 구 앱의 우산 선택은 대설 알림 선택과 무관하게 눈 대비 우산도 포함한다.
+      const legacySnowUmbrella = reason === 'snow' && type === 'UMBRELLA' &&
+        settings?.snowPreparationEnabled === undefined && settings?.umbrellaEnabled !== false;
+      if (enabledReasons[reason] === false && !legacySnowUmbrella) return;
       const { start, end } = intervalFor(reason);
       if (active && usable(reason)) {
         const parts = buildPreparationEvidence(item, reason, criterion);
@@ -142,19 +158,37 @@ export function preparationsForSnapshots(
       record('SCARF', thermal <= 0, 'cold', `${metric} 0℃ 이하`);
       record('HAND_WARMER', thermal <= 0, 'cold', `${metric} 0℃ 이하`);
     }
-    const poorParticles = usable('air') && ((item.pm10 ?? 0) >= defaultRuleConfig.airQuality.pm10 ||
+    if (window.drynessPreparations && usable('humidity')) {
+      const level = drynessLevel(item.humidity) ?? 0;
+      levels.humidity = Math.max(levels.humidity, level) as Level;
+      mark('humidity', level > 0);
+      // 낮은 단계 물품을 누적하지 않고 해당 시간대의 물품에만 근거를 연결한다.
+      const preparation = drynessPreparation(item.humidity);
+      if (preparation) record(preparation, true, 'humidity', level === 3
+        ? '상대습도 20% 이하: 매우 건조' : level === 2
+        ? '상대습도 20% 초과~30% 이하: 건조' : '상대습도 30% 초과~40% 이하: 약한 건조');
+    }
+    const poorParticles = settings?.maskEnabled !== false && usable('air') && ((item.pm10 ?? 0) >= defaultRuleConfig.airQuality.pm10 ||
       (item.pm25 ?? 0) >= defaultRuleConfig.airQuality.pm25 ||
       /bad|나쁨/i.test(item.pm25ForecastGrade ?? ''));
-    const highPollen = usable('air') && pollenEvidence(item).length > 0;
+    const highPollen = (settings?.pollenEnabled ?? settings?.maskEnabled ?? true) && usable('air') && pollenEvidence(item).length > 0;
     if (poorParticles) maskReasons.add('air');
     if (highPollen) maskReasons.add('pollen');
     if (poorParticles || highPollen) levels.air = 1;
     mark('air', poorParticles || highPollen);
-    record('MASK', poorParticles || highPollen, 'air', `미세먼지 ${defaultRuleConfig.airQuality.pm10}㎍/㎥ 이상 또는 초미세먼지 ${defaultRuleConfig.airQuality.pm25}㎍/㎥ 이상 또는 초미세먼지 예보 나쁨 또는 꽃가루 예측 높음 이상`);
+    record('MASK', poorParticles || highPollen, 'air', [
+      ...(poorParticles ? [`미세먼지 ${defaultRuleConfig.airQuality.pm10}㎍/㎥ 이상 또는 초미세먼지 ${defaultRuleConfig.airQuality.pm25}㎍/㎥ 이상 또는 초미세먼지 예보 나쁨`] : []),
+      ...(highPollen ? ['꽃가루 예측 높음 이상'] : []),
+    ].join(' 또는 '));
     unsuitableParasol ||= rain || snow || (usable('uv') && (item.windSpeed ?? 0) >= defaultRuleConfig.wind.caution);
   }
 
   const groups: Record<Category, { base?: RecommendationType; extras: RecommendationType[] }> = {
+    humidity: {
+      base: levels.humidity === 3 ? 'PORTABLE_HUMIDIFIER'
+        : levels.humidity === 2 ? 'HAND_CREAM' : levels.humidity === 1 ? 'LIP_BALM' : undefined,
+      extras: [],
+    },
     snow: {
       base: levels.snow >= 2 ? 'WINTER_BOOTS' : levels.snow ? 'SLIP_RESISTANT_SHOES' : undefined,
       extras: [
@@ -221,7 +255,7 @@ export function preparationsForSnapshots(
 export function preparationsForWindow(
   forecast: WeatherForecast,
   now: Date,
-  options: { sunriseAt?: string; sunsetAt?: string; allowedRecommendedItems?: RecommendationType[] } = {},
+  options: { sunriseAt?: string; sunsetAt?: string; allowedRecommendedItems?: RecommendationType[]; drynessPreparations?: boolean; preparationSettings?: Partial<NotificationSettings> } = {},
 ): PreparationCandidate[] {
   const korea = new Date(now.getTime() + 9 * HOUR);
   const end = Date.UTC(korea.getUTCFullYear(), korea.getUTCMonth(), korea.getUTCDate() + 1) - 9 * HOUR;
@@ -238,11 +272,13 @@ export function preparationsForWindow(
     ['PORTABLE_FAN', 'COOLING_ITEM', 'WATER'],
     ['MASK'],
     ['PARASOL', 'SUN_HAT', 'SUNSCREEN', 'SUNGLASSES'],
+    ['PORTABLE_HUMIDIFIER', 'HAND_CREAM', 'LIP_BALM'],
   ];
   const severity: Partial<Record<RecommendationType, number>> = {
     HAND_WARMER: 3, OUTERWEAR: 2, LIGHT_OUTERWEAR: 1,
     PORTABLE_FAN: 3, COOLING_ITEM: 2, WATER: 1,
     MASK: 2, PARASOL: 3, SUN_HAT: 2, SUNSCREEN: 1,
+    PORTABLE_HUMIDIFIER: 3, HAND_CREAM: 2, LIP_BALM: 1,
   };
   const groups = representatives.map((types, priority) => ({ priority,
     items: types.flatMap((type) => {

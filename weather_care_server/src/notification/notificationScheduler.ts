@@ -63,6 +63,16 @@ interface NotificationInstallationRow extends CommuteSchedule, RegionTarget {
   maskEnabled: number;
   waterEnabled: number;
   sunscreenEnabled: number;
+  drynessEnabled: number | null;
+  todayVisibilityEnabled: number;
+  todayOzoneEnabled: number;
+  todayWindEnabled: number;
+  todayHumidityEnabled: number;
+  todayApparentTemperatureEnabled: number;
+  snowPreparationEnabled: number | null;
+  uvPreparationEnabled: number | null;
+  pollenEnabled: number | null;
+  blackIceEnabled: number | null;
   dailyWeatherEnabled: number;
   heavyRainEnabled: number;
   heatwaveEnabled: number;
@@ -272,7 +282,10 @@ export async function runRecommendationNotificationJob(
         {
           regionKey,
           tieredPreparations: true,
-          allowedRecommendedItems: enabledRecommendationTypes(settingsFromRow(row)),
+          todayNotificationSettings: settingsFromRow(row),
+          preparationSettings: settingsFromRow(row),
+          drynessPreparations: row.drynessEnabled != null,
+          allowedRecommendedItems: enabledRecommendationTypes(settingsFromRow(row), row.drynessEnabled != null),
           ...(briefingCoordinates
             ? calculateSunTimes(
                 now,
@@ -323,9 +336,10 @@ export async function runRecommendationNotificationJob(
     WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 0) = 1
       AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version = 1
       AND (? <> 'PIPE_FREEZE_CAUTION' OR COALESCE(s.pipe_freeze_enabled, 0) = 1)
+      AND (? = 0 OR COALESCE(s.black_ice_enabled, 1) = 1)
       AND NOT EXISTS (SELECT 1 FROM installation_activity a
         WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
-    .bind(item.installationId, item.token, item.built.notification_key,
+    .bind(item.installationId, item.token, item.built.notification_key, item.roadIceRisk ? 1 : 0,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendAt = dependencies.now ?? new Date();
   const regionEligible = await Promise.all(pending.map(item => regionStillEnabled(env.DB, item.installationId, item.region!)));
@@ -379,6 +393,16 @@ async function notificationInstallations(
          COALESCE(s.mask_enabled, 1) AS maskEnabled,
          COALESCE(s.water_enabled, 1) AS waterEnabled,
          COALESCE(s.sunscreen_enabled, 1) AS sunscreenEnabled,
+         s.dryness_enabled AS drynessEnabled,
+         COALESCE(s.today_visibility_enabled, 1) AS todayVisibilityEnabled,
+         COALESCE(s.today_ozone_enabled, 1) AS todayOzoneEnabled,
+         COALESCE(s.today_wind_enabled, 1) AS todayWindEnabled,
+         COALESCE(s.today_humidity_enabled, 1) AS todayHumidityEnabled,
+         COALESCE(s.today_apparent_temperature_enabled, 1) AS todayApparentTemperatureEnabled,
+         s.snow_preparation_enabled AS snowPreparationEnabled,
+         s.uv_preparation_enabled AS uvPreparationEnabled,
+         s.pollen_enabled AS pollenEnabled,
+         s.black_ice_enabled AS blackIceEnabled,
          COALESCE(s.daily_weather_enabled, 1) AS dailyWeatherEnabled,
          COALESCE(s.heavy_rain_enabled, 1) AS heavyRainEnabled,
          COALESCE(s.heatwave_enabled, 1) AS heatwaveEnabled,
@@ -544,7 +568,7 @@ async function collectRoadIceNotification(
     roadNumbers: readonly string[],
   ) => Promise<RoadIceRisk | undefined>,
 ): Promise<void> {
-  if (row.latitude === null || row.longitude === null) return;
+  if (row.blackIceEnabled === 0 || row.latitude === null || row.longitude === null) return;
   const region = regionMetadataForGrid(row.nx, row.ny);
   const displayRegionName = region?.name ?? '현재 위치';
   const locationKey = [
@@ -1215,6 +1239,16 @@ function settingsFromRow(
     maskEnabled: row.maskEnabled === 1,
     waterEnabled: row.waterEnabled === 1,
     sunscreenEnabled: row.sunscreenEnabled === 1,
+    drynessEnabled: row.drynessEnabled == null ? undefined : row.drynessEnabled === 1,
+    todayVisibilityEnabled: row.todayVisibilityEnabled !== 0,
+    todayOzoneEnabled: row.todayOzoneEnabled !== 0,
+    todayWindEnabled: row.todayWindEnabled !== 0,
+    todayHumidityEnabled: row.todayHumidityEnabled !== 0,
+    todayApparentTemperatureEnabled: row.todayApparentTemperatureEnabled !== 0,
+    snowPreparationEnabled: row.snowPreparationEnabled == null ? undefined : row.snowPreparationEnabled === 1,
+    uvPreparationEnabled: row.uvPreparationEnabled == null ? undefined : row.uvPreparationEnabled === 1,
+    pollenEnabled: row.pollenEnabled == null ? undefined : row.pollenEnabled === 1,
+    blackIceEnabled: row.blackIceEnabled == null ? undefined : row.blackIceEnabled === 1,
     dailyWeatherEnabled: row.dailyWeatherEnabled === 1,
     heavyRainEnabled: row.heavyRainEnabled === 1,
     heatwaveEnabled: row.heatwaveEnabled === 1,

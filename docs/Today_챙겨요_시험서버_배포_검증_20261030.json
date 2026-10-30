@@ -1,0 +1,102 @@
+{
+  "status": "complete",
+  "startedAt": "2026-10-30T16:07:54.805519+09:00",
+  "completedAt": "2026-10-30T16:08:13.558197+09:00",
+  "changedFiles": [
+    "src/database/notificationSettingsRepository.ts",
+    "src/notification/notificationScheduler.ts",
+    "src/presentation/weatherBrief.ts",
+    "src/types.ts",
+    "src/validation/notificationSettings.ts",
+    "src/api/weather.ts",
+    "src/recommendations/preparationPolicy.ts",
+    "src/recommendations/recommendationEngine.ts",
+    "node-migrations/users/0006_today_notifications.sql",
+    "node-migrations/users/0007_carry_categories_black_ice.sql"
+  ],
+  "backup": "/var/backups/weather-care/today-test-20261030T070803Z",
+  "rehearsal": {
+    "candidateTypecheck": "passed",
+    "candidateProbe": {
+      "passed": true,
+      "checks": 59,
+      "externalRequests": 0,
+      "actualFcmSent": 0
+    }
+  },
+  "installedProbe": {
+    "passed": true,
+    "checks": 59,
+    "externalRequests": 0,
+    "actualFcmSent": 0
+  },
+  "publicRequests": 24,
+  "installedSourceMatchesCandidate": true,
+  "productionAndSharedWeatherUnchanged": true,
+  "migration": {
+    "applied": [
+      "0007_carry_categories_black_ice.sql"
+    ],
+    "settingsPreserved": 40,
+    "quickCheck": "ok",
+    "foreignKeyErrors": 0
+  },
+  "liveApi": {
+    "passed": true,
+    "actualFcmSent": 0,
+    "existingUserSettingsModified": 0,
+    "temporaryInstallationRemoved": true,
+    "checks": 27,
+    "controlFields": [
+      "todayVisibilityEnabled",
+      "todayOzoneEnabled",
+      "todayWindEnabled",
+      "todayHumidityEnabled",
+      "todayApparentTemperatureEnabled",
+      "snowPreparationEnabled",
+      "uvPreparationEnabled",
+      "pollenEnabled",
+      "blackIceEnabled"
+    ],
+    "bothSettingsPathsVerified": true,
+    "legacyUpdatesPreserveOff": true,
+    "requests": 48,
+    "checkedAt": "2026-10-30T16:10:00.127143+09:00"
+  },
+  "postverify": {
+    "passed": true,
+    "checkedAt": "2026-10-30T16:10:03.720030+09:00",
+    "services": {
+      "weather-care-api.service": {
+        "MainPID": "742759",
+        "ActiveState": "active"
+      },
+      "weather-care-scheduler.service": {
+        "MainPID": "742823",
+        "ActiveState": "active"
+      },
+      "weather-care-test-api.service": {
+        "MainPID": "784896",
+        "ActiveState": "active"
+      },
+      "weather-care-test-scheduler.service": {
+        "MainPID": "0",
+        "ActiveState": "inactive"
+      }
+    },
+    "healthStatuses": {
+      "test": 200,
+      "testWithoutKey": 403,
+      "production": 200
+    },
+    "settingsCount": 40,
+    "productionAndSharedWeatherUnchanged": true,
+    "installedSourceMatchesCandidate": true,
+    "databaseQuickCheck": "ok",
+    "foreignKeyErrors": 0,
+    "runtimeErrors": 0,
+    "temporaryInstallationsRemaining": 0,
+    "actualFcmSent": 0,
+    "backupPermissionsVerified": true
+  }
+}

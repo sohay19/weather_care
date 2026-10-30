@@ -22,6 +22,7 @@ class SettingsSyncService {
       'maskEnabled': settings.maskEnabled,
       'waterEnabled': settings.waterEnabled,
       'sunscreenEnabled': settings.sunscreenEnabled,
+      'drynessEnabled': settings.drynessEnabled,
       'heavyRainEnabled': settings.heavyRainEnabled,
       'heavySnowEnabled': settings.heavySnowEnabled,
       'heatwaveEnabled': settings.heatwaveEnabled,
@@ -29,6 +30,16 @@ class SettingsSyncService {
       'pipeFreezeEnabled': settings.pipeFreezeEnabled,
       'showerAndLightRainEnabled': settings.showerAndLightRainEnabled,
       'lightningEnabled': settings.lightningEnabled,
+      'todayVisibilityEnabled': settings.todayVisibilityEnabled,
+      'todayOzoneEnabled': settings.todayOzoneEnabled,
+      'todayWindEnabled': settings.todayWindEnabled,
+      'todayHumidityEnabled': settings.todayHumidityEnabled,
+      'todayApparentTemperatureEnabled':
+          settings.todayApparentTemperatureEnabled,
+      'snowPreparationEnabled': settings.snowPreparationEnabled,
+      'uvPreparationEnabled': settings.uvPreparationEnabled,
+      'pollenEnabled': settings.pollenEnabled,
+      'blackIceEnabled': settings.blackIceEnabled,
       'dailyWeatherEnabled': settings.dailyWeatherEnabled,
     };
     await client.putJson(

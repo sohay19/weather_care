@@ -16,6 +16,16 @@ interface NotificationSettingsRow {
   maskEnabled: number;
   waterEnabled: number;
   sunscreenEnabled: number;
+  drynessEnabled: number | null;
+  todayVisibilityEnabled: number;
+  todayOzoneEnabled: number;
+  todayWindEnabled: number;
+  todayHumidityEnabled: number;
+  todayApparentTemperatureEnabled: number;
+  snowPreparationEnabled: number | null;
+  uvPreparationEnabled: number | null;
+  pollenEnabled: number | null;
+  blackIceEnabled: number | null;
   dailyWeatherEnabled: number;
   heavyRainEnabled: number;
   heatwaveEnabled: number;
@@ -40,6 +50,11 @@ export function defaultNotificationSettings(
     maskEnabled: true,
     waterEnabled: true,
     sunscreenEnabled: true,
+    todayVisibilityEnabled: true,
+    todayOzoneEnabled: true,
+    todayWindEnabled: true,
+    todayHumidityEnabled: true,
+    todayApparentTemperatureEnabled: true,
     dailyWeatherEnabled: true,
     heavyRainEnabled: true,
     heatwaveEnabled: true,
@@ -71,6 +86,16 @@ export async function getNotificationSettings(
          mask_enabled AS maskEnabled,
          water_enabled AS waterEnabled,
          sunscreen_enabled AS sunscreenEnabled,
+         dryness_enabled AS drynessEnabled,
+         today_visibility_enabled AS todayVisibilityEnabled,
+         today_ozone_enabled AS todayOzoneEnabled,
+         today_wind_enabled AS todayWindEnabled,
+         today_humidity_enabled AS todayHumidityEnabled,
+         today_apparent_temperature_enabled AS todayApparentTemperatureEnabled,
+         snow_preparation_enabled AS snowPreparationEnabled,
+         uv_preparation_enabled AS uvPreparationEnabled,
+         pollen_enabled AS pollenEnabled,
+         black_ice_enabled AS blackIceEnabled,
          daily_weather_enabled AS dailyWeatherEnabled,
          heavy_rain_enabled AS heavyRainEnabled,
          heatwave_enabled AS heatwaveEnabled,
@@ -99,6 +124,16 @@ export async function getNotificationSettings(
     maskEnabled: row.maskEnabled === 1,
     waterEnabled: row.waterEnabled === 1,
     sunscreenEnabled: row.sunscreenEnabled === 1,
+    drynessEnabled: row.drynessEnabled == null ? undefined : row.drynessEnabled === 1,
+    todayVisibilityEnabled: row.todayVisibilityEnabled !== 0,
+    todayOzoneEnabled: row.todayOzoneEnabled !== 0,
+    todayWindEnabled: row.todayWindEnabled !== 0,
+    todayHumidityEnabled: row.todayHumidityEnabled !== 0,
+    todayApparentTemperatureEnabled: row.todayApparentTemperatureEnabled !== 0,
+    snowPreparationEnabled: row.snowPreparationEnabled == null ? undefined : row.snowPreparationEnabled === 1,
+    uvPreparationEnabled: row.uvPreparationEnabled == null ? undefined : row.uvPreparationEnabled === 1,
+    pollenEnabled: row.pollenEnabled == null ? undefined : row.pollenEnabled === 1,
+    blackIceEnabled: row.blackIceEnabled == null ? undefined : row.blackIceEnabled === 1,
     dailyWeatherEnabled: row.dailyWeatherEnabled === 1,
     heavyRainEnabled: row.heavyRainEnabled === 1,
     heatwaveEnabled: row.heatwaveEnabled === 1,
@@ -125,8 +160,10 @@ export async function upsertNotificationSettings(
        outerwear_enabled, mask_enabled, water_enabled, sunscreen_enabled,
        daily_weather_enabled, heavy_rain_enabled, heatwave_enabled,
        cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported, pipe_freeze_enabled,
-       commute_to_work_start, commute_to_work_end, commute_from_work_start, commute_from_work_end)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       commute_to_work_start, commute_to_work_end, commute_from_work_start, commute_from_work_end, dryness_enabled,
+       today_visibility_enabled, today_ozone_enabled, today_wind_enabled, today_humidity_enabled, today_apparent_temperature_enabled,
+       snow_preparation_enabled, uv_preparation_enabled, pollen_enabled, black_ice_enabled)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
@@ -143,6 +180,16 @@ export async function upsertNotificationSettings(
         mask_enabled=excluded.mask_enabled,
         water_enabled=excluded.water_enabled,
         sunscreen_enabled=excluded.sunscreen_enabled,
+        dryness_enabled=${payload.drynessEnabled === undefined ? 'notification_settings.dryness_enabled' : 'excluded.dryness_enabled'},
+        today_visibility_enabled=${payload.todayVisibilityEnabled === undefined ? 'notification_settings.today_visibility_enabled' : 'excluded.today_visibility_enabled'},
+        today_ozone_enabled=${payload.todayOzoneEnabled === undefined ? 'notification_settings.today_ozone_enabled' : 'excluded.today_ozone_enabled'},
+        today_wind_enabled=${payload.todayWindEnabled === undefined ? 'notification_settings.today_wind_enabled' : 'excluded.today_wind_enabled'},
+        today_humidity_enabled=${payload.todayHumidityEnabled === undefined ? 'notification_settings.today_humidity_enabled' : 'excluded.today_humidity_enabled'},
+        today_apparent_temperature_enabled=${payload.todayApparentTemperatureEnabled === undefined ? 'notification_settings.today_apparent_temperature_enabled' : 'excluded.today_apparent_temperature_enabled'},
+        snow_preparation_enabled=${payload.snowPreparationEnabled === undefined ? 'notification_settings.snow_preparation_enabled' : 'excluded.snow_preparation_enabled'},
+        uv_preparation_enabled=${payload.uvPreparationEnabled === undefined ? 'notification_settings.uv_preparation_enabled' : 'excluded.uv_preparation_enabled'},
+        pollen_enabled=${payload.pollenEnabled === undefined ? 'notification_settings.pollen_enabled' : 'excluded.pollen_enabled'},
+        black_ice_enabled=${payload.blackIceEnabled === undefined ? 'notification_settings.black_ice_enabled' : 'excluded.black_ice_enabled'},
         daily_weather_enabled=excluded.daily_weather_enabled,
         heavy_rain_enabled=excluded.heavy_rain_enabled,
         heatwave_enabled=excluded.heatwave_enabled,
@@ -178,6 +225,16 @@ export async function upsertNotificationSettings(
       payload.commuteToWorkEnd ?? defaultCommuteSchedule.commuteToWorkEnd,
       payload.commuteFromWorkStart ?? defaultCommuteSchedule.commuteFromWorkStart,
       payload.commuteFromWorkEnd ?? defaultCommuteSchedule.commuteFromWorkEnd,
+      payload.drynessEnabled === undefined ? null : booleanInteger(payload.drynessEnabled),
+      booleanInteger(payload.todayVisibilityEnabled ?? true),
+      booleanInteger(payload.todayOzoneEnabled ?? true),
+      booleanInteger(payload.todayWindEnabled ?? true),
+      booleanInteger(payload.todayHumidityEnabled ?? true),
+      booleanInteger(payload.todayApparentTemperatureEnabled ?? true),
+      payload.snowPreparationEnabled === undefined ? null : booleanInteger(payload.snowPreparationEnabled),
+      payload.uvPreparationEnabled === undefined ? null : booleanInteger(payload.uvPreparationEnabled),
+      payload.pollenEnabled === undefined ? null : booleanInteger(payload.pollenEnabled),
+      payload.blackIceEnabled === undefined ? null : booleanInteger(payload.blackIceEnabled),
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

@@ -109,6 +109,18 @@ class WeatherInfoCard extends StatelessWidget {
             '상대습도는 현재 공기가 같은 온도에서 머금을 수 있는 수증량에 얼마나 가까운지를 나타내요. 실내 습도나 피부가 느끼는 건조함과는 다를 수 있어요.\n\n$humidityRanges',
       ),
       _WeatherMetric(
+        icon: Icons.water_drop_outlined,
+        label: '건조도',
+        value: drynessDescription(current.humidity) == null
+            ? '자료 없음'
+            : '${drynessDescription(current.humidity)}\n${formatWeatherNumber(current.humidity!)}%',
+        levelTitle: '실외 상대습도로 판단한 건조도예요',
+        detailBody: drynessDescription(current.humidity) == null
+            ? '$currentSource에서 건조도를 판단할 습도 자료를 받지 못했어요.'
+            : '$currentSource의 상대습도는 ${formatWeatherNumber(current.humidity!)}%예요. 단계에 맞는 준비물 한 가지를 안내해요.',
+        interpretation: drynessRanges,
+      ),
+      _WeatherMetric(
         icon: Icons.air_rounded,
         label: '바람',
         value: current.windSpeed == null
@@ -268,6 +280,7 @@ class WeatherInfoCard extends StatelessWidget {
     const todayMetricOrder = [
       '체감온도',
       '습도',
+      '건조도',
       '자외선',
       '바람',
       '대기질',

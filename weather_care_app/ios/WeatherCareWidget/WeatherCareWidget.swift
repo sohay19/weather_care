@@ -777,9 +777,39 @@ private enum PreparationIconPainter {
       drawBottle(context: &context, rect: rect, style: style, sunscreen: false)
     case "SUNSCREEN":
       drawBottle(context: &context, rect: rect, style: style, sunscreen: true)
+    case "LIP_BALM", "HAND_CREAM", "PORTABLE_HUMIDIFIER":
+      drawMoistureItem(type: type, context: &context, rect: rect, style: style)
     default:
       drawUmbrella(context: &context, rect: rect, style: style, parasol: false)
     }
+  }
+
+  private static func drawMoistureItem(
+    type: String, context: inout GraphicsContext, rect: CGRect, style: StrokeStyle
+  ) {
+    func box(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect {
+      CGRect(x: rect.minX + rect.width * x / 100, y: rect.minY + rect.height * y / 100,
+             width: rect.width * w / 100, height: rect.height * h / 100)
+    }
+    var path = Path()
+    if type == "LIP_BALM" {
+      path.addRoundedRect(in: box(36, 40, 28, 46), cornerSize: CGSize(width: rect.width * 0.04, height: rect.height * 0.04))
+      path.addRect(box(40, 16, 20, 24))
+      path.move(to: point(36, 56, in: rect)); path.addLine(to: point(64, 56, in: rect))
+    } else if type == "HAND_CREAM" {
+      path.move(to: point(27, 18, in: rect)); path.addLine(to: point(73, 18, in: rect))
+      path.addLine(to: point(64, 73, in: rect)); path.addLine(to: point(36, 73, in: rect)); path.closeSubpath()
+      path.addRect(box(36, 73, 28, 13)); path.addEllipse(in: box(43, 43, 14, 14))
+      path.move(to: point(32, 29, in: rect)); path.addLine(to: point(68, 29, in: rect))
+    } else {
+      path.addRoundedRect(in: box(24, 44, 52, 42), cornerSize: CGSize(width: rect.width * 0.12, height: rect.height * 0.12))
+      path.addEllipse(in: box(47, 65, 6, 6))
+      for x in [CGFloat(38), CGFloat(60)] {
+        path.move(to: point(x, 33, in: rect))
+        path.addCurve(to: point(x, 8, in: rect), control1: point(x - 12, 23, in: rect), control2: point(x + 12, 18, in: rect))
+      }
+    }
+    context.stroke(path, with: .color(ink), style: style)
   }
 
   private static func point(_ x: CGFloat, _ y: CGFloat, in rect: CGRect) -> CGPoint {
@@ -986,6 +1016,9 @@ private func preparationDescription(_ type: String) -> String {
   case "RAIN_BOOTS": return "장화"
   case "PARASOL": return "양산"
   case "SUNSCREEN": return "선크림"
+  case "LIP_BALM": return "립밤"
+  case "HAND_CREAM": return "핸드크림"
+  case "PORTABLE_HUMIDIFIER": return "휴대용 가습기"
   case "SUNGLASSES": return "선글라스"
   case "WATER": return "물"
   case "PORTABLE_FAN": return "휴대용 선풍기"

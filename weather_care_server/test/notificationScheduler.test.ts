@@ -16,14 +16,11 @@ import {
 } from '../src/database/collectedWeatherRepository';
 
 describe('notification scheduler', () => {
-  it('동파 알림은 기본 OFF이며 선택하면 하루 한 번만 상세 화면으로 보낸다', async () => {
+  it('동파 알림은 기본 ON이며 하루 한 번만 상세 화면으로 보낸다', async () => {
     await insertInstallation('device-token');
     const now = new Date('2026-12-01T12:00:00+09:00');
     const sent: FcmPayload[] = [];
     const dependencies = { now, forecastLoader: async () => freezingForecast(now), sender: collectingSender(sent) };
-    await runRecommendationNotificationJob(testBindings(), dependencies);
-    expect(sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toHaveLength(0);
-    await savePreferences({pipeFreezeEnabled: true});
     await runRecommendationNotificationJob(testBindings(), dependencies);
     await runRecommendationNotificationJob(testBindings(), dependencies);
     const alerts = sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION');
@@ -194,6 +191,9 @@ describe('notification scheduler', () => {
           water_enabled INTEGER NOT NULL DEFAULT 1,
           sunscreen_enabled INTEGER NOT NULL DEFAULT 1,
         dryness_enabled INTEGER,
+        carry_notification_enabled INTEGER,
+        today_notification_enabled INTEGER,
+        weather_notification_enabled INTEGER,
         snow_preparation_enabled INTEGER,
         uv_preparation_enabled INTEGER,
         pollen_enabled INTEGER,
@@ -474,6 +474,43 @@ describe('notification scheduler', () => {
       roadControlLoader: async () => roadControl(), sender: collectingSender(sent),
     });
     expect(sent.map((item) => item.notificationTopic)).toEqual(['STRONG_WIND', 'ROAD_ICE', 'COMMUTE']);
+  });
+
+  it('기상생활 전체 OFF는 현재 비·특보·블랙아이스·도로통제를 끄고 정기 요약은 유지한다', async () => {
+    await insertInstallation('device-token', true);
+    await savePreferences({ weatherNotificationEnabled: false, notificationTime: '08:00' });
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings('key', 'its-key'), {
+      now: new Date('2026-09-02T08:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => [{ ...officialWarning('R', '호우', '2'), typeCode: 'W', type: '강풍' }],
+      precipitationLoader: async () => precipitation('RAIN'), roadIceLoader: async () => roadIceRisk(),
+      roadControlLoader: async () => roadControl(), sender: collectingSender(sent),
+    });
+    expect(sent.map((item) => item.notificationKey)).toEqual(['MORNING_BRIEF']);
+  });
+
+  it('기상생활 전체 OFF는 기본 ON인 동파 알림도 차단한다', async () => {
+    await insertInstallation('device-token');
+    await savePreferences({ weatherNotificationEnabled: false });
+    const now = new Date('2026-12-01T12:00:00+09:00');
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings(), {
+      now, forecastLoader: async () => freezingForecast(now), sender: collectingSender(sent),
+    });
+    expect(sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toEqual([]);
+  });
+
+  it('기상생활 전체 선택을 조회 중 끄면 발송 직전에 다시 제외한다', async () => {
+    await insertInstallation('device-token', true);
+    const sent: FcmPayload[] = [];
+    await runRecommendationNotificationJob(testBindings('key'), {
+      now: new Date('2026-09-02T08:00:00+09:00'), forecastLoader: async () => rainyForecast(),
+      warningLoader: async () => {
+        await savePreferences({ weatherNotificationEnabled: false });
+        return [{ ...officialWarning('R', '호우', '2'), typeCode: 'W', type: '강풍' }];
+      }, roadIceLoader: async () => roadIceRisk(), sender: collectingSender(sent),
+    });
+    expect(sent.filter((item) => item.notificationKey !== 'MORNING_BRIEF')).toEqual([]);
   });
 
   it('sends a due brief once and records only a successful send', async () => {

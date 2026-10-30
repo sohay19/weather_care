@@ -98,11 +98,11 @@ void main() {
         containsPair('longitude', '127.0286'));
     expect(
       client.queries['/api/v1/weather/today'],
-      containsPair('recommendationCatalog', 'PREPARATION_18'),
+      containsPair('recommendationCatalog', 'PREPARATION_21'),
     );
     expect(
       client.queries['/api/v1/weather/weekly'],
-      containsPair('recommendationCatalog', 'PREPARATION_18'),
+      containsPair('recommendationCatalog', 'PREPARATION_21'),
     );
   });
 

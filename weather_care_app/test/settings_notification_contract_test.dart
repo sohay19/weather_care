@@ -45,7 +45,9 @@ void main() {
     'todayWindEnabled': '바람',
     'todayHumidityEnabled': '습도',
     'todayApparentTemperatureEnabled': '체감온도',
-    'dailyWeatherEnabled': '챙겨요·Today 알림',
+    'carryNotificationEnabled': '전체 알림',
+    'todayNotificationEnabled': '전체 알림',
+    'weatherNotificationEnabled': '전체 알림',
   };
   for (final entry in fields.entries) {
     testWidgets('${entry.value} 스위치는 ${entry.key}만 변경한다', (tester) async {
@@ -59,7 +61,8 @@ void main() {
       await openWeatherAlerts(tester);
       final toggle = find.byKey(ValueKey('notification-toggle-${entry.key}'));
       await reveal(tester, toggle);
-      expect(find.text(entry.value), findsOneWidget);
+      expect(find.text(entry.value),
+          entry.value == '전체 알림' ? findsNWidgets(3) : findsOneWidget);
       await tester.tap(toggle);
       await tester.pumpAndSettle();
       expect(changed, hasLength(1));
@@ -77,7 +80,7 @@ void main() {
       tester
           .getTopLeft(find.byKey(const ValueKey('notification-save-notice')))
           .dy,
-      greaterThan(tester
+      lessThan(tester
           .getTopLeft(
               find.byKey(const ValueKey('weather-alerts-master-section')))
           .dy),
@@ -210,7 +213,7 @@ void main() {
     expect(find.text('07:35'), findsOneWidget);
     expect(find.textContaining('서버 확인 시각'), findsNothing);
     expect(find.textContaining('10분 단위로 확인'), findsOneWidget);
-    expect(find.text('챙겨요·Today 알림을 켜야 설정한 시간이 적용돼요.'), findsOneWidget);
+    expect(find.text('챙겨요 또는 Today 알림을 켜야 설정한 시간이 적용돼요.'), findsOneWidget);
     expect(settings.notificationTime, '07:35');
   });
 
@@ -272,7 +275,7 @@ void main() {
         find.descendant(of: today, matching: find.text('챙겨요 알림과 발송되는 시각은 같아요')),
         findsOneWidget);
     final toggles = find.descendant(of: today, matching: find.byType(Switch));
-    expect(toggles, findsNWidgets(5));
+    expect(toggles, findsNWidgets(6));
     expect(tester.widgetList<Switch>(toggles).every((toggle) => toggle.value),
         isTrue);
     final labels = ['가시거리', '오존', '바람', '습도', '체감온도'];
@@ -282,7 +285,7 @@ void main() {
     }
   });
 
-  testWidgets('최상단 알림 사용여부는 스위치와 한 줄이며 챙겨요는 설명 없는 8항목이다', (tester) async {
+  testWidgets('알림 사용여부는 스위치와 한 줄이며 챙겨요는 설명 없는 8항목이다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await openWeatherAlerts(tester);
     final label = tester.getRect(find.text('알림 사용여부'));
@@ -299,6 +302,7 @@ void main() {
     expect(text, [
       '챙겨요 알림',
       '준비물 요약에 포함할 항목을 선택해요',
+      '전체 알림',
       '비',
       '눈',
       '추위',
@@ -309,7 +313,7 @@ void main() {
       '건조도'
     ]);
     expect(find.descendant(of: carry, matching: find.byType(Switch)),
-        findsNWidgets(8));
+        findsNWidgets(9));
   });
 
   testWidgets('전체 알림 OFF일 때 Today 스위치는 저장값을 유지한 채 비활성화된다', (tester) async {
@@ -324,11 +328,51 @@ void main() {
         .widgetList<Switch>(
             find.descendant(of: today, matching: find.byType(Switch)))
         .toList();
-    expect(switches, hasLength(5));
+    expect(switches, hasLength(6));
     expect(switches.every((toggle) => toggle.onChanged == null), isTrue);
     expect(switches.map((toggle) => toggle.value),
-        [true, true, false, true, true]);
+        [true, true, true, false, true, true]);
   });
+
+  for (final carry in [true, false]) {
+    testWidgets('${carry ? '챙겨요' : 'Today'} 전체 OFF는 자기 항목만 비활성화하고 선택을 보존한다',
+        (tester) async {
+      final changed = <AppSettings>[];
+      await tester.pumpWidget(MaterialApp(
+          home: SettingsScreen(
+        initialSettings: AppSettings.fallback('test'),
+        onSettingsChanged: (settings) async => changed.add(settings),
+      )));
+      await openWeatherAlerts(tester);
+      final master = find.byKey(ValueKey(
+          'notification-toggle-${carry ? 'carryNotificationEnabled' : 'todayNotificationEnabled'}'));
+      await reveal(tester, master);
+      await tester.tap(master);
+      await tester.pumpAndSettle();
+      final section = find.byKey(ValueKey(
+          carry ? 'carry-notification-section' : 'today-notification-section'));
+      final switches = tester
+          .widgetList<Switch>(
+              find.descendant(of: section, matching: find.byType(Switch)))
+          .toList();
+      expect(switches.first.value, isFalse);
+      expect(
+          switches
+              .skip(1)
+              .every((item) => item.value && item.onChanged == null),
+          isTrue);
+      expect(changed.single.dailyWeatherEnabled, isTrue);
+      expect(changed.single.umbrellaEnabled, isTrue);
+      final other = find.byKey(ValueKey(
+          'notification-toggle-${carry ? 'todayNotificationEnabled' : 'carryNotificationEnabled'}'));
+      await reveal(tester, other);
+      expect(tester.widget<Switch>(other).value, isTrue);
+      expect(tester.widget<Switch>(other).onChanged, isNotNull);
+      expect(
+          find.byKey(const ValueKey('notification-toggle-dailyWeatherEnabled')),
+          findsNothing);
+    });
+  }
 
   testWidgets('360px 2배 글씨에서 긴 설명과 스위치가 넘치지 않는다', (tester) async {
     tester.view.physicalSize = const Size(360, 900);

@@ -102,6 +102,7 @@ class _LifestyleTile extends StatelessWidget {
 }
 
 IconData _iconFor(LifestyleMessageType type) => switch (type) {
+      LifestyleMessageType.drynessGuidance => Icons.water_drop_outlined,
       LifestyleMessageType.rainGearUseful => Icons.umbrella_outlined,
       LifestyleMessageType.strongSunExposure ||
       LifestyleMessageType.sunscreenUseful =>

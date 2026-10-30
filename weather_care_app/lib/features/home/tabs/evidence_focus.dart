@@ -114,6 +114,9 @@ LifestyleMessageType detailLifestyleTypeForRecommendationType(
   RecommendationType type,
 ) =>
     switch (type) {
+      RecommendationType.lipBalm ||
+      RecommendationType.handCream ||
+      RecommendationType.portableHumidifier => LifestyleMessageType.drynessGuidance,
       RecommendationType.umbrella => LifestyleMessageType.rainGearUseful,
       RecommendationType.raincoat => LifestyleMessageType.rainGearUseful,
       RecommendationType.rainBoots => LifestyleMessageType.rainGearUseful,

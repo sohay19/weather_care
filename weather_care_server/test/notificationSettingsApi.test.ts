@@ -22,6 +22,9 @@ describe('notification settings API', () => {
         water_enabled INTEGER NOT NULL DEFAULT 1,
         sunscreen_enabled INTEGER NOT NULL DEFAULT 1,
         dryness_enabled INTEGER,
+        carry_notification_enabled INTEGER,
+        today_notification_enabled INTEGER,
+        weather_notification_enabled INTEGER,
         snow_preparation_enabled INTEGER,
         uv_preparation_enabled INTEGER,
         pollen_enabled INTEGER,
@@ -73,7 +76,7 @@ describe('notification settings API', () => {
       heavyRainEnabled: false,
       lightningEnabled: false,
       parasolEnabled: true,
-      pipeFreezeEnabled: false,
+      pipeFreezeEnabled: true,
     });
   });
 
@@ -86,6 +89,24 @@ describe('notification settings API', () => {
       expect(await response.json()).toMatchObject({pipeFreezeEnabled: true});
     }
   });
+
+  it.each(['/api/v1/notification-settings/device-1', '/api/v1/installations/device-1/notification-settings'])(
+    '%s는 신규 동파 기본 ON과 저장한 OFF를 보존한다', async (path) => {
+      for (const [body, enabled] of [
+        [{ notificationTime: '08:00' }, true],
+        [{ pipeFreezeEnabled: false }, false],
+        [{ notificationTime: '09:00' }, false],
+      ] as const) {
+        const saved = await SELF.fetch('https://example.com' + path, {
+          method: 'PUT', headers: testAuthHeaders, body: JSON.stringify(body),
+        });
+        expect(saved.status).toBe(200);
+        const current = await SELF.fetch('https://example.com/api/v1/notification-settings?installationId=device-1', {
+          headers: testAuthHeaders,
+        });
+        expect(await current.json()).toMatchObject({ pipeFreezeEnabled: enabled });
+      }
+    });
 
   it('출퇴근 시간과 야간 구간을 저장하고 구 앱의 부분 갱신에도 유지한다', async () => {
     const schedule = { commuteToWorkStart: '23:00', commuteToWorkEnd: '01:00',

@@ -11,11 +11,30 @@ String weatherRefreshLabel(String? generatedAt, {DateTime? now}) {
 
 String? humidityDescription(double? percent) {
   if (percent == null) return null;
-  if (percent <= 35) return '건조';
+  if (percent <= 40) return drynessDescription(percent);
   if (percent < 70) return '쾌적';
   if (percent < 80) return '습한 편';
   return '매우 습함';
 }
+
+String? drynessDescription(double? percent) {
+  if (percent == null || !percent.isFinite || percent < 0 || percent > 100) {
+    return null;
+  }
+  if (percent <= 20) return '매우 건조';
+  if (percent <= 30) return '건조';
+  if (percent <= 40) return '약한 건조';
+  return '건조하지 않음';
+}
+
+const drynessRanges = '앱 보습 준비 기준 (실외 상대습도)\n'
+    '30% 초과~40% 이하: 약한 건조 · 립밤\n'
+    '20% 초과~30% 이하: 건조 · 핸드크림\n'
+    '20% 이하: 매우 건조 · 휴대용 가습기\n'
+    '40% 초과: 건조 대비 준비물 추천 없음\n\n'
+    '연구를 참고한 앱 자체 기준이며 피부 진단 등급은 아니에요.\n'
+    '실내 습도도 확인하고 낮다면 가습기 사용을 고려하세요. '
+    '실내 습도는 30~50%로 관리하고 과도한 가습은 피하세요.';
 
 String? apparentTemperatureDescription(double? celsius) {
   if (celsius == null) return null;
@@ -71,7 +90,8 @@ const apparentTemperatureRanges = '표현 기준 (체감온도)\n'
     '35~38℃ 미만: 더위 경계\n38℃ 이상: 위험한 더위';
 
 const humidityRanges = '표현 기준 (실외 상대습도)\n'
-    '35% 이하: 건조\n35% 초과~70% 미만: 쾌적\n'
+    '20% 이하: 매우 건조\n20% 초과~30% 이하: 건조\n'
+    '30% 초과~40% 이하: 약한 건조\n40% 초과~70% 미만: 쾌적\n'
     '70% 이상~80% 미만: 습한 편\n80% 이상: 매우 습함';
 
 const windRanges = '표현 기준 (풍속)\n'

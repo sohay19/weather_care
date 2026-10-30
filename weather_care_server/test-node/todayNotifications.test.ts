@@ -63,6 +63,58 @@ async function run(input: WeatherForecast, at = now) {
 }
 
 describe('Today 정기 알림 항목 제어', () => {
+  it.each([[true, true], [true, false], [false, true], [false, false]])(
+    '챙겨요 %s·Today %s는 각 그룹의 요약만 허용한다', async (carry, today) => {
+      const response = await app.fetch(new Request('http://localhost/api/v1/notification-settings/today-test', {
+        method: 'PUT', headers, body: JSON.stringify({ carryNotificationEnabled: carry, todayNotificationEnabled: today }),
+      }), nodeServerEnv(database, {}));
+      expect(response.status).toBe(200);
+      const settings = await getNotificationSettings(database, 'today-test');
+      expect(settings.dailyWeatherEnabled).toBe(carry || today);
+      const sent = await run(forecast({ precipitationType: 'RAIN', precipitationProbability: 80, windSpeed: 12 }));
+      expect(sent).toHaveLength(carry || today ? 1 : 0);
+      if (carry) expect(sent[0].body).toContain('우산');
+      else if (today) {
+        expect(sent[0].body).toContain('바람');
+        expect(sent[0].body).not.toContain('우산');
+      }
+    });
+
+  it.each(['/notification-settings/today-test', '/installations/today-test/notification-settings'])(
+    '%s는 독립 그룹 OFF와 구버전 전체 스위치를 보존한다', async (path) => {
+      const request = (body: object) => app.fetch(new Request('http://localhost/api/v1' + path, {
+        method: 'PUT', headers, body: JSON.stringify(body),
+      }), nodeServerEnv(database, {}));
+      expect((await request({ carryNotificationEnabled: false, todayNotificationEnabled: true })).status).toBe(200);
+      expect((await request({ notificationTime: '07:00' })).status).toBe(200);
+      expect(await getNotificationSettings(database, 'today-test')).toMatchObject({
+        carryNotificationEnabled: false, todayNotificationEnabled: true, dailyWeatherEnabled: true,
+      });
+      expect((await request({ dailyWeatherEnabled: false })).status).toBe(200);
+      expect(await run(forecast({ windSpeed: 12 }))).toEqual([]);
+      expect((await request({ dailyWeatherEnabled: true })).status).toBe(200);
+      const sent = await run(forecast({ precipitationType: 'RAIN', precipitationProbability: 80, windSpeed: 12 }));
+      expect(sent).toHaveLength(1);
+      expect(sent[0].body).toContain('바람');
+      expect(sent[0].body).not.toContain('우산');
+    });
+
+  it('Today 전체 OFF는 정보만 있는 알림을 끄고 챙겨요 전체 OFF는 준비물만 있는 알림을 끈다', async () => {
+    await update({ carryNotificationEnabled: true, todayNotificationEnabled: false });
+    expect(await run(forecast({ windSpeed: 12 }))).toEqual([]);
+    await update({ carryNotificationEnabled: false, todayNotificationEnabled: true });
+    expect(await run(forecast({ precipitationType: 'RAIN', precipitationProbability: 80 }))).toEqual([]);
+  });
+  it('동파 필드 없는 새 저장은 ON이며 기존 OFF는 기본값으로 덮어쓰지 않는다', async () => {
+    database.sqlite.exec('DELETE FROM notification_settings');
+    const settings = defaultNotificationSettings('today-test');
+    delete settings.pipeFreezeEnabled;
+    await upsertNotificationSettings(database, settings);
+    expect((await getNotificationSettings(database, 'today-test')).pipeFreezeEnabled).toBe(true);
+    await update({ pipeFreezeEnabled: false });
+    await upsertNotificationSettings(database, settings);
+    expect((await getNotificationSettings(database, 'today-test')).pipeFreezeEnabled).toBe(false);
+  });
   it.each([
     ['todayVisibilityEnabled', { visibilityMeters: 500 }, 'VISIBILITY'],
     ['todayVisibilityEnabled', { visibilityMeters: 25000 }, 'CLEAR_COMFORTABLE'],
@@ -142,8 +194,9 @@ describe('Today 정기 알림 항목 제어', () => {
       runSqliteMigrations(users, resolve('node-migrations/users'));
       expect(runSqliteMigrations(users, resolve('node-migrations/users'))).toEqual([]);
       const columns = users.sqlite.prepare('PRAGMA table_info(notification_settings)').all() as Array<{ name: string; dflt_value: string }>;
-      expect(columns.filter((column) => column.name.startsWith('today_'))).toHaveLength(5);
-      expect(columns.filter((column) => column.name.startsWith('today_')).every((column) => column.dflt_value === '1')).toBe(true);
+      const items = columns.filter((column) => column.name.startsWith('today_') && column.name !== 'today_notification_enabled');
+      expect(items).toHaveLength(5);
+      expect(items.every((column) => column.dflt_value === '1')).toBe(true);
     } finally { users.close(); }
   });
 });

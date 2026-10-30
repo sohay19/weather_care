@@ -26,6 +26,9 @@ interface NotificationSettingsRow {
   uvPreparationEnabled: number | null;
   pollenEnabled: number | null;
   blackIceEnabled: number | null;
+  carryNotificationEnabled: number | null;
+  todayNotificationEnabled: number | null;
+  weatherNotificationEnabled: number | null;
   dailyWeatherEnabled: number;
   heavyRainEnabled: number;
   heatwaveEnabled: number;
@@ -61,8 +64,23 @@ export function defaultNotificationSettings(
     coldWaveEnabled: true,
     showerAndLightRainEnabled: true,
     lightningEnabled: true,
-    pipeFreezeEnabled: false,
+    pipeFreezeEnabled: true,
   };
+}
+
+export function mergeNotificationSettings(
+  current: NotificationSettings,
+  update: Partial<NotificationSettings>,
+): NotificationSettings {
+  const merged = { ...current, ...update };
+  if (update.carryNotificationEnabled !== undefined || update.todayNotificationEnabled !== undefined) {
+    merged.carryNotificationEnabled = update.carryNotificationEnabled ??
+      current.carryNotificationEnabled ?? current.dailyWeatherEnabled;
+    merged.todayNotificationEnabled = update.todayNotificationEnabled ??
+      current.todayNotificationEnabled ?? current.dailyWeatherEnabled;
+    merged.dailyWeatherEnabled = merged.carryNotificationEnabled || merged.todayNotificationEnabled;
+  }
+  return merged;
 }
 
 export async function getNotificationSettings(
@@ -96,6 +114,9 @@ export async function getNotificationSettings(
          uv_preparation_enabled AS uvPreparationEnabled,
          pollen_enabled AS pollenEnabled,
          black_ice_enabled AS blackIceEnabled,
+         carry_notification_enabled AS carryNotificationEnabled,
+         today_notification_enabled AS todayNotificationEnabled,
+         weather_notification_enabled AS weatherNotificationEnabled,
          daily_weather_enabled AS dailyWeatherEnabled,
          heavy_rain_enabled AS heavyRainEnabled,
          heatwave_enabled AS heatwaveEnabled,
@@ -134,6 +155,9 @@ export async function getNotificationSettings(
     uvPreparationEnabled: row.uvPreparationEnabled == null ? undefined : row.uvPreparationEnabled === 1,
     pollenEnabled: row.pollenEnabled == null ? undefined : row.pollenEnabled === 1,
     blackIceEnabled: row.blackIceEnabled == null ? undefined : row.blackIceEnabled === 1,
+    carryNotificationEnabled: row.carryNotificationEnabled == null ? undefined : row.carryNotificationEnabled === 1,
+    todayNotificationEnabled: row.todayNotificationEnabled == null ? undefined : row.todayNotificationEnabled === 1,
+    weatherNotificationEnabled: row.weatherNotificationEnabled == null ? undefined : row.weatherNotificationEnabled === 1,
     dailyWeatherEnabled: row.dailyWeatherEnabled === 1,
     heavyRainEnabled: row.heavyRainEnabled === 1,
     heatwaveEnabled: row.heatwaveEnabled === 1,
@@ -162,8 +186,8 @@ export async function upsertNotificationSettings(
        cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported, pipe_freeze_enabled,
        commute_to_work_start, commute_to_work_end, commute_from_work_start, commute_from_work_end, dryness_enabled,
        today_visibility_enabled, today_ozone_enabled, today_wind_enabled, today_humidity_enabled, today_apparent_temperature_enabled,
-       snow_preparation_enabled, uv_preparation_enabled, pollen_enabled, black_ice_enabled)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       snow_preparation_enabled, uv_preparation_enabled, pollen_enabled, black_ice_enabled, carry_notification_enabled, today_notification_enabled, weather_notification_enabled)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
@@ -190,6 +214,9 @@ export async function upsertNotificationSettings(
         uv_preparation_enabled=${payload.uvPreparationEnabled === undefined ? 'notification_settings.uv_preparation_enabled' : 'excluded.uv_preparation_enabled'},
         pollen_enabled=${payload.pollenEnabled === undefined ? 'notification_settings.pollen_enabled' : 'excluded.pollen_enabled'},
         black_ice_enabled=${payload.blackIceEnabled === undefined ? 'notification_settings.black_ice_enabled' : 'excluded.black_ice_enabled'},
+        carry_notification_enabled=${payload.carryNotificationEnabled === undefined ? 'notification_settings.carry_notification_enabled' : 'excluded.carry_notification_enabled'},
+        today_notification_enabled=${payload.todayNotificationEnabled === undefined ? 'notification_settings.today_notification_enabled' : 'excluded.today_notification_enabled'},
+        weather_notification_enabled=${payload.weatherNotificationEnabled === undefined ? 'notification_settings.weather_notification_enabled' : 'excluded.weather_notification_enabled'},
         daily_weather_enabled=excluded.daily_weather_enabled,
         heavy_rain_enabled=excluded.heavy_rain_enabled,
         heatwave_enabled=excluded.heatwave_enabled,
@@ -220,7 +247,7 @@ export async function upsertNotificationSettings(
       now,
       now,
       booleanInteger(lightningSupported),
-      booleanInteger(payload.pipeFreezeEnabled === true),
+      booleanInteger(payload.pipeFreezeEnabled !== false),
       payload.commuteToWorkStart ?? defaultCommuteSchedule.commuteToWorkStart,
       payload.commuteToWorkEnd ?? defaultCommuteSchedule.commuteToWorkEnd,
       payload.commuteFromWorkStart ?? defaultCommuteSchedule.commuteFromWorkStart,
@@ -235,6 +262,9 @@ export async function upsertNotificationSettings(
       payload.uvPreparationEnabled === undefined ? null : booleanInteger(payload.uvPreparationEnabled),
       payload.pollenEnabled === undefined ? null : booleanInteger(payload.pollenEnabled),
       payload.blackIceEnabled === undefined ? null : booleanInteger(payload.blackIceEnabled),
+      payload.carryNotificationEnabled === undefined ? null : booleanInteger(payload.carryNotificationEnabled),
+      payload.todayNotificationEnabled === undefined ? null : booleanInteger(payload.todayNotificationEnabled),
+      payload.weatherNotificationEnabled === undefined ? null : booleanInteger(payload.weatherNotificationEnabled),
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

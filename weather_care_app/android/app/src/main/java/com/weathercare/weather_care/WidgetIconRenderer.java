@@ -148,10 +148,39 @@ final class WidgetIconRenderer {
             case "MASK" -> drawMask(canvas, paint, s);
             case "WATER" -> drawBottle(canvas, paint, s, false);
             case "SUNSCREEN" -> drawBottle(canvas, paint, s, true);
+            case "LIP_BALM", "HAND_CREAM", "PORTABLE_HUMIDIFIER" -> drawMoistureItem(canvas, paint, s, type);
             default -> drawUmbrella(canvas, paint, s, false);
         }
         canvas.restore();
         return bitmap;
+    }
+
+    private static void drawMoistureItem(Canvas canvas, Paint paint, float size, String type) {
+        paint = new Paint(paint);
+        paint.setStrokeWidth(7.5f);
+        canvas.save();
+        canvas.scale(size / 100f, size / 100f);
+        if ("LIP_BALM".equals(type)) {
+            canvas.drawRoundRect(new RectF(36, 40, 64, 86), 4, 4, paint);
+            canvas.drawRect(40, 16, 60, 40, paint);
+            canvas.drawLine(36, 56, 64, 56, paint);
+        } else if ("HAND_CREAM".equals(type)) {
+            Path tube = new Path();
+            tube.moveTo(27, 18); tube.lineTo(73, 18); tube.lineTo(64, 73); tube.lineTo(36, 73); tube.close();
+            canvas.drawPath(tube, paint);
+            canvas.drawRect(36, 73, 64, 86, paint);
+            canvas.drawLine(32, 29, 68, 29, paint);
+            canvas.drawCircle(50, 50, 7, paint);
+        } else {
+            canvas.drawRoundRect(new RectF(24, 44, 76, 86), 12, 12, paint);
+            canvas.drawCircle(50, 68, 3, paint);
+            for (float x : new float[]{38, 60}) {
+                Path steam = new Path();
+                steam.moveTo(x, 33); steam.cubicTo(x - 12, 23, x + 12, 18, x, 8);
+                canvas.drawPath(steam, paint);
+            }
+        }
+        canvas.restore();
     }
 
     private static String preparationAssetName(String type) {

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import {
   getNotificationSettings,
+  mergeNotificationSettings,
   upsertNotificationSettings,
 } from '../database/notificationSettingsRepository';
 import { NotificationSettings, ServerEnv } from '../types';
@@ -34,11 +35,10 @@ router.put('/:installationId', async (c) => {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }
   const current = await getNotificationSettings(c.env.DB, installationId);
-  const settings: NotificationSettings = {
-    ...current,
+  const settings: NotificationSettings = mergeNotificationSettings(current, {
     ...parsed.data,
     installationId,
-  };
+  });
   if (!isValidCommuteSchedule(settings)) {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }

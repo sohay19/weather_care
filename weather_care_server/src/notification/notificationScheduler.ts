@@ -73,6 +73,9 @@ interface NotificationInstallationRow extends CommuteSchedule, RegionTarget {
   uvPreparationEnabled: number | null;
   pollenEnabled: number | null;
   blackIceEnabled: number | null;
+  carryNotificationEnabled: number | null;
+  todayNotificationEnabled: number | null;
+  weatherNotificationEnabled: number | null;
   dailyWeatherEnabled: number;
   heavyRainEnabled: number;
   heatwaveEnabled: number;
@@ -189,41 +192,43 @@ export async function runRecommendationNotificationJob(
   for (const row of rows) {
     const pendingStart = pending.length;
     const local = localNotificationTime(now, row.timezone);
-    await collectCurrentRainNotification(
-      env,
-      row,
-      local.date,
-      pending,
-      precipitationByLocation,
-      dependencies.precipitationLoader ?? defaultPrecipitationLoader,
-    );
-    await collectOfficialWarningNotifications(
-      env,
-      row,
-      local.date,
-      pending,
-      warningsByRegion,
-      warningRegionsByLocation,
-      dependencies.warningLoader ?? defaultWarningLoader,
-      dependencies.warningRegionResolver ?? defaultWarningRegionResolver,
-    );
-    await collectRoadIceNotification(
-      env,
-      row,
-      local.date,
-      pending,
-      roadIceByLocation,
-      dependencies.roadIceLoader ?? defaultRoadIceLoader,
-    );
-    if (isCommuteNotificationTime(local.time, row)) {
-      await collectRoadControlNotification(
+    if (row.weatherNotificationEnabled !== 0) {
+      await collectCurrentRainNotification(
         env,
         row,
         local.date,
         pending,
-        roadControlByLocation,
-        dependencies.roadControlLoader ?? defaultRoadControlLoader,
+        precipitationByLocation,
+        dependencies.precipitationLoader ?? defaultPrecipitationLoader,
       );
+      await collectOfficialWarningNotifications(
+        env,
+        row,
+        local.date,
+        pending,
+        warningsByRegion,
+        warningRegionsByLocation,
+        dependencies.warningLoader ?? defaultWarningLoader,
+        dependencies.warningRegionResolver ?? defaultWarningRegionResolver,
+      );
+      await collectRoadIceNotification(
+        env,
+        row,
+        local.date,
+        pending,
+        roadIceByLocation,
+        dependencies.roadIceLoader ?? defaultRoadIceLoader,
+      );
+      if (isCommuteNotificationTime(local.time, row)) {
+        await collectRoadControlNotification(
+          env,
+          row,
+          local.date,
+          pending,
+          roadControlByLocation,
+          dependencies.roadControlLoader ?? defaultRoadControlLoader,
+        );
+      }
     }
     const regionKey = `${row.nx}:${row.ny}:${row.latitude}:${row.longitude}:${row.regionName ?? ''}`;
     let forecastPromise = forecastByRegion.get(regionKey);
@@ -262,7 +267,7 @@ export async function runRecommendationNotificationJob(
         local.date,
         row.scopeId,
       );
-      if (row.pipeFreezeEnabled === 1 && !alreadySent.has('PIPE_FREEZE_CAUTION')) {
+      if (row.weatherNotificationEnabled !== 0 && row.pipeFreezeEnabled === 1 && !alreadySent.has('PIPE_FREEZE_CAUTION')) {
         const assessment = assessPipeFreeze(forecast, now);
         if (assessment.status === 'AVAILABLE' && assessment.level !== 'CHECK') {
           pending.push({ installationId: row.installationId, targetDate: local.date, token: row.token,
@@ -303,7 +308,7 @@ export async function runRecommendationNotificationJob(
               isNotificationTimeDue(local.time, row.notificationTime)
             );
           }
-          return true;
+          return row.weatherNotificationEnabled !== 0;
         },
       );
 
@@ -335,11 +340,12 @@ export async function runRecommendationNotificationJob(
     LEFT JOIN notification_settings s ON s.installation_id = i.installation_id
     WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 0) = 1
       AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version = 1
-      AND (? <> 'PIPE_FREEZE_CAUTION' OR COALESCE(s.pipe_freeze_enabled, 0) = 1)
+      AND (? <> 'PIPE_FREEZE_CAUTION' OR COALESCE(s.pipe_freeze_enabled, 1) = 1)
       AND (? = 0 OR COALESCE(s.black_ice_enabled, 1) = 1)
+      AND (? = 'MORNING_BRIEF' OR COALESCE(s.weather_notification_enabled, 1) = 1)
       AND NOT EXISTS (SELECT 1 FROM installation_activity a
         WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
-    .bind(item.installationId, item.token, item.built.notification_key, item.roadIceRisk ? 1 : 0,
+    .bind(item.installationId, item.token, item.built.notification_key, item.roadIceRisk ? 1 : 0, item.built.notification_key,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendAt = dependencies.now ?? new Date();
   const regionEligible = await Promise.all(pending.map(item => regionStillEnabled(env.DB, item.installationId, item.region!)));
@@ -403,11 +409,14 @@ async function notificationInstallations(
          s.uv_preparation_enabled AS uvPreparationEnabled,
          s.pollen_enabled AS pollenEnabled,
          s.black_ice_enabled AS blackIceEnabled,
+         s.carry_notification_enabled AS carryNotificationEnabled,
+         s.today_notification_enabled AS todayNotificationEnabled,
+         s.weather_notification_enabled AS weatherNotificationEnabled,
          COALESCE(s.daily_weather_enabled, 1) AS dailyWeatherEnabled,
          COALESCE(s.heavy_rain_enabled, 1) AS heavyRainEnabled,
          COALESCE(s.heatwave_enabled, 1) AS heatwaveEnabled,
          COALESCE(s.cold_wave_enabled, 1) AS coldWaveEnabled,
-         COALESCE(s.pipe_freeze_enabled, 0) AS pipeFreezeEnabled,
+         COALESCE(s.pipe_freeze_enabled, 1) AS pipeFreezeEnabled,
          COALESCE(s.shower_light_rain_enabled, 1) AS showerAndLightRainEnabled,
          i.latitude,
          i.longitude,
@@ -1249,6 +1258,9 @@ function settingsFromRow(
     uvPreparationEnabled: row.uvPreparationEnabled == null ? undefined : row.uvPreparationEnabled === 1,
     pollenEnabled: row.pollenEnabled == null ? undefined : row.pollenEnabled === 1,
     blackIceEnabled: row.blackIceEnabled == null ? undefined : row.blackIceEnabled === 1,
+    carryNotificationEnabled: row.carryNotificationEnabled == null ? undefined : row.carryNotificationEnabled === 1,
+    todayNotificationEnabled: row.todayNotificationEnabled == null ? undefined : row.todayNotificationEnabled === 1,
+    weatherNotificationEnabled: row.weatherNotificationEnabled == null ? undefined : row.weatherNotificationEnabled === 1,
     dailyWeatherEnabled: row.dailyWeatherEnabled === 1,
     heavyRainEnabled: row.heavyRainEnabled === 1,
     heatwaveEnabled: row.heatwaveEnabled === 1,

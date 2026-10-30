@@ -270,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       'nx': '${grid.nx}',
       'ny': '${grid.ny}',
       'widgetSettings': _homeWidgetSettingsKey(),
-      'recommendationCatalog': 'PREPARATION_18',
+      'recommendationCatalog': 'PREPARATION_21',
       if (coordinates != null) ...{
         'latitude': '${coordinates.latitude}',
         'longitude': '${coordinates.longitude}',
@@ -1595,7 +1595,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         width: 84,
                         child: Transform.translate(
                           offset: const Offset(-8, 12),
-                          child: Text('알림 ON/OFF',
+                          child: Text(
+                            '알림 ON/OFF',
                             key: const ValueKey(
                                 'region-notification-column-label'),
                             textAlign: TextAlign.center,

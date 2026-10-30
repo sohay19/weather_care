@@ -27,19 +27,30 @@ export function buildNotification(
   forecast?: WeatherForecast,
   briefContext: Omit<WeatherBriefContext, 'now'> = {},
 ): BuiltNotification[] {
+  const settings = briefContext.todayNotificationSettings;
+  const carryEnabled = settings?.dailyWeatherEnabled !== false && settings?.carryNotificationEnabled !== false;
+  const todayEnabled = settings?.dailyWeatherEnabled !== false && settings?.todayNotificationEnabled !== false;
+  const context = {
+    ...briefContext,
+    todayNotificationSettings: todayEnabled ? settings : {
+      ...settings,
+      todayVisibilityEnabled: false, todayOzoneEnabled: false, todayWindEnabled: false,
+      todayHumidityEnabled: false, todayApparentTemperatureEnabled: false,
+    },
+  };
   recommendations = recommendations.filter((item) => !now || !item.validUntil ||
     Date.parse(item.validUntil) >= now.getTime());
   const important = recommendations.filter((r) => r.type === 'HEAVY_SNOW_CAUTION');
   const normal = recommendations.filter((r) => r.type !== 'HEAVY_SNOW_CAUTION');
   const briefing = forecast
     ? buildWeatherBriefResult(forecast, {
-        ...briefContext,
+        ...context,
         now,
-        allowedRecommendedItems: [
+        allowedRecommendedItems: carryEnabled ? [
           ...normal.map((item) => item.type),
           ...(briefContext.drynessPreparations
             ? briefContext.allowedRecommendedItems?.filter(isDrynessPreparation) ?? [] : []),
-        ],
+        ] : [],
         severityRecommendedItems: normal
           .filter((item) => item.recommended)
           .map((item) => item.type),
@@ -50,9 +61,10 @@ export function buildNotification(
       ? briefing.sceneId !== 'DEFAULT'
       : normal.some((item) => briefing.recommendedItems.includes(item.type))
   );
-  const summaryBriefing = briefingMatchesPreferences ? briefing : undefined;
-  const fallbackItems = briefContext.tieredPreparations ? [] : normal;
-  const preparations = forecast && briefContext.tieredPreparations
+  const summaryBriefing = briefingMatchesPreferences &&
+    (briefing!.recommendedItems.length > 0 ? carryEnabled : todayEnabled) ? briefing : undefined;
+  const fallbackItems = carryEnabled && !briefContext.tieredPreparations ? normal : [];
+  const preparations = carryEnabled && forecast && briefContext.tieredPreparations
     ? preparationsForWindow(forecast, now ?? new Date(), briefContext)
     : [];
   const preparationBody = forecast

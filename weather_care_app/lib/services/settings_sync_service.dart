@@ -40,6 +40,9 @@ class SettingsSyncService {
       'uvPreparationEnabled': settings.uvPreparationEnabled,
       'pollenEnabled': settings.pollenEnabled,
       'blackIceEnabled': settings.blackIceEnabled,
+      'carryNotificationEnabled': settings.carryNotificationEnabled,
+      'todayNotificationEnabled': settings.todayNotificationEnabled,
+      'weatherNotificationEnabled': settings.weatherNotificationEnabled,
       'dailyWeatherEnabled': settings.dailyWeatherEnabled,
     };
     await client.putJson(

@@ -14,6 +14,7 @@ import generate_store_screenshots as previous
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'screenshots/source-android-20261028'
+SETTINGS_SOURCE = ROOT / 'screenshots/source-android-20261030'
 NATIVE = ROOT / 'screenshots/native-android-20261028'
 BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
@@ -74,9 +75,10 @@ def widget(family, dark=False):
 
 def app_screen(name):
     """실제 앱 전체 화면에서 상단 상태바와 하단 시스템 내비게이션바를 제외한다."""
-    manifest = json.loads((SOURCE / 'capture-manifest.json').read_text(encoding='utf-8'))
+    directory = SETTINGS_SOURCE if name == 'notification-settings' else SOURCE
+    manifest = json.loads((directory / 'capture-manifest.json').read_text(encoding='utf-8'))
     row = next(row for row in manifest['files'] if row['path'] == f'{name}.png')
-    path = SOURCE / row['path']
+    path = directory / row['path']
     if hashlib.sha256(path.read_bytes()).hexdigest() != row['sha256']:
         raise ValueError(f'촬영 원본 해시가 다릅니다: {path}')
     with Image.open(path) as source:
@@ -241,19 +243,19 @@ def main(screenshots_only=False, platforms=None, topics=None):
             assert im.mode == 'RGB' and im.format == 'PNG' and im.size == expected
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/screenshots-20261029-manifest.json'
+    report = ROOT / 'screenshots/screenshots-20261030-manifest.json'
     report.write_text(json.dumps({
         '기준일': '2026-10-28',
-        '편집일': '2026-10-29',
+        '편집일': '2026-10-30',
         '배치': '상단 제목 60px 두 줄, 줄간격 16px. 바깥 사방 및 제목·본문 사이 간격 모두 72px(태블릿 96px). 이미지는 남은 높이에 비율 유지 배치. 작은 분류명·부연 설명·위젯 크기 라벨 생략.',
         '화면': '연결 SM-S948U에서 최신 제품 화면을 실행한 별도 Debug 촬영 패키지의 ADB screencap 및 실제 Android AppWidgetHost',
         '데이터': '실제 운영 서버 자료. 지역 저장 및 알림 선택 상태는 촬영용 별도 설정. 5번은 지원 기능 소개용 알림 예시.',
         '태블릿': '같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.',
-        '구성': '2번을 지역별 알림으로 교체. 앱 화면은 시스템 상태바·내비게이션바만 제외. 4번은 실제 다크 대형 위젯을 함께 배치.',
+        '구성': '1~7번은 10월 29일 등록 이미지 유지. 8번만 10월 30일 최신 알림 설정 UI 실기기 촬영본으로 교체. 앱 화면은 시스템 상태바·내비게이션바만 제외. 4번은 실제 다크 대형 위젯을 함께 배치.',
         'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
-    guide = ROOT / 'screenshots/SCREENSHOTS_20261029.md'
-    package = ROOT / 'weather-care-android-screenshots-20261029.zip'
+    guide = ROOT / 'screenshots/SCREENSHOTS_20261030.md'
+    package = ROOT / 'weather-care-android-screenshots-20261030.zip'
     # Android 전용 새 묶음만 작성한다. 과거 묶음과 iOS 자료는 보존한다.
     with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
         for path in generated + preview_paths + [guide, report]:

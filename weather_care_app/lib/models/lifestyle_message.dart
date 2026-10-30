@@ -1,4 +1,5 @@
 enum LifestyleMessageType {
+  drynessGuidance,
   rainGearUseful,
   strongSunExposure,
   outerwearUseful,
@@ -28,6 +29,7 @@ enum LifestyleMessageType {
 
 extension LifestyleMessageTypeLabel on LifestyleMessageType {
   String get title => switch (this) {
+        LifestyleMessageType.drynessGuidance => '건조도',
         LifestyleMessageType.rainGearUseful => '비와 우산 준비',
         LifestyleMessageType.strongSunExposure => '자외선과 양산',
         LifestyleMessageType.outerwearUseful => '겉옷 준비',
@@ -56,6 +58,7 @@ extension LifestyleMessageTypeLabel on LifestyleMessageType {
       };
 
   String get apiName => switch (this) {
+        LifestyleMessageType.drynessGuidance => 'DRYNESS_GUIDANCE',
         LifestyleMessageType.rainGearUseful => 'RAIN_GEAR_USEFUL',
         LifestyleMessageType.strongSunExposure => 'STRONG_SUN_EXPOSURE',
         LifestyleMessageType.outerwearUseful => 'OUTERWEAR_USEFUL',
@@ -195,6 +198,7 @@ class LifestyleMessage {
 }
 
 LifestyleMessageType _typeFromApiName(String value) => switch (value) {
+      'DRYNESS_GUIDANCE' => LifestyleMessageType.drynessGuidance,
       'RAIN_GEAR_USEFUL' => LifestyleMessageType.rainGearUseful,
       'STRONG_SUN_EXPOSURE' => LifestyleMessageType.strongSunExposure,
       'OUTERWEAR_USEFUL' => LifestyleMessageType.outerwearUseful,

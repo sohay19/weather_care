@@ -66,6 +66,7 @@ void main() {
     expect(find.byKey(const ValueKey('weather-metric-대기정체')), findsOneWidget);
     expect(find.text('높음\n참나무'), findsOneWidget);
     expect(find.text('매우 높음'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('weather-metric-detail-꽃가루')));
     await tester.tap(find.byKey(const ValueKey('weather-metric-detail-꽃가루')));
     await tester.pumpAndSettle();
     expect(find.textContaining('소나무: 보통'), findsOneWidget);
@@ -84,6 +85,7 @@ void main() {
     const labels = [
       '체감온도',
       '습도',
+      '건조도',
       '자외선',
       '바람',
       '대기질',
@@ -164,8 +166,8 @@ void main() {
     expect(apparentTemperatureDescription(35), '더위 경계');
     expect(apparentTemperatureDescription(38), '위험한 더위');
     expect(apparentTemperatureDescription(null), isNull);
-    expect(humidityDescription(35), '건조');
-    expect(humidityDescription(35.1), '쾌적');
+    expect(humidityDescription(35), '약한 건조');
+    expect(humidityDescription(35.1), '약한 건조');
     expect(humidityDescription(70), '습한 편');
     expect(humidityDescription(80), '매우 습함');
     expect(windDescription(3.9), '약한 바람');
@@ -344,6 +346,7 @@ void main() {
     const labels = [
       '체감온도',
       '습도',
+      '건조도',
       '자외선',
       '바람',
       '대기질',
@@ -589,10 +592,10 @@ void main() {
     expect(find.textContaining('햇볕의 영향은 포함하지 않아요.'), findsOneWidget);
   });
 
-  testWidgets('체감은 상단에 두고 결측인 6개 지표를 0으로 바꾸지 않는다', (tester) async {
+  testWidgets('체감은 상단에 두고 결측인 7개 지표를 0으로 바꾸지 않는다', (tester) async {
     await _pumpCard(tester, const CurrentWeather(temperature: null));
 
-    expect(find.text('자료 없음'), findsNWidgets(7));
+    expect(find.text('자료 없음'), findsNWidgets(8));
     expect(find.text('체감 자료 없음'), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-체감')), findsNothing);
     expect(find.text('하늘 상태 자료 없음'), findsOneWidget);
@@ -683,7 +686,7 @@ void main() {
     expect(sunTimesSpan.style?.fontSize, 15);
     expect(sunTimesSpan.style?.fontWeight, FontWeight.w800);
     const expectedRanges = {
-      '습도': '35% 이하: 건조',
+      '습도': '20% 이하: 매우 건조',
       '바람': '14m/s 이상: 매우 강한 바람',
       '자외선': '10 초과: 위험',
       '가시거리': '20km 이상: 매우 좋음',
@@ -729,7 +732,7 @@ void main() {
     expect(find.text('자료 없음'), findsNothing);
     expect(find.text('0.0℃'), findsOneWidget);
     expect(find.text('체감 0.0℃'), findsOneWidget);
-    expect(find.text('건조\n0%'), findsOneWidget);
+    expect(find.text('매우 건조\n0%'), findsNWidgets(2));
     expect(find.text('약한 바람\n0.0m/s'), findsOneWidget);
     expect(find.text('낮음\n0.0'), findsOneWidget);
     expect(find.text('좋음'), findsOneWidget);
@@ -809,9 +812,9 @@ void main() {
       final first =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-습도')));
       final second =
-          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-바람')));
+          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-건조도')));
       final third =
-          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-자외선')));
+          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-바람')));
       expect(second.dy, first.dy);
       expect(second.dx, greaterThan(first.dx));
       expect(third.dx, first.dx);

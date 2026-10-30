@@ -626,6 +626,7 @@ String? _validPeriodLabel(String? from, String? until) {
 }
 
 IconData _lifestyleIcon(LifestyleMessageType type) => switch (type) {
+      LifestyleMessageType.drynessGuidance => Icons.water_drop_outlined,
       LifestyleMessageType.rainGearUseful => Icons.umbrella_outlined,
       LifestyleMessageType.strongSunExposure => Icons.wb_sunny_outlined,
       LifestyleMessageType.outerwearUseful => Icons.checkroom_rounded,

@@ -3,7 +3,7 @@ import { ServerEnv, Installation } from '../types';
 import { regionFromQuery } from '../utils';
 import { upsertInstallation } from '../database/installationsRepository';
 import { upsertNotificationSettings } from '../database/notificationSettingsRepository';
-import { getNotificationSettings } from '../database/notificationSettingsRepository';
+import { getNotificationSettings, mergeNotificationSettings } from '../database/notificationSettingsRepository';
 import { notificationSettingsBodySchema } from '../validation/notificationSettings';
 import { z } from 'zod';
 import { ownerForRequest } from '../security/installationAccess';
@@ -89,11 +89,10 @@ router.put('/:installationId/notification-settings', async (c) => {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }
   const current = await getNotificationSettings(c.env.DB, installationId);
-  const settings = {
-    ...current,
+  const settings = mergeNotificationSettings(current, {
     ...parsed.data,
     installationId,
-  };
+  });
   if (!isValidCommuteSchedule(settings)) {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }

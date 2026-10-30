@@ -1,0 +1,123 @@
+{
+  "배포완료시각": "2026-10-30T14:35:31.803543+09:00",
+  "최종검증시각": "2026-10-30T14:37:52.792339+09:00",
+  "환경": "시험 서버",
+  "주소": "https://weather-test-api.codesoha.com",
+  "배포파일": [
+    "src/api/weather.ts",
+    "src/database/notificationSettingsRepository.ts",
+    "src/lifestyle/lifestyleTemplates.ts",
+    "src/notification/notificationBuilder.ts",
+    "src/notification/notificationDestination.ts",
+    "src/notification/notificationScheduler.ts",
+    "src/presentation/drynessMessage.ts",
+    "src/presentation/homeWidgetSnapshot.ts",
+    "src/presentation/weatherBrief.ts",
+    "src/recommendations/preparationPolicy.ts",
+    "src/recommendations/recommendationEngine.ts",
+    "src/recommendations/recommendationTemplates.ts",
+    "src/rules/dryness.ts",
+    "src/types.ts",
+    "src/validation/notificationSettings.ts",
+    "node-migrations/users/0005_dryness_preparations.sql"
+  ],
+  "백업": "/var/backups/weather-care/dryness-test-20261030T053518Z",
+  "DB마이그레이션": [
+    "0005_dryness_preparations.sql"
+  ],
+  "기존설정보존건수": 39,
+  "후보검증": {
+    "passed": true,
+    "checks": 24,
+    "externalCalls": 0,
+    "actualUserWrites": 0,
+    "actualFcmSent": 0
+  },
+  "설치본검증": {
+    "passed": true,
+    "checks": 24,
+    "externalCalls": 0,
+    "actualUserWrites": 0,
+    "actualFcmSent": 0
+  },
+  "공개API요청검증건수": 35,
+  "실제기상자료검증": {
+    "requests": 9,
+    "regions": {
+      "seoul": {
+        "drynessItems": [],
+        "catalogVersion": "ko-KR-2026.10.30"
+      },
+      "siheung": {
+        "drynessItems": [],
+        "catalogVersion": "ko-KR-2026.10.30"
+      },
+      "busan": {
+        "drynessItems": [],
+        "catalogVersion": "ko-KR-2026.10.30"
+      }
+    }
+  },
+  "설정API검증": {
+    "passed": true,
+    "actualFcmSent": 0,
+    "actualUserSettingsModified": 0,
+    "temporaryInstallationRemoved": true,
+    "checks": [
+      "actualEnrollment",
+      "legacyRegistration",
+      "twoDongNames",
+      "regionOnOffPersistence",
+      "bothOldSettingsPathsPreserveSubscriptions",
+      "commuteSchedulePreserved",
+      "globalOffPreserved",
+      "allRegionsOff",
+      "drynessSaved",
+      "legacyUpdatesPreserveDryness",
+      "drynessOffFiltersRecommendationsAndBriefing"
+    ],
+    "regionRowsVerified": 2,
+    "checkedAt": "2026-10-30T14:36:05.623077+09:00"
+  },
+  "최종검증": {
+    "passed": true,
+    "settingsCount": 39,
+    "drynessSupportRecordedCount": 1,
+    "healthStatuses": {
+      "test": 200,
+      "testWithoutKey": 403,
+      "production": 200
+    },
+    "checkedAt": "2026-10-30T14:37:52.792339+09:00",
+    "services": {
+      "weather-care-api.service": {
+        "ActiveState": "active",
+        "MainPID": "742759"
+      },
+      "weather-care-scheduler.service": {
+        "ActiveState": "active",
+        "MainPID": "742823"
+      },
+      "weather-care-test-api.service": {
+        "ActiveState": "active",
+        "MainPID": "778943"
+      },
+      "weather-care-test-scheduler.service": {
+        "ActiveState": "inactive",
+        "MainPID": "0"
+      }
+    },
+    "installedSourceMatchesCandidate": true,
+    "productionAndSharedWeatherUnchanged": true,
+    "runtimeErrors": 0,
+    "temporaryInstallationsRemaining": 0,
+    "databaseQuickCheck": "ok",
+    "foreignKeyErrors": 0,
+    "testAccessGatePreserved": true,
+    "backupPermissionsVerified": true,
+    "verificationFcmSent": 0
+  },
+  "운영배포": false,
+  "앱설치및스토어배포": false,
+  "커밋및푸시": false
+}

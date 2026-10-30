@@ -1,5 +1,9 @@
 # 스토어 스크린샷
 
+## 2026-10-30 Android 마지막 장 교체
+
+Android 휴대전화·태블릿 등록 이미지의 마지막 8번만 최신 알림 설정 UI 실기기 촬영본으로 교체했다. 1~7번은 기존 파일 그대로 유지한다. [최신 Android 안내](SCREENSHOTS_20261030.md)와 `../weather-care-android-screenshots-20261030.zip`을 사용한다. 이전 날짜 ZIP과 iOS·iPad 자료는 보존했다.
+
 ## 2026-10-29 iOS Android 배치 참고 재제작
 
 원격 최신 코드로 iOS 앱 화면을 다시 촬영하고, Android의 큰 두 줄 제목·작은 설명 생략·여백 축소·커진 알림 카드 구성을 반영했다. 2번 지역별 알림과 iPhone·iPad 규격 각 8장을 유지한다. [최신 iOS 안내](IOS_20261029.md)와 `../app-store/weather-care-ios-screenshots-20261029.zip`을 사용한다. 실제 iOS 위젯은 제품 코드 변경이 없어 10월 28일 촬영본을 재사용한다. Android 자료와 과거 iOS ZIP은 보존했다.

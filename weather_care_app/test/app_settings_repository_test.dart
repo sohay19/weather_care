@@ -5,6 +5,33 @@ import 'package:weather_care/services/app_settings_repository.dart';
 import 'package:weather_care/services/installation_identity.dart';
 
 void main() {
+  test('구버전 정기 알림 선택은 두 전체 스위치로 이관하고 독립 OFF를 보존한다', () async {
+    final legacy = AppSettings.fromJson({'dailyWeatherEnabled': false}, 'test');
+    expect(legacy.carryNotificationEnabled, isFalse);
+    expect(legacy.todayNotificationEnabled, isFalse);
+    final carryOnly = legacy.copyWith(carryNotificationEnabled: true);
+    expect(carryOnly.dailyWeatherEnabled, isTrue);
+    expect(carryOnly.todayNotificationEnabled, isFalse);
+    SharedPreferences.setMockInitialValues({});
+    const repository = AppSettingsRepository();
+    await repository.save(carryOnly);
+    expect((await repository.load('test')).toJson(), carryOnly.toJson());
+    expect(
+        carryOnly.copyWith(carryNotificationEnabled: false).dailyWeatherEnabled,
+        isFalse);
+    expect(
+        carryOnly.copyWith(dailyWeatherEnabled: false).carryNotificationEnabled,
+        isFalse);
+  });
+  test('동파 알림은 기본 ON이고 저장한 OFF는 재로딩해도 유지한다', () async {
+    SharedPreferences.setMockInitialValues({});
+    const repository = AppSettingsRepository();
+    expect((await repository.load('test')).pipeFreezeEnabled, isTrue);
+    expect(AppSettings.fromJson({}, 'test').pipeFreezeEnabled, isTrue);
+    await repository
+        .save(AppSettings.fallback('test').copyWith(pipeFreezeEnabled: false));
+    expect((await repository.load('test')).pipeFreezeEnabled, isFalse);
+  });
   test('구 앱의 눈·자외선·마스크 선택을 항목 설정으로 이관하고 개별 선택을 보존한다', () {
     final legacy = AppSettings.fromJson({
       'heavySnowEnabled': false,
@@ -121,7 +148,7 @@ void main() {
       'currentRegion': '60_121',
     }, 'device-1');
     expect(loaded.savedRegionKeys, ['이전 구역']);
-    expect(loaded.pipeFreezeEnabled, false);
+    expect(loaded.pipeFreezeEnabled, true);
     expect(loaded.commuteToWorkStart, '07:00');
     expect(loaded.commuteToWorkEnd, '10:00');
     expect(loaded.commuteFromWorkStart, '17:00');

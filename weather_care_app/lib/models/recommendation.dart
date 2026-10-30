@@ -9,6 +9,9 @@ enum RecommendationType {
   parasol,
   sunHat,
   sunscreen,
+  lipBalm,
+  handCream,
+  portableHumidifier,
   sunglasses,
   water,
   portableFan,
@@ -40,6 +43,9 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.parasol => '양산',
       RecommendationType.sunHat => '모자',
       RecommendationType.sunscreen => '선크림',
+      RecommendationType.lipBalm => '립밤',
+      RecommendationType.handCream => '핸드크림',
+      RecommendationType.portableHumidifier => '휴대용 가습기',
       RecommendationType.sunglasses => '선글라스',
       RecommendationType.water => '물',
       RecommendationType.portableFan => '휴대용 선풍기',
@@ -65,6 +71,9 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.parasol => '양산 챙겨요',
       RecommendationType.sunHat => '모자 챙겨요',
       RecommendationType.sunscreen => '선크림 챙겨요',
+      RecommendationType.lipBalm => '립밤 챙겨요',
+      RecommendationType.handCream => '핸드크림 챙겨요',
+      RecommendationType.portableHumidifier => '휴대용 가습기 챙겨요',
       RecommendationType.sunglasses => '선글라스 챙겨요',
       RecommendationType.water => '물 챙겨요',
       RecommendationType.portableFan => '휴대용 선풍기 챙겨요',
@@ -90,6 +99,9 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.parasol => Icons.wb_sunny,
       RecommendationType.sunHat => Icons.face,
       RecommendationType.sunscreen => Icons.spa,
+      RecommendationType.lipBalm => Icons.sanitizer_outlined,
+      RecommendationType.handCream => Icons.back_hand_outlined,
+      RecommendationType.portableHumidifier => Icons.air_rounded,
       RecommendationType.sunglasses => Icons.visibility,
       RecommendationType.water => Icons.local_drink,
       RecommendationType.portableFan => Icons.air,
@@ -115,6 +127,9 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.parasol => 'PARASOL',
       RecommendationType.sunHat => 'SUN_HAT',
       RecommendationType.sunscreen => 'SUNSCREEN',
+      RecommendationType.lipBalm => 'LIP_BALM',
+      RecommendationType.handCream => 'HAND_CREAM',
+      RecommendationType.portableHumidifier => 'PORTABLE_HUMIDIFIER',
       RecommendationType.sunglasses => 'SUNGLASSES',
       RecommendationType.water => 'WATER',
       RecommendationType.portableFan => 'PORTABLE_FAN',
@@ -148,6 +163,9 @@ extension RecommendationTypeLabel on RecommendationType {
       RecommendationType.snowChains => 'assets/icons/prep_snow_chains.png',
       RecommendationType.powerBank => 'assets/icons/prep_power_bank.png',
       RecommendationType.winterBoots => 'assets/icons/prep_winter_boots.png',
+      RecommendationType.lipBalm ||
+      RecommendationType.handCream ||
+      RecommendationType.portableHumidifier ||
       RecommendationType.heavySnowCaution ||
       RecommendationType.mask ||
       RecommendationType.slipResistantShoes ||
@@ -277,6 +295,12 @@ RecommendationType? recommendationTypeFromApiName(String raw) {
       return RecommendationType.parasol;
     case 'SUN_HAT':
       return RecommendationType.sunHat;
+    case 'LIP_BALM':
+      return RecommendationType.lipBalm;
+    case 'HAND_CREAM':
+      return RecommendationType.handCream;
+    case 'PORTABLE_HUMIDIFIER':
+      return RecommendationType.portableHumidifier;
     case 'SUNSCREEN':
       return RecommendationType.sunscreen;
     case 'SUNGLASSES':

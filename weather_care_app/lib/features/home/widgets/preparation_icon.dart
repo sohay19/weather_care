@@ -167,10 +167,50 @@ class _PreparationIconPainter extends CustomPainter {
         _drawBottle(canvas, stroke, sunscreen: false);
       case RecommendationType.sunscreen:
         _drawBottle(canvas, stroke, sunscreen: true);
+      case RecommendationType.lipBalm:
+      case RecommendationType.handCream:
+      case RecommendationType.portableHumidifier:
+        _drawMoistureItem(canvas, stroke);
       default:
         _drawUmbrella(canvas, stroke, parasol: false);
     }
     canvas.restore();
+  }
+
+  void _drawMoistureItem(Canvas canvas, Paint paint) {
+    if (type == RecommendationType.lipBalm) {
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              const Rect.fromLTWH(36, 40, 28, 46), const Radius.circular(4)),
+          paint);
+      canvas.drawRect(const Rect.fromLTWH(40, 16, 20, 24), paint);
+      canvas.drawLine(const Offset(36, 56), const Offset(64, 56), paint);
+    } else if (type == RecommendationType.handCream) {
+      final tube = Path()
+        ..moveTo(27, 18)
+        ..lineTo(73, 18)
+        ..lineTo(64, 73)
+        ..lineTo(36, 73)
+        ..close();
+      canvas.drawPath(tube, paint);
+      canvas.drawRect(const Rect.fromLTWH(36, 73, 28, 13), paint);
+      canvas.drawLine(const Offset(32, 29), const Offset(68, 29), paint);
+      canvas.drawCircle(const Offset(50, 50), 7, paint);
+    } else {
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              const Rect.fromLTWH(24, 44, 52, 42), const Radius.circular(12)),
+          paint);
+      canvas.drawLine(const Offset(42, 44), const Offset(58, 44), paint);
+      canvas.drawCircle(const Offset(50, 68), 3, paint);
+      for (final x in [38.0, 60.0]) {
+        canvas.drawPath(
+            Path()
+              ..moveTo(x, 33)
+              ..cubicTo(x - 12, 23, x + 12, 18, x, 8),
+            paint);
+      }
+    }
   }
 
   void _drawUmbrella(Canvas canvas, Paint paint, {required bool parasol}) {

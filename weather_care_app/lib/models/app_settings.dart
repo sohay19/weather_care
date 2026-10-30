@@ -49,6 +49,9 @@ class AppSettings {
   final bool uvPreparationEnabled;
   final bool pollenEnabled;
   final bool blackIceEnabled;
+  final bool carryNotificationEnabled;
+  final bool todayNotificationEnabled;
+  final bool weatherNotificationEnabled;
   final bool dailyWeatherEnabled;
 
   AppSettings({
@@ -74,7 +77,7 @@ class AppSettings {
     required this.heavySnowEnabled,
     required this.heatwaveEnabled,
     required this.coldWaveEnabled,
-    this.pipeFreezeEnabled = false,
+    this.pipeFreezeEnabled = true,
     required this.showerAndLightRainEnabled,
     this.lightningEnabled = true,
     required this.outerwearEnabled,
@@ -91,8 +94,15 @@ class AppSettings {
     bool? uvPreparationEnabled,
     bool? pollenEnabled,
     bool? blackIceEnabled,
+    bool? carryNotificationEnabled,
+    bool? todayNotificationEnabled,
+    this.weatherNotificationEnabled = true,
     required this.dailyWeatherEnabled,
-  })  : snowPreparationEnabled = snowPreparationEnabled ?? (heavySnowEnabled),
+  })  : carryNotificationEnabled =
+            dailyWeatherEnabled && (carryNotificationEnabled ?? true),
+        todayNotificationEnabled =
+            dailyWeatherEnabled && (todayNotificationEnabled ?? true),
+        snowPreparationEnabled = snowPreparationEnabled ?? (heavySnowEnabled),
         uvPreparationEnabled =
             uvPreparationEnabled ?? (parasolEnabled || sunscreenEnabled),
         pollenEnabled = pollenEnabled ?? (maskEnabled),
@@ -138,8 +148,19 @@ class AppSettings {
     bool? uvPreparationEnabled,
     bool? pollenEnabled,
     bool? blackIceEnabled,
+    bool? carryNotificationEnabled,
+    bool? todayNotificationEnabled,
+    bool? weatherNotificationEnabled,
     bool? dailyWeatherEnabled,
   }) {
+    final carry = carryNotificationEnabled ??
+        dailyWeatherEnabled ??
+        this.carryNotificationEnabled;
+    final today = todayNotificationEnabled ??
+        dailyWeatherEnabled ??
+        this.todayNotificationEnabled;
+    final split =
+        carryNotificationEnabled != null || todayNotificationEnabled != null;
     return AppSettings(
       installationId: installationId,
       locationMode: locationMode ?? this.locationMode,
@@ -188,7 +209,13 @@ class AppSettings {
       uvPreparationEnabled: uvPreparationEnabled ?? this.uvPreparationEnabled,
       pollenEnabled: pollenEnabled ?? this.pollenEnabled,
       blackIceEnabled: blackIceEnabled ?? this.blackIceEnabled,
-      dailyWeatherEnabled: dailyWeatherEnabled ?? this.dailyWeatherEnabled,
+      weatherNotificationEnabled:
+          weatherNotificationEnabled ?? this.weatherNotificationEnabled,
+      carryNotificationEnabled: carry,
+      todayNotificationEnabled: today,
+      dailyWeatherEnabled: split
+          ? carry || today
+          : dailyWeatherEnabled ?? this.dailyWeatherEnabled,
     );
   }
 
@@ -272,7 +299,7 @@ class AppSettings {
           json['heatwaveEnabled'] as bool? ?? fallbackSettings.heatwaveEnabled,
       coldWaveEnabled:
           json['coldWaveEnabled'] as bool? ?? fallbackSettings.coldWaveEnabled,
-      pipeFreezeEnabled: json['pipeFreezeEnabled'] == true,
+      pipeFreezeEnabled: json['pipeFreezeEnabled'] as bool? ?? true,
       showerAndLightRainEnabled: json['showerAndLightRainEnabled'] as bool? ??
           fallbackSettings.showerAndLightRainEnabled,
       lightningEnabled: json['lightningEnabled'] as bool? ?? true,
@@ -299,6 +326,10 @@ class AppSettings {
       pollenEnabled: json['pollenEnabled'] as bool? ??
           ((json['maskEnabled'] as bool? ?? true)),
       blackIceEnabled: json['blackIceEnabled'] as bool? ?? (true),
+      carryNotificationEnabled: json['carryNotificationEnabled'] as bool?,
+      todayNotificationEnabled: json['todayNotificationEnabled'] as bool?,
+      weatherNotificationEnabled:
+          json['weatherNotificationEnabled'] as bool? ?? true,
       dailyWeatherEnabled: json['dailyWeatherEnabled'] as bool? ??
           fallbackSettings.dailyWeatherEnabled,
     );
@@ -347,6 +378,9 @@ class AppSettings {
       'uvPreparationEnabled': uvPreparationEnabled,
       'pollenEnabled': pollenEnabled,
       'blackIceEnabled': blackIceEnabled,
+      'carryNotificationEnabled': carryNotificationEnabled,
+      'todayNotificationEnabled': todayNotificationEnabled,
+      'weatherNotificationEnabled': weatherNotificationEnabled,
       'dailyWeatherEnabled': dailyWeatherEnabled,
     };
   }

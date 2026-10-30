@@ -196,6 +196,14 @@ describe('낙뢰 관측 유효성·수집 상태', () => {
 });
 
 describe('낙뢰 전용 알림', () => {
+  it('기상생활 전체 OFF는 낙뢰 ON이어도 발송을 막는다', async () => {
+    installation(); state(); snapshot(['202610201210']);
+    sqlite.sqlite.prepare('UPDATE notification_settings SET weather_notification_enabled=0').run();
+    const sent: FcmPayload[] = [];
+    await runLightningNotificationJob(env, { now: () => now, sender: sender(sent) });
+    expect(sent).toEqual([]);
+    expect(sqlite.sqlite.prepare('SELECT count(*) AS count FROM notification_history').get()).toEqual({ count: 0 });
+  });
   it('격자가 다른 가까운 낙뢰도 등록 GPS 위치의 반경으로 알린다', async () => {
     installation(); state();
     sqlite.sqlite.prepare('UPDATE installations SET latitude=?,longitude=?').run(point.latitude, point.longitude);
@@ -267,7 +275,7 @@ describe('낙뢰 전용 알림', () => {
     expect(sent).toEqual([]);
   });
 
-  it.each(['notification_enabled', 'lightning_enabled', 'lightning_supported'])('%s 끄기는 발송을 막고 설정 저장에도 유지된다', async (column) => {
+  it.each(['notification_enabled', 'lightning_enabled', 'lightning_supported', 'weather_notification_enabled'])('%s 끄기는 발송을 막고 설정 저장에도 유지된다', async (column) => {
     installation(); state(); snapshot(['202610201210']);
     sqlite.sqlite.prepare(`UPDATE notification_settings SET ${column}=0`).run();
     const sent: FcmPayload[] = [];

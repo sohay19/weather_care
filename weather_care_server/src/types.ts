@@ -359,6 +359,9 @@ export interface NotificationSettings {
   uvPreparationEnabled?: boolean;
   pollenEnabled?: boolean;
   blackIceEnabled?: boolean;
+  carryNotificationEnabled?: boolean;
+  todayNotificationEnabled?: boolean;
+  weatherNotificationEnabled?: boolean;
   dailyWeatherEnabled: boolean;
   heavyRainEnabled: boolean;
   heatwaveEnabled: boolean;

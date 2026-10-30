@@ -13,6 +13,8 @@ import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
 import 'ad_removal_purchase_screen.dart';
 import 'notification_schedule.dart';
+import 'notification_time_picker.dart';
+import 'settings_time_control.dart';
 import 'commute_notification_settings_screen.dart';
 import 'region_picker_screen.dart' show RegionMapBuilder;
 import 'settings_guide.dart';
@@ -357,17 +359,13 @@ class _WeatherAlertsSettingsScreenState
   Future<void> _selectTime() async {
     if (!settings.notificationEnabled || widget.paused) return;
     final pieces = settings.notificationTime.split(':');
-    final selected = await showTimePicker(
+    final selected = await showNotificationTimePicker(
       context: context,
       initialTime: TimeOfDay(
         hour: int.tryParse(pieces.first) ?? 7,
         minute: int.tryParse(pieces.length > 1 ? pieces[1] : '') ?? 0,
       ),
-      helpText: '알림 시간 선택',
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-        child: child!,
-      ),
+      title: '알림 시간 선택',
     );
     if (selected == null || !mounted) return;
     final time =
@@ -439,41 +437,11 @@ class _WeatherAlertsSettingsScreenState
           subtitle: '준비물 요약 알림 시간을 설정해요',
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Opacity(
+            SettingsTimeControl(
               key: const ValueKey('notification-time-control'),
-              opacity: enabled ? 1 : 0.46,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(18),
-                onTap: enabled ? _selectTime : null,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: WeatherCareTheme.of(context).surfaceMuted,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(children: [
-                    Icon(Icons.alarm_rounded,
-                        color: WeatherCareTheme.of(context).primary),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text('설정 시각',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
-                    ),
-                    Text(
-                      settings.notificationTime,
-                      style: TextStyle(
-                        color: WeatherCareTheme.of(context).primaryDeep,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right_rounded,
-                        color: WeatherCareTheme.of(context).textSecondary),
-                  ]),
-                ),
-              ),
+              label: '설정 시각',
+              value: settings.notificationTime,
+              onTap: enabled ? _selectTime : null,
             ),
             const SizedBox(height: 10),
             Padding(
@@ -506,20 +474,16 @@ class _WeatherAlertsSettingsScreenState
           ]),
         ),
         const SizedBox(height: 12),
-        _SettingsMenuButton(
+        _SettingsSection(
           key: const ValueKey('commute-notification-menu'),
           icon: Icons.commute_rounded,
           title: '출퇴근 알림 시간',
-          subtitle:
-              '출근 ${settings.commuteToWorkStart}~${settings.commuteToWorkEnd}\n'
-              '퇴근 ${settings.commuteFromWorkStart}~${settings.commuteFromWorkEnd}',
-          onTap: () => Navigator.of(context).push<void>(MaterialPageRoute(
-            builder: (_) => CommuteNotificationSettingsScreen(
-              initialSettings: settings,
-              enabled: enabled,
-              onSettingsChanged: _update,
-            ),
-          )),
+          subtitle: '도로통제 알림을 받을 시간대를 설정해요',
+          child: CommuteNotificationTimeControls(
+            settings: settings,
+            enabled: enabled,
+            onSettingsChanged: _update,
+          ),
         ),
         const SizedBox(height: 12),
         _SettingsSection(

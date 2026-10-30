@@ -1,3 +1,4 @@
+import 'package:weather_care/features/settings/notification_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
@@ -126,7 +127,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(
           tester
-              .widget<TimePickerDialog>(find.byType(TimePickerDialog))
+              .widget<NotificationTimePickerDialog>(
+                  find.byType(NotificationTimePickerDialog))
               .initialTime,
           const TimeOfDay(hour: 7, minute: 0));
 
@@ -136,9 +138,7 @@ void main() {
           find.byType(TextFormField).first, time.hour.toString());
       await tester.enterText(
           find.byType(TextFormField).last, time.minute.toString());
-      final labels = MaterialLocalizations.of(
-          tester.element(find.byType(TimePickerDialog)));
-      await tester.tap(find.text(labels.okButtonLabel));
+      await tester.tap(find.text('확인'));
       await tester.pumpAndSettle();
 
       final savedTime =
@@ -158,10 +158,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(
           tester
-              .widget<TimePickerDialog>(find.byType(TimePickerDialog))
+              .widget<NotificationTimePickerDialog>(
+                  find.byType(NotificationTimePickerDialog))
               .initialTime,
           time);
-      await tester.tap(find.text(labels.cancelButtonLabel));
+      await tester.tap(find.text('취소'));
       await tester.pumpAndSettle();
       expect(changed, hasLength(1));
       expect(find.text(savedTime), findsOneWidget);

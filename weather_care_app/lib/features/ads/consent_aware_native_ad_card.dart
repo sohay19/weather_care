@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -381,9 +382,13 @@ class _NativeAdFrame extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.constrainWidth(400);
+        final padding = size == NativeAdCardSize.small ? 8.0 : 12.0;
         final height = switch (size) {
-          // 광고 영역은 4:1을 유지하고 카드 안쪽에 12px 여백을 둔다.
-          NativeAdCardSize.small => (width - 24) / 4 + 24,
+          // iOS 템플릿의 제목·광고 표시·버튼이 눌리지 않도록 세로 공간을 확보한다.
+          NativeAdCardSize.small => 120.0 *
+                  math.max(
+                      1.0, MediaQuery.textScalerOf(context).scale(14) / 14) +
+              padding * 2,
           NativeAdCardSize.medium => 360.0,
         };
         return Center(
@@ -394,8 +399,8 @@ class _NativeAdFrame extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             decoration: decoration,
             child: Padding(
-              // 카드 테두리 1px을 포함해 광고와 카드 사이를 12px로 맞춘다.
-              padding: const EdgeInsets.all(11),
+              // 카드 테두리 1px을 포함한 여백이다.
+              padding: EdgeInsets.all(padding - 1),
               child: child,
             ),
           ),

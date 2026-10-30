@@ -179,7 +179,7 @@ void main() {
     expect(card.bottom - ad.bottom, 12);
   });
 
-  testWidgets('소형 광고는 카드 안쪽 여백을 제외하고 4:1 비율을 유지한다', (tester) async {
+  testWidgets('좁은 화면에서도 소형 광고의 제목과 버튼에 필요한 높이를 확보한다', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -195,21 +195,30 @@ void main() {
       find.byKey(const ValueKey('week-native-ad-card')),
     );
     expect(card.width, 360);
-    expect(card.height, 108);
+    expect(card.height, 136);
     expect(tester.getSize(find.byKey(const ValueKey('fake-native-ad'))),
-        const Size(336, 84));
+        const Size(344, 120));
     expect(tester.getCenter(find.byKey(const ValueKey('fake-native-ad'))),
         tester.getCenter(find.byKey(const ValueKey('week-native-ad-card'))));
   });
 
-  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
-    testWidgets('${platform.name} 광고 박스는 유지하고 광고를 안쪽에 배치한다', (tester) async {
+  for (final (platform, textScale) in [
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS])
+      for (final textScale in [1.0, 1.5]) (platform, textScale),
+  ]) {
+    testWidgets('${platform.name} 글자 배율 $textScale에서 광고와 로딩 영역 높이를 유지한다',
+        (tester) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: Scaffold(
           body: Column(
             children: [
@@ -235,7 +244,7 @@ void main() {
       expect(placeholder.left, 0);
       expect(placeholder.top, 0);
       expect(placeholder.width, 360);
-      expect(placeholder.height, 108);
+      expect(placeholder.height, 120 * textScale + 16);
       final bounds = tester.getRect(find.byType(ConsentAwareNativeAdCard));
       expect(placeholder, bounds);
 
@@ -245,10 +254,10 @@ void main() {
       );
       expect(card, placeholder);
       final ad = tester.getRect(find.byKey(const ValueKey('fake-native-ad')));
-      expect(ad.left - card.left, 12);
-      expect(ad.top - card.top, 12);
-      expect(card.right - ad.right, 12);
-      expect(card.bottom - ad.bottom, 12);
+      expect(ad.left - card.left, 8);
+      expect(ad.top - card.top, 8);
+      expect(card.right - ad.right, 8);
+      expect(card.bottom - ad.bottom, 8);
       expect(tester.takeException(), isNull);
     });
   }

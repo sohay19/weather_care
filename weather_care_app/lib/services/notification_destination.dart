@@ -214,7 +214,7 @@ NotificationTopic _warningTopic(String typeCode) {
   };
 }
 
-/// 알림 발송 당시의 구역. GPS 알림도 클릭할 때 다른 위치로 바뀌지 않는다.
+/// 알림 발송 당시의 구역. GPS 알림을 열 때는 현재 위치를 다시 확인한다.
 class NotificationRegion {
   final String key;
   final int nx;

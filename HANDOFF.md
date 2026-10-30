@@ -13991,3 +13991,71 @@
 - 사용자가 남은 미커밋 내역 전체의 푸시를 요청했다. 남아 있던 Week 초기280ms 전환 애니메이션 인계9줄과 docs/week-card-animation-20261029의 README·실제기기영상·회귀검사JSON 3파일을 모두 포함한다. 영상은 이후 손가락추적/12dp간격 추가 전의 기록이며 최신 동작을 재촬영한 자료로 제시하지 않는다.
 - 영상 크기1,127,012바이트와 SHA256 5e4849e8f11509443c95b9c35f87b43971809b6d55d87161d663f15b901a40b5, 검사JSON의5건 통과 및 한글안내를 확인했다. 제품코드 변경이 없어 빌드·기기조작·검사를 반복하지 않았다. 공백검사 통과, 작업 시작 시 원격master와 로컬3ec3eed의 일치를 확인했다.
 - 누락 없이 git add -A로 반영하고 한글 문서 커밋을 일반 푸시한 뒤, 원격master 커밋 일치와 작업 트리의 미커밋/미추적 파일 없음까지 확인한다. ignored 빌드·임시검증 자료는 기존 제외 규칙을 유지한다.
+
+## 2026-10-29 v1.1.2 이후 수정내역 조회
+
+- 사용자 요청으로 v1.1.2 태그(909be4c, 2026-10-27) 이후 현재 HEAD dc6ca36까지 Git 커밋·제품 코드 차이와 기존 인계를 확인해 수정내역을 정리했다.
+- 주요 항목: 구역별 알림 ON/OFF·동 단위 지역명·알림 클릭 지역 이동, 출퇴근 도로통제 알림 시간 설정, 알림 설정 안내 정리, 공통 제목 간격·Week 제목 및 날짜 이동 버튼 개선, Week 내부 가로 스크롤 영역·손가락 추적 전환·카드 간격 개선, 그래프 수치 충돌 회피·신적설 표시와 관측/예보 시간 분리, Android 소형/중형/대형 위젯 분리 및 기본 크기 보정, Debug 버전 검사 생략, Android/iOS 스토어 이미지 갱신이다.
+- 기능 변경과 서버 배포·스토어 자료/검증 기록을 구분해 안내한다. 이번 작업은 이력 조회와 인계 추가만 수행했으며 제품 코드·기기·배포·커밋·push는 변경하지 않았다. 빌드와 테스트는 새로 실행하지 않았다.
+
+## 2026-10-30 현재 위치 구역 자동 추가 동작 확인
+
+- 사용자 문의에 따라 앱의 GPS 갱신, 구역 메뉴, 알림 클릭 초기화 및 설정 복원 코드를 확인했다.
+- 일반 GPS 조회/새로고침은 savedRegionKeys에 구역을 추가하지 않으며, 구역 메뉴의 현재 위치 항목은 항상 표시된다.
+- 다만 현재 위치 알림을 눌러 앱을 열면 발송 당시 격자·지역명이 지역 카탈로그와 일치하는 경우 MANUAL 조회로 전환하고 해당 지역을 savedRegionKeys에 자동 추가·저장한다(home_screen.dart 초기화 370~402행). 따라서 알림을 통해 들어온 현재 위치가 별도 저장 구역으로 남을 수 있다.
+- AppSettings.fromJson도 저장된 manualRegionKey가 구역 목록에 없으면 목록에 복원한다. 이번에는 동작 확인만 수행했으며 제품 코드·기기·커밋·배포는 변경하지 않았다. 테스트는 실행하지 않았고 기존 관련 테스트와 코드를 읽어 확인했다. 기존 HANDOFF 미커밋 변경은 보존했다.
+## 2026-10-30 현재 위치 알림의 자동 구역 추가 제거·새 구역 알림 기본 ON
+
+- 사용자 요청: 현재 위치 알림 클릭 시 저장 구역을 추가하지 않고 GPS 모드를 유지하며, 현재 위치와 신규 구역의 알림 기본값을 ON으로 적용한다.
+- home_screen.dart 초기화에서 GPS 알림은 locationMode=GPS로 열고 발송 격자의 수동 지역 변환·추가 경로를 거치지 않도록 분리했다. 기존 수동 구역에서 GPS 알림으로 진입해도 GPS로 전환하고, 기존 저장 구역 및 알림 ON/OFF 선택은 보존한다. 저장 구역 알림의 기존 지역 이동 동작은 유지한다.
+- 현재 위치 알림의 기존 기본 ON을 유지했다. 행정지역명·주소·지도 구역 추가의 공통 저장 처리에서 새 지역 키만 알림 대상에 추가해 기본 ON으로 저장·서버 동기화한다. 이미 OFF인 GPS/다른 저장 구역 및 전체 알림 설정을 강제로 켜지 않는다. 과거에 자동 추가된 구역을 임의로 삭제하지 않는다.
+- NotificationRegion 설명을 현재 GPS 처리에 맞췄다. GPS 알림 클릭/앱 재시작/이동/위치권한 없음/기존 수동 구역·OFF 선택 보존과 GPS 기본 ON·직접 OFF 후 재시작, 세 가지 구역 추가 경로의 ON 저장·서버 동기화 회귀 검증을 추가했다.
+- 변경 전에도 실패한 기존 구역 알림 토글 검사의 제목 글자/위치 기대값(12px·w700·오프셋0)을 실제 기존 화면(11px·w800·가로-8px)에 맞췄다. 제품 UI는 수정하지 않았다.
+- Flutter 3.47.4: home_location_test.dart/app_settings_repository_test.dart/settings_sync_service_test.dart/notification_destination_test.dart 총88개 모두 통과. Flutter analyze 실행이 시작 단계에서 지연돼 해당 실행만 종료하고 같은 SDK의 dart analyze --fatal-infos lib test로 전체 앱 소스·테스트 정적 분석을 완료했다(No issues found). git diff --check 통과.
+- UI 실행·실기기 설치·실제 알림 발송·서버/스토어 배포·커밋·push는 수행하지 않았다. 기존 HANDOFF 미커밋 기록은 보존했으며, 검증 로그는 ignored weather_care_app/build/location-notification-*-20261030.log에 있다.
+## 2026-10-30 SM_S948U 실기기 알림·구역 기본값·백그라운드 위젯 검사
+
+- 사용자 요청으로 방금 수정한 앱과 앱 미사용 중 이동에 따른 위젯 갱신을 검사했다. 연결 기기가2대여서 사용자에게 확인했고 SM_S948U(localhost:36163, Android API36)를 선택받았다. 다른 USB기기에는 설치·설정 변경하지 않았다. 대상에는 제품 앱이 미설치였으므로 새 설치 기준이다.
+- Flutter3.47.4의 일반 lib/main.dart Debug APK를327.6초에 빌드하고 제품 패키지 com.codesoha.weathercare에 설치했다(현재 keystore 버전1.1.3). Debug 설정의 시험 API weather-test-api.codesoha.com을 사용했다. 제품 소스를 이번 검사에서 추가 변경하거나 시험 진입점으로 교체하지 않았다. APK SHA256과 결과는 ignored build/location-device-20261030/verification.json에 기록했다.
+- PC 창을 띄우지 않고 ADB·실제 Android UIAutomator/스크린샷으로 확인했다. 별도 데스크톱 생성 도구는 제공되지 않았으며 Windows UI 자동화는 수행하지 않았다. 최초 앱 권한 안내와 실제 화면을 보존했고, 테스트에 필요한 정확한 위치·백그라운드 위치·알림 권한을 ADB로 허용했다. 앱의 백그라운드 위치 및 전체/GPS 알림이 ON인 상태를 확인했다.
+- 현재 위치 알림 기본 ON을 실제 구역 메뉴 Switch.checked=true와 저장값['GPS']로 확인했다. 실제 행정지역 선택 UI로 부산 남구 감만1동(98/74)을 추가하니 해당 지역과 GPS가 모두 ON이며 수동 구역 선택으로 저장됐다.
+- 기기 Google Play services25.45.34가 Firebase cloud messaging에 SERVICE_VERSION_UPDATE_REQUIRED를 반환해 제품 FCM 토큰 등록이 firebase:unknown으로 실패했다. 실제 FCM 푸시 수신으로 성공을 주장하지 않는다. 제품 FlutterLocalNotificationsPlugin을 디버그 VM에서 호출해 지역 키GPS·발송 지역서울 구로3동58/125인 실제 로컬 알림을 표시하고 시스템 알림창에서 직접 탭했다. 화면은 실제 측정 서울 중구 명동60/127로 열리고 locationMode=GPS, 저장 구역은 기존 감만1동1개 그대로였다. 발송 지역은 저장 구역에 추가되지 않았다. 완전 종료·재실행 후에도 GPS와 기존 구역 목록이 유지됐다.
+- OS 모의 위치는 기존 gpsreview 도구의 FusedLocationProviderClient.setMockLocation으로 서울37.5665/126.9780→부산35.1796/129.0756을 재현했다. 앱을 열지 않고 삼성 Launcher 전면을 유지한 채121.2초 관찰했지만 위젯 격자60/127·측정시각·revision이 그대로여서 자동 위치 갱신은 실패했다. OS dumpsys location에는 부산 fused mock 측정이 기록됐다. 실제 물리 이동이나 정상 지오펜스 등록 뒤의 OS 이탈 감지·Doze 검증으로 간주하지 않는다.
+- 실패 원인을 읽기 전용으로 확인했다. 앱은 backgroundLocationWanted=true/status=error·모든 권한 허용·설정 저장saved였으나 네이티브 감시 설정 파일이 없었다. 시험 사용자 DB에서 이 기기 소유자의 알림 설정(notification_enabled=1)은 있으나 installations 행이 없었다. FCM 실패로 설치/위치 등록이 끝나지 않아 백그라운드 세션이 시작되지 않는 환경이다. 서버 DB/설정을 직접 수정하거나 대체 토큰·좌표로 등록을 우회하지 않았다. Google Play 서비스 업데이트 후 자연스러운 전체 경로 재검증이 필요하다.
+- 대조로 위젯의 실제 새로고침 버튼을 눌렀더니 앱을 열지 않고 기존 선택 지역 서울의 날씨/기준시각은 정상 갱신되고 WeatherCareWidgetRefreshWorker SUCCESS가 기록됐다. 현재 구현의 버튼은 저장된 선택 URL의 날씨 갱신이며 GPS 재측정을 뜻하지 않는다.
+- 모의 위치 해제(mock-cleared=true)·모의 권한 기본값 복원·시연 도구 제거를 완료했다. 실제 기기 위치 구미시 임수동85/96로 앱과 위젯이 돌아온 것을 확인했다. 디버그 연결/전용 포트도 정리했다. 소형2×2 위젯을 실제 홈에 추가했으며 제품 앱과 위젯은 유지했다.
+- 테스트 구역 정리 도중12:14경 원격 연결이 일시 단절돼 사용자에게 같은 기기 재연결을 요청했다. 재연결 후 기존 설정 파일이 정상·변경 전 상태임을 확인했다. 앱을 종료하고 전체 기존 prefs를 ignored 검사 폴더에 백업한 뒤 임시 파일 XML 검증·원자적 교체로 이번 검사 구역만 제거했다. 최종 GPS·savedRegionKeys=[]·notificationRegionKeys=['GPS']·전체/백그라운드ON을 재확인했다. 최종 홈 전면의 실제 위젯은 구미시 임수동19.3도/12:17기준이다. 사용자 Google Play 서비스나 기기 테마/밀도/배터리 정책은 변경하지 않았다.
+- 증거: ignored weather_care_app/build/location-device-20261030의 verification.json, initialized/added-region/after-notification-loaded/cold-restart/background-baseline/movement-start/automatic-result/final-device.json, 실제 알림·구역 메뉴·권한 상태·홈 위젯 PNG/XML, OS 위치·제품 로그·읽기 전용 server-status.json. 빌드 로그는 build/location-device-build-20261030.log다. 새로 실행한88개 단위 검사가 아니라 실제 기기 검사이며 이전88개 통과 기록은 그대로다. git diff --check 통과. 서버/스토어 배포·커밋·push는 하지 않았다.
+## 2026-10-30 Play 서비스 업데이트 시도·SM-F971N 실기기 백그라운드 위치/위젯 재검사
+
+- 사용자 요청으로 Google Play 서비스 업데이트 후 앱 미진입 백그라운드 갱신을 재검사했다. SM-S948U 리모트 랩의 공식 Play Store에 로그인 화면이 나와 사용자가 직접 로그인했다. 업데이트를2회 눌렀으나 관리자 정책으로 설치가 차단됐다(PackageManager This admin app installation is not allowed, 설치-110·스토어6000). 25.45.34→26.42.31 업데이트는 적용되지 않았고 정책을 우회하지 않았다. 해당 기기는 홈으로 돌려놓았다.
+- 사용자가 실기기를 대안으로 제시해 USB R5KL9052KLY로 전환했다. 사용자 표기는 SM-F917N이었지만 실제 adb 모델은 SM-F971N이며 이를 안내했다. Android API37·Google Play services26.42.31(기본 이미지26.18.42 위 업데이트 설치)이 이미 설치돼 있어 실기기의 Play 서비스는 변경할 필요가 없었다.
+- 실기기는 기존 제품1.1.3(versionCode26102900) 비디버그/운영 API 앱을 그대로 사용했다. 이번 GPS 알림 수정 Debug APK로 교체한 검사가 아니다. 백그라운드 네이티브 경로를 기존 실설치 앱에서 검사했으며 제품 소스·실기기 APK·앱 데이터·저장 지역·알림·권한·테마·배터리 정책을 수정하지 않았다. 처음부터 GPS·현재 위치 알림/전체 알림·백그라운드 위치가 ON, 정확한 위치·항상 허용·알림 권한이 모두 허용돼 있었다. 앱 권한 상태에 이동 감지 중을 확인했다.
+- 임시 gpsreview APK를 설치해 해당 도구만 위치 권한·mock_location appops를 허용했다. FusedLocationProviderClient.setMockLocation으로 서울37.5665123/126.9780123을 입력하고 초기 준비를 위해 앱을1회 재실행했다. 제품 FCM 등록, BackgroundGeofenceWorker/BackgroundLocationWorker/위젯 Worker 성공 및 실제 홈 위젯 서울 중구 무교동17.2도/12:28기준을 확인한 다음 홈으로 내렸다.
+- 첫 백그라운드 이동은 통과했다. 12:30:39경 부산35.1796123/129.0756123(98/76)을 OS 모의 위치로 입력했고, 앱 재진입·위젯 새로고침 버튼 없이 실제 홈 위젯이 부산 연제구 연산동19.6도/12:30기준으로 바뀌었다. 입력부터 UI 확인까지4.49초다. 지오펜스 Worker12:30:39.795 성공→위치 업로드 Worker12:30:41.077 성공→위젯 Worker12:30:42.110 성공이 순서대로 기록됐다.
+- 운영 사용자 DB는 읽기 전용으로 이 시험의 정확한 합성 좌표와 시각에 일치하는 설치1건만 식별했다(지문 e19a1e277f88). 서버 GPS 격자60/127→98/76, 측정12:30:39.718/반영12:30:40.556, 토큰 존재 및 동일 background_location_revision 유지를 확인했다. 첫 이동 구간의 MainActivity resume 이벤트는0건이다. 서버 설치·인증·DB를 직접 수정하거나 테스트 콜백/Worker를 강제 호출하지 않았다.
+- 추가 연속 갱신은 미확인으로 남긴다. 모의 모드를 OFF/ON한 뒤 서울로 되돌린 입력에서는 후속 이탈 이벤트가 오지 않았다. 한 번은 앱 재진입 준비 중 새 위치 측정이 제때 도착하지 않아 위젯이 지역 설정 안내로 비워졌으므로 유효한 기준 상태로 간주하지 않았다. 이후 새 부산 측정을 전달해 앱·서버·위젯과 지오펜스 등록 완료를 확인한 뒤 홈으로 내리고 서울 재입력·감시 중심 안쪽 재입력도 검사했지만 후속 Worker 시작 기록과 서버/위젯 이동이 없었다.
+- 마지막으로 부산 중심 안의 모의 좌표를3분 유지(12:43:11~12:46:11, 60초마다 신선한 측정)한 뒤 서울 바깥쪽 측정을 넣고138.3초(최종12:48:30) 관찰했다. OS fused에는 서울 mock 측정이 있으나 서버는 부산98/76, 위젯도 부산 연산동에 남았고 새 BackgroundGeofenceWorker 시작이 없었다. 중간에 화면 자동 잠금이 발생해 사용자에게 잠금만 해제해 달라고 요청했다. 이 결과는 앱의 재등록 오류·모의 모드 전환 영향·위치 샘플 조건·OS 실행 지연을 분리하지 못했으므로 전체 정상/실제 연속 물리 이동 성공으로 보고하지 않는다.
+- Google 공식 FusedLocationProviderClient 문서의 setMockMode가 FLP 캐시를 비우며 geofencing 등 파생 API에도 영향을 준다는 설명을 확인했다: https://developers.google.com/android/reference/com/google/android/gms/location/FusedLocationProviderClient#setMockMode(boolean). 원인 확정의 대용으로 사용하지 않는다. 실제 물리 이동·장시간 연속 감지·재부팅/Doze 검사는 수행하지 않았다.
+- 검사 종료 후 mock-cleared=true 확인, 도구 appops 기본값 복원, 임시 gpsreview 앱 제거를 완료했다. 사용자가 잠금을 해제한 뒤 관찰 구간 밖에서 제품 앱에 진입해 실제 서울 구로구 구로동58/125로 원복했다. 운영 서버·홈 위젯16.9도/12:49기준이 일치하고, 권한 화면의 정상 설정 저장·알림 허용·백그라운드 ON/이동 감지 중을 다시 확인했다. 최종 화면은 기존 홈 위젯이 있는 Launcher이며 기존 앱과 사용자 지역/알림 목록을 유지했다.
+- 증거는 ignored build/location-physical-20261030/verification.json, baseline/movement-immediate/final-real.json, movement.json, app-after-movement.txt, app-activity-resumes*.txt, home-busan-auto/final-home-real/restored-background-status PNG/XML, 후속 모의입력·관찰 JSON/JSONL 및 작업 스케줄러/위치 기록이다. 리모트 랩 업데이트 차단 근거는 build/location-device-retest-20261030의 Play Store PNG와 해당 패키지 관련 로그만 남긴 play-install-log.txt에 있다. 토큰/소유 비밀키는 출력하지 않았다. 새 단위 검사·빌드·앱/서버 배포·커밋·push는 하지 않았고 기존 미커밋 작업을 보존했다. git diff --check 통과다.- 실기기 ADB screencap stdout에 다중 디스플레이 경고 문자열이 PNG 앞에 붙어 처음 이미지 열기가 실패했다. 17개 캡처에서 PNG 시그니처 앞의 전송 경고만 별도 .capture-warning.txt로 분리하고 이미지 본문은 그대로 보존했다. 전체 PNG 청크 CRC·추출 본문 SHA256 일치를 검사했고 capture-transport-repair.json에 기록했다. 이후 부산 자동 갱신 화면과 최종 실제 구로동 원복 화면을 직접 열어 확인했다. 리사이즈·색상/문구/수치/픽셀 수정은 하지 않았다.
+## 2026-10-30 연속 이동 지오펜스 갱신 수정·SM-F971N 재검증
+
+- 사용자 요청: 첫 이동 이후 연속 이동에서 백그라운드 위치/위젯이 갱신되지 않는 원인을 찾아 수정하고 실기기로 재검사한다. 이전 현재 위치 알림/신규 구역 기본 ON 수정과 기존 미커밋 기록을 보존했다.
+- 동일 실기기 R5KL9052KLY(SM-F971N, Android API37, Play services26.42.31)를 사용했다. 기존 운영 스토어 앱1.1.3은 Google Play 서명과 로컬 서명이 달라 데이터 삭제 없이 교체할 수 없으므로 그대로 보존했다. 현재 소스를 별도 패키지 com.codesoha.weathercare.locationqa(날씨챙겨 위치검증), Debug/시험 API로 빌드해 수정 전후를 비교했다. 기존 앱은 관찰 동안만 종료했다. 운영 앱의 구역·알림·권한·배터리 정책은 변경하지 않았다.
+- 재현 조건을 바로잡았다. 기존 gpsreview 도구가 입력마다 setMockMode(true)를 호출해 FLP/지오펜스 캐시를 비울 수 있어, 최초1회만 모의 모드를 켜고 이후에는 setMockLocation만 전달하도록 ignored 검증 도구를 수정했다. 이 조건에서도 원래 설치 앱과 수정 전 QA APK는 첫 서울→부산 이동만 처리하고 두 번째 서울 복귀를 처리하지 않았다. QA는 두 번째 입력 후200초 이상 부산에 남았고 후속 GeofenceWorker도 시작되지 않았다.
+- 원인은 이동 후 같은 서버 세션 revision을 지오펜스 requestId로 재사용하며 기존 울타리를 덮어쓰던 재등록 경로로 좁혔다. 수정 전후 대조에서 이 방식의 두 번째 이탈 감시 실패를 재현했다. Google Play 내부 상태 보존의 구현 세부를 확정한 것은 아니다.
+- BackgroundGeofenceWorker는 이전 울타리 ID의 해제 완료를 기다린 뒤 세션 revision+UUID인 새 ID로 등록하도록 변경했다. 서버 인증/세션 revision은 유지한다. 등록 중 상태를 표시하고, 이전 세대의 늦은 EXIT는 무시한다. 기존 revision 형식의 울타리는 새 세대를 등록하기 전까지 호환한다. 늦은 등록 완료 정리는 해당 고유 ID만 제거해 새 세대/새 세션 감시를 삭제하지 않도록 했다. 네이티브 제품2파일과 기존 단위검사1파일만 수정했다.
+- 수정 APK에서 초기 준비 후 홈으로 내린 채 서울→부산→서울→부산→서울 네 번 연속 이동을 통과했다(13:21:00~13:25:23). 앱 재진입·위젯 버튼·Worker/콜백 직접 호출 없이 실제 Google Play services 지오펜스 이벤트가 BackgroundGeofenceWorker→BackgroundLocationWorker→WeatherCareWidgetRefreshWorker를 실행했고 저장 좌표/위젯 데이터가 매번 바뀌었다.
+- 실제 Launcher 렌더링도 별도로 재검사했다. ignored QA 전용 PinWidgetActivity로 삼성 홈에 검증 소형 위젯33을 추가했다(제품 manifest/소스에는 추가하지 않음). APK 갱신 후 앱1회 초기 준비와 서울 기준 상태를 확인하고13:27:00에 홈으로 내렸다. 13:27:19.491 부산,13:27:36.871 서울,13:27:58.036 부산,13:28:21.875 서울 입력에서 네 번 모두 홈 위젯 지역/온도/기준시각이 자동 갱신됐다. 실제 화면과 UI 트리에서 부산 연제구 연산동20.5도↔서울 중구 무교동17.8도를 확인했다. 각 위젯 Worker 완료는 입력 뒤 약1.4~1.7초다. 화면 캡처는 그 뒤 확인 시점의 증거다.
+- 해당 네 번의 관찰 구간에서 QA MainActivity resume/create 이벤트가 없었다. 앱 내부 타이머나 재진입의 결과가 아니다. 마지막 시험 사용자 설치1건(지문6b7d1ccc10a5)을 정확한 합성 좌표/측정시각으로 읽기 전용 식별해 GPS60/127·측정13:28:21.868·FCM 토큰 존재·세션 revision을 확인했다. 서버 DB 직접 변경·대체 토큰·강제 위치 업로드는 하지 않았다. 처음에는 로컬 legacy installationId로 조회해 null이 나왔으나 실제 서버 owner는 enrollment에서 따로 발급되므로 해당 null을 등록 실패로 판단하지 않았다.
+- 검사: Android testDebugUnitTest 27개/5클래스 모두 통과(울타리 세대 고유성·이전 세대 EXIT 거절·기존 ID 호환 포함), Flutter background_location_service/control 및 home_widget_service/snapshot 31개 모두 통과, QA 수정 APK와 실제 위젯 추가용 QA APK 빌드 성공. 이전 현재 위치 알림 관련88개 통과 기록은 별도이며 이번58개에 합산하지 않는다. git diff --check 통과.
+- 정리:13:28:58 mock-cleared=true 확인, 모의 위치 appops 기본값 복원, gpsreview/QA APK와 QA 위젯 제거, 임시 probe jar 제거·ADB forward 없음 확인. 기존 운영 앱을 다시 열어 실제 구로동58/125·운영 서버13:29:04.901 실좌표·GPS·알림 ON 복귀를 확인했다. 기존 소형 위젯30의 바인딩도 유지됐다. 이 종료 단계에서 기존 위젯은 현재 홈 페이지 UI 트리에 없어 최종 실좌표의 기존 위젯 화면까지 재확인했다고 주장하지 않는다. 검증용 실제 홈 위젯의 네 번 자동 갱신은 앞 구간에서 확인했다. 이후 사용자가 다른 앱을 사용하는 상태여서 추가 화면 조작을 중단했다.
+- 한계: 실기기에 OS 모의 좌표를 입력한 검사이며 실제 도보/차량 연속 이동, 장시간 절전·재부팅은 검사하지 않았다. 서버/스토어 배포·운영 APK 교체·커밋·push는 하지 않았다. 기존 스토어 설치본에는 이번 수정이 아직 반영되지 않았다.
+- 증거: ignored weather_care_app/build/location-fix-20261030의 qa-baseline-failure-confirmed.json, fixed-move-1~4-check.json, rendered-move-1~4.json/png와 대응 state.json, qa-server-final.json, rendered-worker-chain.txt, qa-activity-events.txt, native-tests.log, flutter-tests.log, QA 빌드 로그/APK, restored-real-first.json, restored-widget-final.json. 홈 캡처에는 사용자 개인 화면이 포함돼 공개 문서/저장소로 복사하지 않았다. 인증 비밀키·FCM 토큰은 출력하지 않았다.
+
+## 2026-10-30 현재 위치 알림·연속 이동 수정 커밋 및 푸시
+
+- 사용자 요청으로 현재 위치 알림의 GPS 유지·구역 자동 추가 제거, 신규 구역 알림 기본 ON, 연속 이동 지오펜스 재등록 수정과 관련 회귀 검사·인계 기록7파일을 커밋 대상으로 확인했다.
+- 기존88개 및 추가58개 자동 검사 통과, 실기기 연속 모의 이동4회와 실제 홈 위젯 자동 갱신 기록을 확인했다. 이후 제품 코드가 바뀌지 않아 검사를 반복하지 않았다. git diff --check 통과, 원격 fetch 후 master의 로컬/원격 시작 커밋80b167c 일치를 확인했다.
+- 임시 APK·검증 도구·로그·개인 홈 캡처는 기존 ignored build 경로에 유지하며 Git 반영 대상에서 제외한다. 이 작업의 범위는 저장소 커밋·일반 푸시이며 앱/서버/스토어 배포는 포함하지 않는다. 푸시 후 원격 master와 HEAD 일치 및 작업 트리 상태를 확인한다.

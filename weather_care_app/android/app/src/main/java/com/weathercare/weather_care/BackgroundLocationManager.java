@@ -36,6 +36,7 @@ import java.security.KeyStore;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -137,10 +138,11 @@ final class BackgroundLocationManager {
         }
     }
 
-    static void exit(Context context, String revision, Location location) {
+    static void exit(Context context, String requestId, Location location) {
         synchronized (LOCK) {
             JSONObject config = read(context);
-            if (config == null || !revision.equals(config.optString("revision")) || !permitted(context)) return;
+            if (config == null || !currentGeofence(config.optString("revision"),
+                    config.optString("geofenceId"), requestId) || !permitted(context)) return;
             try {
                 if (usable(location, System.currentTimeMillis())) {
                     JSONObject event = config.optJSONObject("geofenceEvent");
@@ -153,7 +155,7 @@ final class BackgroundLocationManager {
                 }
                 scheduleGeofence(context, config, ExistingWorkPolicy.APPEND_OR_REPLACE);
             } catch (Exception error) {
-                setError(context, revision, true);
+                setError(context, config.optString("revision"), true);
             }
         }
     }
@@ -165,9 +167,19 @@ final class BackgroundLocationManager {
                         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS).build());
     }
 
-    static GeofencingRequest geofenceRequest(String revision, double latitude, double longitude) {
+    static String newGeofenceId(String revision) {
+        return revision + ":" + UUID.randomUUID();
+    }
+
+    static boolean currentGeofence(String revision, String fenceId, String receivedId) {
+        // 업데이트 전 등록된 울타리는 새 세대를 등록하기 전까지만 허용한다.
+        return receivedId != null && receivedId.equals(
+                fenceId == null || fenceId.isEmpty() ? revision : fenceId);
+    }
+
+    static GeofencingRequest geofenceRequest(String requestId, double latitude, double longitude) {
         return new GeofencingRequest.Builder().setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_EXIT)
-                .addGeofence(new Geofence.Builder().setRequestId(revision)
+                .addGeofence(new Geofence.Builder().setRequestId(requestId)
                         .setCircularRegion(latitude, longitude, 1000)
                         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
                         .setNotificationResponsiveness(120_000).setExpirationDuration(Geofence.NEVER_EXPIRE).build())
@@ -255,6 +267,7 @@ final class BackgroundLocationManager {
             String state = config == null ? "disabled" : !permitted(context) ? "permissionRequired" :
                     manager != null && !androidx.core.location.LocationManagerCompat.isLocationEnabled(manager)
                             ? "locationDisabled" : config.optBoolean("error") ? "error" :
+                            config.optBoolean("geofenceRegistering") ? "starting" :
                             config.has("geofenceLatitude") ? "active" : "starting";
             result.put("status", state);
             if (config != null) {

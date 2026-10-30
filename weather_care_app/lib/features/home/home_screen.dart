@@ -364,24 +364,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     _widgetServerUrl = config.serverUrl;
-    // 첫 업데이트에서는 기존 알림 대상 한 곳만 유지한다.
+    // 지역별 알림 선택은 조회 모드가 바뀌어도 유지한다.
     _settings = savedSettings.copyWith(
         notificationRegionKeys: savedSettings.enabledNotificationRegionKeys);
     final notificationRegion = widget.initialNotificationRegion;
-    if (notificationRegion != null) {
+    if (notificationRegion?.key == 'GPS') {
+      _settings = _settings.copyWith(locationMode: 'GPS');
+    } else if (notificationRegion != null) {
       var selected = _regionCatalog?.find(notificationRegion.key);
-      if (selected == null &&
-          notificationRegion.key == 'GPS' &&
-          notificationRegion.name != null) {
-        for (final region in _regionCatalog?.regions ?? <ForecastRegion>[]) {
-          if (region.nx == notificationRegion.nx &&
-              region.ny == notificationRegion.ny &&
-              region.fullName == notificationRegion.name) {
-            selected = region;
-            break;
-          }
-        }
-      }
       if (selected != null &&
           (selected.nx != notificationRegion.nx ||
               selected.ny != notificationRegion.ny)) {
@@ -1785,6 +1775,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       currentRegionId: selected.gridId,
       manualRegionKey: selected.regionKey,
       savedRegionKeys: keys,
+      notificationRegionKeys: {
+        ..._settings.enabledNotificationRegionKeys,
+        selected.regionKey,
+      }.toList(),
     ));
   }
 

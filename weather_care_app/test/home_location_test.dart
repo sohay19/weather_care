@@ -1805,13 +1805,13 @@ void main() {
         find.byKey(const ValueKey('region-notification-column-label'));
     final labelStyle = tester.widget<Text>(columnLabel).style!;
     expect(labelStyle.fontFamily, WeatherCareTheme.fontSuite);
-    expect(labelStyle.fontSize, 12);
-    expect(labelStyle.fontWeight, FontWeight.w700);
+    expect(labelStyle.fontSize, 11);
+    expect(labelStyle.fontWeight, FontWeight.w800);
     expect(labelStyle.color,
         WeatherCareTheme.of(tester.element(columnLabel)).primary);
     final gpsSwitch = find.byKey(const ValueKey('region-notification-GPS'));
     expect(tester.getCenter(columnLabel).dx,
-        closeTo(tester.getCenter(gpsSwitch).dx, 1));
+        closeTo(tester.getCenter(gpsSwitch).dx - 8, 1));
     expect(tester.getBottomRight(columnLabel).dy,
         lessThan(tester.getCenter(gpsSwitch).dy - 16));
     final calls = weather.calls.length;
@@ -1870,19 +1870,92 @@ void main() {
         screen(tester).initialSettings!.savedRegionKeys, contains(region.key));
   });
 
-  testWidgets('GPS 알림은 클릭 당시 위치 대신 발송 당시 격자를 열고 앱 재시작 후 유지한다', (tester) async {
-    const target =
-        NotificationRegion(key: 'GPS', nx: 58, ny: 125, name: '서울 구로구 구로3동');
-    await start(tester, initialIndex: 2, notificationRegion: target);
-    expect(weather.calls.last.nx, 58);
-    expect(weather.calls.last.ny, 125);
-    expect(weather.calls.last.coordinates, isNull);
-    expect(screen(tester).initialSettings!.locationMode, 'MANUAL');
+  testWidgets('현재 위치 알림은 기본 ON이고 직접 끈 선택은 재시작 후에도 유지한다', (tester) async {
+    await start(tester, initialIndex: 2);
+    expect(
+        screen(tester).initialSettings!.enabledNotificationRegionKeys, ['GPS']);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    final gpsSwitch = find.byKey(const ValueKey('region-notification-GPS'));
+    expect(tester.widget<Switch>(gpsSwitch).value, isTrue);
+    await tester.tap(gpsSwitch);
+    await tester.pumpAndSettle();
+    expect(sync.calls.last.enabledNotificationRegionKeys, isEmpty);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
     await start(tester, initialIndex: 2);
-    expect(weather.calls.last.nx, 58);
-    expect(weather.calls.last.ny, 125);
+    expect(
+        screen(tester).initialSettings!.enabledNotificationRegionKeys, isEmpty);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(gpsSwitch).value, isFalse);
+  });
+
+  testWidgets('GPS 알림은 현재 위치로 조회하고 구역 추가 없이 재시작 후에도 GPS를 유지한다', (tester) async {
+    final region = catalog.search('서울 구로 구로3동').single;
+    final target = NotificationRegion(
+        key: 'GPS', nx: region.nx, ny: region.ny, name: region.fullName);
+    await start(tester, initialIndex: 2, notificationRegion: target);
+    expect(location.requests, isNotEmpty);
+    expect(weather.calls.last.coordinates, _seoul);
+    expect(weather.calls.last.nx, 60);
+    expect(weather.calls.last.ny, 127);
+    expect(screen(tester).initialSettings!.locationMode, 'GPS');
+    expect(screen(tester).initialSettings!.manualRegionKey, isNull);
+    expect(screen(tester).initialSettings!.savedRegionKeys, isEmpty);
+    expect(
+        screen(tester).initialSettings!.enabledNotificationRegionKeys, ['GPS']);
+    location.result =
+        const LocationResult(LocationState.ready, coordinates: _busan);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await start(tester, initialIndex: 2);
+    expect(weather.calls.last.coordinates, _busan);
+    final stored = await const AppSettingsRepository().load('test');
+    expect(stored.locationMode, 'GPS');
+    expect(stored.manualRegionKey, isNull);
+    expect(stored.savedRegionKeys, isEmpty);
+  });
+
+  testWidgets('수동 구역에서 GPS 알림을 열면 현재 위치로 전환하고 기존 구역과 OFF 선택을 보존한다',
+      (tester) async {
+    final saved = catalog.search('부산 해운대 좌1동').single;
+    await const AppSettingsRepository()
+        .save(AppSettings.fallback('test').copyWith(
+      locationMode: 'MANUAL',
+      currentRegionId: saved.gridId,
+      manualRegionKey: saved.key,
+      savedRegionKeys: [saved.key],
+      notificationRegionKeys: [],
+    ));
+    await start(tester,
+        initialIndex: 2,
+        notificationRegion:
+            const NotificationRegion(key: 'GPS', nx: 58, ny: 125));
+    expect(weather.calls.last.coordinates, _seoul);
+    expect(screen(tester).initialSettings!.locationMode, 'GPS');
+    expect(screen(tester).initialSettings!.savedRegionKeys, [saved.key]);
+    expect(
+        screen(tester).initialSettings!.enabledNotificationRegionKeys, isEmpty);
+    final stored = await const AppSettingsRepository().load('test');
+    expect(stored.locationMode, 'GPS');
+    expect(stored.savedRegionKeys, [saved.key]);
+    expect(stored.enabledNotificationRegionKeys, isEmpty);
+  });
+
+  testWidgets('GPS 알림을 열 때 위치 권한이 없어도 발송 지역을 수동 구역으로 추가하지 않는다', (tester) async {
+    location.result = const LocationResult(LocationState.deniedForever);
+    await start(tester,
+        initialIndex: 2,
+        notificationRegion: const NotificationRegion(
+            key: 'GPS', nx: 58, ny: 125, name: '서울 구로구 구로3동'));
+    expect(weather.calls, isEmpty);
+    expect(screen(tester).initialSettings!.locationMode, 'GPS');
+    expect(screen(tester).initialSettings!.savedRegionKeys, isEmpty);
+    final stored = await const AppSettingsRepository().load('test');
+    expect(stored.locationMode, 'GPS');
+    expect(stored.manualRegionKey, isNull);
+    expect(stored.savedRegionKeys, isEmpty);
   });
 
   testWidgets('Main에서 구역을 추가하고 저장 구역과 GPS를 전환한다', (tester) async {
@@ -1891,6 +1964,7 @@ void main() {
     await const AppSettingsRepository()
         .save(AppSettings.fallback('test').copyWith(
       savedRegionKeys: [first.key],
+      notificationRegionKeys: ['GPS'],
     ));
     await start(
       tester,
@@ -1931,9 +2005,26 @@ void main() {
     expect(weather.calls.last.nx, second.nx);
     expect(screen(tester).initialSettings!.savedRegionKeys,
         [first.key, second.key]);
+    expect(screen(tester).initialSettings!.enabledNotificationRegionKeys,
+        ['GPS', second.key]);
+    final stored = await const AppSettingsRepository().load('test');
+    expect(stored.enabledNotificationRegionKeys, ['GPS', second.key]);
+    expect(sync.calls.last.enabledNotificationRegionKeys, ['GPS', second.key]);
 
     await tester.tap(find.byKey(const ValueKey('main-region-menu')));
     await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<Switch>(
+                find.byKey(ValueKey('region-notification-${second.key}')))
+            .value,
+        isTrue);
+    expect(
+        tester
+            .widget<Switch>(
+                find.byKey(ValueKey('region-notification-${first.key}')))
+            .value,
+        isFalse);
     await tester.tap(find.text(first.displayName));
     await tester.pumpAndSettle();
     expect(weather.calls.last.nx, first.nx);
@@ -1992,6 +2083,8 @@ void main() {
     expect(stored.currentRegionId, region.gridId);
     expect(stored.manualRegionKey, region.key);
     expect(stored.savedRegionKeys, [region.key]);
+    expect(stored.enabledNotificationRegionKeys, [region.key]);
+    expect(sync.calls.last.enabledNotificationRegionKeys, [region.key]);
   });
 
   testWidgets('지도에서 다른 지역명을 골라도 저장된 격자와 같으면 팝업만 표시한다', (tester) async {
@@ -2094,6 +2187,8 @@ void main() {
     expect(settings.currentRegionId, '60_127');
     expect(settings.manualRegionKey, region.key);
     expect(settings.savedRegionKeys, [region.key]);
+    expect(settings.enabledNotificationRegionKeys, [region.key]);
+    expect(sync.calls.last.enabledNotificationRegionKeys, [region.key]);
     expect(jsonEncode(settings.toJson()), isNot(contains('세종대로')));
     expect(jsonEncode(settings.toJson()), isNot(contains('37.57')));
   });

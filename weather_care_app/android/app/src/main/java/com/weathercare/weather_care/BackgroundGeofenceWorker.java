@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.android.gms.location.CurrentLocationRequest;
+import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
@@ -98,27 +99,44 @@ public final class BackgroundGeofenceWorker extends Worker {
 
     private boolean register(Context context, JSONObject original, double latitude, double longitude) throws Exception {
         String revision = original.getString("revision");
+        String requestId = BackgroundLocationManager.newGeofenceId(revision);
+        GeofencingClient client = LocationServices.getGeofencingClient(context);
+        com.google.android.gms.tasks.Task<Void> removal;
+        synchronized (BackgroundLocationManager.LOCK) {
+            JSONObject config = BackgroundLocationManager.read(context);
+            if (!current(context, config, revision)) return false;
+            config.put("geofenceRegistering", true);
+            BackgroundLocationManager.write(context, config);
+            // 이탈한 울타리의 상태를 이어받지 않도록 해제 완료 후 새 세대를 등록한다.
+            removal = client.removeGeofences(List.of(config.optString("geofenceId", revision)));
+        }
+        Tasks.await(removal, 20, TimeUnit.SECONDS);
         com.google.android.gms.tasks.Task<Void> registration;
         synchronized (BackgroundLocationManager.LOCK) {
-            if (!current(context, BackgroundLocationManager.read(context), revision)) return false;
-            registration = LocationServices.getGeofencingClient(context).addGeofences(
-                    BackgroundLocationManager.geofenceRequest(revision, latitude, longitude),
+            JSONObject config = BackgroundLocationManager.read(context);
+            if (!current(context, config, revision)) return false;
+            config.put("geofenceId", requestId);
+            BackgroundLocationManager.write(context, config);
+            registration = client.addGeofences(
+                    BackgroundLocationManager.geofenceRequest(requestId, latitude, longitude),
                     BackgroundLocationManager.geofenceIntent(context));
         }
         // A late registration must never restore monitoring after opt-out or a new session.
         registration.addOnSuccessListener(Runnable::run, unused -> {
             synchronized (BackgroundLocationManager.LOCK) {
                 JSONObject config = BackgroundLocationManager.read(context);
-                if (config == null || !revision.equals(config.optString("revision")) || !BackgroundLocationManager.permitted(context)) {
-                    LocationServices.getGeofencingClient(context).removeGeofences(List.of(revision));
+                if (config == null || !revision.equals(config.optString("revision")) ||
+                        !requestId.equals(config.optString("geofenceId")) || !BackgroundLocationManager.permitted(context)) {
+                    client.removeGeofences(List.of(requestId));
                 }
             }
         });
         Tasks.await(registration, 20, TimeUnit.SECONDS);
         synchronized (BackgroundLocationManager.LOCK) {
             JSONObject config = BackgroundLocationManager.read(context);
-            if (!current(context, config, revision)) return false;
-            config.put("geofenceLatitude", latitude).put("geofenceLongitude", longitude).put("error", false);
+            if (!current(context, config, revision) || !requestId.equals(config.optString("geofenceId"))) return false;
+            config.put("geofenceLatitude", latitude).put("geofenceLongitude", longitude)
+                    .put("geofenceRegistering", false).put("error", false);
             BackgroundLocationManager.write(context, config);
         }
         return true;

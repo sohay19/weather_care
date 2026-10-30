@@ -21,14 +21,33 @@ public class BackgroundLocationManagerTest {
         assertEquals(Geofence.NEVER_EXPIRE, fence.getExpirationTime());
     }
 
-    @Test public void movementRecentersTheSameFenceInsteadOfAccumulatingRegions() {
-        Geofence previous = BackgroundLocationManager.geofenceRequest("session-a", 37.5665, 126.978).getGeofences().get(0);
-        Geofence next = BackgroundLocationManager.geofenceRequest("session-a", 35.1796, 129.0756).getGeofences().get(0);
-        assertEquals(previous.getRequestId(), next.getRequestId());
+    @Test public void movementCreatesANewFenceGenerationWithinTheSameSession() {
+        String revision = "e19169ef-a3fe-4534-84fc-3e45fb5cac3f";
+        String previousId = BackgroundLocationManager.newGeofenceId(revision);
+        String nextId = BackgroundLocationManager.newGeofenceId(revision);
+        Geofence previous = BackgroundLocationManager.geofenceRequest(previousId, 37.5665, 126.978).getGeofences().get(0);
+        Geofence next = BackgroundLocationManager.geofenceRequest(nextId, 35.1796, 129.0756).getGeofences().get(0);
+        assertFalse(previous.getRequestId().equals(next.getRequestId()));
+        assertTrue(nextId.startsWith(revision + ":"));
+        assertTrue(nextId.length() <= 100);
         assertEquals(35.1796, next.getLatitude(), 0);
         assertEquals(129.0756, next.getLongitude(), 0);
-        assertFalse(next.getRequestId().equals(BackgroundLocationManager.geofenceRequest("session-b", 35.1796, 129.0756)
-                .getGeofences().get(0).getRequestId()));
+    }
+
+    @Test public void delayedExitFromPreviousGenerationCannotMoveTheCurrentFence() {
+        String previous = BackgroundLocationManager.newGeofenceId("session-a");
+        String current = BackgroundLocationManager.newGeofenceId("session-a");
+        assertTrue(BackgroundLocationManager.currentGeofence("session-a", current, current));
+        assertFalse(BackgroundLocationManager.currentGeofence("session-a", current, previous));
+        assertFalse(BackgroundLocationManager.currentGeofence("session-a", current, "session-a"));
+        assertFalse(BackgroundLocationManager.currentGeofence("session-b", null, previous));
+        assertFalse(BackgroundLocationManager.currentGeofence("session-a", current, null));
+    }
+
+    @Test public void legacyFenceIsAcceptedOnlyUntilANewGenerationIsRegistered() {
+        assertTrue(BackgroundLocationManager.currentGeofence("session-a", null, "session-a"));
+        assertTrue(BackgroundLocationManager.currentGeofence("session-a", "", "session-a"));
+        assertFalse(BackgroundLocationManager.currentGeofence("session-a", "session-a:new", "session-a"));
     }
 
     @Test public void stationarySamplesAndShortMovesDoNotUploadAgain() {

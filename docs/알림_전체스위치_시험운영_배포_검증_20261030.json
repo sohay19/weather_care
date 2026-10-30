@@ -1,0 +1,272 @@
+{
+  "결과": "시험·운영 배포 및 최종 점검 통과",
+  "배포완료시각": "2026-10-30T17:22:08.890774+09:00",
+  "최종점검시각": "2026-10-30T17:22:19.056566+09:00",
+  "알림그룹": [
+    "챙겨요",
+    "Today",
+    "기상·생활"
+  ],
+  "환경별결과": {
+    "test": {
+      "완료시각": "2026-10-30T17:16:54.920160+09:00",
+      "백업": "/var/backups/weather-care/server-promote-test-20261030T081618Z",
+      "반영파일": [
+        "src/api/installations.ts",
+        "src/api/notificationSettings.ts",
+        "src/database/notificationSettingsRepository.ts",
+        "src/notification/lightningNotificationJob.ts",
+        "src/notification/notificationBuilder.ts",
+        "src/notification/notificationScheduler.ts",
+        "src/types.ts",
+        "src/validation/notificationSettings.ts",
+        "node-migrations/users/0008_notification_group_masters.sql"
+      ],
+      "기존설정보존건수": 40,
+      "적용마이그레이션": [
+        "0008_notification_group_masters.sql"
+      ],
+      "설치본기능검사": {
+        "passed": true,
+        "checks": 76,
+        "externalRequests": 0,
+        "actualFcmSent": 0
+      },
+      "구버전비교": {
+        "schedulerCases": 180,
+        "schedulerMatches": 180,
+        "schedulerDifferences": [],
+        "apiChecks": 20,
+        "migrationCheck": true,
+        "externalRequests": 0,
+        "actualFcmSent": 0
+      },
+      "동파기본값비교": {
+        "passed": true,
+        "comparisons": 8,
+        "preservedCases": 6,
+        "intentionalDefaultChanges": [
+          {
+            "version": "current",
+            "path": "/notification-settings/legacy",
+            "state": "newOmitted",
+            "enabled": true,
+            "pipeNotifications": 1
+          },
+          {
+            "version": "current",
+            "path": "/installations/legacy/notification-settings",
+            "state": "newOmitted",
+            "enabled": true,
+            "pipeNotifications": 1
+          }
+        ]
+      },
+      "공개날씨API요청": 41,
+      "실제설정API검사": {
+        "passed": true,
+        "checks": 35,
+        "requests": 63,
+        "verificationFcmSent": 0,
+        "temporaryInstallationRemoved": true,
+        "fields": [
+          "todayVisibilityEnabled",
+          "todayOzoneEnabled",
+          "todayWindEnabled",
+          "todayHumidityEnabled",
+          "todayApparentTemperatureEnabled",
+          "snowPreparationEnabled",
+          "uvPreparationEnabled",
+          "pollenEnabled",
+          "blackIceEnabled",
+          "pipeFreezeEnabled",
+          "carryNotificationEnabled",
+          "todayNotificationEnabled",
+          "weatherNotificationEnabled"
+        ]
+      },
+      "API": {
+        "MainPID": "791414",
+        "ActiveState": "active"
+      },
+      "스케줄러": {
+        "MainPID": "0",
+        "ActiveState": "inactive"
+      }
+    },
+    "production": {
+      "완료시각": "2026-10-30T17:22:07.839588+09:00",
+      "백업": "/var/backups/weather-care/server-promote-production-20261030T082121Z",
+      "반영파일": [
+        "src/api/installations.ts",
+        "src/api/notificationSettings.ts",
+        "src/api/weather.ts",
+        "src/database/notificationSettingsRepository.ts",
+        "src/lifestyle/lifestyleTemplates.ts",
+        "src/notification/lightningNotificationJob.ts",
+        "src/notification/notificationBuilder.ts",
+        "src/notification/notificationDestination.ts",
+        "src/notification/notificationScheduler.ts",
+        "src/presentation/drynessMessage.ts",
+        "src/presentation/homeWidgetSnapshot.ts",
+        "src/presentation/weatherBrief.ts",
+        "src/recommendations/preparationPolicy.ts",
+        "src/recommendations/recommendationEngine.ts",
+        "src/recommendations/recommendationTemplates.ts",
+        "src/rules/dryness.ts",
+        "src/types.ts",
+        "src/validation/notificationSettings.ts",
+        "node-migrations/users/0005_dryness_preparations.sql",
+        "node-migrations/users/0006_today_notifications.sql",
+        "node-migrations/users/0007_carry_categories_black_ice.sql",
+        "node-migrations/users/0008_notification_group_masters.sql"
+      ],
+      "기존설정보존건수": 230,
+      "적용마이그레이션": [
+        "0005_dryness_preparations.sql",
+        "0006_today_notifications.sql",
+        "0007_carry_categories_black_ice.sql",
+        "0008_notification_group_masters.sql"
+      ],
+      "설치본기능검사": {
+        "passed": true,
+        "checks": 76,
+        "externalRequests": 0,
+        "actualFcmSent": 0
+      },
+      "구버전비교": {
+        "schedulerCases": 180,
+        "schedulerMatches": 180,
+        "schedulerDifferences": [],
+        "apiChecks": 20,
+        "migrationCheck": true,
+        "externalRequests": 0,
+        "actualFcmSent": 0
+      },
+      "동파기본값비교": {
+        "passed": true,
+        "comparisons": 8,
+        "preservedCases": 6,
+        "intentionalDefaultChanges": [
+          {
+            "version": "current",
+            "path": "/notification-settings/legacy",
+            "state": "newOmitted",
+            "enabled": true,
+            "pipeNotifications": 1
+          },
+          {
+            "version": "current",
+            "path": "/installations/legacy/notification-settings",
+            "state": "newOmitted",
+            "enabled": true,
+            "pipeNotifications": 1
+          }
+        ]
+      },
+      "공개날씨API요청": 41,
+      "실제설정API검사": {
+        "passed": true,
+        "checks": 35,
+        "requests": 63,
+        "verificationFcmSent": 0,
+        "temporaryInstallationRemoved": true,
+        "fields": [
+          "todayVisibilityEnabled",
+          "todayOzoneEnabled",
+          "todayWindEnabled",
+          "todayHumidityEnabled",
+          "todayApparentTemperatureEnabled",
+          "snowPreparationEnabled",
+          "uvPreparationEnabled",
+          "pollenEnabled",
+          "blackIceEnabled",
+          "pipeFreezeEnabled",
+          "carryNotificationEnabled",
+          "todayNotificationEnabled",
+          "weatherNotificationEnabled"
+        ]
+      },
+      "API": {
+        "MainPID": "792543",
+        "ActiveState": "active"
+      },
+      "스케줄러": {
+        "MainPID": "792658",
+        "ActiveState": "active"
+      }
+    }
+  },
+  "최종점검": {
+    "passed": true,
+    "checkedAt": "2026-10-30T17:22:19.056566+09:00",
+    "environments": {
+      "test": {
+        "api": {
+          "MainPID": "791414",
+          "ActiveState": "active"
+        },
+        "scheduler": {
+          "MainPID": "0",
+          "ActiveState": "inactive"
+        },
+        "sourceMatchesCandidate": true,
+        "migrations": [
+          "0001_users.sql",
+          "0002_pipe_freeze_alert.sql",
+          "0003_commute_notification_schedule.sql",
+          "0004_notification_regions.sql",
+          "0005_dryness_preparations.sql",
+          "0006_today_notifications.sql",
+          "0007_carry_categories_black_ice.sql",
+          "0008_notification_group_masters.sql"
+        ],
+        "quickCheck": "ok",
+        "foreignKeyErrors": 0,
+        "temporaryInstallationsRemaining": 0,
+        "runtimeErrors": 0,
+        "backupPermissions": "0700/0600"
+      },
+      "production": {
+        "api": {
+          "MainPID": "792543",
+          "ActiveState": "active"
+        },
+        "scheduler": {
+          "MainPID": "792658",
+          "ActiveState": "active"
+        },
+        "sourceMatchesCandidate": true,
+        "migrations": [
+          "0001_users.sql",
+          "0002_pipe_freeze_alert.sql",
+          "0003_commute_notification_schedule.sql",
+          "0004_notification_regions.sql",
+          "0005_dryness_preparations.sql",
+          "0006_today_notifications.sql",
+          "0007_carry_categories_black_ice.sql",
+          "0008_notification_group_masters.sql"
+        ],
+        "quickCheck": "ok",
+        "foreignKeyErrors": 0,
+        "temporaryInstallationsRemaining": 0,
+        "runtimeErrors": 0,
+        "backupPermissions": "0700/0600"
+      }
+    },
+    "configurationsPreserved": true,
+    "sharedWeatherSchemaPreserved": true,
+    "healthStatuses": {
+      "test": 200,
+      "testWithoutKey": 403,
+      "production": 200
+    }
+  },
+  "검증용FCM전송": 0,
+  "실기기검사": false,
+  "초기운영시도": {
+    "결과": "API 재시작 선수집 대기 120초 초과로 소스 자동 복구, 추가 DB 열 보존",
+    "해결": "선수집 완료 확인 후 대기 한도를 조정해 코드만 재반영, DB 재이관 없음",
+    "백업": "/var/backups/weather-care/server-promote-production-20261030T081703Z"
+  }
+}

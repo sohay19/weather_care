@@ -1,0 +1,32 @@
+{
+  "촬영일": "2026-10-30",
+  "모델": "SM-S948U",
+  "패키지": "com.codesoha.weathercare.storecapture",
+  "빌드": "Debug, 최신 제품 capture_device.dart, 별도 촬영용 초기 설정",
+  "화면": "Setting → 알림 → 챙겨요 전체 알림 및 비·눈·추위·더위·자외선·대기질·꽃가루·건조도",
+  "원본": "ADB exec-out screencap -p, 운영 서버 재시도 팝업 없는 상태를 직접 검수",
+  "시스템바": "WindowManager statusBars 상단 105px, navigationBars 하단 135px 실측",
+  "APK_SHA256": "92f546b36e31c6b79b69e54803eeefc34781235aa21461d7ec8999595b0f2061",
+  "files": [
+    {
+      "path": "notification-settings.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "ca10e5a75df2be990704017d7e5bb8b6db4635916f86cfd224b0564927a27718",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2205,
+        1080,
+        2340
+      ]
+    }
+  ]
+}

@@ -439,7 +439,7 @@ class _WeatherAlertsSettingsScreenState
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             SettingsTimeControl(
               key: const ValueKey('notification-time-control'),
-              label: '설정 시각',
+              label: '알림',
               value: settings.notificationTime,
               onTap: enabled ? _selectTime : null,
             ),

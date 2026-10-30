@@ -20,32 +20,28 @@ class CommuteNotificationTimeControls extends StatelessWidget {
         toWork ? settings.commuteToWorkStart : settings.commuteFromWorkStart;
     final until =
         toWork ? settings.commuteToWorkEnd : settings.commuteFromWorkEnd;
-    final selected = <String>[];
-    for (final start in [true, false]) {
-      final pieces = (start ? from : until).split(':');
-      final time = await showNotificationTimePicker(
-        context: context,
-        initialTime:
-            TimeOfDay(hour: int.parse(pieces[0]), minute: int.parse(pieces[1])),
-        title: '${toWork ? '출근' : '퇴근'} ${start ? '시작' : '종료'} 시각',
-      );
-      if (time == null || !context.mounted) return;
-      selected.add(
-          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}');
+    TimeOfDay parse(String value) {
+      final pieces = value.split(':');
+      return TimeOfDay(
+          hour: int.parse(pieces[0]), minute: int.parse(pieces[1]));
     }
-    if (selected[0] == selected[1]) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('시작과 종료 시각을 다르게 선택해주세요.')),
-      );
-      return;
-    }
-    if (selected[0] == from && selected[1] == until) return;
+
+    String format(TimeOfDay time) =>
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final selected = await showNotificationTimeRangePicker(
+      context: context,
+      initialStartTime: parse(from),
+      initialEndTime: parse(until),
+      title: '${toWork ? '출근' : '퇴근'} 알림 시간 범위',
+    );
+    if (selected == null || !context.mounted) return;
+    final start = format(selected.$1);
+    final end = format(selected.$2);
+    if (start == from && end == until) return;
     onSettingsChanged(toWork
-        ? settings.copyWith(
-            commuteToWorkStart: selected[0], commuteToWorkEnd: selected[1])
+        ? settings.copyWith(commuteToWorkStart: start, commuteToWorkEnd: end)
         : settings.copyWith(
-            commuteFromWorkStart: selected[0],
-            commuteFromWorkEnd: selected[1]));
+            commuteFromWorkStart: start, commuteFromWorkEnd: end));
   }
 
   @override

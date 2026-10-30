@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/settings/commute_notification_settings_screen.dart';
 import 'package:weather_care/features/settings/notification_time_picker.dart';
@@ -20,7 +21,7 @@ Future<void> _choose(
   await _open(tester, key.startsWith('commute-to-'));
   final editStart = key.endsWith('-start');
   if (!editStart) {
-    await tester.tap(find.text('확인'));
+    await tester.tap(find.byKey(const ValueKey('notification-range-end')));
     await tester.pumpAndSettle();
   }
   await tester.tap(find.byIcon(Icons.keyboard_outlined));
@@ -29,10 +30,6 @@ Future<void> _choose(
   await tester.enterText(find.byType(TextFormField).last, '$minute');
   await tester.tap(find.text('확인'));
   await tester.pumpAndSettle();
-  if (editStart) {
-    await tester.tap(find.text('확인'));
-    await tester.pumpAndSettle();
-  }
 }
 
 void main() {
@@ -96,6 +93,12 @@ void main() {
         .ensureVisible(find.byKey(const ValueKey('weather-alerts-menu')));
     await tester.tap(find.byKey(const ValueKey('weather-alerts-menu')));
     await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<SettingsTimeControl>(
+                find.byKey(const ValueKey('notification-time-control')))
+            .label,
+        '알림');
     await _choose(tester, 'commute-to-start', 8, 10);
     expect(find.text('08:10~10:00'), findsOneWidget);
     await _open(tester, true);
@@ -111,6 +114,89 @@ void main() {
     await tester.pumpAndSettle();
     expect(changed, hasLength(1));
   });
+
+  testWidgets('한 팝업에서 시작·끝을 번갈아 바꾸고 두 값을 한 번에 저장한다', (tester) async {
+    final changed = <AppSettings>[];
+    await start(tester, changed: changed.add);
+    await _open(tester, false);
+    expect(find.text('퇴근 알림 시간 범위'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.keyboard_outlined));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, '18');
+    await tester.enterText(find.byType(TextFormField).last, '23');
+    await tester.pump();
+    expect(
+        tester
+            .widget<Text>(
+                find.byKey(const ValueKey('notification-range-start-value')))
+            .data,
+        '18:23');
+    await tester.tap(find.byKey(const ValueKey('notification-range-end')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, '22');
+    await tester.enterText(find.byType(TextFormField).last, '41');
+    await tester.tap(find.byKey(const ValueKey('notification-range-start')));
+    await tester.pumpAndSettle();
+    expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        '18');
+    expect(
+        tester.widget<TextField>(find.byType(TextField).last).controller!.text,
+        '23');
+    expect(
+        tester
+            .widget<Text>(
+                find.byKey(const ValueKey('notification-range-end-value')))
+            .data,
+        '22:41');
+    expect(changed, isEmpty);
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    expect(changed, hasLength(1));
+    expect(changed.single.toJson(), {
+      ...AppSettings.fallback('test').toJson(),
+      'commuteFromWorkStart': '18:23',
+      'commuteFromWorkEnd': '22:41'
+    });
+  });
+
+  testWidgets('시작 시간이 기본 선택되고 스크롤 변경은 선택한 시간에만 반영된다', (tester) async {
+    final changed = <AppSettings>[];
+    await start(tester, changed: changed.add);
+    await _open(tester, true);
+    CupertinoPicker wheel(String part) => tester.widget<CupertinoPicker>(
+        find.byKey(ValueKey('notification-$part-wheel')));
+    expect(wheel('hour').scrollController!.selectedItem, 7);
+    wheel('hour').scrollController!.jumpToItem(8);
+    wheel('minute').scrollController!.jumpToItem(5);
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<Text>(
+                find.byKey(const ValueKey('notification-range-start-value')))
+            .data,
+        '08:25');
+    expect(
+        tester
+            .widget<Text>(
+                find.byKey(const ValueKey('notification-range-end-value')))
+            .data,
+        '10:00');
+    await tester.tap(find.byKey(const ValueKey('notification-range-end')));
+    await tester.pumpAndSettle();
+    expect(wheel('hour').scrollController!.selectedItem, 10);
+    wheel('hour').scrollController!.jumpToItem(21);
+    wheel('minute').scrollController!.jumpToItem(11);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('notification-range-start')));
+    await tester.pumpAndSettle();
+    expect(wheel('hour').scrollController!.selectedItem, 8);
+    expect(wheel('minute').scrollController!.selectedItem, 5);
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    expect(changed.single.commuteToWorkStart, '08:25');
+    expect(changed.single.commuteToWorkEnd, '21:55');
+  });
   for (final cancelEnd in [false, true]) {
     testWidgets('${cancelEnd ? '종료' : '시작'} 시각 설정 중 취소하면 구간 전체를 적용하지 않는다',
         (tester) async {
@@ -120,13 +206,13 @@ void main() {
       expect(find.byType(NotificationTimePickerDialog), findsOneWidget);
       expect(find.byKey(const ValueKey('commute-range-dialog')), findsNothing);
       if (cancelEnd) {
+        await tester.tap(find.byKey(const ValueKey('notification-range-end')));
+        await tester.pumpAndSettle();
         await tester.tap(find.byIcon(Icons.keyboard_outlined));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextFormField).first, '9');
         await tester.enterText(find.byType(TextFormField).last, '23');
-        await tester.tap(find.text('확인'));
-        await tester.pumpAndSettle();
-        expect(find.text('출근 종료 시각'), findsOneWidget);
+        expect(find.text('출근 알림 시간 범위'), findsOneWidget);
       }
       await tester.tap(find.text('취소'));
       await tester.pumpAndSettle();
@@ -139,7 +225,9 @@ void main() {
     await start(tester, changed: changed.add);
     await _choose(tester, 'commute-to-start', 10, 0);
     expect(changed, isEmpty);
-    expect(find.text('시작과 종료 시각을 다르게 선택해주세요.'), findsOneWidget);
+    expect(find.text('시작과 끝 시간을 다르게 선택해주세요.'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
     await _choose(tester, 'commute-to-start', 23, 0);
     expect(changed.single.commuteToWorkStart, '23:00');
     expect(changed.single.commuteToWorkEnd, '10:00');
@@ -161,9 +249,14 @@ void main() {
       await _open(tester, toWork);
       expect(find.byType(NotificationTimePickerDialog), findsOneWidget);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.text('확인'));
+      expect(find.text(toWork ? '출근 알림 시간 범위' : '퇴근 알림 시간 범위'), findsOneWidget);
+      final startBox = tester
+          .getRect(find.byKey(const ValueKey('notification-range-start')));
+      final endBox =
+          tester.getRect(find.byKey(const ValueKey('notification-range-end')));
+      expect(startBox.center.dy, closeTo(endBox.center.dy, 1));
+      await tester.tap(find.byKey(const ValueKey('notification-range-end')));
       await tester.pumpAndSettle();
-      expect(find.text(toWork ? '출근 종료 시각' : '퇴근 종료 시각'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('취소'));
       await tester.pumpAndSettle();

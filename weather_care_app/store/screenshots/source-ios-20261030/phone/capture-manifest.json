@@ -1,0 +1,28 @@
+{
+  "기준일": "2026-10-30",
+  "방식": "실제 iPhone 앱 전체 화면·시스템 바만 제외·iPad 규격에도 같은 원본 사용",
+  "files": [
+    {
+      "name": "notification-settings",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "notification-settings.png",
+      "source_sha256": "c378d527b7b50520835cb6d7dc8f4c780ef6512023d899ed650155a0b006c485",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261030/phone/notification-settings.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "fe5958050839ef272ccfe2cfd6fdc8be594708161e27fa5dca05f746e8a8cf54"
+    }
+  ]
+}

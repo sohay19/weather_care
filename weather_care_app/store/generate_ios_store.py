@@ -1,4 +1,4 @@
-"""2026-10-29 실제 iOS 앱·홈 위젯 촬영본으로 스토어 스크린샷을 만든다."""
+"""실제 iOS 앱·홈 위젯 촬영본으로 스토어 스크린샷을 만든다."""
 from __future__ import annotations
 
 import hashlib
@@ -13,6 +13,7 @@ import generate_android_store as common
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'screenshots/source-ios-20261029'
+SETTINGS_SOURCE = ROOT / 'screenshots/source-ios-20261030'
 NATIVE = ROOT / 'screenshots/native-ios-20261028'
 # Android 제작 설정과 독립적으로 iOS 소개 순서를 관리한다.
 TOPICS = [
@@ -26,7 +27,7 @@ TOPICS = [
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
 ]
 SIZES = {'ios': (1320, 2868), 'ipad': (2064, 2752)}
-BACKUP = ROOT.parent / 'build/ios-live-store-20261029/before'
+BACKUP = ROOT.parent / 'build/ios-last-screenshot-20261030/before'
 
 
 def backup(path):
@@ -49,8 +50,9 @@ def widget(family, platform, dark=False):
 
 def app_screen(name):
     """시스템 바만 제외한 실제 전체 화면 촬영본의 해시·크롭 범위를 확인한다."""
-    path = SOURCE / 'phone' / f'{name}.png'
-    records = json.loads((SOURCE / 'phone/capture-manifest.json').read_text(encoding='utf-8'))['files']
+    directory = SETTINGS_SOURCE if name == 'notification-settings' else SOURCE
+    path = directory / 'phone' / f'{name}.png'
+    records = json.loads((directory / 'phone/capture-manifest.json').read_text(encoding='utf-8'))['files']
     record = next(row for row in records if row['name'] == name)
     assert record['source_size'] == [1290, 2796] and record['crop'] == [0, 177, 1290, 2694]
     assert hashlib.sha256(path.read_bytes()).hexdigest() == record['sha256'], path
@@ -203,17 +205,17 @@ def main(topics=None):
             assert im.size == SIZES[path.parent.name] and im.mode == 'RGB' and im.format == 'PNG'
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/ios-20261029-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-10-29', '화면': '실제 iPhone 앱 전체 화면 촬영, iPad 등록 규격에도 동일 원본 사용',
-        '배치': 'Android 2026-10-29 참고: 큰 두 줄 제목, 줄간격 16px, 바깥 최소 여백과 제목·이미지 간격 72px(1080px 너비 기준). 분류명·부연 설명·위젯 크기 라벨 생략. 원본 비율 유지.',
-        '데이터': '최신 제품 앱의 실제 서버 응답과 촬영용 설정. 앱 화면은 2026-10-29 재촬영.', '위젯': '제품 위젯 소스 변경이 없어 2026-10-28 실제 WidgetKit 촬영본 재사용. 두 등록 규격에 같은 원본 사용.',
+    report = ROOT / 'screenshots/ios-20261030-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-10-30', '화면': '실제 iPhone 앱 전체 화면 촬영, iPad 등록 규격에도 동일 원본 사용',
+        '배치': '8번은 pull 받은 Android 2026-10-30 마지막 장 참고: 큰 두 줄 제목, 줄간격 16px, 바깥 최소 여백과 제목·이미지 간격 72px(1080px 너비 기준). 분류명·부연 설명·위젯 크기 라벨 생략. 원본 비율 유지.',
+        '데이터': '제품 앱의 실제 서버 응답과 촬영용 설정. 8번 알림 설정은 2026-10-30 재촬영, 1~7번은 2026-10-29 등록 이미지 유지.', '위젯': '3·4번은 기존 등록 이미지 유지. 사용 원본은 2026-10-28 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
         '알림': '5번은 지원 알림 종류의 예시 카드 5개, 2번은 실제 지역별 알림 설정 화면', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    docs = [ROOT / 'screenshots/IOS_20261029.md', ROOT / 'screenshots/README.md', report]
+    docs = [ROOT / 'screenshots/IOS_20261030.md', ROOT / 'screenshots/README.md', report]
     files = images + previews + docs
-    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261029.zip']:
+    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261030.zip']:
         package(ROOT / name, files)
     print(json.dumps({'검증완료': len(records), '플랫폼': list(SIZES),
-                     '묶음': 'app-store/weather-care-ios-screenshots-20261029.zip'}, ensure_ascii=False))
+                     '묶음': 'app-store/weather-care-ios-screenshots-20261030.zip'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

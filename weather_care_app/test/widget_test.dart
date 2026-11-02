@@ -907,10 +907,22 @@ void main() {
     expect(
       tester
           .widget<Opacity>(
-            find.byKey(const ValueKey('notification-time-control')),
+            find.descendant(
+              of: find.byKey(const ValueKey('notification-time-control')),
+              matching: find.byType(Opacity),
+            ),
           )
           .opacity,
       0.46,
+    );
+    expect(
+      tester
+          .widget<InkWell>(find.descendant(
+            of: find.byKey(const ValueKey('notification-time-control')),
+            matching: find.byType(InkWell),
+          ))
+          .onTap,
+      isNull,
     );
 
     await tester.scrollUntilVisible(

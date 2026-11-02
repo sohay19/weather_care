@@ -85,7 +85,6 @@ void main() {
     const labels = [
       '체감온도',
       '습도',
-      '건조도',
       '자외선',
       '바람',
       '대기질',
@@ -346,7 +345,6 @@ void main() {
     const labels = [
       '체감온도',
       '습도',
-      '건조도',
       '자외선',
       '바람',
       '대기질',
@@ -595,7 +593,7 @@ void main() {
   testWidgets('체감은 상단에 두고 결측인 7개 지표를 0으로 바꾸지 않는다', (tester) async {
     await _pumpCard(tester, const CurrentWeather(temperature: null));
 
-    expect(find.text('자료 없음'), findsNWidgets(8));
+    expect(find.text('자료 없음'), findsNWidgets(7));
     expect(find.text('체감 자료 없음'), findsOneWidget);
     expect(find.byKey(const ValueKey('weather-metric-체감')), findsNothing);
     expect(find.text('하늘 상태 자료 없음'), findsOneWidget);
@@ -732,7 +730,7 @@ void main() {
     expect(find.text('자료 없음'), findsNothing);
     expect(find.text('0.0℃'), findsOneWidget);
     expect(find.text('체감 0.0℃'), findsOneWidget);
-    expect(find.text('매우 건조\n0%'), findsNWidgets(2));
+    expect(find.text('매우 건조\n0%'), findsOneWidget);
     expect(find.text('약한 바람\n0.0m/s'), findsOneWidget);
     expect(find.text('낮음\n0.0'), findsOneWidget);
     expect(find.text('좋음'), findsOneWidget);
@@ -812,9 +810,10 @@ void main() {
       final first =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-습도')));
       final second =
-          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-건조도')));
-      final third =
           tester.getTopLeft(find.byKey(const ValueKey('weather-metric-바람')));
+      final third =
+          tester.getTopLeft(find.byKey(const ValueKey('weather-metric-자외선')));
+      expect(find.byKey(const ValueKey('weather-metric-건조도')), findsNothing);
       expect(second.dy, first.dy);
       expect(second.dx, greaterThan(first.dx));
       expect(third.dx, first.dx);

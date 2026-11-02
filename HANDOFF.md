@@ -14384,3 +14384,44 @@
 - 시작 HEAD25e4a51, fetch 후 origin/master와 차이0/0을 확인했다. 앞 Flutter18개·네이티브2개·실제 촬영 제어1개 통과 결과와 현재 변경 내용이 동일함을 확인했다. Ruby/프로젝트 구문 및 공백 검사를 통과했다. 제품 수정 없이 커밋하는 작업이라 빌드/테스트를 반복하지 않는다. 한글 메시지 fix(ios): 네이티브 광고 중앙 배치와 여백 개선으로 커밋하고 origin/master에 일반 푸시한 뒤 로컬·원격HEAD 일치와 작업 트리 정리를 확인한다. 추가 배포나 기기 조작은 하지 않는다.
 
 - 전송 방식 보완: 일반 HTTPS와 시스템 Git은 Password 조회 불가(Device not configured), 기존 키를 명시한 시스템 SSH는 publickey 거부로 실패했다. 연결된 GitHub 계정sohay19의 인증은 정상이라 GitHub Git Data 도구로 동일4파일의 blob/tree/commit을 생성하고, 기대 원격HEAD25e4a51 조건의 비강제 ref 갱신으로 반영한다. 원격 tree와 로컬 커밋 tree가 정확히 같은지 확인한 뒤 원격 커밋을 fetch하고, 같은 tree/부모를 재확인해 로컬 브랜치도 일치시킨다. 인증정보·원격URL·전역 Git/SSH 설정은 변경하지 않는다.
+
+## 2026-11-02 Today 건조도·습도 중복 표시 수정
+
+- 사용자 지적을 확인한 결과 Today 상세의 ‘건조도’와 ‘습도’가 모두 current.humidity의 상대습도 값을 표시하고 있었다. 별도 수치처럼 보이던 건조도 카드와 정렬 항목을 제거했다. 기존 습도의 건조 단계 표현은 유지하고 보습 준비물 기준·실내 관리 안내를 습도 상세 설명에 통합했다.
+- 제품 변경은 weather_care_app/lib/features/home/widgets/weather_card.dart 한 파일이다. 기존 건조도/날씨 카드 검사의 중복 카드 부재·습도 상세 안내·배치·결측 개수·0% 기대값을 수정했다. 알림 설정과 서버 준비물 정책은 변경하지 않았다.
+- Flutter 3.47.4에서 weather_card_test.dart·dryness_test.dart 41개 모두 통과했다. 320/360px·글자 1/2배·상세 팝업·자료 없음·실제 0% 표시를 포함한다. 관련 제품/검사 3파일 dart analyze 이슈 없음, git diff --check 통과.
+- 추가 widget_test.dart 검사에서 이번 제품 변경과 독립적으로 SettingsScreen만 생성하는 기존 설정 검사 1건이 실패했다. notification-time-control의 실제 SettingsTimeControl을 Opacity로 캐스팅하는 test/widget_test.dart:909의 TypeError이며 단독 실행에서도 재현했다. 해당 설정 코드/검사는 수정하지 않았다. 전체 검사 통과로 표현하지 않는다.
+- 앱 소스 수정까지 완료했으며 UI 창/기기 조작·설치·빌드·서버/스토어 배포·커밋·푸시는 수행하지 않았다.
+## 2026-11-02 기존 설정 테스트 타입 오류 수정
+
+- 사용자 요청으로 test/widget_test.dart의 기존 설정 검사 오류를 수정했다. notification-time-control 키는 SettingsTimeControl에 있으므로 해당 위젯 자체를 Opacity로 캐스팅하지 않고 내부 Opacity를 찾아 비활성 투명도0.46을 검증하도록 변경했다. 내부 InkWell.onTap도 null인지 확인해 실제 편집 비활성화를 함께 검증한다. 앱 제품 코드는 이번 작업에서 수정하지 않았다.
+- Flutter 3.47.4에서 widget_test.dart·weather_card_test.dart·dryness_test.dart·settings_notification_contract_test.dart·commute_notification_settings_test.dart 5파일117개 모두 통과했다. 앞 Today 중복 표시 수정과 기존 설정 오류가 함께 해결된 상태다. widget_test.dart 정적 분석 이슈 없음, git diff --check 통과.
+- 로그는 ignored weather_care_app/build/settings-test-fix-20261102.log다. 앞 작업의 미커밋 수정은 보존했으며 UI/기기 조작·설치·빌드·배포·커밋·푸시는 수행하지 않았다.
+## 2026-11-02 연결 기기 잠금 해제·최신 앱 빌드 및 실행
+
+- 사용자 요청으로 열린 기기와 ADB 상태를 확인했다. Windows Android 에뮬레이터 프로세스는 없으며 연결 대상은 localhost:36246의 삼성 SM-S948U/Android16 기기다. 열린 창 목록에는 Samsung Remote Test Lab 웹 클라이언트가 있다. 기존 HANDOFF/제품/검사 미커밋 변경을 보존했다.
+- 기기 잠금은 secure=false인 일반 화면 잠금이었다. ADB로 깨우기와 wm dismiss-keyguard를 실행해 홈 화면 및 showing=false/mIsShowing=false를 확인했다. 암호 입력·보안 설정 변경은 하지 않았다. Windows 창 활성화/입력 없이 창 목록만 읽고 Android 전용 ADB로 조작해 별도 UI 창을 띄우지 않았다.
+- Flutter3.47.4의 일반 lib/main.dart를 flutter build apk --debug --no-pub로 빌드했다. Gradle331.4초 후 성공했으며 APK는 weather_care_app/build/app/outputs/flutter-apk/app-debug.apk(185885580바이트)다. 기존 Kotlin 플러그인의 향후 호환 경고만 있었고 빌드는 성공했다. 이번 Today 중복 카드 제거를 포함한 현재 작업 소스로 생성했다.
+- adb install -r 성공, com.codesoha.weathercare/.MainActivity의 am start -W는 Status:ok/COLD/TotalTime976ms로 완료했다. 설치 버전1.1.4/26103000, PID7445 및 topResumedActivity를 확인했다. 해당 PID 로그에서 FATAL/Unhandled/E/flutter/RenderFlex/Connection refused/HandshakeException 일치0건이다.
+- 현재 앱은 최초 실행 권한 안내 화면으로 열려 있다. 알림·위치·백그라운드 위치 권한을 임의 승인하지 않았으며 해당 화면 이후의 Today 실데이터 표시는 검증하지 않았다. 잠금 해제 상태와 앱 실행까지 확인했다. 기본 Debug 시험 서버를 사용하며 별도 서버/스토어 배포나 커밋·푸시는 하지 않았다.
+- 로그: ignored weather_care_app/build/emulator-run-20261102-build.log, 화면 캡처와 빌드 지연 확인용 스레드 덤프는 build/device-run-20261102에 있다. HANDOFF 외 추가 제품 소스 수정은 없다.
+## 2026-11-02 권한 전체 승인·Today 실기기 확인·터치 입력 복구
+
+- 사용자가 모든 권한 승인을 명시적으로 요청했다. 연결된 삼성 SM-S948U/Android16(localhost:36246)의 com.codesoha.weathercare에 POST_NOTIFICATIONS·ACCESS_COARSE_LOCATION·ACCESS_FINE_LOCATION·ACCESS_BACKGROUND_LOCATION을 ADB로 승인하고, 최종 dumpsys package에서 네 항목 모두 granted=true를 재확인했다. 앱의 최초 권한 안내 ‘계속’도 진행했다.
+- 터치 불응 원인은 Android InputDispatcher 로그에서 원격 주입 포인터2가 계속 눌린 상태로 남아 pointer0의 일반 탭이 거부되는 것으로 확인했다. 기본 input CANCEL도 포인터0이라 거부됐다. 임시 Android Java/Dex 도구로 동일 포인터2의 ACTION_CANCEL을 한 번 주입해 touch_cancel=true를 확인했다. 키보드로 안내를 닫은 뒤 일반 touchscreen tap/swipe가 정상 동작하는 것을 확인했다. 재부팅·잠금/보안 설정 변경·앱 데이터 삭제는 하지 않았다. 임시 Dex는 작업 후 기기 /data/local/tmp에서 제거했다.
+- 실제 앱 Today 탭을 열어 상단·하단을 스크롤하며 화면과 UIAutomator 텍스트를 함께 확인했다. 습도는 ‘매우 습함 / 82.6%’ 한 카드이며 별도 ‘건조도’ 카드는 없다. 체감온도·습도·자외선·바람·대기질·대기정체·가시거리·꽃가루·강수량·적설량 순서도 확인했다. 최종 상단으로 복귀 후 TODAY/습도 존재·건조도 부재를 기기 UI 트리로 검증하고 Today 탭을 열어뒀다.
+- 증거는 ignored weather_care_app/build/device-run-20261102/today-top.png/xml·today-lower.png/xml·today-verified.png/xml 및 입력 복구 보조 소스/산출물이다. Windows 창을 조작하거나 새 UI 창을 띄우지 않고 Android ADB로만 확인했다. HANDOFF 외 제품 코드 변경·재빌드·재설치·서버/스토어 배포·커밋·푸시는 없다.
+- 검증 보조 스크립트의 최초 최종 검사에서는 Flutter가 카드 문구를 여러 줄의 단일 content-desc로 제공하는 것을 개별 노드로 가정해 단언이 실패했다. UI 트리 문구를 줄 단위로 해석하도록 바로잡은 뒤 TODAY 존재·습도 정확히1개·건조도0개 검사를 통과했고 today-verified.png/xml 생성까지 확인했다. 실제 앱 오류나 추가 제품 수정은 아니다.
+
+## 2026-11-02 알림 외 건조 관련 표시 위치 확인
+
+- 사용자 질문에 따라 현재 앱/서버/네이티브 위젯 코드를 읽어 표시 경로를 확인했다. 이번 변경은 Today 상단의 중복 수치 카드만 제거한 것이며 건조 안내 기능 전체를 제거한 것은 아니다.
+- ‘건조도’라는 항목명은 건조 조건에 해당하면 Today 하단 ‘상세 자료’의 DRYNESS_GUIDANCE 카드에 남는다. 서버 buildDrynessMessages의 ‘건조도 · 단계’ 메시지와 앱 LifestyleMessageType.drynessGuidance.title/WeatherEvidenceCard가 연결된다. Setting→알림→챙겨요의 ‘건조도’ 스위치도 유지된다.
+- 관련 내용은 Today 습도 카드의 낮은 습도 단계 표현과 상세 팝업의 보습 준비 기준, Main의 건조 브리핑·립밤/핸드크림/휴대용 가습기 추천, Week 준비물 및 Android/iOS 위젯 준비물에도 조건에 따라 표시될 수 있다. 독립적인 건조도 수치 지표가 남았다는 의미는 아니다.
+- 제품 소스 변경·기기 조작·재빌드·배포·커밋·푸시는 하지 않았다. 읽기 확인 작업으로 제품 테스트는 반복하지 않았다.
+## 2026-11-02 Today 중복 카드·설정 테스트 수정 커밋 및 푸시
+
+- 사용자가 나머지 건조 안내는 유지하고 이번 변경을 커밋·푸시하도록 요청했다. 대상은 Today 중복 건조도 카드 제거/습도 설명 통합, 관련 날씨·건조도 검사 수정, 기존 설정 검사의 잘못된 Opacity 캐스팅 수정, 이번 작업 인계 기록의5파일이다. ignored APK·캡처·검증 도구·로그는 포함하지 않는다.
+- 관련5파일117개 테스트 통과·정적 분석 이상 없음·Debug 빌드와 삼성 실기기 Today 화면 확인 완료를 기존 로그/기록과 대조했다. 제품 코드가 이후 바뀌지 않아 빌드/검사를 반복하지 않는다. 공백 검사와 커밋 대상을 확인한다.
+- 시작 로컬HEAD25e4a51, fetch 후 원격weather_care/master의 새 커밋5afe632(iOS 광고 배치·관련 테스트/인계)를 확인했다. 서로 다른 제품 변경과 양쪽 HANDOFF 기록을 보존해 원격 변경 위에 이번 커밋을 반영한다. 한글 메시지 fix(today): 중복 건조도 표시와 설정 테스트 수정으로 커밋 후 일반 푸시하고 원격HEAD 일치·작업 트리 상태를 확인한다. 추가 앱/서버/스토어 배포는 하지 않는다.
+- 원격 반영 중 HANDOFF 끝의 추가 기록 충돌1곳은 원격 iOS 광고 기록과 이번 Today/검사/기기 확인 기록을 모두 보존해 해결했다. 제품 파일 간 충돌은 없다.

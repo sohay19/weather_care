@@ -45,7 +45,7 @@ void main() {
   });
 
   for (final scale in [1.0, 2.0]) {
-    testWidgets('좁은 화면·글자 $scale배에서 건조도와 실내 관리 안내를 표시한다', (tester) async {
+    testWidgets('좁은 화면·글자 $scale배에서 습도로 건조 상태와 보습 안내를 통합한다', (tester) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -68,10 +68,12 @@ void main() {
               current: CurrentWeather(temperature: 20, humidity: 20), showCurrentSummary: false),
         ]))),
       )));
-      final metric = find.byKey(const ValueKey('weather-metric-건조도'));
+      expect(find.byKey(const ValueKey('weather-metric-건조도')), findsNothing);
+      final metric = find.byKey(const ValueKey('weather-metric-습도'));
+      expect(metric, findsOneWidget);
       expect(find.descendant(of: metric, matching: find.text('매우 건조\n20%')),
           findsOneWidget);
-      final detail = find.byKey(const ValueKey('weather-metric-detail-건조도'));
+      final detail = find.byKey(const ValueKey('weather-metric-detail-습도'));
       await tester.ensureVisible(detail);
       await tester.tap(detail);
       await tester.pumpAndSettle();

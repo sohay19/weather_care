@@ -14353,3 +14353,34 @@
 
 - 사용자 요청으로 로컬597aa10과 병합 대상e071a5c 사이 HANDOFF 충돌1곳을 해결했다. 두 커밋의 제품 변경은 동일하며 차이는 마지막 인증 실패 기록 추가뿐이다. 양쪽 공통 기록과 당시 실패 기록을 보존했다. 사용자가 이후 직접 푸시했다고 알렸으므로 앞 실패 안내는 당시 실행 결과로만 해석한다.
 - HANDOFF 외 제품/이미지 파일 변경 없이 충돌표식 제거와 스테이징 공백 검사를 확인해 한글 병합 메시지로 커밋한다. 사용자가 푸시는 직접 하겠다고 명시했으므로 이번 작업에서는 푸시하지 않는다.
+
+
+## 2026-11-02 iOS 네이티브 광고 중앙 배치·내부 여백 보완
+
+- 사용자 요청: Android와 달리 iOS 네이티브 광고가 가로·세로 중앙에 놓이지 않고 여백이 많은 현상을 확인한다. 기존 광고 수정 인계와 Google Mobile Ads 9.0.0의 실제 iOS/Android 소스를 비교했다. 이전 변경은 Flutter 소형 내부 높이120/외곽8px와 Android 소형 리소스를 보완했지만 iOS 래퍼는 여전히 top 고정·bottom 부등식이며 layoutSubviews마다 같은 제약을 추가했다. iOS 소형 XIB도 이미지 왼쪽0/오른쪽10pt의 비대칭 여백과 제목 한 줄을 유지했다.
+- ios/native_ad_template.rb의 기존 앱 전용 복사 경로를 확장했다. FLTNativeTemplateStyle.m의 래퍼는 templateView를 연결하는 setter에서 즉시 네 방향을 부모에 고정하고 같은 뷰를 다시 연결할 때 중복 제약을 추가하지 않는다. 기존 뷰 교체 시 제거한다. 중형 미디어16:9는 원래 XIB 제약을 유지한다. 공용 Pub 캐시의 원본 소스·리소스를 수정하지 않고 Pods/WeatherCareNativeAds의 복사본만 컴파일한다.
+- 소형 XIB 복사본은 이미지 왼쪽에도10pt를 주고 폭을 부모의25% 정사각형으로 명확히 고정한다. 제목2줄과 텍스트/버튼 높이비1.8을 적용해 내부높이120에서도14pt 제목 두 줄과32pt 이상 CTA 공간을 확보한다. Flutter/Android 제품 코드·카드 크기·광고 ID/동의/구매 로직은 변경하지 않는다. 기존 테두리 제거도 유지한다. Pod 리소스는 별도 번들 타깃에 있음을 반영했고, Aggregate 타깃은 탐색에서 제외한다. 반복 pod install 및 Ruby/프로젝트 구문 검사를 통과했다.
+- RunnerTests/NativeAdLayoutTests.swift와 프로젝트 소스참조4줄을 추가했다. UIKit에서 실제 플러그인의 XIB와 래퍼를 사용해 소형 내부폭304/344/384×높이120/180의6조합에서 부모 영역 채움·이미지25%·이미지 세로중앙·자산영역 좌상우하10pt·한글/영문 제목 두 줄 공간·CTA 최소높이·폭 변경 후 배치·제약 비누적을 검사한다. 중형336×336에서 부모영역 채움과 미디어16:9를 검사한다.
+- 검증: Flutter 광고/광고ID 테스트18개 통과. 전용 iPhone15 Pro/iOS17.5 시뮬레이터(B85283F1-9072-4F35-9C5E-A92BFE755D46)에서 일반 앱·테스트 빌드 및 네이티브2개 테스트 통과(실패0/건너뜀0). 첫 래퍼 시안은 layoutSubviews 안에서 새 제약을 연결해 최초 검사 시 XIB 초기403×101 크기가 남는 실패를 발견했다. setter에서 즉시 연결하는 최종 구현으로 수정 후 통과했으며 실패 실행을 최종 증거로 쓰지 않는다. CocoaPods의 자동 프로젝트 정규화 변경은 제거하고 테스트 참조4줄만 남겼다.
+- 시뮬레이터 창을 열지 않고 headless XCTest와 렌더링 첨부 이미지를 사용했으며 사용자가 실행 중인 iOS26.3 시뮬레이터는 조작하지 않았다. 검사 이미지는 실제 광고 수신이 아닌 템플릿에 한글/영문 제목·광고주·버튼을 넣은 fixture다. 실기기·실제 광고 소재 수신/표시나 실제 Week 화면을 검증한 것으로 확대하지 않는다. 네이티브 변경이므로 사용자 기기에 반영하려면 새 iOS 빌드가 필요하다. 커밋·푸시·스토어/서버 배포는 하지 않았다.
+- 증거: ignored weather_care_app/build/ios-ad-layout-flutter-tests.log, ios-ad-layout-verified-tests.log, ios-ad-layout-20261102-verified.xcresult(2개 통과), ios-ad-layout-previews/의 소형·중형 렌더링 이미지. 초기 ios-ad-layout-xcode-tests.log/ios-ad-layout-final-tests.log와 해당 결과는 실패 시안 기록이며 최종 통과 자료와 구분한다. 미리보기 fixture에서 SDK가 실제 광고 연결 때 숨기는 store/starRating 자리표시자를 숨겨 시각 검수를 정리한 후속 실행은 ios-ad-layout-preview-final-tests.log 및 ios-ad-layout-20261102-preview-final.xcresult다.
+
+- 최종 후속 확인: fixture 자리표시자를 정리한 마지막 실행도2개 통과/실패0이며 ios-ad-layout-summary.json에 집계했다. ios-ad-layout-previews-final/의 소형·중형 PNG를 직접 열어 한글/영문 제목·광고 배지·버튼 배치를 확인했다. 소형 제목2줄/버튼 잘림이나 자리표시자 겹침 없음. 검사 전용 시뮬레이터는 이미 종료된 상태를 확인해 삭제했고 기존 사용자 시뮬레이터는 유지했다. 최종 제품 변경은 Ruby 보조 스크립트1개, 테스트1개와 프로젝트 참조4줄, 이 인계 기록뿐이다.
+
+
+## 2026-11-02 iOS 실제 Week 화면 실행·광고 캡처
+
+- 사용자 후속 요청으로 시뮬레이터에서 수정본을 실행하고 화면을 캡처했다. 기존 전용 iPhone15 Pro Max/iOS17.5 촬영 기기71087354를 EB63FF48-0C83-443A-A99E-FD6BB181448C(날씨챙겨 광고 실제화면 20261102)로 복제하고 앞 작업의 최종 일반 lib/main.dart Debug Runner.app을 설치했다. 별도 예시 광고 화면이나 fixture를 사용하지 않는다. 사용자 실행 중인 iOS26.3 기기 및 기존 촬영 기기의 앱/설정은 변경하지 않았다. Simulator 창을 열지 않고 기존 독립 XCTest 촬영 도구로 조작해 사용자 화면을 방해하지 않았다.
+- 실제 Main 화면의 서버 날씨를 확인한 후 접근성 트리의 Week\nTab 4 of 5를 눌렀다. 공식 iOS 테스트 네이티브 광고3986624511의 Test mode: Flood-It! 이미지·제목·Ad 배지·App Store·설치 버튼이 실제 Week 화면에 표시됐다. 카드와 이미지/텍스트/버튼의 배치, 제목과 버튼 잘림 없음을 원본 PNG로 확인했다. 첫 Week 라벨만으로 찾던 명령은 실패했으며 실제 접근성 라벨 확인 후 정상 이동했다. 초기 dump 명령도 준비 시점 경합으로 응답 대기가 끝났고, 이를 성공 증거로 쓰지 않았다.
+- 실제 광고 수신으로 추가 확인된 미해결 사항: AdMob native ad validator가 WARNING: MediaView is too small for video 1건을 표시했다. 상세 화면은 영상이 있을 때 iOS MediaView가120×120pt 이상이어야 한다고 안내한다. 현재 소형 미디어 폭은382×25%=95.5pt여서 이 조건에 못 미친다. 실제 정렬 확인과 SDK 전체 검증 통과를 구분하며, 이 경고를 해결했다고 주장하지 않는다. 이번 후속 요청은 실행/캡처이므로 제품 코드는 추가 수정하지 않았다. 상세 경고를 촬영한 후 SDK 상세 화면과 검사 팝업을 UI로 닫아 가리지 않은 원본을 촬영했다. 광고 자체 클릭·스토어 이동·과금은 없다.
+- 공유 원본: ignored weather_care_app/build/ios-ad-screen-20261102/raw/week-final.png(1290×2796), 같은 이름.txt와 commands.jsonl. 경고 증거는 ad-validator-issues.png/.txt, 첫 표시 week-loaded.png/.txt다. week-final.png를 직접 열어 팝업 없는 실제 Week/주간 요약/Google 테스트 광고/날짜 선택/하단 메뉴를 확인했다. 이미지 합성·편집·크롭 없이 전체 화면 원본을 공유한다. 캡처 제어 finish 명령으로 XCTest 반복 대기를 종료했다. 커밋·푸시·빌드 소스 변경·스토어/서버 배포는 없다.
+
+- 촬영 제어 XCTest1개도 실패0으로 정상 종료(TEST EXECUTE SUCCEEDED)했다. 복제한 전용 시뮬레이터만 종료해 후속 확인용으로 보존했다. 기존 사용자 iOS26.3 시뮬레이터는 실행 상태를 유지한다.
+
+
+## 2026-11-02 iOS 광고 배치 수정 커밋·푸시
+
+- 사용자 요청으로 iOS 광고 템플릿 보조 스크립트·네이티브 레이아웃 테스트·프로젝트 테스트 참조와 이번 수정/실제 화면 확인 인계를4파일로 커밋한다. ignored build의 앱·캡처·로그는 추가하지 않는다. 실제 광고에서 확인한 영상 MediaView120×120pt 최소크기 경고는 미해결 상태로 명시해 보존한다.
+- 시작 HEAD25e4a51, fetch 후 origin/master와 차이0/0을 확인했다. 앞 Flutter18개·네이티브2개·실제 촬영 제어1개 통과 결과와 현재 변경 내용이 동일함을 확인했다. Ruby/프로젝트 구문 및 공백 검사를 통과했다. 제품 수정 없이 커밋하는 작업이라 빌드/테스트를 반복하지 않는다. 한글 메시지 fix(ios): 네이티브 광고 중앙 배치와 여백 개선으로 커밋하고 origin/master에 일반 푸시한 뒤 로컬·원격HEAD 일치와 작업 트리 정리를 확인한다. 추가 배포나 기기 조작은 하지 않는다.
+
+- 전송 방식 보완: 일반 HTTPS와 시스템 Git은 Password 조회 불가(Device not configured), 기존 키를 명시한 시스템 SSH는 publickey 거부로 실패했다. 연결된 GitHub 계정sohay19의 인증은 정상이라 GitHub Git Data 도구로 동일4파일의 blob/tree/commit을 생성하고, 기대 원격HEAD25e4a51 조건의 비강제 ref 갱신으로 반영한다. 원격 tree와 로컬 커밋 tree가 정확히 같은지 확인한 뒤 원격 커밋을 fetch하고, 같은 tree/부모를 재확인해 로컬 브랜치도 일치시킨다. 인증정보·원격URL·전역 Git/SSH 설정은 변경하지 않는다.

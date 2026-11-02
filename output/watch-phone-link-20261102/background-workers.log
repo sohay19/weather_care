@@ -1,0 +1,2 @@
+11-02 16:13:19.614 11065 11216 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=30d7f09e-da3c-421b-967f-ea6ba806680a, tags={ com.codesoha.weathercare.WeatherCareWidgetRefreshWorker } ]
+11-02 16:13:21.224 11065 11222 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=ef0d1dda-09e8-4e90-9c83-ecbc663831da, tags={ com.codesoha.weathercare.WearCloudPublishWorker } ]

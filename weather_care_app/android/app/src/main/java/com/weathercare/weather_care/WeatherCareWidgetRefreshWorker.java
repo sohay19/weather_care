@@ -124,6 +124,8 @@ public final class WeatherCareWidgetRefreshWorker extends Worker {
                         .putString(MainActivity.SNAPSHOT_KEY, selectedSnapshot)
                         .remove(WeatherCareWidgetProvider.REFRESH_STATUS_KEY)
                         .apply();
+                WearPhoneSync.publishFromBackground(context, selectedSnapshot, rawUrl,
+                        preferences.getString(MainActivity.WIDGET_TEST_ACCESS_KEY, null), revision);
             }
             return status;
         } finally {

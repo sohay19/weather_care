@@ -15,6 +15,7 @@ import 'ad_removal_purchase_screen.dart';
 import 'notification_schedule.dart';
 import 'notification_time_picker.dart';
 import 'settings_time_control.dart';
+import 'watch_connection_screen.dart';
 import 'commute_notification_settings_screen.dart';
 import 'region_picker_screen.dart' show RegionMapBuilder;
 import 'settings_guide.dart';
@@ -186,6 +187,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: '데이터 저장·기기 권한 상태',
           subtitle: '데이터 저장과 알림·위치 권한을 확인해요',
           onTap: _openNotificationStatusSettings,
+        ),
+        const SizedBox(height: 16),
+        _SettingsMenuButton(
+          key: const ValueKey('watch-connection-menu'),
+          icon: Icons.watch_outlined,
+          title: '워치 연결',
+          subtitle: '연결 코드로 워치에 날씨를 보내요',
+          onTap: () {
+            if (widget.serverDataAccess?.paused ?? false) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('서버 기능을 다시 사용한 뒤 워치를 연결해 주세요.'),
+              ));
+              return;
+            }
+            Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) =>
+                  WatchConnectionScreen(onRefresh: widget.onRefresh),
+            ));
+          },
         ),
         const SizedBox(height: 16),
         _SettingsMenuButton(

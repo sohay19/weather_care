@@ -6,6 +6,7 @@ import comparisonRoutes from './api/comparison';
 import installationsRoutes from './api/installations';
 import notificationSettingsRoutes from './api/notificationSettings';
 import installationOwnershipRoutes from './api/installationOwnership';
+import wearRoutes from './api/wear';
 import { runScheduledJobs } from './cron/jobs';
 import { safeErrorName } from './observability/providerErrorDiagnostics';
 import { recoveryActive, recoveryResponse } from './recovery/maintenance';
@@ -34,6 +35,7 @@ app.route('/api/v1/weather/comparison', comparisonRoutes);
 app.route('/api/v1/installations', installationOwnershipRoutes);
 app.route('/api/v1/installations', installationsRoutes);
 app.route('/api/v1/notification-settings', notificationSettingsRoutes);
+app.route('/api/v1/wear', wearRoutes);
 
 app.get('/', (c) => c.json({ app: 'weather-care-server', version: '0.1.0' }));
 

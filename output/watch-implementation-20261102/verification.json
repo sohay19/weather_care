@@ -1,0 +1,21 @@
+{
+  "결과": "통과",
+  "폰Flutter검사": 91,
+  "폰네이티브검사": 27,
+  "워치단위검사": 7,
+  "연결기기검사": 2,
+  "워치Lint오류": 0,
+  "워치Lint경고": 11,
+  "시험자료원복": true,
+  "실제폰연동검증": false,
+  "워치APK": {
+    "경로": "D:\\IdeaProjects\\weather_care\\weather_care_wear\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+    "바이트": 46412692,
+    "sha256": "a57a59393dc5d9ab798a474b14158a94c735a30c470087d953ec48f4ca116307"
+  },
+  "폰APK": {
+    "경로": "D:\\IdeaProjects\\weather_care\\weather_care_app\\build\\app\\outputs\\flutter-apk\\app-debug.apk",
+    "바이트": 209931218,
+    "sha256": "5a6b268c5982389a292f5f35df699f1702f088282ef5e5dac0b2aee5a534f569"
+  }
+}

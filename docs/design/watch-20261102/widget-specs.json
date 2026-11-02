@@ -1,0 +1,130 @@
+{
+  "sdk": "androidx.glance.wear:wear-tooling-preview:1.0.0-alpha21",
+  "sourceUrl": "https://dl.google.com/dl/android/maven2/androidx/glance/wear/wear-tooling-preview/1.0.0-alpha21/wear-tooling-preview-1.0.0-alpha21-sources.jar",
+  "sourceJarSha256": "40c37b208a78340da54311971d01a8eedcb5525a075ba0f64a97dc7c6572e2f6",
+  "checkedAt": "2026-11-02",
+  "meaning": "widthDp/heightDp는 콘텐츠 영역; 외곽 프리뷰는 양쪽 호스트 패딩을 더한 크기",
+  "deviceMeasured": false,
+  "profiles": [
+    {
+      "id": "squircle-small-1",
+      "family": "SQUIRCLE",
+      "kind": "small",
+      "widthDp": 166.0,
+      "heightDp": 60.0,
+      "verticalPaddingDp": 8.0,
+      "horizontalPaddingDp": 8.0,
+      "cornerRadiusDp": 26.0,
+      "outerWidthDp": 182.0,
+      "outerHeightDp": 76.0
+    },
+    {
+      "id": "squircle-small-2",
+      "family": "SQUIRCLE",
+      "kind": "small",
+      "widthDp": 200.0,
+      "heightDp": 60.0,
+      "verticalPaddingDp": 8.0,
+      "horizontalPaddingDp": 8.0,
+      "cornerRadiusDp": 26.0,
+      "outerWidthDp": 216.0,
+      "outerHeightDp": 76.0
+    },
+    {
+      "id": "squircle-large-1",
+      "family": "SQUIRCLE",
+      "kind": "large",
+      "widthDp": 166.0,
+      "heightDp": 96.0,
+      "verticalPaddingDp": 8.0,
+      "horizontalPaddingDp": 8.0,
+      "cornerRadiusDp": 26.0,
+      "outerWidthDp": 182.0,
+      "outerHeightDp": 112.0
+    },
+    {
+      "id": "squircle-large-2",
+      "family": "SQUIRCLE",
+      "kind": "large",
+      "widthDp": 200.0,
+      "heightDp": 108.0,
+      "verticalPaddingDp": 8.0,
+      "horizontalPaddingDp": 8.0,
+      "cornerRadiusDp": 26.0,
+      "outerWidthDp": 216.0,
+      "outerHeightDp": 124.0
+    },
+    {
+      "id": "round-small-1",
+      "family": "ROUND",
+      "kind": "small",
+      "widthDp": 182.0,
+      "heightDp": 54.0,
+      "verticalPaddingDp": 8.0,
+      "horizontalPaddingDp": 13.0,
+      "cornerRadiusDp": 999,
+      "outerWidthDp": 208.0,
+      "outerHeightDp": 70.0
+    },
+    {
+      "id": "round-small-2",
+      "family": "ROUND",
+      "kind": "small",
+      "widthDp": 200.0,
+      "heightDp": 60.0,
+      "verticalPaddingDp": 8.0,
+      "horizontalPaddingDp": 15.0,
+      "cornerRadiusDp": 999,
+      "outerWidthDp": 230.0,
+      "outerHeightDp": 76.0
+    },
+    {
+      "id": "round-large-1",
+      "family": "ROUND",
+      "kind": "large",
+      "widthDp": 150.0,
+      "heightDp": 120.0,
+      "verticalPaddingDp": 16.0,
+      "horizontalPaddingDp": 29.0,
+      "cornerRadiusDp": 999,
+      "outerWidthDp": 208.0,
+      "outerHeightDp": 152.0
+    },
+    {
+      "id": "round-large-2",
+      "family": "ROUND",
+      "kind": "large",
+      "widthDp": 160.0,
+      "heightDp": 136.0,
+      "verticalPaddingDp": 16.0,
+      "horizontalPaddingDp": 35.0,
+      "cornerRadiusDp": 999,
+      "outerWidthDp": 230.0,
+      "outerHeightDp": 168.0
+    },
+    {
+      "id": "rectangular-small-1",
+      "family": "RECTANGULAR",
+      "kind": "small",
+      "widthDp": 192.0,
+      "heightDp": 60.0,
+      "verticalPaddingDp": 12.0,
+      "horizontalPaddingDp": 16.0,
+      "cornerRadiusDp": 0,
+      "outerWidthDp": 224.0,
+      "outerHeightDp": 84.0
+    },
+    {
+      "id": "rectangular-large-1",
+      "family": "RECTANGULAR",
+      "kind": "large",
+      "widthDp": 168.0,
+      "heightDp": 112.0,
+      "verticalPaddingDp": 16.0,
+      "horizontalPaddingDp": 32.0,
+      "cornerRadiusDp": 0,
+      "outerWidthDp": 232.0,
+      "outerHeightDp": 144.0
+    }
+  ]
+}

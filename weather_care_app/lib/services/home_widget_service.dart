@@ -27,11 +27,13 @@ class HomeWidgetService {
     String? testAccessKey,
     bool gpsEnabled = false,
     DateTime? locationMeasuredAt,
+    Map<String, dynamic>? wearDetails,
   }) async {
     if (!_isSupportedPlatform) return;
     try {
       await _channel.invokeMethod<void>('save', {
         'snapshot': snapshot.encode(),
+        if (wearDetails != null) 'wearDetails': wearDetails,
         if (refreshUrl != null) 'refreshUrl': refreshUrl,
         if (Uri.tryParse(refreshUrl ?? '')?.host ==
                 'weather-test-api.codesoha.com' &&

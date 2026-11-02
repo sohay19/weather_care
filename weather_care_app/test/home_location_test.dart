@@ -211,6 +211,7 @@ class _WidgetService extends HomeWidgetService {
     String? testAccessKey,
     bool gpsEnabled = false,
     DateTime? locationMeasuredAt,
+    Map<String, dynamic>? wearDetails,
   }) async {
     published.add(snapshot);
     refreshUrls.add(refreshUrl);
@@ -292,12 +293,20 @@ void main() {
   late _NotificationPermission notificationPermission;
   const backgroundChannel =
       MethodChannel('com.codesoha.weathercare/background-location');
+  const widgetChannel = MethodChannel('com.codesoha.weathercare/home-widget');
   final backgroundCalls = <MethodCall>[];
+  final widgetCalls = <MethodCall>[];
   final catalog = RegionCatalog.fromJson(
       jsonDecode(File('assets/data/kma_regions.json').readAsStringSync())
           as Map<String, dynamic>);
   setUp(() {
     backgroundCalls.clear();
+    widgetCalls.clear();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(widgetChannel, (call) async {
+      widgetCalls.add(call);
+      return call.method == 'wearUnlink' ? '{"linked":false}' : null;
+    });
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(backgroundChannel, (call) async {
       backgroundCalls.add(call);
@@ -321,6 +330,8 @@ void main() {
     notificationPermission = _NotificationPermission();
   });
   tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(widgetChannel, null);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(backgroundChannel, null);
   });
@@ -901,6 +912,7 @@ void main() {
     await screen(tester).onDeleteServerData!();
     await tester.pumpAndSettle();
     expect(api.deletes, 1);
+    expect(widgetCalls.where((call) => call.method == 'wearUnlink'), hasLength(1));
     expect(access.mode, ServerDataMode.deleted);
     expect(screen(tester).saveState, SettingsSaveState.localOnly);
     final saved = await const AppSettingsRepository().load('test');

@@ -1,0 +1,19 @@
+{
+  "phone": {
+    "revision": 10,
+    "publishedAt": 1793602883233,
+    "region": "서울 구로구 구로동",
+    "temperature": "14.4°",
+    "apparent": "11°",
+    "time": "오후 4:01 기준"
+  },
+  "watch": {
+    "revision": 10,
+    "publishedAt": 1793602883233,
+    "region": "서울 구로구 구로동",
+    "temperature": "14.4°",
+    "apparent": "11°",
+    "time": "오후 4:01 기준"
+  },
+  "watchActivityOpenedDuringTileCheck": false
+}

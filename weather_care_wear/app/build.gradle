@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
+}
+android {
+    namespace 'com.codesoha.weathercare'
+    compileSdk 37
+    defaultConfig {
+        applicationId 'com.codesoha.weathercare'
+        minSdk 33
+        targetSdk 37
+        versionCode 26110201
+        versionName '1.0.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = '17' }
+    buildFeatures { compose true; buildConfig true }
+    testOptions { unitTests.includeAndroidResources = true }
+    sourceSets {
+        main.java.srcDir "$buildDir/generated/widget-source"
+        main.res.srcDir "$buildDir/generated/watch-res"
+        main.assets.srcDir "$buildDir/generated/watch-assets"
+    }
+    packaging { resources.excludes += ['/META-INF/{AL2.0,LGPL2.1}'] }
+}
+// 폰 위젯의 원본 렌더러와 폰트·아이콘을 그대로 사용한다.
+def phoneMain = file('../../weather_care_app/android/app/src/main')
+tasks.register('prepareWatchResources') {
+    inputs.files(fileTree(phoneMain) { include '**/WidgetIconRenderer.java', '**/ic_launcher.png' })
+    inputs.files(fileTree('../../weather_care_app/assets/fonts'))
+    inputs.files(fileTree('../../weather_care_app/assets/icons'))
+    outputs.dirs(layout.buildDirectory.dir('generated/widget-source'), layout.buildDirectory.dir('generated/watch-res'), layout.buildDirectory.dir('generated/watch-assets'))
+    doLast {
+        copy { from fileTree(phoneMain) { include '**/WidgetIconRenderer.java' }; into layout.buildDirectory.dir('generated/widget-source') }
+        copy { from '../../weather_care_app/assets/fonts/SUITE-Regular.ttf'; into layout.buildDirectory.dir('generated/watch-res/font'); rename { 'suite_regular.ttf' } }
+        copy { from '../../weather_care_app/assets/fonts/SUITE-Bold.ttf'; into layout.buildDirectory.dir('generated/watch-res/font'); rename { 'suite_bold.ttf' } }
+        copy { from new File(phoneMain,'res/mipmap-xxxhdpi/ic_launcher.png'); into layout.buildDirectory.dir('generated/watch-res/drawable'); rename { 'app_icon.png' } }
+        copy { from '../../weather_care_app/assets/icons'; into layout.buildDirectory.dir('generated/watch-assets/flutter_assets/assets/icons') }
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'prepareWatchResources' }
+dependencies {
+    implementation 'com.google.guava:guava:33.4.8-android'
+    implementation project(':bridge')
+    implementation 'androidx.activity:activity-compose:1.11.0'
+    implementation 'androidx.wear.compose:compose-material:1.7.1'
+    implementation 'androidx.wear.compose:compose-foundation:1.7.1'
+    implementation 'androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1'
+    implementation 'androidx.wear.tiles:tiles:1.6.2'
+    implementation 'androidx.wear.protolayout:protolayout:1.4.0'
+    implementation 'androidx.glance.wear:wear:1.0.0-alpha21'
+    implementation 'androidx.glance.wear:wear-core:1.0.0-alpha21'
+    implementation 'androidx.compose.remote:remote-creation-compose:1.0.0-alpha22'
+    implementation 'androidx.compose.remote:remote-core:1.0.0-alpha22'
+    implementation 'androidx.work:work-runtime-ktx:2.11.2'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+}

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weather_care/features/settings/settings_screen.dart';
 import 'package:weather_care/services/api_client.dart';
@@ -121,11 +122,16 @@ class _Boundary extends InstallationApiClient {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late _Api api;
   late ServerDataAccess access;
   String? stored;
   bool failWrite = false;
   setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+            const MethodChannel('com.codesoha.weathercare/home-widget'),
+            (_) async => '{"linked":false}');
     api = _Api();
     stored = null;
     failWrite = false;
@@ -143,6 +149,28 @@ void main() {
   tearDown(() async {
     access.dispose();
     await api.messages?.close();
+  });
+
+  test('워치 연결 자료 삭제가 실패하면 삭제 완료로 표시하지 않고 재시도한다', () async {
+    await access.load();
+    await access.mutate((_) async {});
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    const channel = MethodChannel('com.codesoha.weathercare/home-widget');
+    messenger.setMockMethodCallHandler(channel, (_) async {
+      throw PlatformException(code: 'WEAR_NETWORK_ERROR');
+    });
+    await access.deleteData();
+    expect(access.mode, ServerDataMode.deleting);
+    expect(api.calls.where((call) => call.method == 'DELETE'), isEmpty);
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      expect(call.method, 'wearUnlink');
+      return '{"linked":false}';
+    });
+    await access.deleteData();
+    expect(access.mode, ServerDataMode.deleted);
+    expect(api.calls.where((call) => call.method == 'DELETE'), hasLength(1));
+    messenger.setMockMethodCallHandler(channel, null);
   });
 
   test(

@@ -1,0 +1,5 @@
+{
+  "result": "통과",
+  "fixture": true,
+  "checks": "실제 삼성 호스트의 소형·대형 표시, Activity 미진입 채택 후 갱신, 카드 탭 현재날씨 진입"
+}

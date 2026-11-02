@@ -15,7 +15,7 @@
 
     <application
         android:allowBackup="false"
-        android:label="날씨챙겨"
+        android:label="${weatherCareAppLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
@@ -108,6 +108,13 @@
             android:name=".WeatherCareWidgetRefreshService"
             android:exported="false"
             android:foregroundServiceType="location" />
+        <service android:name=".WearPhoneListenerService" android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" android:path="/weather-care/v1/request" />
+            </intent-filter>
+            <intent-filter><action android:name="com.google.android.gms.wearable.PEER_CONNECTED" /></intent-filter>
+        </service>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

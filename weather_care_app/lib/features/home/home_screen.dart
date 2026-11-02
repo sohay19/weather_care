@@ -9,6 +9,7 @@ import '../../models/lifestyle_message.dart';
 import '../../models/recommendation.dart';
 import '../../models/weather.dart';
 import '../../models/home_widget_snapshot.dart';
+import '../../models/wear_weather_details.dart';
 import '../../services/api_client.dart';
 import '../../services/ad_removal_service.dart';
 import '../../services/server_data_access.dart';
@@ -242,6 +243,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
     unawaited(widget.homeWidgetService.publish(
       snapshot,
+      wearDetails:
+          buildWearWeatherDetails(today, comparison: _yesterdayComparison),
       refreshUrl: _homeWidgetRefreshUrl(),
       testAccessKey: _serverDataAccess?.api.testAccessKey,
       gpsEnabled: _settings.locationMode == 'GPS',

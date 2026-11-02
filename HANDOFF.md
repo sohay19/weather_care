@@ -14425,3 +14425,228 @@
 - 관련5파일117개 테스트 통과·정적 분석 이상 없음·Debug 빌드와 삼성 실기기 Today 화면 확인 완료를 기존 로그/기록과 대조했다. 제품 코드가 이후 바뀌지 않아 빌드/검사를 반복하지 않는다. 공백 검사와 커밋 대상을 확인한다.
 - 시작 로컬HEAD25e4a51, fetch 후 원격weather_care/master의 새 커밋5afe632(iOS 광고 배치·관련 테스트/인계)를 확인했다. 서로 다른 제품 변경과 양쪽 HANDOFF 기록을 보존해 원격 변경 위에 이번 커밋을 반영한다. 한글 메시지 fix(today): 중복 건조도 표시와 설정 테스트 수정으로 커밋 후 일반 푸시하고 원격HEAD 일치·작업 트리 상태를 확인한다. 추가 앱/서버/스토어 배포는 하지 않는다.
 - 원격 반영 중 HANDOFF 끝의 추가 기록 충돌1곳은 원격 iOS 광고 기록과 이번 Today/검사/기기 확인 기록을 모두 보존해 해결했다. 제품 파일 간 충돌은 없다.
+
+## 2026-11-02 연결 워치 앱·위젯 기획서와 디자인 시안
+
+- 사용자 요청은 연결 워치를 바탕으로 기획서와 디자인 시안을 만드는 범위다. ADB의 현재 연결 SM-L340을 읽기 조회해 Android17/API37, watch 기능, 원형438×438px, density340dpi, 위젯 렌더러1.6.1.87.907578152를 확인했다. 삼성 공식 SM-L340 지원 페이지의 갤럭시 워치9 블루투스40mm와 대조했다. 실제 위젯 선택기/부분 높이 호스트·폰 페어링/서명 연동은 아직 확인하지 않았다. 기기 UI·권한·설정·설치·파일은 변경하지 않았다.
+- 공식 Android 문서를 조회해 Wear OS7의 새 소형/대형 위젯과 이전 타일, 컴플리케이션의 역할을 구분했다. 신규 위젯은 API37/렌더러1.6.1 이상 및 alpha SDK 도입 검증이 필요하다. 1차 Wear OS4/API33 이상·단일 WidgetService의 공식 타일 호환부터 검증하고, 부족하면 이중 서비스로 분리하는 안이다. OS만으로 OEM 부분 높이 표시가 보장된다고 주장하지 않는다. 출처는 기획서/PDF에 링크했다.
+- 첫 버전은 폰 연동형 Kotlin/Compose for Wear OS 별도 모듈을 제안한다. 현재 날씨·준비물·다음3시간·기상생활 안내, 소형/대형 위젯·이전 타일·기온/준비물 컴플리케이션을 설계했다. 기존 HomeWidgetSnapshot의 재사용 필드와 추가 hourly/alerts 정규화를 구분하고, Data Layer 동일 패키지/서명·독립 로컬캐시·revision/지역 순서 보호·유효기간·백그라운드 이동 검사를 명시했다. 알림OFF는 조회 숨김과 구분하고 폰 알림 브리지 우선으로 중복 방지, 독립GPS/기기인증/FCM은 후속이다.
+- 산출물: docs/워치앱_위젯_기획서_20261102.md, docs/design/watch-20261102/index.html(폰트/아이콘 내장 클릭 시안), overview.png(앱6화면), widgets.png(빠른화면4종), screens/개별PNG·device-summary.json·verification.json·README·재생성도구, output/pdf/watch-app-plan-20261102.pdf(8페이지). 기존 dark palette/SUITE/준비물 자산을 재사용하고 대비를 보완했다. 립밤은 시안용 대체 벡터다. 예보/특보/위치는 모두 합성 자료이며 실제 설치 화면으로 표현하지 않는다.
+- 검증: headless Edge에서 브리핑→준비물→상세/복귀·목록 다음구간·건조상황 보습문구·자료만료·연결완료·390px 넘침 없음 등8개 통과/JS오류0. 실제 Wear 앱 기능 테스트는 아니다. PDF 스킬에 따라 한글폰트내장·8페이지 텍스트 추출·전체페이지PNG렌더링/시각검수했다. 개별 위젯 PNG 최초 캡처에서 옆 요소가 섞이는 도구 문제를 독립 렌더링으로 수정한 뒤 PDF 재생성·최종 디자인3/4페이지와 출처페이지를 재검수했다. 초기 PDF 완료 출력만 콘솔 인코딩 오류가 있었으며 생성 자체는 성공했다. 도구 stdout UTF-8 설정 후 최종 실행도정상이다.
+- Windows UI 창은 열지 않고 headless 렌더링해 사용자 화면을 방해하지 않았다. 제품 앱/서버 소스 수정·워치 설치/권한 변경·서버/스토어 배포·커밋/푸시는 수행하지 않았다. 기획 문서와 시안/생성기만 새로 작성했다.
+- 검토용 PNG는 tmp/watch-plan-review-20261102에 남아 있다. 최종 시각검수 후 해당 경로 확인·링크 제외 조건을 넣은 PowerShell 재귀 정리 명령이 실행 정책에 차단돼 삭제하지 않았고 우회하지 않았다. 최종 납품 파일에는 영향이 없으며 검토 증거로 보존한다. PDF를 Codex 패널에서 열도록 요청한 결과 queued로 반환돼 실제 탭 표시까지 확인한 것은 아니다.
+
+## 2026-11-02 워치 PDF 0.2 사용자 지정 구성 반영
+
+- 요청에 따라 PDF와 원본 기획/HTML/PNG 시안을 수정했다. 앱은 챙겨요→현재 날씨→타임라인→기상/생활 순서다. 챙겨요 품목 맨 오른쪽 빈/체크된 체크박스를 추가하고 체크영역 클릭은 상세 탭과 분리했다. 현재 날씨의 기존 오후비/우산48dp 브리핑 박스는 약35dp의 어제 비교로 교체했다. 같은지역/같은시각 기온차와상태변화,비교자료없음을 명시한다. 다음 시간은타임라인으로명칭만바꾸고 시각/상태/기온/강수확률 형식유지다.
+- 기상/생활은 Today형2열 세로목록으로 체감온도·습도·자외선·바람·대기질·대기정체·가시거리·꽃가루·강수량·적설량10개를 나열하고 탭하면값/기준시각/자료의미 상세를 확인한다. 별도건조도 수치카드는추가하지않았다. 웹의아래로버튼은 검토용스크롤구간전환이며 제품페이지버튼기획이아니다. 체크 저장은지역+날짜+품목 로컬상태/다음날초기화안으로기록하되 실제앱·서버구현은없다.
+- 소형은준비물제거,상단좌위치/우기준시각,중앙기온·체감·작은날씨아이콘,하단중앙최저최고다. 대형은동일상단/중앙1/하단에중앙2준비물아이콘3개를추가했다. 기존타일은기온+날씨아이콘/짧은브리핑,워치페이스예시는좌기온/우날씨아이콘으로교체했다. 컴플리케이션의실제외형·슬롯은워치페이스가결정한다는기존구분은유지한다.
+- 최종PDF는 output/pdf/watch-app-plan-20261102.pdf 0.2/9페이지로갱신했다.3페이지앱순서,4페이지위젯구성,5페이지체크상태·지표목록후속구간·습도상세를넣고 본문·데이터계약·완료기준도맞췄다. docs/워치앱_위젯_기획서_20261102.md와 docs/design/watch-20261102의원본/보드/개별PNG/README/검증JSON도동일하게갱신했다.
+- headless Edge17검사통과/JS오류0:체크전후·체크보존/해제·상세탭분리·어제비교/기존브리핑제거·타임라인형식·2열목록3구간/상세복귀·소형준비물0/필수정보·대형아이콘3·페이스준비물0·건조/만료/연결·390px넘침없음이다. PDF9페이지텍스트검사,전페이지PNG렌더링과전체콘택트시트/새5페이지시각검수에서잘림·겹침없음을확인했다. tmp/watch-plan-review-20261102-v02에검토PNG보존. 기기조작/설치·제품코드수정·서버배포·커밋/푸시는하지않았다.
+
+## 2026-11-02 워치 PDF 0.3 날씨 아이콘·위젯 묶음·타일 수정
+
+- 사용자 요청으로 PDF/HTML/PNG/기획서를0.3으로수정했다. 날씨아이콘은임의SVG구름/빗금을제거하고 docs/icon-previews/weather-color의clear/rain/partly_cloudy 기존PNG를그대로내장했다. Android위젯의WidgetIconRenderer.java/Provider와 tools/generate_icon_previews.py의팔레트·도형을대조했다. 플랫폼래스터라이저의픽셀경계동일성까지주장하지않으며 같은아이콘디자인/색상을재사용한다. 준비물아이콘명도조정과립밤대체벡터는그대로다.
+- 소형/대형중앙은왼쪽기온+날씨아이콘을하나의묶음,오른쪽체감온도를별도묶음으로배치하고각각어두운배경박스를추가했다. 대형준비물3개는각각원형배경을넣었다. 기존위치/기준시각·하단최저최고·소형준비물제외는유지한다. 타일은기온44sp/날씨44dp를같은행에정렬하고한줄브리핑을중앙으로올렸다. 타일전체탭이시안에서도워치앱현재날씨로이어진다.
+- 사용자의타일역할질문에는 앱진입전요약확인+탭시워치앱현재날씨진입으로답했다. ‘기존’은이전버전타일표현이라는의미이며이미제품에구현된타일을뜻하지않는다. 휴대전화앱을자동으로열지않는다. 공식Tiles문서를재확인하고기획서/PDF7페이지역할설명에도명시했다.
+- headless Edge20개검사통과/JS오류0. 기존17개에날씨아이콘PNG원문일치·기온날씨/체감배경분리·준비물원형3개·타일같은크기/행/중앙브리핑과앱진입확인을포함했다. PDF9페이지렌더링/텍스트검사·전체콘택트시트및수정4페이지시각검수에서잘림/겹침없음을확인했다. tmp/watch-plan-review-20261102-v03에검토PNG를보존했다. 같은최종PDF경로 output/pdf/watch-app-plan-20261102.pdf와 docs/design/watch-20261102의시안/검증/재생성도구·원본기획서를갱신했으며실제기기조작·설치·제품코드수정·배포·커밋/푸시는없다.
+
+## 2026-11-02 워치 PDF 0.4 체감 비교·목록 개수·위젯 정렬·타일 정보
+
+- 사용자 요청으로 현재날씨의 어제기온차 아래 문구를 날씨상태변화 대신 ‘체감 상 어제보다3°낮아요’ 합성예시로바꿨다. 같은지역/같은시각의체감값을비교하고없으면체감비교자료없음이다. 챙겨요와기상생활의 ‘1~2 / 3개·아래로’류문구는우리가시안에넣은것임을답하고 모든구간을 ‘총 n개 · 아래로’로통일했다. n은전체목록개수다.
+- 소형/대형정보박스를청록색#204A50으로맞추고기온과날씨아이콘을세로중앙정렬했다. 아이콘은29→22dp로줄였으며 동일앱위젯PNG재사용은유지했다. 체감은9.5sp작은라벨+19sp숫자를한SVG텍스트행으로배치했다. 대형준비물3개의원형배경은유지한다. 타일에는제목과기온사이에지역·기준시각,맨하단최저최고기온을추가하고시계/제목사이간격을보완했다.
+- 최종PDF output/pdf/watch-app-plan-20261102.pdf를0.4/9페이지로갱신하고원본기획서·HTML·개별PNG·보드·재생성도구·README를동기화했다. headless Edge24검사통과/JS오류0,PDF9페이지한글텍스트/전체PNG렌더링과수정3/4페이지시각검수에서잘림/겹침없음을확인했다. 검토PNG는 tmp/watch-plan-review-20261102-v04에보존한다. 실제기기조작/설치·앱서버제품코드수정·배포·커밋/푸시는없다.
+
+## 2026-11-02 워치 PDF 0.5 검정 위젯 바탕·순서 교체·세로 중앙
+
+- 현재날씨의날씨아이콘과기온을명시적인중앙기준선으로세로정렬했다. 소형/대형은왼쪽묶음안의순서를아이콘→기온으로바꾸고전체위젯바탕을워치와같은검정#000000으로맞췄다. 이전큰전체위젯바탕색#253747을기온/날씨·체감·준비물각배경박스/원형에적용했다. 작은날씨22dp·한줄체감·위치/기준시각·최저최고는유지한다.
+- 타일은기온/날씨부터브리핑까지그룹으로묶어아래로내리고지역/기준시각과최저최고사이에세로중앙으로배치했다. 최초18dp계산은글꼴BBox가EM기준으로위쪽에더넓다는실측으로중앙검사가실패했다. 실제BBox y56.125/h86.875를확인해21dp이동으로보정했고최종중앙오차1dp미만을확인했다. 이실패를최종통과검사에포함하지않는다.
+- PDF/원본기획/HTML/PNG/보드/검증/README를0.5로갱신했다. headless Edge27검사통과·JS오류0,현재날씨중앙·아이콘/기온순서·검정위젯바탕·모든정보/준비물배경동일색·타일그룹실측중앙을검사했다. PDF9페이지텍스트및전페이지렌더링/콘택트시트와최종4페이지시각검수에서잘림/겹침없음이다. 최종 output/pdf/watch-app-plan-20261102.pdf,검토PNG tmp/watch-plan-review-20261102-v05. 실제앱구현·기기설치/조작·서버수정/배포·커밋/푸시없음.
+
+## 2026-11-02 워치 PDF 0.6 최저최고 중앙하단·타일 상향
+
+- 진행중사용자추가요청까지합쳐소형/대형위젯최저·최고를같은화면중앙하단(x104/y187,208dp시안기준)으로배치했다. 소형은y144→187,대형은169→187이다. 기존타일기온/날씨/브리핑묶음은0.5보다8dp위로이동해translate21→13으로바꿨다. 지역/기준시간과타일최저최고는유지한다.
+- PDF0.6/9페이지,원본기획·HTML·PNG/보드·README·검증을동기화했다. 기존27개검사통과/JS오류0,PDF한글텍스트/전페이지렌더링/전체콘택트시트및수정4페이지시각검수에서잘림·겹침없음을확인했다. 낮은영향의위치변경으로신규테스트는추가하지않았다. 최종PDF경로는 output/pdf/watch-app-plan-20261102.pdf,검토PNG는 tmp/watch-plan-review-20261102-v06이다. 기기조작/설치·제품코드/서버변경·배포·커밋/푸시없음.
+
+## 2026-11-02 소형 워치 위젯 실제 규격 가능 여부 확인
+
+- 사용자 질문으로 시안소스와공식Wear Widgets/시작/타일호환문서를재확인했다. 소형/대형위젯방식자체는지원되지만OEM이주는컨테이너폭/높이·안전여백에맞춰야하며208dp전체원형을소형영역으로쓰는것은검증된규격이아니다. 현재HTML은실제WearWidgetParams/표준프리뷰/기기호스트가아닌고정원형SVG다. 이전27개통과는웹시안회귀이며실제소형규격통과가아님을명확히한다.
+- 구체오류: 소형의예시외곽은x19/y53/w170/h103으로아래경계156인데최저최고는y187에있다. 검정으로외곽을숨긴뒤최저최고를전체워치하단으로옮겨카드밖을쓰는배치가됐다. 따라서PDF0.6의소형배치를그대로구현가능한최종규격으로설명하면안된다. ‘중앙하단’은워치전체가아닌실제소형카드안의중앙하단으로재해석/수정해야한다. 실기기컨테이너확인전정확한고정dp값을새로단정하지않는다.
+- 현재adb devices -l에는연결기기가없어실제SM-L340컨테이너를확인하지못했다. 이전기기OS/렌더러확인은플랫폼조건확인일뿐실제위젯선택기/사이즈검증이아니다. 이번은질문에대한조회·정정답변으로PDF/시안/제품소스를변경하지않고결함과차후실측필요를기록했다. 기기조작/설치·배포·커밋/푸시없음. 공식근거: https://developer.android.com/training/wearables/widgets/get_started 의호스트크기/safe inset/fillMaxSize와표준프리뷰지침.
+
+## 2026-11-02 워치 PDF 0.7 소형·대형 공식 SDK 프리뷰 규격 적용
+
+- 사용자가 소형을 실제 규격으로 수정하라고 요청한 진행 중 대형도 같은 기준으로 바꾸도록 추가 요청했다. 두 크기 모두 전체 원형화면 배치를 폐기하고 카드 자체로 다시 설계했다. 현재 ADB 기기는 없어 SM-L340의 OEM 호스트 실측이나 설치는 수행하지 않았다.
+- Google Maven 고정 wear-tooling-preview:1.0.0-alpha21 sources.jar의 WidgetPreviewParams.kt/WearWidgetPreview.kt, wear-core의 WearWidgetParams.kt를 읽었다. 기본 작은 화면용 소형 콘텐츠166×60dp+양방향8dp여백=외곽182×76dp, 대형166×96dp+여백=182×112dp다. 오래된2026.5 변경의 소형72dp를 사용하지 않고 alpha21 소스의60dp를 확인했다. 다른 Squircle/Round/Rectangular까지10개 공식 프로필을 load_widget_specs.py로 추출해 widget-specs.json에 URL·소스JAR SHA-256(40c37b208a78340da54311971d01a8eedcb5525a075ba0f64a97dc7c6572e2f6)과 함께 보존했다.
+- widthDp/heightDp가 콘텐츠 크기이고 Native 프리뷰는 양쪽 호스트 여백을 더하는 점을 구분했다. 소형은 위치/기준시각→아이콘/기온·한줄체감→최저최고, 대형은 준비물3개 원형행을 추가한다. 모든 요소는 콘텐츠 좌표에서 계산한다. 최저최고는 x=콘텐츠너비/2, y=콘텐츠높이-3으로 각각 카드 안쪽 중앙하단이다. 기존 원형화면 y187은 사용하지 않는다. 검정 바탕·이전바탕색 정보/준비물박스·동일날씨PNG·아이콘먼저/기온다음은 유지하고 좁은 높이에 맞춰 폰트를 조정했다.
+- 대표 PDF/웹 카드는 같은 배율에서 소형182×76,대형182×112 외곽 비율로 표시한다. 개별PNG도 320dpi/2배 픽셀로 소형364×152·대형364×224를 생성해 정사각으로 늘리지 않았다. 웹에는10개 프로필 갤러리를 넣고 모든 텍스트/박스/아이콘의BBox가 실제 콘텐츠경계 안에 있는지와 최저최고의 중앙/내부 포함을 검사했다. 28검사통과·JS오류0이며 이는 공식 SDK 수치에 맞춘 웹 경계 검사다. Android Studio Native Preview 또는 실기기 실행 검증으로 설명하면 안 된다. OEM이 다른 WearWidgetParams를 주면 그 값에 적응해야 한다.
+- 최종 output/pdf/watch-app-plan-20261102.pdf는0.7/10페이지다.4페이지 실제비율 카드·콘텐츠/외곽치수,5페이지 공식10규격표·검증범위를 추가했다. PDF한글/10페이지/전페이지PNG/전체콘택트시트/4·5페이지시각검수에서잘림·겹침없음이다. 원본기획서·HTML·보드·검증JSON·README·재생성도구도 동기화했다. 검토PNG는 tmp/watch-plan-review-20261102-v07이다. 앱/서버제품변경·기기조작/설치·배포·커밋/푸시는없다.
+
+## 2026-11-02 워치 PDF 0.8 통합 날씨박스·아이콘 순서 변경
+
+- 사용자 요청으로 기존 타일을 왼쪽 날씨아이콘/오른쪽 기온 순서로 교체했다. 44dp/44sp 크기와 타일 주요 묶음의 위치·지역/기준시각·브리핑·최저최고는 유지했다. 시안에서 전체 탭이 동작하도록 투명 원형 탭 영역을 넣었다. 최초 검사에서는 아이콘 교체 후 그룹 중앙의 빈 공간을 누를 때 배경 원이 입력을 받는 문제를 발견했고, 수정 후 정상 현재날씨 진입을 확인했다.
+- 소형·대형 위젯은 기온→날씨아이콘→중간점→한줄 체감 순서를 하나의 #253747 배경박스에 배치했다. 날씨아이콘은 각 프로필의 이전 크기의2/3(대표22→14.67dp, 낮은 Round20→13.33dp)로 줄였다. 작은 체감 라벨·검정 바탕·준비물별 원형 배경·콘텐츠 안쪽 중앙하단 최저최고와 공식 SDK10규격은 유지한다.
+- 원본기획서·시안 HTML/PNG·생성기·검증JSON·README 및 output/pdf/watch-app-plan-20261102.pdf를0.8/10페이지로 동기화했다. headless Edge28검사 통과/JS오류0, 공식10규격 콘텐츠 경계 및 최저최고 포함 검사 통과. PDF10페이지·한글·버전/수정내용 추출, 전페이지 렌더링/콘택트시트와 수정4·5페이지 직접 시각검수에서 잘림·겹침없음이다. 검토PNG는 tmp/watch-plan-review-20261102-v08에 보존한다. 첫 생성 로그의 콘솔 인코딩 오류는 Python -X utf8로 해결해 최종 생성/검증을 완료했다.
+- 공식 SDK 수치 기반 웹 시안 검사이며 Native/실기기 검증으로 확대하지 않는다. Windows UI창·기기조작/설치·앱/서버제품변경·배포·커밋/푸시는 없다.
+
+## 2026-11-02 시안0.8 워치 앱·위젯 구현 및 연결 SM-L340 검사
+
+- 사용자 요청으로 기획 단계를 넘어 weather_care_wear 독립 Android/Kotlin·Compose 프로젝트와 공용 bridge 모듈을 추가했다. 폰과 같은 com.codesoha.weathercare/Debug 인증서를 사용한다. Gradle9.3.1/AGP9.1/Kotlin2.4, Wear Compose1.7.1, Glance Wear alpha21/Remote Compose alpha22, Tiles1.6.2, Complication Data Source1.2.1, Play services wearable20.0.1이다. 로컬 Android SDK platforms;android-37.0을 설치했고 JBR25로 빌드했다. 폰 compileSdk36은 유지한다.
+- 워치 앱은 챙겨요→현재날씨→타임라인→기상생활4화면, 준비물 우측 체크/설명 탭 분리, 한국날짜·구역별 체크 저장과 구역 왕복 보존, 어제 기온/체감 비교·자료없음, 시간별 형식, Today10지표2열/상세, 세로 스크롤·회전입력·가장자리 뒤로/최상위 종료를 구현했다. 폰 WidgetIconRenderer 원본을 빌드 때 가져와 날씨/준비물 이미지를 재사용하며 SUITE 폰트도 원본을 쓴다.
+- 실제 GlanceWearWidgetService로 소형·대형을 제공한다. 기온+2/3날씨아이콘·중간점·체감을 한 배경박스에 넣고 대형3준비물 원형, 각 카드 내부 중앙하단 최저최고, 검정 바탕을 적용했다. 좁은 위젯 수치는 정수 반올림하고 앱 상세 원자료는 유지한다. 전체화면 이전 TileService 및 기온 SHORT_TEXT/날씨 SMALL_IMAGE 컴플리케이션도 등록했으나 이전 OS·실제 워치페이스 슬롯 표시 검사는 남아 있다. 선택기 미리보기는 공식 Rectangular/320dpi의 합성 웹 시안이며 실제 서비스 렌더링과 구분한다.
+- 폰은 HomeWidgetService의 추가 wearDetails/정규화 모델, MainActivity의 채택 후 발행, 기존 WidgetRefreshWorker의 백그라운드 성공 경로 발행과 별도 Today/어제 비교 조회, WearPhoneListenerService 요청/재연결을 추가했다. 공용 Data Layer 경로 /weather-care/v1/snapshot·request, 버전1, 발행순서·시각/지역선택 검사,90KB 제한·로컬보관/재전송, 빈 자료 해제 계약을 사용한다. 인증키/설치비밀·정밀좌표는 워치로 보내지 않는다. 추가 상세 조회는 폰 위젯 갱신을 막지 않고 이전 구역/스냅샷 응답을 버린다. 폰과 워치가 같은 저장소의 bridge를 참조하므로 함께 보존/커밋해야 한다. 서버/기존 알림·구역추가 정책은 변경하지 않았다.
+- 워치는 독립 캐시·StateFlow, 구 브리핑 제거/3시간 경과 표시, 폰 갱신 요청60초 제한, WorkManager30분 목표·브리핑 경계/만료 갱신을 구현했다. 앱 미진입 위젯/수신 서비스 경로에서도 보조 작업을 등록한다. OS 실행 지연 가능성을 문서화했으며 빈 자료로 초기화하면 만료 작업을 취소한다. 일반 APK에 시험 자료 주입 API/receiver는 없고 fixtures는 androidTest에만 있다.
+- 최종 검사: 폰 Flutter 관련89+신규 정규화2=91개 통과, 폰 네이티브5파일27개 통과, 워치 단위7개 통과, SM-L340 연결 AndroidJUnit2개 통과/실패0, 워치 assembleDebug/assembleDebugAndroidTest/lintDebug 성공(오류0·경고11), 수정 Dart 제품/검사5파일 analyze 이슈없음, git diff --check 통과. 폰 Debug APK도 빌드했다. 두 APK 인증서 SHA-256은528cdfb8c580d0c6215aebaf7a5100a42508f32c5f1ea553f15bc7f82ad4fbc0로 일치한다.
+- SM-L340/API37/438×438/density340에서 일반 삼성 타일추가 UI로 실제 소형·대형을 추가했다. 공식 디버그 브로드캐스트는 화면에 반영되지 않았고 비공개 선택기 Activity 직접 실행은 not exported로 거절돼 우회하지 않고 일반 UI를 사용했다. 실제 서비스 콜백: 소형 type2 콘텐츠145.88235×56.470585dp/패딩15.529411,6.117647, 대형 type1 콘텐츠149.64706×104.941185dp/패딩24,19.294117. 고정 PDF 크기 대신 호스트값을 사용한다. 기존 타일 그룹을 보존했다.
+- 최종 실기기 검사는 합성 시험자료로 체크/상세/체크유지·구역왕복·네화면/2열지표상세·연속3회구역/과거응답거절·만료제거·가장자리뒤로/종료를 확인했다. Activity를 열지 않은 수신 채택 경로에서 실제 두 위젯 갱신과 탭→현재날씨를 확인했다. 실제 폰 전송/물리적 이동과 구분한다. 초기 테스트의 클릭/렌더시점과 스크롤 가시성 검사를 보완했고, 실제 가장자리 종료 충돌은 windowSwipeToDismiss=false+Compose 처리와 화면별 Swipe 상태/접근성 재생성으로 수정했다. 이 중간 실패를 최종 통과로 쓰지 않는다. Lint의 제한 API 오버로드 사용/메인스레드 압축/로컬 경로/Activity 컨텍스트 캐스팅 오류도 각각 공개 API·백그라운드 처리·경로escape·LocalActivity로 수정했으며 검사 비활성화/baseline은 추가하지 않았다.
+- 환경 한계: Data Layer의 연결 폰 노드0개다. 사용자가 RDB 두 인스턴스로 폰 연결이 가능한지 요청해 지정 C:/Users/idp20/Downloads/rdb.exe의 두 번째 실행을 시도했으나 RDB is already running으로 거절됐다. Computer Use 스킬을 읽고 sky로 RDB 창을 읽기 조회했지만 대상창은 없었고 Windows 입력/새 UI창은 열지 않았다. ADB 두 기기 연결과 실제 폰·워치 페어링은 별개임을 안내했다. 실제 페어링 폰 설치/전송·폰 앱 미진입 실제 위치 이동·재페어링/24시간배터리·구OS타일/워치페이스슬롯/큰글자 전체조합은 미검증이다. 기기 날짜는 리모트랩의8/21 시각을 그대로 두었고 시험 payload는 기기 시각을 사용했다.
+- APK 재설치 중 삼성 시스템 UI 런처 updateIconView 경로의 ArrayIndexOutOfBoundsException1건을 관찰했다. 우리 앱 스택이 아니며 복구 후 최종 두 검사 통과다. 앱 크래시와 혼동하지 않는다. 종료 시 시험 payload를 원래 빈 자료로 복원해 run-as 검사에서 cleared=true·현재기온없음을 확인했다. 시험 APK만 제거하고 일반 워치 앱/두 위젯을 남겼으며 앱을 연결 대기 화면으로 열어 뒀다. 새 권한 승인·정밀위치·계정/페어링/기기시각 변경은 없다.
+- 결과: docs/워치앱_실기기검증_20261102.md, weather_care_wear/README.md, output/watch-implementation-20261102의 실제 화면/집계/최종로그. 전체 로그는 각 build의 wear-*.log 및 app/build/device-test에 있다. SDK 열람 소스는 검증된 작업공간 경로 안에서 weather_care_wear/build/sdk-sources로 옮겨 빌드 캐시에 보존했다. 이전 PDF/시안·다른 작업은 유지했다. 커밋·푸시·서버/스토어 배포는 하지 않았다.
+
+## 2026-11-02 폰 없는 리모트랩에서 사용자 직접 워치 UI 확인
+
+- 사용자가 연결 대기 화면을 제보했고, 현재 폰 연동형 구현과 ADB 워치만 연결된 상태를 설명한 뒤 확인 방법을 물었다. 사용자가 ‘그냥 UI만 봐도돼’로 범위를 지정했다. 이에 제품의 폰 연동 정책이나 독립 서버 조회를 바꾸지 않고 androidTest 전용 WatchPreviewTest.prepareUiPreviewForUser를 추가해 기존 앱의 로컬 자료 채택 경로로 시험 자료를 준비했다.
+- ‘UI 시험 자료’ 지역명, 준비물3개/품목별 시험 설명·시간별3개·생활10지표(9°/72%/자외선3/풍속2.4m/s 등)·어제 기온/체감 비교를 넣었다. 미리보기의 시각은 워치 표시 시각과 맞춘다. 일반 앱/출시 APK에 fixture 생성·공개 주입 API·자동 가짜날씨 전환을 추가하지 않는다. 도구용 시험 APK만 빌드/설치해 Instrumentation1개 통과 후 다시 제거했다. 기존 일반 앱 APK/버전은 유지한다.
+- 실제 챙겨요/현재날씨/타임라인/기상생활의 UI 트리·스크린샷과 삼성 소형/대형 위젯 적용을 확인했다. 증거 output/watch-ui-preview-20261102의 prepare/weather/timeline/metrics/widget-host/widget-large PNG/XML, 로그 weather_care_wear/app/build/device-test/ui-preview.log. 이번에는 사용자가 직접 둘러볼 수 있도록 시험 자료를 남기고 챙겨요 화면을 열어 뒀다. 이전 작업 끝의 cleared=true 연결대기 원복 상태는 이 후속 요청으로 대체된다. 준비물/브리핑 유효기간은 약1시간이며 필요하면 도구를 재실행한다.
+- README와 실기기 검증 문서에 재현 방법/현재 상태/실제날씨와 구분을 기록했다. Windows UI창·기기계정/페어링/시간/권한 변경·앱/서버 제품코드 수정·커밋/푸시/배포는 없다. 다른 미커밋 작업은 유지한다.
+- 미리보기 준비 도구의 첫 실행은 앱 자료는 저장됐지만 짧은 Instrumentation 종료로 비동기 위젯 갱신이 끝나기 전 프로세스가 종료돼 위젯에 연결대기가 남았다. 도구에서 triggerUpdateAll 완료와 호스트 전달을 기다리도록 보완했다. 최종 도구 실행1개 통과(4.5초), 이후 실제 type1/type2 서비스 콜백이 모두 revision1 시험자료를 렌더링한 로그와 최종 위젯 캡처를 확인했다. 제품의 폰 연동 정책이나 캐시 경로를 변경하지 않았다.
+
+## 2026-11-02 워치 새로고침 문구 변경·실제 위젯 화면 열기
+
+- 사용자 요청으로 WatchActivity.kt의 공통 WatchButton ‘다시 확인’을 ‘새로고침’으로1줄 변경했다. 문장 안의 ‘다시 확인해 주세요’와 최초 연결 버튼은 별도 문구라 유지한다. assembleDebug 성공 후 연결 SM-L340(localhost:36246)에 update 설치했고 기존 UI 시험 자료와 체크 상태를 유지했다.
+- 실제 앱을 스크롤해 ‘새로고침’ 버튼이 표시되고 예전 버튼 문구가 없는 것을 UIAutomator 텍스트 및 원본 스크린샷으로 확인했다. 단순 문구 수정이라 신규 단위 검사나 전체 회귀 반복은 하지 않았다. git diff --check 통과다.
+- 사용자가 요청한 실제 위젯 화면은 워치 앱 내부/선택기 이미지가 아닌 삼성 시스템 호스트의 ‘도구’4번째 타일 그룹으로 열었다. 소형·대형 두 위젯과 ‘UI 시험 자료’/11°/체감9°/최저8°·최고14°를 실제 UI 트리/PNG로 확인하고 그 화면을 열린 상태로 남겼다. 대형 전체는 아래로 스크롤하면 보인다. 증거 output/watch-refresh-label-20261102/refresh-button.png/.xml, added-widgets.png/.xml 및 빌드 로그 weather_care_wear/build-refresh-label.log다.
+- Windows UI창·페어링/권한/시각 변경·폰/서버 제품 수정·커밋/푸시/배포는 없다. 일반 워치 APK만 갱신했고 시험자료는 사용자가 계속 볼 수 있도록 남겼다.
+
+## 2026-11-02 실제 추가된 워치 위젯 원본 캡처 공유
+
+- 사용자 후속 요청으로 연결 SM-L340의 현재 삼성 시스템 호스트 화면을 ADB screencap으로 새로 촬영했다. UI 트리의 ‘도구,타일,4개 중4개’와 날씨챙겨 카드2개를 대조했다. 전체 그룹 원본 current.png와 세로 스크롤 후 최저최고까지 보이는 대형 원본 large.png를 output/watch-live-widgets-20261102에 XML과 함께 보존하고 채팅에 직접 이미지로 표시한다. 시안/합성이 아닌 실제 설치 위젯 화면이며 표시 날씨는 사용자가 지정한 UI 시험 자료다.
+- 워치는 대형 위젯 전체가 보이는 위치로 남겼다. 임시 기기 캡처2파일은 제거했으며 제품 코드/데이터/설정/설치·배포·커밋/푸시 변경은 없다.
+
+## 2026-11-02 시계페이스 기온·날씨 적용과 워치 위젯 사용 안내
+
+- 사용자 요청으로 연결 SM-L340의 실제 시계페이스 ‘아날로그 밸런스’를 길게 누르고 꾸미기→컴플리케이션→정보칸→다른 앱→날씨챙겨를 사용했다. 기존 왼쪽 에너지 점수는 TemperatureComplicationService(날씨챙겨 기온), 오른쪽 날짜는 WeatherComplicationService(날씨챙겨 날씨)로 지정했다. 아래 걸음 수 칸은 유지한다. 별도 워치페이스 제작/설치나 앱 제품 수정은 하지 않았다.
+- 처음 꾸미기 안내의 좌우/상하 제스처 튜토리얼을 완료했다. 편집 화면에서 느린 짧은 가로 스와이프는 카테고리가 바뀌지 않았고 화면 폭410→28px/120ms 빠른 스와이프로 컴플리케이션으로 이동했다. 일부 uiautomator dump는 안내 애니메이션 중 idle 오류를 반환해 이전 XML을 최신 상태로 해석하지 않고 현재 스크린샷/Activity를 재조회했다. 비공개 Activity나 권한 우회는 사용하지 않았다.
+- 실제 시계 화면의 왼쪽11°와 오른쪽 비 아이콘을 PNG 및 UI 트리 ‘현재 기온11°’/‘현재 날씨 rain’으로 확인했다. 각각의 칸 탭이 날씨챙겨 현재날씨의 ‘UI 시험 자료’로 열리는 것을2회 검사하고 시계 화면으로 복귀했다. 대기/홈 복귀 중 캡처에서 두 값이 비어 보였으나 시계 배경을 한 번 터치하면 표시됐고 데이터 캐시는 정상임을 확인했다. 원인을 AOD/페이스 재그리기 중 하나로 단정하거나 모든 조건 검증으로 확대하지 않는다. 최종 시계 화면을 열어 두고 표시 값은 시험 자료임을 안내한다.
+- 원본 증거 output/watch-face-20261102/applied.png/.xml, temperature-tap.png/.xml, weather-tap.png/.xml. README/실기기 검증 문서의 기존 ‘시계페이스 미검증’ 범위를 이 페이스2칸에 한해 갱신했다. 다른 페이스/AOD/자료형 조합과 실제 폰 연동은 남아 있다.
+- 위젯은 시계화면에서 오른쪽→왼쪽으로 넘기는 타일 영역에 추가하고, 끝의 타일추가(+)→날씨챙겨→소형/대형을 선택하도록 설명한다. 현재 ‘도구’4번째 그룹에2개가 있고 그룹 안은 위아래 스크롤, 카드 탭은 현재날씨 앱 진입이다. 삼성 공식 위젯/시계페이스 안내를 확인했다: https://www.samsung.com/us/support/answer/ANS10002835/ 및 https://www.samsung.com/us/support/answer/ANS10002950/ .
+- Windows UI창·앱/서버 코드/데이터·계정/페어링/권한/기기시각·커밋/푸시/배포 변경은 없다. 사용자가 요청한 워치페이스 정보칸 설정만 변경했다.
+
+## 2026-11-02 SM-S947N과 리모트랩 워치 연동 가능성 확인
+
+- 사용자는 SM-S947N 휴대전화와 현재 SM-L340 워치의 연동 가능성을 질문했다. ADB에는 localhost:36246 SM-L340만 연결되어 있으며 워치 companiondevice의 현재 연결 대상과 System Data Transports는 비어 있다. 이전 Data Layer connectedNodes=0 결과와 일치하나 companiondevice 정보만으로 모든 블루투스 페어링 상태를 단정하지 않는다.
+- RTL 브라우저 접근성 트리에서 SM-L340_KR1 / SM-S947N_KR3 두 예약을 확인했다. 휴대전화 세션 선택 시도 후 RDB 메뉴 클릭은 연속으로 사용자 입력 감지 오류가 나서 더 이상 입력을 시도하지 않았다. Galaxy Wearable 기기 검색이나 실제 페어링은 수행하지 못했으며 성공/불가로 보고하지 않는다. 예약 연장/추가 크레딧 사용/계정/초기화/페어링 설정 변경은 없다.
+- 삼성 공식 안내 https://www.samsungsvc.co.kr/solution/22438 확인: 휴대전화 Galaxy Wearable에서 워치 선택 및 양쪽 인증번호 확인으로 연결한다. 기존 워치의 새 휴대전화 연결은 워치 설정→일반→새 폰에 워치 연결을 사용하며 모델/소프트웨어에 따라 초기화 가능성이 있어 무조건 실행하지 않는다. KR1/KR3가 동일 블루투스 범위임은 확인되지 않았고 RTL에서 블루투스가 일괄 차단된다는 근거도 확인되지 않았다. RDB/ADB 연결은 폰-워치 페어링을 대체하지 않는다.
+- 앱/서버 제품 코드와 테스트 자료, 워치페이스/위젯 설정은 그대로 유지한다. 다음 실제 검사는 SM-S947N의 Galaxy Wearable에서 현재 워치가 검색되는지부터 확인해야 한다.
+
+## 2026-11-02 RDB 단일 연결 제한과 타일 묶음 이름 확인
+
+- 사용자 첨부 RTL 팝업에 다른 기기에 RDB가 이미 연결되어 있고 한 번에 RDB 한 연결만 허용된다고 명시되어 있다. 기존에는 두 실행 파일 동시 실행 실패만 확인했으나 이번 화면으로 RTL 서비스의 동시 연결 제한을 확인했다. 이는 폰-워치 Galaxy Wearable 블루투스 페어링 실패 메시지와 다르며, RDB를 순차 전환해 각 앱 설치/검사는 가능하지만 동시 ADB 디버깅은 제한된다. 연결 전환이나 예약 연장은 실행하지 않았다.
+- 앱 AndroidManifest와 strings 및 weather_widget.xml 확인: 앱/위젯 label은 app_name(날씨챙겨)이며 도구 문자열은 없다. XML group=com.codesoha.weathercare.WeatherTileService는 기존 타일과 새 위젯의 논리적 연결용으로 삼성 사용자 타일 묶음 제목이 아니다. 공식 근거 https://developer.android.com/training/wearables/widgets/migration .
+- 현재 워치 uiautomator XML에서 com.samsung.android.wearable.sysui:id/title이 android.widget.EditText, editable/focused이며 텍스트 j도구인 것을 확인했다. 현재 화면은 사용자가 제목 변경용 키보드를 연 상태다. 따라서 삼성 타일 묶음 이름은 편집 화면 상단 제목에서 직접 수정할 수 있다. 사용자의 편집을 방해하지 않도록 ADB 읽기/캡처만 했고 제목/위젯/타일/페어링 상태는 수정하지 않았다. 실제 이름 변경 완료로 보고하지 않는다.
+- 참고 캡처 output/tile-group-current.png, XML output/tile-group-current.xml. 제품 코드 변경 및 테스트/빌드/설치/커밋/푸시는 없다.
+
+## 2026-11-02 타일 추가 시 기본 묶음 이름 날씨챙겨 요청 정정
+
+- 사용자 의도는 수동으로 기존 묶음 이름을 바꾸는 안내가 아니라 신규 추가 시 기본 제목이 날씨챙겨가 되는 동작이다. 이전 답변의 수동 변경 안내는 요구사항의 해결이 아님을 인정하고 작업 범위를 정정했다.
+- Android 공식 WearWidgetProviderInfo 문서와 현재 alpha21 소스의 XML 파서/ContainerInfo를 확인했다. 앱/서비스/제공자 label은 이미 app_name(날씨챙겨)이고, 크기별 컨테이너 label은 미지정이었다. weather_widget.xml의 SMALL/LARGE 두 줄에 label=@string/app_name을 추가한 시험본을 만들었다. XML group은 타일 마이그레이션 식별자라 변경하지 않았다. 삼성 타일 묶음의 표시 기본 제목 지정용 공개 API는 확인하지 못했다. 근거 https://developer.android.com/reference/kotlin/androidx/glance/wear/core/WearWidgetProviderInfo 및 /training/wearables/widgets/migration .
+- :app:assembleDebug 성공(3초), 로그 weather_care_wear/build-tile-default-name.log. 설치 전 기존 APK는 weather_care_wear/build/tile-name-original.apk로 보관했다. 새 APK adb install -r는 연결 closed/device not found로 실패했다. 뒤에 이어진 dump/pull도 실패했으므로 출력된 j도구 XML 텍스트는 이전 파일이며 신규 추가 결과가 아니다. 최종 adb devices는 비어 있다. 시험본 기기 적용 성공으로 보고하지 않는다.
+- 현재 신규 label이 삼성 묶음 제목에 영향을 주는지는 미검증이다. README에 이를 명시했다. 새 타일을 추가하거나 기존 타일/제목을 편집하지 않았다. 이전 사용자가 입력 중이던 j도구 상태를 변경하려는 키보드 입력은 하지 않았다. 연결 실패 설치에 이어진 back 키도 device not found로 실패했다.
+- 같은 SM-L340 리모트랩/RDB 재연결을 사용자에게 비동기 요청했다. 재연결 후 시험본 설치→기존 묶음을 보존하며 새로 추가한 묶음의 이름 확인이 필요하다. 효과가 없으면 label 명시 변경을 되돌리고 공개 API 한계를 정확히 보고해야 하며 임의 메타데이터/숨은 API/타일 데이터 직접 수정으로 해결됐다고 주장하지 않는다. 시험용으로 새로 만든 묶음이 있다면 그것만 정리한다. 현재 새 묶음 생성은 없다. 커밋/푸시/서버 변경은 없다.
+
+## 2026-11-02 재연결 워치 타일 기본 제목 실검사 완료
+
+- 사용자 재연결 응답 후 localhost:36246 SM-L340 transport_id=2 연결을 확인하고 크기별 label을 명시한 시험 APK install -r에 성공했다. 재연결 세션은 영어 UI, 기본 아날로그 페이스, Health/Fitness/Basic3개 타일 상태였고 이전 사용자의 j도구 입력 및 시험 날씨/페이스 정보칸/두 위젯은 남아 있지 않았다. 해당 초기 상태 변경은 이번 검사에서 수행하지 않았다.
+- 일반 타일 추가로 이동→최초 Customize your tiles 안내 OK→목록 스크롤→날씨챙겨(2) 펼침→첫 소형 프리뷰 선택으로 새 묶음을 생성했다. 선택기와 카드 서비스 이름은 날씨챙겨지만 상단 EditText 기본 제목은 Tools였다. 제목 편집 입력은 전혀 하지 않았다. 증거 output/watch-default-name-20261102/added-experimental.png 및 .xml. 따라서 공통/서비스/크기별 label만으로 삼성 기본 묶음 제목을 자동 지정하는 시험은 실패했다.
+- 공식 Android WearWidgetProviderInfo의 label/containers/group 구분을 재확인했다. group은 표시 제목이 아닌 서비스 연결 식별자다. 삼성 묶음 기본 이름을 직접 지정하는 지원 공개 API는 확인하지 못했다. 이 결과를 모든 비공개 구현까지 기술적으로 절대 불가능하다고 확대하지 않고 현재 공개 API 및 현재 기기 시험에서 구현 방법 미확인으로 보고한다. 수동 이름변경을 완료로 대체하지 않는다.
+- 이번에 추가한 시험 카드의 Remove만 눌러 제거→back→이전 Basic으로 이동해 Basic,Tile,3 of 3을 확인했다. 기존 기본3개를 보존했다. 실험한 두 container label 추가를 되돌리고 :app:assembleDebug 성공(3초), 복원 APK install -r 성공. restored.xml에 최종 기본3개 상태 기록. 제거 후 생성된 빈 묶음도 사라졌다.
+- README의 미검증 설명을 실제 부정 결과/복원 상태로 갱신했다. 제품코드의 이번 요청에 대한 변경은 남기지 않으며 기존 워치 구현 전체 미커밋 변경은 보존한다. 신규 사진/XML 증거 및 문서만 추가/변경. 서버/계정/블루투스 페어링/시간/예약연장/커밋/푸시는 건드리지 않았다. git diff --check 통과(기존 LF/CRLF 안내만 있음).
+
+## 2026-11-02 기존 전체 화면 타일 기본 이름 실검사
+
+- 사용자는 기존 타일 방식이면 기본 이름을 날씨챙겨로 표시 가능한지 질문했다. 기존 WeatherTileService의 service label 및 화면 헤더가 이미 날씨챙겨이고 현재 SMALL/LARGE 제공자와 group으로 연결돼 있어 API37 삼성 호스트에서는 위젯이 우선됨을 공식 migration 가이드에서 확인했다.
+- 먼저 adb pm disable-user로 위젯 컴포넌트를 임시 비활성화하려 했으나 Shell cannot change component state ... to 3 SecurityException으로 거절됐다. 권한 우회/시스템 변경은 시도하지 않았다. 대신 소유한 앱의 검사용 Manifest에서 WeatherWidgetService에 android:enabled=false만 임시 지정→assembleDebug 성공→install -r 성공으로 기존 TileService만 제공했다.
+- 일반 타일 추가 화면에서 날씨챙겨는 Other apps 아래1개로 표시됐다(새 위젯은 Optimized apps 아래2개). 펼친 뒤 실제 기존 프리뷰를 선택해 추가했으며 시스템 접근성 명칭은 날씨챙겨, Tile, 4 of 4였다. Tools 묶음/편집 제목 입력창은 생성되지 않고 독립 전체 화면 타일이 열렸다. 화면 상단 날씨챙겨/미연결 상태의 날씨 안내가 표시됐다. 제목 입력/자료 주입 없이 확인했다. 장기 누름 타일 편집에도 Remove, 날씨챙겨로 식별된다. output/watch-legacy-name-20261102/added.png/.xml, edit.png/.xml에 증거.
+- 검사 타일1개만 Remove로 정리→back→Manifest 임시 enabled=false 제거→복원 assembleDebug 성공2초→install -r 성공. 최종 Basic,Tile,3 of 3 확인(restored.xml). 새 위젯을 포함한 기존 제품 구성으로 원복했으며 기존 타일 전용 구성으로 영구 전환하지 않았다. 제품 코드의 이번 작업 순변경 없음. README에 검증 결과를 추가했다. git diff --check 통과(기존 LF/CRLF 안내만).
+- 결과: 기존 독립 전체 화면 타일만 제공하는 방식은 현재 실기기에서 날씨챙겨 표시 가능. 이것이 삼성 SMALL/LARGE 위젯 묶음 기본 이름 지정 기능을 제공한다는 뜻은 아니다. 현재 구성에서 둘을 동시에 선택기에 독립 노출하거나 새로운 구성을 적용하는 작업은 아직 하지 않았다. 서버/계정/페어링/기기시각/권한/예약/커밋/푸시 변경 없음.
+- 정리 검증 보충: 첫 편집 화면 캡처 후 좌표 삭제/뒤로 연속 입력에서는 타일이 실제로 지워지지 않아 복원 APK 설치 후에도 Basic3 of 4와 기존 날씨챙겨4 of 4가 남아 있음을 재조회했다. 이후 새 장기누름→최신 XML에서 Remove, 날씨챙겨 버튼1개를 찾아 즉시 클릭→제거 상태 XML 확인→뒤로→Basic 이동 순서로 정리했다. 최종 restored.xml은 Basic,Tile,3 of 3을 확정한다. 이전 기록의 기본3개 복원은 이 최종 검사 시점을 뜻한다.
+
+## 2026-11-02 사용자 요청: 기존 타일 방식으로 정식 전환 및 연결 워치 적용
+
+- 사용자는 기존 타일 방식으로 변경하고 기본 이름 날씨챙겨가 나오게 하며 연결 워치에도 적용해서 보여 달라고 명시했다. WeatherWidgetService Manifest에 android:enabled=false 및 이유 주석을 추가해 SMALL/LARGE 대신 기존 WeatherTileService만 추가 목록에 제공한다. 기존 service label/app_name과 타일 상단 헤더는 이미 날씨챙겨라 그대로 사용한다. 비활성화된 위젯 구현/자산 및 기존 데이터 계약은 삭제하지 않았다. 서버/폰 코드는 변경하지 않았다.
+- :app:assembleDebug :app:assembleDebugAndroidTest 빌드 성공4초, 로그 weather_care_wear/build-legacy-final.log. localhost:36246 SM-L340에 최종 APK install -r 성공. 이전 사용자 지시의 폰 없이 UI만 보기 범위로 시험 APK 설치→WatchPreviewTest1개 통과2.879초→시험 APK 제거 성공. 현재 시각16:04/지역 UI 시험 자료/11°/최저8·최고14/오후 비 우산 예시 자료를 남겼다. 실관측/실제 폰 연동 검사로 보고하지 않는다.
+- 삼성 일반 타일 추가 화면에서 날씨챙겨는 Other apps 아래1개만 노출됐다. 해당 프리뷰를 선택해 실제 독립 타일로 추가했고 제목 수동 입력 없이 시스템 접근성 날씨챙겨, Tile, 4 of 4를 확인했다. 기존3개 타일은 보존했다. Tools 묶음이 생성되지 않았다. added.png/.xml, selector.xml에 증거.
+- 타일 탭→현재날씨의 UI 시험 자료/11°/체감9°/어제 비교 화면 진입을 확인(tap.xml). 홈 복귀 뒤4회 넘기기 중 첫 스와이프가 반영되지 않아 Basic3 of 4가 보이는 것을 재확인하고1회 더 넘겨 최종 날씨챙겨4 of 4를 확인했다. applied.png/.xml은 최종 실제 타일 화면이다. output/watch-legacy-applied-20261102/에 보관한다.
+- 이번에는 요청에 따라 최종 타일/시험 자료 및 disabled=false 복원이 아닌 enabled=false 제품 변경을 그대로 유지한다. 타일 화면을 열어 두었다. README/실기기 검증 문서에 현재 구성을 반영했다. 기존 소형/대형 전용 WatchWidgetHostTest는 현재 제공 방식의 검사가 아니므로 반복 실행하지 않았다. 빌드/실제 추가/탭 검사를 완료했고 git diff --check 통과(기존 LF/CRLF 안내만). 커밋/푸시/배포/계정/페어링/기기시간 변경은 없다.
+
+## 2026-11-02 진행 중: 실기기 폰과 리모트랩 워치의 서버 연결 기능
+
+- 사용자 ‘실제 앱과 연결’ 요청 후 SM-F971N 실기기(R5KL9052KLY)가 연결됐다. 현재 워치는 리모트랩 SM-L340_KR2(localhost:36246)이며 서로 물리적으로 떨어져 최초 Bluetooth 페어링을 할 수 없다. 사용자가 별도 서버 연결 기능 추가를 명시적으로 선택했다. 기존 Data Layer 방식도 유지하며 서버 연결은 별도 읽기/쓰기 capability 토큰 방식으로 구현한다.
+- 서버 src/api/wear.ts 신규 + index.ts 경로 등록 + node-migrations/users/0009_wear_links.sql 및 기존 통합 migrations/0026_wear_links.sql 추가. POST pair(5분 유효8자리 영문/숫자 코드), POST claim(멱등), GET status, PUT/GET snapshot(쓰기/읽기 권한 분리), DELETE link. 토큰/코드는 SHA256만 저장하고 최신 자료1건만 저장, 24시간 조회유효 및 오래된 자료 읽을 때 제거, 90일 미사용 연결/만료 미연결 코드는 발급 때 정리. 90KB 제한/기존 발급 rate limit/HTTPS·no-store 적용. 허용 필드만 저장하고 위치키는 해시로 바꿔 좌표를 워치에 보내지 않는다. 기존 설치 인증/알림 데이터와 분리한 테이블이다. 새 원문 토큰을 로그/URL로 출력하지 않는다.
+- shared bridge WearCloudHttp.java 추가(고정 production HTTPS origin, redirect금지, 헤더 토큰, 응답크기/timeout). 폰 WearCloudSync.java 및 기존 home-widget 채널의 wearStatus/Claim/Unlink/Send, WearPhoneSync의 기존 채택/백그라운드 전송 경로에 클라우드 발행 추가. Flutter 설정에 WatchConnectionScreen 연결 코드/상태/전송/해제 화면 추가.
+- 워치 INTERNET/WatchCloudLink.kt 추가, 기존 앱 아래 워치 연결 메뉴와 서버 코드 UI. WorkManager가 클라우드 설정 시 서버에서 받고 미설정은 기존 Data Layer 사용. 코드 화면은5초, 앱은30초 확인, 기존 백그라운드 목표30분/수동새로고침 유지. clear()로 시험 자료를 제거하고 실제 자료 채택, 서버시각 offset으로 리모트랩 시계 차이를 처리하며 같은 발행 자료라도 기기 시각 변경 시 offset을 갱신한다. 시계 시스템 설정/시간은 변경하지 않았다. 코드 발급/읽기 경쟁은 같은 모니터와 busy 상태로 막는다.
+- 서버 검사: typecheck통과. 신규5보안검사+sqlite4=9통과. 전체 Node412개 중408통과/기존 마이그레이션 예상0025→0026 미갱신3개 및 부하 상태서버시작5초 timeout1개 실패 후 예상목록수정. 신규/구버전/서버HTTP 관련3파일30개 재검사 전부 통과. Watch Snapshot7+서버시계8번째 단위검사 통과. Flutter 신규화면/설정 analyze최종문제없음. 워치 assemble/lint 성공(로그 build-cloud-link-verified.log); phone 실제조건검사 진행 중.
+- 시험/운영 배포 완료: build/wear-cloud-deploy-20261102의 후보는 설치 원본index기반으로 새 API/라우트/user migration3파일만 배포. 원격 /tmp/weather-care-wear-20261102-RMUe2s. 원래 프로브 top-level await CJS 오류로 시험 소스 자동원복/추가schema보존 후 async main으로수정해 재시도. 시험성공 후 운영DB가 예상 users.sqlite가 아닌 실제 /var/lib/weather-care/weather-care-users-production.sqlite임을 안전가드에서 감지해 운영변경전중단, 실제 env확인 후 경로검증수정하여 운영만추가배포성공. DB온라인백업/기존행해시불변/외래키/원본SHA가드/환경당6개 메모리검사/기존weather응답200키보존/health200/미인증wear401 통과. 운영·시험 각 API만 재시작, 스케줄러/환경/터널/공용날씨DB는 보존. test-report.json/production-report.json에 결과. Python urllib 외부health는403이었으나 curl실제공개health200/wear401 및 워치자체코드발급201은 성공했다.
+- SM-F971N 기존Play설치앱(version1.1.4/26103000)은 Play서명10530b...이고 개발 debug528cdf...·로컬upload키2da092...와 다르다. 기존앱삭제는 하지 않았다. app/build.gradle에 weatherCarePreview 선택속성 추가(일반 ID/이름 유지, true시 com.codesoha.weathercare.preview/날씨챙겨 수정본). Preview는 explicit Dart FirebaseOptions를 사용하고 GoogleServices 자동리소스 생성만 생략한다. Manifest 앱이름 placeholder. Flutter CLI env ORG_GRADLE_PROJECT 속성이 적용되지 않아 동일ID APK였고 업데이트실패(INCOMPATIBLE)했으나 기존앱변경없음. 이후 Android Gradle명시 -PweatherCarePreview=true -Ptarget-platform=android-arm64 -Pdart-defines=SERVER_URL production의base64로빌드(4m27s), aapt로preview ID/수정본라벨검증 후설치성공. source/class시간비교로 WearCloudSync 최종변경도 포함됨을확인했다. production 실제날씨를 사용한다.
+- 현재 기기에 설치된 워치APK는 클라우드/시각보완 포함최종빌드, 별도폰preview APK설치성공. 워치가 실제 서버에서 코드를 발급받는 화면까지 검증했고 기존 UI시험자료는 코드발급시 clear됐다. 워치시각은 당시2026-11-02 06:36 GMT로 자동정상상태였다(직접변경없음). 초기에8월이던 동일세션시계가 네트워크에서 갱신된 것으로 보이나 원인단정안함. 코드원문/서버토큰은 최종문서에 남기지 않는다.
+- 현재 사용자 입력 대기: 폰 수정본 최초 권한안내 화면을 열어 두고 직접 초기설정/권한선택/연동지역 날씨가 보이게 한 뒤 알려달라고 요청했다. ‘초기 설정했고 날씨가 보여’ 응답이 아직 없다. 임의 권한/연령/약관 동의하지 않는다. RDB 재연결 요청에는 ‘연결했어’ 답이 도착했으며 현재 ADB는2개 다연결되어있다. 다음은 폰 설정완료 확인→새 워치코드 필요시재발급→폰설정 워치연결 입력→실제동일지역·기온/타일탭·폰미진입자료반영 확인→한쪽해제/재연결 검사 범위를 적절히 수행 후 최종 연결상태와 실제날씨타일을 남긴다. 실제연동성공으로 아직보고하지 않는다. 테스트fixture를 재주입하지 않는다.
+- 유의: 서버 snapshot 스키마는 현재 revision>=0 및 widget 일부필드optional이지만 실제 WatchSnapshot은 revision>0와 locationKey/generatedAt를 요구한다. 실제폰은 이필드를항상포함해 정상경로가능하나 필요하면 최종계약강화와검사/새API파일만추가배포해야 한다. 기존 서버데이터삭제와 독립 워치연결해제 동작의 연계도 추가점검을 고려한다(현재 워치연결 화면에서 명시해제가능).
+- 진행중 Flutter test exec session은 별도 도구출력을 확인한다. 커밋/푸시는 요청되지 않아 수행하지 않는다.
+
+## 2026-11-02 완료: 실기기 폰과 리모트랩 워치 실제 서버 날씨 연결
+
+- 사용자 최초설정 완료 응답 후 SM-F971N 수정본의 실제 서울 구로구 날씨를 확인하고 워치 코드 발급→폰 설정/워치 연결 입력으로 연결했다. 첫 실제 비교는 구로동/기온14.1°/체감10.5°/최저9°·최고15° 일치. 이후 실제 서버 갱신에 따라 체감10.8°, 기온14.4°·체감11°로 바뀌는 것까지 확인했다. UI 시험 자료 재주입은 없으며 발급 때 기존 시험 캐시를 지웠다.
+- 실제 폰 시간문자열이 ‘오후3:48 기준’ 형식이라 워치의 ‘기준 기준’ 중복을 발견해 WatchSnapshot.time에서 기존 접미어를 정리했다. 단위검사 추가. 수동 강제 갱신은 KEEP의 재시도 대기 대신 REPLACE하도록 보완했고 서버 연결 중에는 Data Layer 수신을 무시해 자료 출처를 섞지 않는다. 대기 중 서버 연결 취소 버튼도 제공한다.
+- 폰 연결 해제 UI→서버 행 삭제→워치 새로고침 시 연결/캐시 제거를 실제로 확인했다. 새 코드를 발급해 재연결 성공, 양쪽 APK 업데이트 뒤 연결 토큰/설정 보존도 확인했다. 검증 중 폰의 다른 패키지가 떠 있으면 내용을 읽지 않고 수정본만 다시 열었으며 App Open 시험광고는 뒤로 가기로 닫았다. 개인 앱 안을 조작하지 않았다.
+- 서버 계약을 WatchSnapshot과 일치하게 revision>0/정상 generatedAt·locationKey 필수(명시 cleared 제외)로 강화하고 신규검사/구버전/HTTP 호환3파일30개 및 typecheck 재통과. 원본 SHA 검증/파일백업/환경별 합성6개 프로브 후 시험·운영의 새 API파일만 다시 반영했다. 추가 DB 변경 없음. 원격 contract-report.json 및 로컬 build/wear-cloud-deploy-20261102/contract-report.json에 최종 소스 해시/백업 기록. 공개 health200, wear 미인증401, 시험 키 없는 health403 확인.
+- 폰 ServerDataAccess.deleteData/deleteExistingData에서 워치 연결 해제도 완료한 뒤 삭제 완료 표시하도록 추가했다. 실패하면 기존 삭제 대기 상태에서 재시도한다. 기존 네이티브 호스트/iOS MissingPlugin은 무시한다. 서버 사용 중지 상태는 새 워치 연결을 막는다. 관련 Flutter21개(새 실패/재시도 검사 포함) 통과. 테스트 네이티브 채널 mock 응답을 즉시 제공하도록 맞췄다. 관련 기존 설정/날씨정규화10개도 통과, 변경3 Dart analyze문제없음. 워치 Snapshot9개 통과, 마지막 compose/manifest 빌드 성공, Lint0오류21경고(기존 권고/업데이트 안내 등).
+- 폰 홈 위젯 없이도 자동 수신이 유지되도록 WearCloudRefreshWorker(30분/네트워크/재부팅 지속)→실제 WeatherCareWidgetRefreshWorker→WearCloudPublishWorker의 WorkManager 체인을 추가했다. 게시 Worker가 HTTP 수신 완료까지 생존하며 실패는 제한 재시도. UI ‘날씨 다시 보내기’도 같은 체인을 요청한다. 연결 해제/404는 주기·체인을 취소하고 오래된 전송 실패가 새 토큰을 지우지 않도록 class 모니터/토큰 비교로 보호했다. cloud 연결 시 Today 상세 조회는 Wearable 노드 API가 없어도 수행하도록 조건을 short-circuit했다. 워치는 기존30분 목표/앱·타일/수동 경로로 받으며 즉시 푸시나30분 보장으로 설명하지 않는다.
+- 새 백그라운드 경로 실검사: 폰 버전13을 기준으로 전송 요청 후 즉시 HOME, 워치 Activity도 닫고 삼성 타일만 표시한 상태에서 버전15로 실제 조회·발행·수신 완료. 양쪽 revision15/publishedAt1793603600358, 서울 구로구 구로동/14.5°/체감10.7°/오후4:13 기준/Today 상세10개가 일치한다. WM-WorkerWrapper에서 WeatherCareWidgetRefreshWorker와 WearCloudPublishWorker SUCCESS를 확인했다. 주기 WearCloudRefreshWorker가30분 지연·네트워크 조건으로 등록된 것도 확인했으나 실제30분을 기다린 자연 실행/Doze/물리 이동은 이번 검사 범위가 아니다.
+- 최종 증거 output/watch-phone-link-20261102/background-chain-before.json(버전13/앱닫힘), background-chain-after.json(양쪽15), background-workers.log(두 Worker SUCCESS), sync-verification.json(이전양쪽10), watch-live-tile.xml 및 real-linked-tile.png(최종 화면은 후속캡처로 갱신). 실제 기본 이름 날씨챙겨/4번째 독립 전체 화면 타일을 남겼다. 구버전 Play앱/개인정보/계정/권한/기기시각/알림설정은 임의변경하지 않았다. 최초 권한·지역 선택은 사용자가 직접 완료했다.
+- 최종 APK: weather_care_app/build/weather-care-watch-cloud-preview.apk 및 워치 app/build/outputs/apk/debug/app-debug.apk. 폰은 com.codesoha.weathercare.preview, 기존 Play앱은 별도 com.codesoha.weathercare로 보존. Gradle 기본 빌드의 기존 ID/라벨/Google Services 설정 유지. 최종 폰 빌드 로그 wear-cloud-background-verified.log, 워치 build-cloud-link-e2e-final.log, 서버 wear-cloud-compat-final.log/typecheck-final, Flutter wear-cloud-deletion-tests.log(21)/wear-cloud-flutter-tests.log(10)/analyze-final. 커밋/푸시/스토어 배포 요청은 없어 수행하지 않았다. 이번 요청은 실제 서버 연결·기기 적용까지 완료했다.
+- 최종 마감 확인: real-linked-tile.png/.xml을 오후4:13 기준14.5° 실제 화면으로 갱신하고 ‘날씨챙겨, Tile, 4 of 4’ 확인 후 해당 화면에 남겼다. 폰 named preview APK를 백그라운드 Worker 포함최신APK로 다시 복사했다. watch_connection_screen 변경 후 analyze재통과, diff공백검사통과. 기기에 만든 현재 작업 임시 XML/PNG 이름만 정리했으며 앱 연결/날씨 캐시·개인 설정은 보존한다. 기능과 기기 적용은 완료이며 추가 사용자 응답 대기나 차단 사항은 없다.
+
+## 2026-11-02 워치 컨트롤 불가 진단: 리모트랩 웹 클라이언트
+
+- 사용자는 리모트랩 화면에서 마우스 클릭·드래그가 안 된다고 명확히 응답했다. 최초 ADB에는 SM-L340 localhost:36246 transport3이 연결돼 있었고 shell응답/화면캡처/스와이프/타일 탭/앱 좌우이동/타임라인 세로스크롤이 모두 성공했다. 안드로이드 DispatchEnabled=true, DispatchFrozen=false, Awake였다. 출력된 키워드에는 ANR이 없었으나 전체 시스템 무결성/ANR없음으로 확대하지 않는다.
+- 현재 브라우저 예약은 SM-L340_KR2/남은 약16~21분이었다. 실제 워치를 ADB로 현재날씨 화면으로 전환한 직후 캡처는 날씨14.5°/체감10.7°/오후4:13 기준이었고, 거의 동시에 RTL 브라우저 캡처는 이전 아날로그 시계페이스에 머물러 있었다. 웹 화면 전송/조작 연결이 멈춘 정황이며 앱 내 입력은 정상이다. evidence output/watch-control-20261102/before.png, calibration.png, gesture.xml, tap.xml, pager.xml, scroll.xml.
+- 기존 RTL 창에 한해 Computer Use 스킬/sky로 조회, Ctrl+R/Ctrl+L/주소 영역 클릭/포커스 복구를 시도했으나 실제 재접속 성공은 검증되지 않았다. 예약 종료·추가 예약·기기 재부팅/초기화·계정/권한 변경·RDB 프로세스 종료·앱 코드 수정은 하지 않았다. 코드/서버/연결 토큰/폰 상태는 변경하지 않았다.
+- 브라우저 canvas 식별자와 실제 ADB 기기의 일련번호를 비교하려던 시점에 워치 ADB가 device not found가 되어 비교 자체가 성립하지 않았다. Boolean false 출력은 유효한 일련번호 불일치 증거가 아니다. 최종 adb devices에는 폰만 보이며 rdb.exe는 실행 중이다. 잘못된 기기를 조작한 것으로 단정하지 않는다.
+- 이후 Windows Computer Use가 사용자 물리 Escape 입력으로 중단됐다고 보고했다. 정책에 따라 추가 Computer Use와 제어/복구 작업을 중단하며, 웹 연결 복구 완료로 보고하지 않는다. 현재 앱 자체 입력 정상/웹 화면 지연·정지 정황/워치ADB도 현재 미연결 상태라는 확인 범위를 안내한다. 다음 사용자 재개 지시가 있을 때 RTL 실제 새로고침·RDB/화면 전송 재접속·웹 클릭/드래그가 실제 워치 상태를 바꾸는지 검증해야 한다. 더 이상 UI 도구를 호출하지 않았다.
+
+## 2026-11-02 사용자 요청으로 중단: 내일 해야 할 일 등록
+
+- 사용자 재개 지시 후 ADB localhost:36246 transport4/SM-L340 연결을 확인했다. ro.serialno와 ro.boot.serialno는 모두 R3GL203GKVN으로, 브라우저 SM-L340_KR2 canvas 식별자와 실제로 일치했다. 직전 턴의 연결 실패 중 Boolean false는 기기 불일치 근거가 아니며 이번 정상 조회로 같은 기기임을 확인했다.
+- 새 RTL 창은 ID858330이었다(이전31133688은 재사용하지 않는다). Languages 팝업이 열린 상태였고 예약이 <1min 남아 있었다. 별도 예약/연장으로 크레딧을 사용하지 않고 사용자에게 연장을 요청했다. 앱 pm list packages codesoha는 빈 결과였으므로 현재 워치에는 날씨챙겨가 설치되어 있지 않다. 초기 조회의 기기시각은8/21이었다가 네트워크 이후11/02로 자동 갱신됐으며 수동 날짜/언어/초기화 변경은 하지 않았다.
+- ADB HOME로 기본 한국어 시계페이스 표시를 확인했다. Languages 팝업 바깥 영역을 클릭해 조작 검사를 준비했으나 곧 웹 화면이 All ongoing tests have ended로 바뀌었다. 새 예약 상태의 웹 마우스 클릭·드래그→실기기 상태 변경 검사는 완료하지 못했다. 직전 실제 앱 입력 검증과 이번 웹 컨트롤 복구 미완료를 구분한다. 앱을 재설치하거나 토큰/서버/폰을 수정하지 않았다. 증거 output/watch-control-retry-20261102/start.xml.
+- 사용자가 ‘못해 그만둬 내일 할께 해야할일에 작성해줘’라고 명시했다. 모든 기기/브라우저 복구 작업을 즉시 중단하고 README.md의 ‘해야 할 일 → 2026-11-03’에 체크리스트를 작성했다. 알림/자동 실행 예약이나 크레딧 사용은 요청하지 않아 생성하지 않는다. 커밋/푸시는 하지 않았다.
+- 내일 순서: 충분한 RTL 예약→브라우저/ADB 동일기기·입력/영상 동작 복구 확인→watch APK 재설치→기본 이름 날씨챙겨 독립 전체 화면 타일 추가→F971N 수정본 기존 연결 명시해제 및 새 워치코드 연결→실제 자료 버전 일치/앱 닫힘 타일 갱신·캡처. 예약 초기화로 워치 앱/로컬 읽기토큰이 없어졌을 수 있어 과거 연결 성공 상태를 그대로 유지됐다고 가정하지 않는다. 현재 폰 수정본의 기존 연결 정보는 건드리지 않았다.
+- 사용 APK는 워치 weather_care_wear/app/build/outputs/apk/debug/app-debug.apk, 폰 weather_care_app/build/weather-care-watch-cloud-preview.apk. 폰 Play 설치본은 삭제/덮어쓰지 않는다. 서버 API/DB 시험·운영 배포는 이미 완료되어 있고 이번 중단 때문에 롤백하거나 다시 배포하지 않는다. 사용자가 내일 재개할 때까지 대기한다.
+
+## 2026-11-02 실기기 연결 방식과 폰트 적용 안내
+
+- 사용자 질문에 대해 코드와 Android 공식 Data Layer/ProtoLayout 문서만 확인했다. 내일로 미룬 워치·브라우저 조작은 재개하지 않았다.
+- 실제 폰·워치를 Galaxy Wearable로 페어링하고 양쪽에 동일 패키지명·서명의 정식 앱을 설치하면 기존 Data Layer 자동 동기화가 가능하며 별도 서버 연결 코드는 필요 없다. 단 현재 폰 수정본은 preview 패키지이므로 정식 워치 앱과 Data Layer 조건이 달라 서버 연결이 필요한 시험 구성이다.
+- WatchActivity는 이미 SUITE regular/bold를 MaterialTheme 기본 폰트로 적용한다. 현재 WeatherTileService의 ProtoLayout Text는 별도 폰트 지정 없이 시스템 기본 폰트를 사용한다. 공식 setPreferredFontFamilies는 기기에 사용 가능한 폰트 선택이며 Roboto/Roboto Flex 이외 지원은 보장되지 않아 앱 내장 SUITE 파일을 일반 앱처럼 직접 지정하는 방식으로 동일 폰트를 보장할 수 없다. 텍스트를 이미지로 그리면 시각적 적용은 가능하지만 글자 확대·접근성은 별도 고려가 필요하다.
+- 이번 작업은 질의 안내와 HANDOFF 기록만 변경했으며 코드·설정·기기·서버·커밋/푸시는 변경하지 않았다.
+
+## 2026-11-02 타일 SUITE 폰트 이미지 렌더링 적용
+
+- 사용자 요청: 기존 전체 화면 타일에도 글자를 이미지로 그려 SUITE를 적용하고, 글자 크기 설정과 화면 읽기 기능의 용도를 설명한다. 코드 수정만 재개하며 내일로 미룬 기기/브라우저 조작은 재개하지 않았다.
+- WeatherTileService의 시스템 Text/Column/Row를 SuiteTileRenderer로 그린 단일 PNG Image로 대체했다. 제목·지역/기준 시각·기온·브리핑·최저/최고 모두 폰 앱에서 복사한 SUITE regular/bold를 사용한다. 검은 배경, 폰 위젯과 같은 날씨 아이콘, 날씨아이콘 왼쪽/기온 오른쪽, 하단 최저/최고 및 현재날씨 화면 열기 동작을 유지한다.
+- request의 화면 DP/밀도에 맞춰 실제 픽셀 크기로 그린다. Android applyDimension(SP)으로 시스템 글자 크기 설정(지원 OS의 비선형 확대 포함)을 반영하고, 큰 글자에서는 여백을 줄인다. 긴 음수 기온은 아이콘을 먼저 줄이고 필요시 남은 폭에 맞춰 숫자를 조정해 말줄임하지 않는다. 최저/최고가 한 줄에 들어가지 않으면 두 줄로 그린다. 원형 화면의 각 행 유효 폭을 계산한다. 긴 지역/브리핑은 시각적으로 말줄임할 수 있으나 음성 설명에는 전체 원문을 보존한다.
+- 루트 Image에 기존 탭 동작과 전체 정보의 Semantics를 부여했다. TalkBack 설명은 앱명·지역·기준 시각·현재 기온·전체 브리핑·최저/최고·열기 안내를 포함하며 별도 자식 텍스트가 없어 중복 읽기를 피한다. 실제 TalkBack 발음/포커스는 실기기 미검증이다.
+- TileImageStore는 PNG 내용 SHA-256으로 리소스 버전을 만들고 AtomicFile로 앱 전용 파일에 저장한다. 나중에 도착하는 리소스 요청/서비스 재생성에서도 해당 버전 그림을 반환해 날씨/폰트 크기가 바뀌는 중 레이아웃과 그림이 섞이지 않게 한다. 최신 32개 및 하루 이내 버전은 보존하고 오래된 나머지를 정리한다.
+- Robolectric 4.16.1/native graphics를 테스트 전용으로 추가했다. 기존 WatchSnapshot 9개 + 신규 렌더링 5개 = 14개 모두 성공. 192/227/240dp × 기본/1.3배 글자 × 보통/긴 음수·지역·브리핑 12개 조합의 원형 화면 픽셀 경계, 글자 확대 픽셀 증가, 전체 음성 설명, 연결 전 안내, 새 날씨 저장 뒤 이전 리소스 픽셀 불변/재로딩을 확인했다. 최종 testDebugUnitTest + assembleDebug + lintDebug 모두 성공. Lint 0오류/24경고(신규 3개는 KTX 편의 함수 권장)이며 diff 공백 검사도 통과했다.
+- 실제 native renderer 출력은 output/watch-suite-tile-20261102/{normal,large-font,small-screen-long-text}.png 및 tests.json. 시험 자료이며 실기기 캡처가 아니다. 기본/큰 글자/작은 화면 긴 음수의 PNG를 직접 확인해 기온·최저/최고 누락을 수정한 후 재검증했다.
+- 최신 APK weather_care_wear/app/build/outputs/apk/debug/app-debug.apk 빌드 완료. 워치 설치/실제 호스트 배치/터치/TalkBack 확인은 수행하지 않았고 README 내일 해야 할 일에 SUITE 타일 기본/큰 글자·TalkBack 확인을 추가했다. 폰·서버·DB·연결 토큰·예약은 변경하지 않았고 커밋/푸시도 하지 않았다.
+
+## 2026-11-02 전체 미커밋 변경 커밋·푸시
+
+- 사용자 요청은 현재 수정 내용을 모두 커밋하고 푸시하는 것이다. 현재 master와 weather_care/master의 시작 해시는 같고 fetch 후에도 선행/후행 0/0이다. 기존 master를 유지하고 강제 푸시는 사용하지 않는다.
+- 범위: 워치 앱/기존 전체 화면 타일·컴플리케이션·SUITE 이미지 렌더링, 폰 Data Layer/서버 연결·백그라운드 발행·삭제 연동, 서버 wear API 및 신규 wear_links 마이그레이션(통합0026/사용자DB0009), 테스트, 기획/디자인/PDF, 실제 및 시험 검증 자료, 디자인 검토 이미지, README 내일 할 일과 HANDOFF까지 모든 미커밋 변경을 포함한다. 빌드/APK·Gradle 캐시·local.properties·기존 제외 로그는 ignore 규칙을 유지한다.
+- 커밋 직전 서버 wear/legacyCompatibility/sqliteD1/serverCompatibility 4파일34개와 typecheck를 재실행해 모두 성공했다. 폰 wear_weather_details/server_data_access/home_location 3파일98개도 성공했다. 워치 최종 14개 단위검사와 APK 빌드/Lint 성공 결과는 직전 작업에서 확인한 최신 결과다.
+- 폰 회귀 검사 중 home_location의 실제 삭제 콜백 검사가 새 wearUnlink 네이티브 응답을 모의하지 않아 대기하는 문제를 발견했다. 테스트 채널 응답과 정리만 추가하고 연결 해제 1회 호출을 검증하도록 보완한 뒤 98개를 재통과했다. 앱/서버 동작 코드는 이번 커밋 준비 과정에서 바꾸지 않았다.
+- 추가·변경 텍스트 파일의 실제 비밀키/토큰 패턴을 값 출력 없이 검사했으며 발견된64자리 값은 문서의 해시/인증서 지문이다. 로컬 설정·빌드 파일을 강제로 추가하지 않는다. 커밋 메시지는 한글을 기반으로 작성하고 additive DB 변경/기존 API 유지와 검증 내용을 기록한다.
+- 이 기록까지 포함해 단일 커밋을 작성하고 weather_care/master로 푸시한 뒤 로컬/원격 HEAD 일치와 작업 트리 상태를 확인한다. 워치 재설치·실제 TalkBack/큰 글자·리모트랩 조작 확인은 README의 내일 할 일로 남으며 기기/서버 재배포 작업은 재개하지 않았다.
+- 커밋 준비 중 PDF가 텍스트로 인식되는 것을 확인해 루트 .gitattributes에 *.pdf binary를 추가했다. PDF 내용은 바꾸지 않고 Git 줄바꿈 변환으로 인한 손상을 방지한다. 새 Gradle 래퍼의 실행 권한도 인덱스에서 설정했다. 전체 staged 공백 검사는 이 처리 후 통과했다.

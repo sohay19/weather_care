@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">날씨챙겨</string>
+    <string name="widget_description">현재 기온과 체감온도, 오늘 챙길 물건을 확인해요</string>
+    <string name="temperature_complication">날씨챙겨 기온</string>
+    <string name="weather_complication">날씨챙겨 날씨</string>
+    <style name="WatchTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:colorAccent">#9DBDD8</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- Compose가 상세 뒤로 이동과 최상위 종료를 구분한다. -->
+        <item name="android:windowSwipeToDismiss">false</item>
+    </style>
+</resources>

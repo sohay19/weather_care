@@ -1,0 +1,138 @@
+{
+  "결과": "통과",
+  "검사": [
+    "첫 화면 챙겨요",
+    "우측 체크만 변경, 상세로 이동하지 않음",
+    "어제 기온 비교 아래 체감 비교, 날씨 상태 비교 제거",
+    "현재 날씨의 작은 어제 비교 영역",
+    "현재 날씨 기온·날씨 아이콘 세로 중앙",
+    "화면 이동 후 체크 유지와 해제",
+    "우산 상세 이동",
+    "상세에서 목록 복귀",
+    "준비물 다음 구간",
+    "명칭 변경과 시각·상태·기온·확률 유지",
+    "기상생활 항목 상세 데이터",
+    "지표 목록 복귀",
+    "2열 지표 다음 구간",
+    "2열 지표 마지막 구간",
+    "챙겨요·기상생활 총 n개 문구",
+    "소형 준비물 제거·상하단 정보, 대형3아이콘, 페이스 날씨 아이콘",
+    "소형·대형 기온+날씨아이콘·중간점·체감의 배경박스 통합",
+    "대형 준비물별 원형 배경3개",
+    "소형·대형 이전 바탕색 박스·2/3 아이콘 중앙 정렬·작은 체감 라벨 한줄",
+    "검정 위젯 바탕, 이전 바탕색 정보·준비물 배경, 기온 다음 아이콘",
+    "공식 SDK10규격 콘텐츠경계 안에 전항목, 최저최고 안쪽 중앙하단",
+    "타일 제목 아래 지역·기준 시각, 하단 최저·최고",
+    "타일 기온·아이콘·브리핑 묶음 직전 시안보다8dp 상향",
+    "기존 타일 탭은 워치앱 현재 날씨 진입",
+    "건조 상황 보습 준비물",
+    "만료 상황 안내",
+    "연결 시안 완료 이동",
+    "390px 페이지 가로 넘침 없음"
+  ],
+  "공식규격경계검사": [
+    {
+      "profile": "squircle-small-1",
+      "content": [
+        166,
+        60
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "squircle-small-2",
+      "content": [
+        200,
+        60
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "squircle-large-1",
+      "content": [
+        166,
+        96
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "squircle-large-2",
+      "content": [
+        200,
+        108
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "round-small-1",
+      "content": [
+        182,
+        54
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "round-small-2",
+      "content": [
+        200,
+        60
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "round-large-1",
+      "content": [
+        150,
+        120
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "round-large-2",
+      "content": [
+        160,
+        136
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "rectangular-small-1",
+      "content": [
+        192,
+        60
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    },
+    {
+      "profile": "rectangular-large-1",
+      "content": [
+        168,
+        112
+      ],
+      "outside": [],
+      "footerInside": true,
+      "footerCentered": true
+    }
+  ],
+  "브라우저오류": [],
+  "기기설치": false,
+  "주의": "공식 SDK 프리뷰의 수치에 맞춘 웹 시안 검증. Native SDK 렌더링/기기 호스트 실측은 아님"
+}

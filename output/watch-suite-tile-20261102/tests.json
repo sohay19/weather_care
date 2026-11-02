@@ -1,0 +1,14 @@
+[
+  {
+    "name": "com.codesoha.weathercare.SuiteTileRendererTest",
+    "tests": "5",
+    "failures": "0",
+    "errors": "0"
+  },
+  {
+    "name": "com.codesoha.weathercare.WatchSnapshotTest",
+    "tests": "9",
+    "failures": "0",
+    "errors": "0"
+  }
+]

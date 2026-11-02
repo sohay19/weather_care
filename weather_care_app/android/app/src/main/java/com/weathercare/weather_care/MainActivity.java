@@ -74,6 +74,10 @@ public class MainActivity extends FlutterActivity {
                 flutterEngine.getDartExecutor().getBinaryMessenger(),
                 CHANNEL
         ).setMethodCallHandler((call, result) -> {
+            if (call.method.matches("wearStatus|wearClaim|wearUnlink|wearSend")) {
+                WearCloudSync.handle(this, call.method, call.arguments, result);
+                return;
+            }
             synchronized (WIDGET_LOCK) {
                 SharedPreferences preferences = getSharedPreferences(
                         WIDGET_PREFERENCES,
@@ -92,6 +96,7 @@ public class MainActivity extends FlutterActivity {
                 }
                 if ("save".equals(call.method)) {
                     String snapshot = null;
+                    JSONObject wearDetails = null;
                     String refreshUrl = null;
                     String testAccessKey = null;
                     boolean gpsEnabled = false;
@@ -99,6 +104,7 @@ public class MainActivity extends FlutterActivity {
                     if (call.arguments instanceof String) {
                         snapshot = (String) call.arguments;
                     } else if (call.arguments instanceof Map<?, ?> values) {
+                        if (values.get("wearDetails") instanceof Map<?, ?> details) wearDetails = new JSONObject(details);
                         Object rawSnapshot = values.get("snapshot");
                         Object rawRefreshUrl = values.get("refreshUrl");
                         Object rawTestAccessKey = values.get("testAccessKey");
@@ -140,11 +146,13 @@ public class MainActivity extends FlutterActivity {
                         editor.putString(WIDGET_TEST_ACCESS_KEY, testAccessKey);
                     }
                     editor.apply();
+                    WearPhoneSync.publish(this, snapshot, wearDetails);
                     WeatherCareWidgetProvider.updateAll(this);
                     result.success(null);
                     return;
                 }
                 if ("clear".equals(call.method)) {
+                    WearPhoneSync.publish(this, null, null);
                     preferences.edit()
                             .putString(REVISION_KEY, UUID.randomUUID().toString())
                             .remove(SNAPSHOT_KEY)

@@ -1,0 +1,4 @@
+<wearwidget-provider label="@string/app_name" description="@string/widget_description" icon="@drawable/app_icon" preferredType="SMALL" group="com.codesoha.weathercare.WeatherTileService">
+    <container type="SMALL" previewImage="@drawable/widget_preview_small" />
+    <container type="LARGE" previewImage="@drawable/widget_preview_large" />
+</wearwidget-provider>

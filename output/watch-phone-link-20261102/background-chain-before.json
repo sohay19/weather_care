@@ -1,0 +1,8 @@
+{
+  "phone": {
+    "revision": 13,
+    "publishedAt": 1793603475678
+  },
+  "phoneAppInForeground": false,
+  "watchActivityInForeground": false
+}

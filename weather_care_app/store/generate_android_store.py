@@ -25,7 +25,7 @@ TOPICS = [
     ('02-region-notifications', '지역별 알림', '관심 있는 지역의\n날씨 알림을 골라요', '여러 지역 저장 · 지역마다 알림 ON/OFF', 'region-notifications'),
     ('03-widget', '홈 화면 위젯', '앱을 열지 않아도\n날씨가 보여요', '작게, 넓게, 자세하게 · 세 가지 크기', None),
     ('04-dark-mode', '편안한 다크모드', '앱도 위젯도\n눈이 편안하게', '라이트 · 다크 · 시스템 설정에 맞춰', 'dark-main'),
-    ('05-watch', '갤럭시 워치 앱', '갤럭시 워치에서도\n날씨를 챙겨요', '오늘의 준비물 · 현재 날씨 · 타임라인 · 기상·생활', None),
+    ('05-watch', '갤럭시 워치 앱', '갤럭시 워치에서도\n날씨를 챙겨요', '현재 날씨 · 오늘의 준비물 · 타임라인 · 기상·생활', None),
     ('06-advanced', '심화 날씨 정보', '바다와 하천까지\n더 깊이 살펴요', '만조·간조/조위 · 수온 · 수위·유량 · 댐·보', 'advanced-values'),
     ('07-week', '한주 날씨', '한 주의 흐름을 보고\n하루를 계획해요', '주간 요약 · 날짜별 예보 · 시간별 날씨', 'week'),
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
@@ -166,7 +166,7 @@ def compose(topic, platform):
             y = box[3] + gap
         assert box[3] == canvas.height - margin, '위젯 아래 여백이 다릅니다.'
     elif stem == '05-watch':
-        screens = [('prep', '오늘의 준비물'), ('current', '현재 날씨'),
+        screens = [('current', '현재 날씨'), ('prep', '오늘의 준비물'),
                    ('timeline', '타임라인'), ('life', '기상·생활')]
         diameter, row_height = 436, 650
         y_start = content_top + (content_height - row_height * 2) // 2

@@ -50,7 +50,7 @@ class WatchActivity : ComponentActivity() {
     private var requestRevision by mutableLongStateOf(0)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedPage = if (intent.getStringExtra("screen") == "weather") 1 else 0
+        requestedPage = if (intent.getStringExtra("screen") == "prepare") 1 else 0
         val repository = WatchRepository.get(this)
         repository.requestRefresh()
         setContent { WatchApp(repository, requestedPage, requestRevision) }
@@ -58,7 +58,7 @@ class WatchActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        requestedPage = if (intent.getStringExtra("screen") == "weather") 1 else 0
+        requestedPage = if (intent.getStringExtra("screen") == "prepare") 1 else 0
         requestRevision++
     }
 }
@@ -85,12 +85,14 @@ class WatchActivity : ComponentActivity() {
                 val item = detail!!
                 WatchScroll {
                     Label(item.name, 18, Accent)
-                    Spacer(Modifier.height(12.dp))
-                    Label(item.value, 26, Ink, true)
-                    Label(snapshot.region + " · " + snapshot.time, 10, Muted)
-                    Label(item.basis, 11, Muted)
-                    Spacer(Modifier.height(10.dp))
+                    if (item.value.isNotBlank()) {
+                        Spacer(Modifier.height(12.dp))
+                        Label(item.value, 26, Ink, true)
+                    }
                     Label(item.description, 12)
+                    Spacer(Modifier.height(10.dp))
+                    Label(snapshot.region, 10, Muted)
+                    Label(item.basis, 11, Muted)
                     WatchButton("목록으로") { detail = null }
                 }
             } else if (!snapshot.hasData) {
@@ -104,7 +106,7 @@ class WatchActivity : ComponentActivity() {
                     key(snapshot.publishedAt, tick) {
                         WatchScroll(active = pager.currentPage == page) {
                             when (page) {
-                                0 -> {
+                                1 -> {
                                     Label("오늘의 준비물", 13, Accent)
                                     val items = snapshot.preparations()
                                     if (items.isEmpty()) Label(if (snapshot.stale()) "오래된 자료예요\n최신 날씨를 확인해 주세요" else "지금 챙길 물건이 없어요", 12, Muted)
@@ -112,7 +114,7 @@ class WatchActivity : ComponentActivity() {
                                         var checked by remember(item.type) { mutableStateOf(repository.checked(item.type)) }
                                         Row(Modifier.fillMaxWidth().padding(vertical = 3.dp).background(Panel, RoundedCornerShape(14.dp)), verticalAlignment = Alignment.CenterVertically) {
                                             Row(Modifier.weight(1f).heightIn(min = 48.dp).clickable {
-                                                detail = WatchMetric(item.label, "챙겨요", snapshot.time + " 기준", item.reason)
+                                                detail = WatchMetric(item.label, "", snapshot.time + " 기준", item.reason)
                                             }.padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                                                 PrepIcon(item.type, 25)
                                                 Text(item.label, fontSize = 13.sp, color = Ink, modifier = Modifier.padding(start = 5.dp))
@@ -123,7 +125,7 @@ class WatchActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                                1 -> {
+                                0 -> {
                                     Label(snapshot.region, 13, Accent)
                                     Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                                         WeatherIcon(snapshot.condition, 38)
@@ -159,7 +161,7 @@ class WatchActivity : ComponentActivity() {
                                 }
                             }
                             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                listOf("챙김", "날씨", "시간", "생활").forEachIndexed { index, name ->
+                                listOf("날씨", "챙김", "시간", "생활").forEachIndexed { index, name ->
                                     Text(if (index == pager.currentPage) "●" else "○", color = Accent, fontSize = 10.sp,
                                         modifier = Modifier.sizeIn(minWidth = 24.dp, minHeight = 24.dp).clickable { scope.launch { pager.animateScrollToPage(index) } }.semantics { contentDescription = name + " 화면" })
                                 }

@@ -1841,6 +1841,62 @@ void main() {
     expect(stored.manualRegionKey, first.key);
   });
 
+  testWidgets('구역 삭제는 알림 상태별 확인을 거쳐 저장하고 선택 구역은 GPS로 전환한다', (tester) async {
+    final active = catalog.search('서울 구로 구로3동').single;
+    final other = catalog.search('부산 해운대 좌1동').single;
+    const repository = AppSettingsRepository();
+    await repository.save(AppSettings.fallback('test').copyWith(
+      locationMode: 'MANUAL',
+      currentRegionId: active.gridId,
+      manualRegionKey: active.key,
+      savedRegionKeys: [active.key, other.key],
+      notificationRegionKeys: [active.key, 'GPS'],
+    ));
+    await start(tester, initialIndex: 2);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('편집'));
+    await tester.pumpAndSettle();
+    expect(find.text('완료'), findsOneWidget);
+    expect(find.byKey(const ValueKey('region-notification-GPS')), findsNothing);
+
+    await tester.tap(find.byKey(ValueKey('region-delete-${active.key}')));
+    await tester.pumpAndSettle();
+    expect(
+        find.text('더 이상 해당 구역의 알람이 발송되지 않습니다. 구역을 삭제하시겠습니까?'), findsOneWidget);
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect((await repository.load('test')).savedRegionKeys,
+        [active.key, other.key]);
+
+    await tester.tap(find.byKey(ValueKey('region-delete-${other.key}')));
+    await tester.pumpAndSettle();
+    expect(find.text('구역을 삭제하시겠습니까?'), findsOneWidget);
+    final confirm = find.descendant(
+        of: find.byType(AlertDialog), matching: find.text('삭제'));
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+    expect((await repository.load('test')).manualRegionKey, active.key);
+
+    await tester.tap(find.byKey(ValueKey('region-delete-${active.key}')));
+    await tester.pumpAndSettle();
+    await tester.tap(confirm);
+    await tester.pumpAndSettle();
+    final stored = await repository.load('test');
+    expect(stored.savedRegionKeys, isEmpty);
+    expect(stored.manualRegionKey, isNull);
+    expect(stored.locationMode, 'GPS');
+    expect(stored.enabledNotificationRegionKeys, ['GPS']);
+    expect(sync.calls.last.enabledNotificationRegionKeys, ['GPS']);
+    expect(
+        tester
+            .widget<ListTile>(find.widgetWithText(ListTile, '현재 위치'))
+            .selected,
+        isTrue);
+    expect(find.text('편집'), findsNothing);
+    expect(find.text('구역 추가'), findsOneWidget);
+  });
+
   testWidgets('구역 토글은 작은 화면과 큰 글씨에서 표시되고 전체 OFF 선택도 보존한다', (tester) async {
     tester.view.physicalSize = const Size(320, 800);
     tester.view.devicePixelRatio = 1;

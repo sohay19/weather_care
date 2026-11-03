@@ -15,15 +15,17 @@ import generate_store_screenshots as previous
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'screenshots/source-android-20261028'
 SETTINGS_SOURCE = ROOT / 'screenshots/source-android-20261030'
+REGION_SOURCE = ROOT / 'screenshots/source-android-20261103'
+WATCH_SOURCE = ROOT / 'screenshots/source-wear-20261103'
 NATIVE = ROOT / 'screenshots/native-android-20261028'
 BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
 TOPICS = [
     ('01-main', '오늘의 날씨 요약', '나가기 전 필요한 정보,\n한눈에 챙겨요', '지금 날씨 · 오늘 최저·최고 · 어제와 비교', 'main'),
-    ('02-region-notifications', '지역별 알림', '관심 있는 지역의\n날씨 알림을 골라요', '여러 지역 저장 · 지역마다 알림 ON/OFF', 'region-notifications'),
+    ('02-region-notifications', '저장 구역 편집', '자주 보는 구역을\n간편하게 관리해요', '여러 지역 저장 · 알림 선택 · 구역 편집', 'region-notifications'),
     ('03-widget', '홈 화면 위젯', '앱을 열지 않아도\n날씨가 보여요', '작게, 넓게, 자세하게 · 세 가지 크기', None),
     ('04-dark-mode', '편안한 다크모드', '앱도 위젯도\n눈이 편안하게', '라이트 · 다크 · 시스템 설정에 맞춰', 'dark-main'),
-    ('05-notifications', '다양한 날씨 알림', '챙겨야 할 날씨,\n알림으로 알려드려요', '준비물 요약 · 현재 비 · 기상특보 · 낙뢰 · 자외선', None),
+    ('05-watch', '갤럭시 워치 앱', '갤럭시 워치에서도\n날씨를 챙겨요', '오늘의 준비물 · 현재 날씨 · 타임라인 · 기상·생활', None),
     ('06-advanced', '심화 날씨 정보', '바다와 하천까지\n더 깊이 살펴요', '만조·간조/조위 · 수온 · 수위·유량 · 댐·보', 'advanced-values'),
     ('07-week', '한주 날씨', '한 주의 흐름을 보고\n하루를 계획해요', '주간 요약 · 날짜별 예보 · 시간별 날씨', 'week'),
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
@@ -75,7 +77,10 @@ def widget(family, dark=False):
 
 def app_screen(name):
     """실제 앱 전체 화면에서 상단 상태바와 하단 시스템 내비게이션바를 제외한다."""
-    directory = SETTINGS_SOURCE if name == 'notification-settings' else SOURCE
+    directory = {
+        'notification-settings': SETTINGS_SOURCE,
+        'region-notifications': REGION_SOURCE,
+    }.get(name, SOURCE)
     manifest = json.loads((directory / 'capture-manifest.json').read_text(encoding='utf-8'))
     row = next(row for row in manifest['files'] if row['path'] == f'{name}.png')
     path = directory / row['path']
@@ -140,10 +145,12 @@ def compose(topic, platform):
     content_height = canvas.height - margin - content_top
     if source:
         im = app_screen(source)
-        screen_width = round(content_height * im.width / im.height)
-        assert screen_width <= content_width
-        im = im.resize((screen_width, content_height), Image.Resampling.LANCZOS)
-        card(canvas, im, ((canvas.width - screen_width) // 2, content_top), screen_width, 0)
+        scale = min(content_width / im.width, content_height / im.height)
+        screen_width = round(im.width * scale)
+        screen_height = round(im.height * scale)
+        im = im.resize((screen_width, screen_height), Image.Resampling.LANCZOS)
+        y = content_top + (content_height - screen_height) // 2
+        card(canvas, im, ((canvas.width - screen_width) // 2, y), screen_width, 0)
         if stem == '04-dark-mode':
             card(canvas, widget('large', True), (548, 1310), 460, 32)
     elif stem == '03-widget':
@@ -158,15 +165,19 @@ def compose(topic, platform):
             box = card(canvas, wim, ((1080 - sw) / 2, y), sw, 28)
             y = box[3] + gap
         assert box[3] == canvas.height - margin, '위젯 아래 여백이 다릅니다.'
-    else:
-        alerts = notification_cards([
-            ('자외선', '낮 자외선이 강해요',
-             '낮 동안 자외선이 높을 것으로 보여요.\n외출한다면 선크림이나 양산을 챙기세요.'),
-        ])
-        alerts_width = round(content_height * alerts.width / alerts.height)
-        assert alerts_width <= content_width
-        alerts = alerts.resize((alerts_width, content_height), Image.Resampling.LANCZOS)
-        canvas.alpha_composite(alerts, ((canvas.width - alerts_width) // 2, content_top))
+    elif stem == '05-watch':
+        screens = [('prep', '오늘의 준비물'), ('current', '현재 날씨'),
+                   ('timeline', '타임라인'), ('life', '기상·생활')]
+        diameter, row_height = 436, 650
+        y_start = content_top + (content_height - row_height * 2) // 2
+        for index, (name, label) in enumerate(screens):
+            x = 89 + index % 2 * 466
+            y = y_start + index // 2 * row_height
+            with Image.open(WATCH_SOURCE / f'{name}.png') as screen:
+                assert screen.size == (438, 438)
+                card(canvas, screen, (x, y), diameter, diameter // 2)
+            d.ellipse((x, y, x + diameter - 1, y + diameter - 1), outline='#DCE8F5', width=4)
+            text(d, (x + diameter // 2, y + diameter + 27), label, 34, center=True)
     canvas = canvas.convert('RGB')
     if tablet:
         canvas = canvas.resize((width, height), Image.Resampling.LANCZOS)
@@ -243,19 +254,19 @@ def main(screenshots_only=False, platforms=None, topics=None):
             assert im.mode == 'RGB' and im.format == 'PNG' and im.size == expected
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/screenshots-20261030-manifest.json'
+    report = ROOT / 'screenshots/screenshots-20261103-manifest.json'
     report.write_text(json.dumps({
         '기준일': '2026-10-28',
-        '편집일': '2026-10-30',
+        '편집일': '2026-11-03',
         '배치': '상단 제목 60px 두 줄, 줄간격 16px. 바깥 사방 및 제목·본문 사이 간격 모두 72px(태블릿 96px). 이미지는 남은 높이에 비율 유지 배치. 작은 분류명·부연 설명·위젯 크기 라벨 생략.',
-        '화면': '연결 SM-S948U에서 최신 제품 화면을 실행한 별도 Debug 촬영 패키지의 ADB screencap 및 실제 Android AppWidgetHost',
-        '데이터': '실제 운영 서버 자료. 지역 저장 및 알림 선택 상태는 촬영용 별도 설정. 5번은 지원 기능 소개용 알림 예시.',
+        '화면': '기존 Android 촬영 자료 및 리모트랩 Galaxy S26 Ultra와 Galaxy Watch9의 실기기 화면',
+        '데이터': '실제 운영 서버 날씨. 5번은 실기기 워치 앱 네 탭의 화면을 원형으로 배치한 소개 이미지.',
         '태블릿': '같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.',
-        '구성': '1~7번은 10월 29일 등록 이미지 유지. 8번만 10월 30일 최신 알림 설정 UI 실기기 촬영본으로 교체. 앱 화면은 시스템 상태바·내비게이션바만 제외. 4번은 실제 다크 대형 위젯을 함께 배치.',
+        '구성': '2번은 저장 구역 편집 UI, 5번은 갤럭시 워치 앱 소개로 교체했다. 1·3·4·6·7·8번은 직전 등록 이미지와 동일하다.',
         'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
-    guide = ROOT / 'screenshots/SCREENSHOTS_20261030.md'
-    package = ROOT / 'weather-care-android-screenshots-20261030.zip'
+    guide = ROOT / 'screenshots/SCREENSHOTS_20261103.md'
+    package = ROOT / 'weather-care-android-screenshots-20261103.zip'
     # Android 전용 새 묶음만 작성한다. 과거 묶음과 iOS 자료는 보존한다.
     with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
         for path in generated + preview_paths + [guide, report]:

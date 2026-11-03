@@ -1,0 +1,41 @@
+{
+  "촬영일": "2026-11-03",
+  "모델": "Galaxy Watch9 SM-L340_KR1",
+  "원본": "ADB exec-out screencap -p",
+  "files": [
+    {
+      "path": "prep.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "1718e598866c32a6e14bea787f3f4fb197dbffe7fe6feeb9743d5b0264ab354e"
+    },
+    {
+      "path": "current.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "53675baa51a27c5cca014187ce91c8c2f59f0331d3f8c9fb21cc9bae55e68a7d"
+    },
+    {
+      "path": "timeline.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "0b64ddb3090db063f9c22b3f778280cd44cc117e3842a944bf4ddabba5452dfe"
+    },
+    {
+      "path": "life.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "7f83ba96b63e15afd961a54a2df8745f97023fd769941efad0e3adca62140df1"
+    }
+  ],
+  "APK_SHA256": "97803760e156f9748527ec804aa0a0c6ddd90d3dbf8a9c3809fbbaef687b36d1",
+  "captureClockHidden": true
+}

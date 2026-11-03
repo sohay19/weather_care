@@ -107,6 +107,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   late AppSettings _settings;
+  bool _editingRegions = false;
   final AppSettingsRepository _settingsRepository =
       const AppSettingsRepository();
   WeatherService? _service;
@@ -1260,6 +1261,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _regionDrawer(),
+        onDrawerChanged: (open) {
+          if (!open && _editingRegions) {
+            setState(() => _editingRegions = false);
+          }
+        },
         drawerEnableOpenDragGesture: false,
         body: SafeArea(
           bottom: false,
@@ -1536,6 +1542,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final tilePadding = ListTileTheme.of(context).contentPadding ??
         const EdgeInsetsDirectional.only(start: 16, end: 24);
     final gpsSelected = _settings.locationMode == 'GPS';
+    final hasSavedRegions = _settings.savedRegionKeys
+        .any((key) => _regionCatalog?.find(key) != null);
     return Drawer(
       key: const ValueKey('region-drawer'),
       backgroundColor: colors.surface,
@@ -1555,6 +1563,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           child: Text('구역 선택',
                               style: Theme.of(context).textTheme.titleLarge),
                         ),
+                        if (hasSavedRegions)
+                          TextButton(
+                            onPressed: () => setState(
+                                () => _editingRegions = !_editingRegions),
+                            child: Text(_editingRegions ? '완료' : '편집'),
+                          ),
                         IconButton(
                           tooltip: '구역 메뉴 닫기',
                           icon: const Icon(Icons.close_rounded),
@@ -1564,14 +1578,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                    child: Text(
-                        _settings.notificationEnabled
-                            ? '지역별로 알림을 켜고 끌 수 있어요'
-                            : '전체 알림이 꺼져 있어요. 지역별 선택은 유지돼요.',
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ),
+                  if (!_editingRegions)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Text(
+                          _settings.notificationEnabled
+                              ? '지역별로 알림을 켜고 끌 수 있어요'
+                              : '전체 알림이 꺼져 있어요. 지역별 선택은 유지돼요.',
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ),
                   if (_settingsSave?.state.canRetry ?? false)
                     Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1585,34 +1600,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       refreshWeather: false),
                                   child: const Text('저장 다시 시도')),
                             ])),
-                  Padding(
-                    padding: EdgeInsets.only(
-                        right: tilePadding
-                                .resolve(Directionality.of(context))
-                                .right -
-                            12,
-                        bottom: 2),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: SizedBox(
-                        width: 84,
-                        child: Transform.translate(
-                          offset: const Offset(-8, 12),
-                          child: Text(
-                            '알림 ON/OFF',
-                            key: const ValueKey(
-                                'region-notification-column-label'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontFamily: WeatherCareTheme.fontSuite,
-                                color: colors.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800),
+                  if (!_editingRegions)
+                    Padding(
+                      padding: EdgeInsets.only(
+                          right: tilePadding
+                                  .resolve(Directionality.of(context))
+                                  .right -
+                              12,
+                          bottom: 2),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: SizedBox(
+                          width: 84,
+                          child: Transform.translate(
+                            offset: const Offset(-8, 12),
+                            child: Text(
+                              '알림 ON/OFF',
+                              key: const ValueKey(
+                                  'region-notification-column-label'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontFamily: WeatherCareTheme.fontSuite,
+                                  color: colors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                   ListTile(
                     leading: Icon(gpsSelected
                         ? Icons.check_circle_rounded
@@ -1622,14 +1638,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     subtitle: gpsSelected && _hasGpsRegionName
                         ? Text(_gpsDisplayName)
                         : null,
-                    trailing: _regionNotificationSwitch('GPS', '현재 위치'),
-                    onTap: () {
-                      _scaffoldKey.currentState?.closeDrawer();
-                      if (!gpsSelected) {
-                        unawaited(_handleSettingsChanged(
-                            _settings.copyWith(locationMode: 'GPS')));
-                      }
-                    },
+                    trailing: _editingRegions
+                        ? null
+                        : _regionNotificationSwitch('GPS', '현재 위치'),
+                    onTap: _editingRegions
+                        ? null
+                        : () {
+                            _scaffoldKey.currentState?.closeDrawer();
+                            if (!gpsSelected) {
+                              unawaited(_handleSettingsChanged(
+                                  _settings.copyWith(locationMode: 'GPS')));
+                            }
+                          },
                   ),
                   if (_settings.legacyNotificationRegionAvailable ||
                       _settings.enabledNotificationRegionKeys
@@ -1638,8 +1658,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         leading: const Icon(Icons.notifications_outlined),
                         title: const Text('이전에 설정한 지역'),
                         subtitle: const Text('새 구역을 추가해 알림을 선택할 수 있어요.'),
-                        trailing:
-                            _regionNotificationSwitch('LEGACY', '이전에 설정한 지역')),
+                        trailing: _editingRegions
+                            ? null
+                            : _regionNotificationSwitch(
+                                'LEGACY', '이전에 설정한 지역')),
                   for (final key in _settings.savedRegionKeys)
                     if (_regionCatalog?.find(key) case final region?)
                       ListTile(
@@ -1658,39 +1680,102 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 .trim()),
                         selected: !gpsSelected &&
                             _settings.manualRegionKey == region.key,
-                        trailing: _regionNotificationSwitch(
-                            region.key, region.fullName),
-                        onTap: () {
-                          _scaffoldKey.currentState?.closeDrawer();
-                          unawaited(_handleSettingsChanged(_settings.copyWith(
-                            locationMode: 'MANUAL',
-                            currentRegionId: region.gridId,
-                            manualRegionKey: region.key,
-                          )));
-                        },
+                        trailing: _editingRegions
+                            ? TextButton(
+                                key: ValueKey('region-delete-${region.key}'),
+                                style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        Theme.of(context).colorScheme.error),
+                                onPressed: () =>
+                                    _confirmRegionDeletion(region.key),
+                                child: Semantics(
+                                  label: '${region.fullName} 삭제',
+                                  excludeSemantics: true,
+                                  child: const Text('삭제'),
+                                ),
+                              )
+                            : _regionNotificationSwitch(
+                                region.key, region.fullName),
+                        onTap: _editingRegions
+                            ? null
+                            : () {
+                                _scaffoldKey.currentState?.closeDrawer();
+                                unawaited(
+                                    _handleSettingsChanged(_settings.copyWith(
+                                  locationMode: 'MANUAL',
+                                  currentRegionId: region.gridId,
+                                  manualRegionKey: region.key,
+                                )));
+                              },
                       ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: FilledButton.icon(
-                key: const ValueKey('region-add-button'),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text(
-                  '구역 추가',
-                  style: TextStyle(fontFamily: WeatherCareTheme.fontSuite),
+            if (!_editingRegions)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton.icon(
+                  key: const ValueKey('region-add-button'),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text(
+                    '구역 추가',
+                    style: TextStyle(fontFamily: WeatherCareTheme.fontSuite),
+                  ),
+                  onPressed: () {
+                    _scaffoldKey.currentState?.closeDrawer();
+                    unawaited(_addRegion());
+                  },
                 ),
-                onPressed: () {
-                  _scaffoldKey.currentState?.closeDrawer();
-                  unawaited(_addRegion());
-                },
               ),
-            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmRegionDeletion(String key) async {
+    final notificationEnabled =
+        _settings.enabledNotificationRegionKeys.contains(key);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        scrollable: true,
+        content: Text(notificationEnabled
+            ? '더 이상 해당 구역의 알람이 발송되지 않습니다. 구역을 삭제하시겠습니까?'
+            : '구역을 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted ||
+        confirmed != true ||
+        !_settings.savedRegionKeys.contains(key)) {
+      return;
+    }
+    final remainingKeys =
+        _settings.savedRegionKeys.where((savedKey) => savedKey != key).toList();
+    final deletingManualRegion = _settings.manualRegionKey == key;
+    if (!remainingKeys.any((key) => _regionCatalog?.find(key) != null)) {
+      setState(() => _editingRegions = false);
+    }
+    await _handleSettingsChanged(_settings.copyWith(
+      locationMode: deletingManualRegion ? 'GPS' : _settings.locationMode,
+      clearManualRegion: deletingManualRegion,
+      savedRegionKeys: remainingKeys,
+      notificationRegionKeys: _settings.enabledNotificationRegionKeys
+          .where((enabledKey) => enabledKey != key)
+          .toList(),
+    ));
   }
 
   Future<void> _addRegion() async {

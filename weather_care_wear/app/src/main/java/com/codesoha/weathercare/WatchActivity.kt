@@ -142,7 +142,7 @@ class WatchActivity : ComponentActivity() {
                         WatchScroll(active = pager.currentPage == page) {
                             when (page) {
                                 0 -> {
-                                    Label("챙겨요", 17, Ink, true)
+                                    Label("오늘의 준비물", 13, Accent)
                                     val items = snapshot.preparations()
                                     if (items.isEmpty()) Label(if (snapshot.stale()) "오래된 자료예요\n최신 날씨를 확인해 주세요" else "지금 챙길 물건이 없어요", 12, Muted)
                                     for (item in items) {
@@ -159,7 +159,6 @@ class WatchActivity : ComponentActivity() {
                                             }
                                         }
                                     }
-                                    Label("총 ${items.size}개 · 아래로", 10, Muted)
                                 }
                                 1 -> {
                                     Label(snapshot.region, 13, Accent)
@@ -175,7 +174,7 @@ class WatchActivity : ComponentActivity() {
                                     Label(snapshot.time + if (snapshot.stale()) " 기준 · 오래됨" else " 기준", 10, Muted)
                                 }
                                 2 -> {
-                                    Label("타임라인", 17, Ink, true)
+                                    Label("시간별 예보 · 강수확률", 10, Muted)
                                     val hours = snapshot.hours()
                                     if (hours.isEmpty()) Label("시간별 자료 없음", 12, Muted)
                                     for (hour in hours) Row(Modifier.fillMaxWidth().padding(vertical = 3.dp).background(Panel, RoundedCornerShape(12.dp)).padding(7.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -184,10 +183,9 @@ class WatchActivity : ComponentActivity() {
                                         Text(hour.temperature, color = Ink, fontSize = 16.sp)
                                         Text(hour.rain, color = Accent, fontSize = 10.sp)
                                     }
-                                    Label("시간별 예보 · 강수확률", 10, Muted)
                                 }
                                 else -> {
-                                    Label("기상/생활", 17, Ink, true)
+                                    Label("항목을 눌러 자세한 내용을 확인", 10, Muted)
                                     for (row in snapshot.metrics.chunked(2)) Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         for (item in row) Column(Modifier.weight(1f).heightIn(min = 50.dp).background(Panel, RoundedCornerShape(13.dp)).clickable { detail = item }.padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                                             Text(item.name, color = Muted, fontSize = 10.sp)

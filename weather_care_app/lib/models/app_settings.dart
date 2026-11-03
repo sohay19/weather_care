@@ -117,6 +117,7 @@ class AppSettings {
     String? manualRegionName,
     bool? legacyNotificationRegionAvailable,
     bool clearManualRegionKey = false,
+    bool clearManualRegion = false,
     bool? onboardingCompleted,
     bool? notificationEnabled,
     bool? backgroundLocationEnabled,
@@ -164,13 +165,16 @@ class AppSettings {
     return AppSettings(
       installationId: installationId,
       locationMode: locationMode ?? this.locationMode,
-      currentRegionId: currentRegionId ?? this.currentRegionId,
-      manualRegionKey:
-          clearManualRegionKey ? null : manualRegionKey ?? this.manualRegionKey,
+      currentRegionId:
+          clearManualRegion ? null : currentRegionId ?? this.currentRegionId,
+      manualRegionKey: clearManualRegion || clearManualRegionKey
+          ? null
+          : manualRegionKey ?? this.manualRegionKey,
       savedRegionKeys: savedRegionKeys ?? this.savedRegionKeys,
       notificationRegionKeys:
           notificationRegionKeys ?? this.notificationRegionKeys,
-      manualRegionName: manualRegionName ?? this.manualRegionName,
+      manualRegionName:
+          clearManualRegion ? null : manualRegionName ?? this.manualRegionName,
       legacyNotificationRegionAvailable: legacyNotificationRegionAvailable ??
           this.legacyNotificationRegionAvailable,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,

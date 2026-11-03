@@ -1,0 +1,30 @@
+{
+  "촬영일": "2026-11-03",
+  "모델": "Galaxy S26 Ultra SM-S948U_KR2",
+  "원본": "ADB exec-out screencap -p",
+  "패키지": "com.codesoha.weathercare.preview",
+  "화면": "촬영 전용 진입점에서 예시 저장 구역 3개의 편집 모드",
+  "APK_SHA256": "c7d89c49c8691eee2aafb6c2607a409aa5252270c6c1a3378599c183fbab56f3",
+  "files": [
+    {
+      "path": "region-notifications.png",
+      "size": [
+        1080,
+        2340
+      ],
+      "sha256": "a9f195e3b7d4d769ae4e7fafd542923802b8443fe4d0336e0b1cc45c090a67cd",
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        105
+      ],
+      "system_navigation_bar": [
+        0,
+        2205,
+        1080,
+        2340
+      ]
+    }
+  ]
+}

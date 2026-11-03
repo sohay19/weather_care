@@ -13,11 +13,11 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import generate_store_screenshots as previous
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshots/source-android-20261028'
-SETTINGS_SOURCE = ROOT / 'screenshots/source-android-20261030'
+SOURCE = ROOT / 'screenshot-inputs/source-android-20261028'
+SETTINGS_SOURCE = ROOT / 'screenshot-inputs/source-android-20261030'
 REGION_SOURCE = ROOT / 'screenshots/source-android-20261103'
 WATCH_SOURCE = ROOT / 'screenshots/source-wear-20261103'
-NATIVE = ROOT / 'screenshots/native-android-20261028'
+NATIVE = ROOT / 'screenshot-inputs/native-android-20261028'
 BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
 TOPICS = [

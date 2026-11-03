@@ -12,11 +12,11 @@ from PIL import Image, ImageDraw, ImageFilter
 import generate_android_store as common
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshots/source-ios-20261029'
-SETTINGS_SOURCE = ROOT / 'screenshots/source-ios-20261030'
+SOURCE = ROOT / 'screenshot-inputs/source-ios-20261029'
+SETTINGS_SOURCE = ROOT / 'screenshot-inputs/source-ios-20261030'
 REGION_SOURCE = ROOT / 'screenshots/source-ios-20261103'
 WATCH_SOURCE = ROOT / 'screenshots/source-watchos-20261103'
-NATIVE = ROOT / 'screenshots/native-ios-20261028'
+NATIVE = ROOT / 'screenshot-inputs/native-ios-20261028'
 # Android 제작 설정과 독립적으로 iOS 소개 순서를 관리한다.
 TOPICS = [
     ('01-main', '오늘의 날씨 요약', '나가기 전 필요한 정보,\n한눈에 챙겨요', '지금 날씨 · 오늘 최저·최고 · 어제와 비교', 'main'),

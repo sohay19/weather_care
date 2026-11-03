@@ -7,8 +7,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 ROOT = Path(__file__).resolve().parent
-SOURCE_DIR = ROOT / "screenshots" / "source"
-TABLET_SOURCE_DIR = ROOT / "screenshots" / "source-tablet"
+SOURCE_DIR = ROOT / "screenshot-inputs" / "source"
+TABLET_SOURCE_DIR = ROOT / "screenshot-inputs" / "source-tablet"
 OUTPUT_DIR = ROOT / "screenshots"
 GOOGLE_PLAY_DIR = ROOT / "google-play"
 FONT_DIR = ROOT.parent / "assets" / "fonts"

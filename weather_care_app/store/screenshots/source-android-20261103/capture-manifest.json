@@ -3,8 +3,8 @@
   "모델": "Galaxy S26 Ultra SM-S948U_KR2",
   "원본": "ADB exec-out screencap -p",
   "패키지": "com.codesoha.weathercare.preview",
-  "화면": "지역별 알림 ON/OFF 기본 상태와 편집 버튼",
-  "APK_SHA256": "4146f0acb320bbefc7f7ae0c96554ce617c208a42cf8f60f04b7dba38382563d",
+  "화면": "구역별로 알림을 켜고 끌 수 있어요 문구, 알림 ON/OFF 및 편집 버튼",
+  "APK_SHA256": "078f71859611bbd9764b684123cacd26f1fb8d134ab673dae5f292b2af9af172",
   "files": [
     {
       "path": "region-notifications.png",
@@ -12,7 +12,7 @@
         1080,
         2340
       ],
-      "sha256": "015b5494c1083d41ab10f2f831dc4ea038e0e2adffea65cfbfb4bd022c7a181d",
+      "sha256": "568158bd2bd7500b4887791a92f544740d1b57937dd0b5f660ecd4bb1b1293b8",
       "system_status_bar": [
         0,
         0,

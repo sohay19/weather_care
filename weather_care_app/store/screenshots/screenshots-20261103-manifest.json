@@ -23,7 +23,7 @@
         2160
       ],
       "mode": "RGB",
-      "sha256": "344f7fbda2c2fd4798ad20ab222aadfacc7c6159fff3e24b370dc14b40c92e18"
+      "sha256": "da1f2f8bd662592c7eae7a5533c4fdbd4205fc8ae09414b370ffcc68947bacc9"
     },
     {
       "path": "screenshots/android/03-widget.png",
@@ -95,7 +95,7 @@
         2880
       ],
       "mode": "RGB",
-      "sha256": "346e6f9495f0f30f814b8a1fb12528ebd74dff5507fda391a147e3172f83ba4f"
+      "sha256": "3116fac8eafa625a34d860feba7ca6da36e94f5494c0240b43309ca1b43e7487"
     },
     {
       "path": "screenshots/android-tablet/03-widget.png",

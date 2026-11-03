@@ -151,28 +151,6 @@ void main() {
     await api.messages?.close();
   });
 
-  test('워치 연결 자료 삭제가 실패하면 삭제 완료로 표시하지 않고 재시도한다', () async {
-    await access.load();
-    await access.mutate((_) async {});
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    const channel = MethodChannel('com.codesoha.weathercare/home-widget');
-    messenger.setMockMethodCallHandler(channel, (_) async {
-      throw PlatformException(code: 'WEAR_NETWORK_ERROR');
-    });
-    await access.deleteData();
-    expect(access.mode, ServerDataMode.deleting);
-    expect(api.calls.where((call) => call.method == 'DELETE'), isEmpty);
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      expect(call.method, 'wearUnlink');
-      return '{"linked":false}';
-    });
-    await access.deleteData();
-    expect(access.mode, ServerDataMode.deleted);
-    expect(api.calls.where((call) => call.method == 'DELETE'), hasLength(1));
-    messenger.setMockMethodCallHandler(channel, null);
-  });
-
   test(
       'missing server registration pauses reuse durably without automatic enrollment',
       () async {

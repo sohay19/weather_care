@@ -43,7 +43,6 @@ final class WearPhoneSync {
         IO.execute(() -> {
             String raw = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("payload", null);
             if (raw == null) return;
-            WearCloudSync.publish(app, raw);
             try {
                 PutDataMapRequest request = PutDataMapRequest.create(WearContract.SNAPSHOT_PATH);
                 request.getDataMap().putString(WearContract.PAYLOAD_KEY, raw);
@@ -58,7 +57,7 @@ final class WearPhoneSync {
         publish(app, snapshot, null);
         IO.execute(() -> {
             try {
-                if (!WearCloudSync.isLinked(app) && Tasks.await(Wearable.getNodeClient(app).getConnectedNodes(), 5, TimeUnit.SECONDS).isEmpty()) return;
+                if (Tasks.await(Wearable.getNodeClient(app).getConnectedNodes(), 5, TimeUnit.SECONDS).isEmpty()) return;
                 JSONObject details = WearDetailsLoader.load(rawUrl, key);
                 synchronized (MainActivity.WIDGET_LOCK) {
                     var saved = app.getSharedPreferences(MainActivity.WIDGET_PREFERENCES, Context.MODE_PRIVATE);

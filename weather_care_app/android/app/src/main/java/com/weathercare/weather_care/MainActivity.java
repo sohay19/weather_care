@@ -47,6 +47,12 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void configureFlutterEngine(FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
+        if (!getSharedPreferences("weather_care_cloud_link", MODE_PRIVATE).getAll().isEmpty()) {
+            androidx.work.WorkManager work = androidx.work.WorkManager.getInstance(this);
+            work.cancelUniqueWork("wear-cloud-periodic");
+            work.cancelUniqueWork("wear-cloud-fetch-and-publish");
+            deleteSharedPreferences("weather_care_cloud_link");
+        }
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(),
                 "com.codesoha.weathercare/background-location").setMethodCallHandler((call, result) -> {
             try {
@@ -74,10 +80,6 @@ public class MainActivity extends FlutterActivity {
                 flutterEngine.getDartExecutor().getBinaryMessenger(),
                 CHANNEL
         ).setMethodCallHandler((call, result) -> {
-            if (call.method.matches("wearStatus|wearClaim|wearUnlink|wearSend")) {
-                WearCloudSync.handle(this, call.method, call.arguments, result);
-                return;
-            }
             synchronized (WIDGET_LOCK) {
                 SharedPreferences preferences = getSharedPreferences(
                         WIDGET_PREFERENCES,

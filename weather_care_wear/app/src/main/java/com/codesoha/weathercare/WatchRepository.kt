@@ -13,15 +13,18 @@ import java.util.concurrent.TimeUnit
 
 class WatchRepository private constructor(private val context: Context) {
     private val preferences = context.getSharedPreferences("watch_weather", Context.MODE_PRIVATE)
-    private val state = MutableStateFlow(WatchSnapshot.parse(preferences.getString("snapshot", "")!!) ?: WatchSnapshot.EMPTY)
+    private val state = MutableStateFlow(restoreSnapshot())
+
+    private fun restoreSnapshot(): WatchSnapshot {
+        context.deleteSharedPreferences("watch_cloud_link")
+        val cached = WatchSnapshot.parse(preferences.getString("snapshot", "")!!) ?: return WatchSnapshot.EMPTY
+        if (!cached.json.has("_serverClockOffsetMs")) return cached
+        preferences.edit().remove("snapshot").remove("requested_at").apply()
+        return WatchSnapshot.EMPTY
+    }
+
     val snapshot = state.asStateFlow()
     val value get() = state.value
-    @Synchronized fun clear() {
-        preferences.edit().remove("snapshot").remove("requested_at").commit()
-        state.value = WatchSnapshot.EMPTY
-        WatchUpdates.request(context)
-        WatchExpiryWorker.schedule(context, value)
-    }
     init {
         // 앱을 열지 않고 위젯/수신 서비스만 사용해도 보조 갱신을 등록한다.
         WorkManager.getInstance(context).enqueueUniquePeriodicWork("watch-weather-periodic", ExistingPeriodicWorkPolicy.KEEP,
@@ -40,16 +43,6 @@ class WatchRepository private constructor(private val context: Context) {
         WatchExpiryWorker.schedule(context, next)
         Log.i("WeatherCareWear", "accepted revision=${next.revision}")
         return true
-    }
-
-    @Synchronized fun updateServerClock(publishedAt: Long, offset: Long) {
-        if (value.publishedAt != publishedAt || !value.json.has("_serverClockOffsetMs") ||
-            kotlin.math.abs(value.json.optLong("_serverClockOffsetMs") - offset) < 5000) return
-        val raw = org.json.JSONObject(value.json.toString()).put("_serverClockOffsetMs", offset).toString()
-        if (!preferences.edit().putString("snapshot", raw).commit()) return
-        state.value = WatchSnapshot.parse(raw) ?: return
-        WatchUpdates.request(context)
-        WatchExpiryWorker.schedule(context, value)
     }
 
     fun checked(type: String) = preferences.getBoolean(value.checkKey(type), false)
@@ -84,7 +77,6 @@ class WatchRepository private constructor(private val context: Context) {
 
 class WatchDataService : WearableListenerService() {
     override fun onDataChanged(events: DataEventBuffer) {
-        if (WatchCloudLink.get(this).configured) return
         for (event in events) if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == WearContract.SNAPSHOT_PATH) {
             runCatching { DataMapItem.fromDataItem(event.dataItem).dataMap.getString(WearContract.PAYLOAD_KEY) }
                 .getOrNull()?.let { WatchRepository.get(this).accept(it) }
@@ -94,11 +86,6 @@ class WatchDataService : WearableListenerService() {
 
 class WatchRefreshWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result = try {
-        val cloud = WatchCloudLink.get(applicationContext)
-        if (cloud.configured) {
-            cloud.refresh()
-            return Result.success()
-        }
         val client = Wearable.getDataClient(applicationContext)
         Tasks.await(client.dataItems, 15, TimeUnit.SECONDS).use { items ->
             for (item in items) if (item.uri.path == WearContract.SNAPSHOT_PATH) {

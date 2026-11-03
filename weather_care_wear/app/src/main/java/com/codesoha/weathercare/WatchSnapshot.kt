@@ -26,7 +26,7 @@ class WatchSnapshot(val json: JSONObject) {
     val maximum get() = widget.text("maximumTemperature", "--")
     val time get() = widget.text("refreshTime", "--:--").removeSuffix(" 기준").trim()
 
-    fun now(): Instant = Instant.now().plusMillis(json.optLong("_serverClockOffsetMs", 0))
+    fun now(): Instant = Instant.now()
 
     fun stale(now: Instant = now()): Boolean = generatedAt == null ||
         generatedAt.isAfter(now.plusSeconds(300)) || generatedAt.plusSeconds(3 * 3600).isBefore(now)

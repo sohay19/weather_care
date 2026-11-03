@@ -48,13 +48,6 @@ class WatchSnapshotTest {
         assertEquals("0°",compactTemperature("0°"))
         assertEquals("--",compactTemperature("--"))
     }
-    @Test fun serverClockMakesRemoteLabDatesComparable() {
-        val data = snapshot(java.time.Instant.now().plusSeconds(60 * 86400).toString())
-        data.json.put("_serverClockOffsetMs", 60L * 86400 * 1000)
-        assertFalse(data.stale())
-        data.json.put("_serverClockOffsetMs", 64L * 86400 * 1000)
-        assertTrue(data.stale())
-    }
     @Test fun phoneRefreshLabelDoesNotDuplicateBasisSuffix() {
         val data = snapshot()
         data.widget.put("refreshTime", "오후 3:48 기준")

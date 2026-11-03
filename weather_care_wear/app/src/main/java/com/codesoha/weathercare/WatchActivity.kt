@@ -65,21 +65,8 @@ class WatchActivity : ComponentActivity() {
 
 @Composable private fun WatchApp(repository: WatchRepository, requestedPage: Int, requestRevision: Long) {
     val snapshot by repository.snapshot.collectAsState()
-    val context = LocalContext.current
-    val cloud = remember(context) { WatchCloudLink.get(context) }
-    val connection by cloud.status.collectAsState()
-    var showConnection by remember { mutableStateOf(false) }
     var tick by remember { mutableLongStateOf(0) }
     LaunchedEffect(Unit) { while (true) { delay(30_000); tick++; repository.requestRefresh() } }
-    LaunchedEffect(showConnection) {
-        while (showConnection) {
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { runCatching { cloud.refresh() } }
-            delay(5000)
-        }
-    }
-    LaunchedEffect(connection.linked, snapshot.publishedAt) {
-        if (connection.linked && snapshot.hasData) showConnection = false
-    }
     val pager = rememberPagerState(initialPage = requestedPage, pageCount = { 4 })
     var detail by remember { mutableStateOf<WatchMetric?>(null) }
     LaunchedEffect(requestedPage, requestRevision) { detail = null; pager.scrollToPage(requestedPage) }
@@ -88,34 +75,12 @@ class WatchActivity : ComponentActivity() {
     val fonts = remember { FontFamily(Font(R.font.suite_regular), Font(R.font.suite_bold, FontWeight.Bold)) }
     MaterialTheme(colors = androidx.wear.compose.material.Colors(primary = Accent, secondary = Accent, background = Color.Black, surface = Panel),
         typography = androidx.wear.compose.material.Typography(defaultFontFamily = fonts)) {
-        key(if (showConnection) "connection" else detail?.name ?: "pages") {
+        key(detail?.name ?: "pages") {
         val dismiss = rememberSwipeToDismissBoxState()
-        SwipeToDismissBox(state = dismiss, onDismissed = { if (showConnection) showConnection = false else if (detail != null) detail = null else activity?.finish() }) { background ->
+        SwipeToDismissBox(state = dismiss, onDismissed = { if (detail != null) detail = null else activity?.finish() }) { background ->
         if (background) Box(Modifier.fillMaxSize().background(Color.Black)) else
         Scaffold(timeText = { TimeText(timeTextStyle = MaterialTheme.typography.caption2.copy(color = Muted, fontSize = 10.sp)) }) {
-            if (showConnection) {
-                BackHandler { showConnection = false }
-                WatchScroll {
-                    Label("워치 연결", 17, Accent, true)
-                    Label(if (connection.linked) "폰과 연결됐어요" else "폰의 설정 → 워치 연결에서\n아래 코드를 입력해 주세요", 12)
-                    if (!connection.linked && connection.code.isNotEmpty()) {
-                        Label(connection.code.chunked(4).joinToString("-"), 22, Ink, true)
-                        Label("코드는 5분 동안 유효해요", 10, Muted)
-                    }
-                    if (connection.busy) Label("처리 중이에요", 12, Muted)
-                    if (connection.message.isNotEmpty()) Label(connection.message, 11, Muted)
-                    if (!connection.busy) {
-                        if (connection.linked) {
-                            WatchButton("날씨 새로고침") { repository.requestRefresh(true) }
-                            WatchButton("연결 해제") { cloud.disconnect() }
-                        } else {
-                            WatchButton("새 코드 만들기") { cloud.newCode() }
-                            WatchButton("서버 연결 취소") { cloud.disconnect() }
-                        }
-                    }
-                    WatchButton("돌아가기") { showConnection = false }
-                }
-            } else if (detail != null) {
+            if (detail != null) {
                 BackHandler { detail = null }
                 val item = detail!!
                 WatchScroll {
@@ -133,8 +98,6 @@ class WatchActivity : ComponentActivity() {
                     Label("휴대전화와 연결", 17, Accent, true)
                     Label("휴대전화의 날씨챙겨에서\n날씨를 한 번 확인해 주세요", 12)
                     WatchButton("연결 확인") { repository.requestRefresh(true) }
-                    WatchButton("서버로 연결") { showConnection = true; cloud.open() }
-                    Label("페어링 또는 연결 코드로\n폰의 날씨를 받을 수 있어요", 10, Muted)
                 }
             } else {
                 HorizontalPager(state = pager, modifier = Modifier.fillMaxSize().edgeSwipeToDismiss(dismiss)) { page ->
@@ -202,7 +165,6 @@ class WatchActivity : ComponentActivity() {
                                 }
                             }
                             WatchButton("새로고침") { repository.requestRefresh(true) }
-                            WatchButton("워치 연결") { showConnection = true; cloud.open() }
                         }
                     }
                 }

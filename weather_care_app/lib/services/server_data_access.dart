@@ -4,7 +4,6 @@ import 'dart:math';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_client.dart';
@@ -26,15 +25,6 @@ class ServerDataPaused implements Exception {
 /// One gate for registration, settings, deletion and re-enrollment. A deletion
 /// intent is persisted BEFORE its network call, and survives uncertain replies.
 class ServerDataAccess extends ChangeNotifier {
-  static Future<void> _disconnectWatch() async {
-    try {
-      await const MethodChannel('com.codesoha.weathercare/home-widget')
-          .invokeMethod<String>('wearUnlink');
-    } on MissingPluginException {
-      // 워치 서버 연결 기능이 없는 플랫폼/이전 네이티브 호스트.
-    }
-  }
-
   static String _storageKey(String baseUrl) =>
       Uri.parse(baseUrl).host == 'weather-test-api.codesoha.com'
           ? 'weather_care_server_access_test'
@@ -230,7 +220,6 @@ class ServerDataAccess extends ChangeNotifier {
       await _serial(() async {
         if (!_loaded) throw StateError('Secure storage is not loaded');
         await _persist();
-        await _disconnectWatch();
         final owner = await _ensureCredential();
         await api.requestJson('DELETE', '/api/v1/installations/${owner.id}',
             headers: owner.headers);
@@ -271,10 +260,7 @@ class ServerDataAccess extends ChangeNotifier {
   Future<bool> deleteExistingData() async {
     if (!_loaded) await load();
     if (mode == ServerDataMode.deleted) return true;
-    if (credential == null) {
-      await _disconnectWatch();
-      return true;
-    }
+    if (credential == null) return true;
     await deleteData();
     return mode == ServerDataMode.deleted;
   }

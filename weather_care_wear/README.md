@@ -17,11 +17,7 @@
 
 페어링된 기기는 폰에서 채택한 위젯 스냅샷과 Today 상세 → Data Layer `/weather-care/v1/snapshot` → 워치 로컬 캐시 → 앱·타일·컴플리케이션으로 전달한다. 비밀키·설치 인증정보·정밀 좌표는 보내지 않는다. 별도 워치 위치 권한이나 FCM을 추가하지 않았다.
 
-페어링할 수 없는 기기는 워치 앱의 ‘서버로 연결’ 또는 ‘워치 연결’에서 코드를 발급받고 폰의 설정→워치 연결에 입력한다. 8자리 코드는5분 유효하며 실제 연결은 `https://weather-api.codesoha.com/api/v1/wear`를 사용한다. 서버는 코드와 읽기/쓰기 토큰의 해시를 저장하며, 워치는 해당 연결의 날씨 읽기만 할 수 있다. 설치 인증과 정밀 좌표는 전달하지 않고 위치키는 해시로 바꾼다. 서버 연결을 사용하는 동안 다른 Data Layer 자료는 채택하지 않는다. 양쪽에서 연결 해제가 가능하고 폰의 서버 데이터 삭제에도 연결 해제를 포함한다.
-
-폰 앱·기존 백그라운드 위젯 갱신에서 채택한 자료를 서버에 발행한다. 폰 홈 위젯이 없어도 `WearCloudRefreshWorker`가30분 주기로 실제 날씨 조회→`WearCloudPublishWorker`의 서버 수신 완료까지 처리한다. WorkManager가 재부팅 뒤에도 작업을 유지한다. 워치는 앱/수동 새로고침·타일 요청과30분 목표의 백그라운드 작업에서 수신한다. 절전과 네트워크에 따라 실행은 지연될 수 있으며 즉시 푸시 방식은 아니다. 현재 날씨1건을 저장하고24시간 지난 자료는 조회하지 않으며 읽을 때 비운다. 미사용90일 연결과 만료된 미연결 코드는 다음 발급 시 정리한다.
-
-폰의 메인 화면 저장뿐 아니라 기존 백그라운드 위치/위젯 갱신이 성공한 경로에서도 발행한다. 상세 조회는 폰 위젯 갱신을 지연하지 않는 직렬 작업으로 처리하고, 조회 전 구역이 바뀌었으면 결과를 버린다. 폰에 페어링 노드와 서버 연결이 모두 없으면 추가 Today 조회를 생략한다.
+폰의 메인 화면 저장뿐 아니라 기존 백그라운드 위치/위젯 갱신이 성공한 경로에서도 발행한다. 상세 조회는 폰 위젯 갱신을 지연하지 않는 직렬 작업으로 처리하고, 조회 전 구역이 바뀌었으면 결과를 버린다. 폰에 페어링된 워치가 없으면 추가 Today 조회를 생략한다.
 
 계약 버전은 1이며 순서값과 발행시각으로 늦은 응답을 거절한다. 전송 실패 자료는 폰에 남겨 재연결/워치 요청 때 재전송한다. 같은 Data Layer 경로만 사용하며 워치에 공개된 디버그 자료 주입 API는 없다. 시험 자료는 androidTest에만 포함된다.
 
@@ -48,9 +44,7 @@ adb shell am instrument -w -r -e class com.codesoha.weathercare.WatchDeviceTest 
 
 시험 자료로 체크·상세·화면 이동·연속3회 구역 변경/이전 응답 거절·만료 준비물 제거를 검사했고, 앱 Activity를 열지 않은 채 채택한 새 자료가 소형/대형에 반영되는 것과 카드 탭의 현재날씨 진입을 확인했다. `app/build/device-test/`의 로그·스크린샷은 합성 시험 자료다. 기상 관측을 실제로 이동해 받은 결과로 설명하면 안 된다.
 
-리모트랩 워치는 Data Layer 페어링 없이 사용 중이다. 현재 SM-F971N 수정본과 SM-L340_KR2의 실제 서버 연결/해제/재연결, 양쪽 앱을 닫은 뒤 실제 날씨 조회·전송·타일 반영을 확인했다. 검증 버전은15이며 지역·기온14.5°·체감10.7°·기준시각과 Today 상세10개가 두 기기에서 일치했다. 실제 위치 이동, Bluetooth 재페어링,30분 이상 자연 주기/Doze 장기 실행,24시간 배터리,이전 OS 및 다른 페이스·큰 글자 전체 조합은 남아 있다. 앞선 아날로그 밸런스 정보칸 검사는 이전 예약 기기의 UI 시험 자료 기록이며 현재 연결 검증과 구분한다. 이번 서버 API/DB는 시험·운영에 반영했으며 스토어 게시·커밋·푸시는 하지 않았다.
-
-실기기 폰의 Play 설치본은 개발 APK와 서명이 달라 삭제하거나 덮어쓰지 않았다. Android Gradle의 `-PweatherCarePreview=true`로 `com.codesoha.weathercare.preview`/‘날씨챙겨 수정본’을 별도 설치했다. 기본 빌드는 기존 ID/이름과 Google Services 설정을 유지한다. 검증용은 Dart의 명시적 FirebaseOptions를 사용하고 Google Services 자동 리소스 생성은 생략한다. Preview는 Data Layer용 같은 패키지 조건을 만족하지 않으므로 이번 검증은 서버 연결에 한한다. 현재 검증 APK는 폰 `weather_care_app/build/weather-care-watch-cloud-preview.apk`, 워치 `weather_care_wear/app/build/outputs/apk/debug/app-debug.apk`다. Play 설치본에 이 기능을 업데이트하려면 별도 스토어 배포가 필요하다.
+실기기에서 자동 동기화를 시험할 때는 휴대전화와 워치를 페어링하고 양쪽에 동일한 패키지 이름과 서명으로 빌드한 앱을 설치한다.
 
 공식 참고: [Wear Widgets 시작](https://developer.android.com/training/wearables/widgets/get_started), [타일 호환](https://developer.android.com/training/wearables/widgets/migration), [Data Layer 패키지·서명](https://developer.android.com/training/wearables/data/overview).
 

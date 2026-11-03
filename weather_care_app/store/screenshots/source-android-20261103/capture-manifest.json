@@ -3,8 +3,8 @@
   "모델": "Galaxy S26 Ultra SM-S948U_KR2",
   "원본": "ADB exec-out screencap -p",
   "패키지": "com.codesoha.weathercare.preview",
-  "화면": "촬영 전용 진입점에서 예시 저장 구역 3개의 편집 모드",
-  "APK_SHA256": "c7d89c49c8691eee2aafb6c2607a409aa5252270c6c1a3378599c183fbab56f3",
+  "화면": "지역별 알림 ON/OFF 기본 상태와 편집 버튼",
+  "APK_SHA256": "4146f0acb320bbefc7f7ae0c96554ce617c208a42cf8f60f04b7dba38382563d",
   "files": [
     {
       "path": "region-notifications.png",
@@ -12,7 +12,7 @@
         1080,
         2340
       ],
-      "sha256": "a9f195e3b7d4d769ae4e7fafd542923802b8443fe4d0336e0b1cc45c090a67cd",
+      "sha256": "015b5494c1083d41ab10f2f831dc4ea038e0e2adffea65cfbfb4bd022c7a181d",
       "system_status_bar": [
         0,
         0,

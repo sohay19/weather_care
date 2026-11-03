@@ -5,7 +5,7 @@
   "화면": "기존 Android 촬영 자료 및 리모트랩 Galaxy S26 Ultra와 Galaxy Watch9의 실기기 화면",
   "데이터": "실제 운영 서버 날씨. 5번은 실기기 워치 앱 네 탭의 화면을 원형으로 배치한 소개 이미지.",
   "태블릿": "같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.",
-  "구성": "2번은 저장 구역 편집 UI, 5번은 갤럭시 워치 앱 소개로 교체했다. 1·3·4·6·7·8번은 직전 등록 이미지와 동일하다.",
+  "구성": "2번은 편집 버튼이 표시되는 지역별 알림 ON/OFF 화면, 5번은 갤럭시 워치 앱 소개다. 1·3·4·6·7·8번은 10월 30일 등록 이미지와 동일하다.",
   "files": [
     {
       "path": "screenshots/android/01-main.png",
@@ -23,7 +23,7 @@
         2160
       ],
       "mode": "RGB",
-      "sha256": "53e47760be7e1978805e92276d95133ccfe282274cbc96357bc4708eabaec154"
+      "sha256": "344f7fbda2c2fd4798ad20ab222aadfacc7c6159fff3e24b370dc14b40c92e18"
     },
     {
       "path": "screenshots/android/03-widget.png",
@@ -95,7 +95,7 @@
         2880
       ],
       "mode": "RGB",
-      "sha256": "e1b026aada4904156052378b3960b2b1f3cdbb4476fcf93781b5fa23f2e3a477"
+      "sha256": "346e6f9495f0f30f814b8a1fb12528ebd74dff5507fda391a147e3172f83ba4f"
     },
     {
       "path": "screenshots/android-tablet/03-widget.png",

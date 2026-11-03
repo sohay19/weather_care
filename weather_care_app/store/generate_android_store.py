@@ -22,7 +22,7 @@ BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
 TOPICS = [
     ('01-main', '오늘의 날씨 요약', '나가기 전 필요한 정보,\n한눈에 챙겨요', '지금 날씨 · 오늘 최저·최고 · 어제와 비교', 'main'),
-    ('02-region-notifications', '저장 구역 편집', '자주 보는 구역을\n간편하게 관리해요', '여러 지역 저장 · 알림 선택 · 구역 편집', 'region-notifications'),
+    ('02-region-notifications', '지역별 알림', '관심 있는 지역의\n날씨 알림을 골라요', '여러 지역 저장 · 지역마다 알림 ON/OFF', 'region-notifications'),
     ('03-widget', '홈 화면 위젯', '앱을 열지 않아도\n날씨가 보여요', '작게, 넓게, 자세하게 · 세 가지 크기', None),
     ('04-dark-mode', '편안한 다크모드', '앱도 위젯도\n눈이 편안하게', '라이트 · 다크 · 시스템 설정에 맞춰', 'dark-main'),
     ('05-watch', '갤럭시 워치 앱', '갤럭시 워치에서도\n날씨를 챙겨요', '오늘의 준비물 · 현재 날씨 · 타임라인 · 기상·생활', None),
@@ -262,7 +262,7 @@ def main(screenshots_only=False, platforms=None, topics=None):
         '화면': '기존 Android 촬영 자료 및 리모트랩 Galaxy S26 Ultra와 Galaxy Watch9의 실기기 화면',
         '데이터': '실제 운영 서버 날씨. 5번은 실기기 워치 앱 네 탭의 화면을 원형으로 배치한 소개 이미지.',
         '태블릿': '같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.',
-        '구성': '2번은 저장 구역 편집 UI, 5번은 갤럭시 워치 앱 소개로 교체했다. 1·3·4·6·7·8번은 직전 등록 이미지와 동일하다.',
+        '구성': '2번은 편집 버튼이 표시되는 지역별 알림 ON/OFF 화면, 5번은 갤럭시 워치 앱 소개다. 1·3·4·6·7·8번은 10월 30일 등록 이미지와 동일하다.',
         'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
     guide = ROOT / 'screenshots/SCREENSHOTS_20261103.md'

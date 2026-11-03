@@ -1,6 +1,6 @@
 # Android 스토어 스크린샷 · 2026-11-03
 
-- 2번은 리모트랩 Galaxy S26 Ultra(SM-S948U_KR2)의 촬영용 앱에서 예시 저장 구역을 열어 촬영한 편집 화면이다.
+- 2번은 리모트랩 Galaxy S26 Ultra(SM-S948U_KR2)의 촬영용 앱에서 촬영한 지역별 알림 ON/OFF 화면이다. 기본 상태에서 편집 버튼과 각 구역의 알림 스위치가 보인다.
 - 5번은 Fold8과 서버로 연결된 리모트랩 Galaxy Watch9(SM-L340)의 앱 네 탭을 촬영해 원형으로 배치했다.
 - 휴대전화용은 1080×2160, 태블릿용은 1440×2880 RGB PNG다. 양쪽 규격에 같은 기기 원본을 사용했다.
 - 등록용 묶음은 [Android ZIP](../weather-care-android-screenshots-20261103.zip)이다.

@@ -1841,6 +1841,39 @@ void main() {
     expect(stored.manualRegionKey, first.key);
   });
 
+  testWidgets('구역 편집은 행 위치를 유지하고 핸들로 바꾼 순서를 저장한다', (tester) async {
+    final first = catalog.search('서울 구로 구로3동').single;
+    final second = catalog.search('부산 해운대 좌1동').single;
+    const repository = AppSettingsRepository();
+    await repository.save(AppSettings.fallback('test').copyWith(
+      savedRegionKeys: [first.key, second.key],
+      notificationRegionKeys: [second.key],
+    ));
+    await start(tester, initialIndex: 2);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    final firstRow = find.byKey(ValueKey(first.key));
+    final secondRow = find.byKey(ValueKey(second.key));
+    final initialTop = tester.getTopLeft(firstRow).dy;
+    await tester.tap(find.text('편집'));
+    await tester.pumpAndSettle();
+    expect(find.text('구역을 편집할 수 있어요'), findsOneWidget);
+    expect(tester.getTopLeft(firstRow).dy, initialTop);
+    final handle = find.descendant(
+      of: firstRow,
+      matching: find.byType(ReorderableDragStartListener),
+    );
+    expect(handle, findsOneWidget);
+    tester
+        .widget<ReorderableListView>(find.byType(ReorderableListView))
+        .onReorderItem!(0, 1);
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(secondRow).dy, initialTop);
+    final stored = await repository.load('test');
+    expect(stored.savedRegionKeys, [second.key, first.key]);
+    expect(stored.notificationRegionKeys, [second.key]);
+  });
+
   testWidgets('구역 삭제는 알림 상태별 확인을 거쳐 저장하고 선택 구역은 GPS로 전환한다', (tester) async {
     final active = catalog.search('서울 구로 구로3동').single;
     final other = catalog.search('부산 해운대 좌1동').single;

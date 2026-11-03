@@ -7,8 +7,10 @@ import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import type { ServerEnv } from '../types';
 
 export const notificationRegionsSchema = z.object({
-  regions: z.array(z.object({ key: z.string().min(1).max(200), enabled: z.boolean() }).strict()).max(50),
-}).strict().refine(({ regions }) => new Set(regions.map(r => r.key)).size === regions.length);
+  regions: z.array(z.object({ key: z.string().min(1).max(200), enabled: z.boolean() }).strict()).max(51),
+}).strict().refine(({ regions }) =>
+  new Set(regions.map(r => r.key)).size === regions.length &&
+  regions.filter(r => r.key !== 'GPS' && r.key !== 'LEGACY').length <= 49);
 
 export interface RegionTarget {
   regionKey?: string; scopeId?: string; regionName?: string;

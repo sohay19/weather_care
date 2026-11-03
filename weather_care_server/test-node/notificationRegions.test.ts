@@ -6,7 +6,7 @@ import installations from '../src/api/installations';
 import settings from '../src/api/notificationSettings';
 import { asD1Database, runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
 import { secretHash, deleteInstallationData } from '../src/security/installationAccess';
-import { catalogNotificationRegion, expandNotificationRegions, saveNotificationRegions } from '../src/notification/notificationRegions';
+import { catalogNotificationRegion, expandNotificationRegions, notificationRegionsSchema, saveNotificationRegions } from '../src/notification/notificationRegions';
 import { runRecommendationNotificationJob } from '../src/notification/notificationScheduler';
 import { KMA_ADMINISTRATIVE_AREAS } from '../src/regions/kmaAdministrativeAreas';
 import { sendBatch, type FcmPayload, type FcmSendResult } from '../src/notification/fcmClient';
@@ -21,6 +21,12 @@ const now = new Date('2026-09-02T07:00:00+09:00');
 const keys = KMA_ADMINISTRATIVE_AREAS.filter(r => r[1].includes('구로구 구로') && r[1].endsWith('동'))
   .map(r => `${r[0]}|${r[1].split(' ').at(-1)}|${r[2]}|${r[3]}`);
 const first = keys[0], second = keys[1];
+it('allows 49 saved regions alongside GPS and LEGACY', () => {
+  const saved = Array.from({length: 49}, (_, index) => ({key: `saved-${index}`, enabled: true}));
+  const special = [{key: 'GPS', enabled: true}, {key: 'LEGACY', enabled: true}];
+  expect(notificationRegionsSchema.safeParse({regions: [...saved, ...special]}).success).toBe(true);
+  expect(notificationRegionsSchema.safeParse({regions: [...saved, {key: 'extra', enabled: true}]}).success).toBe(false);
+});
 const router = new Hono<{Bindings:ServerEnv}>().route('/installations', installations).route('/settings',settings);
 const success = (sent:FcmPayload[]) => async (_env:ServerEnv, payloads:FcmPayload[]):Promise<FcmSendResult[]> => {
   sent.push(...payloads); return payloads.map(p => ({token:p.token,notificationKey:p.notificationKey,success:true,unregistered:false,status:200}));

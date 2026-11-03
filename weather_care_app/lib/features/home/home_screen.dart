@@ -376,7 +376,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _settings = savedSettings.copyWith(
         notificationRegionKeys: savedSettings.enabledNotificationRegionKeys);
     final notificationRegion = widget.initialNotificationRegion;
-    if (notificationRegion?.key == 'GPS') {
+    final deletedNotificationRegion = notificationRegion != null &&
+        notificationRegion.key != 'GPS' &&
+        notificationRegion.key != 'LEGACY' &&
+        !_settings.savedRegionKeys.contains(notificationRegion.key);
+    if (deletedNotificationRegion) {
+      _selectedIndex = 2;
+      _detailFocusTopic = null;
+    } else if (notificationRegion?.key == 'GPS') {
       _settings = _settings.copyWith(locationMode: 'GPS');
     } else if (notificationRegion != null) {
       var selected = _regionCatalog?.find(notificationRegion.key);
@@ -390,13 +397,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           currentRegionId: '${notificationRegion.nx}_${notificationRegion.ny}',
           manualRegionKey: selected?.key,
           clearManualRegionKey: selected == null,
-          manualRegionName: notificationRegion.name,
-          savedRegionKeys: [
-            ..._settings.savedRegionKeys,
-            if (selected != null &&
-                !_settings.savedRegionKeys.contains(selected.key))
-              selected.key
-          ]);
+          manualRegionName: notificationRegion.name);
     }
     final access = widget.serverDataAccess ??
         ServerDataAccess(
@@ -430,7 +431,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         saveLocal: _settingsRepository.save,
         saveServer: (settings) async {
           if (access.paused) throw const ServerDataPaused();
-          await _settingsSync!.save(settings);
+          // The server replaces the region list. Wait for a valid catalog before filtering it.
+          final catalog = await _loadRegionCatalog();
+          await _settingsSync!.save(settings.copyWith(
+            savedRegionKeys: settings.savedRegionKeys
+                .where((key) => catalog.find(key) != null)
+                .toList(),
+          ));
         })
       ..addListener(_onSettingsSaveChanged);
     unawaited(_settingsSave!.save(_settings));
@@ -439,6 +446,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final permissionsConfirmed =
         await widget.permissionOnboardingStore.isConfirmed();
     if (!mounted) return;
+    if (deletedNotificationRegion) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          content: const Text('삭제된 구역입니다'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+    }
     if (!permissionsConfirmed) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -1543,9 +1565,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         const EdgeInsetsDirectional.only(start: 16, end: 24);
     final gpsSelected = _settings.locationMode == 'GPS';
     final savedKeys = _settings.savedRegionKeys;
+    final catalog = _regionCatalog;
     final regions = [
       for (final key in savedKeys)
-        if (_regionCatalog?.find(key) case final region?) region,
+        if (catalog?.find(key) != null || (_editingRegions && catalog != null))
+          (key: key, region: catalog?.find(key)),
     ];
     final errorColor = Theme.of(context).colorScheme.error;
     return Drawer(
@@ -1585,7 +1609,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             child: Text('구역 선택',
                                 style: Theme.of(context).textTheme.titleLarge),
                           ),
-                          if (regions.isNotEmpty)
+                          if (catalog != null && savedKeys.isNotEmpty)
                             TextButton(
                               onPressed: () => setState(
                                   () => _editingRegions = !_editingRegions),
@@ -1611,7 +1635,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             maintainState: true,
                             child: Text(
                               _settings.notificationEnabled
-                                  ? '지역별로 알림을 켜고 끌 수 있어요'
+                                  ? '구역별로 알림을 켜고 끌 수 있어요'
                                   : '전체 알림이 꺼져 있어요. 지역별 선택은 유지돼요.',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
@@ -1706,50 +1730,58 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ],
                 ),
                 children: [
-                  for (final (index, region) in regions.indexed)
+                  for (final (index, entry) in regions.indexed)
                     ListTile(
-                      key: ValueKey(region.key),
+                      key: ValueKey(entry.key),
                       leading: _editingRegions
                           ? ReorderableDragStartListener(
                               index: index,
                               child: Tooltip(
-                                message: '${region.displayName} 순서 이동',
+                                message:
+                                    '${entry.region?.displayName ?? '현재 사용할 수 없는 구역'} 순서 이동',
                                 child: const Icon(Icons.menu_rounded),
                               ),
                             )
                           : Icon(!gpsSelected &&
-                                  _settings.manualRegionKey == region.key
+                                  _settings.manualRegionKey == entry.key
                               ? Icons.check_circle_rounded
                               : Icons.location_on_outlined),
-                      title: Text(region.displayName),
-                      subtitle: region.fullName == region.displayName
-                          ? null
-                          : Text(region.fullName
+                      title:
+                          Text(entry.region?.displayName ?? '현재 사용할 수 없는 구역'),
+                      subtitle: switch (entry.region) {
+                        null => Text(_unavailableRegionName(entry.key)),
+                        final region
+                            when region.fullName != region.displayName =>
+                          Text(region.fullName
                               .substring(
-                                  0,
-                                  region.fullName.length -
-                                      region.displayName.length)
+                                0,
+                                region.fullName.length -
+                                    region.displayName.length,
+                              )
                               .trim()),
+                        _ => null,
+                      },
                       selected: !gpsSelected &&
-                          _settings.manualRegionKey == region.key,
+                          _settings.manualRegionKey == entry.key,
                       trailing: _editingRegions
                           ? OutlinedButton(
-                              key: ValueKey('region-delete-${region.key}'),
+                              key: ValueKey('region-delete-${entry.key}'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: errorColor,
                                 side: BorderSide(color: errorColor),
                                 shape: const StadiumBorder(),
                               ),
                               onPressed: () =>
-                                  _confirmRegionDeletion(region.key),
+                                  _confirmRegionDeletion(entry.key),
                               child: Semantics(
-                                label: '${region.fullName} 삭제',
+                                label:
+                                    '${entry.region?.fullName ?? _unavailableRegionName(entry.key)} 삭제',
                                 excludeSemantics: true,
                                 child: const Text('삭제'),
                               ),
                             )
                           : _regionNotificationSwitch(
-                              region.key, region.fullName),
+                              entry.key, entry.region!.fullName),
                       onTap: _editingRegions
                           ? null
                           : () {
@@ -1757,8 +1789,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               unawaited(
                                   _handleSettingsChanged(_settings.copyWith(
                                 locationMode: 'MANUAL',
-                                currentRegionId: region.gridId,
-                                manualRegionKey: region.key,
+                                currentRegionId: entry.region!.gridId,
+                                manualRegionKey: entry.key,
                               )));
                             },
                     ),
@@ -1790,6 +1822,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  String _unavailableRegionName(String key) {
+    final parts = key.split('|');
+    return parts.length == 4 && parts[1].isNotEmpty ? parts[1] : '이전에 저장한 구역';
   }
 
   Future<void> _confirmRegionDeletion(String key) async {
@@ -1824,7 +1861,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final remainingKeys =
         _settings.savedRegionKeys.where((savedKey) => savedKey != key).toList();
     final deletingManualRegion = _settings.manualRegionKey == key;
-    if (!remainingKeys.any((key) => _regionCatalog?.find(key) != null)) {
+    if (remainingKeys.isEmpty) {
       setState(() => _editingRegions = false);
     }
     await _handleSettingsChanged(_settings.copyWith(

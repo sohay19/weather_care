@@ -1812,7 +1812,7 @@ void main() {
         find.byKey(ValueKey('region-notification-${second.key}'));
     expect(tester.widget<Switch>(firstSwitch).value, isTrue);
     expect(tester.widget<Switch>(secondSwitch).value, isFalse);
-    expect(find.text('지역별로 알림을 켜고 끌 수 있어요'), findsOneWidget);
+    expect(find.text('구역별로 알림을 켜고 끌 수 있어요'), findsOneWidget);
     final columnLabel =
         find.byKey(const ValueKey('region-notification-column-label'));
     final labelStyle = tester.widget<Text>(columnLabel).style!;
@@ -1953,8 +1953,8 @@ void main() {
 
   testWidgets('알림의 저장 구역을 열어도 기존 구독을 켜거나 끄지 않는다', (tester) async {
     final region = catalog.search('서울 구로 구로3동').single;
-    await const AppSettingsRepository().save(
-        AppSettings.fallback('test').copyWith(notificationRegionKeys: ['GPS']));
+    await const AppSettingsRepository().save(AppSettings.fallback('test')
+        .copyWith(savedRegionKeys: [region.key], notificationRegionKeys: ['GPS']));
     await start(tester,
         initialIndex: 0,
         notificationRegion: NotificationRegion(
@@ -1969,6 +1969,57 @@ void main() {
         screen(tester).initialSettings!.enabledNotificationRegionKeys, ['GPS']);
     expect(
         screen(tester).initialSettings!.savedRegionKeys, contains(region.key));
+  });
+
+  testWidgets('삭제된 구역의 알림은 팝업만 열고 마지막 선택을 유지한다', (tester) async {
+    final saved = catalog.search('부산 해운대 좌1동').single;
+    final deleted = catalog.search('서울 구로 구로3동').single;
+    const repository = AppSettingsRepository();
+    await repository.save(AppSettings.fallback('test').copyWith(
+      locationMode: 'MANUAL',
+      currentRegionId: saved.gridId,
+      manualRegionKey: saved.key,
+      savedRegionKeys: [saved.key],
+      notificationRegionKeys: [saved.key],
+    ));
+    await start(tester,
+        settle: false,
+        initialIndex: 0,
+        notificationRegion: NotificationRegion(
+            key: deleted.key, nx: deleted.nx, ny: deleted.ny));
+    expect(find.text('삭제된 구역입니다'), findsOneWidget);
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    final stored = await repository.load('test');
+    expect(stored.manualRegionKey, saved.key);
+    expect(stored.savedRegionKeys, [saved.key]);
+    expect(stored.notificationRegionKeys, [saved.key]);
+    expect(weather.calls.last.nx, saved.nx);
+    expect(weather.calls.last.ny, saved.ny);
+  });
+
+  testWidgets('카탈로그에서 사라진 구역은 서버에서 제외하고 편집에서 삭제할 수 있다', (tester) async {
+    const key = '0000000000|이전동|60|127';
+    const repository = AppSettingsRepository();
+    await repository.save(AppSettings.fallback('test').copyWith(
+      savedRegionKeys: [key],
+      notificationRegionKeys: [key],
+    ));
+    await start(tester, initialIndex: 2);
+    expect(sync.calls.last.savedRegionKeys, isEmpty);
+    expect((await repository.load('test')).savedRegionKeys, [key]);
+    await tester.tap(find.byKey(const ValueKey('main-region-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('편집'));
+    await tester.pumpAndSettle();
+    expect(find.text('현재 사용할 수 없는 구역'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('region-delete-$key')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(
+        of: find.byType(AlertDialog), matching: find.text('삭제')));
+    await tester.pumpAndSettle();
+    expect((await repository.load('test')).savedRegionKeys, isEmpty);
+    expect(find.text('완료'), findsNothing);
   });
 
   testWidgets('현재 위치 알림은 기본 ON이고 직접 끈 선택은 재시작 후에도 유지한다', (tester) async {

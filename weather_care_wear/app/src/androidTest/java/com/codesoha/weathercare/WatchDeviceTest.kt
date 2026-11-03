@@ -3,6 +3,7 @@ package com.codesoha.weathercare
 import android.content.Intent
 import android.graphics.Bitmap
 import android.util.Log
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.*
@@ -19,6 +20,102 @@ import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class WatchDeviceTest {
+    @Test fun preparationCheckboxFollowsRegionWithoutLeavingPage() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        val repository = WatchRepository.get(context)
+        val preferences = context.getSharedPreferences("watch_weather", 0)
+        val original = preferences.getString("snapshot", null)
+        val originalChecks = preferences.all.filter { it.key.contains('|') && it.value is Boolean }
+        val base = maxOf(System.currentTimeMillis(), repository.value.publishedAt)
+        val firstRegion = "체크 시험 A $base"
+        val secondRegion = "체크 시험 B $base"
+        var umbrellaLabel = ""
+
+        fun showRegion(offset: Int, region: String) {
+            umbrellaLabel = if (region == firstRegion) "A 구역 우산" else "B 구역 우산"
+            val payload = JSONObject(fixture(base + offset, offset, region))
+            val widget = payload.getJSONObject("widget")
+            for (field in listOf("preparations", "preparationCatalog")) {
+                widget.getJSONArray(field).getJSONObject(0).put("label", umbrellaLabel)
+            }
+            instrumentation.runOnMainSync { assertTrue(repository.accept(payload.toString())) }
+        }
+
+        fun findUmbrella(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+            if (node == null || !node.refresh()) return null
+            if (node.contentDescription?.toString() == "$umbrellaLabel 챙김") return node
+            for (index in 0 until node.childCount) {
+                findUmbrella(node.getChild(index))?.let { return it }
+            }
+            return null
+        }
+
+        fun assertUmbrellaChecked(checked: Boolean): AccessibilityNodeInfo {
+            repeat(12) {
+                val node = findUmbrella(instrumentation.uiAutomation.rootInActiveWindow)
+                if (node != null && node.isChecked == checked) {
+                    assertEquals("$umbrellaLabel 저장 상태", checked, repository.checked("UMBRELLA"))
+                    return node
+                }
+                android.os.SystemClock.sleep(400)
+            }
+            assertEquals("$umbrellaLabel 저장 상태", checked, repository.checked("UMBRELLA"))
+            throw AssertionError("$umbrellaLabel 체크 표시: $checked")
+        }
+
+        fun tapUmbrella(checked: Boolean) {
+            val node = assertUmbrellaChecked(checked)
+            assertTrue(node.performAction(AccessibilityNodeInfo.ACTION_CLICK))
+        }
+
+        try {
+            showRegion(1, firstRegion)
+            context.startActivity(Intent(context, WatchActivity::class.java)
+                .putExtra("screen", "prepare")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            tapUmbrella(false)
+            assertUmbrellaChecked(true)
+
+            showRegion(2, secondRegion)
+            assertUmbrellaChecked(false)
+            showRegion(3, firstRegion)
+            assertUmbrellaChecked(true)
+            showRegion(4, secondRegion)
+            assertUmbrellaChecked(false)
+
+            tapUmbrella(false)
+            assertUmbrellaChecked(true)
+            showRegion(5, firstRegion)
+            assertUmbrellaChecked(true)
+            tapUmbrella(true)
+            assertUmbrellaChecked(false)
+            showRegion(6, secondRegion)
+            assertUmbrellaChecked(true)
+            showRegion(7, firstRegion)
+            assertUmbrellaChecked(false)
+        } finally {
+            val cleanup = preferences.edit()
+            preferences.all.keys.filter {
+                it.startsWith("$firstRegion|") || it.startsWith("$secondRegion|")
+            }.forEach(cleanup::remove)
+            originalChecks.forEach { (key, value) ->
+                if (!preferences.contains(key)) cleanup.putBoolean(key, value as Boolean)
+            }
+            cleanup.commit()
+            if (repository.value.region in listOf(firstRegion, secondRegion)) {
+                val restored = if (original == null) {
+                    JSONObject().put("schemaVersion", 1).put("cleared", true).put("widget", JSONObject())
+                } else {
+                    JSONObject(original)
+                }
+                val stamp = repository.value.publishedAt + 1
+                repository.accept(restored.put("revision", stamp).put("publishedAt", stamp).toString())
+                if (original == null) preferences.edit().remove("snapshot").commit()
+            }
+        }
+    }
+
     @Test fun watchAppCacheChecksDetailsAndDataLayerAvailability() {
         val inst=InstrumentationRegistry.getInstrumentation()
         val context=inst.targetContext

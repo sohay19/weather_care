@@ -2,18 +2,17 @@ package com.codesoha.weathercare
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.work.*
 import com.codesoha.weathercare.wearbridge.WearContract
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 class WatchRepository private constructor(private val context: Context) {
     private val preferences = context.getSharedPreferences("watch_weather", Context.MODE_PRIVATE)
-    private val state = MutableStateFlow(restoreSnapshot())
+    private val state = mutableStateOf(restoreSnapshot())
 
     private fun restoreSnapshot(): WatchSnapshot {
         context.deleteSharedPreferences("watch_cloud_link")
@@ -23,7 +22,6 @@ class WatchRepository private constructor(private val context: Context) {
         return WatchSnapshot.EMPTY
     }
 
-    val snapshot = state.asStateFlow()
     val value get() = state.value
     init {
         // 앱을 열지 않고 위젯/수신 서비스만 사용해도 보조 갱신을 등록한다.
@@ -45,9 +43,11 @@ class WatchRepository private constructor(private val context: Context) {
         return true
     }
 
-    fun checked(type: String) = preferences.getBoolean(value.checkKey(type), false)
-    fun toggle(type: String): Boolean {
-        val key = value.checkKey(type)
+    fun checked(type: String, snapshot: WatchSnapshot = value) =
+        preferences.getBoolean(snapshot.checkKey(type), false)
+
+    fun toggle(type: String, snapshot: WatchSnapshot = value): Boolean {
+        val key = snapshot.checkKey(type)
         val checked = !preferences.getBoolean(key, false)
         // 지난날 키만 정리하고 같은 날 다른 구역의 체크는 유지한다.
         val editor = preferences.edit()

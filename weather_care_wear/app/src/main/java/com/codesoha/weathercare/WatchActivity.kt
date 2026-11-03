@@ -64,7 +64,6 @@ class WatchActivity : ComponentActivity() {
 }
 
 @Composable private fun WatchApp(repository: WatchRepository, requestedPage: Int, requestRevision: Long) {
-    val snapshot by repository.snapshot.collectAsState()
     var tick by remember { mutableLongStateOf(0) }
     LaunchedEffect(Unit) { while (true) { delay(30_000); tick++; repository.requestRefresh() } }
     val pager = rememberPagerState(initialPage = requestedPage, pageCount = { 4 })
@@ -80,6 +79,7 @@ class WatchActivity : ComponentActivity() {
         SwipeToDismissBox(state = dismiss, onDismissed = { if (detail != null) detail = null else activity?.finish() }) { background ->
         if (background) Box(Modifier.fillMaxSize().background(Color.Black)) else
         Scaffold(timeText = { TimeText(timeTextStyle = MaterialTheme.typography.caption2.copy(color = Muted, fontSize = 10.sp)) }) {
+            val snapshot = repository.value
             if (detail != null) {
                 BackHandler { detail = null }
                 val item = detail!!
@@ -103,15 +103,19 @@ class WatchActivity : ComponentActivity() {
                 }
             } else {
                 HorizontalPager(state = pager, modifier = Modifier.fillMaxSize().edgeSwipeToDismiss(dismiss)) { page ->
-                    key(snapshot.publishedAt, tick) {
+                    // 준비물 탭은 유지하고 각 체크박스의 상태만 구역과 날짜에 맞춰 읽는다.
+                    key(if (page == 1) Unit else snapshot.publishedAt to tick) {
                         WatchScroll(active = pager.currentPage == page) {
                             when (page) {
                                 1 -> {
+                                    val snapshot = repository.value
                                     Label("오늘의 준비물", 13, Accent)
-                                    val items = snapshot.preparations()
+                                    val items = remember(snapshot, tick) { snapshot.preparations() }
                                     if (items.isEmpty()) Label(if (snapshot.stale()) "오래된 자료예요\n최신 날씨를 확인해 주세요" else "지금 챙길 물건이 없어요", 12, Muted)
                                     for (item in items) {
-                                        var checked by remember(item.type) { mutableStateOf(repository.checked(item.type)) }
+                                        var checked by remember(snapshot.checkKey(item.type)) {
+                                            mutableStateOf(repository.checked(item.type, snapshot))
+                                        }
                                         Row(Modifier.fillMaxWidth().padding(vertical = 3.dp).background(Panel, RoundedCornerShape(14.dp)), verticalAlignment = Alignment.CenterVertically) {
                                             Row(Modifier.weight(1f).heightIn(min = 48.dp).clickable {
                                                 detail = WatchMetric(item.label, "", snapshot.time + " 기준", item.reason)
@@ -120,7 +124,7 @@ class WatchActivity : ComponentActivity() {
                                                 Text(item.label, fontSize = 13.sp, color = Ink, modifier = Modifier.padding(start = 5.dp))
                                             }
                                             Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                                                Checkbox(checked = checked, onCheckedChange = { checked = repository.toggle(item.type) }, modifier = Modifier.semantics { contentDescription = item.label + " 챙김" })
+                                                Checkbox(checked = checked, onCheckedChange = { checked = repository.toggle(item.type, snapshot) }, modifier = Modifier.semantics { contentDescription = item.label + " 챙김" })
                                             }
                                         }
                                     }

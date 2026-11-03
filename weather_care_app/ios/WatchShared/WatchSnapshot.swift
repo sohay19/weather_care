@@ -158,9 +158,15 @@ enum WatchCache {
     guard let next = WatchSnapshot.parse(raw), next.revision > load(storage: storage).revision else { return false }
     let previous = load(storage: storage)
     storage.set(raw, forKey: "watch_snapshot")
-    if next.cleared || previous.locationKey != next.locationKey {
-      // 다른 지역의 체크는 해당 키로 보존하지만 삭제 시에는 모두 지운다.
-      if next.cleared { storage.removeObject(forKey: "preparation_checks") }
+    let resets = next.object["checkResetTokens"] as? [String: String] ?? [:]
+    let oldResets = previous.object["checkResetTokens"] as? [String: String] ?? [:]
+    let changed = Set(resets.keys.filter { resets[$0] != oldResets[$0] })
+    if changed.contains("*") {
+      storage.removeObject(forKey: "preparation_checks")
+    } else if !changed.isEmpty,
+              let checks = storage.dictionary(forKey: "preparation_checks") as? [String: Bool] {
+      storage.set(checks.filter { !changed.contains($0.key.components(separatedBy: "|")[0]) },
+        forKey: "preparation_checks")
     }
     return true
   }

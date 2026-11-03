@@ -95,4 +95,19 @@ void main() {
     expect(calls.last.method, 'clear');
     expect(calls.last.arguments, isNull);
   });
+
+  test('iOS 구역 삭제는 해당 워치 체크만 지우고 자료 삭제는 전체 체크를 지운다', () async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    await const HomeWidgetService()
+        .clearWatchChecks(regionKey: '1153052000|구로제1동|58|125');
+    expect(calls.single.method, 'clearWatchChecks');
+    expect(calls.single.arguments, {'locationKey': '58:125:admin:1153052000'});
+    await const HomeWidgetService().clearWatchChecks();
+    expect(calls.last.arguments, isEmpty);
+    await const HomeWidgetService().clearWatchChecks(regionKey: 'invalid');
+    expect(calls, hasLength(2));
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await const HomeWidgetService().clearWatchChecks();
+    expect(calls, hasLength(2));
+  });
 }

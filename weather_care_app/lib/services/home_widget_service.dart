@@ -72,6 +72,25 @@ class HomeWidgetService {
     }
   }
 
+  Future<void> clearWatchChecks({String? regionKey}) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
+    String? locationKey;
+    if (regionKey != null) {
+      final parts = regionKey.split('|');
+      if (parts.length != 4) return;
+      locationKey = '${parts[2]}:${parts[3]}:admin:${parts[0]}';
+    }
+    try {
+      await _channel.invokeMethod<void>('clearWatchChecks', {
+        if (locationKey != null) 'locationKey': locationKey,
+      });
+    } on MissingPluginException {
+      // 워치 연동이 없는 실행 환경에서는 삭제를 건너뛴다.
+    } on PlatformException {
+      // 워치 연결 상태가 휴대전화의 설정 저장을 막지 않게 한다.
+    }
+  }
+
   bool get _isSupportedPlatform =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||

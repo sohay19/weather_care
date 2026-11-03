@@ -1,0 +1,203 @@
+{
+  "검증일": "2026-11-03",
+  "최종_소스_커밋": "d160245",
+  "자동검사": {
+    "Flutter_iOS기준": 898,
+    "Swift모델": 5,
+    "정적분석": "통과"
+  },
+  "화면": {
+    "구역_순서변경.png": {
+      "크기": [
+        1206,
+        2622
+      ],
+      "sha256": "3339a8678f8c818b37e230944cff27e3087cb1282b697d315e49c6ff6f44aa3b"
+    },
+    "알림OFF_삭제확인.png": {
+      "크기": [
+        1206,
+        2622
+      ],
+      "sha256": "44e3c85851f16e90d67132291f9533b2b449b422b6303289ae32248d22277912"
+    },
+    "알림ON_삭제확인.png": {
+      "크기": [
+        1206,
+        2622
+      ],
+      "sha256": "1cd4ebd75a5c92e5781d8854946557bc137ff234e552c0bf6da977bf7230813c"
+    },
+    "워치_구역전환전_체크.png": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "e86b08d2fd922b271e8eb769ee3b2029e78d310fa5438a5b1005f5688398ec28"
+    },
+    "워치_구역복귀후_체크초기화.png": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "92363841e862f5842340d0ef3666c772d65c64daf3cb9622134a429a5ac0bab8"
+    },
+    "워치_습도상세.png": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "c47092df725737ecd745637ff6d1f00b291ecaa09309dffacfd24efca9f01307"
+    },
+    "최신빌드_iPhone.png": {
+      "크기": [
+        1206,
+        2622
+      ],
+      "sha256": "a6fd0bc48d3bda15b54c2e2efee158e0d2cb27bd6d490f168438c008f274bcf3"
+    },
+    "최신빌드_Watch.png": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "79f118d22ce07ebf7f8e7306ba60d7bdd52787901c7b42ecb21efdf0e505518b"
+    }
+  },
+  "after-reorder": {
+    "설정": {
+      "locationMode": "MANUAL",
+      "manualRegionKey": "1168060000|대치1동|61|125",
+      "savedRegionKeys": [
+        "1168060000|대치1동|61|125",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationRegionKeys": [
+        "GPS",
+        "1153052000|구로제1동|58|125",
+        "1168060000|대치1동|61|125"
+      ],
+      "notificationEnabled": true
+    },
+    "폰_워치_일치": true,
+    "자료삭제": false,
+    "워치체크": null,
+    "revision": 1793681298981
+  },
+  "after-cancel": {
+    "설정": {
+      "locationMode": "MANUAL",
+      "manualRegionKey": "1153052000|구로제1동|58|125",
+      "savedRegionKeys": [
+        "1168060000|대치1동|61|125",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationRegionKeys": [
+        "GPS",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationEnabled": true
+    },
+    "폰_워치_일치": true,
+    "자료삭제": false,
+    "워치체크": null,
+    "revision": 1793681391316
+  },
+  "roundtrip-guro": {
+    "설정": {
+      "locationMode": "MANUAL",
+      "manualRegionKey": "1153052000|구로제1동|58|125",
+      "savedRegionKeys": [
+        "1168060000|대치1동|61|125",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationRegionKeys": [
+        "GPS",
+        "1153052000|구로제1동|58|125",
+        "1168060000|대치1동|61|125"
+      ],
+      "notificationEnabled": true
+    },
+    "폰_워치_일치": true,
+    "자료삭제": false,
+    "워치체크": null,
+    "revision": 1793681391316
+  },
+  "after-selected-deletion": {
+    "설정": {
+      "locationMode": "GPS",
+      "manualRegionKey": null,
+      "savedRegionKeys": [
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationRegionKeys": [
+        "GPS",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationEnabled": true
+    },
+    "폰_워치_일치": true,
+    "자료삭제": true,
+    "워치체크": null,
+    "revision": 1793681577113
+  },
+  "final-settings-and-watch": {
+    "설정": {
+      "locationMode": "MANUAL",
+      "manualRegionKey": "1153052000|구로제1동|58|125",
+      "savedRegionKeys": [
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationRegionKeys": [
+        "GPS",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationEnabled": true
+    },
+    "폰_워치_일치": true,
+    "자료삭제": false,
+    "워치체크": {
+      "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+    },
+    "revision": 1793681699480
+  },
+  "앱버전": {
+    "iPhone": {
+      "버전": "1.2.0",
+      "빌드": "26110300"
+    },
+    "Watch": {
+      "버전": "1.2.0",
+      "빌드": "26110300"
+    },
+    "Watch위젯": {
+      "버전": "1.1.4",
+      "빌드": "26103000"
+    },
+    "iPhone위젯": {
+      "버전": "1.2.0",
+      "빌드": "26110300"
+    }
+  },
+  "최종_설치_연동": {
+    "revision": 1793681813693,
+    "폰_워치_일치": true,
+    "지역": "구로구 구로1동",
+    "기온": "16.5°",
+    "체감": "13.4°",
+    "기준시각": "오후 1:56 기준",
+    "워치체크": {
+      "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+    }
+  },
+  "실제설치버전": {
+    "iPhone": [
+      "1.2.0",
+      "26110300"
+    ],
+    "Watch": [
+      "1.2.0",
+      "26110300"
+    ]
+  }
+}

@@ -196,6 +196,10 @@ import WidgetKit
         WatchPhoneBridge.shared.publish(snapshot: snapshot,
           details: values?["wearDetails"] as? [String: Any] ?? [:])
         result(nil)
+      case "clearWatchChecks":
+        let values = call.arguments as? [String: Any]
+        WatchPhoneBridge.shared.clearChecks(locationKey: values?["locationKey"] as? String)
+        result(nil)
       case "clear":
         defaults.set(UUID().uuidString, forKey: widgetRevisionKey)
         defaults.removeObject(forKey: widgetSnapshotKey)

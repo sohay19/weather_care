@@ -1863,6 +1863,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final remainingKeys =
         _settings.savedRegionKeys.where((savedKey) => savedKey != key).toList();
     final deletingManualRegion = _settings.manualRegionKey == key;
+    await widget.homeWidgetService.clearWatchChecks(regionKey: key);
+    if (!mounted) return;
     if (remainingKeys.isEmpty) {
       setState(() => _editingRegions = false);
     }
@@ -2231,6 +2233,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _today = null;
         _weekly = null;
       });
+      await widget.homeWidgetService.clearWatchChecks();
+      if (!mounted) return;
       _clearHomeWidget();
       await _settingsSave?.save(_settings);
       if (mounted) unawaited(_refresh(supersede: true));

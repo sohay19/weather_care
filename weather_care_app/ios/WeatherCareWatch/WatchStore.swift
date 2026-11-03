@@ -40,7 +40,7 @@ final class WatchStore: NSObject, ObservableObject, WCSessionDelegate {
   private func receive(_ message: [String: Any]) {
     guard let raw = message["snapshot"] as? String, WatchCache.accept(raw) else { return }
     snapshot = WatchCache.load()
-    if snapshot.cleared { checks = [:] }
+    checks = WatchCache.defaults.dictionary(forKey: "preparation_checks") as? [String: Bool] ?? [:]
     status = "iPhone에서 수신"
     WidgetCenter.shared.reloadAllTimelines()
     logger.info("watch:received revision=\(self.snapshot.revision)")

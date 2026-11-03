@@ -197,11 +197,17 @@ class _WidgetService extends HomeWidgetService {
   final published = <HomeWidgetSnapshot>[];
   final refreshUrls = <String?>[];
   final gpsModes = <bool>[];
+  final clearedWatchRegions = <String?>[];
   int clearCount = 0;
 
   @override
   Future<void> clear() async {
     clearCount++;
+  }
+
+  @override
+  Future<void> clearWatchChecks({String? regionKey}) async {
+    clearedWatchRegions.add(regionKey);
   }
 
   @override
@@ -883,6 +889,7 @@ void main() {
   });
 
   testWidgets('실제 삭제 콜백 후 복귀·새로고침·설정 변경으로 서버에 다시 등록하지 않는다', (tester) async {
+    final widgetService = _WidgetService();
     var stored = jsonEncode({
       'mode': 'active',
       'serverId': 'wc_fixture_server_1234567890',
@@ -903,12 +910,13 @@ void main() {
             currentRegionId: '98_76',
             notificationTime: '06:35',
             umbrellaEnabled: false));
-    await start(tester, access: access);
+    await start(tester, access: access, widgetService: widgetService);
     final registrations = registration.calls.length;
     final settingsWrites = sync.calls.length;
     await screen(tester).onDeleteServerData!();
     await tester.pumpAndSettle();
     expect(api.deletes, 1);
+    expect(widgetService.clearedWatchRegions, [null]);
     expect(access.mode, ServerDataMode.deleted);
     expect(screen(tester).saveState, SettingsSaveState.localOnly);
     final saved = await const AppSettingsRepository().load('test');
@@ -1871,6 +1879,7 @@ void main() {
   });
 
   testWidgets('구역 삭제는 알림 상태별 확인을 거쳐 저장하고 선택 구역은 GPS로 전환한다', (tester) async {
+    final widgetService = _WidgetService();
     final active = catalog.search('서울 구로 구로3동').single;
     final other = catalog.search('부산 해운대 좌1동').single;
     const repository = AppSettingsRepository();
@@ -1881,7 +1890,7 @@ void main() {
       savedRegionKeys: [active.key, other.key],
       notificationRegionKeys: [active.key, 'GPS'],
     ));
-    await start(tester, initialIndex: 2);
+    await start(tester, initialIndex: 2, widgetService: widgetService);
     await tester.tap(find.byKey(const ValueKey('main-region-menu')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('편집'));
@@ -1897,6 +1906,7 @@ void main() {
     await tester.pumpAndSettle();
     expect((await repository.load('test')).savedRegionKeys,
         [active.key, other.key]);
+    expect(widgetService.clearedWatchRegions, isEmpty);
 
     await tester.tap(find.byKey(ValueKey('region-delete-${other.key}')));
     await tester.pumpAndSettle();
@@ -1906,6 +1916,7 @@ void main() {
     await tester.tap(confirm);
     await tester.pumpAndSettle();
     expect((await repository.load('test')).manualRegionKey, active.key);
+    expect(widgetService.clearedWatchRegions, [other.key]);
 
     await tester.tap(find.byKey(ValueKey('region-delete-${active.key}')));
     await tester.pumpAndSettle();
@@ -1915,6 +1926,7 @@ void main() {
     expect(stored.savedRegionKeys, isEmpty);
     expect(stored.manualRegionKey, isNull);
     expect(stored.locationMode, 'GPS');
+    expect(widgetService.clearedWatchRegions, [other.key, active.key]);
     expect(stored.enabledNotificationRegionKeys, ['GPS']);
     expect(sync.calls.last.enabledNotificationRegionKeys, ['GPS']);
     expect(

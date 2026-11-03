@@ -24,11 +24,25 @@ final class WatchPhoneBridge: NSObject, WCSessionDelegate {
 
   func clear() { save(widget: [:], details: [:], cleared: true) }
 
+  func clearChecks(locationKey: String?) {
+    var tokens = defaults.dictionary(forKey: "watch_check_reset_tokens") as? [String: String] ?? [:]
+    if let locationKey { tokens[locationKey] = UUID().uuidString }
+    else { tokens = ["*": UUID().uuidString] }
+    defaults.set(tokens, forKey: "watch_check_reset_tokens")
+    let object = raw?.data(using: .utf8)
+      .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] } ?? [:]
+    save(widget: object["widget"] as? [String: Any] ?? [:],
+      details: object["details"] as? [String: Any] ?? [:],
+      cleared: object["cleared"] as? Bool ?? true)
+  }
+
   private func save(widget: [String: Any], details: [String: Any], cleared: Bool) {
     let revision = max(Int64(Date().timeIntervalSince1970 * 1000), Int64(defaults.double(forKey: "watch_outgoing_revision")) + 1)
     let envelope: [String: Any] = ["schemaVersion": 1, "revision": revision,
       "publishedAt": Int64(Date().timeIntervalSince1970 * 1000), "widget": widget,
-      "details": details, "cleared": cleared]
+      "details": details, "cleared": cleared,
+      // 전체 상태 전송이 합쳐져도 삭제 요청이 다음 날씨 자료에 남는다.
+      "checkResetTokens": defaults.dictionary(forKey: "watch_check_reset_tokens") as? [String: String] ?? [:]]
     guard let data = try? JSONSerialization.data(withJSONObject: envelope),
           let value = String(data: data, encoding: .utf8) else { return }
     defaults.set(Double(revision), forKey: "watch_outgoing_revision")

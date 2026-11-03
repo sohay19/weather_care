@@ -1,0 +1,167 @@
+{
+  "검증일": "2026-11-03",
+  "환경": {
+    "iOS": "18.6",
+    "watchOS": "11.5",
+    "Flutter": "3.47.4"
+  },
+  "자동검사": {
+    "Flutter기본플랫폼": 106,
+    "Flutter_iOS플랫폼": 106,
+    "Swift모델": 7,
+    "정적분석": "통과",
+    "동반빌드": "통과"
+  },
+  "단계": {
+    "before-roundtrip": {
+      "지역": "구로구 구로1동",
+      "revision": 1793682479135,
+      "폰워치일치": true,
+      "체크": {
+        "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+      },
+      "삭제토큰": {},
+      "저장구역": [
+        "1153052000|구로제1동|58|125"
+      ]
+    },
+    "daechi-guro-preserved": {
+      "지역": "강남구 대치1동",
+      "revision": 1793682527230,
+      "폰워치일치": true,
+      "체크": {
+        "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+      },
+      "삭제토큰": {},
+      "저장구역": [
+        "1153052000|구로제1동|58|125",
+        "1168060000|대치1동|61|125"
+      ]
+    },
+    "guro-roundtrip": {
+      "지역": "구로구 구로1동",
+      "revision": 1793682600265,
+      "폰워치일치": true,
+      "체크": {
+        "61:125:admin:1168060000|2026-11-03|SUNSCREEN": true,
+        "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+      },
+      "삭제토큰": {},
+      "저장구역": [
+        "1153052000|구로제1동|58|125",
+        "1168060000|대치1동|61|125"
+      ]
+    },
+    "after-phone-restart": {
+      "지역": "구로구 구로1동",
+      "revision": 1793682644676,
+      "폰워치일치": true,
+      "체크": {
+        "61:125:admin:1168060000|2026-11-03|SUNSCREEN": true,
+        "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+      },
+      "삭제토큰": {},
+      "저장구역": [
+        "1153052000|구로제1동|58|125",
+        "1168060000|대치1동|61|125"
+      ]
+    },
+    "after-watch-restart": {
+      "지역": "구로구 구로1동",
+      "revision": 1793682671156,
+      "폰워치일치": true,
+      "체크": {
+        "61:125:admin:1168060000|2026-11-03|SUNSCREEN": true,
+        "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+      },
+      "삭제토큰": {},
+      "저장구역": [
+        "1153052000|구로제1동|58|125",
+        "1168060000|대치1동|61|125"
+      ]
+    },
+    "after-region-deletion": {
+      "지역": "구로구 구로1동",
+      "revision": 1793682704616,
+      "폰워치일치": true,
+      "체크": {
+        "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+      },
+      "삭제토큰": {
+        "61:125:admin:1168060000": "8564D80A-3178-4839-A0EB-E4749A5D3149"
+      },
+      "저장구역": [
+        "1153052000|구로제1동|58|125"
+      ]
+    }
+  },
+  "화면": {
+    "구로_전환전": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "29dc37c80ba6a6d824c94c2e28a1f62a835333c88a312d774a6e6388206558d5",
+      "접근성상태": "Button, 0x10dbcaca0, {{141.0, 134.5}, {44.0, 48.0}}, identifier: 'prep-check-SUNSCREEN', label: '선크림 챙김', value: 완료, Selected"
+    },
+    "대치_별도체크": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "e8fee9facb2bfcb3d6767a3d02b69943332a3c76109762c7e6884b8185972a60",
+      "접근성상태": "Button, 0x10dbc1000, {{141.0, 134.5}, {44.0, 48.0}}, identifier: 'prep-check-SUNSCREEN', label: '선크림 챙김', value: 미완료"
+    },
+    "구로_복귀후": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "ec98d6c24d83bb4aac246ddbe97b83b6561a348a7f50d7f8ea5c910abd5c3991",
+      "접근성상태": "Button, 0x10dbec160, {{141.0, 134.5}, {44.0, 48.0}}, identifier: 'prep-check-SUNSCREEN', label: '선크림 챙김', value: 완료, Selected"
+    },
+    "재실행후": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "57faf02d4278766b1f79692750992d929def342ae361ba9e3f20dfb1b4623f26",
+      "접근성상태": "Button, 0x11209c1e0, {{141.0, 134.5}, {44.0, 48.0}}, identifier: 'prep-check-SUNSCREEN', label: '선크림 챙김', value: 완료, Selected"
+    },
+    "다른구역_삭제후": {
+      "크기": [
+        374,
+        446
+      ],
+      "sha256": "57faf02d4278766b1f79692750992d929def342ae361ba9e3f20dfb1b4623f26",
+      "접근성상태": "Button, 0x10e4ebae0, {{141.0, 134.5}, {44.0, 48.0}}, identifier: 'prep-check-SUNSCREEN', label: '선크림 챙김', value: 완료, Selected"
+    }
+  },
+  "제품소스해시": {
+    "ios/Runner/AppDelegate.swift": "f25df4c7275a784d6387b8b761d0e907dbfb7b42150e4a38f2ba07b34bdc620f",
+    "ios/Runner/WatchPhoneBridge.swift": "9bfb7f2958834897e58c146a5317cc81079f95d074d22b042a78ecf43336256d",
+    "ios/WatchShared/WatchSnapshot.swift": "9f4fda31b3122180d4ec6a61860f17e0ef5bfc5baf05f117e0bdee80a843914e",
+    "ios/WeatherCareWatch/WatchStore.swift": "5c9e3df2322317094dda7f1d533acf6878b8426e76c59caec01342768d2d8936",
+    "lib/services/home_widget_service.dart": "dd79a3e2c8342aa6435500da32ded77974fbc2ea1919c905b0f8fb6c6b75f58b",
+    "lib/features/home/home_screen.dart": "e80ed6cd15f883d2ff27fea9440d6db401f4b8677de7dda4d846ca8a5f735035"
+  },
+  "최종상태": {
+    "revision": 1793682794135,
+    "폰워치일치": true,
+    "체크": {
+      "58:125:admin:1153052000|2026-11-03|SUNSCREEN": true
+    },
+    "설정": {
+      "locationMode": "MANUAL",
+      "manualRegionKey": "1153052000|구로제1동|58|125",
+      "savedRegionKeys": [
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationRegionKeys": [
+        "GPS",
+        "1153052000|구로제1동|58|125"
+      ],
+      "notificationEnabled": true
+    }
+  }
+}

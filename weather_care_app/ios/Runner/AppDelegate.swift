@@ -26,6 +26,7 @@ import WidgetKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     backgroundLocation.resume()
+    WatchPhoneBridge.shared.start()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -124,6 +125,9 @@ import WidgetKit
       name: homeWidgetChannel,
       binaryMessenger: engineBridge.applicationRegistrar.messenger()
     )
+    WatchPhoneBridge.shared.onRefresh = {
+      channel.invokeMethod("refreshFromWatch", arguments: nil)
+    }
     channel.setMethodCallHandler { call, result in
       guard let defaults = UserDefaults(suiteName: widgetGroup) else {
         result(FlutterError(
@@ -189,6 +193,8 @@ import WidgetKit
           defaults.removeObject(forKey: widgetTestAccessKey)
         }
         WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
+        WatchPhoneBridge.shared.publish(snapshot: snapshot,
+          details: values?["wearDetails"] as? [String: Any] ?? [:])
         result(nil)
       case "clear":
         defaults.set(UUID().uuidString, forKey: widgetRevisionKey)
@@ -199,6 +205,7 @@ import WidgetKit
         defaults.removeObject(forKey: widgetGPSEnabledKey)
         defaults.removeObject(forKey: "location_measured_at")
         WidgetCenter.shared.reloadTimelines(ofKind: "WeatherCareWidget")
+        WatchPhoneBridge.shared.clear()
         result(nil)
       default:
         result(FlutterMethodNotImplemented)

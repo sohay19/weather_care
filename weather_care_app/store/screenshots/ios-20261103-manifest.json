@@ -1,0 +1,155 @@
+{
+  "기준일": "2026-11-03",
+  "화면": "실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용",
+  "배치": "2번은 Android 구역별 알림, 5번은 Android 워치 소개의 2×2 화면 순서를 참고했다. 5번은 Apple Watch의 사각 화면이며 시스템 시계와 앱 UI를 보존한다. 기존 제목·색상·바깥 여백을 유지하고 원본 비율로 배치한다.",
+  "데이터": "제품 앱의 실제 서버 응답과 촬영용 설정. 2번과 5번은 2026-11-03 시뮬레이터 촬영. 8번은 2026-10-30, 나머지는 2026-10-29 등록 이미지 유지.",
+  "위젯": "3·4번은 기존 등록 이미지 유지. 사용 원본은 2026-10-28 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.",
+  "워치": "5번은 실제 watchOS 앱의 현재·준비물·타임라인·기상·생활 실행 화면. 시험 자료 주입이나 HTML 시안 사용 없음. 실물 워치 촬영은 아님.",
+  "알림": "2번은 실제 지역별 알림 설정 화면, 8번은 실제 알림 설정 화면",
+  "files": [
+    {
+      "path": "screenshots/ios/01-main.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "0f774ea14cd89ad18a6ff3cb3b688191d18a66e38e07d2e483a0aef3c8a92e61"
+    },
+    {
+      "path": "screenshots/ios/02-region-notifications.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "60b3d7d3c4b8df570f8b8e4dc301fdde7ae6eb941af7e19408ef3890af335fc1"
+    },
+    {
+      "path": "screenshots/ios/03-widget.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "8389cca43e01e3180ce9d659a269b4d17d23cc30c41c2256774c2b559b689498"
+    },
+    {
+      "path": "screenshots/ios/04-dark-mode.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "a5c0d8defb7ba6bf215df8b7422ca67b5245804c299dd66db4d2225688d495fa"
+    },
+    {
+      "path": "screenshots/ios/05-watch.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "55b85c01368fcf29ff08ee985087677cfd695d921ac1bb4ffdad6e0103d3dc84"
+    },
+    {
+      "path": "screenshots/ios/06-advanced.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "ca05fb53389a75ba0712a3be508875eaedc55149c8522f85ad29de3a2a9b70e1"
+    },
+    {
+      "path": "screenshots/ios/07-week.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "4d03149056fb252a87645dcba9fbbade65ebb295907a8789c68622de55eec327"
+    },
+    {
+      "path": "screenshots/ios/08-notification-settings.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "416734221a4414b9ca64b621259693c37e3b745884dbe45e8b3890319fd57ab0"
+    },
+    {
+      "path": "screenshots/ipad/01-main.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "012f0ee0d257a4543a1f72263edea8f6338a04384990df3eee628b3c1ac6e2fc"
+    },
+    {
+      "path": "screenshots/ipad/02-region-notifications.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "43bcdc2b774d408be5ef9e763d128573bd7fde063f4d8d74895144146f39670d"
+    },
+    {
+      "path": "screenshots/ipad/03-widget.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "0f438b2266b27de961877fd5f130ccf56bad61e9bc9eec32f851d4a48c111ddf"
+    },
+    {
+      "path": "screenshots/ipad/04-dark-mode.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "ae78ccc9dcbaad6c21b209ef56e9eb1cedc44106ff26d0eb162d54c2f01a5602"
+    },
+    {
+      "path": "screenshots/ipad/05-watch.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "eb50117efed34c7b35d894939c32fc69cb8dd7bb788436a14b154e6bc07ce156"
+    },
+    {
+      "path": "screenshots/ipad/06-advanced.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "0bee72a21eba44dd1d3f69eeac44aa051b294a7b7bf710ff7f81e59a89e9c075"
+    },
+    {
+      "path": "screenshots/ipad/07-week.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "1ddb1b8152de8b3d4cdec1b2cd6c81548ffa837ac5bb22d91e92459657d0c02c"
+    },
+    {
+      "path": "screenshots/ipad/08-notification-settings.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "9f4b7192aab0c465c3575785b4119fa992af9c6c769167b10c996a11b9936b98"
+    }
+  ]
+}

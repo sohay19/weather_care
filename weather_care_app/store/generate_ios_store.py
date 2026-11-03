@@ -14,6 +14,8 @@ import generate_android_store as common
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'screenshots/source-ios-20261029'
 SETTINGS_SOURCE = ROOT / 'screenshots/source-ios-20261030'
+REGION_SOURCE = ROOT / 'screenshots/source-ios-20261103'
+WATCH_SOURCE = ROOT / 'screenshots/source-watchos-20261103'
 NATIVE = ROOT / 'screenshots/native-ios-20261028'
 # Android 제작 설정과 독립적으로 iOS 소개 순서를 관리한다.
 TOPICS = [
@@ -21,13 +23,13 @@ TOPICS = [
     ('02-region-notifications', '지역별 알림', '관심 있는 지역의\n날씨 알림을 골라요', '여러 지역 저장 · 지역마다 알림 ON/OFF', 'region-notifications'),
     ('03-widget', '홈 화면 위젯', '앱을 열지 않아도\n날씨가 보여요', '작게, 넓게, 자세하게 · 세 가지 크기', None),
     ('04-dark-mode', '편안한 다크모드', '앱도 위젯도\n눈이 편안하게', '라이트 · 다크 · 시스템 설정에 맞춰', 'dark-main'),
-    ('05-notifications', '다양한 날씨 알림', '챙겨야 할 날씨,\n알림으로 알려드려요', '준비물 요약 · 현재 비 · 기상특보 · 낙뢰 · 자외선', None),
+    ('05-watch', 'Apple Watch 앱', 'Apple Watch에서도\n날씨를 챙겨요', '현재 날씨 · 오늘의 준비물 · 타임라인 · 기상·생활', None),
     ('06-advanced', '심화 날씨 정보', '바다와 하천까지\n더 깊이 살펴요', '만조·간조/조위 · 수온 · 수위·유량 · 댐·보', 'advanced-values'),
     ('07-week', '일주일 예보', '한 주의 흐름을 보고\n하루를 계획해요', '주간 요약 · 날짜별 예보 · 시간별 날씨', 'week'),
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
 ]
 SIZES = {'ios': (1320, 2868), 'ipad': (2064, 2752)}
-BACKUP = ROOT.parent / 'build/ios-last-screenshot-20261030/before'
+BACKUP = ROOT.parent / 'build/watch-store-screenshot-20261103/before'
 
 
 def backup(path):
@@ -50,7 +52,8 @@ def widget(family, platform, dark=False):
 
 def app_screen(name):
     """시스템 바만 제외한 실제 전체 화면 촬영본의 해시·크롭 범위를 확인한다."""
-    directory = SETTINGS_SOURCE if name == 'notification-settings' else SOURCE
+    directory = {'notification-settings': SETTINGS_SOURCE,
+                 'region-notifications': REGION_SOURCE}.get(name, SOURCE)
     path = directory / 'phone' / f'{name}.png'
     records = json.loads((directory / 'phone/capture-manifest.json').read_text(encoding='utf-8'))['files']
     record = next(row for row in records if row['name'] == name)
@@ -58,6 +61,17 @@ def app_screen(name):
     assert hashlib.sha256(path.read_bytes()).hexdigest() == record['sha256'], path
     with Image.open(path) as image:
         assert image.size == (1290, 2517), path
+        return image.convert('RGB')
+
+
+def watch_screen(name):
+    """자료 주입 없이 실행한 watchOS 앱 전체 화면의 원본 해시를 확인한다."""
+    path = WATCH_SOURCE / f'{name}.png'
+    manifest = json.loads((WATCH_SOURCE / 'capture-manifest.json').read_text(encoding='utf-8'))
+    record = next(row for row in manifest['files'] if row['path'] == path.name)
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == record['sha256'], path
+    with Image.open(path) as image:
+        assert list(image.size) == record['size'] == [374, 446], path
         return image.convert('RGB')
 
 
@@ -115,15 +129,29 @@ def compose(topic, platform):
             bounds = native_card(canvas, im, ((width - sw) / 2, y), sw)
             y = bounds[3] + gap
         assert bounds[3] == height - margin
-    else:
-        alerts = common.notification_cards([
-            ('자외선', '낮 자외선이 강해요',
-             '낮 동안 자외선이 높을 것으로 보여요.\n외출한다면 선크림이나 양산을 챙기세요.'),
-        ])
-        alerts_width = min(content_width, round(content_height * alerts.width / alerts.height))
-        alerts = alerts.resize((alerts_width, round(alerts.height * alerts_width / alerts.width)),
-                               Image.Resampling.LANCZOS)
-        canvas.alpha_composite(alerts, ((width - alerts.width) // 2, content_top))
+    elif stem == '05-watch':
+        screens = [('current', '현재 날씨'), ('prep', '오늘의 준비물'),
+                   ('timeline', '타임라인'), ('life', '기상·생활')]
+        label_size, label_gap = round(34 * scale), round(27 * scale)
+        label_height = draw.textbbox((0, 0), '오늘의 준비물', font=common.font(label_size))[3]
+        column_gap, row_gap = round(30 * scale), round(96 * scale)
+        row_height = (content_height - row_gap) / 2
+        screen_width = min((content_width - column_gap) // 2,
+                           int((row_height - label_gap - label_height) * 374 / 446))
+        screen_height = round(screen_width * 446 / 374)
+        grid_width = screen_width * 2 + column_gap
+        row_height = screen_height + label_gap + label_height
+        y_start = content_top + (content_height - row_height * 2 - row_gap) / 2
+        for index, (name, label) in enumerate(screens):
+            x = round((width - grid_width) / 2 + index % 2 * (screen_width + column_gap))
+            y = round(y_start + index // 2 * (row_height + row_gap))
+            radius = round(screen_width * .18)
+            with watch_screen(name) as screen:
+                bounds = common.card(canvas, screen, (x, y), screen_width, radius)
+            draw.rounded_rectangle((x, y, bounds[2] - 1, bounds[3] - 1), radius=radius,
+                                   outline='#DCE8F5', width=round(4 * scale))
+            common.text(draw, (x + screen_width / 2, bounds[3] + label_gap), label,
+                        label_size, center=True)
     # Android와 같은 바깥 여백·제목 간격에 그림자가 침범하지 않게 한다.
     draw = ImageDraw.Draw(canvas)
     for box in [(0, 0, width - 1, margin - 1), (0, height - margin, width - 1, height - 1),
@@ -195,6 +223,10 @@ def main(topics=None):
                 path = compose(topic, platform)
             assert path.is_file(), path
             paths.append(path)
+        old_notifications = ROOT / 'screenshots' / platform / '05-notifications.png'
+        if old_notifications.exists():
+            backup(old_notifications)
+            old_notifications.unlink()
         images.extend(paths)
         previews.append(preview(paths, platform))
     records = []
@@ -205,17 +237,18 @@ def main(topics=None):
             assert im.size == SIZES[path.parent.name] and im.mode == 'RGB' and im.format == 'PNG'
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/ios-20261030-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-10-30', '화면': '실제 iPhone 앱 전체 화면 촬영, iPad 등록 규격에도 동일 원본 사용',
-        '배치': '8번은 pull 받은 Android 2026-10-30 마지막 장 참고: 큰 두 줄 제목, 줄간격 16px, 바깥 최소 여백과 제목·이미지 간격 72px(1080px 너비 기준). 분류명·부연 설명·위젯 크기 라벨 생략. 원본 비율 유지.',
-        '데이터': '제품 앱의 실제 서버 응답과 촬영용 설정. 8번 알림 설정은 2026-10-30 재촬영, 1~7번은 2026-10-29 등록 이미지 유지.', '위젯': '3·4번은 기존 등록 이미지 유지. 사용 원본은 2026-10-28 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
-        '알림': '5번은 지원 알림 종류의 예시 카드 5개, 2번은 실제 지역별 알림 설정 화면', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    docs = [ROOT / 'screenshots/IOS_20261030.md', ROOT / 'screenshots/README.md', report]
+    report = ROOT / 'screenshots/ios-20261103-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-11-03', '화면': '실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용',
+        '배치': '2번은 Android 구역별 알림, 5번은 Android 워치 소개의 2×2 화면 순서를 참고했다. 5번은 Apple Watch의 사각 화면이며 시스템 시계와 앱 UI를 보존한다. 기존 제목·색상·바깥 여백을 유지하고 원본 비율로 배치한다.',
+        '데이터': '제품 앱의 실제 서버 응답과 촬영용 설정. 2번과 5번은 2026-11-03 시뮬레이터 촬영. 8번은 2026-10-30, 나머지는 2026-10-29 등록 이미지 유지.', '위젯': '3·4번은 기존 등록 이미지 유지. 사용 원본은 2026-10-28 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
+        '워치': '5번은 실제 watchOS 앱의 현재·준비물·타임라인·기상·생활 실행 화면. 시험 자료 주입이나 HTML 시안 사용 없음. 실물 워치 촬영은 아님.',
+        '알림': '2번은 실제 지역별 알림 설정 화면, 8번은 실제 알림 설정 화면', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    docs = [ROOT / 'screenshots/IOS_20261103.md', ROOT / 'screenshots/README.md', report]
     files = images + previews + docs
-    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261030.zip']:
+    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261103.zip']:
         package(ROOT / name, files)
     print(json.dumps({'검증완료': len(records), '플랫폼': list(SIZES),
-                     '묶음': 'app-store/weather-care-ios-screenshots-20261030.zip'}, ensure_ascii=False))
+                     '묶음': 'app-store/weather-care-ios-screenshots-20261103.zip'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

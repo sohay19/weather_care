@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-03",
+  "commit": "9ba5ff012fd091227442732549413b1fc3672fb8",
+  "sourceFiles": [
+    {
+      "path": "weather_care_app/store/screenshots/source-wear-20261103/prep-detail.png",
+      "sha256": "5dd55b5a23982346fdb7bd37e894f23719a8427ad2a7d42aa66ab2175f38c2ab"
+    },
+    {
+      "path": "weather_care_app/store/screenshots/source-wear-20261103/life-detail.png",
+      "sha256": "fa3539fbdfd2b37a10b2aa334dda75965a4f783ea87f8c045cdde7a3ad55b78f"
+    },
+    {
+      "path": "weather_care_wear/app/src/main/java/com/codesoha/weathercare/WatchActivity.kt",
+      "sha256": "204ea97c8964a95e85311ba6217d594fb1075bc995c761503fa4247e09a9574d"
+    },
+    {
+      "path": "weather_care_wear/app/src/main/java/com/codesoha/weathercare/WatchSnapshot.kt",
+      "sha256": "216c9e6ac4db1bc5c0d509547269b750b6476871590efeea252aa26385c7f6b4"
+    },
+    {
+      "path": "weather_care_app/lib/models/wear_weather_details.dart",
+      "sha256": "70d62b61d78dd532d4fdea3fd0778dbbdb54dd0fef908ccc929be3a543275283"
+    }
+  ],
+  "referenceCapture": "로컬 Android 에뮬레이터 시험 자료 · 실워치 촬영 아님",
+  "iosPreview": "기존 48.9% 및 10:48 예시 스냅샷 유지, Android의 상세 정보 순서와 항목 설명 적용",
+  "preparationOrder": [
+    "항목명",
+    "추천 이유",
+    "지역명",
+    "기준시각",
+    "목록으로"
+  ],
+  "metricOrder": [
+    "항목명",
+    "값·단위",
+    "설명",
+    "지역명",
+    "항목별 기준시각",
+    "목록으로"
+  ]
+}

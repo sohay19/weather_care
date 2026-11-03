@@ -1,0 +1,28 @@
+{
+  "기준일": "2026-11-03",
+  "방식": "실제 iPhone 앱 전체 화면·시스템 바만 제외·iPad 규격에도 같은 원본 사용",
+  "files": [
+    {
+      "name": "region-notifications",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "region-notifications.png",
+      "source_sha256": "b9ec8f235862dfb1d7bbc987fd2cc91cadf78f1510a1709a1a54a3f1f7dfbcef",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261103/phone/region-notifications.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "5ff5f18a57625ba7bb7df57ea606090553f83b71ad7fb87cfab21091cb55bcf2"
+    }
+  ]
+}

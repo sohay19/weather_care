@@ -1,0 +1,50 @@
+{
+  "검증일": "2026-11-03",
+  "구분": "실제 watchOS 시뮬레이터 실행 캡처 / 운영 날씨 조회 / 자료 주입 없음",
+  "iPhone": "4EBFF416-CCE9-4F79-9C88-2C272BF821A7",
+  "Watch": "565FCA1F-E64D-4F95-AE9E-F2AEC188EE0D",
+  "pair": "1BA74C80-9DA5-4A1C-A765-758956443E56",
+  "연동": {
+    "같은_revision": 1793679982924,
+    "지역": "구로구 구로1동",
+    "기온": "16.5°",
+    "체감": "13.8°",
+    "최저": "5°",
+    "최고": "17°",
+    "기준시각": "오후 1:26",
+    "체크_갱신후_유지": true
+  },
+  "자동검사": {
+    "Flutter_회귀": 101,
+    "Swift_모델": 5,
+    "Dart_정적분석": "통과",
+    "iPhone_Watch_WidgetKit_빌드": "통과"
+  },
+  "sha256": {
+    "current.png": "7b8e2475fd10ef3d971fee7b7479908917597935052b04c9cd40741694ab32f6",
+    "preparations.png": "2c39ea16cb0f966853f109162863921e78e6ab805826b926571793da86eeb066",
+    "preparation-detail.png": "7c844f3e1830781545fcfa826d78820d3565c9ee3c2714feda2698917f0c79b2",
+    "timeline.png": "2372801e19885f45b31c489109adb669ff24cd69ecaec1934677f530416562cb",
+    "metrics.png": "fe77bda559387ddbbb05a86297b8c6e6b22ba264208efa8a63c6ab47b895c39c",
+    "humidity-detail.png": "1eba70f9fec7906f26637dff99ea585f9cee3953e3d65d2eba93fc8b19c2b22e",
+    "humidity-detail-bottom.png": "82049e7daefe15518ddebbc27b4df3698cf9d8b481e2cd44595edfeaae5ba581",
+    "smart-stack-preview.png": "f0c195e915b25a9a45c2ea7c9de60b77694a2be8c2bd5e88157e06cbabf9af01",
+    "smart-stack.png": "db3245636d6eb47174027da1cf40065b38cf08bb957d267fbef8afd77e2098e6"
+  },
+  "미검증": [
+    "실제 Apple Watch",
+    "잠금/백그라운드 장시간 전송",
+    "실기기 provisioning",
+    "큰 글자와 VoiceOver 전체 조작"
+  ],
+  "WidgetKit_실행": "스마트 스택 추가 화면에서 실제 공유 캐시의 지역/기준시각·아이콘/기온/체감·최저/최고 3줄 렌더 확인",
+  "최종_연동": {
+    "같은_revision": 1793680438878,
+    "지역": "구로구 구로1동",
+    "기온": "16.7°",
+    "체감": "14.1°",
+    "기준시각": "오후 1:33 기준",
+    "체크_재설치후_유지": true,
+    "스마트스택_탭_현재화면_이동": true
+  }
+}

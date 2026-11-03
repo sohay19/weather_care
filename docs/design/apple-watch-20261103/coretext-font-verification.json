@@ -1,0 +1,36 @@
+{
+  "fonts" : [
+    {
+      "fallbackCharacter" : "μ",
+      "fallbackCovered" : true,
+      "fallbackPostScriptName" : "Helvetica",
+      "missingPrimaryGlyphCount" : 0,
+      "postScriptName" : "SUITE-Regular",
+      "primarySampleCovered" : true,
+      "registered" : true,
+      "weight" : "Regular"
+    },
+    {
+      "fallbackCharacter" : "μ",
+      "fallbackCovered" : true,
+      "fallbackPostScriptName" : "Helvetica-Bold",
+      "missingPrimaryGlyphCount" : 0,
+      "postScriptName" : "SUITE-SemiBold",
+      "primarySampleCovered" : true,
+      "registered" : true,
+      "weight" : "SemiBold"
+    },
+    {
+      "fallbackCharacter" : "μ",
+      "fallbackCovered" : true,
+      "fallbackPostScriptName" : "Helvetica-Bold",
+      "missingPrimaryGlyphCount" : 0,
+      "postScriptName" : "SUITE-ExtraBold",
+      "primarySampleCovered" : true,
+      "registered" : true,
+      "weight" : "ExtraBold"
+    }
+  ],
+  "platform" : "macOS CoreText · watchOS 실행 검증 아님",
+  "sample" : "서울 구로구 구로동 · 10:48 기준 13.5° 체감 최저 최고 습도 48.9% PM10 μg\/m³"
+}

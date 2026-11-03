@@ -345,6 +345,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.homeWidgetService.setWatchRefreshHandler(() => _refresh());
     widget.adRemoval?.addListener(_onAdRemovalChanged);
     _settings = AppSettings.fallback('initializing-installation');
     _selectedIndex = widget.initialIndex < 0
@@ -505,6 +506,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    widget.homeWidgetService.setWatchRefreshHandler(null);
     WidgetsBinding.instance.removeObserver(this);
     widget.adRemoval?.removeListener(_onAdRemovalChanged);
     _locationRevision++;

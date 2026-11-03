@@ -10,6 +10,15 @@ class HomeWidgetService {
 
   const HomeWidgetService();
 
+  void setWatchRefreshHandler(Future<void> Function()? onRefresh) {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
+    _channel.setMethodCallHandler(onRefresh == null
+        ? null
+        : (call) async {
+            if (call.method == 'refreshFromWatch') await onRefresh();
+          });
+  }
+
   Future<void> setThemeMode(ThemeMode mode) async {
     if (!_isSupportedPlatform) return;
     try {

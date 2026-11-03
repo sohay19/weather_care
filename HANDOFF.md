@@ -14882,3 +14882,85 @@
 - 앱 시작 화면을 현재 날씨로 바꾸고 준비물, 타임라인, 기상·생활 순서로 배치했다. 준비물 상세의 ‘챙겨요’ 강조 문구를 제거했다. 두 상세 유형에서 설명 아래에 지역명과 기준시간을 각각 표시한다.
 - 워치 Debug 빌드와 단위 검사 통과. 실기기 연결이 끊겨 438×438 로컬 Android 에뮬레이터에서 시험 자료를 사용해 탭 이동과 우산·습도 상세를 확인하고 촬영했다. 에뮬레이터는 Wearable API를 지원하지 않아 실기기 연동 검사는 수행하지 못했다.
 - iOS 참고 문서에 두 상세 캡처를 추가했다. Android 휴대전화·태블릿 5번은 기존 Galaxy Watch9 실기기 탭 원본을 새 순서로 재배치했다. 미리보기와 ZIP을 재생성하고 PNG 16개 규격과 ZIP 무결성을 확인했다.
+
+
+## 2026-11-03 Apple Watch 앱 기획과 UI 예시
+
+- 사용자 지정 source-wear-20261103의 현재·준비물·시간별·생활 캡처 4장과 촬영 명세를 확인했다. 검정 배경·푸른 카드·표시 수치를 이어받고 Apple Watch 사각 화면과 시스템 시계·세로 페이지에 맞춘 UI 예시를 만들었다.
+- docs/Apple_Watch_앱_기획_20261103.md에 첫 버전 4화면, 준비물 체크/상세, WatchConnectivity 기반 iPhone 연동, 스마트 스택·원형/사각 컴플리케이션, 미연결·3시간 초과·유효기간·지역/자료 삭제 정책, 개발 순서와 실기기 완료 기준을 기록했다. Apple 공식 설계·API 문서를 확인했으며 현재 저장소에 watchOS 연동 구현은 없다는 전제로 작성했다.
+- 대화용 UI 원본은 /Users/soha/.codex/visualizations/2026/11/03/01a19f60-2047-7721-8962-ae10cc797e20/weather-care-apple-watch.html. 준비물 체크/이유, 시간별 다음 구간, 10개 지표 상세, 최초 연결/오래된 자료, 스마트 스택 진입을 체험할 수 있다. 수치는 캡처 기반 예시와 일부 가상 자료이며 실제 watchOS 실행 화면이 아니다.
+- docs/design/apple-watch-20261103/overview.png와 verification.json을 저장했다. headless 브라우저에서 동작 13개·320/360/600/780px 외부 폭·스크립트 오류 0건을 확인하고 전체 이미지를 직접 검토했다. 사용자 데스크톱에 창을 띄우지 않았다. 앱·서버 제품 구현, 실기기 설치, 배포, 커밋·푸시는 수행하지 않았다. 작업 중 다른 스토어 파일 변경이 나타났으며 건드리지 않았다.
+
+## 2026-11-03 Android 참고 iOS 스토어 2번 실제 화면 갱신
+
+- Android 최신 2번의 구역별 알림 메뉴를 참고해 일반 lib/main.dart·운영 API용 Flutter 3.47.4 Debug 앱을 빌드했다. 기존 촬영 전용 iPhone 15 Pro Max/iOS 17.5(71087354-633A-42B1-AD48-60A603FE411F)에만 설치하고 창 없이 XCTest로 조작했다. 사용자 실행 중인 iOS 26 시뮬레이터는 그대로 유지했다.
+- 실제 메뉴에 최신 ‘구역별로 알림을 켜고 끌 수 있어요’, 편집 버튼, 알림 ON/OFF가 표시된다. 화면 조작으로 정왕1동을 추가하고 감만1동·대치1동 ON, 정왕1동 OFF 상태를 촬영했다. Android 원본의 종로구는 행정지역 선택 UI에서 하위 동 선택으로 이동하므로 기존 대치1동을 사용했다. 제품 UI·서버 자료·설정 파일을 합성 또는 주입하지 않았다.
+- 처음 검색창 입력은 포커스 전후 접근성 라벨이 바뀌어 촬영 XCTest가 실패했다. 촬영 제어 상태를 백업하고 재시작한 뒤 포커스된 검색창의 실제 라벨로 입력해 촬영을 마쳤고 재시도 XCTest는 성공했다. 제품 소스 변경은 없으며 Flutter 빌드가 자동 수정한 iOS 프로젝트 파일 2개도 복원했다.
+- 1290×2796 실제 원본에서 시스템 상태바 177px·홈 표시 영역 102px만 제외했다. source-ios-20261103/phone에 크롭·해시를 저장하고 iPhone 1320×2868·iPad 등록 규격 2064×2752의 2번, 미리보기·촬영 안내·최신 및 날짜별 ZIP을 갱신했다. iPad도 같은 iPhone 촬영본을 사용한다.
+- 최종 이미지 배치를 직접 검토했다. PNG 16장 규격·RGB·해시와 ZIP 2개 각 21항목의 무결성·이미지 동일성을 확인했다. 기존 32장 중 양규격 2번만 바뀌었고 iOS 나머지 14장·Android 16장은 그대로다. 제품 Dart 소스 해시도 빌드 기준과 같다. 로그·원본·검증 결과는 ignored weather_care_app/build/ios-region-screenshot-20261103에 있다. 촬영 전용 시뮬레이터를 종료했으며 스토어 업로드·커밋·푸시는 하지 않았다.
+- 작업 중 별도 Apple Watch 기획 문서와 HANDOFF 기록이 추가돼 해당 변경은 유지했다.
+
+
+## 2026-11-03 Apple Watch 시안 기존 아이콘·SUITE·스마트 스택 수정
+
+- 사용자 요청에 따라 현재·시간별·스마트 스택·원형 컴플리케이션의 날씨 그림을 기존 docs/icon-previews/weather-color/overcast.png 및 rain.png 원본으로 교체했다. 원본 해시와 시안 내 이미지 바이트 일치를 확인했다.
+- 스마트 스택은 지역 · 기준시각 / 날씨아이콘 + 기온 + 체감온도 / 최저·최고 기온의 세 줄로 수정했고 탭 시 현재 날씨 화면으로 이어지게 했다. 준비물 요약은 제거했다. 기획서도 동일하게 갱신했다.
+- Apple 공식 문서의 watchOS 번들 폰트 지원을 확인했다. 로컬 SUITE 2.040 Regular/SemiBold/ExtraBold의 PostScript 이름·한글 11,172자 포함을 확인했다. CoreText 등록과 한글·영문·수치·단위 샘플을 검증했고 누락된 그리스 μ는 시스템 폰트 대체가 동작했다. watchOS 26.4 SDK, watchOS 10.0 simulator 대상 SwiftUI custom relativeTo API 타입 검사도 통과했다. 실제 watchOS 앱 실행/실기기 폰트 검증은 하지 않았다.
+- 시안에는 원본 SUITE에서 만든 표시문자 subset을 적용했다. 파생 미리보기 폰트는 WeatherCare Preview로 이름을 바꾸고 원 라이선스를 포함했다. 제품 원본 폰트는 변경하지 않았고 제품에서는 전체 TTF를 번들 등록하는 기획이다.
+- docs/Apple_Watch_앱_기획_20261103.md 및 docs/design/apple-watch-20261103의 overview.png·smart-stack.png·verification.json·font-assets-verification.json·coretext-font-verification.json을 갱신/저장했다. headless 브라우저 18개 확인, 320/360/600/780px 외부 폭에서 잘림과 스크립트 오류 없음, 실제 이미지 배치도 직접 검토했다. 앱·서버 제품 코드와 별도 스토어 작업 변경은 건드리지 않았고 배포·커밋·푸시는 하지 않았다.
+
+
+## 2026-11-03 스마트 스택 첫 줄 좌우 정렬
+
+- 사용자 요청에 따라 스마트 스택 첫 줄의 지역을 좌측 상단, 기준 시각을 우측 상단에 배치하고 중간점을 제거했다. 기획서와 시안을 함께 수정하고 overview.png·smart-stack.png·검증 자료를 갱신했다.
+- headless 브라우저에서 첫 줄 양끝 정렬·상단 정렬·중간점 제거를 포함한 기존 18개 확인과 320/360/600/780px 외부 폭 확인을 통과했다. 스마트 스택 이미지를 직접 확인했다. 앱·서버 제품 코드 변경과 배포·커밋·푸시는 수행하지 않았다.
+
+
+## 2026-11-03 워치 시안 안내 문구·준비물 제목 정렬
+
+- 사용자 요청 3건을 시안과 기획서에 반영했다. 시간별 타임라인 위에 ‘시간별 예보 · 강수확률’을 중앙 정렬했고, 생활 목록의 ‘기상·생활 지표’를 ‘항목을 눌러 내용 확인’으로 교체했다. 준비물의 완료 개수 문구를 제거하고 ‘오늘의 준비물’을 중앙 정렬했다.
+- 새 문구의 SUITE 문자가 빠지지 않도록 미리보기 폰트 subset을 갱신하고 확인했다. headless 브라우저에서 신규 문구/중앙 정렬/완료 개수 제거와 기존 체크·상세·스마트 스택을 포함한 21개 확인 및 320/360/600/780px 외부 폭 검증을 통과했다. overview.png와 검증 자료를 갱신하고 이미지를 직접 검토했다.
+- 범위는 Apple Watch 기획·시안이며 실제 watchOS 앱 구현·앱/서버 제품 코드 변경·배포·커밋·푸시는 하지 않았다.
+
+
+## 2026-11-03 워치 시안 탭 제목 변경
+
+- 세 번째 화면 좌측 상단 탭 제목을 ‘타임라인’, 마지막 탭 제목을 ‘기상·생활’로 바꾸고 기획서의 탭 이름도 맞췄다. 내부 ‘시간별 예보 · 강수확률’ 안내는 유지했다.
+- 새 탭 이름에 필요한 SUITE 미리보기 문자를 갱신했고 headless 21개 확인 및 4개 화면 폭 검증을 통과했다. 갱신한 overview.png를 직접 검토했다. 실제 앱 제품 코드·배포·커밋·푸시는 수행하지 않았다.
+
+
+## 2026-11-03 원격 pull 및 Android 상세 화면 기반 iOS 워치 기획 보완
+
+- 사용자 요청으로 origin/master를 fetch하고 f109bce에서 9ba5ff0으로 ff-only pull했다. 기존 미커밋 파일을 유지했다. HANDOFF.md만 임시 stash했고 복원 시 양쪽 끝 추가 기록이 충돌해 공통 원본 prefix를 검증한 뒤 원격 추가와 로컬 추가를 모두 이어 붙였다. 해결 후 unstaged로 복원하고 이번에 만든 stash만 제거했다.
+- 새 prep-detail.png·life-detail.png와 WatchActivity/WatchSnapshot, Flutter wear_weather_details 전달 계약을 확인했다. 두 캡처는 Android 에뮬레이터 시험 자료이며 실제 기기 연동 자료가 아니다. 준비물 상세는 제목·이유·지역·기준시각·목록으로, 기상생활 상세는 제목·큰 값·설명·지역·항목별 기준시각·목록으로 순서다.
+- iOS 기획서 11절과 대화 시안을 같은 정보 순서로 갱신했다. 준비물에 수치형 챙겨요 강조는 넣지 않고, 큰 수치는 기상생활에만 둔다. 기존 iOS 예시 값 48.9%·10:48은 유지했다. 항목 설명은 Android의 10종 문구를 반영하고 결측/항목별 시각을 보존한다. 상세/전체 보기 전환과 목록 복귀를 제공하고, 상세에서는 페이지 점을 숨겼다. 기존 날씨 아이콘·SUITE·탭 이름·스마트 스택 요구사항은 유지했다.
+- docs/design/apple-watch-20261103/details.png·overview.png와 details-reference.json·verification.json·폰트 자료를 갱신했다. headless UI 확인 26개, 전체 320/360/600/780px 및 상세 320/780px 외부 폭, 46px 목록 버튼, 스크립트 오류 0건을 확인하고 상세 이미지를 직접 검토했다. 실제 watchOS 앱 실행·제품 소스 수정·배포·커밋·푸시는 수행하지 않았다.
+
+
+## 2026-11-03 Apple Watch 실제 구현과 전용 시뮬레이터 연결
+
+- watchOS 10 이상 SwiftUI 동반 앱과 WidgetKit 확장을 Runner Xcode 프로젝트에 추가했다. 현재 날씨 → 준비물 → 타임라인 → 기상·생활, 상세/목록 복귀, 지역·한국 날짜별 로컬 체크, 결측·만료·3시간 초과·미래 시각·삭제/이전 revision 처리를 구현했다. 기존 날씨 아이콘과 원본 SUITE Regular/ExtraBold, OFL 고지를 포함했다.
+- 스마트 스택/사각 컴플리케이션은 지역 좌측·기준시각 우측 / 기존 아이콘+기온+체감 / 최저·최고 3줄이며 원형도 추가했다. 실제 스마트 스택 검증에서 512px PNG가 WidgetKit imageTooLarge 오류를 만드는 것을 확인해 같은 원본에서 만든 64px `_accessory` 전용 자산으로 고쳤다. 원본 아이콘은 유지했다. watchOS 단일 앱 아이콘 설정도 수정하고 실제 추가 목록 아이콘을 확인했다.
+- iPhone WatchPhoneBridge는 기존 HomeWidgetService의 날씨와 wearDetails를 application context/도달 가능한 메시지로 보낸다. 워치 새로고침은 Flutter 기존 재조회 경로를 호출한다. 워치/위젯은 별도 앱 그룹 group.com.codesoha.weathercare.watch를 공유한다. 서버·Android 소스는 수정하지 않았다. CODE_SIGNING_ALLOWED=NO 단독 워치 빌드에는 앱 그룹이 등록되지 않아 Flutter의 서명된 동반 빌드를 설치한 뒤 그룹 등록/공유 캐시를 다시 확인했다.
+- 전용 iPhone 16 Pro/iOS 18.6 4EBFF416-CCE9-4F79-9C88-2C272BF821A7와 Watch Series 10 42mm/watchOS 11.5 565FCA1F-E64D-4F95-AE9E-F2AEC188EE0D, pair 1BA74C80-9DA5-4A1C-A765-758956443E56를 생성·연결했다. 기존 사용자 iOS 26 시뮬레이터는 유지했다. 처음 별도 화면 배치를 위해 Simulator를 조작했지만 사용자 작업 화면에 간섭이 생겨 이후 데스크톱/창 전환을 중단하고 simctl/XCTest만으로 검증했다. 후속 작업도 화면을 전환하지 말 것.
+- 권한을 부여하지 않고 실제 앱의 수동 지역 선택 UI에서 구로구 구로1동을 골랐다. 운영 날씨를 받아 iPhone/Watch 최종 캐시 revision 1793680438878과 16.7°·체감14.1°·오후1:33 기준의 일치를 확인했다. 자료 합성/주입 없음. 준비물 체크/상세/목록 복귀, 새로고침, 재설치 후 체크 보존, 타임라인·기상생활·습도 개별 시각, 스마트 스택 실제 추가·3줄 렌더·탭 후 현재 화면 진입을 확인했다.
+- Flutter 3.47.4에서 iPhone+Watch+WidgetKit 동반 빌드 성공, Flutter 회귀 101개·Swift 스냅샷 XCTest 5개 통과, 수정 Dart 2파일 분석·diff 공백 검사 통과. Flutter가 자동 변경한 AppFrameworkInfo.plist는 원복했다. 워치 QA controller는 ignored build/watch-native-control의 독립 XCTest이며 제품에 시험 자료나 촬영 기능을 추가하지 않았다. 실제 워치·페이스 컴플리케이션 배치·큰 글자/VoiceOver·장시간 잠금/백그라운드·실기기 provisioning은 미검증이다.
+- 기획서 12절과 ios/WeatherCareWatch/README.md에 구현/실행/검증을 기록했다. 실제 캡처와 해시는 docs/design/apple-watch-20261103/native에 보존했다. 기존 HTML 시안은 별도 유지했다. build/watch-phone-build.log, watch-flutter-tests.log, watch-model-tests.log, watch-analyze.log, watch-verification에 추가 증거가 있다. 전용 두 시뮬레이터와 앱은 연결·실행 상태로 남긴다.
+- 기존 iOS 스토어 스크린샷/ZIP/생성기 변경과 앞선 기획 변경을 보존했다. 운영 배포·커밋·푸시는 하지 않았다.
+
+
+## 2026-11-03 iOS 5번 실제 Apple Watch 앱 화면으로 교체
+
+- 사용자 요청으로 Android 5번 갤럭시 워치 소개의 네 화면 2×2 배치를 참고해 iPhone/iPad 5번을 Apple Watch 소개로 바꿨다. 제목은 ‘Apple Watch에서도 / 날씨를 챙겨요’, 순서는 현재 날씨·오늘의 준비물·타임라인·기상·생활이다. 사각 워치 화면을 원본 비율로 배치했다.
+- 전용 Apple Watch Series 10 42mm/watchOS 11.5의 실제 설치된 제품 앱을 XCTest로 조작해 374×446 전체 화면 4장을 새로 촬영했다. 연결된 전용 iPhone의 구로구 구로1동 운영 서버 자료이며 HTML 시안/생성형 UI/시험 날씨 주입 없음. 실물 Apple Watch는 devicectl에서 unavailable이라 시뮬레이터 실행본임을 사용자와 문서에 명시했다. 사용자 데스크톱/창 전환은 하지 않았다.
+- store/screenshots/source-watchos-20261103에 전체 원본과 촬영시각·원본/제품 실행파일 해시·가공 기준을 보존했다. 시스템 시계·문구·수치·페이지 표시기는 유지하고 등록 이미지에서는 확대와 검정 모서리 둥근 마스크·바깥 테두리만 적용했다. 현재 16.5°/체감13.6°, 생활 습도51.8% 등은 실제 촬영 시점 값이다.
+- generate_ios_store.py의 5번을 05-watch로 바꾸고 원본 해시 검사와 2×2 사각 배치를 추가했다. ios/ipad의 05-notifications.png를 05-watch.png로 대체하고 미리보기·최신 날짜/고정 이름 iOS ZIP·촬영 안내·매니페스트를 갱신했다. 기존 제품 구현과 다른 작업 파일은 수정하지 않았다. 작업 중 AppFrameworkInfo.plist에 별도 변경이 나타났으며 이번 작업에서 건드리지 않고 유지했다.
+- iPhone 1320×2868/iPad 2064×2752 RGB PNG 16장, 실제 워치 원본 4장 해시, 두 ZIP 각 21항목 무결성·등록 파일 일치를 확인했다. 다른 iPhone/iPad 14장·Android 16장·과거 날짜 ZIP의 해시는 작업 직전과 같다. 두 5번 배치를 직접 검토했고 diff 공백 검사도 통과했다. XCTest 촬영 세션 1개 성공. build/watch-store-screenshot-20261103에 백업·전체 캡처/접근성 트리/명령·촬영 로그·검증 JSON을 보존했다.
+- 전용 워치 앱을 현재 화면으로 다시 실행해 두었다. 제품 코드 변경·App Store 업로드·커밋·푸시는 하지 않았다.
+
+
+## 2026-11-03 전체 변경사항 커밋·푸시
+
+- 사용자 요청으로 현재 저장소의 모든 미커밋 변경을 함께 반영한다. Apple Watch 기획·실제 SwiftUI/WidgetKit/WatchConnectivity 구현, iOS 2번/5번 스토어 화면과 원본·미리보기·ZIP·문서, iOS 프레임워크 설정 변경을 포함한다.
+- 앞선 검증의 iPhone/Watch/WidgetKit 빌드 성공, Flutter 회귀 101개·Swift 모델 5개·Dart 정적 분석·실제 watchOS 촬영 세션 성공 기록을 확인했다. 스토어 PNG 16장과 ZIP 2개 무결성 검증, 다른 14장·Android 16장 보존 기록 및 diff 공백 검사도 확인했다.
+- origin/master를 fetch해 원격 상태를 확인하고 전체 변경을 한글 메시지로 커밋했다. 일반 push는 로컬 HTTPS 인증 부재로 실패했고 SSH 인증도 사용할 수 없어, 연결된 GitHub 도구의 저장소 쓰기 권한으로 같은 파일 tree를 업로드하고 master에 반영한다. 원격 커밋을 수신한 뒤 tree 일치를 검증해 로컬 master도 같은 커밋으로 맞춘다. 사용자 승인 범위에 따라 기존 다른 작업 변경도 포함하며, ignored build 로그·시뮬레이터 제어 산출물은 커밋하지 않는다.

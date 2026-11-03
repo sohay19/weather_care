@@ -1,5 +1,13 @@
 # 스토어 스크린샷
 
+## 2026-11-03 iOS 5번 Apple Watch 앱 소개
+
+iPhone·iPad 5번을 Android 5번처럼 네 화면을 2×2로 배치한 Apple Watch 앱 소개로 바꿨다. 실제 제품 watchOS 앱을 전용 시뮬레이터에서 실행해 촬영했으며 HTML 시안이나 합성한 날씨 화면을 사용하지 않았다. 사각 화면·시스템 시계·실제 UI를 유지했다. `ios/05-watch.png`, `ipad/05-watch.png`와 [최신 iOS 안내](IOS_20261103.md)를 사용한다. 다른 14장·Android·과거 날짜 ZIP은 그대로이며 최신/고정 이름 iOS ZIP과 미리보기를 갱신했다.
+
+## 2026-11-03 iOS 2번 구역별 알림 교체
+
+iPhone·iPad 2번을 Android 최신 2번을 참고한 실제 iOS 시뮬레이터 촬영본으로 갱신했다. 편집 버튼과 구역별 알림 ON/OFF가 보이는 메뉴이며, 나머지 14장은 기존 파일과 같다. [최신 iOS 안내](IOS_20261103.md), `../app-store/weather-care-ios-screenshots-20261103.zip`과 고정 이름 iOS ZIP을 사용한다.
+
 ## 2026-10-30 iOS 마지막 장 교체
 
 iPhone·iPad 등록 이미지의 마지막 8번만 현재 알림 설정 UI 촬영본으로 교체했다. 1~7번은 기존 파일 그대로 유지한다. [최신 iOS 안내](IOS_20261030.md)와 `../app-store/weather-care-ios-screenshots-20261030.zip`을 사용한다. 고정 이름 iOS ZIP과 미리보기도 갱신하며 이전 날짜 ZIP과 Android 자료는 보존했다.

@@ -70,7 +70,7 @@ describe('notification scheduler', () => {
     expect(sent.filter((item) => item.notificationKey === 'PIPE_FREEZE_CAUTION')).toHaveLength(2);
   });
 
-  it('아침 안개가 있어도 저녁 한 시간 비와 다른 항목 준비물을 우선 알린다', async () => {
+  it('비에 대비해야 하면 일상 준비물은 생략한다', async () => {
     await insertInstallation('device-token');
     const forecast = rainyForecast();
     forecast.current = { observedAt: '2026-09-02T07:00:00+09:00', dataRole: 'OBSERVATION',
@@ -88,12 +88,8 @@ describe('notification scheduler', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].notificationKey).toBe('MORNING_BRIEF');
     const lines = sent[0].body.split('\n');
-    expect(lines).toHaveLength(3);
     expect(sent[0].title).toBe('오늘자 준비물 😊');
-    expect(lines[0]).toContain('오후 6시~오후 7시에는 비 소식이 있어요.');
-    expect(lines[0]).toContain('우산');
-    expect(lines[1]).toContain('겉옷');
-    expect(lines[2]).toContain('마스크');
+    expect(lines).toEqual(['오후 6시~7시에 비 소식이 있으니 우산을 챙기세요. (강수확률 60%)']);
   });
 
   it('does not send to a new registration without explicit notification settings', async () => {
@@ -580,7 +576,7 @@ describe('notification scheduler', () => {
       sender: collectingSender(sent),
     });
     expect(sent).toHaveLength(1);
-    expect(sent[0].body).toContain('오전 7시~오전 9시에는');
+    expect(sent[0].body).toContain('오전 7시~9시에 비 소식이 있으니 우산을 챙기세요. (강수확률 최고 80%)');
   });
 
   it('removes an unregistered token without writing send history', async () => {
@@ -632,7 +628,7 @@ describe('notification scheduler', () => {
     }
   });
 
-  it('sends current rain once per rain episode only after both 500m sources agree', async () => {
+  it('sends current rain once for persistent radar detection with valid zero analysis', async () => {
     await insertInstallation('device-token', true);
     const sender = vi.fn(async (_env: ServerEnv, payloads: FcmPayload[]) =>
       payloads.map((payload) => ({
@@ -650,7 +646,7 @@ describe('notification scheduler', () => {
         observedAt: '2026-09-01T20:50:00+09:00',
         latitude: 37.2636,
         longitude: 127.0286,
-        analysisRainDetected: true,
+        analysisRainDetected: false,
         radarRainDetected: true,
         state: 'RAIN' as const,
         provider: 'KMA_ANALYSIS_RADAR' as const,
@@ -702,7 +698,7 @@ describe('notification scheduler', () => {
     expect(sent.filter((item) => item.notificationKey.startsWith('OFFICIAL_WARNING')))
       .toEqual([
         expect.objectContaining({
-          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요\n수원에는 호우주의보가 발효 중이에요',
+          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요\n수원에는 호우주의보가 발효 중이에요 내일 오전 7시~10시 예보 (강수확률 최고 80%, 9mm)',
           notificationTarget: 'WEATHER_DETAILS',
           notificationTopic: 'PRECIPITATION',
         }),

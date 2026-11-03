@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   KmaPrecipitationObservationProvider,
+  analysisGridPoint,
+  nationwidePrecipitationAtPoint,
   parseAnalysisRain,
   radarGridPoint,
   radarRainAtPoint,
@@ -94,6 +96,35 @@ describe('KMA precipitation observation provider', () => {
         source: '기상청 관측분석자료·기상청 레이더',
       }),
     ]);
+  });
+
+  it.each([
+    [0, 1234, 'RAIN'],
+    [0.9, 1234, 'RAIN'],
+    [0.9, -25000, 'MISMATCH'],
+    [0, -25000, 'DRY'],
+    [-999, 1234, 'INVALID'],
+  ])('classifies nationwide analysis %s with radar echo %s', (value, echo, state) => {
+    const latitude = 37.38;
+    const longitude = 126.803;
+    const point = analysisGridPoint(latitude, longitude);
+    const analysis = new ArrayBuffer(4 + 2049 * 2049 * 4);
+    const view = new DataView(analysis);
+    view.setUint16(0, 2049, true);
+    view.setUint16(2, 2049, true);
+    view.setFloat32(4 + (point.y * 2049 + point.x) * 4, value, true);
+    const snapshot = {
+      observedAt: '2026-11-03T08:00:00+09:00',
+      analysis,
+      radar: radarPayload(radarGridPoint(latitude, longitude), echo),
+    };
+    if (state === 'INVALID') {
+      expect(() => nationwidePrecipitationAtPoint(snapshot, latitude, longitude)).toThrow(
+        expect.objectContaining({ providerFailureDetail: 'ANALYSIS_MISSING_VALUE' }),
+      );
+    } else {
+      expect(nationwidePrecipitationAtPoint(snapshot, latitude, longitude).state).toBe(state);
+    }
   });
 
   it('does not retry a quota response and reports it separately', async () => {

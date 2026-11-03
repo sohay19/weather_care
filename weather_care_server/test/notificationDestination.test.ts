@@ -155,7 +155,7 @@ describe('notification destinations', () => {
     const result = buildNotification([], new Date('2026-10-27T07:00:00+09:00'), forecast,
       { tieredPreparations: true })[0];
     expect(result.title).toBe('오늘자 준비물 😊');
-    expect(result.body).toBe('오늘은 하루 종일 쌀쌀해요. 두꺼운 겉옷을 챙겨 입고,\n' +
+    expect(result.body).toBe('오늘은 하루 종일 쌀쌀해요 (최저 기온 8℃). 두꺼운 겉옷을 챙겨 입으세요.\n' +
       '오전 9시~오후 3시까지 자외선이 강하니 선크림을 잊지 마세요.');
   });
 
@@ -166,10 +166,10 @@ describe('notification destinations', () => {
     const result = buildNotification([], new Date('2026-10-27T07:00:00+09:00'), forecast,
       { tieredPreparations: true })[0];
     expect(result.body).not.toContain('하루 종일');
-    expect(result.body).toContain('오전 7시~밤 12시까지는 쌀쌀해요.');
+    expect(result.body).toContain('오전 7시~밤 12시까지는 쌀쌀해요 (최저 기온 8℃).');
   });
 
-  it('같은 시간대 비 준비물은 한 문장에 묶고 자정 이후 비는 제외한다', () => {
+  it('호우는 확률과 mm를 표시하고 자정 이후 비는 제외한다', () => {
     const forecast = preparationForecast();
     forecast.current = { observedAt: '2026-10-27T07:00:00+09:00', temperature: 22 };
     forecast.hourly = [18, 24].map((hour) => ({
@@ -178,11 +178,11 @@ describe('notification destinations', () => {
     }));
     const result = buildNotification([], new Date('2026-10-27T07:00:00+09:00'), forecast,
       { tieredPreparations: true })[0];
-    expect(result.body).toBe('오후 6시~오후 7시에는 비 소식이 있어요. 우산, 장화, 우비를 챙겨 나가세요.');
+    expect(result.body).toBe('오후 6시~7시에 강한 비가 예상되니 하천변과 지하차도는 피하세요. (강수확률 80%, 16mm)');
   });
 
   it.each([
-    ['SNOW', { precipitationType: 'SNOW', snowfallAmount: 1 }, '눈 소식이 있어요.'],
+    ['SNOW', { precipitationType: 'SNOW', snowfallAmount: 1 }, '눈 소식이 있으니 미끄럼에 주의하세요.'],
     ['HEAT', { temperature: 33 }, '더위에 대비해요.'],
     ['AIR', { pm25: 80 }, '미세먼지가 심하니 마스크를 챙겨 쓰세요.'],
   ])('%s 준비물도 문장으로 안내한다', (_kind, weather, expected) => {
@@ -197,13 +197,13 @@ describe('notification destinations', () => {
 
   it.each([
     [18, 19, { precipitationType: 'RAIN', precipitationProbability: 60, precipitationAmount: 1 },
-      '오후 6시~오후 7시에는 비 소식이 있어요. 우산을 챙겨 나가세요.'],
+      '오후 6시~7시에 비 소식이 있으니 우산을 챙기세요. (강수확률 60%)'],
     [11, 16, { temperature: 26 },
       '오전 11시~오후 4시까지는 더위에 대비해요. 물을 챙기고 틈틈이 쉬어 가세요.'],
     [8, 11, { pm25: 80 },
       '오전 8시~오전 11시까지는 미세먼지가 심하니 마스크를 챙겨 쓰세요.'],
     [8, 10, { precipitationType: 'SNOW', snowfallAmount: 0.5 },
-      '오전 8시~오전 10시까지는 눈 소식이 있어요. 우산, 미끄럼 방지 신발 준비하여 미끄러지지 않도록 조심하세요.'],
+      '오전 8시~10시에 눈 소식이 있으니 미끄럼에 주의하세요.'],
   ])('사용자 지정 문구를 %s시~%s시 예보에 적용한다', (start, end, weather, expected) => {
     const forecast = preparationForecast();
     forecast.current = { observedAt: '2026-10-27T07:00:00+09:00', temperature: 22 };
@@ -215,12 +215,41 @@ describe('notification destinations', () => {
       { tieredPreparations: true })[0].body).toBe(expected);
   });
 
+  it('태풍과 대설이 비·강풍·빙판길보다 우선하고 신적설 cm를 mm로 환산한다', () => {
+    const forecast = preparationForecast();
+    forecast.hourly[2] = { ...forecast.hourly[2], precipitationType: 'RAIN',
+      precipitationProbability: 70, precipitationAmount: 1 };
+    forecast.hourly[10] = { ...forecast.hourly[10], precipitationType: 'SNOW',
+      precipitationProbability: 80, snowfallAmount: 6 };
+    const result = buildNotification([], new Date('2026-10-27T07:00:00+09:00'), forecast, {
+      tieredPreparations: true, activeWarningCodes: ['W', 'T'], roadIce: true,
+    })[0];
+    expect(result.body.split('\n')).toEqual([
+      '태풍 특보가 발효 중이에요. 강한 바람에 대비해 바깥 물건을 고정하고 외출을 줄이세요.',
+      '오후 5시~6시에 많은 눈이 예상되니 차량 이동에 여유를 두세요. (강설확률 80%, 60mm)',
+    ]);
+  });
+
+  it('비와 눈의 확률을 각 예보 구간에서 고르고 일상 안내를 생략한다', () => {
+    const forecast = preparationForecast();
+    forecast.hourly[2] = { ...forecast.hourly[2], precipitationType: 'RAIN', precipitationProbability: 60 };
+    forecast.hourly[3] = { ...forecast.hourly[3], precipitationType: 'RAIN', precipitationProbability: 70 };
+    forecast.hourly[10] = { ...forecast.hourly[10], precipitationType: 'SNOW', precipitationProbability: 50,
+      snowProbability: 100 };
+    const result = buildNotification([], new Date('2026-10-27T07:00:00+09:00'), forecast,
+      { tieredPreparations: true })[0];
+    expect(result.body.split('\n')).toEqual([
+      '오전 9시~11시에 비 소식이 있으니 우산을 챙기세요. (강수확률 최고 70%)',
+      '오후 5시~6시에 눈 소식이 있으니 미끄럼에 주의하세요. (강설확률 50%)',
+    ]);
+  });
+
   it('자외선 안내가 없으면 겉옷 문장을 쉼표로 끝내지 않는다', () => {
     const forecast = preparationForecast();
     forecast.hourly.forEach((item) => { item.uvIndex = 0; });
     expect(buildNotification([], new Date('2026-10-27T07:00:00+09:00'), forecast,
       { tieredPreparations: true })[0].body)
-      .toBe('오늘은 하루 종일 쌀쌀해요. 두꺼운 겉옷을 챙겨 입으세요.');
+      .toBe('오늘은 하루 종일 쌀쌀해요 (최저 기온 8℃). 두꺼운 겉옷을 챙겨 입으세요.');
   });
 });
 

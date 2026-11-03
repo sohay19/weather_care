@@ -26,6 +26,7 @@ import {
 } from '../types';
 import { FcmPayload, FcmSendResult, sendBatch } from './fcmClient';
 import { BuiltNotification, buildNotification } from './notificationBuilder';
+import { precipitationNotice } from './precipitationNotice';
 import {
   warningDestination,
   weatherDetailsDestination,
@@ -192,6 +193,8 @@ export async function runRecommendationNotificationJob(
   for (const row of rows) {
     const pendingStart = pending.length;
     const local = localNotificationTime(now, row.timezone);
+    let activeWarningCodes: string[] | undefined;
+    let roadIce: RoadIceRisk | undefined;
     if (row.weatherNotificationEnabled !== 0) {
       await collectCurrentRainNotification(
         env,
@@ -201,7 +204,7 @@ export async function runRecommendationNotificationJob(
         precipitationByLocation,
         dependencies.precipitationLoader ?? defaultPrecipitationLoader,
       );
-      await collectOfficialWarningNotifications(
+      activeWarningCodes = await collectOfficialWarningNotifications(
         env,
         row,
         local.date,
@@ -211,7 +214,7 @@ export async function runRecommendationNotificationJob(
         dependencies.warningLoader ?? defaultWarningLoader,
         dependencies.warningRegionResolver ?? defaultWarningRegionResolver,
       );
-      await collectRoadIceNotification(
+      roadIce = await collectRoadIceNotification(
         env,
         row,
         local.date,
@@ -248,6 +251,14 @@ export async function runRecommendationNotificationJob(
     try {
       const forecast = await forecastPromise;
       const hourly = forecast.hourly.slice(0, 24);
+      for (const item of pending.slice(pendingStart)) {
+        const mutation = item.warningStateMutation;
+        if (mutation?.operation !== 'UPSERT') continue;
+        const code = mutation.warning.typeCode;
+        if (code !== 'R' && code !== 'S') continue;
+        const notice = precipitationNotice(hourly, code === 'R' ? 'rain' : 'snow', now, Infinity, true);
+        if (notice?.forecastDetails) item.built.body += ` ${notice.forecastDetails}`;
+      }
       const rules = runWeatherRuleEngineForHourly(hourly, undefined, now);
       const insights = runLifestyleWeatherEngine(rules, hourly, now);
       const recommendations = runRecommendationEngine(
@@ -287,6 +298,8 @@ export async function runRecommendationNotificationJob(
         {
           regionKey,
           tieredPreparations: true,
+          activeWarningCodes,
+          roadIce: roadIce !== undefined,
           todayNotificationSettings: settingsFromRow(row),
           preparationSettings: settingsFromRow(row),
           drynessPreparations: row.drynessEnabled != null,
@@ -576,7 +589,7 @@ async function collectRoadIceNotification(
     longitude: number,
     roadNumbers: readonly string[],
   ) => Promise<RoadIceRisk | undefined>,
-): Promise<void> {
+): Promise<RoadIceRisk | undefined> {
   if (row.blackIceEnabled === 0 || row.latitude === null || row.longitude === null) return;
   const region = regionMetadataForGrid(row.nx, row.ny);
   const displayRegionName = region?.name ?? '현재 위치';
@@ -607,7 +620,7 @@ async function collectRoadIceNotification(
       row.roadIceLevel === risk.level &&
       row.roadIceLinkId === risk.linkId
     ) {
-      return;
+      return risk;
     }
     const content = roadIceNotification(risk, displayRegionName);
     pending.push({
@@ -622,6 +635,7 @@ async function collectRoadIceNotification(
       },
       roadIceRisk: risk,
     });
+    return risk;
   } catch (error) {
     logNotificationError('road_ice_build_failed', error);
   }
@@ -747,7 +761,7 @@ async function collectOfficialWarningNotifications(
     nx: number,
     ny: number,
   ) => Promise<KmaWarningRegionMatch>,
-): Promise<void> {
+): Promise<string[] | undefined> {
   let regionKey = `${row.nx}:${row.ny}`;
 
   try {
@@ -842,6 +856,7 @@ async function collectOfficialWarningNotifications(
         { operation: 'DELETE', typeCode: before.typeCode },
       );
     }
+    return [...current.keys()].filter((code) => isWarningNotificationEnabled(row, code));
   } catch (error) {
     logNotificationError('official_warning_build_failed', error);
   }

@@ -508,21 +508,23 @@ export function nationwidePrecipitationAtPoint(
     4 + (point.y * 2049 + point.x) * 4,
     true,
   );
-  if (analysisValue !== 0 && analysisValue !== 1) {
+  if (!Number.isFinite(analysisValue) || analysisValue < 0) {
     throw new KmaPrecipitationObservationProviderError(
       'KMA analysis point has no valid rain observation',
       analysisValue < 0 ? 'ANALYSIS_MISSING_VALUE' : 'ANALYSIS_NON_BINARY_VALUE',
     );
   }
   const radar = radarRainAtPoint(snapshot.radar, radarGridPoint(latitude, longitude));
-  const analysisRainDetected = analysisValue === 1;
+  const analysisRainDetected = analysisValue > 0;
   return {
     observedAt: snapshot.observedAt,
     latitude,
     longitude,
     analysisRainDetected,
     radarRainDetected: radar.rainDetected,
-    state: consensusState(analysisRainDetected, radar.rainDetected),
+    // 유효한 분석값이 있으면 레이더 감지로 알린다. 레이더가 없고
+    // 분석에 양수가 남아 있는 동안에는 이전 강수 상태를 초기화하지 않는다.
+    state: radar.rainDetected ? 'RAIN' : analysisRainDetected ? 'MISMATCH' : 'DRY',
     radarDbz: radar.dbz,
     provider: 'KMA_ANALYSIS_RADAR',
   };

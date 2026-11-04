@@ -12,6 +12,8 @@ dependencies:
   firebase_messaging: ^16.6.0
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_local_notifications: ^20.1.0
   google_mobile_ads: 9.0.0
   in_app_purchase: ^3.3.1
@@ -51,6 +53,7 @@ flutter:
         - package: tool/build_app_config.dart
     - assets/data/kma_regions.json
     - assets/icons/
+    - assets/licenses/
   fonts:
     - family: SUITE
       fonts:
@@ -82,15 +85,15 @@ flutter:
           weight: 400
         - asset: assets/fonts/Mona10-Bold.ttf
           weight: 700
-    - family: NeoHyundai
+    - family: NanumSquareNeo
       fonts:
-        - asset: "assets/fonts/NeoHyundai L.ttf"
+        - asset: assets/fonts/NanumSquareNeo-aLt.ttf
           weight: 300
-        - asset: "assets/fonts/NeoHyundai R.ttf"
+        - asset: assets/fonts/NanumSquareNeo-bRg.ttf
           weight: 400
-        - asset: "assets/fonts/NeoHyundai B.ttf"
+        - asset: assets/fonts/NanumSquareNeo-cBd.ttf
           weight: 700
-        - asset: "assets/fonts/NeoHyundai EB.ttf"
+        - asset: assets/fonts/NanumSquareNeo-dEb.ttf
           weight: 800
-        - asset: "assets/fonts/NeoHyundai EBK.ttf"
+        - asset: assets/fonts/NanumSquareNeo-eHv.ttf
           weight: 900

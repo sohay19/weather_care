@@ -17,8 +17,8 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "NeoHyundai";
-  src: url("/assets/fonts/NeoHyundai-Bold.ttf") format("truetype");
+  font-family: "NanumSquareNeo";
+  src: url("/assets/fonts/NanumSquareNeo-cBd.ttf") format("truetype");
   font-weight: 700;
   font-display: swap;
 }
@@ -92,7 +92,7 @@ input:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-family: "NeoHyundai", "SUITE", sans-serif;
+  font-family: "NanumSquareNeo", "SUITE", sans-serif;
   font-size: 21px;
   font-weight: 700;
   text-decoration: none;
@@ -132,7 +132,7 @@ main {
   letter-spacing: 0.14em;
 }
 .intro h1 {
-  font-family: "NeoHyundai", "SUITE", sans-serif;
+  font-family: "NanumSquareNeo", "SUITE", sans-serif;
   font-weight: 700;
   font-size: clamp(38px, 6vw, 68px);
   line-height: 1.17;
@@ -163,7 +163,7 @@ main {
 .meaning h2,
 .source h2,
 .selection h2 {
-  font-family: "NeoHyundai", "SUITE", sans-serif;
+  font-family: "NanumSquareNeo", "SUITE", sans-serif;
   font-weight: 700;
   margin: 0;
   line-height: 1.35;
@@ -390,7 +390,7 @@ main {
   padding: 25px;
 }
 .meaning h3 {
-  font-family: "NeoHyundai", "SUITE", sans-serif;
+  font-family: "NanumSquareNeo", "SUITE", sans-serif;
   font-weight: 700;
   margin: 0 0 10px;
   font-size: 18px;

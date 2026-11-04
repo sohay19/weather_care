@@ -25,7 +25,7 @@ class WeatherTileService : TileService() {
             val width = device.screenWidthDp.takeIf { it > 0 } ?: resources.configuration.screenWidthDp
             val height = device.screenHeightDp.takeIf { it > 0 } ?: resources.configuration.screenHeightDp
             val density = device.screenDensity.takeIf { it > 0 } ?: resources.displayMetrics.density
-            val rendered = SuiteTileRenderer(this).render(data, width, height, density)
+            val rendered = NanumSquareNeoTileRenderer(this).render(data, width, height, density)
             val version = TileImageStore(this).save(rendered.bitmap)
             rendered.bitmap.recycle()
             val action = ActionBuilders.LaunchAction.Builder().setAndroidActivity(ActionBuilders.AndroidActivity.Builder()

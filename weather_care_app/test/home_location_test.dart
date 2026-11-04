@@ -1752,7 +1752,7 @@ void main() {
         'Roboto': ['SUITE-Regular.ttf'],
         'sans-serif': ['SUITE-Regular.ttf'],
         'SUITE': ['SUITE-Regular.ttf', 'SUITE-Bold.ttf', 'SUITE-Heavy.ttf'],
-        'NeoHyundai': ['NeoHyundai R.ttf', 'NeoHyundai B.ttf'],
+        'NanumSquareNeo': ['NanumSquareNeo-bRg.ttf', 'NanumSquareNeo-cBd.ttf'],
         'ChosunSg': ['ChosunSg.TTF', 'ChosunKg.TTF', 'ChosunBg.TTF'],
         'Mona': ['Mona10.ttf', 'Mona10-Bold.ttf'],
       }.entries) {

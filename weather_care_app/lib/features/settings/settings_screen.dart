@@ -136,6 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     final body = ListView(
       key: widget.embedded ? const ValueKey('setting-tab') : null,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -194,6 +195,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: '데이터 권한 안내',
           subtitle: '자료 출처와 위치·알림 정보 사용을 확인해요',
           onTap: _openDataPermissionSettings,
+        ),
+        const SizedBox(height: 16),
+        _SettingsMenuButton(
+          key: const ValueKey('open-source-licenses-menu'),
+          icon: Icons.description_outlined,
+          title: isEnglish ? 'Open Source & Licenses' : '오픈소스 및 라이선스',
+          subtitle: isEnglish
+              ? 'View font and library licenses'
+              : '글꼴과 라이브러리 라이선스를 확인해요',
+          onTap: () => showLicensePage(context: context),
         ),
       ],
     );

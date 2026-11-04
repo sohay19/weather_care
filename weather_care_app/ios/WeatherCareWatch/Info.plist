@@ -31,8 +31,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>SUITE-Regular.ttf</string>
-		<string>SUITE-ExtraBold.ttf</string>
+		<string>NanumSquareNeo-bRg.ttf</string>
+		<string>NanumSquareNeo-dEb.ttf</string>
 	</array>
 	<key>WKApplication</key>
 	<true/>

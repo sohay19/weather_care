@@ -24,7 +24,7 @@ private struct WeatherAccessory: View {
   let entry: WeatherEntry
   private var valid: Bool { entry.snapshot.hasData && !entry.snapshot.stale(at: entry.date) }
   private func font(_ size: CGFloat, bold: Bool = false) -> Font {
-    .custom(bold ? "SUITE-ExtraBold" : "SUITE-Regular", size: size, relativeTo: .caption)
+    .custom(bold ? "NanumSquareNeoTTF-dEb" : "NanumSquareNeoTTF-bRg", size: size, relativeTo: .caption)
   }
   var body: some View {
     Group {

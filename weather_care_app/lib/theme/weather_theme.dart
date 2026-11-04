@@ -7,7 +7,7 @@ class WeatherCareTheme {
   static const String fontSuite = 'SUITE';
   static const String fontChosunSg = 'ChosunSg';
   static const String fontMona = 'Mona';
-  static const String fontNeoHyundai = 'NeoHyundai';
+  static const String fontNanumSquareNeo = 'NanumSquareNeo';
 
   static const Color primary = Color(0xFF5D7F9E);
   static const Color primaryDeep = Color(0xFF3E5F7C);
@@ -101,7 +101,7 @@ class WeatherCareTheme {
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: fontNeoHyundai,
+          fontFamily: fontNanumSquareNeo,
           color: palette.textPrimary,
           fontSize: 22,
           fontWeight: FontWeight.w800,
@@ -121,7 +121,7 @@ class WeatherCareTheme {
       ),
       textTheme: TextTheme(
         displaySmall: TextStyle(
-          fontFamily: fontNeoHyundai,
+          fontFamily: fontNanumSquareNeo,
           fontSize: 32,
           height: 1.22,
           fontWeight: FontWeight.w600,
@@ -129,14 +129,14 @@ class WeatherCareTheme {
           color: palette.textPrimary,
         ),
         headlineSmall: TextStyle(
-          fontFamily: fontNeoHyundai,
+          fontFamily: fontNanumSquareNeo,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
           color: palette.textPrimary,
         ),
         titleLarge: TextStyle(
-          fontFamily: fontNeoHyundai,
+          fontFamily: fontNanumSquareNeo,
           fontSize: 19,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.35,

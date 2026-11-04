@@ -6,7 +6,7 @@ enum WatchStyle {
   static let muted = Color(red: 170/255, green: 183/255, blue: 195/255)
   static let accent = Color(red: 157/255, green: 189/255, blue: 216/255)
   static func font(_ size: CGFloat, bold: Bool = false) -> Font {
-    .custom(bold ? "SUITE-ExtraBold" : "SUITE-Regular", size: size, relativeTo: .body)
+    .custom(bold ? "NanumSquareNeoTTF-dEb" : "NanumSquareNeoTTF-bRg", size: size, relativeTo: .body)
   }
 }
 

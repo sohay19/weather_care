@@ -11,8 +11,8 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "NeoHyundai";
-  src: url("/assets/fonts/NeoHyundai-Bold.ttf") format("truetype");
+  font-family: "NanumSquareNeo";
+  src: url("/assets/fonts/NanumSquareNeo-cBd.ttf") format("truetype");
   font-weight: 700;
   font-display: swap;
 }
@@ -116,7 +116,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #f2b544; outline-
   box-shadow: 0 4px 15px rgba(28, 59, 79, .12);
   backdrop-filter: blur(5px);
 }
-.legend-title { font-family: "NeoHyundai", "SUITE", sans-serif; font-weight: 700; font-size: 12px; }
+.legend-title { font-family: "NanumSquareNeo", "SUITE", sans-serif; font-weight: 700; font-size: 12px; }
 .legend-scale { display: flex; gap: 10px; margin-top: 5px; font-size: 11px; }
 .legend-scale span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .legend-scale i { width: 13px; height: 13px; border-radius: 4px; border: 1px solid rgba(21, 89, 120, .18); }
@@ -150,7 +150,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid #f2b544; outline-
 }
 .selection-copy h1 {
   margin: 0;
-  font: 700 18px/1.35 "NeoHyundai", "SUITE", sans-serif;
+  font: 700 18px/1.35 "NanumSquareNeo", "SUITE", sans-serif;
 }
 #selection-summary { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 .selection-count { color: var(--primary); font-weight: 600; }

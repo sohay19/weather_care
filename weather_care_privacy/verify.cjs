@@ -109,7 +109,7 @@ const routes = {
   '/assets/fonts/SUITE-Regular.ttf': 'assets/fonts/SUITE-Regular.ttf',
   '/assets/fonts/SUITE-SemiBold.ttf': 'assets/fonts/SUITE-SemiBold.ttf',
   '/assets/fonts/SUITE-ExtraBold.ttf': 'assets/fonts/SUITE-ExtraBold.ttf',
-  '/assets/fonts/NeoHyundai-Bold.ttf': 'assets/fonts/NeoHyundai-Bold.ttf',
+  '/assets/fonts/NanumSquareNeo-cBd.ttf': 'assets/fonts/NanumSquareNeo-cBd.ttf',
   '/weather-map': 'weather-map/index.html',
   '/weather-map/': 'weather-map/index.html',
   '/weather-map/map.css': 'weather-map/map.css',
@@ -141,7 +141,7 @@ async function verifyStaticPage(browser, port, target, width) {
   assert.ok((await page.locator('body').evaluate((element) =>
     getComputedStyle(element).fontFamily)).includes('SUITE'));
   assert.ok((await page.locator('h1').evaluate((element) =>
-    getComputedStyle(element).fontFamily)).includes('NeoHyundai'));
+    getComputedStyle(element).fontFamily)).includes('NanumSquareNeo'));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   for (const href of await page.locator('a[href^="#"]').evaluateAll((nodes) =>
     nodes.map((node) => node.getAttribute('href')))) {
@@ -203,7 +203,7 @@ async function verifyMapPage(browser, port, width) {
   assert.ok((await page.locator('body').evaluate((element) =>
     getComputedStyle(element).fontFamily)).includes('SUITE'));
   assert.ok((await page.locator('h1').evaluate((element) =>
-    getComputedStyle(element).fontFamily)).includes('NeoHyundai'));
+    getComputedStyle(element).fontFamily)).includes('NanumSquareNeo'));
   await page.waitForFunction(() =>
     document.querySelector('#grid-map')?.dataset.gridCount === '1633');
   assert.equal(await page.locator('#grid-map').getAttribute('data-ready'), 'true');

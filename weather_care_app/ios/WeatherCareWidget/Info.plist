@@ -27,11 +27,10 @@
 	</dict>
 	<key>UIAppFonts</key>
 	<array>
-		<string>SUITE-Regular.ttf</string>
-		<string>SUITE-SemiBold.ttf</string>
-		<string>SUITE-Bold.ttf</string>
-		<string>SUITE-ExtraBold.ttf</string>
-		<string>SUITE-Heavy.ttf</string>
+		<string>NanumSquareNeo-bRg.ttf</string>
+		<string>NanumSquareNeo-cBd.ttf</string>
+		<string>NanumSquareNeo-dEb.ttf</string>
+		<string>NanumSquareNeo-eHv.ttf</string>
 	</array>
 </dict>
 </plist>

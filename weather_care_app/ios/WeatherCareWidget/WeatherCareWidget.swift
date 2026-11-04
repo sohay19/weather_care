@@ -43,12 +43,11 @@ private let widgetHorizontalMarginRatio: CGFloat = 0.75
 private let widgetTopMarginRatio: CGFloat = 0.25
 private let widgetBottomMarginRatio: CGFloat = 0.65
 
-private enum SuiteFont {
-  static func regular(_ size: CGFloat) -> Font { .custom("SUITE-Regular", fixedSize: size) }
-  static func semiBold(_ size: CGFloat) -> Font { .custom("SUITE-SemiBold", fixedSize: size) }
-  static func bold(_ size: CGFloat) -> Font { .custom("SUITE-Bold", fixedSize: size) }
-  static func extraBold(_ size: CGFloat) -> Font { .custom("SUITE-ExtraBold", fixedSize: size) }
-  static func heavy(_ size: CGFloat) -> Font { .custom("SUITE-Heavy", fixedSize: size) }
+private enum NanumSquareNeoFont {
+  static func regular(_ size: CGFloat) -> Font { .custom("NanumSquareNeoTTF-bRg", fixedSize: size) }
+  static func bold(_ size: CGFloat) -> Font { .custom("NanumSquareNeoTTF-cBd", fixedSize: size) }
+  static func extraBold(_ size: CGFloat) -> Font { .custom("NanumSquareNeoTTF-dEb", fixedSize: size) }
+  static func heavy(_ size: CGFloat) -> Font { .custom("NanumSquareNeoTTF-eHv", fixedSize: size) }
 }
 
 struct WeatherCareEntry: TimelineEntry {
@@ -378,14 +377,14 @@ private struct WidgetHeader: View {
   var body: some View {
     HStack(alignment: .center, spacing: 2) {
       Text(snapshot.region)
-        .font(SuiteFont.extraBold(regionSize))
+        .font(NanumSquareNeoFont.extraBold(regionSize))
         .lineLimit(2)
         .minimumScaleFactor(0.72)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
         .widgetInvalidatableContent()
       Text(snapshot.refreshTime)
-        .font(SuiteFont.regular(timeSize))
+        .font(NanumSquareNeoFont.regular(timeSize))
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
@@ -403,12 +402,12 @@ private struct SmallWidgetHeader: View {
     HStack(alignment: .top, spacing: 0) {
       VStack(alignment: .leading, spacing: 1) {
         Text(snapshot.region)
-          .font(SuiteFont.extraBold(12))
+          .font(NanumSquareNeoFont.extraBold(12))
           .lineLimit(3)
           .minimumScaleFactor(0.72)
           .fixedSize(horizontal: false, vertical: true)
         Text(snapshot.refreshTime)
-          .font(SuiteFont.regular(9))
+          .font(NanumSquareNeoFont.regular(9))
           .foregroundStyle(secondaryInk)
           .lineLimit(1)
           .fixedSize(horizontal: true, vertical: false)
@@ -457,10 +456,10 @@ private struct MinMaxRow: View {
   let size: CGFloat
 
   var body: some View {
-    (Text("최저 ").font(SuiteFont.regular(size))
-      + Text(snapshot.minimumTemperature).font(SuiteFont.extraBold(size))
-      + Text("  최고 ").font(SuiteFont.regular(size))
-      + Text(snapshot.maximumTemperature).font(SuiteFont.extraBold(size)))
+    (Text("최저 ").font(NanumSquareNeoFont.regular(size))
+      + Text(snapshot.minimumTemperature).font(NanumSquareNeoFont.extraBold(size))
+      + Text("  최고 ").font(NanumSquareNeoFont.regular(size))
+      + Text(snapshot.maximumTemperature).font(NanumSquareNeoFont.extraBold(size)))
       .foregroundStyle(ink.opacity(0.82))
       .lineLimit(1)
       .minimumScaleFactor(0.62)
@@ -516,16 +515,16 @@ private struct AdaptiveTemperatureRow: View {
   }
 
   private func temperatureColumnWidth(label: String, value: String) -> CGFloat {
-    let valueWidth = measuredSuiteTextWidth(value, fontName: "SUITE-Heavy", size: temperatureSize)
+    let valueWidth = measuredWidgetTextWidth(value, fontName: "NanumSquareNeoTTF-eHv", size: temperatureSize)
     guard apparentTemperature != nil else { return valueWidth }
-    let labelWidth = measuredSuiteTextWidth(label, fontName: "SUITE-Regular", size: labelSize)
+    let labelWidth = measuredWidgetTextWidth(label, fontName: "NanumSquareNeoTTF-bRg", size: labelSize)
     return max(valueWidth, labelWidth)
   }
 
   private func temperatureColumn(label: String, value: String, scale: CGFloat) -> some View {
     VStack(spacing: -1 * scale) {
       Text(label)
-        .font(SuiteFont.regular(labelSize * scale))
+        .font(NanumSquareNeoFont.regular(labelSize * scale))
         .foregroundStyle(secondaryInk)
         .lineLimit(1)
         .fixedSize(horizontal: true, vertical: false)
@@ -535,13 +534,13 @@ private struct AdaptiveTemperatureRow: View {
 
   private func temperatureText(_ value: String, scale: CGFloat) -> some View {
     Text(value)
-      .font(SuiteFont.heavy(temperatureSize * scale))
+      .font(NanumSquareNeoFont.heavy(temperatureSize * scale))
       .lineLimit(1)
       .fixedSize(horizontal: true, vertical: false)
   }
 }
 
-private func measuredSuiteTextWidth(_ value: String, fontName: String, size: CGFloat) -> CGFloat {
+private func measuredWidgetTextWidth(_ value: String, fontName: String, size: CGFloat) -> CGFloat {
   let font = UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: .heavy)
   return ceil((value as NSString).size(withAttributes: [.font: font]).width)
 }
@@ -594,7 +593,7 @@ private struct MediumWeatherWidget: View {
       .frame(maxHeight: .infinity)
       HStack(spacing: 8) {
         Text(snapshot.shortMessage)
-          .font(SuiteFont.extraBold(13))
+          .font(NanumSquareNeoFont.extraBold(13))
           .lineLimit(1)
         Spacer(minLength: 2)
         MinMaxRow(snapshot: snapshot, size: 12)
@@ -627,7 +626,7 @@ private struct LargeWeatherWidget: View {
         )
         .frame(maxWidth: .infinity, alignment: .center)
         Text(snapshot.brief)
-          .font(SuiteFont.extraBold(14))
+          .font(NanumSquareNeoFont.extraBold(14))
           .foregroundStyle(ink)
           .lineLimit(2)
           .multilineTextAlignment(.center)
@@ -640,7 +639,7 @@ private struct LargeWeatherWidget: View {
                 PreparationIconView(type: item.type)
                   .frame(width: 36, height: 36)
                 Text(item.label)
-                  .font(SuiteFont.extraBold(12))
+                  .font(NanumSquareNeoFont.extraBold(12))
                   .lineLimit(1)
                   .minimumScaleFactor(0.8)
                   .frame(maxWidth: .infinity, alignment: .center)
@@ -657,17 +656,17 @@ private struct LargeWeatherWidget: View {
       .frame(maxHeight: .infinity, alignment: .center)
       HStack(spacing: 0) {
         Text("다음 시간 예보")
-          .font(SuiteFont.extraBold(12))
+          .font(NanumSquareNeoFont.extraBold(12))
           .foregroundStyle(ink)
           .lineLimit(1)
           .padding(.trailing, 10)
         Text(snapshot.nextTime)
-          .font(SuiteFont.regular(12))
+          .font(NanumSquareNeoFont.regular(12))
           .foregroundStyle(ink)
           .lineLimit(1)
           .frame(maxWidth: .infinity)
         Text(snapshot.nextTemperature)
-          .font(SuiteFont.heavy(17))
+          .font(NanumSquareNeoFont.heavy(17))
           .foregroundStyle(ink)
         WeatherIconView(condition: snapshot.nextCondition, monochrome: true)
           .frame(width: 32, height: 32)
@@ -1126,7 +1125,7 @@ private enum WeatherIconPainter {
       drawCloud(&context, center: point(origin, s, 0.5, 0.5), width: s * 0.8,
                 height: s * 0.42, color: cloudColor)
       let question = context.resolve(
-        Text("?").font(SuiteFont.bold(s * 0.3)).foregroundColor(monochrome ? ink : secondaryInk)
+        Text("?").font(NanumSquareNeoFont.bold(s * 0.3)).foregroundColor(monochrome ? ink : secondaryInk)
       )
       context.draw(question, at: point(origin, s, 0.52, 0.52), anchor: .center)
     }

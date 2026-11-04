@@ -19,7 +19,7 @@ import java.time.Instant
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-class SuiteTileRendererTest {
+class NanumSquareNeoTileRendererTest {
     private fun context(scale: Float = 1f): Context {
         val application = RuntimeEnvironment.getApplication()
         val configuration = Configuration(application.resources.configuration).apply {
@@ -45,14 +45,14 @@ class SuiteTileRendererTest {
     }
 
     private fun export(name: String, bitmap: Bitmap) {
-        val file = File("build/reports/suite-tile/$name.png")
+        val file = File("build/reports/nanum-square-neo-tile/$name.png")
         file.parentFile?.mkdirs()
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
     @Test fun fontSizeSettingChangesPixelsAtTheSameOutputResolution() {
-        val normal = SuiteTileRenderer(context()).render(weather(), 227, 227, 2f)
-        val enlarged = SuiteTileRenderer(context(1.3f)).render(weather(), 227, 227, 2f)
+        val normal = NanumSquareNeoTileRenderer(context()).render(weather(), 227, 227, 2f)
+        val enlarged = NanumSquareNeoTileRenderer(context(1.3f)).render(weather(), 227, 227, 2f)
         assertEquals(454, normal.bitmap.width)
         assertEquals(normal.bitmap.width, enlarged.bitmap.width)
         assertTrue("큰 글자 설정에서 글자 픽셀이 증가해야 한다", foreground(enlarged.bitmap) > foreground(normal.bitmap))
@@ -63,7 +63,7 @@ class SuiteTileRendererTest {
     @Test fun readableDescriptionPreservesFullTextAndAllWeatherValues() {
         val longRegion = "서울특별시 구로구 구로제삼동"
         val message = "오후부터 비와 강한 바람 예보가 있으니 우산과 겉옷을 챙겨요"
-        val rendered = SuiteTileRenderer(context(1.3f)).render(weather(longRegion, "-12.5°", message), 192, 192, 2f)
+        val rendered = NanumSquareNeoTileRenderer(context(1.3f)).render(weather(longRegion, "-12.5°", message), 192, 192, 2f)
         for (text in listOf(longRegion, "기온 -12.5°", message, "최저 9°", "최고 15°", "오후 4:13 기준", "현재 날씨를 엽니다")) {
             assertTrue(text, rendered.description.contains(text))
         }
@@ -74,7 +74,7 @@ class SuiteTileRendererTest {
     @Test fun textStaysInsideRoundScreensAtSupportedFontSizes() {
         for (size in listOf(192, 227, 240)) for (scale in listOf(1f, 1.3f)) for (longText in listOf(false, true)) {
             val data = if (longText) weather("서울특별시 구로구 구로제삼동", "-12.5°", "오후부터 비와 강한 바람 예보가 있으니 우산과 겉옷을 챙겨요") else weather()
-            val bitmap = SuiteTileRenderer(context(scale)).render(data, size, size, 2f).bitmap
+            val bitmap = NanumSquareNeoTileRenderer(context(scale)).render(data, size, size, 2f).bitmap
             val radius = bitmap.width / 2f
             for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
                 if (bitmap.getPixel(x, y) == Color.BLACK) continue
@@ -89,10 +89,10 @@ class SuiteTileRendererTest {
     @Test fun olderResourceRequestsKeepOriginalPixelsAfterWeatherChanges() {
         val application = context()
         val store = TileImageStore(application)
-        val first = SuiteTileRenderer(application).render(weather(), 227, 227, 2f).bitmap
+        val first = NanumSquareNeoTileRenderer(application).render(weather(), 227, 227, 2f).bitmap
         val originalVersion = store.save(first)
         assertEquals(originalVersion, store.save(first))
-        val changed = SuiteTileRenderer(application).render(weather(temperature = "20°"), 227, 227, 2f).bitmap
+        val changed = NanumSquareNeoTileRenderer(application).render(weather(temperature = "20°"), 227, 227, 2f).bitmap
         val newVersion = store.save(changed)
         assertNotEquals(originalVersion, newVersion)
         val resources = TileImageStore(application).load(originalVersion)
@@ -103,7 +103,7 @@ class SuiteTileRendererTest {
     }
 
     @Test fun noDataStillHasAVisibleConnectionPrompt() {
-        val rendered = SuiteTileRenderer(context()).render(WatchSnapshot.EMPTY, 192, 192, 2f)
+        val rendered = NanumSquareNeoTileRenderer(context()).render(WatchSnapshot.EMPTY, 192, 192, 2f)
         assertTrue(rendered.description.contains("휴대전화에서 날씨를 연결해 주세요"))
         assertTrue(foreground(rendered.bitmap) > 1000)
         export("no-data", rendered.bitmap)

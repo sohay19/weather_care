@@ -1,9 +1,9 @@
-Copyright (c) 2023, SUNN (http://sun.fo/suite),
-with Reserved Font Name SUITE.
+Copyright (c) 2025, Monad ABXY (https://monadabxy.com),
+with Reserved Font Name "Mona".
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-https://scripts.sil.org/OFL
+https://openfontlicense.org
 
 
 -----------------------------------------------------------

@@ -1,5 +1,6 @@
 import 'package:weather_care/features/home/widgets/hourly_value_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_care/app.dart';
@@ -56,7 +57,7 @@ void main() {
     );
     expect(
       theme.textTheme.headlineSmall?.fontFamily,
-      WeatherCareTheme.fontNeoHyundai,
+      WeatherCareTheme.fontNanumSquareNeo,
     );
     expect(
       WeatherCareTheme.specialLabelStyle.fontFamily,
@@ -884,6 +885,27 @@ void main() {
     );
     expect(find.text('장화'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('설정의 라이선스 메뉴는 한국어와 영어로 표시되고 라이선스 화면을 연다', (tester) async {
+    for (final (locale, label) in [
+      (const Locale('ko'), '오픈소스 및 라이선스'),
+      (const Locale('en'), 'Open Source & Licenses'),
+    ]) {
+      await tester.pumpWidget(MaterialApp(
+        key: ValueKey(locale),
+        locale: locale,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('ko'), Locale('en')],
+        home: const SettingsScreen(),
+      ));
+      await tester.pumpAndSettle();
+      final menu = find.text(label);
+      await tester.scrollUntilVisible(menu, 200);
+      await tester.tap(menu);
+      await tester.pumpAndSettle();
+      expect(find.byType(LicensePage), findsOneWidget);
+    }
   });
 
   testWidgets('settings disables notification time and shows all data sources',

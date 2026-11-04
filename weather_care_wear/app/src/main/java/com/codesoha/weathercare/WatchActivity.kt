@@ -71,7 +71,7 @@ class WatchActivity : ComponentActivity() {
     LaunchedEffect(requestedPage, requestRevision) { detail = null; pager.scrollToPage(requestedPage) }
     val scope = rememberCoroutineScope()
     val activity = LocalActivity.current
-    val fonts = remember { FontFamily(Font(R.font.suite_regular), Font(R.font.suite_bold, FontWeight.Bold)) }
+    val fonts = remember { FontFamily(Font(R.font.nanum_square_neo_regular), Font(R.font.nanum_square_neo_bold, FontWeight.Bold)) }
     MaterialTheme(colors = androidx.wear.compose.material.Colors(primary = Accent, secondary = Accent, background = Color.Black, surface = Panel),
         typography = androidx.wear.compose.material.Typography(defaultFontFamily = fonts)) {
         key(detail?.name ?: "pages") {

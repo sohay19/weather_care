@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:weather_care/firebase_options.dart';
 
 import 'app.dart';
+import 'features/settings/font_licenses.dart';
 import 'features/update/app_update_gate.dart';
 import 'services/analytics_consent.dart';
 import 'services/ad_removal_service.dart';
@@ -40,6 +41,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerFontLicenses();
 
   runApp(
     WeatherCareStartup(

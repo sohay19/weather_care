@@ -722,15 +722,14 @@ class _TopWeatherCard extends StatelessWidget {
             padding: const EdgeInsets.only(left: 10, right: 10),
             child: WeatherBriefText(
               text: today.briefing?.copy.medium ?? today.brief,
-              expiresAt:
-                  today.briefing?.nextBriefingBoundary ?? today.briefExpiresAt,
+              expiresAt: today.briefing?.nextBriefingBoundary ?? today.briefExpiresAt,
               timeline: today.briefingTimeline,
               generatedAt: today.generatedAt,
               receivedAt: today.receivedAt,
               style: TextStyle(
-                fontFamily: WeatherCareTheme.fontNeoHyundai,
+                fontFamily: WeatherCareTheme.fontNanumSquareNeo,
                 color: WeatherCareTheme.of(context).textPrimary,
-                fontSize: compact ? 21 : 23,
+                fontSize: compact ? 20 : 22,
                 height: 1.24,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.45,

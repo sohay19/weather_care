@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'features/home/home_screen.dart';
 import 'features/update/app_update_gate.dart';
@@ -39,6 +40,8 @@ class WeatherCareApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: '날씨챙겨',
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      supportedLocales: const [Locale('ko'), Locale('en')],
       debugShowCheckedModeBanner: false,
       theme: WeatherCareTheme.light(),
       darkTheme: WeatherCareTheme.dark(),
@@ -146,7 +149,7 @@ class WeatherDetailsScreen extends StatelessWidget {
                 const Text(
                   '숫자는 추천을 이해하는\n근거로 보여드릴게요.',
                   style: TextStyle(
-                    fontFamily: WeatherCareTheme.fontNeoHyundai,
+                    fontFamily: WeatherCareTheme.fontNanumSquareNeo,
                     fontSize: 25,
                     height: 1.3,
                     fontWeight: FontWeight.w900,
@@ -216,7 +219,7 @@ class WeatherRecommendationDetailScreen extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontFamily: WeatherCareTheme.fontNeoHyundai,
+                    fontFamily: WeatherCareTheme.fontNanumSquareNeo,
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.6,

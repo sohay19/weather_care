@@ -15,11 +15,11 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-/** 타일 호스트의 시스템 폰트 대신 앱에 포함된 SUITE로 실제 해상도에서 그린다. */
-internal class SuiteTileRenderer(private val context: Context) {
+/** 타일 호스트의 시스템 폰트 대신 앱에 포함된 나눔스퀘어 네오로 실제 해상도에서 그린다. */
+internal class NanumSquareNeoTileRenderer(private val context: Context) {
     data class Rendered(val bitmap: Bitmap, val description: String)
-    private val regular = context.resources.getFont(R.font.suite_regular)
-    private val bold = context.resources.getFont(R.font.suite_bold)
+    private val regular = context.resources.getFont(R.font.nanum_square_neo_regular)
+    private val bold = context.resources.getFont(R.font.nanum_square_neo_bold)
 
     fun render(data: WatchSnapshot, width: Int, height: Int, density: Float): Rendered {
         require(width > 0 && height > 0 && density > 0 && density.isFinite())
@@ -48,7 +48,7 @@ internal class SuiteTileRenderer(private val context: Context) {
                 if (fit && measureText(value) > layoutWidth - 1) textSize *= (layoutWidth - 1).coerceAtLeast(1) / measureText(value)
             }
             return StaticLayout.Builder.obtain(value, 0, value.length, paint, layoutWidth)
-                .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(true)
+                .setAlignment(Layout.Alignment.ALIGN_CENTER).setIncludePad(false)
                 .setMaxLines(lines).setEllipsize(TextUtils.TruncateAt.END).build()
         }
         var title = text("날씨챙겨", 13f, blue, width * .58f, strong = true)
@@ -93,7 +93,11 @@ internal class SuiteTileRenderer(private val context: Context) {
             minMax = extremes(minOf(width * .72f, safeWidth(y, minMax.height)))
         }
         val gaps = originalGaps.map { it * gapScale() }
-        var y = (height - title.height - region.height - rowHeight - summary.height - minMax.height - gaps.sum()) / 2f
+        val contentHeight = title.height + region.height + rowHeight + summary.height + minMax.height + gaps.sum()
+        // 간격을 모두 줄인 뒤에도 큰 글자가 넘치면 가운데를 기준으로 전체를 맞춘다.
+        val contentScale = (height * .82f / contentHeight).coerceAtMost(1f)
+        canvas.scale(contentScale, contentScale, width / 2f, height / 2f)
+        var y = (height - contentHeight) / 2f
         fun draw(layout: StaticLayout) {
             canvas.save()
             canvas.translate((width - layout.width) / 2f, y)

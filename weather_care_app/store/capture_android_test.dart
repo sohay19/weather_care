@@ -263,7 +263,7 @@ void main({bool ios = false}) {
       'SUITE': ['SUITE-Regular.ttf', 'SUITE-Bold.ttf'],
       'ChosunSg': ['ChosunSg.TTF', 'ChosunKg.TTF'],
       'Mona': ['Mona10.ttf', 'Mona10-Bold.ttf'],
-      'NeoHyundai': ['NeoHyundai R.ttf', 'NeoHyundai B.ttf'],
+      'NanumSquareNeo': ['NanumSquareNeo-bRg.ttf', 'NanumSquareNeo-cBd.ttf'],
     }.entries) {
       final loader = FontLoader(entry.key);
       for (final name in entry.value) {

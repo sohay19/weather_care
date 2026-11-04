@@ -744,7 +744,7 @@ class _WeekSummary extends StatelessWidget {
           const Text(
             '주간 날씨 요약',
             style: TextStyle(
-              fontFamily: WeatherCareTheme.fontNeoHyundai,
+              fontFamily: WeatherCareTheme.fontNanumSquareNeo,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),

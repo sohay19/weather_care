@@ -32,13 +32,21 @@ android {
 def phoneMain = file('../../weather_care_app/android/app/src/main')
 tasks.register('prepareWatchResources') {
     inputs.files(fileTree(phoneMain) { include '**/WidgetIconRenderer.java', '**/ic_launcher.png' })
-    inputs.files(fileTree('../../weather_care_app/assets/fonts'))
+    inputs.files(fileTree('../../weather_care_app/assets/fonts') { include 'NanumSquareNeo-bRg.ttf', 'NanumSquareNeo-cBd.ttf' })
+    inputs.file('../../weather_care_app/assets/licenses/nanum_square_neo.txt')
     inputs.files(fileTree('../../weather_care_app/assets/icons'))
     outputs.dirs(layout.buildDirectory.dir('generated/widget-source'), layout.buildDirectory.dir('generated/watch-res'), layout.buildDirectory.dir('generated/watch-assets'))
     doLast {
         copy { from fileTree(phoneMain) { include '**/WidgetIconRenderer.java' }; into layout.buildDirectory.dir('generated/widget-source') }
-        copy { from '../../weather_care_app/assets/fonts/SUITE-Regular.ttf'; into layout.buildDirectory.dir('generated/watch-res/font'); rename { 'suite_regular.ttf' } }
-        copy { from '../../weather_care_app/assets/fonts/SUITE-Bold.ttf'; into layout.buildDirectory.dir('generated/watch-res/font'); rename { 'suite_bold.ttf' } }
+        project.sync {
+            into layout.buildDirectory.dir('generated/watch-res/font')
+            from('../../weather_care_app/assets/fonts/NanumSquareNeo-bRg.ttf') { rename { 'nanum_square_neo_regular.ttf' } }
+            from('../../weather_care_app/assets/fonts/NanumSquareNeo-cBd.ttf') { rename { 'nanum_square_neo_bold.ttf' } }
+        }
+        project.sync {
+            from '../../weather_care_app/assets/licenses/nanum_square_neo.txt'
+            into layout.buildDirectory.dir('generated/watch-assets/licenses')
+        }
         copy { from new File(phoneMain,'res/mipmap-xxxhdpi/ic_launcher.png'); into layout.buildDirectory.dir('generated/watch-res/drawable'); rename { 'app_icon.png' } }
         copy { from '../../weather_care_app/assets/icons'; into layout.buildDirectory.dir('generated/watch-assets/flutter_assets/assets/icons') }
     }

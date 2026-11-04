@@ -158,7 +158,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     WidgetTextRenderer.line(
                             context,
                             snapshot.shortMessage,
-                            R.font.suite_extra_bold,
+                            R.font.nanum_square_neo_extra_bold,
                             13,
                             TEXT_PRIMARY,
                             180
@@ -352,7 +352,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.paragraph(
                         context,
                         displayRegion,
-                        R.font.suite_extra_bold,
+                        R.font.nanum_square_neo_extra_bold,
                         regionSize,
                         TEXT_PRIMARY,
                         regionWidth,
@@ -369,7 +369,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.line(
                         context,
                         snapshot.refreshTime,
-                        R.font.suite_regular,
+                        R.font.nanum_square_neo_regular,
                         refreshSize,
                         TEXT_SECONDARY,
                         refreshWidth
@@ -392,7 +392,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.line(
                         context,
                         snapshot.currentTemperature,
-                        R.font.suite_heavy,
+                        R.font.nanum_square_neo_heavy,
                         sizing.textSizeDp,
                         TEXT_PRIMARY,
                         sizing.currentWidthDp
@@ -407,7 +407,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     WidgetTextRenderer.line(
                             context,
                             "현재",
-                            R.font.suite_regular,
+                            R.font.nanum_square_neo_regular,
                             labelSize,
                             TEXT_SECONDARY,
                             40
@@ -420,7 +420,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     WidgetTextRenderer.line(
                             context,
                             "체감",
-                            R.font.suite_regular,
+                            R.font.nanum_square_neo_regular,
                             labelSize,
                             TEXT_SECONDARY,
                             40
@@ -433,7 +433,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     WidgetTextRenderer.line(
                             context,
                             snapshot.apparentTemperature,
-                            R.font.suite_heavy,
+                            R.font.nanum_square_neo_heavy,
                             sizing.textSizeDp,
                             TEXT_PRIMARY,
                             sizing.apparentWidthDp
@@ -478,7 +478,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.lineWidthDp(
                         context,
                         snapshot.currentTemperature,
-                        R.font.suite_heavy,
+                        R.font.nanum_square_neo_heavy,
                         textSize
                 )
         ));
@@ -486,7 +486,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.lineWidthDp(
                         context,
                         snapshot.apparentTemperature,
-                        R.font.suite_heavy,
+                        R.font.nanum_square_neo_heavy,
                         textSize
                 )
         ));
@@ -504,7 +504,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
         float currentWidth = WidgetTextRenderer.lineWidthDp(
                 context,
                 snapshot.currentTemperature,
-                R.font.suite_heavy,
+                R.font.nanum_square_neo_heavy,
                 textSize
         );
         if (size == WidgetSize.SMALL) {
@@ -517,7 +517,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.lineWidthDp(
                         context,
                         "현재",
-                        R.font.suite_regular,
+                        R.font.nanum_square_neo_regular,
                         labelSize
                 )
         );
@@ -525,13 +525,13 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.lineWidthDp(
                         context,
                         snapshot.apparentTemperature,
-                        R.font.suite_heavy,
+                        R.font.nanum_square_neo_heavy,
                         textSize
                 ),
                 WidgetTextRenderer.lineWidthDp(
                         context,
                         "체감",
-                        R.font.suite_regular,
+                        R.font.nanum_square_neo_regular,
                         labelSize
                 )
         );
@@ -551,7 +551,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.paragraph(
                         context,
                         snapshot.brief,
-                        R.font.suite_extra_bold,
+                        R.font.nanum_square_neo_extra_bold,
                         14,
                         TEXT_PRIMARY,
                         contentWidth,
@@ -568,7 +568,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.line(
                         context,
                         "다음 시간 예보",
-                        R.font.suite_extra_bold,
+                        R.font.nanum_square_neo_extra_bold,
                         12,
                         TEXT_PRIMARY,
                         100
@@ -581,7 +581,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.line(
                         context,
                         snapshot.nextTime,
-                        R.font.suite_regular,
+                        R.font.nanum_square_neo_regular,
                         12,
                         TEXT_PRIMARY,
                         100
@@ -594,7 +594,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                 WidgetTextRenderer.line(
                         context,
                         snapshot.nextTemperature,
-                        R.font.suite_heavy,
+                        R.font.nanum_square_neo_heavy,
                         17,
                         TEXT_PRIMARY,
                         60
@@ -633,7 +633,7 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                     WidgetTextRenderer.line(
                             context,
                             preparation.label,
-                            R.font.suite_extra_bold,
+                            R.font.nanum_square_neo_extra_bold,
                             12,
                             TEXT_PRIMARY,
                             90
@@ -668,15 +668,15 @@ public class WeatherCareWidgetProvider extends AppWidgetProvider {
                         textSize,
                         TEXT_MIN_MAX,
                         maxWidth,
-                        WidgetTextRenderer.part(minimumPrefix, R.font.suite_regular),
+                        WidgetTextRenderer.part(minimumPrefix, R.font.nanum_square_neo_regular),
                         WidgetTextRenderer.part(
                                 snapshot.minimumTemperature,
-                                R.font.suite_extra_bold
+                                R.font.nanum_square_neo_extra_bold
                         ),
-                        WidgetTextRenderer.part(divider, R.font.suite_regular),
+                        WidgetTextRenderer.part(divider, R.font.nanum_square_neo_regular),
                         WidgetTextRenderer.part(
                                 snapshot.maximumTemperature,
-                                R.font.suite_extra_bold
+                                R.font.nanum_square_neo_extra_bold
                         )
                 ),
                 description

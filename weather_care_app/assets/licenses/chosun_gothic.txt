@@ -1,0 +1,12 @@
+Copyright © 2020 조선일보사 (The Chosun Ilbo)
+
+조선가는고딕, 조선굵은고딕, 조선견고딕
+
+조선일보에서 무료로 제공하는 글꼴입니다. 배포된 형태 그대로 사용해야 하며,
+복사나 배포에 대가를 요구하거나 수정한 글꼴을 판매할 수 없습니다.
+
+The Chosun Ilbo provides these fonts free of charge. Use them as distributed.
+Charging for copying or redistribution and selling modified fonts are prohibited.
+
+공식 이용 조건 / Official terms
+https://event.chosun.com/100/100font.html

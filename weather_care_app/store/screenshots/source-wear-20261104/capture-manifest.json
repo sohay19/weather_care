@@ -1,0 +1,58 @@
+{
+  "촬영일": "2026-11-04",
+  "모델": "Galaxy Watch9 SM-L340",
+  "데이터": "폰 제품 앱이 운영 자료로 생성한 Wear payload를 촬영 도구로 전달했다. 실제 Data Layer 페어링 시험은 아니다.",
+  "촬영조건": "리모트랩의 8월 기기 시각을 촬영 빌드 안에서 현재 시각으로 보정하고 상단 시스템 시계만 숨겼다. 날씨 수치·화면 내용은 재구성하지 않았다.",
+  "captureClockHidden": true,
+  "APK_SHA256": "2671fc226118e70a63684cfd9d6694f54e1f7214215d7ba34a49054a25aa005a",
+  "files": [
+    {
+      "path": "current.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "d06ce2dfbe41f8c1fece1dedef6c0bd8b9b0a0932e894f613af4830af9c14f98"
+    },
+    {
+      "path": "prep.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "779b928bb0e469e0aff63a9e04431f281356493df1d0f5bced8cbec568e0bac0"
+    },
+    {
+      "path": "timeline.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "b7ace2ce2bdd693d0f3fd2826a56a9aa659c32fa0ee7c4a6ddb5123bdb6aad71"
+    },
+    {
+      "path": "life.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "45e1d1463531096883e420124348748ed289d8a2c26ae8525a0e54106b3652f0"
+    },
+    {
+      "path": "prep-detail.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "829316ad073053f88fcb19f4918200d25fba75d1ae37e51b7bc9f54aada22e7b"
+    },
+    {
+      "path": "life-detail.png",
+      "size": [
+        438,
+        438
+      ],
+      "sha256": "f2314f6ff2ad402ab9ab372600db2ae0c409ed20ea788907e1e88e0cc997efda"
+    }
+  ]
+}

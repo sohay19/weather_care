@@ -248,7 +248,7 @@ class _WeekTabState extends State<WeekTab> with WidgetsBindingObserver {
                     style: TextStyle(
                       color: _weekDateColor(context, selectedDay.date),
                       fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),

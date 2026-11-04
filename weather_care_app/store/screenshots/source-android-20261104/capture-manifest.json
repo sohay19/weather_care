@@ -1,0 +1,131 @@
+{
+  "촬영일": "2026-11-04",
+  "모델": "Android 전용 에뮬레이터 (WeatherCareCapture20261023)",
+  "빌드": "3788b11, 제품 UI와 운영 서버 자료, 촬영 전용 시작 설정",
+  "APK_SHA256": "b1fed511182a5d4d3513e02b7beaff20b09a567af052feaea13ce6ab05282c33",
+  "files": [
+    {
+      "path": "main.png",
+      "sha256": "f90cebf8e1153959e8795e15ef4028e03d24a1ec58aab79a7c01722e8ec4445a",
+      "size": [
+        1080,
+        2400
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        63
+      ],
+      "system_navigation_bar": [
+        0,
+        2337,
+        1080,
+        2400
+      ]
+    },
+    {
+      "path": "region-notifications.png",
+      "sha256": "ad2fc7f694092f50558f981aa7b53d0f8a1b8f4fd14ff700f104537731a712b2",
+      "size": [
+        1080,
+        2400
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        63
+      ],
+      "system_navigation_bar": [
+        0,
+        2337,
+        1080,
+        2400
+      ]
+    },
+    {
+      "path": "dark-main.png",
+      "sha256": "95b785b1c62764c2076f8822088689858f91af8c71e9c6d5444fb86b0a08d504",
+      "size": [
+        1080,
+        2400
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        63
+      ],
+      "system_navigation_bar": [
+        0,
+        2337,
+        1080,
+        2400
+      ]
+    },
+    {
+      "path": "advanced-values.png",
+      "sha256": "b421b9cd526bcdf97132ee9235e50af3901f1c5624b8ecb8479265fff4a7b6f4",
+      "size": [
+        1080,
+        2400
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        63
+      ],
+      "system_navigation_bar": [
+        0,
+        2337,
+        1080,
+        2400
+      ]
+    },
+    {
+      "path": "week.png",
+      "sha256": "538393261f3d5d1c55bef8d7ea3baf3ab42c4e466712c606721eef4f9123225e",
+      "size": [
+        1080,
+        2400
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        63
+      ],
+      "system_navigation_bar": [
+        0,
+        2337,
+        1080,
+        2400
+      ],
+      "APK_SHA256": "d6e0b9d53c925f9fb95deb4e277f3c7bebac9e63dd35d68dec29b601bcabfa35",
+      "Week소스_SHA256": "bb345b63fb2c22ff269cc6985b2958650fe3cd79c51baab1dabb6a5820c98912",
+      "촬영조건": "최신 Week 날짜 굵기 w800, 제품 화면·운영 서버 자료"
+    },
+    {
+      "path": "notification-settings.png",
+      "sha256": "a9211f82d8648f86a8f4dad3bcf8d9c5fc22bf2bf4237587ec0160208b31d29d",
+      "size": [
+        1080,
+        2400
+      ],
+      "system_status_bar": [
+        0,
+        0,
+        1080,
+        63
+      ],
+      "system_navigation_bar": [
+        0,
+        2337,
+        1080,
+        2400
+      ]
+    }
+  ]
+}

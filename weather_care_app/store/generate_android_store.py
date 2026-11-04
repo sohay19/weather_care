@@ -158,7 +158,12 @@ def compose(topic, platform):
         widgets = [(sw, widget(kind)) for kind, sw in [
             ('small', 400), ('medium', 936), ('large', 900)]]
         total_height = sum(round(im.height * sw / im.width) for sw, im in widgets)
-        gap = (canvas.height - margin - y - total_height) / 2
+        available_height = canvas.height - margin - y
+        if total_height > available_height - 64:
+            scale = (available_height - 64) / total_height
+            widgets = [(int(sw * scale), im) for sw, im in widgets]
+            total_height = sum(round(im.height * sw / im.width) for sw, im in widgets)
+        gap = (available_height - total_height) / 2
         for index, (sw, wim) in enumerate(widgets):
             if index == len(widgets) - 1:
                 y = canvas.height - margin - round(wim.height * sw / wim.width)

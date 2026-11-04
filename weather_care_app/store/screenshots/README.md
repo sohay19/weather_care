@@ -1,19 +1,28 @@
 # 스토어 스크린샷
 
-2026년 11월 4일 나눔스퀘어 네오 적용본의 Android 앱·홈 위젯과 Galaxy Watch 소개를 갱신했다. 촬영 전용 Android 에뮬레이터에서 운영 날씨 자료로 촬영하고 휴대전화 1080×2160, 태블릿 1440×2880 RGB PNG 각 8장으로 내보냈다. 태블릿 규격에도 동일한 휴대전화 원본을 사용했다. Week는 날짜 글자 굵기 w800을 반영해 다시 촬영했다.
+2026년 11월 4일 **나눔스퀘어 네오**를 반영해 iPhone·Android 앱과 홈 위젯, Apple Watch·Galaxy Watch 앱 및 워치 위젯·타일을 모두 갱신했다. 실제 앱·시스템 위젯 호스트의 화면을 사용한다.
 
-- [Android 휴대전화·태블릿 ZIP](../weather-care-android-phone-screenshots-20261104.zip)
-- [휴대전화 미리보기](phone-20261104/preview-android.png) · [태블릿 미리보기](phone-20261104/preview-android-tablet.png)
-- [앱 촬영 원본 및 명세](source-android-20261104/) · [홈 위젯 촬영 원본 및 명세](../screenshot-inputs/native-android-20261104/)
-- [Wear OS 등록용 ZIP](wear-os-screenshots-20261104.zip) · [워치 홍보 카드 ZIP](wear-os-promo-20261104.zip)
-- [Galaxy Watch 네 탭 미리보기](preview-wear-20261104.png) · [워치 촬영 원본 및 명세](source-wear-20261104/)
-- iPhone·iPad 및 Apple Watch 등록본은 아래의 11월 3일 묶음에 있다.
+- [전체 스크린샷 ZIP](../weather-care-all-screenshots-20261104.zip)
+- [촬영·제작·검증 안내](SCREENSHOTS_20261104.md) · [전체 파일 명세](screenshots-all-20261104-manifest.json)
 
-Galaxy Watch9 실기기에서 현재 날씨·준비물·타임라인·기상생활을 촬영했다. 휴대전화 앱이 운영 자료로 생성한 Wear payload를 촬영 도구로 전달했다. 리모트랩 기기의 8월 날짜 때문에 촬영 빌드 안에서 현재 시각과의 차이를 보정하고, 기존 촬영과 같이 상단 시스템 시계를 숨겼다. 네이티브 폰·워치 페어링 검증은 이번 촬영에 포함되지 않는다. 워치 PNG와 홍보 카드는 각각 438×438 RGB 규격이다.
+| 대상 | 개별 PNG | 최신 ZIP | 미리보기 |
+|---|---|---|---|
+| iPhone·iPad 등록용 각 8장 | `ios/`, `ipad/` | [iOS ZIP](../app-store/weather-care-ios-screenshots-20261104.zip) | [iPhone](preview-ios.png) · [iPad](preview-ipad.png) |
+| Android 휴대전화·태블릿 등록용 각 8장 | `android/`, `android-tablet/` | [Android ZIP](../weather-care-android-screenshots-20261104.zip) | [휴대전화](preview-android.png) · [태블릿](preview-android-tablet.png) |
+| Apple Watch 앱·스마트 스택 5장 | `watchos/` | [Apple Watch ZIP](watchos-screenshots-20261104.zip) | [미리보기](preview-watchos-20261104.png) |
+| Wear OS 앱·전체 화면 타일 5장 | `wear-os/` | [Wear OS ZIP](wear-os-screenshots-20261104.zip) | [미리보기](preview-wear-20261104.png) |
+| Apple Watch 홍보 카드 5장 | `watchos-promo/` | [홍보 ZIP](watchos-promo-20261104.zip) | [미리보기](preview-watchos-promo-20261104.png) |
+| Galaxy Watch 홍보 카드 5장 | `wear-os-promo/` | [홍보 ZIP](wear-os-promo-20261104.zip) | [미리보기](preview-wear-os-promo-20261104.png) |
+
+[홈 위젯 12종 미리보기](preview-widgets-20261104.png): iPhone·Android 각각 소형·중형·대형 × 라이트·다크다. 원본은 `../screenshot-inputs/native-ios-20261104/phone/`과 `../screenshot-inputs/native-android-20261104/`에 있다.
+
+Apple Watch는 416×496, Wear OS는 438×438 RGB PNG다. 워치 등록용·홍보용의 5번은 각각 실제 스마트 스택과 현재 공개된 전체 화면 타일이다. Wear OS 소형·대형 서비스는 제품에서 비활성화되어 있다. 태블릿 등록 규격에는 기존 제작 방식대로 휴대전화 원본을 비율 유지해 배치했다.
+
+앱·워치 원본과 촬영 환경·SHA-256은 `source-ios-20261104/`, `source-android-20261104/`, `source-watchos-20261104/`, `source-wear-20261104/`의 매니페스트에 기록한다. Galaxy Watch 앱 네 화면은 11월 4일 실기기 촬영본이며, 새 전체 화면 타일은 Wear OS 7 전용 에뮬레이터의 실제 시스템 호스트에서 촬영했다.
 
 ## 2026년 11월 3일 등록본
 
-2026년 11월 3일 기준 등록용 파일이다.
+이전 폰트의 제작 이력이다. 새 등록에는 위의 11월 4일 묶음을 사용한다.
 
 | 등록 대상 | 개별 PNG | 다운로드 |
 |---|---|---|
@@ -27,7 +36,7 @@ Galaxy Watch9 실기기에서 현재 날씨·준비물·타임라인·기상생�
 - 이전 촬영분 중 생성 스크립트에 필요한 입력은 `../screenshot-inputs/`에 있다. 이전 제작 기록은 Git 이력에서 확인할 수 있다.
 
 
-## 워치 홍보 카드
+## 이전 워치 홍보 카드
 
 - [Apple Watch 홍보 카드 ZIP](watchos-promo-20261103.zip)
 - [Galaxy Watch 홍보 카드 ZIP](wear-os-promo-20261103.zip)

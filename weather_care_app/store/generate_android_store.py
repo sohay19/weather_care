@@ -13,11 +13,11 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import generate_store_screenshots as previous
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshot-inputs/source-android-20261028'
-SETTINGS_SOURCE = ROOT / 'screenshot-inputs/source-android-20261030'
-REGION_SOURCE = ROOT / 'screenshots/source-android-20261103'
-WATCH_SOURCE = ROOT / 'screenshots/source-wear-20261103'
-NATIVE = ROOT / 'screenshot-inputs/native-android-20261028'
+SOURCE = ROOT / 'screenshots/source-android-20261104'
+SETTINGS_SOURCE = SOURCE
+REGION_SOURCE = SOURCE
+WATCH_SOURCE = ROOT / 'screenshots/source-wear-20261104'
+NATIVE = ROOT / 'screenshot-inputs/native-android-20261104'
 BG, WHITE, YELLOW = '#4C77A4', '#FFFFFF', '#FFD06A'
 FONT = ROOT.parent / 'assets/fonts'
 TOPICS = [
@@ -259,19 +259,19 @@ def main(screenshots_only=False, platforms=None, topics=None):
             assert im.mode == 'RGB' and im.format == 'PNG' and im.size == expected
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/screenshots-20261103-manifest.json'
+    report = ROOT / 'screenshots/screenshots-20261104-manifest.json'
     report.write_text(json.dumps({
-        '기준일': '2026-10-28',
-        '편집일': '2026-11-03',
+        '기준일': '2026-11-04',
+        '편집일': '2026-11-04',
         '배치': '상단 제목 60px 두 줄, 줄간격 16px. 바깥 사방 및 제목·본문 사이 간격 모두 72px(태블릿 96px). 이미지는 남은 높이에 비율 유지 배치. 작은 분류명·부연 설명·위젯 크기 라벨 생략.',
-        '화면': '기존 Android 촬영 자료 및 리모트랩 Galaxy S26 Ultra와 Galaxy Watch9의 실기기 화면',
+        '화면': '나눔스퀘어 네오를 적용한 전용 Android 에뮬레이터 앱·홈 위젯과 Galaxy Watch9 실기기 화면',
         '데이터': '실제 운영 서버 날씨. 5번은 실기기 워치 앱 네 탭의 화면을 원형으로 배치한 소개 이미지.',
         '태블릿': '같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.',
-        '구성': '2번은 편집 버튼이 표시되는 지역별 알림 ON/OFF 화면, 5번은 갤럭시 워치 앱 소개다. 1·3·4·6·7·8번은 10월 30일 등록 이미지와 동일하다.',
+        '구성': '앱·홈 위젯·워치 모두 11월 4일 새 폰트 촬영본을 사용한다. Week 날짜 굵기는 w800이다.',
         'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
-    guide = ROOT / 'screenshots/SCREENSHOTS_20261103.md'
-    package = ROOT / 'weather-care-android-screenshots-20261103.zip'
+    guide = ROOT / 'screenshots/SCREENSHOTS_20261104.md'
+    package = ROOT / 'weather-care-android-screenshots-20261104.zip'
     # Android 전용 새 묶음만 작성한다. 과거 묶음과 iOS 자료는 보존한다.
     with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
         for path in generated + preview_paths + [guide, report]:

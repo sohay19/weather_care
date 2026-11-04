@@ -12,11 +12,11 @@ from PIL import Image, ImageDraw, ImageFilter
 import generate_android_store as common
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / 'screenshot-inputs/source-ios-20261029'
-SETTINGS_SOURCE = ROOT / 'screenshot-inputs/source-ios-20261030'
-REGION_SOURCE = ROOT / 'screenshots/source-ios-20261103'
-WATCH_SOURCE = ROOT / 'screenshots/source-watchos-20261103'
-NATIVE = ROOT / 'screenshot-inputs/native-ios-20261028'
+SOURCE = ROOT / 'screenshots/source-ios-20261104'
+SETTINGS_SOURCE = SOURCE
+REGION_SOURCE = SOURCE
+WATCH_SOURCE = ROOT / 'screenshots/source-watchos-20261104'
+NATIVE = ROOT / 'screenshot-inputs/native-ios-20261104'
 # Android 제작 설정과 독립적으로 iOS 소개 순서를 관리한다.
 TOPICS = [
     ('01-main', '오늘의 날씨 요약', '나가기 전 필요한 정보,\n한눈에 챙겨요', '지금 날씨 · 오늘 최저·최고 · 어제와 비교', 'main'),
@@ -29,7 +29,7 @@ TOPICS = [
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
 ]
 SIZES = {'ios': (1320, 2868), 'ipad': (2064, 2752)}
-BACKUP = ROOT.parent / 'build/watch-store-screenshot-20261103/before'
+BACKUP = ROOT.parent / 'build/screenshot-refresh-20261104/before'
 
 
 def backup(path):
@@ -237,18 +237,18 @@ def main(topics=None):
             assert im.size == SIZES[path.parent.name] and im.mode == 'RGB' and im.format == 'PNG'
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/ios-20261103-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-11-03', '화면': '실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용',
+    report = ROOT / 'screenshots/ios-20261104-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-11-04', '글꼴': '나눔스퀘어 네오', '화면': '실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용',
         '배치': '2번은 Android 구역별 알림, 5번은 Android 워치 소개의 2×2 화면 순서를 참고했다. 5번은 Apple Watch의 사각 화면이며 시스템 시계와 앱 UI를 보존한다. 기존 제목·색상·바깥 여백을 유지하고 원본 비율로 배치한다.',
-        '데이터': '제품 앱의 실제 서버 응답과 촬영용 설정. 2번과 5번은 2026-11-03 시뮬레이터 촬영. 8번은 2026-10-30, 나머지는 2026-10-29 등록 이미지 유지.', '위젯': '3·4번은 기존 등록 이미지 유지. 사용 원본은 2026-10-28 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
+        '데이터': '제품 앱의 실제 서버 응답과 촬영용 설정. 모든 앱·위젯·워치 화면을 2026-11-04 최신 소스로 촬영했다.', '위젯': '3·4번은 2026-11-04 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
         '워치': '5번은 실제 watchOS 앱의 현재·준비물·타임라인·기상·생활 실행 화면. 시험 자료 주입이나 HTML 시안 사용 없음. 실물 워치 촬영은 아님.',
         '알림': '2번은 실제 지역별 알림 설정 화면, 8번은 실제 알림 설정 화면', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    docs = [ROOT / 'screenshots/IOS_20261103.md', ROOT / 'screenshots/README.md', report]
+    docs = [ROOT / 'screenshots/SCREENSHOTS_20261104.md', ROOT / 'screenshots/README.md', report]
     files = images + previews + docs
-    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261103.zip']:
+    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261104.zip']:
         package(ROOT / name, files)
     print(json.dumps({'검증완료': len(records), '플랫폼': list(SIZES),
-                     '묶음': 'app-store/weather-care-ios-screenshots-20261103.zip'}, ensure_ascii=False))
+                     '묶음': 'app-store/weather-care-ios-screenshots-20261104.zip'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

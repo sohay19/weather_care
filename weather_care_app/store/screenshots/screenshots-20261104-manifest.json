@@ -1,0 +1,155 @@
+{
+  "기준일": "2026-11-04",
+  "편집일": "2026-11-04",
+  "배치": "상단 제목 60px 두 줄, 줄간격 16px. 바깥 사방 및 제목·본문 사이 간격 모두 72px(태블릿 96px). 이미지는 남은 높이에 비율 유지 배치. 작은 분류명·부연 설명·위젯 크기 라벨 생략.",
+  "화면": "나눔스퀘어 네오를 적용한 전용 Android 에뮬레이터 앱·홈 위젯과 Galaxy Watch9 실기기 화면",
+  "데이터": "실제 운영 서버 날씨. 5번은 실기기 워치 앱 네 탭의 화면을 원형으로 배치한 소개 이미지.",
+  "태블릿": "같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.",
+  "구성": "앱·홈 위젯·워치 모두 11월 4일 새 폰트 촬영본을 사용한다. Week 날짜 굵기는 w800이다.",
+  "files": [
+    {
+      "path": "screenshots/android/01-main.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "23be5324885a254b58cc96735650174514564b6e61264dc6863b28ae48aad482"
+    },
+    {
+      "path": "screenshots/android/02-region-notifications.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "ca957c56bbdfb91bca5f6cf2c5cbb430e6566347c25d174ef14f518ea9b41045"
+    },
+    {
+      "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "e9974e199217b4021a0b7f462a3c008640e16f2bdeb801bdecd832429843aeee"
+    },
+    {
+      "path": "screenshots/android/04-dark-mode.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "3220cc905d95f65c1071d0e7802d8e1baf5bf3ce19b08fde743818d837d1659f"
+    },
+    {
+      "path": "screenshots/android/05-watch.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "a392f485f048f536658f36905a10ada047cae186b03e94b9fab85b076f245af5"
+    },
+    {
+      "path": "screenshots/android/06-advanced.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "78ca4178d7477ce2812c61a434593c0b0e17ab92243158f9d25d567ba7c6e00f"
+    },
+    {
+      "path": "screenshots/android/07-week.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "969b80c88398390e4b0aa29499a1f15fc59322b5faf116f57070f30b390ee001"
+    },
+    {
+      "path": "screenshots/android/08-notification-settings.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "653c9b3ade11217a40a99f1597ceb4feea48713bc90ecf7256037eab1906ab3a"
+    },
+    {
+      "path": "screenshots/android-tablet/01-main.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "b9c1c630d31bc75f15d65bc02b9ddec5b740506b495786a7bfac27d78548a756"
+    },
+    {
+      "path": "screenshots/android-tablet/02-region-notifications.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "ef695f8013ae2fab129b383477ebd9e955222e34a8fb11952926b2220d4c6d7f"
+    },
+    {
+      "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "d64415b2c968cd4f012751b5e6fcb72497a12ced44c984112f10042061df21f3"
+    },
+    {
+      "path": "screenshots/android-tablet/04-dark-mode.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "ad06142aa260d92ae8c2c8504bd5fb375758e0e939ad795a29161dcce3ff56bb"
+    },
+    {
+      "path": "screenshots/android-tablet/05-watch.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "7c49979fe324aece14e4b07207f33add8fc473fcd3caa677b945c8c2136af919"
+    },
+    {
+      "path": "screenshots/android-tablet/06-advanced.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "4055089510c1e29282e6469282afce196151ed0270ab235b4dfa8dc9fb6beab5"
+    },
+    {
+      "path": "screenshots/android-tablet/07-week.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "15630ecd726b78b9696df0cb6e4198fde415d144dbd89c0036512f230239abe5"
+    },
+    {
+      "path": "screenshots/android-tablet/08-notification-settings.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "29f2ac0eb08f459b8d19e46db05e27bda895c972d3f1dc3ddb27bc5d79c7f6a2"
+    }
+  ]
+}

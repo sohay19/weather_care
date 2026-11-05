@@ -15,6 +15,7 @@ TOPICS = (
     ('prep', '오늘의 준비물', '나가기 전에\n오늘의 준비물을 챙겨요'),
     ('timeline', '타임라인', '시간대별 날씨와\n비 올 확률을 살펴봐요'),
     ('life', '기상·생활', '습도부터 자외선까지\n생활에 필요한 날씨'),
+    ('widget', '워치 위젯', '앱을 열지 않고\n손목에서 날씨를 확인해요'),
 )
 
 
@@ -61,14 +62,16 @@ def main():
         round_watch = folder == 'wear-os-promo'
         output = ROOT / folder
         output.mkdir(exist_ok=True)
-        with ZipFile(ROOT / f'{folder}-20261103.zip', 'w', ZIP_DEFLATED) as archive:
+        with ZipFile(ROOT / f'{folder}-20261104.zip', 'w', ZIP_DEFLATED) as archive:
             for index, (name, topic, headline) in enumerate(TOPICS, start=1):
                 filename = f'{index:02}-{name}.png'
                 if round_watch:
-                    with Image.open(ROOT / 'source-wear-20261103' / f'{name}.png') as screen:
+                    source_name = 'tile' if name == 'widget' else name
+                    with Image.open(ROOT / 'source-wear-20261104' / f'{source_name}.png') as screen:
                         card = compose(screen, platform, topic, headline, round_watch)
                 else:
-                    card = compose(apple_screen(name), platform, topic, headline, round_watch)
+                    source_name = 'smart-stack' if name == 'widget' else name
+                    card = compose(apple_screen(source_name), platform, topic, headline, round_watch)
                 card.save(output / filename)
                 archive.write(output / filename, filename)
 

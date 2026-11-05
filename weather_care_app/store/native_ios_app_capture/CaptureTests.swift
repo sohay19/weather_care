@@ -12,7 +12,9 @@ final class AppCaptureTests: XCTestCase {
       .appendingPathComponent("app-capture", isDirectory: true)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     func save(_ name: String) throws {
-      try (app.debugDescription + "\nSYSTEM\n" + springboard.debugDescription)
+      let appTree = app.state == .runningForeground ? app.debugDescription : "제품 앱 백그라운드"
+      let systemTree = springboard.state == .runningForeground ? springboard.debugDescription : "시스템 홈 백그라운드"
+      try (appTree + "\nSYSTEM\n" + systemTree)
         .write(to: folder.appendingPathComponent("state.txt"), atomically: true, encoding: .utf8)
       try XCUIScreen.main.screenshot().pngRepresentation.write(to: folder.appendingPathComponent("\(name).png"))
     }

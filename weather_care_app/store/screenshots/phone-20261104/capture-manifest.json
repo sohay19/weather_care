@@ -5,67 +5,147 @@
   "files": [
     {
       "path": "screenshots/android/01-main.png",
-      "sha256": "b94a4468215fb2ff1912299b0a608e041aa8aacdf83f21faa633351003547dbd"
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "23be5324885a254b58cc96735650174514564b6e61264dc6863b28ae48aad482"
     },
     {
       "path": "screenshots/android/02-region-notifications.png",
-      "sha256": "ba814f695962c25bd13700ac4c47ed60e5eeb6d83a9e9f57ea6ce990d92fed9e"
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "ca957c56bbdfb91bca5f6cf2c5cbb430e6566347c25d174ef14f518ea9b41045"
     },
     {
       "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
       "sha256": "e9974e199217b4021a0b7f462a3c008640e16f2bdeb801bdecd832429843aeee"
     },
     {
       "path": "screenshots/android/04-dark-mode.png",
-      "sha256": "500259375b8de518bcd76acb9cd1ee1e1731619882c81d6b183af660519f52f3"
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "3220cc905d95f65c1071d0e7802d8e1baf5bf3ce19b08fde743818d837d1659f"
     },
     {
       "path": "screenshots/android/05-watch.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
       "sha256": "a392f485f048f536658f36905a10ada047cae186b03e94b9fab85b076f245af5"
     },
     {
       "path": "screenshots/android/06-advanced.png",
-      "sha256": "8114f983f88e9a1d67c13e019541a53ab620bdc22e47e08f538848bcfc7c4cfa"
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "78ca4178d7477ce2812c61a434593c0b0e17ab92243158f9d25d567ba7c6e00f"
     },
     {
       "path": "screenshots/android/07-week.png",
-      "sha256": "644f4ad28e6f70a970270cd49c81df6bc4e00533b8c5bc45858d41d39f6d1b6c"
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "969b80c88398390e4b0aa29499a1f15fc59322b5faf116f57070f30b390ee001"
     },
     {
       "path": "screenshots/android/08-notification-settings.png",
-      "sha256": "a777c0c53e46973f3258b62dad633b543b5ca828b1932563ce1d1e2ab8970153"
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "653c9b3ade11217a40a99f1597ceb4feea48713bc90ecf7256037eab1906ab3a"
     },
     {
       "path": "screenshots/android-tablet/01-main.png",
-      "sha256": "509f2ac3e3346637555765a838eddf06f0f29628b43a0841d28c03559c21ae2b"
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "b9c1c630d31bc75f15d65bc02b9ddec5b740506b495786a7bfac27d78548a756"
     },
     {
       "path": "screenshots/android-tablet/02-region-notifications.png",
-      "sha256": "d578faa63e5f7b79400e26763968ee4c24543c5ee95a8ea11cef542999a82822"
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "ef695f8013ae2fab129b383477ebd9e955222e34a8fb11952926b2220d4c6d7f"
     },
     {
       "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
       "sha256": "d64415b2c968cd4f012751b5e6fcb72497a12ced44c984112f10042061df21f3"
     },
     {
       "path": "screenshots/android-tablet/04-dark-mode.png",
-      "sha256": "7e494a209eb9d64b2ccd9faa5a0aac8478bce7e42b88c1523bc14cc3721d35db"
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "ad06142aa260d92ae8c2c8504bd5fb375758e0e939ad795a29161dcce3ff56bb"
     },
     {
       "path": "screenshots/android-tablet/05-watch.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
       "sha256": "7c49979fe324aece14e4b07207f33add8fc473fcd3caa677b945c8c2136af919"
     },
     {
       "path": "screenshots/android-tablet/06-advanced.png",
-      "sha256": "e25e69d89b39f90e21e7cbee4c74f0ec7424614ee3fd2decbd0327a4f83a0728"
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "4055089510c1e29282e6469282afce196151ed0270ab235b4dfa8dc9fb6beab5"
     },
     {
       "path": "screenshots/android-tablet/07-week.png",
-      "sha256": "a43001959615447b18b64be3600ef1a91aa440a08d6872e921d85d6442877a49"
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "15630ecd726b78b9696df0cb6e4198fde415d144dbd89c0036512f230239abe5"
     },
     {
       "path": "screenshots/android-tablet/08-notification-settings.png",
-      "sha256": "e8c6d83adbbbbdaecd19769864f963dba08f88c3eb8f268d203fb5e1103cda06"
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "29f2ac0eb08f459b8d19e46db05e27bda895c972d3f1dc3ddb27bc5d79c7f6a2"
     }
   ],
   "Week": "최신 날짜 글자 굵기 w800으로 재촬영"

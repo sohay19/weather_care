@@ -1,0 +1,88 @@
+{
+  "촬영일": "2026-11-04",
+  "글꼴": "나눔스퀘어 네오",
+  "환경": "Apple Watch Series 10 42mm / watchOS 11.5 시뮬레이터의 최신 제품 앱·WidgetKit 스마트 스택",
+  "device_id": "565FCA1F-E64D-4F95-AE9E-F2AEC188EE0D",
+  "연결된_iPhone": "4EBFF416-CCE9-4F79-9C88-2C272BF821A7",
+  "데이터": "연결된 iPhone 제품 앱의 구로구 구로1동 운영 날씨. 날씨 자료 주입 없음.",
+  "가공": "전체 실제 화면, 내부 UI·문구·수치 수정 없음.",
+  "files": [
+    {
+      "path": "current.png",
+      "size": [
+        374,
+        446
+      ],
+      "sha256": "ac0442407f6154222026f9c02001630ee64dd442bd58cb14e1b1d2bbaa0b4bc5",
+      "촬영시각": "2026-11-04T12:02:12.191458+09:00"
+    },
+    {
+      "path": "prep.png",
+      "size": [
+        374,
+        446
+      ],
+      "sha256": "ef6e12bcbd760ed7d284182ef3e6fca90186cc6ea8613177df6f373148b98985",
+      "촬영시각": "2026-11-04T12:02:46.850144+09:00"
+    },
+    {
+      "path": "timeline.png",
+      "size": [
+        374,
+        446
+      ],
+      "sha256": "1f6c51303c8fedd7b62c92c15ccd2e8fe1263f437cfb29b246c38dfc467d4bda",
+      "촬영시각": "2026-11-04T12:03:18.797239+09:00"
+    },
+    {
+      "path": "life.png",
+      "size": [
+        374,
+        446
+      ],
+      "sha256": "1d7c2a9a69d8595c327d720e676b5286df3949218929df9df835802e7b40f0ff",
+      "촬영시각": "2026-11-04T12:04:07.302230+09:00"
+    },
+    {
+      "path": "life-detail.png",
+      "size": [
+        374,
+        446
+      ],
+      "sha256": "d4ed0ba4039b0a11e63f0c0218753f553f41016e6024c5777db1813432fa277c",
+      "촬영시각": "2026-11-04T12:05:56.515073+09:00"
+    },
+    {
+      "path": "smart-stack.png",
+      "size": [
+        374,
+        446
+      ],
+      "sha256": "f3726145a3c842a325ec2367cd08c2c7951bbf30bbd4392d9179261f2e2e4eb4",
+      "촬영시각": "2026-11-04T12:08:29.906402+09:00"
+    }
+  ],
+  "제품_실행파일_sha256": "0cf42f707e61e954575e7cb83baf828c8d921dc2e32f32cd41e1551f27165c0b",
+  "글꼴_번들_대조": [
+    {
+      "대상": "Apple Watch",
+      "파일": "NanumSquareNeo-bRg.ttf",
+      "sha256": "864de849b9d0af7efbd9e855044f5ab3bbf44cc88ddff6b9873ee830b9d3a61f"
+    },
+    {
+      "대상": "Apple Watch",
+      "파일": "NanumSquareNeo-dEb.ttf",
+      "sha256": "3cedb3ee07aabd894f2c1ad4f0434739ecf28a870674ba73cff016057c764750"
+    },
+    {
+      "대상": "Apple Watch 위젯",
+      "파일": "NanumSquareNeo-bRg.ttf",
+      "sha256": "864de849b9d0af7efbd9e855044f5ab3bbf44cc88ddff6b9873ee830b9d3a61f"
+    },
+    {
+      "대상": "Apple Watch 위젯",
+      "파일": "NanumSquareNeo-dEb.ttf",
+      "sha256": "3cedb3ee07aabd894f2c1ad4f0434739ecf28a870674ba73cff016057c764750"
+    }
+  ]
+}

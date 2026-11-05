@@ -1,0 +1,174 @@
+{
+  "기준일": "2026-11-04",
+  "방식": "실제 iPhone 앱 전체 화면·시스템 바만 제외·iPad 규격에도 같은 원본 사용",
+  "files": [
+    {
+      "name": "main",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "main.png",
+      "source_sha256": "5b072740e7051967f96aee45af34d7c86eeaff38d630ea597a47823c97d6d209",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261104/phone/main.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "2a4d17113df04775f61ade19254ac2e0f39891f4a77e1653ad8f0fee3ad92dda"
+    },
+    {
+      "name": "region-notifications",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "region-notifications.png",
+      "source_sha256": "aa0ae0c8f17627d74b008d5c8483012af60b52fb6027292b24118dfd7fdf533b",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261104/phone/region-notifications.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "b44f6581ecc1802ed134fe9a2fb992e81c2f312927152fc06de532b0dce285a6"
+    },
+    {
+      "name": "dark-main",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "dark-main.png",
+      "source_sha256": "ff24c67f1c45c425aba1e50209edbb7602b01b73f9ff03889b19ffa38a1579e6",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261104/phone/dark-main.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "fc2429cdad8465c23eb7788382a3291a237561f30ef74e2cf1f932baf21b6f6d"
+    },
+    {
+      "name": "advanced-values",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "advanced-values.png",
+      "source_sha256": "0c9d2b2f5e19843ac6fecf916325795525f44dd977c96abfc06cea96cab455f7",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261104/phone/advanced-values.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "e088ef869f34690ecf18afeb04d2a612a95647dba8aa1066035a852c2155f583"
+    },
+    {
+      "name": "week",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "week-detail.png",
+      "source_sha256": "8c3354bd374de96d8c5a89b2a6f1ba2dbc86a82afabc3d469d8ca047b37d01cd",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261104/phone/week.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "cc8d4bcb051fd4a7658ecb22730e69c94f515a4d5ecd32220f9c0f8d09b22d79"
+    },
+    {
+      "name": "notification-settings",
+      "device": "71087354-633A-42B1-AD48-60A603FE411F",
+      "source": "notification-settings.png",
+      "source_sha256": "87bed7d1276c8f74de694d5daa3f235d3169daa68f5de19c9eaf499e44226001",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261104/phone/notification-settings.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "48a9e5c0618e63a26a6a2929704e27b73c7f13f55dc771535138d8b059235471"
+    }
+  ],
+  "글꼴": "나눔스퀘어 네오",
+  "빌드_기준": "c9dc91d4e75fd317e3ae77f1fb7445a7de300301",
+  "제품_실행파일_sha256": "b6ed1d27aa0c18af03bbbd5335562a71b0e22b660a757cf271122f6fa02098b4",
+  "촬영_설치본": "동일 실행파일·제품 UI. 촬영용 복사본 Info.plist의 GADNativeAdValidatorEnabled만 false로 설정했다.",
+  "글꼴_번들_대조": [
+    {
+      "대상": "iPhone 위젯",
+      "파일": "NanumSquareNeo-bRg.ttf",
+      "sha256": "864de849b9d0af7efbd9e855044f5ab3bbf44cc88ddff6b9873ee830b9d3a61f"
+    },
+    {
+      "대상": "iPhone 위젯",
+      "파일": "NanumSquareNeo-dEb.ttf",
+      "sha256": "3cedb3ee07aabd894f2c1ad4f0434739ecf28a870674ba73cff016057c764750"
+    },
+    {
+      "대상": "Apple Watch",
+      "파일": "NanumSquareNeo-bRg.ttf",
+      "sha256": "864de849b9d0af7efbd9e855044f5ab3bbf44cc88ddff6b9873ee830b9d3a61f"
+    },
+    {
+      "대상": "Apple Watch",
+      "파일": "NanumSquareNeo-dEb.ttf",
+      "sha256": "3cedb3ee07aabd894f2c1ad4f0434739ecf28a870674ba73cff016057c764750"
+    },
+    {
+      "대상": "Apple Watch 위젯",
+      "파일": "NanumSquareNeo-bRg.ttf",
+      "sha256": "864de849b9d0af7efbd9e855044f5ab3bbf44cc88ddff6b9873ee830b9d3a61f"
+    },
+    {
+      "대상": "Apple Watch 위젯",
+      "파일": "NanumSquareNeo-dEb.ttf",
+      "sha256": "3cedb3ee07aabd894f2c1ad4f0434739ecf28a870674ba73cff016057c764750"
+    }
+  ]
+}

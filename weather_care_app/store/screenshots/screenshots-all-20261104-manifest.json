@@ -1,0 +1,584 @@
+{
+  "기준일": "2026-11-04",
+  "글꼴": "나눔스퀘어 네오",
+  "구성": "휴대전화·태블릿 등록 32장, 워치 앱·위젯 등록 10장, 워치 홍보 10장, 홈 위젯 원본 12장",
+  "검증": "PNG 규격·모드·SHA-256, 촬영 원본 해시, ZIP 무결성과 개별 파일 일치",
+  "files": [
+    {
+      "path": "screenshots/ios/01-main.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "47cd7a1258310076b5f98521caedceb01181841a23fd3f29055ddacaff9cfb0f"
+    },
+    {
+      "path": "screenshots/ios/02-region-notifications.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "9dcd486573be57bf48ca0f8335f186044ad94e5e2ad00c49ecb5c4cf1aebafec"
+    },
+    {
+      "path": "screenshots/ios/03-widget.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "dcc55fc22f52f35ec636e300c702dd1f1a6c9826b021c9d3ea7472132b204ee7"
+    },
+    {
+      "path": "screenshots/ios/04-dark-mode.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "12a27868feff0d0a5cabec25895783779263b4cc227302583269c0d401a981c6"
+    },
+    {
+      "path": "screenshots/ios/05-watch.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "d3f81113cf5d8deaa2bfdfd335ed98a8dc5962aa6cfcf49543d8d6b906fca035"
+    },
+    {
+      "path": "screenshots/ios/06-advanced.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "3a14b423a9aebfc981ee0108378fd4d8db47b7de1a7565f9027f249a337a3157"
+    },
+    {
+      "path": "screenshots/ios/07-week.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "b1108a15ad56933702654a2da7785ede0f65f4f6361ad514b305a2f5e2020127"
+    },
+    {
+      "path": "screenshots/ios/08-notification-settings.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "987afde82a8da262c4cac115b00581ba6b8198713935e0176f3ce123881ad07c"
+    },
+    {
+      "path": "screenshots/ipad/01-main.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "c7236a048a43b9ed4961924860403345c3b9bd32e3a40c07a054b5593969cb7d"
+    },
+    {
+      "path": "screenshots/ipad/02-region-notifications.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "abd6046bc83782bde9284670b07d493b95340248080f7266c2239c6d77395842"
+    },
+    {
+      "path": "screenshots/ipad/03-widget.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "435f335260e07c18fdbdf83c50b46ee459a9fd25c56e6e4e1233dcaa97cfd9e0"
+    },
+    {
+      "path": "screenshots/ipad/04-dark-mode.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "8a1164e4c5bedcd32f7fab0d4f855c5e1b00cc48eb736e85c0522dff46a120ee"
+    },
+    {
+      "path": "screenshots/ipad/05-watch.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "50eebeeb29c68b78e795f1353d7e6bbc780a9a62fd5e96365fe762fb153bf961"
+    },
+    {
+      "path": "screenshots/ipad/06-advanced.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "7e69b42459fb55e025ae84ec31dfc2ec349e8076328344426847467fac4eacc2"
+    },
+    {
+      "path": "screenshots/ipad/07-week.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "1b4cc9d42ad08ab3aa869781d79ce6af70a5412163265d26d1c167152cba3ac5"
+    },
+    {
+      "path": "screenshots/ipad/08-notification-settings.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "bb9d6ec0445bd291a9e1a5ee07bf529634e421e2f1b95ee377d544adb19e06b5"
+    },
+    {
+      "path": "screenshots/android/01-main.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "23be5324885a254b58cc96735650174514564b6e61264dc6863b28ae48aad482"
+    },
+    {
+      "path": "screenshots/android/02-region-notifications.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "ca957c56bbdfb91bca5f6cf2c5cbb430e6566347c25d174ef14f518ea9b41045"
+    },
+    {
+      "path": "screenshots/android/03-widget.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "e9974e199217b4021a0b7f462a3c008640e16f2bdeb801bdecd832429843aeee"
+    },
+    {
+      "path": "screenshots/android/04-dark-mode.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "3220cc905d95f65c1071d0e7802d8e1baf5bf3ce19b08fde743818d837d1659f"
+    },
+    {
+      "path": "screenshots/android/05-watch.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "a392f485f048f536658f36905a10ada047cae186b03e94b9fab85b076f245af5"
+    },
+    {
+      "path": "screenshots/android/06-advanced.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "78ca4178d7477ce2812c61a434593c0b0e17ab92243158f9d25d567ba7c6e00f"
+    },
+    {
+      "path": "screenshots/android/07-week.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "969b80c88398390e4b0aa29499a1f15fc59322b5faf116f57070f30b390ee001"
+    },
+    {
+      "path": "screenshots/android/08-notification-settings.png",
+      "size": [
+        1080,
+        2160
+      ],
+      "mode": "RGB",
+      "sha256": "653c9b3ade11217a40a99f1597ceb4feea48713bc90ecf7256037eab1906ab3a"
+    },
+    {
+      "path": "screenshots/android-tablet/01-main.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "b9c1c630d31bc75f15d65bc02b9ddec5b740506b495786a7bfac27d78548a756"
+    },
+    {
+      "path": "screenshots/android-tablet/02-region-notifications.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "ef695f8013ae2fab129b383477ebd9e955222e34a8fb11952926b2220d4c6d7f"
+    },
+    {
+      "path": "screenshots/android-tablet/03-widget.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "d64415b2c968cd4f012751b5e6fcb72497a12ced44c984112f10042061df21f3"
+    },
+    {
+      "path": "screenshots/android-tablet/04-dark-mode.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "ad06142aa260d92ae8c2c8504bd5fb375758e0e939ad795a29161dcce3ff56bb"
+    },
+    {
+      "path": "screenshots/android-tablet/05-watch.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "7c49979fe324aece14e4b07207f33add8fc473fcd3caa677b945c8c2136af919"
+    },
+    {
+      "path": "screenshots/android-tablet/06-advanced.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "4055089510c1e29282e6469282afce196151ed0270ab235b4dfa8dc9fb6beab5"
+    },
+    {
+      "path": "screenshots/android-tablet/07-week.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "15630ecd726b78b9696df0cb6e4198fde415d144dbd89c0036512f230239abe5"
+    },
+    {
+      "path": "screenshots/android-tablet/08-notification-settings.png",
+      "size": [
+        1440,
+        2880
+      ],
+      "mode": "RGB",
+      "sha256": "29f2ac0eb08f459b8d19e46db05e27bda895c972d3f1dc3ddb27bc5d79c7f6a2"
+    },
+    {
+      "path": "screenshots/watchos/01-current.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "73c4c7375e14a377a6f09f9cc090a8ebc0148162ad733f7f74a81b6f642dba23"
+    },
+    {
+      "path": "screenshots/watchos/02-prep.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "eaaca428210085840915eee5c3c4fa0b94846600e1940af4676dfa53f9bd02d4"
+    },
+    {
+      "path": "screenshots/watchos/03-timeline.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "b37244c00d2796e9684c505798bb5d3160aaeab9059ac5758d00f3205272d866"
+    },
+    {
+      "path": "screenshots/watchos/04-life.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "430ec54befa99e7ff1a451687ffcba00ae03e883a34436144531bc31d35cc047"
+    },
+    {
+      "path": "screenshots/watchos/05-widget.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "32fc8b16ca1b8701b4d61ba83e1110a4dbe970f2a51517e71214437ec256ddb8"
+    },
+    {
+      "path": "screenshots/wear-os/01-current.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "d06ce2dfbe41f8c1fece1dedef6c0bd8b9b0a0932e894f613af4830af9c14f98"
+    },
+    {
+      "path": "screenshots/wear-os/02-prep.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "779b928bb0e469e0aff63a9e04431f281356493df1d0f5bced8cbec568e0bac0"
+    },
+    {
+      "path": "screenshots/wear-os/03-timeline.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "b7ace2ce2bdd693d0f3fd2826a56a9aa659c32fa0ee7c4a6ddb5123bdb6aad71"
+    },
+    {
+      "path": "screenshots/wear-os/04-life.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "45e1d1463531096883e420124348748ed289d8a2c26ae8525a0e54106b3652f0"
+    },
+    {
+      "path": "screenshots/wear-os/05-widget.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "921bfc92d811069f9c36207e404c25799247a5fddcb6bc56f6134e92697fabd2"
+    },
+    {
+      "path": "screenshots/watchos-promo/01-current.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "17ea3011a43f4733710149e108518765270b346547fe0670aac3c8df6e90c5de"
+    },
+    {
+      "path": "screenshots/watchos-promo/02-prep.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "86774027809018d377532f0c6ffa6bf356bdbe0d2adb4329b2e48493407710cd"
+    },
+    {
+      "path": "screenshots/watchos-promo/03-timeline.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "d02004bb0845e0b5f949fea3dd752ef132b1320b8971dca86baea7967a35290a"
+    },
+    {
+      "path": "screenshots/watchos-promo/04-life.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "9820788ebe573b33561fc657c32256c316a542dc94342c5ec5d8a0299625b113"
+    },
+    {
+      "path": "screenshots/watchos-promo/05-widget.png",
+      "size": [
+        416,
+        496
+      ],
+      "mode": "RGB",
+      "sha256": "b84af07f2f3944d0d2fcbd28b38b61cbf06233a464b74ac2984987a829e80a51"
+    },
+    {
+      "path": "screenshots/wear-os-promo/01-current.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "cfe3c92b392ce476901102334502810a224c92b56120427bd8fef26b623f0fa1"
+    },
+    {
+      "path": "screenshots/wear-os-promo/02-prep.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "27d49aed6514b6674087cb81a5042899216835915eaf8aa9bd971edb334a270c"
+    },
+    {
+      "path": "screenshots/wear-os-promo/03-timeline.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "3b60fb517ea62de4dfd54a3bb5d75fcda79ef2e4c38a8d324b971b116d5e013c"
+    },
+    {
+      "path": "screenshots/wear-os-promo/04-life.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "57897f572ec146709bdacec3df8f0ae5b83de568f81a7b33ee13bb875d945d4e"
+    },
+    {
+      "path": "screenshots/wear-os-promo/05-widget.png",
+      "size": [
+        438,
+        438
+      ],
+      "mode": "RGB",
+      "sha256": "d49c9172b8c2df20a45b54b2e8c71046bca3966bf40c0d1a4a22ed995f5940eb"
+    },
+    {
+      "path": "screenshot-inputs/native-ios-20261104/phone/light-small.png",
+      "size": [
+        510,
+        510
+      ],
+      "mode": "RGBA",
+      "sha256": "4c911d54104136c503629dc1cfc72999f1201ed87fb0f16637c7f53e18cc5510"
+    },
+    {
+      "path": "screenshot-inputs/native-ios-20261104/phone/light-medium.png",
+      "size": [
+        1092,
+        510
+      ],
+      "mode": "RGBA",
+      "sha256": "3dd55dbc132010ef724d939d7bb5fe5679c1164dbf44a0d4d19339e8ba6f4d75"
+    },
+    {
+      "path": "screenshot-inputs/native-ios-20261104/phone/light-large.png",
+      "size": [
+        1092,
+        1146
+      ],
+      "mode": "RGBA",
+      "sha256": "b7a24df7ac1705a13c23c1d6e47e715f8598c0fe2be7c3c5f7c9f0c023778d44"
+    },
+    {
+      "path": "screenshot-inputs/native-ios-20261104/phone/dark-small.png",
+      "size": [
+        510,
+        510
+      ],
+      "mode": "RGBA",
+      "sha256": "1e2e91b272e26780016af9e34044975255e0d5e39d69bbc155334a27197d9ca8"
+    },
+    {
+      "path": "screenshot-inputs/native-ios-20261104/phone/dark-medium.png",
+      "size": [
+        1092,
+        510
+      ],
+      "mode": "RGBA",
+      "sha256": "5f81a58b2131e16f683318dded0a44874fe0161c4bec12a306183eb85e75525b"
+    },
+    {
+      "path": "screenshot-inputs/native-ios-20261104/phone/dark-large.png",
+      "size": [
+        1092,
+        1146
+      ],
+      "mode": "RGBA",
+      "sha256": "0812dfb740ceb92be27bae7b0c3dcd94337325322f6acc247c91d4759b4a276e"
+    },
+    {
+      "path": "screenshot-inputs/native-android-20261104/light-small.png",
+      "size": [
+        410,
+        473
+      ],
+      "mode": "RGBA",
+      "sha256": "2611ec959126e16e8fbc6a4751997aac8dd1a87d450cf49b8eaf5a43cd67bca2"
+    },
+    {
+      "path": "screenshot-inputs/native-android-20261104/light-medium.png",
+      "size": [
+        877,
+        473
+      ],
+      "mode": "RGBA",
+      "sha256": "e1733286456206ab9ae28c1cfe3d0f87262a2d3c4a5cff16b89504b2d2cde1ba"
+    },
+    {
+      "path": "screenshot-inputs/native-android-20261104/light-large.png",
+      "size": [
+        877,
+        1045
+      ],
+      "mode": "RGBA",
+      "sha256": "9139c2d5476150a0e199a46a0d85933664563f70b39a8cc72d7d4f6218b44187"
+    },
+    {
+      "path": "screenshot-inputs/native-android-20261104/dark-small.png",
+      "size": [
+        410,
+        473
+      ],
+      "mode": "RGBA",
+      "sha256": "fa016837b455a1d2238d813f27b62179acbce35743f233bb01de9fd1f2a0252d"
+    },
+    {
+      "path": "screenshot-inputs/native-android-20261104/dark-medium.png",
+      "size": [
+        877,
+        473
+      ],
+      "mode": "RGBA",
+      "sha256": "96417fc1f4199149e95fb35e6f350e3cbe22e8b3d36bee1bd11cae6eab6c9b38"
+    },
+    {
+      "path": "screenshot-inputs/native-android-20261104/dark-large.png",
+      "size": [
+        877,
+        1045
+      ],
+      "mode": "RGBA",
+      "sha256": "f3fe6de19fb15df6a08c65bb2a3b10c9c6141cc5a21d621e5cfa406fdc050bd1"
+    }
+  ]
+}

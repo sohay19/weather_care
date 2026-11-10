@@ -4,12 +4,14 @@
 
 2026년 11월 10일 Android 휴대전화·태블릿의 8번 알림 설정에 새 속보·특보 메뉴를 반영했다. 두 규격에 같은 Android 촬영 원본을 사용한다.
 
+같은 날 iOS 1.2.2(26111000)의 알림 설정도 전용 iPhone 시뮬레이터에서 다시 촬영해 iPhone·iPad 8번에 반영했다. 이번 iOS 갱신에서 Android 등록본은 변경하지 않았다.
+
 - [전체 스크린샷 ZIP](../weather-care-store-screenshots.zip)
-- [촬영·제작·검증 안내](SCREENSHOTS_20261104.md) · [전체 파일 명세](screenshots-all-20261110-manifest.json) · [8번 촬영 기록](source-android-20261110/capture-manifest.json)
+- [촬영·제작·검증 안내](SCREENSHOTS_20261104.md) · [전체 파일 명세](screenshots-all-20261110-manifest.json) · [Android 8번 촬영 기록](source-android-20261110/capture-manifest.json) · [iOS 8번 촬영 기록](source-ios-20261110/phone/capture-manifest.json)
 
 | 대상 | 개별 PNG | 최신 ZIP | 미리보기 |
 |---|---|---|---|
-| iPhone·iPad 등록용 각 8장 | `ios/`, `ipad/` | [iOS ZIP](../app-store/weather-care-ios-screenshots-20261104.zip) | [iPhone](preview-ios.png) · [iPad](preview-ipad.png) |
+| iPhone·iPad 등록용 각 8장 | `ios/`, `ipad/` | [iOS ZIP](../app-store/weather-care-ios-screenshots-20261110.zip) | [iPhone](preview-ios.png) · [iPad](preview-ipad.png) |
 | Android 휴대전화·태블릿 등록용 각 8장 | `android/`, `android-tablet/` | [Android ZIP](../weather-care-android-screenshots-20261110.zip) | [휴대전화](preview-android.png) · [태블릿](preview-android-tablet.png) |
 | Apple Watch 앱·스마트 스택 5장 | `watchos/` | [Apple Watch ZIP](watchos-screenshots-20261104.zip) | [미리보기](preview-watchos-20261104.png) |
 | Wear OS 앱·전체 화면 타일 5장 | `wear-os/` | [Wear OS ZIP](wear-os-screenshots-20261104.zip) | [미리보기](preview-wear-20261104.png) |
@@ -27,6 +29,12 @@ Android 8번과 관련 미리보기·ZIP을 다시 만들려면 앱 루트에서
 ```sh
 python3 store/generate_android_store.py --screenshots-only --topics 08-notification-settings
 python3 store/package_screenshots.py --android-refresh
+```
+
+iOS 8번과 관련 미리보기·ZIP만 다시 만들려면 다음을 실행한다. 이전 날짜의 iOS ZIP과 Android·워치 이미지는 보존한다.
+
+```sh
+python3 store/generate_ios_store.py --topics 08-notification-settings
 ```
 
 ## 2026년 11월 3일 등록본

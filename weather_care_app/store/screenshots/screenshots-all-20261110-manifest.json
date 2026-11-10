@@ -74,7 +74,7 @@
         2868
       ],
       "mode": "RGB",
-      "sha256": "987afde82a8da262c4cac115b00581ba6b8198713935e0176f3ce123881ad07c"
+      "sha256": "4d0722e3b0fb889150ecd705f78ff917b35bc554395b8585b8c0980d12b4db9b"
     },
     {
       "path": "screenshots/ipad/01-main.png",
@@ -146,7 +146,7 @@
         2752
       ],
       "mode": "RGB",
-      "sha256": "bb9d6ec0445bd291a9e1a5ee07bf529634e421e2f1b95ee377d544adb19e06b5"
+      "sha256": "c0c6181b7b4f4fe46b2f03718887b7259fb4d11c3843c7079e520df3c0becc5a"
     },
     {
       "path": "screenshots/android/01-main.png",
@@ -581,5 +581,6 @@
       "sha256": "f3fe6de19fb15df6a08c65bb2a3b10c9c6141cc5a21d621e5cfa406fdc050bd1"
     }
   ],
-  "Android 알림 설정 편집일": "2026-11-10"
+  "Android 알림 설정 편집일": "2026-11-10",
+  "iOS 알림 설정 편집일": "2026-11-10"
 }

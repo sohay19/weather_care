@@ -13,7 +13,7 @@ import generate_android_store as common
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'screenshots/source-ios-20261104'
-SETTINGS_SOURCE = SOURCE
+SETTINGS_SOURCE = ROOT / 'screenshots/source-ios-20261110'
 REGION_SOURCE = SOURCE
 WATCH_SOURCE = ROOT / 'screenshots/source-watchos-20261104'
 NATIVE = ROOT / 'screenshot-inputs/native-ios-20261104'
@@ -29,7 +29,7 @@ TOPICS = [
     ('08-notification-settings', '원하는 알림만', '받고 싶은 알림만\n켜고 끌 수 있어요', '준비물부터 기상·생활 알림까지, 하나씩 선택', 'notification-settings'),
 ]
 SIZES = {'ios': (1320, 2868), 'ipad': (2064, 2752)}
-BACKUP = ROOT.parent / 'build/screenshot-refresh-20261104/before'
+BACKUP = ROOT.parent / 'build/screenshot-refresh-ios-20261110/before'
 
 
 def backup(path):
@@ -237,18 +237,32 @@ def main(topics=None):
             assert im.size == SIZES[path.parent.name] and im.mode == 'RGB' and im.format == 'PNG'
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/ios-20261104-manifest.json'
-    report.write_text(json.dumps({'기준일': '2026-11-04', '글꼴': '나눔스퀘어 네오', '화면': '실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용',
+    report = ROOT / 'screenshots/ios-20261110-manifest.json'
+    report.write_text(json.dumps({'기준일': '2026-11-04', '편집일': '2026-11-10', '글꼴': '나눔스퀘어 네오', '화면': '실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용',
         '배치': '2번은 Android 구역별 알림, 5번은 Android 워치 소개의 2×2 화면 순서를 참고했다. 5번은 Apple Watch의 사각 화면이며 시스템 시계와 앱 UI를 보존한다. 기존 제목·색상·바깥 여백을 유지하고 원본 비율로 배치한다.',
-        '데이터': '제품 앱의 실제 서버 응답과 촬영용 설정. 모든 앱·위젯·워치 화면을 2026-11-04 최신 소스로 촬영했다.', '위젯': '3·4번은 2026-11-04 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
+        '데이터': '8번 알림 설정은 iOS 1.2.2(26111000)의 2026-11-10 촬영본이다. 나머지 앱·위젯·워치 화면은 2026-11-04 촬영본이다.', '위젯': '3·4번은 2026-11-04 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.',
         '워치': '5번은 실제 watchOS 앱의 현재·준비물·타임라인·기상·생활 실행 화면. 시험 자료 주입이나 HTML 시안 사용 없음. 실물 워치 촬영은 아님.',
         '알림': '2번은 실제 지역별 알림 설정 화면, 8번은 실제 알림 설정 화면', 'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     docs = [ROOT / 'screenshots/SCREENSHOTS_20261104.md', ROOT / 'screenshots/README.md', report]
-    files = images + previews + docs
-    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261104.zip']:
+    files = images + previews + docs + [SETTINGS_SOURCE / 'phone/capture-manifest.json']
+    for name in ['app-store/weather-care-ios-screenshots.zip', 'app-store/weather-care-ios-screenshots-20261110.zip']:
         package(ROOT / name, files)
+    # 기존 Android·워치 자료를 보존하며 iOS 교체분만 전체 묶음에 반영한다.
+    full_report = ROOT / 'screenshots/screenshots-all-20261110-manifest.json'
+    data = json.loads(full_report.read_text(encoding='utf-8'))
+    data['iOS 알림 설정 편집일'] = '2026-11-10'
+    for row in data['files']:
+        path = ROOT / row['path']
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if path.parent.name in SIZES and path.name == '08-notification-settings.png':
+            row['sha256'] = digest
+        else:
+            assert row['sha256'] == digest, path
+    full_report.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    package(ROOT / 'weather-care-store-screenshots.zip',
+            files + [full_report], preserve=True)
     print(json.dumps({'검증완료': len(records), '플랫폼': list(SIZES),
-                     '묶음': 'app-store/weather-care-ios-screenshots-20261104.zip'}, ensure_ascii=False))
+                     '묶음': 'app-store/weather-care-ios-screenshots-20261110.zip'}, ensure_ascii=False))
 
 
 if __name__ == '__main__':

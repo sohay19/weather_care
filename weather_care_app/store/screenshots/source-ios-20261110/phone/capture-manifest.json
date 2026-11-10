@@ -1,0 +1,33 @@
+{
+  "기준일": "2026-11-10",
+  "방식": "실제 iPhone 앱 전체 화면·시스템 바만 제외·iPad 규격에도 같은 원본 사용",
+  "files": [
+    {
+      "name": "notification-settings",
+      "device": "B20A7D38-79A6-47B0-BA66-32B9237994F8",
+      "source": "notification-settings-full.png",
+      "source_sha256": "a085bc1a7cec22729311659a1a4312773394af4081333383539c51122da156cc",
+      "source_size": [
+        1290,
+        2796
+      ],
+      "crop": [
+        0,
+        177,
+        1290,
+        2694
+      ],
+      "path": "screenshots/source-ios-20261110/phone/notification-settings.png",
+      "size": [
+        1290,
+        2517
+      ],
+      "sha256": "a649cec36f8713057d2969a3c6ac315f1c04134c006abe4b073478f7c125b925"
+    }
+  ],
+  "빌드": "iOS 1.2.2 (26111000), 최신 제품 Debug 앱, 운영 서버",
+  "기기": "전용 iPhone 15 Pro Max / iOS 17.5, 기존 촬영용 기기 복제본",
+  "촬영시각": "2026-11-10T16:07:45+09:00",
+  "화면": "기상·생활 알림 메뉴 및 펼친 속보·특보 메뉴, 방재속보·풍랑특보와 선택한 해역 112개",
+  "실행": "Simulator 창 없이 simctl·독립 XCTest로 실제 앱 화면 촬영. UI·날씨 자료 주입 없음."
+}

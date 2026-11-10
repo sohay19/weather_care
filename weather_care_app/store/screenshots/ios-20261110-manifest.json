@@ -1,0 +1,157 @@
+{
+  "기준일": "2026-11-04",
+  "편집일": "2026-11-10",
+  "글꼴": "나눔스퀘어 네오",
+  "화면": "실제 iPhone 앱·watchOS 앱 시뮬레이터 전체 화면 촬영. iPad 등록 규격에도 동일 원본 사용",
+  "배치": "2번은 Android 구역별 알림, 5번은 Android 워치 소개의 2×2 화면 순서를 참고했다. 5번은 Apple Watch의 사각 화면이며 시스템 시계와 앱 UI를 보존한다. 기존 제목·색상·바깥 여백을 유지하고 원본 비율로 배치한다.",
+  "데이터": "8번 알림 설정은 iOS 1.2.2(26111000)의 2026-11-10 촬영본이다. 나머지 앱·위젯·워치 화면은 2026-11-04 촬영본이다.",
+  "위젯": "3·4번은 2026-11-04 실제 WidgetKit 촬영본이며 두 등록 규격에 같은 원본 사용.",
+  "워치": "5번은 실제 watchOS 앱의 현재·준비물·타임라인·기상·생활 실행 화면. 시험 자료 주입이나 HTML 시안 사용 없음. 실물 워치 촬영은 아님.",
+  "알림": "2번은 실제 지역별 알림 설정 화면, 8번은 실제 알림 설정 화면",
+  "files": [
+    {
+      "path": "screenshots/ios/01-main.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "47cd7a1258310076b5f98521caedceb01181841a23fd3f29055ddacaff9cfb0f"
+    },
+    {
+      "path": "screenshots/ios/02-region-notifications.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "9dcd486573be57bf48ca0f8335f186044ad94e5e2ad00c49ecb5c4cf1aebafec"
+    },
+    {
+      "path": "screenshots/ios/03-widget.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "dcc55fc22f52f35ec636e300c702dd1f1a6c9826b021c9d3ea7472132b204ee7"
+    },
+    {
+      "path": "screenshots/ios/04-dark-mode.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "12a27868feff0d0a5cabec25895783779263b4cc227302583269c0d401a981c6"
+    },
+    {
+      "path": "screenshots/ios/05-watch.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "d3f81113cf5d8deaa2bfdfd335ed98a8dc5962aa6cfcf49543d8d6b906fca035"
+    },
+    {
+      "path": "screenshots/ios/06-advanced.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "3a14b423a9aebfc981ee0108378fd4d8db47b7de1a7565f9027f249a337a3157"
+    },
+    {
+      "path": "screenshots/ios/07-week.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "b1108a15ad56933702654a2da7785ede0f65f4f6361ad514b305a2f5e2020127"
+    },
+    {
+      "path": "screenshots/ios/08-notification-settings.png",
+      "size": [
+        1320,
+        2868
+      ],
+      "mode": "RGB",
+      "sha256": "4d0722e3b0fb889150ecd705f78ff917b35bc554395b8585b8c0980d12b4db9b"
+    },
+    {
+      "path": "screenshots/ipad/01-main.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "c7236a048a43b9ed4961924860403345c3b9bd32e3a40c07a054b5593969cb7d"
+    },
+    {
+      "path": "screenshots/ipad/02-region-notifications.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "abd6046bc83782bde9284670b07d493b95340248080f7266c2239c6d77395842"
+    },
+    {
+      "path": "screenshots/ipad/03-widget.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "435f335260e07c18fdbdf83c50b46ee459a9fd25c56e6e4e1233dcaa97cfd9e0"
+    },
+    {
+      "path": "screenshots/ipad/04-dark-mode.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "8a1164e4c5bedcd32f7fab0d4f855c5e1b00cc48eb736e85c0522dff46a120ee"
+    },
+    {
+      "path": "screenshots/ipad/05-watch.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "50eebeeb29c68b78e795f1353d7e6bbc780a9a62fd5e96365fe762fb153bf961"
+    },
+    {
+      "path": "screenshots/ipad/06-advanced.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "7e69b42459fb55e025ae84ec31dfc2ec349e8076328344426847467fac4eacc2"
+    },
+    {
+      "path": "screenshots/ipad/07-week.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "1b4cc9d42ad08ab3aa869781d79ce6af70a5412163265d26d1c167152cba3ac5"
+    },
+    {
+      "path": "screenshots/ipad/08-notification-settings.png",
+      "size": [
+        2064,
+        2752
+      ],
+      "mode": "RGB",
+      "sha256": "c0c6181b7b4f4fe46b2f03718887b7259fb4d11c3843c7079e520df3c0becc5a"
+    }
+  ]
+}

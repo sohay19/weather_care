@@ -14,7 +14,7 @@ import generate_store_screenshots as previous
 
 ROOT = Path(__file__).resolve().parent
 SOURCE = ROOT / 'screenshots/source-android-20261104'
-SETTINGS_SOURCE = SOURCE
+SETTINGS_SOURCE = ROOT / 'screenshots/source-android-20261110'
 REGION_SOURCE = SOURCE
 WATCH_SOURCE = ROOT / 'screenshots/source-wear-20261104'
 NATIVE = ROOT / 'screenshot-inputs/native-android-20261104'
@@ -259,22 +259,23 @@ def main(screenshots_only=False, platforms=None, topics=None):
             assert im.mode == 'RGB' and im.format == 'PNG' and im.size == expected
             records.append({'path': path.relative_to(ROOT).as_posix(), 'size': list(im.size),
                             'mode': im.mode, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
-    report = ROOT / 'screenshots/screenshots-20261104-manifest.json'
+    report = ROOT / 'screenshots/screenshots-20261110-manifest.json'
     report.write_text(json.dumps({
         '기준일': '2026-11-04',
-        '편집일': '2026-11-04',
+        '편집일': '2026-11-10',
         '배치': '상단 제목 60px 두 줄, 줄간격 16px. 바깥 사방 및 제목·본문 사이 간격 모두 72px(태블릿 96px). 이미지는 남은 높이에 비율 유지 배치. 작은 분류명·부연 설명·위젯 크기 라벨 생략.',
         '화면': '나눔스퀘어 네오를 적용한 전용 Android 에뮬레이터 앱·홈 위젯과 Galaxy Watch9 실기기 화면',
         '데이터': '실제 운영 서버 날씨. 5번은 실기기 워치 앱 네 탭의 화면을 원형으로 배치한 소개 이미지.',
         '태블릿': '같은 휴대전화 촬영본을 태블릿 등록 규격에 비율 유지해 배치. 실제 태블릿 촬영 아님.',
-        '구성': '앱·홈 위젯·워치 모두 11월 4일 새 폰트 촬영본을 사용한다. Week 날짜 굵기는 w800이다.',
+        '구성': '8번 알림 설정은 11월 10일 촬영본이다. 나머지 앱·홈 위젯·워치 화면은 11월 4일 촬영본이다.',
         'files': records}, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     preview_paths = [ROOT / f'screenshots/preview-{platform}.png' for platform in platforms]
     guide = ROOT / 'screenshots/SCREENSHOTS_20261104.md'
-    package = ROOT / 'weather-care-android-screenshots-20261104.zip'
+    package = ROOT / 'weather-care-android-screenshots-20261110.zip'
     # Android 전용 새 묶음만 작성한다. 과거 묶음과 iOS 자료는 보존한다.
     with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
-        for path in generated + preview_paths + [guide, report]:
+        for path in generated + preview_paths + [ROOT / 'screenshots/README.md', guide, report,
+                                                  SETTINGS_SOURCE / 'capture-manifest.json']:
             archive.write(path, path.relative_to(ROOT))
     with zipfile.ZipFile(package) as archive:
         assert archive.testzip() is None

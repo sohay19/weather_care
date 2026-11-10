@@ -1,4 +1,5 @@
 """최신 등록본·홈 위젯을 검증하고 미리보기와 플랫폼별·전체 ZIP을 만든다."""
+import argparse
 from pathlib import Path
 import hashlib
 import json
@@ -11,6 +12,7 @@ import generate_android_store as common
 ROOT = Path(__file__).resolve().parent
 SCREENSHOTS = ROOT / 'screenshots'
 DATE = '20261104'
+ANDROID_REFRESH_DATE = '20261110'
 WATCH_NAMES = ['현재 날씨', '오늘의 준비물', '타임라인', '기상·생활', '워치 위젯']
 
 
@@ -27,6 +29,29 @@ def package(path, files, base=ROOT):
         assert len(archive.namelist()) == len(files) == len(set(archive.namelist()))
         for file in files:
             assert archive.read(file.relative_to(base).as_posix()) == file.read_bytes()
+
+
+def refresh_android():
+    baseline = ROOT / f'weather-care-all-screenshots-{DATE}.zip'
+    with zipfile.ZipFile(baseline) as archive:
+        files = [ROOT / name for name in archive.namelist()]
+    old_report = SCREENSHOTS / f'screenshots-all-{DATE}-manifest.json'
+    report = SCREENSHOTS / f'screenshots-all-{ANDROID_REFRESH_DATE}-manifest.json'
+    data = json.loads(old_report.read_text(encoding='utf-8'))
+    data['Android 알림 설정 편집일'] = '2026-11-10'
+    for row in data['files']:
+        path = ROOT / row['path']
+        if path.parent.name in {'android', 'android-tablet'} and path.name == '08-notification-settings.png':
+            with Image.open(path) as image:
+                image.load()
+                assert list(image.size) == row['size'] and image.mode == row['mode'] and image.format == 'PNG'
+            row['sha256'] = digest(path)
+        else:
+            assert digest(path) == row['sha256'], path
+    report.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    files[files.index(old_report)] = report
+    files.append(common.SETTINGS_SOURCE / 'capture-manifest.json')
+    package(ROOT / 'weather-care-store-screenshots.zip', files)
 
 
 def preview(paths, destination, labels, cell=(250, 330)):
@@ -156,4 +181,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--android-refresh', action='store_true', help='Android 8번 교체분을 현재 전체 ZIP에 반영')
+    args = parser.parse_args()
+    if args.android_refresh:
+        refresh_android()
+    else:
+        main()

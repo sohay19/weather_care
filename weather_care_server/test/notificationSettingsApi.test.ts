@@ -25,6 +25,8 @@ describe('notification settings API', () => {
         carry_notification_enabled INTEGER,
         today_notification_enabled INTEGER,
         weather_notification_enabled INTEGER,
+        official_alert_settings TEXT,
+        road_control_enabled INTEGER NOT NULL DEFAULT 1,
         snow_preparation_enabled INTEGER,
         uv_preparation_enabled INTEGER,
         pollen_enabled INTEGER,

@@ -42,7 +42,11 @@ router.put('/:installationId', async (c) => {
   if (!isValidCommuteSchedule(settings)) {
     return c.json({ error: 'INVALID_NOTIFICATION_SETTINGS' }, 400);
   }
-  if (!await upsertNotificationSettings(c.env.DB, settings, ownerHash,
+  if (!await upsertNotificationSettings(c.env.DB, {
+    ...settings,
+    officialAlertSettings: parsed.data.officialAlertSettings,
+    roadControlEnabled: parsed.data.roadControlEnabled,
+  }, ownerHash,
     parsed.data.lightningEnabled !== undefined)) {
     return c.json({ error: 'INSTALLATION_AUTH_REQUIRED' }, 401);
   }

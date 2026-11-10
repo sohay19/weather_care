@@ -1,10 +1,28 @@
 import '../models/app_settings.dart';
 import 'api_client.dart';
 
+typedef MarineWarningZones = ({
+  Map<String, String> names,
+  int maxSubscriptions
+});
+
 class SettingsSyncService {
   final ApiClient client;
 
   const SettingsSyncService(this.client);
+
+  Future<MarineWarningZones> loadMarineWarningZones() async {
+    final data = await client.requestJson(
+      'GET',
+      '/api/v1/installations/marine-warning-zones',
+    );
+    final names = <String, String>{
+      for (final zone in data['zones'] as List)
+        if (zone['id'] != allSeasWarningZoneKey)
+          zone['id'] as String: zone['name'] as String,
+    };
+    return (names: names, maxSubscriptions: data['maxSubscriptions'] as int);
+  }
 
   Future<void> save(AppSettings settings) async {
     // This endpoint is strict: installation/location belong to the separate
@@ -43,6 +61,8 @@ class SettingsSyncService {
       'carryNotificationEnabled': settings.carryNotificationEnabled,
       'todayNotificationEnabled': settings.todayNotificationEnabled,
       'weatherNotificationEnabled': settings.weatherNotificationEnabled,
+      'roadControlEnabled': settings.roadControlEnabled,
+      'officialAlertSettings': settings.officialAlertSettings,
       'dailyWeatherEnabled': settings.dailyWeatherEnabled,
     };
     await client.putJson(
@@ -60,6 +80,7 @@ class SettingsSyncService {
       await client.putJson(
         '/api/v1/installations/${settings.installationId}/notification-regions',
         {
+          'marineWarningZones': settings.marineWarningZoneKeys ?? 'all',
           'regions': [
             for (final key in available)
               {

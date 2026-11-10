@@ -16,6 +16,7 @@ export const collectedCacheKey = {
   warning: (nx: number, ny: number) => `COLLECTED_WARNING_${nx}_${ny}`,
   warningStations: 'COLLECTED_WARNING_STATIONS',
   warningSnapshot: 'COLLECTED_WARNING_SNAPSHOT',
+  disasterBulletin: 'COLLECTED_DISASTER_BULLETIN',
   warningRegion: (nx: number, ny: number) =>
     `COLLECTED_WARNING_REGION_${nx}_${ny}`,
   precipitation: (latitude: number, longitude: number) =>

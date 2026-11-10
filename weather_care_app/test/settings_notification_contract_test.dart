@@ -23,6 +23,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> toggleSection(WidgetTester tester, String title) async {
+    final header = find.text(title);
+    if (header.evaluate().isEmpty) {
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position
+          .jumpTo(0);
+      await tester.pumpAndSettle();
+    }
+    await reveal(tester, header);
+    await tester.tap(header);
+    await tester.pumpAndSettle();
+  }
+
   const fields = {
     'umbrellaEnabled': '비',
     'snowPreparationEnabled': '눈',
@@ -34,12 +48,13 @@ void main() {
     'pollenEnabled': '꽃가루',
     'blackIceEnabled': '블랙아이스 안내',
     'heavyRainEnabled': '호우특보 안내',
-    'heavySnowEnabled': '대설·많은 눈 안내',
+    'heavySnowEnabled': '많은 눈 대비',
     'heatwaveEnabled': '폭염특보 안내',
     'coldWaveEnabled': '한파특보 안내',
     'pipeFreezeEnabled': '수도관 동파 대비 안내',
     'showerAndLightRainEnabled': '현재 비 안내',
     'lightningEnabled': '낙뢰 감지 알림',
+    'roadControlEnabled': '출퇴근 도로통제',
     'todayVisibilityEnabled': '가시거리',
     'todayOzoneEnabled': '오존',
     'todayWindEnabled': '바람',
@@ -59,10 +74,26 @@ void main() {
         onSettingsChanged: (settings) async => changed.add(settings),
       )));
       await openWeatherAlerts(tester);
+      final section = switch (entry.key) {
+        'heavyRainEnabled' ||
+        'heatwaveEnabled' ||
+        'coldWaveEnabled' =>
+          '속보·특보 알림',
+        'blackIceEnabled' ||
+        'heavySnowEnabled' ||
+        'pipeFreezeEnabled' ||
+        'showerAndLightRainEnabled' ||
+        'roadControlEnabled' ||
+        'lightningEnabled' ||
+        'weatherNotificationEnabled' =>
+          '기상·생활 알림',
+        final key when key.startsWith('today') => 'Today 알림',
+        _ => '챙겨요 알림',
+      };
+      await toggleSection(tester, section);
       final toggle = find.byKey(ValueKey('notification-toggle-${entry.key}'));
       await reveal(tester, toggle);
-      expect(find.text(entry.value),
-          entry.value == '전체 알림' ? findsNWidgets(3) : findsOneWidget);
+      expect(find.text(entry.value), findsOneWidget);
       await tester.tap(toggle);
       await tester.pumpAndSettle();
       expect(changed, hasLength(1));
@@ -91,6 +122,7 @@ void main() {
       'carry-notification-section',
       'today-notification-section',
       'weather-notification-section',
+      'official-alert-section',
     ]) {
       await reveal(tester, find.byKey(ValueKey(key)));
       expect(find.byKey(ValueKey(key)), findsOneWidget);
@@ -98,6 +130,108 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('weather-alerts-menu')), findsOneWidget);
+  });
+
+  testWidgets('해역을 검색하고 적용해 기존 육상 구역과 함께 저장한다', (tester) async {
+    final changed = <AppSettings>[];
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
+      home: SettingsScreen(
+        initialSettings: AppSettings.fallback('test')
+            .copyWith(notificationRegionKeys: ['GPS']),
+        onSettingsChanged: (settings) async => changed.add(settings),
+        loadMarineWarningZones: () async => (
+          names: {'S1311100': '부산앞바다', 'S1131100': '울산앞바다'},
+          maxSubscriptions: 12,
+        ),
+      ),
+    ));
+    await openWeatherAlerts(tester);
+    await toggleSection(tester, '속보·특보 알림');
+    final wind =
+        find.byKey(const ValueKey('notification-toggle-officialAlert-V'));
+    await reveal(tester, wind);
+    await tester.tap(wind);
+    await tester.pumpAndSettle();
+    expect(changed.last.officialAlertSettings['V'], isFalse);
+    final menu = find.byKey(const ValueKey('marine-warning-zones'));
+    await reveal(tester, menu);
+    expect(find.text('선택한 해역 2개 >'), findsOneWidget);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    final all = find.byKey(const ValueKey('marine-warning-select-all'));
+    expect(tester.widget<CheckboxListTile>(all).value, isTrue);
+    await tester.tap(all);
+    await tester.pumpAndSettle();
+    expect(tester.widget<CheckboxListTile>(all).value, isFalse);
+    await tester.enterText(find.byType(TextField), '부산');
+    await tester.pumpAndSettle();
+    expect(find.text('울산앞바다'), findsNothing);
+    await tester.tap(find.text('부산앞바다'));
+    await tester.tap(find.text('적용'));
+    await tester.pumpAndSettle();
+    expect(changed.last.enabledNotificationRegionKeys, ['GPS']);
+    expect(changed.last.marineWarningZoneKeys, ['S1311100']);
+    expect(changed.last.officialAlertSettings['V'], isFalse);
+    expect(find.text('선택한 해역 1개 >'), findsOneWidget);
+    await tester.tap(menu);
+    await tester.pumpAndSettle();
+    expect(tester.widget<CheckboxListTile>(all).value, isNull);
+    await tester.tap(all);
+    await tester.tap(find.text('적용'));
+    await tester.pumpAndSettle();
+    expect(changed.last.marineWarningZoneKeys, isNull);
+  });
+
+  testWidgets('네 분류를 각각 여닫고 속보·특보의 14종을 별도로 설정한다', (tester) async {
+    final changed = <AppSettings>[];
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(splashFactory: NoSplash.splashFactory),
+      home: SettingsScreen(
+        initialSettings: AppSettings.fallback('test'),
+        onSettingsChanged: (settings) async => changed.add(settings),
+      ),
+    ));
+    await openWeatherAlerts(tester);
+    for (final (title, id, count) in [
+      ('챙겨요 알림', 'carry-notification-section', 9),
+      ('Today 알림', 'today-notification-section', 6),
+      ('기상·생활 알림', 'weather-notification-section', 7),
+      ('속보·특보 알림', 'official-alert-section', 15),
+    ]) {
+      final section = find.byKey(ValueKey(id));
+      final switches =
+          find.descendant(of: section, matching: find.byType(Switch));
+      expect(switches, findsNothing);
+      await toggleSection(tester, title);
+      expect(switches, findsNWidgets(count));
+      await toggleSection(tester, title);
+      expect(switches, findsNothing);
+    }
+    await toggleSection(tester, '기상·생활 알림');
+    final forecastSnow =
+        find.byKey(const ValueKey('notification-toggle-heavySnowEnabled'));
+    await reveal(tester, forecastSnow);
+    await tester.tap(forecastSnow);
+    await tester.pumpAndSettle();
+    expect(changed.last.heavySnowEnabled, isFalse);
+    expect(changed.last.officialAlertSettings['S'], isTrue);
+    final weatherMaster = find.byKey(
+        const ValueKey('notification-toggle-weatherNotificationEnabled'));
+    await reveal(tester, weatherMaster);
+    await tester.tap(weatherMaster);
+    await tester.pumpAndSettle();
+    expect(changed.last.weatherNotificationEnabled, isFalse);
+    expect(changed.last.officialAlertSettings['enabled'], isTrue);
+    await toggleSection(tester, '속보·특보 알림');
+    final bulletin = find
+        .byKey(const ValueKey('notification-toggle-officialAlert-bulletin'));
+    await reveal(tester, bulletin);
+    await tester.tap(bulletin);
+    await tester.pumpAndSettle();
+    expect(changed.last.officialAlertSettings['bulletin'], isFalse);
+    expect(changed.last.officialAlertSettings['S'], isTrue);
+    expect(changed.last.officialAlertSettings['enabled'], isTrue);
   });
 
   testWidgets('설정 최상위에는 묶인 날씨 알림과 상태 메뉴만 표시한다', (tester) async {
@@ -227,6 +361,7 @@ void main() {
       find.byKey(const ValueKey('carry-notification-section')),
       find.byKey(const ValueKey('today-notification-section')),
       find.byKey(const ValueKey('weather-notification-section')),
+      find.byKey(const ValueKey('official-alert-section')),
     ];
     final scrollable = find.byType(Scrollable).first;
     var previousOffset = 0.0;
@@ -248,6 +383,7 @@ void main() {
   testWidgets('현재 비의 자료·우산 조건과 개별 스위치 없는 안내를 명시한다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await openWeatherAlerts(tester);
+    await toggleSection(tester, '기상·생활 알림');
     await reveal(
         tester,
         find.byKey(
@@ -267,6 +403,7 @@ void main() {
   testWidgets('Today 박스는 챙겨요 바로 아래에서 지정한 설명과 다섯 항목을 표시한다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await openWeatherAlerts(tester);
+    await toggleSection(tester, 'Today 알림');
     final today = find.byKey(const ValueKey('today-notification-section'));
     await reveal(tester, today);
     expect(find.descendant(of: today, matching: find.text('Today 알림')),
@@ -292,6 +429,7 @@ void main() {
     final toggle = tester.getRect(
         find.byKey(const ValueKey('notification-toggle-notificationEnabled')));
     expect(label.center.dy, closeTo(toggle.center.dy, 1));
+    await toggleSection(tester, '챙겨요 알림');
     final carry = find.byKey(const ValueKey('carry-notification-section'));
     await reveal(tester, carry);
     final text = tester
@@ -322,6 +460,7 @@ void main() {
             initialSettings: AppSettings.fallback('test').copyWith(
                 notificationEnabled: false, todayWindEnabled: false))));
     await openWeatherAlerts(tester);
+    await toggleSection(tester, 'Today 알림');
     final today = find.byKey(const ValueKey('today-notification-section'));
     await reveal(tester, today);
     final switches = tester
@@ -344,6 +483,7 @@ void main() {
         onSettingsChanged: (settings) async => changed.add(settings),
       )));
       await openWeatherAlerts(tester);
+      await toggleSection(tester, carry ? '챙겨요 알림' : 'Today 알림');
       final master = find.byKey(ValueKey(
           'notification-toggle-${carry ? 'carryNotificationEnabled' : 'todayNotificationEnabled'}'));
       await reveal(tester, master);
@@ -365,6 +505,7 @@ void main() {
       expect(changed.single.umbrellaEnabled, isTrue);
       final other = find.byKey(ValueKey(
           'notification-toggle-${carry ? 'todayNotificationEnabled' : 'carryNotificationEnabled'}'));
+      await toggleSection(tester, carry ? 'Today 알림' : '챙겨요 알림');
       await reveal(tester, other);
       expect(tester.widget<Switch>(other).value, isTrue);
       expect(tester.widget<Switch>(other).onChanged, isNotNull);
@@ -396,6 +537,7 @@ void main() {
         find.byKey(const ValueKey('notification-schedule-description'));
     expect(tester.widget<Text>(description).maxLines, 1);
     expect(tester.getRect(description).width, lessThanOrEqualTo(360));
+    await toggleSection(tester, '기상·생활 알림');
     await reveal(
         tester,
         find.byKey(

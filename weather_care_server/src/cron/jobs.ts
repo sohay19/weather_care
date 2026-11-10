@@ -7,6 +7,7 @@ import { collectGridHourly, collectGridLightning, collectGridRiverFlow,
 import { selectGridCollectionStations } from '../collection/gridStationSelection';
 import { clearExpiredEnrollmentData } from '../security/installationAccess';
 import { runDataRetentionJob } from '../database/dataRetention';
+import { collectDisasterBulletin } from '../collection/disasterBulletinCollection';
 import {
   runCurrentObservationCollectionJob,
   runWeatherCollectionJob,
@@ -82,12 +83,15 @@ export async function runScheduledJobs(
     }
     return;
   }
-  await runWeatherCollectionJob(env, {
-    now,
-    collectCore: true,
-    collectRadar: false,
-    collectRoadIce: false,
-  });
+  await Promise.all([
+    collectDisasterBulletin(weatherDatabase(env)),
+    runWeatherCollectionJob(env, {
+      now,
+      collectCore: true,
+      collectRadar: false,
+      collectRoadIce: false,
+    }),
+  ]);
   await runRecommendationNotificationJobFromCron(env, scheduledTime);
 }
 

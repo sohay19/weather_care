@@ -287,7 +287,7 @@ export function parseActiveWarnings(
       }`,
     );
   }
-  if (/AUTH|인증|ERROR/i.test(payload) && !/L\d{7}/.test(payload)) {
+  if (/AUTH|인증|ERROR/i.test(payload) && !/[LS]\d{7}/.test(payload)) {
     throw new KmaWarningProviderError('KMA warning response contains an error');
   }
 
@@ -406,7 +406,7 @@ function parseWarningRow(line: string): ParsedWarningRow | undefined {
 
   // ED_TM은 '22일 밤(21시~24시)'처럼 시간대를 포함한다. 활성 여부는 TM_EF·LVL·CMD로 판단한다.
   const normalized = trimmed.replace(/\s*,\s*/g, ' ').replace(/\s*=\s*$/, '').trim();
-  const match = /^(L\d{7})\s+(.+?)\s+(L\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(?:\d{12}|\d{1,2}일(?:\s+(?:새벽|아침|오전|낮|늦은 오후|오후|저녁|밤)\(\d{2}시~\d{2}시\))?))?$/.exec(
+  const match = /^([LS]\d{7})\s+(.+?)\s+([LS]\d{7})\s+(.+?)\s+(\d{12})\s+(\d{12})\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(?:\d{12}|\d{1,2}일(?:\s+(?:새벽|아침|오전|낮|늦은 오후|오후|저녁|밤)\(\d{2}시~\d{2}시\))?))?$/.exec(
     normalized,
   );
   if (!match) return undefined;

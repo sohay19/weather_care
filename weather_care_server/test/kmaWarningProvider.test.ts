@@ -8,6 +8,7 @@ import {
 import { providerErrorDiagnostic } from '../src/observability/providerErrorDiagnostics';
 import eucKrFixture from './fixtures/kmaWarningEucKr.json';
 import status20261021 from './fixtures/kmaWarningStatus20261021.json';
+import { marineWarningZoneIds } from '../src/regions/kmaMarineWarningZones';
 
 const NOW = new Date('2026-09-01T01:30:00Z');
 
@@ -85,6 +86,19 @@ describe('KMA warning provider', () => {
     expect(warnings).toContainEqual(expect.objectContaining({
       regionId: 'L1052500', type: '강풍', level: '경보', commandCode: '6',
     }));
+  });
+
+  it('공식 코드표의 해역으로 실제 풍랑특보를 읽고 인접 해역과 구분한다', () => {
+    const warnings = parseActiveWarnings(
+      status20261021.payload, marineWarningZoneIds, new Date('2026-10-21T02:50:00Z'),
+    );
+    expect(warnings).toContainEqual(expect.objectContaining({
+      typeCode: 'V', regionId: 'S1232210', regionName: '서해남부남쪽안쪽먼바다', level: '주의보',
+    }));
+    expect(warnings).toContainEqual(expect.objectContaining({
+      typeCode: 'V', regionId: 'S1232220', regionName: '서해남부남쪽바깥먼바다', level: '주의보',
+    }));
+    expect(warnings.every((warning) => warning.regionId.startsWith('S'))).toBe(true);
   });
 
   it.each([

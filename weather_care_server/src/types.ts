@@ -362,6 +362,8 @@ export interface NotificationSettings {
   carryNotificationEnabled?: boolean;
   todayNotificationEnabled?: boolean;
   weatherNotificationEnabled?: boolean;
+  roadControlEnabled?: boolean;
+  officialAlertSettings?: import('./validation/notificationSettings').OfficialAlertSettings;
   dailyWeatherEnabled: boolean;
   heavyRainEnabled: boolean;
   heatwaveEnabled: boolean;

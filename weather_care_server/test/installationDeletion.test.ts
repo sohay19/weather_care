@@ -24,6 +24,13 @@ import m16 from '../migrations/0016_lightning_alerts.sql?raw';
 import m17 from '../migrations/0017_background_location.sql?raw';
 import m18 from '../migrations/0018_lightning_client_support.sql?raw';
 import m19 from '../migrations/0019_pipe_freeze_alert.sql?raw';
+import m20 from '../migrations/0020_commute_notification_schedule.sql?raw';
+import m22 from '../migrations/0022_dryness_preparations.sql?raw';
+import m23 from '../migrations/0023_today_notifications.sql?raw';
+import m24 from '../migrations/0024_carry_categories_black_ice.sql?raw';
+import m25 from '../migrations/0025_notification_group_masters.sql?raw';
+import m27 from '../migrations/0027_official_alert_settings.sql?raw';
+import m28 from '../migrations/0028_road_control_notification.sql?raw';
 
 const legacyId = 'wc_legacy_synthetic_fixture_0001';
 const noTokenId = 'wc_legacy_without_token_000001';
@@ -78,6 +85,7 @@ beforeEach(async () => {
   await apply(m17);
   await apply(m18);
   await apply(m19);
+  for (const migration of [m20, m22, m23, m24, m25, m27, m28]) await apply(migration);
   vi.spyOn(fcm, 'sendOwnershipChallenge').mockResolvedValue();
   vi.spyOn(analyticsDeletion, 'submitAnalyticsUserDeletion').mockResolvedValue({
     deletionRequestTime: '2026-09-11T01:02:03Z',

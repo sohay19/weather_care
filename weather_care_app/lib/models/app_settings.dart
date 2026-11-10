@@ -1,3 +1,6 @@
+bool isMarineWarningZoneKey(String key) => RegExp(r'^S[0-9]{7}$').hasMatch(key);
+const allSeasWarningZoneKey = 'S1000000';
+
 class AppSettings {
   final String installationId;
   final String locationMode;
@@ -5,6 +8,8 @@ class AppSettings {
   final String? manualRegionKey;
   final List<String> savedRegionKeys;
   final List<String>? notificationRegionKeys;
+  // null은 기상청 해역 목록 전체, 빈 목록은 선택 없음이다.
+  final List<String>? marineWarningZoneKeys;
   final String? manualRegionName;
   final bool legacyNotificationRegionAvailable;
 
@@ -52,6 +57,8 @@ class AppSettings {
   final bool carryNotificationEnabled;
   final bool todayNotificationEnabled;
   final bool weatherNotificationEnabled;
+  final bool roadControlEnabled;
+  final Map<String, bool> officialAlertSettings;
   final bool dailyWeatherEnabled;
 
   AppSettings({
@@ -61,6 +68,7 @@ class AppSettings {
     this.manualRegionKey,
     this.savedRegionKeys = const [],
     this.notificationRegionKeys,
+    this.marineWarningZoneKeys,
     this.manualRegionName,
     this.legacyNotificationRegionAvailable = false,
     required this.onboardingCompleted,
@@ -97,6 +105,8 @@ class AppSettings {
     bool? carryNotificationEnabled,
     bool? todayNotificationEnabled,
     this.weatherNotificationEnabled = true,
+    this.roadControlEnabled = true,
+    Map<String, bool>? officialAlertSettings,
     required this.dailyWeatherEnabled,
   })  : carryNotificationEnabled =
             dailyWeatherEnabled && (carryNotificationEnabled ?? true),
@@ -106,7 +116,25 @@ class AppSettings {
         uvPreparationEnabled =
             uvPreparationEnabled ?? (parasolEnabled || sunscreenEnabled),
         pollenEnabled = pollenEnabled ?? (maskEnabled),
-        blackIceEnabled = blackIceEnabled ?? (true);
+        blackIceEnabled = blackIceEnabled ?? (true),
+        officialAlertSettings = Map.unmodifiable({
+          'enabled':
+              officialAlertSettings?['enabled'] ?? weatherNotificationEnabled,
+          'S': officialAlertSettings?['S'] ?? heavySnowEnabled,
+          for (final key in const [
+            'bulletin',
+            'W',
+            'V',
+            'D',
+            'O',
+            'N',
+            'T',
+            'Y',
+            'F',
+            'K'
+          ])
+            key: officialAlertSettings?[key] ?? true,
+        });
 
   AppSettings copyWith({
     String? locationMode,
@@ -114,6 +142,8 @@ class AppSettings {
     String? manualRegionKey,
     List<String>? savedRegionKeys,
     List<String>? notificationRegionKeys,
+    List<String>? marineWarningZoneKeys,
+    bool selectAllMarineWarningZones = false,
     String? manualRegionName,
     bool? legacyNotificationRegionAvailable,
     bool clearManualRegionKey = false,
@@ -152,6 +182,8 @@ class AppSettings {
     bool? carryNotificationEnabled,
     bool? todayNotificationEnabled,
     bool? weatherNotificationEnabled,
+    bool? roadControlEnabled,
+    Map<String, bool>? officialAlertSettings,
     bool? dailyWeatherEnabled,
   }) {
     final carry = carryNotificationEnabled ??
@@ -173,6 +205,9 @@ class AppSettings {
       savedRegionKeys: savedRegionKeys ?? this.savedRegionKeys,
       notificationRegionKeys:
           notificationRegionKeys ?? this.notificationRegionKeys,
+      marineWarningZoneKeys: selectAllMarineWarningZones
+          ? null
+          : marineWarningZoneKeys ?? this.marineWarningZoneKeys,
       manualRegionName:
           clearManualRegion ? null : manualRegionName ?? this.manualRegionName,
       legacyNotificationRegionAvailable: legacyNotificationRegionAvailable ??
@@ -215,6 +250,9 @@ class AppSettings {
       blackIceEnabled: blackIceEnabled ?? this.blackIceEnabled,
       weatherNotificationEnabled:
           weatherNotificationEnabled ?? this.weatherNotificationEnabled,
+      roadControlEnabled: roadControlEnabled ?? this.roadControlEnabled,
+      officialAlertSettings:
+          officialAlertSettings ?? this.officialAlertSettings,
       carryNotificationEnabled: carry,
       todayNotificationEnabled: today,
       dailyWeatherEnabled: split
@@ -259,6 +297,15 @@ class AppSettings {
         !savedRegionKeys.contains(manualRegionKey)) {
       savedRegionKeys.add(manualRegionKey);
     }
+    final storedNotificationRegions = json['notificationRegionKeys'];
+    final savedNotificationRegions = storedNotificationRegions is List
+        ? storedNotificationRegions.whereType<String>().toSet()
+        : null;
+    final legacyMarineZones = savedNotificationRegions
+        ?.where((key) =>
+            isMarineWarningZoneKey(key) && key != allSeasWarningZoneKey)
+        .toList();
+    final storedMarineZones = json['marineWarningZoneKeys'];
     return AppSettings(
       installationId: installationId,
       locationMode:
@@ -267,12 +314,19 @@ class AppSettings {
           json['currentRegion'] as String? ?? fallbackSettings.currentRegionId,
       manualRegionKey: manualRegionKey is String ? manualRegionKey : null,
       savedRegionKeys: savedRegionKeys,
-      notificationRegionKeys: json['notificationRegionKeys'] is List
-          ? (json['notificationRegionKeys'] as List)
+      notificationRegionKeys: savedNotificationRegions
+          ?.where((key) => !isMarineWarningZoneKey(key))
+          .toList(),
+      marineWarningZoneKeys: storedMarineZones is List
+          ? storedMarineZones
               .whereType<String>()
+              .where((key) =>
+                  isMarineWarningZoneKey(key) && key != allSeasWarningZoneKey)
               .toSet()
               .toList()
-          : null,
+          : (legacyMarineZones?.isNotEmpty ?? false)
+              ? legacyMarineZones
+              : null,
       manualRegionName: json['manualRegionName'] as String?,
       legacyNotificationRegionAvailable:
           json['legacyNotificationRegionAvailable'] == true ||
@@ -334,6 +388,15 @@ class AppSettings {
       todayNotificationEnabled: json['todayNotificationEnabled'] as bool?,
       weatherNotificationEnabled:
           json['weatherNotificationEnabled'] as bool? ?? true,
+      roadControlEnabled: json['roadControlEnabled'] as bool? ?? true,
+      officialAlertSettings: switch (json['officialAlertSettings']) {
+        Map values => {
+            for (final entry in values.entries)
+              if (entry.key is String && entry.value is bool)
+                entry.key as String: entry.value as bool,
+          },
+        _ => null,
+      },
       dailyWeatherEnabled: json['dailyWeatherEnabled'] as bool? ??
           fallbackSettings.dailyWeatherEnabled,
     );
@@ -348,6 +411,8 @@ class AppSettings {
       'savedRegionKeys': savedRegionKeys,
       if (notificationRegionKeys != null)
         'notificationRegionKeys': notificationRegionKeys,
+      if (marineWarningZoneKeys != null)
+        'marineWarningZoneKeys': marineWarningZoneKeys,
       if (manualRegionName != null) 'manualRegionName': manualRegionName,
       if (legacyNotificationRegionAvailable)
         'legacyNotificationRegionAvailable': true,
@@ -385,6 +450,8 @@ class AppSettings {
       'carryNotificationEnabled': carryNotificationEnabled,
       'todayNotificationEnabled': todayNotificationEnabled,
       'weatherNotificationEnabled': weatherNotificationEnabled,
+      'roadControlEnabled': roadControlEnabled,
+      'officialAlertSettings': officialAlertSettings,
       'dailyWeatherEnabled': dailyWeatherEnabled,
     };
   }

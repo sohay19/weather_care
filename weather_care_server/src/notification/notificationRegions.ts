@@ -4,16 +4,26 @@ import { displayAdministrativeName } from '../regions/nationwideLocation';
 import { resolveSavedLocation } from '../regions/resolvedLocation';
 import { weatherDatabase } from '../database/weatherDatabase';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
+import { allSeasWarningZoneId, marineWarningZoneName, maxMarineWarningSubscriptions } from '../regions/kmaMarineWarningZones';
 import type { ServerEnv } from '../types';
 
 export const notificationRegionsSchema = z.object({
-  regions: z.array(z.object({ key: z.string().min(1).max(200), enabled: z.boolean() }).strict()).max(51),
+  regions: z.array(z.object({ key: z.string().min(1).max(200), enabled: z.boolean() }).strict())
+    .max(52 + maxMarineWarningSubscriptions),
+  marineWarningZones: z.union([
+    z.literal('all'),
+    z.array(z.string().refine(key => key !== allSeasWarningZoneId && Boolean(marineWarningZoneName(key))))
+      .max(maxMarineWarningSubscriptions)
+      .refine(keys => new Set(keys).size === keys.length),
+  ]).optional(),
 }).strict().refine(({ regions }) =>
   new Set(regions.map(r => r.key)).size === regions.length &&
-  regions.filter(r => r.key !== 'GPS' && r.key !== 'LEGACY').length <= 49);
+  regions.filter(r => r.key !== 'GPS' && r.key !== 'LEGACY' && !marineWarningZoneName(r.key)).length <= 49 &&
+  regions.filter(r => r.key !== allSeasWarningZoneId && marineWarningZoneName(r.key)).length <= maxMarineWarningSubscriptions);
 
 export interface RegionTarget {
   regionKey?: string; scopeId?: string; regionName?: string;
+  adminCode?: string;
   nx: number; ny: number; latitude: number | null; longitude: number | null;
   currentRainState?: number; roadIceLevel?: number; roadIceLinkId?: string | null;
   roadControlEventKey?: string | null; roadControlKind?: 'FULL' | 'PARTIAL' | null;
@@ -42,8 +52,15 @@ export async function saveNotificationRegions(db: D1Database, id: string, hash: 
   const keys = regions.map(r => r.key);
   statements.push(db.prepare(`DELETE FROM notification_regions WHERE installation_id=?
     AND region_key NOT IN (SELECT value FROM json_each(?)) AND ${guard}`).bind(id, JSON.stringify(keys), id, hash));
+  const marine = [];
   for (const region of regions) {
-    const area = region.key === 'GPS' || region.key === 'LEGACY' ? undefined : catalogNotificationRegion(region.key)!;
+    const marineName = marineWarningZoneName(region.key);
+    if (marineName) {
+      marine.push({ ...region, name: marineName });
+      continue;
+    }
+    const area = region.key === 'GPS' || region.key === 'LEGACY'
+      ? undefined : catalogNotificationRegion(region.key);
     statements.push(db.prepare(`INSERT INTO notification_regions
       (installation_id,region_key,scope_id,enabled,nx,ny,region_name,latitude,longitude)
       SELECT ?,?,?,?,COALESCE(?,CASE WHEN ?='LEGACY' OR i.location_mode='GPS' THEN i.nx END),
@@ -55,8 +72,18 @@ export async function saveNotificationRegions(db: D1Database, id: string, hash: 
       .bind(id, region.key, crypto.randomUUID(), region.enabled ? 1 : 0,
         area?.nx ?? null, region.key, area?.ny ?? null, region.key, area?.name ?? null, region.key, region.key, id, id, hash));
   }
+  if (marine.length) {
+    statements.push(db.prepare(`INSERT INTO notification_regions
+      (installation_id,region_key,scope_id,enabled,region_name)
+      SELECT ?,json_extract(value,'$.key'),lower(hex(randomblob(16))),
+        json_extract(value,'$.enabled'),json_extract(value,'$.name')
+      FROM json_each(?) WHERE ${guard}
+      ON CONFLICT(installation_id,region_key) DO UPDATE SET enabled=excluded.enabled
+      WHERE notification_regions.enabled <> excluded.enabled`)
+      .bind(id, JSON.stringify(marine), id, hash));
+  }
   // 업데이트 직전까지 같은 위치에서 받은 알림과 상태를 이어 받아 재발송을 막는다.
-  if (firstSubscription && regions.filter(r => r.enabled).length === 1) {
+  if (firstSubscription && regions.filter(r => r.enabled && !marineWarningZoneName(r.key)).length === 1) {
     const match = `r.installation_id=i.installation_id AND r.enabled=1 AND r.nx=i.nx AND r.ny=i.ny`;
     statements.push(db.prepare(`INSERT OR IGNORE INTO notification_region_state
       (installation_id,scope_id,current_rain_state,road_ice_level,road_ice_link_id,road_control_event_key,road_control_kind)
@@ -81,7 +108,7 @@ export async function saveNotificationRegions(db: D1Database, id: string, hash: 
 
 // 기존 설치에는 원래 행을 반환하며, 구독 등록 후에는 켜 둔 지역만 반환한다.
 export async function expandNotificationRegions<T extends RegionTarget & { installationId: string }>(
-  env: ServerEnv, rows: T[], now: Date): Promise<T[]> {
+  env: ServerEnv, rows: T[], now: Date, includeMarineWarnings = false): Promise<T[]> {
   if (!rows.length) return [];
   const preferences = await env.DB.prepare('SELECT installation_id AS id FROM notification_region_preferences').all<{id:string}>();
   const opted = new Set(preferences.results.map(p => p.id));
@@ -91,7 +118,9 @@ export async function expandNotificationRegions<T extends RegionTarget & { insta
     s.road_ice_link_id AS roadIceLinkId,s.road_control_event_key AS roadControlEventKey,s.road_control_kind AS roadControlKind
     FROM notification_regions r LEFT JOIN notification_region_state s
       ON s.installation_id=r.installation_id AND s.scope_id=r.scope_id
-    WHERE r.enabled=1 AND r.nx IS NOT NULL AND r.ny IS NOT NULL`).all<RegionTarget & {installationId:string}>();
+    WHERE r.enabled=1 AND r.region_key<>? AND ((r.nx IS NOT NULL AND r.ny IS NOT NULL)
+      OR (? = 1 AND r.region_key GLOB 'S[0-9][0-9][0-9][0-9][0-9][0-9][0-9]'))`)
+    .bind(allSeasWarningZoneId, includeMarineWarnings ? 1 : 0).all<RegionTarget & {installationId:string}>();
   const grouped = new Map<string, Array<RegionTarget & {installationId:string}>>();
   for (const region of subscriptions.results) {
     const list = grouped.get(region.installationId) ?? [];
@@ -101,6 +130,13 @@ export async function expandNotificationRegions<T extends RegionTarget & { insta
   for (const row of rows) {
     const regions = opted.has(row.installationId) ? grouped.get(row.installationId) ?? [] : [row];
     for (const region of regions) {
+      const marineName = marineWarningZoneName(region.regionKey);
+      if (marineName) {
+        if (includeMarineWarnings) {
+          targets.push({ ...row, scopeId: region.scopeId, regionKey: region.regionKey, regionName: marineName });
+        }
+        continue;
+      }
       const target = { ...row, ...region };
       // 수동 구역도 강수·도로 알림 조회에 해당 격자의 기준 좌표를 사용한다.
       if (target.latitude === null || target.longitude === null) {
@@ -113,6 +149,7 @@ export async function expandNotificationRegions<T extends RegionTarget & { insta
             coordinates: region.latitude !== null && region.longitude !== null
               ? { latitude: region.latitude, longitude: region.longitude } : undefined }, now);
           target.regionName = resolved.regionName;
+          target.adminCode = resolved.adminCode;
         } catch { /* 지역명을 추측해서 동을 배정하지 않는다. */ }
       }
       targets.push(target);
@@ -132,6 +169,7 @@ export async function regionStillEnabled(db: D1Database, id: string, target: Reg
 }
 
 export function regionPushData(target: RegionTarget) {
+  if (marineWarningZoneName(target.regionKey)) return {};
   return target.scopeId ? { notificationRegionKey: target.regionKey, notificationRegionId: target.scopeId,
     notificationRegionName: target.regionName, notificationRegionNx: String(target.nx), notificationRegionNy: String(target.ny) } : {};
 }

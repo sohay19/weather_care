@@ -8,6 +8,7 @@ import '../../services/ad_removal_service.dart';
 import '../../services/current_location_service.dart';
 import '../../services/region_catalog.dart';
 import '../../services/settings_save_controller.dart';
+import '../../services/settings_sync_service.dart' show MarineWarningZones;
 import '../../services/notification_permission_service.dart';
 import '../../theme/weather_theme.dart';
 import '../home/widgets/tab_page_header.dart';
@@ -36,6 +37,7 @@ class SettingsScreen extends StatefulWidget {
   final Future<void> Function()? onLocate;
   final Future<void> Function()? onOpenLocationSettings;
   final Future<RegionCatalog> Function()? loadRegionCatalog;
+  final Future<MarineWarningZones> Function()? loadMarineWarningZones;
   final String? manualRegionName;
   final SettingsSaveState saveState;
   final Future<void> Function()? onRetrySave;
@@ -63,6 +65,7 @@ class SettingsScreen extends StatefulWidget {
     this.onLocate,
     this.onOpenLocationSettings,
     this.loadRegionCatalog,
+    this.loadMarineWarningZones,
     this.manualRegionName,
     this.saveState = SettingsSaveState.checking,
     this.onRetrySave,
@@ -274,6 +277,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (_) => _WeatherAlertsSettingsScreen(
         initialSettings: settings,
         paused: widget.serverDataAccess?.paused ?? false,
+        loadMarineWarningZones: widget.loadMarineWarningZones,
         onSettingsChanged: _updateSettings,
       ),
     ));
@@ -340,11 +344,13 @@ class _WeatherAlertsSettingsScreen extends StatefulWidget {
   final AppSettings initialSettings;
   final bool paused;
   final ValueChanged<AppSettings> onSettingsChanged;
+  final Future<MarineWarningZones> Function()? loadMarineWarningZones;
 
   const _WeatherAlertsSettingsScreen({
     required this.initialSettings,
     required this.paused,
     required this.onSettingsChanged,
+    this.loadMarineWarningZones,
   });
 
   @override
@@ -355,6 +361,7 @@ class _WeatherAlertsSettingsScreen extends StatefulWidget {
 class _WeatherAlertsSettingsScreenState
     extends State<_WeatherAlertsSettingsScreen> {
   late AppSettings settings;
+  Future<MarineWarningZones>? _marineZoneCatalog;
 
   @override
   void initState() {
@@ -366,6 +373,72 @@ class _WeatherAlertsSettingsScreenState
     setState(() => settings = updated);
     widget.onSettingsChanged(updated);
   }
+
+  Widget _officialAlertToggle(
+    String code,
+    String title,
+    IconData icon,
+    bool enabled, {
+    String? subtitle,
+    Widget? accessory,
+  }) {
+    return _SettingsToggleTile(
+      icon: icon,
+      settingId: 'officialAlert-$code',
+      title: title,
+      subtitle: subtitle,
+      accessory: accessory,
+      value: settings.officialAlertSettings[code]!,
+      enabled: enabled,
+      onChanged: (value) => _update(settings.copyWith(
+        officialAlertSettings: {...settings.officialAlertSettings, code: value},
+      )),
+    );
+  }
+
+  Future<MarineWarningZones> _loadMarineWarningZones() =>
+      _marineZoneCatalog ??= widget.loadMarineWarningZones!();
+
+  Future<void> _selectMarineWarningZones({required bool reload}) async {
+    if (reload) {
+      setState(() => _marineZoneCatalog = widget.loadMarineWarningZones!());
+    }
+    final selection = await showDialog<({List<String>? zoneKeys})>(
+      context: context,
+      builder: (_) => _MarineWarningZoneDialog(
+        zones: _loadMarineWarningZones(),
+        initial: settings.marineWarningZoneKeys,
+      ),
+    );
+    if (selection == null || !mounted) return;
+    _update(settings.copyWith(
+      marineWarningZoneKeys: selection.zoneKeys,
+      selectAllMarineWarningZones: selection.zoneKeys == null,
+    ));
+  }
+
+  Widget _marineWarningZoneLink() => Builder(
+        builder: (context) => FutureBuilder<MarineWarningZones>(
+          future: _loadMarineWarningZones(),
+          builder: (context, snapshot) {
+            final selection = settings.marineWarningZoneKeys;
+            final names = snapshot.data?.names;
+            final count = names == null
+                ? selection?.length
+                : selection?.where(names.containsKey).length ?? names.length;
+            return TextButton(
+              key: const ValueKey('marine-warning-zones'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              ),
+              onPressed: widget.paused
+                  ? null
+                  : () => _selectMarineWarningZones(reload: snapshot.hasError),
+              child: Text(count == null ? '전체 해역 >' : '선택한 해역 $count개 >'),
+            );
+          },
+        ),
+      );
 
   Future<void> _selectTime() async {
     if (!settings.notificationEnabled || widget.paused) return;
@@ -387,6 +460,8 @@ class _WeatherAlertsSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final enabled = settings.notificationEnabled && !widget.paused;
+    final officialEnabled =
+        enabled && settings.officialAlertSettings['enabled']!;
     return _SettingsDetailScaffold(
       title: '알림',
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -499,6 +574,7 @@ class _WeatherAlertsSettingsScreenState
         const SizedBox(height: 12),
         _SettingsSection(
           key: const ValueKey('carry-notification-section'),
+          collapsible: true,
           icon: Icons.work_rounded,
           title: '챙겨요 알림',
           subtitle:
@@ -591,6 +667,7 @@ class _WeatherAlertsSettingsScreenState
         const SizedBox(height: 12),
         _SettingsSection(
           key: const ValueKey('today-notification-section'),
+          collapsible: true,
           icon: Icons.today_outlined,
           title: 'Today 알림',
           subtitle: '챙겨요 알림과 발송되는 시각은 같아요',
@@ -655,9 +732,10 @@ class _WeatherAlertsSettingsScreenState
         const SizedBox(height: 12),
         _SettingsSection(
           key: const ValueKey('weather-notification-section'),
+          collapsible: true,
           icon: Icons.shield,
           title: '기상·생활 알림',
-          subtitle: '특보와 현재 날씨 안내를 관리해요',
+          subtitle: '현재 날씨와 생활 대비 안내를 관리해요',
           child: Column(children: [
             _SettingsToggleTile(
               icon: Icons.shield_outlined,
@@ -680,44 +758,14 @@ class _WeatherAlertsSettingsScreenState
                   _update(settings.copyWith(lightningEnabled: value)),
             ),
             _SettingsToggleTile(
-              icon: Icons.thunderstorm_outlined,
-              settingId: 'heavyRainEnabled',
-              title: '호우특보 안내',
-              subtitle: '발효된 호우특보의 시작·단계 변경·해제를 안내해요',
-              value: settings.heavyRainEnabled,
-              enabled: enabled && settings.weatherNotificationEnabled,
-              onChanged: (value) =>
-                  _update(settings.copyWith(heavyRainEnabled: value)),
-            ),
-            _SettingsToggleTile(
               icon: Icons.ac_unit_rounded,
               settingId: 'heavySnowEnabled',
-              title: '대설·많은 눈 안내',
-              subtitle: '발효된 대설특보와 예보 기반 많은 눈 대비를 안내해요',
+              title: '많은 눈 대비',
+              subtitle: '예보를 바탕으로 많은 눈에 대비할 수 있게 안내해요',
               value: settings.heavySnowEnabled,
               enabled: enabled && settings.weatherNotificationEnabled,
               onChanged: (value) =>
                   _update(settings.copyWith(heavySnowEnabled: value)),
-            ),
-            _SettingsToggleTile(
-              icon: Icons.device_thermostat_rounded,
-              settingId: 'heatwaveEnabled',
-              title: '폭염특보 안내',
-              subtitle: '발효된 폭염특보의 시작·단계 변경·해제를 안내해요',
-              value: settings.heatwaveEnabled,
-              enabled: enabled && settings.weatherNotificationEnabled,
-              onChanged: (value) =>
-                  _update(settings.copyWith(heatwaveEnabled: value)),
-            ),
-            _SettingsToggleTile(
-              icon: Icons.severe_cold_outlined,
-              settingId: 'coldWaveEnabled',
-              title: '한파특보 안내',
-              subtitle: '발효된 한파특보의 시작·단계 변경·해제를 안내해요',
-              value: settings.coldWaveEnabled,
-              enabled: enabled && settings.weatherNotificationEnabled,
-              onChanged: (value) =>
-                  _update(settings.copyWith(coldWaveEnabled: value)),
             ),
             _SettingsToggleTile(
               icon: Icons.severe_cold_rounded,
@@ -750,9 +798,200 @@ class _WeatherAlertsSettingsScreenState
               onChanged: (value) =>
                   _update(settings.copyWith(showerAndLightRainEnabled: value)),
             ),
+            _SettingsToggleTile(
+              icon: Icons.traffic_outlined,
+              settingId: 'roadControlEnabled',
+              title: '출퇴근 도로통제',
+              subtitle: '출퇴근 알림 시간에 맞춰 안내해요',
+              value: settings.roadControlEnabled,
+              enabled: enabled && settings.weatherNotificationEnabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(roadControlEnabled: value)),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        _SettingsSection(
+          key: const ValueKey('official-alert-section'),
+          collapsible: true,
+          icon: Icons.warning_amber_rounded,
+          title: '속보·특보 알림',
+          subtitle: '기상청 방재속보와 특보를 관리해요',
+          child: Column(children: [
+            _officialAlertToggle(
+                'enabled', '전체 알림', Icons.warning_amber_rounded, enabled),
+            const Divider(height: 20),
+            _officialAlertToggle(
+                'bulletin', '방재속보', Icons.campaign_outlined, officialEnabled,
+                subtitle: '알림을 켠 구역의 기상청 방재속보를 안내해요'),
+            _SettingsToggleTile(
+              icon: Icons.thunderstorm_outlined,
+              settingId: 'heavyRainEnabled',
+              title: '호우특보 안내',
+              subtitle: '발효된 호우특보의 시작·단계 변경·해제를 안내해요',
+              value: settings.heavyRainEnabled,
+              enabled: officialEnabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(heavyRainEnabled: value)),
+            ),
+            _officialAlertToggle(
+                'S', '대설특보 안내', Icons.ac_unit_rounded, officialEnabled),
+            _SettingsToggleTile(
+              icon: Icons.device_thermostat_rounded,
+              settingId: 'heatwaveEnabled',
+              title: '폭염특보 안내',
+              subtitle: '발효된 폭염특보의 시작·단계 변경·해제를 안내해요',
+              value: settings.heatwaveEnabled,
+              enabled: officialEnabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(heatwaveEnabled: value)),
+            ),
+            _SettingsToggleTile(
+              icon: Icons.severe_cold_outlined,
+              settingId: 'coldWaveEnabled',
+              title: '한파특보 안내',
+              subtitle: '발효된 한파특보의 시작·단계 변경·해제를 안내해요',
+              value: settings.coldWaveEnabled,
+              enabled: officialEnabled,
+              onChanged: (value) =>
+                  _update(settings.copyWith(coldWaveEnabled: value)),
+            ),
+            _officialAlertToggle(
+                'W', '강풍특보 안내', Icons.air_rounded, officialEnabled),
+            _officialAlertToggle(
+                'V', '풍랑특보 안내', Icons.waves_rounded, officialEnabled,
+                accessory: widget.loadMarineWarningZones == null
+                    ? null
+                    : _marineWarningZoneLink()),
+            for (final (code, title, icon) in const [
+              ('D', '건조특보 안내', Icons.water_drop_outlined),
+              ('O', '폭풍해일특보 안내', Icons.waves_rounded),
+              ('N', '지진해일특보 안내', Icons.waves_rounded),
+              ('T', '태풍특보 안내', Icons.cyclone_outlined),
+              ('Y', '황사특보 안내', Icons.air_rounded),
+              ('F', '안개특보 안내', Icons.foggy),
+              ('K', '열대야특보 안내', Icons.nights_stay_outlined),
+            ])
+              _officialAlertToggle(code, title, icon, officialEnabled),
           ]),
         ),
       ]),
+    );
+  }
+}
+
+class _MarineWarningZoneDialog extends StatefulWidget {
+  final Future<MarineWarningZones> zones;
+  final List<String>? initial;
+
+  const _MarineWarningZoneDialog({required this.zones, required this.initial});
+
+  @override
+  State<_MarineWarningZoneDialog> createState() =>
+      _MarineWarningZoneDialogState();
+}
+
+class _MarineWarningZoneDialogState extends State<_MarineWarningZoneDialog> {
+  Set<String>? _selection;
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<MarineWarningZones>(
+      future: widget.zones,
+      builder: (context, snapshot) {
+        final zones = snapshot.data;
+        final names = zones?.names;
+        final selected = names == null
+            ? null
+            : _selection ??=
+                (widget.initial ?? names.keys).where(names.containsKey).toSet();
+        final allSelected =
+            selected != null && selected.length == names!.length;
+        final matches = zones?.names.entries
+            .where((zone) => zone.value.contains(_query))
+            .toList();
+        return AlertDialog(
+          title: const Text('풍랑특보 해역'),
+          content: SizedBox(
+            width: 420,
+            height: 380,
+            child: zones == null
+                ? Center(
+                    child: snapshot.hasError
+                        ? const Text('해역 목록을 불러오지 못했어요. 다시 열어 주세요.')
+                        : const CircularProgressIndicator(),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        decoration:
+                            const InputDecoration(labelText: '해역 이름 검색'),
+                        onChanged: (value) =>
+                            setState(() => _query = value.trim()),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: matches!.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              return CheckboxListTile(
+                                key:
+                                    const ValueKey('marine-warning-select-all'),
+                                title: const Text('전체 선택'),
+                                subtitle: Text('선택한 해역 ${selected!.length}개'),
+                                tristate: true,
+                                value: allSelected
+                                    ? true
+                                    : selected.isEmpty
+                                        ? false
+                                        : null,
+                                onChanged: (_) => setState(() {
+                                  if (allSelected) {
+                                    selected.clear();
+                                  } else {
+                                    selected.addAll(names!.keys);
+                                  }
+                                }),
+                              );
+                            }
+                            final zone = matches[index - 1];
+                            return CheckboxListTile(
+                              title: Text(zone.value),
+                              value: selected!.contains(zone.key),
+                              onChanged: (checked) => setState(() {
+                                if (checked == true) {
+                                  selected.add(zone.key);
+                                } else {
+                                  selected.remove(zone.key);
+                                }
+                              }),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: selected == null
+                  ? null
+                  : () => Navigator.pop(context, (
+                        zoneKeys: selected.length == names!.length
+                            ? null
+                            : selected.toList(),
+                      )),
+              child: const Text('적용'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1340,11 +1579,12 @@ class _AdRemovalBanner extends StatelessWidget {
   }
 }
 
-class _SettingsSection extends StatelessWidget {
+class _SettingsSection extends StatefulWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final Widget child;
+  final bool collapsible;
 
   const _SettingsSection({
     super.key,
@@ -1352,48 +1592,80 @@ class _SettingsSection extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.collapsible = false,
   });
 
   @override
+  State<_SettingsSection> createState() => _SettingsSectionState();
+}
+
+class _SettingsSectionState extends State<_SettingsSection>
+    with AutomaticKeepAliveClientMixin {
+  bool _expanded = false;
+
+  @override
+  bool get wantKeepAlive => widget.collapsible;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final _SettingsSection(:icon, :title, :subtitle, :child, :collapsible) =
+        widget;
+    final header = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: WeatherCareTheme.of(context).primarySoft,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: WeatherCareTheme.of(context).primaryDeep,
+          ),
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 2),
+              Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+        if (collapsible)
+          Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+      ],
+    );
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: WeatherCareTheme.of(context).surfaceDecoration(radius: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: WeatherCareTheme.of(context).primarySoft,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: WeatherCareTheme.of(context).primaryDeep,
+          if (collapsible)
+            Semantics(
+              button: true,
+              expanded: _expanded,
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: header,
                 ),
               ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 2),
-                    Text(subtitle,
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          child,
+            )
+          else
+            header,
+          if (!collapsible || _expanded) ...[
+            const SizedBox(height: 15),
+            child,
+          ],
         ],
       ),
     );
@@ -1405,6 +1677,7 @@ class _SettingsToggleTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String? subtitle;
+  final Widget? accessory;
   final bool value;
   final bool enabled;
   final ValueChanged<bool> onChanged;
@@ -1414,6 +1687,7 @@ class _SettingsToggleTile extends StatelessWidget {
     required this.icon,
     required this.title,
     this.subtitle,
+    this.accessory,
     required this.value,
     required this.enabled,
     required this.onChanged,
@@ -1445,10 +1719,20 @@ class _SettingsToggleTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                  if (accessory != null)
+                    Wrap(
+                      spacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(title,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w700)),
+                        accessory!,
+                      ],
+                    )
+                  else
+                    Text(title,
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
                   if (subtitle != null) ...[
                     const SizedBox(height: 2),
                     Text(

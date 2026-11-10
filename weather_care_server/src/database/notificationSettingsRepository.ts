@@ -29,6 +29,8 @@ interface NotificationSettingsRow {
   carryNotificationEnabled: number | null;
   todayNotificationEnabled: number | null;
   weatherNotificationEnabled: number | null;
+  roadControlEnabled: number;
+  officialAlertSettings: string | null;
   dailyWeatherEnabled: number;
   heavyRainEnabled: number;
   heatwaveEnabled: number;
@@ -65,6 +67,7 @@ export function defaultNotificationSettings(
     showerAndLightRainEnabled: true,
     lightningEnabled: true,
     pipeFreezeEnabled: true,
+    roadControlEnabled: true,
   };
 }
 
@@ -117,6 +120,8 @@ export async function getNotificationSettings(
          carry_notification_enabled AS carryNotificationEnabled,
          today_notification_enabled AS todayNotificationEnabled,
          weather_notification_enabled AS weatherNotificationEnabled,
+         road_control_enabled AS roadControlEnabled,
+         official_alert_settings AS officialAlertSettings,
          daily_weather_enabled AS dailyWeatherEnabled,
          heavy_rain_enabled AS heavyRainEnabled,
          heatwave_enabled AS heatwaveEnabled,
@@ -158,6 +163,8 @@ export async function getNotificationSettings(
     carryNotificationEnabled: row.carryNotificationEnabled == null ? undefined : row.carryNotificationEnabled === 1,
     todayNotificationEnabled: row.todayNotificationEnabled == null ? undefined : row.todayNotificationEnabled === 1,
     weatherNotificationEnabled: row.weatherNotificationEnabled == null ? undefined : row.weatherNotificationEnabled === 1,
+    roadControlEnabled: row.roadControlEnabled !== 0,
+    officialAlertSettings: row.officialAlertSettings == null ? undefined : JSON.parse(row.officialAlertSettings),
     dailyWeatherEnabled: row.dailyWeatherEnabled === 1,
     heavyRainEnabled: row.heavyRainEnabled === 1,
     heatwaveEnabled: row.heatwaveEnabled === 1,
@@ -186,8 +193,9 @@ export async function upsertNotificationSettings(
        cold_wave_enabled, shower_light_rain_enabled, lightning_enabled, created_at, updated_at, lightning_supported, pipe_freeze_enabled,
        commute_to_work_start, commute_to_work_end, commute_from_work_start, commute_from_work_end, dryness_enabled,
        today_visibility_enabled, today_ozone_enabled, today_wind_enabled, today_humidity_enabled, today_apparent_temperature_enabled,
-       snow_preparation_enabled, uv_preparation_enabled, pollen_enabled, black_ice_enabled, carry_notification_enabled, today_notification_enabled, weather_notification_enabled)
-      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       snow_preparation_enabled, uv_preparation_enabled, pollen_enabled, black_ice_enabled, carry_notification_enabled, today_notification_enabled, weather_notification_enabled,
+       official_alert_settings, road_control_enabled)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       ${ownerHash === undefined ? 'WHERE 1' : `WHERE EXISTS (SELECT 1 FROM installation_credentials
         WHERE installation_id = ? AND secret_hash = ?)`}
       ON CONFLICT(installation_id) DO UPDATE SET
@@ -217,6 +225,8 @@ export async function upsertNotificationSettings(
         carry_notification_enabled=${payload.carryNotificationEnabled === undefined ? 'notification_settings.carry_notification_enabled' : 'excluded.carry_notification_enabled'},
         today_notification_enabled=${payload.todayNotificationEnabled === undefined ? 'notification_settings.today_notification_enabled' : 'excluded.today_notification_enabled'},
         weather_notification_enabled=${payload.weatherNotificationEnabled === undefined ? 'notification_settings.weather_notification_enabled' : 'excluded.weather_notification_enabled'},
+        official_alert_settings=COALESCE(excluded.official_alert_settings, notification_settings.official_alert_settings),
+        road_control_enabled=${payload.roadControlEnabled === undefined ? 'notification_settings.road_control_enabled' : 'excluded.road_control_enabled'},
         daily_weather_enabled=excluded.daily_weather_enabled,
         heavy_rain_enabled=excluded.heavy_rain_enabled,
         heatwave_enabled=excluded.heatwave_enabled,
@@ -265,6 +275,8 @@ export async function upsertNotificationSettings(
       payload.carryNotificationEnabled === undefined ? null : booleanInteger(payload.carryNotificationEnabled),
       payload.todayNotificationEnabled === undefined ? null : booleanInteger(payload.todayNotificationEnabled),
       payload.weatherNotificationEnabled === undefined ? null : booleanInteger(payload.weatherNotificationEnabled),
+      payload.officialAlertSettings === undefined ? null : JSON.stringify(payload.officialAlertSettings),
+      booleanInteger(payload.roadControlEnabled !== false),
       ...(ownerHash === undefined ? [] : [payload.installationId, ownerHash]),
     )
     .run();

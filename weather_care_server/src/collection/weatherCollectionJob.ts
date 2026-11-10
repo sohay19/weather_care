@@ -13,6 +13,7 @@ import type {
   RoadIceRisk,
   ServerEnv,
 } from '../types';
+import { marineWarningZoneIds } from '../regions/kmaMarineWarningZones';
 import {
   type EnvironmentalDataBundle,
   type NationwideAirQualitySnapshot,
@@ -296,12 +297,13 @@ export async function collectWarnings(
       });
     }
     if (!stations?.length) throw new Error('KMA warning region mapping is empty');
-    const ids = [...new Set(stations.map((station) => station.regionId))];
-    const warnings = await provider.getActiveForRegions(ids);
+    const ids = [...new Set([...stations.map((station) => station.regionId), ...marineWarningZoneIds])];
+    const warnings = (await provider.getActiveForRegions(ids))
+      .filter((warning) => !warning.regionId.startsWith('S') || warning.typeCode === 'V');
     await saveCollectedCache(weatherDatabase(env), {
       key: collectedCacheKey.warningSnapshot,
       type: 'COLLECTED_WARNING_SNAPSHOT',
-      value: { stations, warnings },
+      value: { stations, warnings, marineCoverage: true },
       updatedAt: now,
     });
     await mapWithConcurrency(regions, 12, async (region) => {

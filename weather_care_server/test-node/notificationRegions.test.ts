@@ -11,6 +11,8 @@ import { runRecommendationNotificationJob } from '../src/notification/notificati
 import { KMA_ADMINISTRATIVE_AREAS } from '../src/regions/kmaAdministrativeAreas';
 import { sendBatch, type FcmPayload, type FcmSendResult } from '../src/notification/fcmClient';
 import type { ServerEnv } from '../src/types';
+import { saveCollectedCache, collectedCacheKey } from '../src/database/collectedWeatherRepository';
+import type { OfficialWeatherWarning } from '../src/providers/warnings/kmaWarningProvider';
 
 let sqlite: SqliteD1Database;
 let env: ServerEnv;
@@ -153,6 +155,90 @@ describe('구역별 알림 구독과 기존 앱 호환', () => {
     expect(sent.filter(p=>p.notificationKey.startsWith('OFFICIAL_WARNING_RELEASED'))).toHaveLength(2);
     expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_region_warning_state').get()).toEqual({n:0});
   });
+  it('선택한 해역의 풍랑 발효·변경·해제만 보내고 육상 자료를 조회하지 않는다', async () => {
+    const zones = await router.request('/installations/marine-warning-zones', {}, env);
+    expect(await zones.json()).toMatchObject({
+      zones: expect.arrayContaining([{ id: 'S1311100', name: '부산앞바다' }]),
+      maxSubscriptions: 112,
+    });
+    expect((await save([{ key: 'S9999999', enabled: true }])).status).toBe(400);
+    expect((await save([{ key: 'S1311100', enabled: true }, { key: 'S1131100', enabled: false }])).status).toBe(200);
+    const warning: OfficialWeatherWarning = {
+      typeCode: 'V', type: '풍랑', levelCode: '2', level: '주의보', commandCode: '1',
+      regionId: 'S1311100', regionName: '부산앞바다', announcedAt: now.toISOString(),
+      validFrom: now.toISOString(), provider: '기상청 특보현황',
+    };
+    const writeSnapshot = (warnings: OfficialWeatherWarning[], marineCoverage: boolean) => saveCollectedCache(env.DB, {
+      key: collectedCacheKey.warningSnapshot, type: 'COLLECTED_WARNING_SNAPSHOT',
+      value: { warnings, marineCoverage }, updatedAt: new Date(),
+    });
+    const sent: FcmPayload[] = [];
+    const forecastLoader = vi.fn(dependencies.forecastLoader);
+    const warningRegionResolver = vi.fn(dependencies.warningRegionResolver);
+    const precipitationLoader = vi.fn(dependencies.precipitationLoader);
+    const run = () => job(sent, { warningLoader: undefined, forecastLoader, warningRegionResolver, precipitationLoader });
+    await writeSnapshot([warning, { ...warning, regionId: 'S1131100' }], true);
+    await run();
+    await run();
+    expect(sent).toMatchObject([{
+      title: '[부산앞바다] 풍랑주의보 발효',
+      notificationKey: expect.stringMatching(/^OFFICIAL_WARNING_ACTIVE_V_.*_S1311100$/),
+    }]);
+    expect(sent[0].notificationRegionKey).toBeUndefined();
+    await writeSnapshot([], false);
+    await run();
+    expect(sent).toHaveLength(1);
+    await writeSnapshot([{ ...warning, levelCode: '3', level: '경보' }], true);
+    await run();
+    await writeSnapshot([], true);
+    await run();
+    expect(sent.map(p => p.title)).toEqual([
+      '[부산앞바다] 풍랑주의보 발효', '[부산앞바다] 풍랑특보 변경', '[부산앞바다] 풍랑경보 해제',
+    ]);
+    expect(forecastLoader).not.toHaveBeenCalled();
+    expect(warningRegionResolver).not.toHaveBeenCalled();
+    expect(precipitationLoader).not.toHaveBeenCalled();
+    expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_history').get()).toEqual({ n: 3 });
+  });
+  it('전체 해역 요청은 전해상을 제외하고 기존 구역을 보존하며 빈 선택을 구분한다', async () => {
+    const put = (marineWarningZones: 'all' | string[]) => router.request('/installations/device/notification-regions', {
+      method: 'PUT', headers, body: JSON.stringify({ regions: [{ key: first, enabled: true }], marineWarningZones }),
+    }, env);
+    expect((await put(['S1000000'])).status).toBe(400);
+    expect((await put('all')).status).toBe(200);
+    const rows = () => sqlite.sqlite.prepare('SELECT region_key, scope_id FROM notification_regions ORDER BY region_key').all();
+    const all = rows();
+    expect(all).toHaveLength(113);
+    expect(all).not.toContainEqual(expect.objectContaining({ region_key: 'S1000000' }));
+    expect((await put('all')).status).toBe(200);
+    expect(rows()).toEqual(all);
+    expect((await put([])).status).toBe(200);
+    expect(rows()).toEqual([expect.objectContaining({ region_key: first })]);
+  });
+  it('출퇴근 도로통제 스위치는 구 앱 저장 후에도 유지되며 발송 직전에 다시 확인한다', async () => {
+    await save([{ key: first, enabled: true }]);
+    const put = (body: Record<string, unknown>) => router.request('/settings/device', {
+      method: 'PUT', headers, body: JSON.stringify(body),
+    }, env);
+    const control = { eventKey: 'test-road', controlKind: 'FULL', startedAt: now.toISOString(),
+      roadName: '검증도로', provider: '국가교통정보센터 돌발상황정보' };
+    const roadControlLoader = vi.fn(async () => control);
+    const sent: FcmPayload[] = [];
+    const roadPushes = () => sent.filter(p => p.notificationKey.startsWith('ROAD_CONTROL'));
+    expect((await put({ roadControlEnabled: false })).status).toBe(200);
+    expect(await (await put({ notificationTime: '07:05' })).json()).toMatchObject({ roadControlEnabled: false });
+    await job(sent, { roadControlLoader });
+    expect(roadControlLoader).not.toHaveBeenCalled();
+    expect((await put({ roadControlEnabled: true })).status).toBe(200);
+    await job(sent, { roadControlLoader, forecastLoader: async () => {
+      await put({ roadControlEnabled: false });
+      return forecast();
+    } });
+    expect(roadPushes()).toHaveLength(0);
+    expect((await put({ roadControlEnabled: true })).status).toBe(200);
+    await job(sent, { roadControlLoader });
+    expect(roadPushes()).toHaveLength(1);
+  });
   it('전송 실패 시 지역별 강수·특보·발송 이력을 기록하지 않는다', async () => {
     await save();
     await job([], {precipitationLoader:async()=>({state:'RAIN',observedAt:now.toISOString()}),
@@ -160,6 +246,76 @@ describe('구역별 알림 구독과 기존 앱 호환', () => {
         success:false,unregistered:false,status:503}))});
     expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_history').get()).toEqual({n:0});
     expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_region_state').get()).toEqual({n:0});
+  });
+  it('방재속보는 일치하는 알림 구역이 켜진 설치에 속보당 한 번만 보낸다', async () => {
+    await save();
+    const writeBulletin = (regionCodes: string[]) => saveCollectedCache(env.DB, {
+      key: collectedCacheKey.disasterBulletin, type: collectedCacheKey.disasterBulletin,
+      value: { issuedAt: '202609020655', title: '안개 현황과 전망', regionCodes }, updatedAt: now,
+    });
+    const sent: FcmPayload[] = [];
+    const pushKey = 'DISASTER_BULLETIN_202609020655';
+    const notices = () => sent.filter((item) => item.notificationKey === pushKey);
+    await writeBulletin(['2600000000']);
+    await job(sent);
+    expect(notices()).toHaveLength(0);
+    await writeBulletin(['1153000000']);
+    sqlite.sqlite.exec('UPDATE notification_settings SET weather_notification_enabled=0');
+    await job(sent);
+    expect(notices()).toHaveLength(0);
+    sqlite.sqlite.exec('UPDATE notification_settings SET weather_notification_enabled=1');
+    await job(sent);
+    expect(notices()).toMatchObject([{
+      title: expect.stringContaining('기상청 방재속보'),
+      notificationRegionKey: first,
+      expiresAt: '2026-09-01T22:40:00.000Z',
+    }]);
+    await save([{ key: first, enabled: false }, { key: second, enabled: true }]);
+    await job(sent);
+    expect(notices()).toHaveLength(1);
+  });
+  it('속보·특보 전체와 유형 설정을 생활 알림과 분리하고 구 앱 저장에도 보존한다', async () => {
+    await save([{ key: first, enabled: true }]);
+    const official = {
+      enabled: true, bulletin: false, S: false, W: true, V: true, D: true,
+      O: true, N: true, T: true, Y: true, F: true, K: true,
+    };
+    const put = (body: Record<string, unknown>) => router.request('/settings/device', {
+      method: 'PUT', headers, body: JSON.stringify(body),
+    }, env);
+    expect((await put({ weatherNotificationEnabled: false, officialAlertSettings: official })).status).toBe(200);
+    expect(await (await put({ notificationTime: '07:05' })).json()).toMatchObject({
+      weatherNotificationEnabled: false, officialAlertSettings: official,
+    });
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.disasterBulletin, type: collectedCacheKey.disasterBulletin,
+      value: { issuedAt: '202609020655', title: '안개 현황과 전망', regionCodes: ['1153000000'] }, updatedAt: now,
+    });
+    const wind: OfficialWeatherWarning = {
+      typeCode: 'W', type: '강풍', levelCode: '2', level: '주의보', commandCode: '1',
+      regionId: 'L1010100', regionName: '서울서남권', announcedAt: now.toISOString(),
+      validFrom: now.toISOString(), provider: '기상청 특보현황',
+    };
+    const snow: OfficialWeatherWarning = { ...wind, typeCode: 'S', type: '대설' };
+    const sent: FcmPayload[] = [];
+    const bulletin = () => sent.filter(p => p.notificationKey.startsWith('DISASTER_BULLETIN_'));
+    const warnings = () => sent.filter(p => p.notificationKey.startsWith('OFFICIAL_WARNING_'));
+    await job(sent, { warningLoader: async () => [wind, snow] });
+    expect(warnings().map(p => p.notificationKey)).toEqual([expect.stringContaining('ACTIVE_W_')]);
+    expect(bulletin()).toHaveLength(0);
+    expect((await put({ officialAlertSettings: { ...official, bulletin: true } })).status).toBe(200);
+    await job(sent, { warningLoader: async () => [wind, snow], forecastLoader: async () => {
+      // 푸시 큐에 들어간 뒤에도 개별 설정을 다시 확인한다.
+      await put({ officialAlertSettings: { ...official, bulletin: false } });
+      return forecast();
+    } });
+    expect(bulletin()).toHaveLength(0);
+    expect((await put({ officialAlertSettings: { ...official, bulletin: true } })).status).toBe(200);
+    await job(sent, { warningLoader: async () => [wind, snow] });
+    expect(bulletin()).toHaveLength(1);
+    expect((await put({ weatherNotificationEnabled: true, officialAlertSettings: { ...official, enabled: false } })).status).toBe(200);
+    await job(sent, { warningLoader: async () => [{ ...wind, levelCode: '3', level: '경보' }] });
+    expect(warnings()).toHaveLength(1);
   });
   it('실제 이전 스키마의 설치·설정·이력을 추가 마이그레이션에서 보존한다', () => {
     for(const [directory,latest] of [['migrations','0021_notification_regions.sql'],['node-migrations/users','0004_notification_regions.sql']]) {

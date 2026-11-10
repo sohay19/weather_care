@@ -20,24 +20,57 @@ class _Client extends ApiClient {
 }
 
 void main() {
+  test('기존 전체와 대설 OFF를 새 속보·특보 설정에 옮기고 이후 따로 저장한다', () {
+    final legacy = AppSettings.fromJson({
+      'installationId': 'test',
+      'heavySnowEnabled': false,
+      'weatherNotificationEnabled': false,
+    }, 'test');
+    expect(legacy.officialAlertSettings['enabled'], isFalse);
+    expect(legacy.officialAlertSettings['S'], isFalse);
+    final changed = legacy.copyWith(
+        heavySnowEnabled: true, weatherNotificationEnabled: true);
+    expect(changed.officialAlertSettings['S'], isFalse);
+    expect(changed.officialAlertSettings['enabled'], isFalse);
+    expect(AppSettings.fromJson(changed.toJson(), 'test').officialAlertSettings,
+        changed.officialAlertSettings);
+  });
   test('새 앱 구역 구독은 기존 설정 필드와 분리하고 OFF 지역도 명시한다', () async {
     final client = _Client();
     await SettingsSyncService(client).save(AppSettings.fallback('test')
         .copyWith(
             savedRegionKeys: ['region1', 'region2'],
-            notificationRegionKeys: ['GPS', 'region2']));
+            notificationRegionKeys: ['GPS', 'region2'],
+            marineWarningZoneKeys: ['S1311100']));
     expect(client.calls, hasLength(2));
     expect(client.calls.first.path, '/api/v1/notification-settings/test');
     expect(client.calls.first.body.containsKey('regions'), isFalse);
     expect(client.calls.last.path,
         '/api/v1/installations/test/notification-regions');
     expect(client.calls.last.body, {
+      'marineWarningZones': ['S1311100'],
       'regions': [
         {'key': 'GPS', 'enabled': true},
         {'key': 'region1', 'enabled': false},
-        {'key': 'region2', 'enabled': true}
+        {'key': 'region2', 'enabled': true},
       ]
     });
+  });
+
+  test('풍랑 기본 전체와 선택 없음, 기존 개별 해역을 구분해 전송한다', () async {
+    final client = _Client();
+    final service = SettingsSyncService(client);
+    final settings =
+        AppSettings.fallback('test').copyWith(notificationRegionKeys: ['GPS']);
+    await service.save(settings);
+    expect(client.body?['marineWarningZones'], 'all');
+    await service.save(settings.copyWith(marineWarningZoneKeys: []));
+    expect(client.body?['marineWarningZones'], isEmpty);
+    final legacy = AppSettings.fromJson({
+      'notificationRegionKeys': ['GPS', 'S1000000', 'S1311100'],
+    }, 'test');
+    expect(legacy.notificationRegionKeys, ['GPS']);
+    expect(legacy.marineWarningZoneKeys, ['S1311100']);
   });
 
   test('알림 설정 API에는 출퇴근 시간을 포함한 허용 필드만 전송한다', () async {
@@ -82,6 +115,8 @@ void main() {
       'carryNotificationEnabled': true,
       'todayNotificationEnabled': true,
       'weatherNotificationEnabled': true,
+      'roadControlEnabled': true,
+      'officialAlertSettings': settings.officialAlertSettings,
       'dailyWeatherEnabled': true,
     });
   });
@@ -105,6 +140,7 @@ void main() {
         pollenEnabled: false,
         blackIceEnabled: false,
         weatherNotificationEnabled: false,
+        roadControlEnabled: false,
         todayVisibilityEnabled: false,
         todayOzoneEnabled: false,
         todayWindEnabled: false,

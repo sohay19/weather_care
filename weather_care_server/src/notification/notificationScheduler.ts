@@ -11,9 +11,18 @@ import { runLifestyleWeatherEngine } from '../lifestyle/lifestyleWeatherEngine';
 import { WeatherForecast } from '../providers/weather/weatherProvider';
 import {
   KmaWarningRegionMatch,
+  KmaWarningTypeCode,
   OfficialWeatherWarning,
 } from '../providers/warnings/kmaWarningProvider';
+import type { OfficialAlertSettings } from '../validation/notificationSettings';
 import { regionMetadataForGrid } from '../regions/regionCatalog';
+import { marineWarningZoneName } from '../regions/kmaMarineWarningZones';
+import {
+  disasterBulletinExpiresAt,
+  disasterBulletinIsCurrent,
+  disasterBulletinMatchesRegion,
+  type KmaDisasterBulletin,
+} from '../providers/warnings/kmaDisasterBulletin';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { enabledRecommendationTypes, runRecommendationEngine } from '../recommendations/recommendationEngine';
 import { runWeatherRuleEngineForHourly } from '../rules/weatherRuleEngine';
@@ -77,6 +86,7 @@ interface NotificationInstallationRow extends CommuteSchedule, RegionTarget {
   carryNotificationEnabled: number | null;
   todayNotificationEnabled: number | null;
   weatherNotificationEnabled: number | null;
+  officialAlertSettings?: OfficialAlertSettings;
   dailyWeatherEnabled: number;
   heavyRainEnabled: number;
   heatwaveEnabled: number;
@@ -89,6 +99,7 @@ interface NotificationInstallationRow extends CommuteSchedule, RegionTarget {
   roadIceLevel: number;
   roadIceLinkId: string | null;
   roadControlEventKey: string | null;
+  roadControlEnabled: number;
   roadControlKind: 'FULL' | 'PARTIAL' | null;
 }
 
@@ -102,6 +113,8 @@ interface PendingNotification {
   warningStateMutation?: WarningStateMutation;
   roadIceRisk?: RoadIceRisk;
   roadControl?: OfficialRoadControl;
+  expiresAt?: string;
+  officialAlertKey?: KmaWarningTypeCode | 'bulletin';
 }
 
 interface WarningStateRow {
@@ -166,7 +179,7 @@ export async function runRecommendationNotificationJob(
 ): Promise<void> {
   const now = dependencies.now ?? new Date();
   const rows = await expandNotificationRegions(env,
-    await notificationInstallations(env.DB, dependencies.retentionNow ?? now), now);
+    await notificationInstallations(env.DB, dependencies.retentionNow ?? now), now, true);
   if (rows.length === 0) return;
 
   const loadForecast = dependencies.forecastLoader ?? defaultForecastLoader;
@@ -189,13 +202,26 @@ export async function runRecommendationNotificationJob(
     Promise<OfficialRoadControl | undefined>
   >();
   const pending: PendingNotification[] = [];
+  const bulletin = await readCurrentDisasterBulletin(env, now);
+  const bulletinInstallations = new Set<string>();
 
   for (const row of rows) {
     const pendingStart = pending.length;
     const local = localNotificationTime(now, row.timezone);
+    const marineZone = marineWarningZoneName(row.regionKey);
+    const weatherEnabled = row.weatherNotificationEnabled !== 0;
+    const officialEnabled = row.officialAlertSettings?.enabled ?? weatherEnabled;
+    if (bulletin && officialEnabled && row.officialAlertSettings?.bulletin !== false &&
+        !bulletinInstallations.has(row.installationId)) {
+      const candidate = await disasterBulletinNotification(env.DB, row, bulletin);
+      if (candidate) {
+        pending.push(candidate);
+        bulletinInstallations.add(row.installationId);
+      }
+    }
     let activeWarningCodes: string[] | undefined;
     let roadIce: RoadIceRisk | undefined;
-    if (row.weatherNotificationEnabled !== 0) {
+    if (weatherEnabled && !marineZone) {
       await collectCurrentRainNotification(
         env,
         row,
@@ -204,6 +230,8 @@ export async function runRecommendationNotificationJob(
         precipitationByLocation,
         dependencies.precipitationLoader ?? defaultPrecipitationLoader,
       );
+    }
+    if (officialEnabled) {
       activeWarningCodes = await collectOfficialWarningNotifications(
         env,
         row,
@@ -214,6 +242,12 @@ export async function runRecommendationNotificationJob(
         dependencies.warningLoader ?? defaultWarningLoader,
         dependencies.warningRegionResolver ?? defaultWarningRegionResolver,
       );
+    }
+    if (marineZone) {
+      for (const item of pending.slice(pendingStart)) item.region = row;
+      continue;
+    }
+    if (weatherEnabled) {
       roadIce = await collectRoadIceNotification(
         env,
         row,
@@ -222,7 +256,7 @@ export async function runRecommendationNotificationJob(
         roadIceByLocation,
         dependencies.roadIceLoader ?? defaultRoadIceLoader,
       );
-      if (isCommuteNotificationTime(local.time, row)) {
+      if (row.roadControlEnabled !== 0 && isCommuteNotificationTime(local.time, row)) {
         await collectRoadControlNotification(
           env,
           row,
@@ -354,17 +388,31 @@ export async function runRecommendationNotificationJob(
     WHERE i.installation_id = ? AND i.fcm_token = ? AND COALESCE(s.notification_enabled, 0) = 1
       AND i.minimum_age_confirmed_at IS NOT NULL AND i.age_policy_version = 1
       AND (? <> 'PIPE_FREEZE_CAUTION' OR COALESCE(s.pipe_freeze_enabled, 1) = 1)
+      AND (? <> 'IMPORTANT_HEAVY_SNOW_CAUTION' OR COALESCE(s.heavy_snow_enabled, 1) = 1)
       AND (? = 0 OR COALESCE(s.black_ice_enabled, 1) = 1)
-      AND (? = 'MORNING_BRIEF' OR COALESCE(s.weather_notification_enabled, 1) = 1)
+      AND (? = 0 OR COALESCE(s.road_control_enabled, 1) = 1)
+      AND CASE WHEN ? IS NOT NULL THEN
+        COALESCE(json_extract(s.official_alert_settings, '$.enabled'), s.weather_notification_enabled, 1) = 1
+        AND COALESCE(json_extract(s.official_alert_settings, '$.' || ?), CASE ?
+          WHEN 'R' THEN s.heavy_rain_enabled
+          WHEN 'S' THEN s.heavy_snow_enabled
+          WHEN 'H' THEN s.heatwave_enabled
+          WHEN 'C' THEN s.cold_wave_enabled
+          ELSE 1 END, 1) = 1
+        ELSE (? = 'MORNING_BRIEF' OR COALESCE(s.weather_notification_enabled, 1) = 1) END
       AND NOT EXISTS (SELECT 1 FROM installation_activity a
         WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`)
-    .bind(item.installationId, item.token, item.built.notification_key, item.roadIceRisk ? 1 : 0, item.built.notification_key,
+    .bind(item.installationId, item.token, item.built.notification_key, item.built.notification_key,
+      item.roadIceRisk ? 1 : 0, item.roadControl ? 1 : 0,
+      item.officialAlertKey ?? null, item.officialAlertKey ?? null, item.officialAlertKey ?? null,
+      item.built.notification_key,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendAt = dependencies.now ?? new Date();
   const regionEligible = await Promise.all(pending.map(item => regionStillEnabled(env.DB, item.installationId, item.region!)));
   const sendable = pending.filter((item, index) => {
     const current = eligible[index].results[0];
-    if (!current || !regionEligible[index]) return false;
+    if (!current || !regionEligible[index] ||
+        (item.expiresAt && Date.parse(item.expiresAt) <= sendAt.getTime())) return false;
     return !item.roadControl ||
       isCommuteNotificationTime(localNotificationTime(sendAt, current.timezone).time, current);
   });
@@ -376,6 +424,7 @@ export async function runRecommendationNotificationJob(
     notificationKey: item.built.notification_key,
     notificationTarget: item.built.destination.target,
     notificationTopic: item.built.destination.topic,
+    ...(item.expiresAt ? { expiresAt: item.expiresAt } : {}),
     ...regionPushData(item.region!),
   }));
   let results: FcmSendResult[];
@@ -386,6 +435,51 @@ export async function runRecommendationNotificationJob(
     return;
   }
   await recordResults(env.DB, sendable, results, now.toISOString());
+}
+
+async function readCurrentDisasterBulletin(env: ServerEnv, now: Date): Promise<KmaDisasterBulletin | undefined> {
+  try {
+    const snapshot = await getCollectedCache<KmaDisasterBulletin | null>(
+      weatherDatabase(env), collectedCacheKey.disasterBulletin,
+    );
+    if (snapshot?.status === 'AVAILABLE' && snapshot.value && cacheRecordIsFresh(snapshot, 20 * 60_000, now) &&
+        disasterBulletinIsCurrent(snapshot.value.issuedAt, now)) return snapshot.value;
+  } catch (error) {
+    logNotificationError('disaster_bulletin_read_failed', error);
+  }
+}
+
+async function disasterBulletinNotification(
+  db: D1Database, row: NotificationInstallationRow, bulletin: KmaDisasterBulletin,
+): Promise<PendingNotification | undefined> {
+  const keyCode = row.regionKey?.split('|')[0];
+  const regionCode = keyCode && (/^\d{10}$/.test(keyCode) || marineWarningZoneName(keyCode))
+    ? keyCode : row.adminCode;
+  if (!regionCode || !disasterBulletinMatchesRegion(bulletin.regionCodes, regionCode)) return;
+  const { issuedAt } = bulletin;
+  const key = 'DISASTER_BULLETIN_' + issuedAt;
+  const targetDate = issuedAt.slice(0, 4) + '-' + issuedAt.slice(4, 6) + '-' + issuedAt.slice(6, 8);
+  try {
+    if (await db.prepare(`SELECT 1 FROM notification_history
+      WHERE installation_id=? AND target_date=? AND notification_key=?`)
+      .bind(row.installationId, targetDate, key).first()) return;
+  } catch (error) {
+    logNotificationError('disaster_bulletin_history_failed', error);
+    return;
+  }
+  return {
+    installationId: row.installationId,
+    targetDate,
+    token: row.token,
+    expiresAt: disasterBulletinExpiresAt(issuedAt),
+    officialAlertKey: 'bulletin',
+    built: {
+      notification_key: key,
+      title: '기상청 방재속보',
+      body: bulletin.title + ' · 기상청 날씨누리에서 발표한 방재속보입니다.',
+      destination: weatherDetailsDestination('WEATHER_WARNING'),
+    },
+  };
 }
 
 async function notificationInstallations(
@@ -425,6 +519,7 @@ async function notificationInstallations(
          s.carry_notification_enabled AS carryNotificationEnabled,
          s.today_notification_enabled AS todayNotificationEnabled,
          s.weather_notification_enabled AS weatherNotificationEnabled,
+         s.official_alert_settings AS officialAlertSettingsJson,
          COALESCE(s.daily_weather_enabled, 1) AS dailyWeatherEnabled,
          COALESCE(s.heavy_rain_enabled, 1) AS heavyRainEnabled,
          COALESCE(s.heatwave_enabled, 1) AS heatwaveEnabled,
@@ -437,6 +532,7 @@ async function notificationInstallations(
          COALESCE(i.road_ice_level, 0) AS roadIceLevel,
          i.road_ice_link_id AS roadIceLinkId,
          i.road_control_event_key AS roadControlEventKey,
+         COALESCE(s.road_control_enabled, 1) AS roadControlEnabled,
          i.road_control_kind AS roadControlKind
        FROM installations i
        LEFT JOIN notification_settings s
@@ -450,8 +546,11 @@ async function notificationInstallations(
            WHERE a.installation_id = i.installation_id AND ${installationExpirySql} <= julianday(?))`,
     )
     .bind(now.toISOString())
-    .all<NotificationInstallationRow>();
-  return result.results;
+    .all<NotificationInstallationRow & { officialAlertSettingsJson: string | null }>();
+  return result.results.map(({ officialAlertSettingsJson, ...row }) => ({
+    ...row,
+    officialAlertSettings: officialAlertSettingsJson == null ? undefined : JSON.parse(officialAlertSettingsJson),
+  }));
 }
 
 async function sentNotificationKeys(
@@ -525,8 +624,13 @@ async function defaultWarningLoader(
   env: ServerEnv,
   regionIds: readonly string[],
 ): Promise<OfficialWeatherWarning[]> {
-  const snapshot = await getCollectedCache<{ warnings: OfficialWeatherWarning[] }>(weatherDatabase(env), collectedCacheKey.warningSnapshot);
+  const snapshot = await getCollectedCache<{ warnings: OfficialWeatherWarning[]; marineCoverage?: boolean }>(
+    weatherDatabase(env), collectedCacheKey.warningSnapshot,
+  );
   if (!snapshot || !cacheRecordIsFresh(snapshot, 45 * 60_000)) throw new Error('COLLECTED_WARNING_SNAPSHOT_NOT_READY');
+  if (regionIds.some((id) => marineWarningZoneName(id)) && !snapshot.value.marineCoverage) {
+    throw new Error('COLLECTED_MARINE_WARNING_SNAPSHOT_NOT_READY');
+  }
   const requested = new Set(regionIds);
   return snapshot.value.warnings.filter((warning) => requested.has(warning.regionId));
 }
@@ -766,9 +870,13 @@ async function collectOfficialWarningNotifications(
 
   try {
     const catalogRegion = row.scopeId ? undefined : regionMetadataForGrid(row.nx, row.ny);
+    const marineZone = marineWarningZoneName(row.regionKey);
     let regionIds: readonly string[];
     let displayRegionName: string;
-    if (catalogRegion) {
+    if (marineZone) {
+      regionIds = [row.regionKey!];
+      displayRegionName = marineZone;
+    } else if (catalogRegion) {
       regionIds = catalogRegion.warningRegionIds;
       displayRegionName = catalogRegion.name;
     } else {
@@ -800,7 +908,10 @@ async function collectOfficialWarningNotifications(
       warningsByRegion.set(regionKey, warningsPromise);
     }
 
-    const current = highestWarningByType(await warningsPromise);
+    const warnings = await warningsPromise;
+    const current = highestWarningByType(marineZone
+      ? warnings.filter((warning) => warning.typeCode === 'V' && warning.regionId === row.regionKey)
+      : warnings);
     const previous = await warningStates(env.DB, row.installationId, row.scopeId);
     const previousByType = new Map(previous.map((item) => [item.typeCode, item]));
 
@@ -884,12 +995,13 @@ async function queueOrApplyWarningTransition(
     targetDate,
     token: row.token,
     built: {
-      notification_key: notificationKey,
+      notification_key: marineWarningZoneName(row.regionKey) ? `${notificationKey}_${row.regionKey}` : notificationKey,
       title: content.title,
       body: content.body,
       destination: warningDestination(typeCode),
     },
     warningStateMutation: mutation,
+    officialAlertKey: typeCode as KmaWarningTypeCode,
   });
 }
 
@@ -996,10 +1108,10 @@ function isWarningNotificationEnabled(
   typeCode: string,
 ): boolean {
   if (typeCode === 'R') return row.heavyRainEnabled === 1;
-  if (typeCode === 'S') return row.heavySnowEnabled === 1;
+  if (typeCode === 'S') return row.officialAlertSettings?.S ?? (row.heavySnowEnabled === 1);
   if (typeCode === 'H') return row.heatwaveEnabled === 1;
   if (typeCode === 'C') return row.coldWaveEnabled === 1;
-  return true;
+  return row.officialAlertSettings?.[typeCode as keyof OfficialAlertSettings] ?? true;
 }
 
 function warningKey(
@@ -1123,7 +1235,8 @@ async function recordResults(
           .bind(
             item.installationId,
             item.targetDate,
-            regionHistoryKey(item.built.notification_key, item.region?.scopeId),
+            regionHistoryKey(item.built.notification_key,
+              item.built.notification_key.startsWith('DISASTER_BULLETIN_') ? undefined : item.region?.scopeId),
             sentAt,
             `${item.built.title}\n${item.built.body}`.slice(0, 160),
             item.installationId,
@@ -1332,6 +1445,8 @@ function logNotificationError(
     | 'recommendation_build_failed'
     | 'current_rain_build_failed'
     | 'official_warning_build_failed'
+    | 'disaster_bulletin_read_failed'
+    | 'disaster_bulletin_history_failed'
     | 'road_ice_build_failed'
     | 'road_control_build_failed'
     | 'fcm_send_failed',

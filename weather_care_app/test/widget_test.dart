@@ -948,15 +948,28 @@ void main() {
     );
 
     await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('notification-toggle-heavyRainEnabled')),
+      find.text('기상·생활 알림'),
       250,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.text('기상·생활 알림'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('기상·생활 알림'));
+    await tester.pumpAndSettle();
+    expect(find.text('현재 비 안내'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('속보·특보 알림'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.text('속보·특보 알림'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('속보·특보 알림'));
+    await tester.pumpAndSettle();
 
     expect(find.text('호우특보 안내'), findsOneWidget);
     expect(find.text('폭염특보 안내'), findsOneWidget);
     expect(find.text('한파특보 안내'), findsOneWidget);
-    expect(find.text('현재 비 안내'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('settings-detail-back')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(

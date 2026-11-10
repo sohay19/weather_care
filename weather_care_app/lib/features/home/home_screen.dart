@@ -1255,6 +1255,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           onOpenLocationSettings: _openDeviceLocationSettings,
           loadRegionCatalog: _loadRegionCatalog,
+          loadMarineWarningZones: _settingsSync?.loadMarineWarningZones,
           manualRegionName: _manualRegion?.fullName,
           saveState: _settingsSave?.state ?? SettingsSaveState.checking,
           onRetrySave: _retrySettingsSave,
@@ -2026,10 +2027,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (_serverDataAccess?.paused ?? true) {
       updated = updated.copyWith(notificationEnabled: false);
     }
-    final onlyRegionNotificationsChanged =
-        updated.notificationRegionKeys != _settings.notificationRegionKeys &&
-            updated.locationMode == _settings.locationMode &&
-            updated.manualRegionKey == _settings.manualRegionKey;
+    final onlyRegionNotificationsChanged = (updated.notificationRegionKeys !=
+                _settings.notificationRegionKeys ||
+            updated.marineWarningZoneKeys != _settings.marineWarningZoneKeys) &&
+        updated.locationMode == _settings.locationMode &&
+        updated.manualRegionKey == _settings.manualRegionKey;
     final locationChanged = _settings.locationMode != updated.locationMode ||
         _settings.currentRegionId != updated.currentRegionId ||
         _settings.manualRegionKey != updated.manualRegionKey;

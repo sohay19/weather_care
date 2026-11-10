@@ -18,6 +18,7 @@ describe('현재 관측 재시도', () => {
   const cleanup: Array<() => void> = [];
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     while (cleanup.length > 0) cleanup.pop()?.();
   });
@@ -57,14 +58,20 @@ describe('현재 관측 재시도', () => {
       .mockRejectedValueOnce(new Error('FILE_UNAVAILABLE'))
       .mockResolvedValueOnce(observationSnapshot(observation.observedAt, 19.5, 26, 3.1))
       .mockResolvedValueOnce(observationSnapshot('2026-10-01T11:40:00+09:00'));
-    const fetcher = vi.spyOn(globalThis, 'fetch');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-02T02:56:00Z'));
+    const fetcher = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('Unavailable', { status: 503 }));
     const logs: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((message) => logs.push(message));
 
     await runCurrentObservationCollectionJob(env, new Date('2026-10-02T02:56:00Z'));
     expect(await getCollectedCache(env.DB, collectedCacheKey.ultraShortObservation(58, 125)))
       .toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(new URL(String(fetcher.mock.calls[0][0])).pathname).toMatch(/stn_inf\.php$/);
 
+    vi.setSystemTime(new Date('2026-10-02T02:58:00Z'));
     await runCurrentObservationCollectionJob(env, new Date('2026-10-02T02:58:00Z'));
     const cached = await getCollectedCache<UltraShortObservation>(
       env.DB, collectedCacheKey.ultraShortObservation(58, 125),
@@ -80,9 +87,9 @@ describe('현재 관측 재시도', () => {
       ]);
     expect(grid.mock.calls.every(([, options]) => options?.requiredOnly === true))
       .toBe(true);
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledTimes(1);
     await expect(getApiHubUsage(env.DB, new Date('2026-10-02T02:58:00Z')))
-      .resolves.toEqual({ requestCount: 0, responseBytes: 0 });
+      .resolves.toEqual({ requestCount: 1, responseBytes: 11 });
     expect(logs.some((line) => line.includes('"missing":1'))).toBe(true);
     expect(logs.some((line) => line.includes('"stored":1'))).toBe(true);
   });

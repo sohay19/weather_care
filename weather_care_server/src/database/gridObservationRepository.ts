@@ -10,6 +10,14 @@ const MAX_AGE_MS = 30 * 60 * 1000;
 export const GRID_HISTORY_RETENTION_MS = 72 * 60 * 60 * 1000;
 const snapshots = new WeakMap<D1Database, Map<string, CollectedCacheRecord<GridObservationSnapshot>>>();
 
+export async function hasFreshGridObservationSnapshot(db: D1Database, now: Date): Promise<boolean> {
+  const target = Date.parse(gridObservationKoreanIso(latestGridObservationTime(now)));
+  for (let at = target; at >= now.getTime() - MAX_AGE_MS; at -= 10 * 60 * 1000) {
+    if (await getGridObservationSnapshot(db, new Date(at).toISOString())) return true;
+  }
+  return false;
+}
+
 export async function saveGridObservationSnapshot(
   db: D1Database, snapshot: GridObservationSnapshot, now: Date,
 ): Promise<void> {

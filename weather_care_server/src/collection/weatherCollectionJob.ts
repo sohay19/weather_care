@@ -86,7 +86,8 @@ import {
   reserveMonthlyRequestBudget,
 } from '../database/apiUsageRepository';
 import { collectGridObservationSnapshot, backfillGridObservationHistory } from '../services/gridObservationCache';
-import { readCurrentGridObservation } from '../database/gridObservationRepository';
+import { hasFreshGridObservationSnapshot, readCurrentGridObservation } from '../database/gridObservationRepository';
+import { collectAwsHourlyFallback } from '../services/awsHourlyFallback';
 import { archiveActiveDailyHumidity } from '../services/dailyHumidityHistory';
 import { providerErrorDiagnostic, safeErrorName } from '../observability/providerErrorDiagnostics';
 import {
@@ -350,12 +351,17 @@ async function collectUltraShortObservations(
   });
   const exact = latest ? observationsFromGridSnapshot(latest, regions) : new Map<string, UltraShortObservation>();
   const pending = regions.filter(({ nx, ny }) => !exact.has(`${nx}:${ny}`));
-  // 원본/핵심값이 없으면 이전 회차의 같은 격자만 쓴다. 관측소 대체는 하지 않는다.
+  // 최신 격자에 값이 없으면 먼저 이전 격자 회차를 확인한다.
   const previous = pending.length > 0 || !latest ? await collectGridObservationSnapshot({
     db: weatherDatabase(env), serviceKey: env.KMA_APIHUB_KEY,
     clock: new Date(targetClock.getTime() - 10 * 60 * 1000), now,
     requiredOnly: fastRetry, fastRetry,
   }) : null;
+  const db = weatherDatabase(env);
+  if (!latest && !previous && !await hasFreshGridObservationSnapshot(db, now)) {
+    await collectAwsHourlyFallback(db, env.KMA_APIHUB_KEY, now)
+      .catch((error) => logCollectionFailure('aws_hourly_fallback', error));
+  }
   const previousValues = previous ? observationsFromGridSnapshot(previous, pending) : new Map<string, UltraShortObservation>();
   const historicalClocks = new Set<number>();
   let stored = 0;

@@ -6,7 +6,8 @@ import { coordinatesFromQuery, regionFromQuery } from '../utils';
 import {
   ultraShortApparentTemperature,
 } from '../providers/weather/kmaUltraShortObservationProvider';
-import { getGridObservationSnapshot, readCurrentGridObservation } from '../database/gridObservationRepository';
+import { getGridObservationSnapshot } from '../database/gridObservationRepository';
+import { readCurrentWeatherObservation, readYesterdayAwsObservation } from '../services/awsHourlyFallback';
 import { observationsFromGridSnapshot } from '../providers/weather/kmaGridObservationProvider';
 
 interface ComparisonRouterOptions {
@@ -24,13 +25,17 @@ export function createComparisonRouter(
     const { nx, ny } = regionFromQuery(c.req.query('nx'), c.req.query('ny'));
     try {
       const coordinates = coordinatesFromQuery(c.req.query('latitude'), c.req.query('longitude'));
-      const current = await readCurrentGridObservation(weatherDatabase(c.env), nx, ny, now, coordinates);
+      const db = weatherDatabase(c.env);
+      const current = await readCurrentWeatherObservation(db, nx, ny, now, coordinates);
       if (!current) return unavailableYesterday(targetDate, 'CURRENT_GRID_OBSERVATION_UNAVAILABLE');
       const yesterdayAt = new Date(Date.parse(current.value.observedAt) - 24 * 60 * 60 * 1000).toISOString();
-      const snapshot = await getGridObservationSnapshot(weatherDatabase(c.env), yesterdayAt);
+      const awsFallback = current.value.provider === 'KMA_AWS_OBSERVATION';
+      const snapshot = awsFallback ? null : await getGridObservationSnapshot(db, yesterdayAt);
       const source = { nx: current.value.sourceLocation?.nx ?? nx, ny: current.value.sourceLocation?.ny ?? ny };
-      const comparison = snapshot && observationsFromGridSnapshot(snapshot.value, [source]).get(`${source.nx}:${source.ny}`);
-      if (!comparison) return unavailableYesterday(yesterdayAtKoreanDate(yesterdayAt), 'HISTORICAL_GRID_OBSERVATION_UNAVAILABLE');
+      const comparison = awsFallback ? await readYesterdayAwsObservation(db, current.value)
+        : snapshot && observationsFromGridSnapshot(snapshot.value, [source]).get(`${source.nx}:${source.ny}`);
+      if (!comparison) return unavailableYesterday(yesterdayAtKoreanDate(yesterdayAt),
+        awsFallback ? 'HISTORICAL_AWS_OBSERVATION_UNAVAILABLE' : 'HISTORICAL_GRID_OBSERVATION_UNAVAILABLE');
       if (current.value.humidity === undefined || !Number.isFinite(current.value.humidity) ||
           current.value.humidity < 0 || current.value.humidity > 100 ||
           current.value.windSpeed === undefined || !Number.isFinite(current.value.windSpeed) ||
@@ -48,7 +53,7 @@ export function createComparisonRouter(
         comparison: { temperature: comparison.temperature, apparentTemperature: comparisonApparent },
         targetDate: yesterdayAtKoreanDate(yesterdayAt),
         basis: {
-          provider: 'KMA_APIHUB_GRID_OBSERVATION', dataRole: 'OBSERVATION_VS_OBSERVATION',
+          provider: current.value.provider, dataRole: 'OBSERVATION_VS_OBSERVATION',
           gridX: nx, gridY: ny,
           sourceLocation: current.value.sourceLocation,
         },

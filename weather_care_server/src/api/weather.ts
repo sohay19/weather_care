@@ -8,7 +8,8 @@ import { withLivingIndexAdvice, ventilationAdvice } from '../services/livingInde
 import { readSnowDepthHistory } from '../services/snowDepthHistory';
 import { assessPipeFreeze, pipeFreezeMessage } from '../services/pipeFreezeAdvice';
 import { readCachedMidTermForecast } from '../services/midTermForecastCache';
-import { currentGridObservationIsUsable, readCurrentGridObservation } from '../database/gridObservationRepository';
+import { currentGridObservationIsUsable } from '../database/gridObservationRepository';
+import { isCurrentAwsHour, readCurrentWeatherObservation } from '../services/awsHourlyFallback';
 import { Hono } from 'hono';
 import {
   enrichForecastWithEnvironmentalData,
@@ -175,7 +176,7 @@ router.get('/main', async (c) => {
         collectedCacheKey.weekly(nx, ny),
       ),
       readNationwideVisibility(weatherDatabase(c.env), location, generatedAt).then((value) => value ? { value } : null),
-      readCurrentGridObservation(weatherDatabase(c.env), nx, ny, generatedAt, requestedCoordinates),
+      readCurrentWeatherObservation(weatherDatabase(c.env), nx, ny, generatedAt, requestedCoordinates),
     ]);
     if (!collected || collected.status !== 'AVAILABLE') {
       c.set('weatherAccessFields', { errorCode: 'WEATHER_CACHE_NOT_READY' });
@@ -316,7 +317,7 @@ router.get('/today', async (c) => {
         collectedCacheKey.weekly(nx, ny),
       ),
       readNationwideVisibility(weatherDatabase(c.env), location, generatedAt).then((value) => value ? { value } : null),
-      readCurrentGridObservation(weatherDatabase(c.env), nx, ny, generatedAt, requestedCoordinates),
+      readCurrentWeatherObservation(weatherDatabase(c.env), nx, ny, generatedAt, requestedCoordinates),
       coordinates
         ? getNationwidePrecipitation(weatherDatabase(c.env), generatedAt)
         : Promise.resolve(null),
@@ -1038,7 +1039,10 @@ export function currentFromUltraShortObservation(
     ? Number.NaN
     : Date.parse(observedAt);
   const observationAge = now.getTime() - observedInstant;
-  const available = currentGridObservationIsUsable(record, now);
+  const awsFallback = record?.value.provider === 'KMA_AWS_OBSERVATION';
+  const available = awsFallback
+    ? record.status === 'AVAILABLE' && isCurrentAwsHour(observedInstant, now)
+    : currentGridObservationIsUsable(record, now);
 
   if (!available || !record) {
     return {
@@ -1115,24 +1119,24 @@ export function currentFromUltraShortObservation(
       ...(amountAvailable ? { precipitationAmount: String(amount) } : {}),
     },
     provider: `${observation.provider}+KMA_FORECAST`,
-    providerField: 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST',
+    providerField: awsFallback ? 'TA,HM,WS10;SKY=FORECAST' : 'T1H,REH,WSD,VEC,PTY,RN1;SKY=FORECAST',
     ...(observation.sourceLocation
       ? { sourceLocation: observation.sourceLocation }
       : {}),
     fieldSources: {
       temperature: {
         role: 'OBSERVATION',
-        field: 'T1H',
+        field: awsFallback ? 'TA' : 'T1H',
         observedAt: observation.observedAt,
       },
       humidity: {
         role: 'OBSERVATION',
-        field: 'REH',
+        field: awsFallback ? 'HM' : 'REH',
         observedAt: observation.observedAt,
       },
       windSpeed: {
         role: 'OBSERVATION',
-        field: 'WSD',
+        field: awsFallback ? 'WS10' : 'WSD',
         observedAt: observation.observedAt,
       },
       sky: {
@@ -1187,6 +1191,7 @@ function currentObservationSourceLabel(snapshot: WeatherSnapshot): string {
   if (snapshot.provider?.includes('KMA_APIHUB_GRID_OBSERVATION')) {
     return '기상청 APIHub 10분 격자 실황';
   }
+  if (snapshot.provider?.includes('KMA_AWS_OBSERVATION')) return '기상청 AWS 정각 관측';
   return '기상청 초단기실황';
 }
 

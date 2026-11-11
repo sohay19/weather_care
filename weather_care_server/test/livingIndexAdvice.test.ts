@@ -32,8 +32,9 @@ describe('꽃가루 추천과 대기정체 환기 안내', () => {
     }
     const brief = buildWeatherBriefResult(enriched, { now, tieredPreparations: true });
     expect(brief.intent.recommendedItems).toContain('MASK');
-    expect(runRecommendationEngine([], { maskEnabled: false },
-      { tieredPreparations: true, snapshots: enriched.hourly }).find((rec) => rec.type === 'MASK')?.recommended).toBe(false);
+    const disabledRecommendations = runRecommendationEngine([], { maskEnabled: false },
+      { tieredPreparations: true, snapshots: enriched.hourly });
+    expect(disabledRecommendations.map((rec) => rec.type)).not.toContain('MASK');
   });
 
   it('두 원인이 동시에 있어도 마스크는 하나이고 양쪽 공식 근거가 있다', () => {

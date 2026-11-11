@@ -1,5 +1,12 @@
 import m20 from '../migrations/0020_commute_notification_schedule.sql?raw';
 import m21 from '../migrations/0021_notification_regions.sql?raw';
+import m22 from '../migrations/0022_dryness_preparations.sql?raw';
+import m23 from '../migrations/0023_today_notifications.sql?raw';
+import m24 from '../migrations/0024_carry_categories_black_ice.sql?raw';
+import m25 from '../migrations/0025_notification_group_masters.sql?raw';
+import m27 from '../migrations/0027_official_alert_settings.sql?raw';
+import m28 from '../migrations/0028_road_control_notification.sql?raw';
+import m29 from '../migrations/0029_warning_region_identity.sql?raw';
 import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
 import { Hono } from 'hono';
@@ -52,7 +59,9 @@ async function seed(target: string, activeAt: string) {
       .bind(target, activeAt, activeAt),
     env.DB.prepare('INSERT INTO notification_history VALUES (?, ?, ?, ?, ?)')
       .bind(target, '2026-09-11', 'TEST', now.toISOString(), 'synthetic'),
-    env.DB.prepare('INSERT INTO installation_warning_state VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    env.DB.prepare(`INSERT INTO installation_warning_state
+      (installation_id, warning_type, warning_name, level_code, level_name, region_name, effective_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
       .bind(target, 'R', '호우', '2', '경보', '테스트', activeAt, activeAt),
     env.DB.prepare('INSERT INTO notification_region_preferences VALUES (?,?)').bind(target,activeAt),
     env.DB.prepare("INSERT INTO notification_regions(installation_id,region_key,scope_id,enabled,nx,ny) VALUES (?,'GPS',?,1,60,121)").bind(target,target),
@@ -65,7 +74,10 @@ async function seed(target: string, activeAt: string) {
 beforeEach(async () => {
   // This suite uses only an isolated local test binding, never production D1.
   await env.DB.exec('DROP TABLE IF EXISTS notification_region_warning_state; DROP TABLE IF EXISTS notification_region_state; DROP TABLE IF EXISTS notification_regions; DROP TABLE IF EXISTS notification_region_preferences; DROP TABLE IF EXISTS installation_activity; DROP TABLE IF EXISTS installation_ownership_challenges; DROP TABLE IF EXISTS legacy_installation_ownership; DROP TABLE IF EXISTS installation_warning_state; DROP TABLE IF EXISTS notification_history; DROP TABLE IF EXISTS notification_settings; DROP TABLE IF EXISTS installations; DROP TABLE IF EXISTS installation_credentials; DROP TABLE IF EXISTS active_regions; DROP TABLE IF EXISTS weather_cache; DROP TABLE IF EXISTS daily_weather_snapshots; DROP TABLE IF EXISTS weekly_forecast_records; DROP TABLE IF EXISTS grid_observation_snapshots; DROP TABLE IF EXISTS grid_extra_snapshots;');
-  for (const sql of [m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m15, m19, m20, m21]) await apply(sql);
+  for (const sql of [
+    m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m15, m19, m20, m21,
+    m22, m23, m24, m25, m27, m28, m29,
+  ]) await apply(sql);
 });
 afterEach(() => vi.restoreAllMocks());
 

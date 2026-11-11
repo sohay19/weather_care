@@ -3,7 +3,7 @@ import { weatherDatabase } from '../database/weatherDatabase';
 import { readNationwideRegion } from '../services/nationwideWeatherCache';
 import { getNationwidePrecipitation } from '../database/nationwidePrecipitationRepository';
 import { nationwidePrecipitationAtPoint } from '../providers/precipitation/precipitationObservationProvider';
-import { nearestWarningRegion, type KmaWarningRegionStation } from '../providers/warnings/kmaWarningProvider';
+import { landWarningRegionName, landWarningRegionsForTarget } from '../regions/landWarningRegions';
 import { nearestRoadIceRisk, type RoadIceSegment } from '../providers/road/kmaRoadIceProvider';
 import { nearestRoadControl, type RoadControlSnapshotItem } from '../providers/traffic/itsRoadControlProvider';
 import { cacheRecordIsFresh } from '../database/collectedWeatherRepository';
@@ -118,6 +118,7 @@ interface PendingNotification {
 }
 
 interface WarningStateRow {
+  regionId: string | null;
   typeCode: string;
   typeName: string;
   levelCode: '2' | '3';
@@ -129,6 +130,8 @@ interface WarningStateRow {
 type WarningStateMutation =
   | { operation: 'UPSERT'; warning: OfficialWeatherWarning }
   | { operation: 'DELETE'; typeCode: string };
+
+type NotificationWarningRegionMatch = Pick<KmaWarningRegionMatch, 'regionId' | 'regionName'> & { regionIds?: readonly string[] };
 
 interface SchedulerDependencies {
   now?: Date;
@@ -159,7 +162,8 @@ interface SchedulerDependencies {
     longitude: number,
     nx: number,
     ny: number,
-  ) => Promise<KmaWarningRegionMatch>;
+    target?: RegionTarget,
+  ) => Promise<NotificationWarningRegionMatch>;
   roadIceLoader?: (
     env: ServerEnv,
     latitude: number,
@@ -194,7 +198,7 @@ export async function runRecommendationNotificationJob(
   >();
   const warningRegionsByLocation = new Map<
     string,
-    Promise<KmaWarningRegionMatch>
+    Promise<NotificationWarningRegionMatch>
   >();
   const roadIceByLocation = new Map<string, Promise<RoadIceRisk | undefined>>();
   const roadControlByLocation = new Map<
@@ -408,7 +412,7 @@ export async function runRecommendationNotificationJob(
       item.built.notification_key,
       (dependencies.retentionNow ?? dependencies.now ?? new Date()).toISOString())));
   const sendAt = dependencies.now ?? new Date();
-  const regionEligible = await Promise.all(pending.map(item => regionStillEnabled(env.DB, item.installationId, item.region!)));
+  const regionEligible = await Promise.all(pending.map(item => regionStillEnabled(env.DB, item.installationId, item.region!, Boolean(item.officialAlertKey))));
   const sendable = pending.filter((item, index) => {
     const current = eligible[index].results[0];
     if (!current || !regionEligible[index] ||
@@ -493,6 +497,7 @@ async function notificationInstallations(
          i.fcm_token AS token,
          i.nx,
          i.ny,
+         i.location_mode AS locationMode,
          i.timezone,
          COALESCE(s.notification_time, '07:00') AS notificationTime,
          s.commute_to_work_start AS commuteToWorkStart,
@@ -636,20 +641,18 @@ async function defaultWarningLoader(
 }
 
 async function defaultWarningRegionResolver(
-  env: ServerEnv,
+  _env: ServerEnv,
   _latitude: number,
   _longitude: number,
   nx: number,
   ny: number,
-): Promise<KmaWarningRegionMatch> {
-  const stations = await getCollectedCache<KmaWarningRegionStation[]>(weatherDatabase(env), collectedCacheKey.warningStations);
-  if (stations?.status === 'AVAILABLE') return nearestWarningRegion(stations.value, _latitude, _longitude);
-  const cached = await getCollectedCache<KmaWarningRegionMatch>(
-    weatherDatabase(env),
-    collectedCacheKey.warningRegion(nx, ny),
-  );
-  if (cached?.status === 'AVAILABLE') return cached.value;
-  throw new Error('COLLECTED_WARNING_REGION_NOT_READY');
+  target?: RegionTarget,
+): Promise<NotificationWarningRegionMatch> {
+  const regionIds = landWarningRegionsForTarget(target ?? {
+    nx,ny,latitude:_latitude,longitude:_longitude,locationMode:'GPS',
+  });
+  return { regionId: regionIds[0] ?? '', regionIds,
+    regionName: target?.regionName ?? landWarningRegionName(regionIds[0]) ?? '' };
 }
 
 async function defaultRoadIceLoader(
@@ -853,7 +856,7 @@ async function collectOfficialWarningNotifications(
   targetDate: string,
   pending: PendingNotification[],
   warningsByRegion: Map<string, Promise<OfficialWeatherWarning[]>>,
-  warningRegionsByLocation: Map<string, Promise<KmaWarningRegionMatch>>,
+  warningRegionsByLocation: Map<string, Promise<NotificationWarningRegionMatch>>,
   loader: (
     env: ServerEnv,
     regionIds: readonly string[],
@@ -864,27 +867,25 @@ async function collectOfficialWarningNotifications(
     longitude: number,
     nx: number,
     ny: number,
-  ) => Promise<KmaWarningRegionMatch>,
+    target?: RegionTarget,
+  ) => Promise<NotificationWarningRegionMatch>,
 ): Promise<string[] | undefined> {
   let regionKey = `${row.nx}:${row.ny}`;
 
   try {
-    const catalogRegion = row.scopeId ? undefined : regionMetadataForGrid(row.nx, row.ny);
     const marineZone = marineWarningZoneName(row.regionKey);
     let regionIds: readonly string[];
     let displayRegionName: string;
     if (marineZone) {
       regionIds = [row.regionKey!];
       displayRegionName = marineZone;
-    } else if (catalogRegion) {
-      regionIds = catalogRegion.warningRegionIds;
-      displayRegionName = catalogRegion.name;
     } else {
       const coordinates = row.latitude !== null && row.longitude !== null
         ? { latitude: row.latitude, longitude: row.longitude }
         : kmaGridCoordinates(row.nx, row.ny);
       if (!coordinates) return;
-      const locationKey = `${row.nx}:${row.ny}`;
+      const locationKey = JSON.stringify([row.regionKey,row.locationMode,row.nx,row.ny,
+        row.subscriptionCoordinates ?? {latitude:row.latitude,longitude:row.longitude}]);
       let matchPromise = warningRegionsByLocation.get(locationKey);
       if (!matchPromise) {
         matchPromise = regionResolver(
@@ -893,11 +894,12 @@ async function collectOfficialWarningNotifications(
           coordinates.longitude,
           row.nx,
           row.ny,
+          row,
         );
         warningRegionsByLocation.set(locationKey, matchPromise);
       }
       const match = await matchPromise;
-      regionIds = [match.regionId];
+      regionIds = match.regionIds ?? [match.regionId];
       displayRegionName = match.regionName;
     }
     if (regionIds.length === 0) return;
@@ -909,15 +911,19 @@ async function collectOfficialWarningNotifications(
     }
 
     const warnings = await warningsPromise;
-    const current = highestWarningByType(marineZone
-      ? warnings.filter((warning) => warning.typeCode === 'V' && warning.regionId === row.regionKey)
-      : warnings);
+    const current = highestWarningByType(warnings.filter(warning => regionIds.includes(warning.regionId) &&
+      (marineZone ? warning.typeCode === 'V' : warning.regionId.startsWith('L'))));
     const previous = await warningStates(env.DB, row.installationId, row.scopeId);
+    // 기존 해역 상태는 이미 해당 해역 구독에서만 생성됐다.
+    if (marineZone) for (const state of previous) state.regionId ??= row.regionKey!;
     const previousByType = new Map(previous.map((item) => [item.typeCode, item]));
 
     for (const warning of current.values()) {
       const before = previousByType.get(warning.typeCode);
-      if (!before) {
+      if (before && !before.regionId && before.effectiveAt === warning.validFrom &&
+          before.regionName === warning.regionName && before.levelCode === warning.levelCode) {
+        await applyWarningStateMutation(env.DB,row.installationId,{operation:'UPSERT',warning},row.scopeId);
+      } else if (!before || !before.regionId || !regionIds.includes(before.regionId)) {
         await queueOrApplyWarningTransition(
           env.DB,
           row,
@@ -942,7 +948,7 @@ async function collectOfficialWarningNotifications(
           { operation: 'UPSERT', warning },
         );
       } else if (
-        before.effectiveAt !== warning.validFrom ||
+        before.regionId !== warning.regionId || before.effectiveAt !== warning.validFrom ||
         before.regionName !== warning.regionName
       ) {
         await applyWarningStateMutation(env.DB, row.installationId, {
@@ -954,6 +960,11 @@ async function collectOfficialWarningNotifications(
     }
 
     for (const before of previousByType.values()) {
+      // 이전 판정 구역이나 이동 전 구역의 해제를 현재 위치로 보내지 않는다.
+      if (!before.regionId || !regionIds.includes(before.regionId)) {
+        await applyWarningStateMutation(env.DB,row.installationId,{operation:'DELETE',typeCode:before.typeCode},row.scopeId);
+        continue;
+      }
       await queueOrApplyWarningTransition(
         env.DB,
         row,
@@ -1026,6 +1037,7 @@ async function warningStates(
   const result = await db
     .prepare(
       `SELECT warning_type AS typeCode,
+              region_id AS regionId,
               warning_name AS typeName,
               level_code AS levelCode,
               level_name AS levelName,
@@ -1065,8 +1077,8 @@ async function applyWarningStateMutation(
     .prepare(
       `INSERT INTO installation_warning_state
        (installation_id, warning_type, warning_name, level_code, level_name,
-        region_name, effective_at, updated_at)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS
+        region_name, effective_at, updated_at, region_id)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS
          (SELECT 1 FROM installations WHERE installation_id = ?)
        ON CONFLICT(installation_id, warning_type) DO UPDATE SET
          warning_name = excluded.warning_name,
@@ -1074,7 +1086,8 @@ async function applyWarningStateMutation(
          level_name = excluded.level_name,
          region_name = excluded.region_name,
          effective_at = excluded.effective_at,
-         updated_at = excluded.updated_at`,
+         updated_at = excluded.updated_at,
+         region_id = excluded.region_id`,
     )
     .bind(
       installationId,
@@ -1085,6 +1098,7 @@ async function applyWarningStateMutation(
       warning.regionName,
       warning.validFrom,
       new Date().toISOString(),
+      warning.regionId,
       installationId,
     )
     .run();
@@ -1095,12 +1109,12 @@ function regionWarningStatement(db: D1Database, id: string, scope: string, mutat
     WHERE installation_id=? AND scope_id=? AND warning_type=?`).bind(id, scope, mutation.typeCode);
   const w = mutation.warning;
   return db.prepare(`INSERT INTO notification_region_warning_state
-    (installation_id,scope_id,warning_type,warning_name,level_code,level_name,region_name,effective_at,updated_at)
-    SELECT ?,?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM notification_regions WHERE installation_id=? AND scope_id=?)
+    (installation_id,scope_id,warning_type,warning_name,level_code,level_name,region_name,effective_at,updated_at,region_id)
+    SELECT ?,?,?,?,?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM notification_regions WHERE installation_id=? AND scope_id=?)
     ON CONFLICT(installation_id,scope_id,warning_type) DO UPDATE SET warning_name=excluded.warning_name,
       level_code=excluded.level_code,level_name=excluded.level_name,region_name=excluded.region_name,
-      effective_at=excluded.effective_at,updated_at=excluded.updated_at`)
-    .bind(id, scope, w.typeCode, w.type, w.levelCode, w.level, w.regionName, w.validFrom, new Date().toISOString(), id, scope);
+      effective_at=excluded.effective_at,updated_at=excluded.updated_at,region_id=excluded.region_id`)
+    .bind(id, scope, w.typeCode, w.type, w.levelCode, w.level, w.regionName, w.validFrom, new Date().toISOString(), w.regionId, id, scope);
 }
 
 function isWarningNotificationEnabled(
@@ -1281,8 +1295,8 @@ async function recordResults(
               .prepare(
                 `INSERT INTO installation_warning_state
                  (installation_id, warning_type, warning_name, level_code,
-                  level_name, region_name, effective_at, updated_at)
-                 SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS
+                  level_name, region_name, effective_at, updated_at, region_id)
+                 SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS
                    (SELECT 1 FROM installations WHERE installation_id = ?)
                  ON CONFLICT(installation_id, warning_type) DO UPDATE SET
                    warning_name = excluded.warning_name,
@@ -1290,7 +1304,8 @@ async function recordResults(
                    level_name = excluded.level_name,
                    region_name = excluded.region_name,
                    effective_at = excluded.effective_at,
-                   updated_at = excluded.updated_at`,
+                   updated_at = excluded.updated_at,
+                   region_id = excluded.region_id`,
               )
               .bind(
                 item.installationId,
@@ -1301,6 +1316,7 @@ async function recordResults(
                 warning.regionName,
                 warning.validFrom,
                 sentAt,
+                warning.regionId,
                 item.installationId,
               ),
           );

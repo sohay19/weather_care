@@ -6,6 +6,7 @@ import { weatherDatabase } from '../database/weatherDatabase';
 import { kmaGridCoordinates } from '../regions/kmaGridCoordinates';
 import { allSeasWarningZoneId, marineWarningZoneName, maxMarineWarningSubscriptions } from '../regions/kmaMarineWarningZones';
 import type { ServerEnv } from '../types';
+import { adjacentMarineWarningZoneIds } from '../regions/marineWarningAdjacency';
 
 export const notificationRegionsSchema = z.object({
   regions: z.array(z.object({ key: z.string().min(1).max(200), enabled: z.boolean() }).strict())
@@ -22,6 +23,9 @@ export const notificationRegionsSchema = z.object({
   regions.filter(r => r.key !== allSeasWarningZoneId && marineWarningZoneName(r.key)).length <= maxMarineWarningSubscriptions);
 
 export interface RegionTarget {
+  locationMode?: string;
+  marineSourceRegions?: RegionTarget[];
+  subscriptionCoordinates?: { latitude: number | null; longitude: number | null };
   regionKey?: string; scopeId?: string; regionName?: string;
   adminCode?: string;
   nx: number; ny: number; latitude: number | null; longitude: number | null;
@@ -90,7 +94,8 @@ export async function saveNotificationRegions(db: D1Database, id: string, hash: 
       SELECT i.installation_id,r.scope_id,i.current_rain_state,i.road_ice_level,i.road_ice_link_id,i.road_control_event_key,i.road_control_kind
       FROM installations i JOIN notification_regions r ON ${match} WHERE i.installation_id=? AND ${guard}`).bind(id,id,hash));
     statements.push(db.prepare(`INSERT OR IGNORE INTO notification_region_warning_state
-      SELECT w.installation_id,r.scope_id,w.warning_type,w.warning_name,w.level_code,w.level_name,w.region_name,w.effective_at,w.updated_at
+      (installation_id,scope_id,warning_type,warning_name,level_code,level_name,region_name,effective_at,updated_at,region_id)
+      SELECT w.installation_id,r.scope_id,w.warning_type,w.warning_name,w.level_code,w.level_name,w.region_name,w.effective_at,w.updated_at,w.region_id
       FROM installation_warning_state w JOIN installations i ON i.installation_id=w.installation_id
       JOIN notification_regions r ON ${match} WHERE i.installation_id=? AND ${guard}`).bind(id,id,hash));
     statements.push(db.prepare(`INSERT OR IGNORE INTO notification_history
@@ -138,6 +143,7 @@ export async function expandNotificationRegions<T extends RegionTarget & { insta
         continue;
       }
       const target = { ...row, ...region };
+      target.subscriptionCoordinates = { latitude: region.latitude, longitude: region.longitude };
       // 수동 구역도 강수·도로 알림 조회에 해당 격자의 기준 좌표를 사용한다.
       if (target.latitude === null || target.longitude === null) {
         const point = kmaGridCoordinates(target.nx, target.ny);
@@ -155,17 +161,56 @@ export async function expandNotificationRegions<T extends RegionTarget & { insta
       targets.push(target);
     }
   }
-  return targets;
+  if (!includeMarineWarnings) return targets;
+  const land = new Map<string, Array<{ target: T; adjacent: Set<string> }>>();
+  for (const target of targets) {
+    if (marineWarningZoneName(target.regionKey)) continue;
+    const adjacent = adjacentMarineWarningZoneIds({ nx: target.nx, ny: target.ny,
+      adminCode: target.regionKey?.split('|')[0].match(/^\d{10}$/)?.[0] ?? target.adminCode,
+      regionName: target.regionName });
+    const list = land.get(target.installationId) ?? [];
+    list.push({ target, adjacent });
+    land.set(target.installationId, list);
+  }
+  return targets.filter(target => {
+    if (!marineWarningZoneName(target.regionKey)) return true;
+    target.marineSourceRegions = (land.get(target.installationId) ?? [])
+      .filter(source => source.adjacent.has(target.regionKey!)).map(source => source.target);
+    return target.marineSourceRegions.length > 0;
+  });
 }
 
 export function regionHistoryKey(key: string, scopeId?: string): string {
   return scopeId ? `${key}@${scopeId}` : key;
 }
 
-export async function regionStillEnabled(db: D1Database, id: string, target: RegionTarget): Promise<boolean> {
-  if (!target.scopeId) return !(await db.prepare('SELECT 1 FROM notification_region_preferences WHERE installation_id=?').bind(id).first());
-  return Boolean(await db.prepare(`SELECT 1 FROM notification_regions WHERE installation_id=?
+export async function regionStillEnabled(db: D1Database, id: string, target: RegionTarget, sameLocation = false): Promise<boolean> {
+  if (!target.scopeId) {
+    if (await db.prepare('SELECT 1 FROM notification_region_preferences WHERE installation_id=?').bind(id).first()) return false;
+    return !sameLocation || Boolean(await db.prepare(`SELECT 1 FROM installations WHERE installation_id=?
+      AND nx=? AND ny=? AND latitude IS ? AND longitude IS ? AND location_mode IS ?`)
+      .bind(id,target.nx,target.ny,target.subscriptionCoordinates?.latitude ?? target.latitude,
+        target.subscriptionCoordinates?.longitude ?? target.longitude,target.locationMode).first());
+  }
+  const enabled = Boolean(await db.prepare(`SELECT 1 FROM notification_regions WHERE installation_id=?
     AND region_key=? AND scope_id=? AND enabled=1`).bind(id, target.regionKey, target.scopeId).first());
+  if (!enabled) return false;
+  if (!marineWarningZoneName(target.regionKey)) {
+    if (!sameLocation) return true;
+    return Boolean(await db.prepare(`SELECT 1 FROM notification_regions WHERE installation_id=? AND region_key=? AND scope_id=?
+      AND enabled=1 AND nx=? AND ny=? AND latitude IS ? AND longitude IS ?`)
+      .bind(id,target.regionKey,target.scopeId,target.nx,target.ny,
+        target.subscriptionCoordinates?.latitude ?? null,target.subscriptionCoordinates?.longitude ?? null).first());
+  }
+  for (const source of target.marineSourceRegions ?? []) {
+    if (await db.prepare(`SELECT 1 FROM notification_regions WHERE installation_id=?
+      AND region_key=? AND scope_id=? AND enabled=1 AND nx=? AND ny=?
+      AND latitude IS ? AND longitude IS ?`)
+      .bind(id, source.regionKey, source.scopeId, source.nx, source.ny,
+        source.subscriptionCoordinates?.latitude ?? null,
+        source.subscriptionCoordinates?.longitude ?? null).first()) return true;
+  }
+  return false;
 }
 
 export function regionPushData(target: RegionTarget) {

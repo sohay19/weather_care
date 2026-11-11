@@ -223,12 +223,13 @@ describe('notification scheduler', () => {
           installation_id TEXT NOT NULL, warning_type TEXT NOT NULL,
           warning_name TEXT NOT NULL, level_code TEXT NOT NULL,
           level_name TEXT NOT NULL, region_name TEXT NOT NULL,
-          effective_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+          effective_at TEXT NOT NULL, updated_at TEXT NOT NULL, region_id TEXT,
           PRIMARY KEY (installation_id, warning_type))`,
       ),
     ]);
     for (const statement of regionSchema.slice(0, regionSchema.indexOf('-- 앱')).split(';').filter(part => part.trim())) {
-      await env.DB.prepare(statement.replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS ')).run();
+      await env.DB.prepare(statement.replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS ')
+        .replace('warning_type TEXT NOT NULL, warning_name', 'region_id TEXT, warning_type TEXT NOT NULL, warning_name')).run();
     }
     await env.DB.prepare('DELETE FROM notification_region_preferences').run();
     await env.DB.batch([
@@ -700,7 +701,7 @@ describe('notification scheduler', () => {
     expect(sent.filter((item) => item.notificationKey.startsWith('OFFICIAL_WARNING')))
       .toEqual([
         expect.objectContaining({
-          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요\n수원에는 호우주의보가 발효 중이에요 내일 오전 7시~10시 예보 (강수확률 최고 80%, 9mm)',
+          body: '호우특보가 발효 중이니, 하천변과 지하차도에 접근하지 마세요\n수원시에는 호우주의보가 발효 중이에요 내일 오전 7시~10시 예보 (강수확률 최고 80%, 9mm)',
           notificationTarget: 'WEATHER_DETAILS',
           notificationTopic: 'PRECIPITATION',
         }),
@@ -724,7 +725,7 @@ describe('notification scheduler', () => {
     const warningLoader = vi.fn(async () => [
       {
         ...officialWarning('R', '호우', '2'),
-        regionId: 'L1080100',
+        regionId: 'L1150000',
         regionName: '부산',
       },
     ]);
@@ -766,12 +767,12 @@ describe('notification scheduler', () => {
 
     expect(warningLoader).toHaveBeenCalledWith(
       expect.anything(),
-      ['L1080100'],
+      expect.arrayContaining(['L1082600','L1150000']),
     );
     const warningPayload = sender.mock.calls
       .flatMap((call) => call[1] as FcmPayload[])
       .find((payload) => payload.notificationKey.startsWith('OFFICIAL_WARNING'));
-    expect(warningPayload?.body).toContain('부산에는 호우주의보가 발효 중이에요');
+    expect(warningPayload?.body).toContain('부산중부에는 호우주의보가 발효 중이에요');
   });
 
   it('announces an official level change and release', async () => {
@@ -787,7 +788,7 @@ describe('notification scheduler', () => {
       sender: collectingSender(sent),
     });
     expect(sent.find((item) => item.notificationKey.includes('CHANGED'))?.body)
-      .toContain('기상청은 수원의 호우주의보를 호우경보로 변경했어요');
+      .toContain('기상청은 수원시의 호우주의보를 호우경보로 변경했어요');
 
     sent.length = 0;
     await runRecommendationNotificationJob(bindings, {
@@ -797,7 +798,7 @@ describe('notification scheduler', () => {
       sender: collectingSender(sent),
     });
     expect(sent.find((item) => item.notificationKey.includes('RELEASED'))?.body)
-      .toBe('수원의 호우경보가 해제됐어요');
+      .toBe('수원시의 호우경보가 해제됐어요');
   });
 
   it.each([false, true])('블랙아이스 선택 %s가 실제 발송을 제어한다', async (blackIceEnabled) => {
@@ -1007,7 +1008,7 @@ function precipitation(state: 'RAIN' | 'DRY' | 'MISMATCH') {
 
 async function insertInstallation(
   token: string,
-  withCoordinates = false,
+  withCoordinates = true,
   minimumAgeConfirmed = true,
 ): Promise<void> {
   await env.DB.prepare(
@@ -1020,8 +1021,8 @@ async function insertInstallation(
     .bind(
       'installation-1',
       token,
-      withCoordinates ? 37.2636 : null,
-      withCoordinates ? 127.0286 : null,
+      withCoordinates ? 37.30326021617463 : null,
+      withCoordinates ? 126.98505669360944 : null,
       minimumAgeConfirmed ? '2026-09-01T00:00:00Z' : null,
       minimumAgeConfirmed ? 1 : 0,
       '2026-09-01T00:00:00Z',
@@ -1156,8 +1157,8 @@ async function insertWarningState(
   await env.DB.prepare(
     `INSERT INTO installation_warning_state
      (installation_id, warning_type, warning_name, level_code, level_name,
-      region_name, effective_at, updated_at)
-     VALUES ('installation-1', ?, ?, ?, ?, '수원', ?, ?)`,
+      region_name, effective_at, updated_at, region_id)
+     VALUES ('installation-1', ?, ?, ?, ?, '수원', ?, ?, 'L1011900')`,
   )
     .bind(
       typeCode,

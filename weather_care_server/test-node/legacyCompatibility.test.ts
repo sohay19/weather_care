@@ -205,7 +205,7 @@ describe('운영 DB 대신 합성 구버전 DB로 검증하는 마이그레이�
         '0017_background_location.sql', '0018_lightning_client_support.sql', '0019_pipe_freeze_alert.sql',
         '0020_commute_notification_schedule.sql', '0021_notification_regions.sql', '0022_dryness_preparations.sql',
         '0023_today_notifications.sql', '0024_carry_categories_black_ice.sql', '0025_notification_group_masters.sql', '0026_wear_links.sql',
-        '0027_official_alert_settings.sql', '0028_road_control_notification.sql'];
+        '0027_official_alert_settings.sql', '0028_road_control_notification.sql', '0029_warning_region_identity.sql'];
       expect(runSqliteMigrations(database)).toEqual(pending.filter((name) => Number(name.slice(0, 4)) > version));
       expect(runSqliteMigrations(database)).toEqual([]);
       for (const { table, columns, rows } of before) {

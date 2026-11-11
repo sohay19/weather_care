@@ -1,18 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { loadCollectionTargets } from '../src/collection/collectionTargets';
+import { collectWarnings } from '../src/collection/weatherCollectionJob';
 import { Hono } from 'hono';
 import installations from '../src/api/installations';
 import settings from '../src/api/notificationSettings';
 import { asD1Database, runSqliteMigrations, SqliteD1Database } from '../src/node/sqliteD1';
 import { secretHash, deleteInstallationData } from '../src/security/installationAccess';
-import { catalogNotificationRegion, expandNotificationRegions, notificationRegionsSchema, saveNotificationRegions } from '../src/notification/notificationRegions';
+import { catalogNotificationRegion, expandNotificationRegions, notificationRegionsSchema, regionStillEnabled, saveNotificationRegions } from '../src/notification/notificationRegions';
 import { runRecommendationNotificationJob } from '../src/notification/notificationScheduler';
 import { KMA_ADMINISTRATIVE_AREAS } from '../src/regions/kmaAdministrativeAreas';
 import { sendBatch, type FcmPayload, type FcmSendResult } from '../src/notification/fcmClient';
 import type { ServerEnv } from '../src/types';
 import { saveCollectedCache, collectedCacheKey } from '../src/database/collectedWeatherRepository';
 import type { OfficialWeatherWarning } from '../src/providers/warnings/kmaWarningProvider';
+import { adjacentMarineWarningZoneIds } from '../src/regions/marineWarningAdjacency';
+import { selectableMarineWarningZones } from '../src/regions/kmaMarineWarningZones';
+import { kmaGridFromCoordinates } from '../src/regions/kmaGridFromCoordinates';
 
 let sqlite: SqliteD1Database;
 let env: ServerEnv;
@@ -23,6 +27,12 @@ const now = new Date('2026-09-02T07:00:00+09:00');
 const keys = KMA_ADMINISTRATIVE_AREAS.filter(r => r[1].includes('구로구 구로') && r[1].endsWith('동'))
   .map(r => `${r[0]}|${r[1].split(' ').at(-1)}|${r[2]}|${r[3]}`);
 const first = keys[0], second = keys[1];
+const coastalKey = (name: string) => {
+  const area = KMA_ADMINISTRATIVE_AREAS.find(area => area[1] === name)!;
+  return `${area[0]}|${name.split(' ').at(-1)}|${area[2]}|${area[3]}`;
+};
+const busan = coastalKey('부산광역시 해운대구 우제1동');
+const ulsan = coastalKey('울산광역시 동구 방어동');
 it('allows 49 saved regions alongside GPS and LEGACY', () => {
   const saved = Array.from({length: 49}, (_, index) => ({key: `saved-${index}`, enabled: true}));
   const special = [{key: 'GPS', enabled: true}, {key: 'LEGACY', enabled: true}];
@@ -155,14 +165,14 @@ describe('구역별 알림 구독과 기존 앱 호환', () => {
     expect(sent.filter(p=>p.notificationKey.startsWith('OFFICIAL_WARNING_RELEASED'))).toHaveLength(2);
     expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_region_warning_state').get()).toEqual({n:0});
   });
-  it('선택한 해역의 풍랑 발효·변경·해제만 보내고 육상 자료를 조회하지 않는다', async () => {
+  it('알림을 켠 육상 구역에 인접하고 선택한 해역의 풍랑 발효·변경·해제만 보낸다', async () => {
     const zones = await router.request('/installations/marine-warning-zones', {}, env);
     expect(await zones.json()).toMatchObject({
       zones: expect.arrayContaining([{ id: 'S1311100', name: '부산앞바다' }]),
       maxSubscriptions: 112,
     });
     expect((await save([{ key: 'S9999999', enabled: true }])).status).toBe(400);
-    expect((await save([{ key: 'S1311100', enabled: true }, { key: 'S1131100', enabled: false }])).status).toBe(200);
+    expect((await save([{ key: busan, enabled: true }, { key: 'S1311100', enabled: true }, { key: 'S1131100', enabled: false }])).status).toBe(200);
     const warning: OfficialWeatherWarning = {
       typeCode: 'V', type: '풍랑', levelCode: '2', level: '주의보', commandCode: '1',
       regionId: 'S1311100', regionName: '부산앞바다', announcedAt: now.toISOString(),
@@ -180,25 +190,160 @@ describe('구역별 알림 구독과 기존 앱 호환', () => {
     await writeSnapshot([warning, { ...warning, regionId: 'S1131100' }], true);
     await run();
     await run();
-    expect(sent).toMatchObject([{
+    expect(sent.filter(p => p.notificationKey.startsWith('OFFICIAL_WARNING'))).toMatchObject([{
       title: '[부산앞바다] 풍랑주의보 발효',
       notificationKey: expect.stringMatching(/^OFFICIAL_WARNING_ACTIVE_V_.*_S1311100$/),
     }]);
-    expect(sent[0].notificationRegionKey).toBeUndefined();
+    expect(sent.find(p => p.notificationKey.startsWith('OFFICIAL_WARNING'))!.notificationRegionKey).toBeUndefined();
     await writeSnapshot([], false);
     await run();
-    expect(sent).toHaveLength(1);
+    expect(sent.filter(p => p.notificationKey.startsWith('OFFICIAL_WARNING'))).toHaveLength(1);
     await writeSnapshot([{ ...warning, levelCode: '3', level: '경보' }], true);
     await run();
     await writeSnapshot([], true);
     await run();
-    expect(sent.map(p => p.title)).toEqual([
+    expect(sent.filter(p => p.notificationKey.startsWith('OFFICIAL_WARNING')).map(p => p.title)).toEqual([
       '[부산앞바다] 풍랑주의보 발효', '[부산앞바다] 풍랑특보 변경', '[부산앞바다] 풍랑경보 해제',
     ]);
-    expect(forecastLoader).not.toHaveBeenCalled();
-    expect(warningRegionResolver).not.toHaveBeenCalled();
-    expect(precipitationLoader).not.toHaveBeenCalled();
-    expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_history').get()).toEqual({ n: 3 });
+    expect(forecastLoader).toHaveBeenCalled();
+    expect(warningRegionResolver).toHaveBeenCalled();
+    expect(precipitationLoader).toHaveBeenCalled();
+  });
+  it('전체 해역 구독이어도 서울에는 0개, 부산에는 부산 인접 해역만 확장한다', async () => {
+    const all = selectableMarineWarningZones.map(zone => ({ key: zone.id, enabled: true }));
+    const targets = () => expandNotificationRegions(env, [{ installationId: 'device', nx: 60, ny: 127,
+      latitude: null, longitude: null }], now, true);
+    await save([{ key: first, enabled: true }, ...all]);
+    expect((await targets()).filter(row => row.regionKey?.startsWith('S'))).toHaveLength(0);
+    await save([{ key: busan, enabled: true }, { key: ulsan, enabled: false }, ...all]);
+    const marine = (await targets()).filter(row => row.regionKey?.startsWith('S'));
+    expect(marine.map(row => row.regionKey)).toContain('S1311100');
+    expect(marine.map(row => row.regionKey)).not.toContain('S1131100');
+    expect(marine.map(row => row.regionKey)).not.toContain('S1324020');
+    expect(marine.every(row => row.marineSourceRegions?.length === 1)).toBe(true);
+    await save([{ key: busan, enabled: false }, ...all]);
+    expect((await targets()).filter(row => row.regionKey?.startsWith('S'))).toHaveLength(0);
+  });
+  it('해역만 구독하거나 인접 육상 구역을 발송 준비 중 끄면 풍랑과 해상 속보를 보내지 않는다', async () => {
+    const sent: FcmPayload[] = [];
+    const sea = { key: 'S1311100', enabled: true };
+    const warning: OfficialWeatherWarning = { typeCode: 'V', type: '풍랑', levelCode: '2', level: '주의보', commandCode: '1',
+      regionId: sea.key, regionName: '부산앞바다', announcedAt: now.toISOString(), validFrom: now.toISOString(), provider: '기상청 특보현황' };
+    await saveCollectedCache(env.DB, { key: collectedCacheKey.disasterBulletin, type: collectedCacheKey.disasterBulletin,
+      value: { issuedAt: '202609020655', title: '풍랑 현황과 전망', regionCodes: [sea.key] }, updatedAt: now });
+    await save([sea]);
+    await job(sent, { warningLoader: async () => [warning] });
+    expect(sent).toHaveLength(0);
+    await save([{ key: busan, enabled: true }, sea]);
+    await job(sent, { warningLoader: async (_env: ServerEnv, ids: string[]) => {
+      if (ids.includes(sea.key)) {
+        await save([{ key: busan, enabled: false }, sea]);
+        return [warning];
+      }
+      return [];
+    } });
+    expect(sent.filter(p => /OFFICIAL_WARNING|DISASTER_BULLETIN/.test(p.notificationKey))).toHaveLength(0);
+    await save([{ key: busan, enabled: true }, sea]);
+    await job(sent, { warningLoader: async (_env: ServerEnv, ids: string[]) => ids.includes(sea.key) ? [warning] : [] });
+    expect(sent.filter(p => p.notificationKey.startsWith('OFFICIAL_WARNING'))).toHaveLength(1);
+    expect(sent.filter(p => p.notificationKey.startsWith('DISASTER_BULLETIN'))).toHaveLength(1);
+  });
+  it('앞바다 관할 시군을 구분하고 내륙·먼바다·불명확한 지역은 연결하지 않는다', () => {
+    const adjacent = (name: string) => adjacentMarineWarningZoneIds({ nx: 60, ny: 127, regionName: name });
+    expect(adjacent('서울특별시 구로구 구로1동').size).toBe(0);
+    expect(adjacent('경기도 시흥시 정왕1동')).toContain('S1251200');
+    expect(adjacent('강원특별자치도 고성군 토성면')).toContain('S1151100');
+    expect(adjacent('경상남도 고성군 동해면')).toContain('S1311300');
+    expect(adjacent('경상남도 고성군 동해면')).not.toContain('S1151100');
+    expect(adjacent('제주특별자치도 제주시 구좌읍')).toContain('S1323200');
+    expect(adjacent('제주특별자치도 제주시 구좌읍')).not.toContain('S1323400');
+    expect(adjacent('경기도').size).toBe(0);
+    expect(adjacent('부산광역시 해운대구 우1동')).not.toContain('S1312020');
+  });
+  it('GPS가 같은 격자 안에서 이동해도 발송 직전에 인접 판정 좌표를 재확인한다', async () => {
+    sqlite.sqlite.exec("UPDATE installations SET nx=99,ny=75,latitude=35.16,longitude=129.16");
+    await save([{ key: 'GPS', enabled: true }, { key: 'S1311100', enabled: true }]);
+    sqlite.sqlite.exec("UPDATE notification_regions SET region_name='부산광역시 해운대구 우제1동' WHERE region_key='GPS'");
+    const targets = await expandNotificationRegions(env, [{ installationId: 'device', nx: 99, ny: 75,
+      latitude: 35.16, longitude: 129.16 }], now, true);
+    const sea = targets.find(target => target.regionKey === 'S1311100')!;
+    expect(sea).toBeDefined();
+    expect(await regionStillEnabled(env.DB, 'device', sea)).toBe(true);
+    sqlite.sqlite.exec('UPDATE installations SET latitude=35.17');
+    expect(await regionStillEnabled(env.DB, 'device', sea)).toBe(false);
+  });
+  it('같은 격자의 GPS 두 곳에 각자 정확히 포함된 육상 특보만 보낸다', async () => {
+    const firstPoint = {latitude:37.44526,longitude:126.96402};
+    const secondPoint = {latitude:37.44028,longitude:127.00249};
+    const grid = kmaGridFromCoordinates(firstPoint.latitude,firstPoint.longitude);
+    expect(grid).toEqual(kmaGridFromCoordinates(secondPoint.latitude,secondPoint.longitude));
+    sqlite.sqlite.prepare('UPDATE installations SET nx=?,ny=?,latitude=?,longitude=?').run(grid.nx,grid.ny,firstPoint.latitude,firstPoint.longitude);
+    sqlite.sqlite.prepare('INSERT INTO installation_credentials VALUES(?,?,?)').run('other',hash,now.toISOString());
+    sqlite.sqlite.prepare(`INSERT INTO installations(installation_id,fcm_token,nx,ny,region_topic,location_mode,minimum_age_confirmed_at,age_policy_version,created_at,updated_at,latitude,longitude)
+      SELECT 'other','other-token',nx,ny,region_topic,location_mode,minimum_age_confirmed_at,age_policy_version,created_at,updated_at,?,? FROM installations WHERE installation_id='device'`)
+      .run(secondPoint.latitude,secondPoint.longitude);
+    sqlite.sqlite.prepare("INSERT INTO notification_settings(installation_id,created_at,updated_at) VALUES('other',?,?)").run(now.toISOString(),now.toISOString());
+    const warning: OfficialWeatherWarning = { typeCode:'R',type:'호우',levelCode:'2',level:'주의보',commandCode:'1',
+      regionId:'L1100300',regionName:'서울서남권',announcedAt:now.toISOString(),validFrom:now.toISOString(),provider:'기상청 특보현황' };
+    await saveCollectedCache(env.DB,{key:collectedCacheKey.warningSnapshot,type:'COLLECTED_WARNING_SNAPSHOT',
+      value:{warnings:[warning,{...warning,regionId:'L1010300',regionName:'과천시'}]},updatedAt:new Date()});
+    const sent:FcmPayload[]=[];
+    await job(sent,{warningRegionResolver:undefined,warningLoader:undefined});
+    const official=sent.filter(item=>item.notificationKey.startsWith('OFFICIAL_WARNING'));
+    expect(official).toHaveLength(2);
+    expect(official.find(item=>item.token==='token')!.body).toContain('서울서남권');
+    expect(official.find(item=>item.token==='other-token')!.body).toContain('과천시');
+    expect(sqlite.sqlite.prepare('SELECT installation_id,region_id FROM installation_warning_state ORDER BY installation_id').all())
+      .toEqual([{installation_id:'device',region_id:'L1100300'},{installation_id:'other',region_id:'L1010300'}]);
+  });
+  it('GPS 이동 후 이전 구역의 해제를 보내지 않고 발송 준비 중 이동도 차단한다', async () => {
+    const point={latitude:37.44526,longitude:126.96402};
+    const grid=kmaGridFromCoordinates(point.latitude,point.longitude);
+    sqlite.sqlite.prepare('UPDATE installations SET nx=?,ny=?,latitude=?,longitude=?').run(grid.nx,grid.ny,point.latitude,point.longitude);
+    const warning:OfficialWeatherWarning={typeCode:'W',type:'강풍',levelCode:'2',level:'주의보',commandCode:'1',regionId:'L1100300',regionName:'서울서남권',
+      announcedAt:now.toISOString(),validFrom:now.toISOString(),provider:'기상청 특보현황'};
+    const sent:FcmPayload[]=[];
+    await job(sent,{warningRegionResolver:undefined,warningLoader:async()=>[warning]});
+    expect(sent.filter(p=>p.notificationKey.startsWith('OFFICIAL_WARNING'))).toHaveLength(1);
+    sqlite.sqlite.exec('UPDATE installations SET latitude=37.44028,longitude=127.00249');
+    await job(sent,{warningRegionResolver:undefined});
+    expect(sent.filter(p=>p.notificationKey.includes('RELEASED'))).toHaveLength(0);
+    expect(sqlite.sqlite.prepare('SELECT 1 FROM installation_warning_state').get()).toBeUndefined();
+    sqlite.sqlite.exec('DELETE FROM notification_history; UPDATE installations SET latitude=37.44526,longitude=126.96402');
+    sent.length=0;
+    await job(sent,{warningRegionResolver:undefined,warningLoader:async()=>[warning],forecastLoader:async()=>{
+      sqlite.sqlite.exec('UPDATE installations SET latitude=37.44028,longitude=127.00249'); return forecast();
+    }});
+    expect(sent.filter(p=>p.notificationKey.startsWith('OFFICIAL_WARNING'))).toHaveLength(0);
+    expect(sqlite.sqlite.prepare('SELECT 1 FROM installation_warning_state').get()).toBeUndefined();
+  });
+  it('좌표 없는 경계 격자에서 65% 이상인 시군과 광역의 공식 특보만 발송한다', async () => {
+    sqlite.sqlite.exec('UPDATE installations SET nx=69,ny=132');
+    const collectedAt = new Date();
+    const issued = new Date(collectedAt.getTime() + 8 * 3_600_000).toISOString().slice(0,16).replace(/\D/g,'');
+    await saveCollectedCache(env.DB, {
+      key: collectedCacheKey.warningStations, type: 'COLLECTED_WARNING_STATIONS', updatedAt: collectedAt,
+      value: [{ regionId:'L1011400', regionName:'가평군', stationId:'1', stationName:'가평', latitude:37.82, longitude:127.51 }],
+    });
+    const fetcher = vi.fn(async () => new Response([
+      `L1010000,경기도,L1010000,경기도,${issued},${issued},호우,주의,발표,,=`,
+      `L1010000,경기도,L1011400,가평군,${issued},${issued},강풍,주의,발표,,=`,
+      `L1020000,강원도,L1021600,춘천시,${issued},${issued},강풍,경보,발표,,=`,
+    ].join('\n'), { headers:{'content-type':'text/plain; charset=UTF-8'} }));
+    vi.stubGlobal('fetch', fetcher);
+    try {
+      await collectWarnings({ ...env, KMA_APIHUB_KEY:'test-key' }, [], collectedAt);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const sent: FcmPayload[] = [];
+    await job(sent, { now:collectedAt, warningLoader:undefined, warningRegionResolver:undefined });
+    const warnings = sent.filter(item => item.notificationKey.startsWith('OFFICIAL_WARNING'));
+    expect(warnings).toHaveLength(2);
+    expect(warnings.every(item => item.title.includes('주의보'))).toBe(true);
+    expect(sqlite.sqlite.prepare('SELECT region_id FROM installation_warning_state ORDER BY region_id').all())
+      .toEqual([{ region_id:'L1010000' }, { region_id:'L1011400' }]);
   });
   it('전체 해역 요청은 전해상을 제외하고 기존 구역을 보존하며 빈 선택을 구분한다', async () => {
     const put = (marineWarningZones: 'all' | string[]) => router.request('/installations/device/notification-regions', {
@@ -321,7 +466,7 @@ describe('구역별 알림 구독과 기존 앱 호환', () => {
     for(const [directory,latest] of [['migrations','0021_notification_regions.sql'],['node-migrations/users','0004_notification_regions.sql']]) {
       const old=new SqliteD1Database(':memory:');
       try {
-        for(const file of readdirSync(directory).filter(n=>n.endsWith('.sql') && n!==latest).sort()) old.sqlite.exec(readFileSync(`${directory}/${file}`,'utf8'));
+        for(const file of readdirSync(directory).filter(n=>n.endsWith('.sql') && n<latest).sort()) old.sqlite.exec(readFileSync(`${directory}/${file}`,'utf8'));
         old.sqlite.prepare('INSERT INTO installation_credentials VALUES(?,?,?)').run('old','synthetic',now.toISOString());
         old.sqlite.prepare(`INSERT INTO installations(installation_id,nx,ny,region_topic,location_mode,created_at,updated_at)
           VALUES('old',60,127,'test','GPS',?,?)`).run(now.toISOString(),now.toISOString());

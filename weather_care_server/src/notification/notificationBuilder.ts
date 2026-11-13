@@ -1,5 +1,5 @@
 import { Recommendation, WeatherRuleFactType } from '../types';
-import { koreanHour, periodLabel, otherDatePrefix } from '../rules/precipitationWindows';
+import { koreaDate, koreanHour, periodLabel, otherDatePrefix } from '../rules/precipitationWindows';
 import {
   morningBriefDestination,
   NotificationDestination,
@@ -121,9 +121,15 @@ export function buildNotification(
 
   const payloads: BuiltNotification[] = [];
   if (preparationBody || fallbackItems.length > 0 || summaryBriefing) {
+    const today = koreaDate(reference.toISOString()).replaceAll('-', '');
+    const daily = forecast?.daily.find((day) => day.date.replaceAll('-', '') === today);
+    const { minTemperature, maxTemperature } = daily ?? {};
     payloads.push({
       notification_key: 'MORNING_BRIEF',
-      title: '오늘자 준비물 😊',
+      title: minTemperature !== undefined && Number.isFinite(minTemperature) &&
+        maxTemperature !== undefined && Number.isFinite(maxTemperature)
+        ? `최저 ${minTemperature.toFixed(1)} °C · 최고 ${maxTemperature.toFixed(1)} °C`
+        : '오늘자 준비물 😊',
       body: preparationBody || summaryBriefing?.copy.notificationBody || composeBody(fallbackItems, now),
       destination: morningBriefDestination,
     });

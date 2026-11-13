@@ -75,6 +75,8 @@ describe('notification scheduler', () => {
     const forecast = rainyForecast();
     forecast.current = { observedAt: '2026-09-02T07:00:00+09:00', dataRole: 'OBSERVATION',
       temperature: 22, visibilityMeters: 500 };
+    forecast.daily = [{ date: '2026-09-02', minTemperature: 8.2, maxTemperature: 24,
+      skyCondition: 'CLOUDY', precipitationProbability: 60, precipitationAmount: 1 }];
     forecast.hourly = [{ observedAt: '2026-09-02T19:00:00+09:00',
       forecastAt: '2026-09-02T19:00:00+09:00', precipitationType: 'RAIN',
       precipitationProbability: 60, precipitationAmount: 1,
@@ -88,7 +90,7 @@ describe('notification scheduler', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].notificationKey).toBe('MORNING_BRIEF');
     const lines = sent[0].body.split('\n');
-    expect(sent[0].title).toBe('오늘자 준비물 😊');
+    expect(sent[0].title).toBe('최저 8.2 °C · 최고 24.0 °C');
     expect(lines).toEqual(['오후 6시~7시에 비 소식이 있으니 우산을 챙기세요. (강수확률 60%)']);
   });
 

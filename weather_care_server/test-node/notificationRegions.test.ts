@@ -14,6 +14,7 @@ import { sendBatch, type FcmPayload, type FcmSendResult } from '../src/notificat
 import type { ServerEnv } from '../src/types';
 import { saveCollectedCache, collectedCacheKey } from '../src/database/collectedWeatherRepository';
 import type { OfficialWeatherWarning } from '../src/providers/warnings/kmaWarningProvider';
+import type { WeatherForecast } from '../src/providers/weather/weatherProvider';
 import { adjacentMarineWarningZoneIds } from '../src/regions/marineWarningAdjacency';
 import { selectableMarineWarningZones } from '../src/regions/kmaMarineWarningZones';
 import { kmaGridFromCoordinates } from '../src/regions/kmaGridFromCoordinates';
@@ -91,12 +92,30 @@ describe('구역별 알림 구독과 기존 앱 호환', () => {
   });
   it('ON인 동마다 발송하고 같은 날 반복 발송하지 않는다', async () => {
     expect((await save()).status).toBe(200);
-    const sent:FcmPayload[]=[]; await job(sent); await job(sent);
+    const firstName = catalogNotificationRegion(first)!.name;
+    const secondName = catalogNotificationRegion(second)!.name;
+    const baseForecast = forecast();
+    const dailyWeather = {skyCondition:'CLOUDY',precipitationProbability:80,precipitationAmount:3};
+    const forecastLoader = async (_env: ServerEnv, _nx: number, _ny: number,
+      _coordinates?: { latitude: number; longitude: number }, regionName?: string): Promise<WeatherForecast> => ({
+      ...baseForecast,
+      daily: [
+        {...dailyWeather,date:'20260901',minTemperature:-12,maxTemperature:-5},
+        {...dailyWeather,date:'20260902',minTemperature:regionName===firstName ? -2.34 : 8,
+          maxTemperature:regionName===firstName ? 17 : 18.64},
+      ],
+    });
+    const sent:FcmPayload[]=[];
+    await job(sent, {forecastLoader});
+    await job(sent, {forecastLoader});
     const briefs=sent.filter(p => p.notificationKey==='MORNING_BRIEF');
     expect(briefs).toHaveLength(2);
     expect(new Set(briefs.map(p=>p.notificationRegionId)).size).toBe(2);
     expect(briefs.map(p=>p.notificationRegionKey)).toEqual([first,second]);
-    for(const p of briefs) expect(p.title).toBe(`[${catalogNotificationRegion(p.notificationRegionKey!)!.name}] 오늘자 준비물 😊`);
+    expect(briefs.map(p=>p.title)).toEqual([
+      `[${firstName}] 최저 -2.3 °C · 최고 17.0 °C`,
+      `[${secondName}] 최저 8.0 °C · 최고 18.6 °C`,
+    ]);
     expect(sqlite.sqlite.prepare('SELECT COUNT(*) AS n FROM notification_history').get()).toEqual({n:2});
   });
   it('업데이트 직전 현재 지역의 발송 이력과 강수 상태를 이어 받는다', async () => {
